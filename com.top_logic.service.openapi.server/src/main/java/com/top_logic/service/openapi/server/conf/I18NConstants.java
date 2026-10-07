@@ -39,6 +39,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_PATH_PARAMETER_NOT_ALLOWED_AT_OPERATION__PARAMS;
 
 	/**
+	 * @en Multiple parameters of the operation are bound to the same script variable: {0}
+	 */
+	public static ResKey1 ERROR_DUPLICATE_PARAMETER_VARIABLES__NAMES;
+
+	/**
 	 * @en Path parameters not defined: {0}
 	 */
 	public static ResKey1 ERROR_PATH_PARAMETER_NOT_DECLARED__PARAMS;

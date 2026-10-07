@@ -26,14 +26,11 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  */
 @TagName("derived-channel")
-public interface DerivedChannelConfig extends ChannelConfig {
+public interface DerivedChannelConfig extends ChannelConfig, Inputs {
 
 	@Override
 	@ClassDefault(DerivedChannelFactory.class)
 	Class<? extends ChannelFactory> getImplementationClass();
-
-	/** Configuration name for {@link #getInputs()}. */
-	String INPUTS = "inputs";
 
 	/** Configuration name for {@link #getExpr()}. */
 	String EXPR = "expr";
@@ -43,14 +40,6 @@ public interface DerivedChannelConfig extends ChannelConfig {
 
 	/** Configuration name for {@link #getObservedTypes()}. */
 	String OBSERVED_TYPES = "observed-types";
-
-	/**
-	 * Comma-separated references to channels whose current values become positional arguments to the
-	 * expression.
-	 */
-	@Name(INPUTS)
-	@Format(CommaSeparatedChannelRefs.class)
-	List<ChannelRef> getInputs();
 
 	/**
 	 * TL-Script expression computing the derived value.

@@ -1,7 +1,15 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { buttonClassName } from './button/ButtonDefaults';
 
 const { useCallback } = React;
+
+const I18N_KEYS = {
+  'js.breadcrumb.label': 'Breadcrumb',
+};
+
+/** The glyph between two entries; ThemeIcon renders a font glyph aria-hidden, so it is decoration only. */
+const SEPARATOR_ICON = 'css:fa-solid fa-chevron-right';
 
 interface BreadcrumbItem {
   id: string;
@@ -9,7 +17,10 @@ interface BreadcrumbItem {
 }
 
 /**
- * A navigation trail showing the current location in a hierarchy.
+ * A navigation trail showing the current location in a hierarchy (tl-breadcrumb).
+ *
+ * Every entry before the current page is a link button that jumps back to it; the current page is
+ * plain text marked `aria-current="page"` and no jump target.
  *
  * State:
  * - items: { id, label }[]  (last item = current page)
@@ -17,6 +28,7 @@ interface BreadcrumbItem {
 const TLBreadcrumb: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
 
   const items = (state.items as BreadcrumbItem[]) ?? [];
 
@@ -25,28 +37,24 @@ const TLBreadcrumb: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   return (
-    <nav id={controlId} className="tlBreadcrumb" aria-label="Breadcrumb">
-      <ol className="tlBreadcrumb__list">
+    <nav id={controlId} className={rootClassName(state, 'tl-breadcrumb')} aria-label={i18n['js.breadcrumb.label']}>
+      <ol className="tl-breadcrumb__list">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={item.id} className="tlBreadcrumb__entry">
+            <li key={item.id} className="tl-breadcrumb__entry">
               {index > 0 && (
-                <svg className="tlBreadcrumb__separator" viewBox="0 0 16 16"
-                  width="16" height="16" aria-hidden="true">
-                  <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor"
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <ThemeIcon encoded={SEPARATOR_ICON} className="tl-breadcrumb__separator tl-icon-sm" />
               )}
               {isLast ? (
-                <span className="tlBreadcrumb__current" aria-current="page">{item.label}</span>
+                <span className="tl-breadcrumb__current tl-type-body" aria-current="page">{item.label}</span>
               ) : (
                 <button
                   type="button"
-                  className="tlBreadcrumb__item"
+                  className={buttonClassName({ appearance: 'link' })}
                   onClick={() => handleNavigate(item.id)}
                 >
-                  {item.label}
+                  <span className="tl-button__label">{item.label}</span>
                 </button>
               )}
             </li>

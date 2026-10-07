@@ -7,10 +7,13 @@ package test.com.top_logic.basic.module;
 
 import static test.com.top_logic.basic.BasicTestCase.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -24,6 +27,7 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.ModuleUtil.ModuleContext;
+import com.top_logic.basic.module.ModuleUtil.StartupPhase;
 import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -663,6 +667,61 @@ public class TestModuleUtil extends AbstractModuleTest {
 		assertFalse(dependenciesOfF.hasNext());
 	}
 	
+	/**
+	 * The module system is running, when the application services are active and no services are
+	 * being started or restarted.
+	 */
+	public void testRunning() throws IllegalArgumentException, ModuleException {
+		Set<BasicRuntimeModule<?>> formerServices = moduleUtil.getApplicationServices();
+		List<String> log = new ArrayList<>();
+		Runnable logRunning = () -> log.add("G=" + G.Module.INSTANCE.isActive() + ", H=" + H.Module.INSTANCE.isActive());
+		try {
+			moduleUtil.setApplicationServices(null);
+			moduleUtil.startUp(F.Module.INSTANCE);
+			assertFalse("No application services started.", moduleUtil.isRunning());
+
+			moduleUtil.whenRunning(logRunning);
+			assertEquals(list(), log);
+
+			moduleUtil.startApplicationServices(list(H.Module.INSTANCE));
+			assertTrue(moduleUtil.isRunning());
+			assertEquals("Action runs once, when all application services have started.",
+				list("G=true, H=true"), log);
+
+			log.clear();
+			moduleUtil.whenRunning(logRunning);
+			assertEquals("Action runs immediately in a running module system.", list("G=true, H=true"), log);
+
+			log.clear();
+			moduleUtil.restart(F.Module.INSTANCE, () -> {
+				assertFalse(moduleUtil.isRunning());
+				moduleUtil.whenRunning(logRunning);
+			});
+			assertTrue(moduleUtil.isRunning());
+			assertEquals("Action waits until the restart has started all services again.",
+				list("G=true, H=true"), log);
+
+			log.clear();
+			moduleUtil.shutDown(G.Module.INSTANCE);
+			assertFalse("Application service H is not active.", moduleUtil.isRunning());
+			moduleUtil.whenRunning(logRunning);
+			Runnable cancelled = () -> log.add("cancelled");
+			moduleUtil.whenRunning(cancelled);
+			moduleUtil.cancelWhenRunning(cancelled);
+			try (StartupPhase phase = moduleUtil.beginStartup()) {
+				moduleUtil.startUp(G.Module.INSTANCE);
+				assertFalse("Application service H is not active.", moduleUtil.isRunning());
+				moduleUtil.startUp(H.Module.INSTANCE);
+				assertFalse("Startup phase is open.", moduleUtil.isRunning());
+				assertEquals(list(), log);
+			}
+			assertTrue(moduleUtil.isRunning());
+			assertEquals(list("G=true, H=true"), log);
+		} finally {
+			moduleUtil.setApplicationServices(formerServices);
+		}
+	}
+
 	/**
 	 * Test for Ticket #3947
 	 */

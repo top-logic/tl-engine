@@ -666,22 +666,26 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/**
 	 * Removes duplicated entries from a given list.
-	 * 
+	 *
 	 * <p>
-	 * This implementation uses a temporary {@link Set}, consider using more efficient methods for
-	 * lists with {@link Comparable} elements, e.g. #sort other Methods in case you have a) lots of
-	 * data b) a List that is already sorted in some way.
+	 * The order of the given list is kept: Of each duplicated entry, the first occurrence remains
+	 * at its position.
 	 * </p>
-	 * 
+	 *
+	 * <p>
+	 * This implementation uses a temporary {@link LinkedHashSet}, consider using more efficient
+	 * methods, e.g. {@link #removeDuplicatesSortedInline(List)}, in case you have a list that is
+	 * already sorted.
+	 * </p>
+	 *
 	 * @param aList
 	 *        The list that contains duplicated entries.
-	 * @return A list that contains no duplicated entries.
-	 * 
+	 * @return A new list that contains no duplicated entries.
+	 *
 	 * @see #sortRemovingDuplicates(List)
 	 */
 	public static <E> List<E> removeDuplicates(List<? extends E> aList) {
-		Set<? extends E> temp = toSet(aList);
-		return new ArrayList<>(temp);
+		return new ArrayList<>(new LinkedHashSet<>(aList));
 	}
 
 	/**

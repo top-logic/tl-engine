@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
+import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
@@ -192,8 +193,14 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Registers a {@link ReactCommandTarget} (typically a {@link ReactControl}) so that it can be
-	 * looked up by ID for command dispatch.
+	 * Registers a {@link ReactCommandTarget} so that it can be looked up by ID for command dispatch.
+	 *
+	 * <p>
+	 * A {@link ReactControl} is registered exactly while it is {@link ReactControl#isAttached()
+	 * attached}: {@link ReactControl#attach()} registers it and {@link ReactControl#detach()}
+	 * unregisters it. The queue therefore holds the controls the window displays, and no control that
+	 * left the display is kept alive by it.
+	 * </p>
 	 */
 	public void registerControl(ReactCommandTarget control) {
 		_controls.put(control.getID(), control);
@@ -201,6 +208,8 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Unregisters a previously registered control.
+	 *
+	 * @see #registerControl(ReactCommandTarget)
 	 */
 	public void unregisterControl(ReactCommandTarget control) {
 		_controls.remove(control.getID(), control);
@@ -210,8 +219,10 @@ public class SSEUpdateQueue {
 	 * Whether any control is registered with this queue.
 	 *
 	 * <p>
-	 * A queue without any controls did not render a page in this session - it was typically
-	 * created empty by an SSE reconnect after the session was replaced underneath an open page.
+	 * Rendering a page attaches its root control, which stays registered as long as the page is
+	 * displayed. A queue without any controls therefore did not render a page in this session - it
+	 * was typically created empty by an SSE reconnect after the session was replaced underneath an
+	 * open page.
 	 * Commands arriving for such a window target the control tree of a discarded session.
 	 * </p>
 	 */
@@ -222,25 +233,21 @@ public class SSEUpdateQueue {
 	/**
 	 * Looks up a previously registered control by its ID.
 	 *
+	 * <p>
+	 * Only {@link #registerControl(ReactCommandTarget) registered}, i.e. displayed, controls are
+	 * found. A request that was sent for a control before the client unmounted it may arrive after
+	 * the server has detached it; missing such a control is expected and therefore logged at debug
+	 * level only.
+	 * </p>
+	 *
 	 * @return The control, or {@code null} if not found.
 	 */
 	public ReactCommandTarget getControl(String controlId) {
 		ReactCommandTarget control = _controls.get(controlId);
 		if (control == null) {
-			int total = _controls.size();
-			int attached = 0;
-			for (ReactCommandTarget target : _controls.values()) {
-				if (target instanceof ReactControl rc && rc.isAttached()) {
-					attached++;
-				}
-			}
-			// Diagnostic for "controls don't react": the browser is targeting a control the
-			// window's queue does not (or no longer) holds. An empty queue (total == 0) means the
-			// window's control tree was never built here or was torn down; a non-empty queue means
-			// the client is referencing a stale/disposed control ID.
-			Logger.warn("Command target '" + controlId + "' NOT FOUND in window '" + _windowName
-				+ "' (queue@" + System.identityHashCode(this) + "): " + total + " controls registered, "
-				+ attached + " attached. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
+			Logger.debug("Control '" + controlId + "' is not displayed in window '" + _windowName
+				+ "' (queue@" + System.identityHashCode(this) + ", " + _controls.size()
+				+ " controls registered).", SSEUpdateQueue.class);
 		}
 		return control;
 	}
@@ -250,8 +257,7 @@ public class SSEUpdateQueue {
 	 *
 	 * <p>
 	 * Set when the window's page is rendered. This is the single root the headless interface projects
-	 * from, so that controls still registered (for command dispatch) but no longer reachable from the
-	 * displayed tree (orphaned navigation content) are excluded.
+	 * from, following the displayed tree in display order.
 	 * </p>
 	 *
 	 * @param rootControl
@@ -340,11 +346,15 @@ public class SSEUpdateQueue {
 	 * client has the current state of all controls, recovering any state that may have been lost
 	 * while the connection was down.
 	 * </p>
+	 *
+	 * <p>
+	 * Since a control is registered exactly while it is displayed, this sends the state of the
+	 * controls the window displays.
+	 * </p>
 	 */
 	private void sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
-			if (control instanceof ReactControl) {
-				ReactControl rc = (ReactControl) control;
+			if (control instanceof ReactControl rc) {
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
 					.setState(rc.stateAsJSON());
@@ -373,7 +383,29 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Enqueues an event and immediately flushes it to the connected SSE client.
+	 * The number of events waiting for a client: enqueued, but not yet written to a connection.
+	 *
+	 * <p>
+	 * An {@link #enqueue(SSEEvent) enqueued} event is removed only once it has been written, so
+	 * without a {@link #setConnection(AsyncContext) connection} this counts everything the queue has
+	 * been handed. That makes it the seam for observing what a control sends: a count that does not
+	 * move across an interaction is the proof that no event was produced.
+	 * </p>
+	 */
+	public int pendingEventCount() {
+		return _pendingEvents.size();
+	}
+
+	/**
+	 * Enqueues an event for delivery to the connected SSE client.
+	 *
+	 * <p>
+	 * Outside an interaction the event is flushed immediately: an SSE (re)connection, the model
+	 * events synthesized on the heartbeat and background activity deliver state that nothing is
+	 * about to revise. Within an open {@link DeliveryScope} the event only queues and this queue is
+	 * noted as touched, so that delivery is {@link #settle() settled} once the interaction has
+	 * completed.
+	 * </p>
 	 */
 	public void enqueue(SSEEvent event) {
 		if (_shutdown) {
@@ -382,7 +414,54 @@ public class SSEUpdateQueue {
 			return;
 		}
 		_pendingEvents.add(event);
+		DeliveryScope scope = DeliveryScope.current();
+		if (scope == null) {
+			flush();
+		} else {
+			scope.collect(this);
+		}
+	}
+
+	/**
+	 * Delivers what an interaction produced for this window, dropping the updates that address
+	 * controls the interaction stopped displaying.
+	 *
+	 * <p>
+	 * An interaction both updates controls and decides which of them stay displayed: a control is
+	 * patched by the listener chain of the channel a command wrote, while the container that
+	 * replaces it is notified later in the same chain. An update addressed to a control the client
+	 * is about to unmount would send the browser looking for data the server no longer serves, so it
+	 * is dropped here, where it is known which controls the interaction leaves displayed. Nothing is
+	 * lost: a control that becomes displayed again is serialized with its full state.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the events that address a control - a {@link StateEvent} or a {@link PatchEvent} - can be
+	 * dropped. Everything else is delivered as enqueued.
+	 * </p>
+	 *
+	 * @see DeliveryScope
+	 */
+	void settle() {
+		_pendingEvents.removeIf(this::addressesRetiredControl);
 		flush();
+	}
+
+	/**
+	 * Whether the given event addresses a control that this window no longer displays, i.e. one
+	 * that is not {@link #registerControl(ReactCommandTarget) registered}: a container detached or
+	 * disposed it.
+	 */
+	private boolean addressesRetiredControl(SSEEvent event) {
+		String controlId;
+		if (event instanceof StateEvent state) {
+			controlId = state.getControlId();
+		} else if (event instanceof PatchEvent patch) {
+			controlId = patch.getControlId();
+		} else {
+			return false;
+		}
+		return !_controls.containsKey(controlId);
 	}
 
 	/**

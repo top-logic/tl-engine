@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,8 +32,6 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.TooltipContent;
-import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -44,7 +43,9 @@ import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropPosition;
+import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.control.button.MessageButtons;
@@ -55,9 +56,11 @@ import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
@@ -79,6 +82,7 @@ import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -95,10 +99,12 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Rows are dragged and dropped through the seam of
- * {@link com.top_logic.layout.react.control.dnd}: {@link #setDragSource(String)} makes the rows
- * draggable under a type tag, {@link #setDropTarget(DropTarget)} accepts a drop of such objects and
- * applies it. A drag names client-side row keys only, and each control resolves the keys it owns, so
- * the two ends of a drag between two tables need know nothing of each other.
+ * {@link com.top_logic.layout.react.control.dnd}: {@link #setDragSource(String, Predicate)} makes
+ * the rows draggable under a type tag, {@link #setDropTarget(DropTarget)} accepts a drop of such
+ * objects and applies it. A drag names client-side row keys only, and each control resolves the keys
+ * it owns, so the two ends of a drag between two tables need know nothing of each other. While a drag
+ * hovers the table, the client probes each row and position it passes for the
+ * {@link DropTarget#check(DropEvent) verdict} of a drop there, and shows a refusal with its reason.
  * </p>
  *
  * <p>
@@ -118,7 +124,7 @@ import com.top_logic.util.Resources;
  * @param <R>
  *        The row business object type.
  */
-public class TableViewControl<R> extends ReactControl implements TooltipProvider, DragSourceControl {
+public class TableViewControl<R> extends ReactControl implements DragSourceControl {
 
 	/**
 	 * Notified when the set of selected row keys changes.
@@ -128,6 +134,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		/**
 		 * Called after the selection changed, with the current selected {@link Row#key()
 		 * keys}.
+		 *
+		 * <p>
+		 * A listener refuses the change by throwing a {@link ChannelVetoException} - the unsaved
+		 * changes of a form the selection would replace block it. The table then restores the
+		 * selection it displayed before the refused change, both in its own state and in the
+		 * {@link TableView}, and rethrows, so whoever resolves the unsaved changes retries the
+		 * whole selection change. A listener notified before the refusing one keeps what it was
+		 * told; the retry tells it the same value again.
+		 * </p>
 		 */
 		void selectionChanged(Set<Object> selectedKeys);
 	}
@@ -185,9 +200,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * Prefix of a row's {@link #ROW_ID id}, followed by the row's {@link #ROW_INDEX index}.
 	 *
 	 * <p>
-	 * This is the identity the client refers to a row by - in a tooltip request, and as the key of a
-	 * dragged or dropped-on row. It designates a row for as long as the client's row window is the
-	 * one the server sent, which is what a gesture on a displayed row rests on anyway.
+	 * This is the identity the client refers to a row by - the key of a dragged or dropped-on row.
+	 * It designates a row for as long as the client's row window is the one the server sent, which
+	 * is what a gesture on a displayed row rests on anyway.
 	 * </p>
 	 *
 	 * @see #rowIndex(String)
@@ -198,7 +213,25 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String ROW_SELECTED = "selected";
 
+	/**
+	 * Row entry telling whether the row may be dragged, present while the rows are
+	 * {@link #setDragSource(String, Predicate) draggable} at all.
+	 */
+	private static final String ROW_DRAGGABLE = "draggable";
+
 	private static final String ROW_CELLS = "cells";
+
+	/**
+	 * Per-row state key holding the tooltip of the row's cells, by column name.
+	 *
+	 * <p>
+	 * Holds an entry for the cells whose {@link CellContent#tooltip()} says something the cell does
+	 * not display; the client shows that text where the cell is. A row whose cells all display what
+	 * they have to say is sent without the key - the client then offers the cell's own text where it
+	 * does not fit.
+	 * </p>
+	 */
+	private static final String ROW_TOOLTIPS = "tooltips";
 
 	private static final String TREE_DEPTH = "treeDepth";
 
@@ -239,6 +272,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * every cell of that column, its heading included. Absent for a column declaring none.
 	 */
 	private static final String COLUMN_CSS_CLASS = "cssClass";
+
+	/**
+	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
+	 * which the client offers on the heading. Absent for a column whose label has none.
+	 */
+	private static final String COLUMN_TOOLTIP = "tooltip";
 
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
@@ -281,6 +320,26 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/** State key telling the client whether a single row is a drop target of its own. */
 	private static final String DROP_ON_ROWS = "dropOnRows";
+
+	/**
+	 * State key holding the verdicts answered to the {@link #CMD_DROP_PROBE probes} of the running
+	 * drag, by {@link DropProbeArguments#getProbe() probe identifier}.
+	 *
+	 * <p>
+	 * Each entry holds {@link #VERDICT_ACCEPTED} and, for a refusal, {@link #VERDICT_REASON}. The
+	 * verdicts of a drag accumulate, so a client receiving several answers at once misses none of
+	 * them; a probe of the next drag discards them.
+	 * </p>
+	 */
+	private static final String DROP_VERDICTS = "dropVerdicts";
+
+	/** Entry of a {@link #DROP_VERDICTS} verdict telling whether the drop is accepted. */
+	private static final String VERDICT_ACCEPTED = "accepted";
+
+	/**
+	 * Entry of a refusing {@link #DROP_VERDICTS} verdict holding the reason, in the user's language.
+	 */
+	private static final String VERDICT_REASON = "reason";
 
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
@@ -325,7 +384,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public static final String CMD_COLUMN_RESIZE = "columnResize";
 
-	private static final String CMD_COLUMN_REORDER = "columnReorder";
+	/**
+	 * The command the client sends to move a column to another position.
+	 *
+	 * @see ColumnReorderArguments
+	 */
+	public static final String CMD_COLUMN_REORDER = "columnReorder";
 
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";
@@ -353,6 +417,14 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_DROP_OBJECTS = "dropObjects";
 
+	/**
+	 * The command the client sends while a drag hovers the table, asking whether a drop right there
+	 * would be accepted; answered in {@link #DROP_VERDICTS}.
+	 *
+	 * @see DropProbeArguments
+	 */
+	private static final String CMD_DROP_PROBE = "dropProbe";
+
 	// Command argument names (shared with the typed SelectRowArguments so dispatch, recording and
 	// projection agree on the wire keys).
 	private static final String ARG_ROW_INDEX = SelectRowArguments.ROW_INDEX;
@@ -376,11 +448,6 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String DIR_PAGE_DOWN = "pageDown";
 
-	// Selection mode values.
-	private static final String MODE_MULTI = "multi";
-
-	private static final String MODE_SINGLE = "single";
-
 	// Sort direction/accumulation argument values.
 	private static final String SORT_ASC = "asc";
 
@@ -396,7 +463,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private int _viewportCount = 50;
 
-	private final String _selectionMode;
+	private final SelectionMode _selectionMode;
 
 	private final Set<Object> _selectedKeys = new LinkedHashSet<>();
 
@@ -407,11 +474,23 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
 
+	/**
+	 * The selected keys the {@link #addSelectionListener(SelectionListener) selection listeners}
+	 * have accepted, restored when one of them refuses a change.
+	 */
+	private Set<Object> _committedKeys = new LinkedHashSet<>();
+
+	/** The {@link #_cursorIndex} belonging to {@link #_committedKeys}. */
+	private int _committedCursor = -1;
+
+	/** The {@link #_selectionAnchor} belonging to {@link #_committedKeys}. */
+	private int _committedAnchor = -1;
+
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private ActivationHandler<R> _activationHandler;
 
-	/** Cell controls for currently buffered rows, keyed by row key then column name. */
-	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
+	/** What is rendered in the cells of the currently buffered rows, keyed by row key. */
+	private final Map<Object, RowCells> _cellCache = new LinkedHashMap<>();
 
 	/** View-supplied custom filter UIs, keyed by column name. */
 	private final Map<String, ColumnFilterUI> _filterUIs = new LinkedHashMap<>();
@@ -424,6 +503,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
 	private String _dragType;
+
+	/**
+	 * Which rows may be dragged while {@link #_dragType} is set, {@code null} when every data row may
+	 * be.
+	 */
+	private Predicate<? super R> _draggable;
+
+	/** The {@link DropProbeArguments#getDrag() drag} the {@link #_dropVerdicts} belong to. */
+	private String _probedDrag;
+
+	/** The verdicts answered to the probes of {@link #_probedDrag}, see {@link #DROP_VERDICTS}. */
+	private Map<String, Object> _dropVerdicts = new LinkedHashMap<>();
 
 	/** What dropped objects are done with, or {@code null} while the table accepts no drop. */
 	private DropTarget _dropTarget;
@@ -443,10 +534,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		super(context, null, "TLTableView");
 		_view = view;
 		_treeMode = treeMode;
-		_selectionMode = view.state().getSelection().mode() == SelectionMode.MULTI ? MODE_MULTI : MODE_SINGLE;
+		_selectionMode = view.state().getSelection().mode();
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
-		putState(SELECTION_MODE, _selectionMode);
+		putState(SELECTION_MODE, _selectionMode.getExternalName());
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
 		pushGrouping();
@@ -527,6 +618,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
+	 * Makes all data rows draggable, announcing them under the given type tag.
+	 *
+	 * @param dragType
+	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 *
+	 * @see #setDragSource(String, Predicate)
+	 */
+	public void setDragSource(String dragType) {
+		setDragSource(dragType, null);
+	}
+
+	/**
 	 * Makes the rows draggable, announcing them under the given type tag.
 	 *
 	 * <p>
@@ -535,18 +638,38 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * what it accepts the drop by.
 	 * </p>
 	 *
+	 * <p>
+	 * A row the given predicate refuses offers no drag, and a drag of a selection including such a
+	 * row is refused as a whole (see {@link DragSourceControl#isDraggable(Object)}). Group headers are
+	 * never draggable.
+	 * </p>
+	 *
 	 * @param dragType
 	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 * @param draggable
+	 *        Which row business objects may be dragged, {@code null} for all of them. Asked whenever
+	 *        rows are rendered; when its answer changes for other reasons, call
+	 *        {@link #refreshDragSource()}.
 	 */
-	public void setDragSource(String dragType) {
+	public void setDragSource(String dragType, Predicate<? super R> draggable) {
 		Object update = beginUpdate();
 		try {
 			_dragType = dragType;
+			_draggable = draggable;
 			putState(DRAG_ENABLED, Boolean.valueOf(dragType != null));
 			putState(DRAG_TYPE, dragType == null ? NOTHING : dragType);
+			updateViewport(_viewportStart, _viewportCount);
 		} finally {
 			commitUpdate(update);
 		}
+	}
+
+	/**
+	 * Asks the {@link #setDragSource(String, Predicate) draggable predicate} again for the rendered
+	 * rows, after its answer may have changed.
+	 */
+	public void refreshDragSource() {
+		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -557,9 +680,19 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 *        What dropped objects are done with, or {@code null} to accept no drop again.
 	 */
 	public void setDropTarget(DropTarget dropTarget) {
+		_dropTarget = dropTarget;
+		refreshDropTarget();
+	}
+
+	/**
+	 * Announces the {@link DropTarget#acceptedTypes() accepted type tags} and whether
+	 * {@link DropTarget#dropOnRows() rows are drop targets} to the client again, after the
+	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
+	 */
+	public void refreshDropTarget() {
+		DropTarget dropTarget = _dropTarget;
 		Object update = beginUpdate();
 		try {
-			_dropTarget = dropTarget;
 			putState(DROP_ACCEPTS,
 				dropTarget == null ? List.of() : List.copyOf(dropTarget.acceptedTypes()));
 			putState(DROP_ON_ROWS, Boolean.valueOf(dropTarget != null && dropTarget.dropOnRows()));
@@ -576,6 +709,25 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
+	 * Whether this table lets the user select one row at a time, or any number of them.
+	 *
+	 * <p>
+	 * The mode is what the {@link TableView#state() view state} was seeded with when this control
+	 * was created; it does not change over the life of the control.
+	 * </p>
+	 */
+	public SelectionMode getSelectionMode() {
+		return _selectionMode;
+	}
+
+	/**
+	 * Whether more than one row may be selected at a time.
+	 */
+	private boolean multiSelection() {
+		return _selectionMode == SelectionMode.MULTI;
+	}
+
+	/**
 	 * Drops the cached cell controls of the given rows and re-renders the current viewport, so
 	 * those rows' cells are rebuilt on the next write (e.g. after a row's editability changed).
 	 *
@@ -585,9 +737,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	public void invalidateRowCells(Collection<Object> rowKeys) {
 		boolean changed = false;
 		for (Object key : rowKeys) {
-			Map<String, ReactControl> cells = _cellCache.remove(key);
+			RowCells cells = _cellCache.remove(key);
 			if (cells != null) {
-				cells.values().forEach(ReactControl::cleanupTree);
+				cells.dispose();
 				changed = true;
 			}
 		}
@@ -598,28 +750,49 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/**
 	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
-	 * or clears the selection when {@code key} is {@code null} or matches no current row. Pushes the
-	 * change to the client, scrolls the row into view and notifies the
+	 * or clears the selection when {@code key} is {@code null} or names no row of the table's data.
+	 * Pushes the change to the client, scrolls the row into view and notifies the
 	 * {@link #addSelectionListener(SelectionListener) selection listeners}.
 	 *
 	 * @param key
 	 *        The row key to select, or {@code null} to clear.
+	 *
+	 * @see #selectRows(Collection)
 	 */
 	public void selectRow(Object key) {
+		selectRows(key == null ? Set.of() : Collections.singleton(key));
+	}
+
+	/**
+	 * Selects exactly the rows whose {@link Row#key() row key} is among the given ones (clearing any
+	 * other selection), leaving out the keys the table's data has no row for. Pushes the change to
+	 * the client, scrolls the first displayed selected row into view and notifies the
+	 * {@link #addSelectionListener(SelectionListener) selection listeners}.
+	 *
+	 * <p>
+	 * A row of the data that is not displayed - hidden by a filter, or inside a collapsed group or
+	 * tree node - is selected as well (see {@link TableView#containedKeys(Collection)}); it shows as
+	 * selected once it is displayed again. The keyboard cursor and the range anchor go to the first
+	 * displayed selected row, and to no row when none of the selected rows is displayed.
+	 * </p>
+	 *
+	 * <p>
+	 * A selection of more than one row is what {@link SelectionMode#MULTI} allows; in
+	 * {@link SelectionMode#SINGLE} the caller is responsible for passing at most one key.
+	 * </p>
+	 *
+	 * @param keys
+	 *        The row keys to select, empty to clear the selection.
+	 */
+	public void selectRows(Collection<?> keys) {
 		_selectedKeys.clear();
-		_cursorIndex = -1;
-		_selectionAnchor = -1;
-		if (key != null) {
-			List<Row<R>> rows = _view.rows(0, _view.rowCount());
-			for (int i = 0; i < rows.size(); i++) {
-				if (rows.get(i).key().equals(key)) {
-					_selectedKeys.add(rows.get(i).key());
-					_cursorIndex = i;
-					_selectionAnchor = i;
-					break;
-				}
-			}
+		if (!keys.isEmpty()) {
+			_selectedKeys.addAll(_view.containedKeys(keys));
 		}
+		// The first displayed selected row carries the cursor and is the range anchor, so a
+		// keyboard range extension continues from where the selection starts.
+		_cursorIndex = firstSelectedRowIndex();
+		_selectionAnchor = _cursorIndex;
 		pushSelection();
 		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
 		// selected programmatically after a create), centering it; keep the viewport otherwise.
@@ -636,6 +809,20 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void setFilterUI(String column, ColumnFilterUI ui) {
 		_filterUIs.put(column, ui);
+	}
+
+	/**
+	 * The table this control displays.
+	 *
+	 * <p>
+	 * What the table is - its columns, its rows, what it is filtered and sorted by - is the view's
+	 * business; this control renders it and turns the user's gestures into calls on it. A caller
+	 * reads the view to learn the displayed state and observes it to follow a change of that state,
+	 * but changes it through this control, so that what the client displays follows.
+	 * </p>
+	 */
+	public TableView<R> getView() {
+		return _view;
 	}
 
 	// -- State building --
@@ -674,6 +861,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
+			}
+			String tooltip = description(resources, column.label());
+			if (!StringServices.isEmpty(tooltip)) {
+				columnState.put(COLUMN_TOOLTIP, tooltip);
 			}
 			columns.add(columnState);
 		}
@@ -730,6 +921,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return key == null ? "" : resources.getString(key);
 	}
 
+	/**
+	 * The description belonging to the given label, {@code null} when the label has none.
+	 *
+	 * <p>
+	 * What a label says about itself over and above its own text, resolved from
+	 * {@link ResKey#tooltipOptional()} - the same description a form field offers on its label.
+	 * </p>
+	 */
+	private static String description(Resources resources, ResKey key) {
+		return key == null ? null : resources.getString(key.tooltipOptional());
+	}
+
 	private void updateViewport(int start, int count) {
 		int total = _view.rowCount();
 		int bufferedStart = Math.max(0, start - PREFETCH_ROWS);
@@ -744,9 +947,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		// Drop cell controls for rows that left the buffer.
 		for (Object cached : new ArrayList<>(_cellCache.keySet())) {
 			if (!bufferedKeys.contains(cached)) {
-				Map<String, ReactControl> cells = _cellCache.remove(cached);
+				RowCells cells = _cellCache.remove(cached);
 				if (cells != null) {
-					cells.values().forEach(ReactControl::cleanupTree);
+					cells.dispose();
 				}
 			}
 		}
@@ -754,12 +957,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		List<Map<String, Object>> rowStates = new ArrayList<>();
 		int index = bufferedStart;
 		for (Row<R> row : rows) {
-			Map<String, ReactControl> cells = _cellCache.computeIfAbsent(row.key(), key -> createCells(row));
+			RowCells cells = _cellCache.computeIfAbsent(row.key(), key -> createCells(row));
 
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
+			if (_dragType != null) {
+				rowState.put(ROW_DRAGGABLE, Boolean.valueOf(isDraggableRow(row)));
+			}
 			if (treeMode()) {
 				rowState.put(TREE_DEPTH, Integer.valueOf(row.depth()));
 				rowState.put(TREE_EXPANDABLE, Boolean.valueOf(row.expandable()));
@@ -770,7 +976,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			if (row.kind() == RowKind.GROUP_HEADER) {
 				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			}
-			rowState.put(ROW_CELLS, cells);
+			rowState.put(ROW_CELLS, cells.controls());
+			if (!cells.tooltips().isEmpty()) {
+				rowState.put(ROW_TOOLTIPS, cells.tooltips());
+			}
 			rowStates.add(rowState);
 			index++;
 		}
@@ -857,14 +1066,43 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return "";
 	}
 
-	private Map<String, ReactControl> createCells(Row<R> row) {
-		Map<String, ReactControl> cells = new LinkedHashMap<>();
+	private RowCells createCells(Row<R> row) {
+		Map<String, ReactControl> controls = new LinkedHashMap<>();
+		Map<String, String> tooltips = new LinkedHashMap<>();
 		for (ColumnView column : _view.columns()) {
-			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), _view.cell(row, column.name()));
-			registerChildControl(cell);
-			cells.put(column.name(), cell);
+			CellContent content = _view.cell(row, column.name());
+			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
+			controls.put(column.name(), cell);
+			String tooltip = content.tooltip();
+			if (!StringServices.isEmpty(tooltip)) {
+				tooltips.put(column.name(), tooltip);
+			}
 		}
-		return cells;
+		return new RowCells(controls, tooltips);
+	}
+
+	/**
+	 * What is rendered in the cells of one row: the cell controls and, for the cells that say more
+	 * than they display, their tooltips.
+	 *
+	 * <p>
+	 * Both are built from the same {@link CellContent}, so the row is rendered once however often
+	 * its state is pushed.
+	 * </p>
+	 *
+	 * @param controls
+	 *        The cell control of each column, by column name.
+	 * @param tooltips
+	 *        The {@link CellContent#tooltip() tooltip} of a cell that has one, by column name;
+	 *        empty when no cell of the row has one.
+	 */
+	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips) {
+
+		/** Disposes the cell controls. */
+		void dispose() {
+			controls().values().forEach(ReactControl::cleanupTree);
+		}
+
 	}
 
 	/**
@@ -874,8 +1112,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	@Override
 	protected void cleanupChildren() {
 		super.cleanupChildren();
-		for (Map<String, ReactControl> cells : _cellCache.values()) {
-			cells.values().forEach(ReactControl::cleanupTree);
+		for (RowCells cells : _cellCache.values()) {
+			cells.dispose();
 		}
 		_cellCache.clear();
 	}
@@ -888,8 +1126,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * <p>
 	 * The dialog is composed entirely from standard React controls: the column's
 	 * {@link FilterEditor} fields are laid out by {@link ReactFormBuilder} (labels + chrome),
-	 * wrapped in a {@link ReactWindowControl} with reset / cancel / apply
-	 * {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
+	 * inset by a {@link ReactInsetControl} and wrapped in a {@link ReactWindowControl} with reset /
+	 * cancel / apply {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
 	 * per field is chosen from the field model itself ({@link #fieldControl}).
 	 * </p>
 	 */
@@ -940,7 +1178,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
-		window.setChild(body);
+		// The window body is flush; the filter form keeps the page inset from its border.
+		window.setChild(new ReactInsetControl(context, body));
 		// Apply is the dialog's default action: primary-styled and Enter-bound, matching the legacy
 		// filter popup (Enter applies from anywhere in the form).
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
@@ -1064,20 +1303,19 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/**
 	 * Rebuilds the row count and viewport after the backing data changed externally (e.g. an
-	 * object was created or deleted and the row source was refreshed). Stale selected keys that no
-	 * longer match a row are dropped.
+	 * object was created or deleted and the row source was refreshed).
+	 *
+	 * <p>
+	 * A selected key whose object is gone from the data is dropped from the selection. A selected
+	 * row the table merely does not display - hidden by a filter, or inside a collapsed group or
+	 * tree node - is still part of the data and stays selected (see
+	 * {@link TableView#containedKeys(Collection)}).
+	 * </p>
 	 */
 	public void refreshData() {
-		_selectedKeys.retainAll(currentRowKeys());
+		_selectedKeys.retainAll(_view.containedKeys(_selectedKeys));
+		commitSelection();
 		rebuildAfterRowChange();
-	}
-
-	private Set<Object> currentRowKeys() {
-		Set<Object> keys = new LinkedHashSet<>();
-		for (Row<R> row : _view.rows(0, _view.rowCount())) {
-			keys.add(row.key());
-		}
-		return keys;
 	}
 
 	private void rebuildAfterRowChange() {
@@ -1086,8 +1324,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	private void clearCells() {
-		for (Map<String, ReactControl> cells : _cellCache.values()) {
-			cells.values().forEach(ReactControl::cleanupTree);
+		for (RowCells cells : _cellCache.values()) {
+			cells.dispose();
 		}
 		_cellCache.clear();
 	}
@@ -1172,36 +1410,37 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/**
 	 * Re-derives the cursor and the range anchor from the selected rows after the rows were
-	 * rearranged, and gives up the selection of a row that is no longer among them.
+	 * rearranged.
 	 *
 	 * <p>
-	 * A value the table can still display stays selected - it is the selection whoever wrote it
-	 * made, and a rearrangement is no reason to drop it. To be called after a rearrangement that
-	 * leaves every row displayed (a change of the grouping), where a key that is not among the rows
-	 * is one the table cannot display any more.
+	 * A rearrangement (a change of the grouping) does not change the data, so the selection itself
+	 * stays as it is - also a selected row that is not displayed, because a filter hides it or its
+	 * group is collapsed. The cursor goes to the first displayed selected row, and to no row when
+	 * none of the selected rows is displayed.
 	 * </p>
 	 */
 	private void relocateSelection() {
+		_cursorIndex = firstSelectedRowIndex();
+		_selectionAnchor = _cursorIndex;
+		commitSelection();
+	}
+
+	/**
+	 * The index of the first displayed row that is selected, {@code -1} when none of the selected
+	 * rows is displayed.
+	 */
+	private int firstSelectedRowIndex() {
 		if (_selectedKeys.isEmpty()) {
-			_cursorIndex = -1;
-			_selectionAnchor = -1;
-			return;
+			return -1;
 		}
-		Set<Object> displayed = new LinkedHashSet<>();
-		int cursor = -1;
 		List<Row<R>> rows = _view.rows(0, _view.rowCount());
 		for (int n = 0; n < rows.size(); n++) {
 			Row<R> row = rows.get(n);
 			if (row.kind() == RowKind.DATA && _selectedKeys.contains(row.key())) {
-				displayed.add(row.key());
-				if (cursor < 0) {
-					cursor = n;
-				}
+				return n;
 			}
 		}
-		_selectedKeys.retainAll(displayed);
-		_cursorIndex = cursor;
-		_selectionAnchor = cursor;
+		return -1;
 	}
 
 	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */
@@ -1242,13 +1481,14 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			// A group header stands for no object: the gesture that would select it collapses or
 			// expands the group instead, and the selection stays what it was.
 			_cursorIndex = rowIndex;
+			commitSelection();
 			toggleExpansion(clicked);
 			return;
 		}
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;
 
-		if (MODE_MULTI.equals(_selectionMode)) {
+		if (multiSelection()) {
 			if (shiftKey && _selectionAnchor >= 0) {
 				int from = Math.min(_selectionAnchor, rowIndex);
 				int to = Math.max(_selectionAnchor, rowIndex);
@@ -1343,6 +1583,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		if (row.kind() != RowKind.DATA) {
 			// A group header has nothing to open: activating it collapses or expands the group.
 			_cursorIndex = rowIndex;
+			commitSelection();
 			toggleExpansion(row);
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -1512,9 +1753,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		_cursorIndex = target;
 		Object key = keyAt(target);
 
-		if (MODE_MULTI.equals(_selectionMode) && move) {
+		if (multiSelection() && move) {
 			// Ctrl: move the focus cursor only; leave the selection untouched.
-		} else if (MODE_MULTI.equals(_selectionMode) && extend) {
+		} else if (multiSelection() && extend) {
 			if (_selectionAnchor < 0) {
 				_selectionAnchor = from < 0 ? target : from;
 			}
@@ -1600,28 +1841,73 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * filters} the bar offers.
 	 *
 	 * <p>
-	 * The named filter replaces the whole filter, so what the bar displays as active is what the
-	 * table is filtered by - a column the filter does not mention ends up unfiltered.
+	 * The named filter replaces the whole filter, the search term included, so what the bar displays
+	 * as active is what the table is filtered by - a column the filter does not mention ends up
+	 * unfiltered, and a filter that names no term of its own leaves the table searching for nothing.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_APPLY_NAMED_FILTER)
 	void handleApplyNamedFilter(ApplyNamedFilterArguments args) {
-		_view.applyNamedFilter(args.getId());
+		applyNamedFilter(args.getId());
+	}
+
+	/**
+	 * Filters the table by the criteria of one of the {@link TableView#namedFilters() named filters}
+	 * it offers, and re-renders it.
+	 *
+	 * <p>
+	 * The named filter replaces the whole filter, so what the bar displays as active is what the
+	 * table is filtered by - a column the filter does not mention ends up unfiltered.
+	 * </p>
+	 *
+	 * <p>
+	 * No filter carries the given identifier - it is empty, or it names one this table does not (or
+	 * no longer) offer - leaves the table {@link #clearFilter() unfiltered}: a name nothing carries
+	 * selects nothing, and the table shows every row instead of keeping criteria that belong to no
+	 * name.
+	 * </p>
+	 *
+	 * @param id
+	 *        The {@link NamedFilter#id() identifier} of the filter to apply, {@code null} to
+	 *        unfilter the table.
+	 */
+	public void applyNamedFilter(String id) {
+		if (id == null || id.isEmpty() || namedFilter(id) == null) {
+			clearFilter();
+			return;
+		}
+		_view.applyNamedFilter(id);
 		rebuildAfterRowChange();
 	}
 
 	/**
-	 * Unfilters the table: clears every column filter and the search term.
-	 *
-	 * <p>
-	 * This is what clicking the active chip in the filter bar does. While a chip is active, the
-	 * table's criteria are exactly that chip's own, so clearing them all clears exactly what the
-	 * chip applied - the chip acts as a toggle, and a second click leaves the table showing every
-	 * row again.
-	 * </p>
+	 * The offered {@link NamedFilter} carrying the given {@link NamedFilter#id() identifier},
+	 * {@code null} when none does.
 	 */
+	private NamedFilter namedFilter(String id) {
+		for (NamedFilter filter : _view.namedFilters()) {
+			if (id.equals(filter.id())) {
+				return filter;
+			}
+		}
+		return null;
+	}
+
 	@ReactCommandHandler(CMD_CLEAR_FILTER)
 	void handleClearFilter() {
+		clearFilter();
+	}
+
+	/**
+	 * Unfilters the table - clears every column filter and the search term - and re-renders it.
+	 *
+	 * <p>
+	 * This is what clicking the active chip in the filter bar does: the chip acts as a toggle, and a
+	 * second click leaves the table showing every row again. It withdraws the criteria of the chip
+	 * together with a text searched for on top of them, which is what the user sees the chip select.
+	 * </p>
+	 */
+	public void clearFilter() {
 		for (String column : new ArrayList<>(_view.state().getFilters().keySet())) {
 			_view.filter(column, null);
 		}
@@ -1629,18 +1915,31 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		rebuildAfterRowChange();
 	}
 
+	@ReactCommandHandler(CMD_SEARCH)
+	void handleSearch(SearchArguments args) {
+		search(args.getTerm());
+	}
+
 	/**
-	 * Searches the table's displayed columns for a text, or clears the search when the term is
-	 * empty.
+	 * Searches the table's displayed columns for a text - or clears the search when the term is
+	 * empty - and re-renders it.
 	 *
 	 * <p>
 	 * The bar searches for a plain {@link TextFilterState#contains(String) case-insensitive
 	 * substring}; the matching flags of a column's own text filter stay that column's business.
 	 * </p>
+	 *
+	 * <p>
+	 * The search narrows the rows within whatever the table is filtered by, and leaves that
+	 * filtering alone: a {@link NamedFilter} the table matches goes on being the
+	 * {@link TableView#activeNamedFilter() active} one while the text is searched for, so the bar
+	 * keeps its chip marked and the table shows the rows of that filter holding the text.
+	 * </p>
+	 *
+	 * @param term
+	 *        The text to search for, {@code null} or empty to search for nothing.
 	 */
-	@ReactCommandHandler(CMD_SEARCH)
-	void handleSearch(SearchArguments args) {
-		String term = args.getTerm();
+	public void search(String term) {
 		_view.search(term == null || term.isEmpty() ? null : TextFilterState.contains(term));
 		rebuildAfterRowChange();
 	}
@@ -1687,6 +1986,17 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public boolean isDraggable(Object object) {
+		return _dragType != null && (_draggable == null || _draggable.test((R) object));
+	}
+
+	/** Whether the given row offers a drag, see {@link #setDragSource(String, Predicate)}. */
+	private boolean isDraggableRow(Row<R> row) {
+		return row.kind() == RowKind.DATA && row.data() != null && isDraggable(row.data());
+	}
+
+	@Override
 	public List<?> dragObjects(List<String> keys) {
 		if (keys == null) {
 			return List.of();
@@ -1717,26 +2027,95 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 *
 	 * <p>
 	 * The arguments name client-side identities only, so both ends of the gesture are resolved by the
-	 * control that owns them: the dragged objects by the {@link DragSourceControl} the
-	 * {@link DropArguments#getSource() source id} designates, the target by this table. A drop of a
-	 * type the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
-	 * no drag source, or naming a row this table no longer displays is refused - the client-side
-	 * acceptance check that precedes it narrows the gesture for the user, it does not decide it.
+	 * control that owns them (see {@link #resolveDrop(DropArguments)}). A drop the resolution or the
+	 * {@link DropTarget#check(DropEvent) drop target's check} refuses is answered with a warning
+	 * naming the reason and not applied - the client-side acceptance check that precedes it narrows
+	 * the gesture for the user, it does not decide it.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
 	HandlerResult handleDrop(DropArguments args) {
+		ResolvedDrop resolved = resolveDrop(args);
+		if (resolved.refusal() != null) {
+			return dropRefused(resolved.refusal());
+		}
+		return applyDrop(resolved.event());
+	}
+
+	/**
+	 * Answers whether a drop right where a drag hovers would be accepted, without applying it.
+	 *
+	 * <p>
+	 * The drop is resolved exactly like {@link #handleDrop(DropArguments) a drop} and then put to the
+	 * {@link DropTarget#check(DropEvent) drop target's check}. The verdict is added to
+	 * {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe() probe's identifier},
+	 * refusal reasons resolved to the user's language. The probe is technical: it is neither
+	 * recorded nor offered as an action, and it never fails, since a refusal is its answer.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_DROP_PROBE, technical = true)
+	void handleDropProbe(DropProbeArguments args) {
+		ResolvedDrop resolved = resolveDrop(args);
+		ResKey refusal = resolved.refusal();
+		if (refusal == null) {
+			refusal = _dropTarget.check(resolved.event()).reason();
+		}
+
+		String drag = args.getDrag();
+		if (!drag.equals(_probedDrag)) {
+			_probedDrag = drag;
+			_dropVerdicts = new LinkedHashMap<>();
+		}
+		Map<String, Object> verdict = new LinkedHashMap<>();
+		verdict.put(VERDICT_ACCEPTED, Boolean.valueOf(refusal == null));
+		if (refusal != null) {
+			verdict.put(VERDICT_REASON, Resources.getInstance().getString(refusal));
+		}
+		_dropVerdicts.put(args.getProbe(), verdict);
+		putState(DROP_VERDICTS, new LinkedHashMap<>(_dropVerdicts));
+	}
+
+	/**
+	 * A drop resolved from its client-side identities: either the {@link DropEvent} to announce, or
+	 * the reason it cannot be made.
+	 *
+	 * @param event
+	 *        The drop to announce, {@code null} if it is refused.
+	 * @param refusal
+	 *        Why the drop cannot be made, {@code null} if it can.
+	 */
+	private record ResolvedDrop(DropEvent event, ResKey refusal) {
+
+		static ResolvedDrop refused(ResKey reason) {
+			return new ResolvedDrop(null, reason);
+		}
+
+	}
+
+	/**
+	 * Resolves the client-side identities a drop names.
+	 *
+	 * <p>
+	 * The dragged objects are resolved by the {@link DragSourceControl} the
+	 * {@link DropArguments#getSource() source id} designates, the target by this table. A drop of a
+	 * type the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
+	 * no drag source, including an object the source does not let be
+	 * {@link DragSourceControl#isDraggable(Object) dragged}, or naming a row this table no longer
+	 * displays is refused.
+	 * </p>
+	 */
+	private ResolvedDrop resolveDrop(DropArguments args) {
 		DropTarget dropTarget = _dropTarget;
 		if (dropTarget == null) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ReactCommandTarget registered = registeredControl(args.getSource());
 		if (!(registered instanceof DragSourceControl source) || !(registered instanceof ReactControl sourceControl)) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		String dragType = source.dragType();
 		if (dragType == null || !dropTarget.acceptedTypes().contains(dragType)) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 
 		Row<R> targetRow = null;
@@ -1744,25 +2123,55 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		if (dropTarget.dropOnRows()) {
 			position = DropPosition.fromWire(args.getPosition());
 			if (position == null) {
-				return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+				return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 			}
 			String targetKey = args.getTargetKey();
 			if (targetKey != null && !targetKey.isEmpty()) {
 				targetRow = rowById(targetKey);
 				if (targetRow == null) {
-					return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
+					return ResolvedDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
 				}
 			}
 		}
 
 		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
 		if (objects.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(args.getKeys()));
+			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(args.getKeys()));
+		}
+		for (Object object : objects) {
+			if (!source.isDraggable(object)) {
+				return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_DRAGGABLE);
+			}
 		}
 
-		dropTarget.onDrop(
-			new DropEvent(sourceControl, objects, targetRow == null ? null : targetRow.data(), position));
+		return new ResolvedDrop(
+			new DropEvent(sourceControl, objects, targetRow == null ? null : targetRow.data(), position), null);
+	}
+
+	/**
+	 * Applies the given drop through the {@link #setDropTarget(DropTarget) drop target}, unless its
+	 * {@link DropTarget#check(DropEvent) check} refuses it.
+	 */
+	private HandlerResult applyDrop(DropEvent event) {
+		DropVerdict verdict = _dropTarget.check(event);
+		if (!verdict.isAccepted()) {
+			return dropRefused(verdict.reason());
+		}
+		_dropTarget.onDrop(event);
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The answer to a drop that is refused for the given reason.
+	 *
+	 * <p>
+	 * A refused drop is no malfunction but a refusal like that of a command its executability rule
+	 * forbids: the result is the {@link HandlerResult#notExecutable(ExecutableState) warning} of
+	 * such a command, naming the reason.
+	 * </p>
+	 */
+	private static HandlerResult dropRefused(ResKey reason) {
+		return HandlerResult.notExecutable(ExecutableState.createDisabledState(reason));
 	}
 
 	/**
@@ -1777,11 +2186,11 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
 		DropTarget dropTarget = _dropTarget;
 		if (dropTarget == null) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		DropPosition position = DropPosition.fromWire(args.getPosition());
 		if (position == null) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = newActionContext();
 
@@ -1809,14 +2218,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			}
 		}
 		// Drift contract: a recorded identity that no longer designates a present object is an
-		// explicit failure (replay reports success:false), never a partially applied drop.
+		// explicit failure (replay reports success:false), never a partially applied drop. Unlike a
+		// refusal, a drift means the replayed script no longer matches the application, hence an
+		// error rather than a warning.
 		if (!unresolved.isEmpty() || objects.isEmpty()) {
 			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}
 
-		dropTarget.onDrop(new DropEvent(null, objects, target,
+		return applyDrop(new DropEvent(null, objects, target,
 			dropTarget.dropOnRows() ? position : DropPosition.NONE));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -1961,34 +2371,53 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		updateViewport(Math.max(0, start), _viewportCount);
 	}
 
-	@Override
-	public TooltipContent getTooltipContent(String key) {
-		if (key == null) {
-			return null;
+	/**
+	 * Publishes the current selection to the {@link TableView} and the
+	 * {@link #addSelectionListener(SelectionListener) selection listeners}, as one change the
+	 * listeners can refuse.
+	 *
+	 * <p>
+	 * A {@link ChannelVetoException} from a listener restores the selection state of the last
+	 * accepted change - the keys, the cursor, the range anchor and the {@link TableView}'s
+	 * selection - and is rethrown, so the table holds what it displays until the refused change is
+	 * retried.
+	 * </p>
+	 */
+	private void pushSelection() {
+		selectInView(_selectedKeys);
+		try {
+			for (SelectionListener listener : _selectionListeners) {
+				listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
+			}
+		} catch (ChannelVetoException ex) {
+			_selectedKeys.clear();
+			_selectedKeys.addAll(_committedKeys);
+			_cursorIndex = _committedCursor;
+			_selectionAnchor = _committedAnchor;
+			selectInView(_selectedKeys);
+			throw ex;
 		}
-		int separator = key.indexOf('|');
-		if (separator < 0) {
-			return null;
-		}
-		Row<R> row = rowById(key.substring(0, separator));
-		if (row == null) {
-			return null;
-		}
-		CellContent content = _view.cell(row, key.substring(separator + 1));
-		if (content instanceof CellContent.Labeled labeled
-				&& labeled.tooltip() != null && !labeled.tooltip().isEmpty()) {
-			return new TooltipContent(labeled.tooltip(), null);
-		}
-		return null;
+		commitSelection();
 	}
 
-	private void pushSelection() {
-		_view.select(new Selection(
-			MODE_MULTI.equals(_selectionMode) ? SelectionMode.MULTI : SelectionMode.SINGLE,
-			new LinkedHashSet<>(_selectedKeys)));
-		for (SelectionListener listener : _selectionListeners) {
-			listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
-		}
+	/** Writes the given keys as the {@link TableView}'s selection. */
+	private void selectInView(Set<Object> keys) {
+		_view.select(new Selection(_selectionMode, new LinkedHashSet<>(keys)));
+	}
+
+	/**
+	 * Makes the current selection state the one a refused change is restored to.
+	 *
+	 * <p>
+	 * Called when the selection listeners have accepted a change, and wherever the table changes
+	 * what it displays without asking them: it drops a key it has no row for any more, or it moves
+	 * the cursor onto a group header. What the table gave up must not come back through a restore.
+	 * </p>
+	 */
+	private void commitSelection() {
+		_committedKeys = new LinkedHashSet<>(_selectedKeys);
+		_committedCursor = _cursorIndex;
+		_committedAnchor = _selectionAnchor;
 	}
 
 }

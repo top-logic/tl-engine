@@ -178,6 +178,7 @@ public class FieldElement implements UIElement {
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();
+		chrome.setCssClass(_config.getCssClass());
 
 		return chrome;
 	}

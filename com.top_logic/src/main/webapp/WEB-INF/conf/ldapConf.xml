@@ -2,25 +2,25 @@
 
 <root>
     <alias>
-        <entry name="%LDAP_URL%" value="ldap://ldap.your.domain:389"/>
-        <entry name="%LDAP_PRINCIPAL%" value="you@your.domain"/>
-        <entry name="%LDAP_CREDENTIAL%" value="your-password"/>
+        <entry name="%LDAP_URL%" value="${env:ldap_url:ldap://ldap.your.domain:389}"/>
+        <entry name="%LDAP_PRINCIPAL%" value="${env:ldap_principal:you@your.domain}"/>
+        <entry name="%LDAP_CREDENTIAL%" value="${env:ldap_credential:your-password}"/>
         
-        <entry name="%LDAP_BASE_DN%" value="DC=YourDC"/>
-        <entry name="%LDAP_FILTER%" value="(objectClass=Person)" comment="Filter is applied to group members. When no group given, this query alone is used to determine user entries"/>
+        <entry name="%LDAP_BASE_DN%" value="${env:ldap_base_dn:DC=YourDC}"/>
+        <entry name="%LDAP_FILTER%" value="${env:ldap_filter:(objectClass=Person)}" comment="Filter is applied to group members. When no group given, this query alone is used to determine user entries"/>
         
-        <entry name="%LDAP_GROUP_1%" value="CN=YourCN,DC=YourDC"/>
-        <entry name="%LDAP_GROUP_2%" value=""/>
-        <entry name="%LDAP_GROUP_3%" value=""/>
+        <entry name="%LDAP_GROUP_1%" value="${env:ldap_group_1:CN=YourCN,DC=YourDC}"/>
+        <entry name="%LDAP_GROUP_2%" value="${env:ldap_group_2:}"/>
+        <entry name="%LDAP_GROUP_3%" value="${env:ldap_group_3:}"/>
 
-        <entry name="%LDAP_ALLOW_PWD_CHANGE%" value="false"/>
-        <entry name="%LDAP_NESTED_GROUPS%" value="false"/>
+        <entry name="%LDAP_ALLOW_PWD_CHANGE%" value="${env:ldap_allow_pwd_change:false}"/>
+        <entry name="%LDAP_NESTED_GROUPS%" value="${env:ldap_nested_groups:false}"/>
 
-        <entry name="%LDAP_MAPPING_ALL%" value="/WEB-INF/database/ldap/all-mapping.properties"/>
-        <entry name="%LDAP_MAPPING_PERSON%" value="/WEB-INF/database/ldap/person-mapping.properties"/>
-        <entry name="%LDAP_MAPPING_GROUP%" value="/WEB-INF/database/ldap/group-mapping.properties"/>
+        <entry name="%LDAP_MAPPING_ALL%" value="${env:ldap_mapping_all:/WEB-INF/database/ldap/all-mapping.properties}"/>
+        <entry name="%LDAP_MAPPING_PERSON%" value="${env:ldap_mapping_person:/WEB-INF/database/ldap/person-mapping.properties}"/>
+        <entry name="%LDAP_MAPPING_GROUP%" value="${env:ldap_mapping_group:/WEB-INF/database/ldap/group-mapping.properties}"/>
 
-        <entry name="%LDAP_MFA_REQUIREMENT%" value="optional"/>
+        <entry name="%LDAP_MFA_REQUIREMENT%" value="${env:ldap_mfa_requirement:optional}"/>
 	</alias>
 	
     <properties>

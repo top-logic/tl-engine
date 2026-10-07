@@ -110,6 +110,8 @@ public class TLScriptEditorElement implements UIElement {
 
 	private final List<String> _contextVariables;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link TLScriptEditorElement} from configuration.
 	 */
@@ -119,6 +121,7 @@ public class TLScriptEditorElement implements UIElement {
 		_valueChannelRef = config.getValueChannel();
 		_readOnly = config.getReadOnly();
 		_contextVariables = config.getContextVariables();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -141,6 +144,7 @@ public class TLScriptEditorElement implements UIElement {
 			control.addCleanupAction(() -> channel.removeListener(listener));
 		}
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 }

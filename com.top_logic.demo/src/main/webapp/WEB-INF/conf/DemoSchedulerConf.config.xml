@@ -21,6 +21,11 @@
 						/>
 					</schedules>
 				</task>
+				<task class="com.top_logic.knowledge.service.compact.CompactHistoryTask"
+					enabled="false"
+					name="CompactHistoryTask"
+					retention-period="10min"
+				/>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
 					blocked-by-default="true"
 					name="MonthlyScheduleTask"

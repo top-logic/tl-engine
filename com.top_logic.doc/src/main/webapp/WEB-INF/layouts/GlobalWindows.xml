@@ -27,7 +27,7 @@
 		>
 			<open-handler id="openScriptRecorder"
 				class="com.top_logic.layout.window.OpenWindowCommand"
-				executability="com.top_logic.layout.debug.ScriptingEnabledExecutability"
+				executability="com.top_logic.layout.debug.ScriptingEnabledExecutability, RootOnly"
 				image="theme:IMAGE_BUTTONS_SCRIPT_RECORDER22"
 				resourceKey="menu.Recorder"
 			/>

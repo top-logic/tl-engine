@@ -5,12 +5,15 @@
     <channel name="selectedNode" />
   </channels>
 
-  <tree selection="selectedNode">
+  <tree
+    selection="selectedNode"
+    selection-mode="multi"
+  >
     <inputs>
       <input channel="rootInput" />
     </inputs>
     <root>input -> $input</root>
     <children>input -> parent -> list($parent, "child1", "child2")</children>
-    <isLeaf>input -> node -> $node != $input</isLeaf>
+    <parents>input -> node -> if($node == $input, null, $input)</parents>
   </tree>
 </view>

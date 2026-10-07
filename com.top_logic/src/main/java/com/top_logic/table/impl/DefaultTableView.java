@@ -85,6 +85,17 @@ public class DefaultTableView<R> implements TableView<R> {
 	private final List<NamedFilter> _savedFilters = new ArrayList<>();
 
 	/**
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection,
+	 *      List, NamedFilterStore, String)
+	 */
+	private final String _initialFilter;
+
+	/**
+	 * The order last handed to the {@link RowSource}, see {@link #pushOrder()}.
+	 */
+	private SortSpec _pushedOrder = SortSpec.NONE;
+
+	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
 	 *
 	 * @param columns
@@ -148,6 +159,25 @@ public class DefaultTableView<R> implements TableView<R> {
 	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
 			ViewStateStore store, TableId id, Collection<String> hiddenByDefault,
 			List<NamedFilter> declaredFilters, NamedFilterStore filterStore) {
+		this(columns, source, state, store, id, hiddenByDefault, declaredFilters, filterStore, null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} that starts out filtered by one of its named filters.
+	 *
+	 * @param initialFilter
+	 *        The {@link NamedFilter#id() identifier} of the filter this table is filtered by until
+	 *        the user filters it themselves, or {@code null} to start unfiltered. It takes effect
+	 *        only as long as no personalization is stored for this table, so a user who chose
+	 *        other criteria - or cleared the filter - keeps their choice. An identifier no
+	 *        {@link #namedFilters() named filter} carries leaves the table unfiltered, which is
+	 *        what a declared filter withheld at runtime amounts to.
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection,
+	 *      List, NamedFilterStore)
+	 */
+	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
+			ViewStateStore store, TableId id, Collection<String> hiddenByDefault,
+			List<NamedFilter> declaredFilters, NamedFilterStore filterStore, String initialFilter) {
 		for (Column<R, ?> column : columns) {
 			_columns.put(column.name(), column);
 		}
@@ -159,20 +189,19 @@ public class DefaultTableView<R> implements TableView<R> {
 		_hiddenByDefault.retainAll(_columns.keySet());
 		_declaredFilters = List.copyOf(declaredFilters);
 		_filterStore = filterStore;
+		_initialFilter = initialFilter;
 		_source.addListener(_sourceListener);
-		if (_store != null && _id != null) {
-			restore();
-		}
-		pinColumns();
-		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
+		// The filters the user saved are offered before the state is restored, so that the initial
+		// filter can name one of them just as well as a declared one.
 		if (_filterStore != null && _id != null) {
 			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
+		restore();
+		pinColumns();
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		// Whatever the order and the grouping end up being - the initial default or the user's
 		// persisted choice - the row source has to be told about them.
-		if (!_state.getSort().isEmpty()) {
-			_source.withOrder(new SortSpec(_state.getSort()));
-		}
+		pushOrder();
 		if (!_state.getGrouping().columns().isEmpty()) {
 			_source.withGrouping(_state.getGrouping());
 		}
@@ -256,8 +285,24 @@ public class DefaultTableView<R> implements TableView<R> {
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
 			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault,
 			List<NamedFilter> declaredFilters, NamedFilterStore filterStore) {
+		return create(columns, source, store, id, defaultSort, hiddenByDefault, declaredFilters, filterStore, null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} that starts out filtered by one of its named filters,
+	 * whose initial state displays all columns but the ones hidden by default, in declaration
+	 * order, sorted by the given order.
+	 *
+	 * @see #create(List, RowSource, ViewStateStore, TableId, SortSpec, Collection, List,
+	 *      NamedFilterStore)
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection,
+	 *      List, NamedFilterStore, String)
+	 */
+	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
+			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault,
+			List<NamedFilter> declaredFilters, NamedFilterStore filterStore, String initialFilter) {
 		return new DefaultTableView<>(columns, source, initialState(columns, defaultSort, hiddenByDefault),
-			store, id, hiddenByDefault, declaredFilters, filterStore);
+			store, id, hiddenByDefault, declaredFilters, filterStore, initialFilter);
 	}
 
 	/**
@@ -431,6 +476,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public Set<Object> containedKeys(Collection<?> keys) {
+		return _source.containedKeys(keys);
+	}
+
+	@Override
 	public CellContent cell(Row<R> row, String column) {
 		Column<R, ?> definition = _columns.get(column);
 		if (definition == null) {
@@ -499,6 +549,69 @@ public class DefaultTableView<R> implements TableView<R> {
 		return _source.matchCounts(column);
 	}
 
+	/**
+	 * Hands the {@link #effectiveOrder() effective order} to the {@link RowSource}, unless it is
+	 * the order the source already has.
+	 */
+	private void pushOrder() {
+		SortSpec order = effectiveOrder();
+		if (order.equals(_pushedOrder)) {
+			return;
+		}
+		_pushedOrder = order;
+		_source.withOrder(order);
+	}
+
+	/**
+	 * The order the {@link RowSource} applies: the user's {@link TableViewState#getSort() sort},
+	 * extended by the direction of the group order in a grouped table.
+	 *
+	 * <p>
+	 * A grouped table shows the group values in the header rows in its first displayed column,
+	 * and usually hides the grouping column itself. Sorting that first column therefore orders
+	 * the groups in the same direction: when the grouping column is sortable and not sorted
+	 * itself, but the first displayed column is, the grouping column is put in front of the
+	 * user's sort with the direction of the first displayed column. This decides the direction of
+	 * the group order and leaves the order within a group as it is, since all members of a group
+	 * share the grouping value. The {@link TableViewState#getSort() sort of the state} stays the
+	 * user's sort.
+	 * </p>
+	 */
+	private SortSpec effectiveOrder() {
+		List<SortColumn> sort = _state.getSort();
+		List<String> grouping = _state.getGrouping().columns();
+		List<String> order = _state.getColumnOrder();
+		if (grouping.isEmpty() || order.isEmpty()) {
+			return new SortSpec(sort);
+		}
+		String groupColumn = grouping.get(0);
+		Column<R, ?> definition = _columns.get(groupColumn);
+		if (definition == null || definition.sort().isEmpty() || sortEntry(sort, groupColumn) != null) {
+			return new SortSpec(sort);
+		}
+		SortColumn firstColumnSort = sortEntry(sort, order.get(0));
+		if (firstColumnSort == null) {
+			return new SortSpec(sort);
+		}
+		List<SortColumn> result = new ArrayList<>(sort.size() + 1);
+		result.add(new SortColumn(groupColumn, firstColumnSort.ascending()));
+		result.addAll(sort);
+		return new SortSpec(result);
+	}
+
+	/**
+	 * The entry of the given sort for the given column, or {@code null} if the sort does not
+	 * order that column.
+	 */
+	private static SortColumn sortEntry(List<SortColumn> sort, String column) {
+		for (SortColumn sortColumn : sort) {
+			if (sortColumn.column().equals(column)) {
+				return sortColumn;
+			}
+		}
+		return null;
+	}
+
 	private boolean isFirstColumn(String column) {
 		List<String> order = _state.getColumnOrder();
 		return !order.isEmpty() && order.get(0).equals(column);
@@ -509,7 +622,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public void sort(SortSpec spec) {
 		_state.setSort(new ArrayList<>(spec.columns()));
-		_source.withOrder(spec);
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -524,6 +637,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		applyFilter();
 		persist();
 		fireColumnsChanged();
+		fireFilterChanged();
 	}
 
 	@Override
@@ -532,6 +646,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		applyFilter();
 		persist();
 		fireColumnsChanged();
+		fireFilterChanged();
 	}
 
 	/**
@@ -593,17 +708,41 @@ public class DefaultTableView<R> implements TableView<R> {
 			applyNamedFilter(activeId);
 		} else {
 			fireColumnsChanged();
+			// The criteria are unchanged, but the filters they are compared against are not, so
+			// the table may have fallen out of - or into - a named filter.
+			fireFilterChanged();
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Several of the offered filters can match at once, because a filter naming no search term of
+	 * its own matches whatever is searched for: the preset the user picked goes on matching while
+	 * they search within it, and a filter they saved during that search carries exactly those
+	 * columns plus that term. The one carrying the term is then returned - it describes what the
+	 * user is looking at completely, while the other describes only its columns. Among the filters
+	 * of one kind the offered order decides, so a declared filter still wins over a saved one with
+	 * the same criteria.
+	 * </p>
+	 */
 	@Override
 	public NamedFilter activeNamedFilter() {
+		NamedFilter searchAgnostic = null;
 		for (NamedFilter filter : namedFilters()) {
-			if (filter.matches(_state.getFilters(), _state.getSearch())) {
+			if (!filter.matches(_state.getFilters(), _state.getSearch())) {
+				continue;
+			}
+			if (filter.search() != null) {
+				// Its term is the one being searched for, so it names the search as well.
 				return filter;
 			}
+			if (searchAgnostic == null) {
+				searchAgnostic = filter;
+			}
 		}
-		return null;
+		return searchAgnostic;
 	}
 
 	@Override
@@ -612,6 +751,19 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (filter == null) {
 			return;
 		}
+		applyCriteria(filter);
+		persist();
+		fireColumnsChanged();
+		fireFilterChanged();
+	}
+
+	/**
+	 * Filters the table by exactly the criteria of the given {@link NamedFilter}, without
+	 * persisting the outcome or announcing it.
+	 *
+	 * @see #applyNamedFilter(String) The command doing both on top of this.
+	 */
+	private void applyCriteria(NamedFilter filter) {
 		Map<String, FilterState> filters = _state.getFilters();
 		filters.clear();
 		for (Map.Entry<String, FilterState> entry : filter.filters().entrySet()) {
@@ -624,8 +776,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		_state.setSearch(filter.search());
 		applyFilter();
-		persist();
-		fireColumnsChanged();
 	}
 
 	@Override
@@ -649,6 +799,8 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		_filterStore.save(_id, _savedFilters, filterCodec());
 		fireColumnsChanged();
+		// The criteria the table filters by now carry a name, so they are the active named filter.
+		fireFilterChanged();
 		return filter;
 	}
 
@@ -663,6 +815,9 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		_filterStore.save(_id, _savedFilters, filterCodec());
 		fireColumnsChanged();
+		// The deleted filter may have been the active one, whose criteria the table keeps under no
+		// name at all.
+		fireFilterChanged();
 	}
 
 	private NamedFilter namedFilter(String id) {
@@ -694,6 +849,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		_state.setGrouping(spec);
+		pushOrder();
 		_source.withGrouping(spec);
 		persist();
 		fireColumnsChanged();
@@ -710,6 +866,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// The columns pinned to the end trail the order, and a column moved to the very right lands
 		// in front of them.
 		order.add(Math.min(toIndex, unpinnedCount()), column);
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -745,6 +902,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// frozen prefix can never reach beyond the columns that are left.
 		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		searchScopeChanged();
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -823,6 +981,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			return;
 		}
 		searchScopeChanged();
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -902,10 +1061,20 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * Loads persisted personalization and merges it onto the current state: column order, widths
 	 * and sort are reconciled against the columns that actually exist (stale columns dropped, new
 	 * columns appended), and the persisted filters and search are applied to the row source.
+	 *
+	 * <p>
+	 * Without a personalization to merge - no store, or nothing stored for this table yet - the
+	 * configured defaults stay in effect, among them the
+	 * {@link #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection, List, NamedFilterStore, String)
+	 * initial named filter}, which is applied here. As soon as a personalization exists it wins,
+	 * exactly as it does over the default sort and the initial grouping: a user who filtered by
+	 * other criteria keeps them, and one who cleared the filter keeps the table unfiltered.
+	 * </p>
 	 */
 	private void restore() {
-		TableViewState persisted = _store.load(_id, filterCodec());
+		TableViewState persisted = _store == null || _id == null ? null : _store.load(_id, filterCodec());
 		if (persisted == null) {
+			applyInitialFilter();
 			return;
 		}
 
@@ -989,6 +1158,28 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	/**
+	 * Filters the table by its initial named filter, if it has one that is offered.
+	 *
+	 * <p>
+	 * The result is not persisted: until the user decides about the filtering themselves, this
+	 * table has no personalization, so the next visit starts from the initial filter again - and
+	 * follows it when its criteria have been redefined in the meantime.
+	 * </p>
+	 */
+	private void applyInitialFilter() {
+		if (_initialFilter == null) {
+			return;
+		}
+		NamedFilter filter = namedFilter(_initialFilter);
+		if (filter == null) {
+			// A filter can be withheld at runtime, e.g. when all its criteria evaluate empty. The
+			// table then displays everything instead of failing over a name nothing carries.
+			return;
+		}
+		applyCriteria(filter);
+	}
+
+	/**
 	 * Persists the current personalization, if a store is configured.
 	 */
 	private void persist() {
@@ -1046,6 +1237,12 @@ public class DefaultTableView<R> implements TableView<R> {
 	private void fireColumnsChanged() {
 		for (TableViewListener listener : List.copyOf(_listeners)) {
 			listener.columnsChanged();
+		}
+	}
+
+	private void fireFilterChanged() {
+		for (TableViewListener listener : List.copyOf(_listeners)) {
+			listener.filterChanged();
 		}
 	}
 

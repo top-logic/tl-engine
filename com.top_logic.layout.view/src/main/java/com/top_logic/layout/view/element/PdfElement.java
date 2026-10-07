@@ -62,12 +62,15 @@ public class PdfElement implements UIElement {
 
 	private final ChannelRef _inputRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link PdfElement} from configuration.
 	 */
 	@CalledByReflection
 	public PdfElement(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -81,6 +84,7 @@ public class PdfElement implements UIElement {
 			channel.addListener(listener);
 			control.addCleanupAction(() -> channel.removeListener(listener));
 		}
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

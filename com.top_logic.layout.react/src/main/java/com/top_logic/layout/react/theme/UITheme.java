@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -22,7 +23,19 @@ import com.top_logic.layout.basic.ThemeImage;
  *
  * <p>
  * The token map is fully resolved, i.e. the values inherited from the {@link Config#getExtends()
- * parent} theme are already merged with this theme's own overrides.
+ * parent} theme are already merged with this theme's own overrides. Beside the value, a token
+ * answers the {@link DesignTokenKind kind} of value it holds, so that a configuration naming a
+ * token of a certain kind can be checked against the tokens of that kind.
+ * </p>
+ *
+ * <p>
+ * A token is named by what it is for, not by what it looks like, and a stylesheet consumes it as
+ * {@code var(--name)} without a fallback. Rounding comes in two tiers, {@code corner-radius} for
+ * controls and {@code border-radius-02} for surfaces; elevation comes in three steps,
+ * {@code shadow-raised} for a surface lifted off the page, {@code shadow-menu} for a popup and
+ * {@code shadow-dialog} for a layer covering it, which dims the page with {@code overlay}. A theme
+ * that squares every corner off and drops every shadow therefore overrides the two radius tokens
+ * and the three shadow tokens and inherits the rest.
  * </p>
  */
 public final class UITheme {
@@ -46,6 +59,9 @@ public final class UITheme {
 
 		/** Configuration name for {@link #isSystemDefault()}. */
 		String SYSTEM_DEFAULT = "system-default";
+
+		/** Configuration name for {@link #isAbstract()}. */
+		String ABSTRACT = "abstract";
 
 		/**
 		 * Id of the parent theme whose tokens this theme inherits, or empty for a root theme.
@@ -93,6 +109,19 @@ public final class UITheme {
 		boolean isSystemDefault();
 
 		/**
+		 * Whether this theme only serves as the base of other themes, i.e. of the themes naming it
+		 * in {@link #getExtends()}.
+		 *
+		 * <p>
+		 * An abstract theme hands its tokens down to the themes extending it, but is never offered
+		 * to the user, never selected and never in effect. It can therefore neither be the default
+		 * theme nor answer the preference of the operating system ({@link #isSystemDefault()}).
+		 * </p>
+		 */
+		@Name(ABSTRACT)
+		boolean isAbstract();
+
+		/**
 		 * This theme's tokens, overriding the inherited ones, keyed by token name.
 		 */
 		@DefaultContainer
@@ -111,7 +140,11 @@ public final class UITheme {
 
 	private final boolean _systemDefault;
 
+	private final boolean _abstract;
+
 	private final Map<String, String> _tokens;
+
+	private final Map<String, DesignTokenKind> _tokenKinds;
 
 	/**
 	 * Creates a {@link UITheme}.
@@ -126,17 +159,24 @@ public final class UITheme {
 	 *        The resolved color scheme of the theme's appearance.
 	 * @param systemDefault
 	 *        Whether this theme answers the operating system's preference for its color scheme.
+	 * @param isAbstract
+	 *        Whether this theme only serves as the base of other themes.
 	 * @param tokens
 	 *        The fully resolved token values (name without {@code --} to CSS value).
+	 * @param tokenKinds
+	 *        The kind of value each token holds, keyed by the same token names. A token whose kind
+	 *        could not be resolved is missing here, while its value is present in {@code tokens}.
 	 */
 	public UITheme(String id, ResKey label, ThemeImage icon, ColorScheme colorScheme, boolean systemDefault,
-			Map<String, String> tokens) {
+			boolean isAbstract, Map<String, String> tokens, Map<String, DesignTokenKind> tokenKinds) {
 		_id = id;
 		_label = label;
 		_icon = icon;
 		_colorScheme = colorScheme;
 		_systemDefault = systemDefault;
+		_abstract = isAbstract;
 		_tokens = tokens;
+		_tokenKinds = tokenKinds;
 	}
 
 	/**
@@ -181,10 +221,33 @@ public final class UITheme {
 	}
 
 	/**
+	 * Whether this theme only serves as the base of other themes, and is never offered or
+	 * selected.
+	 *
+	 * @see Config#isAbstract()
+	 */
+	public boolean isAbstract() {
+		return _abstract;
+	}
+
+	/**
 	 * The fully resolved token values, keyed by token name (without {@code --}).
 	 */
 	public Map<String, String> getTokens() {
 		return _tokens;
+	}
+
+	/**
+	 * The kind of value each of the {@link #getTokens() tokens} holds, keyed by the same token
+	 * names.
+	 *
+	 * <p>
+	 * A token whose kind could not be resolved - one aliasing a token that is not defined - has a
+	 * value but no kind, so this map may hold fewer entries than {@link #getTokens()}.
+	 * </p>
+	 */
+	public Map<String, DesignTokenKind> getTokenKinds() {
+		return _tokenKinds;
 	}
 
 }

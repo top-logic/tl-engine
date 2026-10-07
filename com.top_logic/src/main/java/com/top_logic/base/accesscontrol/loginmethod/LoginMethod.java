@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.accesscontrol.loginmethod;
 
+import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 
@@ -58,5 +59,29 @@ public interface LoginMethod {
 	 * @return The URL to redirect the browser to.
 	 */
 	String getInitiationUrl(String returnToUrl);
+
+	/**
+	 * Builds the URL a browser is sent to so that the identity provider authenticates the user of
+	 * the running session afresh and returns to the application carrying the given token.
+	 *
+	 * <p>
+	 * Where a login method establishes a session, this is how it proves, later on, that the person
+	 * at the keyboard still is the account holder: the browser walks through the provider's
+	 * authentication once more and comes back to the application's authentication servlet, which
+	 * recognises the token and completes the identity verification the token stands for. The
+	 * request that returns stays in the same session - it confirms an identity, it does not
+	 * establish one.
+	 * </p>
+	 *
+	 * @param token
+	 *        The token of the awaited verification, to be carried back in the request parameter
+	 *        {@link ExternalAuthenticationServlet#VERIFICATION_PARAM}.
+	 * @return The URL to open, or <code>null</code> when this method cannot authenticate the user
+	 *         of an established session again. A login method that only knows how to start a fresh
+	 *         login answers <code>null</code>.
+	 */
+	default String getReauthenticationUrl(String token) {
+		return null;
+	}
 
 }

@@ -25,7 +25,7 @@ import com.top_logic.table.filter.TextFilterState;
  * <p>
  * Which named filter is {@link TableView#activeNamedFilter() active} is derived by comparing its
  * criteria with the table's live ones, see {@link #matches(Map, TextFilterState)}: there is no
- * flag to maintain, and editing any column filter or the search term ends the match by itself.
+ * flag to maintain, and editing a criterion the filter is made of ends the match by itself.
  * Criteria are therefore normalized: a column whose state is {@link FilterState#isEmpty() empty}
  * is no criterion, and an empty search term is no search.
  * </p>
@@ -41,7 +41,8 @@ import com.top_logic.table.filter.TextFilterState;
  * @param filters
  *        The criterion per column, keyed by {@link Column#name() column name}.
  * @param search
- *        The cross-column search term, or {@code null} for no search.
+ *        The cross-column search term this filter is made of, or {@code null} for a filter that
+ *        says nothing about the search - the usual case, see {@link #matches(Map, TextFilterState)}.
  */
 public record NamedFilter(String id, ResKey label, Origin origin, Map<String, FilterState> filters,
 		TextFilterState search) {
@@ -102,13 +103,25 @@ public record NamedFilter(String id, ResKey label, Origin origin, Map<String, Fi
 	 * unfiltered.
 	 * </p>
 	 *
+	 * <p>
+	 * The {@link #search() search term} takes part in the comparison only for a filter that defines
+	 * one. A filter without a search says nothing about the text the table is searched for, so a
+	 * search running on top of it narrows <em>within</em> the named selection instead of ending it:
+	 * the criteria the name stands for are untouched, and the table is still what the name says,
+	 * searched. A filter that does define a search - one the user saved while searching - keeps
+	 * comparing it, because the term is one of the things it was saved as.
+	 * </p>
+	 *
 	 * @param columnFilters
 	 *        The live criterion per column, see {@link TableViewState#getFilters()}.
 	 * @param searchTerm
 	 *        The live search term, see {@link TableViewState#getSearch()}.
 	 */
 	public boolean matches(Map<String, FilterState> columnFilters, TextFilterState searchTerm) {
-		return filters.equals(criteria(columnFilters)) && Objects.equals(search, term(searchTerm));
+		if (!filters.equals(criteria(columnFilters))) {
+			return false;
+		}
+		return search == null || Objects.equals(search, term(searchTerm));
 	}
 
 	/**

@@ -121,6 +121,7 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 		if (event.isShiftKey() || event.isCtrlKey()) {
 			// Ignore.
 		} else {
+			self().setIncrementalSelection(false);
 			for (SelectableBox selected : self().getSelection()) {
 				selected.setSelected(false);
 			}

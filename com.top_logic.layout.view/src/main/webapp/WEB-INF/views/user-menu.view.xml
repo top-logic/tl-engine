@@ -17,11 +17,24 @@
 	(WEB-INF/views/user-menu.view.xml of its own module); the ViewLoader merges all copies in
 	dependency order, so an entry is contributed without this module knowing the contributor. The
 	administration view is extended the same way - see admin/admin.view.xml.
+
+	The same overlay names the account differently by declaring a channel accountName of its own:
+	the overlay's expression replaces the one below, and the menu trigger shows what it computes.
 -->
 <view>
 	<channels>
 		<!-- Feeds the area; read-only, recomputed per session. -->
 		<derived-channel name="currentUser"
+			expr="currentUser()"
+		/>
+
+		<!--
+			What the menu trigger shows for the logged-in account, as avatar and as text: the account
+			itself, labelled as the application labels accounts. An application that names the
+			account differently - e.g. first name first - redefines this channel in a same-path
+			overlay.
+		-->
+		<derived-channel name="accountName"
 			expr="currentUser()"
 		/>
 	</channels>
@@ -58,9 +71,9 @@
 				logged in follows after a separator.
 			-->
 			<menu>
-				<avatar input="currentUser"/>
-				<text css-class="tlUserMenu__name"
-					input="currentUser"
+				<avatar input="accountName"/>
+				<text css-class="tl-button__label"
+					input="accountName"
 					overflow="ellipsis"
 				/>
 
@@ -79,7 +92,7 @@
 				</commands>
 
 				<groups>
-					<group>
+					<group id="account">
 						<!-- What describes the account, and what secures it. -->
 						<generic-command image="css:bi bi-sliders">
 							<label>

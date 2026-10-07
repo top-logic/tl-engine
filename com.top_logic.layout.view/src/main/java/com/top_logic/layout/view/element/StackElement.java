@@ -12,6 +12,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
@@ -20,6 +21,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackJustify;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -28,8 +30,9 @@ import com.top_logic.layout.view.ViewContext;
  * UIElement that wraps {@link ReactStackControl}.
  *
  * <p>
- * Renders a flexbox container that arranges its children along a configurable direction with
- * configurable gap and alignment.
+ * Renders a flexbox container that arranges its children along a configurable direction: with a
+ * configurable gap and alignment, with the space left over distributed as configured, flowing into
+ * further lines where asked to, and bounded to a width it is then centered in.
  * </p>
  */
 @InApp
@@ -54,6 +57,15 @@ public class StackElement extends ContainerElement {
 		/** Configuration name for {@link #getAlign()}. */
 		String ALIGN = "align";
 
+		/** Configuration name for {@link #getJustify()}. */
+		String JUSTIFY = "justify";
+
+		/** Configuration name for {@link #getWrap()}. */
+		String WRAP = "wrap";
+
+		/** Configuration name for {@link #getMaxWidth()}. */
+		String MAX_WIDTH = "max-width";
+
 		/**
 		 * The flex direction.
 		 */
@@ -71,6 +83,48 @@ public class StackElement extends ContainerElement {
 		 */
 		@Name(ALIGN)
 		StackAlign getAlign();
+
+		/**
+		 * How the children are distributed along the direction of the stack.
+		 *
+		 * <p>
+		 * Where the children together are smaller than the stack, this decides what happens with
+		 * the space left over: it stays behind them (the default), before them, on both sides, or
+		 * it is divided between them - a title and the actions belonging to it pushed to the
+		 * opposite ends of a row, a row of buttons centered under a form.
+		 * </p>
+		 */
+		@Name(JUSTIFY)
+		StackJustify getJustify();
+
+		/**
+		 * Whether the children flow into further lines once they no longer fit next to each other.
+		 *
+		 * <p>
+		 * A wrapping row keeps the size of its children instead of shrinking them into one line,
+		 * which is what a row of items that each need a readable width - chips, cards, filter
+		 * buttons - does on a narrow screen. Unset, the children stay in one line.
+		 * </p>
+		 */
+		@Name(WRAP)
+		boolean getWrap();
+
+		/**
+		 * The largest width the stack takes, as a CSS length such as "60rem".
+		 *
+		 * <p>
+		 * A stack of a bounded width is centered in the space it is given, the space left over
+		 * split between its two sides, which is how a column of running text stays readable on a
+		 * wide screen. Below the bound nothing changes, so the stack still fills a narrow screen.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, the stack takes the width its container offers.
+		 * </p>
+		 */
+		@Name(MAX_WIDTH)
+		@Nullable
+		String getMaxWidth();
 	}
 
 	private final StackDirection _direction;
@@ -78,6 +132,14 @@ public class StackElement extends ContainerElement {
 	private final StackGap _gap;
 
 	private final StackAlign _align;
+
+	private final StackJustify _justify;
+
+	private final boolean _wrap;
+
+	private final String _maxWidth;
+
+	private final String _cssClass;
 
 	/**
 	 * Creates a new {@link StackElement} from configuration.
@@ -88,6 +150,10 @@ public class StackElement extends ContainerElement {
 		_direction = config.getDirection();
 		_gap = config.getGap();
 		_align = config.getAlign();
+		_justify = config.getJustify();
+		_wrap = config.getWrap();
+		_maxWidth = config.getMaxWidth();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -98,6 +164,10 @@ public class StackElement extends ContainerElement {
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 
-		return new ReactStackControl(context, _direction, _gap, _align, false, reactChildren);
+		ReactStackControl result = new ReactStackControl(context, _direction, _gap, _align, _wrap, reactChildren);
+		result.setJustify(_justify);
+		result.setMaxWidth(_maxWidth);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

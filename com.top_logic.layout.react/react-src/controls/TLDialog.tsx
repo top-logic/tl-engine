@@ -1,7 +1,8 @@
 import {
   React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding, FillBarrier,
+  rootClassName,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, DialogStateJson } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
 
@@ -24,14 +25,17 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  * State:
  * - open: boolean
  * - closeOnBackdrop: boolean  (default: true)
+ * - closable: boolean  (default: true)
  * - child: ChildDescriptor
  */
 const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<DialogStateJson>>();
   const sendCommand = useTLCommand();
 
   const open = state.open === true;
   const closeOnBackdrop = state.closeOnBackdrop !== false;
+  // A dialog held open by ongoing work: neither Escape nor a backdrop click dismisses it.
+  const closable = state.closable !== false;
   const child = state.child;
 
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -41,19 +45,19 @@ const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (closeOnBackdrop && e.target === e.currentTarget) {
+    if (closable && closeOnBackdrop && e.target === e.currentTarget) {
       handleClose();
     }
-  }, [closeOnBackdrop, handleClose]);
+  }, [closable, closeOnBackdrop, handleClose]);
 
   if (!open) return null;
 
   return (
     <KeyboardScopeProvider>
-      <EscapeToClose onClose={handleClose} />
+      {closable && <EscapeToClose onClose={handleClose} />}
       <div
         id={controlId}
-        className="tlDialog__backdrop"
+        className={rootClassName(state, 'tlDialog__backdrop')}
         onClick={handleBackdropClick}
         ref={backdropRef}
         tabIndex={-1}

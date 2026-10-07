@@ -12,11 +12,18 @@
 	that the commands of a hidden case do not stay behind in the panel toolbar. The criterion the
 	switch tests is stated by the hint above the detail view and by the description of the priority
 	attribute.
+	
+	The progress bar and the line above the switch read their texts from the selected object; while
+	that object is deleted they keep the display they have, until the selection is cleared.
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="selectedDemo"/>
+		<derived-channel name="selectedLabel"
+			expr="d -> if($d == null, '', #('Selected: {0}'@en, 'Ausgewählt: {0}'@de).fill($d.get(`demo.react:Demo#name`)))"
+			inputs="selectedDemo"
+		/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -42,7 +49,7 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`demo.react:Demo`, transient: true)"/>
+							<create-transient type="demo.react:Demo"/>
 							<open-dialog
 								bind-input-to="model"
 								dialog-view="switch-demo-create.view.xml"
@@ -62,6 +69,12 @@
 								<en>Generate samples</en>
 								<de>Beispiele erzeugen</de>
 							</label>
+							<executability>
+								<model-access
+									operation="Create"
+									type="demo.react:Demo"
+								/>
+							</executability>
 							<with-transaction>
 								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, 'Sample ' + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
 							</with-transaction>
@@ -79,9 +92,7 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-							</with-transaction>
+							<delete-object/>
 							<write-channel name="selectedDemo"/>
 						</generic-command>
 					</commands>
@@ -114,6 +125,16 @@
 								<de>Welche Ansicht erscheint, richtet sich nach der Priorität des ausgewählten Objekts: „high“ zeigt eine Tab-Ansicht (Details + Mehr), jeder andere Wert ein einfaches Formular. Auch das Bearbeiten der Priorität wechselt die Ansicht, ohne dass ein anderes Objekt selektiert werden muss.</de>
 							</label>
 						</text>
+					</inset>
+					<inset>
+						<progress
+							done="d -> { amount = if($d == null, null, $d.get(`demo.react:Demo#amount`)); if($amount == null, 0, $amount); }"
+							input="selectedDemo"
+							label="d -> { amount = if($d == null, null, $d.get(`demo.react:Demo#amount`)); if($d == null, #('Nothing selected'@en, 'Nichts ausgewählt'@de), #('{0}: {1} of 100'@en, '{0}: {1} von 100'@de).fill($d.get(`demo.react:Demo#name`), if($amount == null, 0, $amount))); }"
+							observed-types="demo.react:Demo"
+							total="d -> 100"
+						/>
+						<text input="selectedLabel"/>
 					</inset>
 					<switch input="selectedDemo">
 						<case test="d -> $d != null &amp;&amp; $d.get(`demo.react:Demo#priority`) != null &amp;&amp; $d.get(`demo.react:Demo#priority`).get(`tl.model:TLNamedPart#name`) == 'high'">
@@ -161,6 +182,7 @@
 						<default>
 							<form
 								input="selectedDemo"
+								with-inset="true"
 								withEditMode="true"
 							>
 								<field attribute="name"/>

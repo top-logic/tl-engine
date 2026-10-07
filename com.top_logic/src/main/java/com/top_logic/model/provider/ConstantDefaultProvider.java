@@ -32,7 +32,7 @@ public class ConstantDefaultProvider extends DefaultValueProviderShared implemen
 	}
 
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		return _defaultValue;
 	}
 

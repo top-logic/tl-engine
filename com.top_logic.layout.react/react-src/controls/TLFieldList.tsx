@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -14,11 +14,11 @@ const TLFieldList: React.FC<TLCellProps> = ({ controlId }) => {
   const fields = (state.fields as unknown[]) ?? [];
 
   return (
-    <div id={controlId} className="tlFieldList">
-      {title && <h3 className="tlFieldList__title">{title}</h3>}
-      <div className="tlFieldList__fields">
+    <div id={controlId} className={rootClassName(state, 'tl-field-list')}>
+      {title && <h3 className="tl-field-list__title tl-type-heading-sm">{title}</h3>}
+      <div className="tl-field-list__fields">
         {fields.map((field, index) => (
-          <div key={index} className="tlFieldList__item">
+          <div key={index} className="tl-field-list__item">
             <TLChild control={field} />
           </div>
         ))}

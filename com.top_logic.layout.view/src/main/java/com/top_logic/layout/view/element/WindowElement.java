@@ -34,6 +34,7 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.SuspendedCommands;
 import com.top_logic.util.Resources;
 
 /**
@@ -134,6 +135,12 @@ public class WindowElement extends CommandScopeElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getActions();
 	}
 
+	/**
+	 * Segment appended to the {@link ViewContext#getPersonalizationKey() personalization key} of
+	 * the context to form the key the window size is stored under.
+	 */
+	private static final String PERSONALIZATION_SEGMENT = "window";
+
 	private final ResKey _title;
 
 	private final String _width;
@@ -176,12 +183,23 @@ public class WindowElement extends CommandScopeElement {
 		DisplayDimension width = parseWidth(_width);
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 
-		ConfigKey configKey = ConfigKey.named(context.getPersonalizationKey());
+		// Qualified like the keys of the other stateful elements: a dialog's view context is rooted
+		// in a path of its own, so each dialog remembers its own size.
+		ConfigKey configKey = ConfigKey.named(context.getPersonalizationKey() + "." + PERSONALIZATION_SEGMENT);
 		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler, configKey);
 		window.setResizable(_resizable);
 		window.setChild(content);
 		window.setToolbar(toolbar);
 		window.setButtonBar(buttonBar);
+
+		SuspendedCommands suspended = context.getScope(SuspendedCommands.class);
+		if (suspended != null) {
+			// A window whose command is still running keeps the user from leaving the work behind
+			// with nothing left to follow or stop it.
+			window.setClosable(!suspended.hasSuspended());
+			window.addCleanupAction(
+				suspended.observe(() -> window.setClosable(!suspended.hasSuspended())));
+		}
 
 		if (!_actions.isEmpty()) {
 			List<ReactControl> actionControls = _actions.stream()

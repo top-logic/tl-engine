@@ -15,11 +15,14 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
+import com.top_logic.layout.react.control.layout.ToolbarOverflow;
+import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.table.ConfigKey;
 
 /**
- * Visual window chrome for modal dialogs: title bar, close button, scrollable body, footer actions,
- * and optional resize handles.
+ * Visual window chrome for modal dialogs: title bar, close button, scrollable body, footer button
+ * bar, and optional resize handles.
  *
  * <p>
  * This control provides the visual frame. It is typically placed as the child of a
@@ -27,43 +30,55 @@ import com.top_logic.layout.table.ConfigKey;
  * </p>
  *
  * <p>
+ * The footer is a single collapsing toolbar: the {@link #setActions(List) actions} of the window
+ * lead it as its {@link ReactToolbarControl#setPinnedGroup(String, ToolbarGroupDisplay, List)
+ * pinned group}, followed by the groups of the {@link #setButtonBar(ReactToolbarControl) button
+ * bar}. The footer therefore reads from the dismissing command towards the primary one, and
+ * {@link ToolbarOverflow#LEADING collapses from its leading end}, which keeps the primary command
+ * visible longest - the window can still be dismissed with Escape and the title bar's close
+ * button.
+ * </p>
+ *
+ * <p>
  * State:
  * </p>
  * <ul>
- * <li>{@code title} - the window title</li>
- * <li>{@code width} - the window width (CSS value, e.g. "500px")</li>
- * <li>{@code height} - the window height (CSS value or null for auto)</li>
- * <li>{@code resizable} - whether the window can be resized by dragging</li>
- * <li>{@code child} - the body content control</li>
- * <li>{@code actions} - list of footer action controls</li>
+ * <li>{@link WindowState#TITLE__PROP} - the window title</li>
+ * <li>{@link WindowState#WIDTH__PROP} - the window width (CSS value, e.g. "500px")</li>
+ * <li>{@link WindowState#HEIGHT__PROP} - the window height (CSS value or null for auto)</li>
+ * <li>{@link WindowState#CUSTOM_WIDTH__PROP}, {@link WindowState#CUSTOM_HEIGHT__PROP} - the
+ * remembered size in pixels, if any</li>
+ * <li>{@link WindowState#RESIZABLE__PROP} - whether the window can be resized by dragging</li>
+ * <li>{@link WindowState#CLOSABLE__PROP} - whether the close button is enabled and Escape closes
+ * the window</li>
+ * <li>{@link WindowState#CHILD__PROP} - the body content control</li>
+ * <li>{@link WindowState#TOOLBAR__PROP} - the title bar's toolbar</li>
+ * <li>{@link WindowState#FOOTER__PROP} - the footer's toolbar</li>
  * </ul>
  */
 public class ReactWindowControl extends ToolbarControl {
 
 	private static final String REACT_MODULE = "TLWindow";
 
-	private static final String TITLE = "title";
-
-	private static final String WIDTH = "width";
-
-	private static final String HEIGHT = "height";
-
-	private static final String RESIZABLE = "resizable";
-
-	private static final String CHILD = "child";
-
-	private static final String ACTIONS = "actions";
-
-	private static final String TOOLBAR = "toolbar";
-
-	private static final String BUTTON_BAR = "buttonBar";
+	/**
+	 * Clique name of the group the {@link #setActions(List) actions} form at the leading end of
+	 * the {@link WindowState#FOOTER__PROP footer}.
+	 */
+	public static final String ACTIONS_CLIQUE = "actions";
 
 	private static final String CONFIG_KEY_SIZE_SUFFIX = "reactDialogSize";
 
-	private static final String MIN_HEIGHT = "minHeight";
-
 	/** The {@link ReactCommandHandler} that records a window resize. */
 	public static final String RESIZE_COMMAND = "resize";
+
+	/**
+	 * The {@link ReactCommandHandler} that forgets the size the user gave the window, so that it
+	 * takes its configured size again.
+	 */
+	public static final String RESET_SIZE_COMMAND = "resetSize";
+
+	/** The {@link ReactCommandHandler} that closes this window. */
+	public static final String CLOSE_COMMAND = "close";
 
 	private ReactControl _child;
 
@@ -71,11 +86,17 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private ReactToolbarControl _toolbar;
 
-	private ReactToolbarControl _buttonBar;
+	/**
+	 * The toolbar shown in the footer, or {@code null} while the window has neither actions nor a
+	 * button bar.
+	 */
+	private ReactToolbarControl _footer;
 
 	private Runnable _closeHandler;
 
 	private ConfigKey _configKey;
+
+	private boolean _closable = true;
 
 	/**
 	 * Creates a window control.
@@ -97,6 +118,7 @@ public class ReactWindowControl extends ToolbarControl {
 		setWidth(width);
 		setResizable(true);
 		setActions(List.of());
+		putState(WindowState.CLOSABLE__PROP, _closable);
 	}
 
 	/**
@@ -124,28 +146,28 @@ public class ReactWindowControl extends ToolbarControl {
 	 * Sets the window title.
 	 */
 	public void setTitle(String title) {
-		putState(TITLE, title);
+		putState(WindowState.TITLE__PROP, title);
 	}
 
 	/**
 	 * Sets the window width.
 	 */
 	public void setWidth(DisplayDimension width) {
-		putState(WIDTH, width.toString());
+		putState(WindowState.WIDTH__PROP, width.toString());
 	}
 
 	/**
 	 * Sets the window height.
 	 */
 	public void setHeight(DisplayDimension height) {
-		putState(HEIGHT, height != null ? height.toString() : null);
+		putState(WindowState.HEIGHT__PROP, height != null ? height.toString() : null);
 	}
 
 	/**
 	 * Sets whether the window is resizable.
 	 */
 	public void setResizable(boolean resizable) {
-		putState(RESIZABLE, resizable);
+		putState(WindowState.RESIZABLE__PROP, resizable);
 	}
 
 	/**
@@ -153,15 +175,31 @@ public class ReactWindowControl extends ToolbarControl {
 	 */
 	public void setChild(ReactControl child) {
 		_child = child;
-		putState(CHILD, child);
+		putState(WindowState.CHILD__PROP, child);
 	}
 
 	/**
-	 * Sets the footer action controls.
+	 * Sets the controls that lead the {@link WindowState#FOOTER__PROP footer}, such as the command
+	 * dismissing the window.
+	 *
+	 * <p>
+	 * They form the {@link ReactToolbarControl#setPinnedGroup(String, ToolbarGroupDisplay, List)
+	 * pinned group} of the footer toolbar, so a rebuild of the
+	 * {@link #setButtonBar(ReactToolbarControl) button bar} keeps them.
+	 * </p>
+	 *
+	 * @param actions
+	 *        The controls to show, in display order.
 	 */
 	public void setActions(List<? extends ReactControl> actions) {
 		_actions = new ArrayList<>(actions);
-		putState(ACTIONS, _actions);
+		if (_footer == null) {
+			if (_actions.isEmpty()) {
+				return;
+			}
+			setFooter(new ReactToolbarControl(getReactContext()));
+		}
+		_footer.setPinnedGroup(ACTIONS_CLIQUE, ToolbarGroupDisplay.INLINE, _actions);
 	}
 
 	/**
@@ -170,25 +208,90 @@ public class ReactWindowControl extends ToolbarControl {
 	public void setToolbar(ReactToolbarControl toolbar) {
 		_toolbar = toolbar;
 		if (toolbar != null) {
-			putState(TOOLBAR, toolbar);
+			putState(WindowState.TOOLBAR__PROP, toolbar);
 		}
 	}
 
 	/**
-	 * Sets the clique-grouped footer button bar, or {@code null} to remove it.
+	 * Sets the clique-grouped toolbar carrying the window's button-bar commands.
+	 *
+	 * <p>
+	 * It becomes the window's {@link WindowState#FOOTER__PROP footer}, taking over the
+	 * {@link #setActions(List) actions} as its pinned group, so the footer stays a single
+	 * collapsing toolbar however the two are set.
+	 * </p>
+	 *
+	 * @param buttonBar
+	 *        The toolbar to display, or {@code null} to leave the footer to the actions alone.
 	 */
 	public void setButtonBar(ReactToolbarControl buttonBar) {
-		_buttonBar = buttonBar;
-		if (buttonBar != null) {
-			putState(BUTTON_BAR, buttonBar);
+		if (buttonBar == null) {
+			return;
 		}
+		ReactToolbarControl previous = _footer;
+		setFooter(buttonBar);
+		if (!_actions.isEmpty()) {
+			buttonBar.setPinnedGroup(ACTIONS_CLIQUE, ToolbarGroupDisplay.INLINE, _actions);
+		}
+		if (previous != null && previous != buttonBar) {
+			// The actions are shown by the button bar now: release them from the toolbar that
+			// was built for them alone before that one is dropped, so disposing it leaves the
+			// action controls alone.
+			previous.setPinnedGroup(ACTIONS_CLIQUE, ToolbarGroupDisplay.INLINE, List.of());
+			previous.cleanupTree();
+		}
+	}
+
+	/**
+	 * Shows the given toolbar in the footer, collapsing from its leading end.
+	 */
+	private void setFooter(ReactToolbarControl footer) {
+		_footer = footer;
+		footer.setOverflow(ToolbarOverflow.LEADING);
+		putState(WindowState.FOOTER__PROP, footer);
+	}
+
+	/**
+	 * Whether this window can be closed.
+	 *
+	 * @see #setClosable(boolean)
+	 */
+	public boolean isClosable() {
+		return _closable;
+	}
+
+	/**
+	 * Sets whether this window can be closed.
+	 *
+	 * <p>
+	 * While the window is not closable, the client shows its close button disabled and leaves
+	 * Escape to the enclosing scope, and {@link #CLOSE_COMMAND} is ignored. A window is closable
+	 * unless marked otherwise.
+	 * </p>
+	 *
+	 * @param closable
+	 *        Whether the window may be closed.
+	 */
+	public void setClosable(boolean closable) {
+		if (closable == _closable) {
+			return;
+		}
+		_closable = closable;
+		putState(WindowState.CLOSABLE__PROP, closable);
 	}
 
 	/**
 	 * Handles the close button click.
+	 *
+	 * <p>
+	 * The command is ignored while the window is not {@link #isClosable() closable}.
+	 * </p>
 	 */
-	@ReactCommandHandler("close")
+	@ReactCommandHandler(CLOSE_COMMAND)
 	void handleClose() {
+		if (!_closable) {
+			return;
+		}
 		_closeHandler.run();
 	}
 
@@ -202,13 +305,34 @@ public class ReactWindowControl extends ToolbarControl {
 		// The client performed the resize itself; no echo needed.
 		updateStateSilently(() -> {
 			if (w != null) {
-				putState(WIDTH, w + "px");
+				putState(WindowState.CUSTOM_WIDTH__PROP, w);
 			}
 			if (h != null) {
-				putState(HEIGHT, h + "px");
+				putState(WindowState.CUSTOM_HEIGHT__PROP, h);
 			}
 		});
 		saveCustomizedSize(w, h);
+	}
+
+	/**
+	 * Forgets the size the user gave the window, in this window and in the personal configuration,
+	 * so that this and every later opening of the window takes the configured size again.
+	 */
+	@ReactCommandHandler(RESET_SIZE_COMMAND)
+	void handleResetSize() {
+		// Sent to the client: it holds the remembered size and must drop it.
+		putState(WindowState.CUSTOM_WIDTH__PROP, null);
+		putState(WindowState.CUSTOM_HEIGHT__PROP, null);
+
+		String key = _configKey.get();
+		if (key == null) {
+			return;
+		}
+		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
+		if (config == null) {
+			return;
+		}
+		config.setJSONValue(key, null);
 	}
 
 	private void applyCustomizedSize() {
@@ -226,8 +350,13 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 		int width = ((Number) list.get(0)).intValue();
 		int height = ((Number) list.get(1)).intValue();
-		putState(WIDTH, width + "px");
-		putState(MIN_HEIGHT, height + "px");
+		if (width <= 0 || height <= 0) {
+			return;
+		}
+		// Sent beside the configured width instead of replacing it, so that the client falls back
+		// to the configured size where the remembered one does not fit.
+		putState(WindowState.CUSTOM_WIDTH__PROP, width);
+		putState(WindowState.CUSTOM_HEIGHT__PROP, height);
 	}
 
 	private void saveCustomizedSize(Integer widthValue, Integer heightValue) {

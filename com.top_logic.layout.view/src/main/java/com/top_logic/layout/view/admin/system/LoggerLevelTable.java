@@ -96,6 +96,8 @@ public class LoggerLevelTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link LoggerLevelTable} from configuration.
 	 */
@@ -103,6 +105,7 @@ public class LoggerLevelTable implements UIElement {
 	public LoggerLevelTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -139,6 +142,7 @@ public class LoggerLevelTable implements UIElement {
 				selection.set(key instanceof Map.Entry<?, ?> entry ? entry.getKey() : null);
 			});
 		}
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

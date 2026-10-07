@@ -76,6 +76,8 @@ public class TileBreadcrumbElement implements UIElement {
 
 	private final ResKey _homeLabel;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link TileBreadcrumbElement} from configuration.
 	 */
@@ -83,11 +85,14 @@ public class TileBreadcrumbElement implements UIElement {
 	public TileBreadcrumbElement(InstantiationContext context, Config config) {
 		_pathRef = config.getPath();
 		_homeLabel = config.getHomeLabel();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
-		return new ReactTileBreadcrumbControl(context, pathChannel, _homeLabel);
+		ReactTileBreadcrumbControl result = new ReactTileBreadcrumbControl(context, pathChannel, _homeLabel);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

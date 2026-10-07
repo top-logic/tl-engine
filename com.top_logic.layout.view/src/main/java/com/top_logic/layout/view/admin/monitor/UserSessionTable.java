@@ -55,12 +55,14 @@ public class UserSessionTable implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link UserSessionTable} from configuration.
 	 */
 	@CalledByReflection
 	public UserSessionTable(InstantiationContext context, Config config) {
-		// No configuration needed.
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -80,7 +82,9 @@ public class UserSessionTable implements UIElement {
 		// unique; no explicit key function is needed.
 		ListRowSource<UserSession> source = new ListRowSource<>(rows, columns);
 		DefaultTableView<UserSession> view = DefaultTableView.create(columns, source);
-		return new TableViewControl<>(context, view, false);
+		TableViewControl<UserSession> control = new TableViewControl<>(context, view, false);
+		control.setCssClass(_cssClass);
+		return control;
 	}
 
 	/**

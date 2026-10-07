@@ -76,30 +76,4 @@ public enum ConnectorSymbol implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static ConnectorSymbol readConnectorSymbol(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case NONE: out.value(1); break;
-			case ARROW: out.value(2); break;
-			case CLOSED_ARROW: out.value(3); break;
-			case FILLED_ARROW: out.value(4); break;
-			case DIAMOND: out.value(5); break;
-			case FILLED_DIAMOND: out.value(6); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static ConnectorSymbol readConnectorSymbol(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return NONE;
-			case 2: return ARROW;
-			case 3: return CLOSED_ARROW;
-			case 4: return FILLED_ARROW;
-			case 5: return DIAMOND;
-			case 6: return FILLED_DIAMOND;
-			default: return NONE;
-		}
-	}
 }

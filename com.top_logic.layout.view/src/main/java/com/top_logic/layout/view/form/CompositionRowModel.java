@@ -15,7 +15,8 @@ import com.top_logic.model.TLObject;
  *
  * <p>
  * Holds a reference to the row's overlay (for existing persistent objects) or transient object
- * (for new entries), plus the {@link AttributeFieldModel} instances for each editable column.
+ * (for new entries), plus the {@link BoundFieldModel} holding the edited value of each editable
+ * column.
  * </p>
  */
 public class CompositionRowModel {
@@ -26,7 +27,7 @@ public class CompositionRowModel {
 
 	private final boolean _isNew;
 
-	private final Map<String, AttributeFieldModel> _columnModels = new LinkedHashMap<>();
+	private final Map<String, BoundFieldModel> _columnModels = new LinkedHashMap<>();
 
 	private CompositionRowModel(TLObjectOverlay rowOverlay, TLObject rowObject, boolean isNew) {
 		_rowOverlay = rowOverlay;
@@ -70,23 +71,24 @@ public class CompositionRowModel {
 	}
 
 	/**
-	 * Registers an {@link AttributeFieldModel} for a column.
+	 * Registers the field model holding the edited value of a column.
 	 */
-	public void putColumnModel(String columnName, AttributeFieldModel model) {
+	public void putColumnModel(String columnName, BoundFieldModel model) {
 		_columnModels.put(columnName, model);
 	}
 
 	/**
-	 * Gets the {@link AttributeFieldModel} for a column.
+	 * The field model holding the edited value of a column, or {@code null} if that cell was not
+	 * edited yet.
 	 */
-	public AttributeFieldModel getColumnModel(String columnName) {
+	public BoundFieldModel getColumnModel(String columnName) {
 		return _columnModels.get(columnName);
 	}
 
 	/**
 	 * All column field models.
 	 */
-	public Map<String, AttributeFieldModel> getColumnModels() {
+	public Map<String, BoundFieldModel> getColumnModels() {
 		return _columnModels;
 	}
 
@@ -99,7 +101,7 @@ public class CompositionRowModel {
 	 * </p>
 	 */
 	public void refreshColumnModels() {
-		for (AttributeFieldModel model : _columnModels.values()) {
+		for (BoundFieldModel model : _columnModels.values()) {
 			model.refreshFromObject();
 		}
 	}

@@ -1,5 +1,7 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import type { TLCellProps, SelectStateJson } from 'tl-react-bridge';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -10,8 +12,14 @@ interface SelectOption {
 
 /**
  * A select dropdown rendered via React.
+ *
+ * A read-only field shows the label of the selected option as a tl-field-value; a disabled field
+ * renders the select as an inactive one (native `disabled`, see showsValueOnly).
  */
-const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
+const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
+  const state = useTLState<Partial<SelectStateJson>>();
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -21,24 +29,13 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
     [setValue]
   );
 
-  const options = ((state.options ?? config?.options) as SelectOption[]) ?? [];
+  // The options of this component carry string values.
+  const options = (state.options ?? config?.options ?? []) as SelectOption[];
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
-    return (
-      <span id={controlId} className="tlReactSelect tlReactSelect--immutable">
-        {selectedLabel}
-      </span>
-    );
+    return <FieldValue id={controlId} className={rootClassName(state)} text={selectedLabel} />;
   }
-
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const cls = [
-    'tlReactSelect',
-    hasError ? 'tlReactSelect--error' : '',
-    !hasError && hasWarnings ? 'tlReactSelect--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
@@ -46,8 +43,10 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}
-        className={cls}
-        aria-invalid={hasError || undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
+        id={inputId}
+        {...labelProps}
       >
         {state.nullable !== false && <option value=""></option>}
         {options.map((opt) => (

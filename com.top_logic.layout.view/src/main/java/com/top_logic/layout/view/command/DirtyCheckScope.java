@@ -6,22 +6,41 @@
 package com.top_logic.layout.view.command;
 
 /**
- * Scope of the dirty check performed before executing a {@link ViewCommand}.
+ * The forms a {@link ViewCommand} asks about before it runs.
+ *
+ * <p>
+ * When a form in the checked scope holds unsaved changes, the command does not run right away.
+ * Instead, the user is asked whether to save the changes, discard them, or cancel. After saving or
+ * discarding, the command runs; after cancelling, it does not.
+ * </p>
  */
 public enum DirtyCheckScope {
 
 	/**
-	 * Check only the element that owns this command for unsaved changes.
+	 * Asks about the unsaved changes in the scope the command is displayed in: the tab, the sidebar
+	 * item, the frame of a tile stack or the dialog holding the command, including all scopes nested
+	 * within it.
 	 */
 	SELF,
 
 	/**
-	 * Check the entire view for unsaved changes.
+	 * Asks about the unsaved changes anywhere in the browser window the command is displayed in.
 	 */
 	VIEW,
 
 	/**
-	 * Skip dirty checking entirely.
+	 * Runs the command without asking, whatever changes are left unsaved.
 	 */
 	NONE;
+
+	/**
+	 * The configuration value of {@link #VIEW}.
+	 */
+	public static final String VIEW_NAME = "VIEW";
+
+	/**
+	 * The configuration value of {@link #NONE}.
+	 */
+	public static final String NONE_NAME = "NONE";
+
 }

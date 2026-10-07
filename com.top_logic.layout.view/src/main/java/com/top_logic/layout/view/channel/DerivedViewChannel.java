@@ -5,12 +5,14 @@
  */
 package com.top_logic.layout.view.channel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
+import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
@@ -35,6 +37,15 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
+ * A {@link VetoForwarder} from every input channel to this channel makes the unsaved changes of a
+ * form bound to the derived value block the write of the input the value is computed from: asking
+ * an input reaches the {@link com.top_logic.layout.view.channel.ViewChannel.VetoListener}s
+ * registered on this channel. A bidirectional {@link #set(Object)} writes the first input, and
+ * therefore passes the same forwarder - the handlers of this channel are asked once, before the
+ * input is written.
+ * </p>
+ *
+ * <p>
  * This is a per-session object. The evaluation function is typically compiled once at configuration
  * time (e.g. from a TL-Script expression) and passed in via {@link #bind(List, Function)}.
  * </p>
@@ -54,6 +65,16 @@ public class DerivedViewChannel implements ObservingChannel {
 	private Function<Object[], Object> _evaluator;
 
 	private ChannelObjectObserver _inputObserver;
+
+	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
+
+	private final List<Runnable> _vetoForwarderRemovers = new ArrayList<>();
+
+	/**
+	 * The listener recomputing the value, registered on every one of {@link #_inputs}, or
+	 * {@code null} while the channel is not bound.
+	 */
+	private ChannelListener _refreshListener;
 
 	/**
 	 * Creates a {@link DerivedViewChannel}.
@@ -123,20 +144,51 @@ public class DerivedViewChannel implements ObservingChannel {
 	 *        hold, which are always observed; empty for a function reading nothing but those
 	 *        objects.
 	 *
+	 * @implNote Registers a listener and a {@link VetoForwarder} on every input, replacing the ones
+	 *           of a previous binding.
+	 *
 	 * @see #attach(ModelScope)
 	 */
 	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator,
 			Function<Object, Object> reverse, Set<TLStructuredType> observedTypes) {
+		release();
+
 		_inputs = inputs;
 		_evaluator = evaluator;
 		_reverseFunction = reverse;
 		_value = evaluate(evaluator, inputs);
 		_inputObserver = new ChannelObjectObserver(inputs, observedTypes, this::recompute);
 
-		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute();
+		_refreshListener = (sender, oldVal, newVal) -> recompute();
 		for (ViewChannel input : inputs) {
-			input.addListener(refreshListener);
+			input.addListener(_refreshListener);
+			_vetoForwarderRemovers.add(VetoForwarder.forward(input, this));
 		}
+	}
+
+	/**
+	 * Unsubscribes from the inputs - the listener recomputing the value and the
+	 * {@link VetoForwarder}s - and stops following the objects they hold.
+	 */
+	@Override
+	public void release() {
+		if (_refreshListener != null) {
+			for (ViewChannel input : _inputs) {
+				input.removeListener(_refreshListener);
+			}
+			_refreshListener = null;
+		}
+		removeVetoForwarders();
+		if (_inputObserver != null) {
+			_inputObserver.detach();
+		}
+	}
+
+	private void removeVetoForwarders() {
+		for (Runnable remover : _vetoForwarderRemovers) {
+			remover.run();
+		}
+		_vetoForwarderRemovers.clear();
 	}
 
 	/**
@@ -181,13 +233,25 @@ public class DerivedViewChannel implements ObservingChannel {
 	}
 
 	@Override
+	public List<StateHandler> dirtyHandlers() {
+		if (_vetoListeners.isEmpty()) {
+			return List.of();
+		}
+		VetoCollector dirtyHandlers = new VetoCollector();
+		for (VetoListener vetoListener : _vetoListeners) {
+			dirtyHandlers.addAll(vetoListener.checkDirty(this));
+		}
+		return dirtyHandlers.toList();
+	}
+
+	@Override
 	public void addVetoListener(VetoListener listener) {
-		// DerivedViewChannel is read-only; veto listeners are not applicable.
+		_vetoListeners.add(listener);
 	}
 
 	@Override
 	public void removeVetoListener(VetoListener listener) {
-		// DerivedViewChannel is read-only; veto listeners are not applicable.
+		_vetoListeners.remove(listener);
 	}
 
 	private void recompute() {

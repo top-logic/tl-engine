@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import FontIcon from './FontIcon';
+import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback } = React;
 
@@ -61,16 +61,14 @@ const IconPopOut = () => (
  * - fill: boolean (fill the container's bounded height instead of growing with content; a filling
  *     panel takes part in the fill contract, so its container grows with it, while its own body
  *     bounds and scrolls what it contains)
+ * - width: string (a CSS width of the panel's own, e.g. "380px", instead of the width its
+ *     container offers; capped at the available width, so the panel stays visible on a narrow
+ *     screen)
  * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
  * - appearance: "default" | "card" (card renders a bordered, rounded panel with compact insets)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
- * - bare: boolean (this panel draws no chrome - no title, toolbar or border - and is a pure
- *     full-bleed container. Read NOT by this component but by an enclosing TLFormLayout: a form
- *     whose sole content is a bare panel renders flush, dropping its page inset so the panel fills
- *     the area instead of sitting inside an empty frame. A chromed panel omits it / sets it false
- *     and keeps the inset. Set e.g. by the frameless editable table, RowSetTableControl.)
  * - errorMessage: string (validation error displayed below the content, may be absent)
  * - errorIcon: string (encoded theme icon displayed in front of the error message)
  */
@@ -88,6 +86,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const fill = state.fill === true;
   const hoverActions = state.hoverActions === true;
   const card = state.appearance === 'card';
+  const width = (state.width as string | undefined) ?? undefined;
   const errorMessage = state.errorMessage as string | undefined;
 
   const isMinimized = expansionState === 'MINIMIZED';
@@ -115,7 +114,13 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
 
   const panelStyle: React.CSSProperties = isMaximized
     ? { position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }
-    : { display: 'flex', flexDirection: 'column', width: '100%', height: '100%' };
+    : {
+        display: 'flex',
+        flexDirection: 'column',
+        width: width ?? '100%',
+        ...(width ? { maxWidth: '100%' } : {}),
+        height: '100%',
+      };
 
   // Render the header only when it carries something: a title, a toolbar, or an action button.
   // A chrome-less panel (e.g. a fill panel whose tab already labels it) then shows just its
@@ -125,28 +130,32 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const hasHeader =
     (!!title && title.trim() !== '') || !!state.titleContent || !!state.toolbar || hasActionButtons;
 
+  const minimizeLabel = isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize'];
+  const maximizeLabel = isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize'];
+
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fillClass ? ' ' + fillClass : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`}
+      className={rootClassName(state, `tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fillClass ? ' ' + fillClass : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`)}
       style={panelStyle}
     >
       {hasHeader && (
       <div className="tlPanel__header">
         {!!title && title.trim() !== '' && <span className="tlPanel__title">{title}</span>}
-        {state.titleContent && (
+        {!!state.titleContent && (
           <div className="tlPanel__titleContent">
             <TLChild control={state.titleContent} />
           </div>
         )}
         <div className="tlPanel__toolbar">
-          {state.toolbar && <TLChild control={state.toolbar} />}
+          {!!state.toolbar && <TLChild control={state.toolbar} />}
           {showMinimize && !isMaximized && (
             <button
               type="button"
               className="tlPanel__actionButton"
               onClick={handleMinimize}
-              title={isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize']}
+              aria-label={minimizeLabel}
+              {...tooltipProps(minimizeLabel)}
             >
               {isMinimized ? <IconRestoreFromMin /> : <IconMinimize />}
             </button>
@@ -156,7 +165,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
               type="button"
               className="tlPanel__actionButton"
               onClick={handleMaximize}
-              title={isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize']}
+              aria-label={maximizeLabel}
+              {...tooltipProps(maximizeLabel)}
             >
               {isMaximized ? <IconRestoreFromMax /> : <IconMaximize />}
             </button>
@@ -166,7 +176,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
               type="button"
               className="tlPanel__actionButton"
               onClick={handlePopOut}
-              title={i18n['js.panel.popOut']}
+              aria-label={i18n['js.panel.popOut']}
+              {...tooltipProps(i18n['js.panel.popOut'])}
             >
               <IconPopOut />
             </button>
@@ -182,15 +193,17 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       {!isMinimized && errorMessage && (
-        <div className="tlFormField__error tlPanel__error" role="alert">
-          <FontIcon image={state.errorIcon as string | undefined} className="tlFormField__errorIcon" />
+        <div className="tl-form-field__message tl-type-label tlPanel__error" role="alert">
+          {typeof state.errorIcon === 'string' && <ThemeIcon encoded={state.errorIcon} className="tl-icon-sm" />}
           <span>{errorMessage}</span>
         </div>
       )}
-      {!isMinimized && state.buttonBar && (
-        <div className="tlPanel__buttonBar">
-          <TLChild control={state.buttonBar} />
-        </div>
+      {!isMinimized && !!state.buttonBar && (
+        <ButtonDefaults appearance="secondary">
+          <div className="tlPanel__buttonBar">
+            <TLChild control={state.buttonBar} />
+          </div>
+        </ButtonDefaults>
       )}
     </div>
   );

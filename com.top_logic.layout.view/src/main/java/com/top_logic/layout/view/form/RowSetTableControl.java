@@ -8,7 +8,6 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,7 +22,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -38,14 +37,16 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
-import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.CellEditing;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -55,6 +56,8 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.Selection;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.table.Sort;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
@@ -79,9 +82,10 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * Data columns are derived from the model per attribute (sortable, filterable, cells displayed
- * through the attribute's view-mode field display). While the form is in edit mode, the cells of
- * rows covered by the {@link RowEditPolicy} render the attribute's editable field control instead.
+ * Data columns come from the declarations the table is built with (sortable, filterable, cells
+ * displayed through the view-mode field display of the column's values). While the form is in edit
+ * mode, the cells of rows covered by the {@link RowEditPolicy} render the input the column's
+ * {@link CellEditing} builds, where it offers one.
  * An action column for row removal is appended in edit mode when the binding supports removal; a
  * detail-open column is prepended when a {@link #setDetailDialog detail dialog} is configured.
  * </p>
@@ -113,23 +117,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Panel state: encoded theme icon displayed in front of the error message. */
 	private static final String ERROR_ICON = "errorIcon";
 
-	/**
-	 * A data column of a row-set table.
-	 *
-	 * @param attribute
-	 *        The model attribute name.
-	 * @param readonly
-	 *        Whether the column stays read-only in edit mode.
-	 * @param binding
-	 *        The strategy turning the attribute into a runtime column (sort, filter, display).
-	 */
-	public record TableColumn(String attribute, boolean readonly, ColumnBinding binding) {
-		// Pure data carrier.
-	}
-
 	private final ViewContext _context;
 
-	private final List<TableColumn> _columns;
+	/** The declarations of the data columns, in display order. */
+	private final List<ColumnDeclaration> _columns;
 
 	private final RowEditPolicy _policy;
 
@@ -143,18 +134,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private TableId _tableId;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore) */
+	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
 	private Function<List<? extends Column<?, ?>>, List<NamedFilter>> _declaredFilters;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore) */
+	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
 	private NamedFilterStore _filterStore;
+
+	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	private String _initialFilter;
 
 	/** @see #setFilterBar(boolean) */
 	private boolean _filterBar;
 
 	private SortSpec _defaultSort = SortSpec.NONE;
 
-	/** @see #setHiddenByDefault(Collection) */
+	/** The columns displayed only once the user selects them, taken from the resolved columns. */
 	private Set<String> _hiddenByDefault = Set.of();
 
 	/** @see #setFixedColumns(int) */
@@ -165,6 +159,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** Binds {@link #_selectionChannel} to the current {@link #_tableControl}. */
 	private TableSelectionBinding _selectionBinding;
+
+	/** @see #setFilterChannels(ViewChannel, ViewChannel) */
+	private ViewChannel _activePresetChannel;
+
+	/** @see #setFilterChannels(ViewChannel, ViewChannel) */
+	private ViewChannel _searchTermChannel;
+
+	/** Binds the filter channels to the current {@link #_tableControl}. */
+	private TableFilterBinding _filterBinding;
 
 	private Function<Object[], Collection<?>> _rowFunction;
 
@@ -179,6 +182,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** The grouping the table starts with, until a personalization of its own exists. */
 	private GroupSpec _grouping = GroupSpec.NONE;
+
+	/** @see #setSelectionMode(SelectionMode) */
+	private SelectionMode _selectionMode = SelectionMode.SINGLE;
 
 	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
 	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
@@ -205,12 +211,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param binding
 	 *        The row-set semantics (row objects, add, remove, commit).
 	 * @param columns
-	 *        The data columns to display and edit.
+	 *        The declarations of the data columns to display and edit.
 	 * @param policy
 	 *        Which rows are editable while the form is in edit mode.
 	 */
 	public RowSetTableControl(ViewContext context, FormControl formControl, RowSetBinding binding,
-			List<TableColumn> columns, RowEditPolicy policy) {
+			List<ColumnDeclaration> columns, RowEditPolicy policy) {
 		super(context, formControl, binding, "TLPanel");
 		_context = context;
 		_columns = columns;
@@ -269,9 +275,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Sets whether the table renders framed: with the bound attribute's label as panel title and
 	 * row creation as an Add button in its own toolbar. A frameless table shows neither; its
 	 * creator offers row creation through the enclosing command scope.
+	 *
+	 * <p>
+	 * A frameless table is a region of its own rather than a field among others: it fills the
+	 * height its container offers, so the table bounds its scroll viewport and scrolls internally.
+	 * </p>
 	 */
 	public void setFramed(boolean framed) {
 		_framed = framed;
+		putState(ReactPanelControl.FILL, Boolean.valueOf(!framed));
 	}
 
 	/**
@@ -301,11 +313,35 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param filterStore
 	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
 	 *        only the declared ones.
+	 * @param initialFilter
+	 *        The {@link NamedFilter#id() identifier} of the filter the table is filtered by until a
+	 *        personalization of its own exists, or {@code null} to start out unfiltered.
 	 */
 	public void setNamedFilters(Function<List<? extends Column<?, ?>>, List<NamedFilter>> declaredFilters,
-			NamedFilterStore filterStore) {
+			NamedFilterStore filterStore, String initialFilter) {
 		_declaredFilters = declaredFilters;
 		_filterStore = filterStore;
+		_initialFilter = initialFilter;
+	}
+
+	/**
+	 * Binds the table's filtering two-way to the given channels through a
+	 * {@link TableFilterBinding}: the named filter it matches, and the text it searches for.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the binding is established for each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
+	 *
+	 * @param activePreset
+	 *        The channel holding the name of the matched filter, {@code null} to leave it
+	 *        unpublished.
+	 * @param searchTerm
+	 *        The channel holding the searched text, {@code null} to leave it unpublished.
+	 */
+	public void setFilterChannels(ViewChannel activePreset, ViewChannel searchTerm) {
+		_activePresetChannel = activePreset;
+		_searchTermChannel = searchTerm;
 	}
 
 	/**
@@ -322,17 +358,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setDefaultSort(SortSpec defaultSort) {
 		_defaultSort = defaultSort;
-	}
-
-	/**
-	 * The columns offered but not displayed until the user selects them in the column selection.
-	 *
-	 * @param columns
-	 *        Attribute names among the table's {@link TableColumn columns}; unknown names are
-	 *        ignored.
-	 */
-	public void setHiddenByDefault(Collection<String> columns) {
-		_hiddenByDefault = new LinkedHashSet<>(columns);
 	}
 
 	/**
@@ -358,6 +383,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setSelectionChannel(ViewChannel selectionChannel) {
 		_selectionChannel = selectionChannel;
+	}
+
+	/**
+	 * Sets whether the user may select one row at a time, or any number of them.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the mode is part of the initial state of each
+	 * {@link TableViewControl} this control builds, and it decides how the selection reaches the
+	 * {@link #setSelectionChannel(ViewChannel) selection channel} - one selected row as that row's
+	 * object, several as the set of them.
+	 * </p>
+	 */
+	public void setSelectionMode(SelectionMode selectionMode) {
+		_selectionMode = selectionMode;
 	}
 
 	/**
@@ -460,10 +499,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * title. A frameless table shows no title.
 	 */
 	private void updateTitle() {
-		// A frameless table draws no chrome (no title, no own toolbar). Mark the panel bare so an
-		// enclosing form renders flush around it instead of framing it with its page inset; a framed
-		// panel keeps its chrome and the surrounding inset.
-		putState("bare", Boolean.valueOf(!_framed));
 		if (!_framed) {
 			putState("title", null);
 			return;
@@ -503,6 +538,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
 		columns.addAll(createDataColumns(editMode, setups));
+		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 
 		// Removal action column (edit mode only, when the binding supports removal, last, no header
 		// label - see detail column).
@@ -525,6 +561,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
 		initialState.setGrouping(_grouping);
+		initialState.setSelection(Selection.none(_selectionMode));
 		if (_fixedColumns > 0) {
 			// The configured number counts data columns; a leading action column has to be added on
 			// top of it, or freezing "the first two columns" would freeze the detail button and one
@@ -541,16 +578,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		List<NamedFilter> declaredFilters =
 			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
-			_tableId, _hiddenByDefault, declaredFilters, _filterStore);
+			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 
 		disposeSelectionBinding();
+		disposeFilterBinding();
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
 		_tableControl.setActivationHandler(_activationHandler);
-		registerChildControl(_tableControl);
 
 		// Set panel child to the table.
 		putState("child", _tableControl);
@@ -558,6 +595,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_tableControl.addSelectionListener(this::handleSelectionChanged);
 		if (_selectionChannel != null) {
 			_selectionBinding = new TableSelectionBinding(_tableControl, _selectionChannel);
+		}
+		if (_activePresetChannel != null || _searchTermChannel != null) {
+			_filterBinding =
+				new TableFilterBinding(_tableControl, _activePresetChannel, _searchTermChannel);
 		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
@@ -593,7 +634,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Builds the data columns for the current mode, resolving each attribute against the binding's
+	 * Builds the data columns for the current mode, resolving the declarations against the binding's
 	 * current row type (the bound attribute may resolve only once the form has an object).
 	 *
 	 * @param setups
@@ -601,21 +642,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, List<ColumnSetup> setups) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		TLClass rowType = binding().getRowType();
-		for (TableColumn column : _columns) {
-			String attribute = column.attribute();
-			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-			ResKey label = part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
-			ColumnSetup setup = new ColumnSetup(attribute, label, part, _context, column.binding());
+		ColumnResolution scope = new ColumnResolution(binding().getRowType(), _context);
+		for (ColumnSetup setup : ColumnDeclarations.resolve(_columns, scope)) {
 			setups.add(setup);
-			Column<Object, ?> inner = column.binding().createColumn(setup);
-			columns.add(adapt(inner, part, editMode && !column.readonly()));
+			columns.add(adapt(setup.buildColumn(), setup, editMode));
 		}
 		return columns;
 	}
 
-	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, TLStructuredTypePart part, boolean editable) {
-		return new EditAwareColumn<>(inner, part, editable);
+	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
+		return new EditAwareColumn<>(inner, setup, editable);
 	}
 
 	@Override
@@ -666,6 +702,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_selectionBinding != null) {
 			_selectionBinding.dispose();
 			_selectionBinding = null;
+		}
+	}
+
+	/**
+	 * Detaches the {@link TableFilterBinding} from the table it was created for.
+	 */
+	private void disposeFilterBinding() {
+		if (_filterBinding != null) {
+			_filterBinding.dispose();
+			_filterBinding = null;
 		}
 	}
 
@@ -805,6 +851,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	protected void onCleanup() {
 		detachObserver();
 		disposeSelectionBinding();
+		disposeFilterBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;
@@ -816,20 +863,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Adapts a type-derived {@link Column} (rows typed {@code Object}) to the {@link TLObject} row
 	 * type of this table, rendering cells editable when the enclosing form edits and the
-	 * {@link RowEditPolicy} covers the row, and read-only cells through the attribute's view-mode
-	 * field display (so value types keep their interactive display, e.g. a download link).
+	 * {@link RowEditPolicy} covers the row, and read-only cells through the view-mode field display
+	 * of the column's values (so value types keep their interactive display, e.g. a download link).
 	 */
 	private final class EditAwareColumn<V> implements Column<TLObject, V> {
 
 		private final Column<Object, V> _inner;
 
-		private final TLStructuredTypePart _part;
+		private final ColumnSetup _setup;
 
+		/** Whether the enclosing form is editing, so that an editable cell renders its input. */
 		private final boolean _editable;
 
-		EditAwareColumn(Column<Object, V> inner, TLStructuredTypePart part, boolean editable) {
+		EditAwareColumn(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
 			_inner = inner;
-			_part = part;
+			_setup = setup;
 			_editable = editable;
 		}
 
@@ -855,29 +903,39 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		@Override
 		public CellContent renderCell(TLObject row) {
-			if (_editable && row != null && isRowEditable(row)) {
+			if (_editable && row != null && isRowEditable(row) && offersEdit(row)) {
 				return new CellContent.Raw((CellControlFactory) context -> {
-					ReactControl editControl = buildEditCellControl(context, row, name());
+					ReactControl editControl = buildEditCellControl(context, row, _setup);
 					return editControl != null
 						? editControl
 						: readOnlyControl(context, row);
 				});
 			}
-			if (_part != null && row != null) {
+			if (_setup.type().resolved() && row != null) {
 				return new CellContent.Raw((CellControlFactory) context -> readOnlyControl(context, row));
 			}
 			return _inner.renderCell(row);
 		}
 
 		/**
-		 * The read-only cell control: the attribute's view-mode field display, or a text fallback.
+		 * Whether the column offers an edit of the given row's cell.
+		 */
+		private boolean offersEdit(TLObject row) {
+			CellEditing editing = _setup.editing();
+			return editing != null && editing.canEdit(row);
+		}
+
+		/**
+		 * The read-only cell control: the view-mode field display of the column's values.
+		 *
+		 * <p>
+		 * The value is read through the column's own value function, so a column showing something
+		 * else than an attribute of the row displays that.
+		 * </p>
 		 */
 		private ReactControl readOnlyControl(ReactContext context, TLObject row) {
-			if (_part != null) {
-				return FieldControlService.getInstance()
-					.createDisplayControl(context, _part, row.tValueByName(name()));
-			}
-			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(row.tValueByName(name())));
+			return FieldControlService.getInstance()
+				.createDisplayControl(context, _setup.type(), _setup.value().apply(row));
 		}
 
 		@Override

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,6 +46,20 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link AbstractStorage} for primitive values directly stored to persistency-layer attributes.
+ * 
+ * <p>
+ * A single-valued attribute is stored as the storage object delivered by its
+ * {@link StorageMapping}. A multi-valued attribute is stored as a JSON array in a single string
+ * valued persistency-layer attribute.
+ * </p>
+ * 
+ * @implNote The elements of the JSON array are encoded by
+ *           {@link #toJson(TLStructuredTypePart, StorageMapping, Collection)} and decoded by
+ *           {@link #fromJson(TLStructuredTypePart, StorageMapping, String)}: a {@link Number} is
+ *           written as JSON number, a {@link Boolean} as JSON boolean, a {@link String} as JSON
+ *           string, a {@link Date} as JSON number holding its {@link Date#getTime() epoch
+ *           milliseconds}, and <code>null</code> as JSON <code>null</code>. Any other storage
+ *           object type is rejected with an {@link IllegalArgumentException}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -159,6 +174,26 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 		return attribute.isMultiple();
 	}
 
+	/**
+	 * Decodes the JSON array written by
+	 * {@link #toJson(TLStructuredTypePart, StorageMapping, Collection)}.
+	 * 
+	 * <p>
+	 * A JSON number is decoded to a {@link Long}, if its literal is integral and fits into a
+	 * {@link Long}, and to a {@link Double} otherwise. If the application type of the given
+	 * {@link StorageMapping} is a {@link Date}, a JSON number is interpreted as {@link Date#getTime()
+	 * epoch milliseconds} of a {@link Date}. A JSON <code>null</code> is decoded to a
+	 * <code>null</code> element.
+	 * </p>
+	 * 
+	 * @param attribute
+	 *        The attribute being read, decides whether the result is ordered.
+	 * @param storageMapping
+	 *        The mapping transforming storage objects to business objects.
+	 * @param storageValue
+	 *        The stored JSON array, may be <code>null</code> or empty.
+	 * @return The decoded collection of business objects.
+	 */
 	private Collection<Object> fromJson(TLStructuredTypePart attribute, StorageMapping<?> storageMapping,
 			String storageValue) {
 		Collection<Object> result = attribute.isOrdered() ? new ArrayList<>() : new HashSet<>();
@@ -169,13 +204,20 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 				while (json.hasNext()) {
 					switch (json.peek()) {
 						case NUMBER:
-							result.add(storageMapping.getBusinessObject(json.nextDouble()));
+							// Note: Reading the literal keeps the precision of a long value that
+							// cannot be represented exactly as double.
+							Object numberValue = toNumberValue(storageMapping, json.nextString());
+							result.add(storageMapping.getBusinessObject(numberValue));
 							break;
 						case BOOLEAN:
 							result.add(storageMapping.getBusinessObject(json.nextBoolean()));
 							break;
 						case STRING:
 							result.add(storageMapping.getBusinessObject(json.nextString()));
+							break;
+						case NULL:
+							json.nextNull();
+							result.add(storageMapping.getBusinessObject(null));
 							break;
 						default:
 							json.skipValue();
@@ -188,6 +230,41 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Converts the literal of a JSON number to the storage object expected by the given
+	 * {@link StorageMapping}.
+	 * 
+	 * @param storageMapping
+	 *        The mapping that finally transforms the result to a business object.
+	 * @param literal
+	 *        The literal of the JSON number.
+	 * @return A {@link Date}, if the application type of the given mapping is a {@link Date}, the
+	 *         numeric value of the literal otherwise.
+	 */
+	private Object toNumberValue(StorageMapping<?> storageMapping, String literal) {
+		Number number = parseNumber(literal);
+		if (Date.class.isAssignableFrom(storageMapping.getApplicationType())) {
+			return new Date(number.longValue());
+		}
+		return number;
+	}
+
+	/**
+	 * Parses the literal of a JSON number to the most precise matching value type.
+	 * 
+	 * @param literal
+	 *        The literal of the JSON number.
+	 * @return A {@link Long}, if the literal denotes an integral value that fits into a
+	 *         {@link Long}, a {@link Double} otherwise.
+	 */
+	private static Number parseNumber(String literal) {
+		try {
+			return Long.valueOf(literal);
+		} catch (NumberFormatException ex) {
+			return Double.valueOf(literal);
+		}
 	}
 
 	@Override
@@ -226,7 +303,7 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 
 		if (isMultiple(attribute)) {
 			Collection<?> values = toCollection(value);
-			String stringValue = toJson(storageMapping, values);
+			String stringValue = toJson(attribute, storageMapping, values);
 			aMetaAttributed.tSetData(_storageAttribute, stringValue);
 		} else {
 			Object persistentValue = storageMapping.getStorageObject(value);
@@ -239,19 +316,47 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 		return value instanceof Collection<?> ? (Collection<?>) value : Collections.singletonList(value);
 	}
 
-	private String toJson(StorageMapping<?> storageMapping, Collection<?> values) {
+	/**
+	 * Encodes the given values as JSON array of their storage objects.
+	 * 
+	 * <p>
+	 * A {@link Number} is written as JSON number, a {@link Boolean} as JSON boolean, a
+	 * {@link String} as JSON string, a {@link Date} as JSON number holding its
+	 * {@link Date#getTime() epoch milliseconds}, and <code>null</code> as JSON <code>null</code>.
+	 * </p>
+	 * 
+	 * @param attribute
+	 *        The attribute being written, used for error reporting.
+	 * @param storageMapping
+	 *        The mapping transforming business objects to storage objects.
+	 * @param values
+	 *        The business objects to encode.
+	 * @return The JSON array to store.
+	 * @throws IllegalArgumentException
+	 *         If a storage object has a type that cannot be encoded.
+	 */
+	private String toJson(TLStructuredTypePart attribute, StorageMapping<?> storageMapping, Collection<?> values) {
 		StringBuilder buffer = new StringBuilder();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginArray();
 			for (Object element : values) {
 				Object persistentValue = storageMapping.getStorageObject(element);
 
-				if (persistentValue instanceof Number) {
-					json.value((Number) persistentValue);
-				} else if (persistentValue instanceof Boolean) {
-					json.value((Boolean) persistentValue);
+				if (persistentValue == null) {
+					json.nullValue();
+				} else if (persistentValue instanceof Number number) {
+					json.value(number);
+				} else if (persistentValue instanceof Boolean booleanValue) {
+					json.value(booleanValue.booleanValue());
+				} else if (persistentValue instanceof String stringValue) {
+					json.value(stringValue);
+				} else if (persistentValue instanceof Date date) {
+					json.value(date.getTime());
 				} else {
-					json.value((String) persistentValue);
+					throw new IllegalArgumentException("Value '" + persistentValue + "' ("
+						+ persistentValue.getClass().getName() + ") delivered by '"
+						+ storageMapping.getClass().getName() + "' cannot be stored in attribute " + attribute
+						+ ", only numbers, booleans, strings and dates are supported.");
 				}
 			}
 			json.endArray();

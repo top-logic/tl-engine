@@ -8,21 +8,26 @@ package com.top_logic.layout.react.field;
 import java.text.Format;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
-import com.top_logic.layout.react.control.form.ReactBooleanChoiceControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
@@ -40,6 +45,16 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
  * or another module registers further ones through {@link #register(Class, ReactFieldControlProvider)}.
  * A single field can deviate from its type's provider; how that is expressed is up to the editing
  * side, which passes the provider it resolved instead of asking the registry.
+ * </p>
+ *
+ * <p>
+ * Both halves of the decision are made here: which provider edits the value type, and how the
+ * multiplicity of the field is realized. A {@link FieldSpec#isMultiple() multi-valued} field whose
+ * provider edits one value at a time is wrapped in a {@link ReactValueListControl}, so that each
+ * element is edited by the very control its type asks for. An editing side therefore reaches the
+ * control through {@link #createControl(ReactContext, FieldSpec, FieldModel)} or
+ * {@link #createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)} rather than
+ * calling a provider itself.
  * </p>
  */
 public class FieldControlRegistry {
@@ -71,7 +86,8 @@ public class FieldControlRegistry {
 		register(Number.class,
 			(context, field, model) -> new ReactNumberInputControl(context, model, numberFormat(field)));
 		register(Date.class,
-			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind()));
+			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind(),
+				field.getDateFormat()));
 		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
@@ -131,24 +147,100 @@ public class FieldControlRegistry {
 	 */
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactFieldControlProvider provider = lookup(field.getValueType());
-		return (provider == null ? TEXT : provider).createControl(context, field, model);
+		return createControl(context, field, model, provider == null ? TEXT : provider);
 	}
 
 	/**
-	 * Edits a boolean value as a checkbox, or as radio buttons or a select when it
-	 * {@link FieldSpec#getBooleanPresentation() asks} for it.
+	 * Creates the control editing the given value with the given provider.
 	 *
 	 * <p>
-	 * A {@link FieldSpec#isTriState() tri-state} value keeps a state for "no value": the checkbox
-	 * gets a third state, the choice a third option.
+	 * The place where the multiplicity of a field is realized. A field holding
+	 * {@link FieldSpec#isMultiple() several values} whose provider
+	 * {@link ReactFieldControlProvider#editsCollections() edits one value at a time} is displayed as
+	 * a {@link ReactValueListControl}: one control per element, each created by the given provider
+	 * over the {@link FieldSpec#elementSpec() element specification}. Everything else is handed to
+	 * the provider as it stands, through
+	 * {@link ReactFieldControlProvider#createField(ReactContext, FieldSpec, FieldModel)}, which
+	 * applies what the specification says about the display of the control.
 	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param field
+	 *        What is being edited.
+	 * @param model
+	 *        Holds the edited value; the whole collection for a multi-valued field.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 * @return The control to display.
+	 */
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
+			ReactFieldControlProvider provider) {
+		if (field.isMultiple() && !provider.editsCollections()) {
+			return new ReactValueListControl(context, model, field, provider);
+		}
+		return provider.createField(context, field, model);
+	}
+
+	/**
+	 * Edits a boolean value the way the field {@link FieldSpec#getBooleanPresentation() asks} for.
+	 *
+	 * @see #createBooleanControl(ReactContext, FieldModel, BooleanPresentation, boolean)
 	 */
 	private static ReactControl createBooleanControl(ReactContext context, FieldSpec field, FieldModel model) {
-		BooleanPresentation presentation = field.getBooleanPresentation();
-		if (presentation == BooleanPresentation.CHECKBOX) {
-			return new ReactCheckboxControl(context, model, field.isTriState());
+		return createBooleanControl(context, model, field.getBooleanPresentation(), field.isTriState());
+	}
+
+	/**
+	 * Creates the control editing a boolean value in the given presentation.
+	 *
+	 * <p>
+	 * A checkbox and a switch show the value in place, while radio buttons and a select offer it as
+	 * a choice between yes and no: a {@link ReactDropdownSelectControl} choosing one of the two
+	 * values, labelled the way a boolean value is labelled everywhere else, so a field reads like
+	 * the table cell over the same attribute. Radio buttons stand side by side; the select opens a
+	 * list without an input to filter it by, there being nothing to search among two values.
+	 * </p>
+	 *
+	 * <p>
+	 * A tri-state value keeps a state for "no value": the checkbox gets a third state, the choice
+	 * an option for no value, and a switch - having no third position - stays a checkbox. A
+	 * two-valued choice always holds one of its values and offers no choice of no value, whether
+	 * the field is mandatory or not.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param model
+	 *        Holds the edited value.
+	 * @param presentation
+	 *        How the value is displayed.
+	 * @param triState
+	 *        Whether the value may also be unknown, {@code null}.
+	 * @return The control to display.
+	 */
+	public static ReactControl createBooleanControl(ReactContext context, FieldModel model,
+			BooleanPresentation presentation, boolean triState) {
+		if (presentation == BooleanPresentation.RADIO) {
+			return new ReactDropdownSelectControl(context, booleanChoice(model, triState),
+				MetaLabelProvider.INSTANCE, null, false, SelectDisplay.RADIO, Orientation.HORIZONTAL);
 		}
-		return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
+		if (presentation == BooleanPresentation.SELECT) {
+			ReactDropdownSelectControl control = new ReactDropdownSelectControl(context,
+				booleanChoice(model, triState), MetaLabelProvider.INSTANCE, null, false, SelectDisplay.DROPDOWN);
+			control.setFilter(false);
+			return control;
+		}
+		return new ReactCheckboxControl(context, model, presentation, triState);
+	}
+
+	/**
+	 * The given boolean field offered as a choice between yes and no, mandatory unless the value
+	 * may also be unknown.
+	 */
+	private static FixedOptionsFieldModel booleanChoice(FieldModel model, boolean triState) {
+		return new FixedOptionsFieldModel(model, List.of(Boolean.TRUE, Boolean.FALSE), false,
+			Boolean.valueOf(!triState));
 	}
 
 	/**

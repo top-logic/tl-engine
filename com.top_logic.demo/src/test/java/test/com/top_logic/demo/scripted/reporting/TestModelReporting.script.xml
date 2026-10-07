@@ -4,6 +4,23 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/create-A.xml"
+			template-name-comment="Element Anlegen"
+		>
+			<parameters>
+				<parameter name="ergebnis">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestModelReporting"
+					/>
+				</parameter>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestModelReporting"
+					/>
+				</parameter>
+			</parameters>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 			user-id="root"
 		>
@@ -91,6 +108,18 @@
 			user-id="root"
 		>
 			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Element/Action-Element-Loeschen.xml"
+			template-name-comment="Element Loeschen"
+		>
+			<parameters>
+				<parameter name="kontext">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestModelReporting"
+					/>
+				</parameter>
+			</parameters>
 		</action>
 	</actions>
 </action>

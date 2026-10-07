@@ -80,12 +80,15 @@ public class LogFileTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link LogFileTable} from configuration.
 	 */
 	@CalledByReflection
 	public LogFileTable(InstantiationContext context, Config config) {
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -125,6 +128,7 @@ public class LogFileTable implements UIElement {
 			});
 		}
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

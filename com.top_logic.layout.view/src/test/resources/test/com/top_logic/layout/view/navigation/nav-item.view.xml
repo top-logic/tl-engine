@@ -2,6 +2,7 @@
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
   <channels>
     <channel name="item" />
+    <channel name="raw" />
   </channels>
 
   <stack direction="column" />

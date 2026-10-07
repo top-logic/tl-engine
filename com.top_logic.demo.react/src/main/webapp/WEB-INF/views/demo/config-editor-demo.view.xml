@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Config Editor Demo</en>
 			<de>Konfigurationseditor-Demo</de>

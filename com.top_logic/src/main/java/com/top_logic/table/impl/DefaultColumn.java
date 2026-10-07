@@ -243,9 +243,9 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 *
 		 * <p>
 		 * A column whose {@link #renderer(CellRenderer) renderer} produces a control instead of
-		 * text ({@link CellContent.Raw}) takes part in a search only through this text: the
-		 * rendered content carries none. Set it to the same text the column displays, so that the
-		 * search finds what the user reads.
+		 * text ({@link com.top_logic.table.CellContent.Raw}) takes part in a search only through
+		 * this text: the rendered content carries none. Set it to the same text the column
+		 * displays, so that the search finds what the user reads.
 		 * </p>
 		 */
 		public Builder<R, V> searchText(Function<? super V, String> searchText) {

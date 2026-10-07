@@ -32,4 +32,11 @@ public final class TranslationServiceResetTask extends StateHandlingTask<StateHa
 			((TranslationService<?>) TranslationService.getInstance()).resetSummarySize();
 		}
 	}
+
+	@Override
+	public boolean isNodeLocal() {
+		// Resets the translation cache of the node it runs on; every node has its own.
+		return true;
+	}
+
 }

@@ -1,4 +1,4 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, rootClassName } from 'tl-react-bridge';
 
 /** How long to keep waiting for the GWT module to register itself, and how often to look. */
 const MOUNT_TIMEOUT_MS = 10000;
@@ -71,7 +71,7 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
         };
     }, [controlId, diagramJson]);
 
-    return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
+    return <div ref={ref} className={rootClassName(state)} style={{ width: '100%', height: '100%' }} />;
 }
 
 export default TLFlowDiagram;

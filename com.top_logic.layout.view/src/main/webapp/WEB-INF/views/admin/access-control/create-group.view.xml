@@ -14,10 +14,10 @@
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="name"/>
 			<field attribute="isSystem"/>
-			<field attribute="defaultGroup"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"

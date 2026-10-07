@@ -14,3 +14,5 @@
 /.worktrees
 /.mvn
 /.m2
+/**/.DS_Store
+/node/

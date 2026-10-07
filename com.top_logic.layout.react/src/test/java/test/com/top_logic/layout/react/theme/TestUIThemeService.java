@@ -6,6 +6,8 @@
 package test.com.top_logic.layout.react.theme;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Test;
@@ -67,6 +69,33 @@ public class TestUIThemeService extends TestCase {
 			+ "<theme name='midnight' color-scheme='dark' system-default='true'>"
 			+ "<color name='background' value='#000005'/>"
 			+ "</theme>");
+
+	/** An abstract base theme and two concrete themes extending it. */
+	private static final String ABSTRACT_BASE = config("light",
+		"<theme name='base' abstract='true'>"
+			+ "<color name='background' value='#ffffff'/>"
+			+ "<color name='text' value='#000000'/>"
+			+ "</theme>"
+			+ "<theme name='light' extends='base'>"
+			+ "<color name='accent' value='#0000ff'/>"
+			+ "</theme>"
+			+ "<theme name='dark' extends='base' color-scheme='dark' system-default='true'>"
+			+ "<color name='background' value='#000000'/>"
+			+ "</theme>");
+
+	/** An abstract theme configured as the default theme. */
+	private static final String ABSTRACT_DEFAULT = config("base",
+		"<theme name='base' abstract='true'>"
+			+ "<color name='background' value='#ffffff'/>"
+			+ "</theme>"
+			+ "<theme name='light' extends='base'/>");
+
+	/** An abstract theme marked as answering the operating system's preference. */
+	private static final String ABSTRACT_SYSTEM_DEFAULT = config("light",
+		"<theme name='base' abstract='true' color-scheme='dark' system-default='true'>"
+			+ "<color name='background' value='#000000'/>"
+			+ "</theme>"
+			+ "<theme name='light' extends='base' color-scheme='light'/>");
 
 	/**
 	 * Each theme declares the color scheme of its appearance beside its custom properties, and the
@@ -157,10 +186,94 @@ public class TestUIThemeService extends TestCase {
 	}
 
 	/**
+	 * The script names the design system's mode and density on the {@code html} element: the mode
+	 * follows the color scheme of the theme in effect, the density is set once to its default.
+	 */
+	public void testThemeScriptSetsDesignSystemModeAndDensity() throws ConfigurationException {
+		String script = script(service(LIGHT_AND_DARK));
+
+		assertTrue(script, script.contains("'" + UIThemeService.DS_MODE_ATTRIBUTE + "'"));
+		assertTrue(script, script.contains("'" + UIThemeService.DS_DENSITY_ATTRIBUTE + "'"));
+		assertTrue(script, script.contains("'" + UIThemeService.DS_DENSITY_NORMAL + "'"));
+		assertTrue(script, script.contains("var modes = {"));
+		assertTrue(script, script.contains("'dark': 'dark'"));
+		assertTrue(script, script.contains("modes[id] || 'light'"));
+	}
+
+	/**
 	 * Nothing is selected without a personal configuration to select it in.
 	 */
 	public void testNoSelectionWithoutPersonalConfiguration() throws ConfigurationException {
 		assertNull(service(LIGHT_AND_DARK).getSelectedThemeId());
+	}
+
+	/**
+	 * The themes extending an abstract one inherit its tokens, while the abstract theme itself is
+	 * not selectable.
+	 */
+	public void testAbstractThemeIsInheritedButNotSelectable() throws ConfigurationException {
+		UIThemeService service = service(ABSTRACT_BASE);
+
+		assertTrue(theme(service, "base").isAbstract());
+		assertEquals("#000000", theme(service, "light").getTokens().get("text"));
+		assertEquals("#0000ff", theme(service, "light").getTokens().get("accent"));
+		assertEquals("#000000", theme(service, "dark").getTokens().get("background"));
+		assertEquals("#000000", theme(service, "dark").getTokens().get("text"));
+
+		assertEquals(List.of("light", "dark"), ids(service.getSelectableThemes()));
+		assertEquals(List.of("base", "light", "dark"), ids(service.getThemes()));
+		assertFalse(service.isSelectable("base"));
+		assertTrue(service.isSelectable("light"));
+		assertFalse(service.isSelectable("undefined"));
+	}
+
+	/**
+	 * An abstract theme is put into effect nowhere, so neither the stylesheet nor the script names
+	 * it, while its tokens are part of the blocks of the themes extending it.
+	 */
+	public void testAbstractThemeNotEmitted() throws ConfigurationException {
+		UIThemeService service = service(ABSTRACT_BASE);
+		String css = css(service);
+
+		assertFalse(css, css.contains(selector("base")));
+		assertTrue(css, block(css, "light").contains("--text:#000000;"));
+		String script = script(service);
+		assertFalse(script, script.contains("'base'"));
+	}
+
+	/**
+	 * An abstract theme cannot be the default theme.
+	 */
+	public void testAbstractDefaultTheme() throws ConfigurationException {
+		BufferingProtocol log = new BufferingProtocol();
+		create(ABSTRACT_DEFAULT, log);
+
+		List<String> errors = log.getErrors();
+		assertEquals("Expected a single error, got: " + errors, 1, errors.size());
+		String error = errors.get(0);
+		assertTrue(error, error.contains("base") && error.contains("abstract"));
+	}
+
+	/**
+	 * An abstract theme cannot answer the operating system's preference.
+	 */
+	public void testAbstractSystemDefault() throws ConfigurationException {
+		BufferingProtocol log = new BufferingProtocol();
+		UIThemeService service = create(ABSTRACT_SYSTEM_DEFAULT, log);
+
+		List<String> errors = log.getErrors();
+		assertEquals("Expected a single error, got: " + errors, 1, errors.size());
+		String error = errors.get(0);
+		assertTrue(error, error.contains("base") && error.contains("abstract"));
+		assertEquals("light", service.getSystemTheme(ColorScheme.DARK).getId());
+	}
+
+	private static List<String> ids(Collection<UITheme> themes) {
+		List<String> result = new ArrayList<>();
+		for (UITheme theme : themes) {
+			result.add(theme.getId());
+		}
+		return result;
 	}
 
 	private static String config(String defaultTheme, String themes) {

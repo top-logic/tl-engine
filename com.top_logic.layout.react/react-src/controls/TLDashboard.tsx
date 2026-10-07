@@ -1,13 +1,26 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, FillBarrier, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { isInteractiveTarget } from './interactive';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
+
+/**
+ * What activating a tile offers: the name the tile is announced under, whether the activation is
+ * currently refused and the text explaining it.
+ */
+interface TileAction {
+  label: string;
+  disabled: boolean;
+  tooltip?: string | null;
+}
 
 interface TileDescriptor {
   id: string;
   width: 'quarter' | 'third' | 'half' | 'two-thirds' | 'full';
   rowSpan: number;
   control: unknown;
+  /** What the tile runs when activated, absent for a tile that only displays its content. */
+  action?: TileAction | null;
 }
 
 interface Placement {
@@ -80,7 +93,7 @@ function computeLayout(tiles: TileDescriptor[], cols: number): Placement[] {
   };
 
   for (const t of tiles) {
-    const rowSpan = safeCols <= 1 ? 1 : Math.max(1, t.rowSpan || 1);
+    const rowSpan = Math.max(1, t.rowSpan || 1);
     let span = Math.min(itemSpan(t.width, safeCols), safeCols);
 
     while (isOccupied(curRow, curCol)) {
@@ -145,6 +158,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
 
   const minColWidth = (state.minColWidth as string) ?? '16rem';
+  const rowHeight = (state.rowHeight as string) ?? '16rem';
   const tiles = ((state.children as TileDescriptor[]) ?? []).filter(t => t && t.id);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -222,9 +236,28 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     setDropTarget(null);
   }, []);
 
+  // --- Activation ---
+
+  const activateTile = useCallback((tileId: string) => {
+    sendCommand('activate', { tileId });
+  }, [sendCommand]);
+
+  /**
+   * A press anywhere on the tile activates it - except while the dashboard is rearranged, while
+   * the action is refused, and where the press landed on a descendant that answers it itself.
+   * The tile's own action button is such a descendant, and its click handler has already sent the
+   * activation, so the tile is activated exactly once however it was pressed.
+   */
+  const onTileClick = useCallback((e: React.MouseEvent<HTMLDivElement>, tile: TileDescriptor) => {
+    const action = tile.action;
+    if (!action || editMode || action.disabled || isInteractiveTarget(e)) return;
+    activateTile(tile.id);
+  }, [editMode, activateTile]);
+
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns: `repeat(${cols}, 1fr)`,
+    gridAutoRows: rowHeight,
     gap: '1rem',
   };
 
@@ -232,7 +265,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     <div
       id={controlId}
       ref={containerRef}
-      className={'tlDashboard' + (editMode ? ' tlDashboard--edit' : '')}
+      className={rootClassName(state, 'tlDashboard' + (editMode ? ' tlDashboard--edit' : ''))}
     >
       <div className="tlDashboard__grid" style={gridStyle}>
         {tiles.map(tile => {
@@ -242,7 +275,10 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
             gridColumn: `${p.colStart + 1} / ${p.colEnd + 1}`,
             gridRow: `${p.rowStart + 1} / ${p.rowEnd + 1}`,
           };
+          const action = tile.action;
           const classes = ['tlDashboard__tile'];
+          if (action) classes.push('tlDashboard__tile--action');
+          if (action && action.disabled) classes.push('tlDashboard__tile--disabled');
           if (draggedId === tile.id) classes.push('tlDashboard__tile--dragging');
           if (dropTarget && dropTarget.id === tile.id) {
             classes.push(dropTarget.before ? 'tlDashboard__tile--dropBefore' : 'tlDashboard__tile--dropAfter');
@@ -253,13 +289,32 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
               className={classes.join(' ')}
               style={style}
               draggable={editMode}
+              onClick={action ? e => onTileClick(e, tile) : undefined}
+              data-tooltip={action && action.tooltip ? `text:${action.tooltip}` : undefined}
               onDragStart={e => onDragStart(e, tile.id)}
               onDragOver={e => onDragOver(e, tile.id)}
               onDragLeave={onDragLeave}
               onDrop={e => onDrop(e, tile.id)}
               onDragEnd={onDragEnd}
             >
-              <TLChild control={tile.control} />
+              {action && (
+                // The tile's accessible name and its keyboard operation: a button of its own, out
+                // of sight but in the tab order, activated by Enter and Space as any button is.
+                // While the tiles are rearranged it steps aside, so tabbing does not reach an
+                // action the dashboard currently does not offer.
+                <button
+                  type="button"
+                  className="tlDashboard__tileAction"
+                  disabled={action.disabled}
+                  tabIndex={editMode ? -1 : 0}
+                  onClick={() => activateTile(tile.id)}
+                >
+                  {action.label}
+                </button>
+              )}
+              <FillBarrier>
+                <TLChild control={tile.control} />
+              </FillBarrier>
               {editMode && <div className="tlDashboard__overlay" />}
             </div>
           );

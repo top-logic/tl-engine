@@ -156,6 +156,47 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	}
 
 	/**
+	 * A {@link LoginDeniedException} reporting that an external authentication has verified the
+	 * identity of a user, but this application has no account for the name that was authenticated.
+	 * 
+	 * <p>
+	 * The distinction matters for the answer given to the user: the user is who they claim to be, so
+	 * the application may say that the account is missing and whom to ask for it, instead of
+	 * offering the login mask again. Denials in which the identity is not established (a wrong
+	 * password, for example) must stay {@link LoginDeniedException}s, since a distinct answer would
+	 * disclose whether an account exists.
+	 * </p>
+	 * 
+	 * @see ExternalUserMapping#findAccount(String)
+	 */
+	public static class UnknownAccountException extends LoginDeniedException {
+
+		private final String _loginName;
+
+		/**
+		 * Creates a {@link UnknownAccountException}.
+		 * 
+		 * @param loginName
+		 *        See {@link #getLoginName()}.
+		 * @param message
+		 *        Must not be <code>null</code>.
+		 */
+		public UnknownAccountException(String loginName, String message) {
+			super(message);
+			_loginName = loginName;
+		}
+
+		/**
+		 * The name the external authentication system has authenticated, for which this application
+		 * has no (alive) account.
+		 */
+		public String getLoginName() {
+			return _loginName;
+		}
+
+	}
+
+	/**
 	 * A {@link RuntimeException} indicating that the login has failed because of an error. Use this
 	 * if the access was not simply denied, but the check failed unexpected.
 	 * 

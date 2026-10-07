@@ -1,5 +1,7 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -8,8 +10,14 @@ const { useCallback } = React;
  *
  * Which HTML input it is - a date, a time of day, or both - the server decides from the attribute's
  * type and states in `inputType`; the value is exchanged in the ISO form belonging to that input.
+ *
+ * A read-only field shows the localized value as a tl-field-value; a disabled field renders the
+ * input as an inactive one (native `disabled`, see showsValueOnly).
  */
-const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<DatePickerStateJson>>();
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -19,34 +27,24 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
     [setValue]
   );
 
-  if (state.editable === false) {
-    // View mode: show the localized value (e.g. "01.06.2026") supplied by the server, falling
+  if (showsValueOnly(state)) {
+    // Read-only: show the localized value (e.g. "01.06.2026") supplied by the server, falling
     // back to the ISO value if no localized form was emitted.
-    const display = (state.displayValue as string) ?? (value as string) ?? '';
-    return (
-      <span id={controlId} className="tlReactDatePicker tlReactDatePicker--immutable">
-        {display}
-      </span>
-    );
+    const display = state.displayValue ?? (value as string) ?? '';
+    return <FieldValue id={controlId} className={rootClassName(state)} text={display} />;
   }
-
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const cls = [
-    'tlReactDatePicker',
-    hasError ? 'tlReactDatePicker--error' : '',
-    !hasError && hasWarnings ? 'tlReactDatePicker--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
       <input
-        type={(state.inputType as string) ?? 'date'}
+        type={state.inputType ?? 'date'}
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}
-        className={cls}
-        aria-invalid={hasError || undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
+        id={inputId}
+        {...labelProps}
       />
     </span>
   );

@@ -16,6 +16,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
@@ -95,8 +97,15 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/**
 	 * A bounded item count.
+	 *
+	 * <p>
+	 * A count of zero or less is questioned but not refused: the {@link Positive} constraint is
+	 * declared as a warning, so the demo has a warning to show next to the violation of
+	 * {@link #getOwner()}.
+	 * </p>
 	 */
 	@Name(COUNT)
+	@Constraint(value = Positive.class, asWarning = true)
 	int getCount();
 
 	/**

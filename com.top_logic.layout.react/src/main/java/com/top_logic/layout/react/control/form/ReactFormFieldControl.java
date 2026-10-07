@@ -7,6 +7,8 @@ package com.top_logic.layout.react.control.form;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -15,6 +17,10 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.layout.react.state.TypingFieldState;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -27,8 +33,8 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * On initial render, the full field state (value, editable, mandatory, errors, label, tooltip) is
- * sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
+ * On initial render, the full field state (value, editable, disabled, mandatory, errors, label,
+ * tooltip) is sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
  * </p>
  */
 public class ReactFormFieldControl extends ReactControl {
@@ -39,61 +45,18 @@ public class ReactFormFieldControl extends ReactControl {
 	/** Command sent by the client when an edited field is committed (loses focus). */
 	protected static final String COMMIT_COMMAND = "commit";
 
-	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
-	protected static final String COMMIT_ON_BLUR = "commitOnBlur";
-
-	/**
-	 * State key telling the client to hold a typed value back until the field loses focus, instead
-	 * of sending it while the user is still typing.
-	 *
-	 * @see #setSendValueOnBlur(boolean)
-	 */
-	protected static final String SEND_VALUE_ON_BLUR = "sendValueOnBlur";
-
-	/** State key for the field value. */
-	protected static final String VALUE = "value";
-
-	/** State key for the placeholder shown while the field is empty (edit mode). */
-	protected static final String PLACEHOLDER = "placeholder";
-
-	/** State key for whether the text field renders as a multi-line text area. */
-	protected static final String MULTILINE = "multiline";
-
-	/** State key for the number of visible rows of a multi-line text area. */
-	protected static final String ROWS = "rows";
-
-	/** State key for whether the field is editable. */
-	protected static final String EDITABLE = "editable";
-
-	/** State key for whether the field is mandatory. */
-	protected static final String MANDATORY = "mandatory";
-
-	/** State key for whether {@code null} is a legal value for the field. */
-	protected static final String NULLABLE = "nullable";
-
-	/** State key for whether the field has a validation error. */
-	protected static final String HAS_ERROR = "hasError";
-
-	/** State key for the error message text. */
-	protected static final String ERROR_MESSAGE = "errorMessage";
-
-	/** State key for whether the field has validation warnings. */
-	protected static final String HAS_WARNINGS = "hasWarnings";
-
-	/** State key for the field label. */
-	protected static final String LABEL = "label";
-
-	/** State key for the tooltip text. */
-	protected static final String TOOLTIP = "tooltip";
-
-	/** State key for whether the control is hidden on the client. */
-	protected static final String HIDDEN = "hidden";
+	/** Command sent by the client when the user has finished entering a value. */
+	public static final String SUBMIT_COMMAND = "submit";
 
 	private final FieldModel _fieldModel;
 
 	private FieldModelListener _modelListener;
 
 	private ReactControl _editModeAdornment;
+
+	private Function<Object, HandlerResult> _submitListener;
+
+	private boolean _multiline;
 
 	/**
 	 * While handling a client {@code valueChanged}, the value the client sent — so the model
@@ -138,10 +101,11 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 */
 	private void initFieldState() {
-		putState(VALUE, _fieldModel.getValue());
+		putState(FieldState.VALUE__PROP, _fieldModel.getValue());
 		setEditable(_fieldModel.isEditable());
+		setDisabled(_fieldModel.isDisabled());
 		setMandatory(_fieldModel.isMandatory());
-		putState(NULLABLE, _fieldModel.isNullable());
+		putState(FieldState.NULLABLE__PROP, _fieldModel.isNullable());
 		setHasError(_fieldModel.hasError());
 		setHasWarnings(_fieldModel.hasWarnings());
 		if (_fieldModel.hasError()) {
@@ -150,9 +114,9 @@ public class ReactFormFieldControl extends ReactControl {
 		// Display properties from FormFieldAdapter.
 		if (_fieldModel instanceof FormFieldAdapter) {
 			FormFieldAdapter adapter = (FormFieldAdapter) _fieldModel;
-			putState(LABEL, adapter.getLabel());
-			putState(TOOLTIP, adapter.getTooltip());
-			putState(HIDDEN, Boolean.valueOf(!adapter.isVisible()));
+			putState(FieldState.LABEL__PROP, adapter.getLabel());
+			putState(FieldState.TOOLTIP__PROP, adapter.getTooltip());
+			putState(FieldState.HIDDEN__PROP, Boolean.valueOf(!adapter.isVisible()));
 		}
 	}
 
@@ -191,6 +155,11 @@ public class ReactFormFieldControl extends ReactControl {
 			}
 
 			@Override
+			public void onDisabledChanged(FieldModel source, boolean disabled) {
+				setDisabled(disabled);
+			}
+
+			@Override
 			public void onValidationChanged(FieldModel source) {
 				setHasError(source.hasError());
 				setHasWarnings(source.hasWarnings());
@@ -217,7 +186,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The new value.
 	 */
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		putState(VALUE, newValue);
+		putState(FieldState.VALUE__PROP, newValue);
 	}
 
 	/**
@@ -231,10 +200,19 @@ public class ReactFormFieldControl extends ReactControl {
 	 * Updates the editable state.
 	 */
 	protected void setEditable(boolean editable) {
-		putState(EDITABLE, editable);
+		putState(FieldState.EDITABLE__PROP, editable);
 		if (_editModeAdornment != null) {
 			_editModeAdornment.setHidden(!editable);
 		}
+	}
+
+	/**
+	 * Updates whether the non-editable field is presented as an inactive input.
+	 *
+	 * @see FieldModel#isDisabled()
+	 */
+	protected void setDisabled(boolean disabled) {
+		putState(FieldState.DISABLED__PROP, disabled);
 	}
 
 	/**
@@ -248,9 +226,69 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/**
 	 * Updates the placeholder shown while the field is empty (edit mode).
+	 *
+	 * <p>
+	 * Set from the {@link com.top_logic.layout.react.field.FieldSpec} describing the field, so that
+	 * every side building a field control can state one, and by a control that computes a
+	 * placeholder of its own from the value it displays.
+	 * </p>
 	 */
-	protected void setPlaceholder(String placeholder) {
-		putState(PLACEHOLDER, placeholder);
+	public void setPlaceholder(String placeholder) {
+		putState(FieldState.PLACEHOLDER__PROP, placeholder);
+	}
+
+	/**
+	 * Shows the given icon inside the input, ahead of what is typed.
+	 *
+	 * <p>
+	 * What kind of input this is, said as a picture: the magnifier of a search box, the envelope of
+	 * a mail address. The icon is decoration - it answers no click and carries no accessible name -
+	 * so the field is still named by its label or its {@link #setPlaceholder(String) placeholder}.
+	 * </p>
+	 *
+	 * @param icon
+	 *        The encoded form of a {@link com.top_logic.layout.basic.ThemeImage}, or {@code null}
+	 *        for an input without one. Honoured by the single-line text input.
+	 */
+	public void setIcon(String icon) {
+		putState(TextInputState.ICON__PROP, icon);
+	}
+
+	/**
+	 * Offers a button that empties the input.
+	 *
+	 * <p>
+	 * The button is shown only while the field holds a value and is
+	 * {@link com.top_logic.layout.form.model.FieldModel#isEditable() editable}, and it writes the
+	 * empty value at once rather than after the {@link #setDebounce(Long) delay}. For a value that
+	 * is taken back as often as it is given - the term a list is searched by - where emptying the
+	 * field is a step of its own. Honoured by the single-line text input.
+	 * </p>
+	 */
+	public void setClearable(boolean clearable) {
+		putState(TextInputState.CLEARABLE__PROP, clearable);
+	}
+
+	/**
+	 * Holds a typed value back for the given number of milliseconds before sending it, instead of
+	 * for the span a typed field uses by default.
+	 *
+	 * <p>
+	 * The time after the last keystroke before what is typed reaches the server. A shorter span
+	 * makes an answer computed from the value - the rows a search narrows to - follow the typing
+	 * more closely, at the price of more round-trips; a longer one waits for the user to stop.
+	 * </p>
+	 *
+	 * <p>
+	 * A field that {@link #setSendValueOnBlur(boolean) sends its value on blur} ignores the span
+	 * and holds a typed value back until the field is left.
+	 * </p>
+	 *
+	 * @param debounce
+	 *        The span in milliseconds, or {@code null} for the default of the field.
+	 */
+	public void setDebounce(Long debounce) {
+		putState(TypingFieldState.DEBOUNCE_MS__PROP, debounce);
 	}
 
 	/**
@@ -260,8 +298,53 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The number of visible text rows.
 	 */
 	public void setMultiline(int rows) {
-		putState(MULTILINE, Boolean.TRUE);
-		putState(ROWS, Integer.valueOf(rows));
+		_multiline = true;
+		putState(TextInputState.MULTILINE__PROP, Boolean.TRUE);
+		putState(TextInputState.ROWS__PROP, Integer.valueOf(rows));
+	}
+
+	/**
+	 * Whether the field is rendered as a multi-line text area.
+	 *
+	 * @see #setMultiline(int)
+	 */
+	protected final boolean isMultiline() {
+		return _multiline;
+	}
+
+	/**
+	 * Whether the user says when the value entered in this field is complete, instead of every
+	 * change of the value being complete in itself.
+	 *
+	 * <p>
+	 * True for a field the user types in: what is typed is complete when Enter is pressed, not
+	 * while it is still being written. A field that is clicked or picked from - a checkbox, a
+	 * dropdown, a date picker - has no such gesture, and there every value the user produces is
+	 * already the finished one.
+	 * </p>
+	 */
+	public boolean hasSubmitGesture() {
+		return false;
+	}
+
+	/**
+	 * Registers the listener reporting the value the user has finished entering.
+	 *
+	 * <p>
+	 * The value has reached the {@link #getFieldModel() field model} before the listener runs, so
+	 * everything bound to the field sees it. Only a field that
+	 * {@link #hasSubmitGesture() has a submit gesture} reports here; for any other field the value
+	 * itself is what to follow.
+	 * </p>
+	 *
+	 * @param listener
+	 *        Receives the submitted value and returns the result of what the submit triggers,
+	 *        which is reported as the result of the client's submit; {@code null} to stop reporting
+	 *        submits.
+	 */
+	public void setSubmitListener(Function<Object, HandlerResult> listener) {
+		_submitListener = listener;
+		putState(FieldState.SUBMIT_ON_ENTER__PROP, Boolean.valueOf(listener != null && hasSubmitGesture()));
 	}
 
 	/**
@@ -286,35 +369,52 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 */
 	public void setSendValueOnBlur(boolean sendOnBlur) {
-		putState(SEND_VALUE_ON_BLUR, sendOnBlur);
+		putState(TypingFieldState.SEND_VALUE_ON_BLUR__PROP, sendOnBlur);
+	}
+
+	/**
+	 * The display of a field beyond the value it holds: the icon it carries, whether it offers a
+	 * button that empties it, and how long it waits before sending what is typed.
+	 *
+	 * <p>
+	 * Each of the three is how the input looks and how fast it reports, not what it says. The
+	 * {@link FieldState#PLACEHOLDER__PROP placeholder} stays in the projection instead, being the text a
+	 * label-less input names itself by, which is what an agent reads to tell one input from
+	 * another.
+	 * </p>
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), TextInputState.ICON__PROP,
+			TextInputState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP);
 	}
 
 	/**
 	 * Updates the mandatory state.
 	 */
 	protected void setMandatory(boolean mandatory) {
-		putState(MANDATORY, mandatory);
+		putState(FieldState.MANDATORY__PROP, mandatory);
 	}
 
 	/**
 	 * Updates the error flag.
 	 */
 	protected void setHasError(boolean hasError) {
-		putState(HAS_ERROR, hasError);
+		putState(FieldState.HAS_ERROR__PROP, hasError);
 	}
 
 	/**
 	 * Updates the warnings flag.
 	 */
 	protected void setHasWarnings(boolean hasWarnings) {
-		putState(HAS_WARNINGS, hasWarnings);
+		putState(FieldState.HAS_WARNINGS__PROP, hasWarnings);
 	}
 
 	/**
 	 * Updates the error message.
 	 */
 	protected void setErrorMessage(String message) {
-		putState(ERROR_MESSAGE, message);
+		putState(FieldState.ERROR_MESSAGE__PROP, message);
 	}
 
 	/**
@@ -343,6 +443,25 @@ public class ReactFormFieldControl extends ReactControl {
 			return;
 		}
 		onCommit();
+	}
+
+	/**
+	 * Handles the submit the client sends when the user has finished entering a value: stores the
+	 * value like a {@link #CMD_VALUE_CHANGED}, then reports it to the
+	 * {@link #setSubmitListener(Function) submit listener}, whose result is the result of the
+	 * submit.
+	 */
+	@ReactCommandHandler(SUBMIT_COMMAND)
+	final HandlerResult handleSubmit(FieldSubmitArguments args) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		applyRawClientValue(args.getValue());
+		Function<Object, HandlerResult> listener = _submitListener;
+		if (listener == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return listener.apply(_fieldModel.getValue());
 	}
 
 	/**

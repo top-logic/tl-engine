@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Two accordions side by side. The left one is a list of questions, any number of which may be open
+	at a time. The right one is exclusive: expanding one of its sections collapses the one expanded
+	before. Both remember per user which sections are expanded; the right one stores this under a
+	personalization key of its own, so the two do not share their expansion.
+	
+	Every section is the command scope of its content: the header of the "Project" section shows the
+	edit and save commands of the form inside it as soon as the section has been expanded once, and
+	the "Notes" section carries a header command of its own. The content of a section is created when
+	the section is expanded for the first time and kept while it is collapsed, so what is typed into
+	the editor of the "Scratch pad" section, or into the form while it is being edited, is still there
+	after collapsing and expanding the section again.
+-->
+<view>
+	<channels>
+		<!-- The project the form of the "Project" section shows: one of the seeded demo projects. -->
+		<derived-channel name="project"
+			expr="all(`tl.demo.projectManagement:ProjectScope`).firstElement()"
+		/>
+	</channels>
+	<panel with-inset="true">
+		<title>
+			<en>Accordion</en>
+			<de>Akkordeon</de>
+		</title>
+
+		<text>
+			<label>
+				<en>Click a section header to expand or collapse it. Which sections are expanded is remembered across logins.</en>
+				<de>Ein Klick auf die Kopfzeile eines Abschnitts klappt ihn auf oder zu. Welche Abschnitte aufgeklappt sind, bleibt über die Anmeldung hinaus erhalten.</de>
+			</label>
+		</text>
+
+		<columns
+			breakpoint="48rem"
+			gap="default"
+		>
+			<column>
+				<accordion>
+					<section id="faq-what"
+						expanded="true"
+					>
+						<label>
+							<en>What is an accordion?</en>
+							<de>Was ist ein Akkordeon?</de>
+						</label>
+						<text>
+							<label>
+								<en>A stack of sections, each with a header and a body that can be expanded or collapsed. In this accordion any number of sections may be open at the same time.</en>
+								<de>Ein Stapel von Abschnitten, jeder mit einer Kopfzeile und einem Inhalt, der auf- und zugeklappt werden kann. In diesem Akkordeon dürfen beliebig viele Abschnitte gleichzeitig offen sein.</de>
+							</label>
+						</text>
+					</section>
+					<section id="faq-remember"
+						icon="css:bi bi-bookmark"
+					>
+						<label>
+							<en>Is the expansion remembered?</en>
+							<de>Wird das Aufklappen gespeichert?</de>
+						</label>
+						<text>
+							<label>
+								<en>Yes. Which sections are expanded is stored per user. Collapse the first question, log out and in again: it stays collapsed.</en>
+								<de>Ja. Welche Abschnitte aufgeklappt sind, wird pro Benutzer gespeichert. Die erste Frage zuklappen, ab- und wieder anmelden: Sie bleibt zugeklappt.</de>
+							</label>
+						</text>
+					</section>
+					<section id="faq-keyboard">
+						<label>
+							<en>Can it be used with the keyboard?</en>
+							<de>Ist es mit der Tastatur bedienbar?</de>
+						</label>
+						<text>
+							<label>
+								<en>Every header is a button: Enter or Space expands or collapses the section, the arrow keys up and down move to the previous and next header, Home and End to the first and last one.</en>
+								<de>Jede Kopfzeile ist eine Schaltfläche: Eingabe oder Leertaste klappt den Abschnitt auf oder zu, die Pfeiltasten hoch und runter wechseln zur vorigen und nächsten Kopfzeile, Pos1 und Ende zur ersten und letzten.</de>
+							</label>
+						</text>
+					</section>
+					<section id="faq-content">
+						<label>
+							<en>What can a section contain?</en>
+							<de>Was kann ein Abschnitt enthalten?</de>
+						</label>
+						<text>
+							<label>
+								<en>Any element: text as here, a form, a table or an editor, as the accordion beside this one shows.</en>
+								<de>Jedes Element: Text wie hier, ein Formular, eine Tabelle oder einen Editor, wie das Akkordeon daneben zeigt.</de>
+							</label>
+						</text>
+					</section>
+				</accordion>
+			</column>
+			<column>
+				<accordion
+					exclusive="true"
+					personalization-key="accordion-demo-settings"
+				>
+					<section id="project"
+						expanded="true"
+						icon="css:bi bi-kanban"
+					>
+						<label>
+							<en>Project</en>
+							<de>Projekt</de>
+						</label>
+						<form input="project">
+							<field attribute="name"/>
+							<field attribute="description"/>
+						</form>
+					</section>
+					<section id="notes"
+						icon="css:bi bi-info-circle"
+					>
+						<label>
+							<en>Notes</en>
+							<de>Hinweise</de>
+						</label>
+						<commands>
+							<generic-command
+								image="css:bi bi-bell"
+								placement="TOOLBAR"
+							>
+								<label>
+									<en>Show notice</en>
+									<de>Hinweis anzeigen</de>
+								</label>
+								<notify expr="x -> #('The header command of the Notes section was executed.'@en, 'Der Kopfzeilenbefehl des Abschnitts Hinweise wurde ausgeführt.'@de)"/>
+							</generic-command>
+						</commands>
+						<text>
+							<label>
+								<en>The bell in the header of this section is a command of the section itself. It is shown whether the section is expanded or not.</en>
+								<de>Die Glocke in der Kopfzeile dieses Abschnitts ist ein Befehl des Abschnitts selbst. Sie wird angezeigt, ob der Abschnitt aufgeklappt ist oder nicht.</de>
+							</label>
+						</text>
+					</section>
+					<section id="scratch-pad"
+						icon="css:bi bi-pencil-square"
+					>
+						<label>
+							<en>Scratch pad</en>
+							<de>Notizblock</de>
+						</label>
+						<text>
+							<label>
+								<en>Type something into the editor, collapse the section and expand it again: the text is still there.</en>
+								<de>Etwas in den Editor tippen, den Abschnitt zuklappen und wieder aufklappen: Der Text ist noch da.</de>
+							</label>
+						</text>
+						<tlscript-editor value="x -> $x"/>
+					</section>
+				</accordion>
+			</column>
+		</columns>
+	</panel>
+</view>

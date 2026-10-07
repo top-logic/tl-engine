@@ -149,4 +149,21 @@ public class TestTreeRowSource extends TestCase {
 		assertEquals(List.of("a", "b"), names(source));
 	}
 
+	/**
+	 * Tests that {@link TreeRowSource#containedKeys(java.util.Collection)} answers for the tree, not
+	 * for the rows displayed of it: a node below a collapsed node, or one the filter hides, is
+	 * contained, a node that is not part of the tree is not.
+	 */
+	public void testContainedKeysIgnoresExpansionAndFilter() {
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
+		Node deep = _root1._children.get(1)._children.get(0);
+		Node foreign = new Node("x");
+
+		assertEquals(java.util.Set.of(deep), source.containedKeys(List.of(deep, foreign)));
+
+		source.withFilter(new FilterSpec(Map.of("name", new Contains("b"))));
+		assertEquals(List.of("b"), names(source));
+		assertEquals(java.util.Set.of(deep), source.containedKeys(List.of(deep, foreign)));
+	}
+
 }

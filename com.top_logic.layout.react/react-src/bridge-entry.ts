@@ -1,5 +1,7 @@
 // Bridge API
-export { register, getComponent } from './bridge/registry';
+export { register, replace, getComponent } from './bridge/registry';
+export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-wrapper';
+export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
 export { connect, subscribe, unsubscribe } from './bridge/sse-client';
 export {
   mount,
@@ -12,23 +14,77 @@ export {
   useTLUpload,
   useTLDataUrl,
   useTLFieldValue,
+  useTLSubmitOnEnter,
   createChildContext,
   TLControlContext,
   KeyboardScopeProvider,
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
-export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap';
-export { CMD_VALUE_CHANGED } from './bridge/command-channel';
-export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
-export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
+export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
+export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
+export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
+export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
+export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
+export type { TLDragPayload, TLDropPosition, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
+export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export type { PointerDragOptions } from './bridge/pointer-drag';
+export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
+export type { InsideRef } from './bridge/outside-press';
+export { usePopover } from './bridge/popover';
+export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+// A popover surface needs both its own ref and the hook's setFloating on one element; controls
+// must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
+export { useMergeRefs } from '@floating-ui/react';
+export { useListReorder } from './bridge/list-reorder';
+export type {
+  ListReorder,
+  ListReorderOptions,
+  ReorderAxis,
+  ReorderContainerProps,
+  ReorderDropTarget,
+  ReorderHandleProps,
+  ReorderItemProps,
+  ReorderItemState,
+  ReorderSide,
+} from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
+// The state contract of the replaceable components, generated from state.proto: one message per
+// component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
+export type {
+  ControlStateJson,
+  FieldStateJson,
+  TypingFieldStateJson,
+  ChildControlJson,
+  ButtonStateJson,
+  ToggleButtonStateJson,
+  CheckboxStateJson,
+  TextInputStateJson,
+  PasswordInputStateJson,
+  NumberInputStateJson,
+  DatePickerStateJson,
+  SelectStateJson,
+  DropdownSelectStateJson,
+  TabBarStateJson,
+  AccordionStateJson,
+  WindowStateJson,
+  DialogStateJson,
+  MenuStateJson,
+  SnackbarStateJson,
+  AlertStateJson,
+} from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
+export { rootClassName } from './bridge/css';
+export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
+export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
 export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
+export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
 
 // Re-export React so that control bundles use the SAME React instance.
@@ -43,6 +99,13 @@ export type { ChildDescriptor } from './bridge/TLChild';
 import React from 'react';
 import ReactDOM from 'react-dom';
 export { React, ReactDOM };
+
+// Re-export the react-dom entry points that controls legitimately need. Without these, a control
+// has no rule-conforming way to create a portal and is forced to `import { createPortal } from
+// 'react-dom'` -- which drags a second copy of React *and* react-dom into tl-react-controls.js,
+// exactly what the note above forbids.
+export const createPortal = ReactDOM.createPortal;
+export const flushSync = ReactDOM.flushSync;
 
 // Expose bridge functions on window so that server-generated inline scripts
 // (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code
@@ -75,9 +138,14 @@ import { initKeyboardDispatcher } from './bridge/keyboard-dispatcher';
 initKeyboardDispatcher();
 
 // Initialize the "select view" picker (cross-window pick mode for the View Designer).
-import { initViewPicker } from './bridge/view-picker';
-initViewPicker();
+import { initElementPicker } from './bridge/element-picker';
+initElementPicker();
 
 // Install the single document-level focus-trap listener (confines focus to modal surfaces).
 import { initFocusTrap } from './bridge/focus-trap';
 initFocusTrap();
+
+// Install the document listener that marks the start of a press gesture, ahead of the listeners
+// with which the open surfaces close themselves on an outside press.
+import { initOutsidePress } from './bridge/outside-press';
+initOutsidePress();

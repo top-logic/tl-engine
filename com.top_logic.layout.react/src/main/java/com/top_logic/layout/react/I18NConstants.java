@@ -37,6 +37,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_COMMAND_FAILED;
 
 	/**
+	 * @en Files up to {0} can be uploaded.
+	 */
+	public static ResKey1 ERROR_UPLOAD_TOO_LARGE__LIMIT;
+
+	/**
 	 * @en React button clicked.
 	 */
 	public static ResKey REACT_BUTTON_CLICK;
@@ -50,11 +55,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Internal error in React integration.
 	 */
 	public static ResKey ERROR_INTERNAL;
-
-	/**
-	 * @en The command is currently not executable.
-	 */
-	public static ResKey ERROR_COMMAND_NOT_EXECUTABLE;
 
 	/**
 	 * @en The requested view is currently not available.
@@ -319,16 +319,28 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_PHOTO_CAPTURE_CAPTURE;
 
 	/**
-	 * @en Captured photo
+	 * @en Image
 	 */
-	@CustomKey("js.photoViewer.alt")
-	public static ResKey JS_PHOTO_VIEWER_ALT;
+	@CustomKey("js.image.alt")
+	public static ResKey JS_IMAGE_ALT;
 
 	/**
 	 * @en PDF document
 	 */
 	@CustomKey("js.pdfViewer.title")
 	public static ResKey JS_PDF_VIEWER_TITLE;
+
+	/**
+	 * @en HTML document
+	 */
+	@CustomKey("js.html.document")
+	public static ResKey JS_HTML_DOCUMENT;
+
+	/**
+	 * @en Print
+	 */
+	@CustomKey("js.html.print")
+	public static ResKey JS_HTML_PRINT;
 
 	/**
 	 * @en No document available
@@ -378,6 +390,28 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Breadcrumb client-side i18n keys --
+
+	/**
+	 * @en Breadcrumb
+	 */
+	@CustomKey("js.breadcrumb.label")
+	public static ResKey JS_BREADCRUMB_LABEL;
+
+	// -- Toolbar client-side i18n keys --
+
+	/**
+	 * @en Toolbar
+	 */
+	@CustomKey("js.toolbar.label")
+	public static ResKey JS_TOOLBAR_LABEL;
+
+	/**
+	 * @en More actions
+	 */
+	@CustomKey("js.toolbar.overflow")
+	public static ResKey JS_TOOLBAR_OVERFLOW;
+
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */
@@ -399,6 +433,45 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invalid date: {0}
 	 */
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
+
+	/**
+	 * @en Invalid web address: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_URL__VALUE;
+
+	// -- Text input client-side i18n keys --
+
+	/**
+	 * @en Open in a new tab
+	 */
+	@CustomKey("js.textInput.open")
+	public static ResKey JS_TEXT_INPUT_OPEN;
+
+	/**
+	 * @en Clear the input
+	 */
+	@CustomKey("js.textInput.clear")
+	public static ResKey JS_TEXT_INPUT_CLEAR;
+
+	// -- Value list client-side i18n keys --
+
+	/**
+	 * @en Add a value
+	 */
+	@CustomKey("js.valueList.add")
+	public static ResKey JS_VALUE_LIST_ADD;
+
+	/**
+	 * @en Remove this value
+	 */
+	@CustomKey("js.valueList.remove")
+	public static ResKey JS_VALUE_LIST_REMOVE;
+
+	/**
+	 * @en Move this value
+	 */
+	@CustomKey("js.valueList.move")
+	public static ResKey JS_VALUE_LIST_MOVE;
 
 	/**
 	 * @en No value
@@ -439,6 +512,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;
+
+	// -- Form field client-side i18n keys --
+
+	/**
+	 * @en Help
+	 */
+	@CustomKey("js.formField.help")
+	public static ResKey JS_FORM_FIELD_HELP;
+
+	// -- Tree client-side i18n keys --
+
+	/**
+	 * @en Expand
+	 */
+	@CustomKey("js.treeView.expand")
+	public static ResKey JS_TREE_VIEW_EXPAND;
+
+	/**
+	 * @en Collapse
+	 */
+	@CustomKey("js.treeView.collapse")
+	public static ResKey JS_TREE_VIEW_COLLAPSE;
 
 	// -- Form group client-side i18n keys --
 
@@ -782,6 +877,22 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
 
+	// -- Alert client-side i18n keys --
+
+	/**
+	 * @en Dismiss
+	 */
+	@CustomKey("js.alert.dismiss")
+	public static ResKey JS_ALERT_DISMISS;
+
+	// -- Snackbar client-side i18n keys --
+
+	/**
+	 * @en Dismiss
+	 */
+	@CustomKey("js.snackbar.dismiss")
+	public static ResKey JS_SNACKBAR_DISMISS;
+
 	// -- Window client-side i18n keys --
 
 	/**
@@ -822,6 +933,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cannot drop: the dragged objects or the target row are no longer present: {0}
 	 */
 	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
+
+	/**
+	 * @en Cannot drop: the dragged rows include one that cannot be dragged.
+	 */
+	public static ResKey ERROR_DROP_NOT_DRAGGABLE;
 
 	/**
 	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
@@ -895,6 +1011,44 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.calendar.more")
 	public static ResKey JS_CALENDAR_MORE;
+
+	// -- Job status client-side i18n keys --
+
+	/**
+	 * @en Running
+	 */
+	@CustomKey("js.jobStatus.running")
+	public static ResKey JS_JOB_STATUS_RUNNING;
+
+	/**
+	 * @en Completed
+	 */
+	@CustomKey("js.jobStatus.completed")
+	public static ResKey JS_JOB_STATUS_COMPLETED;
+
+	/**
+	 * @en Failed
+	 */
+	@CustomKey("js.jobStatus.failed")
+	public static ResKey JS_JOB_STATUS_FAILED;
+
+	/**
+	 * @en Cancelled
+	 */
+	@CustomKey("js.jobStatus.cancelled")
+	public static ResKey JS_JOB_STATUS_CANCELLED;
+
+	/**
+	 * @en Elapsed time
+	 */
+	@CustomKey("js.jobStatus.elapsed")
+	public static ResKey JS_JOB_STATUS_ELAPSED;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.jobStatus.cancel")
+	public static ResKey JS_JOB_STATUS_CANCEL;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -9,6 +9,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -16,6 +17,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.TestingConnectionPoolRegistryAccess.PoolRef;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.basic.util.DBSelection;
 
 import com.top_logic.basic.Environment;
 import com.top_logic.basic.Logger;
@@ -39,7 +41,7 @@ import com.top_logic.basic.sql.PooledConnection;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DatabaseTestSetup extends RearrangableThreadContextSetup {
+public class DatabaseTestSetup extends RearrangableThreadContextSetup implements DBBoundTest {
 
 	/**
 	 * Name of the environment or system variable to set to "true" to test database tests only with
@@ -125,6 +127,26 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 * The database to test with, if {@link #ONLY_DEFAULT_DB_PROPERTY} is set to <code>true</code>.
 	 */
 	public static final DBType DEFAULT_DB = defaultDBType();
+
+	/**
+	 * The databases that a multi-database test runs with, if not only the {@link #DEFAULT_DB} is
+	 * tested, in the order of execution.
+	 *
+	 * <p>
+	 * {@link DBType#DB2_DB} is not tested, its licence has expired (Ticket #8797).
+	 * </p>
+	 *
+	 * @see #getDBTest(Class, TestFactory)
+	 * @see #useOnlyDefaultDB()
+	 */
+	public static final List<DBType> MULTI_DB = List.of(
+		DBType.MYSQL_DB,
+		DBType.MSSQL_DB,
+		DBType.H2_DB,
+		DBType.ORACLE_DB,
+		DBType.ORACLE12_DB,
+		DBType.ORACLE19_DB,
+		DBType.POSTGRESQL_DB);
     
 	private static MutableInteger setupCnt = new MutableInteger();
 
@@ -161,6 +183,11 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	@Override
 	public Object configKey() {
 		return TupleFactory.newTuple(super.configKey(), dbType);
+	}
+
+	@Override
+	public DBType getBoundDB() {
+		return dbType;
 	}
 	
 	@Override
@@ -383,10 +410,17 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 	 * 
 	 * <p>
 	 * Checks whether {@value #ONLY_DEFAULT_DB_PROPERTY} is set as system property or environment
-	 * variable and set to <code>true</code>.
+	 * variable and set to <code>true</code>. A {@link DBSelection} other than
+	 * {@link DBSelection#ALL_VALUE} selects from the tests of all databases, so that all
+	 * databases are tested in this case.
 	 * </p>
+	 *
+	 * @see DBSelection#PROPERTY
 	 */
 	public static boolean useOnlyDefaultDB() {
+		if (!DBSelection.selectsAll()) {
+			return false;
+		}
 		return Environment.getSystemPropertyOrEnvironmentVariable(ONLY_DEFAULT_DB_PROPERTY, false);
 	}
 
@@ -432,15 +466,9 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup {
 		if (useOnlyDefaultDB()) {
 			result.addTest(newTest(testCase, DEFAULT_DB, f));
 		} else {
-			result.addTest(newTest(testCase, DBType.MYSQL_DB, f));
-			result.addTest(newTest(testCase, DBType.MSSQL_DB, f));
-			result.addTest(newTest(testCase, DBType.H2_DB, f));
-			result.addTest(newTest(testCase, DBType.ORACLE_DB, f));
-			result.addTest(newTest(testCase, DBType.ORACLE12_DB, f));
-			result.addTest(newTest(testCase, DBType.ORACLE19_DB, f));
-			result.addTest(newTest(testCase, DBType.POSTGRESQL_DB, f));
-			// #8797 licence has been expired
-//		result.addTest(newTest(testCase, DBType.DB2_DB, f));
+			for (DBType db : MULTI_DB) {
+				result.addTest(newTest(testCase, db, f));
+			}
 		}
 		
 		return wrap(result);

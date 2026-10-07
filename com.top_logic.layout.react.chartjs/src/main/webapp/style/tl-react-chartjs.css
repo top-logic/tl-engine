@@ -13,13 +13,13 @@
 }
 
 .tlReactChart__error {
-    color: var(--error-color, #dc2626);
+    color: var(--support-error);
     padding: 1rem;
     text-align: center;
 }
 
 .tlReactChart__noData {
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary);
     padding: 1rem;
     text-align: center;
     font-style: italic;
@@ -29,11 +29,11 @@
     position: absolute;
     pointer-events: none;
     z-index: 100;
-    background: var(--surface-elevated, #fff);
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 0.375rem;
+    background: var(--layer-02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-02);
     padding: 0.5rem 0.75rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-menu);
     font-size: 0.8125rem;
 }
 
@@ -42,15 +42,15 @@
     top: 0.5rem;
     right: 0.5rem;
     z-index: 10;
-    background: var(--surface, #fff);
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 0.25rem;
+    background: var(--layer-01);
+    border: 1px solid var(--border-color);
+    border-radius: var(--corner-radius);
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
     cursor: pointer;
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary);
 }
 
 .tlReactChart__zoomReset:hover {
-    background: var(--surface-hover, #f1f5f9);
+    background: var(--layer-hover);
 }

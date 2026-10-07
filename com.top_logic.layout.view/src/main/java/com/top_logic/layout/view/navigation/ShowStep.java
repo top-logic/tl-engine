@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
 import com.top_logic.layout.view.tiles.TileLabelProvider;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -37,6 +39,33 @@ public record ShowStep(String viewRef, boolean dialog, ResKey label, QueryExecut
 	 */
 	public ShowStep {
 		bindings = List.copyOf(bindings);
+	}
+
+	/**
+	 * The {@link ShowStep} the given configuration describes.
+	 *
+	 * @param config
+	 *        The configured view, with the values its channels receive.
+	 * @return The step displaying that view.
+	 */
+	public static ShowStep fromConfig(ShowConfig config) {
+		return new ShowStep(ViewLoader.viewRef(config.getView()), config.isDialog(), config.getLabel(),
+			QueryExecutor.compileOptional(config.getLabelExpr()), Binding.fromConfigs(config.getBindings()));
+	}
+
+	/**
+	 * The {@link ShowStep}s the given configurations describe, in configuration order.
+	 *
+	 * @param configs
+	 *        The configured views, the enclosing ones first.
+	 * @return The steps displaying those views.
+	 */
+	public static List<ShowStep> fromConfigs(List<? extends ShowConfig> configs) {
+		List<ShowStep> result = new ArrayList<>(configs.size());
+		for (ShowConfig config : configs) {
+			result.add(fromConfig(config));
+		}
+		return result;
 	}
 
 	/**

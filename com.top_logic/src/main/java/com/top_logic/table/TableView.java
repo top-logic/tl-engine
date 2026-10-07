@@ -5,7 +5,9 @@
  */
 package com.top_logic.table;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.table.filter.TextFilterState;
 
@@ -81,6 +83,19 @@ public interface TableView<R> {
 	List<Row<R>> rows(int from, int to);
 
 	/**
+	 * The given row keys that belong to a data row of this table, whether that row is displayed or
+	 * hidden by a filter, a collapsed group or a collapsed tree node.
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The keys among the given ones this table has a data row for, in the order they are
+	 *         given.
+	 *
+	 * @see RowSource#containedKeys(Collection)
+	 */
+	Set<Object> containedKeys(Collection<?> keys);
+
+	/**
 	 * The content of the given row's cell in the named column.
 	 */
 	CellContent cell(Row<R> row, String column);
@@ -111,10 +126,19 @@ public interface TableView<R> {
 	 * {@code null} if it is filtered by none of them.
 	 *
 	 * <p>
-	 * The result is derived from the live filter state, not remembered: it is the first named
-	 * filter {@link NamedFilter#matches(java.util.Map, TextFilterState) matching} the current
-	 * column filters and search term, so it is found as well when the user reached those criteria
-	 * through the filter editors, and it is gone as soon as they change any of them.
+	 * The result is derived from the live filter state, not remembered: it is a named filter
+	 * {@link NamedFilter#matches(java.util.Map, TextFilterState) matching} the current column
+	 * filters and search term, so it is found as well when the user reached those criteria through
+	 * the filter editors, and it is gone as soon as they change a criterion that filter is made of.
+	 * A text searched for on top of a filter that names none of its own is no such criterion: it
+	 * narrows the rows that filter selects, which goes on being the active one.
+	 * </p>
+	 *
+	 * <p>
+	 * Where several filters match - one naming the searched term, one saying nothing about the
+	 * search - the one naming the term is the result: it describes the displayed rows completely,
+	 * the other only their columns. Among equally specific matches the {@link #namedFilters()
+	 * offered order} decides.
 	 * </p>
 	 */
 	NamedFilter activeNamedFilter();

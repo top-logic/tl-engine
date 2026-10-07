@@ -58,7 +58,7 @@
 				size="28"
 				unit="%"
 			>
-				<panel>
+				<panel with-inset="true">
 					<title>
 						<en>Appointment</en>
 						<de>Termin</de>
@@ -76,21 +76,17 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-							</with-transaction>
+							<delete-object/>
 							<write-channel name="appointment"/>
 						</generic-command>
 					</commands>
-					<inset>
-						<form input="appointment">
-							<field attribute="name"/>
-							<field attribute="start"/>
-							<field attribute="end"/>
-							<field attribute="allDay"/>
-							<field attribute="category"/>
-						</form>
-					</inset>
+					<form input="appointment">
+						<field attribute="name"/>
+						<field attribute="start"/>
+						<field attribute="end"/>
+						<field attribute="allDay"/>
+						<field attribute="category"/>
+					</form>
 				</panel>
 			</pane>
 		</panes>

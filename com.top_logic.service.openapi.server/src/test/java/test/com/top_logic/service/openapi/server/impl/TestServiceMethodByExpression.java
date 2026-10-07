@@ -7,18 +7,38 @@ package test.com.top_logic.service.openapi.server.impl;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.Proxy;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
+
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.service.openapi.server.impl.ServiceMethod;
+import com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression;
 import com.top_logic.service.openapi.server.impl.ServiceMethodByExpression;
+import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
+import com.top_logic.service.openapi.server.parameter.HeaderParameter;
 import com.top_logic.service.openapi.server.script.Response;
+import com.top_logic.util.model.ModelService;
 
 /**
- * Tests for
- * {@link ServiceMethodByExpression#writeResponse(Response, jakarta.servlet.http.HttpServletResponse)}.
+ * Tests for {@link ServiceMethodByExpression}.
  */
 @SuppressWarnings("javadoc")
 public class TestServiceMethodByExpression extends TestCase {
@@ -146,7 +166,75 @@ public class TestServiceMethodByExpression extends TestCase {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
+	/**
+	 * A header whose name is not a TL-Script variable name is accessed through its variable name,
+	 * a parameter without variable name through its parameter name.
+	 */
+	public void testParameterVariableName() throws Exception {
+		HeaderParameter.Config eventConfig = header("X-Gitea-Event");
+		eventConfig.setVariableName("event");
+		HeaderParameter.Config plainConfig = header("plain");
+
+		List<ConcreteRequestParameter<?>> parameters = List.of(
+			TypedConfigUtil.createInstance(eventConfig),
+			TypedConfigUtil.createInstance(plainConfig));
+		List<String> variables = parameters.stream()
+			.flatMap(parameter -> parameter.getScriptParameterNames().stream())
+			.collect(Collectors.toList());
+		assertEquals(List.of("event", "plain"), variables);
+
+		HttpServletRequest request = requestWithHeaders(Map.of("X-Gitea-Event", "push", "plain", "value"));
+		Map<String, Object> arguments = new HashMap<>();
+		for (ConcreteRequestParameter<?> parameter : parameters) {
+			parameter.parse(arguments, request, Collections.emptyMap());
+		}
+
+		ServiceMethodBuilderByExpression.Config impl =
+			TypedConfiguration.newConfigItem(ServiceMethodBuilderByExpression.Config.class);
+		impl.setOperation(ExprFormat.INSTANCE.getValue(ServiceMethodBuilderByExpression.Config.OPERATION,
+			"[$event, $plain]"));
+		ServiceMethod method = ThreadContextManager.inSystemInteraction(TestServiceMethodByExpression.class,
+			() -> TypedConfigUtil.createInstance(impl).build("/hook", variables));
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		method.handleRequest(null, arguments, resp);
+
+		assertEquals(200, resp.getStatus());
+		assertEquals("[\"push\",\"value\"]", resp.bodyString());
+	}
+
+	private static HeaderParameter.Config header(String name) {
+		HeaderParameter.Config config = TypedConfiguration.newConfigItem(HeaderParameter.Config.class);
+		config.setName(name);
+		return config;
+	}
+
+	/**
+	 * A {@link HttpServletRequest} that only answers single-valued header requests.
+	 */
+	private static HttpServletRequest requestWithHeaders(Map<String, String> headers) {
+		return (HttpServletRequest) Proxy.newProxyInstance(HttpServletRequest.class.getClassLoader(),
+			new Class<?>[] { HttpServletRequest.class },
+			(proxy, method, args) -> {
+				if ("getHeader".equals(method.getName())) {
+					return headers.get(args[0]);
+				}
+				throw new UnsupportedOperationException(method.getName());
+			});
+	}
+
 	private static Response success(Object content) {
 		return new Response(HttpServletResponse.SC_OK, content, null);
+	}
+
+	/**
+	 * The {@link Test} suite of this test case.
+	 */
+	public static Test suite() {
+		return KBSetup.getSingleKBTest(TestServiceMethodByExpression.class,
+			ServiceTestSetup.createStarterFactoryForModules(
+				SearchBuilder.Module.INSTANCE,
+				ModelService.Module.INSTANCE,
+				LabelProviderService.Module.INSTANCE));
 	}
 }

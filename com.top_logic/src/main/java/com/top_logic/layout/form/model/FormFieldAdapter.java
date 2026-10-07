@@ -35,10 +35,16 @@ public class FormFieldAdapter implements FieldModel {
 	private List<FieldModelListener> _listeners = Collections.emptyList();
 
 	/**
+	 * The {@link #isDisabled()} state last reported to the listeners.
+	 */
+	private boolean _disabled;
+
+	/**
 	 * Creates an adapter wrapping the given form field.
 	 */
 	public FormFieldAdapter(FormField field) {
 		_field = field;
+		_disabled = isDisabled();
 		registerFieldListeners();
 	}
 
@@ -60,6 +66,19 @@ public class FormFieldAdapter implements FieldModel {
 	@Override
 	public boolean isEditable() {
 		return !_field.isImmutable() && !_field.isDisabled();
+	}
+
+	/**
+	 * Whether the wrapped field is {@link FormMember#isDisabled() disabled} but not
+	 * {@link FormMember#isImmutable() immutable}.
+	 *
+	 * <p>
+	 * An immutable field is presented as read-only value display even if it is disabled.
+	 * </p>
+	 */
+	@Override
+	public boolean isDisabled() {
+		return _field.isDisabled() && !_field.isImmutable();
 	}
 
 	@Override
@@ -170,6 +189,7 @@ public class FormFieldAdapter implements FieldModel {
 		_field.addListener(FormMember.IMMUTABLE_PROPERTY, new ImmutablePropertyListener() {
 			@Override
 			public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
+				updateDisabled();
 				fireEditabilityChanged();
 				return Bubble.BUBBLE;
 			}
@@ -178,10 +198,23 @@ public class FormFieldAdapter implements FieldModel {
 		_field.addListener(FormMember.DISABLED_PROPERTY, new DisabledPropertyListener() {
 			@Override
 			public Bubble handleDisabledChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
+				updateDisabled();
 				fireEditabilityChanged();
 				return Bubble.BUBBLE;
 			}
 		});
+	}
+
+	private void updateDisabled() {
+		boolean disabled = isDisabled();
+		if (disabled == _disabled) {
+			return;
+		}
+		_disabled = disabled;
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
+			listener.onDisabledChanged(this, disabled);
+		}
 	}
 
 	private void fireEditabilityChanged() {

@@ -248,6 +248,79 @@ public class TestResKeyEncoding extends TestCase {
 		assertEncodeDecode(literal);
 	}
 
+	/**
+	 * Both quote styles are accepted for the translations of a literal resource key.
+	 */
+	public void testDecodeSingleQuotedTranslations() {
+		assertTranslations(ResKey.decode("#('Travel'@en, 'Reise'@de)"), "Travel", "Reise");
+	}
+
+	/**
+	 * The quote style is chosen per translation, not per resource key.
+	 */
+	public void testDecodeMixedQuotedTranslations() {
+		assertTranslations(ResKey.decode("#('Travel'@en, \"Reise\"@de)"), "Travel", "Reise");
+		assertTranslations(ResKey.decode("#(\"Travel\"@en, 'Reise'@de)"), "Travel", "Reise");
+	}
+
+	/**
+	 * A single-quoted translation may contain an escaped single quote and a plain double quote.
+	 */
+	public void testDecodeQuotesInSingleQuotedTranslation() {
+		assertTranslation(ResKey.decode("#('It\\'s a trip'@en)"), "It's a trip");
+		assertTranslation(ResKey.decode("#('Say \"hi\"'@en)"), "Say \"hi\"");
+	}
+
+	/**
+	 * A suffix key (such as a tooltip) accepts single-quoted translations as well.
+	 */
+	public void testDecodeSingleQuotedSuffixTranslations() {
+		ResKey key = ResKey.decode("#('A'@en, tooltip: {'A tooltip'@en})");
+		assertTranslation(key, "A");
+		assertTranslation(key.tooltip(), "A tooltip");
+	}
+
+	/**
+	 * Both quote styles decode to the same resource key, which is encoded with double quotes.
+	 */
+	public void testSingleQuotedTranslationsEncodeCanonically() {
+		String canonical = ResKey.encode(ResKey.decode("#(\"Travel\"@en, \"Reise\"@de)"));
+
+		assertEquals("#(\"Reise\"@de, \"Travel\"@en)", canonical);
+		assertEquals(canonical, ResKey.encode(ResKey.decode("#('Travel'@en, 'Reise'@de)")));
+		assertEquals(canonical, ResKey.encode(ResKey.decode("#('Travel'@en, \"Reise\"@de)")));
+	}
+
+	public void testValueFormatAcceptsSingleQuotedTranslations() throws ConfigurationException {
+		ResKey key = ResKey.ValueFormat.INSTANCE.getValue("test", "#('Travel'@en, 'Reise'@de)");
+		assertTranslations(key, "Travel", "Reise");
+	}
+
+	/**
+	 * A single-quoted translation without a language tag, or an unterminated one, stays malformed.
+	 */
+	public void testDecodeMalformedSingleQuotedTranslations() {
+		for (String malformed : new String[] { "#('Travel')", "#('Travel'@en", "#('Travel@en)" }) {
+			try {
+				ResKey decoded = ResKey.decode(malformed);
+				fail("Expected IllegalArgumentException for '" + malformed + "', got: " + decoded);
+			} catch (IllegalArgumentException ex) {
+				// Expected: a translation must be a terminated literal with a language tag.
+			}
+		}
+	}
+
+	private void assertTranslation(ResKey key, String expectedEnglish) {
+		assertEquals(expectedEnglish,
+			ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(key));
+	}
+
+	private void assertTranslations(ResKey key, String expectedEnglish, String expectedGerman) {
+		assertTranslation(key, expectedEnglish);
+		assertEquals(expectedGerman,
+			ResourcesModule.getInstance().getBundle(Locale.GERMAN).getString(key));
+	}
+
 	private void assertEncodeDecode(ResKey key) {
 		String encoded = ResKey.encode(key);
 		ResKey decoded = ResKey.decode(encoded);

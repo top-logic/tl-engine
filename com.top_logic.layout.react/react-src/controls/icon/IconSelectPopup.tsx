@@ -1,4 +1,4 @@
-import { React, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, tooltipProps } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -33,7 +33,7 @@ export interface IconEntry {
 type Tab = 'simple' | 'advanced';
 
 interface IconSelectPopupProps {
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   currentValue: string | null;
   icons: IconEntry[];
   iconsLoaded: boolean;
@@ -43,7 +43,7 @@ interface IconSelectPopupProps {
 }
 
 // Re-export ThemeIcon as IconPreview for backwards compatibility.
-import { ThemeIcon as IconPreview } from './ThemeIcon';
+import { ThemeIcon as IconPreview } from 'tl-react-bridge';
 export { IconPreview };
 
 const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
@@ -97,19 +97,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(true, { ESCAPE: onCancel });
 
-  // Close on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onCancel();
-      }
-    };
-    const timer = setTimeout(() => document.addEventListener('mousedown', handler), 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handler);
-    };
-  }, [onCancel]);
+  // Close on a press outside the popup.
+  useCloseOnOutsidePress(true, [popupRef], onCancel);
 
   // Filter icons by search term
   const filteredIcons = useMemo(() => {
@@ -208,7 +197,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
           <button
             className="tlIconSelect__resetBtn"
             onClick={() => setSearchTerm('')}
-            title={i18n['js.iconSelect.clearFilter']}
+            aria-label={i18n['js.iconSelect.clearFilter']}
+            {...tooltipProps(i18n['js.iconSelect.clearFilter'])}
           >
             &times;
           </button>
@@ -249,7 +239,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
                 role="option"
                 aria-selected={variant.encoded === currentValue}
                 tabIndex={0}
-                title={icon.label}
+                aria-label={icon.label}
+                {...tooltipProps(icon.label)}
                 onClick={() =>
                   tab === 'simple'
                     ? handleSimpleSelect(variant.encoded)

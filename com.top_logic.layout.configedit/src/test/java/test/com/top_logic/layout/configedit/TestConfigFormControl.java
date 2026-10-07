@@ -28,6 +28,8 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -38,15 +40,15 @@ import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
-import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -80,6 +82,34 @@ public class TestConfigFormControl extends TestCase {
 
 		/** @see #getName() */
 		void setName(String value);
+	}
+
+	/**
+	 * A configuration with a warning-level constraint next to a mandatory property - the shape that
+	 * tells a warning shown apart from a warning that refuses, and lets a refusal be provoked while
+	 * a warning stands.
+	 */
+	public interface WarningConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getAmount()}. */
+		String AMOUNT = "amount";
+
+		@Name(NAME)
+		@Mandatory
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(AMOUNT)
+		@Constraint(value = Positive.class, asWarning = true)
+		int getAmount();
+
+		/** @see #getAmount() */
+		void setAmount(int value);
 	}
 
 	/**
@@ -296,8 +326,9 @@ public class TestConfigFormControl extends TestCase {
 
 	/**
 	 * Concrete handler config B - a second implementation, so
-	 * {@link PolymorphicOptions.Choices#options()} has more than one entry and the type selector
-	 * is actually rendered (a single-option collection needs no selector to begin with).
+	 * {@link com.top_logic.layout.configedit.PolymorphicOptions.Choices#options()} has more than
+	 * one entry and the type selector is actually rendered (a single-option collection needs no
+	 * selector to begin with).
 	 */
 	public interface HandlerBConfig extends HandlerConfig {
 		// Nothing beyond the base.
@@ -376,7 +407,7 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	private ReactContext createTestContext() {
-		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/**
@@ -581,6 +612,46 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
+	 * A warning is drawn by the same chrome the error is, in its own area: the value is questioned
+	 * where it is entered, while the refusal over the sibling property keeps edit mode open.
+	 */
+	public void testAWarningReachesItsChrome() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, WarningConfig.NAME).setValue(null);
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		applyResult(form);
+
+		List<ResKey> warnings = fieldOf(form, WarningConfig.AMOUNT).getWarnings();
+		assertEquals("The constraint has one thing to say about this value.", 1, warnings.size());
+		assertEquals("The warning must be readable under the field it is about.",
+			List.of(label(warnings.get(0))), chromeWarningsOf(form, WarningConfig.AMOUNT));
+	}
+
+	/**
+	 * The warning texts the chrome around the named property's field currently shows, or
+	 * {@code null} if it shows none - the warning counterpart of
+	 * {@link #chromeErrorOf(ReactControl, String)}, reading the same headless projection.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<String> chromeWarningsOf(ReactControl control, String propertyName) {
+		if (control instanceof ReactFormFieldChromeControl chrome
+			&& fieldOf(chrome, propertyName) != null) {
+			return (List<String>) chrome.scriptingScalarState().get("warnings");
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			List<String> found = chromeWarningsOf(child, propertyName);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * The error text the chrome around the named property's field currently shows, or {@code null}
 	 * if it shows none.
 	 */
@@ -601,6 +672,173 @@ public class TestConfigFormControl extends TestCase {
 	/** Presses Apply and hands back its result. */
 	private HandlerResult applyResult(TestableConfigFormControl form) {
 		return click(findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * A warning is read while the value is being entered, not only once Apply is pressed.
+	 *
+	 * <p>
+	 * Apply refuses over a violation and over nothing else, so a configuration whose only finding
+	 * is a warning is applied - which leaves edit mode and rebuilds the form. A warning placed only
+	 * by Apply would therefore be on screen for as long as some other finding happens to keep the
+	 * form open, and never otherwise.
+	 * </p>
+	 */
+	public void testAWarningIsShownWhileEditing() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		List<ResKey> warnings = fieldOf(form, WarningConfig.AMOUNT).getWarnings();
+		assertEquals("The constraint has one thing to say about the value just entered.", 1, warnings.size());
+		assertEquals("The warning must be readable under the field without pressing Apply.",
+			List.of(label(warnings.get(0))), chromeWarningsOf(form, WarningConfig.AMOUNT));
+		assertNotNull("Nothing was applied: the form is still being edited.",
+			findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * A violation likewise. It keeps Apply from going through when Apply is pressed, but what it is
+	 * about is the value the user just entered, and that is when it has something to say.
+	 */
+	public void testAViolationIsShownWhileEditing() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+
+		assertNotNull("Clearing a mandatory value must say so at the field it was cleared in.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertEquals("And the chrome around that field must show it.",
+			label(fieldOf(form, MandatoryConfig.NAME).getError()), chromeErrorOf(form, MandatoryConfig.NAME));
+		assertNotNull("A finding is not a refusal: edit mode stays open, nothing was refused.",
+			findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * A form without edit mode writes straight through, but its caller saves what it wrote - and
+	 * refuses over the same findings. So the value is questioned where it is entered there, too.
+	 */
+	public void testAViolationIsShownWithoutEditMode() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+
+		assertNotNull("Clearing a mandatory value must say so at the field, even without edit mode.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+	}
+
+	/**
+	 * Opening such a form flags nothing yet, like entering edit mode: a verdict is on what the user
+	 * did.
+	 */
+	public void testWithoutEditModeOpeningFlagsNothing() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertNull("An untouched form must not turn red.", fieldOf(form, MandatoryConfig.NAME).getError());
+	}
+
+	/**
+	 * And it goes away again once the value it was about is corrected, without Apply.
+	 *
+	 * <p>
+	 * The field takes its own verdict back the moment it is given a different value - a verdict
+	 * describes the value it was passed. What this says is that the check that follows does not put
+	 * it straight back: the warning is gone because it no longer holds, not because nobody looked.
+	 * </p>
+	 */
+	public void testAWarningLeavesAgainWhileEditing() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(1));
+
+		assertTrue("A corrected value must not keep the old remark.",
+			fieldOf(form, WarningConfig.AMOUNT).getWarnings().isEmpty());
+		assertNull("Nor must the chrome around it.", chromeWarningsOf(form, WarningConfig.AMOUNT));
+	}
+
+	/**
+	 * A constraint reaching into another item flags both ends while editing, and fixing the other
+	 * end clears the flag on the first one.
+	 *
+	 * <p>
+	 * The field that carries the flag is not the field that is corrected here, so the field cannot
+	 * take its own verdict back - only the check that runs over the whole configuration afterwards
+	 * can. Left behind, it would be an error pointing at a value nothing is wrong with.
+	 * </p>
+	 */
+	public void testTheOtherEndOfACrossItemConstraintIsClearedWhileEditing() {
+		CrossRefConfig config = TypedConfiguration.newConfigItem(CrossRefConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, CrossRefConfig.AMOUNT).setValue(Integer.valueOf(10));
+		assertNotNull("The value exceeds the limit, which must be said at the field entering it.",
+			fieldOf(form, CrossRefConfig.AMOUNT).getError());
+		assertNotNull("And at the referenced end, inside the other item.",
+			fieldOf(form, LimitConfig.MAX).getError());
+
+		fieldOf(form, LimitConfig.MAX).setValue(Integer.valueOf(20));
+
+		assertNull("Raising the limit settles the constraint, so the flag at the other end must go.",
+			fieldOf(form, CrossRefConfig.AMOUNT).getError());
+		assertNull("Along with the one at the end that was corrected.",
+			fieldOf(form, LimitConfig.MAX).getError());
+		assertNotNull("None of this was an Apply: the form is still being edited.",
+			findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * Entering edit mode flags nothing. A finding is a verdict on what the user did, and a form
+	 * opened over a configuration whose mandatory value is empty must not turn red before it has
+	 * been touched - that is a form telling the user off for opening it.
+	 */
+	public void testEnteringEditModeFlagsNothingYet() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertNull("The empty mandatory value must not be complained about yet.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertNull("Nor by the chrome around the field.", chromeErrorOf(form, MandatoryConfig.NAME));
+	}
+
+	/**
+	 * An entry that is still being filled in is not yet an entry to be told to confirm or discard.
+	 *
+	 * <p>
+	 * Only asking for the configuration to be handed over - Apply - marks it, because only then is
+	 * it about to be dropped. Marking it while the user is still typing its key would be a
+	 * complaint about having begun.
+	 * </p>
+	 */
+	public void testALiveCheckDoesNotMarkAnUnconfirmedEntry() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+
+		fieldOf(form, ListEntry.TITLE).setValue("still typing");
+
+		assertNull("An entry being filled in must not be complained about.",
+			fieldOf(form, ListEntry.TITLE).getError());
+
+		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, applyRefusal(form));
+		assertNotNull("Asking for it to be handed over is what says the entry has to be confirmed.",
+			fieldOf(form, ListEntry.TITLE).getError());
 	}
 
 	/**
@@ -723,6 +961,24 @@ public class TestConfigFormControl extends TestCase {
 		assertNotNull("Applying returns to view mode.", findButton(form, label(I18NConstants.EDIT)));
 	}
 
+	/**
+	 * A warning is not a refusal: Apply carries the change over and leaves edit mode, with the
+	 * questioned value written to the item like any other.
+	 */
+	public void testApplyProceedsWithNothingButAWarning() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		config.setAmount(1);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		assertNull("A warning refuses nothing.", applyRefusal(form));
+
+		assertEquals("The questioned value must have been carried over.", -1, config.getAmount());
+		assertNotNull("Applying returns to view mode.", findButton(form, label(I18NConstants.EDIT)));
+	}
+
 	/** Cancel throws the copy away. */
 	public void testCancelDiscardsTheChange() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
@@ -787,9 +1043,9 @@ public class TestConfigFormControl extends TestCase {
 
 	/**
 	 * A violation that did reach its own field says nothing at form level - the field carries it.
-	 * This is what pins {@link com.top_logic.layout.configedit.ConfigValidation#report(java.util.List,
-	 * com.top_logic.layout.configedit.ConfigFieldIndex)}'s answer as actually being read, rather
-	 * than a message shown on every refusal alike.
+	 * This is what pins
+	 * {@link com.top_logic.layout.configedit.ConfigValidation#report(com.top_logic.layout.configedit.ConfigValidation.Findings, com.top_logic.layout.configedit.ConfigFieldIndex)}'s
+	 * answer as actually being read, rather than a message shown on every refusal alike.
 	 */
 	public void testAPlacedViolationIsNotRepeatedAtFormLevel() {
 		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);

@@ -9,20 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
@@ -33,11 +28,6 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
-import com.top_logic.layout.view.security.AccessChecks;
-import com.top_logic.layout.view.security.AccessControl;
-import com.top_logic.layout.view.security.SecurityScope;
-import com.top_logic.layout.view.security.WithAccessControl;
-import com.top_logic.util.Resources;
 
 /**
  * UIElement that wraps {@link ReactTabBarControl}.
@@ -92,41 +82,10 @@ public class TabBarElement implements UIElement {
 	 * Configuration for a single tab.
 	 */
 	@TagName("tab")
-	public interface TabConfig extends WithAccessControl {
-
-		/** Configuration name for {@link #getId()}. */
-		String ID = "id";
-
-		/** Configuration name for {@link #getLabel()}. */
-		String LABEL = "label";
-
-		/** Configuration name for {@link #getChildren()}. */
-		String CHILDREN = "children";
+	public interface TabConfig extends ContentSectionConfig {
 
 		/** Configuration name for {@link #getRoute()}. */
 		String ROUTE = "route";
-
-		/** Configuration name for {@link #getIcon()}. */
-		String ICON = "icon";
-
-		/**
-		 * The unique tab identifier.
-		 */
-		@Name(ID)
-		String getId();
-
-		/**
-		 * The CSS icon class shown next to the tab label (e.g. {@code "css:fa-solid fa-tags"}), or
-		 * empty for no icon.
-		 */
-		@Name(ICON)
-		String getIcon();
-
-		/**
-		 * The tab display label.
-		 */
-		@Name(LABEL)
-		ResKey getLabel();
 
 		/**
 		 * The route segment for this tab.
@@ -140,20 +99,16 @@ public class TabBarElement implements UIElement {
 		 */
 		@Name(ROUTE)
 		String getRoute();
-
-		/**
-		 * The content elements shown when this tab is active.
-		 */
-		@Name(CHILDREN)
-		@DefaultContainer
-		@TreeProperty
-		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
+
+	/** Personalization key segment of the content of a tab. */
+	private static final String TAB_SEGMENT = "tab";
 
 	private final List<TabEntry> _tabs;
 
 	private final String _activeTab;
+
+	private final String _cssClass;
 
 	/**
 	 * Creates a new {@link TabBarElement} from configuration.
@@ -162,33 +117,16 @@ public class TabBarElement implements UIElement {
 	public TabBarElement(InstantiationContext context, Config config) {
 		_tabs = new ArrayList<>();
 		for (TabConfig tabConfig : config.getTabs()) {
-			List<UIElement> children = tabConfig.getChildren().stream()
-				.map(context::getInstance)
-				.collect(Collectors.toList());
-			String route = tabConfig.getRoute();
-			_tabs.add(new TabEntry(tabConfig.getId(), tabConfig.getLabel(), route, tabConfig.getIcon(),
-				tabConfig.getAccessControl(), children));
+			_tabs.add(new TabEntry(ContentSection.of(context, tabConfig), tabConfig.getRoute()));
 		}
 		_activeTab = config.getActiveTab();
-	}
-
-	/**
-	 * The label to display on the tab, in the language of the session being served.
-	 *
-	 * <p>
-	 * Falls back to the tab's {@link TabConfig#getId() ID} while no label is configured, so that a tab
-	 * added to a tab bar is visible and can be selected instead of rendering as a blank one.
-	 * </p>
-	 */
-	private static String label(TabEntry entry) {
-		String label = Resources.getInstance().getString(entry._label, null);
-		return StringServices.isEmpty(label) ? entry._id : label;
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public List<ChildGroup> getChildGroups() {
 		return _tabs.stream()
-			.map(tab -> ChildGroup.keyed(tab._id(), tab._children()))
+			.map(tab -> ChildGroup.keyed(tab._section().getId(), tab._section().getChildren()))
 			.collect(Collectors.toList());
 	}
 
@@ -197,20 +135,23 @@ public class TabBarElement implements UIElement {
 		RevealPath here = RevealPath.of(context);
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
-			if (!AccessChecks.isAccessible(entry._accessControl)) {
+			ContentSection section = entry._section();
+			if (!section.isAccessible()) {
 				// Access denied for the current user: omit the tab entirely.
 				continue;
 			}
-			DirtyChannel dirtyChannel = new DirtyChannel();
+			// The tab lies within the scope enclosing the tab bar (a sidebar item, say), so what a
+			// form of the tab holds unsaved is held unsaved there as well.
+			DirtyChannel dirtyChannel = new DirtyChannel(context.getDirtyChannel());
 			// The content of a tab is created only when the tab is first activated, so the tab's
 			// context must already say where that content will sit.
-			ViewContext tabContext = context.withScope(RevealPath.class, here.append(this, entry._id));
-			TabDefinition tabDef = new TabDefinition(entry._id, label(entry),
-				() -> createContent(entry, tabContext, dirtyChannel), dirtyChannel);
-			if (entry._icon != null && !entry._icon.isEmpty()) {
-				tabDef.withIcon(entry._icon);
+			ViewContext tabContext = context.withScope(RevealPath.class, here.append(this, section.getId()));
+			TabDefinition tabDef = new TabDefinition(section.getId(), section.label(),
+				() -> createContent(section, tabContext, dirtyChannel), dirtyChannel);
+			if (section.getIcon() != null) {
+				tabDef.withIcon(section.getIcon());
 			}
-			String effectiveRoute = SidebarElement.resolveRoute(entry._route, entry._id);
+			String effectiveRoute = SidebarElement.resolveRoute(entry._route(), section.getId());
 			if (effectiveRoute != null) {
 				tabDef.withRoute(effectiveRoute);
 			}
@@ -218,6 +159,7 @@ public class TabBarElement implements UIElement {
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
 		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
+		tabBar.setCssClass(_cssClass);
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {
@@ -227,34 +169,16 @@ public class TabBarElement implements UIElement {
 		return tabBar;
 	}
 
-	private static ReactControl createContent(TabEntry entry, ViewContext context,
+	private static ReactControl createContent(ContentSection section, ViewContext context,
 			DirtyChannel dirtyChannel) {
-		// Per-tab context: extend the personalization key with "tab" (legacy) and extend the slot
-		// path with the tab id so same-named <slot-content> in two tabs route into independent
-		// positions. Channels are NOT forked: only a <view> declares channels, so tab content
-		// shares the enclosing view's channels. A tab needing its own channel namespace embeds a
-		// <view-ref> to a separate <view> and binds across that boundary.
-		ViewContext baseContext = context.childContext("tab")
-			.withChildSlotPath(entry._id);
-		// Establish the tab's security scope so command rules in its content default to it.
-		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
-		ViewContext tabContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
+		ViewContext tabContext = section.contentContext(context, TAB_SEGMENT);
 		tabContext.setDirtyChannel(dirtyChannel);
-
-		List<UIElement> elements = entry._children;
-		return ContentControls.toControl(elements, tabContext);
+		return section.createContent(tabContext);
 	}
 
 	/**
 	 * A configured tab, as far as it is the same for every session.
-	 *
-	 * <p>
-	 * The label stays a {@link ResKey}: an element is parsed once and shared by every session, so a
-	 * text resolved here would be the one language whichever session loaded the view first happened
-	 * to ask in.
-	 * </p>
 	 */
-	private record TabEntry(String _id, ResKey _label, String _route, String _icon,
-			AccessControl _accessControl, List<UIElement> _children) {
+	private record TabEntry(ContentSection _section, String _route) {
 	}
 }

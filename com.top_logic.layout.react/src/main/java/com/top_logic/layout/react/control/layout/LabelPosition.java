@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.react.control.layout;
 
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.basic.config.annotation.EnumDefaultValue;
+
 /**
  * Where a form field renders its label relative to the input.
  *
@@ -14,8 +18,13 @@ package com.top_logic.layout.react.control.layout;
  * ({@link ReactFormFieldChromeControl}, where a {@code null} position inherits from the enclosing
  * layout and {@link #AFTER} trails the input, e.g. for a checkbox).
  * </p>
+ *
+ * <p>
+ * The {@link #getExternalName() external name} is both the value written in a configuration and the
+ * value sent to the client.
+ * </p>
  */
-public enum LabelPosition {
+public enum LabelPosition implements ExternallyNamed {
 
 	/** Label beside the input. */
 	SIDE("side"),
@@ -35,17 +44,26 @@ public enum LabelPosition {
 	 */
 	AUTO("auto");
 
-	private final String _protocolName;
-
-	LabelPosition(String protocolName) {
-		_protocolName = protocolName;
+	/**
+	 * Default value provider answering {@link LabelPosition#AUTO}, for a configuration property
+	 * whose label position is the responsive one unless stated otherwise.
+	 */
+	public static class AutoDefault extends EnumDefaultValue {
+		@Override
+		public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
+			return AUTO;
+		}
 	}
 
-	/**
-	 * The wire value sent to the client for this position.
-	 */
-	public String protocolName() {
-		return _protocolName;
+	private final String _externalName;
+
+	LabelPosition(String externalName) {
+		_externalName = externalName;
+	}
+
+	@Override
+	public String getExternalName() {
+		return _externalName;
 	}
 
 }

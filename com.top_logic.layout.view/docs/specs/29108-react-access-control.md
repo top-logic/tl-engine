@@ -26,7 +26,8 @@ plumbing. The goal of Phase 1 is the visibility half of the legacy model: make
 1. **Only *removable* units carry access control.** Hiding one of two
    side-by-side panels makes no sense; the thing that disappears must be a
    navigable/removable container — a **nav-item, tab, or tile**. Plain content
-   (forms, tables, split panes) never consults security.
+   (forms, tables, split panes) never carries a scope; what it shows and offers
+   follows the model access rights of the objects it works on (§7).
 2. **Define scopes centrally; reference by id.** A *security scope* (`id` +
    `label`) is defined once in a service catalog and referenced from the view by
    id only. Several units sharing one scope reference the same id — no duplicated
@@ -379,5 +380,98 @@ Remaining Phase 3 work:
   materialization pattern).
 - This feature: `com.top_logic.layout.view.security.*`; wiring in
   `element/{SidebarElement,TabBarElement,TileElement,DashboardElement}`.
+- Model access rights: `specs/model-based-access-rights.md` (repository root),
+  `com.top_logic.model.security.ModelAccessRights`,
+  `SecurityConfigurationService`.
 - View layer composition: `ViewServlet`, `UIElement`/`ViewContext`,
   `element/*Element`, `command/*`; see also `docs/specs/29108-react-login.md`.
+
+---
+
+## 7. Model access rights in views (Tickets #29675, #29692)
+
+Scopes (§1–§4) gate *navigable units* by view-level command groups. The objects
+a view shows, edits, creates and deletes are governed by the **model access
+rights**: grants per type, attribute, module and singleton in the
+`SecurityConfigurationService`, queried through `ModelAccessRights`
+(`specs/model-based-access-rights.md`). This section maps those rights onto the
+view layer.
+
+### Principles
+
+1. **The model decides, the view follows.** The view layer grants nothing of its
+   own and defines no command groups for model data. A view operation *is* a
+   model operation on an object, a type or an attribute (Read, Write, Create,
+   Delete, or a custom command group such as `Approve`). The model operations
+   enforce the rights; the UI only avoids offering what they would refuse.
+2. **Enforcement lives in the model operations.** TL-Script `set`/`add`/`new`/
+   `copy`/`delete` check their right and fail with a message naming the
+   operation. Every write path of the view layer that bypasses TL-Script — form
+   save (`TLObjectOverlay.apply`), table cell save — checks Write per changed
+   attribute. A non-transient `copy()` of a transient object is a *creation* and
+   reports a refusal as one. Option lists of form fields are read-filtered like
+   table rows and every other TL-Script result.
+3. **Derive where the element knows object and attribute** (#29692). A form field
+   or table column hides a value the user may not read and is read-only for an
+   attribute the user may not write; a form offers editing only with Write on its
+   object (Edit command, `initial-edit-mode` and edit channel alike). No
+   configuration in the view. The attributes of a draft (an object to be created)
+   are decided by `ModelAccessRights#isAllowedInitial`: for a type with an access
+   parent, the part grants are checked on the roles at the end of the draft's
+   access-parent chain (through drafts up to the first committed object); attribute
+   grants of a self-deciding type do not restrict a draft, since the roles the
+   object will hold are computed only once it exists. For a draft, the
+   locked field is the enforcement — it rejects client values server-side —, and
+   persisting the draft writes its values without a per-attribute check, so values
+   the application prefills are kept. Reading an attribute without a Read grant of
+   its own needs no check per row or form object (both come from read-filtered
+   access); the `CommandApprovalService` is consulted for writes only.
+4. **Commands say what they do, not which right they need.** An action that knows
+   the model operation it performs brings the matching executability rule itself
+   (`ViewAction#getIntrinsicRule()`, combined by `generic-command` with its
+   configured `<executability>`; `with-transaction` forwards the rules of the
+   actions it wraps, while `if`/`switch` do not, since their branch is chosen only
+   when the chain runs). The rule decides on the command input, not on the value
+   handed along the chain:
+   - an object-deleting action → Delete on the command input;
+   - a draft-creating action for a create dialog (type, optionally container and
+     composition reference) → Create on the type (plus Write on the composition),
+     checked **before** the dialog opens;
+   - the dialog's persisting action → the same Create check.
+
+   Commands whose effect is a free script, and custom business operations, use
+   one general rule: `<model-access operation="…"/>` on the command input, an
+   attribute of it, a type, or a container's composition reference.
+5. **One presentation policy.** How a refused element is displayed is derived
+   from what the refusal depends on (`ModelAccessPolicy`):
+   - **hidden** when the refusal depends on no concrete object — the check runs
+     against the security root (a creation without container, a check on a
+     `type`), the type grants the operation to no role at all, the checked
+     attribute has a grant for the operation listing no role, or the user is
+     restricted: the operation is never possible for this user;
+   - **disabled**, giving the reason that names the operation ("You may not
+     delete this object."), when the check on a concrete object — the object
+     operated on (the command input), or the container to create in — fails.
+
+   A rule overrides the derived display with `denied="hide"` or
+   `denied="disable"`. An empty object or container is nothing to check: the
+   rule answers executable and leaves a missing input to `<null-input-disabled/>`
+   and its kin.
+
+   ```xml
+   <model-access operation="Delete"/>                         <!-- the command input -->
+   <model-access operation="Write" attribute="secret"/>       <!-- one attribute of it -->
+   <model-access operation="Approve" object="selection"/>     <!-- custom command group -->
+   <model-access operation="Create" type="my.module:Project"/><!-- top level -->
+   <model-access operation="Create" container="project" reference="tasks"/>
+   <model-access operation="Create"/>                         <!-- the type of the transient command input -->
+   ```
+
+   The actions knowing their model operation are `<delete-object/>`,
+   `<create-transient type="…" [container reference]/>` (the draft; checked before the
+   dialog opens) and `<persist-transient [type] [container reference]/>` (the dialog's
+   Create button, created type from its input unless given).
+6. **Typeless units keep their scope.** Navigation units, dashboards and admin
+   areas have no model type; they stay gated by `<access-control scope>`
+   (§1–§4).
+

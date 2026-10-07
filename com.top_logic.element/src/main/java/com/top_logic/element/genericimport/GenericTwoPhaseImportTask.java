@@ -34,6 +34,11 @@ public class GenericTwoPhaseImportTask extends TaskImpl {
     
     @Override
 	public void run() {
+		super.run();
+		runWithResultProtocol(this::importAll);
+	}
+
+	private void importAll() {
 		File theImportDir = FileManager.getInstance().getIDEFile(importPath);
 		File theConfigFiles[];
 		try {
@@ -80,5 +85,12 @@ public class GenericTwoPhaseImportTask extends TaskImpl {
             theImporters[i].getImportConfiguration().getCache().reload();
         }
     }
+
+	@Override
+	public boolean isNodeLocal() {
+		// Imports into persistent data; must run only once in the cluster.
+		return false;
+	}
+
 }
 

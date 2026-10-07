@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -143,6 +144,7 @@ import com.top_logic.knowledge.search.InternalExpressionFactory;
 import com.top_logic.knowledge.search.Order;
 import com.top_logic.knowledge.search.QueryArguments;
 import com.top_logic.knowledge.search.RangeParam;
+import com.top_logic.knowledge.search.RevisionParam;
 import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.search.RevisionQuery.LoadStrategy;
 import com.top_logic.knowledge.search.RevisionQueryArguments;
@@ -1142,6 +1144,27 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return getLastLocalRevision();
     }
 
+	/**
+	 * The smallest commit number in the revision table, <code>0</code> if the table is empty.
+	 *
+	 * <p>
+	 * The value is not cached, because compacting the history changes it in the database.
+	 * </p>
+	 */
+	@Override
+	public long getFirstRevision() {
+		MOKnowledgeItemImpl revisionType = getRevisionType();
+		String getMinRevStatement =
+			"SELECT min(" + dbHelper.columnRef(RevisionType.getRevisionAttribute(revisionType).getDBName()) + ") "
+				+ "FROM " + dbHelper.tableRef(revisionType.getDBName());
+		PooledConnection readConnection = connectionPool.borrowReadConnection();
+		try {
+			return fetchCommitNumber(readConnection, getMinRevStatement);
+		} finally {
+			connectionPool.releaseReadConnection(readConnection);
+		}
+	}
+
 	private long getLastRevisionId() {
 		MOKnowledgeItemImpl revisionType = getRevisionType();
 		String getMaxRevStatement = 
@@ -1150,7 +1173,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		
     	PooledConnection readConnection = connectionPool.borrowReadConnection();
     	try {
-    		return fetchLongValue(readConnection, getMaxRevStatement);
+    		return fetchCommitNumber(readConnection, getMaxRevStatement);
 		} finally {
 			connectionPool.releaseReadConnection(readConnection);
 		}
@@ -1840,13 +1863,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			for (Iterator<Entry<MetaObject, HistoryQuery>> it = monomorphicSearches.entrySet().iterator(); it.hasNext(); ) {
 				Entry<MetaObject, HistoryQuery> entry = it.next();
 				HistoryQuery monomorphicQuery = entry.getValue();
-				Object[] enhancedArguments =
-					addInternalArguments(monomorphicQuery, requestedBranch, Revision.CURRENT_REV, Revision.CURRENT_REV,
-						0, -1, arguments);
 
 				// TODO: Transform order.
 				List<SQLOrder> orderBy = new ArrayList<>();
 				List<HistorySearch> searches = SQLBuilder.createHistorySearches(this.moRepository, monomorphicQuery);
+
+				Object[] enhancedArguments =
+					addInternalArguments(monomorphicQuery, requestedBranch, Revision.CURRENT_REV, Revision.CURRENT_REV,
+						0, -1, arguments);
+				if (monomorphicQuery.getRevisionParam() == RevisionParam.range) {
+					enhancedArguments = addRevisionRangeArguments(monomorphicQuery, queryArguments, currentRevision,
+						enhancedArguments);
+				}
 				for (HistorySearch search : searches) {
 					try {
 						Map<ObjectBranchId, List<LongRange>> partialResult = 
@@ -1874,7 +1902,69 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		
 		assert result != null : "At least one search was executed.";
 		adaptToCurrentRevision(result, currentRevision);
+		if (query.getRevisionParam() == RevisionParam.range) {
+			restrictToRevisionRange(result, queryArguments);
+		}
 		return result;
+	}
+
+	/**
+	 * Adds the values for {@link SQLBuilder#START_REVISION_PARAM} and
+	 * {@link SQLBuilder#STOP_REVISION_PARAM} to the given arguments.
+	 *
+	 * <p>
+	 * The database search must not exclude rows ending before the requested start revision, when
+	 * they are still alive in the current revision of this {@link KnowledgeBase}, because
+	 * {@link #adaptToCurrentRevision(Map, long)} extends them to the future.
+	 * </p>
+	 */
+	private static Object[] addRevisionRangeArguments(HistoryQuery monomorphicQuery,
+			HistoryQueryArguments queryArguments, long currentRevision, Object[] arguments) {
+		Map<String, Integer> argumentIndexByName = monomorphicQuery.getArgumentIndexByName();
+		int startIndex = argumentIndexByName.get(SQLBuilder.START_REVISION_PARAM);
+		int stopIndex = argumentIndexByName.get(SQLBuilder.STOP_REVISION_PARAM);
+		Object[] result = Arrays.copyOf(arguments, Math.max(arguments.length, Math.max(startIndex, stopIndex) + 1));
+		result[startIndex] = Long.valueOf(Math.min(queryArguments.getStartRevision(), currentRevision));
+		result[stopIndex] = Long.valueOf(queryArguments.getStopRevision());
+		return result;
+	}
+
+	/**
+	 * Restricts the life periods in the given result to the revision range requested in the given
+	 * {@link HistoryQueryArguments}.
+	 *
+	 * <p>
+	 * The database search already skips rows outside the requested range, see
+	 * {@link SQLBuilder#START_REVISION_PARAM}. This cuts off the parts of the life periods that
+	 * exceed the range and removes objects that do not match in any revision of the requested
+	 * range.
+	 * </p>
+	 *
+	 * @see HistoryQueryArguments#getStartRevision()
+	 * @see HistoryQueryArguments#getStopRevision()
+	 */
+	private static void restrictToRevisionRange(Map<ObjectBranchId, List<LongRange>> result,
+			HistoryQueryArguments queryArguments) {
+		long startRevision = queryArguments.getStartRevision();
+		long stopRevision = queryArguments.getStopRevision();
+		List<LongRange> requestedRange;
+		if (stopRevision == Revision.CURRENT_REV) {
+			requestedRange = LongRangeSet.endSection(startRevision);
+		} else {
+			// Stop revision is exclusive.
+			requestedRange = LongRangeSet.range(startRevision, stopRevision - 1);
+		}
+
+		Iterator<Entry<ObjectBranchId, List<LongRange>>> resultIt = result.entrySet().iterator();
+		while (resultIt.hasNext()) {
+			Entry<ObjectBranchId, List<LongRange>> resultEntry = resultIt.next();
+			List<LongRange> restricted = LongRangeSet.intersect(resultEntry.getValue(), requestedRange);
+			if (restricted.isEmpty()) {
+				resultIt.remove();
+			} else {
+				resultEntry.setValue(restricted);
+			}
+		}
 	}
 
 	/**
@@ -3085,6 +3175,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
     	return lookupDBContext();
     }
     
+	/**
+	 * Whether the current thread has changes in this {@link KnowledgeBase} that are not yet
+	 * committed.
+	 * <p>
+	 * Queries see these changes, a value derived from committed data does not.
+	 * </p>
+	 */
+	public final boolean hasUncommittedChanges() {
+		DBContext context = getCurrentDBContext();
+		return context != null && context.hasChanges();
+	}
+
     /**
      * Workaround for inability of covariant return type overwriting. 
      * 
@@ -4042,21 +4144,37 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
         
 	}
 
-	/*package protected*/ long fetchLongValue(PooledConnection connection, String fetchSource) {
+	/**
+	 * Fetches a single commit number with the given query.
+	 * 
+	 * <p>
+	 * A failed query is retried, if the database reports a transient failure.
+	 * </p>
+	 * 
+	 * @param connection
+	 *        The connection to execute the query on.
+	 * @param fetchSource
+	 *        An SQL query without parameters, whose result consists of a single row with a single
+	 *        column holding a commit number, e.g. the minimum or maximum commit number of the
+	 *        revision table.
+	 * @return The commit number in the first column of the first result row, <code>0</code> if the
+	 *         query has no result or the value is SQL <code>NULL</code> (e.g. an aggregate over an
+	 *         empty revision table).
+	 */
+	/*package protected*/ long fetchCommitNumber(PooledConnection connection, String fetchSource) {
 		int retry = dbHelper.retryCount();
 		while (true) {
 			try {
-				long maxRevision;
-				// Lookup the maximum commit number from the revision table.
+				long commitNumber;
 				try (PreparedStatement getStmt = connection.prepareStatement(fetchSource);
 						ResultSet result = getStmt.executeQuery()) {
 					if (result.next()) {
-						maxRevision = result.getLong(1);
+						commitNumber = result.getLong(1);
 					} else {
-						maxRevision = 0;
+						commitNumber = 0;
 					}
 				}
-				return maxRevision;
+				return commitNumber;
 			} catch (SQLException ex) {
 				if (dbHelper.canRetry(ex)) {
 					connection.closeConnection(ex);
@@ -4066,7 +4184,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				}
 				
 				throw (KnowledgeBaseRuntimeException) 
-					new KnowledgeBaseRuntimeException("Could not determine the commit number maximum.").initCause(ex);
+					new KnowledgeBaseRuntimeException("Could not determine the commit number.").initCause(ex);
 			}
 		}
 	}

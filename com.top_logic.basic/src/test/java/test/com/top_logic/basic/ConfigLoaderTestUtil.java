@@ -272,7 +272,7 @@ public class ConfigLoaderTestUtil {
 	}
 
 	private void setupFileManager() {
-		List<Path> webappPaths = Workspace.applicationModules();
+		List<Path> webappPaths = ScratchDirectory.withOverlay(Workspace.applicationModules());
 		FileManager fileManager = MultiFileManager.createMultiFileManager(webappPaths);
 		FileManager.setInstance(fileManager);
 	}

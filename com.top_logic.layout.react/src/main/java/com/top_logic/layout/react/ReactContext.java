@@ -11,6 +11,7 @@ import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.listen.ModelScope;
 
 /**
@@ -52,6 +53,26 @@ public interface ReactContext {
 	ReactWindowRegistry getWindowRegistry();
 
 	/**
+	 * The name of the window that opened this context's window, or {@code null} if there is none
+	 * (the main window, or a window whose opener is gone).
+	 *
+	 * <p>
+	 * A tool side-window (the script recorder, the UI inspector) works on the window it was opened
+	 * from: this is the handle to that window, from which its
+	 * {@link ReactWindowRegistry#getQueue(String) update queue} and everything hanging off it is
+	 * reached.
+	 * </p>
+	 */
+	default String getOpenerWindowName() {
+		ReactWindowRegistry registry = getWindowRegistry();
+		if (registry == null) {
+			return null;
+		}
+		WindowEntry entry = registry.getWindow(getWindowName());
+		return entry == null ? null : entry.getOpenerWindowId();
+	}
+
+	/**
 	 * The {@link ErrorSink} for reporting user-visible errors in the current scope, or {@code null}
 	 * if no error sink is installed (legacy mode).
 	 */
@@ -70,6 +91,11 @@ public interface ReactContext {
 
 	/**
 	 * The {@link ModelScope} for observing persistent object changes in this window.
+	 *
+	 * <p>
+	 * {@code null} for a context that belongs to no window - a display built outside a browser
+	 * session - which observes no object changes.
+	 * </p>
 	 */
 	ModelScope getModelScope();
 

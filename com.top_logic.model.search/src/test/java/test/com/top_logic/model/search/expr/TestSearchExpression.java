@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -75,6 +76,7 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
+import com.top_logic.model.search.expr.Fill;
 import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.KBQuery;
@@ -86,13 +88,16 @@ import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.ToSystemCalendar;
 import com.top_logic.model.search.expr.ToUserCalendar;
 import com.top_logic.model.search.expr.config.operations.Label;
+import com.top_logic.model.search.expr.config.operations.string.Localize;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -389,6 +394,122 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		Object inMemoryResult = asSet(execute(search(
 			"all -> $all.filter(x -> $x.get(" + attr + ") " + op + ")"), all));
 		assertEquals("In-memory result for '" + attr + " " + op + "'.", expected, inMemoryResult);
+	}
+
+	/**
+	 * Filters over objects of which some have no value in the tested database columns, and with
+	 * script arguments that are <code>null</code>.
+	 *
+	 * <p>
+	 * In TL-Script, an order comparison with a <code>null</code> operand yields <code>null</code>,
+	 * which counts as <code>false</code> in a boolean context, and the negation of
+	 * <code>null</code> is <code>true</code>. The database-delegated filter must produce exactly
+	 * the result of the in-memory evaluation, although SQL treats a comparison with
+	 * <code>NULL</code> as unknown and the negation of unknown as unknown.
+	 * </p>
+	 */
+	public void testKBNullSemantics() {
+		with("TestSearchExpression-testKBNullSemantics.scenario.xml",
+			scenario -> {
+				TLObject c0 = scenario.getObject("c0"); // long = 100
+				TLObject c1 = scenario.getObject("c1"); // long = 200
+				TLObject c2 = scenario.getObject("c2"); // long not set
+				assertNotNull(c0);
+				assertNotNull(c1);
+				assertNotNull(c2);
+				List<TLObject> all = list(c0, c1, c2);
+
+				String l = "$x.get(`TestSearchExpression:WithDatabaseColumns#long`)";
+
+				// Outer variable compared with a column.
+				for (Object v : new Object[] { null, 150 }) {
+					assertFilterConsistent(all, "$v >= " + l, v);
+					assertFilterConsistent(all, "$v <= " + l, v);
+					assertFilterConsistent(all, l + " < $v", v);
+					assertFilterConsistent(all, "$v >= " + l + " && $v <= " + l, v);
+					assertFilterConsistent(all, "!($v >= " + l + ")", v);
+					assertFilterConsistent(all, "!($v >= " + l + ") && " + l + " > 0", v);
+					assertFilterConsistent(all, "!($v >= " + l + " && " + l + " > 0)", v);
+					assertFilterConsistent(all, "$v >= " + l + " || " + l + " > 150", v);
+					assertFilterConsistent(all, "($v >= " + l + ") == false", v);
+					assertFilterConsistent(all, "false == ($v >= " + l + ")", v);
+					assertFilterConsistent(all, "($v >= " + l + ") == null", v);
+					assertFilterConsistent(all, "!(($v >= " + l + ") == false)", v);
+					assertFilterConsistent(all, l + " == $v", v);
+					assertFilterConsistent(all, "!(" + l + " == $v)", v);
+				}
+				assertEquals(set(), assertFilterConsistent(all, "$v >= " + l, null));
+				assertEquals(set(c0, c1, c2), assertFilterConsistent(all, "!($v >= " + l + ")", null));
+				assertEquals(set(c0), assertFilterConsistent(all, "$v >= " + l, 150));
+
+				// Boolean outer variable.
+				for (Object v : new Object[] { null, true, false }) {
+					assertFilterConsistent(all, "$v", v);
+					assertFilterConsistent(all, "!$v", v);
+					assertFilterConsistent(all, "$v && " + l + " > 150", v);
+					assertFilterConsistent(all, "$v || " + l + " > 150", v);
+					assertFilterConsistent(all, "!$v && " + l + " > 150", v);
+					assertFilterConsistent(all, "!($v && " + l + " > 150)", v);
+					assertFilterConsistent(all, "!($v || " + l + " > 150)", v);
+					assertFilterConsistent(all, "(" + l + " > 150) == $v", v);
+					assertFilterConsistent(all, "!((" + l + " > 150) == $v)", v);
+				}
+				assertEquals(set(), assertFilterConsistent(all, "$v && " + l + " > 0", null));
+				assertEquals(set(c0, c1, c2), assertFilterConsistent(all, "!$v", null));
+
+				// Negated comparisons with a column that is not set in some rows.
+				assertEquals(set(c0, c2), assertFilterConsistent(all, "!(" + l + " >= 150)"));
+				assertEquals(set(c1, c2), assertFilterConsistent(all, "!(" + l + " < 150)"));
+				assertEquals(set(c0, c2), assertFilterConsistent(all, l + " < 150 || !(" + l + " >= 150)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, "!(!(" + l + " >= 0))"));
+				assertEquals(set(c2), assertFilterConsistent(all, "!(" + l + " >= 0 || " + l + " < 0)"));
+				assertEquals(set(c1, c2), assertFilterConsistent(all, "!(" + l + " == 100)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, "!(" + l + " == null)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, l + " != null"));
+				assertEquals(set(c0, c2),
+					assertFilterConsistent(all, "!(" + l + " > 150 && $x.get(`TestSearchExpression:WithDatabaseColumns#int`) > 0)"));
+
+				// Comparison results used as values.
+				assertEquals(set(c0), assertFilterConsistent(all, "(" + l + " >= 150) == false"));
+				assertEquals(set(c2), assertFilterConsistent(all, "(" + l + " >= 150) == null"));
+				assertEquals(set(c1, c2), assertFilterConsistent(all, "!((" + l + " >= 150) == false)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, "(" + l + " >= 0 && true) == (" + l + " >= 0)"));
+			});
+	}
+
+	/**
+	 * Asserts that the given filter predicate over the variable {@code x} yields the same result
+	 * when delegated to the database (rooted in {@code all(...)}) and when evaluated in memory
+	 * (rooted in the given list).
+	 *
+	 * @return The common result.
+	 */
+	private Set<?> assertFilterConsistent(List<TLObject> all, String predicate) throws ParseException {
+		Set<?> kbResult = asSet(execute(search(
+			"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> " + predicate + ")")));
+		Set<?> inMemoryResult = asSet(execute(search(
+			"all -> $all.filter(x -> " + predicate + ")"), all));
+		assertEquals("Database-delegated vs. in-memory result for '" + predicate + "'.", inMemoryResult, kbResult);
+		return kbResult;
+	}
+
+	/**
+	 * Asserts that the given filter predicate over the variable {@code x} and the outer variable
+	 * {@code v} yields the same result when delegated to the database (rooted in {@code all(...)})
+	 * and when evaluated in memory (rooted in the given list).
+	 *
+	 * @param v
+	 *        The value of the outer variable {@code v}, may be <code>null</code>.
+	 * @return The common result.
+	 */
+	private Set<?> assertFilterConsistent(List<TLObject> all, String predicate, Object v) throws ParseException {
+		Set<?> kbResult = asSet(QueryExecutor.compile(search(
+			"v -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> " + predicate + ")")).execute(v));
+		Set<?> inMemoryResult = asSet(execute(search(
+			"all -> v -> $all.filter(x -> " + predicate + ")"), all, v));
+		assertEquals("Database-delegated vs. in-memory result for '" + predicate + "' with v = " + v + ".",
+			inMemoryResult, kbResult);
+		return kbResult;
 	}
 
 	public void testSimpleSearch() {
@@ -2359,6 +2480,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("FOOBAR", eval("'FooBar'.toUpperCase()"));
 	}
 
+	public void testTrim() throws ParseException {
+		assertEquals("Foo  Bar", eval("'  Foo  Bar  '.trim()"));
+		assertEquals("Foo  Bar", eval("trim('  Foo  Bar  ')"));
+		assertEquals("Foo\tBar", eval("s -> $s.trim()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals("Foo", eval("s -> $s.trim()", " 　Foo  "));
+		assertEquals("", eval("' \t '.trim()"));
+		assertEquals("", eval("''.trim()"));
+		assertNull(eval("null.trim()"));
+		assertNull(eval("trim(null)"));
+		assertNull(eval("list().trim()"));
+		assertEquals("42", eval("42.trim()"));
+	}
+
+	public void testTrimStart() throws ParseException {
+		assertEquals("Foo  Bar  ", eval("'  Foo  Bar  '.trimStart()"));
+		assertEquals("Foo  Bar  ", eval("trimStart('  Foo  Bar  ')"));
+		assertEquals("Foo\tBar\n\t ", eval("s -> $s.trimStart()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals("Foo ", eval("s -> $s.trimStart()", " 　Foo "));
+		assertEquals("", eval("' \t '.trimStart()"));
+		assertNull(eval("null.trimStart()"));
+		assertNull(eval("trimStart(null)"));
+	}
+
+	public void testTrimEnd() throws ParseException {
+		assertEquals("  Foo  Bar", eval("'  Foo  Bar  '.trimEnd()"));
+		assertEquals("  Foo  Bar", eval("trimEnd('  Foo  Bar  ')"));
+		assertEquals(" \t\r\nFoo\tBar", eval("s -> $s.trimEnd()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals(" Foo", eval("s -> $s.trimEnd()", " Foo  "));
+		assertEquals("", eval("' \t '.trimEnd()"));
+		assertNull(eval("null.trimEnd()"));
+		assertNull(eval("trimEnd(null)"));
+	}
+
 	public void testConcat() throws ParseException {
 		assertEquals(list(1.0, 2.0, "Hello", "world", "!"), eval("concat(list(1, 2), list('Hello', 'world'), '!')"));
 	}
@@ -2886,6 +3040,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		SearchExpression labelExpression = search("label(" + object + ", \"" + locale + "\")");
 		Object label = execute(labelExpression);
 		assertEquals(expected, label);
+	}
+
+	/** Test that {@link Label} of a constant is resolved in the locale of the executing session. */
+	public void testLabelOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("label(#(\"Offen\"@de, \"Pending\"@en))"));
+
+		assertEquals("Offen", executeIn(Locale.GERMAN, executor));
+		assertEquals("Pending", executeIn(Locale.ENGLISH, executor));
+	}
+
+	/**
+	 * Test that {@link Localize} of a constant is resolved in the locale of the executing session.
+	 */
+	public void testLocalizeOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("localize(#(\"Offen\"@de, \"Pending\"@en))"));
+
+		assertEquals("Offen", executeIn(Locale.GERMAN, executor));
+		assertEquals("Pending", executeIn(Locale.ENGLISH, executor));
+	}
+
+	/**
+	 * Test that {@link Fill} of a constant pattern formats in the locale of the executing session.
+	 */
+	public void testFillOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("fill(\"{0,number,#.#}\", 1.5)"));
+
+		assertEquals("1,5", executeIn(Locale.GERMAN, executor));
+		assertEquals("1.5", executeIn(Locale.ENGLISH, executor));
+	}
+
+	private Object executeIn(Locale locale, QueryExecutor executor) {
+		return TLContextManager.getSubSession()
+			.withLocale(locale, () -> executor.executeWith(null, null, Args.none()));
 	}
 
 	private void with(String scenarioName, TestFun test) {

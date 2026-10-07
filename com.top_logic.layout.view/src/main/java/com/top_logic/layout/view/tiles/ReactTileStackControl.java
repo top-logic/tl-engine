@@ -6,8 +6,11 @@
 package com.top_logic.layout.view.tiles;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -21,11 +24,13 @@ import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
+import com.top_logic.layout.view.element.ContentControls;
+import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 
@@ -46,6 +51,17 @@ import com.top_logic.layout.view.navigation.RevealRegistry;
  * A path change keeps the frames of the longest common prefix and disposes the ones the new path
  * drops, so a path that a URL reconstructs keeps the frames it names ({@link TileFrame} compares by
  * view, label and params).
+ * </p>
+ *
+ * <p>
+ * Every frame is a dirty-tracked scope of its own: its forms report their unsaved changes to a
+ * {@link DirtyChannel} of the frame, which forwards them to the channel of the scope enclosing the
+ * stack (a tab or sidebar item, say). A path change that would drop a frame holding unsaved changes
+ * is vetoed with a {@link com.top_logic.layout.view.channel.ChannelVetoException} naming the forms
+ * of the frames it drops - whether it comes from a breadcrumb click, a
+ * {@link NavigatePopCommand pop}, the URL, or any other write to the path. The frames the new path
+ * keeps are not asked about, and pushing a frame drops none. Once the user has saved or discarded,
+ * the continuation of the veto writes the path again.
  * </p>
  *
  * <p>
@@ -92,6 +108,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 	private final ChannelListener _pathListener;
 
+	private final VetoListener _pathVeto;
+
 	/**
 	 * The path the {@link #_frameControls} beyond the initial view were built for.
 	 */
@@ -104,11 +122,17 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	private final List<ReactControl> _frameControls = new ArrayList<>();
 
 	/**
+	 * The dirty-tracked scope of each of the {@link #_frameControls}, at the same index.
+	 */
+	private final List<DirtyChannel> _frameDirty = new ArrayList<>();
+
+	/**
 	 * Creates a new {@link ReactTileStackControl}.
 	 *
 	 * @param parent
 	 *        The {@link ViewContext} in which the {@code <tile-stack>} is embedded. Used to
-	 *        inherit ambient services (error sink, dirty channel) into each frame's child context.
+	 *        inherit ambient services into each frame's child context: the error sink, and the dirty
+	 *        channel that the dirty channel of each frame forwards to.
 	 * @param element
 	 *        The element this control displays, the container a frame is addressed through.
 	 * @param pathChannel
@@ -137,6 +161,22 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		_pathChannel.addListener(_pathListener);
 		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
 
+		_pathVeto = new VetoListener() {
+			@Override
+			public List<StateHandler> checkVeto(ViewChannel sender, Object oldValue,
+					Object newValue) {
+				return dirtyHandlersDroppedBy(newValue);
+			}
+
+			@Override
+			public List<StateHandler> checkDirty(ViewChannel sender) {
+				// Any write may replace the whole path, so every pushed frame is at stake.
+				return dirtyHandlersFrom(1);
+			}
+		};
+		_pathChannel.addVetoListener(_pathVeto);
+		addCleanupAction(() -> _pathChannel.removeVetoListener(_pathVeto));
+
 		RevealRegistry registry = parent.getRevealRegistry();
 		if (registry != null) {
 			addCleanupAction(registry.registerContainer(element, _here, this));
@@ -144,7 +184,9 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 		installRouteParticipant();
 
-		_frameControls.add(buildFrame(_initialViewPath, Map.of(), TileStackElement.Config.INITIAL));
+		DirtyChannel initialDirty = frameDirtyChannel();
+		_frameControls.add(buildFrame(_initialViewPath, Map.of(), TileStackElement.Config.INITIAL, initialDirty));
+		_frameDirty.add(initialDirty);
 		publishFrames();
 		updateFrames();
 	}
@@ -223,18 +265,22 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		while (_frames.size() > keep) {
 			_frames.remove(_frames.size() - 1);
 			dropped.add(_frameControls.remove(_frameControls.size() - 1));
+			_frameDirty.remove(_frameDirty.size() - 1);
 		}
 		for (int i = keep; i < path.size(); i++) {
 			TileFrame frame = path.get(i);
+			DirtyChannel dirty = frameDirtyChannel();
 			ReactControl control;
 			try {
-				control = buildFrame(ViewLoader.VIEW_BASE_PATH + frame.getViewRef(), frame.getParams(), frameKey(i));
+				control = buildFrame(ViewLoader.VIEW_BASE_PATH + frame.getViewRef(), frame.getParams(), frameKey(i),
+					dirty);
 			} catch (RuntimeException ex) {
 				Logger.error("Failed to build tile frame.", ex, ReactTileStackControl.class);
 				break;
 			}
 			_frames.add(frame);
 			_frameControls.add(control);
+			_frameDirty.add(dirty);
 
 			// Attached now rather than when it is rendered, because a URL being taken up is resolved by
 			// the participants the display registers, and the display it registers them from is built
@@ -246,10 +292,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 		publishFrames();
 
-		// A dropped frame may hold listeners of the very channel whose notification is running, so
-		// its disposal waits until that notification has unwound.
-		ChannelNotificationScope.current()
-			.afterNotification(() -> dropped.forEach(ReactControl::cleanupTree));
+		dropped.forEach(ContentControls::retire);
 	}
 
 	/**
@@ -276,10 +319,54 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	}
 
 	/**
-	 * Creates the control of one frame: the view at the given path, in a child context carrying the
-	 * given params as channels.
+	 * The handlers holding unsaved changes in the frames that writing the given value to the path
+	 * would drop.
+	 *
+	 * <p>
+	 * These are the frames beyond the longest common prefix of the new path and the frames held. The
+	 * initial view is never dropped.
+	 * </p>
+	 *
+	 * @param newPath
+	 *        The value about to be written to the path channel. Anything but a list stands for the
+	 *        empty path.
 	 */
-	private ReactControl buildFrame(String viewPath, Map<String, Object> params, String key) {
+	@SuppressWarnings("unchecked")
+	private List<StateHandler> dirtyHandlersDroppedBy(Object newPath) {
+		List<TileFrame> path = newPath instanceof List<?> list ? (List<TileFrame>) list : List.of();
+		return dirtyHandlersFrom(commonPrefixSize(path) + 1);
+	}
+
+	/**
+	 * The handlers holding unsaved changes in the frames from the given position of
+	 * {@link #_frameControls} on, each reported once and in frame order.
+	 */
+	private List<StateHandler> dirtyHandlersFrom(int firstFrame) {
+		List<StateHandler> result = new ArrayList<>();
+		Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (int i = firstFrame; i < _frameDirty.size(); i++) {
+			for (com.top_logic.layout.react.dirty.StateHandler handler : _frameDirty.get(i).getDirtyHandlers()) {
+				if (seen.add(handler)) {
+					// Only forms of the view layer report to the dirty channel of a view.
+					result.add((StateHandler) handler);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * A dirty-tracked scope for a frame, lying within the scope enclosing the stack.
+	 */
+	private DirtyChannel frameDirtyChannel() {
+		return new DirtyChannel(_parentContext.getDirtyChannel());
+	}
+
+	/**
+	 * Creates the control of one frame: the view at the given path, in a child context carrying the
+	 * given params as channels and reporting unsaved changes to the given dirty channel.
+	 */
+	private ReactControl buildFrame(String viewPath, Map<String, Object> params, String key, DirtyChannel dirty) {
 		ViewElement frameView;
 		try {
 			frameView = ViewLoader.getOrLoadView(viewPath);
@@ -292,10 +379,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		if (parentErrorSink != null) {
 			frameContext = frameContext.withErrorSink(parentErrorSink);
 		}
-		DirtyChannel parentDirty = _parentContext.getDirtyChannel();
-		if (parentDirty != null) {
-			frameContext.setDirtyChannel(parentDirty);
-		}
+		frameContext.setDirtyChannel(dirty);
 		frameContext = frameContext.withScope(TileStackScope.class, _scope)
 			.withScope(RevealPath.class, _here.append(_element, key));
 

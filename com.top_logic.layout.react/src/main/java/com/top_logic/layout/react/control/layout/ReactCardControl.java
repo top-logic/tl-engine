@@ -155,6 +155,6 @@ public class ReactCardControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of("padding", "variant");
+		return presentationKeys(super.scriptingPresentationKeys(), "padding", "variant");
 	}
 }

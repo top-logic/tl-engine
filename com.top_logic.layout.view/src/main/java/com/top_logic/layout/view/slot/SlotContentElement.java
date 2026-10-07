@@ -82,6 +82,8 @@ public class SlotContentElement implements UIElement {
 
 	private final List<UIElement> _children;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SlotContentElement} from configuration.
 	 */
@@ -92,6 +94,7 @@ public class SlotContentElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> childConfig : config.getChildren()) {
 			_children.add(context.getInstance(childConfig));
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -106,7 +109,9 @@ public class SlotContentElement implements UIElement {
 			ViewContext childContext = context.withChildSlotPath(Integer.toString(i));
 			childControls.add((ReactControl) _children.get(i).createControl(childContext));
 		}
-		return new SlotContentControl(context, _slotName, context.getSlotPath(),
+		SlotContentControl result = new SlotContentControl(context, _slotName, context.getSlotPath(),
 			context.getSlotRegistry(), childControls);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

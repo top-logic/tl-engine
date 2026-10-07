@@ -8,25 +8,27 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -34,23 +36,31 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.NullDefault;
-import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.DisabledIf;
+import com.top_logic.layout.view.command.ExecutabilityConfig;
+import com.top_logic.layout.view.command.LiveExecutability;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
@@ -60,9 +70,13 @@ import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
-import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
@@ -70,53 +84,60 @@ import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.search.expr.EvalContext;
+import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
-import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.GroupSpec;
-import com.top_logic.table.SortColumn;
-import com.top_logic.table.SortDirection;
-import com.top_logic.table.SortSpec;
-import com.top_logic.table.TableId;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
+import com.top_logic.table.Selection;
+import com.top_logic.table.SelectionMode;
+import com.top_logic.table.SortSpec;
+import com.top_logic.table.TableId;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
+import com.top_logic.util.TLContext;
 
 /**
- * Declarative {@link UIElement} that renders a model-defined table (the {@code <table>} tag) through
- * the green-field table model ({@link com.top_logic.table.TableView}) via a {@link TableViewControl}.
+ * Declarative {@link UIElement} that renders a model-defined table (the {@code 
+ * <table>
+ * } tag) through the green-field table model ({@link com.top_logic.table.TableView}) via a
+ * {@link TableViewControl}.
  *
  * <p>
  * Input data comes from {@link ViewChannel}s, rows are computed by a TL-Script expression, and each
- * configured column reads a model attribute. Columns are sortable and (per-column) filterable.
+ * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows,
+ * over a value computed from them, or over an object they point to. Columns are sortable and
+ * (per-column) filterable.
  * </p>
  *
  * <p>
  * What the user personalizes about a table - the column order, the column widths, which columns are
  * displayed, the sort order - and the filters the user saves under a name are stored under the
  * element's personalization key. Without a configured one, that key is the table's structural
- * signature: its row types plus the attributes of its columns. That signature changes whenever a
- * column is added or removed, and everything the users of the table personalized - their saved
+ * signature: its row types plus the names of its declared columns. That signature changes whenever
+ * a column is added or removed, and everything the users of the table personalized - their saved
  * filters included - is then left behind. Setting {@code personalization-key} gives the table an
  * identity of its own that survives such an edit of the view, so set it on every table whose
  * personalization is meant to last.
  * </p>
  *
  * @implNote {@link #tableId()} derives the {@link TableId} from
- *           {@link UIElement.Config#getPersonalizationKey()} when one is configured, and from the
- *           structural signature otherwise.
+ *           {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()} when one is
+ *           configured, and from the structural signature otherwise.
  */
 @InApp
 public class TableElement implements UIElement {
@@ -125,14 +146,11 @@ public class TableElement implements UIElement {
 	 * Configuration for {@link TableElement}.
 	 */
 	@TagName("table")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(TableElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getRows()}. */
 		String ROWS = "rows";
@@ -148,6 +166,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
 
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
@@ -176,6 +197,12 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getPresets()}. */
 		String PRESETS = "presets";
 
+		/** Configuration name for {@link #getActivePreset()}. */
+		String ACTIVE_PRESET = "active-preset";
+
+		/** Configuration name for {@link #getSearchTerm()}. */
+		String SEARCH_TERM = "search-term";
+
 		/** Configuration name for {@link #getDrag()}. */
 		String DRAG = "drag";
 
@@ -192,15 +219,11 @@ public class TableElement implements UIElement {
 		List<TLModelPartRef> getTypes();
 
 		/**
-		 * References to {@link ViewChannel}s whose values become positional arguments to
-		 * {@link #getRows()}.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
-
-		/**
 		 * TL-Script function computing the row objects (a {@link Collection}).
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order.
+		 * </p>
 		 */
 		@Name(ROWS)
 		@Mandatory
@@ -209,6 +232,11 @@ public class TableElement implements UIElement {
 
 		/**
 		 * The columns to display, in display order.
+		 *
+		 * <p>
+		 * Unset, the table shows the main properties of its row type, and all of its non-hidden
+		 * attributes when the type names none.
+		 * </p>
 		 */
 		@Name(COLUMNS)
 		ColumnsConfig getColumns();
@@ -232,6 +260,32 @@ public class TableElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Whether the user may select one row at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and
+		 * a click on the selected row with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} puts a checkbox in front of every row and one in the header
+		 * selecting and deselecting all of them; a click with {@code Ctrl} adds a row to the
+		 * selection or takes it out again, a click with {@code Shift} selects the range from the
+		 * row selected last, and {@code Ctrl+A} selects every row.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the selected row object while exactly
+		 * one row is selected, the set of the selected row objects while there are several, and
+		 * nothing while there is none - so a display bound to the channel works with either mode,
+		 * and only one that is to show several rows at once has to expect a set.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
 
 		/**
 		 * The command a row activation runs - a double-click on the row, or {@code Enter} while the
@@ -357,6 +411,56 @@ public class TableElement implements UIElement {
 		PresetsConfig getPresets();
 
 		/**
+		 * Optional {@link ViewChannel} holding the name of the named filter this table is filtered
+		 * by, and nothing while it matches none of them.
+		 *
+		 * <p>
+		 * It carries the name of a {@link PresetConfig preset} as well as the generated name of a
+		 * filter the user saved, and it works in both directions: a name written to it filters the
+		 * table by that filter, and a name nothing carries - a link that has outlived the preset it
+		 * names - leaves the table unfiltered and is corrected to what the table shows.
+		 * </p>
+		 *
+		 * <p>
+		 * A preset says which rows are selected, not what is searched for, so the name stays on the
+		 * channel while the user searches within the preset.
+		 * </p>
+		 *
+		 * <p>
+		 * Bound to a query parameter, this is what makes a filtered table linkable, together with
+		 * the searched text.
+		 * </p>
+		 */
+		@Name(ACTIVE_PRESET)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getActivePreset();
+
+		/**
+		 * Optional {@link ViewChannel} holding the text this table searches its displayed columns
+		 * for, and nothing while it searches for none.
+		 *
+		 * <p>
+		 * It works in both directions: what the user types into the search field of the filter bar
+		 * reaches the channel, and a text written to the channel is searched for - so a table
+		 * without a bar of its own can be searched from an input elsewhere.
+		 * </p>
+		 *
+		 * <p>
+		 * The search narrows the rows within whatever the table is filtered by, so a preset the
+		 * table matches goes on being the {@link #getActivePreset() active preset} while the text is
+		 * searched for. Bound to query parameters, the two together are one address: the preset and
+		 * the text the user sees the table under. A filter the user saved while searching is the
+		 * exception - it carries the text it was saved with, and matches only while exactly that
+		 * text is searched for.
+		 * </p>
+		 */
+		@Name(SEARCH_TERM)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getSearchTerm();
+
+		/**
 		 * Makes the rows of this table draggable, so they can be dropped on a display that accepts
 		 * their type.
 		 *
@@ -384,12 +488,22 @@ public class TableElement implements UIElement {
 
 	/**
 	 * Configuration of the {@code <drag>} of a {@link TableElement}: that its rows may be dragged,
-	 * and what they are announced as.
+	 * what they are announced as, and when they may be dragged.
+	 *
+	 * <p>
+	 * The {@link #getExecutability() executability} rules decide for the table as a whole over the
+	 * value of the {@link #getInput() input} channel, and are followed live: while they refuse, no
+	 * row can be dragged. The {@link #getRowExecutability() row executability} rules decide for
+	 * each row separately, with the row as their input.
+	 * </p>
 	 */
-	public interface DragConfig extends ConfigurationItem {
+	public interface DragConfig extends ExecutabilityConfig {
 
 		/** Configuration name for {@link #getType()}. */
 		String TYPE = "type";
+
+		/** Configuration name for {@link #getRowExecutability()}. */
+		String ROW_EXECUTABILITY = "row-executability";
 
 		/**
 		 * The type the dragged rows are announced as, which a {@link DropConfig#getAccept() drop}
@@ -402,14 +516,37 @@ public class TableElement implements UIElement {
 		 */
 		@Name(TYPE)
 		TLModelPartRef getType();
+
+		/**
+		 * Rules deciding which rows may be dragged, each row being the input they decide over.
+		 *
+		 * <p>
+		 * A row the rules refuse offers no drag, and a drag of a selection including such a row is
+		 * refused as a whole. Empty (default) lets every row be dragged while the table-wide
+		 * {@link #getExecutability() executability} allows dragging at all.
+		 * </p>
+		 */
+		@Name(ROW_EXECUTABILITY)
+		@EntryTag(RULE)
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getRowExecutability();
 	}
 
 	/**
 	 * Configuration of one {@code <drop>} of a {@link TableElement}: what it accepts, what it
-	 * targets, and what it does.
+	 * targets, when it applies, and what it does.
+	 *
+	 * <p>
+	 * A drop is restricted in three stages, each asked only after the previous one accepted: the
+	 * {@link #getExecutability() executability} rules decide for the table as a whole over the value
+	 * of the {@link #getInput() input} channel, and are followed live - while they refuse, the drop
+	 * is not offered at all; the {@link #getTargetExecutability() target executability} rules decide
+	 * over the row a {@link DropTargetMode#ROW row} drop is made on; the {@link #getRefuseIf() refusal
+	 * function} decides over the target and the dragged objects together. While the user drags, the
+	 * first refusal is shown at the target under the pointer, with its reason.
+	 * </p>
 	 */
 	@TagName("drop")
-	public interface DropConfig extends ConfigurationItem {
+	public interface DropConfig extends ExecutabilityConfig {
 
 		/** Configuration name for {@link #getAccept()}. */
 		String ACCEPT = "accept";
@@ -419,6 +556,12 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getTargetChannel()}. */
 		String TARGET_CHANNEL = "target-channel";
+
+		/** Configuration name for {@link #getTargetExecutability()}. */
+		String TARGET_EXECUTABILITY = "target-executability";
+
+		/** Configuration name for {@link #getRefuseIf()}. */
+		String REFUSE_IF = "refuse-if";
 
 		/** Configuration name for {@link #getActions()}. */
 		String ACTIONS = "actions";
@@ -459,6 +602,35 @@ public class TableElement implements UIElement {
 		ChannelRef getTargetChannel();
 
 		/**
+		 * Rules deciding on which rows the drop may be made, each target row being the input they
+		 * decide over.
+		 *
+		 * <p>
+		 * Only a drop whose {@link #getTarget() target} is a row has a target row to decide over;
+		 * declaring rules here for a drop on the table as a whole is a configuration error. Empty
+		 * (default) accepts every row.
+		 * </p>
+		 */
+		@Name(TARGET_EXECUTABILITY)
+		@EntryTag(RULE)
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getTargetExecutability();
+
+		/**
+		 * TL-Script function computing why a drop must not be made, from the target and the dragged
+		 * objects: {@code target -> objects -> reason}.
+		 *
+		 * <p>
+		 * The target is the row dropped on, or {@code null} for a drop on the table as a whole; the
+		 * objects are the list of dragged objects. No value or <code>false</code> accepts the drop,
+		 * <code>true</code> refuses it with a generic reason, a resource key or a text refuses it
+		 * with that reason - the same interpretation as the {@link DisabledIf.Config disabled-if}
+		 * rule. Unset (default) refuses nothing.
+		 * </p>
+		 */
+		@Name(REFUSE_IF)
+		Expr getRefuseIf();
+
+		/**
 		 * The chain of actions applying the drop, receiving the dropped objects as the input of its
 		 * first action.
 		 */
@@ -473,12 +645,36 @@ public class TableElement implements UIElement {
 	 */
 	public interface PresetsConfig extends ConfigurationItem {
 
+		/** Configuration name for {@link #getInitial()}. */
+		String INITIAL = "initial";
+
 		/**
 		 * The named filters the table offers, in the order they are displayed in.
 		 */
 		@DefaultContainer
 		@Key(PresetConfig.NAME)
 		List<PresetConfig> getPresets();
+
+		/**
+		 * The {@link PresetConfig#getName() name} of the preset the table is filtered by until the
+		 * user decides about its filtering themselves.
+		 *
+		 * <p>
+		 * This is what a user sees who opens the table for the first time - the open items, their
+		 * own rows - instead of everything the table holds. It is part of the table's initial state,
+		 * like its sort order and its grouping, so it takes effect only as long as no
+		 * personalization of this table exists: a user who applied other criteria keeps them, and
+		 * one who cleared the filter keeps the table unfiltered.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset (default), the table starts out unfiltered. A name none of the declared presets
+		 * carries is a configuration error.
+		 * </p>
+		 */
+		@Name(INITIAL)
+		@Nullable
+		String getInitial();
 	}
 
 	/**
@@ -615,89 +811,10 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * Container for the list of {@link ColumnConfig}s of a {@link TableElement}.
-	 */
-	public interface ColumnsConfig extends ConfigurationItem {
-
-		/**
-		 * The columns to display, in display order.
-		 */
-		@DefaultContainer
-		List<ColumnConfig> getColumns();
-	}
-
-	/**
-	 * Configuration for a single displayed column of a {@link TableElement}.
-	 */
-	@TagName("column")
-	public interface ColumnConfig extends ConfigurationItem {
-
-		/** Configuration name for {@link #getAttribute()}. */
-		String ATTRIBUTE = "attribute";
-
-		/** Configuration name for {@link #getFilter()}. */
-		String FILTER = "filter";
-
-		/** Configuration name for {@link #getReadonly()}. */
-		String READONLY = "readonly";
-
-		/** Configuration name for {@link #getSort()}. */
-		String SORT = "sort";
-
-		/**
-		 * The name of the attribute (column) to display.
-		 */
-		@Name(ATTRIBUTE)
-		@Mandatory
-		String getAttribute();
-
-		/**
-		 * An optional application-defined filter for this column, overriding the type-derived
-		 * default. The filter matches against the cell's display text.
-		 */
-		@Name(FILTER)
-		PolymorphicConfiguration<? extends ColumnFilter<?>> getFilter();
-
-		/**
-		 * Whether this column stays read-only while the table is {@link Config#getRowEdit()
-		 * edited}.
-		 */
-		@Name(READONLY)
-		boolean getReadonly();
-
-		/**
-		 * The direction this column is sorted in when the table is first shown, or unset to leave
-		 * it unsorted.
-		 *
-		 * <p>
-		 * Sorting by several columns is expressed by setting this on more than one column; the
-		 * declaration order decides which one sorts first. The default only applies until the user
-		 * sorts the table themselves, from then on their own order is remembered.
-		 * </p>
-		 */
-		@Name(SORT)
-		@Nullable
-		@NullDefault
-		SortDirection getSort();
-	}
-
-	/**
-	 * The order the table is displayed in before the user sorts it, taken from the
-	 * {@link ColumnConfig#getSort() sorted} columns in declaration order.
+	 * The order the table is displayed in before the user sorts it, as its declarations say.
 	 */
 	private SortSpec defaultSort() {
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig == null) {
-			return SortSpec.NONE;
-		}
-		List<SortColumn> sortColumns = new ArrayList<>();
-		for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			SortDirection direction = columnConfig.getSort();
-			if (direction != null) {
-				sortColumns.add(new SortColumn(columnConfig.getAttribute(), direction == SortDirection.ASC));
-			}
-		}
-		return sortColumns.isEmpty() ? SortSpec.NONE : new SortSpec(sortColumns);
+		return ColumnDeclarations.defaultSort(_declarations);
 	}
 
 	/**
@@ -727,10 +844,16 @@ public class TableElement implements UIElement {
 
 	/**
 	 * Where the filters the user saves under a name are persisted, or {@code null} for a table
-	 * without a filter bar, which offers no way to save one.
+	 * that offers no way to save one.
+	 *
+	 * <p>
+	 * A table without a filter bar offers no saving, and neither does a table in an anonymous
+	 * session: all anonymous visitors share one account, so a filter saved there would belong to
+	 * nobody in particular. Such a session keeps the filter bar and the declared filters.
+	 * </p>
 	 */
 	private NamedFilterStore filterStore() {
-		return filterBar() ? PersonalConfigNamedFilterStore.INSTANCE : null;
+		return filterBar() && !TLContext.isAnonymous() ? PersonalConfigNamedFilterStore.INSTANCE : null;
 	}
 
 	/**
@@ -746,12 +869,17 @@ public class TableElement implements UIElement {
 	 *
 	 * @param columns
 	 *        All columns of the table, whose filters translate the criteria.
+	 * @param declaredNames
+	 *        The names of the columns the table declares; one of them missing from the given
+	 *        columns is withheld from the current user, see
+	 *        {@link ColumnDeclarations#withheld(Collection, List)}.
 	 * @param arguments
 	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
 	 *        the arguments of every criterion expression, as they are the arguments of
 	 *        {@link Config#getRows()}.
 	 */
-	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Object[] arguments) {
+	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Collection<String> declaredNames,
+			Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -763,7 +891,8 @@ public class TableElement implements UIElement {
 			}
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
 		}
-		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns);
+		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
+			ColumnDeclarations.withheld(declaredNames, columns));
 	}
 
 	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
@@ -771,19 +900,57 @@ public class TableElement implements UIElement {
 
 	/**
 	 * Prefix distinguishing a {@link TableId} built from a configured
-	 * {@link UIElement.Config#getPersonalizationKey() personalization key}.
+	 * {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey() personalization
+	 * key}.
 	 */
 	private static final String KEY_PREFIX = "key:";
+
+	/**
+	 * Name of the {@link ReactControl#putDiagnostic(String, Object) diagnostic} reporting the rows
+	 * the current user's read rights removed from the table.
+	 *
+	 * <p>
+	 * Its value is a map of {@link #HIDDEN_COUNT} and {@link #HIDDEN_BY_TYPE}; a table from which
+	 * nothing was removed carries no such entry.
+	 * </p>
+	 *
+	 * @see #applyRowDiagnostics(ReactControl, SecurityFilterReport)
+	 */
+	public static final String DIAGNOSTIC_HIDDEN_BY_ACCESS = "hiddenByAccess";
+
+	/**
+	 * Entry of {@link #DIAGNOSTIC_HIDDEN_BY_ACCESS} holding the number of removed rows.
+	 */
+	public static final String HIDDEN_COUNT = "count";
+
+	/**
+	 * Entry of {@link #DIAGNOSTIC_HIDDEN_BY_ACCESS} holding the number of removed rows per type,
+	 * keyed by the qualified name of the type.
+	 */
+	public static final String HIDDEN_BY_TYPE = "byType";
 
 	private final Config _config;
 
 	private final QueryExecutor _rowsExecutor;
 
-	/** The column-integration strategy per configured column, keyed by attribute name. */
-	private final Map<String, ColumnBinding> _bindings = new HashMap<>();
+	/** The declared {@link Config#getColumns() columns}, in display order. */
+	private final List<ColumnDeclaration> _declarations;
+
+	/**
+	 * The names of the declared columns, in declaration order.
+	 *
+	 * <p>
+	 * Known without rows, so that the table has an identity and knows which further columns to
+	 * offer before it is displayed for the first time.
+	 * </p>
+	 */
+	private final List<String> _declaredNames;
 
 	/** The compiled {@link Config#getPresets() presets}, in the order they are offered. */
 	private final List<CompiledPreset> _presets;
+
+	/** @see #initialFilter() */
+	private final String _initialFilter;
 
 	/**
 	 * The type tag the rows are dragged under, or {@code null} while the table declares no
@@ -852,14 +1019,16 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * A {@link DropConfig} with its action chain instantiated.
+	 * A {@link DropConfig} with its action chain instantiated and its refusal function compiled.
 	 *
 	 * @param config
 	 *        What the drop accepts and targets.
 	 * @param actions
 	 *        The instantiated action chain applying it.
+	 * @param refuseIf
+	 *        The compiled {@link DropConfig#getRefuseIf()}, {@code null} without one.
 	 */
-	private record CompiledDrop(DropConfig config, List<ViewAction> actions) {
+	private record CompiledDrop(DropConfig config, List<ViewAction> actions, QueryExecutor refuseIf) {
 		// Pure data carrier.
 	}
 
@@ -880,14 +1049,11 @@ public class TableElement implements UIElement {
 				+ "> nor <drop>.");
 		}
 
-		ColumnsConfig columnsConfig = config.getColumns();
-		if (columnsConfig != null) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				_bindings.put(columnConfig.getAttribute(), resolveBinding(context, columnConfig));
-			}
-		}
+		_declarations = ColumnDeclarations.instantiate(context, config.getColumns());
+		_declaredNames = ColumnDeclarations.declaredNames(_declarations);
 
 		_presets = compilePresets(context, config.getPresets());
+		_initialFilter = initialFilter(context, config.getPresets());
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
@@ -934,16 +1100,29 @@ public class TableElement implements UIElement {
 				.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
 				.filter(action -> action != null)
 				.toList();
-			result.add(new CompiledDrop(dropConfig, actions));
+			if (!dropConfig.getTargetExecutability().isEmpty() && dropConfig.getTarget() != DropTargetMode.ROW) {
+				context.error("A <drop> on the table as a whole has no target row its '"
+					+ DropConfig.TARGET_EXECUTABILITY + "' could decide over; only a drop with "
+					+ DropConfig.TARGET + "=\"" + DropTargetMode.ROW.getExternalName() + "\" declares one.");
+			}
+			Expr refuseIf = dropConfig.getRefuseIf();
+			result.add(new CompiledDrop(dropConfig, actions, refuseIf == null ? null : QueryExecutor.compile(refuseIf)));
 		}
 		return result;
 	}
 
 	/**
 	 * The drop target of this table's declared drops, resolved for the given session: the accepted
-	 * types against the application model, the target channels against the view.
+	 * types against the application model, the target channels against the view, the rules against
+	 * the context.
+	 *
+	 * <p>
+	 * The table-wide {@link DropConfig#getExecutability() executability} of each drop is followed
+	 * while the control is displayed, and a change of it is announced to the client again (see
+	 * {@link #followLive(ViewContext, ReactControl, LiveExecutability, Runnable)}).
+	 * </p>
 	 */
-	private DropTarget dropBinding(ViewContext context) {
+	private DropTarget dropBinding(ViewContext context, TableViewControl<?> control) {
 		List<TableDropBinding.Drop> drops = new ArrayList<>(_drops.size());
 		for (CompiledDrop compiled : _drops) {
 			DropConfig dropConfig = compiled.config();
@@ -957,11 +1136,82 @@ public class TableElement implements UIElement {
 				accepted.add(type);
 			}
 			ChannelRef targetChannelRef = dropConfig.getTargetChannel();
+
+			Supplier<ExecutableState> executability;
+			if (dropConfig.getExecutability().isEmpty()) {
+				executability = () -> ExecutableState.EXECUTABLE;
+			} else {
+				LiveExecutability live =
+					LiveExecutability.create(dropConfig, context, control::refreshDropTarget);
+				followLive(context, control, live, control::refreshDropTarget);
+				executability = live::getState;
+			}
+
+			QueryExecutor refuseIf = compiled.refuseIf();
 			drops.add(new TableDropBinding.Drop(TableDropBinding.tagsOf(accepted), dropConfig.getTarget(),
 				targetChannelRef == null ? null : context.resolveChannel(targetChannelRef),
-				compiled.actions()));
+				compiled.actions(),
+				executability,
+				ViewExecutabilityRules.build(dropConfig.getTargetExecutability(), context),
+				refuseIf == null ? null : (target, objects) -> refuseIf.execute(target, objects)));
 		}
 		return new TableDropBinding(context, drops);
+	}
+
+	/**
+	 * Makes the rows of the given control draggable as the {@link Config#getDrag() drag} declares.
+	 *
+	 * <p>
+	 * The {@link DragConfig#getRowExecutability() row rules} decide per row; the table-wide
+	 * {@link DragConfig#getExecutability() executability} is followed while the control is
+	 * displayed, and takes the drag away from all rows while it refuses.
+	 * </p>
+	 */
+	private void installDragSource(ViewContext context, TableViewControl<Object> control) {
+		DragConfig drag = _config.getDrag();
+		ViewExecutabilityRule rowRule = ViewExecutabilityRules.build(drag.getRowExecutability(), context);
+		Predicate<Object> draggable = rowRule == ViewExecutabilityRule.ALWAYS_EXECUTABLE ? null
+			: row -> rowRule.isExecutable(row).isExecutable();
+		String dragType = _dragType;
+		if (drag.getExecutability().isEmpty()) {
+			control.setDragSource(dragType, draggable);
+			return;
+		}
+
+		LiveExecutability[] live = new LiveExecutability[1];
+		Runnable update = () -> {
+			String type = live[0].getState().isExecutable() ? dragType : null;
+			if (Objects.equals(type, control.dragType())) {
+				control.refreshDragSource();
+			} else {
+				control.setDragSource(type, draggable);
+			}
+		};
+		live[0] = LiveExecutability.create(drag, context, update);
+		control.setDragSource(live[0].getState().isExecutable() ? dragType : null, draggable);
+		followLive(context, control, live[0], update);
+	}
+
+	/**
+	 * Follows the given rules while the given control is displayed.
+	 *
+	 * <p>
+	 * The rules are attached when the control is attached - the update then runs, since the rules
+	 * may answer differently than when the control was last displayed - and detached when it is
+	 * detached or cleaned up, so that no listener outlives the display.
+	 * </p>
+	 *
+	 * @param update
+	 *        Brings the control in line with what the rules answer now.
+	 */
+	private static void followLive(ViewContext context, ReactControl control, LiveExecutability live,
+			Runnable update) {
+		control.addAttachListener(() -> {
+			live.attach(context.getModelScope());
+			update.run();
+		});
+		control.addDetachListener(live::detach);
+		control.addCleanupAction(live::detach);
 	}
 
 	/**
@@ -1023,67 +1273,94 @@ public class TableElement implements UIElement {
 			criterionConfig.getInverted());
 	}
 
+	/**
+	 * The name of the preset the table starts out filtered by, {@code null} for a table that starts
+	 * out unfiltered.
+	 *
+	 * <p>
+	 * A name none of the declared presets carries is reported: it would leave the table unfiltered
+	 * without anything saying why.
+	 * </p>
+	 */
+	private static String initialFilter(Log log, PresetsConfig presetsConfig) {
+		if (presetsConfig == null) {
+			return null;
+		}
+		String initial = presetsConfig.getInitial();
+		if (StringServices.isEmpty(initial)) {
+			return null;
+		}
+		for (PresetConfig presetConfig : presetsConfig.getPresets()) {
+			if (initial.equals(presetConfig.getName())) {
+				return initial;
+			}
+		}
+		log.error("The '" + PresetsConfig.INITIAL + "' of the <" + Config.PRESETS
+			+ "> of a <table> names no declared preset: '" + initial + "'.");
+		return null;
+	}
+
+	/**
+	 * The preset the table is filtered by until a personalization of its own exists, {@code null}
+	 * for a table that starts out unfiltered.
+	 *
+	 * <p>
+	 * This is what the table's initial state carries, so criteria the user applied - which are
+	 * persisted under the table's identity - win over it, and so does a filter the user cleared.
+	 * </p>
+	 */
+	public String initialFilter() {
+		return _initialFilter;
+	}
+
 	/** How a criterion of a preset is named in a configuration error. */
 	private static String criterion(PresetConfig presetConfig, CriterionConfig criterionConfig) {
 		return "The criterion for the column '" + criterionConfig.getColumn() + "' of the preset '"
 			+ presetConfig.getName() + "'";
 	}
 
-	/**
-	 * The column integration for a configured column: derived from the attribute's type when no
-	 * filter is configured, the filter's own integration when it provides one, or a value-text filter
-	 * otherwise. This single capability check ({@link ColumnBinding}) is the only place filter kinds
-	 * are distinguished.
-	 */
-	private static ColumnBinding resolveBinding(InstantiationContext context, ColumnConfig columnConfig) {
-		PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig = columnConfig.getFilter();
-		if (filterConfig == null) {
-			return ColumnBinding.TYPE_DERIVED;
-		}
-		ColumnFilter<?> filter = context.getInstance(filterConfig);
-		if (filter == null) {
-			return ColumnBinding.TYPE_DERIVED;
-		}
-		return filter instanceof ColumnBinding binding ? binding : ColumnBinding.forValueFilter(filter);
-	}
-
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		List<ViewChannel> inputChannels = new ArrayList<>();
-		for (ChannelRef ref : _config.getInputs()) {
-			inputChannels.add(context.resolveChannel(ref));
-		}
-		Object[] inputValues = readChannelValues(inputChannels);
-		Collection<?> rows = executeRowsQuery(_rowsExecutor, inputValues);
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
+		Object[] inputValues = ChannelInputs.arguments(inputChannels);
+		RowsResult initialRows = executeRows(_rowsExecutor, inputValues);
+		Collection<?> rows = initialRows.rows();
 
 		if (_config.getRowEdit() != RowEditPolicy.NONE) {
-			return createEditableControl(context, inputChannels, rows);
+			return createEditableControl(context, inputChannels, initialRows);
 		}
 
 		ViewCommandModel activation = activationModel(context);
 
-		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
+		TLStructuredType rowType = resolveRowType(rows);
+		List<ColumnDeclaration> declarations = columns(rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
+		List<ColumnSetup> setups =
+			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
-			columns.add(setup.binding().createColumn(setup));
+			columns.add(setup.buildColumn());
 		}
 		columns.addAll(this.<Object> rowCommandColumns(context, activation));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList());
+		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(initialGrouping());
+		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
-			declaredFilters(columns, inputValues), filterStore());
+			declaredFilters(columns, declaredNames, inputValues), filterStore(), _initialFilter);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+		control.setCssClass(_config.getCssClass());
+		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFilterBar(filterBar());
 		if (_dragType != null) {
-			control.setDragSource(_dragType);
+			installDragSource(context, control);
 		}
 		if (!_drops.isEmpty()) {
-			control.setDropTarget(dropBinding(context));
+			control.setDropTarget(dropBinding(context, control));
 		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
@@ -1098,6 +1375,11 @@ public class TableElement implements UIElement {
 			control.addCleanupAction(selectionBinding::dispose);
 		}
 
+		TableFilterBinding filterBinding = filterBinding(context, control);
+		if (filterBinding != null) {
+			control.addCleanupAction(filterBinding::dispose);
+		}
+
 		control.setActivationHandler(activationHandler(context, activation));
 
 		// Refresh the rows when observed objects change or an input channel changes.
@@ -1107,7 +1389,8 @@ public class TableElement implements UIElement {
 				// The criteria of the presets are computed from the inputs, so a changed input means
 				// other criteria: they are resolved again, and a chip the user has applied goes on
 				// filtering by what it now means.
-				view.setDeclaredFilters(declaredFilters(columns, readChannelValues(inputChannels)));
+				view.setDeclaredFilters(
+					declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)));
 			}
 			control.refreshData();
 			if (selectionBinding != null) {
@@ -1116,7 +1399,7 @@ public class TableElement implements UIElement {
 		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			source,
-			args -> new ArrayList<>(executeRowsQuery(rowsExecutor, args)),
+			args -> new ArrayList<>(refreshRows(rowsExecutor, args, control)),
 			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
 			refresh);
@@ -1126,6 +1409,29 @@ public class TableElement implements UIElement {
 		control.addDetachListener(observer::detach);
 
 		return control;
+	}
+
+	/**
+	 * Publishes the table's filtering on the configured channels, {@code null} when the table
+	 * configures neither of them.
+	 *
+	 * @param control
+	 *        The control displaying the table.
+	 */
+	private TableFilterBinding filterBinding(ViewContext context, TableViewControl<?> control) {
+		ViewChannel activePreset = channel(context, _config.getActivePreset());
+		ViewChannel searchTerm = channel(context, _config.getSearchTerm());
+		if (activePreset == null && searchTerm == null) {
+			return null;
+		}
+		return new TableFilterBinding(control, activePreset, searchTerm);
+	}
+
+	/**
+	 * The channel the given reference names, {@code null} when the table declares none.
+	 */
+	private static ViewChannel channel(ViewContext context, ChannelRef ref) {
+		return ref == null ? null : context.resolveChannel(ref);
 	}
 
 	/**
@@ -1178,7 +1484,7 @@ public class TableElement implements UIElement {
 	 * changes follow {@link Config#getCreateType()} / {@link Config#getOnRemove()}.
 	 */
 	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
-			Collection<?> rows) {
+			RowsResult initialRows) {
 		FormModel formModel = context.getFormModel();
 		if (!(formModel instanceof FormControl formControl)) {
 			throw new IllegalStateException(
@@ -1186,10 +1492,13 @@ public class TableElement implements UIElement {
 		}
 
 		TLClass createType = resolveCreateType();
-		TLStructuredType rowType = resolveRowType(rows);
+		TLStructuredType rowType = resolveRowType(initialRows.rows());
 		QueryExecutor rowsExecutor = _rowsExecutor;
+		// The row function is handed to the binding before the control it reports its diagnostics to
+		// exists, so the target is filled in below.
+		ReactControl[] diagnosticsTarget = new ReactControl[1];
 		QueryRowSetBinding binding = new QueryRowSetBinding(
-			() -> tlObjectRows(executeRowsQuery(rowsExecutor, readChannelValues(inputChannels))),
+			() -> tlObjectRows(refreshRows(rowsExecutor, ChannelInputs.arguments(inputChannels), diagnosticsTarget[0])),
 			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
 			createType == null ? List.of() : List.of(createType),
 			_config.getOnRemove());
@@ -1199,21 +1508,28 @@ public class TableElement implements UIElement {
 
 		ViewCommandModel activation = activationModel(context);
 
-		List<RowSetTableControl.TableColumn> editColumns = editColumns(rowType);
+		List<ColumnDeclaration> declarations = columns(rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, editColumns, _config.getRowEdit());
+			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
+		diagnosticsTarget[0] = control;
+		control.setCssClass(_config.getCssClass());
+		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
-		control.setNamedFilters(columns -> declaredFilters(columns, readChannelValues(inputChannels)),
-			filterStore());
+		control.setNamedFilters(
+			columns -> declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)),
+			filterStore(), _initialFilter);
+		control.setFilterChannels(channel(context, _config.getActivePreset()),
+			channel(context, _config.getSearchTerm()));
 		control.setFilterBar(filterBar());
-		control.setHiddenByDefault(
-			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
-		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+		control.setSelectionMode(_config.getSelectionMode());
+		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
 		control.init();
@@ -1221,43 +1537,6 @@ public class TableElement implements UIElement {
 		contributeAddRowCommand(context, formControl, binding, control);
 
 		return control;
-	}
-
-	/**
-	 * The data columns of the editable variant: one per configured {@code <column>} (with its
-	 * read-only flag and resolved filter binding), followed by the {@link #offeredParts offered}
-	 * remainder of the row type - or, when no columns are configured, one per non-hidden attribute
-	 * of the row type.
-	 */
-	private List<RowSetTableControl.TableColumn> editColumns(TLStructuredType rowType) {
-		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				String attribute = columnConfig.getAttribute();
-				columns.add(new RowSetTableControl.TableColumn(attribute, columnConfig.getReadonly(),
-					_bindings.get(attribute)));
-			}
-			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
-				// An offered column has no <column> to declare a read-only flag, so it is editable
-				// exactly as a form field for that attribute would be.
-				columns.add(new RowSetTableControl.TableColumn(part.getName(),
-					!DisplayAnnotations.isEditable(part), ColumnBinding.TYPE_DERIVED));
-			}
-		} else if (rowType != null) {
-			for (TLStructuredTypePart part : rowType.getAllParts()) {
-				if (DisplayAnnotations.isHidden(part)) {
-					continue;
-				}
-				columns.add(
-					new RowSetTableControl.TableColumn(part.getName(), false, ColumnBinding.TYPE_DERIVED));
-			}
-		}
-		if (columns.isEmpty()) {
-			throw new IllegalStateException(
-				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
-		}
-		return columns;
 	}
 
 	/**
@@ -1319,10 +1598,11 @@ public class TableElement implements UIElement {
 	 * filters are stored.
 	 *
 	 * <p>
-	 * The configured {@link UIElement.Config#getPersonalizationKey() personalization key} when
-	 * there is one. Without it, the identity is the table's structural signature - its row types
-	 * plus its column attributes - which changes whenever a column is added or removed, so that a
-	 * configured key is what keeps a personalization across an edit of the view.
+	 * The configured {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()
+	 * personalization key} when there is one. Without it, the identity is the table's structural
+	 * signature - its row types plus the names of its declared columns - which changes whenever a
+	 * column is added or removed, so that a configured key is what keeps a personalization across
+	 * an edit of the view.
 	 * </p>
 	 */
 	public TableId tableId() {
@@ -1340,128 +1620,74 @@ public class TableElement implements UIElement {
 			}
 		}
 		key.append('|');
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				key.append(columnConfig.getAttribute()).append(',');
-			}
+		for (String column : _declaredNames) {
+			key.append(column).append(',');
 		}
 		return new TableId(key.toString());
 	}
 
 	/**
-	 * The resolved column descriptors: one per configured {@code <column>} (using its
-	 * {@link #resolveBinding resolved binding}), followed by the {@link #offeredParts offered}
-	 * remainder of the row type - or, when no columns are configured, one per non-hidden attribute
-	 * of the row type, each type-derived.
+	 * The columns of this table for rows of the given type: the ones it shows, followed by the ones
+	 * it only offers in its column selection.
+	 *
+	 * <p>
+	 * A table showing what it declares offers the rest of what its rows hold in addition. A table
+	 * declaring nothing shows the main properties of its row type - the columns the model says
+	 * instances of that type are presented by - and everything else the type holds is offered, so
+	 * that a table without a column configuration of its own still starts with a set of columns
+	 * someone chose. A row type declaring no main properties shows all of its non-hidden attributes.
+	 * </p>
+	 *
+	 * @param rowType
+	 *        The model type of the rows, or {@code null} when it is unknown.
 	 */
-	private List<ColumnSetup> columnSetups(TLStructuredType rowType, ViewContext context) {
-		List<ColumnSetup> setups = new ArrayList<>();
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				String attribute = columnConfig.getAttribute();
-				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					_bindings.get(attribute)));
-			}
-			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
-				String attribute = part.getName();
-				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					ColumnBinding.TYPE_DERIVED));
-			}
-		} else if (rowType != null) {
-			// No explicit columns configured: derive a default set from the row type's
-			// non-hidden attributes, in declaration order.
-			for (TLStructuredTypePart part : rowType.getAllParts()) {
-				if (DisplayAnnotations.isHidden(part)) {
-					continue;
-				}
-				String attribute = part.getName();
-				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					ColumnBinding.TYPE_DERIVED));
-			}
-		}
-		if (setups.isEmpty()) {
+	public List<ColumnDeclaration> columns(TLStructuredType rowType) {
+		List<ColumnDeclaration> displayed =
+			_declarations.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _declarations;
+		List<String> displayedNames =
+			_declarations.isEmpty() ? ColumnDeclarations.declaredNames(displayed) : _declaredNames;
+		List<ColumnDeclaration> result = new ArrayList<>(displayed);
+		result.addAll(offeredColumns(displayedNames, rowType));
+		if (result.isEmpty()) {
 			throw new IllegalStateException(
 				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
 		}
-		return setups;
+		return result;
 	}
 
 	/**
-	 * The attributes a table with explicitly configured {@code <column>}s <em>offers</em> in
-	 * addition: those of its {@link Config#getTypes() configured types} that no column covers and
-	 * that a form would display, too - so a user can add any attribute of the row type to the table
-	 * through the column selection, without the table having to enumerate them all.
-	 *
-	 * <p>
-	 * Their columns start out hidden (see {@link #hiddenByDefault(Collection)}); a table configures
-	 * the columns it considers worth showing, and the rest is a choice, not a default.
-	 * </p>
+	 * The columns this table <em>offers</em> in addition to the ones it shows: those of its
+	 * {@link Config#getTypes() configured types} that no displayed column covers and that a form
+	 * would display, too - so a user can add any attribute of the row type to the table through the
+	 * column selection, without the table having to enumerate them all.
 	 *
 	 * @param covered
-	 *        The attributes of the configured columns, which are not offered a second time.
+	 *        The names of the displayed columns, which are not offered a second time.
+	 * @param rowType
+	 *        The model type of the rows, which the configured types are resolved in.
 	 */
-	private List<TLStructuredTypePart> offeredParts(Collection<String> covered) {
+	private List<ColumnDeclaration> offeredColumns(Collection<String> covered, TLStructuredType rowType) {
 		// Only an explicitly configured type gives a stable set of columns; a type guessed from the
 		// first row would offer different columns depending on the data at hand.
 		List<TLModelPartRef> typeRefs = _config.getTypes();
 		if (typeRefs == null || typeRefs.isEmpty()) {
 			return List.of();
 		}
-		Set<String> seen = new HashSet<>(covered);
-		List<TLStructuredTypePart> result = new ArrayList<>();
+		TLModel model = ColumnResolution.model(rowType);
+		Set<String> seen = new LinkedHashSet<>(covered);
+		List<ColumnDeclaration> result = new ArrayList<>();
 		for (TLModelPartRef typeRef : typeRefs) {
 			TLStructuredType type;
 			try {
-				type = typeRef.resolveClass();
+				type = typeRef.resolveClass(model);
 			} catch (ConfigurationException ex) {
 				throw new RuntimeException("Failed to resolve type: " + typeRef.qualifiedName(), ex);
 			}
-			for (TLStructuredTypePart part : type.getAllParts()) {
-				if (DisplayAnnotations.isHidden(part) || !seen.add(part.getName())) {
-					continue;
-				}
-				result.add(part);
-			}
+			List<ColumnDeclaration> offered = ColumnDeclarations.offeredColumns(seen, type);
+			seen.addAll(ColumnDeclarations.declaredNames(offered));
+			result.addAll(offered);
 		}
 		return result;
-	}
-
-	/** The attributes of the configured {@code <column>}s, empty if none are configured. */
-	private Set<String> configuredAttributes() {
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig == null || columnsConfig.getColumns().isEmpty()) {
-			return Set.of();
-		}
-		Set<String> result = new LinkedHashSet<>();
-		for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			result.add(columnConfig.getAttribute());
-		}
-		return result;
-	}
-
-	/**
-	 * Which of the given columns the table does not display until the user selects them: everything
-	 * beyond the configured {@code <column>}s, i.e. the {@link #offeredParts offered} attributes.
-	 */
-	private Set<String> hiddenByDefault(Collection<String> columns) {
-		Set<String> configured = configuredAttributes();
-		if (configured.isEmpty()) {
-			return Set.of();
-		}
-		Set<String> result = new LinkedHashSet<>(columns);
-		result.removeAll(configured);
-		return result;
-	}
-
-	/**
-	 * The display label for a column: the model attribute's label if the part can be resolved,
-	 * otherwise the attribute name.
-	 */
-	private static ResKey columnLabel(TLStructuredTypePart part, String attribute) {
-		return part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
 	}
 
 	/**
@@ -1485,20 +1711,92 @@ public class TableElement implements UIElement {
 		return null;
 	}
 
-	private static Object[] readChannelValues(List<ViewChannel> channels) {
-		Object[] values = new Object[channels.size()];
-		for (int n = 0; n < channels.size(); n++) {
-			values[n] = channels.get(n).get();
-		}
-		return values;
+	/**
+	 * The outcome of a rows query: the rows it delivers, and what the security filter removed from
+	 * them.
+	 *
+	 * @param rows
+	 *        The rows to display.
+	 * @param securityReport
+	 *        The objects the current user must not read, which the query result therefore does not
+	 *        contain.
+	 */
+	private record RowsResult(Collection<?> rows, SecurityFilterReport securityReport) {
+		// Pure data.
 	}
 
-	private static Collection<?> executeRowsQuery(QueryExecutor rowsExecutor, Object[] channelValues) {
-		Object result = rowsExecutor.execute(channelValues);
+	/**
+	 * Executes the rows query, observing what the current user's read rights removed from its
+	 * result.
+	 *
+	 * @param rowsExecutor
+	 *        The compiled rows expression.
+	 * @param channelValues
+	 *        The values of the input channels, passed as the expression arguments.
+	 *
+	 * @see #applyRowDiagnostics(ReactControl, SecurityFilterReport)
+	 */
+	private static RowsResult executeRows(QueryExecutor rowsExecutor, Object[] channelValues) {
+		SecurityFilterReport securityReport = new SecurityFilterReport();
+		EvalContext definitions = rowsExecutor.context();
+		definitions.setSecurityReport(securityReport);
+		Object result = rowsExecutor.executeWith(definitions, Args.some(channelValues));
+		return new RowsResult(toRows(result), securityReport);
+	}
+
+	/**
+	 * Executes the rows query and reports its {@link SecurityFilterReport} to the given control.
+	 *
+	 * @param control
+	 *        The control displaying the rows, {@code null} while it is not built yet.
+	 *
+	 * @see #executeRows(QueryExecutor, Object[])
+	 */
+	private static Collection<?> refreshRows(QueryExecutor rowsExecutor, Object[] channelValues,
+			ReactControl control) {
+		RowsResult result = executeRows(rowsExecutor, channelValues);
+		if (control != null) {
+			applyRowDiagnostics(control, result.securityReport());
+		}
+		return result.rows();
+	}
+
+	private static Collection<?> toRows(Object result) {
 		if (result instanceof Collection<?> collection) {
 			return collection;
 		}
 		return result == null ? Collections.emptyList() : Collections.singletonList(result);
+	}
+
+	/**
+	 * Records on the given control how many rows the current user's read rights removed, so that the
+	 * UI inspector can explain a table that shows fewer rows than its query found.
+	 *
+	 * <p>
+	 * The count is not information the user is entitled to, therefore it is kept as a
+	 * {@link ReactControl#putDiagnostic(String, Object) diagnostic}, which reaches the headless
+	 * projection but never the browser. A table from which nothing was removed carries no
+	 * {@link #DIAGNOSTIC_HIDDEN_BY_ACCESS} entry at all.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control displaying the rows.
+	 * @param securityReport
+	 *        What the security filter removed from the rows query result.
+	 */
+	private static void applyRowDiagnostics(ReactControl control, SecurityFilterReport securityReport) {
+		if (securityReport.isEmpty()) {
+			control.putDiagnostic(DIAGNOSTIC_HIDDEN_BY_ACCESS, null);
+			return;
+		}
+		Map<String, Object> byType = new LinkedHashMap<>();
+		for (Map.Entry<TLStructuredType, Integer> entry : securityReport.droppedByType().entrySet()) {
+			byType.put(TLModelUtil.qualifiedName(entry.getKey()), entry.getValue());
+		}
+		Map<String, Object> hidden = new LinkedHashMap<>();
+		hidden.put(HIDDEN_COUNT, Integer.valueOf(securityReport.droppedCount()));
+		hidden.put(HIDDEN_BY_TYPE, byType);
+		control.putDiagnostic(DIAGNOSTIC_HIDDEN_BY_ACCESS, hidden);
 	}
 
 }

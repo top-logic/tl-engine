@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.button;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Model for a command button providing label, executability, and execution.
@@ -16,6 +17,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * The {@link ReactButtonControl} uses this interface to read button state (label, disabled) and
  * listen for changes. The button registers a state change listener at construction and removes it
  * during cleanup.
+ * </p>
+ *
+ * <p>
+ * The model is the single authority on whether the command may run: every UI element runs it
+ * through {@link #executeCommand(ReactContext)}, which refuses a command that is not
+ * {@link #getExecutableState() executable} and reports why. An implementation supplies only the
+ * command's effect, {@link #perform(ReactContext)}.
  * </p>
  *
  * <p>
@@ -89,13 +97,79 @@ public interface CommandModel {
 	boolean isVisible();
 
 	/**
-	 * Executes the command.
+	 * The state the command's rules assign to it right now.
+	 *
+	 * <p>
+	 * Agrees with {@link #isVisible()} and {@link #isExecutable()}, and in addition carries the
+	 * {@link ExecutableState#getI18NReasonKey() reason} for a refusal: a UI element that refuses to
+	 * run the command reports this state, so that the user learns why.
+	 * </p>
+	 *
+	 * <p>
+	 * By default, the state is derived from {@link #isVisible()} and {@link #isExecutable()} and
+	 * carries only the generic reasons {@link ExecutableState#NOT_EXEC_HIDDEN} and
+	 * {@link ExecutableState#NOT_EXEC_DISABLED}. A model whose rules give a reason of their own
+	 * reports it by overriding this method; a model delegating to another one delegates this
+	 * method as well.
+	 * </p>
+	 */
+	default ExecutableState getExecutableState() {
+		if (!isVisible()) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		if (!isExecutable()) {
+			return ExecutableState.NOT_EXEC_DISABLED;
+		}
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
+	 * Executes the command, if it is executable.
+	 *
+	 * <p>
+	 * This is the one entry for running a command from the user interface - a button, a menu
+	 * entry, a sidebar item, a dashboard tile. The command's {@link #getExecutableState() state}
+	 * decides: a command that is not executable does not {@link #perform(ReactContext) perform}
+	 * anything, and the call returns the {@link HandlerResult#notExecutable(ExecutableState)
+	 * refusal} carrying that state, so that the user learns why. A command that is executable
+	 * performs, and the call returns what it reports.
+	 * </p>
+	 *
+	 * <p>
+	 * The check is part of this contract, not of the caller: whoever executes a command gets the
+	 * refusal as result and passes it on to be reported, like any other result of the command.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view display context.
+	 * @return The result of the command execution, or the refusal of a command that is not
+	 *         executable.
+	 */
+	default HandlerResult executeCommand(ReactContext context) {
+		ExecutableState state = getExecutableState();
+		if (!state.isExecutable()) {
+			return HandlerResult.notExecutable(state);
+		}
+		return perform(context);
+	}
+
+	/**
+	 * Performs the command's effect.
+	 *
+	 * <p>
+	 * Called by {@link #executeCommand(ReactContext)} after the command has been found executable;
+	 * a user interface runs a command through {@link #executeCommand(ReactContext)}, never through
+	 * this method. An implementation whose rules decide by more than its
+	 * {@link #getExecutableState() current state} - an input evaluated anew - may still refuse
+	 * here, and reports that by returning a {@link HandlerResult#notExecutable(ExecutableState)
+	 * refusal}.
+	 * </p>
 	 *
 	 * @param context
 	 *        The view display context.
 	 * @return The result of the command execution.
 	 */
-	HandlerResult executeCommand(ReactContext context);
+	HandlerResult perform(ReactContext context);
 
 	/**
 	 * Where the command should be rendered.
@@ -132,8 +206,8 @@ public interface CommandModel {
 	 *
 	 * <p>
 	 * Appended to the class list of the command's button, and of a menu entry rendering the
-	 * command, so that a single command can be styled (e.g. marked as destructive) wherever it is
-	 * offered. Returns {@code null} by default (no additional classes).
+	 * command. Returns {@code null} by default (no additional classes). Whether the command is
+	 * destructive is not a class but its {@link #getTone() tone}.
 	 * </p>
 	 */
 	default String getCssClasses() {
@@ -151,6 +225,20 @@ public interface CommandModel {
 	 */
 	default KeyStroke getKeyGesture() {
 		return null;
+	}
+
+	/**
+	 * The kind of action this command stands for.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} for a command that destroys or discards what the user has: every UI
+	 * element offering it - its button, a menu entry, the confirmation asking for it - shows it as
+	 * destructive. The tone follows from what the command does, not from a presentation option, and
+	 * does not change while the model lives. Returns {@link ButtonTone#DEFAULT} by default.
+	 * </p>
+	 */
+	default ButtonTone getTone() {
+		return ButtonTone.DEFAULT;
 	}
 
 	/**

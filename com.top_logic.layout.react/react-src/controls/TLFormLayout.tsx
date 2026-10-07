@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { FormLayoutContext } from './FormLayoutContext';
 
@@ -7,23 +7,26 @@ const { useMemo, useRef, useState, useEffect } = React;
 /** Column width threshold (px) below which labels switch from side to top. */
 const LABEL_SIDE_MIN_WIDTH = 320;
 
-/** React module of the table control. */
-const TABLE_MODULE = 'TLTableView';
-
-/** React module of the panel control (an editable table renders as a bare panel wrapping a table). */
-const PANEL_MODULE = 'TLPanel';
-
 /**
  * Top-level responsive form grid.
+ *
+ * A plain layout: the grid reaches up to the border of its container. A form that needs distance
+ * from that border is wrapped in a TLInset.
  *
  * State:
  * - maxColumns: number
  * - labelPosition: "side" | "top" | "auto"
  * - readOnly: boolean
  * - children: ChildDescriptor[]
+ *
+ * Takes part in the fill contract as a container: a form hosting a filling child - a split panel, a
+ * panel that fills - fills its own container in turn, so that the child's height resolves against
+ * the height the form is offered instead of against its content. A form around content of its own
+ * size stays as high as that content.
  */
 const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const [fillClass, fillHost] = useFillHost();
 
   const maxColumns = (state.maxColumns as number) ?? 3;
   const labelPosition = (state.labelPosition as string) ?? 'auto';
@@ -76,39 +79,29 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColWidth}, 100%), 1fr))`,
   };
 
-  // A form whose sole content is a full-bleed, chrome-less region renders flush: the form's own
-  // page inset would otherwise frame a control that already manages its own layout. That region is
-  // a table rendered directly, or a panel that declares itself `bare` (the TLPanel state flag - see
-  // its doc - set by a frameless table wrapper like RowSetTableControl). A panel with chrome
-  // (title, toolbar, card border) is not bare and keeps the surrounding inset.
-  const soleChild = children.length === 1
-    ? (children[0] as { module?: string; state?: { bare?: boolean } } | undefined)
-    : undefined;
-  const isFullBleedOnly = !!soleChild
-    && (soleChild.module === TABLE_MODULE
-      || (soleChild.module === PANEL_MODULE && soleChild.state?.bare === true));
-
   const className = [
-    'tlFormLayout',
-    readOnly ? 'tlFormLayout--readonly' : '',
-    isFullBleedOnly ? 'tlFormLayout--flush' : '',
+    'tl-form-layout',
+    fillClass ? 'tl-form-layout--fill' : '',
+    fillClass,
   ].filter(Boolean).join(' ');
 
   if (noModelMessage) {
     return (
-      <div id={controlId} className="tlFormLayout tlFormLayout--empty" ref={containerRef}>
-        <p className="tlFormLayout__noModel">{noModelMessage}</p>
+      <div id={controlId} className={rootClassName(state, 'tl-form-layout')} ref={containerRef}>
+        <div className="tl-form-layout__empty tl-type-body">{noModelMessage}</div>
       </div>
     );
   }
 
   return (
     <FormLayoutContext.Provider value={ctxValue}>
-      <div id={controlId} className={className} style={style} ref={containerRef}>
-        {children.map((child, i) => (
-          <TLChild key={i} control={child} />
-        ))}
-      </div>
+      <FillProvider host={fillHost}>
+        <div id={controlId} className={rootClassName(state, className)} style={style} ref={containerRef}>
+          {children.map((child, i) => (
+            <TLChild key={i} control={child} />
+          ))}
+        </div>
+      </FillProvider>
     </FormLayoutContext.Provider>
   );
 };

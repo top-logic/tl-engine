@@ -29,10 +29,18 @@ import com.top_logic.util.Resources;
  * {@link ConfigFormModel#cancelEditing() drops} the copy, Apply runs {@link ConfigValidation} and
  * either {@link ConfigFormModel#apply() carries the copy over} or, if a violation was found,
  * leaves edit mode open and puts every violation on the field that caused it - via
- * {@link ConfigValidation#report(List, ConfigFieldIndex)} against the {@link ConfigFieldIndex}
+ * {@link ConfigValidation#report(ConfigValidation.Findings, ConfigFieldIndex)} against the
+ * {@link ConfigFieldIndex}
  * the current editor filled while it was built. Every mode change rebuilds the editor over
  * {@link ConfigFormModel#edited()} - the editor itself never learns which of the two, original or
  * copy, it was handed.
+ * </p>
+ *
+ * <p>
+ * While the editor accepts input - in edit mode, or always with {@link Commands#NONE} - every change
+ * to a field checks the edited item again and shows what the check found, see {@link #recheck()} -
+ * so a value is questioned where it is entered, rather than only when the user asks for the item to
+ * be carried over.
  * </p>
  *
  * <p>
@@ -47,8 +55,9 @@ import com.top_logic.util.Resources;
  * Save and Cancel; drawing them as buttons among the fields is what a standalone use wants.
  * {@link Commands#NONE} turns the whole cycle off: the control is then a thin wrapper around the
  * editor over the item itself - today's write-through behaviour, kept available for a caller (e.g.
- * the view designer) that must not gain an edit mode of its own just because it now goes through
- * this class.
+ * a dialog with a save cycle of its own) that must not gain an edit mode of its own just because it
+ * now goes through this class. Its fields are still checked as they change, since the caller's save
+ * will refuse over the same findings.
  * </p>
  */
 public class ConfigFormControl extends ReactFormLayoutControl {
@@ -105,6 +114,18 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	private final ConfigFieldIndex _index = new ConfigFieldIndex();
 
 	/**
+	 * Runs {@link #recheck()} whenever a field of the current editor changes.
+	 *
+	 * <p>
+	 * Installed on the {@link ConfigFieldIndex} once, in the constructor: an observer survives
+	 * {@link ConfigFieldIndex#clear()}, so it keeps watching the fields of every editor built
+	 * afterwards, while a second one per rebuild would leave the editors' worth of listeners behind
+	 * that came before.
+	 * </p>
+	 */
+	private final ConfigFieldPush _onFieldChange = new ConfigFieldPush(this::recheck);
+
+	/**
 	 * The {@link ConfigFormModel} listener that rebuilds this control on every mode change,
 	 * registered in the constructor and removed in {@link #onCleanup()}. Kept in a field, not
 	 * created afresh at each of those two call sites, so {@link ConfigFormModel#removeListener(Runnable)}
@@ -158,6 +179,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		_commands = commands;
 		_toolbarCommands = commands == Commands.TOOLBAR ? createCommands() : Collections.emptyList();
 		_model.addListener(_onModeChange);
+		_index.observeFields(_onFieldChange::watch);
 		rebuild();
 	}
 
@@ -215,15 +237,17 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * The rebuilt {@link ConfigEditorControl} is editable exactly while either
-	 * {@link #_withEditMode} is off (the thin-wrapper, write-through case - it was always editable
-	 * and stays so) or the model {@link ConfigFormModel#isEditMode() is in edit mode}. In every
-	 * other case - {@link #_withEditMode} on, model in view mode - it is built read-only: every
-	 * field non-editable and no collection action rendered, so a form with a mode never accepts a
-	 * change outside of one.
+	 * The rebuilt {@link ConfigEditorControl} is editable exactly while either {@link #_commands}
+	 * is {@link Commands#NONE} (the thin-wrapper, write-through case - it was always editable and
+	 * stays so) or the model {@link ConfigFormModel#isEditMode() is in edit mode}. In every other
+	 * case - an edit mode offered, model in view mode - it is built read-only: every field
+	 * non-editable and no collection action rendered, so a form with a mode never accepts a change
+	 * outside of one.
 	 * </p>
 	 */
 	private void rebuild() {
+		_onFieldChange.disarmed();
+
 		for (ReactControl child : getChildren()) {
 			child.cleanupTree();
 		}
@@ -247,6 +271,49 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		for (ConfigFormCommand command : _toolbarCommands) {
 			command.notifyStateChanged();
 		}
+
+		_onFieldChange.armed();
+	}
+
+	/**
+	 * Checks {@link ConfigFormModel#edited()} again and shows what the check found, run whenever a
+	 * field of the editor changes.
+	 *
+	 * <p>
+	 * A value is questioned where it is entered, not only once Apply is pressed. Without this, a
+	 * warning would never be read at all in a form of this kind: Apply refuses over a violation and
+	 * nothing else, so a successful Apply leaves edit mode and rebuilds the editor over the applied
+	 * value, and a warning would be on screen only for as long as some <em>other</em> finding keeps
+	 * refusing.
+	 * </p>
+	 *
+	 * <p>
+	 * Only while the editor accepts input: in edit mode, or always with {@link Commands#NONE}, where
+	 * there is no mode at all and the editor writes straight through to the item - whoever saves that
+	 * item refuses over the same findings, so they belong next to the fields as well. In view mode the
+	 * editor accepts nothing, so there is nothing to check anything about, and marking what is merely
+	 * being looked at would be noise.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link ConfigValidation#recheck(ConfigurationItem, ConfigFieldIndex)}, not
+	 * {@link ConfigValidation#refusalFor(ConfigurationItem, ConfigFieldIndex)}: an entry the user
+	 * has just started is not yet something to be told to confirm or discard, and an input a field
+	 * rejected is nothing this is about to discard - both are Apply's to refuse over, when the user
+	 * asks for the configuration to be handed over.
+	 * </p>
+	 *
+	 * <p>
+	 * Nothing runs this when edit mode is entered: a finding is a verdict on what the user did, and
+	 * a form opened over a configuration whose mandatory properties are empty must not turn red
+	 * before it has been touched.
+	 * </p>
+	 */
+	private void recheck() {
+		if (_commands != Commands.NONE && !_model.isEditMode()) {
+			return;
+		}
+		ConfigValidation.recheck(_model.edited(), _index);
 	}
 
 	/**
@@ -284,8 +351,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * untouched and this control unrebuilt.
 	 *
 	 * <p>
-	 * Takes back every violation the previous refusal placed before checking anything, via
-	 * {@link ConfigFieldIndex#clearModelErrors()}: a violation still holding is placed again a few
+	 * Takes back every finding the previous refusal placed before checking anything, via
+	 * {@link ConfigFieldIndex#clearFindings()}: a finding still holding is placed again a few
 	 * lines below, one the user has meanwhile fixed is gone. Without that, a violation could
 	 * outlive its own cause - a cross-item constraint is fixed by editing <em>one</em> of the two
 	 * fields it flagged, leaving the other one showing an error nothing will ever clear.
@@ -303,7 +370,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * A violation that {@link ConfigValidation#report(List, ConfigFieldIndex)} could not place -
+	 * A violation that {@link ConfigValidation#report(ConfigValidation.Findings, ConfigFieldIndex)}
+	 * could not place -
 	 * a property the editor renders as no field of its own, e.g. a
 	 * {@link com.top_logic.basic.config.annotation.Hidden @Hidden} one or one named by a
 	 * constraint that reached into another item - is shown at form level instead. Without that,

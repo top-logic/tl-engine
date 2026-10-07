@@ -22,9 +22,6 @@ public class NavigationItem extends SidebarItem {
 	/** @see #setBadge(String) */
 	private static final String BADGE = "badge";
 
-	/** @see #withHidden(boolean) */
-	private static final String HIDDEN = "hidden";
-
 	private final String _label;
 
 	private final String _icon;

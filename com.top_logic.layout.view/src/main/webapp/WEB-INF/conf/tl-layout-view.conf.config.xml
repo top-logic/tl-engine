@@ -2,6 +2,25 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!--
+			The login model holds the transient form objects of the login views (credentials,
+			password change, one-time password, forgotten password, password reset), the admin
+			model the transient form objects of the administration views. They are handled by the
+			view code only and never on behalf of a user through the access check, so they carry no
+			access definition on purpose.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<module name="tl.login"
+						internal="true"
+					/>
+					<module name="tl.admin"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
@@ -17,7 +36,51 @@
 					<module key="com.top_logic.layout.view.navigation.DisplayTargetService$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.view.command.CommandCliqueService$Module"
+						value="true"
+					/>
 				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.view.command.CommandCliqueService">
+			<instance class="com.top_logic.layout.view.command.CommandCliqueService">
+				<cliques>
+					<!--
+						The order of the entries is the order of the command groups in a toolbar.
+						An application adds a clique or relabels one by an entry of the same name.
+					-->
+					<clique name="create"/>
+					<clique name="edit"/>
+					<clique name="delete"/>
+					<clique name="commit"/>
+					<clique name="navigate"/>
+					<clique name="view"
+						display="menu"
+					>
+						<label>
+							<en>View</en>
+							<de>Ansicht</de>
+						</label>
+					</clique>
+					<clique name="export"
+						display="menu"
+					>
+						<label>
+							<en>Export</en>
+							<de>Export</de>
+						</label>
+					</clique>
+					<clique name="more"
+						display="menu"
+						icon="css:bi bi-list"
+					>
+						<label>
+							<en>More</en>
+							<de>Mehr</de>
+						</label>
+					</clique>
+				</cliques>
 			</instance>
 		</config>
 
@@ -62,6 +125,21 @@
 							<option-provider class="com.top_logic.element.meta.complex.TimeZoneOptionProvider"/>
 						</impl>
 					</provider>
+					<provider type="tl.util:URL">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="URL"
+						/>
+					</provider>
+					<provider type="tl.util:EMail">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="EMAIL"
+						/>
+					</provider>
+					<provider type="tl.util:Phone">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="TEL"
+						/>
+					</provider>
 				</providers>
 			</instance>
 		</config>
@@ -89,6 +167,21 @@
 		</config>
 
 		<!--
+			The application's security.xml grants roles on view security scopes. A scope is
+			available as a security object only after the SecurityScopeService has materialized
+			it, therefore the access configuration import runs after that service.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService">
+			<instance class="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService">
+				<dependencies>
+					<dependency key="com.top_logic.layout.view.security.SecurityScopeService$Module"
+						value="true"
+					/>
+				</dependencies>
+			</instance>
+		</config>
+
+		<!--
 			Where the application displays its business objects: per model type, the views to
 			show and the values their channels receive. An application declares its own targets
 			by extending this service's <targets> list; a type without a target is not offered
@@ -107,6 +200,31 @@
 			<loginPage>/view/</loginPage>
 			<loginRetrySSO>/view/</loginRetrySSO>
 			<logoutPage>/view/</logoutPage>
+			<!--
+				The page explaining to an externally authenticated visitor that this application
+				has no account for them: a view of this UI instead of the stand-alone JSP the
+				core delivers, so an application built on the view layer answers with a page of
+				its own design.
+			-->
+			<unknownAccountPage>/view/unknown-account.view.xml</unknownAccountPage>
+		</config>
+
+		<!--
+			The views a URL may name as the contents of a browser tab, contributed by this module.
+			The list is keyed by the view, so the entry points of an application merge with these.
+		-->
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<entry-points>
+				<!--
+					Shown to a visitor although an application with a login view answers every
+					other URL of a session without an account with that login view: the page is
+					written for exactly such a visitor.
+				-->
+				<entry-point
+					anonymous="true"
+					view="unknown-account.view.xml"
+				/>
+			</entry-points>
 		</config>
 	</configs>
 </application>

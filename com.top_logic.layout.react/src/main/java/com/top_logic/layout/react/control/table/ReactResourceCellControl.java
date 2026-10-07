@@ -13,7 +13,10 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -21,7 +24,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Resolves label, icon, CSS class, tooltip, and link availability from the provider and sends them
- * as flat state to the {@code TLResourceCell} React component.
+ * as flat state to the {@code TLResourceCell} React component, together with the
+ * {@link ReactValueColor#ROLE color role} the displayed value carries in the model.
  * </p>
  *
  * <p>
@@ -59,8 +63,6 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 
 	private static final String ICON_SRC = "iconSrc";
 
-	private static final String CSS_CLASS = "cssClass";
-
 	private static final String HAS_TOOLTIP = "hasTooltip";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
@@ -96,6 +98,17 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	private GotoListener _gotoListener;
 
 	/**
+	 * The displayed value, observed while the cell is displayed.
+	 *
+	 * <p>
+	 * Label, icon, tooltip, css class and link of the cell are all read from that object, so editing
+	 * it elsewhere must reach the cell: the observation follows the displayed value and resolves the
+	 * state again.
+	 * </p>
+	 */
+	private final ObservedObjects _displayedObjects = new ObservedObjects(event -> refreshDisplay());
+
+	/**
 	 * Creates a new {@link ReactResourceCellControl}.
 	 *
 	 * @param value
@@ -119,6 +132,27 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		_useLink = useLink;
 		_rowObject = value;
 		resolveState(value);
+		_displayedObjects.observeValue(value);
+		addAttachListener(() -> _displayedObjects.attach(modelScope()));
+		addDetachListener(_displayedObjects::detach);
+	}
+
+	/**
+	 * Resolves the display of the value again after the object it names has changed.
+	 *
+	 * <p>
+	 * A deleted object is left alone: it has no type any more, so neither its label, its icon nor
+	 * the color of its value can be resolved from it. The cell keeps what it shows until the display
+	 * holding it drops it, which is what the deletion makes that display do.
+	 * </p>
+	 */
+	private void refreshDisplay() {
+		if (_rowObject instanceof TLObject model && !model.tValid()) {
+			return;
+		}
+		Object tx = beginUpdate();
+		resolveState(_rowObject);
+		commitUpdate(tx);
 	}
 
 	/**
@@ -144,6 +178,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	 */
 	public void update(Object value) {
 		_rowObject = value;
+		_displayedObjects.observeValue(value);
 		resolveState(value);
 	}
 
@@ -157,10 +192,12 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 			resolveIcon(value);
 		}
 
+		putState(ReactValueColor.ROLE, ReactValueColor.roleOf(value));
+
 		if (value != null) {
 			String cssClass = _provider.getCssClass(value);
 			if (cssClass != null) {
-				putState(CSS_CLASS, cssClass);
+				setCssClass(cssClass);
 			}
 
 			String tooltip = _provider.getTooltip(value);

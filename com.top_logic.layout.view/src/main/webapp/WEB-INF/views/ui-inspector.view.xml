@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	UI inspector side-window: pick an element in the application (opener) window and show the control
+	behind it as the headless projection sees it - its address, its state entry by entry (including
+	the server-only diagnostics a control records about itself) and the actions it offers. The
+	SelectElementAction (referenced by class=, app-specific) starts the pick in the opener window and
+	writes the picked control onto the node channel when the user clicks; the InspectNodeAction walks
+	from there to the enclosing element or takes the same element anew. InspectedNodeElement follows
+	the node channel and shows what it holds. The selection channel carries the state paths the user
+	selected, which the RecordAssertionAction appends to the script recording running on the inspected
+	window as an assertion about those entries.
+-->
+<view>
+	<channels>
+		<channel name="node"/>
+		<channel name="selection"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>UI inspector</en>
+			<de>UI-Inspektor</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-crosshair"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Pick element</en>
+					<de>Element wählen</de>
+				</label>
+				<tooltip>
+					<en>Click an element in the application window to inspect it.</en>
+					<de>Klicken Sie ein Element im Anwendungsfenster an, um es zu untersuchen.</de>
+				</tooltip>
+				<action class="com.top_logic.layout.view.inspector.SelectElementAction"
+					node="node"
+				/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-up"
+				input="node"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Parent</en>
+					<de>Übergeordnetes Element</de>
+				</label>
+				<tooltip>
+					<en>Inspect the element enclosing the current one.</en>
+					<de>Untersucht das Element, das das aktuelle enthält.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<action class="com.top_logic.layout.view.inspector.InspectNodeAction"
+					mode="PARENT"
+					node="node"
+				/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				input="node"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<tooltip>
+					<en>Show the state the inspected element has now.</en>
+					<de>Zeigt den aktuellen Zustand des untersuchten Elements.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<action class="com.top_logic.layout.view.inspector.InspectNodeAction"
+					mode="REFRESH"
+					node="node"
+				/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-check2-square"
+				input="selection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Record assertion</en>
+					<de>Zusicherung aufzeichnen</de>
+				</label>
+				<tooltip>
+					<en>Appends the selected state entries to the running script recording as a step that checks them on replay.</en>
+					<de>Hängt die ausgewählten Zustandseinträge als Schritt an die laufende Skriptaufzeichnung an, der sie beim Abspielen prüft.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<action class="com.top_logic.layout.view.inspector.RecordAssertionAction"
+					node="node"
+				/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.inspector.InspectedNodeElement"
+			node="node"
+			selection="selection"
+		/>
+	</panel>
+</view>

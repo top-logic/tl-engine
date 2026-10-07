@@ -63,12 +63,15 @@ public class MaintenanceStatusView implements UIElement {
 
 	private final ChannelRef _stateRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link MaintenanceStatusView} from configuration.
 	 */
 	@CalledByReflection
 	public MaintenanceStatusView(InstantiationContext context, Config config) {
 		_stateRef = config.getState();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -82,6 +85,7 @@ public class MaintenanceStatusView implements UIElement {
 			state.addListener(listener);
 			control.addCleanupAction(() -> state.removeListener(listener));
 		}
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

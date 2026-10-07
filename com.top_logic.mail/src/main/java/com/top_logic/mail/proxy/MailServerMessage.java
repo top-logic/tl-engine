@@ -7,6 +7,7 @@ package com.top_logic.mail.proxy;
 
 import jakarta.mail.Flags.Flag;
 import jakarta.mail.Message;
+import jakarta.mail.MessageRemovedException;
 
 import com.top_logic.util.error.TopLogicException;
 
@@ -90,4 +91,19 @@ public interface MailServerMessage {
 	 * @return   <code>true</code> when setting succeeds.
 	 */
     public boolean setFlag(Flag aFlag, boolean aValue);
+
+	/**
+	 * Whether the {@link #getMessage() message} has been removed from its folder, e.g. expunged by
+	 * another client accessing the same mailbox.
+	 * 
+	 * <p>
+	 * A removed message can no longer be read or modified, every access to its contents, headers,
+	 * or flags fails with a {@link MessageRemovedException}.
+	 * </p>
+	 * 
+	 * @see Message#isExpunged()
+	 */
+	default boolean isRemoved() {
+		return getMessage().isExpunged();
+	}
 }

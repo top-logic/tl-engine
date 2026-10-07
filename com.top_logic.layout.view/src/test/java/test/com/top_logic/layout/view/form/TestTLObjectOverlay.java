@@ -8,8 +8,10 @@ package test.com.top_logic.layout.view.form;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -21,8 +23,10 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * Tests for {@link TLObjectOverlay}.
@@ -110,6 +114,11 @@ public class TestTLObjectOverlay extends TestCase {
 
 	/**
 	 * Tests that {@link TLObjectOverlay#apply()} transfers changes to the base object.
+	 *
+	 * <p>
+	 * The transfer is tested apart from the write check, which the {@link ModelAccessRights}
+	 * decide; therefore the changes are applied without an access check.
+	 * </p>
 	 */
 	public void testApply() {
 		TLStructuredTypePart namePart = mockPart("name");
@@ -122,7 +131,7 @@ public class TestTLObjectOverlay extends TestCase {
 		overlay.tUpdate(namePart, "Bob");
 		overlay.tUpdate(agePart, Integer.valueOf(25));
 
-		overlay.apply();
+		ModelAccessRights.uncheckedSecurity(overlay::apply);
 
 		assertEquals("Bob", base.tValue(namePart));
 		assertEquals(Integer.valueOf(25), base.tValue(agePart));
@@ -144,6 +153,19 @@ public class TestTLObjectOverlay extends TestCase {
 		MockTLObject base = new MockTLObject();
 		TLObjectOverlay overlay = new TLObjectOverlay(base);
 		assertSame(base.tType(), overlay.tType());
+	}
+
+	/**
+	 * Tests that {@link TLObjectOverlay#tValid()} follows the base object: an overlay of a deleted
+	 * object is not valid.
+	 */
+	public void testTValidFollowsBase() {
+		MockTLObject base = new MockTLObject();
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		assertTrue("An overlay of a valid object is valid.", overlay.tValid());
+
+		base.delete();
+		assertFalse("An overlay of a deleted object is not valid.", overlay.tValid());
 	}
 
 	/**
@@ -208,6 +230,21 @@ public class TestTLObjectOverlay extends TestCase {
 		assertEquals("The overlay must be the object it stands for.", base, overlay);
 		assertEquals("Identity must be symmetric.", overlay, base);
 		assertEquals(base.hashCode(), overlay.hashCode());
+	}
+
+	/**
+	 * Tests that the referrers of the edited object are those of the object itself: an expression
+	 * navigating backwards from the editing buffer (e.g. an options function) reaches the same
+	 * objects as it would from the base object.
+	 */
+	public void testReferersDelegateToBase() {
+		MockTLObject referrer = new MockTLObject(objectKey("r1"));
+		MockTLObject base = new MockTLObject(objectKey("o1"));
+		base.setReferers(Collections.singleton(referrer));
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+
+		assertEquals(Collections.singleton(referrer), overlay.tReferers(null));
 	}
 
 	/**
@@ -301,6 +338,10 @@ public class TestTLObjectOverlay extends TestCase {
 
 		private final Map<TLStructuredTypePart, Object> _values = new LinkedHashMap<>();
 
+		private Set<? extends TLObject> _referers = Collections.emptySet();
+
+		private boolean _deleted;
+
 		/**
 		 * Creates a {@link MockTLObject} without identity.
 		 */
@@ -330,11 +371,35 @@ public class TestTLObjectOverlay extends TestCase {
 			_values.put(part, value);
 		}
 
+		@Override
+		public boolean tValid() {
+			return !_deleted && super.tValid();
+		}
+
+		@Override
+		public Set<? extends TLObject> tReferers(TLReference ref) {
+			return _referers;
+		}
+
 		/**
 		 * Convenience setter for test setup.
 		 */
 		void set(TLStructuredTypePart part, Object value) {
 			_values.put(part, value);
+		}
+
+		/**
+		 * Convenience setter for the objects this one is referred to by.
+		 */
+		void setReferers(Set<? extends TLObject> referers) {
+			_referers = referers;
+		}
+
+		/**
+		 * Marks this object as deleted.
+		 */
+		void delete() {
+			_deleted = true;
 		}
 	}
 }

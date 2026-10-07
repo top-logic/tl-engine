@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="displayed"/>
+	</channels>
+
+	<!-- A form whose fields stand in a grid of their own. -->
+	<form input="displayed">
+		<fields>
+			<text>
+				<label>
+					<en>Inside</en>
+				</label>
+			</text>
+		</fields>
+	</form>
+</view>

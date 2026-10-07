@@ -331,7 +331,9 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 			String lastSentRevisionAtDate, Long lastSentRevision) {
 		boolean progress = false;
 		try {
-			Revision startRev = hm.getRevision(lastSentRevision + 1);
+			/* Revisions before the first revision may have been deleted by compacting the history
+			 * after they were due to be sent. */
+			Revision startRev = hm.getRevision(Math.max(lastSentRevision + 1, hm.getFirstRevision()));
 			Revision stopRev = hm.getRevision(lastKBRevision.getRevision());
 			logDebugBeginSending(startRev, stopRev);
 			TLSubSessionContext context = TLContextManager.getSubSession();
@@ -778,6 +780,12 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 			return "Date: " + _sentDate + ": " + getRecord();
 		}
 
+	}
+
+	@Override
+	public boolean isNodeLocal() {
+		// Coordinates the nodes itself by a compare-and-set on the last sent revision.
+		return true;
 	}
 
 }

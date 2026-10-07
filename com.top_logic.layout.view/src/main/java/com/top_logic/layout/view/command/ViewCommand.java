@@ -5,24 +5,20 @@
  */
 package com.top_logic.layout.view.command;
 
-import java.util.List;
-
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -39,7 +35,7 @@ public interface ViewCommand {
 	/**
 	 * Configuration for {@link ViewCommand}.
 	 */
-	interface Config extends PolymorphicConfiguration<ViewCommand> {
+	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -64,15 +60,6 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getClique()}. */
 		String CLIQUE = "clique";
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
-
-		/** Configuration name for {@link #getExecutability()}. */
-		String EXECUTABILITY = "executability";
-
-		/** Configuration name for {@link #getObservedTypes()}. */
-		String OBSERVED_TYPES = "observed-types";
 
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
@@ -150,39 +137,18 @@ public interface ViewCommand {
 		String getClique();
 
 		/**
-		 * Reference to a channel whose value is passed as input to the command.
-		 */
-		@Name(INPUT)
-		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getInput();
-
-		/**
-		 * Rules that determine when this command is executable.
-		 */
-		@Name(EXECUTABILITY)
-		@EntryTag("rule")
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getExecutability();
-
-		/**
-		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
-		 * {@link #getExecutability() executability}, in addition to the {@link #getInput() input}
-		 * object, which is always observed.
+		 * Which unsaved changes this command asks about before it runs.
 		 *
 		 * <p>
-		 * Configure this only for a rule that navigates beyond the input object, e.g. one deciding
-		 * by an attribute of the input's container: a change of that other object is invisible to
-		 * the input's own observation. Empty (default) observes just the input object.
+		 * When a form in the checked scope holds unsaved changes, the user is asked whether to save
+		 * or discard them, or to cancel the command. After saving or discarding, the command runs.
+		 * By default, the command runs without asking.
 		 * </p>
-		 */
-		@Name(OBSERVED_TYPES)
-		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-		List<TLModelPartRef> getObservedTypes();
-
-		/**
-		 * Scope of the dirty check to perform before executing this command.
+		 *
+		 * @see DirtyCheckScope
 		 */
 		@Name(CHECK_DIRTY)
+		@FormattedDefault(DirtyCheckScope.NONE_NAME)
 		DirtyCheckScope getCheckDirty();
 
 		/**
@@ -226,5 +192,42 @@ public interface ViewCommand {
 	 */
 	default boolean appliesFormState() {
 		return false;
+	}
+
+	/**
+	 * The executability this command brings of its own, decided by what the command knows about
+	 * itself rather than by what its use site configured.
+	 *
+	 * <p>
+	 * A command that cannot be carried out in certain circumstances - a dialog's cancel while the
+	 * dialog holds a running command, say - says so here, and its button gives that reason instead
+	 * of doing nothing when pressed. The rule is combined with the
+	 * {@link Config#getExecutability() configured rules} and takes part in the same way: it is
+	 * {@link ContextDependentRule#bind(com.top_logic.layout.view.ViewContext) bound} to the
+	 * context of the command and {@link ObservableRule observed} while its button is attached.
+	 * </p>
+	 *
+	 * @return A rule of this command's own, {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} for a
+	 *         command that leaves the decision to its use site. A fresh instance per call, since a
+	 *         bound rule belongs to the one command model it was built for.
+	 */
+	default ViewExecutabilityRule getIntrinsicRule() {
+		return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+	}
+
+	/**
+	 * The kind of action this command stands for, decided by what the command does.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} for a command that destroys or discards what the user has. There is
+	 * no configuration for it: an author states what a command does, the command's UI shows it.
+	 * </p>
+	 *
+	 * @return {@link ButtonTone#DEFAULT} for an ordinary command.
+	 *
+	 * @see ViewAction#getTone()
+	 */
+	default ButtonTone getTone() {
+		return ButtonTone.DEFAULT;
 	}
 }

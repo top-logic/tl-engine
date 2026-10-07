@@ -1,10 +1,43 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier,
+  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
+import { ButtonDefaults } from './button/ButtonDefaults';
 
-const { useCallback, useRef, useState } = React;
+const { useCallback, useEffect, useRef, useState } = React;
+
+/** The smallest size a window can be resized to. */
+const MIN_WIDTH = 200;
+const MIN_HEIGHT = 100;
+
+/**
+ * The space a window keeps free towards each edge of the browser window, when it is resized and
+ * when a remembered size is checked against the browser window. Matches the margin the stylesheet
+ * keeps with the window's max-width.
+ */
+const VIEWPORT_MARGIN = 24;
+
+/** The largest width a window may take in a browser window of the given width. */
+function maxWindowWidth(viewportWidth: number): number {
+  return Math.max(MIN_WIDTH, viewportWidth - 2 * VIEWPORT_MARGIN);
+}
+
+/** The largest height a window may take in a browser window of the given height. */
+function maxWindowHeight(viewportHeight: number): number {
+  return Math.max(MIN_HEIGHT, viewportHeight - 2 * VIEWPORT_MARGIN);
+}
+
+/** The size of the browser window, updated when the browser window is resized. */
+function useViewportSize(): { width: number; height: number } {
+  const [size, setSize] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
+  useEffect(() => {
+    const update = () => setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return size;
+}
 
 /**
  * Registers Escape -> close in the enclosing window scope as a fallback. Rendered as the first
@@ -28,33 +61,58 @@ type ResizeDir = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
 const RESIZE_HANDLES: ResizeDir[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
 
+/** The cursor a resize handle shows, kept for the whole gesture by the drag shield. */
+const RESIZE_CURSORS: Record<ResizeDir, string> = {
+  n: 'ns-resize', s: 'ns-resize',
+  e: 'ew-resize', w: 'ew-resize',
+  ne: 'nesw-resize', sw: 'nesw-resize',
+  nw: 'nwse-resize', se: 'nwse-resize',
+};
+
 /**
- * Window chrome: title bar, close button, scrollable body, footer actions, resize handles.
+ * Window chrome: title bar, close button, scrollable body, footer button bar, resize handles.
  *
  * State:
  * - title: string
  * - width: string (CSS value, e.g. "500px")
  * - height: string | null
+ * - customWidth, customHeight: number | absent (the size the user gave the window when last resizing
+ *   it; used instead of width and the automatic height only while it fits into the browser window,
+ *   so a size remembered on a larger screen never pushes the title bar or footer out of reach)
  * - resizable: boolean
+ * - closable: boolean (default: true)
  * - child: ChildDescriptor
- * - actions: ChildDescriptor[]
  * - toolbar: ChildDescriptor (clique-grouped TLToolbar for the title bar, may be absent)
- * - buttonBar: ChildDescriptor (clique-grouped TLToolbar for the footer, may be absent)
+ * - footer: ChildDescriptor (the collapsing TLToolbar the footer consists of, may be absent)
+ *
+ * The footer holds that one toolbar and nothing beside it, so the width it is granted is the
+ * footer's and the toolbar gives it up again down to its overflow trigger. A toolbar without a
+ * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
+ *
+ * A double click on a resize handle gives the window its configured size back and makes the server
+ * forget the remembered one - the way back from a size the user no longer wants.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<WindowStateJson>>();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
 
-  const title = (state.title as string) ?? '';
-  const serverWidth = (state.width as string) ?? '32rem';
-  const serverHeight = (state.height as string | null) ?? null;
-  const serverMinHeight = (state.minHeight as string | null) ?? null;
+  const title = state.title ?? '';
+  const serverWidth = state.width ?? '32rem';
+  const serverHeight = state.height ?? null;
+  const customWidth = state.customWidth ?? null;
+  const customHeight = state.customHeight ?? null;
+  const viewport = useViewportSize();
+  const customFits = customWidth != null && customHeight != null
+    && customWidth <= maxWindowWidth(viewport.width)
+    && customHeight <= maxWindowHeight(viewport.height);
   const resizable = state.resizable === true;
+  // A window held open by ongoing work: Escape is left to the enclosing scope and the close
+  // button stays visible, but disabled.
+  const closable = state.closable !== false;
   const child = state.child;
-  const actions = (state.actions as unknown[]) ?? [];
   const toolbar = state.toolbar;
-  const buttonBar = state.buttonBar;
+  const footer = state.footer;
 
   // Local dimensions during resize (null = use server values).
   const [localWidth, setLocalWidth] = useState<number | null>(null);
@@ -91,7 +149,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   // to the opener (e.g. a table) when it closes.
   useFocusTrap(true, windowRef, 'field');
 
-  const handleMouseDown = useCallback((dir: ResizeDir, e: React.MouseEvent) => {
+  const handleResizePointerDown = useCallback((dir: ResizeDir, e: React.PointerEvent) => {
     e.preventDefault();
     const el = windowRef.current;
     if (!el) return;
@@ -117,76 +175,105 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       symmetric: wasCentered,
     };
 
-    const handleMouseMove = (ev: MouseEvent) => {
-      const ds = dragState.current;
-      if (!ds) return;
-      const dx = ev.clientX - ds.startX;
-      const dy = ev.clientY - ds.startY;
-      let w = ds.startW;
-      let h = ds.startH;
-      let posXDelta = 0;
-      let posYDelta = 0;
+    startPointerDrag(e, {
+      cursor: RESIZE_CURSORS[dir],
 
-      if (ds.symmetric) {
-        // Symmetric resize: double the size delta so the handle stays under the mouse.
-        if (ds.dir.includes('e')) w = ds.startW + 2 * dx;
-        if (ds.dir.includes('w')) w = ds.startW - 2 * dx;
-        if (ds.dir.includes('s')) h = ds.startH + 2 * dy;
-        if (ds.dir.includes('n')) h = ds.startH - 2 * dy;
-      } else {
-        // Non-symmetric: edge follows mouse, opposite edge stays anchored.
-        if (ds.dir.includes('e')) w = ds.startW + dx;
-        if (ds.dir.includes('w')) { w = ds.startW - dx; posXDelta = dx; }
-        if (ds.dir.includes('s')) h = ds.startH + dy;
-        if (ds.dir.includes('n')) { h = ds.startH - dy; posYDelta = dy; }
-      }
+      onMove: (ev) => {
+        const ds = dragState.current;
+        if (!ds) return;
+        const dx = ev.clientX - ds.startX;
+        const dy = ev.clientY - ds.startY;
+        let w = ds.startW;
+        let h = ds.startH;
+        let posXDelta = 0;
+        let posYDelta = 0;
 
-      const newW = Math.max(200, w);
-      const newH = Math.max(100, h);
+        if (ds.symmetric) {
+          // Symmetric resize: double the size delta so the handle stays under the mouse.
+          if (ds.dir.includes('e')) w = ds.startW + 2 * dx;
+          if (ds.dir.includes('w')) w = ds.startW - 2 * dx;
+          if (ds.dir.includes('s')) h = ds.startH + 2 * dy;
+          if (ds.dir.includes('n')) h = ds.startH - 2 * dy;
+        } else {
+          // Non-symmetric: edge follows mouse, opposite edge stays anchored.
+          if (ds.dir.includes('e')) w = ds.startW + dx;
+          if (ds.dir.includes('w')) { w = ds.startW - dx; posXDelta = dx; }
+          if (ds.dir.includes('s')) h = ds.startH + dy;
+          if (ds.dir.includes('n')) { h = ds.startH - dy; posYDelta = dy; }
+        }
 
-      if (ds.symmetric) {
-        // Keep center fixed: position shifts by half the size change.
-        posXDelta = (ds.startW - newW) / 2;
-        posYDelta = (ds.startH - newH) / 2;
-      } else {
-        // Clamp position deltas if size hit minimum.
-        if (ds.dir.includes('w') && newW === 200) posXDelta = ds.startW - 200;
-        if (ds.dir.includes('n') && newH === 100) posYDelta = ds.startH - 100;
-      }
+        // The window never grows beyond the browser window, so the size reported and remembered
+        // for it fits again when the window is opened next time.
+        const newW = Math.min(maxWindowWidth(window.innerWidth), Math.max(MIN_WIDTH, w));
+        const newH = Math.min(maxWindowHeight(window.innerHeight), Math.max(MIN_HEIGHT, h));
 
-      localWidthRef.current = newW;
-      localHeightRef.current = newH;
-      setLocalWidth(newW);
-      setLocalHeight(newH);
+        if (ds.symmetric) {
+          // Keep center fixed: position shifts by half the size change.
+          posXDelta = (ds.startW - newW) / 2;
+          posYDelta = (ds.startH - newH) / 2;
+        } else {
+          // The opposite edge stays anchored, also where the size hit its minimum or maximum.
+          if (ds.dir.includes('w')) posXDelta = ds.startW - newW;
+          if (ds.dir.includes('n')) posYDelta = ds.startH - newH;
+        }
 
-      const newPos = {
-        x: ds.startPos.x + posXDelta,
-        y: ds.startPos.y + posYDelta,
-      };
-      positionRef.current = newPos;
-      setPosition(newPos);
-    };
+        localWidthRef.current = newW;
+        localHeightRef.current = newH;
+        setLocalWidth(newW);
+        setLocalHeight(newH);
 
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      const lw = localWidthRef.current;
-      const lh = localHeightRef.current;
-      if (lw != null || lh != null) {
-        sendCommand('resize', {
-          ...(lw != null ? { width: Math.round(lw) } : {}),
-          ...(lh != null ? { height: Math.round(lh) } : {}),
-        });
-        // Keep local dimensions — server uses putStateSilent() which does not push back.
-      }
-      dragState.current = null;
-    };
+        const newPos = {
+          x: ds.startPos.x + posXDelta,
+          y: ds.startPos.y + posYDelta,
+        };
+        positionRef.current = newPos;
+        setPosition(newPos);
+      },
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+      onEnd: (_event, dragged) => {
+        // A press that stayed where it was leaves the window as it is: the local dimensions still
+        // hold what an earlier drag gave it, and reporting them again says nothing new.
+        const lw = localWidthRef.current;
+        const lh = localHeightRef.current;
+        if (dragged && (lw != null || lh != null)) {
+          sendCommand('resize', {
+            ...(lw != null ? { width: Math.round(lw) } : {}),
+            ...(lh != null ? { height: Math.round(lh) } : {}),
+          });
+          // Keep local dimensions — server uses putStateSilent() which does not push back.
+        }
+        dragState.current = null;
+      },
+
+      onCancel: () => {
+        // Nothing is reported, so the window returns to the size and place it had before the drag.
+        const ds = dragState.current;
+        if (ds) {
+          localWidthRef.current = ds.startW;
+          localHeightRef.current = ds.startH;
+          setLocalWidth(ds.startW);
+          setLocalHeight(ds.startH);
+          const restored = ds.symmetric ? null : { ...ds.startPos };
+          positionRef.current = restored;
+          setPosition(restored);
+        }
+        dragState.current = null;
+      },
+    });
   }, [sendCommand]);
 
-  const handleTitleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleResetSize = useCallback(() => {
+    localWidthRef.current = null;
+    localHeightRef.current = null;
+    setLocalWidth(null);
+    setLocalHeight(null);
+    // Centered again, as a window with its configured size is when it opens.
+    positionRef.current = null;
+    setPosition(null);
+    sendCommand('resetSize');
+  }, [sendCommand]);
+
+  const handleTitlePointerDown = useCallback((e: React.PointerEvent) => {
     // Only left mouse button; ignore clicks on buttons inside the header.
     if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
     e.preventDefault();
@@ -196,36 +283,42 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     const rect = el.getBoundingClientRect();
 
     // If first drag, initialize position from current rendered position.
+    const wasCentered = positionRef.current === null;
     const startPos = positionRef.current ?? { x: rect.left, y: rect.top };
     const offsetX = e.clientX - startPos.x;
     const offsetY = e.clientY - startPos.y;
 
-    const handleMouseMove = (ev: MouseEvent) => {
-      const viewW = window.innerWidth;
-      const viewH = window.innerHeight;
-      let newX = ev.clientX - offsetX;
-      let newY = ev.clientY - offsetY;
+    // The place the window ends up at is the browser's alone: the server keeps no position, so a
+    // finished move reports nothing.
+    startPointerDrag(e, {
+      cursor: 'grabbing',
 
-      // Constrain to viewport.
-      const elW = el.offsetWidth;
-      const elH = el.offsetHeight;
-      if (newX + elW > viewW) newX = viewW - elW;
-      if (newY + elH > viewH) newY = viewH - elH;
-      if (newX < 0) newX = 0;
-      if (newY < 0) newY = 0;
+      onMove: (ev) => {
+        const viewW = window.innerWidth;
+        const viewH = window.innerHeight;
+        let newX = ev.clientX - offsetX;
+        let newY = ev.clientY - offsetY;
 
-      const pos = { x: newX, y: newY };
-      positionRef.current = pos;
-      setPosition(pos);
-    };
+        // Constrain to viewport.
+        const elW = el.offsetWidth;
+        const elH = el.offsetHeight;
+        if (newX + elW > viewW) newX = viewW - elW;
+        if (newY + elH > viewH) newY = viewH - elH;
+        if (newX < 0) newX = 0;
+        if (newY < 0) newY = 0;
 
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
+        const pos = { x: newX, y: newY };
+        positionRef.current = pos;
+        setPosition(pos);
+      },
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+      onCancel: () => {
+        // The window goes back where it was picked up, a centered one back to the center.
+        const restored = wasCentered ? null : { ...startPos };
+        positionRef.current = restored;
+        setPosition(restored);
+      },
+    });
   }, []);
 
   const handleToggleMaximize = useCallback(() => {
@@ -239,14 +332,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       }
       setMaximized(false);
     } else {
-      // Save current bounds.
-      const el = windowRef.current;
-      const rect = el?.getBoundingClientRect();
+      // Save current bounds. A centered window is restored centered and with the size it had
+      // (the configured or the remembered one), not pinned to the place and width it was rendered
+      // at: pinned, it would lose the 80vh height limit of a centered window and could reach below
+      // the bottom edge of the browser window.
       regularBoundsRef.current = {
-        x: positionRef.current?.x ?? (rect?.left ?? -1),
-        y: positionRef.current?.y ?? (rect?.top ?? -1),
-        w: localWidth ?? (rect?.width ?? null),
-        h: localHeight ?? null,
+        x: positionRef.current?.x ?? -1,
+        y: positionRef.current?.y ?? -1,
+        w: localWidth,
+        h: localHeight,
       };
       setMaximized(true);
       setPosition({ x: 0, y: 0 });
@@ -258,14 +352,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const style: React.CSSProperties = maximized
     ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }
     : {
-        width: localWidth != null ? localWidth + 'px' : serverWidth,
+        width: localWidth != null ? localWidth + 'px' : customFits ? customWidth + 'px' : serverWidth,
         ...(localHeight != null
           ? { height: localHeight + 'px' }
           : serverHeight != null
             ? { height: serverHeight }
             : {}),
-        ...(serverMinHeight != null && localHeight == null
-          ? { minHeight: serverMinHeight }
+        // The remembered height is a minimum only, so content that has grown since still fits.
+        ...(customFits && localHeight == null
+          ? { minHeight: customHeight + 'px' }
           : {}),
         maxHeight: position ? '100vh' : '80vh',
         ...(position
@@ -275,12 +370,14 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   const titleId = controlId + '-title';
 
+  const maximizeLabel = maximized ? i18n['js.window.restore'] : i18n['js.window.maximize'];
+
   return (
     <KeyboardScopeProvider modal>
-      <EscapeToClose onClose={handleClose} />
+      {closable && <EscapeToClose onClose={handleClose} />}
       <div
       id={controlId}
-      className="tlWindow"
+      className={rootClassName(state, 'tlWindow')}
       style={style}
       ref={windowRef}
       role="dialog"
@@ -289,11 +386,11 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     >
       <div
         className={`tlWindow__header${maximized ? ' tlWindow__header--maximized' : ''}`}
-        onMouseDown={maximized ? undefined : handleTitleMouseDown}
+        onPointerDown={maximized ? undefined : handleTitlePointerDown}
         onDoubleClick={resizable ? handleToggleMaximize : undefined}
       >
         <span className="tlWindow__title" id={titleId}>{title}</span>
-        {toolbar && (
+        {!!toolbar && (
           <div className="tlWindow__toolbar">
             <TLChild control={toolbar} />
           </div>
@@ -304,7 +401,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           type="button"
           className="tlWindow__maximizeBtn"
           onClick={handleToggleMaximize}
-          title={maximized ? i18n['js.window.restore'] : i18n['js.window.maximize']}
+          aria-label={maximizeLabel}
+          {...tooltipProps(maximizeLabel)}
         >
           {maximized ? (
             // Restore icon: two overlapping squares.
@@ -324,7 +422,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           type="button"
           className="tlWindow__closeBtn"
           onClick={handleClose}
-          title={i18n['js.window.close']}
+          disabled={!closable}
+          aria-label={i18n['js.window.close']}
+          {...tooltipProps(i18n['js.window.close'])}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"
@@ -339,19 +439,19 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           <TLChild control={child} />
         </FillBarrier>
       </div>
-      {(actions.length > 0 || buttonBar) && (
-        <div className="tlWindow__footer">
-          {buttonBar && <TLChild control={buttonBar} />}
-          {actions.map((action, i) => (
-            <TLChild key={i} control={action} />
-          ))}
-        </div>
+      {!!footer && (
+        <ButtonDefaults appearance="secondary">
+          <div className="tlWindow__footer">
+            <TLChild control={footer} />
+          </div>
+        </ButtonDefaults>
       )}
       {resizable && !maximized && RESIZE_HANDLES.map(dir => (
         <div
           key={dir}
           className={`tlWindow__resizeHandle tlWindow__resizeHandle--${dir}`}
-          onMouseDown={(e) => handleMouseDown(dir, e)}
+          onPointerDown={(e) => handleResizePointerDown(dir, e)}
+          onDoubleClick={handleResetSize}
         />
       ))}
       </div>

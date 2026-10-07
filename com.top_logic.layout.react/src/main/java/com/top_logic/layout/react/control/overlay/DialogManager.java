@@ -12,7 +12,8 @@ import com.top_logic.layout.react.control.ReactControl;
  *
  * <p>
  * Dialogs are stacked: opening a new dialog while one is already open places the new dialog on top.
- * Closing a dialog cascades to close all dialogs above it.
+ * Closing a dialog cascades to close all dialogs above it. A dialog that its opener marked as not
+ * {@link DialogHandle#isClosable() closable} is not closed, and neither is any dialog below it.
  * </p>
  *
  * @see ReactDialogManagerControl
@@ -35,6 +36,10 @@ public interface DialogManager {
 	/**
 	 * Closes the topmost dialog with the given result.
 	 *
+	 * <p>
+	 * Closing nothing while that dialog is not {@link DialogHandle#isClosable() closable}.
+	 * </p>
+	 *
 	 * @param result
 	 *        The result to pass to the dialog's handler.
 	 */
@@ -46,7 +51,8 @@ public interface DialogManager {
 	 * <p>
 	 * The dialogs above are closed with {@link DialogResult#cancelled()}, the given dialog stays
 	 * open. Closing nothing when the dialog is already the topmost one, or when it is no longer
-	 * open.
+	 * open. Closing stops at the first dialog that is not {@link DialogHandle#isClosable()
+	 * closable}, so the given dialog is displayed only if nothing above it must stay open.
 	 * </p>
 	 *
 	 * @param dialog

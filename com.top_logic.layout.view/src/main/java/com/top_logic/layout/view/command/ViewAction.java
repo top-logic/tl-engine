@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.command;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 
 /**
  * Lightweight functional building block for composable view commands.
@@ -72,5 +73,51 @@ public interface ViewAction {
 	 */
 	default boolean appliesFormState() {
 		return false;
+	}
+
+	/**
+	 * The executability this action brings of its own, decided by what the action knows about the
+	 * operation it performs rather than by what the command using it configured.
+	 *
+	 * <p>
+	 * An action performing a model operation that the current user may be refused - deleting its
+	 * input, say - says so here, so that the command offering it is hidden or disabled before the
+	 * operation would fail. A command running the action combines this rule with its
+	 * {@link ViewCommand.Config#getExecutability() configured rules} (see
+	 * {@link ViewCommand#getIntrinsicRule()}), and the rule takes part in the same way: it is
+	 * {@link ContextDependentRule#bind(com.top_logic.layout.view.ViewContext) bound} to the context of
+	 * the command and {@link ObservableRule observed} while its button is attached.
+	 * </p>
+	 *
+	 * <p>
+	 * The rule decides before the command runs. It therefore receives the <em>command's</em> input,
+	 * not the value the previous action of the chain hands to this action when the chain runs.
+	 * </p>
+	 *
+	 * @return A rule of this action's own, {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} for an
+	 *         action that leaves the decision to the command. A fresh instance per call, since a
+	 *         bound rule belongs to the one command model it was built for.
+	 *
+	 * @see ViewActions#intrinsicRule(java.util.List)
+	 */
+	default ViewExecutabilityRule getIntrinsicRule() {
+		return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+	}
+
+	/**
+	 * The kind of action this is.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} for an action that destroys or discards what the user has - deleting
+	 * its input, say. A command running the action takes this tone (see
+	 * {@link ViewActions#tone(java.util.List)}), so that every surface offering the command - its
+	 * button, a menu entry, the confirmation asking for it - shows it as destructive, without the
+	 * author choosing a color.
+	 * </p>
+	 *
+	 * @return {@link ButtonTone#DEFAULT} for an ordinary action.
+	 */
+	default ButtonTone getTone() {
+		return ButtonTone.DEFAULT;
 	}
 }

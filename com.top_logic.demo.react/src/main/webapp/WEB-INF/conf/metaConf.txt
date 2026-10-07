@@ -1,2 +1,4 @@
 db-default.xml
 demoReactConf.xml
+pac4j-keycloak.xml
+pac4j-keycloak-demo.xml

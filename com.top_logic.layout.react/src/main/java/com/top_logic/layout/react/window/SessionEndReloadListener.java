@@ -18,19 +18,25 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
  * Reloads the browser windows of a session that has been logged out.
  *
  * <p>
- * A session can lose its user without the browser doing anything: the maintenance mode logs out
- * everybody who may not stay, and an administrator can terminate a session. Neither invalidates the
- * HTTP session - {@link SessionService#invalidateSession(String) Invalidation of session using the
- * session ID} only drops it from the session table - so the page keeps showing the previous user
- * and their content, and the first interaction merely establishes a fresh anonymous session behind
- * the scenes and appears to do nothing at all.
+ * A session that is logged out while its HTTP session lives on would leave its pages showing the
+ * previous user and their content; the first interaction would then merely be answered as stale.
+ * Reloading brings the browser back as the anonymous user, showing the login and whatever the
+ * application announces to it.
  * </p>
  *
  * <p>
- * Reloading brings the browser back as the anonymous user, showing the login and whatever the
- * application announces to it. The classic UI reaches the same end differently, by checking on
- * every request whether the session is still known to the {@link SessionService}.
+ * Ending a session through the {@link SessionService} - an administrator terminating it, the
+ * maintenance mode logging out everybody who may not stay, the account being deleted - invalidates
+ * the HTTP session, which reloads and tears down the windows through the {@link ReactWindowRegistry}
+ * itself. This listener covers a session that is only dropped from the session table while its
+ * HTTP session stays alive, which is what happens to all sessions when the {@link SessionService}
+ * service is shut down.
  * </p>
+ *
+ * @implNote A session is dropped from the session table without being invalidated by
+ *           {@link SessionService#invalidateSession(String)}. Ending a session with
+ *           {@link SessionService#terminateSession(String)} invalidates it and reaches
+ *           {@link ReactWindowRegistry#valueUnbound(jakarta.servlet.http.HttpSessionBindingEvent)}.
  *
  * @see ReactWindowRegistry#reloadWindowsOfSession(String)
  */

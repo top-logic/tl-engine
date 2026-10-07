@@ -54,8 +54,17 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 	 *
 	 * <p>
 	 * When <code>withSecurity</code> is requested, the access is denied (an empty value is returned)
-	 * if the user must not read the attribute on the base object {@code self}. The looked-up value
-	 * itself is returned unfiltered; securing the final result is the responsibility of the caller.
+	 * if the user must not read the attribute on the base object {@code self}.
+	 * </p>
+	 *
+	 * <p>
+	 * The looked-up value itself is returned unfiltered: a reference is not a query, so the
+	 * referenced object is delivered even if the user must not read it, consistent with the GUI,
+	 * which shows the label of a referenced object and only gates the navigation into it. Reading
+	 * the attributes of such an object is denied by the access check of that attribute access. The
+	 * result of a whole script execution is a different matter: it is filtered for the read rights
+	 * of the user, see {@link SearchExpression#filterSecurity(Object, SecurityFilterReport)}, and a
+	 * {@link SecurityFilterReport} tells the caller what that filter removed.
 	 * </p>
 	 *
 	 * @param self

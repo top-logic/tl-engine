@@ -35,10 +35,11 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -46,6 +47,7 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
@@ -66,10 +68,13 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * Image URLs are rewritten when sending HTML to the client: bare filenames in
- * {@code <img src="file.png">} become full download URLs
- * {@code <img src="/react-api/data?controlId=...&key=file.png">}. The reverse transformation is
- * applied when receiving HTML back from the client.
+ * An image embedded in the text is stored in its source as a reference {@code <img src="ref:name">}
+ * (see {@link I18NStructuredTextUtil#getImageRefID(String)}), where {@code name} is the key of the
+ * image in {@link StructuredText#getImages()}. The HTML sent to the client carries a download URL
+ * {@code <img src="/react-api/data?controlId=...&key=name">} in place of such a reference, and a
+ * download URL in the HTML received from the client is turned back into the reference. A plain
+ * {@code <img src="name">} naming an image of the text is shown as well and stored as a reference
+ * after the next edit.
  * </p>
  */
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
@@ -116,10 +121,22 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	/** Field of {@link #INSERT} holding the markup to insert at the cursor. */
 	private static final String INSERT_HTML = "html";
 
+	/**
+	 * State announcing the key of an uploaded image, which the client inserts at the cursor as a
+	 * download URL.
+	 */
 	private static final String IMAGE_URL = "imageUrl";
 
+	/** Path of the download URLs the images are served under by {@link #getDownloadData(String)}. */
+	private static final String DATA_PATH = "/react-api/data?";
+
+	/** Parameter of a download URL naming the image, the last parameter of the URL. */
 	private static final String KEY_PARAM = "&key=";
 
+	/** Start of every download URL of this editor, up to the query parameters. */
+	private final String _dataUrlBase;
+
+	/** Start of the download URL of an image, followed by the image key. */
 	private final String _imageUrlPrefix;
 
 	private StructuredText _shadowCopy;
@@ -165,11 +182,12 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			List<ViewCommand.Config> commandConfigs, String insertChannel) {
 		super(context, model, "TLWysiwygEditor");
 
-		_imageUrlPrefix = context.getContextPath() + "/react-api/data?controlId=" + getID()
+		_dataUrlBase = context.getContextPath() + DATA_PATH;
+		_imageUrlPrefix = _dataUrlBase + "controlId=" + getID()
 			+ "&windowName=" + context.getWindowName() + KEY_PARAM;
 
 		initShadowCopy();
-		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
+		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
 
 		_insertChannel = insertChannel == null ? null : new DefaultViewChannel(insertChannel);
 		if (_insertChannel != null) {
@@ -204,7 +222,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			List<ViewCommand.Config> commandConfigs) {
 		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, commands, commandConfigs);
 		ReactToolbarControl toolbar = ToolbarBuilder.build(context, new CommandScope(models),
-			CommandPlacement.TOOLBAR, new CliqueRegistry(), ButtonDisplayMode.ICON_ONLY);
+			CommandPlacement.TOOLBAR, CommandCliqueService.getInstance(), ButtonDisplayMode.ICON_ONLY);
 		if (toolbar == null) {
 			return;
 		}
@@ -259,10 +277,10 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		if (newValue instanceof StructuredText) {
 			_shadowCopy = ((StructuredText) newValue).copy();
-			putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
+			putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
 		} else {
 			_shadowCopy = new StructuredText();
-			putState(VALUE, "");
+			putState(FieldState.VALUE__PROP, "");
 		}
 	}
 
@@ -323,26 +341,35 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	}
 
 	/**
-	 * Rewrites bare image filenames in {@code <img src>} to full download URLs for the client.
+	 * Replaces the image references in {@code <img src>} with download URLs for the client.
+	 *
+	 * <p>
+	 * A reference {@code ref:name} and a plain {@code name} both become the download URL of the
+	 * image {@code name}, provided the text has such an image. Any other source is left as it is.
+	 * </p>
 	 */
 	private String rewriteImageUrls(String html) {
 		if (html == null || html.isEmpty()) {
 			return html;
 		}
+		Map<String, BinaryData> images = _shadowCopy.getImages();
 		Document doc = Jsoup.parse(html);
 		doc.outputSettings().prettyPrint(false);
 		Elements imgs = doc.select("img[src]");
 		for (Element img : imgs) {
 			String src = img.attr("src");
-			if (!src.contains("react-api/data") && _shadowCopy.getImages().containsKey(src)) {
-				img.attr("src", _imageUrlPrefix + URLEncoder.encode(src, StandardCharsets.UTF_8));
+			String key = I18NStructuredTextUtil.isImageReference(src)
+				? I18NStructuredTextUtil.getImageID(src)
+				: src;
+			if (images.containsKey(key)) {
+				img.attr("src", _imageUrlPrefix + URLEncoder.encode(key, StandardCharsets.UTF_8));
 			}
 		}
 		return doc.body().html();
 	}
 
 	/**
-	 * Strips download URLs from {@code <img src>} back to bare image keys for storage.
+	 * Replaces the download URLs in {@code <img src>} with the image references they stand for.
 	 */
 	private String stripImageUrls(String html) {
 		if (html == null || html.isEmpty()) {
@@ -353,6 +380,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		Elements imgs = doc.select("img[src]");
 		for (Element img : imgs) {
 			String src = img.attr("src");
+			if (!src.startsWith(_dataUrlBase)) {
+				continue;
+			}
 			int keyIndex = src.indexOf(KEY_PARAM);
 			if (keyIndex >= 0) {
 				String key = src.substring(keyIndex + KEY_PARAM.length());
@@ -360,7 +390,8 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 				if (ampIndex >= 0) {
 					key = key.substring(0, ampIndex);
 				}
-				img.attr("src", URLDecoder.decode(key, StandardCharsets.UTF_8));
+				img.attr("src",
+					I18NStructuredTextUtil.getImageRefID(URLDecoder.decode(key, StandardCharsets.UTF_8)));
 			}
 		}
 		return doc.body().html();

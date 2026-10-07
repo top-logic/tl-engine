@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.channel;
 
+import java.util.List;
+
 import junit.framework.TestCase;
 
 import com.top_logic.layout.view.channel.ChannelVetoException;
@@ -80,7 +82,8 @@ public class TestDirtyCheckIntegration extends TestCase {
 		MutableStubHandler handler = new MutableStubHandler("myForm");
 		handler._dirty = true;
 
-		VetoListener vetoListener = (sender, oldValue, newValue) -> handler.isDirty() ? handler : null;
+		VetoListener vetoListener =
+			(sender, oldValue, newValue) -> handler.isDirty() ? List.of(handler) : List.<StateHandler> of();
 		channel.addVetoListener(vetoListener);
 
 		ChannelVetoException caught = null;
@@ -170,8 +173,10 @@ public class TestDirtyCheckIntegration extends TestCase {
 		errorHandler._dirty = true;
 		errorHandler._hasErrors = true;
 
-		channel.addVetoListener((sender, oldValue, newValue) -> cleanHandler.isDirty() ? cleanHandler : null);
-		channel.addVetoListener((sender, oldValue, newValue) -> errorHandler.isDirty() ? errorHandler : null);
+		channel.addVetoListener(
+			(sender, oldValue, newValue) -> cleanHandler.isDirty() ? List.of(cleanHandler) : List.<StateHandler> of());
+		channel.addVetoListener(
+			(sender, oldValue, newValue) -> errorHandler.isDirty() ? List.of(errorHandler) : List.<StateHandler> of());
 
 		ChannelVetoException caught = null;
 		try {

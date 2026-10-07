@@ -132,4 +132,10 @@ public final class SchedulerClusterCleanupTask extends StateHandlingTask<StateHa
 		return nodeState == null;
 	}
 
+	@Override
+	public boolean isNodeLocal() {
+		// Releases the cluster locks of dead nodes, so it must not depend on a cluster lock itself.
+		return true;
+	}
+
 }

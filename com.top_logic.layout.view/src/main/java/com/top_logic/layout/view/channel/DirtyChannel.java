@@ -21,6 +21,24 @@ import com.top_logic.layout.view.form.StateHandler;
 public class DirtyChannel extends com.top_logic.layout.react.dirty.DirtyChannel {
 
 	/**
+	 * Creates a {@link DirtyChannel} for a scope that no dirty-tracked scope encloses.
+	 */
+	public DirtyChannel() {
+		super();
+	}
+
+	/**
+	 * Creates a {@link DirtyChannel} for a scope lying within the scope of another channel.
+	 *
+	 * @param parent
+	 *        The channel of the enclosing scope, which every handler reported here is reported to as
+	 *        well. May be {@code null} for a scope nothing dirty-tracked encloses.
+	 */
+	public DirtyChannel(com.top_logic.layout.react.dirty.DirtyChannel parent) {
+		super(parent);
+	}
+
+	/**
 	 * Bridge for {@link #updateState(com.top_logic.layout.react.dirty.StateHandler, boolean)} that
 	 * accepts the view-level {@link StateHandler}.
 	 */

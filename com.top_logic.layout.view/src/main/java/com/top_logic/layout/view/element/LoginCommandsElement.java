@@ -50,6 +50,8 @@ public class LoginCommandsElement implements UIElement {
 
 	private final List<UIElement> _commands;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link LoginCommandsElement} from configuration.
 	 */
@@ -58,6 +60,7 @@ public class LoginCommandsElement implements UIElement {
 		_commands = ApplicationConfig.getInstance().getConfig(LoginCommandsConfig.class).getCommands().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -74,7 +77,10 @@ public class LoginCommandsElement implements UIElement {
 		}
 		// A column whose cross-axis end alignment right-aligns the contributed commands (e.g. the
 		// self-service "Forgot password?" link sits at the right, below the password field).
-		return new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.END, false, children);
+		ReactStackControl result =
+			new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.END, false, children);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 
 }

@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -18,7 +17,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -43,28 +42,21 @@ public class ScriptedTileLabel implements TileLabelProvider {
 	 * Configuration for {@link ScriptedTileLabel}.
 	 */
 	@TagName("scripted")
-	public interface Config extends TileLabelProvider.Config<ScriptedTileLabel> {
+	public interface Config extends TileLabelProvider.Config<ScriptedTileLabel>, Inputs {
 
 		@Override
 		@ClassDefault(ScriptedTileLabel.class)
 		Class<? extends ScriptedTileLabel> getImplementationClass();
 
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
-
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";
 
 		/**
-		 * Comma-separated channel references whose current values are passed as positional
-		 * arguments to the expression.
-		 */
-		@Name(INPUTS)
-		@Format(CommaSeparatedChannelRefs.class)
-		List<ChannelRef> getInputs();
-
-		/**
 		 * TL-Script expression returning the label string.
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order.
+		 * </p>
 		 */
 		@Name(EXPR)
 		@Mandatory

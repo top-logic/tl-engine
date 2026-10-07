@@ -29,6 +29,7 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.wysiwyg.ReactWysiwygControl;
 import com.top_logic.layout.react.wysiwyg.WysiwygControlProvider;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -38,6 +39,7 @@ import com.top_logic.layout.view.element.FieldElement;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewCommand;
 
@@ -85,7 +87,8 @@ public class TestEditorCommands extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		ReactContext reactContext = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext reactContext = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		_context = new DefaultViewContext(reactContext);
 		_context.registerChannel(VIEW_CHANNEL, new DefaultViewChannel(VIEW_CHANNEL));
 	}
@@ -282,7 +285,7 @@ public class TestEditorCommands extends TestCase {
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestEditorCommands.class, ThreadContextManager.Module.INSTANCE,
-				TypeIndex.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
 	}
 
 }

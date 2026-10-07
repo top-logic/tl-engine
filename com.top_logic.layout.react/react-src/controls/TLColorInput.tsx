@@ -1,5 +1,6 @@
-import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { showsValueOnly } from './form/fieldState';
 import ColorPopup from './color/ColorPopup';
 
 const I18N_KEYS = { 'js.colorInput.chooseColor': 'Choose color' };
@@ -12,11 +13,15 @@ const { useState, useCallback, useRef } = React;
  * State from server:
  *  - value: string | null       - Current hex color ('#RRGGBB') or null
  *  - editable: boolean          - Whether the field is editable
+ *  - disabled: boolean          - Whether the field that is not editable shows an inactive swatch
+ *                                 button that opens no popup (see showsValueOnly) instead of the color
  *  - palette: (string | null)[] - Palette colors (flat, row-major)
  *  - paletteColumns: number     - Number of palette columns
  *  - defaultPalette: (string | null)[] - Default palette for reset
  */
 const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [fieldValue, setValue] = useTLFieldValue();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -30,6 +35,10 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const defaultPalette = (state.defaultPalette as (string | null)[]) ?? palette;
 
   const handleClick = useCallback(() => {
+    // The press of this click has closed the popup this swatch opens: leave it closed.
+    if (pressClosedSurface()) {
+      return;
+    }
     if (editable) setOpen(true);
   }, [editable]);
 
@@ -52,23 +61,21 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     [sendCommand]
   );
 
-  // Immutable mode: just a colored span
-  if (!editable) {
+  // Read-only: just a colored span
+  if (showsValueOnly(state)) {
     return (
       <span
         id={controlId}
-        className={
-          'tlColorInput tlColorInput--immutable' +
-          (value == null ? ' tlColorInput--noColor' : '')
-        }
+        className={rootClassName(state, 'tlColorInput tlColorInput--immutable' +
+          (value == null ? ' tlColorInput--noColor' : ''))}
         style={value != null ? { backgroundColor: value } : undefined}
-        title={value ?? ''}
+        {...tooltipProps(value)}
       />
     );
   }
 
   return (
-    <span id={controlId} className="tlColorInput">
+    <span id={controlId} className={rootClassName(state, 'tlColorInput')}>
       <button
         ref={swatchRef}
         className={
@@ -78,8 +85,10 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         style={value != null ? { backgroundColor: value } : undefined}
         onClick={handleClick}
         disabled={state.disabled === true}
-        title={value ?? ''}
         aria-label={i18n['js.colorInput.chooseColor']}
+        {...tooltipProps(value ?? i18n['js.colorInput.chooseColor'])}
+        id={inputId}
+        {...labelProps}
       />
 
       {open && (

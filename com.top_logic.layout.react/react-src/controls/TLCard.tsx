@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, TLChild, FillBarrier, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -23,7 +23,7 @@ const TLCard: React.FC<TLCellProps> = ({ controlId }) => {
   const hasHeader = title != null || headerActions.length > 0;
 
   return (
-    <div id={controlId} className={`tlCard tlCard--${variant}`}>
+    <div id={controlId} className={rootClassName(state, `tlCard tlCard--${variant}`)}>
       {hasHeader && (
         <div className="tlCard__header">
           {title && <span className="tlCard__title">{title}</span>}

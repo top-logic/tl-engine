@@ -1,10 +1,19 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import {
+  React,
+  useTLState,
+  useTLFieldValue,
+  useTLSubmitOnEnter,
+  rootClassName,
+  VALUE_DEBOUNCE_MS,
+  tooltipProps,
+  useFieldLabelProps,
+  fieldInputId,
+} from 'tl-react-bridge';
+import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
-
-/** Debounce for transmitting a typed value to the server (see TLTextInput). */
-const VALUE_DEBOUNCE_MS = 300;
 
 /**
  * A number input field rendered via React.
@@ -23,10 +32,24 @@ const VALUE_DEBOUNCE_MS = 300;
  * Typing updates the local value immediately. Since the server rewrites the text it is given (12,5
  * comes back as 12,50), state.sendValueOnBlur holds the value back until the field is left, so a
  * mid-edit round-trip cannot re-render the input from the normalized text.
+ *
+ * When state.submitOnEnter is set, Enter sends a 'submit' command carrying the text, so the server
+ * can run a command over the number that was entered.
+ *
+ * state.placeholder holds the text shown while the field is empty, stating what the field is for
+ * where no label does. state.debounceMs names the span a typed value is held back before it is
+ * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
+ * it, so the span matters here only where the server turns the blur behaviour off.
+ *
+ * A read-only field shows the text as a tl-field-value; a disabled field renders the input as an
+ * inactive one (native `disabled`, see showsValueOnly).
  */
-const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<NumberInputStateJson>>();
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: VALUE_DEBOUNCE_MS,
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
   });
 
@@ -40,37 +63,33 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
+  const handleSubmitKey = useTLSubmitOnEnter();
+
   const text = value == null ? '' : String(value);
 
-  if (state.editable === false) {
-    return (
-      <span id={controlId} className="tlReactNumberInput tlReactNumberInput--immutable">
-        {text}
-      </span>
-    );
+  if (showsValueOnly(state)) {
+    return <FieldValue id={controlId} className={rootClassName(state)} text={text} />;
   }
 
   const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const errorMessage = state.errorMessage as string | undefined;
-  const cls = [
-    'tlReactNumberInput',
-    hasError ? 'tlReactNumberInput--error' : '',
-    !hasError && hasWarnings ? 'tlReactNumberInput--warning' : '',
-  ].filter(Boolean).join(' ');
+  const errorMessage = state.errorMessage;
 
   return (
     <span id={controlId}>
       <input
         type="text"
-        inputMode={(state.inputMode as 'numeric' | 'decimal' | 'text' | undefined) ?? 'numeric'}
+        inputMode={state.inputMode ?? 'numeric'}
         value={text}
         onChange={handleChange}
         onBlur={handleBlur}
+        onKeyDown={handleSubmitKey}
+        placeholder={state.placeholder}
         disabled={state.disabled === true}
-        className={cls}
-        aria-invalid={hasError || undefined}
-        title={hasError && errorMessage ? errorMessage : undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
+        {...tooltipProps(hasError ? errorMessage : undefined)}
+        id={inputId}
+        {...labelProps}
       />
     </span>
   );

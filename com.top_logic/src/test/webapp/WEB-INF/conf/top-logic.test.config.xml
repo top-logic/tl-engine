@@ -361,7 +361,6 @@
 
 		<config service-class="com.top_logic.util.sched.Scheduler">
 			<instance class="com.top_logic.util.sched.Scheduler" 
-				dont-run-tasks-on-startup="false" 
 				polling-interval="1000"
 				max-tasktime="120000" 
 				max-task="1" 
@@ -498,6 +497,7 @@
 				<entry value="jsp/display/error/404ErrorPage.jsp" />
 				<entry value="jsp/display/error/NoXssProtection.jsp" />
 				<entry value="jsp/main/LoginErrorPage_noCookies.jsp" />
+				<entry value="jsp/main/LoginErrorPage_unknownAccount.jsp" />
 				<entry value="jsp/main/LogoutPage.jsp" />
 				<entry value="index.jsp" />
 				<entry value="SystemState.jsp" />

@@ -18,29 +18,41 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.DerivedProperty;
+import com.top_logic.layout.form.values.ListenerBinding;
+import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
- * properties of a {@link ConfigurationItem}, plus a COMPLEX property that also has a value
- * provider (e.g. a {@link com.top_logic.basic.util.ResKey} property).
+ * properties of a {@link ConfigurationItem}, plus a COMPLEX property whose value
+ * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}
+ * (e.g. a {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
- * Each PLAIN/REF property, and a COMPLEX property with a value provider, is wrapped in a
+ * Each PLAIN/REF property, and a COMPLEX property whose value has a text form, is wrapped in a
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
  * nested {@link ConfigEditorControl} - unless the configuration writes the item as text, a
  * TL-Script expression for instance, in which case that text is edited as a field. LIST, ARRAY,
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
- * unordered. DERIVED and a binding-only COMPLEX property are skipped.
+ * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * </p>
+ *
+ * <p>
+ * A property with a {@link DynamicMode dynamic mode} is hidden or stops accepting input while its
+ * mode, computed from other properties of the item, says so.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -195,7 +207,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
-			if (!isSupportedKind(property)) {
+			if (!isSupportedKind(config, property)) {
 				continue;
 			}
 			if (isHidden(property)) {
@@ -206,24 +218,29 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 
 			// An item the configuration writes as text - a TL-Script expression, for instance - is
-			// edited as that text below, instead of as a form over its syntax tree.
-			if (property.kind() == PropertyKind.ITEM && property.getValueProvider() == null) {
+			// edited as that text below, instead of as a form over its syntax tree. An item whose
+			// format cannot express the value it currently holds has no such text and gets the
+			// structured editor, the same as an item without a format at all.
+			if (property.kind() == PropertyKind.ITEM
+				&& !ConfigControlService.hasTextForm(config, property)) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
 						createPolymorphicGroup(context, label, config, property, _editable);
 					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
+					followMode(config, property, polyGroup, null);
 				} else {
 					ConfigurationAccess configAccess = property.getConfigurationAccess();
 					ConfigurationItem nested = configAccess.getConfig(config.value(property));
 					if (nested != null) {
 						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
 						ReactFormGroupControl group = new ReactFormGroupControl(
-							context, null, true, false, "subtle", true,
+							context, null, true, false, GroupBorder.SUBTLE, true,
 							List.of(), List.of(nestedEditor));
 						group.setHeader(createGroupHeader(context, property));
 						addChild(group);
+						followMode(config, property, group, null);
 					}
 				}
 				continue;
@@ -238,10 +255,11 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				// row is not a place to put a form. It also keeps a collection recognizable as one
 				// section rather than as a column of the surrounding grid.
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
-					context, null, true, false, "default", true,
+					context, null, true, false, GroupBorder.SUBTLE, true,
 					List.of(), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);
+				followMode(config, property, listGroup, null);
 				continue;
 			}
 
@@ -267,6 +285,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				chrome.setTooltip(tooltip, label, true);
 			}
 			addChild(chrome);
+			followMode(config, property, chrome, model);
 		}
 	}
 
@@ -395,23 +414,77 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, and {@link PropertyKind#MAP} are
 	 * always supported - LIST, ARRAY, and MAP are the same sequence-of-elements editor, differing
 	 * only in the value's shape and, for MAP, in being unordered. An ITEM is a nested form, except
-	 * when the configuration writes it as text: such an item has a
-	 * {@link PropertyDescriptor#getValueProvider() value provider} and is edited as that text, by
-	 * the same service the other fields go through. A {@link PropertyKind#COMPLEX}
-	 * property - e.g. a {@link com.top_logic.basic.util.ResKey} property, whose type carries both
-	 * a {@code @Format} and a {@code ConfigurationValueBinding} - is supported only when it also
-	 * has a {@link PropertyDescriptor#getValueProvider() value provider}: exactly the subset
+	 * when the configuration writes it as text: such an item's value
+	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text
+	 * form} and is edited as that text, by the same service the other fields go through. A
+	 * {@link PropertyKind#COMPLEX} property - e.g. a {@link com.top_logic.basic.util.ResKey}
+	 * property, whose type carries both a {@code @Format} and a {@code ConfigurationValueBinding} -
+	 * is supported only when its value has such a text form: exactly the subset
 	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
 	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
 	 * Admitting more here would hand them a property they reject with an
 	 * {@link IllegalArgumentException}.
 	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property - a format answers for the value the
+	 *        property currently holds, so the item is part of the question.
 	 */
-	private static boolean isSupportedKind(PropertyDescriptor property) {
+	private static boolean isSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
 			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
-			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
+			|| (kind == PropertyKind.COMPLEX && ConfigControlService.hasTextForm(config, property));
+	}
+
+	/**
+	 * Lets the given display of a property follow the property's {@link DynamicMode dynamic mode},
+	 * if it has one.
+	 *
+	 * <p>
+	 * The mode is computed from other properties of the configuration, so it changes while the user
+	 * edits those: an {@link FieldMode#INVISIBLE invisible} or {@link FieldMode#BLOCKED blocked}
+	 * property is hidden, and the field of a property in a mode that does not accept input -
+	 * {@link FieldMode#DISABLED disabled} or immutable - stops accepting it. A group of an ITEM or a
+	 * collection property is only hidden: its nested editors decide their editability when they are
+	 * built.
+	 * </p>
+	 *
+	 * <p>
+	 * The subscription lasts as long as this editor, like the field model it may switch.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property.
+	 * @param display
+	 *        The control displaying the property - its field chrome or its group.
+	 * @param model
+	 *        The field model of the property, or {@code null} for a group.
+	 */
+	private void followMode(ConfigurationItem config, PropertyDescriptor property, ReactControl display,
+			ConfigFieldModel model) {
+		DerivedProperty<FieldMode> provider = ConfigPropertyOptions.modeProvider(_formModel, property);
+		if (provider == null) {
+			return;
+		}
+		Value<FieldMode> mode = provider.getValue(config);
+		applyMode(mode.get(), property, display, model);
+		ListenerBinding binding = mode.addListener(sender -> applyMode(mode.get(), property, display, model));
+		addCleanupAction(binding::close);
+	}
+
+	private void applyMode(FieldMode mode, PropertyDescriptor property, ReactControl display, ConfigFieldModel model) {
+		boolean hidden = mode == FieldMode.INVISIBLE || mode == FieldMode.BLOCKED;
+		if (display instanceof ReactFormFieldChromeControl chrome) {
+			// A field hides itself through its own visibility, which is what the client reads.
+			chrome.setVisible(!hidden);
+		} else {
+			display.setHidden(hidden);
+		}
+		if (model != null) {
+			boolean accepting = mode == null || mode == FieldMode.ACTIVE;
+			model.setEditable(_editable && !isReadOnly(property) && accepting);
+		}
 	}
 
 	/**

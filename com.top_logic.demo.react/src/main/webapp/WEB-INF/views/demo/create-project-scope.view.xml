@@ -3,9 +3,10 @@
 <!--
 	Create dialog for a free tl.demo.projectManagement:ProjectScope.
 	
-	The opening command creates a transient ProjectScope and binds it to "model"; the Create button
-	persists it via copy(transient: false) and writes it to "selection" (bound to the list's
-	selectedScope channel, so the new scope becomes selected).
+	The opening command creates a transient ProjectScope with <create-transient> and binds it to
+	"model"; the Create button persists it with <persist-transient> and writes it to "selection"
+	(bound to the list's selectedScope channel, so the created scope becomes selected). Both are
+	offered only while the user may create a project scope at top level.
 -->
 <view>
 	<channels>
@@ -21,12 +22,17 @@
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="name"/>
 			<field attribute="description"/>
+			<field attribute="budget"/>
+			<field attribute="members"/>
+			<field attribute="admins"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
+					input="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -34,9 +40,7 @@
 						<de>Erstellen</de>
 					</label>
 					<store-form-state/>
-					<with-transaction>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
+					<persist-transient/>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>

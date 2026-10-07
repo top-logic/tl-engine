@@ -140,13 +140,17 @@ TopLogic uses a typed configuration system: config classes are annotated `Config
 
 Objects are read/written through `PersistencyLayer.getKnowledgeBase()`. Wrap every mutation in a transaction: `kb.beginTransaction()`, perform the changes, `tx.commit()`, with `tx.rollback()` in a `finally` (a no-op after a successful commit).
 
+### Access Control
+
+Whether a user may perform an operation on an object is decided by two independent definitions: the grants of the object's type (`SecurityConfigurationService`) and the roles the user holds on the object (rules of the `AccessManager`). A security parent inherits roles, not grants. See [docs/faq/access-configuration.md](docs/faq/access-configuration.md) for the check, the configuration syntax, the `internal` / `without-security` marks and the coverage check.
+
 ### Layout Components
 
 UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. See the `tl-layout` skill for the template-call pattern, channel binding, and the component catalog.
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md).
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md)). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [docs/faq/react-theme-tokens.md](docs/faq/react-theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [docs/faq/customer-component-library.md](docs/faq/customer-component-library.md).
 
 ### Model Definitions
 
@@ -264,6 +268,8 @@ This runs `com.top_logic.basic.xml.XMLPrettyPrinter` on layout directories.
 
 ### Migration Tools
 
+For upgrading an application from TL 7.11 to 8.0, see [docs/faq/upgrade-7.11-to-8.0.md](docs/faq/upgrade-7.11-to-8.0.md).
+
 For layout migrations after API changes:
 
 ```bash
@@ -315,6 +321,8 @@ Available tools include:
 - `create_ticket` / `update_ticket` - Create or update tickets
 - `get_ticket_actions` / `close_ticket` - Inspect the workflow steps of a ticket, or walk it to `closed`
 - `get_milestones` / `get_milestone` / `create_milestone` / `update_milestone` - Milestones
+
+**Tickets for tl-engine always get the component `tl`.** Do not derive the component from the affected module (there is no component such as `tl-graphic-blocks`), even if an existing ticket carries a different value.
 
 **`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
 

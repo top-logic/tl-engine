@@ -39,12 +39,6 @@ public class PendingSessionAction {
 	/** Session attribute (Boolean) requesting a switch back to the anonymous user. */
 	public static final String PENDING_LOGOUT = "com.top_logic.layout.view.login.pendingLogout";
 
-	/**
-	 * Session attribute (Boolean) marking a session that has just replaced another one, until its
-	 * first view request.
-	 */
-	public static final String SESSION_SWAPPED = "com.top_logic.layout.view.login.sessionSwapped";
-
 	private PendingSessionAction() {
 		// Utility class.
 	}
@@ -69,9 +63,9 @@ public class PendingSessionAction {
 	 * <p>
 	 * On a swap, the current session is invalidated, a new session is created for the target user
 	 * (the requested account, or the anonymous user on logout), and a redirect back to the current
-	 * URL is sent so the browser re-requests the view with the new session cookie. That URL still
-	 * names the page the previous user was on, which the new session's first request drops in
-	 * favour of the start page of the user taking over.
+	 * URL is sent so the browser re-requests the view with the new session cookie. The new session
+	 * takes up the route that URL names like any other request, so the page a user asked for is the
+	 * one their login leads to.
 	 * </p>
 	 *
 	 * @return {@code true} if a swap was performed and a redirect was sent (the caller must stop
@@ -115,39 +109,13 @@ public class PendingSessionAction {
 
 		SessionService service = SessionService.getInstance();
 		service.invalidateSession(request.getSession());
-		HttpSession swapped = service.loginUser(request, response, target);
-
-		// The route the URL still carries is where the user of the session just replaced had
-		// navigated to. It belongs to them, not to the user taking over, who starts where they
-		// start - see ViewServlet, which drops it on the first request of this session.
-		if (swapped != null) {
-			swapped.setAttribute(SESSION_SWAPPED, Boolean.TRUE);
-		}
+		service.loginUser(request, response, target);
 
 		// loginUser performs the session-cookie check redirect itself; only redirect explicitly if
 		// it did not already commit the response.
 		if (!response.isCommitted()) {
 			response.sendRedirect(currentUrl(request));
 		}
-		return true;
-	}
-
-	/**
-	 * Whether the given session has just replaced another one, and this is its first view request.
-	 *
-	 * <p>
-	 * Answers once: the mark is cleared, so the following requests of the session are ordinary
-	 * ones.
-	 * </p>
-	 *
-	 * @param session
-	 *        The session of the current request; {@code null} is answered with {@code false}.
-	 */
-	public static boolean consumeSessionSwapped(HttpSession session) {
-		if (session == null || !Boolean.TRUE.equals(session.getAttribute(SESSION_SWAPPED))) {
-			return false;
-		}
-		session.removeAttribute(SESSION_SWAPPED);
 		return true;
 	}
 

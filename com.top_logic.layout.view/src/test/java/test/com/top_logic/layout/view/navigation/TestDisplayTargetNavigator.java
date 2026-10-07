@@ -11,6 +11,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.navigation.DisplayTargetNavigator;
@@ -28,7 +29,8 @@ public class TestDisplayTargetNavigator extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue()));
+		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")));
 	}
 
 	/** A view context leads to the application's display targets. */
@@ -46,7 +48,8 @@ public class TestDisplayTargetNavigator extends TestCase {
 
 	/** A plain rendering context displays no business objects. */
 	public void testAPlainContextLeadsNowhere() {
-		assertNull(new DefaultReactContext("", "test", new SSEUpdateQueue()).getObjectNavigator());
+		assertNull(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")).getObjectNavigator());
 	}
 
 	/**

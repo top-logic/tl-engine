@@ -13,7 +13,8 @@ import com.top_logic.basic.config.annotation.Name;
  *
  * <p>
  * If a {@link #getSpecifier() specifier} is given, an import map entry mapping that specifier to the
- * resolved URL is contributed so that other modules can import this one by name (e.g.
+ * resolved URL (including its content version, see {@link DefaultResourceResolver}) is contributed
+ * so that other modules can import this one by name (e.g.
  * {@code import {...} from "tl-react-bridge"}).
  * </p>
  */

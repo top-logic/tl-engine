@@ -931,6 +931,114 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that a held URL is the one the manager carries, whatever the display shows.
+	 */
+	public void testHeldUrlIsCurrentUrl() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.holdUrl("my-refunds?year=2026");
+
+		assertEquals("my-refunds?year=2026", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that the display the hold covers corrects nothing in the address bar, not even when it is
+	 * complete.
+	 */
+	public void testHeldUrlSurvivesFinishedDisplay() {
+		RouteManager rm = new RouteManager();
+		ResettableParticipant sidebar = new ResettableParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+
+		rm.holdUrl("my-refunds");
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertEquals("Nothing is reported for a display that is not the application.", List.of(), urls);
+		assertFalse("What the held display shows is none of the URL's business.", sidebar.wasReset());
+		assertEquals("my-refunds", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a participant appearing while a URL is held is neither activated nor reset, and
+	 * composes nothing.
+	 */
+	public void testParticipantRegisteringWhileHeld() {
+		RouteManager rm = new RouteManager();
+		rm.holdUrl("explore");
+
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+
+		ResettableParticipant sidebar = new ResettableParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.finishAdoption();
+
+		assertNull("The held URL names a page of the application, which this display is not.",
+			sidebar.lastActivation());
+		assertFalse(sidebar.wasReset());
+		assertEquals(List.of(), urls);
+		assertEquals("explore", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a URL the client navigates to while the hold lasts is held in turn.
+	 */
+	public void testNavigateToRouteWhileHeld() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		rm.holdUrl("my-refunds");
+
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+
+		rm.navigateToRoute("explore");
+
+		assertEquals("explore", rm.currentUrl());
+		assertNull(sidebar.lastActivation());
+		assertEquals(List.of(), urls);
+	}
+
+	/**
+	 * Tests that adopting a URL ends the hold, so the display that is the application takes its URL up
+	 * as it does without one.
+	 */
+	public void testAdoptAfterHold() {
+		RouteManager rm = new RouteManager();
+		rm.holdUrl("explore");
+
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+
+		rm.adoptUrl("explore");
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings")));
+		rm.register(sidebar);
+		rm.finishAdoption();
+
+		assertEquals("explore", sidebar.lastActivation().itemId());
+		assertEquals("explore", rm.currentUrl());
+		assertEquals("The display arrives at the URL the client already shows.", List.of(), urls);
+
+		sidebar.simulateNavigation("listings", Map.of());
+		assertEquals(List.of("listings"), urls);
+	}
+
+	/**
 	 * A participant whose activation brings another one into the display, as materializing the view a
 	 * sidebar item names does.
 	 */

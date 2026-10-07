@@ -53,6 +53,20 @@ public class WindowEntry {
 	private volatile long _unloadedAt;
 
 	/**
+	 * The token of the page the window currently displays, or {@code null} while none was rendered.
+	 *
+	 * @see #getPageLoad()
+	 */
+	private volatile String _pageLoad;
+
+	/**
+	 * Whether the tree this entry holds must be replaced instead of being rendered again.
+	 *
+	 * @see #requestRebuild()
+	 */
+	private volatile boolean _rebuildRequested;
+
+	/**
 	 * Creates a new {@link WindowEntry} with a control provider and model.
 	 *
 	 * @param windowId
@@ -112,9 +126,17 @@ public class WindowEntry {
 		return _rootControl;
 	}
 
-	/** Sets the control tree for this window. */
+	/**
+	 * Sets the control tree for this window.
+	 *
+	 * <p>
+	 * The tree handed over is the one this window displays from now on, so it answers a
+	 * {@link #requestRebuild() requested rebuild}: the mark is cleared.
+	 * </p>
+	 */
 	public void setRootControl(ReactControl rootControl) {
 		_rootControl = rootControl;
+		_rebuildRequested = false;
 	}
 
 	/** The factory that creates the control tree for this window. */
@@ -200,6 +222,64 @@ public class WindowEntry {
 	 */
 	public long getUnloadedAt() {
 		return _unloadedAt;
+	}
+
+	/**
+	 * The token of the page the window currently displays, or {@code null} while none was rendered.
+	 *
+	 * <p>
+	 * Each rendering of the window's page is issued a token of its own, which the page reports back
+	 * when it is unloaded. It tells the report of the page on the screen apart from the report of a
+	 * page that was already replaced: the unload of a reloaded page may arrive only after the reload
+	 * has rendered the page that replaces it.
+	 * </p>
+	 *
+	 * @see ReactWindowRegistry#issuePageLoad(String)
+	 * @see ReactWindowRegistry#windowUnloaded(String, String)
+	 */
+	public String getPageLoad() {
+		return _pageLoad;
+	}
+
+	/**
+	 * Sets the token of the page the window displays from now on.
+	 *
+	 * @see #getPageLoad()
+	 */
+	public void setPageLoad(String pageLoad) {
+		_pageLoad = pageLoad;
+	}
+
+	/**
+	 * Demands that the tree this entry holds is replaced rather than rendered again.
+	 *
+	 * <p>
+	 * The tree is built from the state of the session it belongs to - the personal configuration
+	 * above all - and keeps what it read from that state in its controls. Once that state is gone,
+	 * rendering the tree again would put it back on the screen and write it out once more, so the
+	 * window is told to reload and this mark tells the renderer of that reload to build the page from
+	 * scratch: it disposes the tree found here and installs the replacement through
+	 * {@link #setRootControl(ReactControl)}, which clears the mark again.
+	 * </p>
+	 *
+	 * @implNote Nothing is disposed here. The tree is torn down by whoever renders the window next,
+	 *           which owns the request thread and the interaction the disposal needs; the caller
+	 *           typically runs inside the very tree it asks to be replaced.
+	 *
+	 * @see #isRebuildRequested()
+	 */
+	public void requestRebuild() {
+		_rebuildRequested = true;
+	}
+
+	/**
+	 * Whether the {@link #getRootControl() tree} this entry holds has to be disposed and replaced by a
+	 * freshly built one instead of being rendered again.
+	 *
+	 * @see #requestRebuild()
+	 */
+	public boolean isRebuildRequested() {
+		return _rebuildRequested;
 	}
 
 	/** Whether the browser window has connected via SSE. */

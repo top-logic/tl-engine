@@ -14,6 +14,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that a {@link ReactSelectFormFieldControl} tells the client about the value it holds, even
@@ -31,7 +32,7 @@ public class TestReactSelectFormFieldControl extends TestCase {
 	private static final String OPTIONS = "\"options\"";
 
 	private ReactContext createTestContext() {
-		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	private ReactSelectFormFieldControl createSelect(Object value, List<?> options) {

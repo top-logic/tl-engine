@@ -1,5 +1,6 @@
-import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { showsValueOnly } from './form/fieldState';
 import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
 
@@ -13,10 +14,14 @@ const { useState, useCallback, useRef } = React;
  * State from server:
  *  - value: string | null     - Encoded ThemeImage (e.g. "css:fa-solid fa-home")
  *  - editable: boolean        - Whether the field is editable
+ *  - disabled: boolean        - Whether the field that is not editable shows an inactive swatch
+ *                               button that opens no popup (see showsValueOnly) instead of the icon
  *  - icons: IconEntry[]       - Icon metadata (populated on loadIcons)
  *  - iconsLoaded: boolean     - Whether icons have been loaded
  */
 const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [fieldValue, setValue] = useTLFieldValue();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -30,6 +35,10 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const iconsLoaded = state.iconsLoaded === true;
 
   const handleClick = useCallback(() => {
+    // The press of this click has closed the popup this swatch opens: leave it closed.
+    if (pressClosedSurface()) {
+      return;
+    }
     if (editable && !disabled) setOpen(true);
   }, [editable, disabled]);
 
@@ -49,10 +58,10 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     await sendCommand('loadIcons');
   }, [sendCommand]);
 
-  // Immutable rendering
-  if (!editable) {
+  // Read-only rendering
+  if (showsValueOnly(state)) {
     return (
-      <span id={controlId} className="tlIconSelect tlIconSelect--immutable">
+      <span id={controlId} className={rootClassName(state, 'tlIconSelect tlIconSelect--immutable')}>
         <span className="tlIconSelect__swatch">
           {value ? <IconPreview encoded={value} /> : null}
         </span>
@@ -61,7 +70,7 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <span id={controlId} className="tlIconSelect">
+    <span id={controlId} className={rootClassName(state, 'tlIconSelect')}>
       <button
         ref={swatchRef}
         className={
@@ -69,8 +78,10 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         }
         onClick={handleClick}
         disabled={disabled}
-        title={value ?? ''}
         aria-label={i18n['js.iconSelect.chooseIcon']}
+        {...tooltipProps(value ?? i18n['js.iconSelect.chooseIcon'])}
+        id={inputId}
+        {...labelProps}
       >
         {value ? (
           <IconPreview encoded={value} />

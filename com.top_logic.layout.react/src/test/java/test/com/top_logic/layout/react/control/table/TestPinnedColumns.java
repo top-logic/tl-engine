@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.table.ColumnResizeArguments;
 import com.top_logic.layout.react.control.table.SetFrozenColumnCountArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
@@ -240,7 +241,8 @@ public class TestPinnedColumns extends TestCase {
 
 	/** A control over a {@link #table()}. */
 	private static TestTable control() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		return new TestTable(context, table());
 	}
 

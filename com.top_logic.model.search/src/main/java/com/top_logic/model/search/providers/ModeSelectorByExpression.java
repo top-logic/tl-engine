@@ -14,6 +14,7 @@ import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.form.OverlayLookup;
@@ -47,6 +48,9 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	@TagName("mode-by-expression")
 	public interface Config<I extends ModeSelectorByExpression<?>> extends PolymorphicConfiguration<I> {
 
+		/** Configuration name for {@link #getFunction()}. */
+		String FUNCTION = "function";
+
 		/**
 		 * Function computing the form field mode for an attribute.
 		 *
@@ -68,6 +72,7 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 		 *
 		 * @see FormVisibility
 		 */
+		@Name(FUNCTION)
 		Expr getFunction();
 
 	}
@@ -98,9 +103,9 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	}
 
 	@Override
-	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-			OverlayLookup overlays) {
-		_selectorAnalyzer.execute(trace, overlays, object);
+	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode,
+			Sink<Pointer> trace, OverlayLookup overlays) {
+		_selectorAnalyzer.execute(trace, overlays, object, Boolean.valueOf(editMode));
 	}
 
 	private static FormVisibility toFieldMode(Object result) {

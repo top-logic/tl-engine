@@ -68,9 +68,7 @@ protected void doWork(JspWriter out, boolean simulate, HttpServletRequest reques
 	}
 }
 
-// This is a hack for stupid Scheduler / Task implementation.
-// This sets the last run time to now so that calcNextShed()
-// will calculate correct result.
+// Marks the triggered task as run now and recalculates its next schedule.
 private static class RecalcSchedulerThread extends Thread {
 	
 	private Task task;
@@ -96,11 +94,9 @@ private static class RecalcSchedulerThread extends Thread {
 	}
 	
 	public void recalculate() {
-		if (task instanceof TaskImpl) {
-			// hack to set last scheduled time to now
-			((TaskImpl<?>)task).setRunOnStartup(false);
-		}
-		task.calcNextShed(System.currentTimeMillis());
+		long now = System.currentTimeMillis();
+		task.markAsRun(now);
+		task.calcNextShed(now);
 	}
 	
 }
@@ -121,7 +117,6 @@ private static class RecalcSchedulerThread extends Thread {
 %><%@page import="java.util.Collections"
 %><%@page import="java.util.ArrayList"
 %><%@page import="java.util.Calendar"
-%><%@page import="com.top_logic.util.sched.task.impl.TaskImpl"
 %><%@page import="java.util.Map"
 %><%@page import="java.util.Iterator"
 %><%@page import="com.top_logic.basic.Logger"
@@ -199,7 +194,7 @@ private static class RecalcSchedulerThread extends Thread {
 							<tr>
 								<td>
 									<p>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
 											type="submit"
 										>
@@ -217,7 +212,7 @@ private static class RecalcSchedulerThread extends Thread {
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							onclick="self.location.href = '<%=component.getComponentURL(pageContext).getURL()%>';"
 						>
 							<h4 class="tlButtonLabel">
@@ -279,7 +274,7 @@ private static class RecalcSchedulerThread extends Thread {
 									<%
 									if (RUN_BUTTON != null) {
 										%>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="SUBMIT"
 											type="submit"
 										>
@@ -291,7 +286,7 @@ private static class RecalcSchedulerThread extends Thread {
 									}
 									if (SIMULATE_BUTTON != null) {
 										%>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="SIMULATE"
 											type="submit"
 										>

@@ -16,22 +16,22 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Edit.
+	 * @en Edit
 	 */
 	public static ResKey FORM_EDIT;
 
 	/**
-	 * @en Apply.
+	 * @en Apply
 	 */
 	public static ResKey FORM_APPLY;
 
 	/**
-	 * @en Save.
+	 * @en Save
 	 */
 	public static ResKey FORM_SAVE;
 
 	/**
-	 * @en Cancel.
+	 * @en Cancel
 	 */
 	public static ResKey FORM_CANCEL;
 
@@ -61,9 +61,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPOSITION_TABLE_ADD;
 
 	/**
-	 * @en The form command is currently not executable.
+	 * @en {0} / {1}
 	 */
-	public static ResKey ERROR_FORM_COMMAND_NOT_EXECUTABLE;
+	public static ResKey2 EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN;
 
 	/**
 	 * @en Cannot save view "{0}": no writable IDE file found.
@@ -125,6 +125,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Done
 	 */
 	public static ResKey DASHBOARD_DONE;
+
+	/**
+	 * @en A value of type "{0}" cannot be displayed as HTML.
+	 */
+	public static ResKey1 ERROR_HTML_UNSUPPORTED_VALUE__TYPE;
+
+	/**
+	 * @en The document "{0}" is of content type "{1}" and therefore not HTML.
+	 */
+	public static ResKey2 ERROR_HTML_UNSUPPORTED_CONTENT_TYPE__NAME_TYPE;
+
+	/**
+	 * @en The document "{0}" cannot be read.
+	 */
+	public static ResKey1 ERROR_HTML_NOT_READABLE__NAME;
+
+	/**
+	 * @en The HTML content cannot be rendered.
+	 */
+	public static ResKey ERROR_HTML_NOT_RENDERABLE;
+
+	/**
+	 * @en This target does not accept the dragged objects.
+	 */
+	public static ResKey ERROR_DROP_REFUSED;
 
 	static {
 		initConstants(I18NConstants.class);

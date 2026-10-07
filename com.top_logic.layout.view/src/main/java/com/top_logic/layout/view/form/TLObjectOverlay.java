@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -22,6 +23,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.search.expr.Update;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Lean overlay over a persistent {@link TLObject} that intercepts writes.
@@ -88,6 +91,19 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		return _base.tId();
 	}
 
+	/**
+	 * Whether the {@link #getEditedObject() edited object} is valid.
+	 *
+	 * <p>
+	 * An overlay is valid exactly as long as the object it stands for: an overlay of a deleted
+	 * object is not valid.
+	 * </p>
+	 */
+	@Override
+	public boolean tValid() {
+		return _base.tValid();
+	}
+
 	@Override
 	public KnowledgeItem tHandle() {
 		return _base.tHandle();
@@ -101,6 +117,22 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	@Override
 	public TLReference tContainerReference() {
 		return _base.tContainerReference();
+	}
+
+	/**
+	 * The objects referring to the {@link #getEditedObject() edited object} through the given
+	 * reference.
+	 *
+	 * <p>
+	 * The overlay stands for the object it wraps, and who refers to that object is answered by the
+	 * database: an edit pending in the form changes what the object holds, not what holds it. An
+	 * options or constraint expression navigating backwards from the edited object therefore sees
+	 * the same referrers here as it would see on the object itself.
+	 * </p>
+	 */
+	@Override
+	public Set<? extends TLObject> tReferers(TLReference ref) {
+		return _base.tReferers(ref);
 	}
 
 	@Override
@@ -200,15 +232,61 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	}
 
 	/**
+	 * Ensures that the current user may write all changes {@link #apply()} would transfer.
+	 *
+	 * <p>
+	 * Every attribute whose value {@link #isDirty() differs} from the base value must be writable
+	 * for the current user, see {@link Update#checkWritePermission(TLObject, TLStructuredTypePart)}.
+	 * A buffered value equal to the base value is no change and needs no right.
+	 * </p>
+	 *
+	 * <p>
+	 * A save writing several overlays checks all of them before the first one is applied, so a
+	 * refused save leaves every overlay with its changes.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to modify one of the changed attributes.
+	 */
+	public void checkApply() {
+		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
+			TLStructuredTypePart part = entry.getKey();
+			if (isChange(entry.getValue(), _base.tValue(part))) {
+				Update.checkWritePermission(_base, part);
+			}
+		}
+	}
+
+	/**
 	 * Transfers all accumulated changes to the base object.
+	 *
+	 * <p>
+	 * The changes are {@link #checkApply() checked} before the first value is written, so a refused
+	 * write leaves the base object and this overlay untouched.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to modify one of the changed attributes.
 	 */
 	public void apply() {
+		checkApply();
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
 			_base.tUpdate(entry.getKey(), entry.getValue());
 		}
 		// The base now holds all values, so the overlay has no unsaved changes anymore. Reads
 		// delegate to the base, and dirty tracking reports a clean state.
 		_changes.clear();
+	}
+
+	/**
+	 * Discards the change of the given attribute. Afterwards, reads of the attribute delegate to the
+	 * base object again.
+	 *
+	 * @param part
+	 *        The attribute whose change is discarded.
+	 */
+	public void revert(TLStructuredTypePart part) {
+		_changes.remove(part);
 	}
 
 	/**

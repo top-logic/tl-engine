@@ -9,19 +9,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.base.locking.handler.LockHandler;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
+import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
+import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -107,6 +110,15 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private ModelScope _modelScope;
 
+	/**
+	 * The object this control is registered for as {@link ModelListener} in {@link #_modelScope},
+	 * {@code null} if not registered.
+	 */
+	private TLObject _observedObject;
+
+	/** Whether this control was {@link #detach() detached} and has not been attached again. */
+	private boolean _suspended;
+
 	private ViewExecutabilityRule _editRule = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 
 	/**
@@ -130,6 +142,22 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(EDIT_MODE, Boolean.FALSE);
 		putState(DIRTY, Boolean.FALSE);
 		updateNoModelMessage();
+	}
+
+	/**
+	 * Lays the fields of this form out in the given grid.
+	 *
+	 * @param maxColumns
+	 *        The greatest number of columns the fields are distributed over, written as
+	 *        {@link ReactFormLayoutControl#MAX_COLUMNS}. How many of them are actually filled
+	 *        follows the available width.
+	 * @param labelPosition
+	 *        Where the fields render their labels relative to their inputs, written as
+	 *        {@link ReactFormLayoutControl#LABEL_POSITION}.
+	 */
+	public void setLayout(int maxColumns, LabelPosition labelPosition) {
+		putState(ReactFormLayoutControl.MAX_COLUMNS, Integer.valueOf(maxColumns));
+		putState(ReactFormLayoutControl.LABEL_POSITION, labelPosition.getExternalName());
 	}
 
 	@Override
@@ -180,12 +208,28 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * <p>
 	 * The permission alone, independent of the form's lifecycle state: a form already in edit mode
 	 * still reports the permission that got it there. The Edit command combines this with its state
-	 * condition, and {@link #handleEdit()} rejects a transition the permission denies — so the same
-	 * decision governs the button and a command a client sends directly.
+	 * condition, and {@link #enterEditMode()} refuses a transition the permission denies — so the same
+	 * decision governs the button, a command a client sends directly, the initial edit mode, an object
+	 * switch of an auto-edit form, and the edit-mode channel.
+	 * </p>
+	 *
+	 * <p>
+	 * The permission combines the {@link #setEditRule(ViewExecutabilityRule) configured rule} with
+	 * the model right to write the displayed object, see
+	 * {@link ModelAccessPolicy#onEdit(TLObject)}: editing is offered only where both allow it. Of two
+	 * refusals, the stronger one wins (a hidden command beats a disabled one, see
+	 * {@link ExecutableState#combine(ExecutableState)}); of two equally strong refusals, the one of
+	 * the model right gives the reason. A transient draft (e.g. of a create dialog) is not refused
+	 * by the model right: its creation was checked when it was created.
 	 * </p>
 	 */
 	public ExecutableState editPermission() {
-		return _editRule.isExecutable(getCurrentObject());
+		if (_currentObject == null || !_currentObject.tValid()) {
+			// Nothing to edit, and a deleted object has no rights to ask for.
+			return _editRule.isExecutable(getCurrentObject());
+		}
+		ExecutableState right = ModelAccessPolicy.onEdit(_currentObject);
+		return right.combine(_editRule.isExecutable(getCurrentObject()));
 	}
 
 	@Override
@@ -320,8 +364,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * <p>
 	 * When the channel value changes from outside (i.e., not triggered by this control):
 	 * <ul>
-	 * <li>If the channel becomes {@code true} and the form is not in edit mode, it enters edit
-	 * mode.</li>
+	 * <li>If the channel becomes {@code true} and the form is not in edit mode, it
+	 * {@link #enterEditMode() enters edit mode}; if that transition is refused, the form resets the
+	 * channel to {@code false}.</li>
 	 * <li>If the channel becomes {@code false} and the form is in edit mode, it cancels editing.</li>
 	 * </ul>
 	 * </p>
@@ -365,37 +410,69 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		if (_modelScope == scope) {
 			return;
 		}
-		if (isAttached()) {
-			deregisterModelListener();
-		}
+		deregisterModelListener();
 		_modelScope = scope;
-		if (isAttached()) {
-			registerModelListener();
-		}
-	}
-
-	@Override
-	protected void onAttach() {
 		registerModelListener();
 	}
 
+	/**
+	 * Starts observing the current object, and catches up with the changes it missed when this
+	 * control resumes.
+	 *
+	 * <p>
+	 * A control that is displayed again after a {@link #detach()} (a hidden sidebar section or tab
+	 * keeps its content for re-use) did not observe its object while it was hidden. What it displays
+	 * is therefore treated as unknown and the control reacts as to a change of its object, see
+	 * {@link #catchUp()}. The first attach is silent: the fields were just built from the object.
+	 * This is the resume behavior of {@link RowSourceObserver} for element lists.
+	 * </p>
+	 */
+	@Override
+	protected void onAttach() {
+		registerModelListener();
+		if (_suspended) {
+			_suspended = false;
+			catchUp();
+		}
+	}
+
+	/**
+	 * Stops observing the current object while this control is not displayed.
+	 *
+	 * @see #onAttach()
+	 */
 	@Override
 	protected void onDetach() {
 		deregisterModelListener();
+		_suspended = true;
 	}
 
+	/**
+	 * Registers this control as {@link ModelListener} for its current object, if displayed and not
+	 * yet registered.
+	 *
+	 * <p>
+	 * A transient object is not observed: its changes are not reported by a {@link ModelScope}.
+	 * </p>
+	 */
 	private void registerModelListener() {
-		if (_modelScope == null || _currentObject == null || _currentObject.tTransient()) {
+		if (!isAttached() || _observedObject != null || _modelScope == null || _currentObject == null
+			|| _currentObject.tTransient()) {
 			return;
 		}
 		_modelScope.addModelListener(_currentObject, this);
+		_observedObject = _currentObject;
 	}
 
+	/**
+	 * Removes the registration made by {@link #registerModelListener()}, if any.
+	 */
 	private void deregisterModelListener() {
-		if (_modelScope == null || _currentObject == null || _currentObject.tTransient()) {
+		if (_observedObject == null) {
 			return;
 		}
-		_modelScope.removeModelListener(_currentObject, this);
+		_modelScope.removeModelListener(_observedObject, this);
+		_observedObject = null;
 	}
 
 	@Override
@@ -405,17 +482,68 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 		ModelChangeEvent.ChangeType change = event.getChange(_currentObject);
 		if (change == ModelChangeEvent.ChangeType.DELETED) {
+			onCurrentObjectChanged(true);
+		} else if (change == ModelChangeEvent.ChangeType.UPDATED) {
+			onCurrentObjectChanged(false);
+		}
+	}
+
+	/**
+	 * Reacts to changes of the current object that happened while this control was not displayed.
+	 *
+	 * <p>
+	 * Which changes happened is unknown, so the current object is treated as changed whenever it is
+	 * one a {@link ModelScope} reports changes of: the values shown may stem from the object as well
+	 * as from objects associated with it, so no property of the object itself tells whether the
+	 * display is still current. A persistent object that is no longer {@link TLObject#tValid()
+	 * valid} was deleted meanwhile. A transient object is not observed while displayed either (see
+	 * {@link #registerModelListener()}), so there is nothing to catch up with.
+	 * </p>
+	 */
+	private void catchUp() {
+		if (_currentObject == null || _currentObject.tTransient()) {
+			return;
+		}
+		onCurrentObjectChanged(!_currentObject.tValid());
+	}
+
+	/**
+	 * Updates the display after the current object may have changed.
+	 *
+	 * @param deleted
+	 *        Whether the current object was deleted.
+	 */
+	private void onCurrentObjectChanged(boolean deleted) {
+		if (deleted) {
 			onCurrentObjectDeleted();
-		} else if (change == ModelChangeEvent.ChangeType.UPDATED && !_editMode) {
-			// In view mode: refresh field values. In edit mode: overlay buffers changes,
-			// base values become visible after save/cancel.
+		} else if (_editMode) {
+			followStoredChanges();
+		} else {
 			fireFormStateChanged();
 		}
 	}
 
+	/**
+	 * Makes the edit session show a change stored to the edited object by someone else than this
+	 * form.
+	 *
+	 * <p>
+	 * The participants show the stored values wherever the user has not changed anything, see
+	 * {@link FormParticipant#onObjectChanged()}. The user's changes stay in the overlay and are
+	 * written by the next save.
+	 * </p>
+	 */
+	private void followStoredChanges() {
+		for (FormParticipant participant : new ArrayList<>(_participants)) {
+			participant.onObjectChanged();
+		}
+		updateDirtyState();
+		fireValidityChanged();
+	}
+
 	private void onCurrentObjectDeleted() {
 		if (_editMode) {
-			exitEditMode();
+			discardEditSession();
 		}
 		deregisterModelListener();
 		_currentObject = null;
@@ -445,7 +573,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Set for forms configured with {@code initial-edit-mode} (and no edit-mode channel): such a
 	 * form is editable not only for its first object, but also after its input channel switches to
 	 * another object (e.g. a new-entry form whose channel is re-filled with a fresh transient
-	 * object after each submit).
+	 * object after each submit). Each entry is subject to the check of {@link #enterEditMode()}, so an
+	 * object the {@link #editPermission() edit permission} denies is displayed in view mode.
 	 * </p>
 	 *
 	 * @param autoEditMode
@@ -457,10 +586,31 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	/**
 	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
+	 *
+	 * <p>
+	 * Every transition into edit mode goes through this method, so it is the single place that checks
+	 * the {@link #editPermission() edit permission}. It refuses the transition when the form displays
+	 * no object, is already in edit mode, or the permission is denied for the displayed object. A
+	 * refused transition acquires no lock and creates no overlay; instead, the form writes its actual
+	 * mode to the {@link #setEditModeChannel(ViewChannel) edit-mode channel}, so that the channel
+	 * always mirrors the form's mode — a channel set to {@code true} while the transition is refused
+	 * is reset to {@code false}.
+	 * </p>
+	 *
+	 * <p>
+	 * The write-back is {@link ChannelNotificationScope#afterNotification(Runnable) deferred} until
+	 * the channel notification in progress has completed (it runs immediately outside any
+	 * notification). Writing from inside the notification would let the channel's remaining
+	 * listeners receive the outer, outdated value after the reset, so that a listener following the
+	 * reported values would end up with the refused mode.
+	 * </p>
+	 *
+	 * @return Whether this call started an edit session.
 	 */
-	public void enterEditMode() {
-		if (_editMode || _currentObject == null) {
-			return;
+	public boolean enterEditMode() {
+		if (_editMode || _currentObject == null || !editPermission().isExecutable()) {
+			ChannelNotificationScope.current().afterNotification(this::updateEditModeChannel);
+			return false;
 		}
 
 		// Acquire lock first -- if this fails, no overlay is created.
@@ -475,26 +625,28 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			// which object would come next.
 			_inputVeto = new VetoListener() {
 				@Override
-				public StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
+				public List<StateHandler> checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
 					return checkDirty(sender);
 				}
 
 				@Override
-				public StateHandler checkDirty(ViewChannel sender) {
-					return isDirty() ? FormControl.this : null;
+				public List<StateHandler> checkDirty(ViewChannel sender) {
+					return isDirty() ? List.of(FormControl.this) : List.of();
 				}
 			};
 			_inputChannel.addVetoListener(_inputVeto);
 		}
 
 		setupEditSession();
+		return true;
 	}
 
 	/**
 	 * Applies overlay changes to the knowledge base without leaving edit mode.
 	 *
 	 * <p>
-	 * Persists changes, then sets up a fresh edit session (new overlay, new validation model).
+	 * {@link #executeStoreState() Stores} the changes, then sets up a fresh edit session (new overlay,
+	 * new validation model).
 	 * Participants re-register via {@link FormModelListener#onFormStateChanged(FormModel)}.
 	 * </p>
 	 */
@@ -503,23 +655,47 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
-		persistChanges();
+		executeStoreState();
 
 		setupEditSession();
 	}
 
 	/**
-	 * Validates the form and applies overlay edits to the base object.
+	 * Validates the form and stores all its changes.
 	 *
 	 * <p>
-	 * This is the core form-state application. All paths that commit form changes
-	 * ({@link #executeApply()}, {@link #executeSave()}, and external callers like
-	 * {@code StoreFormStateAction}) go through this method.
+	 * This is the single path storing form state: {@link #executeApply()}, {@link #executeSave()}
+	 * and the {@link com.top_logic.layout.view.command.StoreFormStateAction} all go through this
+	 * method. It runs in this order:
+	 * </p>
+	 * <ol>
+	 * <li>{@link #validateOrThrow() Validates} all participants.</li>
+	 * <li>{@link #checkWriteRights() Checks the write rights} of all changes.</li>
+	 * <li>For a persistent base object, opens a KB transaction and lets every participant
+	 * {@link FormParticipant#persist(Transaction) persist} its KB-specific changes (e.g. a composition
+	 * table creates its new rows and writes the persisted row list into the overlay).</li>
+	 * <li>Lets every participant {@link FormParticipant#applyState() apply} its state.</li>
+	 * <li>Applies the overlay to the base object, and commits the transaction.</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * KB transactions nest: when called within an open transaction (e.g. from an action inside a
+	 * {@link com.top_logic.layout.view.command.WithTransactionAction}), the transaction of this
+	 * method joins the outer one and the outer transaction decides whether the changes are
+	 * committed. Without an outer transaction, the changes are committed by this method.
+	 * </p>
+	 *
+	 * <p>
+	 * For a transient base object (e.g. in a create dialog), no transaction is opened: all changes
+	 * are applied to the transient object and its transient rows, which become persistent together
+	 * when the object is made persistent.
 	 * </p>
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
 	 * @throws TopLogicException
-	 *         If any participant reports a validation error.
+	 *         If any participant reports a validation error, or if the current user is not allowed
+	 *         to write one of the changes, see {@link #checkWriteRights()}. In that case nothing is
+	 *         stored.
 	 */
 	public TLObject executeStoreState() {
 		validateOrThrow();
@@ -528,11 +704,35 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return null;
 		}
 
+		checkWriteRights();
+
+		TLObject base = _overlay.getBase();
+		if (base.tTransient()) {
+			applyState();
+			return base;
+		}
+
+		Transaction tx = base.tKnowledgeBase().beginTransaction(I18NConstants.FORM_SAVE);
+		try {
+			for (FormParticipant participant : _participants) {
+				participant.persist(tx);
+			}
+			applyState();
+			tx.commit();
+		} finally {
+			tx.rollback();
+		}
+		return base;
+	}
+
+	/**
+	 * Transfers the state of all participants and of the overlay to the base objects.
+	 */
+	private void applyState() {
 		for (FormParticipant participant : _participants) {
 			participant.applyState();
 		}
 		_overlay.apply();
-		return _overlay.getBase();
 	}
 
 	/**
@@ -545,7 +745,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		if (_overlay.isDirty() || hasParticipantChanges()) {
-			persistChanges();
+			executeStoreState();
 		}
 
 		exitEditMode();
@@ -659,7 +859,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	public void updateDirtyState() {
-		boolean dirty = _editMode && _overlay != null && (_overlay.isDirty() || hasParticipantChanges());
+		boolean dirty = hasUnsavedChanges();
 		putState(DIRTY, Boolean.valueOf(dirty));
 		if (_dirtyChannel != null) {
 			_dirtyChannel.set(Boolean.valueOf(dirty));
@@ -673,7 +873,27 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	@Override
 	public boolean isDirty() {
-		return _editMode && _overlay != null && (_overlay.isDirty() || hasParticipantChanges());
+		return hasUnsavedChanges();
+	}
+
+	/**
+	 * Whether the form holds changes that can still be saved.
+	 *
+	 * <p>
+	 * An object that is no longer {@link TLObject#tValid() valid} is gone, and the edits made to it
+	 * cannot be kept. Such a form holds nothing to protect: it reports itself clean, so that it
+	 * neither publishes a dirty state nor blocks the object switch that replaces the object it
+	 * displays.
+	 * </p>
+	 */
+	private boolean hasUnsavedChanges() {
+		if (!_editMode || _overlay == null) {
+			return false;
+		}
+		if (_currentObject != null && !_currentObject.tValid()) {
+			return false;
+		}
+		return _overlay.isDirty() || hasParticipantChanges();
 	}
 
 	@Override
@@ -705,29 +925,54 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Validates, lets participants apply, and commits form state in a KB transaction.
+	 * Ensures that the current user may write all changes of this form: those of every
+	 * {@link FormParticipant} and those of the form's own overlay.
 	 *
 	 * <p>
-	 * Participants apply first (e.g. composition tables persist new objects and update reference
-	 * lists in the overlay), then {@link #executeStoreState()} validates and transfers overlay
-	 * changes to the base object.
+	 * Runs before anything is persisted or applied, so a refused save leaves all buffered changes in
+	 * place and the user can correct or cancel the edit.
 	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to write one of the changes.
 	 */
-	private void persistChanges() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
-		try {
-			for (FormParticipant participant : _participants) {
-				participant.persist(tx);
-			}
-			executeStoreState();
-			tx.commit();
-		} finally {
-			tx.rollback();
+	private void checkWriteRights() {
+		for (FormParticipant participant : _participants) {
+			participant.checkApplyState();
+		}
+		if (_overlay != null) {
+			_overlay.checkApply();
 		}
 	}
 
+	/**
+	 * Ends the edit session and announces the resulting view-mode state.
+	 *
+	 * <p>
+	 * Used where the form keeps displaying the same object ({@link #executeSave()},
+	 * {@link #executeCancel()}): the fields must drop the overlay values and show the base values
+	 * again, which the notification triggers.
+	 * </p>
+	 */
 	private void exitEditMode() {
+		discardEditSession();
+
+		fireFormStateChanged();
+	}
+
+	/**
+	 * Ends the edit session without notifying the {@link FormModelListener}s.
+	 *
+	 * <p>
+	 * Used where the form stops displaying its current object ({@link #handleInputChanged},
+	 * {@link #onCurrentObjectDeleted()}) or stops displaying anything at all
+	 * ({@link #onCleanup()}). Such a caller switches the object and then fires once, so that no
+	 * field is rebound to the object the form is leaving: rebinding computes field state for that
+	 * object (options, constraints, validation) although the result is thrown away by the
+	 * notification for the new object — and for a deleted object the computation fails.
+	 * </p>
+	 */
+	private void discardEditSession() {
 		if (_inputVeto != null && _inputChannel != null) {
 			_inputChannel.removeVetoListener(_inputVeto);
 			_inputVeto = null;
@@ -740,8 +985,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(EDIT_MODE, Boolean.FALSE);
 		updateEditModeChannel();
 		updateDirtyState();
-
-		fireFormStateChanged();
 
 		if (_validationModel != null && _validityListener != null) {
 			_validationModel.removeConstraintValidationListener(_validityListener);
@@ -757,7 +1000,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	private void fireFormStateChanged() {
-		for (FormModelListener listener : _formModelListeners) {
+		// A listener may deregister while being notified, e.g. a field grid disposed by the change.
+		for (FormModelListener listener : new ArrayList<>(_formModelListeners)) {
 			listener.onFormStateChanged(this);
 		}
 		// The participants have rebuilt themselves, so what the user sees may differ from before.
@@ -814,7 +1058,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private void handleInputChanged(ViewChannel sender, Object oldValue, Object newValue) {
 		if (_editMode) {
-			exitEditMode();
+			discardEditSession();
 		}
 		deregisterModelListener();
 		_currentObject = (TLObject) newValue;
@@ -825,7 +1069,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		if (_autoEditMode) {
 			// The form is configured to be editable whenever an object is available, so the
-			// object switch re-enters edit mode for the new object.
+			// object switch re-enters edit mode for the new object, if its edit permission allows.
 			enterEditMode();
 		}
 	}
@@ -836,7 +1080,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			_scopeDirtyChannel.removeHandler(this);
 		}
 		if (_editMode) {
-			exitEditMode();
+			discardEditSession();
 		}
 		deregisterModelListener();
 		if (_inputChannel != null) {
@@ -851,19 +1095,29 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Command that enters edit mode.
 	 *
 	 * <p>
-	 * Refused unless the form offers editing, i.e. it displays an object, is not already in edit
-	 * mode, and the user has the {@link #editPermission() permission to edit it} — the condition
-	 * under which {@link FormCommandModel#editCommand(FormControl) the Edit command} is executable.
-	 * The lifecycle commands are dispatched to this control directly, so they repeat the condition
-	 * instead of inheriting it from the toolbar button.
+	 * Refused when {@link #enterEditMode()} refuses the transition, i.e. unless the form displays an
+	 * object, is not already in edit mode, and the user has the {@link #editPermission() permission
+	 * to edit it} — the condition under which {@link FormCommandModel#editCommand(FormControl) the
+	 * Edit command} is executable. The lifecycle commands are dispatched to this control directly, so
+	 * the check in {@link #enterEditMode()} applies to them instead of the toolbar button's
+	 * executability.
 	 * </p>
 	 */
 	@ReactCommandHandler("formEdit")
 	HandlerResult handleEdit() {
-		if (_currentObject == null || _editMode || !editPermission().isExecutable()) {
+		if (_currentObject == null) {
+			return HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+		}
+		if (_editMode) {
 			return notExecutable();
 		}
-		enterEditMode();
+		ExecutableState permission = editPermission();
+		if (!permission.isExecutable()) {
+			return HandlerResult.notExecutable(permission);
+		}
+		if (!enterEditMode()) {
+			return notExecutable();
+		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
@@ -915,7 +1169,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
+	/**
+	 * The refusal of a lifecycle command the form's state does not offer.
+	 */
 	private static HandlerResult notExecutable() {
-		return HandlerResult.error(I18NConstants.ERROR_FORM_COMMAND_NOT_EXECUTABLE);
+		return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
 	}
 }

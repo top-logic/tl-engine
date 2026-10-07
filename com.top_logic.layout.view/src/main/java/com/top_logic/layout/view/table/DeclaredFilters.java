@@ -64,7 +64,13 @@ import com.top_logic.table.filter.TextFilterState;
  * leaves its column unfiltered. A declaration all of whose criteria select nothing is withheld -
  * nothing is left of what it says - and offered again as soon as its inputs select something. A
  * declaration that names no criterion at all is a different thing: it says "no filter", is offered
- * as such, and is the active one exactly while the table is unfiltered.
+ * as such, and is the active one exactly while no column of the table is filtered.
+ * </p>
+ *
+ * <p>
+ * A declaration names criteria per column and never a search term, so what the table is searched for
+ * is none of its business: a preset goes on being the active one while the user searches, and the
+ * search narrows the rows the preset selects, see {@link NamedFilter#matches(Map, TextFilterState)}.
  * </p>
  */
 public class DeclaredFilters {
@@ -154,11 +160,33 @@ public class DeclaredFilters {
 	 *        The declarations to materialize, in the order the table offers them.
 	 * @param columns
 	 *        All columns of the table, whose filters translate the criteria.
-	 * @return One {@link NamedFilter.Origin#DECLARED} filter per declaration that materialized
-	 *         completely.
+	 * @return One {@link com.top_logic.table.NamedFilter.Origin#DECLARED} filter per declaration
+	 *         that materialized completely.
 	 */
 	public static List<NamedFilter> resolve(Log log, String table, List<Declaration> declarations,
 			List<? extends Column<?, ?>> columns) {
+		return resolve(log, table, declarations, columns, Set.of());
+	}
+
+	/**
+	 * Materializes the given declarations over the given columns, some of the table's columns
+	 * being withheld from the current user.
+	 *
+	 * <p>
+	 * A declaration with a criterion on a withheld column is not offered, and that is no
+	 * declaration error: the column exists, the current user may only not see it (see
+	 * {@link ColumnDeclarations#withheld(java.util.Collection, List)}). Filtering by values the user may not
+	 * read would reveal them, and offering the declaration without that criterion would change what
+	 * it says.
+	 * </p>
+	 *
+	 * @param withheld
+	 *        The names of the table's columns withheld from the current user.
+	 *
+	 * @see #resolve(Log, String, List, List)
+	 */
+	public static List<NamedFilter> resolve(Log log, String table, List<Declaration> declarations,
+			List<? extends Column<?, ?>> columns, Set<String> withheld) {
 		Map<String, Column<?, ?>> columnsByName = new LinkedHashMap<>();
 		for (Column<?, ?> column : columns) {
 			columnsByName.put(column.name(), column);
@@ -171,6 +199,9 @@ public class DeclaredFilters {
 			if (!ids.add(id)) {
 				log.error("Table '" + table + "' declares more than one named filter '" + id
 					+ "'. Only the first one is offered.");
+				continue;
+			}
+			if (refersTo(declaration, withheld)) {
 				continue;
 			}
 			Map<String, FilterState> filters = resolveCriteria(log, table, declaration, columnsByName);
@@ -188,6 +219,21 @@ public class DeclaredFilters {
 			result.add(NamedFilter.declared(id, declaration.label(), filters, null));
 		}
 		return result;
+	}
+
+	/**
+	 * Whether a criterion of the given declaration is on one of the given columns.
+	 */
+	private static boolean refersTo(Declaration declaration, Set<String> columns) {
+		if (columns.isEmpty()) {
+			return false;
+		}
+		for (Criterion criterion : declaration.criteria()) {
+			if (columns.contains(criterion.column())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

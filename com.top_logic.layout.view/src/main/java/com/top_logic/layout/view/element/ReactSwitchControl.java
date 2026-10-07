@@ -11,12 +11,10 @@ import java.util.Set;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.element.SwitchElement.SwitchCase;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 
@@ -30,7 +28,9 @@ import com.top_logic.model.listen.ModelScope;
  * itself: a predicate typically decides by one of its attributes, which can be edited while the
  * channel keeps pointing to the same object. A {@link ChannelObjectObserver} therefore observes the
  * input object in the {@link ModelScope}, along with the optionally configured
- * {@link SwitchElement.Config#getObservedTypes() observed types}.
+ * {@link SwitchElement.Config#getObservedTypes() observed types}. While the input object is
+ * deleted, the observer reports no change, so no case predicate is evaluated over it: the shown
+ * case stays until the channel delivers its next value.
  * </p>
  *
  * <p>
@@ -107,12 +107,6 @@ public class ReactSwitchControl extends ReactControl {
 		if (_disposed) {
 			return;
 		}
-		if (hasDeletedInput()) {
-			// A deleted object is still in the channel: the deleting command notifies the model change
-			// before writing the channel. Evaluating a test against it would fail, so keep the current
-			// content until the channel write arrives.
-			return;
-		}
 		int index = selectIndex(_input.get());
 		if (index == _activeIndex && _current != null) {
 			// The matching case is unchanged; its content is bound to the channel and updates itself.
@@ -132,21 +126,8 @@ public class ReactSwitchControl extends ReactControl {
 			built.attach();
 		}
 		if (old != null && old != built) {
-			// The rebuild typically runs from inside the input channel's listener notification, where
-			// the old content's controls may still be pending in the listener snapshot. Disposing them
-			// synchronously would let those listeners run on a torn-down control, so disposal is
-			// deferred until the notification has unwound (mirrors ReactAdaptiveDetailControl).
-			ChannelNotificationScope.current().afterNotification(old::cleanupTree);
+			ContentControls.retire(old);
 		}
-	}
-
-	private boolean hasDeletedInput() {
-		for (TLObject object : ChannelObjectObserver.objects(_input.get())) {
-			if (!object.tValid()) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private int selectIndex(Object value) {

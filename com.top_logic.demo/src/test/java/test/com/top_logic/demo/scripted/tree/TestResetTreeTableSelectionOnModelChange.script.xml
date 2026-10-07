@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Test for ticket #29712: when the model of a tree table changes so that the selected node is no longer part of the tree and no default selection applies, the selection is reset and dependent components no longer show the formerly selected object."
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle loeschen"
+				/>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Element Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="Ticket #29712 A"
+						/>
+						<parameter name="Name"
+							value="Ticket #29712 A"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Element Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="Ticket #29712 A.1"
+						/>
+						<parameter name="kontext"
+							value="Ticket #29712 A"
+						/>
+						<parameter name="Name"
+							value="Ticket #29712 A.1"
+						/>
+						<parameter name="Typ"
+							value="Demo B"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Element Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="Ticket #29712 B"
+						/>
+						<parameter name="Name"
+							value="Ticket #29712 B"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Selection that still resolves after a rebuild for the same model is kept"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment="Show the substructure of an object with children in the tree table."
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Ticket #29712 A"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment="Select a child node; the tree table has no default selection."
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Ticket #29712 A.1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="The chosen node is selected."
+					comparision="set-equals"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.SelectableSelectionNaming$SelectableSelectionName">
+						<selectable config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="Ticket #29712 A.1"
+							/>
+						</list>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+					comment="The details form shows the selected node."
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</actual-value>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="Ticket #29712 A.1"
+							/>
+						</constraint>
+					</constraints>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					comment="Invalidate the view via the 'Aktualisieren' toolbar button; this discards and rebuilds the tree for the same model."
+					component-name="rootLayout#masterFrame"
+					label="Aktualisieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="A selection that still resolves in the rebuilt tree is kept, although the tree table has no default selection."
+					comparision="set-equals"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.SelectableSelectionNaming$SelectableSelectionName">
+						<selectable config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="Ticket #29712 A.1"
+							/>
+						</list>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+					comment="The details form still shows the selected node."
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</actual-value>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="Ticket #29712 A.1"
+							/>
+						</constraint>
+					</constraints>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Selection is reset when the tree is rebuilt for another model"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment="Show an object without children; the selected node is not part of its tree."
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Ticket #29712 B"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="The tree table has no selection."
+					comparision="set-equals"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.SelectableSelectionNaming$SelectableSelectionName">
+						<selectable config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list/>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+					comment="The details form no longer shows the formerly selected node."
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+						/>
+					</actual-value>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+							<expected-value config:interface=""/>
+						</constraint>
+					</constraints>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Element/Action-Element-Loeschen.xml"
+					template-name-comment="Element Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Ticket #29712 A.1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Element/Action-Element-Loeschen.xml"
+					template-name-comment="Element Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Ticket #29712 A"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Element/Action-Element-Loeschen.xml"
+					template-name-comment="Element Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Ticket #29712 B"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle loeschen"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

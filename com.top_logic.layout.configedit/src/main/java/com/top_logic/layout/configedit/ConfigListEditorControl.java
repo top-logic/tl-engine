@@ -8,6 +8,7 @@ package com.top_logic.layout.configedit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
@@ -15,8 +16,8 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.config.copy.ConfigCopier;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 import com.top_logic.layout.form.model.FieldModel;
@@ -33,6 +34,7 @@ import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -360,7 +362,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, null);
 
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, !expanded, "subtle", true,
+			_context, null, true, !expanded, GroupBorder.SUBTLE, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(item, keyProperty, null, label);
 		group.setHeader(header);
@@ -374,17 +376,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * The group for one entry of {@link ConfigPendingEntries}, rendered separately from
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} because a pending entry
 	 * differs from a committed one in more than one dimension at once: it has no position in the
-	 * edited collection to move it among (so no Move Up/Move Down button - there is nothing to
-	 * move it among), it carries a Confirm button that a committed entry has no use for (see
+	 * edited collection to move it among (so no Move Up/Move Down button - there is nothing to move
+	 * it among), it carries a Confirm button that a committed entry has no use for (see
 	 * {@link ConfigPendingEntries#confirm(PendingEntry)}), its Remove button discards it (see
-	 * {@link ConfigPendingEntries#discard(PendingEntry)}) instead of removing an entry from the collection, and
-	 * its key field is editable rather than fixed. Folding all of that into
+	 * {@link ConfigPendingEntries#discard(PendingEntry)}) instead of removing an entry from the
+	 * collection, and its key field is editable rather than fixed. Folding all of that into
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} via extra parameters would
 	 * have left that method's index/listSize-based Move Up/Move Down logic surrounded by
 	 * conditionals that never apply to it; a sibling method keeps both readable, sharing the
 	 * body/title-listener construction that does not differ (
 	 * {@link #createBodyChildren(ConfigurationItem, PropertyDescriptor, PendingEntry)},
-	 * {@link #registerTitleListener(ConfigurationItem, ReactFormGroupControl)}).
+	 * {@link #registerTitleListener(ConfigurationItem, ReactFormGroupControl, boolean)}).
 	 *
 	 * <p>
 	 * Always rendered expanded, and refreshes {@code pending}'s
@@ -432,7 +434,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, false, "subtle", true,
+			_context, null, true, false, GroupBorder.SUBTLE, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(entry, keyProperty, pending, label);
 		group.setHeader(header);

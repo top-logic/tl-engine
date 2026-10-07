@@ -42,15 +42,22 @@ import com.top_logic.util.Resources;
  * section are available to child elements via the command scope and toolbar-placed commands are
  * automatically rendered as clique-grouped toolbar buttons.
  * </p>
+ *
+ * <p>
+ * The panel body is flush: its content reaches up to the panel border. Where the content flows -
+ * texts, stacks, grids, alerts, buttons, a form that does not span the panel - the panel sets
+ * {@link Config#getInset()}. Where the content fills the panel - a table, a diagram, a split - or
+ * brings its own inset, the option stays unset.
+ * </p>
  */
 @InApp
-public class PanelElement extends CommandScopeElement {
+public class PanelElement extends CommandScopeElement implements TitledElement {
 
 	/**
 	 * Configuration for {@link PanelElement}.
 	 */
 	@TagName("panel")
-	public interface Config extends CommandScopeElement.Config {
+	public interface Config extends CommandScopeElement.Config, InsetOptions {
 
 		@Override
 		@ClassDefault(PanelElement.class)
@@ -70,6 +77,9 @@ public class PanelElement extends CommandScopeElement {
 
 		/** Configuration name for {@link #getAppearance()}. */
 		String APPEARANCE = "appearance";
+
+		/** Configuration name for {@link #getWidth()}. */
+		String WIDTH = "width";
 
 		/**
 		 * The panel title displayed in the toolbar header.
@@ -131,6 +141,36 @@ public class PanelElement extends CommandScopeElement {
 		 */
 		@Name(FILL)
 		boolean getFill();
+
+		/**
+		 * A width of the panel's own, as a CSS length, e.g. {@code 380px}.
+		 *
+		 * <p>
+		 * A panel of its own width does not stretch across its container, so the container's
+		 * alignment places it: inside a {@code <stack align="center">} it is centered, which is how
+		 * a form of fixed width is placed on an otherwise empty page. The width is a preference, not
+		 * a minimum - the panel never grows beyond the space there is.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, the panel takes the width its container offers.
+		 * </p>
+		 */
+		@Name(WIDTH)
+		@Nullable
+		String getWidth();
+
+		/**
+		 * Whether the panel body is inset from the panel border.
+		 *
+		 * <p>
+		 * Set it where the body content flows - texts, stacks, grids, alerts, buttons, a form that
+		 * does not span the panel. Leave it unset where the content fills the panel - a table, a
+		 * diagram, a split - or brings its own inset. The title and the toolbar are not affected.
+		 * </p>
+		 */
+		@Override
+		boolean getInset();
 	}
 
 	private final ResKey _title;
@@ -142,6 +182,10 @@ public class PanelElement extends CommandScopeElement {
 	private final boolean _hoverActions;
 
 	private final PanelAppearance _appearance;
+
+	private final String _width;
+
+	private final InsetOptions _insetOptions;
 
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
@@ -156,6 +200,13 @@ public class PanelElement extends CommandScopeElement {
 		_fill = config.getFill();
 		_hoverActions = config.getHoverActions();
 		_appearance = config.getAppearance();
+		_width = config.getWidth();
+		_insetOptions = config;
+	}
+
+	@Override
+	public ResKey getTitle() {
+		return _title;
 	}
 
 	@Override
@@ -169,10 +220,12 @@ public class PanelElement extends CommandScopeElement {
 	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content,
 			ReactToolbarControl toolbar, ReactToolbarControl buttonBar) {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
-		ReactPanelControl panel = new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
+		ReactControl body = InsetOptions.insetIfRequested(context, _insetOptions, content);
+		ReactPanelControl panel = new ReactPanelControl(context, title, body, toolbar, buttonBar, false, false, false);
 		panel.setFill(_fill);
 		panel.setHoverActions(_hoverActions);
 		panel.setAppearance(_appearance);
+		panel.setWidth(_width);
 		panel.setTitleContent(createTitleContentControl(context));
 		return panel;
 	}

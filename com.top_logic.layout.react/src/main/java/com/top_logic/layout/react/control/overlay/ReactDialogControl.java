@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.overlay;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.DialogState;
 
 /**
  * Pure overlay control providing backdrop, focus trap, Escape key, and backdrop-click handling.
@@ -22,17 +23,16 @@ public class ReactDialogControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLDialog";
 
-	private static final String CLOSE_ON_BACKDROP = "closeOnBackdrop";
-
-	private static final String OPEN = "open";
-
-	private static final String CHILD = "child";
+	/** The {@link ReactCommandHandler} dismissing this dialog. */
+	public static final String CLOSE_COMMAND = "close";
 
 	private Runnable _closeHandler;
 
 	private ReactControl _child;
 
 	private boolean _open;
+
+	private boolean _closable = true;
 
 	/**
 	 * Creates a dialog overlay control.
@@ -47,8 +47,9 @@ public class ReactDialogControl extends ReactControl {
 	public ReactDialogControl(ReactContext context, boolean closeOnBackdrop, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
-		putState(CLOSE_ON_BACKDROP, closeOnBackdrop);
-		putState(OPEN, false);
+		putState(DialogState.CLOSE_ON_BACKDROP__PROP, closeOnBackdrop);
+		putState(DialogState.OPEN__PROP, false);
+		putState(DialogState.CLOSABLE__PROP, _closable);
 	}
 
 	/**
@@ -59,7 +60,7 @@ public class ReactDialogControl extends ReactControl {
 			return;
 		}
 		_open = true;
-		putState(OPEN, true);
+		putState(DialogState.OPEN__PROP, true);
 		if (isAttached() && _child != null) {
 			_child.attach();
 		}
@@ -76,7 +77,7 @@ public class ReactDialogControl extends ReactControl {
 			_child.detach();
 		}
 		_open = false;
-		putState(OPEN, false);
+		putState(DialogState.OPEN__PROP, false);
 	}
 
 	/**
@@ -90,17 +91,53 @@ public class ReactDialogControl extends ReactControl {
 			_child.detach();
 		}
 		_child = child;
-		putState(CHILD, child);
+		putState(DialogState.CHILD__PROP, child);
 		if (child != null && _open && isAttached()) {
 			child.attach();
 		}
 	}
 
 	/**
-	 * Handles the close command sent when the dialog overlay is dismissed.
+	 * Whether this dialog can be closed.
+	 *
+	 * @see #setClosable(boolean)
 	 */
-	@ReactCommandHandler("close")
+	public boolean isClosable() {
+		return _closable;
+	}
+
+	/**
+	 * Sets whether this dialog can be closed.
+	 *
+	 * <p>
+	 * A dialog that is not closable stays on screen: the client neither dismisses it on Escape nor
+	 * on a backdrop click, {@link #CLOSE_COMMAND} is ignored, and the {@link DialogManager} refuses
+	 * every close of it. A dialog is closable unless marked otherwise.
+	 * </p>
+	 *
+	 * @param closable
+	 *        Whether the dialog may be closed.
+	 */
+	public void setClosable(boolean closable) {
+		if (closable == _closable) {
+			return;
+		}
+		_closable = closable;
+		putState(DialogState.CLOSABLE__PROP, closable);
+	}
+
+	/**
+	 * Handles the close command sent when the dialog overlay is dismissed.
+	 *
+	 * <p>
+	 * The command is ignored while the dialog is not {@link #isClosable() closable}.
+	 * </p>
+	 */
+	@ReactCommandHandler(CLOSE_COMMAND)
 	void handleClose() {
+		if (!_closable) {
+			return;
+		}
 		close();
 		_closeHandler.run();
 	}

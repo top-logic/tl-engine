@@ -57,6 +57,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 	public ReactFileUploadControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLFileUpload");
 		putState(STATUS, "idle");
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 		initDataFieldState();
 	}
 

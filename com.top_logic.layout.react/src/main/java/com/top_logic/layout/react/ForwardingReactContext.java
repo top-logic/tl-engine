@@ -50,6 +50,11 @@ public class ForwardingReactContext implements ReactContext {
 	}
 
 	@Override
+	public String getOpenerWindowName() {
+		return _delegate.getOpenerWindowName();
+	}
+
+	@Override
 	public String getContextPath() {
 		return _delegate.getContextPath();
 	}

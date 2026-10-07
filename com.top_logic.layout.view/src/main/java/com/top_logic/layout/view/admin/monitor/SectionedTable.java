@@ -55,11 +55,13 @@ public abstract class SectionedTable implements UIElement {
 		// No shared configuration properties.
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SectionedTable} from configuration.
 	 */
 	protected SectionedTable(InstantiationContext context, Config config) {
-		// No shared configuration.
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -81,7 +83,9 @@ public abstract class SectionedTable implements UIElement {
 
 		ListRowSource<Row> source = new ListRowSource<>(rows, columns, keyByRow::get);
 		DefaultTableView<Row> view = DefaultTableView.create(columns, source);
-		return new TableViewControl<>(context, view, false);
+		TableViewControl<Row> control = new TableViewControl<>(context, view, false);
+		control.setCssClass(_cssClass);
+		return control;
 	}
 
 	/**

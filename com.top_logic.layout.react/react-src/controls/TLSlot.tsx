@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -17,7 +17,7 @@ const TLSlot: React.FC<TLCellProps> = ({ controlId }) => {
   const children = (state.children as unknown[]) ?? [];
 
   return (
-    <div id={controlId} className="tlSlot">
+    <div id={controlId} className={rootClassName(state, 'tlSlot')}>
       {children.map((child, i) => (
         <TLChild key={i} control={child} />
       ))}

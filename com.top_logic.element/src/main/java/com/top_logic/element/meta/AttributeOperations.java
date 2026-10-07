@@ -53,6 +53,7 @@ import com.top_logic.element.meta.kbbased.AttributeUtil;
 import com.top_logic.element.meta.kbbased.ConfiguredAttributeImpl;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
+import com.top_logic.element.meta.kbbased.TLOptionsFactory;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -1202,10 +1203,60 @@ public class AttributeOperations {
 	/**
 	 * The configured option provider.
 	 * 
+	 * <p>
+	 * The options of an attribute are defined by the first of:
+	 * </p>
+	 * <ol>
+	 * <li>The {@link TLOptions} annotation of the attribute itself.</li>
+	 * <li>The options of an attribute that the attribute overrides without specializing its value
+	 * type. An override that specializes the value type does not use the options of the overridden
+	 * attribute, since these are not necessarily valid values of the specialized type.</li>
+	 * <li>The {@link TLOptions} annotation configured for the attribute in the attribute
+	 * settings.</li>
+	 * <li>The {@link TLOptions} annotation of the attribute's value type. Only an annotation defined
+	 * at the value type itself applies, not one of a generalization of the value type.</li>
+	 * </ol>
+	 * 
+	 * @return The option provider, or <code>null</code> if no options are defined for the given
+	 *         attribute.
+	 * 
 	 * @see TLOptions
+	 * @see #allOptions(EditContext)
 	 */
 	public static Generator getOptions(TLStructuredTypePart attribute) {
-		return (Generator) attribute.tGetData(OPTIONS_ATTRIBUTE);
+		Generator local = (Generator) attribute.tGetData(OPTIONS_ATTRIBUTE);
+		if (local != null) {
+			return local;
+		}
+		Generator overridden = getOptionsOfOverriddenWithSameType(attribute);
+		if (overridden != null) {
+			return overridden;
+		}
+		TLOptions defaultOptions = attribute.getAnnotation(TLOptions.class);
+		if (defaultOptions == null) {
+			return null;
+		}
+		return TLOptionsFactory.getGenerator(defaultOptions);
+	}
+
+	/**
+	 * The options of the first attribute that the given attribute overrides without specializing
+	 * its value type.
+	 */
+	private static Generator getOptionsOfOverriddenWithSameType(TLStructuredTypePart attribute) {
+		if (!attribute.isOverride() || attribute.getOwner().getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		for (TLClassPart overridden : TLModelUtil.getOverriddenParts((TLClassPart) attribute)) {
+			if (!overridden.getType().equals(attribute.getType())) {
+				continue;
+			}
+			Generator result = getOptions(overridden);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1520,7 +1571,10 @@ public class AttributeOperations {
 		}
 
 		if (isBooleanAttribute(attribute) || isTristateAttribute(attribute)) {
-			if (getBooleanDisplay(attribute) == BooleanPresentation.CHECKBOX) {
+			BooleanPresentation booleanDisplay = getBooleanDisplay(attribute);
+			// A check box and a switch are small enough to stand before the text naming them,
+			// while a choice between labelled options is a field like any other.
+			if (booleanDisplay == BooleanPresentation.CHECKBOX || booleanDisplay == BooleanPresentation.SWITCH) {
 				return LabelPosition.AFTER_VALUE;
 			}
 		}

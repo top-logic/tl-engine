@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application>
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/TestViewModelAccess.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestViewModelAccess.Responsible"/>
+					<role name="TestViewModelAccess.Reader"/>
+					<role name="TestViewModelAccess.Viewer"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="TestViewModelAccess:Project">
+						<!-- The responsible may do everything with a project. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Create"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Delete"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<!-- The responsible may finish a project (a custom command group). -->
+						<grant
+							operation="Finish"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<!-- The viewer may only read a project. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Viewer"
+						/>
+					</class>
+					<class name="TestViewModelAccess:Task">
+						<!-- The responsible of a project may do everything with its tasks. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Create"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Delete"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</class>
+					<!-- A step of a project is decided by the project. -->
+					<class name="TestViewModelAccess:Step"
+						access-parent="container"
+					/>
+					<class name="TestViewModelAccess:Category">
+						<!-- A category may only be read, by its reader. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Reader"
+						/>
+					</class>
+					<part name="TestViewModelAccess:Project#secret">
+						<!--
+							Present grant with no roles: writing this attribute is denied for every
+							role, only a bypassing super-user may write it.
+						-->
+						<grant operation="Write"/>
+					</part>
+					<part name="TestViewModelAccess:Project#budget">
+						<!-- Only the responsible of the project may read its budget. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#classified">
+						<!-- Nobody but a super-user may read this attribute. -->
+						<grant operation="Read"/>
+					</part>
+					<part name="TestViewModelAccess:Project#sponsor">
+						<!-- Only the responsible of the project may see its sponsor. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#rating">
+						<!-- Only the viewer of the project may rate it. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Viewer"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#code">
+						<!-- Only the viewer of the project may write its code, which its display makes read-only anyway. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Viewer"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Task#note">
+						<!-- Only the responsible of the task may write its note. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Step#note">
+						<!-- Only the responsible of the project may write the note of its steps. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Step#secret">
+						<!-- Nobody but a super-user may write the secret of a step. -->
+						<grant operation="Write"/>
+					</part>
+					<part name="TestViewModelAccess:Task#secret">
+						<!-- Nobody but a super-user may write the secret of a task. -->
+						<grant operation="Write"/>
+					</part>
+				</security-config>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="TestViewModelAccess:Project">
+					<!-- A frozen project cannot be modified. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="p -> if($p.get(`TestViewModelAccess:Project#name`) == 'frozen', 'The project is frozen.', true)"
+								show-disabled="true"
+							/>
+						</executability>
+					</rule>
+					<!-- A frozen project cannot be deleted, without a reason to show. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Delete"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="p -> $p.get(`TestViewModelAccess:Project#name`) != 'frozen'"
+								show-disabled="false"
+							/>
+						</executability>
+					</rule>
+				</check>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="TestViewModelAccess_Project_Responsible"
+							meta-element="TestViewModelAccess:Project"
+							role="TestViewModelAccess.Responsible"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Project#responsible"/>
+							</path>
+						</rule>
+						<rule id="TestViewModelAccess_Project_Viewer"
+							meta-element="TestViewModelAccess:Project"
+							role="TestViewModelAccess.Viewer"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Project#viewer"/>
+							</path>
+						</rule>
+						<inheritance-rule id="TestViewModelAccess_Task_Responsible"
+							meta-element="TestViewModelAccess:Task"
+							role="TestViewModelAccess.Responsible"
+						>
+							<path>
+								<step
+									attribute="TestViewModelAccess:Project#tasks"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<rule id="TestViewModelAccess_Category_Reader"
+							meta-element="TestViewModelAccess:Category"
+							role="TestViewModelAccess.Reader"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Category#reader"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+	</services>
+</application>

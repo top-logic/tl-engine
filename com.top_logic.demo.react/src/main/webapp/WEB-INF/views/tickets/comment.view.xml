@@ -16,6 +16,11 @@
 			expr="c -> $c.get(`demo.tickets:Comment#cited`)"
 			inputs="comment"
 		/>
+		<!-- The ticket the comment belongs to, in which a reply is created. -->
+		<derived-channel name="ticket"
+			expr="c -> $c.container()"
+			inputs="comment"
+		/>
 	</channels>
 	<anchor input="comment">
 		<panel
@@ -45,6 +50,14 @@
 						<en>Reply</en>
 						<de>Antworten</de>
 					</label>
+					<executability>
+						<model-access
+							container="ticket"
+							operation="Create"
+							reference="comments"
+							type="demo.tickets:Comment"
+						/>
+					</executability>
 					<execute-script function="comment -> { reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }"/>
 					<write-channel name="draft"/>
 					<scroll-to-anchor target="'composer'"/>
@@ -58,10 +71,16 @@
 						<en>Delete</en>
 						<de>Löschen</de>
 					</label>
+					<executability>
+						<model-access operation="Delete"/>
+					</executability>
 					<remove-element/>
 				</generic-command>
 			</commands>
-			<form input="comment">
+			<form
+				input="comment"
+				with-inset="true"
+			>
 				<field
 					attribute="content"
 					label-position="hide-label"

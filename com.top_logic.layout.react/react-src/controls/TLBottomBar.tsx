@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -31,7 +31,7 @@ const TLBottomBar: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand, activeItemId]);
 
   return (
-    <nav id={controlId} className="tlBottomBar" aria-label="Bottom navigation">
+    <nav id={controlId} className={rootClassName(state, 'tlBottomBar')} aria-label="Bottom navigation">
       {items.map(item => {
         const isActive = item.id === activeItemId;
         return (

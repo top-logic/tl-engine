@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -106,14 +106,14 @@ const TLAudioRecorder: React.FC<TLCellProps> = ({ controlId }) => {
   if (effectiveStatus === 'uploading') buttonClasses.push('tlAudioRecorder__button--uploading');
 
   return (
-    <div id={controlId} className="tlAudioRecorder">
+    <div id={controlId} className={rootClassName(state, 'tlAudioRecorder')}>
       <button
         type="button"
         className={buttonClasses.join(' ')}
         onClick={handleToggle}
         disabled={isDisabled}
-        title={ariaLabel}
         aria-label={ariaLabel}
+        {...tooltipProps(ariaLabel)}
       >
         <span className={`tlAudioRecorder__icon${effectiveStatus === 'recording' ? ' tlAudioRecorder__icon--stop' : ''}`} />
       </button>

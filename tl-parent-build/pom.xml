@@ -28,6 +28,9 @@
 		<!-- By default, generate JavaDoc only to a project-local location. -->
 		<javadocOutput>${project.build.directory}/tl-doc</javadocOutput>
 		
+		<!-- Marks that the doclet has generated the English message resources in this build. -->
+		<messagesMarker>${project.build.directory}/messages-generated.marker</messagesMarker>
+		
 		<tl.javadoc.skipTranslate>false</tl.javadoc.skipTranslate>
 		<tl.javadoc.targetLanguages>de</tl.javadoc.targetLanguages>
 		<tl.javadoc.glossaries />
@@ -66,6 +69,8 @@
 								<additionalOption>100000</additionalOption>
 								<additionalOption>-targetMessages</additionalOption>
 								<additionalOption>${basedir}/src/main/java/META-INF/messages_en.properties</additionalOption>
+								<additionalOption>-messagesMarker</additionalOption>
+								<additionalOption>${messagesMarker}</additionalOption>
 								<additionalOption>-acronyms</additionalOption>
 								<additionalOption>acronyms.properties</additionalOption>
  								<additionalOption>-knownBugs</additionalOption>
@@ -133,6 +138,7 @@
 							<skip>${tl.javadoc.skipTranslate}</skip>
 							<sourcePath>src/main/java/META-INF/messages_en.properties</sourcePath>
 							<referencePath>src/main/java/META-INF/messages_en.properties~</referencePath>
+							<generationMarker>${messagesMarker}</generationMarker>
 							<targetLanguages>${tl.javadoc.targetLanguages}</targetLanguages>
 							<glossaries>${tl.javadoc.glossaries}</glossaries>
 						</configuration>
@@ -194,4 +200,28 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<!-- 
+				Keeps the JavaDoc of each module in the module's own build directory instead of combining it in 
+				the shared tree tl.javadoc.aggregateDir. Activated by -Dtl.javadoc.aggregate=false.
+				
+				The shared tree is written by many modules, which a parallel build (-T) runs concurrently. The 
+				doclet still runs in every module and generates its message resources and warnings, only its 
+				output goes to a module-local directory.
+			-->
+			<id>javadoc-module-local</id>
+			<activation>
+				<property>
+					<name>tl.javadoc.aggregate</name>
+					<value>false</value>
+				</property>
+			</activation>
+
+			<properties>
+				<tl.javadoc.aggregateDir>${project.build.directory}/tl-doc</tl.javadoc.aggregateDir>
+			</properties>
+		</profile>
+	</profiles>
 </project>

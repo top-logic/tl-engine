@@ -13,11 +13,42 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelNotificationScope;
 
 /**
- * Utilities for turning view-element children into a single {@link ReactControl}.
+ * Utilities for the content a view element displays: building it from the element's children, and
+ * retiring it when the element shows something else.
  */
 public class ContentControls {
+
+	/**
+	 * Retires content a container no longer displays: it stops being displayed right away, and is
+	 * disposed once the channel notification in progress has unwound.
+	 *
+	 * <p>
+	 * The two halves happen at different times because they answer to different constraints.
+	 * Detaching cannot wait: a container exchanges its content from inside a channel notification,
+	 * and another listener of the same channel - still pending in the channel's listener snapshot -
+	 * may update a control of the content just replaced. Sending that update would address a control
+	 * the client has already unmounted, and the browser would go looking for data the server no
+	 * longer serves. Disposal, on the other hand, cannot happen yet: the retired controls may
+	 * themselves be listeners pending in that same snapshot, and tearing them down synchronously
+	 * would let those listeners run on a disposed control.
+	 * </p>
+	 *
+	 * <p>
+	 * Outside a notification there is nothing to wait for and the disposal runs immediately.
+	 * </p>
+	 *
+	 * @param content
+	 *        The content control to retire.
+	 *
+	 * @see ChannelNotificationScope#afterNotification(Runnable)
+	 */
+	public static void retire(ReactControl content) {
+		content.detach();
+		ChannelNotificationScope.current().afterNotification(content::cleanupTree);
+	}
 
 	/**
 	 * Instantiates the given {@link UIElement}s in the given context and {@link #combine(ViewContext,

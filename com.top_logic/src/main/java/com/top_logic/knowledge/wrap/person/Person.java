@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -184,6 +186,19 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	public String getDSN() {
         return null; //Persons have no DSN
     }
+
+	/**
+	 * The {@link PersonManager#isAnonymous(Person) anonymous account} cannot be deleted: It
+	 * represents all visitors that are not logged in, and every session of such a visitor is
+	 * created for it.
+	 */
+	@Override
+	public Optional<ResKey> tDeleteVeto() {
+		if (PersonManager.Module.INSTANCE.isActive() && PersonManager.getManager().isAnonymous(this)) {
+			return Optional.of(I18NConstants.ERROR_ANONYMOUS_ACCOUNT_CANNOT_BE_DELETED);
+		}
+		return super.tDeleteVeto();
+	}
 
     /**
 	 * Get the {@link TimeZone} of the person.
@@ -639,6 +654,19 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 */
 	public static List<Person> all() {
 		return all(PersistencyLayer.getKnowledgeBase());
+	}
+
+	/**
+	 * All {@link Person}s that can be chosen in a selection field: all accounts except the
+	 * anonymous one.
+	 * 
+	 * @see PersonManager#isAnonymous(Person)
+	 */
+	public static List<Person> allSelectable() {
+		PersonManager manager = PersonManager.getManager();
+		List<Person> result = all();
+		result.removeIf(manager::isAnonymous);
+		return result;
 	}
 
 	/**

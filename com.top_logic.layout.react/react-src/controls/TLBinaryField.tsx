@@ -1,5 +1,7 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { buttonClassName } from './button/ButtonDefaults';
+import { showsValueOnly } from './form/fieldState';
 
 const I18N_KEYS = {
   'js.fileUpload.choose': 'Choose file',
@@ -11,19 +13,27 @@ const I18N_KEYS = {
 
 type LocalStatus = 'idle' | 'uploading';
 
+const UPLOAD_ICON = 'css:fa-solid fa-upload';
+
 /**
  * Form-field control for a binary ({@code tl.core:Binary}) attribute. Renders a file upload
  * (drag-and-drop + button) in edit mode and a download link in view mode. The actual bytes are
  * fetched from / sent to the server control via the data and upload endpoints.
+ *
+ * A disabled field renders the upload of edit mode as an inactive one: the upload and download
+ * buttons are natively `disabled`, and the field neither opens the file picker nor takes a dropped
+ * file (see showsValueOnly).
  */
 const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const liveState = useTLState();
   const state = liveState ?? propState ?? {};
   const upload = useTLUpload();
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
 
-  const editable = state.editable !== false;
+  const disabled = state.disabled === true;
   const hasData = !!state.hasData;
   const fileName = (state.fileName as string) ?? 'download';
   const dataRevision = (state.dataRevision as number) ?? 0;
@@ -82,6 +92,8 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
     if (file) {
       doUpload(file);
     }
+    // Reset so picking the same file again still fires a change event.
+    e.target.value = '';
   }, [doUpload]);
 
   const handleButtonClick = React.useCallback(() => {
@@ -122,68 +134,72 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         type="button"
         className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}
         onClick={doDownload}
-        disabled={downloading}
-        title={downloadLabel}
+        disabled={downloading || disabled}
         aria-label={downloadLabel}
+        {...tooltipProps(downloadLabel)}
       >
         <svg className="tlDownload__downloadIcon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
       </button>
-      <span className="tlDownload__fileName" title={fileName}>{fileName}</span>
+      <span className="tlDownload__fileName">{fileName}</span>
     </span>
   );
 
   // View (read-only) mode: just the download link, or a "no file" hint.
-  if (!editable) {
+  if (showsValueOnly(state)) {
     if (!hasData) {
       return (
-        <div id={controlId} className="tlBinaryField tlDownload tlDownload--empty">
+        <div id={controlId} className={rootClassName(state, 'tlBinaryField tlDownload tlDownload--empty')}>
           <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
         </div>
       );
     }
     return (
-      <div id={controlId} className="tlBinaryField tlBinaryField--view">
+      <div id={controlId} className={rootClassName(state, 'tlBinaryField tlBinaryField--view')}>
         {downloadLink}
       </div>
     );
   }
 
   // Edit mode: drag-and-drop upload + button, plus a download link for the current file.
-  const isDisabled = isUploading;
+  const isDisabled = isUploading || disabled;
   const buttonLabel = isUploading ? t['js.uploading'] : t['js.fileUpload.choose'];
 
   return (
     <div
       id={controlId}
-      className={`tlBinaryField tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      className={rootClassName(state, 'tlBinaryField tl-file-upload')}
+      data-tl-state={isDragOver ? 'dragover' : undefined}
+      onDragOver={disabled ? undefined : handleDragOver}
+      onDragLeave={disabled ? undefined : handleDragLeave}
+      onDrop={disabled ? undefined : handleDrop}
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept || undefined}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
+      {!disabled && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept || undefined}
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+      )}
       <button
         type="button"
-        className={'tlFileUpload__button' + (isDisabled ? ' tlFileUpload__button--uploading' : '')}
+        className={buttonClassName({ appearance: 'secondary' })}
         onClick={handleButtonClick}
         disabled={isDisabled}
-        title={buttonLabel}
+        aria-busy={isUploading ? true : undefined}
         aria-label={buttonLabel}
+        {...tooltipProps(buttonLabel)}
+        id={inputId}
+        {...labelProps}
       >
-        <svg className="tlFileUpload__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path d="M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
+        <ThemeIcon encoded={UPLOAD_ICON} className="tl-button__icon tl-icon-md" />
       </button>
       {hasData && downloadLink}
       {serverError && (
-        <span className="tlFileUpload__status tlFileUpload__status--error">{serverError}</span>
+        <span className="tl-file-upload__status tl-type-label" role="alert">{serverError}</span>
       )}
     </div>
   );

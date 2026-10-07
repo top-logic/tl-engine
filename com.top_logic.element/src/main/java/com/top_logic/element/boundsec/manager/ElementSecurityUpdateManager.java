@@ -5,8 +5,10 @@
  */
 package com.top_logic.element.boundsec.manager;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -244,13 +246,21 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 									put(added, updatedObject, reference, () -> newValue);
 								} else if (oldValue instanceof Collection oldColValue) {
 									if (newValue instanceof Collection newColValue) {
-										HashSet<?> addedValues = new HashSet<>(newColValue);
-										addedValues.removeAll(oldColValue);
+										/* Both differences are computed between sets: AbstractSet.removeAll()
+										 * iterates over the set and calls contains() on its argument whenever
+										 * the set is not larger than the argument, which scans a list argument
+										 * once per element (JDK-6394757). With a reference holding tens of
+										 * thousands of elements, appending one would make the commit take
+										 * seconds. */
+										Set<Object> oldSet = new HashSet<>(oldColValue);
+										Set<Object> newSet = new HashSet<>(newColValue);
+										Set<Object> addedValues = new HashSet<>(newSet);
+										addedValues.removeAll(oldSet);
 										if (!addedValues.isEmpty()) {
 											put(added, updatedObject, reference, () -> addedValues);
 										}
-										HashSet<?> removedValues = new HashSet<>(oldColValue);
-										removedValues.removeAll(newColValue);
+										Set<Object> removedValues = new HashSet<>(oldSet);
+										removedValues.removeAll(newSet);
 										if (!removedValues.isEmpty()) {
 											put(removed, updatedObject, reference, () -> removedValues);
 										}
@@ -541,7 +551,36 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		// Enhance output map with deleted objects.
 		mergeMaps(rulesToDeletedObjectsMap, rulesToObjectsMap);
 
+		addDependentInvalidRules(invalidRules);
+		rulesToObjectsMap.keySet().removeAll(invalidRules);
     }
+
+	/**
+	 * Closes the given set of rules to rebuild completely over the inheritance rules depending on
+	 * them.
+	 *
+	 * <p>
+	 * For a rule in <code>invalidRules</code>, no base objects are known whose role changed. An
+	 * inheritance rule using the role of such a rule as source role can therefore not determine
+	 * the objects on which it must be re-evaluated, and must be rebuilt completely, too. This
+	 * applies transitively.
+	 * </p>
+	 *
+	 * @param invalidRules
+	 *        The rules to rebuild completely. The inheritance rules depending on these rules are
+	 *        added.
+	 */
+	private void addDependentInvalidRules(Set<RoleProvider> invalidRules) {
+		Deque<RoleProvider> todo = new ArrayDeque<>(invalidRules);
+		while (!todo.isEmpty()) {
+			RoleProvider rule = todo.removeFirst();
+			for (RoleProvider dependent : accessManager.getRulesWithSourceRole(rule.getRole(), Type.inheritance)) {
+				if (invalidRules.add(dependent)) {
+					todo.addLast(dependent);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Finds for a {@link BoundedRole} the inheritance rules with that role as source rule, and

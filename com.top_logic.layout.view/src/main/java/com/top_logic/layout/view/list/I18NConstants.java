@@ -29,9 +29,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_REMOVE_FUNCTION;
 
 	/**
-	 * @en No container object available to link the new element to.
+	 * @en The new element cannot be attached: an input of the list holds no value.
 	 */
-	public static ResKey ERROR_NO_CONTAINER;
+	public static ResKey ERROR_MISSING_INPUT_VALUE;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -24,6 +24,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ActivateRowArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -62,7 +63,8 @@ public class TestTableActivation extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		ListRowSource<String> rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
 		_table = new TableViewControl<>(context, DefaultTableView.create(columns(), rows), false);
 

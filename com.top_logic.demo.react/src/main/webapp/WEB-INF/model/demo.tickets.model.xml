@@ -4,11 +4,27 @@
 	<modules>
 		<module name="demo.tickets">
 			<enum name="TicketStatus">
-				<classifier name="open"/>
-				<classifier name="closed"/>
+				<classifier name="open">
+					<annotations>
+						<color role="warning"/>
+					</annotations>
+				</classifier>
+				<classifier name="inProgress">
+					<annotations>
+						<color role="info"/>
+					</annotations>
+				</classifier>
+				<classifier name="closed">
+					<annotations>
+						<color role="success"/>
+					</annotations>
+				</classifier>
 			</enum>
 			<class name="Ticket">
 				<annotations>
+					<dynamic-color>
+						<color-by-expression color="t -> $t.get(`demo.tickets:Ticket#status`)"/>
+					</dynamic-color>
 					<main-properties properties="name"/>
 				</annotations>
 				<attributes>
@@ -26,6 +42,17 @@
 							</default-value>
 						</annotations>
 					</reference>
+					<property name="statusLabel"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr>t -&gt; label($t.get(`demo.tickets:Ticket#status`))</expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="comments"
 						composite="true"
 						kind="forwards"

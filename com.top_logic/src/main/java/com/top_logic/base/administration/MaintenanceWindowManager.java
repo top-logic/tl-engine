@@ -33,6 +33,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -186,6 +187,15 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
      */
     private NamedConstant token;
 
+	/**
+	 * ID of the session which changed the maintenance window state as last.
+	 * 
+	 * <p>
+	 * May be <code>null</code> if changed by another node in cluster or outside of a user session.
+	 * </p>
+	 */
+	private String _changingSessionId;
+
 	private final Login _login;
 
 	/**
@@ -247,6 +257,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
         if (PROPERTY_STATE_CHANGE.equals(propertyName)) {
             if (!thisNode) {
                 token = null;
+				_changingSessionId = null;
             }
             if (CM_STATE_MAINTENANCE_MODE.equals(newValue)) {
                 internalEnterMaintenanceWindow();
@@ -589,20 +600,36 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 		_login.setAllowedGroups(allowedGroups);
     }
 
-    /**
-     * Logs all users out which are not allowed to be logged in in maintenance window.
-     */
+	/**
+	 * Logs all users out which are not allowed to be logged in in maintenance window.
+	 * 
+	 * <p>
+	 * The sessions of these users are ended. Kept are the sessions of users that are allowed to log
+	 * in during the maintenance window, and the session that switched the maintenance window on:
+	 * the session of the current request, or the one that announced a delayed maintenance window.
+	 * </p>
+	 * 
+	 * @implNote Whether a user may stay logged in is decided by
+	 *           {@link Login#checkAllowedGroups(Person)}, the same check that is applied at login.
+	 *           Sessions are ended with {@link SessionService#terminateSession(String)}.
+	 */
     private void logoutUsers() {
         SessionService sessions = SessionService.getInstance();
+		String currentSessionId = sessions.getSessionId(ThreadContextManager.getSession());
 		Collection<String> sessionIDs = sessions.getSessionIDs();
 		for (String sessionID : sessionIDs) {
+			if (sessionID.equals(currentSessionId) || sessionID.equals(_changingSessionId)) {
+				// The session that switches to maintenance mode is kept, so that it can leave the
+				// maintenance mode again.
+				continue;
+			}
 			Person theUser = sessions.getUser(sessionID);
             try {
 				try {
 					_login.checkAllowedGroups(theUser);
 				} catch (InMaintenanceModeException ex) {
 					// person can not login, therefore log out person.
-					sessions.invalidateSession(sessionID);
+					sessions.terminateSession(sessionID);
                 }
             } catch (Exception e) {
 				StringBuilder logoutFailed = new StringBuilder();
@@ -625,9 +652,11 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 			setChangingUser(cm, context.getCurrentPersonWrapper());
             token = new NamedConstant("currentToken");
             context.set(TOKEN_KEY, token);
+			_changingSessionId = SessionService.getInstance().getSessionId(ThreadContextManager.getSession());
         }
         else {
             token = null;
+			_changingSessionId = null;
         }
     }
 

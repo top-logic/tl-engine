@@ -14,8 +14,10 @@
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="name"/>
+			<field attribute="locked"/>
 			<field attribute="string"/>
 			<field attribute="multiLine"/>
 			<field attribute="html"/>
@@ -23,25 +25,35 @@
 			<field attribute="i18nMultiline"/>
 			<field attribute="i18nHtml"/>
 			<field attribute="password"/>
+			<field attribute="aliases"/>
+			<field attribute="notes"/>
 			<field attribute="count"/>
 			<field attribute="size"/>
 			<field attribute="amount"/>
 			<field attribute="price"/>
 			<field attribute="ratio"/>
+			<field attribute="scores"/>
+			<field attribute="ratios"/>
 			<field attribute="active"/>
 			<field attribute="tri"/>
 			<field attribute="activeRadio"/>
 			<field attribute="activeSelect"/>
+			<field attribute="priorityRadio"/>
+			<field attribute="flags"/>
 			<field attribute="date"/>
 			<field attribute="dateTime"/>
+			<field attribute="dateTimeShort"/>
 			<field attribute="time"/>
 			<field attribute="duration"/>
+			<field attribute="deadlines"/>
 			<field attribute="icon"/>
 			<field attribute="color"/>
 			<field attribute="country"/>
 			<field attribute="language"/>
 			<field attribute="timeZone"/>
 			<field attribute="url"/>
+			<field attribute="email"/>
+			<field attribute="phone"/>
 			<field attribute="json"/>
 			<field attribute="image"/>
 			<field attribute="priority"/>
@@ -50,15 +62,16 @@
 			<field attribute="watchers"/>
 			<field attribute="related"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR">
+				<generic-command
+					input="model"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Create</en>
 						<de>Anlegen</de>
 					</label>
 					<store-form-state/>
-					<with-transaction>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
+					<persist-transient/>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>

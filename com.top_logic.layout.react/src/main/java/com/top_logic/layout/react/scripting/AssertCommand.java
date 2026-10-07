@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
@@ -45,6 +46,11 @@ public interface AssertCommand extends ReactCommand {
 
 	/** @see #getState() */
 	String STATE = "state";
+
+	/**
+	 * Separator between the steps of a {@link #mismatchingKeys(Map, Map) mismatch path}.
+	 */
+	String PATH_SEPARATOR = ".";
 
 	/**
 	 * The expected state entries as canonical JSON (an object mapping state keys to their expected
@@ -93,26 +99,69 @@ public interface AssertCommand extends ReactCommand {
 	}
 
 	/**
-	 * The keys of {@code expected} whose value differs from {@code actual}, comparing by canonical JSON
-	 * so numeric/representation differences do not cause false mismatches. An empty result means
+	 * The paths of {@code expected} whose value differs from {@code actual}, comparing by canonical
+	 * JSON so numeric/representation differences do not cause false mismatches. An empty result means
 	 * {@code actual} satisfies every expected entry (a <em>subset</em> match: keys not in
 	 * {@code expected} are ignored). This is the assertion check a replay performs.
+	 *
+	 * <p>
+	 * The subset match reaches into nested objects: where both sides hold a {@link Map}, the expected
+	 * map is compared entry by entry against the actual one, so an assertion recorded for one entry
+	 * of a grouped state value (a control's
+	 * {@link com.top_logic.layout.react.control.ReactControl#DIAGNOSTICS diagnostics}, say) still
+	 * holds when a sibling entry of that group changes.
+	 * </p>
 	 *
 	 * @param expected
 	 *        The recorded expected state entries.
 	 * @param actual
 	 *        The node's live state at replay.
-	 * @return The mismatching keys, in {@code expected}'s iteration order; empty if the assertion holds.
+	 * @return The mismatching paths, in {@code expected}'s iteration order; empty if the assertion
+	 *         holds. A path is the state key, with the keys of the nested maps it descends into
+	 *         appended separated by {@link #PATH_SEPARATOR} (e.g. {@code diagnostics.hiddenByAccess}),
+	 *         as {@link #valueAt(Map, String)} reads it back.
 	 */
 	static List<String> mismatchingKeys(Map<String, Object> expected, Map<String, Object> actual) {
 		List<String> mismatches = new ArrayList<>();
-		for (Map.Entry<String, Object> entry : expected.entrySet()) {
-			String expectedJson = JSON.toString(entry.getValue());
-			String actualJson = JSON.toString(actual == null ? null : actual.get(entry.getKey()));
-			if (!expectedJson.equals(actualJson)) {
-				mismatches.add(entry.getKey());
+		collectMismatches("", expected, actual, mismatches);
+		return mismatches;
+	}
+
+	/**
+	 * Implementation of {@link #mismatchingKeys(Map, Map)} for the map at the given path prefix.
+	 */
+	private static void collectMismatches(String prefix, Map<?, ?> expected, Object actual, List<String> mismatches) {
+		Map<?, ?> actualMap = actual instanceof Map<?, ?> map ? map : null;
+		for (Map.Entry<?, ?> entry : expected.entrySet()) {
+			String path = prefix + entry.getKey();
+			Object actualValue = actualMap == null ? null : actualMap.get(entry.getKey());
+			if (entry.getValue() instanceof Map<?, ?> expectedValue && actualValue instanceof Map<?, ?>) {
+				collectMismatches(path + PATH_SEPARATOR, expectedValue, actualValue, mismatches);
+			} else if (!JSON.toString(entry.getValue()).equals(JSON.toString(actualValue))) {
+				mismatches.add(path);
 			}
 		}
-		return mismatches;
+	}
+
+	/**
+	 * The value a {@link #mismatchingKeys(Map, Map) mismatch path} points to, for reporting what the
+	 * assertion expected and what it found.
+	 *
+	 * @param state
+	 *        The expected or the actual state entries.
+	 * @param path
+	 *        A path as {@link #mismatchingKeys(Map, Map)} reports it.
+	 * @return The value at the path, {@code null} if the state has none. A state key containing the
+	 *         {@link #PATH_SEPARATOR} is not addressable this way.
+	 */
+	static Object valueAt(Map<String, Object> state, String path) {
+		Object result = state;
+		for (String step : path.split(Pattern.quote(PATH_SEPARATOR))) {
+			if (!(result instanceof Map<?, ?> map)) {
+				return null;
+			}
+			result = map.get(step);
+		}
+		return result;
 	}
 }

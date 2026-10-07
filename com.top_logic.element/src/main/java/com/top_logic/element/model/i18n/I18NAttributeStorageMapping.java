@@ -23,21 +23,27 @@ public class I18NAttributeStorageMapping implements StorageMapping<ResKey> {
 		return ResKey.class;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @throws IllegalArgumentException
+	 *         If the given storage object is neither <code>null</code> nor a {@link ResKey}.
+	 */
 	@Override
 	public ResKey getBusinessObject(Object aStorageObject) {
-		return normalize(aStorageObject);
+		if (aStorageObject == null) {
+			return null;
+		}
+		if (aStorageObject instanceof ResKey resKey) {
+			return resKey;
+		}
+		throw new IllegalArgumentException("Not an internationalized value but a value of type '"
+			+ aStorageObject.getClass().getName() + "': " + aStorageObject);
 	}
 
 	@Override
 	public Object getStorageObject(Object aBusinessObject) {
 		return aBusinessObject;
-	}
-
-	private ResKey normalize(Object value) {
-		if (value instanceof ResKey) {
-			return (ResKey) value;
-		}
-		return null;
 	}
 
 	@Override

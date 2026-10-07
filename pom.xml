@@ -30,17 +30,19 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.13</jetty.version>
+		<jetty.version>12.1.14</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
-		<zookeeper.version>3.9.5</zookeeper.version>
-		<slf4j.version>2.0.19</slf4j.version>
+		<zookeeper.version>3.9.6</zookeeper.version>
+		<slf4j.version>2.0.20</slf4j.version>
 		<log4j.version>2.26.1</log4j.version>
-		<fasterxml.version>2.22.2</fasterxml.version>
-		<msgbuf.version>1.2.2</msgbuf.version>
-		<bouncycastle.version>1.85</bouncycastle.version>
+		<fasterxml.version>2.22.3</fasterxml.version>
+		<msgbuf.version>1.3.0</msgbuf.version>
+		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
+		<!-- renovate: datasource=node-version depName=node -->
+		<node.version>24.21.0</node.version>
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -53,6 +55,29 @@
 		
 		<tl.layoutDir>${basedir}/src/main/webapp/WEB-INF/layouts</tl.layoutDir>
 		<tl.confDir>${basedir}/src/main/webapp/WEB-INF</tl.confDir>
+
+		<maven.javadoc.skip>false</maven.javadoc.skip>
+
+		<!-- 
+			Directory into which the framework modules write their JavaDoc to combine it into one tree. 
+			
+			With -Dtl.javadoc.aggregate=false, the "javadoc-module-local" profiles of tl-parent-build and 
+			tl-parent-engine keep the JavaDoc of each module in its own build directory and skip the index. 
+		-->
+		<tl.javadoc.aggregateDir>${basedir}/../tl-doc/javadoc</tl.javadoc.aggregateDir>
+		
+		<!-- Whether to skip indexing the combined JavaDoc tree in tl-parent-engine. -->
+		<tl.javadoc.skipIndex>${maven.javadoc.skip}</tl.javadoc.skipIndex>
+
+		<!--
+			Comma-separated build and test features of this engine version that the CI pipelines of the
+			repository tl-ci use if present (an application inherits them from its engine version):
+
+			scripted-shards: Test selection TestAll.scripted, TestAll.shardModules and TestAll.scratchDir.
+			db-workers: Database test selection TestAll.db and TestAll.dbWorkers.
+			javadoc-local: Module-local JavaDoc build with -Dtl.javadoc.aggregate=false.
+		-->
+		<tl.ci.features>scripted-shards,db-workers,javadoc-local</tl.ci.features>
 	</properties>
 
 	<developers>
@@ -84,9 +109,17 @@
 
 	<profiles>
 		<profile>
+			<!--
+				Builds the engine modules. Active unless skipFullBuild is set or the profile is deactivated
+				explicitly (-P !full-build). A property activation is used instead of activeByDefault, because
+				Maven deactivates an activeByDefault profile as soon as any other profile of this POM is active
+				(e.g. no-multi-module-directory in an embedded Maven such as the Jenkins Maven integration).
+			-->
 			<id>full-build</id>
 			<activation>
-				<activeByDefault>true</activeByDefault>
+				<property>
+					<name>!skipFullBuild</name>
+				</property>
 			</activation>
 
 			<modules>
@@ -156,7 +189,37 @@
     		
     		<properties>
 				<skipNormalizeLayouts>false</skipNormalizeLayouts>
-    		</properties>			
+    		</properties>
+		</profile>
+
+		<profile>
+			<!--
+				The property maven.multiModuleProjectDirectory is set by the mvn launcher script, but not by
+				every embedded Maven (e.g. Eclipse m2e without a .mvn directory). Unresolved, the expression
+				ends up literally in the Node install path and creates a directory named
+				"${maven.multiModuleProjectDirectory}" in each frontend module. Install Node into the
+				module's build directory instead.
+			-->
+			<id>no-multi-module-directory</id>
+			<activation>
+				<property>
+					<name>!maven.multiModuleProjectDirectory</name>
+				</property>
+			</activation>
+
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>com.github.eirslett</groupId>
+							<artifactId>frontend-maven-plugin</artifactId>
+							<configuration>
+								<installDirectory>${project.build.directory}/node/${node.version}</installDirectory>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
 		</profile>
 	</profiles>
 
@@ -306,6 +369,13 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
 				<version>${tl.version}</version>
 				<type>test-jar</type>
 				<scope>test</scope>
@@ -856,7 +926,7 @@
 			<dependency>
 			    <groupId>com.h2database</groupId>
 			    <artifactId>h2</artifactId>
-			    <version>2.5.250</version>
+			    <version>2.5.252</version>
 		  	</dependency>
 		  	<dependency>
 			    <groupId>com.manticore-projects.tools</groupId>
@@ -894,7 +964,7 @@
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.7</version>
+				<version>3.0.8</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
@@ -1024,7 +1094,7 @@
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
 			    <artifactId>commons-lang3</artifactId>
-			    <version>3.20.0</version>
+			    <version>3.21.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -1055,6 +1125,12 @@
 			    <groupId>org.apache.kafka</groupId>
 			    <artifactId>connect-json</artifactId>
 			    <version>${kafka.version}</version>
+			</dependency>
+			<dependency>
+			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
+			    <groupId>com.github.luben</groupId>
+			    <artifactId>zstd-jni</artifactId>
+			    <version>1.5.7-22</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>
@@ -1221,11 +1297,17 @@
 			<dependency>
 			    <groupId>org.slf4j</groupId>
 			    <artifactId>jcl-over-slf4j</artifactId>
-			    <version>2.0.19</version>
+			    <version>2.0.20</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>fontbox</artifactId>
+			    <version>3.0.8</version>
+			</dependency>
+			<dependency>
+			    <!-- Note: Overrides the version requested by docx4j. -->
+			    <groupId>org.apache.pdfbox</groupId>
+	    		<artifactId>pdfbox-io</artifactId>
 			    <version>3.0.8</version>
 			</dependency>
 			<dependency>
@@ -1325,7 +1407,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.8</version>
+    			<version>6.5.9</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1335,12 +1417,12 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.8</version>
+    			<version>6.5.9</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>jakartaee-pac4j</artifactId>
-			    <version>8.0.3</version>
+			    <version>8.0.4</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.codelibs</groupId>
@@ -1374,7 +1456,7 @@
 		  	<dependency>
 			    <groupId>org.apache.maven</groupId>
 				<artifactId>maven-model-builder</artifactId>
-				<version>3.9.16</version>
+				<version>3.10.0</version>
 		  	</dependency>
 			<dependency>
 				<groupId>org.apache.logging.log4j</groupId>
@@ -1446,6 +1528,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-demo</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-demo-react-corporate</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>
@@ -1889,7 +1976,7 @@
 						<configuration>
 							<rules>
 								<requireMavenVersion>
-									<version>3.6.0</version>
+									<version>3.8.9</version>
 								</requireMavenVersion>
 							</rules>
 						</configuration>
@@ -1977,7 +2064,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.10.3.0</version>
+				<version>4.10.4.1</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>
@@ -2006,6 +2093,20 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>com.github.eirslett</groupId>
+					<artifactId>frontend-maven-plugin</artifactId>
+					<version>1.15.4</version>
+					<configuration>
+						<nodeVersion>v${node.version}</nodeVersion>
+
+						<!--
+							One Node installation per version, shared by all frontend modules of the build. A
+							version change installs into a new directory, never over an existing installation.
+						-->
+						<installDirectory>${maven.multiModuleProjectDirectory}/node/${node.version}</installDirectory>
+					</configuration>
+				</plugin>
+				<plugin>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-maven-plugin</artifactId>
 					<version>${tl.version}</version>
@@ -2029,7 +2130,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.5.6</version>
+					<version>3.6.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-jar-plugin</artifactId>
@@ -2037,12 +2138,12 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-install-plugin</artifactId>
-					<version>3.1.4</version>
+					<version>3.2.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
-					<version>3.6.3</version>
+					<version>3.6.4</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -2051,7 +2152,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>3.1.4</version>
+					<version>3.2.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-invoker-plugin</artifactId>
@@ -2080,7 +2181,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>versions-maven-plugin</artifactId>
-					<version>2.21.0</version>
+					<version>2.22.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.vafer</groupId>

@@ -112,6 +112,14 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		List<ChannelBindingConfig> getBindings();
 	}
 
+	/**
+	 * Personalization path segment below which the elements of a dialog store their state, followed
+	 * by the reference of the dialog's view.
+	 *
+	 * @see ViewContext#getPersonalizationKey()
+	 */
+	private static final String DIALOG_SEGMENT = "dialog";
+
 	private final String _dialogViewPath;
 
 	private final boolean _closeOnBackdrop;
@@ -225,13 +233,23 @@ public class OpenDialogAction extends InterruptibleViewAction {
 			throw new RuntimeException("Failed to load dialog view: " + dialogViewPath, ex);
 		}
 
-		ViewContext dialogContext = new DefaultViewContext(context);
+		// Each dialog view personalizes its elements under a path of its own, so that the state one
+		// dialog stores (e.g. its window size) is neither shared with other dialogs nor with the
+		// view the dialog was opened from.
+		ViewContext dialogContext = new DefaultViewContext(context)
+			.childContext(DIALOG_SEGMENT)
+			.childContext(ViewLoader.viewRef(dialogViewPath));
 
 		// A dialog is displayed on top of everything, so its content sits one step below whatever
 		// opened it - a step no configured container accounts for.
 		RevealPath opener = context instanceof ViewContext parent ? RevealPath.of(parent) : RevealPath.ROOT;
 		dialogContext = dialogContext.withScope(RevealPath.class,
 			opener.append(null, ViewLoader.viewRef(dialogViewPath)));
+
+		// Established before the dialog's content is built, so that every command inside the dialog
+		// is counted here while an action holds its chain.
+		SuspendedCommands suspended = new SuspendedCommands();
+		dialogContext = dialogContext.withScope(SuspendedCommands.class, suspended);
 
 		if (context instanceof ViewContext) {
 			ViewContext parentViewContext = (ViewContext) context;
@@ -265,6 +283,14 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
 			// Dialog closed.
 		});
+
+		if (handle != null) {
+			// A dialog whose command is still running has nothing to show the work in once it is
+			// gone, and no way to stop it: it stays until the command has settled.
+			handle.setClosable(!suspended.hasSuspended());
+			dialogControl.addCleanupAction(
+				suspended.observe(() -> handle.setClosable(!suspended.hasSuspended())));
+		}
 
 		RevealRegistry registry = dialogContext.getRevealRegistry();
 		if (registry != null) {

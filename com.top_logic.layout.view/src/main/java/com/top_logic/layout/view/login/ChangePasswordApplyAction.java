@@ -44,6 +44,13 @@ import com.top_logic.util.error.TopLogicException;
  * the error.
  * </p>
  *
+ * <p>
+ * An account whose device keeps the password elsewhere - a directory service, an identity provider -
+ * is refused before the device is asked to store anything, whichever way the dialog was reached. A
+ * view decides by the same condition whether to offer the change at all, with the TL-Script function
+ * <code>accountPasswordChangeAllowed()</code>.
+ * </p>
+ *
  * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])}.
  *           Only a pending login continues through {@link LoginAction#proceedAfterPassword} (which
  *           runs any required MFA step before completing the login); that is decided by where the
@@ -84,6 +91,13 @@ public class ChangePasswordApplyAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.LOGIN_FAILED);
 		}
 
+		// The device owns the password, so an account whose device keeps it elsewhere is refused
+		// before anything is asked of it.
+		AuthenticationDevice device = account.getAuthenticationDevice();
+		if (device == null || !device.allowPwdChange()) {
+			throw new TopLogicException(I18NConstants.ERROR_PASSWORD_CHANGE_NOT_ALLOWED);
+		}
+
 		TLObject form = (TLObject) input;
 		String newPassword = asString(form.tValueByName("newPassword"));
 		String newPasswordConfirm = asString(form.tValueByName("newPasswordConfirm"));
@@ -97,7 +111,6 @@ public class ChangePasswordApplyAction implements ViewAction {
 
 		char[] password = newPassword.toCharArray();
 		try {
-			AuthenticationDevice device = account.getAuthenticationDevice();
 			try (Transaction tx = account.tKnowledgeBase()
 				.beginTransaction(I18NConstants.CHANGED_PASSWORD__USER.fill(account.getName()))) {
 				// Validates against the configured password policy (throws on violation), persists the

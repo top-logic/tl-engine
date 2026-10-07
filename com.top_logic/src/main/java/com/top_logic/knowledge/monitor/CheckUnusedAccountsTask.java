@@ -12,9 +12,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.util.Computation;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.util.sched.task.impl.TaskImpl;
@@ -65,28 +62,29 @@ public class CheckUnusedAccountsTask<C extends CheckUnusedAccountsTask.Config<?>
 		_unusedAccountsChecker = context.getInstance(config.getChecker());
 	}
 
-    @Override
-    public void run() {
-        super.run(); // as wished by super class
-        ThreadContext.inSystemContext(CheckUnusedAccountsTask.class, new Computation<Void>() {
-            @Override
-			public Void run() {
-                Logger.info("Checking unused accounts...", CheckUnusedAccountsTask.class);
-				try (Transaction transaction =
-					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REMOVED_UNUSED_ACCOUNTS)) {
-					int[] result = _unusedAccountsChecker.checkUnusedAccounts(false);
-                    if (result[0] > 0 || result[1] > 0 || result[2] > 0) {
-                        transaction.commit();
-                    }
-                    String message = "Check done. Notified " + result[1] + " user and deleted " + result[2] + " acounts.";
-                    Logger.info(message, CheckUnusedAccountsTask.class);
-                }
-                catch (KnowledgeBaseException ex) {
-                    Logger.error("Failed to commit changes while checking unused accounts.", ex, CheckUnusedAccountsTask.class);
-                }
-                return null;
-            }
-        });
-    }
+	@Override
+	public void run() {
+		super.run(); // as wished by super class
+		runWithResultProtocol(this::checkUnusedAccounts);
+	}
+
+	private void checkUnusedAccounts() {
+		Logger.info("Checking unused accounts...", CheckUnusedAccountsTask.class);
+		try (Transaction transaction =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REMOVED_UNUSED_ACCOUNTS)) {
+			int[] result = _unusedAccountsChecker.checkUnusedAccounts(false);
+			if (result[0] > 0 || result[1] > 0 || result[2] > 0) {
+				transaction.commit();
+			}
+			String message = "Check done. Notified " + result[1] + " user and deleted " + result[2] + " acounts.";
+			Logger.info(message, CheckUnusedAccountsTask.class);
+		}
+	}
+
+	@Override
+	public boolean isNodeLocal() {
+		// Notifies and deletes accounts; must run only once in the cluster.
+		return false;
+	}
 
 }

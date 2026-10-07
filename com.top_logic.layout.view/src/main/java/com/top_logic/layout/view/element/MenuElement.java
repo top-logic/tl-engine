@@ -38,7 +38,10 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * Every declared command becomes an entry, whatever its
  * {@link com.top_logic.layout.react.control.button.CommandPlacement placement}: a command written
  * inside a menu is an entry of that menu by construction. Entries the current user must not see
- * drop out on their own, since a command hidden by its executability rule is not offered.
+ * drop out on their own, since a command hidden by its executability rule is not offered. A menu
+ * with no entry to offer shows no trigger at all, and its trigger appears as soon as an entry is
+ * offered again; a command that is visible but disabled counts as offered, since it is shown as a
+ * disabled entry.
  * </p>
  *
  * <p>
@@ -96,6 +99,15 @@ public class MenuElement extends AbstractMenuElement {
 		}
 		return new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER, false,
 			children.stream().map(child -> (ReactControl) child).collect(Collectors.toList()));
+	}
+
+	/**
+	 * The children are only the trigger of the menu, so they disappear while there is nothing to
+	 * open.
+	 */
+	@Override
+	protected boolean hideWhileEmpty() {
+		return true;
 	}
 
 	@Override

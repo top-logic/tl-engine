@@ -19,7 +19,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.navigation.ViewResolver;
 
 /**
- * The view files of a test scenario, read from the resources next to this class.
+ * The view files of a test scenario, read from the resources beside the class naming the scenario.
  *
  * <p>
  * Keeps one element tree per view - as the application's loader does, so that a view referenced
@@ -28,7 +28,27 @@ import com.top_logic.layout.view.navigation.ViewResolver;
  */
 public class FixtureViews implements ViewResolver {
 
+	private final Class<?> _base;
+
 	private final Map<String, ViewElement> _views = new HashMap<>();
+
+	/**
+	 * Creates a {@link FixtureViews} reading the resources next to this class.
+	 */
+	public FixtureViews() {
+		this(FixtureViews.class);
+	}
+
+	/**
+	 * Creates a {@link FixtureViews} reading the resources next to the given class.
+	 *
+	 * @param base
+	 *        The class the view files of the scenario are placed beside, so that a test keeps its
+	 *        fixtures in its own package.
+	 */
+	public FixtureViews(Class<?> base) {
+		_base = base;
+	}
 
 	@Override
 	public ViewElement getView(String viewRef) throws ConfigurationException {
@@ -40,9 +60,9 @@ public class FixtureViews implements ViewResolver {
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
 			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
 
-		DefaultInstantiationContext context = new DefaultInstantiationContext(FixtureViews.class);
+		DefaultInstantiationContext context = new DefaultInstantiationContext(_base);
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-		reader.setSource(new ClassRelativeBinaryContent(FixtureViews.class, viewRef));
+		reader.setSource(new ClassRelativeBinaryContent(_base, viewRef));
 		ViewElement.Config config = (ViewElement.Config) reader.read();
 		context.checkErrors();
 

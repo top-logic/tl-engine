@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const TLCounter: React.FC<TLCellProps> = ({ controlId }) => {
@@ -8,7 +8,7 @@ const TLCounter: React.FC<TLCellProps> = ({ controlId }) => {
   const label = (state.label as string) ?? 'React Counter';
 
   return (
-    <div id={controlId} className="tlCounter">
+    <div id={controlId} className={rootClassName(state, 'tlCounter')}>
       <h3 className="tlCounter__title">{label}</h3>
       <div className="tlCounter__controls">
         <button className="tlCounter__button" onClick={() => sendCommand('decrement')}>

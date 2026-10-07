@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
@@ -57,7 +58,7 @@ public class ExecuteScriptAction implements ViewAction {
 	 */
 	@TagName("execute-script")
 	public interface Config
-			extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction>, ActionScript.Inputs {
+			extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction>, Inputs {
 
 		@Override
 		@ClassDefault(ExecuteScriptAction.class)

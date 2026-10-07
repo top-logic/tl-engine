@@ -34,8 +34,12 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
@@ -60,6 +64,7 @@ import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -78,7 +83,7 @@ public class FormElement extends ContainerElement {
 	 * Configuration for {@link FormElement}.
 	 */
 	@TagName("form")
-	public interface Config extends ContainerElement.Config {
+	public interface Config extends ContainerElement.Config, FormLayoutOptions {
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
@@ -277,6 +282,10 @@ public class FormElement extends ContainerElement {
 
 	private final Config _config;
 
+	private final int _maxColumns;
+
+	private final LabelPosition _labelPosition;
+
 	private final LockHandler _lockHandler;
 
 	private final List<ViewCommand> _formCommands;
@@ -294,6 +303,8 @@ public class FormElement extends ContainerElement {
 	public FormElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_config = config;
+		_maxColumns = config.getMaxColumns();
+		_labelPosition = FormLayoutOptions.layoutPosition(context, config.getLabelPosition());
 		_lockHandler = createLockHandler(context, config);
 
 		_formCommands = new ArrayList<>();
@@ -343,6 +354,8 @@ public class FormElement extends ContainerElement {
 
 		// 4. Create FormControl with initial object.
 		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
+		formControl.setCssClass(_config.getCssClass());
+		formControl.setLayout(_maxColumns, _labelPosition);
 
 		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);
@@ -391,7 +404,9 @@ public class FormElement extends ContainerElement {
 
 		// 11. Auto-enter edit mode if configured (after children are set so listeners receive
 		// the formStateChanged event). If an editMode channel is wired and already holds true,
-		// honour that; otherwise fall back to the initial-edit-mode config flag.
+		// honour that; otherwise fall back to the initial-edit-mode config flag. The form enters edit
+		// mode only if its edit permission allows; otherwise it stays in view mode and resets the
+		// edit-mode channel to false.
 		ViewChannel editModeChannel = editModeRef != null ? context.resolveChannel(editModeRef) : null;
 		boolean initialEditMode = editModeChannel != null
 			? Boolean.TRUE.equals(editModeChannel.get())
@@ -408,7 +423,7 @@ public class FormElement extends ContainerElement {
 		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
 		formControl.setModelScope(context.getModelScope());
 
-		return formControl;
+		return InsetOptions.insetIfRequested(context, _config, formControl);
 	}
 
 	/**
@@ -453,7 +468,7 @@ public class FormElement extends ContainerElement {
 			}
 
 			ViewCommandModel inner =
-				ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
+				ViewCommandModel.create(formContext, cmd, cmdConfig, inputChannel, rule);
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.
@@ -516,6 +531,13 @@ public class FormElement extends ContainerElement {
 	 * access to the form model, even though the toolbar button's click handler passes the panel's
 	 * context.
 	 * </p>
+	 *
+	 * <p>
+	 * Apart from that context, the wrapper is a full delegate: every accessor the
+	 * {@link CommandModel} declares is answered by the inner model. Inheriting one of the
+	 * interface's defaults instead would silently drop what the command states - its keyboard
+	 * gesture, tooltip, clique, presentation - the moment it is offered through a form.
+	 * </p>
 	 */
 	private static class FormScopedCommandModel implements CommandModel {
 
@@ -548,8 +570,23 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
+		public String getTooltip() {
+			return _inner.getTooltip();
+		}
+
+		@Override
 		public boolean isExecutable() {
 			return _inner.isExecutable();
+		}
+
+		@Override
+		public ExecutableState getExecutableState() {
+			return _inner.getExecutableState();
+		}
+
+		@Override
+		public boolean isActive() {
+			return _inner.isActive();
 		}
 
 		@Override
@@ -558,7 +595,7 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public HandlerResult executeCommand(ReactContext context) {
+		public HandlerResult perform(ReactContext context) {
 			// Substitute the form context so that actions can access the FormModel.
 			return _inner.executeCommand(_formContext);
 		}
@@ -566,6 +603,31 @@ public class FormElement extends ContainerElement {
 		@Override
 		public CommandPlacement getPlacement() {
 			return _inner.getPlacement();
+		}
+
+		@Override
+		public String getClique() {
+			return _inner.getClique();
+		}
+
+		@Override
+		public ButtonDisplayMode getDisplayMode() {
+			return _inner.getDisplayMode();
+		}
+
+		@Override
+		public String getCssClasses() {
+			return _inner.getCssClasses();
+		}
+
+		@Override
+		public KeyStroke getKeyGesture() {
+			return _inner.getKeyGesture();
+		}
+
+		@Override
+		public ButtonTone getTone() {
+			return _inner.getTone();
 		}
 
 		@Override

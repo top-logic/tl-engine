@@ -12,14 +12,11 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
-import com.top_logic.basic.exception.I18NFailure;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.error.ErrorHandlingHelper;
 
 /**
  * Invokes a single {@link ReactCommandHandler}-annotated method on a {@link ReactControl}.
@@ -71,18 +68,8 @@ class ReactCommandInvoker {
 	 * Invokes the command method on the given control.
 	 *
 	 * <p>
-	 * Exceptions thrown by the command method are converted to error results:
-	 * </p>
-	 * <ul>
-	 * <li>{@link I18NFailure} exceptions use the
-	 * {@linkplain I18NFailure#getErrorKey() user-visible error message}.</li>
-	 * <li>Other exceptions produce a generic error result with the exception message.</li>
-	 * </ul>
-	 *
-	 * <p>
-	 * Only {@linkplain ErrorHandlingHelper#isInternalError(Throwable) internal errors} are logged
-	 * as errors; user-level failures (e.g. a rejected login) are logged at info level, since the
-	 * error result already reports them to the user.
+	 * Exceptions thrown by the command method are converted to error results by
+	 * {@link CommandErrors#failure(Throwable, String, Class)}.
 	 * </p>
 	 */
 	HandlerResult invoke(ReactControl control, ReactContext context,
@@ -109,21 +96,8 @@ class ReactCommandInvoker {
 			Logger.warn("No DialogManager available for dirty-check dialog.", ReactCommandInvoker.class);
 			return HandlerResult.DEFAULT_RESULT;
 		} catch (Throwable ex) {
-			if (ErrorHandlingHelper.isInternalError(ex)) {
-				Logger.error("@ReactCommandHandler failed on " + control.getClass().getName(), ex,
-					ReactCommandInvoker.class);
-			} else {
-				// A user-level problem (e.g. invalid input, denied login) that the UI reports to
-				// the user anyway - not a malfunction worth an error log entry.
-				Logger.info(
-					"Command on " + control.getClass().getName() + " rejected: " + ex.getMessage(),
-					ReactCommandInvoker.class);
-			}
-			I18NFailure i18n = findI18NFailure(ex);
-			if (i18n != null) {
-				return HandlerResult.error(i18n.getErrorKey(), ex);
-			}
-			return HandlerResult.error(ResKey.text(ex.getMessage()), ex);
+			return CommandErrors.failure(ex, "@ReactCommandHandler on " + control.getClass().getName(),
+				ReactCommandInvoker.class);
 		}
 	}
 
@@ -139,20 +113,6 @@ class ReactCommandInvoker {
 	 */
 	private ConfigurationItem bind(Map<String, Object> arguments) throws Exception {
 		return ReactControl.bindArguments(_argType, arguments);
-	}
-
-	/**
-	 * Searches the exception cause chain for an {@link I18NFailure}.
-	 */
-	private static I18NFailure findI18NFailure(Throwable ex) {
-		Throwable current = ex;
-		while (current != null) {
-			if (current instanceof I18NFailure) {
-				return (I18NFailure) current;
-			}
-			current = current.getCause();
-		}
-		return null;
 	}
 
 	private HandlerResult castResult(Object result) {

@@ -5,6 +5,16 @@
 		<channel name="model"/>
 		<channel name="selected"/>
 		<channel name="gridSelected"/>
+		<!--
+			The selection while it consists of exactly one object, and nothing while nothing or
+			several objects are selected: size() counts a missing value as zero, a single object as
+			one and a set as the number of its elements. A command or a form that works on one
+			object binds to this channel.
+		-->
+		<derived-channel name="selectedSingle"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
 		<!-- Anchor object for the editable-table form: the edit session locks on it. -->
 		<derived-channel name="gridAnchor"
 			expr="currentUser()"
@@ -33,8 +43,14 @@
 								<en>Generate samples</en>
 								<de>Beispiele erzeugen</de>
 							</label>
+							<executability>
+								<model-access
+									operation="Create"
+									type="demo.react:Demo"
+								/>
+							</executability>
 							<with-transaction>
-								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o; })"/>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o.set(`demo.react:Demo#aliases`, ['Alpha ' + ($i + 1), 'Bravo ' + ($i + 1), 'Charlie ' + ($i + 1)]); $o.set(`demo.react:Demo#notes`, ['Checked on site.', 'Waiting for the supplier.']); $o.set(`demo.react:Demo#scores`, [$i + 1, $i + 3, $i + 5]); $o.set(`demo.react:Demo#ratios`, [($i + 1) * 1.5, ($i + 1) * 2.25]); $o.set(`demo.react:Demo#deadlines`, [date(2026, ($i % 12) + 1, 10), date(2026, ($i % 12) + 1, 24)]); $o.set(`demo.react:Demo#flags`, [$i % 2 == 0, $i % 3 == 0]); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command
@@ -45,7 +61,7 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`demo.react:Demo`, transient: true)"/>
+							<create-transient type="demo.react:Demo"/>
 							<open-dialog
 								bind-input-to="model"
 								dialog-view="attributes-create.view.xml"
@@ -56,9 +72,13 @@
 								/>
 							</open-dialog>
 						</generic-command>
+						<!--
+							The detail dialog shows one object, so the command takes the selection only while
+							it consists of a single one and is disabled otherwise.
+						-->
 						<generic-command
 							image="css:bi bi-pencil"
-							input="selected"
+							input="selectedSingle"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -74,6 +94,7 @@
 								dialog-view="attributes-detail.view.xml"
 							/>
 						</generic-command>
+						<!-- <delete-object/> deletes a single object as well as a set of them. -->
 						<generic-command
 							image="css:bi bi-trash"
 							input="selected"
@@ -86,9 +107,7 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-							</with-transaction>
+							<delete-object/>
 							<write-channel name="selected"/>
 						</generic-command>
 					</commands>
@@ -98,6 +117,7 @@
 						observed-types="demo.react:Demo"
 						personalization-key="demo-attributes"
 						selection="selected"
+						selection-mode="multi"
 						types="demo.react:Demo"
 					>
 						<inputs>
@@ -172,8 +192,9 @@
 									<de>Gleiche Priorität wie die Auswahl</de>
 								</label>
 								<!--
-									Selects by an input: the priority of the selected row. The preset is
-									offered while a row is selected, and follows the selection.
+									Selects by an input: the priorities of the selected rows. The preset is
+									offered while a row is selected and follows the selection; with several
+									rows selected it offers the priorities of all of them.
 								-->
 								<criterion column="priority">
 									<options selected="sel -> $sel.get(`demo.react:Demo#priority`)"/>
@@ -181,7 +202,10 @@
 							</preset>
 						</presets>
 						<columns>
-							<column attribute="name">
+							<column
+								attribute="name"
+								width="220"
+							>
 								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->
 								<filter class="com.top_logic.table.filter.RegexpOptionsFilter">
 									<pattern regexp="^Part">
@@ -204,7 +228,13 @@
 									</pattern>
 								</filter>
 							</column>
-							<column attribute="string"/>
+							<column
+								attribute="string"
+								width="200"
+							/>
+							<column attribute="multiLine"/>
+							<column attribute="i18n"/>
+							<column attribute="i18nMultiline"/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
 							<column attribute="count">
@@ -231,7 +261,17 @@
 							</column>
 							<column attribute="amount"/>
 							<column attribute="date"/>
+							<column attribute="dateTimeShort"/>
+							<column attribute="aliases"/>
+							<column attribute="notes"/>
+							<column attribute="scores"/>
+							<column attribute="ratios"/>
+							<column attribute="deadlines"/>
+							<column attribute="flags"/>
 							<column attribute="owner"/>
+							<column attribute="url"/>
+							<column attribute="email"/>
+							<column attribute="phone"/>
 						</columns>
 						<rows>all(`demo.react:Demo`)</rows>
 						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
@@ -281,7 +321,7 @@
 											<en>New</en>
 											<de>Neu</de>
 										</label>
-										<execute-script function="x -> new(`demo.react:Demo`, transient: true)"/>
+										<create-transient type="demo.react:Demo"/>
 										<open-dialog
 											bind-input-to="model"
 											dialog-view="attributes-create.view.xml"
@@ -294,7 +334,7 @@
 									</generic-command>
 									<generic-command
 										image="css:bi bi-trash"
-										input="selected"
+										input="selectedSingle"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -304,9 +344,7 @@
 										<executability>
 											<null-input-disabled/>
 										</executability>
-										<with-transaction>
-											<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-										</with-transaction>
+										<delete-object/>
 										<write-channel name="selected"/>
 									</generic-command>
 								</commands>
@@ -331,8 +369,16 @@
 									<en>Details</en>
 									<de>Details</de>
 								</title>
-								<form input="selected">
+								<!--
+									The form shows one object and the table beside it selects one row at a time, so
+									both work on the single selection.
+								-->
+								<form
+									input="selectedSingle"
+									with-inset="true"
+								>
 									<field attribute="name"/>
+									<field attribute="locked"/>
 									<field attribute="string"/>
 									<field attribute="multiLine"/>
 									<field attribute="html"/>
@@ -347,25 +393,35 @@
 									<field attribute="i18nMultiline"/>
 									<field attribute="i18nHtml"/>
 									<field attribute="password"/>
+									<field attribute="aliases"/>
+									<field attribute="notes"/>
 									<field attribute="count"/>
 									<field attribute="size"/>
 									<field attribute="amount"/>
 									<field attribute="price"/>
 									<field attribute="ratio"/>
+									<field attribute="scores"/>
+									<field attribute="ratios"/>
 									<field attribute="active"/>
 									<field attribute="tri"/>
 									<field attribute="activeRadio"/>
 									<field attribute="activeSelect"/>
+									<field attribute="priorityRadio"/>
+									<field attribute="flags"/>
 									<field attribute="date"/>
 									<field attribute="dateTime"/>
+									<field attribute="dateTimeShort"/>
 									<field attribute="time"/>
 									<field attribute="duration"/>
+									<field attribute="deadlines"/>
 									<field attribute="icon"/>
 									<field attribute="color"/>
 									<field attribute="country"/>
 									<field attribute="language"/>
 									<field attribute="timeZone"/>
 									<field attribute="url"/>
+									<field attribute="email"/>
+									<field attribute="phone"/>
 									<field attribute="json"/>
 									<field attribute="image"/>
 									<field attribute="priority"/>
@@ -404,6 +460,8 @@
 							<columns>
 								<column attribute="name"/>
 								<column attribute="string"/>
+								<column attribute="aliases"/>
+								<column attribute="scores"/>
 								<column attribute="priority"/>
 								<column attribute="active"/>
 								<column attribute="amount"/>

@@ -8,6 +8,7 @@
 		>
 			<grid
 				gap="default"
+				max-columns="2"
 				min-column-width="24rem"
 			>
 				<card>

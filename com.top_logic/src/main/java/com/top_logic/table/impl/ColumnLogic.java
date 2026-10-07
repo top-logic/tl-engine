@@ -22,7 +22,8 @@ import com.top_logic.table.SortSpec;
 /**
  * Shared logic deriving a row {@link Predicate} and {@link Comparator} from a
  * {@link FilterSpec} / {@link SortSpec} and the column definitions, used by the in-memory
- * {@link ListRowSource} and {@link TreeRowSource}.
+ * {@link ListRowSource} and {@link TreeRowSource}, and the order of the groups of a grouped
+ * table from its grouping column and the {@link SortSpec}.
  */
 final class ColumnLogic {
 
@@ -146,6 +147,50 @@ final class ColumnLogic {
 		Comparator<R> rowComparator =
 			Comparator.comparing(column::value, Comparator.nullsLast(valueComparator));
 		return ascending ? rowComparator : rowComparator.reversed();
+	}
+
+	/**
+	 * The comparator ordering the group values of the given grouping column, or {@code null}
+	 * if the column has no {@link Column#sort() sort capability}.
+	 *
+	 * <p>
+	 * The group values are compared by the column's own {@link Column#sort() comparator}, with
+	 * a {@code null} group value last. The direction is ascending unless the grouping column is
+	 * itself part of the given {@link SortSpec}: then its {@link SortColumn#ascending()} entry
+	 * decides the direction of the group order.
+	 * </p>
+	 *
+	 * @param groupColumn
+	 *        The column whose {@link Column#value(Object) values} form the groups.
+	 * @param sort
+	 *        The active sort order of the table.
+	 */
+	static Comparator<Object> groupComparator(Column<?, ?> groupColumn, SortSpec sort) {
+		boolean ascending = true;
+		for (SortColumn sortColumn : sort.columns()) {
+			if (sortColumn.column().equals(groupColumn.name())) {
+				ascending = sortColumn.ascending();
+				break;
+			}
+		}
+		return valueComparator(groupColumn, ascending);
+	}
+
+	/**
+	 * The comparator of the given column's values in the given direction, {@code null} values
+	 * last in both directions, or {@code null} if the column is not sortable.
+	 *
+	 * @implNote The compared objects are group values taken from {@link Column#value(Object)} of
+	 *           this very column, hence they are of the column's value type.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <V> Comparator<Object> valueComparator(Column<?, V> column, boolean ascending) {
+		if (column.sort().isEmpty()) {
+			return null;
+		}
+		Comparator<V> valueComparator = column.sort().get().comparator();
+		Comparator<V> directed = ascending ? valueComparator : valueComparator.reversed();
+		return (Comparator<Object>) (Comparator<?>) Comparator.nullsLast(directed);
 	}
 
 	private static <R> Column<R, ?> require(Map<String, Column<R, ?>> byName, String name) {

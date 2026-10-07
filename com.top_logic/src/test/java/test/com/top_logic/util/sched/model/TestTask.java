@@ -49,7 +49,7 @@ public class TestTask extends TestCase {
 
 	public void testSchedulingAlgorithmNoFurtherRun() throws ConfigurationException {
 		Task task =
-			TaskTestUtil.createTaskImpl("SchedulingAlgorithm Test Task", TaskImpl.class, null);
+			TaskTestUtil.createTaskImpl("SchedulingAlgorithm Test Task", TestingTask.class, null);
 
 		long nextSchedule = task.calcNextShed(CalendarUtil.createCalendar().getTimeInMillis());
 
@@ -62,7 +62,7 @@ public class TestTask extends TestCase {
 		PolymorphicConfiguration<? extends SchedulingAlgorithm> schedule =
 			TypedConfiguration.newConfigItem(AlwaysSchedule.Config.class);
 		Task task =
-			TaskTestUtil.createTaskImpl("SchedulingAlgorithm Test Task", TaskImpl.class, schedule);
+			TaskTestUtil.createTaskImpl("SchedulingAlgorithm Test Task", TestingTask.class, schedule);
 		Calendar currentTime = CalendarUtil.createCalendar();
 
 		long nextSchedule = task.calcNextShed(currentTime.getTimeInMillis());
@@ -80,7 +80,7 @@ public class TestTask extends TestCase {
 		Calendar nextDay = newCalendar(2003, Calendar.JANUARY, 2, 12, 0);
         
         // This task should execute 14:22 the same day        
-        Task once = new TaskImpl("Once", LegacySchedulesCommon.ONCE, 0, 14, 22);
+        Task once = new TestingTask("Once", LegacySchedulesCommon.ONCE, 0, 14, 22);
 		long next = once.calcNextShed(highHuhn.getTimeInMillis());
         String check = once.toString();
         assertNotNull(check);
@@ -97,7 +97,7 @@ public class TestTask extends TestCase {
         prop.setProperty("hour"   , "9");
         prop.setProperty("minute" , "59");
         
-        once = new TaskImpl(prop);
+        once = new TestingTask(prop);
 		next = once.calcNextShed(highHuhn.getTimeInMillis());
         check = once.toString();
         assertNotNull(check);
@@ -124,7 +124,7 @@ public class TestTask extends TestCase {
 		Calendar later = newCalendar(2003, Calendar.MARCH, 2, 14, 44);
         
         // This task should execute 15:33 today    
-        Task day = new TaskImpl("Day", someDate.getTime(), 15, 33);
+        Task day = new TestingTask("Day", someDate.getTime(), 15, 33);
 		long next = day.calcNextShed(today.getTimeInMillis());
         String check = day.toString();
         assertNotNull(check);
@@ -134,7 +134,7 @@ public class TestTask extends TestCase {
         day.run();  
 		assertEquals(SchedulingAlgorithm.NO_SCHEDULE, day.calcNextShed(tomorrow.getTimeInMillis()));
 
-        day = new TaskImpl("Day", someDate.getTime(), 15, 33);
+        day = new TestingTask("Day", someDate.getTime(), 15, 33);
 		day.run();
 
 		// This task should not execute its to late!
@@ -150,7 +150,7 @@ public class TestTask extends TestCase {
         prop.setProperty("hour"   , "15");
         prop.setProperty("minute" , "57");
         
-        day = new TaskImpl(prop);
+        day = new TestingTask(prop);
 		next = day.calcNextShed(today.getTimeInMillis());
         check = day.toString();
         assertNotNull(check);
@@ -169,7 +169,7 @@ public class TestTask extends TestCase {
 		Calendar tenthOfMonth = newCalendar(1999, Calendar.JANUARY, 10, 12, 0);
         
         // This taks should execute every third and tenth day of a month
-        Task monthly = new TaskImpl("Monthly", LegacySchedulesCommon.MONTHLY, 
+        Task monthly = new TestingTask("Monthly", LegacySchedulesCommon.MONTHLY, 
                                 1 << (3-1) | 1 << (10-1), 11, 30);
 		long next = monthly.calcNextShed(firstOfMonth.getTimeInMillis());
 		long tmp = newCalendar(1999, Calendar.JANUARY, 3, 11, 30).getTimeInMillis();
@@ -200,7 +200,7 @@ public class TestTask extends TestCase {
         prop.setProperty("hour"   , "11");
         prop.setProperty("minute" , "30");
 
-        Task weekly = new TaskImpl(prop);
+        Task weekly = new TestingTask(prop);
         
         // new Task("Weakly", Task.WEEKLY, 1 << 1 | 1 << 3, 11, 30);
 		long next = weekly.calcNextShed(saturday.getTimeInMillis());
@@ -227,7 +227,7 @@ public class TestTask extends TestCase {
 		Calendar second = newCalendar(2001, Calendar.MARCH, 3, 0, 10);
         
         // This taks should execute every Day at 0:00 (not 24:00 ;-)
-        Task daily = new TaskImpl("Daily", LegacySchedulesCommon.DAILY,0, 0, 0);
+        Task daily = new TestingTask("Daily", LegacySchedulesCommon.DAILY,0, 0, 0);
 		long next = daily.calcNextShed(last.getTimeInMillis());
         
 		int schedulingWindowLength = 0;
@@ -259,12 +259,12 @@ public class TestTask extends TestCase {
 		Calendar second = newCalendar(2001, Calendar.JANUARY, 1, 1, 10);
         
         // This taks should execute every hour
-        Task periodic = new TaskImpl("Periodic", LegacySchedulesCommon.DAILY | LegacySchedulesCommon.PERIODICALLY,
+        Task periodic = new TestingTask("Periodic", LegacySchedulesCommon.DAILY | LegacySchedulesCommon.PERIODICALLY,
             0, 0,10, 60 * 60 * 1000L, 23 ,50 );
 		long next = periodic.calcNextShed(last.getTimeInMillis());
         // System.out.println(periodic);
 		assertEquals(newCalendar(2000, Calendar.JANUARY, 1, 0, 10).getTimeInMillis(), next);
-        periodic = new TaskImpl("Periodic", LegacySchedulesCommon.DAILY | LegacySchedulesCommon.PERIODICALLY,
+        periodic = new TestingTask("Periodic", LegacySchedulesCommon.DAILY | LegacySchedulesCommon.PERIODICALLY,
             0, 0,10, 60 * 60 * 1000L, 24 ,60 );
 		next = periodic.calcNextShed(first.getTimeInMillis());
         // System.out.println(periodic);
@@ -289,7 +289,7 @@ public class TestTask extends TestCase {
         int      hours = 24 * 7 * 60;  // Will end at: Wed Jan 05 17:59:15 CET 2000
         // long  diff  = hours * 10L * 60 * 1000; // ten minutes difference.  
         // This taks should execute every hour
-        Task periodic = new TaskImpl("Periodic", LegacySchedulesCommon.DAILY | LegacySchedulesCommon.PERIODICALLY,
+        Task periodic = new TestingTask("Periodic", LegacySchedulesCommon.DAILY | LegacySchedulesCommon.PERIODICALLY,
             0, 0,0, 45 * 1000L, 24 ,00 );
 
         for (int i=0; i < hours; i++) {
@@ -311,7 +311,7 @@ public class TestTask extends TestCase {
 		Calendar second = newCalendar(2004, Calendar.JANUARY, 1, 1, 10);
         
         // This taks should execute every Saturday twice at 0:00 and 12:00 
-        Task periodic = new TaskImpl("Periodic", LegacySchedulesCommon.WEEKLY | LegacySchedulesCommon.PERIODICALLY,
+        Task periodic = new TestingTask("Periodic", LegacySchedulesCommon.WEEKLY | LegacySchedulesCommon.PERIODICALLY,
             1 << 6, 0,0, 12* 60 * 60 * 1000L, 13 ,0 );
 		long next = periodic.calcNextShed(last.getTimeInMillis());
         // System.out.println(periodic);
@@ -339,7 +339,7 @@ public class TestTask extends TestCase {
         
         // This taks should execute every 2nd of a month    
         // at 0:00 and 8:00 and 16:00  
-        Task periodic = new TaskImpl("Periodic", LegacySchedulesCommon.MONTHLY | LegacySchedulesCommon.PERIODICALLY,
+        Task periodic = new TestingTask("Periodic", LegacySchedulesCommon.MONTHLY | LegacySchedulesCommon.PERIODICALLY,
             1 << 1, 0,0, 8 * 60 * 60 * 1000L, 17 ,0 );
 		long next = periodic.calcNextShed(cal1.getTimeInMillis());
         // System.out.println(periodic);
@@ -383,7 +383,7 @@ public class TestTask extends TestCase {
         prop.setProperty("stopHour"     , "21");
         prop.setProperty("stopMinute"   , "22");
         
-        TaskImpl task = new TaskImpl(prop);
+        TaskImpl task = new TestingTask(prop);
         assertEquals("PropertiesTask", task.getName());
         
 		assertEquals(LegacyOnceSchedule.class, task.getSchedulingAlgorithm().getClass());

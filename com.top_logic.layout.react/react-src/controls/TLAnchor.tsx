@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -15,8 +15,8 @@ const TLAnchor: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const anchor = (state.anchor as string | null) ?? undefined;
   return (
-    <div id={controlId} className="tlAnchor" data-tl-anchor={anchor}>
-      {state.child && <TLChild control={state.child} />}
+    <div id={controlId} className={rootClassName(state, 'tlAnchor')} data-tl-anchor={anchor}>
+      {!!state.child && <TLChild control={state.child} />}
     </div>
   );
 };

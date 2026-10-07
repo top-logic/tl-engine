@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -34,7 +35,11 @@ import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ChildControl;
+import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -64,8 +69,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  */
 public class ReactControl implements HTMLFragment, IReactControl, ScriptingControl {
 
-	/** State key for whether the control is hidden on the client. */
-	private static final String HIDDEN = "hidden";
+	/**
+	 * Key under which the {@link #diagnostics() diagnostic observations} appear in the
+	 * {@link #scriptingScalarState() headless projection}.
+	 */
+	public static final String DIAGNOSTICS = "diagnostics";
 
 	private static final ConcurrentHashMap<Class<?>, ReactCommandMap> COMMAND_MAPS = new ConcurrentHashMap<>();
 
@@ -80,6 +88,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	private Map<String, Object> _reactState;
 
 	/**
+	 * The {@link #putDiagnostic(String, Object) diagnostic observations} about this control, or
+	 * {@code null} while none were recorded.
+	 *
+	 * @see #diagnostics()
+	 */
+	private Map<String, Object> _diagnostics;
+
+	/**
 	 * The state properties holding controls this control renders but does not own, or {@code null}
 	 * while it owns everything it renders.
 	 *
@@ -87,6 +103,15 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	private Set<String> _borrowedState;
 
+	/**
+	 * The {@link SSEUpdateQueue} of the window this control is built for, or {@code null} once the
+	 * control is {@link #cleanupTree() disposed}.
+	 *
+	 * <p>
+	 * The control is {@link SSEUpdateQueue#registerControl(ReactCommandTarget) registered} with this
+	 * queue exactly while it is {@link #isAttached() attached}.
+	 * </p>
+	 */
 	private SSEUpdateQueue _sseQueue;
 
 	/**
@@ -182,7 +207,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		_reactState = new HashMap<>();
 		_id = context.allocateId();
 		_sseQueue = context.getSSEQueue();
-		_sseQueue.registerControl(this);
 	}
 
 	/**
@@ -190,6 +214,21 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	public ReactContext getReactContext() {
 		return _reactContext;
+	}
+
+	/**
+	 * The {@link ModelScope} the objects this control displays are observed on.
+	 *
+	 * <p>
+	 * {@code null} where the control is displayed outside a browser window - a control built in
+	 * a test, say - which observes no object changes. A control registering
+	 * {@link ObservedObjects} hands this over as it is: an observation without a scope stays
+	 * consistent and simply reports nothing.
+	 * </p>
+	 */
+	protected final ModelScope modelScope() {
+		ReactContext context = getReactContext();
+		return context == null ? null : context.getModelScope();
 	}
 
 	/**
@@ -242,7 +281,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Whether this control is attached to an SSE queue (i.e., has been rendered).
+	 * Whether this control still holds the {@link SSEUpdateQueue} of its window, i.e. has not been
+	 * {@link #cleanupTree() disposed}.
 	 *
 	 * <p>
 	 * Subclasses use this to decide whether state changes should produce a patch event or just
@@ -297,8 +337,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	private void sendCurrentState() {
 		_silentChanges = false;
-		if (_disposed) {
-			// The client has already unmounted this control; drop the trailing update.
+		if (!receivesUpdates()) {
 			return;
 		}
 		StateEvent event = StateEvent.create()
@@ -474,7 +513,53 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 				}
 				result.put(entry.getKey(), value);
 			});
+		if (_diagnostics != null && !_diagnostics.isEmpty()) {
+			result.put(DIAGNOSTICS, diagnostics());
+		}
 		return result;
+	}
+
+	/**
+	 * Records a diagnostic observation about this control, or drops the one recorded under the given
+	 * key.
+	 *
+	 * <p>
+	 * A diagnostic explains how the displayed state came about where the display itself cannot say
+	 * so - how many rows a table dropped because the user may not read them, for instance. It is
+	 * information for whoever inspects the UI, not for whoever uses it, and therefore stays on the
+	 * server: it enters the {@link #scriptingScalarState() headless projection} under
+	 * {@link #DIAGNOSTICS} (so the inspector shows it and an assertion can capture it) and never the
+	 * state sent to the browser.
+	 * </p>
+	 *
+	 * @param key
+	 *        The name of the observation, declared as a constant by whoever records it.
+	 * @param value
+	 *        The observation as plain data - a {@link String}, {@link Number}, {@link Boolean},
+	 *        {@link List} or {@link Map} of such values, so that it serializes as JSON like any
+	 *        projected state. {@code null} removes the entry recorded under {@code key}.
+	 */
+	public void putDiagnostic(String key, Object value) {
+		if (value == null) {
+			if (_diagnostics != null) {
+				_diagnostics.remove(key);
+			}
+			return;
+		}
+		if (_diagnostics == null) {
+			_diagnostics = new LinkedHashMap<>();
+		}
+		_diagnostics.put(key, value);
+	}
+
+	/**
+	 * The observations {@link #putDiagnostic(String, Object) recorded} about this control, in the
+	 * order they were first recorded.
+	 *
+	 * @return An unmodifiable view; empty when nothing was recorded.
+	 */
+	public Map<String, Object> diagnostics() {
+		return _diagnostics == null ? Map.of() : Collections.unmodifiableMap(_diagnostics);
 	}
 
 	/**
@@ -488,10 +573,26 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * are dropped automatically and need not be listed.
 	 * </p>
 	 *
-	 * @return The rendering-only state keys; empty by default.
+	 * @return The rendering-only state keys; the {@link #setCssClass(String) CSS class} every
+	 *         control carries.
 	 */
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of();
+		return Set.of(ControlState.CSS_CLASS__PROP);
+	}
+
+	/**
+	 * The {@link #scriptingPresentationKeys() presentation keys} of a control that declares some of
+	 * its own: the keys it inherits together with the given ones.
+	 *
+	 * @param inherited
+	 *        The keys of the super class, i.e. {@code super.scriptingPresentationKeys()}.
+	 * @param own
+	 *        The keys the control renders with beyond those.
+	 */
+	protected static Set<String> presentationKeys(Set<String> inherited, String... own) {
+		Set<String> result = new LinkedHashSet<>(inherited);
+		Collections.addAll(result, own);
+		return Collections.unmodifiableSet(result);
 	}
 
 	/**
@@ -803,7 +904,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 *        {@code true} to hide, {@code false} to show.
 	 */
 	public void setHidden(boolean hidden) {
-		putState(HIDDEN, Boolean.valueOf(hidden));
+		putState(ControlState.HIDDEN__PROP, Boolean.valueOf(hidden));
 	}
 
 	/**
@@ -817,18 +918,49 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * </p>
 	 */
 	public boolean isHidden() {
-		return Boolean.TRUE.equals(getState(HIDDEN));
+		return Boolean.TRUE.equals(getState(ControlState.HIDDEN__PROP));
+	}
+
+	/**
+	 * Sets an additional CSS class the client puts on the root element of this control.
+	 *
+	 * <p>
+	 * The class stands beside the classes the component brings itself, so a stylesheet of the
+	 * application reaches a single control without overriding the styling of its kind.
+	 * </p>
+	 *
+	 * @param cssClass
+	 *        The CSS class, or {@code null} for none.
+	 */
+	public void setCssClass(String cssClass) {
+		putState(ControlState.CSS_CLASS__PROP, cssClass);
+	}
+
+	/**
+	 * The additional CSS class of this control, or {@code null} for none.
+	 *
+	 * @see #setCssClass(String)
+	 */
+	public String getCssClass() {
+		return (String) getState(ControlState.CSS_CLASS__PROP);
 	}
 
 	/**
 	 * Sets a single value in the React state.
 	 *
 	 * <p>
-	 * If this control is already attached to an SSE queue (i.e. rendered), a {@link PatchEvent} is
-	 * sent to the client. Before rendering, the value simply becomes part of the initial render.
-	 * Within {@link #updateStateSilently(Runnable)} — and during state serialization, where the
-	 * written state reaches the client as part of the rendered output — the change is recorded
-	 * without an event.
+	 * If this control is rendered and displayed, a {@link PatchEvent} is sent to the client. Before
+	 * rendering, the value simply becomes part of the initial render. Within
+	 * {@link #updateStateSilently(Runnable)} — and during state serialization, where the written
+	 * state reaches the client as part of the rendered output — the change is recorded without an
+	 * event.
+	 * </p>
+	 *
+	 * <p>
+	 * A control that is not {@link #isAttached() displayed} records the value without an event as
+	 * well: the client shows no component the event could address, and the value reaches it with the
+	 * full state the control is serialized with when it becomes displayed again. See
+	 * {@link #receivesUpdates()}.
 	 * </p>
 	 *
 	 * @param key
@@ -937,14 +1069,36 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	private void sendPatch(Map<String, Object> patch) {
-		if (_disposed) {
-			// The client has already unmounted this control; drop the trailing update.
+		if (!receivesUpdates()) {
 			return;
 		}
 		PatchEvent event = PatchEvent.create()
 			.setControlId(getID())
 			.setPatch(toJsonString(_reactContext, patch));
 		requireSSEQueue().enqueue(event);
+	}
+
+	/**
+	 * Whether a state update of this control reaches the client.
+	 *
+	 * <p>
+	 * Only an {@link #isAttached() attached} control is displayed, and only for a displayed control
+	 * does the client hold a mounted component that an update can address. A container renders its
+	 * active content and {@link #detach() detaches} what it replaces, and a control that becomes
+	 * displayed again is serialized with its full state (see {@link #writeAsChild(JsonWriter)}), so
+	 * an update produced while detached is carried by that serialization. Sending it separately
+	 * would address a control the client has unmounted.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #cleanupTree() disposed} control is detached as well, which is what lets it tolerate
+	 * the trailing updates a stale reference produces within the running interaction: the very
+	 * handler that triggered the disposal can continue on its own control, and an observer
+	 * notification iterating a listener snapshot may still deliver an event afterwards.
+	 * </p>
+	 */
+	private boolean receivesUpdates() {
+		return _attached;
 	}
 
 	private SSEUpdateQueue requireSSEQueue() {
@@ -971,8 +1125,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * Writes this control as a child descriptor to JSON.
 	 *
 	 * <p>
-	 * Since the control is fully initialized at construction time (ID assigned, SSE registered),
-	 * this method simply serializes the current state. Composite controls that create children
+	 * Serializing the control {@link #attach() attaches} it, which
+	 * makes it addressable by its ID before the client receives it. Apart from that, this method
+	 * simply serializes the current state. Composite controls that create children
 	 * lazily do so in an {@link #onBeforeWrite()} hook (e.g.
 	 * {@link com.top_logic.layout.react.control.layout.ReactDeckPaneControl} creates its active
 	 * child).
@@ -993,18 +1148,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			// The full state is serialized below; nothing is pending on the client side anymore.
 			_silentChanges = false;
 			writer.beginObject();
-			writer.name("controlId");
+			writer.name(ChildControl.CONTROL_ID__PROP);
 			writer.value(getID());
-			writer.name("module");
+			writer.name(ChildControl.MODULE__PROP);
 			writer.value(_reactModule);
-			writer.name("state");
+			writer.name(ChildControl.STATE__PROP);
 			writeState(writer);
 			if (_viewSource != null) {
 				// Carried in the child descriptor so the client (TLChild) can stamp
 				// data-view-source onto this control's root element; the top-level write() path
 				// emits the same attribute directly, but view-boundary controls are always
 				// serialized here as nested children.
-				writer.name("viewSource");
+				writer.name(ChildControl.VIEW_SOURCE__PROP);
 				writer.value(_viewSource);
 			}
 			writer.endObject();
@@ -1029,6 +1184,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	public final boolean isAttached() {
 		return _attached;
+	}
+
+	/**
+	 * Whether this control has been disposed by {@link #cleanupTree()}.
+	 *
+	 * <p>
+	 * A disposed control is detached for good: it is never attached or registered with the
+	 * {@link SSEUpdateQueue} of its window again.
+	 * </p>
+	 */
+	public final boolean isDisposed() {
+		return _disposed;
 	}
 
 	/**
@@ -1066,6 +1233,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * {@link #addAttachListener(Runnable) attach listeners}.
 	 *
 	 * <p>
+	 * An attached control is {@link SSEUpdateQueue#registerControl(ReactCommandTarget) registered}
+	 * with the queue of its window, so that the client can address it by its ID. Registration happens
+	 * first, before hooks, listeners and children run, so that everything set up while attaching can
+	 * already be reached. The client only knows the IDs of controls it was sent, and serializing a
+	 * control attaches it, so every control the client can address is registered.
+	 * </p>
+	 *
+	 * <p>
 	 * Idempotent: if already attached, this call is a no-op. Called automatically when the control is
 	 * rendered (see {@link #attachOnRender()}); an explicit call is needed only to attach a control
 	 * that becomes displayed without being rendered again.
@@ -1076,6 +1251,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			return;
 		}
 		_attached = true;
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.registerControl(this);
+		}
 		onAttach();
 		for (Runnable l : _attachListeners) {
 			l.run();
@@ -1086,6 +1265,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	/**
 	 * Marks this control as detached (still in memory but not displayed) and fires
 	 * {@link #addDetachListener(Runnable) detach listeners}.
+	 *
+	 * <p>
+	 * A detached control is {@link SSEUpdateQueue#unregisterControl(ReactCommandTarget) unregistered}
+	 * from the queue of its window, so the queue holds no reference to a subtree that left the display.
+	 * A request the client sent before it unmounted the control no longer reaches it. Unregistering
+	 * happens last, after children, hooks and listeners, symmetric to {@link #attach()}.
+	 * </p>
 	 *
 	 * <p>
 	 * Idempotent: if not attached, this call is a no-op.
@@ -1100,6 +1286,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		onDetach();
 		for (Runnable l : _detachListeners) {
 			l.run();
+		}
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(this);
 		}
 	}
 
@@ -1267,8 +1457,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Disposes this control and all its children: detaches the tree, runs cleanup actions, and
-	 * unregisters from SSE. Called during cleanup and when dynamically removing a child.
+	 * Disposes this control and all its children: detaches the tree (which unregisters it from the
+	 * SSE queue), runs cleanup actions, and releases the queue so that it is never registered again.
+	 * Called during cleanup and when dynamically removing a child.
 	 *
 	 * <p>
 	 * A disposed control tolerates trailing state updates: {@link #putState(String, Object)} and
@@ -1304,31 +1495,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			_cleanupActions.forEach(Runnable::run);
 			_cleanupActions = null;
 		}
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null) {
-			queue.unregisterControl(this);
-			_sseQueue = null;
-		}
-	}
-
-	/**
-	 * Registers a dynamically created child {@link ReactControl} with this control's SSE queue so
-	 * that it can receive state updates and dispatch commands.
-	 *
-	 * <p>
-	 * Since the child already has its context and ID from construction, this method only ensures
-	 * the child is registered with the parent's SSE queue if it is not already.
-	 * </p>
-	 *
-	 * @param child
-	 *        The child control to register.
-	 */
-	protected void registerChildControl(ReactControl child) {
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null && child._sseQueue == null) {
-			child._sseQueue = queue;
-			queue.registerControl(child);
-		}
+		_sseQueue = null;
 	}
 
 

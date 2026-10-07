@@ -23,6 +23,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -31,10 +32,13 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -51,16 +55,21 @@ import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -97,6 +106,117 @@ public class TestConfigEditorControl extends TestCase {
 				throws XMLStreamException, ConfigurationException {
 			throw new UnsupportedOperationException("Not exercised by these tests.");
 		}
+	}
+
+	/**
+	 * A parsing-only format over a {@link HandlerConfig}: it reads a handler's name into a
+	 * configuration, but has no normative way to write one back, and therefore accepts no value.
+	 *
+	 * <p>
+	 * The shape of {@code ExpressionEvaluationAlgorithm.Config.LocatorFormat}, whose configuration a
+	 * single expression cannot be recovered from.
+	 * </p>
+	 */
+	public static class ParseOnlyHandlerFormat extends AbstractConfigurationValueProvider<HandlerConfig> {
+
+		/** Creates a {@link ParseOnlyHandlerFormat}. */
+		public ParseOnlyHandlerFormat() {
+			super(HandlerConfig.class);
+		}
+
+		@Override
+		protected HandlerConfig getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			HandlerAConfig result = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+			result.setNameA(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		protected String getSpecificationNonNull(HandlerConfig configValue) {
+			throw new UnsupportedOperationException("There is no normative way to serialize this value.");
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			// Parsing only format.
+			return false;
+		}
+	}
+
+	/** {@link ParseOnlyHandlerFormat}'s counterpart for a non-polymorphic {@link InnerConfig}. */
+	public static class ParseOnlyInnerFormat extends AbstractConfigurationValueProvider<InnerConfig> {
+
+		/** Creates a {@link ParseOnlyInnerFormat}. */
+		public ParseOnlyInnerFormat() {
+			super(InnerConfig.class);
+		}
+
+		@Override
+		protected InnerConfig getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			InnerConfig result = TypedConfiguration.newConfigItem(InnerConfig.class);
+			result.setTitle(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		protected String getSpecificationNonNull(InnerConfig configValue) {
+			throw new UnsupportedOperationException("There is no normative way to serialize this value.");
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			// Parsing only format.
+			return false;
+		}
+	}
+
+	/**
+	 * Test configuration whose properties carry formats that cannot express every value.
+	 *
+	 * <p>
+	 * Kept apart from {@link TestConfig} so that its properties do not shift the child counts the
+	 * tests over that configuration compare.
+	 * </p>
+	 */
+	public interface ParseOnlyTestConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getParseOnlyHandler()}. */
+		String PARSE_ONLY_HANDLER = "parseOnlyHandler";
+
+		/** Property name for {@link #getParseOnlyInner()}. */
+		String PARSE_ONLY_INNER = "parseOnlyInner";
+
+		/** Property name for {@link #getCommaList()}. */
+		String COMMA_LIST = "commaList";
+
+		/**
+		 * A polymorphic {@link PropertyKind#ITEM} property whose format can write no value - the
+		 * shape of an attribute locator's configuration.
+		 */
+		@Name(PARSE_ONLY_HANDLER)
+		@Format(ParseOnlyHandlerFormat.class)
+		HandlerConfig getParseOnlyHandler();
+
+		void setParseOnlyHandler(HandlerConfig value);
+
+		/** The same, over a plain sub-configuration rather than a polymorphic one. */
+		@Name(PARSE_ONLY_INNER)
+		@Format(ParseOnlyInnerFormat.class)
+		InnerConfig getParseOnlyInner();
+
+		void setParseOnlyInner(InnerConfig value);
+
+		/**
+		 * A {@link PropertyKind#COMPLEX} property (a value binding decides the kind) whose format
+		 * ({@link TestConfigControlService.CommaSeparatedFormat}) can express some of its values and
+		 * not others.
+		 */
+		@Name(COMMA_LIST)
+		@Binding(NoFormatBinding.class)
+		@Format(TestConfigControlService.CommaSeparatedFormat.class)
+		List<String> getCommaList();
+
+		void setCommaList(List<String> value);
 	}
 
 	/** Test configuration with a mix of property types. */
@@ -398,6 +518,65 @@ public class TestConfigEditorControl extends TestCase {
 	 * Test subclass that bypasses {@link com.top_logic.layout.form.values.edit.Labels} to avoid
 	 * requiring Resources/ThreadContextManager in unit tests.
 	 */
+	/**
+	 * A configuration whose {@link #getName() name} is hidden or disabled depending on two other
+	 * properties, and whose {@link #getItems() items} are hidden with the name.
+	 */
+	public interface DynamicModeConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHide()}. */
+		String HIDE = "hide";
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		/** Property name for {@link #getLock()}. */
+		String LOCK = "lock";
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Whether {@link #getName()} is hidden. */
+		@Name(HIDE)
+		boolean getHide();
+
+		/** @see #getHide() */
+		void setHide(boolean value);
+
+		/** Whether {@link #getName()} is disabled. */
+		@Name(LOCK)
+		boolean getLock();
+
+		/** @see #getLock() */
+		void setLock(boolean value);
+
+		/** The property with a dynamic mode. */
+		@Name(NAME)
+		@DynamicMode(fun = NameMode.class, args = { @Ref(HIDE), @Ref(LOCK) })
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		/** A collection with a dynamic mode. */
+		@Name(ITEMS)
+		@DynamicMode(fun = HideActiveIf.class, args = @Ref(HIDE))
+		List<ListItem> getItems();
+
+		/**
+		 * The mode of {@link DynamicModeConfig#getName()}.
+		 */
+		class NameMode extends Function2<FieldMode, Boolean, Boolean> {
+			@Override
+			public FieldMode apply(Boolean hide, Boolean lock) {
+				if (Boolean.TRUE.equals(hide)) {
+					return FieldMode.INVISIBLE;
+				}
+				return Boolean.TRUE.equals(lock) ? FieldMode.DISABLED : FieldMode.ACTIVE;
+			}
+		}
+	}
+
 	static class TestableConfigEditorControl extends ConfigEditorControl {
 
 		TestableConfigEditorControl(ReactContext context, ConfigurationItem config) {
@@ -479,7 +658,7 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	private ReactContext createTestContext() {
-		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/**
@@ -1300,8 +1479,8 @@ public class TestConfigEditorControl extends TestCase {
 		for (ReactControl child : editor.scriptingChildren()) {
 			if (child instanceof ReactFormGroupControl) {
 				groups++;
-				assertEquals("Group '" + child.scriptingScalarState().get("header") + "' must take the whole row.",
-					Boolean.TRUE, child.scriptingScalarState().get("fullLine"));
+				assertEquals("Group must take the whole row: " + child,
+					Boolean.TRUE, child.scriptingScalarState().get(ReactFormGroupControl.FULL_LINE));
 			}
 		}
 		assertTrue("Expected the nested item group and the collection groups.", groups >= 2);
@@ -1486,6 +1665,73 @@ public class TestConfigEditorControl extends TestCase {
 		// 3 rendered (count, enabled, label) + 1 inherited = at least 4 children (each wrapped in
 		// chrome); bindingOnly contributes none.
 		assertTrue("Should have at least 3 child controls", editor.getChildCount() >= 3);
+	}
+
+	/**
+	 * A property with a dynamic mode is hidden while its mode says so, and shown again once the
+	 * properties the mode is computed from change back.
+	 */
+	public void testDynamicModeHidesTheField() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ReactFormFieldChromeControl chrome = (ReactFormFieldChromeControl) onlyField(config, DynamicModeConfig.NAME);
+		assertTrue("The field is shown while its mode is active.", chrome.isVisible());
+
+		config.setHide(true);
+		assertFalse("The field is hidden once its mode is invisible.", chrome.isVisible());
+
+		config.setHide(false);
+		assertTrue("The field is shown again once its mode is active again.", chrome.isVisible());
+	}
+
+	/**
+	 * The group of a collection property with a dynamic mode is hidden while its mode says so.
+	 */
+	public void testDynamicModeHidesACollectionGroup() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ReactControl group = onlyField(config, DynamicModeConfig.ITEMS);
+		assertFalse("The group is shown while its mode is active.", group.isHidden());
+
+		config.setHide(true);
+		assertTrue("The group is hidden once its mode is invisible.", group.isHidden());
+	}
+
+	/**
+	 * A property with a dynamic mode accepts no input while its mode says so.
+	 */
+	public void testDynamicModeDisablesTheField() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, index);
+		ConfigFieldModel field = index.lookup(config, config.descriptor().getProperty(DynamicModeConfig.NAME));
+		assertTrue(field.isEditable());
+
+		config.setLock(true);
+		assertFalse("A disabled field accepts no input.", field.isEditable());
+
+		config.setLock(false);
+		assertTrue("The field accepts input again once its mode is active again.", field.isEditable());
+	}
+
+	/**
+	 * A form built read-only stays read-only, whatever the dynamic mode says.
+	 */
+	public void testDynamicModeDoesNotMakeAReadOnlyFormEditable() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, index, false);
+
+		assertFalse(index.lookup(config, config.descriptor().getProperty(DynamicModeConfig.NAME)).isEditable());
+	}
+
+	/**
+	 * The single control an editor showing only the given property of the given item consists of.
+	 */
+	private ReactControl onlyField(ConfigurationItem config, String propertyName) {
+		Set<PropertyDescriptor> others = new java.util.HashSet<>(config.descriptor().getProperties());
+		others.remove(config.descriptor().getProperty(propertyName));
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config, others);
+		assertEquals(1, editor.getChildCount());
+		return editor.getChildrenList().get(0);
 	}
 
 	/**
@@ -1965,6 +2211,71 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		assertFalse("The editor must still render its fields.", editor.getChildrenList().isEmpty());
+	}
+
+	/**
+	 * A polymorphic {@link PropertyKind#ITEM} property whose format cannot write its value gets the
+	 * type selector and a nested editor over the chosen implementation - the same rendering an item
+	 * without a format at all gets, since there is no text a field could show.
+	 */
+	public void testPolymorphicItemWithParseOnlyFormatGetsTypeSelector() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		HandlerAConfig handler = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+		handler.setNameA("a");
+		config.setParseOnlyHandler(handler);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		TestableConfigEditorControl editor =
+			new TestableConfigEditorControl(createTestContext(), config, Collections.emptySet(), false, index);
+
+		assertNotNull("An item whose format cannot write its value gets the type selector.",
+			findPolymorphicControl(editor));
+		assertNotNull("The chosen implementation's own properties must be editable, which only a "
+			+ "nested editor offers.",
+			index.lookup(handler, handler.descriptor().getProperty(HandlerAConfig.NAME_A)));
+	}
+
+	/**
+	 * The same for a plain sub-configuration: it gets the nested editor over its own properties,
+	 * not a text field.
+	 */
+	public void testItemWithParseOnlyFormatGetsNestedEditor() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		InnerConfig inner = TypedConfiguration.newConfigItem(InnerConfig.class);
+		inner.setTitle("t");
+		config.setParseOnlyInner(inner);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		new TestableConfigEditorControl(createTestContext(), config, Collections.emptySet(), false, index);
+
+		assertNotNull("The item's own field must be editable, which only a nested editor offers.",
+			index.lookup(inner, inner.descriptor().getProperty(InnerConfig.TITLE)));
+		assertNull("No field may stand for the item itself - its format can write no text.",
+			index.lookup(config, config.descriptor().getProperty(ParseOnlyTestConfig.PARSE_ONLY_INNER)));
+	}
+
+	/**
+	 * A {@link PropertyKind#COMPLEX} property holding a value its format can write is rendered as
+	 * that text.
+	 */
+	public void testComplexPropertyWhoseFormatAcceptsItsValueIsDisplayed() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		config.setCommaList(Arrays.asList("red", "green"));
+
+		assertTrue("A value the format can write must be rendered, not skipped.",
+			rendersProperty(config, ParseOnlyTestConfig.COMMA_LIST));
+	}
+
+	/**
+	 * The very same property holding a value its format cannot write is skipped - rendering it
+	 * would hand the service a property it rejects.
+	 */
+	public void testComplexPropertyWhoseFormatRejectsItsValueIsSkipped() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		config.setCommaList(Arrays.asList("red,green"));
+
+		assertFalse("A value the format cannot write has no text form and must stay skipped.",
+			rendersProperty(config, ParseOnlyTestConfig.COMMA_LIST));
 	}
 
 	/**

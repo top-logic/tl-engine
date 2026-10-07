@@ -10,6 +10,9 @@
 		<attribute name="description"
 			value="Projekt 2"
 		/>
+		<attribute name="budget"
+			value="80000.0"
+		/>
 		<attribute name="milestones">
 			<object id="6"
 				type="tl.demo.projectManagement:Milestone"
@@ -61,6 +64,9 @@
 		<attribute name="description"
 			value="Projekt 1"
 		/>
+		<attribute name="budget"
+			value="120000.0"
+		/>
 		<attribute name="milestones">
 			<object id="3"
 				type="tl.demo.projectManagement:Milestone"
@@ -70,6 +76,9 @@
 				/>
 				<attribute name="dueDate"
 					value=""
+				/>
+				<attribute name="approved"
+					value="true"
 				/>
 			</object>
 			<object id="9"
@@ -162,5 +171,25 @@
 			<ref id="12"/>
 			<ref id="8"/>
 		</attribute>
+	</object>
+	<object id="30"
+		type="tl.demo.projectManagement:Contributor"
+	>
+		<attribute name="name"
+			value="A1"
+		/>
+		<attribute name="email"
+			value="a1@example.com"
+		/>
+	</object>
+	<object id="40"
+		type="tl.demo.projectManagement:Contributor"
+	>
+		<attribute name="name"
+			value="B1"
+		/>
+		<attribute name="email"
+			value="b1@example.com"
+		/>
 	</object>
 </objects>

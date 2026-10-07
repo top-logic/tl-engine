@@ -1,17 +1,20 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
+import type { ChildControlJson } from '../state/control-state';
 import { createChildContext, unmount, TLControlContext } from './tl-react-bridge';
 
 /**
- * Descriptor for a server-defined child control, as sent in the parent's state.
+ * Descriptor for a server-defined child control, as sent in the parent's state: a
+ * {@link ChildControlJson}, which always carries its ID, its component and its state object.
  */
-export interface ChildDescriptor {
-  controlId: string;
-  module: string;
-  state: Record<string, unknown>;
-  /** Source .view.xml path when this child is a view boundary; stamped as data-view-source. */
-  viewSource?: string;
-}
+export type ChildDescriptor = Omit<Partial<ChildControlJson>, 'state'>
+  & Required<Pick<ChildControlJson, 'controlId' | 'module'>>
+  & { state: Record<string, unknown> };
+
+/**
+ * The serialized descriptor state last applied to a child's store, by store.
+ */
+const appliedDescriptors = new WeakMap<object, string>();
 
 /**
  * Generic component that renders a server-described child control.
@@ -50,11 +53,21 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
   // item) reflects the update instead of waiting for a remount. Keyed on the serialized
   // state so this only fires when the embedded state actually changes — controls that update
   // solely via their own SSE patches keep a constant descriptor.state and are unaffected.
+  //
+  // A descriptor is applied to a store once. A parent that renders the child at another place
+  // (e.g. a list switching between its edit and its display layout) remounts it with the
+  // descriptor it already held; the store survives the remount (see createChildContext) and has
+  // received the child's own patches since, so applying that descriptor again would turn the
+  // child back to the state it had when the parent last serialized it.
   const stateKey = JSON.stringify(descriptor.state);
   useEffect(() => {
+    if (appliedDescriptors.get(childCtx.store) === stateKey) {
+      return;
+    }
+    appliedDescriptors.set(childCtx.store, stateKey);
     childCtx.store.applyPatch(descriptor.state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateKey]);
+  }, [childCtx, stateKey]);
 
   // Stamp the view-boundary source path onto this control's real root element (which the
   // component renders with id={controlId}). Done imperatively rather than via a wrapper so the

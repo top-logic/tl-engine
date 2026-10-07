@@ -26,6 +26,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -157,7 +158,8 @@ public class TestNavigateActions extends TestCase {
 	 * Tests that a pop outside of the view layer fails.
 	 */
 	public void testPopOutsideViewContextFails() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 
 		try {
 			new NavigatePopAction().execute(context, null);

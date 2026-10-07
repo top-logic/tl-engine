@@ -21,10 +21,17 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.table.Column;
+import com.top_logic.table.Selection;
+import com.top_logic.table.SelectionMode;
+import com.top_logic.table.SortSpec;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -33,9 +40,10 @@ import com.top_logic.table.impl.ListRowSource;
  * Tests for {@link TableSelectionBinding}.
  *
  * <p>
- * Two tables over disjoint row sets share one selection channel, which is what the binding has to
- * get right: each table displays the value where it has a row for it, and neither table clears a
- * value the other one put there.
+ * Tables over disjoint row sets share one selection channel, which is what the binding has to get
+ * right: each table displays the value where it has a row for it, and no table clears a value
+ * another one put there. A table selecting any number of rows displays a set of keys as the
+ * selection of those rows; one selecting a single row cannot display such a value at all.
  * </p>
  */
 public class TestTableSelectionBinding extends TestCase {
@@ -58,6 +66,12 @@ public class TestTableSelectionBinding extends TestCase {
 	/** A row that appears in the first table only after a refresh. */
 	private static final String CREATED = "created";
 
+	/** A row of the table selecting any number of rows. */
+	private static final String M1 = "m1";
+
+	/** A row of the table selecting any number of rows. */
+	private static final String M2 = "m2";
+
 	private ReactContext _context;
 
 	private ViewChannel _channel;
@@ -74,11 +88,17 @@ public class TestTableSelectionBinding extends TestCase {
 
 	private TableSelectionBinding _bindingB;
 
+	private ListRowSource<String> _rowsM;
+
+	private TableViewControl<String> _tableM;
+
+	private TableSelectionBinding _bindingM;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_channel = new DefaultViewChannel("selection");
 
 		_rowsA = rows(A1, A2);
@@ -163,6 +183,43 @@ public class TestTableSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Tests that a row the filter hides keeps the channel value through a refresh that keeps its
+	 * object: the filter changes what the table displays, not its data.
+	 */
+	public void testFilteredRowKeepsTheValue() {
+		_channel.set(A1);
+		_tableA.search(A2);
+
+		refreshA(A1, A2);
+
+		assertEquals(Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals(A1, _channel.get());
+
+		refreshA(A2);
+
+		assertNull("The filtered row's object is gone from the data.", _channel.get());
+		assertEquals(Set.of(), _tableA.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that a channel value naming a row the filter hides becomes the table's selection, and
+	 * that the value is given up once the row's object is gone from the data.
+	 */
+	public void testValueOfFilteredRowIsSelected() {
+		_tableA.search(A2);
+
+		_channel.set(A1);
+
+		assertEquals(Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals(A1, _channel.get());
+
+		refreshA(A2);
+
+		assertNull("The selected row's object is gone from the data.", _channel.get());
+		assertEquals(Set.of(), _tableA.getSelectedKeys());
+	}
+
+	/**
 	 * Tests that giving up the selection in the table clears the channel.
 	 */
 	public void testDeselectionClearsTheValue() {
@@ -171,6 +228,86 @@ public class TestTableSelectionBinding extends TestCase {
 		_tableA.selectRow(null);
 
 		assertNull(_channel.get());
+	}
+
+	/**
+	 * Tests that a set of row keys is displayed as the selection of all those rows by a table
+	 * selecting any number of them, and that the table's echo does not rewrite the value.
+	 */
+	public void testSetSelectsEveryRowThatHasIt() {
+		setUpMultiTable(M1, M2);
+
+		_channel.set(Set.of(M1, M2));
+
+		assertEquals(Set.of(M1, M2), _tableM.getSelectedKeys());
+		assertEquals("The value is the selection, and the table only displays it.",
+			Set.of(M1, M2), _channel.get());
+	}
+
+	/**
+	 * Tests that a set naming a row the table does not have selects the rows it does have, and
+	 * leaves the value alone - the missing row is somebody else's to display.
+	 */
+	public void testSetWithForeignKeySelectsTheRowsThatArePresent() {
+		setUpMultiTable(M1, M2);
+
+		Set<String> value = Set.of(M1, ELSEWHERE);
+		_channel.set(value);
+
+		assertEquals(Set.of(M1), _tableM.getSelectedKeys());
+		assertEquals("A key no table has a row for is nobody's to drop.", value, _channel.get());
+	}
+
+	/**
+	 * Tests how a selection made in a table selecting any number of rows reaches the channel: as
+	 * the set while there are several, as the object while there is one, as nothing while there is
+	 * none.
+	 */
+	public void testSelectionOfSeveralRowsIsWrittenAsASet() {
+		setUpMultiTable(M1, M2);
+
+		_tableM.selectRows(Set.of(M1, M2));
+		assertEquals(Set.of(M1, M2), _channel.get());
+
+		_tableM.selectRow(M2);
+		assertEquals("One selected row is the object, whatever the table's mode.", M2, _channel.get());
+
+		_tableM.selectRow(null);
+		assertNull(_channel.get());
+	}
+
+	/**
+	 * Tests that a table selecting one row at a time cannot display a set - not even one naming its
+	 * own rows - and does not take it from the table that can.
+	 */
+	public void testTableSelectingOneRowIgnoresASet() {
+		setUpMultiTable(M1, M2);
+
+		Set<String> value = Set.of(A1, A2);
+		_channel.set(value);
+
+		assertEquals("A table selecting one row at a time has no way of showing several.",
+			Set.of(), _tableA.getSelectedKeys());
+		assertEquals("The value belongs to whoever wrote it.", value, _channel.get());
+	}
+
+	/**
+	 * Tests that a refresh that takes some of the displayed selected rows away rewrites the value
+	 * to what is left of the selection, and clears it once nothing is left.
+	 */
+	public void testVanishedRowsLeaveTheSurvivingSelection() {
+		setUpMultiTable(M1, M2);
+		_tableM.selectRows(Set.of(M1, M2));
+
+		refreshM(M1);
+
+		assertEquals("One row of the selection is left, so it is the selection.", M1, _channel.get());
+		assertEquals(Set.of(M1), _tableM.getSelectedKeys());
+
+		refreshM();
+
+		assertNull("Nothing of the selection is left.", _channel.get());
+		assertEquals(Set.of(), _tableM.getSelectedKeys());
 	}
 
 	/**
@@ -186,10 +323,106 @@ public class TestTableSelectionBinding extends TestCase {
 		assertEquals(Set.of(), _tableB.getSelectedKeys());
 	}
 
+	/**
+	 * Tests that the unsaved changes blocking the channel write also block the selection in the
+	 * table: the refused change leaves table and channel on the row they showed, and the
+	 * continuation of the veto makes both follow once the changes are discarded.
+	 */
+	public void testRefusedSelectionKeepsTableAndValueOnTheOldRow() {
+		_channel.set(A1);
+		StubHandler handler = vetoWhileDirty(_channel);
+
+		ChannelVetoException caught = null;
+		try {
+			_tableA.selectRow(A2);
+			fail("Expected ChannelVetoException");
+		} catch (ChannelVetoException ex) {
+			caught = ex;
+		}
+
+		assertEquals("The unsaved changes that refused the selection are reported.",
+			List.<StateHandler> of(handler), caught.getDirtyHandlers());
+		assertEquals("The table shows the row it showed before.", Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals("The value is the one the table shows.", A1, _channel.get());
+
+		handler.executeDiscard();
+		caught.getContinuation().run();
+
+		assertEquals("The discarded changes let the value through.", A2, _channel.get());
+		assertEquals("The table follows the value it could not write before.",
+			Set.of(A2), _tableA.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that a refused selection that is never retried - the user cancels the dialog the veto
+	 * opens - leaves table and channel on the same row.
+	 */
+	public void testCancelledSelectionLeavesTableAndValueConsistent() {
+		_channel.set(A1);
+		StubHandler handler = vetoWhileDirty(_channel);
+
+		try {
+			_tableA.selectRow(A2);
+			fail("Expected ChannelVetoException");
+		} catch (ChannelVetoException ex) {
+			// The user cancels: nothing of the change runs.
+		}
+
+		assertTrue("Nothing was discarded.", handler.isDirty());
+		assertEquals(Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals(A1, _channel.get());
+	}
+
+	/**
+	 * Registers a veto listener on the given channel answering with a dirty stub handler.
+	 */
+	private static StubHandler vetoWhileDirty(ViewChannel channel) {
+		StubHandler handler = new StubHandler();
+		channel.addVetoListener((sender, oldValue, newValue) -> handler.isDirty()
+			? List.<StateHandler> of(handler) : List.<StateHandler> of());
+		return handler;
+	}
+
+	/**
+	 * A {@link StateHandler} stub standing for a form with unsaved changes.
+	 */
+	private static class StubHandler implements StateHandler {
+
+		private boolean _dirty = true;
+
+		@Override
+		public boolean isDirty() {
+			return _dirty;
+		}
+
+		@Override
+		public boolean hasErrors() {
+			return false;
+		}
+
+		@Override
+		public void executeSave() {
+			_dirty = false;
+		}
+
+		@Override
+		public void executeDiscard() {
+			_dirty = false;
+		}
+
+		@Override
+		public String getDescription() {
+			return "detailForm";
+		}
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		_bindingA.dispose();
 		_bindingB.dispose();
+		if (_bindingM != null) {
+			_bindingM.dispose();
+		}
 		super.tearDown();
 	}
 
@@ -220,9 +453,31 @@ public class TestTableSelectionBinding extends TestCase {
 		return List.<Column<String, ?>> of(DefaultColumn.<String, String> builder(COLUMN_VALUE, row -> row).build());
 	}
 
-	/** A table over the given rows. */
+	/** A table over the given rows, selecting one row at a time. */
 	private TableViewControl<String> table(ListRowSource<String> rows) {
-		return new TableViewControl<>(_context, DefaultTableView.create(columns(), rows), false);
+		return table(rows, SelectionMode.SINGLE);
+	}
+
+	/** A table over the given rows, selecting rows in the given mode. */
+	private TableViewControl<String> table(ListRowSource<String> rows, SelectionMode mode) {
+		List<Column<String, ?>> columns = columns();
+		TableViewState state = DefaultTableView.initialState(columns, SortSpec.NONE, Set.of());
+		state.setSelection(Selection.none(mode));
+		return new TableViewControl<>(_context, new DefaultTableView<>(columns, rows, state), false);
+	}
+
+	/**
+	 * Adds a table selecting any number of rows over the given elements to the shared channel.
+	 */
+	private void setUpMultiTable(String... elements) {
+		_rowsM = rows(elements);
+		_tableM = table(_rowsM, SelectionMode.MULTI);
+		_bindingM = new TableSelectionBinding(_tableM, _channel);
+	}
+
+	/** Refreshes the rows of the table selecting any number of rows, as its owner does. */
+	private void refreshM(String... elements) {
+		refresh(_rowsM, _tableM, _bindingM, elements);
 	}
 
 	/** Suite requiring the resources the table builds its column headers from. */

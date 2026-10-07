@@ -16,9 +16,16 @@ register('TLCodeEditor', TLCodeEditor);
 
 // Reusable surface for specialized editors.
 export { default as CodeEditor } from './controls/CodeEditor';
-export type { CodeEditorProps, CodeEditorDiagnostic } from './controls/CodeEditor';
+export type {
+  CodeEditorProps, CodeEditorDiagnostic, CodeEditorHover, CodeEditorHoverSource,
+} from './controls/CodeEditor';
 
 // Shared runtime primitives (single instance owned by this bundle).
 export { LRLanguage, LanguageSupport } from '@codemirror/language';
 export { styleTags, tags } from '@lezer/highlight';
 export { LRParser } from '@lezer/lr';
+
+// Types of the CodeMirror objects that the CodeEditor callbacks receive, declared by this bundle's
+// CodeMirror copy, so a downstream editor type-checks its callbacks against the same declarations.
+export type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+export type { EditorView } from '@codemirror/view';

@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that {@link ReactPanelControl} propagates {@link ReactControl#attach() attach} and
@@ -33,7 +34,8 @@ public class TestReactPanelControl extends TestCase {
 	 * detach.
 	 */
 	public void testPropagatesAttachToContent() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		ReactControl child = new ReactStackControl(context, List.of());
 		ReactPanelControl panel =
 			new ReactPanelControl(context, "title", child, null, null, false, false, false);

@@ -92,6 +92,8 @@ public class ReferenceElement implements UIElement {
 
 	private final List<ChannelBindingConfig> _bindings;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ReferenceElement} from configuration.
 	 */
@@ -99,6 +101,7 @@ public class ReferenceElement implements UIElement {
 	public ReferenceElement(InstantiationContext context, Config config) {
 		_viewPath = config.getView();
 		_bindings = config.getBindings();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -139,6 +142,7 @@ public class ReferenceElement implements UIElement {
 		ReloadableControl viewControl = new ReloadableControl(fullPath, childContext,
 			(ReactControl) referencedView.createControl(childContext));
 		viewControl.setViewSource(fullPath);
+		viewControl.setCssClass(_cssClass);
 		return viewControl;
 	}
 }

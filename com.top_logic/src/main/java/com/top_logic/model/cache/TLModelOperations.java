@@ -40,10 +40,12 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
+import com.top_logic.model.annotate.ui.TLDynamicColor;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
 import com.top_logic.model.annotate.ui.TLIDColumn;
 import com.top_logic.model.annotate.ui.TLLabel;
 import com.top_logic.model.annotate.ui.TLTooltip;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -342,6 +344,29 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves the {@link ValueColorProvider} for a given {@link TLType}.
+	 * 
+	 * @see TLDynamicColor#getColorProvider()
+	 */
+	public ValueColorProvider getColorProvider(TLType type) {
+		return computeColorProvider(type);
+	}
+
+	/**
+	 * Builds the {@link ValueColorProvider} the {@link TLDynamicColor} annotation of the given type
+	 * configures, {@link ValueColorProvider#NONE} for a type without that annotation.
+	 * 
+	 * @see #getColorProvider(TLType)
+	 */
+	protected ValueColorProvider computeColorProvider(TLType type) {
+		TLDynamicColor annotation = type.getAnnotation(TLDynamicColor.class);
+		if (annotation == null) {
+			return ValueColorProvider.NONE;
+		}
+		return TypedConfigUtil.createInstance(annotation.getColorProvider());
 	}
 
 	/**

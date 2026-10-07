@@ -3,7 +3,7 @@
 // IMPORTANT: React is imported from 'tl-react-bridge' (not 'react') to share the single React
 // instance. Language packages are imported directly because this component lives in the same
 // bundle as CodeEditor, i.e. shares this bundle's single CodeMirror runtime.
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, fieldInputId, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import type { Extension } from '@codemirror/state';
 import { LanguageSupport } from '@codemirror/language';
@@ -93,6 +93,8 @@ function bindingFor(language: string): LanguageBinding {
  * {@code language} state contributed by the server-side control.
  */
 const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
   const language = (state.language as string) ?? 'plain';
   const readOnly = state.editable === false;
@@ -112,7 +114,8 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       languageSupport={binding.support}
       extraExtensions={binding.extras}
       onChange={setValue}
-      className={cls}
+      className={rootClassName(state, cls)}
+      contentAttributes={{ id: inputId, ...labelProps }}
     />
   );
 };

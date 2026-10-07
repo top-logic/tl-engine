@@ -5,13 +5,13 @@
  */
 
 /**
- * Photo capture and viewer controls for the React integration.
+ * Photo capture for the React integration.
  *
  * <p>
  * Provides {@link com.top_logic.layout.react.control.photo.ReactPhotoCaptureControl} which captures
- * a photo on the client via the {@code getUserMedia} API and uploads the image to the server, and
- * {@link com.top_logic.layout.react.control.photo.ReactPhotoViewerControl} which displays the
- * captured photo inline.
+ * a photo on the client via the {@code getUserMedia} API and uploads the image to the server. The
+ * captured photo is displayed by
+ * {@link com.top_logic.layout.react.control.image.ReactImageControl}.
  * </p>
  */
 package com.top_logic.layout.react.control.photo;

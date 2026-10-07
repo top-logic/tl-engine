@@ -102,12 +102,15 @@ public class SessionTimeoutNoticeElement implements UIElement {
 
 	private final long _leadMillis;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SessionTimeoutNoticeElement} from configuration.
 	 */
 	@CalledByReflection
 	public SessionTimeoutNoticeElement(InstantiationContext context, Config config) {
 		_leadMillis = config.getLeadSeconds() * 1000L;
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -144,6 +147,7 @@ public class SessionTimeoutNoticeElement implements UIElement {
 			control.addCleanupAction(() -> registry.removeActivityListener(countdown));
 		}
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

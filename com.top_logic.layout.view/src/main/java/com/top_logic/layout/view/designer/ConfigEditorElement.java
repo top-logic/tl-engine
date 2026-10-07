@@ -112,6 +112,7 @@ public class ConfigEditorElement implements UIElement {
 		ViewChannel inputChannel = context.resolveChannel(_config.getInput());
 
 		EditorWrapperControl wrapper = new EditorWrapperControl(context);
+		wrapper.setCssClass(_config.getCssClass());
 
 		// Build initial editor if a node is already selected.
 		Object initialValue = inputChannel.get();

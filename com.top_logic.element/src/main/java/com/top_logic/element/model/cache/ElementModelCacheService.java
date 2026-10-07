@@ -12,6 +12,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.model.cache.TLModelCache;
 import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link TLModelCacheService} accessing objects from tl-element.
@@ -44,6 +45,21 @@ public class ElementModelCacheService extends TLModelCacheService {
 		}
 		ElementModelCacheEntry cacheValue = (ElementModelCacheEntry) implementationInstance().getCache().getValue();
 		return cacheValue.getModelTables();
+	}
+
+	/**
+	 * The model tables for the application model, also when this service is not active.
+	 * 
+	 * <p>
+	 * When this service is active, the cached {@link #getModelTables()} are returned. Otherwise,
+	 * the model tables are computed from the current application model.
+	 * </p>
+	 */
+	public static ModelTables getApplicationModelTables() {
+		if (Module.INSTANCE.isActive()) {
+			return getModelTables();
+		}
+		return new ModelTables(ModelService.getApplicationModel());
 	}
 
 	private static ElementModelCacheService implementationInstance() {

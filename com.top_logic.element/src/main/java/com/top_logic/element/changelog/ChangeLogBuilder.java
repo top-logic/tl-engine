@@ -45,6 +45,7 @@ import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
@@ -61,6 +62,23 @@ import com.top_logic.util.model.ModelService;
  * change log.
  */
 public class ChangeLogBuilder {
+
+	/**
+	 * Factor by which more revisions are read than entries are still missing, since not every
+	 * revision contains a reported change.
+	 */
+	private static final double CHUNK_OVERSIZE_FACTOR = 1.5;
+
+	/**
+	 * Factor by which the number of revisions read backwards grows, when a chunk of revisions did
+	 * not deliver enough entries.
+	 */
+	private static final long CHUNK_GROWTH_FACTOR = 2;
+
+	/**
+	 * Maximum number of revisions a chunk grows to by {@link #CHUNK_GROWTH_FACTOR}.
+	 */
+	private static final long MAX_CHUNK_SIZE = 1024;
 
 	private final KnowledgeBase _kb;
 
@@ -92,7 +110,7 @@ public class ChangeLogBuilder {
 		_model = model;
 		_hm = kb.getHistoryManager();
 
-		_startRev = _hm.getRevision(1);
+		_startRev = toRevision(_hm.getFirstRevision());
 		_stopRev = toRevision(_hm.getLastRevision());
 	}
 
@@ -117,8 +135,9 @@ public class ChangeLogBuilder {
 		if (maxTime > 0) {
 			long startTime = System.currentTimeMillis() - maxTime;
 			Revision startRev = _hm.getRevisionAt(startTime);
-			if (startRev.getCommitNumber() < 1) {
-				startRev = _hm.getRevision(1);
+			long firstRev = _hm.getFirstRevision();
+			if (startRev.getCommitNumber() < firstRev) {
+				startRev = toRevision(firstRev);
 			}
 			setStartRev(startRev);
 		}
@@ -263,6 +282,9 @@ public class ChangeLogBuilder {
 		Revision effectiveStartRev = _filter == null ? _startRev : _filter.adjustStartRev(_startRev);
 
 		List<LongRange> revisionRanges = getRevisionRanges(effectiveStartRev);
+
+		// Number of revisions read in the last chunk, grows while too few entries are found.
+		long chunkSize = 0;
 		processRevisions:
 		for (int i = revisionRanges.size() - 1; i >= 0; i--) {
 			LongRange range = revisionRanges.get(i);
@@ -273,10 +295,13 @@ public class ChangeLogBuilder {
 			if (limitEntryCount()) {
 				while (true) {
 					/* Fetch a little bit more revisions than required because there may be
-					 * additional empty or technical changes, which are not reported. */
-					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
+					 * additional empty or technical changes, which are not reported. When the
+					 * previous chunk did not deliver enough entries, the revisions with reported
+					 * changes are sparse: Increase the chunk size to reach them in few steps. */
+					long estimate = (long) ((_numberEntries - log.size()) * CHUNK_OVERSIZE_FACTOR);
+					chunkSize = Long.max(estimate, Long.min(MAX_CHUNK_SIZE, chunkSize * CHUNK_GROWTH_FACTOR));
 
-					long chunkStart = Long.max(start, stop - maxFetchEntries);
+					long chunkStart = Long.max(start, stop - chunkSize);
 					readDescending(log, revertedBy, chunkStart, stop);
 
 					int remaining = _numberEntries - log.size();
@@ -407,7 +432,7 @@ public class ChangeLogBuilder {
 					new TransientChangeSet(analyzer::applyChanges, TransientChangeSet.CHANGES_ATTR);
 				entry.setDate(new Date(revision.getDate()));
 				entry.setRevision(revision);
-				entry.setParentRev(_hm.getRevision(changeSet.getRevision() - 1));
+				entry.setParentRev(HistoryUtils.getPreviousRevision(_hm, changeSet.getRevision()));
 				entry.setMessage(revision.getLog());
 				entry.setAuthor(author);
 

@@ -15,6 +15,7 @@
 				initial-edit-mode="true"
 				input="comment"
 				mode-switch="false"
+				with-inset="true"
 			>
 				<field attribute="cited"/>
 				<field
@@ -60,6 +61,13 @@
 							<en>Add comment</en>
 							<de>Kommentar hinzufügen</de>
 						</label>
+						<executability>
+							<model-access
+								container="ticket"
+								operation="Create"
+								reference="comments"
+							/>
+						</executability>
 						<store-form-state/>
 						<link-element/>
 					</generic-command>

@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.basic.util;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import junit.framework.TestCase;
 
 import com.top_logic.basic.util.StopWatch;
@@ -78,4 +80,41 @@ public class TestStopWatch extends TestCase {
 		assertTrue(t2 == 0);
 	}
 	
+	public void testCustomClock() {
+		AtomicLong clock = new AtomicLong(1000);
+		StopWatch watch = new StopWatch(clock::get);
+		assertFalse(watch.isThreadCpuTime());
+
+		watch.start();
+		clock.addAndGet(5 * MILLI);
+		assertEquals(5 * MILLI, watch.getElapsedNanos());
+		assertEquals(5, watch.getElapsedMillis());
+
+		clock.addAndGet(2 * MILLI);
+		watch.stop();
+		clock.addAndGet(SECOND);
+		assertEquals(7 * MILLI, watch.getElapsedNanos());
+
+		watch.start();
+		clock.addAndGet(3 * MILLI);
+		watch.stop();
+		assertEquals(10 * MILLI, watch.getElapsedNanos());
+		assertEquals(10, watch.getElapsedMillis());
+	}
+
+	public void testThreadCpuTimeExcludesSleep() throws InterruptedException {
+		StopWatch cpuWatch = StopWatch.createStartedThreadCpuWatch();
+		StopWatch wallWatch = StopWatch.createStartedWatch();
+		Thread.sleep(200);
+		wallWatch.stop();
+		cpuWatch.stop();
+
+		if (!cpuWatch.isThreadCpuTime()) {
+			// Thread CPU time is not supported by this JVM, the watch measures wall-clock time.
+			return;
+		}
+		assertTrue("CPU time " + cpuWatch + " not much less than wall-clock time " + wallWatch,
+			cpuWatch.getElapsedNanos() < wallWatch.getElapsedNanos() / 2);
+	}
+
 }

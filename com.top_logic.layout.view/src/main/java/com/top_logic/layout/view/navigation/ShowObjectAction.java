@@ -84,37 +84,6 @@ public class ShowObjectAction extends InterruptibleViewAction {
 	}
 
 	/**
-	 * The {@link Continuation} of the surrounding chain, resumed with the value the chain had before
-	 * the object was displayed.
-	 */
-	private static final class ResumeWith implements Continuation {
-
-		private final Continuation _chain;
-
-		private final Object _input;
-
-		ResumeWith(Continuation chain, Object input) {
-			_chain = chain;
-			_input = input;
-		}
-
-		@Override
-		public void resume(Object value) {
-			_chain.resume(_input);
-		}
-
-		@Override
-		public void abort() {
-			_chain.abort();
-		}
-
-		@Override
-		public void onAbort(Runnable compensation) {
-			_chain.onAbort(compensation);
-		}
-	}
-
-	/**
 	 * The object the given input displays.
 	 *
 	 * @param input

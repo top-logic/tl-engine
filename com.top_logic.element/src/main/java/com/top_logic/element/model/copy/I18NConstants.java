@@ -19,6 +19,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_CREATE_PERMISSION_DENIED__TYPE;
 
+	/**
+	 * @en Creation not allowed: You may not create objects of type "{0}".
+	 */
+	public static ResKey1 ERROR_PERSIST_PERMISSION_DENIED__TYPE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

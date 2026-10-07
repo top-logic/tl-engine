@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 interface NodeState {
@@ -12,7 +12,17 @@ interface NodeState {
   content: unknown;
 }
 
+const I18N_KEYS = {
+  'js.treeView.expand': 'Expand',
+  'js.treeView.collapse': 'Collapse',
+};
+
 const INDENT_PX = 20;
+
+/** What the expansion toggle of a node in the given state does. */
+function toggleLabel(i18n: Record<string, string>, expanded: boolean): string {
+  return expanded ? i18n['js.treeView.collapse'] : i18n['js.treeView.expand'];
+}
 
 // The commands of the server-side tree control.
 const EXPAND_COMMAND = 'expand';
@@ -36,6 +46,7 @@ const MULTI_SELECTION = 'multi';
 const TLTreeView: React.FC<TLCellProps> = () => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
 
   const nodes = (state.nodes as NodeState[]) ?? [];
   const selectionMode = (state.selectionMode as string) ?? SINGLE_SELECTION;
@@ -268,7 +279,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     <ul
       ref={listRef}
       role="tree"
-      className="tlTreeView"
+      className={rootClassName(state, 'tlTreeView')}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
@@ -314,7 +325,8 @@ const TLTreeView: React.FC<TLCellProps> = () => {
                 handleToggle(node.id, node.expanded);
               }}
               tabIndex={-1}
-              aria-label={node.expanded ? 'Collapse' : 'Expand'}
+              aria-label={toggleLabel(i18n, node.expanded)}
+              {...tooltipProps(toggleLabel(i18n, node.expanded))}
             >
               {node.loading ? (
                 <span className="tlTreeView__spinner" />

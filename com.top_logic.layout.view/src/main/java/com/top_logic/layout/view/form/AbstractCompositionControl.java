@@ -12,17 +12,22 @@ import java.util.function.Consumer;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.table.CellEditing;
+import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Base class for form controls that display and edit a set of row objects inline.
@@ -117,6 +122,12 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 * content; when the binding is not available (e.g. the current object's type does not declare
 	 * the bound attribute), builds empty view-mode content.
 	 * </p>
+	 *
+	 * <p>
+	 * When the form is already in edit mode (e.g. the control is created lazily within a tab of a
+	 * form that is opened in edit mode), the edit session of this control starts right away, as it
+	 * does for a control that observes the form entering edit mode.
+	 * </p>
 	 */
 	public void init() {
 		TLObject currentObject = _formControl.getCurrentObject();
@@ -124,7 +135,11 @@ public abstract class AbstractCompositionControl extends ReactControl
 			buildContent(List.of(), false);
 			return;
 		}
-		buildContent(_binding.readRows(currentObject), _formControl.isEditMode());
+		if (_formControl.isEditMode()) {
+			enterEditMode(currentObject);
+		} else {
+			buildContent(_binding.readRows(currentObject), false);
+		}
 	}
 
 	/**
@@ -396,13 +411,60 @@ public abstract class AbstractCompositionControl extends ReactControl
 
 		boolean valid = !_fieldModel.hasError();
 		for (CompositionRowModel row : _rowModels) {
-			for (AttributeFieldModel colModel : row.getColumnModels().values()) {
+			for (BoundFieldModel colModel : row.getColumnModels().values()) {
 				if (colModel.hasError()) {
 					valid = false;
 				}
 			}
 		}
 		return valid;
+	}
+
+	/**
+	 * Checks the write right of every changed row and the right to create every added row.
+	 *
+	 * <p>
+	 * A row added to the rows of a persistent form object is created when the form is saved: the
+	 * user needs the right to create an object of its type in the context of the form object and,
+	 * for rows of an attribute of the form object, the right to write that attribute. Rows of a
+	 * transient form object become persistent together with it, where that creation is checked.
+	 * </p>
+	 */
+	@Override
+	public void checkApplyState() {
+		if (_fieldModel == null) {
+			return;
+		}
+		for (CompositionRowModel row : _rowModels) {
+			TLObjectOverlay overlay = row.getRowOverlay();
+			if (overlay != null && overlay.isDirty()) {
+				overlay.checkApply();
+			}
+		}
+		if (!isTransientOwner()) {
+			checkCreateRights();
+		}
+	}
+
+	private void checkCreateRights() {
+		TLObjectOverlay formOverlay = _formControl.getOverlay();
+		TLObject parent = formOverlay != null ? formOverlay.getBase() : null;
+		TLStructuredTypePart part = parent != null ? _binding.getBoundPart() : null;
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		for (TLObject row : _fieldModel.getCurrentList()) {
+			if (row instanceof TLObjectOverlay || !row.tTransient()) {
+				continue;
+			}
+			TLClass type = (TLClass) row.tType();
+			boolean allowed = part == null
+				? rights.isAllowedCreate(user, type, (TLObject) null)
+				: rights.isAllowedCreate(user, parent, part, type);
+			if (!allowed) {
+				throw new TopLogicException(
+					com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));
+			}
+		}
 	}
 
 	@Override
@@ -480,7 +542,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 			_fieldModel.setRevealed(true);
 		}
 		for (CompositionRowModel row : _rowModels) {
-			for (AttributeFieldModel colModel : row.getColumnModels().values()) {
+			for (BoundFieldModel colModel : row.getColumnModels().values()) {
 				colModel.setRevealed(true);
 			}
 		}
@@ -529,8 +591,10 @@ public abstract class AbstractCompositionControl extends ReactControl
 		}
 		TLClass targetType = createTypes.get(0);
 
-		// Create transient object.
-		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType);
+		// Create the transient object within the form object, so that it navigates to its owner
+		// (e.g. in an options expression) before it is stored.
+		TLObject owner = _formControl.getOverlay().getBase();
+		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType, owner);
 		if (initializer != null) {
 			initializer.accept(transientObject);
 		}
@@ -644,50 +708,63 @@ public abstract class AbstractCompositionControl extends ReactControl
 	// -- Cell Model Support --
 
 	/**
-	 * Builds the editable control for a cell: the attribute's field control bound to the cell's
-	 * {@link AttributeFieldModel}, which is created once per row and column (resolved through
-	 * {@link FieldControlService}, so enums and references edit as selects) and wired for validation
-	 * and dirty tracking.
+	 * Builds the editable control for a cell: the control the column's {@link CellEditing} says the
+	 * value is entered with, bound to the field model of that cell, which is created once per row
+	 * and column and wired for validation and dirty tracking.
 	 *
 	 * @param context
 	 *        The React context for control creation.
 	 * @param row
 	 *        The row object (overlay or transient).
-	 * @param columnName
-	 *        The model attribute name of the column.
-	 * @return The editable cell control, or {@code null} if the cell cannot be edited (the attribute
-	 *         does not resolve or the row is not part of the session).
+	 * @param column
+	 *        The column whose cell is edited.
+	 * @return The editable cell control, or {@code null} if the cell cannot be edited (the column
+	 *         offers no edit on this row, or the row is not part of the session).
 	 */
-	protected final ReactControl buildEditCellControl(ReactContext context, TLObject row, String columnName) {
-		TLStructuredType type = row.tType();
-		TLStructuredTypePart part = type.getPart(columnName);
-		if (part == null) {
+	protected final ReactControl buildEditCellControl(ReactContext context, TLObject row, ColumnSetup column) {
+		CellEditing editing = column.editing();
+		if (editing == null || !editing.canEdit(row)) {
 			return null;
 		}
 		CompositionRowModel rowModel = findRowModel(row);
 		if (rowModel == null) {
 			return null;
 		}
-		AttributeFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
+		String columnName = column.name();
+		BoundFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
 		if (cellFieldModel == null) {
-			cellFieldModel = FieldControlService.getInstance().createModel(row, part, _formControl);
+			cellFieldModel = editing.createModel(row, _formControl);
 			cellFieldModel.setEditable(true);
 			rowModel.putColumnModel(columnName, cellFieldModel);
 
-			// Wire validation from FormValidationModel to this cell.
-			wireCellValidation(cellFieldModel, row, part);
-
-			// Add dirty propagation and live validation trigger.
-			addCellListener(cellFieldModel, row);
+			wireCell(cellFieldModel, row);
 		}
-		return FieldControlService.getInstance().createFieldControl(context, part, cellFieldModel);
+		return editing.createControl(context, row, cellFieldModel);
+	}
+
+	/**
+	 * Wires a freshly created cell model into the form: the validation of the attribute it edits,
+	 * dirty propagation and the live re-evaluation of constraints.
+	 *
+	 * <p>
+	 * Constraints are declared on attributes, so a cell holding a value no attribute holds has none
+	 * to show.
+	 * </p>
+	 */
+	private void wireCell(BoundFieldModel cellFieldModel, TLObject row) {
+		TLStructuredTypePart part =
+			cellFieldModel instanceof AttributeFieldModel attributeModel ? attributeModel.getPart() : null;
+		if (part != null) {
+			wireCellValidation(cellFieldModel, row, part);
+		}
+		addCellListener(cellFieldModel, row, part);
 	}
 
 	/**
 	 * Wires a {@link ConstraintValidationListener} that propagates validation results from the
-	 * {@link FormValidationModel} to the cell's {@link AttributeFieldModel}.
+	 * {@link FormValidationModel} to the cell's field model.
 	 */
-	protected final void wireCellValidation(AttributeFieldModel model, TLObject rowObject,
+	protected final void wireCellValidation(BoundFieldModel model, TLObject rowObject,
 			TLStructuredTypePart part) {
 		FormValidationModel validationModel = _registeredValidationModel;
 		if (validationModel == null) {
@@ -711,8 +788,17 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 * Adds a listener to a cell field model that propagates dirty state, reveals the field after
 	 * user interaction, and triggers live constraint re-evaluation via the
 	 * {@link FormValidationModel}.
+	 *
+	 * @param cellFieldModel
+	 *        The field model holding the cell's edited value.
+	 * @param rowObject
+	 *        The row the cell belongs to.
+	 * @param part
+	 *        The attribute the cell writes to, or {@code null} for a cell holding a value no
+	 *        attribute holds - there is then no constraint to re-evaluate.
 	 */
-	protected final void addCellListener(AttributeFieldModel cellFieldModel, TLObject rowObject) {
+	protected final void addCellListener(BoundFieldModel cellFieldModel, TLObject rowObject,
+			TLStructuredTypePart part) {
 		cellFieldModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
@@ -723,8 +809,8 @@ public abstract class AbstractCompositionControl extends ReactControl
 
 				// Trigger live constraint re-evaluation.
 				FormValidationModel validationModel = _registeredValidationModel;
-				if (validationModel != null) {
-					validationModel.onValueChanged(rowObject, cellFieldModel.getPart());
+				if (validationModel != null && part != null) {
+					validationModel.onValueChanged(rowObject, part);
 				}
 			}
 

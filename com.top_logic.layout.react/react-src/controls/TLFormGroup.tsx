@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -6,6 +6,15 @@ const { useCallback } = React;
 const I18N_KEYS = {
   'js.formGroup.collapse': 'Collapse',
   'js.formGroup.expand': 'Expand',
+};
+
+/** Points right; the package's toggle rotates it when `aria-expanded` is true. */
+const CHEVRON = 'css:fa-solid fa-chevron-right';
+
+/** The class of the group's border: a subtle one is a separator line, an outlined one a frame. */
+const BORDER_CLASS: Record<string, string> = {
+  subtle: 'tl-form-group--separator',
+  outlined: 'tl-form-group--outlined',
 };
 
 /**
@@ -19,6 +28,7 @@ const I18N_KEYS = {
  * - collapsed: boolean
  * - border: "none" | "subtle" | "outlined"
  * - fullLine: boolean
+ * - hidden: boolean
  * - children: ChildDescriptor[]
  */
 const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
@@ -33,6 +43,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   const border = (state.border as string) ?? 'none';
   const fullLine = state.fullLine === true;
   const children = (state.children as unknown[]) ?? [];
+  const hidden = state.hidden === true;
 
   const hasHeader = headerControl != null || headerActions.length > 0 || collapsible;
 
@@ -40,36 +51,38 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('toggleCollapse');
   }, [sendCommand]);
 
+  const toggleLabel = collapsed ? i18n['js.formGroup.expand'] : i18n['js.formGroup.collapse'];
+  const bodyId = `${controlId}-body`;
+
   const className = [
-    'tlFormGroup',
-    `tlFormGroup--border-${border}`,
-    fullLine ? 'tlFormGroup--fullLine' : '',
-    collapsed ? 'tlFormGroup--collapsed' : '',
+    'tl-form-group',
+    BORDER_CLASS[border] ?? '',
+    fullLine ? 'tl-form-group--full' : '',
   ].filter(Boolean).join(' ');
 
+  // A hidden group is hidden via CSS instead of not being rendered, like an invisible form field:
+  // unmounting its children would drop their SSE subscriptions.
   return (
-    <div id={controlId} className={className}>
+    <div id={controlId} className={rootClassName(state, className)} style={hidden ? { display: 'none' } : undefined}>
       {hasHeader && (
-        <div className="tlFormGroup__header">
+        <div className="tl-form-group__header">
           {collapsible && (
-            <button type="button" className="tlFormGroup__collapseToggle"
+            <button type="button" className="tl-toggle"
               onClick={handleToggle}
               aria-expanded={!collapsed}
-              title={collapsed ? i18n['js.formGroup.expand'] : i18n['js.formGroup.collapse']}>
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
-                className={collapsed ? 'tlFormGroup__chevron--collapsed' : 'tlFormGroup__chevron'}>
-                <polyline points="4,6 8,10 12,6" fill="none" stroke="currentColor"
-                  strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              aria-controls={bodyId}
+              aria-label={toggleLabel}
+              {...tooltipProps(toggleLabel)}>
+              <ThemeIcon encoded={CHEVRON} className="tl-icon-sm" />
             </button>
           )}
           {headerControl && (
-            <span className="tlFormGroup__title">
+            <span className="tl-form-group__title tl-type-heading-sm">
               <TLChild control={headerControl} />
             </span>
           )}
           {headerActions.length > 0 && (
-            <div className="tlFormGroup__actions">
+            <div className="tl-form-group__actions">
               {headerActions.map((action, i) => (
                 <TLChild key={i} control={action} />
               ))}
@@ -77,7 +90,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       )}
-      <div className="tlFormGroup__body">
+      <div id={bodyId} className="tl-form-group__body" hidden={collapsed}>
         {children.map((child, i) => (
           <TLChild key={i} control={child} />
         ))}

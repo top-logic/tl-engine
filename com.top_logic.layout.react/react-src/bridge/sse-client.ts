@@ -21,11 +21,11 @@ import {
 } from './window-manager';
 import {
   handleRouteChangeEvent,
-  handleRouteVetoEvent,
+  handleRouteResumeEvent,
   type RouteChangeEventData,
-  type RouteVetoEventData,
+  type RouteResumeEventData,
 } from './route-sync';
-import { handleViewPick, type ViewPickEventData } from './view-picker';
+import { handlePick, type PickEventData } from './element-picker';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -220,11 +220,11 @@ function dispatch(data: unknown): void {
     case 'RouteChangeEvent':
       handleRouteChangeEvent(payload as unknown as RouteChangeEventData);
       break;
-    case 'RouteVetoEvent':
-      handleRouteVetoEvent(payload as unknown as RouteVetoEventData);
+    case 'RouteResumeEvent':
+      handleRouteResumeEvent(payload as unknown as RouteResumeEventData);
       break;
-    case 'ViewPickEvent':
-      handleViewPick(payload as unknown as ViewPickEventData);
+    case 'PickEvent':
+      handlePick(payload as unknown as PickEventData);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);
@@ -312,9 +312,12 @@ export const DOMActionProcessor = {
   functionCall(data: FunctionCallData): void {
     try {
       const args = JSON.parse(data.arguments) as unknown[];
+      // The global object addresses script objects by server-sent name.
+      const globals: object = window;
+      const globalsByName = globals as Record<string, unknown>;
       const ref = data.functionRef
-        ? (window as Record<string, unknown>)[data.functionRef] as Record<string, unknown>
-        : window as unknown as Record<string, unknown>;
+        ? globalsByName[data.functionRef] as Record<string, unknown> | undefined
+        : globalsByName;
       const fn = ref?.[data.functionName];
       if (typeof fn === 'function') {
         fn.apply(ref, args);

@@ -13,7 +13,6 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -24,8 +23,9 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -48,14 +48,11 @@ public class ChartElement implements UIElement {
 	 * Configuration for {@link ChartElement}.
 	 */
 	@TagName("chart")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(ChartElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getData()}. */
 		String DATA = "data";
@@ -69,18 +66,8 @@ public class ChartElement implements UIElement {
 		/** Configuration name for {@link #getZoomEnabled()}. */
 		String ZOOM_ENABLED = "zoomEnabled";
 
-		/** Configuration name for {@link #getCSSClass()}. */
-		String CSS_CLASS = "cssClass";
-
 		/** Configuration name for {@link #getNoDataMessage()}. */
 		String NO_DATA_MESSAGE = "noDataMessage";
-
-		/**
-		 * Input channels whose values are passed as arguments to the {@link #getData()} function.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * TL-Script expression producing the Chart.js configuration map.
@@ -120,13 +107,6 @@ public class ChartElement implements UIElement {
 		boolean getZoomEnabled();
 
 		/**
-		 * Additional CSS class for the chart container element.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCSSClass();
-
-		/**
 		 * Message shown when the chart has no data. If {@code null}, an empty chart is shown.
 		 */
 		@Name(NO_DATA_MESSAGE)
@@ -156,7 +136,7 @@ public class ChartElement implements UIElement {
 		_dataFun = QueryExecutor.compile(config.getData());
 		_inputs = config.getInputs();
 		_zoomEnabled = config.getZoomEnabled();
-		_cssClass = config.getCSSClass();
+		_cssClass = config.getCssClass();
 		_noDataMessage = config.getNoDataMessage();
 
 		_handlers = new HashMap<>();
@@ -172,13 +152,9 @@ public class ChartElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		List<ViewChannel> channels = _inputs.stream()
-			.map(ref -> context.resolveChannel(ref))
-			.toList();
+		List<ViewChannel> channels = ChannelInputs.resolve(context, _inputs);
 
-		Object[] inputValues = channels.stream()
-			.map(ViewChannel::get)
-			.toArray();
+		Object[] inputValues = ChannelInputs.arguments(channels);
 
 		ReactChartJsControl control = new ReactChartJsControl(
 			context, _dataFun, _handlers, _tooltips,
@@ -188,7 +164,7 @@ public class ChartElement implements UIElement {
 		// Re-evaluate on channel changes.
 		for (ViewChannel channel : channels) {
 			ViewChannel.ChannelListener listener = (sender, oldVal, newVal) -> {
-				Object[] values = channels.stream().map(ViewChannel::get).toArray();
+				Object[] values = ChannelInputs.arguments(channels);
 				control.updateChartData(values);
 			};
 			channel.addListener(listener);

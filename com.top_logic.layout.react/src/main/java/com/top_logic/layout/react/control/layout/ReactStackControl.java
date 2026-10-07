@@ -5,17 +5,18 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
- * A {@link ReactControl} that renders a flexbox container via the {@code TLStack} React component.
+ * A {@link ReactLayoutControl} that renders a flexbox container via the {@code TLStack} React
+ * component.
  */
-public class ReactStackControl extends ReactControl {
+public class ReactStackControl extends ReactLayoutControl {
 
 	private static final String REACT_MODULE = "TLStack";
 
@@ -25,14 +26,14 @@ public class ReactStackControl extends ReactControl {
 
 	private static final String ALIGN = "align";
 
+	/** @see #setJustify(StackJustify) */
+	private static final String JUSTIFY = "justify";
+
+	/** @see #setWrap(boolean) */
 	private static final String WRAP = "wrap";
 
+	/** @see #setGrowFirst(boolean) */
 	private static final String GROW_FIRST = "growFirst";
-
-	private static final String CHILDREN = "children";
-
-	/** @see #setCssClass(String) */
-	private static final String CSS_CLASS = "cssClass";
 
 	/**
 	 * Flex direction.
@@ -112,7 +113,46 @@ public class ReactStackControl extends ReactControl {
 		}
 	}
 
-	private final List<ReactControl> _children;
+	/**
+	 * Distribution of the children along the main axis.
+	 *
+	 * <p>
+	 * Where the children together are narrower than the stack, this decides what happens with the
+	 * space left over: it stays behind them, before them, on both sides, or it is divided between
+	 * them.
+	 * </p>
+	 */
+	public enum StackJustify implements ExternallyNamed {
+
+		/** Children placed one after the other from the start, the free space behind them. */
+		START("start"),
+
+		/** Children placed as a block in the middle, the free space split between both ends. */
+		CENTER("center"),
+
+		/** Children placed one after the other towards the end, the free space before them. */
+		END("end"),
+
+		/** First and last child at the ends, the free space divided between the children. */
+		SPACE_BETWEEN("space-between"),
+
+		/** Free space divided around the children, each one getting the same share on both sides. */
+		SPACE_AROUND("space-around"),
+
+		/** Free space divided into equal gaps before, between and after the children. */
+		SPACE_EVENLY("space-evenly");
+
+		private final String _externalName;
+
+		StackJustify(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
 
 	/**
 	 * Creates a vertical stack with default gap.
@@ -140,49 +180,37 @@ public class ReactStackControl extends ReactControl {
 	 */
 	public ReactStackControl(ReactContext context, StackDirection direction, StackGap gap, StackAlign align,
 			boolean wrap, List<? extends ReactControl> children) {
-		super(context, null, REACT_MODULE);
-		_children = new ArrayList<>(children);
+		super(context, REACT_MODULE, children);
 		putState(DIRECTION, direction.getExternalName());
 		putState(GAP, gap.getExternalName());
 		putState(ALIGN, align.getExternalName());
+		putState(JUSTIFY, StackJustify.START.getExternalName());
 		putState(WRAP, Boolean.valueOf(wrap));
-		putState(CHILDREN, _children);
 	}
 
 	/**
-	 * Sets an additional CSS class, appended to the layout classes of the stack.
-	 *
-	 * @param cssClass
-	 *        The CSS class, or {@code null} for none.
-	 */
-	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass != null ? cssClass : "");
-	}
-
-	/**
-	 * Rendering-only state keys, omitted from the headless projection.
-	 */
-	@Override
-	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(CSS_CLASS);
-	}
-
-	/**
-	 * Replaces the displayed children.
+	 * Distributes the children along the main axis, the space left over behind them by default.
 	 *
 	 * <p>
-	 * A dropped child is not cleaned up automatically, since callers may re-add it later (e.g. an
-	 * unchanged item in a refreshed list). Callers that remove a child for good must call
-	 * {@link #cleanupTree()} on it themselves.
+	 * Use to spread a row across the width it is given: a title and the actions belonging to it
+	 * pushed to the opposite ends, a row of buttons centered under a form.
 	 * </p>
-	 *
-	 * @param children
-	 *        The new child controls, replacing the current ones.
 	 */
-	public void setChildren(List<? extends ReactControl> children) {
-		_children.clear();
-		_children.addAll(children);
-		putState(CHILDREN, new ArrayList<>(_children));
+	public void setJustify(StackJustify justify) {
+		putState(JUSTIFY, justify.getExternalName());
+	}
+
+	/**
+	 * Lets the children flow into further lines once they no longer fit next to each other, rather
+	 * than shrinking them into one line.
+	 *
+	 * <p>
+	 * Use for a row of items that each keep a readable size - chips, cards, filter buttons - and
+	 * that may as well stand below each other where the screen is narrow.
+	 * </p>
+	 */
+	public void setWrap(boolean wrap) {
+		putState(WRAP, Boolean.valueOf(wrap));
 	}
 
 	/**
@@ -204,5 +232,18 @@ public class ReactStackControl extends ReactControl {
 	@Override
 	public boolean scriptingTransparent() {
 		return true;
+	}
+
+	/**
+	 * Rendering-only state keys, omitted from the headless projection.
+	 *
+	 * @implNote A stack is elided from the projection wherever it is a plain child, but a stack
+	 *           filling a named slot of its container is kept, and its state is then projected like
+	 *           any other. How it arranges its children says nothing about what they display, so it
+	 *           declares the arrangement rendering-only either way.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DIRECTION, GAP, ALIGN, JUSTIFY, WRAP, GROW_FIRST);
 	}
 }

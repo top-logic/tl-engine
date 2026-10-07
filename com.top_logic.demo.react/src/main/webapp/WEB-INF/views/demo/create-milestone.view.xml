@@ -4,13 +4,13 @@
 	Create dialog for a tl.demo.projectManagement:Milestone inside a selected ProjectScope.
 	
 	"model" carries the transient Milestone (bound by the opening command); "container" is bound to
-	the list's selectedScope. The Create button persists the milestone and links it from the
-	container side - the composite back-reference Milestone#scope is derived and cannot be set, so
-	the link is made via ProjectScope#milestones. The created milestone is written to "selection"
-	(bound to selectedMilestone) so it becomes selected.
+	the list's selectedScope. The Create button persists the milestone with <persist-transient> and
+	adds it to ProjectScope#milestones of the container - the composite back-reference
+	Milestone#scope is derived and cannot be set, so the link is made from the container side. The
+	created milestone is written to "selection" (bound to selectedMilestone) so it becomes selected.
 	
-	The Create command takes the container as a leading positional argument (via <inputs>); the
-	form model is the trailing (chained) argument.
+	The Create button binds its input to the draft ("model"): its intrinsic rule offers it only
+	while the user may create a milestone in the container.
 -->
 <view>
 	<channels>
@@ -27,12 +27,15 @@
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="name"/>
 			<field attribute="dueDate"/>
+			<field attribute="approved"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
+					input="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -40,13 +43,10 @@
 						<de>Erstellen</de>
 					</label>
 					<store-form-state/>
-					<with-transaction>
-						<execute-script function="container -> model -> { created = $model.copy(transient: false); $container.add(`tl.demo.projectManagement:ProjectScope#milestones`, $created); $created }">
-							<inputs>
-								<input channel="container"/>
-							</inputs>
-						</execute-script>
-					</with-transaction>
+					<persist-transient
+						container="container"
+						reference="milestones"
+					/>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>

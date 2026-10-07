@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -19,6 +20,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -26,8 +28,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * The tree is flattened into a list of visible nodes, each annotated with its depth. Node content
- * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}. Expansion,
- * collapse, selection and activation are handled server-side via commands.
+ * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}, which
+ * receives the business object a node stands for
+ * ({@link TreeUIModel#getBusinessObject(Object)}), not the node itself. A node therefore displays
+ * its object exactly as any other place displaying the same object does, down to being a link to
+ * where the application shows it. Expansion, collapse, selection and activation are handled
+ * server-side via commands.
  * </p>
  */
 public class ReactTreeControl extends ReactControl {
@@ -40,11 +46,13 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #handleCollapse(CollapseNodeArguments) */
 	private static final String COLLAPSE_COMMAND = "collapse";
 
-	/** @see #handleSelect(SelectNodeArguments) */
-	private static final String SELECT_COMMAND = "select";
+	/** Id of the command a click on a node sends, see {@link #handleSelect(SelectNodeArguments)}. */
+	public static final String SELECT_COMMAND = "select";
 
-	/** @see #handleActivate(ActivateNodeArguments) */
-	private static final String ACTIVATE_COMMAND = "activate";
+	/**
+	 * Id of the command opening a node sends, see {@link #handleActivate(ActivateNodeArguments)}.
+	 */
+	public static final String ACTIVATE_COMMAND = "activate";
 
 	/** @see #handleContextMenu(ContextMenuArguments) */
 	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
@@ -57,10 +65,10 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- State keys --
 
-	/** @see #buildFullState() */
-	private static final String NODES = "nodes";
+	/** State key of the list of the displayed nodes, in display order. */
+	public static final String NODES = "nodes";
 
-	/** @see #setSelectionMode(String) */
+	/** @see #setSelectionMode(SelectionMode) */
 	private static final String SELECTION_MODE = "selectionMode";
 
 	/** @see #setDragEnabled(boolean) */
@@ -77,8 +85,8 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- Node state keys (used in {@link #addNodeState}) --
 
-	/** Unique node identifier. */
-	private static final String NODE_ID = "id";
+	/** Node state key of the id the client sends back with a gesture on that node. */
+	public static final String NODE_ID = "id";
 
 	/** Nesting depth (0 for top-level visible nodes). */
 	private static final String NODE_DEPTH = "depth";
@@ -149,7 +157,7 @@ public class ReactTreeControl extends ReactControl {
 
 	private final ReactControlProvider _contentProvider;
 
-	private String _selectionMode = "single";
+	private SelectionMode _selectionMode = SelectionMode.SINGLE;
 
 	private boolean _dragEnabled;
 
@@ -185,7 +193,8 @@ public class ReactTreeControl extends ReactControl {
 	 * @param selectionModel
 	 *        The selection model.
 	 * @param contentProvider
-	 *        Provider for creating node content controls.
+	 *        Provider for creating node content controls. It is called with the business object a
+	 *        node stands for, see {@link TreeUIModel#getBusinessObject(Object)}.
 	 */
 	@SuppressWarnings("unchecked")
 	public ReactTreeControl(ReactContext context, TreeUIModel<?> treeModel, SelectionModel<?> selectionModel,
@@ -202,14 +211,21 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the selection mode.
+	 * Sets whether the user may select one node at a time, or any number of them.
 	 *
 	 * @param mode
-	 *        One of {@code "single"}, {@code "multi"}.
+	 *        The selection mode, {@link SelectionMode#SINGLE} by default.
 	 */
-	public void setSelectionMode(String mode) {
+	public void setSelectionMode(SelectionMode mode) {
 		_selectionMode = mode;
-		putState(SELECTION_MODE, mode);
+		putState(SELECTION_MODE, mode.getExternalName());
+	}
+
+	/**
+	 * Whether more than one node may be selected at a time.
+	 */
+	private boolean multiSelection() {
+		return _selectionMode == SelectionMode.MULTI;
 	}
 
 	/**
@@ -320,8 +336,8 @@ public class ReactTreeControl extends ReactControl {
 		if (_nodeControlCache.isEmpty()) {
 			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
 			// but _reactState still has stale node references. Rebuild the cache and state from the
-			// tree model. At this point _sseQueue is still null, so putState() stores locally
-			// without sending a PatchEvent.
+			// tree model. State written while rendering is part of the rendered output, so
+			// putState() stores locally without sending a PatchEvent.
 			buildFullState();
 		}
 	}
@@ -392,9 +408,8 @@ public class ReactTreeControl extends ReactControl {
 	private ReactControl getOrCreateNodeControl(Object node) {
 		ReactControl control = _nodeControlCache.get(node);
 		if (control == null) {
-			control = _contentProvider.createControl(getReactContext(), node);
+			control = _contentProvider.createControl(getReactContext(), _treeModel.getBusinessObject(node));
 			_nodeControlCache.put(node, control);
-			registerChildControl(control);
 		}
 		return control;
 	}
@@ -554,7 +569,7 @@ public class ReactTreeControl extends ReactControl {
 			return;
 		}
 
-		if ("multi".equals(_selectionMode)) {
+		if (multiSelection()) {
 			if (shiftKey && _selectionAnchor >= 0) {
 				// Range selection.
 				List<Object> visibleNodes = collectVisibleNodes();
@@ -562,11 +577,19 @@ public class ReactTreeControl extends ReactControl {
 				if (clickedIndex >= 0) {
 					int from = Math.min(_selectionAnchor, clickedIndex);
 					int to = Math.max(_selectionAnchor, clickedIndex);
+					List<Object> rangeNodes = new ArrayList<>();
 					for (int i = from; i <= to; i++) {
 						Object rangeNode = visibleNodes.get(i);
 						if (_selectionModel.isSelectable(rangeNode)) {
-							_selectionModel.setSelected(rangeNode, _anchorAdded);
+							rangeNodes.add(rangeNode);
 						}
+					}
+					// The whole range is applied in one step, so that a single SelectionEvent
+					// carries it to everything following the selection.
+					if (_anchorAdded) {
+						_selectionModel.addToSelection(rangeNodes);
+					} else {
+						_selectionModel.removeFromSelection(rangeNodes);
 					}
 				}
 			} else if (ctrlKey) {
@@ -616,11 +639,17 @@ public class ReactTreeControl extends ReactControl {
 
 	/**
 	 * Makes the given node the sole selection and the range anchor.
+	 *
+	 * <p>
+	 * {@link SelectionModel#setSelection(Set)} replaces the selection in one step, so that a single
+	 * {@link SelectionEvent} carries the new selection. Everything following the selection - a
+	 * display, a command's executability, a channel the selection is written to - therefore moves
+	 * straight from the former selection to this node.
+	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
 	private void selectOnly(Object node) {
-		_selectionModel.clear();
-		_selectionModel.setSelected(node, true);
+		_selectionModel.setSelection(Set.of(node));
 		_anchorAdded = true;
 		_selectionAnchor = collectVisibleNodes().indexOf(node);
 	}

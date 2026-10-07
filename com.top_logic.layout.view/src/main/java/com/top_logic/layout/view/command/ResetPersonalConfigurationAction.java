@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,8 +17,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.protocol.JSSnipplet;
-import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.util.TLContext;
 
 /**
@@ -30,10 +31,20 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
- * The stored configuration and the copy the running session holds are dropped together; keeping
- * either would restore the other. The page is then reloaded, because what was just discarded is
- * what the page it renders was built from.
+ * The stored configuration and the copies the session holds are dropped together - one per browser
+ * tab, each of them a subsession of its own - because keeping any of them would restore the others
+ * as soon as the tab it belongs to writes it out.
  * </p>
+ *
+ * <p>
+ * Every window of the session is then rebuilt, because what was just discarded is what the page it
+ * displays was built from. The transient display state of those pages goes with it: a table's
+ * selection, its scroll position, the input of a form.
+ * </p>
+ *
+ * @implNote The windows are rebuilt through {@link ReactWindowRegistry#rebuildWindows()}, which
+ *           leaves the trees in place and has the reload of each window replace them - the command
+ *           pipeline runs to its end on the tree that triggered it.
  */
 @InApp
 public class ResetPersonalConfigurationAction implements ViewAction {
@@ -66,10 +77,7 @@ public class ResetPersonalConfigurationAction implements ViewAction {
 
 		try (Transaction tx = account.tKnowledgeBase()
 			.beginTransaction(I18NConstants.RESET_PERSONAL_CONFIGURATION__USER.fill(account.getName()))) {
-			TLContext session = TLContext.getContext();
-			if (session != null && account == session.getPerson()) {
-				session.resetPersonalConfiguration();
-			}
+			resetSubSessions(account);
 			PersonalConfigurationWrapper stored =
 				PersonalConfigurationWrapper.getPersonalConfiguration(account);
 			if (stored != null) {
@@ -78,11 +86,36 @@ public class ResetPersonalConfigurationAction implements ViewAction {
 			tx.commit();
 		}
 
-		SSEUpdateQueue queue = context.getSSEQueue();
-		if (queue != null) {
-			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
-		}
+		context.getWindowRegistry().rebuildWindows();
 		return input;
+	}
+
+	/**
+	 * Drops the transient personal configuration of every subsession that operates on behalf of the
+	 * given account.
+	 *
+	 * <p>
+	 * Each browser tab of the session has a subsession of its own with a copy of the configuration,
+	 * and a tab may be logged in as a different account, which keeps what it adjusted.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account whose configuration is reset.
+	 */
+	private void resetSubSessions(Person account) {
+		TLContext context = TLContext.getContext();
+		if (context == null) {
+			return;
+		}
+		TLSessionContext session = context.getSessionContext();
+		if (session == null) {
+			return;
+		}
+		for (TLSubSessionContext subSession : session.getSubSessions().values()) {
+			if (account == subSession.getPerson()) {
+				subSession.resetPersonalConfiguration();
+			}
+		}
 	}
 
 }

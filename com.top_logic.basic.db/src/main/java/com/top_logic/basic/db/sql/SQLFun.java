@@ -35,6 +35,16 @@ public enum SQLFun {
 	max,
 
 	/**
+	 * 1-ary function counting the results of its argument in the result set.
+	 * 
+	 * <p>
+	 * Rows in which the argument is <code>null</code> are not counted. Applied to a column that is
+	 * declared not <code>null</code>, this counts all rows of the result set.
+	 * </p>
+	 */
+	count,
+
+	/**
 	 * N-ary function that returns the greatest of its arguments.
 	 * 
 	 * <p>

@@ -7,7 +7,6 @@ package com.top_logic.layout.view.designer;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.CalledByReflection;
@@ -19,9 +18,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.protocol.ViewPickEvent;
-import com.top_logic.layout.react.servlet.SSEUpdateQueue;
-import com.top_logic.layout.react.window.PendingViewPick;
+import com.top_logic.layout.react.window.ElementPicker;
+import com.top_logic.layout.react.window.PickKind;
+import com.top_logic.layout.react.window.PickResult;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -34,8 +33,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Toolbar command that starts "select view" mode in the main application window. The user then
  * clicks a view there; the matching design-tree node is selected in the designer.
  *
- * @see PendingViewPick
- * @see ViewPickEvent
+ * @see ElementPicker
  */
 public class SelectViewCommand implements ViewCommand {
 
@@ -94,22 +92,17 @@ public class SelectViewCommand implements ViewCommand {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		String mainWindowId = mainWindowContext.getWindowName();
 		String designerWindowId = context.getWindowName();
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
-			return HandlerResult.DEFAULT_RESULT;
-		}
-		SSEUpdateQueue mainQueue = registry.getQueue(mainWindowId);
-		if (mainQueue == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
 		ViewChannel designTreeChannel = viewContext.resolveChannel(_config.getDesignTree());
 		ViewChannel selectionChannel = viewContext.resolveChannel(_config.getSelection());
 
-		String token = UUID.randomUUID().toString();
-		Consumer<String> onPicked = path -> {
+		Consumer<PickResult> onPicked = result -> {
+			String path = ((PickResult.ViewPicked) result).sourcePath();
 			Object root = designTreeChannel.get();
 			if (root instanceof DesignTreeNode rootNode) {
 				DesignTreeNode node = findViewRoot(rootNode, path);
@@ -124,11 +117,7 @@ public class SelectViewCommand implements ViewCommand {
 				}
 			}
 		};
-		registry.registerPick(token, new PendingViewPick(designerWindowId, onPicked));
-
-		mainQueue.enqueue(ViewPickEvent.create()
-			.setToken(token)
-			.setTargetWindowId(mainWindowId));
+		ElementPicker.start(context, mainWindowContext, PickKind.VIEW, onPicked);
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

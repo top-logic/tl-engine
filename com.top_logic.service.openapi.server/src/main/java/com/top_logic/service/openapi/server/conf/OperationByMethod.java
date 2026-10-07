@@ -171,6 +171,13 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 				PathItem.SERVER_CONFIGURATION,
 				OpenApiServer.Config.GLOBAL_PARAMETERS }),
 		}),
+		@Constraint(value = UniqueParameterVariables.class, args = {
+			@Ref({ OperationByMethod.ENCLOSING_PATH_ITEM,
+				PathItem.PARAMETERS }),
+			@Ref({ OperationByMethod.ENCLOSING_PATH_ITEM,
+				PathItem.SERVER_CONFIGURATION,
+				OpenApiServer.Config.GLOBAL_PARAMETERS }),
+		}),
 		@Constraint(value = OnlyOneRequestBodyParameter.class, args = {
 			@Ref({ OperationByMethod.ENCLOSING_PATH_ITEM,
 				PathItem.PARAMETERS }) }),
@@ -315,6 +322,51 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 
 		static TupleFactory.Pair<String, ParameterLocation> getUniqueKey(ConcreteRequestParameter.Config<?> param) {
 			return new TupleFactory.Pair<>(param.getName(), param.getParameterLocation());
+		}
+
+	}
+
+	/**
+	 * {@link ValueDependency} asserting that the parameters of the operation and of the enclosing
+	 * {@link PathItem} bind pairwise different script variables.
+	 * 
+	 * @see ConcreteRequestParameter#clashingVariableNames(Collection)
+	 */
+	public class UniqueParameterVariables extends
+			GenericValueDependency2<List<Config<? extends RequestParameter<?>>>, List<Config<? extends RequestParameter<?>>>, Map<String, ReferencedParameter>> {
+
+		/**
+		 * Creates a {@link UniqueParameterVariables}.
+		 */
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public UniqueParameterVariables() {
+			super((Class) List.class, (Class) List.class, (Class) Map.class);
+		}
+
+		/**
+		 * Only the parameters of the operation are reported, the parameters of the path item may be
+		 * valid for other operations.
+		 */
+		@Override
+		public boolean isChecked(int index) {
+			return index == 0;
+		}
+
+		@Override
+		protected void checkValue(PropertyModel<List<Config<? extends RequestParameter<?>>>> self,
+				PropertyModel<List<Config<? extends RequestParameter<?>>>> pathItemParams,
+				PropertyModel<Map<String, ReferencedParameter>> globalParams) {
+			Map<String, ReferencedParameter> globalParameters = CollectionUtil.nonNull(globalParams.getValue());
+			List<ConcreteRequestParameter.Config<? extends ConcreteRequestParameter<?>>> parameters = Stream.concat(
+				CollectionUtil.nonNull(pathItemParams.getValue()).stream(),
+				CollectionUtil.nonNull(self.getValue()).stream())
+				.map(RequestParameter.Config.resolveUsing(globalParameters))
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+			Set<String> clashes = ConcreteRequestParameter.clashingVariableNames(parameters);
+			if (!clashes.isEmpty()) {
+				self.setProblemDescription(I18NConstants.ERROR_DUPLICATE_PARAMETER_VARIABLES__NAMES.fill(clashes));
+			}
 		}
 
 	}

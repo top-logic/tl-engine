@@ -25,7 +25,7 @@
 					</buttons>
 
 					<table
-						defaultColumns="name, lastSched, nextSched, isBlocked, isBlockingAllowed, combinedState, exception, warnings, message, startDate, endDate, duration, logFile, isEnabled, runOnStartup, perNode, persistent, clusterLock, needsMaintenanceMode"
+						defaultColumns="name, lastSched, nextSched, isBlocked, isBlockingAllowed, combinedState, exception, warnings, message, startDate, endDate, duration, logFile, isEnabled, perNode, persistent, clusterLock, needsMaintenanceMode"
 						defaultSortOrder="name:ascending"
 						fixedColumns="1"
 					>
@@ -133,11 +133,6 @@
 								columnWidth="70px"
 								filterProvider=""
 								renderer="com.top_logic.util.sched.layout.DurationRenderer"
-							/>
-							<column name="runOnStartup"
-								cellStyle="text-align: center;"
-								columnWidth="100px"
-								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
 							/>
 							<column name="perNode"
 								cellStyle="text-align: center;"

@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.element.meta.kbbased.storage.mappings.JavaEnumMapping;
@@ -34,7 +35,7 @@ import com.top_logic.model.util.Pointer;
 
 /**
  * Resolves the selectable options for a model attribute from the attribute itself (its type or
- * options annotation), for the React view form layer.
+ * options annotation), or for a value from its type alone, for the React view form layer.
  *
  * <p>
  * Option resolution is decoupled from the legacy form framework
@@ -48,6 +49,12 @@ import com.top_logic.model.util.Pointer;
  * <li>Other generators, enumerations, references and enum datatypes are resolved via the platform
  * model metadata.</li>
  * </ul>
+ *
+ * <p>
+ * Options are offered to the current user, so objects the user may not read are removed from them,
+ * exactly as from the result of every <i>TL-Script</i> an application executes, see
+ * {@link SearchExpression#filterSecurity(Object)}.
+ * </p>
  *
  * <p>
  * Type-specific datatypes that need an external option source (e.g. {@code tl.util:Country}) are not
@@ -102,12 +109,22 @@ public class AttributeOptions {
 		if (AttributeOperations.getOptions(part) != null) {
 			return true;
 		}
-		TLType type = part.getType();
+		return isStructuralSelect(part.getType());
+	}
+
+	/**
+	 * Whether values of the given type are chosen from a set of options: an enumeration, a class
+	 * (its instances are referenced), or an enum datatype.
+	 *
+	 * @param type
+	 *        The type of the values.
+	 */
+	public static boolean isStructuralSelect(TLType type) {
 		if (type instanceof TLEnumeration || type instanceof TLClass) {
 			return true;
 		}
-		if (type instanceof TLPrimitive) {
-			return isEnumDatatype((TLPrimitive) type);
+		if (type instanceof TLPrimitive primitive) {
+			return isEnumDatatype(primitive);
 		}
 		return false;
 	}
@@ -126,9 +143,14 @@ public class AttributeOptions {
 	 * @param dependencies
 	 *        Receives the attributes read while evaluating an option expression, so the caller can
 	 *        recompute options when one of them changes.
-	 * @return The available options.
+	 * @return The available options the current user may read.
 	 */
 	public static List<?> optionsFor(TLObject self, TLStructuredTypePart part, OverlayLookup overlays,
+			Sink<Pointer> dependencies) {
+		return readable(allOptionsFor(self, part, overlays, dependencies));
+	}
+
+	private static List<?> allOptionsFor(TLObject self, TLStructuredTypePart part, OverlayLookup overlays,
 			Sink<Pointer> dependencies) {
 		Generator generator = AttributeOperations.getOptions(part);
 		if (generator instanceof OptionsByExpression) {
@@ -147,6 +169,42 @@ public class AttributeOptions {
 		}
 		// Enumeration (classifiers) or reference (all instances).
 		return toList(AttributeOperations.allOptions(SimpleEditContext.createContext(self, part)));
+	}
+
+	/**
+	 * The options a value of the given type is chosen from, or {@code null} where such a value is
+	 * entered rather than selected.
+	 *
+	 * <p>
+	 * The counterpart of {@link #optionsFor(TLObject, TLStructuredTypePart, OverlayLookup, Sink)}
+	 * for a value that no attribute holds: the classifiers of an enumeration, the constants of an
+	 * enum datatype, and the instances of a class the current user may read. A primitive value - a
+	 * text, a number, a point in time - is entered, so it has no options at all.
+	 * </p>
+	 *
+	 * @param type
+	 *        The model type of the value.
+	 */
+	public static List<?> optionsFor(TLType type) {
+		if (type instanceof TLEnumeration enumeration) {
+			return enumeration.getClassifiers();
+		}
+		if (type instanceof TLClass classType) {
+			return readable(MetaElementUtil.getAllInstancesOf(classType, TLObject.class));
+		}
+		if (type instanceof TLPrimitive primitive && isEnumDatatype(primitive)) {
+			return enumOptions(primitive);
+		}
+		return null;
+	}
+
+	/**
+	 * The given options without the objects the current user may not read.
+	 *
+	 * @see SearchExpression#filterSecurity(Object)
+	 */
+	public static List<?> readable(List<?> options) {
+		return SearchExpression.asList(SearchExpression.filterSecurity(options));
 	}
 
 	private static boolean isComposition(TLStructuredTypePart part) {

@@ -990,11 +990,12 @@ public class TreeRenderInfo {
 	/**
 	 * Registers the position that places the candidate box {@code cb} directly below the placed
 	 * box {@code pb} as a try position for {@link #topmostFitDy(List, SubtreeBoxes, double)} —
-	 * provided the two boxes share X range and the position is not above {@code topDy} — and
-	 * returns it as this pair's contribution to the below-everything fallback.
+	 * provided the two boxes share X range (see {@link #overlapsX(double[], double[])}) and the
+	 * position is not above {@code topDy} — and returns it as this pair's contribution to the
+	 * below-everything fallback.
 	 */
 	private double enterTry(TreeSet<Double> tries, double[] pb, double[] cb, double gapY, double topDy) {
-		if (pb[0] + pb[2] <= cb[0] || cb[0] + cb[2] <= pb[0]) {
+		if (!overlapsX(pb, cb)) {
 			return Double.NEGATIVE_INFINITY;
 		}
 		double dy = pb[1] + pb[3] + gapY - cb[1];
@@ -1034,10 +1035,11 @@ public class TreeRenderInfo {
 
 	/**
 	 * Whether the placed box {@code pb} and the candidate box {@code cb}, shifted by
-	 * {@code dy}, share X range and violate the vertical clearance {@code gapY}.
+	 * {@code dy}, share X range (see {@link #overlapsX(double[], double[])}) and violate the
+	 * vertical clearance {@code gapY}.
 	 */
 	private boolean conflicts(double[] pb, double[] cb, double dy, double gapY) {
-		if (pb[0] + pb[2] <= cb[0] || cb[0] + cb[2] <= pb[0]) {
+		if (!overlapsX(pb, cb)) {
 			return false;
 		}
 		double top = cb[1] + dy;
@@ -1062,24 +1064,43 @@ public class TreeRenderInfo {
 
 	/**
 	 * Y-shift the candidate {@code cb} must receive so that it clears the placed box {@code pb}
-	 * by {@code gapY} vertically — provided the two boxes overlap in X. Returns
-	 * {@link Double#NEGATIVE_INFINITY} when the X extents are disjoint and no Y constraint
-	 * applies.
+	 * by {@code gapY} vertically — provided the two boxes overlap in X (see
+	 * {@link #overlapsX(double[], double[])}). Returns {@link Double#NEGATIVE_INFINITY} when
+	 * the X extents are disjoint and no Y constraint applies.
 	 *
 	 * <p>
-	 * "Disjoint in X" means strictly non-overlapping ranges: the column structure of the tree
-	 * layout already enforces a horizontal gap between subtree columns, so any X-disjoint pair
-	 * is safely separated horizontally. Using a wider clearance threshold here would force
-	 * unnecessary Y-stacking for slightly-mismatched box widths (e.g. a wider leaf above a
-	 * narrower subtree-bearing sibling would push the subtree's grandchildren down even though
-	 * they sit in the next column over).
+	 * "Disjoint in X" means non-overlapping ranges without any horizontal clearance: the column
+	 * structure of the tree layout already enforces a horizontal gap between subtree columns,
+	 * so any X-disjoint pair is safely separated horizontally. Using a wider clearance
+	 * threshold here would force unnecessary Y-stacking for slightly-mismatched box widths
+	 * (e.g. a wider leaf above a narrower subtree-bearing sibling would push the subtree's
+	 * grandchildren down even though they sit in the next column over).
 	 * </p>
 	 */
 	private double yClearance(double[] pb, double[] cb, double gapY) {
-		if (pb[0] + pb[2] <= cb[0] || cb[0] + cb[2] <= pb[0]) {
+		if (!overlapsX(pb, cb)) {
 			return Double.NEGATIVE_INFINITY;
 		}
 		return pb[1] + pb[3] + gapY - cb[1];
+	}
+
+	/**
+	 * Whether the two rects {@code a} and {@code b} (each <code>[x, y, w, h]</code>) overlap
+	 * in X.
+	 *
+	 * <p>
+	 * Two boxes overlap when their open X ranges intersect: boxes that merely touch at an edge
+	 * are disjoint. A rect of width 0 is a vertical connection line (bus); it overlaps when the
+	 * closed X ranges intersect. Sibling subtrees put their buses of one depth at the same X,
+	 * so two collinear buses (and a bus touching the edge of a horizontal stub) overlap and
+	 * must be separated vertically.
+	 * </p>
+	 */
+	private static boolean overlapsX(double[] a, double[] b) {
+		if (a[2] == 0 || b[2] == 0) {
+			return a[0] <= b[0] + b[2] && b[0] <= a[0] + a[2];
+		}
+		return a[0] < b[0] + b[2] && b[0] < a[0] + a[2];
 	}
 
 	/**

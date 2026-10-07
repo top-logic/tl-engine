@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useState, useRef, useCallback, useMemo, useEffect } = React;
@@ -166,6 +166,7 @@ const Toolbar: React.FC<{
       <button
         className="tlCalBtn tlCalBtn--icon"
         aria-label={i18n['js.calendar.previous']}
+        {...tooltipProps(i18n['js.calendar.previous'])}
         onClick={() => send('navigate', { direction: 'PREV' })}
       >
         <span className="bi bi-chevron-left" />
@@ -173,6 +174,7 @@ const Toolbar: React.FC<{
       <button
         className="tlCalBtn tlCalBtn--icon"
         aria-label={i18n['js.calendar.next']}
+        {...tooltipProps(i18n['js.calendar.next'])}
         onClick={() => send('navigate', { direction: 'NEXT' })}
       >
         <span className="bi bi-chevron-right" />
@@ -251,15 +253,6 @@ type TimeDrag =
 
 /** A slot the user selected but has not confirmed yet. It exists in the browser only. */
 type PendingCreate = { start: number; end: number; allDay: boolean };
-
-/**
- * Routes the rest of the pointer gesture to the element it started on and suppresses the native
- * text selection, so that dragging sideways over an event's label does not abort the drag.
- */
-const capturePointer = (e: React.PointerEvent) => {
-  e.preventDefault();
-  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-};
 
 /**
  * Title input of an event that is not created yet: Enter creates it with the entered title,
@@ -377,76 +370,85 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     [days.length]
   );
 
-  useEffect(() => {
-    if (!drag) {
-      return;
-    }
-    const onMove = (e: PointerEvent) => {
-      const d = dragRef.current;
-      if (!d) {
-        return;
-      }
-      const { dayIndex, min } = pointerToDayMin(e.clientX, e.clientY);
-      if (d.mode === 'move') {
-        setDrag({ ...d, dayStart: days[dayIndex], startMin: clamp(snap(min - d.grabMin), 0, 24 * 60 - d.dur) });
-      } else if (d.mode === 'resize') {
-        setDrag({ ...d, endMin: clamp(snap(min), d.startMin + SNAP_MIN, 24 * 60) });
-      } else {
-        setDrag({ ...d, toMin: clamp(snap(min), 0, 24 * 60) });
-      }
-    };
-    const onUp = () => {
-      const d = dragRef.current;
-      setDrag(null);
-      if (!d) {
-        return;
-      }
-      if (d.mode === 'move') {
-        const start = d.dayStart + d.startMin * MS_MIN;
-        // Only a real move (pointer actually shifted the event) writes back; a plain click falls
-        // through to selection without a no-op transaction.
-        if (start !== d.origStartMs) {
-          send('moveEvent', { eventId: d.id, start, end: start + d.dur * MS_MIN });
+  // The gesture that edits the grid: moving an event, dragging its lower edge, or pulling a new
+  // slot open. The handlers are installed once, when the gesture starts, and read the drag from
+  // dragRef, which every render keeps current - so they always act on the state the grid shows.
+  const beginDrag = (e: React.PointerEvent, initial: TimeDrag, cursor?: string) => {
+    e.preventDefault();
+    create.discard();
+    dragRef.current = initial;
+    setDrag(initial);
+
+    startPointerDrag(e, {
+      cursor,
+      // The gesture is captured to the grid, not to the event bar it started on: an event dragged
+      // into another day is rendered in that day's column, and a capture on the bar would end with
+      // the bar the drag leaves behind.
+      captureOn: colsRef.current,
+
+      onMove: (ev) => {
+        const d = dragRef.current;
+        if (!d) {
+          return;
         }
-      } else if (d.mode === 'resize') {
-        const end = d.dayStart + d.endMin * MS_MIN;
-        if (end !== d.origEndMs) {
-          send('resizeEvent', { eventId: d.id, end });
+        const { dayIndex, min } = pointerToDayMin(ev.clientX, ev.clientY);
+        if (d.mode === 'move') {
+          setDrag({ ...d, dayStart: days[dayIndex], startMin: clamp(snap(min - d.grabMin), 0, 24 * 60 - d.dur) });
+        } else if (d.mode === 'resize') {
+          setDrag({ ...d, endMin: clamp(snap(min), d.startMin + SNAP_MIN, 24 * 60) });
+        } else {
+          setDrag({ ...d, toMin: clamp(snap(min), 0, 24 * 60) });
         }
-      } else {
-        const from = Math.min(d.fromMin, d.toMin);
-        const to = Math.max(d.fromMin, d.toMin);
-        if (to - from >= SNAP_MIN) {
-          create.open({ start: d.dayStart + from * MS_MIN, end: d.dayStart + to * MS_MIN, allDay: false });
+      },
+
+      onEnd: () => {
+        const d = dragRef.current;
+        dragRef.current = null;
+        setDrag(null);
+        if (!d) {
+          return;
         }
-      }
-    };
-    // The browser cancels the pointer sequence e.g. when a native gesture takes over. Without
-    // this, the drag state would survive with no pointer to end it.
-    const onCancel = () => setDrag(null);
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp, { once: true });
-    window.addEventListener('pointercancel', onCancel);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onCancel);
-    };
-  }, [drag, days, pointerToDayMin, send, create.open]);
+        if (d.mode === 'move') {
+          const start = d.dayStart + d.startMin * MS_MIN;
+          // Only a real move (pointer actually shifted the event) writes back; a plain click falls
+          // through to selection without a no-op transaction.
+          if (start !== d.origStartMs) {
+            send('moveEvent', { eventId: d.id, start, end: start + d.dur * MS_MIN });
+          }
+        } else if (d.mode === 'resize') {
+          const end = d.dayStart + d.endMin * MS_MIN;
+          if (end !== d.origEndMs) {
+            send('resizeEvent', { eventId: d.id, end });
+          }
+        } else {
+          const from = Math.min(d.fromMin, d.toMin);
+          const to = Math.max(d.fromMin, d.toMin);
+          if (to - from >= SNAP_MIN) {
+            create.open({ start: d.dayStart + from * MS_MIN, end: d.dayStart + to * MS_MIN, allDay: false });
+          }
+        }
+      },
+
+      onCancel: () => {
+        // The pointer went away without a release, e.g. because a native gesture took the pointer
+        // over. Nothing is written back and the grid shows the event where it was.
+        dragRef.current = null;
+        setDrag(null);
+      },
+    });
+  };
 
   const startMove = (e: React.PointerEvent, ev: Ev, dayStart: number) => {
     if (!editable || !ev.movable) {
       return;
     }
     e.stopPropagation();
-    capturePointer(e);
-    create.discard();
     const { min } = pointerToDayMin(e.clientX, e.clientY);
     const dur = (ev.end - ev.start) / MS_MIN;
-    setDrag({
+    beginDrag(e, {
       mode: 'move', id: ev.id, grabMin: min - minutesOfDay(ev.start), dur, dayStart,
       startMin: minutesOfDay(ev.start), origStartMs: ev.start,
-    });
+    }, 'pointer');
   };
 
   const startResize = (e: React.PointerEvent, ev: Ev, dayStart: number) => {
@@ -454,22 +456,18 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
       return;
     }
     e.stopPropagation();
-    capturePointer(e);
-    create.discard();
-    setDrag({
+    beginDrag(e, {
       mode: 'resize', id: ev.id, dayStart, startMin: minutesOfDay(ev.start),
       endMin: minutesOfDay(ev.end), origEndMs: ev.end,
-    });
+    }, 'ns-resize');
   };
 
   const startCreate = (e: React.PointerEvent, dayStart: number) => {
     if (!editable || e.button !== 0) {
       return;
     }
-    capturePointer(e);
-    create.discard();
     const { min } = pointerToDayMin(e.clientX, e.clientY);
-    setDrag({ mode: 'create', dayStart, fromMin: snap(min), toMin: snap(min) });
+    beginDrag(e, { mode: 'create', dayStart, fromMin: snap(min), toMin: snap(min) });
   };
 
   const hours = Array.from({ length: 24 }, (_, h) => h);
@@ -549,7 +547,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                 key={ev.id}
                 className={'tlCalAllDayEvent ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
                 style={eventStyle(ev)}
-                title={ev.tooltip}
+                {...tooltipProps(ev.tooltip)}
                 onClick={(e) => {
                   e.stopPropagation();
                   send('selectEvent', { eventId: ev.id });
@@ -609,7 +607,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                           left: `${p.col * widthPct}%`,
                           width: `calc(${widthPct}% - 2px)`,
                         })}
-                        title={p.ev.tooltip}
+                        {...tooltipProps(p.ev.tooltip)}
                         onPointerDown={(e) => startMove(e, p.ev, day)}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -760,7 +758,7 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                       })}
                       draggable={editable && ev.movable}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
-                      title={ev.tooltip}
+                      {...tooltipProps(ev.tooltip)}
                       onClick={(e) => {
                         e.stopPropagation();
                         send('selectEvent', { eventId: ev.id });
@@ -783,7 +781,7 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                       style={eventStyle(ev, { gridColumn: ci + 1, gridRow: barRows + 1 + k })}
                       draggable={editable && ev.movable}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
-                      title={ev.tooltip}
+                      {...tooltipProps(ev.tooltip)}
                       onClick={(e) => {
                         e.stopPropagation();
                         send('selectEvent', { eventId: ev.id });
@@ -918,7 +916,7 @@ const TLCalendar: React.FC<TLCellProps> = ({ controlId }) => {
   };
 
   return (
-    <div id={controlId} className="tlCalendar">
+    <div id={controlId} className={rootClassName(state, 'tlCalendar')}>
       <Toolbar title={title} granularity={granularity} i18n={i18n} send={send} />
       <div className="tlCalBody">
         {granularity === 'MONTH' ? (

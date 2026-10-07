@@ -20,11 +20,24 @@
 					/>
 					<property name="string"
 						type="tl.core:String"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<property name="multiLine"
 						type="tl.core:Text"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<multi-line rows="4"/>
 						</annotations>
 					</property>
@@ -48,9 +61,39 @@
 						type="tl.core:String"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<input-control>
 								<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
 							</input-control>
+						</annotations>
+					</property>
+
+					<property name="aliases"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
+					<property name="notes"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line rows="3"/>
 						</annotations>
 					</property>
 
@@ -136,7 +179,15 @@
 					<!-- Numbers -->
 					<property name="count"
 						type="tl.core:Integer"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<property name="size"
 						type="tl.core:Long"
 					/>
@@ -156,6 +207,11 @@
 						type="tl.core:Double"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<value-range
 								max="100.0"
 								min="0.0"
@@ -163,10 +219,45 @@
 						</annotations>
 					</property>
 
+					<property name="scores"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Integer"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
+					<property name="ratios"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<format>
+								<decimal pattern="#,##0.00"/>
+							</format>
+						</annotations>
+					</property>
+
 					<!-- Boolean / Tristate -->
 					<property name="active"
 						type="tl.core:Boolean"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<property name="tri"
 						type="tl.core:Tristate"
 					/>
@@ -174,6 +265,11 @@
 						type="tl.core:Boolean"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<boolean-display presentation="radio"/>
 						</annotations>
 					</property>
@@ -181,17 +277,53 @@
 						type="tl.core:Boolean"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<boolean-display presentation="select"/>
 						</annotations>
 					</property>
 
+					<property name="locked"
+						type="tl.core:Boolean"
+					/>
+
+					<property name="flags"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Boolean"
+					/>
+
 					<!-- Date / Time -->
 					<property name="date"
 						type="tl.core:Date"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<property name="dateTime"
 						type="tl.core:DateTime"
 					/>
+					<property name="dateTimeShort"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<format>
+								<date-time
+									date-style="short"
+									time-style="short"
+								/>
+							</format>
+						</annotations>
+					</property>
 					<property name="time"
 						type="tl.core:Time"
 					/>
@@ -199,13 +331,36 @@
 						type="tl.core:Duration"
 					/>
 
+					<property name="deadlines"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Date"
+					/>
+
 					<!-- Visual / complex value types -->
 					<property name="icon"
 						type="tl.core:Icon"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<property name="color"
 						type="tl.util:Color"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<property name="country"
 						type="tl.util:Country"
 					/>
@@ -218,12 +373,29 @@
 					<property name="url"
 						type="tl.util:URL"
 					/>
+					<property name="email"
+						type="tl.util:EMail"
+					/>
+					<property name="phone"
+						type="tl.util:Phone"
+					/>
 					<property name="json"
 						type="tl.util:JSON"
 					/>
 					<property name="image"
 						type="tl.core:Binary"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+							<input-control>
+								<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+							</input-control>
+						</annotations>
+					</property>
 
 					<!-- Enumeration / classification -->
 					<reference name="priority"
@@ -231,6 +403,11 @@
 						type="Priority"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<default-value>
 								<classifier value="medium"/>
 							</default-value>
@@ -242,7 +419,25 @@
 						type="Priority"
 					>
 						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
 							<classification-display value="checklist"/>
+						</annotations>
+					</reference>
+					<reference name="priorityRadio"
+						kind="forwards"
+						type="Priority"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+							<classification-display value="radio-inline"/>
 						</annotations>
 					</reference>
 
@@ -255,7 +450,15 @@
 						kind="forwards"
 						multiple="true"
 						type="tl.accounts:Person"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</reference>
 					<reference name="related"
 						kind="forwards"
 						multiple="true"

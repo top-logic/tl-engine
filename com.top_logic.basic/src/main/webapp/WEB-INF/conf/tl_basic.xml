@@ -8,6 +8,12 @@
 		<!-- API key for translation service. -->
         <entry name="%TRANSLATION_API_KEY%" value="${env:translation_api_key:unencrypted:}" />
         <entry name="%TRANSLATION_ENABLED%" value="${env:translation_enabled:false}" />
+
+        <!-- Upload virus scanning through a ClamAV daemon (clamd), configured per deployment. -->
+        <entry name="%UPLOAD_VIRUS_SCAN_ENABLED%" value="${env:upload_virus_scan_enabled:false}" />
+        <entry name="%UPLOAD_VIRUS_SCAN_HOST%" value="${env:upload_virus_scan_host:localhost}" />
+        <entry name="%UPLOAD_VIRUS_SCAN_PORT%" value="${env:upload_virus_scan_port:3310}" />
+        <entry name="%UPLOAD_VIRUS_SCAN_UNAVAILABLE_POLICY%" value="${env:upload_virus_scan_unavailable_policy:REJECT}" />
     </alias>
 
 	<properties> 

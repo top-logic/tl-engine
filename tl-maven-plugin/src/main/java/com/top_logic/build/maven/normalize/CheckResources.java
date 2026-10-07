@@ -28,7 +28,7 @@ import com.top_logic.tools.resources.ResourceFile;
  * files contain translations for all keys.
  * </p>
  */
-@Mojo(name = "check-resources")
+@Mojo(name = "check-resources", threadSafe = true)
 public class CheckResources extends AbstractResourcesMojo {
 
 	@Override

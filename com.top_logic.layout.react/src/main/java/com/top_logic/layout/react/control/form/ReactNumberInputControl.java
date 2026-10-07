@@ -13,6 +13,9 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.NumberInputState;
+import com.top_logic.layout.react.state.NumberInputState.InputMode;
 
 /**
  * A {@link ReactFormFieldControl} for number input fields.
@@ -23,9 +26,9 @@ import com.top_logic.layout.react.ReactContext;
  * number of digits the attribute or property asks for: a German user sees and types {@code 12,5}
  * where an English user sees and types {@code 12.5}. A format of its own kind writes its own text -
  * a duration in milliseconds reads as {@code 1h 30min} - and the field follows it. The client is
- * handed the formatted text in {@link #VALUE} and sends back the text as typed; it does no
- * conversion of its own, and asks for the on-screen keyboard the format's {@link #INPUT_MODE}
- * names.
+ * handed the formatted text in {@link FieldState#VALUE__PROP} and sends back the text as typed; it
+ * does no conversion of its own, and asks for the on-screen keyboard the format's
+ * {@link NumberInputState#INPUT_MODE__PROP input mode} names.
  * </p>
  *
  * <p>
@@ -37,21 +40,6 @@ import com.top_logic.layout.react.ReactContext;
  * </p>
  */
 public class ReactNumberInputControl extends ReactFormFieldControl {
-
-	/**
-	 * State key naming the on-screen keyboard the input asks for, one of
-	 * {@link #INPUT_MODE_NUMERIC}, {@link #INPUT_MODE_DECIMAL} and {@link #INPUT_MODE_TEXT}.
-	 */
-	public static final String INPUT_MODE = "inputMode";
-
-	/** {@link #INPUT_MODE} of a whole number: digits and a sign. */
-	public static final String INPUT_MODE_NUMERIC = "numeric";
-
-	/** {@link #INPUT_MODE} of a number with a fraction: digits, a sign and a decimal separator. */
-	public static final String INPUT_MODE_DECIMAL = "decimal";
-
-	/** {@link #INPUT_MODE} of a number whose format writes words, a duration for instance. */
-	public static final String INPUT_MODE_TEXT = "text";
 
 	private final Format _format;
 
@@ -68,10 +56,10 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format) {
 		super(context, model, "TLNumberInput");
 		_format = format;
-		putState(INPUT_MODE, inputMode(format));
+		putState(NumberInputState.INPUT_MODE__PROP, inputMode(format).protocolName());
 		// The base constructor seeded the raw number into the value state; re-emit it as the text
 		// the user reads and edits.
-		putState(VALUE, format(model.getValue()));
+		putState(FieldState.VALUE__PROP, format(model.getValue()));
 		setSendValueOnBlur(true);
 	}
 
@@ -90,11 +78,11 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 * separator where the format has a fraction. A format that writes words needs the full keyboard.
 	 * </p>
 	 */
-	private static String inputMode(Format format) {
+	private static InputMode inputMode(Format format) {
 		if (!(format instanceof NumberFormat)) {
-			return INPUT_MODE_TEXT;
+			return InputMode.TEXT;
 		}
-		return NumberFormats.isFractional(format) ? INPUT_MODE_DECIMAL : INPUT_MODE_NUMERIC;
+		return NumberFormats.isFractional(format) ? InputMode.DECIMAL : InputMode.NUMERIC;
 	}
 
 	@Override
@@ -140,7 +128,15 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		putState(VALUE, format(newValue));
+		putState(FieldState.VALUE__PROP, format(newValue));
+	}
+
+	/**
+	 * A typed number is complete when the user presses Enter.
+	 */
+	@Override
+	public boolean hasSubmitGesture() {
+		return true;
 	}
 
 	private String format(Object value) {

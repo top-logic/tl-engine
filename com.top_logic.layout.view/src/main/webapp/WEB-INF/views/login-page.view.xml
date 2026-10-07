@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	What a session that belongs to no account sees in place of the application: the credentials
+	form on a page of its own, and nothing else.
+	
+	An application that has nothing to show a visitor names this view as the login-view of its
+	ViewConfig; the view servlet then renders it whatever the URL asks for, and keeps the requested
+	URL while it is displayed. The login reloads the page under the session it establishes, which
+	is where the application itself takes over - and the address the visitor asked for is still the
+	one the browser shows.
+	
+	Without a display to go back to there is no Cancel action: the page is the whole display.
+-->
+<view>
+	<channels>
+		<!-- The credentials the form edits: transient, one per session, never stored. -->
+		<derived-channel name="model"
+			expr="new(`tl.login:Credentials`, transient: true)"
+		/>
+	</channels>
+	<inset>
+		<stack align="center">
+			<panel
+				appearance="card"
+				width="380px"
+			>
+				<title>
+					<en>Login</en>
+					<de>Anmeldung</de>
+				</title>
+				<view-ref view="login-form.view.xml">
+					<bind
+						channel="model"
+						to="model"
+					/>
+				</view-ref>
+			</panel>
+		</stack>
+	</inset>
+</view>

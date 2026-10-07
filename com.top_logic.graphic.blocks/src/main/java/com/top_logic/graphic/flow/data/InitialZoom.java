@@ -112,40 +112,4 @@ public enum InitialZoom implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static InitialZoom readInitialZoom(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case FIXED_100: out.value(1); break;
-			case FIXED_50: out.value(2); break;
-			case FIXED_75: out.value(3); break;
-			case FIXED_150: out.value(4); break;
-			case FIXED_200: out.value(5); break;
-			case FIT_TO_PAGE: out.value(6); break;
-			case FIT_TO_WIDTH: out.value(7); break;
-			case FIT_TO_HEIGHT: out.value(8); break;
-			case FIT_TO_PAGE_ENLARGE: out.value(9); break;
-			case FIT_TO_WIDTH_ENLARGE: out.value(10); break;
-			case FIT_TO_HEIGHT_ENLARGE: out.value(11); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static InitialZoom readInitialZoom(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return FIXED_100;
-			case 2: return FIXED_50;
-			case 3: return FIXED_75;
-			case 4: return FIXED_150;
-			case 5: return FIXED_200;
-			case 6: return FIT_TO_PAGE;
-			case 7: return FIT_TO_WIDTH;
-			case 8: return FIT_TO_HEIGHT;
-			case 9: return FIT_TO_PAGE_ENLARGE;
-			case 10: return FIT_TO_WIDTH_ENLARGE;
-			case 11: return FIT_TO_HEIGHT_ENLARGE;
-			default: return FIXED_100;
-		}
-	}
 }

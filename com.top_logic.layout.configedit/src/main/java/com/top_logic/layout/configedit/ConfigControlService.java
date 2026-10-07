@@ -6,6 +6,7 @@
 package com.top_logic.layout.configedit;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,10 +26,13 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
+import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -38,6 +42,7 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -48,10 +53,13 @@ import com.top_logic.mig.html.HTMLFormatter;
  * ({@code String}, {@code boolean}, a numeric type, or {@code Date}), by selecting from a fixed
  * set of options (an option list, or an enum), or as text through a
  * {@link PropertyDescriptor#getValueProvider() value provider} that can turn the value into text
- * and back. A property that fits none of those is rejected outright, not silently rendered by a
- * control that would mishandle its value. Such a property (a structure, a collection, or a
- * {@link PropertyKind#COMPLEX} property with only a value binding and no format) is rendered by a
- * dedicated nested editor or type selector before this service is ever asked.
+ * and back. Whether a format can do that is decided for the value the property currently holds: a
+ * format that does not accept the value - a parsing-only one accepts nothing - leaves the property
+ * without a text form. A property that fits none of those is rejected outright, not silently
+ * rendered by a control that would mishandle its value. Such a property (a structure, a collection, a
+ * {@link PropertyKind#COMPLEX} property with only a value binding and no format, or one whose
+ * format cannot express its value) is rendered by a dedicated nested editor or type selector
+ * before this service is ever asked.
  * </p>
  *
  * <p>
@@ -61,7 +69,9 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <li>An encrypted property always gets the password field, deliberately ahead of every other
  * step.</li>
  * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
- * <li>A property edited by selecting from a fixed set of options gets a select.</li>
+ * <li>A property edited by selecting from a fixed set of options gets a select - the plain one
+ * where its options are the values it stores, and the dropdown addressing each option by an
+ * identity of its own where they are not, or where more than one option is taken at a time.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
  * <li>The value-provider-to-provider map configured in this service ({@link Config#getFormats()}) -
  * claims a property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of
@@ -84,6 +94,13 @@ import com.top_logic.mig.html.HTMLFormatter;
  *           property edited by selecting gets a {@link ConfigSelectFieldModel}; everything else
  *           with a {@link PropertyDescriptor#getValueProvider() value provider} gets the
  *           format-aware {@link ConfigFormatFieldModel} (text).
+ *           <p>
+ *           Whether a value has a text form at all is decided by
+ *           {@link #hasTextForm(ConfigurationItem, PropertyDescriptor)}, by the very rule
+ *           {@link com.top_logic.basic.config.ConfigurationWriter} applies when it decides how to
+ *           write a property: a format that accepts the value writes it as attribute text, and a
+ *           value no format accepts is written in structured form - and edited by a nested editor
+ *           or a type selector here.
  *           <p>
  *           {@code @Encrypted} runs before the {@link ConfigControl} annotation, not just before
  *           the built-in steps: a module may override the control for a property, but it must
@@ -246,11 +263,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param property
 	 *        The property to bind to. Must be a {@link PropertyKind#PLAIN} or
 	 *        {@link PropertyKind#REF} property, or a {@link PropertyKind#COMPLEX} or
-	 *        {@link PropertyKind#ITEM} one that has a
-	 *        {@link PropertyDescriptor#getValueProvider() value provider}.
+	 *        {@link PropertyKind#ITEM} one whose current value
+	 *        {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}.
 	 * @throws IllegalArgumentException
 	 *         If {@code property} is none of those, see
-	 *         {@link #checkSupportedKind(PropertyDescriptor)}.
+	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
 	 */
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property) {
 		return createModel(config, property, config);
@@ -277,11 +294,10 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 */
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property,
 			ConfigurationItem formModel) {
-		checkSupportedKind(property);
+		checkSupportedKind(config, property);
 
 		// Resolved once and passed to every step below that would otherwise resolve it again
-		// (isSpecialized, isSelect, selectOptions) - this is also where the mapping check
-		// belongs, see isSelect's own JavaDoc.
+		// (isSpecialized, isSelect, selectOptions).
 		DerivedProperty<? extends Iterable<?>> optionProvider =
 			ConfigPropertyOptions.optionProvider(formModel, property);
 		ConfigControlProvider formatProvider = formatProvider(property);
@@ -291,7 +307,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		if (isSelect(property, optionProvider)) {
 			ConfigSelectFieldModel selectModel =
-				new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider), false);
+				new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider),
+					isMultiple(property), optionMapping(optionProvider));
 			if (optionProvider != null) {
 				// An option function may be computed from other properties, and then its result
 				// changes while the user edits those - see ConfigSelectFieldModel#trackOptions.
@@ -327,6 +344,10 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return withFormModel(new ConfigFieldModel(config, property), formModel);
 		}
 		if (property.getValueProvider() != null) {
+			// The format is the value's serialization here: a COMPLEX or ITEM property only reaches
+			// this line when checkSupportedKind found a text form for its current value, and a PLAIN
+			// property's format is how the configuration writes it by definition - ConfigurationWriter
+			// has nothing else to fall back to for such a property.
 			return withFormModel(new ConfigFormatFieldModel(config, property), formModel);
 		}
 		return withFormModel(new ConfigFieldModel(config, property), formModel);
@@ -341,15 +362,15 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        The field model, created by {@link #createModel(ConfigurationItem, PropertyDescriptor)}.
 	 *        Its {@link ConfigFieldModel#getProperty() property} must be a
 	 *        {@link PropertyKind#PLAIN} or {@link PropertyKind#REF} property, or a
-	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one that has a
-	 *        {@link PropertyDescriptor#getValueProvider() value provider}.
+	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one whose current value
+	 *        {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}.
 	 * @throws IllegalArgumentException
 	 *         If the model's property is none of those, see
-	 *         {@link #checkSupportedKind(PropertyDescriptor)}.
+	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
 	 */
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 		PropertyDescriptor property = model.getProperty();
-		checkSupportedKind(property);
+		checkSupportedKind(model.getConfig(), property);
 
 		// 1. Encrypted always wins, deliberately ahead of every other step including an explicit
 		// ConfigControl annotation: a module may override the control for a property, but it must
@@ -367,8 +388,16 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 		// 3. Edited by selecting.
 		if (model instanceof ConfigSelectFieldModel selectModel) {
-			return new ReactSelectFormFieldControl(context, selectModel,
-				selectLabels(selectModel.getFormModel(), property));
+			LabelProvider labels = selectLabels(selectModel.getFormModel(), property);
+			if (needsOptionIdentity(selectModel)) {
+				// Sorted by label rather than left in the order the option function produced, and
+				// without a custom order of the selection: an option list the user picks a type or
+				// a role from is read, and a list of a few hundred model parts is unreadable
+				// unordered.
+				return new ReactDropdownSelectControl(context, selectModel, labels,
+					LabelComparator.newCachingInstance(labels), false);
+			}
+			return new ReactSelectFormFieldControl(context, selectModel, labels);
 		}
 
 		// 4. Configured provider by value type.
@@ -393,6 +422,37 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
+	 * Whether the value the given property currently holds can be written as text, and can therefore
+	 * be edited in a single text field.
+	 *
+	 * <p>
+	 * This is the rule {@link com.top_logic.basic.config.ConfigurationWriter} itself applies when it
+	 * decides how to write a property: a
+	 * {@link PropertyDescriptor#getValueProvider() value provider} that
+	 * {@link ConfigurationValueProvider#isLegalValue(Object) accepts} the value turns it into
+	 * attribute text, and a value the provider does not accept is written in structured form
+	 * instead. A parsing-only format - one that reads text into a value but has no normative way to
+	 * write a value back - accepts nothing, so a property carrying it belongs to a nested editor or
+	 * a type selector, not to a text field that could not produce its content.
+	 * </p>
+	 *
+	 * <p>
+	 * The answer is about the value, not about the format class: a provider may accept some values
+	 * and reject others, so the same property can have a text form for one value and none for the
+	 * next.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property.
+	 * @param property
+	 *        The property to decide for.
+	 */
+	public static boolean hasTextForm(ConfigurationItem config, PropertyDescriptor property) {
+		ConfigurationValueProvider<?> valueProvider = property.getValueProvider();
+		return valueProvider != null && valueProvider.isLegalValue(config.value(property));
+	}
+
+	/**
 	 * Ensures the given property is one this service can actually put into a single widget.
 	 *
 	 * <p>
@@ -407,8 +467,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *
 	 * <p>
 	 * Concretely: {@link PropertyKind#PLAIN} and {@link PropertyKind#REF} always qualify.
-	 * {@link PropertyKind#COMPLEX} qualifies only when the property also has a
-	 * {@link PropertyDescriptor#getValueProvider() value provider} - a type such as
+	 * {@link PropertyKind#COMPLEX} qualifies only when the property's current value
+	 * {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form} - a type such as
 	 * {@link com.top_logic.basic.util.ResKey}, annotated with both {@code @Format} and a
 	 * {@code ConfigurationValueBinding}, is classified {@code COMPLEX} rather than {@code PLAIN}
 	 * (see {@code PropertyDescriptorImpl#initKind}: a value binding wins the kind decision
@@ -421,19 +481,23 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * {@link PropertyKind#ARRAY}, or {@link PropertyKind#MAP} property. An
 	 * {@link PropertyKind#ITEM} property qualifies under the very same rule as {@code COMPLEX}: a
 	 * sub-configuration is a nested form and is rejected, but one the configuration writes as text
-	 * - a TL-Script expression, whose {@code Expr} type carries a {@code @Format} - has a value
-	 * provider and is edited as that text, exactly like a {@code PLAIN} property with a format.
+	 * - a TL-Script expression, whose {@code Expr} type carries a {@code @Format} - is edited as
+	 * that text, exactly like a {@code PLAIN} property with a format.
 	 * A {@link PropertyKind#DERIVED} property is rejected as well, by the same rule read from the
 	 * other side: its value is computed from other properties, so there is nothing to write back -
 	 * it is displayed rather than edited, and a widget bound to it would offer an input that cannot
 	 * take effect.
 	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property - the text form is decided for the value
+	 *        the property currently holds, not for the property in the abstract.
 	 */
-	private static void checkSupportedKind(PropertyDescriptor property) {
+	private static void checkSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		boolean supported = kind == PropertyKind.PLAIN || kind == PropertyKind.REF
 			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
-				&& property.getValueProvider() != null);
+				&& hasTextForm(config, property));
 		if (!supported) {
 			throw new IllegalArgumentException(
 				"ConfigControlService cannot edit property '" + property.getPropertyName() + "' (kind "
@@ -496,13 +560,13 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Whether the given property is edited by selecting from options.
 	 *
 	 * <p>
-	 * Only ever called for a property {@link #checkSupportedKind(PropertyDescriptor)} admits - it
-	 * has already rejected every other kind by the
-	 * time either public entry point reaches this method. That matters because
-	 * {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor) answering non-null} for a
-	 * sub-configuration or a {@link PropertyKind#LIST} property does not mean "edit by
-	 * selecting" (see its own {@code JavaDoc}) - a caller invoking this method directly on such a property
-	 * would be relying on a guarantee this method no longer makes on its own.
+	 * Only ever called for a property
+	 * {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)} admits - it has already
+	 * rejected every other kind by the time either public entry point reaches this method. That
+	 * matters because {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor) answering
+	 * non-null} for a sub-configuration or a {@link PropertyKind#LIST} property does not mean "edit
+	 * by selecting" (see its own {@code JavaDoc}) - a caller invoking this method directly on such
+	 * a property would be relying on a guarantee this method no longer makes on its own.
 	 * </p>
 	 *
 	 * <p>
@@ -518,18 +582,25 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * </p>
 	 *
 	 * <p>
-	 * A non-{@code null} option provider is not enough on its own:
-	 * {@link Fields#optionMapping(DerivedProperty)} must also answer
-	 * {@link IdentityOptionMapping#INSTANCE}, i.e. the option itself <em>is</em>
-	 * the value to store, not something that must first be translated into it. A property such as
-	 * {@link com.top_logic.model.util.TLModelPartRef} declares {@code @Options} with a non-identity
-	 * mapping (its options are model parts, the stored value is the ref that names one) - handing
-	 * such a property to the select model regardless would offer options the client can only send
-	 * back as {@code toString()} text, which {@link ConfigSelectFieldModel#setValue(Object)} cannot
-	 * parse back into anything meaningful and would reject with an uncaught
-	 * {@code IllegalArgumentException} instead of a field error. Such a property falls through
-	 * to the generic format text field instead, which already round-trips its value correctly
-	 * through the property's own value provider.
+	 * Options resolve for more than a value list: {@link ConfigPropertyOptions#optionProvider} also
+	 * answers the implementation types a polymorphic property may be given, which the type selector
+	 * offers, not a field. The {@link Options @Options} annotation is what tells the two apart - it
+	 * is the declaration that the property's own <em>value</em> comes from a fixed set. It is
+	 * looked up with {@link ConfigPropertyOptions#optionsAnnotation(PropertyDescriptor)}, so a
+	 * value class that declares the set for every property typed with it - a command group
+	 * reference, a model part reference - is offered as a select exactly like a property carrying
+	 * the annotation itself.
+	 * </p>
+	 *
+	 * <p>
+	 * The option a property offers and the value it stores need not be the same thing: a property
+	 * such as {@link com.top_logic.model.util.TLModelPartRef} offers model parts and stores the ref
+	 * that names one, and the {@link Fields#optionMapping(DerivedProperty) option mapping} declared
+	 * with the {@code @Options} annotation is the translation between the two. Such a property is
+	 * edited by selecting all the same: {@link ConfigSelectFieldModel} applies that mapping in both
+	 * directions, and the control such a model is paired with addresses an option by an identity of
+	 * its own instead of by the text {@link Object#toString()} would make of it - see
+	 * {@link #needsOptionIdentity(ConfigSelectFieldModel)}.
 	 * </p>
 	 *
 	 * @param optionProvider
@@ -554,10 +625,73 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		if (optionProvider == null) {
 			return false;
 		}
-		// The narrow fix: an option whose mapping is not the identity cannot be sent to the
-		// client and parsed back without translation this service does not perform - see this
-		// method's own doc comment.
-		return Fields.optionMapping(optionProvider) == IdentityOptionMapping.INSTANCE;
+		// An option provider without an @Options annotation offers the implementation types of a
+		// polymorphic property, not values of it - see this method's own doc comment.
+		return ConfigPropertyOptions.optionsAnnotation(property) != null;
+	}
+
+	/**
+	 * Whether the given select field takes more than one of its options.
+	 *
+	 * <p>
+	 * Read from the property's Java type, not from its {@link PropertyKind}: a collection property
+	 * with a {@link Format @Format} of its own (e.g. a {@code List<String>} written as comma
+	 * separated text) is a {@link PropertyKind#PLAIN} property, and it is exactly such a property
+	 * that gets here - {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)} has
+	 * already rejected the {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY} and
+	 * {@link PropertyKind#MAP} kinds, which belong to the collection editor rather than to a field.
+	 * </p>
+	 *
+	 * <p>
+	 * The options win over the format: the property is edited by picking from what it offers, and
+	 * the format is what the configuration writes the picked values as. This is the multi-valued
+	 * reading of the priority this class's own JavaDoc already states for a single value.
+	 * </p>
+	 */
+	private static boolean isMultiple(PropertyDescriptor property) {
+		return Collection.class.isAssignableFrom(property.getType());
+	}
+
+	/**
+	 * The translation between an option of the given provider and the value the property stores for
+	 * it, or {@link IdentityOptionMapping#INSTANCE} where there is nothing to translate.
+	 *
+	 * @param optionProvider
+	 *        The property's option provider, or {@code null} for a plain enum, whose constants are
+	 *        both its options and its values.
+	 */
+	private static OptionMapping optionMapping(DerivedProperty<? extends Iterable<?>> optionProvider) {
+		if (optionProvider == null) {
+			return IdentityOptionMapping.INSTANCE;
+		}
+		OptionMapping mapping = Fields.optionMapping(optionProvider);
+		return mapping == null ? IdentityOptionMapping.INSTANCE : mapping;
+	}
+
+	/**
+	 * Whether the given select field needs a control that addresses each option by an identity of
+	 * its own.
+	 *
+	 * <p>
+	 * {@link ReactSelectFormFieldControl} renders the plain HTML select, which knows an option only
+	 * by the text it carries and gives back exactly that text. That is enough as long as the option
+	 * <em>is</em> the stored value and the property's own format can parse it back - an enum
+	 * constant, or a plain string from an option function. It is not enough for an option the
+	 * property only stores something else for (a model part stored as its qualified name, a role
+	 * stored as its name): the text such an option would carry is whatever
+	 * {@link Object#toString()} makes of it, which names nothing the server could resolve back.
+	 * Nor does a plain select take more than one value at a time.
+	 * </p>
+	 *
+	 * <p>
+	 * Both cases go to {@link ReactDropdownSelectControl}, which allocates an id per option and
+	 * resolves the ids the client sends back to the options themselves, and which takes a
+	 * multiple selection. The translation from those options to what the property stores is the
+	 * field model's, not the control's.
+	 * </p>
+	 */
+	private static boolean needsOptionIdentity(ConfigSelectFieldModel model) {
+		return model.isMultiple() || model.getOptionMapping() != IdentityOptionMapping.INSTANCE;
 	}
 
 	/**
@@ -581,10 +715,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * The {@link LabelProvider} for the options of a property
 	 * {@link #isSelect(PropertyDescriptor, DerivedProperty) edited by selecting}.
 	 *
-	 * @param config
-	 *        The item the property belongs to - the option labels may be built by a mapping that
+	 * @param formModel
+	 *        What is being edited as a whole - the option labels may be built by a mapping that
 	 *        needs the surrounding configuration, see
 	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}.
+	 * @param property
+	 *        The property whose options are labelled.
 	 */
 	private LabelProvider selectLabels(ConfigurationItem formModel, PropertyDescriptor property) {
 		LabelProvider labels = ConfigPropertyOptions.optionLabels(formModel, property);
@@ -641,9 +777,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param optionProvider
 	 *        The property's option provider, as resolved once by the caller via
 	 *        {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor)}, or {@code null} if
-	 *        it has none. Deliberately not narrowed to {@code isSelect}'s identity-mapping check:
-	 *        an {@code @Options} annotation with any mapping still states that the value domain is
-	 *        options, not the type-specific widget's raw value.
+	 *        it has none. Whatever mapping it carries: an {@code @Options} annotation states that
+	 *        the value domain is options, not the type-specific widget's raw value.
 	 * @param formatProvider
 	 *        The property's {@link #formatProvider(PropertyDescriptor) claimed control provider},
 	 *        as resolved once by the caller, or {@code null} if none claims it.

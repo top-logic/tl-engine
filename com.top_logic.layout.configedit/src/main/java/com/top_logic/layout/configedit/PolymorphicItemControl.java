@@ -85,7 +85,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
 			PropertyDescriptor property,
 			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable) {
-		super(context, label, true, false, "subtle", true, List.of(), List.of());
+		super(context, label, true, false, GroupBorder.SUBTLE, true, List.of(), List.of());
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;

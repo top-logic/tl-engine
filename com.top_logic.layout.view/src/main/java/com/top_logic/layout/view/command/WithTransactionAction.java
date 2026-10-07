@@ -20,6 +20,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -76,6 +77,28 @@ public class WithTransactionAction implements ViewAction {
 	@CalledByReflection
 	public WithTransactionAction(InstantiationContext context, Config config) {
 		_actions = ViewActions.instantiate(context, config.getActions());
+	}
+
+	@Override
+	public boolean appliesFormState() {
+		return ViewActions.appliesFormState(_actions);
+	}
+
+	/**
+	 * The rules the actions run in the transaction {@link ViewAction#getIntrinsicRule() bring of
+	 * their own}, combined.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return ViewActions.intrinsicRule(_actions);
+	}
+
+	/**
+	 * Destructive as soon as one of the actions run in the transaction is.
+	 */
+	@Override
+	public ButtonTone getTone() {
+		return ViewActions.tone(_actions);
 	}
 
 	@Override

@@ -163,8 +163,26 @@ public class InfoService {
 	 *        - fragment, that describes the error reason
 	 */
 	public static void showError(HTMLFragment messageFragment) {
-		show(new DefaultInfoServiceItem(Icons.INFOSERVICE_ERROR, I18NConstants.ERROR_MESSAGE_HEADER, messageFragment,
-			ERROR_CSS));
+		show(errorItem(messageFragment));
+	}
+
+	/**
+	 * The info area item displaying the given {@link HTMLFragment} as error.
+	 * 
+	 * <p>
+	 * The item is the fragment that {@link #showError(HTMLFragment)} adds to the items of the
+	 * current interaction. It is created separately for a response that transports a single error
+	 * message outside of an {@link InfoService} update.
+	 * </p>
+	 * 
+	 * @param messageFragment
+	 *        The fragment describing the error reason.
+	 * 
+	 * @see InfoServiceXMLStringConverter#renderItemBox(DisplayContext, HTMLFragment)
+	 */
+	public static HTMLFragment errorItem(HTMLFragment messageFragment) {
+		return new DefaultInfoServiceItem(Icons.INFOSERVICE_ERROR, I18NConstants.ERROR_MESSAGE_HEADER, messageFragment,
+			ERROR_CSS);
 	}
 
 	/**

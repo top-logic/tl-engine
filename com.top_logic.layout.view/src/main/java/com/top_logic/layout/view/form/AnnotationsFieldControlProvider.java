@@ -22,6 +22,8 @@ import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
+import com.top_logic.layout.configedit.ConfigFieldPush;
+import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.configedit.PolymorphicOptions;
@@ -59,15 +61,15 @@ import com.top_logic.util.error.TopLogicException;
  * <b>The surroundings have to be built, not preserved.</b> The owner of an annotation is a model
  * element, not a configuration, so there is no configuration tree above it to copy along - and an
  * annotation copied on its own has no container at all. Anything inside it that navigates outwards
- * (an option function, a derived property, a constraint) would find nothing. So the surroundings are
- * built: legacy's own {@code EditModel} interfaces, one per kind of element -
- * {@link TLStructuredTypeFormBuilder.EditModel} for a type, {@link TLModuleFormBuilder.EditModel}
- * for a module, and so on.
+ * (an option function, a derived property, a constraint) would find nothing. So the surroundings
+ * are built: legacy's own {@code EditModel} interfaces, one per kind of element -
+ * {@link com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel} for a type,
+ * {@link com.top_logic.element.layout.meta.TLModuleFormBuilder.EditModel} for a module, and so on.
  * </p>
  *
  * <p>
- * Legacy's interfaces rather than the plain configurations they extend, because what they add is not
- * form furniture. {@code TLStructuredTypeFormBuilder.EditModel} is also a
+ * Legacy's interfaces rather than the plain configurations they extend, because what they add is
+ * not form furniture. {@code TLStructuredTypeFormBuilder.EditModel} is also a
  * {@link com.top_logic.model.config.FullQualifiedName} and a
  * {@link com.top_logic.model.config.TypeRef}, and that is exactly what an option function asks it
  * for: {@code PartNamesOptionProvider}, behind the {@code main-properties} annotation, casts the
@@ -97,6 +99,15 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class AnnotationsFieldControlProvider implements ReactFieldControlProvider {
 
+	/**
+	 * The annotations of a model element are edited as a whole: the editor offers the kinds of
+	 * annotation the element accepts and writes the resulting list back in one go.
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
+
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		// The identity is the edited element: two elements that both carry no annotations produce no
@@ -113,11 +124,13 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 * options, hand the result back on a change - is tested without a model to build a part from.
 	 * </p>
 	 *
+	 * @param context
+	 *        The React context.
 	 * @param model
 	 *        The field holding the annotations of the edited element.
-	 * @param container
-	 *        The configuration standing in for the element's surroundings. Its
-	 *        {@code annotations} property is what is edited.
+	 * @param containers
+	 *        Supplies the configuration standing in for the element's surroundings, asked anew
+	 *        each time the editor is built. Its {@code annotations} property is what is edited.
 	 */
 	public static ReactControl createControl(ReactContext context, FieldModel model,
 			Supplier<AnnotatedConfig<? extends TLAnnotation>> containers) {

@@ -64,12 +64,15 @@ public class ThreadStackTable implements UIElement {
 
 	private final ChannelRef _inputRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ThreadStackTable} from configuration.
 	 */
 	@CalledByReflection
 	public ThreadStackTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -96,6 +99,7 @@ public class ThreadStackTable implements UIElement {
 		channel.addListener(listener);
 		control.addCleanupAction(() -> channel.removeListener(listener));
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

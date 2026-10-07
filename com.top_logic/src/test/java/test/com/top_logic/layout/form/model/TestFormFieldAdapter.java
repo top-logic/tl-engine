@@ -68,6 +68,35 @@ public class TestFormFieldAdapter extends TestCase {
 	}
 
 	/**
+	 * Test the disabled state of the form field is reported as {@link FormFieldAdapter#isDisabled()},
+	 * unless the field is immutable.
+	 */
+	public void testDisabled() {
+		StringField field = FormFactory.newStringField("test");
+		FormFieldAdapter adapter = new FormFieldAdapter(field);
+		TestAbstractFieldModel.RecordingListener listener = new TestAbstractFieldModel.RecordingListener();
+		adapter.addListener(listener);
+
+		assertFalse(adapter.isDisabled());
+
+		field.setDisabled(true);
+		assertTrue(adapter.isDisabled());
+		assertFalse(adapter.isEditable());
+		assertEquals(List.of(Boolean.TRUE), listener._disabledChanges);
+
+		field.setImmutable(true);
+		assertFalse(adapter.isDisabled());
+		assertFalse(adapter.isEditable());
+		assertEquals(List.of(Boolean.TRUE, Boolean.FALSE), listener._disabledChanges);
+
+		field.setImmutable(false);
+		field.setDisabled(false);
+		assertFalse(adapter.isDisabled());
+		assertTrue(adapter.isEditable());
+		assertEquals(List.of(Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.FALSE), listener._disabledChanges);
+	}
+
+	/**
 	 * Test mandatory delegation.
 	 */
 	public void testMandatory() {

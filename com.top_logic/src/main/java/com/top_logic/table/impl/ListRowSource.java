@@ -6,11 +6,13 @@
 package com.top_logic.table.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +49,12 @@ import com.top_logic.table.SortSpec;
  * Single-level grouping is supported: a non-empty {@link GroupSpec} buckets the
  * filtered/sorted rows by the first grouping column's value and emits an expandable
  * {@link GroupRow group header} per bucket (which doubles as the subtotal row) followed by
- * the group's data rows. Multi-column grouping is a follow-up step.
+ * the group's data rows. The groups are ordered by the grouping column's own
+ * {@link Column#sort() comparator}, a {@code null} group value last; the direction is taken
+ * from the {@link SortSpec} if it sorts the grouping column, ascending otherwise. A grouping
+ * column without sort capability keeps the groups in the order their first rows appear in.
+ * Within a group, the rows keep the order of the {@link SortSpec}. A {@link GroupSpec} with
+ * more than one column is rejected.
  * </p>
  *
  * @param <R>
@@ -136,6 +143,32 @@ public class ListRowSource<R> implements RowSource<R> {
 			return List.of();
 		}
 		return List.copyOf(_displayed.subList(lo, hi));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The data rows are the ones for the {@link #elements() backing business objects}, whatever the
+	 * filter and the collapsed groups display of them.
+	 * </p>
+	 */
+	@Override
+	public Set<Object> containedKeys(Collection<?> keys) {
+		Set<Object> result = new LinkedHashSet<>();
+		if (keys.isEmpty()) {
+			return result;
+		}
+		Set<Object> existing = new HashSet<>();
+		for (R element : _elements) {
+			existing.add(_keyOf.apply(element));
+		}
+		for (Object key : keys) {
+			if (existing.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -256,9 +289,15 @@ public class ListRowSource<R> implements RowSource<R> {
 	}
 
 	/**
-	 * Buckets the (already filtered and sorted) rows by the first grouping column's value,
-	 * in first-appearance order, and emits an expandable group header per bucket followed
-	 * by its data rows when expanded.
+	 * Buckets the (already filtered and sorted) rows by the first grouping column's value
+	 * and emits an expandable group header per bucket followed by its data rows when
+	 * expanded.
+	 *
+	 * <p>
+	 * The buckets are ordered by {@link ColumnLogic#groupComparator(Column, SortSpec)}; for a
+	 * grouping column without sort capability they stay in the order their first rows appear
+	 * in. The rows within a bucket keep the order of the sorted input.
+	 * </p>
 	 */
 	private List<Row<R>> groupedRows(List<R> rows) {
 		Column<R, ?> groupColumn = _byName.get(_grouping.columns().get(0));
@@ -266,8 +305,13 @@ public class ListRowSource<R> implements RowSource<R> {
 		for (R row : rows) {
 			buckets.computeIfAbsent(groupColumn.value(row), key -> new ArrayList<>()).add(row);
 		}
+		List<Map.Entry<Object, List<R>>> ordered = new ArrayList<>(buckets.entrySet());
+		Comparator<Object> groupOrder = ColumnLogic.groupComparator(groupColumn, _sort);
+		if (groupOrder != null) {
+			ordered.sort(Map.Entry.comparingByKey(groupOrder));
+		}
 		List<Row<R>> displayed = new ArrayList<>();
-		for (Map.Entry<Object, List<R>> bucket : buckets.entrySet()) {
+		for (Map.Entry<Object, List<R>> bucket : ordered) {
 			GroupKey key = new GroupKey(Collections.singletonList(bucket.getKey()));
 			List<R> members = bucket.getValue();
 			Group<R> group = new SimpleGroup<>(key, members);

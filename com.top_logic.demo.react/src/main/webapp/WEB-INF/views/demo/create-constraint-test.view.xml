@@ -14,6 +14,7 @@
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="name"/>
 			<field attribute="uniqueName"/>
@@ -36,15 +37,16 @@
 				</columns>
 			</composition-table>
 			<commands>
-				<generic-command placement="BUTTON_BAR">
+				<generic-command
+					input="model"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Create</en>
 						<de>Erstellen</de>
 					</label>
 					<store-form-state/>
-					<with-transaction>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
+					<persist-transient/>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>

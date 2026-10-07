@@ -11,13 +11,14 @@ import java.util.List;
 
 import jakarta.servlet.http.Part;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A button that, on click, opens a native file picker (client-side) and uploads the selected
@@ -56,17 +57,32 @@ public class ReactUploadButtonControl extends ReactButtonControl implements Uplo
 		_uploadModel = model;
 		putState(ACCEPT, model.getAccept());
 		putState(MULTIPLE, model.isMultiple());
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * An upload to a button that is not {@link #getOfferedState() offered} is refused like a click
+	 * on it; otherwise the files go to {@link UploadCommandModel#upload(ReactContext, List)}, which
+	 * decides by the command's state in turn.
+	 * </p>
+	 */
 	@Override
 	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+		ExecutableState offered = getOfferedState();
+		if (!offered.isExecutable()) {
+			return HandlerResult.notExecutable(offered);
+		}
 		try {
 			List<BinaryData> files = UploadSupport.toBinaryData(parts);
 			if (!files.isEmpty()) {
-				_uploadModel.uploadFiles(_context, files);
+				return _uploadModel.upload(_context, files);
 			}
 		} catch (IOException ex) {
-			Logger.error("Failed to process file upload.", ex, ReactUploadButtonControl.class);
+			return CommandErrors.failure(ex, "Reading the files uploaded to '" + _uploadModel.getLabel() + "'",
+				ReactUploadButtonControl.class);
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

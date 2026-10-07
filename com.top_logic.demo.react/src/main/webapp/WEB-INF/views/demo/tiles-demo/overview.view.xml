@@ -8,7 +8,9 @@
 	stack names every frame of the detail view in its <frame> declaration, which is also what
 	puts the frame into the address bar. The navPath channel is the stack's path (bound by the
 	stack's bind-path-to), so the derived depth channel tells this frame how deep it sits: at
-	depth 0 the "Back" command is hidden, which is why the initial frame shows no way out.
+	depth 0 the "Back" command is hidden, which is why the initial frame shows no way out. The
+	selected row is published on the selectedPerson channel, which is where a display target
+	leading to an account puts the account it displays.
 	
 	The panel fills, so the table inside the frame bounds its scroll viewport (and
 	virtualizes) instead of growing with its rows: the frame takes part in the fill
@@ -17,6 +19,7 @@
 <view>
 	<channels>
 		<channel name="navPath"/>
+		<channel name="selectedPerson"/>
 		<derived-channel name="depth"
 			expr="p -> $p.size()"
 			inputs="navPath"
@@ -44,7 +47,10 @@
 				<navigate-pop/>
 			</generic-command>
 		</commands>
-		<table types="tl.accounts:Person">
+		<table
+			selection="selectedPerson"
+			types="tl.accounts:Person"
+		>
 			<rows>all(`tl.accounts:Person`)</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="person"

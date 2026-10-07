@@ -1,17 +1,13 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, rootClassName, fieldInputId, useFieldLabelProps,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
-import Color from '@tiptap/extension-color';
-import TextStyle from '@tiptap/extension-text-style';
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
+import { TextStyle, Color } from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
 import './TLWysiwygEditor.css';
 
@@ -51,6 +47,19 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const uploadFile = useTLUpload();
   const dataUrl = useTLDataUrl();
 
+  // The editable area is the element a form field's label names and focuses. Its attributes reach
+  // the editor through the editor options, which the editor compares by identity on every render,
+  // so a change of the label association updates the element without re-creating the editor.
+  const inputId = fieldInputId(controlId);
+  const labelledBy = useFieldLabelProps(controlId, inputId)['aria-labelledby'];
+  const editorProps = React.useMemo(() => {
+    const attributes: Record<string, string> = { id: inputId };
+    if (labelledBy !== undefined) {
+      attributes['aria-labelledby'] = labelledBy;
+    }
+    return { attributes };
+  }, [inputId, labelledBy]);
+
   const value: string = (state.value as string) || '';
   const editable: boolean = state.editable !== false;
   const hasError: boolean = !!state.hasError;
@@ -77,11 +86,14 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Underline,
-      // The link extension carries the CSS class of an anchor, which is what tells an object
-      // link from an ordinary one, through parsing and rendering alike.
-      Link.configure({ openOnClick: false }),
+      StarterKit.configure({
+        // The link extension carries the CSS class of an anchor, which is what tells an object
+        // link from an ordinary one, through parsing and rendering alike.
+        link: { openOnClick: false },
+        // Opening existing content must not change its stored markup, so no empty paragraph is
+        // appended after a trailing table or code block.
+        trailingNode: false,
+      }),
       Image.configure({ allowBase64: true, inline: true }),
       Table.configure({ resizable: true }),
       TableRow,
@@ -92,6 +104,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     ],
     content: value,
     editable,
+    editorProps,
     onUpdate: ({ editor: ed }) => {
       dirtyRef.current = true;
       if (debounceRef.current) {
@@ -119,7 +132,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     if (editor && !editor.isFocused) {
       const currentHtml = editor.getHTML();
       if (currentHtml !== value) {
-        editor.commands.setContent(value, false);
+        editor.commands.setContent(value, { emitUpdate: false });
       }
     }
   }, [value, editor]);
@@ -180,7 +193,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!editable) {
     return (
-      <div className="tlWysiwygEditor tlWysiwygEditor--immutable">
+      <div id={controlId} className={rootClassName(state, 'tlWysiwygEditor tlWysiwygEditor--immutable')}>
         <div
           className="tlWysiwygEditor__immutableContent ProseMirror"
           onClick={handleContentClick}
@@ -193,7 +206,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const cssClass = 'tlWysiwygEditor' + (hasError ? ' tlWysiwygEditor--error' : '');
 
   return (
-    <div className={cssClass}>
+    <div id={controlId} className={rootClassName(state, cssClass)}>
       <WysiwygToolbar
         editor={editor}
         onImageUpload={handleImageUpload}

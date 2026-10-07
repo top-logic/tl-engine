@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.react.control.button.ButtonTone;
 
 /**
  * Utilities for the {@link ViewAction} lists that a command or a composite action is configured
@@ -39,5 +41,38 @@ public class ViewActions {
 	 */
 	public static boolean appliesFormState(List<ViewAction> actions) {
 		return actions.stream().anyMatch(ViewAction::appliesFormState);
+	}
+
+	/**
+	 * The tone of a chain made of the given actions: {@link ButtonTone#DANGER} as soon as one of
+	 * them {@link ViewAction#getTone() is destructive}, {@link ButtonTone#DEFAULT} otherwise.
+	 */
+	public static ButtonTone tone(List<ViewAction> actions) {
+		return actions.stream().anyMatch(action -> action.getTone() == ButtonTone.DANGER)
+			? ButtonTone.DANGER
+			: ButtonTone.DEFAULT;
+	}
+
+	/**
+	 * The combination of the rules the given actions {@link ViewAction#getIntrinsicRule() bring of
+	 * their own}.
+	 *
+	 * <p>
+	 * Every given action runs whenever the chain runs, so the chain can be carried out only where
+	 * each of their rules allows it.
+	 * </p>
+	 *
+	 * @return The {@link CombinedViewExecutabilityRule#combine(List) combined} rule, a fresh instance
+	 *         per call; {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} when no action brings a rule.
+	 */
+	public static ViewExecutabilityRule intrinsicRule(List<ViewAction> actions) {
+		List<ViewExecutabilityRule> rules = new ArrayList<>();
+		for (ViewAction action : actions) {
+			ViewExecutabilityRule rule = action.getIntrinsicRule();
+			if (rule != ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+				rules.add(rule);
+			}
+		}
+		return CombinedViewExecutabilityRule.combine(rules);
 	}
 }

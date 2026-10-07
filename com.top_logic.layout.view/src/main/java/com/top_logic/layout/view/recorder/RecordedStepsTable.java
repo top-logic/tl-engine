@@ -89,12 +89,15 @@ public class RecordedStepsTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link RecordedStepsTable} from configuration.
 	 */
 	@CalledByReflection
 	public RecordedStepsTable(InstantiationContext context, Config config) {
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -124,6 +127,7 @@ public class RecordedStepsTable implements UIElement {
 
 		bindSelection(context, control);
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

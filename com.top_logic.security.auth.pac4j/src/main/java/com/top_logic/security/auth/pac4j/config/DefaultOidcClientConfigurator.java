@@ -21,6 +21,7 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
+import com.nimbusds.openid.connect.sdk.Prompt;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
 import com.top_logic.basic.CalledByReflection;
@@ -49,6 +50,18 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
  */
 public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurator.Config<?>>
 		extends AbstractConfiguredInstance<C> implements ClientConfigurator {
+
+	/**
+	 * Value of the OIDC {@link OidcConfiguration#PROMPT} parameter demanding that the identity
+	 * provider authenticates the user itself instead of answering from its single-sign-on session.
+	 */
+	private static final String PROMPT_LOGIN = Prompt.Type.LOGIN.toString();
+
+	/**
+	 * Value of the OIDC {@link OidcConfiguration#MAX_AGE} parameter accepting no authentication that
+	 * happened before the request.
+	 */
+	private static final int MAX_AGE_IMMEDIATE = 0;
 
 	/**
 	 * Configuration options for {@link DefaultOidcClientConfigurator}.
@@ -252,14 +265,31 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 
 	@Override
 	public final Client createClient(ServletContext context) {
+		return initClient(createRawClient(), getConfig().getName(), context);
+	}
+
+	@Override
+	public final Client createReauthenticationClient(ServletContext context) {
 		OidcClient result = createRawClient();
 
-		result.setName(getConfig().getName());
-		C config = getConfig();
-		result.setCallbackUrl(Pac4jConfigFactory.resolveCallbackUrl(context, config));
-		result.setUrlResolver(Pac4jConfigFactory.createUrlResolver(config));
+		OidcConfiguration clientConfig = result.getConfiguration();
+		clientConfig.setMaxAge(MAX_AGE_IMMEDIATE);
+		clientConfig.addCustomParam(OidcConfiguration.PROMPT, PROMPT_LOGIN);
 
-		return result;
+		return initClient(result, Pac4jConfigFactory.getReauthenticationName(getConfig().getName()), context);
+	}
+
+	/**
+	 * Registers the given client under the given {@link Client#getName() name} and completes it with
+	 * the settings every client built from this configuration shares.
+	 */
+	private Client initClient(OidcClient client, String name, ServletContext context) {
+		client.setName(name);
+		C config = getConfig();
+		client.setCallbackUrl(Pac4jConfigFactory.resolveCallbackUrl(context, config));
+		client.setUrlResolver(Pac4jConfigFactory.createUrlResolver(config));
+
+		return client;
 	}
 
 	/**

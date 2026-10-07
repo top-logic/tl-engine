@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.TestComment;
 import test.com.top_logic.basic.TestLayoutsNormalized;
 import test.com.top_logic.basic.TestNameClashClassVsPackage;
@@ -67,7 +66,8 @@ public class BasicTestCollector implements TestCollector {
 	}
 
 	private Test getTestsForPackage(String packageName, boolean recursive) {
-		return BasicTestCase.createTests(packageName, new LogProtocol(AbstractBasicTestAll.class), recursive);
+		return new DirectoryLocalTestCollector(new LogProtocol(AbstractBasicTestAll.class), recursive, true)
+			.createTests(packageName);
 	}
 
 	/**

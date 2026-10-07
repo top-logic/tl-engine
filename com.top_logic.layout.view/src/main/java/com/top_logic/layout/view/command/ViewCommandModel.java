@@ -7,22 +7,23 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.dirty.DirtyChannel;
+import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -38,22 +39,30 @@ import com.top_logic.tool.execution.ExecutableState;
  * decide by: the {@link ViewCommand.Config#getInput() input channel} taking a new value, and the
  * object that value points to being edited. A rule testing an attribute of the input object -
  * a workflow command offered only while a ticket is open, say - therefore re-evaluates when that
- * attribute is stored, although the channel keeps pointing to the same object.
+ * attribute is stored, although the channel keeps pointing to the same object. A rule that decides
+ * by more than the input - the step a surrounding wizard displays, the validation state of the form
+ * it sits in - reports its changes itself ({@link ObservableRule}), and the model follows those
+ * reports for as long as it is attached.
  * </p>
  *
- * @see ChannelObjectObserver
+ * @see LiveExecutability
  */
-public class ViewCommandModel implements ViewChannel.ChannelListener, CommandModel {
+public class ViewCommandModel implements CommandModel {
 
 	private final ViewCommand _command;
 
 	private final ViewCommand.Config _config;
 
-	private final ViewChannel _inputChannel;
+	/**
+	 * The command's rule applied to its input channel, followed while this model is attached.
+	 */
+	private final LiveExecutability _executability;
 
-	private final ViewExecutabilityRule _rule;
-
-	private final ChannelObjectObserver _inputObserver;
+	/**
+	 * The dirty-tracked scope the command is displayed in, {@code null} for a command built outside
+	 * a view.
+	 */
+	private final DirtyChannel _scopeDirty;
 
 	private ExecutableState _executableState;
 
@@ -73,29 +82,62 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 */
 	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
 			ViewExecutabilityRule rule) {
+		this(command, config, inputChannel, rule, null);
+	}
+
+	/**
+	 * Creates a new {@link ViewCommandModel} for a command displayed in a dirty-tracked scope.
+	 *
+	 * @param command
+	 *        The stateless command handler.
+	 * @param config
+	 *        The command configuration (provides label, image, placement, etc.).
+	 * @param inputChannel
+	 *        The resolved input channel (may be {@code null} if no input configured).
+	 * @param rule
+	 *        The combined executability rule.
+	 * @param scopeDirty
+	 *        The channel of the scope the command is displayed in, which its
+	 *        {@link ViewCommand.Config#getCheckDirty() dirty check} asks. {@code null} for a command
+	 *        built outside a view, which runs without asking.
+	 */
+	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
+			ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
 		_command = command;
 		_config = config;
-		_inputChannel = inputChannel;
-		_rule = rule;
+		_scopeDirty = scopeDirty;
 		_executableState = ExecutableState.EXECUTABLE;
-
-		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
-		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(config.getObservedTypes());
-		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, this::updateExecutableState);
+		_executability = new LiveExecutability(rule, inputChannel,
+			ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
 	}
 
 	/**
 	 * Creates the {@link ViewCommandModel} matching the given command, choosing a specialized model
 	 * for commands that need one (e.g. a {@link ViewUploadCommandModel} for an {@link UploadCommand},
 	 * whose button uploads files instead of dispatching a click command).
+	 *
+	 * <p>
+	 * Every model is built here, so that the rule a command
+	 * {@link ViewCommand#getIntrinsicRule() brings of its own} is taken into account whichever way
+	 * the model was asked for.
+	 * </p>
+	 *
+	 * @param context
+	 *        The build-time context of the hosting element, binding a rule that needs it;
+	 *        {@code null} for a command built outside a view.
+	 * @param rule
+	 *        The rule built from the command's configuration, possibly extended by the hosting
+	 *        element.
 	 */
-	public static ViewCommandModel create(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
-			ViewExecutabilityRule rule) {
+	public static ViewCommandModel create(ViewContext context, ViewCommand command, ViewCommand.Config config,
+			ViewChannel inputChannel, ViewExecutabilityRule rule) {
+		ViewExecutabilityRule deciding = ViewExecutabilityRules.withIntrinsicRule(context, command, rule);
 		if (config instanceof UploadCommand.Config) {
 			return new ViewUploadCommandModel((UploadCommand) command, (UploadCommand.Config) config, inputChannel,
-				rule);
+				deciding);
 		}
-		return new ViewCommandModel(command, config, inputChannel, rule);
+		DirtyChannel scopeDirty = context == null ? null : context.getDirtyChannel();
+		return new ViewCommandModel(command, config, inputChannel, deciding, scopeDirty);
 	}
 
 	/**
@@ -107,8 +149,8 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * This is the one construction path for a configured command, shared by every element that
 	 * hosts commands. An element that has to interfere with the rule - the form, which additionally
 	 * disables the commands its validation would reject - builds the model from
-	 * {@link #create(ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)} with the
-	 * rule it composed.
+	 * {@link #create(ViewContext, ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)}
+	 * with the rule it composed.
 	 * </p>
 	 *
 	 * @param context
@@ -124,14 +166,14 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		ChannelRef inputRef = config.getInput();
 		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
 		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
-		return create(command, config, inputChannel, rule);
+		return create(context, command, config, inputChannel, rule);
 	}
 
 	/**
 	 * Resolves the current input value from the channel.
 	 */
 	public Object resolveInput() {
-		return _inputChannel != null ? _inputChannel.get() : null;
+		return _executability.getInput();
 	}
 
 	@Override
@@ -155,10 +197,32 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getImage();
 	}
 
+	/**
+	 * The text explaining the button, re-read by its control whenever the model's state changes.
+	 *
+	 * <p>
+	 * While the command is visible but not executable, this is the reason its rules gave for
+	 * disabling it ({@link ExecutableState#getI18NReasonKey()}) - the button then says why it cannot
+	 * be used. Otherwise, and whenever the state carries no reason to show, it is the configured
+	 * {@link ViewCommand.Config#getTooltip() tooltip}.
+	 * </p>
+	 */
 	@Override
 	public String getTooltip() {
-		ResKey key = _config.getTooltip();
-		if (key == null) {
+		if (_executableState.isVisible() && !_executableState.isExecutable()) {
+			String reason = resolve(_executableState.getI18NReasonKey());
+			if (reason != null && !reason.isEmpty()) {
+				return reason;
+			}
+		}
+		return resolve(_config.getTooltip());
+	}
+
+	/**
+	 * The text of the given key, {@code null} if there is no key to resolve.
+	 */
+	private static String resolve(ResKey key) {
+		if (key == null || key == ResKey.NONE) {
 			return null;
 		}
 		return Resources.getInstance().getString(key);
@@ -188,6 +252,25 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getClique();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The tone the command {@link ViewCommand#getTone() takes from what it does}. A command that
+	 * states its meaning only by its {@link ViewCommand.Config#getClique() clique} - one without a
+	 * destructive action of its own, placed in {@link CommandCliques#DELETE} - is destructive as
+	 * well.
+	 * </p>
+	 */
+	@Override
+	public ButtonTone getTone() {
+		ButtonTone tone = _command.getTone();
+		if (tone == ButtonTone.DEFAULT && CommandCliques.DELETE.equals(_config.getClique())) {
+			return ButtonTone.DANGER;
+		}
+		return tone;
+	}
+
 	@Override
 	public String getName() {
 		return _config.getName();
@@ -199,8 +282,15 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
-	 * The current executability state.
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The state the command's rules assign to the current {@link #resolveInput() input}, as last
+	 * evaluated while the model is {@link #attach(ModelScope) attached}, with the reason the
+	 * deciding rule gave.
+	 * </p>
 	 */
+	@Override
 	public ExecutableState getExecutableState() {
 		return _executableState;
 	}
@@ -215,8 +305,18 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _executableState.isVisible();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Runs the command for the current {@link #resolveInput() input}, see
+	 * {@link #execute(ReactContext, Object)}: the rules decide once more over the input as it is
+	 * now, so that a command whose {@link #getExecutableState() last evaluated state} did not keep up
+	 * with its input - a model not {@link #attach(ModelScope) attached}, say - is refused as well.
+	 * </p>
+	 */
 	@Override
-	public HandlerResult executeCommand(ReactContext context) {
+	public HandlerResult perform(ReactContext context) {
 		return execute(context, resolveInput());
 	}
 
@@ -235,7 +335,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * @return The state the command's rules assign to that input.
 	 */
 	public ExecutableState executability(Object input) {
-		return _rule.isExecutable(input);
+		return _executability.getState(input);
 	}
 
 	/**
@@ -243,29 +343,59 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * {@link #resolveInput() channel value} - the row a table activation opens, say.
 	 *
 	 * <p>
-	 * The command's executability rules decide over that same input, so a rule that rejects it
-	 * makes the call a no-op.
+	 * The command's executability rules decide over that same input: a rule that rejects it
+	 * keeps the command from running, and the call reports the rule's state as refusal.
+	 * </p>
+	 *
+	 * <p>
+	 * Before the command runs, the forms of the scope its
+	 * {@link ViewCommand.Config#getCheckDirty() dirty check} names are asked for unsaved changes.
+	 * If there are any, the command does not run: a {@link ChannelVetoException} names the forms
+	 * holding them, and its continuation runs the command once the user has saved or discarded
+	 * them.
 	 * </p>
 	 *
 	 * @param context
 	 *        The context the command executes in.
 	 * @param input
 	 *        The command's input value.
-	 * @return The command's result, {@link HandlerResult#DEFAULT_RESULT} when the rules reject the
-	 *         input.
+	 * @return The command's result, or the {@link HandlerResult#notExecutable(ExecutableState)
+	 *         refusal} carrying the rules' state when they reject the input.
 	 */
 	public HandlerResult execute(ReactContext context, Object input) {
 		ExecutableState state = executability(input);
 		if (!state.isExecutable()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return HandlerResult.notExecutable(state);
 		}
 
-		// TODO: dirty check (DirtyCheckScope from config)
+		List<StateHandler> unsaved = unsavedChanges();
+		if (!unsaved.isEmpty()) {
+			throw new ChannelVetoException(unsaved, () -> execute(context, input));
+		}
 
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
 		return _command.execute(context, input);
+	}
+
+	/**
+	 * The forms holding unsaved changes in the scope the {@link ViewCommand.Config#getCheckDirty()
+	 * dirty check} of the command names.
+	 */
+	private List<StateHandler> unsavedChanges() {
+		if (_scopeDirty == null) {
+			return List.of();
+		}
+		switch (_config.getCheckDirty()) {
+			case SELF:
+				return _scopeDirty.getDirtyHandlers();
+			case VIEW:
+				return _scopeDirty.root().getDirtyHandlers();
+			case NONE:
+				return List.of();
+		}
+		throw new IllegalStateException("Unknown dirty check scope: " + _config.getCheckDirty());
 	}
 
 	/**
@@ -277,10 +407,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 *        a browser window, which follows the channel value alone.
 	 */
 	public void attach(ModelScope scope) {
-		if (_inputChannel != null) {
-			_inputChannel.addListener(this);
-		}
-		_inputObserver.attach(scope);
+		_executability.attach(scope);
 		updateExecutableState();
 	}
 
@@ -296,10 +423,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * Stops following the input.
 	 */
 	public void detach() {
-		if (_inputChannel != null) {
-			_inputChannel.removeListener(this);
-		}
-		_inputObserver.detach();
+		_executability.detach();
 	}
 
 	@Override
@@ -312,15 +436,10 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		_stateChangeListeners.remove(listener);
 	}
 
-	@Override
-	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
-		updateExecutableState();
-	}
-
 	private void updateExecutableState() {
 		Object input = resolveInput();
 		ExecutableState newState = executability(input);
-		if (newState.visibility() != _executableState.visibility()) {
+		if (!newState.equals(_executableState)) {
 			_executableState = newState;
 			fireStateChanged();
 		}

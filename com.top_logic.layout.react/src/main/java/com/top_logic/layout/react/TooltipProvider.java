@@ -17,10 +17,19 @@ import com.top_logic.layout.react.servlet.ReactServlet;
  * </p>
  *
  * <p>
- * The client uses a single {@code data-tooltip} attribute whose value is either {@code key:<key>}
- * (for a server round-trip) or {@code dynamic} (the control resolves the key from the hover target
- * via a {@code tl-tooltip-resolve} DOM event). In both cases, the looked-up key is handed to this
- * method.
+ * The client declares a tooltip with a single {@code data-tooltip} attribute whose value names the
+ * mode: {@code text:<text>} and {@code html:<markup>} carry the content itself, {@code content}
+ * takes the element's own text, {@code key:<key>} asks this provider, and {@code dynamic} lets the
+ * control resolve key or content from the hover target via a {@code tl-tooltip-resolve} DOM event.
+ * In the latter two cases, the looked-up key is handed to this method.
+ * </p>
+ *
+ * <p>
+ * An element may restrict its tooltip with a {@code data-tooltip-when} attribute, read on the
+ * declaring element or on any element between it and the hover target. The value
+ * {@code truncated} shows the tooltip only while that element's text is not fully readable, i.e.
+ * clipped by its box or hidden altogether, so that a tooltip offers text the user cannot read
+ * where it belongs.
  * </p>
  */
 public interface TooltipProvider {

@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge';
+import { React, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -8,8 +8,8 @@ import type { TLCellProps } from 'tl-react-bridge';
  * the contribution; its sole job on the client is to occupy a stable position in the parent's
  * children list.
  */
-const TLSlotContent: React.FC<TLCellProps> = ({ controlId }) => {
-  return <div id={controlId} className="tlSlotContent" style={{ display: 'none' }} />;
+const TLSlotContent: React.FC<TLCellProps> = ({ controlId, state }) => {
+  return <div id={controlId} className={rootClassName(state, 'tlSlotContent')} style={{ display: 'none' }} />;
 };
 
 export default TLSlotContent;

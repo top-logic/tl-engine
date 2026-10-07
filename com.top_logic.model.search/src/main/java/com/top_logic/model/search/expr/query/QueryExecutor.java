@@ -13,6 +13,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.compile.SearchExpressionCompiler;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -27,7 +28,16 @@ import com.top_logic.util.model.ModelService;
  * A {@link QueryExecutor} is the interface through which an application executes a
  * <i>TL-Script</i>. It therefore secures the result of an execution: unless the security is
  * {@link #disableSecurity() switched off}, objects that the current user is not allowed to read are
- * removed from the result, see {@link #executeWith(EvalContext, Args)}.
+ * removed from the result, see {@link #executeWith(EvalContext, Args)}. A
+ * {@link SecurityFilterReport} attached to the {@link EvalContext} of the execution tells the caller
+ * what that filter removed.
+ * </p>
+ *
+ * <p>
+ * Only the result of an execution is filtered. The value of a reference access ({@code get()},
+ * attribute navigation) inside the expression is not, because a reference is not a query: reading
+ * the attributes of an object the user must not read is denied by the access check of the attribute
+ * access itself, see {@link com.top_logic.model.search.expr.AccessLike}.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -376,6 +386,15 @@ public abstract class QueryExecutor {
 	 * allowed to read - the caller does not have to remember to secure it.
 	 * </p>
 	 *
+	 * <p>
+	 * The filter removes those objects without saying so. A caller that wants to report what was
+	 * removed (for example as "N rows hidden by access rights") creates the context with
+	 * {@link #context()}, attaches a {@link SecurityFilterReport} through
+	 * {@link EvalContext#setSecurityReport(SecurityFilterReport)} and inspects the report after the
+	 * execution. With the security {@link #disableSecurity() switched off}, nothing is filtered and
+	 * therefore nothing is recorded.
+	 * </p>
+	 *
 	 * @param args
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
@@ -386,7 +405,7 @@ public abstract class QueryExecutor {
 	public final Object executeWith(EvalContext definitions, Args args) {
 		Object result = internalExecuteWith(definitions, args);
 		if (_securityEnabled) {
-			return SearchExpression.filterSecurity(result);
+			return SearchExpression.filterSecurity(result, definitions.getSecurityReport());
 		}
 		return result;
 	}

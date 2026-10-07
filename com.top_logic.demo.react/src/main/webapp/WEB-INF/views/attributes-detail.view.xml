@@ -147,9 +147,7 @@
 						<en>Save</en>
 						<de>Speichern</de>
 					</label>
-					<with-transaction>
-						<store-form-state/>
-					</with-transaction>
+					<store-form-state/>
 					<close-dialog/>
 				</generic-command>
 			</commands>

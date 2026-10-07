@@ -28,6 +28,10 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
+						<commitMessage>
+							<en>Created ticket {0} as closed.</en>
+							<de>Ticket {0} geschlossen angelegt.</de>
+						</commitMessage>
 						<persist-transient/>
 						<execute-script function="created -> { $created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`); $created; }"/>
 					</with-transaction>

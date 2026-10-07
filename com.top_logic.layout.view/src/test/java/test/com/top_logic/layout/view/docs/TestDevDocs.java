@@ -55,7 +55,7 @@ public class TestDevDocs extends TestCase {
 		write(classes, "views/basics.md", "---\norder: 10\n---\n# Basics\n");
 		write(classes, "access.md", "# Access\n");
 
-		Path jar = _dir.resolve("dep.jar");
+		Path jar = _dir.resolve("tl-dep-1.2.3-SNAPSHOT.jar");
 		try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(jar))) {
 			entry(zip, "META-INF/", "");
 			entry(zip, DevDocs.DOCS_DIR + "/", "");
@@ -86,6 +86,16 @@ public class TestDevDocs extends TestCase {
 			assertEquals(List.of("views/deep/nested"), names(deep.getChildren()));
 
 			assertSame(deep.getChildren().get(0), DevDocs.find(root, "doc:views/deep/nested#section"));
+
+			assertEquals("", root.getNumber());
+			assertEquals("1", views.getNumber());
+			assertEquals("1.2", views.getChildren().get(1).getNumber());
+			assertEquals("1.3.1", deep.getChildren().get(0).getNumber());
+			assertEquals("2", root.getChildren().get(1).getNumber());
+
+			assertEquals("META-INF/tl-docs/views/index.md", views.getSource());
+			assertEquals("tl-dep: META-INF/tl-docs/views/extra.md", views.getChildren().get(3).getSource());
+			assertNull("A chapter without index has no file.", deep.getSource());
 			assertSame(views, DevDocs.find(root, "views"));
 			assertSame(views, DevDocsFunctions.parent(views.getChildren().get(0)));
 			assertNull(DevDocs.find(root, "views/missing"));
@@ -139,7 +149,8 @@ public class TestDevDocs extends TestCase {
 		assertTrue(html, html.contains("<td>2</td>"));
 		assertTrue(html, html.contains("&lt;panel&gt;"));
 		assertTrue(html, html.contains("<a href=\"#spacing-model\">spacing</a>"));
-		assertTrue(html, html.contains("<a href=\"https://top-logic.com/\">the guide</a>"));
+		assertTrue(html, html.contains(
+			"<a href=\"https://top-logic.com/\" target=\"_blank\" rel=\"noopener noreferrer\">the guide</a>"));
 		assertTrue(html, html.contains("<a href=\"#fill\" data-tl-link=\"views/basics#fill\">basics</a>"));
 		assertTrue(html, html.contains("<a href=\"#\" data-tl-link=\"views/basics\">all basics</a>"));
 		assertTrue(html, html.contains("<a>missing</a>"));

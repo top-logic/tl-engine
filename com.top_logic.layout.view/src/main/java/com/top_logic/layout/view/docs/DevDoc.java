@@ -32,6 +32,10 @@ public final class DevDoc {
 
 	private String _text;
 
+	private String _source;
+
+	private String _number = "";
+
 	private DevDoc _parent;
 
 	private final List<DevDoc> _children = new ArrayList<>();
@@ -81,6 +85,23 @@ public final class DevDoc {
 	}
 
 	/**
+	 * Where the file of this node comes from: the module, if it can be told, and the path of the
+	 * file on the class path, e.g. {@code tl-layout-view: META-INF/tl-docs/view-layer/tables.md}.
+	 * {@code null} for a chapter without {@value DevDocs#CHAPTER_FILE}.
+	 */
+	public String getSource() {
+		return _source;
+	}
+
+	/**
+	 * The section number of this node: its position among the entries of its chapter, after the
+	 * number of the chapter, e.g. {@code 1.3}. Empty for the root.
+	 */
+	public String getNumber() {
+		return _number;
+	}
+
+	/**
 	 * The chapter this node belongs to, {@code null} for the root.
 	 */
 	public DevDoc getParent() {
@@ -111,12 +132,20 @@ public final class DevDoc {
 		_text = text;
 	}
 
+	void setSource(String source) {
+		_source = source;
+	}
+
 	void addChild(DevDoc child) {
 		child._parent = this;
 		_children.add(child);
 	}
 
-	void sortChildren() {
+	/**
+	 * Orders the entries of this chapter and numbers this node and all nodes below it.
+	 */
+	void arrange(String number) {
+		_number = number;
 		_children.sort((a, b) -> {
 			Integer orderA = a.getOrder();
 			Integer orderB = b.getOrder();
@@ -134,8 +163,8 @@ public final class DevDoc {
 			}
 			return String.CASE_INSENSITIVE_ORDER.compare(a.getTitle(), b.getTitle());
 		});
-		for (DevDoc child : _children) {
-			child.sortChildren();
+		for (int n = 0; n < _children.size(); n++) {
+			_children.get(n).arrange((number.isEmpty() ? "" : number + ".") + (n + 1));
 		}
 	}
 

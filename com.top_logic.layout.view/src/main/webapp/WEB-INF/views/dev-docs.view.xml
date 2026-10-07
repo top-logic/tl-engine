@@ -4,7 +4,9 @@
 	Documentation side-window: the developer documentation the modules of the application ship
 	(META-INF/tl-docs/**/*.md in their jars), as a tree of chapters and articles. A search input
 	narrows the tree to the articles containing every word typed; the selected entry is displayed
-	beside the tree. A link of an article to another one selects that one.
+	beside the tree, titled with the file it comes from (module and class path), by which it is
+	found in the sources; the title of the entry is the heading of its text. A link of an article to
+	another one selects that one.
 	
 	The selected entry is part of the address of the window, so each change of it is a step in the
 	history of the window: the Back command (or the back button of a browser window) returns to the
@@ -16,6 +18,10 @@
 		<channel name="doc"/>
 		<derived-channel name="docHtml"
 			expr="doc -> devDocsHtml($doc)"
+			inputs="doc"
+		/>
+		<derived-channel name="docSource"
+			expr="doc -> devDocsSource($doc)"
 			inputs="doc"
 		/>
 		<derived-channel name="docKey"
@@ -64,7 +70,7 @@
 		<detail>
 			<panel with-inset="true">
 				<title-content>
-					<text input="doc"/>
+					<text input="docSource"/>
 				</title-content>
 				<commands>
 					<generic-command

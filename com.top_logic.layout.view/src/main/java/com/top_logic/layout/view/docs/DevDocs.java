@@ -97,6 +97,17 @@ public final class DevDocs {
 
 	private static final String HREF = "href";
 
+	private static final String TARGET = "target";
+
+	private static final String TARGET_NEW_WINDOW = "_blank";
+
+	private static final String REL = "rel";
+
+	private static final String REL_DETACHED = "noopener noreferrer";
+
+	/** The name of a module jar: the artifact, then the version, which starts with a digit. */
+	private static final Pattern JAR_NAME = Pattern.compile("(.+?)-\\d.*\\.jar");
+
 	/** A rendered section or subsection heading: level, anchor and content. */
 	private static final Pattern SECTION_HEADING = Pattern.compile("<h([23]) id=\"([^\"]*)\">(.*?)</h\\1>");
 
@@ -125,11 +136,16 @@ public final class DevDocs {
 	 */
 	public static DevDoc load(ClassLoader loader) {
 		Map<String, String> files = new LinkedHashMap<>();
+		Map<String, String> modules = new HashMap<>();
 		try {
 			Enumeration<URL> dirs = loader.getResources(DOCS_DIR);
 			while (dirs.hasMoreElements()) {
-				for (Map.Entry<String, String> file : files(dirs.nextElement()).entrySet()) {
-					files.putIfAbsent(file.getKey(), file.getValue());
+				URL dir = dirs.nextElement();
+				String module = module(dir);
+				for (Map.Entry<String, String> file : files(dir).entrySet()) {
+					if (files.putIfAbsent(file.getKey(), file.getValue()) == null && module != null) {
+						modules.put(file.getKey(), module);
+					}
 				}
 			}
 		} catch (IOException ex) {
@@ -145,16 +161,46 @@ public final class DevDocs {
 			String folder = separator < 0 ? "" : path.substring(0, separator);
 			String fileName = path.substring(separator + 1);
 			DevDoc chapter = chapter(chapters, folder);
+			DevDoc node;
 			if (fileName.equals(CHAPTER_FILE)) {
-				parse(chapter, file.getValue());
+				node = chapter;
 			} else {
-				DevDoc article = new DevDoc(path.substring(0, path.length() - DOC_SUFFIX.length()), false);
-				parse(article, file.getValue());
-				chapter.addChild(article);
+				node = new DevDoc(path.substring(0, path.length() - DOC_SUFFIX.length()), false);
+				chapter.addChild(node);
 			}
+			parse(node, file.getValue());
+			String module = modules.get(path);
+			node.setSource((module == null ? "" : module + ": ") + DOCS_DIR + "/" + path);
 		}
-		root.sortChildren();
+		root.arrange("");
 		return root;
+	}
+
+	/**
+	 * The name of the module whose jar or class output directory holds the given documentation
+	 * directory, {@code null} if it cannot be told.
+	 */
+	private static String module(URL dir) {
+		try {
+			if ("file".equals(dir.getProtocol())) {
+				// <module>/target/classes/META-INF/tl-docs
+				Path classes = Path.of(dir.toURI()).getParent().getParent();
+				Path target = classes.getParent();
+				if (target != null && target.getFileName().toString().equals("target") && target.getParent() != null) {
+					return target.getParent().getFileName().toString();
+				}
+				return null;
+			}
+			URLConnection connection = dir.openConnection();
+			if (connection instanceof JarURLConnection jarConnection) {
+				String jar = jarConnection.getJarFileURL().getPath();
+				Matcher artifact = JAR_NAME.matcher(jar.substring(jar.lastIndexOf('/') + 1));
+				return artifact.matches() ? artifact.group(1) : null;
+			}
+		} catch (IOException | URISyntaxException | RuntimeException ex) {
+			// No module to tell.
+		}
+		return null;
 	}
 
 	private static DevDoc chapter(Map<String, DevDoc> chapters, String folder) {
@@ -312,7 +358,8 @@ public final class DevDocs {
 	 * an article of the given documentation ({@code doc:view-layer/basics#spacing-model}) carries
 	 * the article name and section in its {@link ReactHtmlControl#LINK_ATTRIBUTE} and the section in its
 	 * target. A link to an article the documentation does not contain and a relative link to a file
-	 * of the source tree are displayed as text, since they lead nowhere in the application. An
+	 * of the source tree are displayed as text, since they lead nowhere in the application. A link
+	 * to a page outside the documentation opens in a window of its own. An
 	 * article with several sections gets a table of contents between its introduction and its first
 	 * section.
 	 * </p>
@@ -339,6 +386,10 @@ public final class DevDocs {
 						}
 					} else if (!isResolvable(href)) {
 						attributes.remove(HREF);
+					} else if (!href.startsWith("#")) {
+						// A page outside the documentation opens beside it, leaving the article shown.
+						attributes.put(TARGET, TARGET_NEW_WINDOW);
+						attributes.put(REL, REL_DETACHED);
 					}
 				}
 			})

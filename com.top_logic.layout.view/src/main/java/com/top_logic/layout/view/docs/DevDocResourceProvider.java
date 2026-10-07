@@ -10,8 +10,8 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.DefaultResourceProvider;
 
 /**
- * Displays a {@link DevDoc} by its title, with its description as tooltip and an icon telling a
- * chapter from an article.
+ * Displays a {@link DevDoc} by its section number and title, with its description as tooltip and an
+ * icon telling a chapter from an article.
  */
 public class DevDocResourceProvider extends DefaultResourceProvider {
 
@@ -32,7 +32,10 @@ public class DevDocResourceProvider extends DefaultResourceProvider {
 
 	@Override
 	public String getLabel(Object object) {
-		return object instanceof DevDoc doc ? doc.getTitle() : super.getLabel(object);
+		if (object instanceof DevDoc doc) {
+			return doc.getNumber().isEmpty() ? doc.getTitle() : doc.getNumber() + " " + doc.getTitle();
+		}
+		return super.getLabel(object);
 	}
 
 	@Override

@@ -90,6 +90,22 @@ public class DevDocsFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Where the file of a chapter or an article of the developer documentation comes from, e.g. to
+	 * find it in the sources.
+	 *
+	 * @param node
+	 *        A chapter or an article.
+	 * @return The module, if it can be told, and the path of the file on the class path, e.g.
+	 *         {@code tl-layout-view: META-INF/tl-docs/view-layer/tables.md}; {@code null} for a
+	 *         chapter without introduction.
+	 */
+	@Label("Source of an entry of the developer documentation")
+	@SideEffectFree
+	public static String source(Object node) {
+		return node instanceof DevDoc doc ? doc.getSource() : null;
+	}
+
+	/**
 	 * The key of a chapter or an article of the developer documentation in a URL.
 	 *
 	 * <p>

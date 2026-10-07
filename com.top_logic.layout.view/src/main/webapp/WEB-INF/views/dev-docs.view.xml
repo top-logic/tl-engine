@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Documentation side-window: the developer articles the modules of the application ship
+	(META-INF/tl-docs/*.md in their jars). A search input narrows the list of articles to those
+	containing every word typed; the selected article is displayed beside the list.
+-->
+<view>
+	<channels>
+		<channel name="search"/>
+		<channel name="doc"/>
+		<derived-channel name="docTitle"
+			expr="doc -> $doc['title']"
+			inputs="doc"
+		/>
+		<derived-channel name="docHtml"
+			expr="doc -> if($doc == null, null, devDocsHtml($doc['name']))"
+			inputs="doc"
+		/>
+	</channels>
+	<adaptive-detail selection="doc">
+		<selector>
+			<panel>
+				<title>
+					<en>Articles</en>
+					<de>Artikel</de>
+				</title>
+				<inset>
+					<value-input
+						label-position="hide-label"
+						value="search"
+					>
+						<label>
+							<en>Search</en>
+							<de>Suche</de>
+						</label>
+						<placeholder>
+							<en>Search</en>
+							<de>Suche</de>
+						</placeholder>
+					</value-input>
+				</inset>
+				<table selection="doc">
+					<columns>
+						<computed-column name="title"
+							type="tl.core:String"
+							width="360"
+						>
+							<label>
+								<en>Article</en>
+								<de>Artikel</de>
+							</label>
+							<value><![CDATA[row -> $row['title']]]></value>
+						</computed-column>
+					</columns>
+					<inputs>
+						<input channel="search"/>
+					</inputs>
+					<rows><![CDATA[search -> devDocsList($search)]]></rows>
+				</table>
+			</panel>
+		</selector>
+		<detail>
+			<panel with-inset="true">
+				<title-content>
+					<text input="docTitle"/>
+				</title-content>
+				<html input="docHtml"/>
+			</panel>
+		</detail>
+	</adaptive-detail>
+</view>

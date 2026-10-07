@@ -303,7 +303,9 @@ mvn exec:java@migrate-ticket28336
 - **docs/faq/** - FAQ articles for engine development tasks and pitfalls
 - **`<module>/src/main/java/META-INF/tl-docs/*.md`** - developer articles that also apply when building an
   application on the engine. They ship in the module's jar, so an application workspace finds them through
-  the `tl-mcp` tools `list_docs` / `read_doc`. Each starts with a front matter block whose `description`
+  the `tl-mcp` tools `list_docs` / `read_doc`, and a running React application shows them in the
+  *Documentation* window of its development menu (`dev-docs.view.xml`, shown while UI inspection is on).
+  Each starts with a front matter block whose `description`
   says when to read it; the file name is the article name. An article that only matters for engine
   development belongs in `docs/faq/` instead.
 

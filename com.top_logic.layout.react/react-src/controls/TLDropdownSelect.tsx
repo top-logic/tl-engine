@@ -652,7 +652,8 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
             // A single value is shown as it is. A chip sets one entry off from the next and
             // carries the button removing just that one; with a single value there is nothing to
             // set it off from, and removing it is what the clear button beside the arrow does. A
-            // value with a color role is a pill of that role, as it is in the list.
+            // value with a color role is a pill of that role, as it is in the list, its text in
+            // tl-pill__label; a value without one has its text in tl-field-value__text.
             <span className="tl-select__value">
               <OptionLabel option={value[0]} labelClassName="tl-field-value__text" />
             </span>

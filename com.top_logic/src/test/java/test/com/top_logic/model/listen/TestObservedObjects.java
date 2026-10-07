@@ -16,6 +16,7 @@ import test.com.top_logic.knowledge.service.db2.AbstractDBKnowledgeBaseTest;
 import test.com.top_logic.knowledge.wrap.SimpleWrapperFactoryTestScenario.BObj;
 
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateChain;
 import com.top_logic.mig.html.layout.AssociationEndRelevance;
@@ -51,35 +52,38 @@ public class TestObservedObjects extends AbstractDBKnowledgeBaseTest {
 		private final List<String> _calls = new ArrayList<>();
 
 		@Override
-		public boolean addModelListener(ModelListener listener) {
+		public Registration addModelListener(ModelListener listener) {
 			_calls.add("add");
-			return true;
+			return Registration.onDispose(() -> removeModelListener(listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLStructuredType type, ModelListener listener) {
+		public Registration addModelListener(TLStructuredType type, ModelListener listener) {
 			_calls.add("add:" + type);
-			return true;
+			return Registration.onDispose(() -> removeModelListener(type, listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLObject object, ModelListener listener) {
+		public Registration addModelListener(TLObject object, ModelListener listener) {
 			_calls.add("add:" + object.tId());
-			return true;
+			return Registration.onDispose(() -> removeModelListener(object, listener));
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(ModelListener listener) {
 			_calls.add("remove");
 			return true;
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 			_calls.add("remove:" + type);
 			return true;
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLObject object, ModelListener listener) {
 			_calls.add("remove:" + object.tId());

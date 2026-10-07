@@ -19,6 +19,37 @@ package com.top_logic.basic.listener;
 public interface Registration {
 
 	/**
+	 * {@link Registration} that is not {@link #isActive() active}.
+	 * 
+	 * <p>
+	 * Result of a registration with an observable that never reports anything.
+	 * </p>
+	 */
+	Registration NONE = new Registration() {
+		@Override
+		public void dispose() {
+			// Nothing registered.
+		}
+
+		@Override
+		public boolean isActive() {
+			return false;
+		}
+	};
+
+	/**
+	 * Creates a {@link Registration} that executes the given action when it is
+	 * {@link #dispose() disposed} the first time.
+	 * 
+	 * @param action
+	 *        The action that ends the registration.
+	 * @return The {@link Registration} that is {@link #isActive() active} until it is disposed.
+	 */
+	static Registration onDispose(Runnable action) {
+		return new ActionRegistration(action);
+	}
+
+	/**
 	 * Ends this registration.
 	 * 
 	 * <p>

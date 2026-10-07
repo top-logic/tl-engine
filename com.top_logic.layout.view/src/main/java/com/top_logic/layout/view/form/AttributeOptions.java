@@ -207,7 +207,11 @@ public class AttributeOptions {
 		return SearchExpression.asList(SearchExpression.filterSecurity(options));
 	}
 
-	private static boolean isComposition(TLStructuredTypePart part) {
+	/**
+	 * Whether the given attribute is a reference holding its values as parts of the referencing
+	 * object.
+	 */
+	public static boolean isComposition(TLStructuredTypePart part) {
 		return part instanceof TLReference && ((TLReference) part).isComposite();
 	}
 

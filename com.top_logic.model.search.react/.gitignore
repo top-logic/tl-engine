@@ -8,3 +8,4 @@
 /node
 /node_modules
 /src/main/webapp/script/tl-script-editor.js
+/src/main/webapp/style/_*.css

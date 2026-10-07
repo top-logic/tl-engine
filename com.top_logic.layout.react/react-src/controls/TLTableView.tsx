@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
+import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { Menu, MenuItem } from './menu/Menu';
 
 /**
@@ -849,12 +849,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
       }
     }
-    // Operating a control inside an already selected row is not a selection gesture. Sending one
-    // anyway would have the server re-render the row, and that answer overwrites the value the
-    // control is sending at the same moment - the edit would be lost.
-    const row = rows.find((r) => r.index === rowIndex);
-    if (isInteractiveTarget(event) && row?.selected
-        && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    // Operating a control inside a cell - a button, a checkbox, an input - is not a selection
+    // gesture: the click belongs to the control. Selecting the row anyway would not only change
+    // the selection the user did not ask to change; the server's re-render of the row would also
+    // overwrite the value the control is sending at the same moment, and the edit would be lost.
+    // A control that cannot be operated - the read-only checkbox of a row not yet editable - does
+    // nothing with the click, which then selects the row as a click on its text would.
+    if (isOperableTarget(event) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
       return;
     }
     sendCommand('select', {
@@ -862,7 +863,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand, rows]);
+  }, [sendCommand]);
 
   // A double-click opens the row: the server selects it and runs what the view configured for an
   // activation. A double-click inside an interactive cell element belongs to that element

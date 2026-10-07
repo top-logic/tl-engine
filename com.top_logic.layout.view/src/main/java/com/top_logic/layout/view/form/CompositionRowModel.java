@@ -25,28 +25,25 @@ public class CompositionRowModel {
 
 	private final TLObject _rowObject;
 
-	private final boolean _isNew;
-
 	private final Map<String, BoundFieldModel> _columnModels = new LinkedHashMap<>();
 
-	private CompositionRowModel(TLObjectOverlay rowOverlay, TLObject rowObject, boolean isNew) {
+	private CompositionRowModel(TLObjectOverlay rowOverlay, TLObject rowObject) {
 		_rowOverlay = rowOverlay;
 		_rowObject = rowObject;
-		_isNew = isNew;
 	}
 
 	/**
 	 * Factory for existing persistent objects (wrapped in overlay).
 	 */
 	public static CompositionRowModel forExisting(TLObjectOverlay rowOverlay) {
-		return new CompositionRowModel(rowOverlay, rowOverlay, false);
+		return new CompositionRowModel(rowOverlay, rowOverlay);
 	}
 
 	/**
 	 * Factory for new transient objects.
 	 */
 	public static CompositionRowModel forNew(TLObject transientObject) {
-		return new CompositionRowModel(null, transientObject, true);
+		return new CompositionRowModel(null, transientObject);
 	}
 
 	/**
@@ -61,13 +58,6 @@ public class CompositionRowModel {
 	 */
 	public TLObjectOverlay getRowOverlay() {
 		return _rowOverlay;
-	}
-
-	/**
-	 * Whether this is a newly created (transient) row.
-	 */
-	public boolean isNew() {
-		return _isNew;
 	}
 
 	/**

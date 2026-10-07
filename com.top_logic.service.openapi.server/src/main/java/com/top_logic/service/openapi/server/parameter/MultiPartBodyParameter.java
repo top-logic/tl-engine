@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,6 +99,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	 */
 	@DisplayOrder({
 		Config.NAME_ATTRIBUTE,
+		Config.VARIABLE_NAME,
 		Config.DESCRIPTION,
 		Config.PARTS,
 		Config.TRANSFER_TYPE,
@@ -119,8 +119,9 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		String PARTS = "parts";
 
 		/**
-		 * The name of the {@link MultiPartBodyParameter} can be used to access all parts of the
-		 * body. It is possible to access both the declared parts and the undeclared parts.
+		 * The name of the {@link MultiPartBodyParameter} is the name of the variable to access all
+		 * parts of the body, unless a separate variable name is given. It is possible to access
+		 * both the declared parts and the undeclared parts.
 		 * 
 		 * <p>
 		 * The value is a mapping from the field name in the body request to the value of the field.
@@ -141,6 +142,24 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		@Override
 		default boolean isBodyParameter() {
 			return true;
+		}
+
+		/**
+		 * The variable of the whole body followed by the variables of the declared
+		 * {@link #getParts() parts}.
+		 */
+		@Override
+		default List<String> scriptVariableNames() {
+			Map<String, BodyPart> parts = getParts();
+			if (parts.isEmpty()) {
+				return ConcreteRequestParameter.Config.super.scriptVariableNames();
+			}
+			List<String> result = new ArrayList<>(parts.size() + 1);
+			result.add(effectiveVariableName());
+			for (BodyPart part : parts.values()) {
+				result.add(part.effectiveVariableName());
+			}
+			return result;
 		}
 
 		/**
@@ -180,7 +199,12 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	public interface BodyPart extends ParameterConfiguration {
 
 		/**
-		 * The name of the body parameter.
+		 * The name of the field in the request body.
+		 * 
+		 * <p>
+		 * Unless a separate variable name is given, it is also the name of the variable to access
+		 * the field value in the service method implementation.
+		 * </p>
 		 */
 		@Override
 		String getName();
@@ -201,24 +225,13 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	}
 
 	@Override
-	public List<String> getScriptParameterNames() {
-		Set<String> partNames = parts().keySet();
-		if (partNames.isEmpty()) {
-			return super.getScriptParameterNames();
-		}
-		List<String> result = new ArrayList<>(super.getScriptParameterNames());
-		result.addAll(partNames);
-		return result;
-	}
-
-	@Override
 	public void parse(Map<String, Object> parameters, HttpServletRequest req, Map<String, String> parametersRaw)
 			throws InvalidValueException {
 		Map<?, ?> value = getValue(req, parametersRaw);
 		if (value.isEmpty()) {
 			checkNonMandatory(getConfig());
 		}
-		parameters.put(getName(), value);
+		parameters.put(getVariableName(), value);
 		for (ParameterConfiguration part : parts().values()) {
 			String partName = part.getName();
 			Object partValue = value.get(partName);
@@ -236,7 +249,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 						"Received multiple values for single parameter '" + partName + "'.");
 				}
 			}
-			parameters.put(partName, partValue);
+			parameters.put(part.effectiveVariableName(), partValue);
 		}
 	}
 

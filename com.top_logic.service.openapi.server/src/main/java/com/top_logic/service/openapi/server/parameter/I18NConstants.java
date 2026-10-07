@@ -18,6 +18,18 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 UNDEFINED_PARAMETER_REFERENCE__REFERENCE;
 
+	/**
+	 * @en The variable name "{0}" is not a valid TL-Script variable name. A variable name starts
+	 *     with a letter or an underscore and contains only letters, digits, and underscores.
+	 */
+	public static ResKey1 ERROR_INVALID_VARIABLE_NAME__NAME;
+
+	/**
+	 * @en A variable name is required, because the parameter name "{0}" is not a valid TL-Script
+	 *     variable name.
+	 */
+	public static ResKey1 ERROR_VARIABLE_NAME_REQUIRED__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

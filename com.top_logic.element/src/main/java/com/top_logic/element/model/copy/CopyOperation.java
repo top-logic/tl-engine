@@ -7,9 +7,13 @@ package com.top_logic.element.model.copy;
 
 import java.util.Map;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.provider.DefaultProvider;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
  * Operation for performing a (configurable) deep copy of a model object graph.
@@ -85,6 +89,15 @@ public abstract class CopyOperation {
 	 * them via a copy. The per-attribute write check (mirroring {@code set}) is not applied -- the
 	 * copy populates the user's own, newly created object with values that were already
 	 * read-access-checked.
+	 * </p>
+	 *
+	 * <p>
+	 * This holds for persisting a transient object (a persistent copy of a transient original), too:
+	 * the creation of the persistent object is checked as above, reading the values of the original
+	 * is read-access-checked, and no attribute is write-checked. The values of a transient original
+	 * are set by the application and by the user through form fields that follow the write rights of
+	 * the attribute, see
+	 * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
 	 * </p>
 	 */
 	public abstract CopyOperation withSecurity(Boolean useSecurity);

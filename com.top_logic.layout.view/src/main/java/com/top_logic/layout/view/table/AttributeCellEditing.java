@@ -10,9 +10,12 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * {@link CellEditing} writing the edited value to a model attribute of the row.
@@ -26,6 +29,10 @@ import com.top_logic.model.TLStructuredTypePart;
  * <p>
  * The field and the control editing it are the ones a form builds for that attribute, so a cell is
  * edited exactly as the same attribute is in a form.
+ * </p>
+ *
+ * <p>
+ * Only a cell the current user may write on its row is edited, as a form field is.
  * </p>
  */
 public class AttributeCellEditing implements CellEditing {
@@ -42,9 +49,23 @@ public class AttributeCellEditing implements CellEditing {
 		_attribute = attribute;
 	}
 
+	/**
+	 * Whether the row holds the attribute and the current user may read and write it on the row.
+	 *
+	 * <p>
+	 * A cell the user may not write is displayed read-only, whether the refusal depends on the row
+	 * or not, see {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 */
 	@Override
 	public boolean canEdit(Object row) {
-		return part(row) != null;
+		TLStructuredTypePart part = part(row);
+		if (part == null) {
+			return false;
+		}
+		TLObject object = (TLObject) row;
+		return ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()
+			&& ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE, object, part).isExecutable();
 	}
 
 	@Override

@@ -47,9 +47,12 @@ public abstract class RequestParameter<C extends RequestParameter.Config<?>> ext
 		 * 
 		 * <p>
 		 * Parameter names are case sensitive. The name of the parameter determines its name in the
-		 * API (e.g. in case of a query argument parameter) and its name to access it in the service
+		 * API (e.g. in case of a query argument parameter). Unless a separate variable name is
+		 * given, it is also the name of the variable to access the parameter value in the service
 		 * method implementation.
 		 * </p>
+		 *
+		 * @see ConcreteRequestParameter.ParameterConfiguration#getVariableName()
 		 */
 		@Override
 		@RegexpConstraint(VARIABLE_NAME_PATTERN)

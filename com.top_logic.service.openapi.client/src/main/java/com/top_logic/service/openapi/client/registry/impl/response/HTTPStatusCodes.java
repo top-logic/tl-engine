@@ -55,5 +55,17 @@ public class HTTPStatusCodes {
 		return code >= 100 && code < 600;
 	}
 
+	/**
+	 * Whether the given code is a success status code.
+	 * 
+	 * @param code
+	 *        The code to check.
+	 * @return Whether the given code is within the range [200-299], see
+	 *         {@link #STATUS_CODE_RANGE_SUCCESS}.
+	 */
+	public static boolean isSuccess(int code) {
+		return code >= 200 && code < 300;
+	}
+
 }
 

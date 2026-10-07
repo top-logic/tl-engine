@@ -3,13 +3,15 @@
 <pre><code>$parent.canCreate($reference)
 
 canCreate($parent, $reference)
+
+canCreate($parent, $reference, $type)
 </code></pre>
 
 <h2>Description</h2>
 
 <p>Checks whether the currently logged-in user is allowed to create a new element in the given composition reference of the given parent object and returns a boolean.</p>
 
-<p>This corresponds to the write access to the composition context (the same check that gates adding an element to the reference). The function never fails and never filters.</p>
+<p>The user needs the create right on the type of the new element in the context of the parent object and the write access to the composition reference (the same check that gates adding an element to the reference). By default, the type of the new element is the target type of the reference. If an element of a specialization is to be created, its type is given as third argument; then the create right on this specialization is checked. The function never filters and fails only if the given type is not compatible with the target type of the reference.</p>
 
 <p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
 
@@ -22,6 +24,7 @@ canCreate($parent, $reference)
 	<tbody>
 		<tr><td>parent</td><td>Business object</td><td>The container object that will hold the new element.</td><td>yes</td><td> </td></tr>
 		<tr><td>reference</td><td>Attribute</td><td>The composition reference (<code class="hljs inlineCode">TLStructuredTypePart</code>) into which the element is created.</td><td>yes</td><td> </td></tr>
+		<tr><td>type</td><td>Type</td><td>The type of the element to create. Must be the target type of the reference or a specialization of it.</td><td>no</td><td>The target type of the reference.</td></tr>
 	</tbody>
 </table>
 
@@ -38,3 +41,9 @@ canCreate($parent, $reference)
 <pre><code>$project.canCreate(`my.module:Project#milestones`)</code></pre>
 
 <p><span style="color:#3498db"><strong>Output:</strong></span> Whether the logged-in user may add a milestone to the project.</p>
+
+<h3>Example 2</h3>
+
+<pre><code>$project.canCreate(`my.module:Project#milestones`, `my.module:FinalMilestone`)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Whether the logged-in user may add a final milestone (a specialization of the milestone type) to the project.</p>

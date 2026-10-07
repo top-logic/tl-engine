@@ -356,6 +356,7 @@
   border: var(--tl-border-width-sm) solid var(--tl-border-control);
   background: var(--tl-surface-field);
   cursor: pointer;
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
 }
 .tl-checkbox[hidden] { display: none; }
 .tl-radio[hidden] { display: none; }
@@ -373,6 +374,28 @@
 .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
 .tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover {
   border-color: var(--tl-border-emphasis);
+}
+
+/* Der Hof: beim Zeigen ein Ring um die Marke, beim Drücken ein kräftigerer — docs/skalen.md „Auswahlmarken
+   zeigen einen Hof“, „Höfe sind durchscheinend“. Die Schicht ist durchscheinend: was unter dem Hof liegt,
+   bleibt sichtbar, und er hebt sich auf jedem Grund gleich stark ab. Ein Schatten ohne Versatz und Unschärfe zeichnet nur außerhalb der Marke, verschiebt
+   nichts und folgt ihrer Form: Kreis am Radio, gerundetes Quadrat am Kästchen, Pille am Schalter. Die
+   Ausdehnung füllt die Marke auf die Trefferfläche size-control auf. Auslöser ist die Marke selbst und ihr
+   Label tl-choice — die Trefferfläche ist das Label. Die Wächter wie beim Rand. Der Label-Auslöser
+   steht in :where und bleibt bei (0,1,0), unter dem Drücken an der Marke (0,2,0); das Drücken steht später
+   und gewinnt über das Zeigen. Fokus allein zeigt keinen Hof — der Fokus ist der Ring aus base.css. */
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover,
+:where(.tl-choice:hover) .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])),
+:where(.tl-choice:hover) .tl-radio:where(:not(:disabled):not([aria-readonly="true"])) {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):active,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):active,
+:where(.tl-choice:active) .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])),
+:where(.tl-choice:active) .tl-radio:where(:not(:disabled):not([aria-readonly="true"])) {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
 }
 
 .tl-checkbox:checked,
@@ -703,6 +726,32 @@
   cursor: default;
 }
 
+/* Der Kalenderknopf des Datums-, Zeit- und Zeitpunktfelds ist ein Knopf im Feld wie die Aktion der Gruppe
+   unten: quadratisch size-control-sm, Ecke radius-sm, das native Icon in size-icon-sm mittig, Abstand zum
+   Rand space-2xs (der Rand des Feldes trägt space-control-x, der Knopf rückt um die Differenz nach außen).
+   Nur Chromium und WebKit kennen das Pseudo-Element; Firefox zeichnet seinen eigenen Knopf. Jede Regel
+   steht allein, denn ein unbekanntes Pseudo-Element verwirft die ganze Selektorliste. background-color,
+   nicht background: die Kurzform löschte das Icon, das der Browser als Hintergrundbild malt. */
+.tl-field::-webkit-calendar-picker-indicator {
+  box-sizing: border-box;
+  width: var(--tl-size-control-sm);
+  height: var(--tl-size-control-sm);
+  margin-inline: var(--tl-space-xs) calc(var(--tl-space-2xs) - var(--tl-space-control-x));
+  padding: calc((var(--tl-size-control-sm) - var(--tl-size-icon-sm)) / 2);
+  border-radius: var(--tl-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+.tl-field:enabled::-webkit-calendar-picker-indicator:hover {
+  background-color: var(--tl-surface-interactive-selected);
+}
+.tl-field:enabled::-webkit-calendar-picker-indicator:active {
+  background-color: var(--tl-surface-interactive-active);
+}
+.tl-field:disabled::-webkit-calendar-picker-indicator {
+  cursor: default;
+}
+
 /* Mehrzeilig wächst das Feld mit den Zeilen; hier trägt es den Innenabstand oben und unten. */
 .tl-field--multiline {
   padding-block: var(--tl-space-control-y);
@@ -737,6 +786,18 @@
   inset-inline-end: var(--tl-space-2xs);
   top: 50%;
   translate: 0 -50%;
+}
+
+/* Knopf im Feld (docs/skalen.md „Knöpfe im Feld zeigen eine Stufe kräftiger“): der Ghost-Knopf liegt auf
+   surface-field, auf dem surface-interactive-hover hell nicht zu sehen ist (1,01). Im Feld zeigt er darum
+   surface-interactive-selected und drückt surface-interactive-active — dieselben Stufen am Chevron des
+   Select und am Kalenderknopf des Datumsfelds. Der Wächter hält einen deaktivierten Knopf leer: die Regel
+   steht nach button.css und schlüge sonst dessen :disabled bei gleicher Spezifität. */
+.tl-field-group > .tl-button--ghost:not(:disabled):hover {
+  background: var(--tl-surface-interactive-selected);
+}
+.tl-field-group > .tl-button--ghost:not(:disabled):active {
+  background: var(--tl-surface-interactive-active);
 }
 
 .tl-field-group:has(> .tl-field-group__icon) > .tl-field {
@@ -1310,7 +1371,8 @@ a.tl-field-value:hover {
    Zustände sind Attribute: aria-expanded offen, aria-selected gewählt, data-tl-state~="highlighted"
    die Tastatur-Hervorhebung, data-tl-state~="dragging" / "drop-before" / "drop-after" das Umordnen.
    Das Popup ist ein tl-popover (Fläche, Schatten, Ebene, Radius radius-md um die Optionen mit
-   radius-sm); hier steht nur sein Innenaufbau. Entfernen und Löschen sind tl-button--icon. */
+   radius-sm); hier steht nur sein Innenaufbau. Entfernen und Löschen sind tl-button--icon, Löschen und
+   Chevron zeigen als Knöpfe im Feld eine Stufe kräftiger. */
 
 .tl-select {
   display: flex;
@@ -1320,6 +1382,8 @@ a.tl-field-value:hover {
      und unten ist die halbe Differenz, abzüglich des Randes. Bricht die Wahl in eine zweite Reihe um,
      wächst das Feld um eine Chip-Reihe. */
   padding-block: calc((var(--tl-size-control) - var(--tl-size-control-sm)) / 2 - var(--tl-border-width-sm));
+  /* Am Ende stehen Löschen und Chevron als Knöpfe im Feld: space-2xs vom Rand wie die Aktion der tl-field-group. */
+  padding-inline-end: var(--tl-space-2xs);
   cursor: pointer;
 }
 .tl-select[hidden] { display: none; }
@@ -1360,10 +1424,29 @@ a.tl-field-value:hover {
   min-width: 0;
 }
 
-/* Der Entfernen-Knopf ist ein tl-button--icon --sm --ghost; er liegt in der Pille, ohne sie zu heben. */
+/* Der Entfernen-Knopf ist ein tl-button--icon --sm --ghost, liegt aber ganz innerhalb des Pillenrandes: ein
+   Kreis, konzentrisch zum runden Ende der Pille, mit einer Lücke von space-2xs / 2 zum Rand oben, unten und am
+   Ende. Durchmesser = Pillenhöhe size-control-sm − 2 × Rand − 2 × Lücke; das Ende der Pille trägt nur die
+   Lücke als Innenabstand. Ein Quadrat über dem Rand verdeckte beim Zeigen Rand und rundes Ende. */
+.tl-select__chip:has(> .tl-button) {
+  padding-inline-end: calc(var(--tl-space-2xs) / 2);
+}
+
 .tl-select__chip > .tl-button {
-  margin-block: calc(-1 * var(--tl-border-width-sm));
-  margin-inline-end: calc(-1 * var(--tl-space-2xs));
+  width: calc(var(--tl-size-control-sm) - 2 * var(--tl-border-width-sm) - var(--tl-space-2xs));
+  height: calc(var(--tl-size-control-sm) - 2 * var(--tl-border-width-sm) - var(--tl-space-2xs));
+  min-height: 0;
+  border-radius: var(--tl-radius-round);
+}
+
+/* Der Entfernen-Knopf liegt auf der Pille, nicht auf dem Feld: die neutrale Pille ist selbst
+   surface-interactive-selected, die Ghost-Stufe verschwindet auf ihr und auf den getönten Pillen. Zeigen und
+   Drücken nehmen darum beide surface-interactive-active, die einzige Stufe, die sich auf allen 14
+   Pillenflächen abhebt (docs/skalen.md „Knöpfe im Feld zeigen eine Stufe kräftiger“). Eine kräftigere
+   Drücken-Stufe gibt es nicht; die Kategorie bleibt geschlossen. */
+.tl-select__chip > .tl-button--ghost:not(:disabled):hover,
+.tl-select__chip > .tl-button--ghost:not(:disabled):active {
+  background: var(--tl-surface-interactive-active);
 }
 
 .tl-select__drag-handle {
@@ -1391,8 +1474,35 @@ a.tl-field-value:hover {
   gap: var(--tl-space-2xs);
 }
 
+/* Löschen und Chevron sind Knöpfe im Feld wie die Aktion der tl-field-group (field.css): quadratisch
+   size-control-sm, am Ende space-2xs vom Rand (padding-inline-end von .tl-select), Zeigen surface-interactive-selected, Drücken
+   surface-interactive-active — auf surface-field ist die Zeigen-Stufe des Ghost-Knopfs hell nicht zu sehen. */
+.tl-select__controls > .tl-button--ghost:not(:disabled):hover {
+  background: var(--tl-surface-interactive-selected);
+}
+.tl-select__controls > .tl-button--ghost:not(:disabled):active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Der Chevron bleibt aria-hidden und ohne Fokus: der Klick trifft die Wurzel, die das Popup öffnet. Er zeigt
+   aber dieselbe Fläche wie die Knöpfe daneben, solange der Zeiger auf ihm steht. */
 .tl-select__arrow {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-control-sm);
+  height: var(--tl-size-control-sm);
+  border-radius: var(--tl-radius-sm);
   color: var(--tl-icon-secondary);
+  transition: background-color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-select:not([aria-disabled="true"]) .tl-select__arrow:hover {
+  background: var(--tl-surface-interactive-selected);
+}
+.tl-select:not([aria-disabled="true"]) .tl-select__arrow:active {
+  background: var(--tl-surface-interactive-active);
 }
 
 /* --- Popup ------------------------------------------------------------------------- */

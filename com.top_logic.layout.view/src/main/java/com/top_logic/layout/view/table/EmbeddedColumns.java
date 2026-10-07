@@ -23,6 +23,7 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -33,6 +34,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SortColumn;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * The {@code <embedded-columns>} of a table: the columns of an object the row points to, shown as
@@ -472,6 +474,10 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * reference holding several objects yields all the objects it reaches.
 	 * </p>
 	 *
+	 * <p>
+	 * A reference the current user may not read on an object leads nowhere from it.
+	 * </p>
+	 *
 	 * @param object
 	 *        What the steps before this one reached, possibly {@code null}.
 	 * @param name
@@ -491,7 +497,12 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		if (object instanceof TLObject model) {
 			TLStructuredType type = model.tType();
 			TLStructuredTypePart part = type == null ? null : type.getPart(name);
-			return part == null ? null : model.tValue(part);
+			if (part == null
+				|| !ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, model, part).isExecutable()) {
+				// Nothing to follow, or a reference the user may not read on this object.
+				return null;
+			}
+			return model.tValue(part);
 		}
 		return null;
 	}

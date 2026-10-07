@@ -18,6 +18,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.table.Column;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 import com.top_logic.tool.export.ExcelCellRenderer;
@@ -114,6 +115,29 @@ public class ColumnDeclarations {
 		List<ColumnSetup> result = new ArrayList<>();
 		for (ColumnDeclaration declaration : declarations) {
 			result.addAll(declaration.resolve(scope));
+		}
+		return result;
+	}
+
+	/**
+	 * The names of the declared columns the current user is not offered: those the declarations
+	 * announce (see {@link ColumnDeclaration#declaredNames()}) but did not resolve to a column,
+	 * since the user's access rights withhold them.
+	 *
+	 * <p>
+	 * A configuration referring to such a column (e.g. a declared filter) is no configuration
+	 * error, in contrast to one referring to a column the table does not declare at all.
+	 * </p>
+	 *
+	 * @param declaredNames
+	 *        The names the declarations of the table announce.
+	 * @param columns
+	 *        The columns built for the current user.
+	 */
+	public static Set<String> withheld(Collection<String> declaredNames, List<? extends Column<?, ?>> columns) {
+		Set<String> result = new LinkedHashSet<>(declaredNames);
+		for (Column<?, ?> column : columns) {
+			result.remove(column.name());
 		}
 		return result;
 	}

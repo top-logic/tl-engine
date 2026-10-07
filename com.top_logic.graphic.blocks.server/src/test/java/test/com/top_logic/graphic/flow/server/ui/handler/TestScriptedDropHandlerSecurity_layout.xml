@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="sl">
+	<component class="test.com.top_logic.graphic.flow.server.ui.handler.TestScriptedDropHandlerSecurity$DropTestComponent"
+		name="dropComponent"
+		securityObject="model"
+	>
+		<handlers>
+			<handler class="com.top_logic.graphic.flow.server.ui.handler.ScriptedDropHandler"
+				name="script"
+				script="node -> dragged -> source -> throw('drop executed')"
+				transaction="false"
+			/>
+			<handler class="com.top_logic.graphic.flow.server.ui.handler.ScriptedDropHandler"
+				name="no-script"
+			/>
+		</handlers>
+	</component>
+</securityLayout>

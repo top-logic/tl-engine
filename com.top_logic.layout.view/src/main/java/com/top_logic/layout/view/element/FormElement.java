@@ -423,7 +423,7 @@ public class FormElement extends ContainerElement {
 		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
 		formControl.setModelScope(context.getModelScope());
 
-		return FormLayoutOptions.insetIfRequested(context, _config, formControl);
+		return InsetOptions.insetIfRequested(context, _config, formControl);
 	}
 
 	/**

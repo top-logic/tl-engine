@@ -56,6 +56,23 @@ public class OntoTreeDropByExpression extends TreeDropTargetByExpression {
 		@Override
 		Expr getCanDrop();
 
+		/**
+		 * Function computing the message to annotate to the change performed by the drop.
+		 * 
+		 * <p>
+		 * The function receives the dragged elements as first argument, the referenced node as
+		 * second argument and the model of the tree as third argument.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function returns either a string or an internationalized text. If not set, or if the
+		 * function returns nothing, a default message is used that names the dropped objects and
+		 * the tree they are dropped into.
+		 * </p>
+		 */
+		@Override
+		Expr getCommitMessage();
+
 	}
 
 	/**

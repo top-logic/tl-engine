@@ -19,7 +19,7 @@
 		/>
 	</channels>
 
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Alerts</en>
 			<de>Hinweisboxen</de>
@@ -91,7 +91,7 @@
 			</generic-command>
 		</alert>
 
-		<panel>
+		<panel with-inset="true">
 			<title>
 				<en>Computed from an object</en>
 				<de>Aus einem Objekt berechnet</de>
@@ -102,10 +102,7 @@
 					<de>Objekt bearbeiten, den Text ändern oder "Aktiv" abwählen und speichern. Die Hinweisbox folgt dem gespeicherten Objekt: Sie zeigt den Text und verschwindet, solange das Objekt nicht aktiv ist. Schließen zeigt einen Hinweis; sie erscheint wieder, sobald ein anderer Text gespeichert wird.</de>
 				</label>
 			</text>
-			<form
-				input="obj"
-				with-inset="true"
-			>
+			<form input="obj">
 				<field attribute="string"/>
 				<field attribute="active"/>
 			</form>

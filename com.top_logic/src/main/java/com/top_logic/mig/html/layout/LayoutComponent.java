@@ -1164,17 +1164,18 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * listener is forgotten, should the method output change until deregistration. */
 		_observations = dispose(_observations);
 		_observeAllTypes = observeAllTypes();
-		ModelScope scope = getModelScope();
 		if (_observeAllTypes) {
-			_observations = List.of(scope.addModelListener(this));
+			_observations = List.of(getModelScope().addModelListener(this));
 			return;
 		}
+		/* The model scope is only requested if there is something to observe: A component outside
+		 * a main layout has none. */
 		List<Registration> observations = new ArrayList<>();
 		for (TLStructuredType type : Set.copyOf(getTypesToObserve())) {
-			observations.add(scope.addModelListener(type, this));
+			observations.add(getModelScope().addModelListener(type, this));
 		}
 		for (TLObject object : Set.copyOf(getObjectsToObserve())) {
-			observations.add(scope.addModelListener(object, this));
+			observations.add(getModelScope().addModelListener(object, this));
 		}
 		_observations = observations;
 
@@ -1253,14 +1254,15 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (model == null) {
 			return;
 		}
-		ModelScope scope = getModelScope();
+		/* The model scope is only requested if there is something to observe: A component outside
+		 * a main layout has none. */
 		if (model instanceof TLObject) {
 			/* Optimization for the most common case. */
-			_modelObservations = List.of(scope.addModelListener((TLObject) model, this));
+			_modelObservations = List.of(getModelScope().addModelListener((TLObject) model, this));
 		} else {
 			List<Registration> observations = new ArrayList<>();
 			for (TLObject tlObject : extractTLObjects(model)) {
-				observations.add(scope.addModelListener(tlObject, this));
+				observations.add(getModelScope().addModelListener(tlObject, this));
 			}
 			_modelObservations = observations;
 		}

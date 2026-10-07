@@ -65,7 +65,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey EXPIRE_PASSWORD_NOT_SUPPORTED;
 
 	/**
-	 * @en The password of "{0}" has been expired.
+	 * @en Marked password of "{0}" as expired.
 	 */
 	public static ResKey1 EXPIRE_PASSWORD_DONE__USER;
 
@@ -126,12 +126,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey MFA_NO_ACCOUNT;
 
 	/**
-	 * @en Multi-factor authentication is now required for "{0}". The next login will ask to set it up.
+	 * @en Made multi-factor authentication mandatory for "{0}".
 	 */
 	public static ResKey1 MFA_REQUIRED_SET__USER;
 
 	/**
-	 * @en Multi-factor authentication switched off for "{0}".
+	 * @en Disabled multi-factor authentication for "{0}".
 	 */
 	public static ResKey1 MFA_DISABLED__USER;
 

@@ -238,11 +238,11 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 		body.run(new NoMonitor(), List.of());
 
 		assertEquals(List.of(
-			"Background job, step \"Preparation\"",
-			"Background job, step \"Pass 1\", items 1 to 2",
-			"Background job, step \"Pass 1\", item 3",
-			"Background job, step \"Pass 1\", item 4",
-			"Background job, step \"Completion\""), messagesSince(before));
+			"Executed step \"Preparation\" of a background job.",
+			"Executed step \"Pass 1\" of a background job on items 1 to 2.",
+			"Executed step \"Pass 1\" of a background job on item 3.",
+			"Executed step \"Pass 1\" of a background job on item 4.",
+			"Executed step \"Completion\" of a background job."), messagesSince(before));
 	}
 
 	private static List<String> messagesSince(long revision) {

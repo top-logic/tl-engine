@@ -27,7 +27,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 WRONG_CHILD_TYPE__DROPPED_DESTINATION;
 
 	/**
-	 * @en Drop operation on tree.
+	 * @en Dropped objects onto tree.
 	 */
 	public static ResKey DROP_OPERATION;
 

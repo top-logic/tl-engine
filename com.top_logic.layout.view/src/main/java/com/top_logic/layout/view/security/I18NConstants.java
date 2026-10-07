@@ -17,7 +17,7 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Creating view security scopes.
+	 * @en Created view security scopes.
 	 */
 	public static ResKey CREATING_SECURITY_SCOPES;
 

@@ -57,17 +57,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 SKIPPED_ELEMENT__ELEMENT_CAUSE;
 
 	/**
-	 * @en Background job, step "{0}"
+	 * @en Executed step "{0}" of a background job.
 	 */
 	public static ResKey1 COMMIT_JOB_STEP__STEP;
 
 	/**
-	 * @en Background job, step "{0}", items {1} to {2}
+	 * @en Executed step "{0}" of a background job on items {1} to {2}.
 	 */
 	public static ResKey3 COMMIT_JOB_CHUNK__STEP_FIRST_LAST;
 
 	/**
-	 * @en Background job, step "{0}", item {1}
+	 * @en Executed step "{0}" of a background job on item {1}.
 	 */
 	public static ResKey2 COMMIT_JOB_ITEM__STEP_POSITION;
 

@@ -6,6 +6,7 @@
  */
 import React from 'react';
 import { useFloating, autoUpdate, offset, flip, shift } from '@floating-ui/react';
+import { tokenPx } from './token-px';
 
 export type PopoverAnchor = Element | { x: number; y: number };
 
@@ -20,11 +21,7 @@ export interface PopoverOptions {
  * pixels. Read once per opening (see usePopover), not on every render.
  */
 function gapPx(): number {
-  const root = getComputedStyle(document.documentElement);
-  const v = root.getPropertyValue('--tl-space-xs').trim();
-  const rem = parseFloat(root.fontSize) || 16;
-  const n = parseFloat(v);
-  return isNaN(n) ? 8 : v.endsWith('rem') ? n * rem : n;
+  return tokenPx(document.documentElement, '--tl-space-xs', 8);
 }
 
 export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElement | null) => void; style: React.CSSProperties } {

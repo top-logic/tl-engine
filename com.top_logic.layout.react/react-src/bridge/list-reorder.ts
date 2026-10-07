@@ -22,9 +22,26 @@
  * with the mouse inside a field within it would start a drag of the item instead of selecting. Such
  * a list therefore arms the drag on a press of the item's handle and keeps every item undraggable
  * until then, while the item as a whole stays the area a drop is released on.
+ *
+ * The handle is a button: Alt + arrow moves the item, the live region announces the new position, and
+ * the focus stays on the moved item's handle (3b §8).
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useI18N } from './i18n';
+
+/** Texts of the keyboard gesture; the server translates them (I18NConstants, js.reorder.*). */
+const I18N_KEYS = {
+  'js.reorder.handle': 'Move {0}',
+  'js.reorder.hint': 'Alt + arrow key moves the entry',
+  'js.reorder.moved': '{0}, position {1} of {2}',
+  'js.reorder.position': 'Position {0} of {1}',
+};
+
+/** Fills the placeholders {0}, {1}, ... of a translated text. */
+function format(template: string, ...args: string[]): string {
+  return args.reduce((text, arg, i) => text.replace('{' + i + '}', arg), template);
+}
 
 /** The direction the items of a reorderable list follow each other in. */
 export type ReorderAxis = 'vertical' | 'horizontal';
@@ -72,6 +89,17 @@ export interface ReorderItemProps {
  */
 export interface ReorderHandleProps {
   onPointerDown?(event: React.PointerEvent): void;
+  /** Alt + arrow moves the item by one position (WCAG 2.5.7: dragging has a single-pointer-free alternative). */
+  onKeyDown?(event: React.KeyboardEvent): void;
+  /** Points at the hint naming the keyboard gesture, rendered by {@link ListReorder.announcer}. */
+  'aria-describedby'?: string;
+  /** "Move <name>", present where {@link ListReorderOptions.labelOf} names the item. */
+  'aria-label'?: string;
+  /**
+   * Registers the handle, so that the focus can return to it after a keyboard move; a control spreads
+   * it onto the handle and sets no ref of its own there.
+   */
+  ref?: (element: HTMLElement | null) => void;
 }
 
 /**
@@ -108,6 +136,20 @@ export interface ListReorderOptions {
    * field instead of picking the item up.
    */
   handle?: boolean;
+
+  /** The number of items; a keyboard move stops at both ends. */
+  count: number;
+
+  /** The name of the item at the given position, for the handle's label and the announcement of a move. */
+  labelOf?(index: number): string;
+
+  /**
+   * The React key of the item at the given position, for a list keyed by its values: after a keyboard
+   * move the hook gives the focus back to the moved item's handle once the list shows the item at its
+   * new position. Without it the list is keyed by position, and the focus goes to the handle at the
+   * new position right away.
+   */
+  keyOf?(index: number): string;
 }
 
 /** What {@link useListReorder} hands back to the control. */
@@ -135,6 +177,17 @@ export interface ListReorder {
 
   /** The drag properties of the element containing the items. */
   containerProps: ReorderContainerProps;
+
+  /**
+   * The hint the handles point at and the live region announcing a keyboard move ("<name>, position n
+   * of m"); the control renders it once, next to the list.
+   */
+  announcer: React.ReactElement;
+}
+
+/** The `data-tl-state` word of an item's drag state (drag.css), `undefined` while it takes no part. */
+export function reorderState(state: ReorderItemState): 'dragging' | 'drop-before' | 'drop-after' | undefined {
+  return state.dragging ? 'dragging' : state.dropBefore ? 'drop-before' : state.dropAfter ? 'drop-after' : undefined;
 }
 
 /**
@@ -144,7 +197,10 @@ export interface ListReorder {
  *        {@link ListReorderOptions}.
  */
 export function useListReorder(options: ListReorderOptions): ListReorder {
-  const { axis = 'vertical', onMove, enabled = true, handle = false } = options;
+  const { axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf } = options;
+  const t = useI18N(I18N_KEYS);
+  const hintId = useId();
+  const [announcement, setAnnouncement] = useState('');
 
   // The dragged item and the item it hovers over are held in refs as well as in state: the state
   // drives the drop indicator, while the drop handler reads the refs, so it sees the last hover even
@@ -158,6 +214,12 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   // over a render that renews the callback (a list it closes over has changed).
   const onMoveRef = useRef(onMove);
   onMoveRef.current = onMove;
+  const countRef = useRef(count);
+  countRef.current = count;
+  const labelOfRef = useRef(labelOf);
+  labelOfRef.current = labelOf;
+  const keyOfRef = useRef(keyOf);
+  keyOfRef.current = keyOf;
 
   const setDragIndex = useCallback((index: number | null) => {
     dragIndexRef.current = index;
@@ -284,19 +346,79 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     };
   }, [enabled, handle, armedIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd]);
 
+  // -- After a keyboard move the focus returns to the moved item's handle (3b §8). A list keyed by
+  //    value moves the item's DOM node once the new order arrives, and the browser drops the focus of
+  //    a node it moves; a list keyed by position keeps its nodes, and the moved value now sits under
+  //    the handle at the new position. --
+  const handlesRef = useRef(new Map<string, HTMLElement>());
+  const pendingFocusRef = useRef<{ key: string; to: number } | null>(null);
+  const keyAt = useCallback((index: number) => keyOfRef.current?.(index) ?? String(index), []);
+
+  useLayoutEffect(() => {
+    const pending = pendingFocusRef.current;
+    if (pending === null) {
+      return;
+    }
+    const target = handlesRef.current.get(pending.key);
+    if (keyAt(pending.to) === pending.key) {
+      pendingFocusRef.current = null;
+      if (target?.isConnected) {
+        target.focus();
+      }
+      return;
+    }
+    // The user went on before the new order arrived: the focus is not the list's to take back.
+    const active = document.activeElement;
+    if (active !== null && active !== document.body && active !== target) {
+      pendingFocusRef.current = null;
+    }
+  });
+
+  // Alt + arrow moves the item by one position, the same move a drop makes, and announces where it
+  // landed. Back and forth follow the axis: up/down in a column, left/right in a row.
+  const keyboardMove = useCallback((index: number, event: React.KeyboardEvent) => {
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    const back = axis === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
+    const forth = axis === 'vertical' ? 'ArrowDown' : 'ArrowRight';
+    if (event.key !== back && event.key !== forth) {
+      return;
+    }
+    // The list takes Alt + arrow over from the page: no scrolling, no step in the browser history.
+    event.preventDefault();
+    event.stopPropagation();
+    const to = index + (event.key === back ? -1 : 1);
+    const total = countRef.current;
+    if (to < 0 || to >= total) {
+      return;
+    }
+    pendingFocusRef.current = { key: keyOfRef.current ? keyOfRef.current(index) : String(to), to };
+    onMoveRef.current(index, to);
+    const name = labelOfRef.current?.(index) ?? '';
+    setAnnouncement(name
+      ? format(t['js.reorder.moved'], name, String(to + 1), String(total))
+      : format(t['js.reorder.position'], String(to + 1), String(total)));
+  }, [axis, t]);
+
   const handleProps = useCallback((index: number): ReorderHandleProps => {
-    if (!enabled || !handle) {
+    if (!enabled) {
       return {};
     }
+    const name = labelOfRef.current?.(index);
     return {
-      onPointerDown: (event) => {
-        // The primary button starts a drag; a context menu or a middle click does not.
-        if (event.button === 0) {
-          arm(index);
+      // The primary button starts a drag; a context menu or a middle click does not.
+      onPointerDown: handle ? (event) => { if (event.button === 0) arm(index); } : undefined,
+      onKeyDown: (event) => keyboardMove(index, event),
+      'aria-describedby': hintId,
+      ...(name ? { 'aria-label': format(t['js.reorder.handle'], name) } : {}),
+      ref: (element) => {
+        if (element) {
+          handlesRef.current.set(keyAt(index), element);
         }
       },
     };
-  }, [arm, enabled, handle]);
+  }, [arm, enabled, handle, hintId, keyAt, keyboardMove, t]);
 
   const itemState = useCallback((index: number): ReorderItemState => ({
     dragging: dragIndex === index,
@@ -306,5 +428,9 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
 
   const containerProps: ReorderContainerProps = enabled ? { onDrop: handleDrop } : {};
 
-  return { dragIndex, dropTarget, itemProps, handleProps, itemState, containerProps };
+  const announcer = React.createElement(React.Fragment, null,
+    React.createElement('span', { id: hintId, hidden: true }, t['js.reorder.hint']),
+    React.createElement('span', { role: 'status', className: 'tl-visually-hidden' }, announcement));
+
+  return { dragIndex, dropTarget, itemProps, handleProps, itemState, containerProps, announcer };
 }

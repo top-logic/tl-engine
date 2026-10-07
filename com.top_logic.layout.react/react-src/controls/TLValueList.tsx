@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -52,8 +52,8 @@ const SEPARATOR = ', ';
  * with the button that removes it, and a further button below appends an empty value.
  *
  * Where the order is part of the value, each row starts with a handle that moves the value: by
- * dragging the row by that handle to where the value belongs, or with the arrow keys while the handle
- * has the focus.
+ * dragging the row by that handle to where the value belongs, or with Alt + arrow key while the
+ * handle has the focus.
  *
  * A disabled field shows the rows of an edited one, with the buttons that remove and append a value
  * natively `disabled` and without the handles (see showsValueOnly).
@@ -72,35 +72,15 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const arrangeable = editable && state.ordered === true && elements.length > 1;
   const cls = 'tlValueList ' + (block ? 'tlValueList--block' : 'tlValueList--inline');
 
-  // The handles by row position: a move shifts the values while the rows stay where they are, so the
-  // focus follows the moved value to the handle of the row it now sits in.
-  const handles = React.useRef<(HTMLButtonElement | null)[]>([]);
-
   const move = React.useCallback((index: number, targetIndex: number) => {
     sendCommand(CMD_MOVE_ELEMENT, { [ARG_INDEX]: index, [ARG_TARGET_INDEX]: targetIndex });
   }, [sendCommand]);
 
   // A value is edited in a text field, so the row is picked up by its handle rather than anywhere:
-  // a row that is draggable throughout would drag itself when text within it is selected.
-  const reorder = useListReorder({ axis: 'vertical', onMove: move, enabled: arrangeable, handle: true });
-
-  const handleKeyDown = (index: number, event: React.KeyboardEvent<HTMLButtonElement>) => {
-    let targetIndex: number;
-    if (event.key === 'ArrowUp') {
-      targetIndex = index - 1;
-    } else if (event.key === 'ArrowDown') {
-      targetIndex = index + 1;
-    } else {
-      return;
-    }
-    // The list takes the arrow keys over from the scrolling of the page.
-    event.preventDefault();
-    if (targetIndex < 0 || targetIndex >= elements.length) {
-      return;
-    }
-    move(index, targetIndex);
-    handles.current[targetIndex]?.focus();
-  };
+  // a row that is draggable throughout would drag itself when text within it is selected. Alt + arrow
+  // on the handle moves it by keyboard, and the focus follows the value to the handle of the row it
+  // now sits in (the common hook, 3b §8).
+  const reorder = useListReorder({ axis: 'vertical', onMove: move, enabled: arrangeable, handle: true, count: elements.length });
 
   if (showsValueOnly(state)) {
     return (
@@ -121,29 +101,14 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
     <div id={controlId} {...labelProps} role="group" className={rootClassName(state, cls)}
       {...reorder.containerProps}>
       {elements.map((element, index) => {
-        const dragState = reorder.itemState(index);
-        let rowCls = 'tlValueList__row';
-        if (dragState.dragging) {
-          rowCls += ' tlValueList__row--dragging';
-        }
-        if (dragState.dropBefore) {
-          rowCls += ' tlValueList__row--dragOver-before';
-        }
-        if (dragState.dropAfter) {
-          rowCls += ' tlValueList__row--dragOver-after';
-        }
         return (
-          <div key={index} className={rowCls} {...reorder.itemProps(index)}>
+          <div key={index} className="tlValueList__row" data-tl-state={reorderState(reorder.itemState(index))} {...reorder.itemProps(index)}>
             {arrangeable && (
               <button
                 type="button"
                 className="tlValueList__handle"
                 aria-label={t['js.valueList.move']}
                 {...tooltipProps(t['js.valueList.move'])}
-                ref={(handle) => {
-                  handles.current[index] = handle;
-                }}
-                onKeyDown={(event) => handleKeyDown(index, event)}
                 {...reorder.handleProps(index)}
               >
                 <ThemeIcon encoded={HANDLE_ICON} />
@@ -175,6 +140,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
       >
         <ThemeIcon encoded={ADD_ICON} />
       </button>
+      {arrangeable && reorder.announcer}
     </div>
   );
 };

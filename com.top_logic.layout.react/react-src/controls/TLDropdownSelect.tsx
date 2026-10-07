@@ -1,5 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
@@ -16,10 +16,10 @@ import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
-// -- Sub-components --
+/** The glyph of the handle a chip is moved by. */
+const HANDLE_ICON = 'css:fa-solid fa-grip-vertical';
 
-/** How a chip takes part in reordering by drag and drop: the design system's data-tl-state word. */
-type ChipDragState = 'dragging' | 'drop-before' | 'drop-after';
+// -- Sub-components --
 
 /**
  * Renders a selected value of a multi-valued field as a chip: a pill of the value's color role
@@ -30,23 +30,19 @@ function Chip({
   removable,
   onRemove,
   removeLabel,
-  draggable,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
+  reorderable,
+  itemProps,
+  handleProps,
   dragState,
 }: {
   option: OptionDescriptor;
   removable: boolean;
   onRemove: (value: string) => void;
   removeLabel: string;
-  draggable?: boolean;
-  onDragStart?: (e: React.DragEvent) => void;
-  onDragOver?: (e: React.DragEvent) => void;
-  onDrop?: (e: React.DragEvent) => void;
-  onDragEnd?: (e: React.DragEvent) => void;
-  dragState?: ChipDragState;
+  reorderable: boolean;
+  itemProps?: ReorderItemProps;
+  handleProps?: ReorderHandleProps;
+  dragState?: string;
 }) {
   const handleRemove = useCallback(
     (e: React.MouseEvent) => {
@@ -61,16 +57,18 @@ function Chip({
       className="tl-pill tl-type-label tl-select__chip"
       data-tl-role={optionRoleAttr(option)}
       data-tl-state={dragState}
-      draggable={draggable || undefined}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
+      {...itemProps}
     >
-      {draggable && (
-        <span className="tl-select__drag-handle" aria-hidden="true">
-          <ThemeIcon encoded="css:fa-solid fa-grip-vertical" className="tl-icon-sm" />
-        </span>
+      {reorderable && (
+        <button
+          type="button"
+          className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-select__drag-handle' })}
+          onClick={(e) => e.stopPropagation()}
+          {...tooltipProps(handleProps?.['aria-label'])}
+          {...handleProps}
+        >
+          <ThemeIcon encoded={HANDLE_ICON} className="tl-button__icon tl-icon-sm" />
+        </button>
       )}
       <OptionImage image={option.image} />
       <span className="tl-pill__label">{option.label}</span>
@@ -115,15 +113,17 @@ function OptionRow({
   const handleClick = useCallback(() => onSelect(option.value), [onSelect, option.value]);
 
   const labelContent = useMemo(() => {
-    if (!searchTerm) return option.label;
-    const idx = option.label.toLowerCase().indexOf(searchTerm.toLowerCase());
+    // The term the filter matches (filterOptions trims it): blanks around it mark nothing.
+    const term = searchTerm.trim();
+    if (!term) return option.label;
+    const idx = option.label.toLowerCase().indexOf(term.toLowerCase());
     if (idx < 0) return option.label;
     const matchClass = option.colorRole ? 'tl-type-label-strong' : 'tl-type-body-strong';
     return (
       <>
         {option.label.substring(0, idx)}
-        <span className={matchClass}>{option.label.substring(idx, idx + searchTerm.length)}</span>
-        {option.label.substring(idx + searchTerm.length)}
+        <span className={matchClass}>{option.label.substring(idx, idx + term.length)}</span>
+        {option.label.substring(idx + term.length)}
       </>
     );
   }, [option.label, option.colorRole, searchTerm]);
@@ -208,11 +208,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [loadError, setLoadError] = useState(false);
 
-  // Drag-and-drop state for chip reordering
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
-  const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
-
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -237,15 +232,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [value]
   );
 
-  // Derived: filtered options (exclude selected, apply search)
-  const filteredOptions = useMemo(() => {
-    let opts = allOptions.filter((o) => !selectedIds.has(o.value));
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      opts = opts.filter((o) => o.label.toLowerCase().includes(lower));
-    }
-    return opts;
-  }, [allOptions, selectedIds, searchTerm]);
+  // Derived: the options not chosen, narrowed by the search (filterOptions, shared with the column
+  // selection).
+  const filteredOptions = useMemo(
+    () => filterOptions(allOptions.filter((o) => !selectedIds.has(o.value)), searchTerm),
+    [allOptions, selectedIds, searchTerm]
+  );
 
   // Auto-highlight single result when filtering, reset otherwise.
   useEffect(() => {
@@ -280,7 +272,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     removalIndexRef.current = -1;
 
     const buttons = containerRef.current?.querySelectorAll<HTMLElement>(
-      '.tl-select__chip > .tl-button'
+      '.tl-select__chip > .tl-button:not(.tl-select__drag-handle)'
     );
     if (buttons && buttons.length > 0) {
       buttons[Math.min(idx, buttons.length - 1)].focus();
@@ -510,67 +502,29 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [sendCommand]
   );
 
-  // -- Drag-and-drop handlers for chip reordering --
+  // -- Reordering the chips: the common gesture (useListReorder), along the row of chips --
 
-  const handleChipDragStart = useCallback(
-    (index: number, e: React.DragEvent) => {
-      setDragIndex(index);
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', String(index));
-    },
-    []
-  );
-
-  const handleChipDragOver = useCallback(
-    (index: number, e: React.DragEvent) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (dragIndex === null || dragIndex === index) {
-        setDropTargetIndex(null);
-        setDropPosition(null);
-        return;
-      }
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const midX = rect.left + rect.width / 2;
-      const pos = e.clientX < midX ? 'before' : 'after';
-      setDropTargetIndex(index);
-      setDropPosition(pos);
-    },
-    [dragIndex]
-  );
-
-  const handleChipDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      if (dragIndex === null || dropTargetIndex === null || dropPosition === null) return;
-      if (dragIndex === dropTargetIndex) return;
-
+  const moveChip = useCallback(
+    (from: number, to: number) => {
       const reordered = [...valueRef.current];
-      const [moved] = reordered.splice(dragIndex, 1);
-      let insertAt = dropTargetIndex;
-      // Adjust insertion index since the item was removed first
-      if (dragIndex < dropTargetIndex) {
-        insertAt = dropPosition === 'before' ? insertAt - 1 : insertAt;
-      } else {
-        insertAt = dropPosition === 'before' ? insertAt : insertAt + 1;
-      }
-      reordered.splice(insertAt, 0, moved);
-
+      const [moved] = reordered.splice(from, 1);
+      reordered.splice(to, 0, moved);
       valueRef.current = reordered;
       sendCommand(CMD_VALUE_CHANGED, { value: reordered.map((v) => v.value) });
-
-      setDragIndex(null);
-      setDropTargetIndex(null);
-      setDropPosition(null);
     },
-    [dragIndex, dropTargetIndex, dropPosition, sendCommand]
+    [sendCommand]
   );
 
-  const handleChipDragEnd = useCallback(() => {
-    setDragIndex(null);
-    setDropTargetIndex(null);
-    setDropPosition(null);
-  }, []);
+  // The chips are keyed by value: after Alt + arrow the hook gives the focus back to the moved chip's
+  // handle once the server's new order has arrived.
+  const reorder = useListReorder({
+    axis: 'horizontal',
+    onMove: moveChip,
+    enabled: dragEnabled,
+    count: value.length,
+    labelOf: (i) => value[i]?.label ?? '',
+    keyOf: (i) => value[i]?.value ?? String(i),
+  });
 
   // Scroll highlighted option into view
   useEffect(() => {
@@ -691,7 +645,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         onClick={handleFieldClick}
         onKeyDown={handleKeyDown}
       >
-        <span className="tl-select__values">
+        <span className="tl-select__values" data-tl-axis={multiSelect ? 'horizontal' : undefined} {...reorder.containerProps}>
           {value.length === 0 ? (
             <span className="tl-select__placeholder">{emptyOptionLabel}</span>
           ) : !multiSelect ? (
@@ -703,32 +657,19 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
               <OptionLabel option={value[0]} labelClassName="tl-field-value__text" />
             </span>
           ) : (
-            value.map((v, idx) => {
-              // A chip is either the one dragged or the one dropped beside, never both.
-              let dragState: ChipDragState | undefined;
-              if (dragIndex === idx) {
-                dragState = 'dragging';
-              } else if (dropTargetIndex === idx && dropPosition === 'before') {
-                dragState = 'drop-before';
-              } else if (dropTargetIndex === idx && dropPosition === 'after') {
-                dragState = 'drop-after';
-              }
-              return (
-                <Chip
-                  key={v.value}
-                  option={v}
-                  removable={!disabled}
-                  onRemove={removeOption}
-                  removeLabel={removeChipLabel(v.label)}
-                  draggable={dragEnabled}
-                  onDragStart={dragEnabled ? (e) => handleChipDragStart(idx, e) : undefined}
-                  onDragOver={dragEnabled ? (e) => handleChipDragOver(idx, e) : undefined}
-                  onDrop={dragEnabled ? handleChipDrop : undefined}
-                  onDragEnd={dragEnabled ? handleChipDragEnd : undefined}
-                  dragState={dragEnabled ? dragState : undefined}
-                />
-              );
-            })
+            value.map((v, idx) => (
+              <Chip
+                key={v.value}
+                option={v}
+                removable={!disabled}
+                onRemove={removeOption}
+                removeLabel={removeChipLabel(v.label)}
+                reorderable={dragEnabled}
+                itemProps={dragEnabled ? reorder.itemProps(idx) : undefined}
+                handleProps={dragEnabled ? reorder.handleProps(idx) : undefined}
+                dragState={dragEnabled ? reorderState(reorder.itemState(idx)) : undefined}
+              />
+            ))
           )}
         </span>
         <span className="tl-select__controls">
@@ -752,6 +693,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         </span>
       </div>
 
+      {dragEnabled && reorder.announcer}
       {dropdownContent && createPortal(dropdownContent, document.body)}
     </>
   );

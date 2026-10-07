@@ -79,7 +79,13 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [entries, sendCommand]);
 
-  const reorder = useListReorder({ axis: 'vertical', onMove: handleMove });
+  const reorder = useListReorder({
+    axis: 'vertical',
+    onMove: handleMove,
+    count: entries.length,
+    labelOf: (i) => entries[i]?.label ?? '',
+    keyOf: (i) => entries[i]?.name ?? String(i),
+  });
 
   const searchable = entries.length > 10;
 

@@ -473,6 +473,32 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.valueList.move")
 	public static ResKey JS_VALUE_LIST_MOVE;
 
+	// -- Reordering client-side i18n keys --
+
+	/**
+	 * @en Move {0}
+	 */
+	@CustomKey("js.reorder.handle")
+	public static ResKey JS_REORDER_HANDLE;
+
+	/**
+	 * @en Alt + arrow key moves the entry
+	 */
+	@CustomKey("js.reorder.hint")
+	public static ResKey JS_REORDER_HINT;
+
+	/**
+	 * @en {0}, position {1} of {2}
+	 */
+	@CustomKey("js.reorder.moved")
+	public static ResKey JS_REORDER_MOVED;
+
+	/**
+	 * @en Position {0} of {1}
+	 */
+	@CustomKey("js.reorder.position")
+	public static ResKey JS_REORDER_POSITION;
+
 	/**
 	 * @en No value
 	 */

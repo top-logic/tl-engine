@@ -39,7 +39,7 @@ export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';
-export { useListReorder } from './bridge/list-reorder';
+export { useListReorder, reorderState } from './bridge/list-reorder';
 export type {
   ListReorder,
   ListReorderOptions,
@@ -78,7 +78,9 @@ export type {
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
-export { rootClassName } from './bridge/css';
+export { rootClassName, stateAttr } from './bridge/css';
+export { tokenPx, useTokenPx } from './bridge/token-px';
+export { filterOptions } from './bridge/filter-options';
 export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
 export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';

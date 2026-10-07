@@ -55,17 +55,17 @@ public class KanbanBoardCards {
 	 *        The context the cards are derived from.
 	 * @param cardContent
 	 *        The content instantiated once per displayed object.
-	 * @param itemChannelName
+	 * @param elementChannelName
 	 *        Name of the per-card channel holding the card's object.
 	 * @param columnFunction
 	 *        Computes the column value of an object.
 	 * @param labelFunction
 	 *        Computes the header label of a column value.
 	 */
-	public KanbanBoardCards(ViewContext templateContext, List<UIElement> cardContent, String itemChannelName,
+	public KanbanBoardCards(ViewContext templateContext, List<UIElement> cardContent, String elementChannelName,
 			Function<Object, Object> columnFunction, Function<Object, String> labelFunction) {
 		_templateContext = templateContext;
-		_cards = new TemplateInstances(cardContent, itemChannelName, "card");
+		_cards = new TemplateInstances(cardContent, elementChannelName, "card");
 		_columnFunction = columnFunction;
 		_labelFunction = labelFunction;
 		_board = new ReactKanbanBoardControl(templateContext);

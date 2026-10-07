@@ -43,7 +43,7 @@ import com.top_logic.table.SelectionMode;
 public class TestKanbanBoardCards extends TestCase {
 
 	/** Name of the channel holding the object a card displays. */
-	private static final String ITEM_CHANNEL = "item";
+	private static final String ELEMENT_CHANNEL = "element";
 
 	private static final String OPEN = "open";
 
@@ -64,7 +64,7 @@ public class TestKanbanBoardCards extends TestCase {
 		ViewContext context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
 			new ReactWindowRegistry("test")));
 		_template = new Template();
-		_cards = new KanbanBoardCards(context, List.of(_template), ITEM_CHANNEL, item -> ((Ticket) item)._status,
+		_cards = new KanbanBoardCards(context, List.of(_template), ELEMENT_CHANNEL, item -> ((Ticket) item)._status,
 			column -> "Column " + column);
 	}
 
@@ -339,7 +339,7 @@ public class TestKanbanBoardCards extends TestCase {
 
 		@Override
 		public IReactControl createControl(ViewContext context) {
-			_channels.add(context.resolveChannel(new ChannelRef(ITEM_CHANNEL)));
+			_channels.add(context.resolveChannel(new ChannelRef(ELEMENT_CHANNEL)));
 
 			ReactControl control = new ReactControl(context, null, "TLPanel");
 			_created.add(control);

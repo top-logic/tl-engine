@@ -68,7 +68,7 @@ import com.top_logic.table.SelectionMode;
  *
  * <p>
  * For each object, the {@link Config#getCard() card content} is instantiated with the object
- * published on a local channel ({@link Config#getItemChannel()}), exactly like the item content of
+ * published on a local channel ({@link Config#getElementChannel()}), exactly like the item content of
  * an {@link ObjectListElement &lt;object-list&gt;}.
  * </p>
  *
@@ -81,7 +81,7 @@ import com.top_logic.table.SelectionMode;
  *   selection="ticket"
  * &gt;
  *   &lt;card&gt;
- *     &lt;text input="item"/&gt;
+ *     &lt;text input="element"/&gt;
  *   &lt;/card&gt;
  * &lt;/kanban-board&gt;
  * </pre>
@@ -153,8 +153,8 @@ public class KanbanBoardElement implements UIElement {
 		/** Configuration name for {@link #getSelectionMode()}. */
 		String SELECTION_MODE = "selection-mode";
 
-		/** Configuration name for {@link #getItemChannel()}. */
-		String ITEM_CHANNEL = "item-channel";
+		/** Configuration name for {@link #getElementChannel()}. */
+		String ELEMENT_CHANNEL = "element-channel";
 
 		/** Configuration name for {@link #getCard()}. */
 		String CARD = "card";
@@ -274,17 +274,17 @@ public class KanbanBoardElement implements UIElement {
 		/**
 		 * Name of the channel publishing a card's object to the card content.
 		 */
-		@Name(ITEM_CHANNEL)
-		@StringDefault("item")
-		String getItemChannel();
+		@Name(ELEMENT_CHANNEL)
+		@StringDefault("element")
+		String getElementChannel();
 
 		/**
 		 * The content instantiated once per displayed object, with the object published on the
-		 * {@link #getItemChannel() item channel}.
+		 * {@link #getElementChannel() element channel}.
 		 *
 		 * <p>
 		 * Ordinary view content: typically a single {@link com.top_logic.layout.view.ReferenceElement
-		 * &lt;view-ref&gt;} binding the item channel, or elements written inline. Multiple entries
+		 * &lt;view-ref&gt;} binding the element channel, or elements written inline. Multiple entries
 		 * are stacked vertically.
 		 * </p>
 		 */
@@ -419,7 +419,7 @@ public class KanbanBoardElement implements UIElement {
 		List<ViewChannel> inputs = ChannelInputs.resolve(context, _config.getInputs());
 
 		QueryExecutor columnExecutor = _columnExecutor;
-		KanbanBoardCards cards = new KanbanBoardCards(context, _cardContent, _config.getItemChannel(),
+		KanbanBoardCards cards = new KanbanBoardCards(context, _cardContent, _config.getElementChannel(),
 			item -> columnExecutor.execute(item), this::columnLabel);
 
 		List<Object> initialItems = toList(_itemsExecutor, ChannelInputs.arguments(inputs));

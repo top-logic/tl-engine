@@ -56,6 +56,7 @@
 					<kanban-board
 						column="t -> $t.get(`demo.tickets:Ticket#status`)"
 						columns="all(`demo.tickets:TicketStatus`)"
+						element-channel="ticket"
 						items="all(`demo.tickets:Ticket`).sort(x -> y -> { ox = $x.get(`demo.tickets:Ticket#order`); oy = $y.get(`demo.tickets:Ticket#order`); c = compare(if($ox == null, 1000000, $ox), if($oy == null, 1000000, $oy)); if($c != 0, $c, compare($x.get(`demo.tickets:Ticket#name`), $y.get(`demo.tickets:Ticket#name`))); })"
 						observed-types="demo.tickets:Ticket"
 						on-reorder="column -> tickets -> count($tickets.size()).foreach(i -> $tickets[$i].set(`demo.tickets:Ticket#order`, $i))"
@@ -66,7 +67,7 @@
 							<view-ref view="board/ticket-card.view.xml">
 								<bind
 									channel="ticket"
-									to="item"
+									to="ticket"
 								/>
 							</view-ref>
 						</card>

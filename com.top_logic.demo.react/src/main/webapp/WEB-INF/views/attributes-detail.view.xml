@@ -50,6 +50,7 @@
 				<field attribute="htmlSource"/>
 				<field attribute="markdownSource"/>
 				<field attribute="plainSource"/>
+				<field attribute="script"/>
 			</group>
 			<group
 				border="subtle"
@@ -140,6 +141,21 @@
 				<field attribute="owner"/>
 				<field attribute="watchers"/>
 				<field attribute="related"/>
+			</group>
+			<group
+				border="subtle"
+				collapsible="true"
+			>
+				<label>
+					<en>Parts</en>
+					<de>Teile</de>
+				</label>
+				<composition-table attribute="parts">
+					<columns>
+						<column attribute="name"/>
+						<column attribute="amount"/>
+					</columns>
+				</composition-table>
 			</group>
 			<commands>
 				<generic-command placement="BUTTON_BAR">

@@ -1,4 +1,9 @@
-# FAQ: New React Control Module
+---
+description: Read when creating a module of its own for React controls - package.json, tsconfig.json, vite.config.ts with tl-react-bridge shims, the entry file, frontend-maven-plugin in the pom.xml, ClientResources registration, building and common errors.
+order: 15
+---
+
+# New React Control Module
 
 ## When to use
 
@@ -8,7 +13,7 @@ When you need React controls in a separate module (not in `com.top_logic.layout.
 
 ## Required files
 
-All files from the [general module checklist](new-module-checklist.md) plus the following.
+All files from the [general module checklist](doc:engine/new-module-checklist) plus the following.
 
 ### 1. `package.json`
 
@@ -254,7 +259,7 @@ export default MyControl;
 
 ### 8. Java UIElement + ReactControl
 
-Step by step in [new-ui-element.md](new-ui-element.md). For a full pattern see `ChartElement.java`
+Step by step in [A new `UIElement` with a client component of its own](doc:view-layer/new-ui-element). For a full pattern see `ChartElement.java`
 and `ReactChartJsControl.java` in `com.top_logic.layout.react.chartjs`.
 
 ## Build

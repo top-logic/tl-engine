@@ -243,6 +243,14 @@ nothing in the tool array; it only makes a skill's *instructions* loadable again
 carried them. `AgentEvent.ContextComposition#loadedSkills` names the skills each request paid for.
 See `tl-ai-core/doc/skill-overlays.md`.
 
+`TL_init` (#667) is the counterpart of `/init` in Claude Code: Albert writes the **application
+context** - purpose, users and their tasks, the users' terms, calculated values, rules - as a Markdown
+document an administrator installs in a `TextPromptContributor`. The skill reads the model in depth (the
+calculation rule of every derived attribute, and every mismatch between a description and the
+implementation, which it reports and does not fix), interviews the user and tracks the phases with
+`TL_taskManagement`; it does not look at the application's objects. Nothing the skill reaches
+changes the application - `TestInitSkill` pins that. See `tl-ai-core/doc/init-skill.md`.
+
 ### Prompt caching: three rules
 
 Every provider caches by prefix, over the rendering **tools → system prompt → messages**; Anthropic

@@ -1429,6 +1429,112 @@ When a subagent finishes, its result is delivered to you automatically at the st
 							<tool name="subagent.wait_for_subagent"/>
 						</tools>
 					</skill>
+					<!--
+						Issue #667. The counterpart of /init in Claude Code: it writes the application
+						context - what the application is for, who works with it, its terms and rules -
+						as a Markdown document an administrator puts into a TextPromptContributor, so
+						every run of the chosen agents starts with it. It changes nothing in the
+						application: it carries no tool of its own, and the skills it loads only read
+						(TL_modelExploration) or keep Albert's own task list (TL_taskManagement).
+					-->
+					<skill name="TL_init"
+						description="Load when the user wants the application context written or revised - the document that tells the agents in their system prompt what this application is for, who works with it, its terms and its rules (like /init writing a CLAUDE.md). Analyzes the model, interviews the user, and returns the document for an administrator to install. Does NOT create or change the model, screens or data. Reads the model with TL_modelExploration; if that skill is not available to you, relay the reason loadSkill gives and stop - a context written without reading the model states guesses as facts."
+					>
+						<content><![CDATA[# Writing the application context
+
+<goal>
+You write ONE Markdown document: the application context. An administrator installs it in a text prompt contributor, and from then on it is part of the system prompt of the agents they choose - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
+
+You change NOTHING in the application: no model element, no screen, no object. What you find wrong, you report; what you learn, goes into the document.
+</goal>
+
+<workflow>
+## 0. Organize yourself
+
+Load TL_taskManagement and create one task per phase below (1 to 5) before you start. This workflow is the exception to that skill's rule about two delegations: it is long, it waits for the user several times, and the user follows it in the progress panel. Work through the tasks as that skill says.
+
+## 1. Look for an existing context
+
+Your own system prompt may already contain an application context - a section describing this application that an administrator installed. If it does, you REVISE it: keep what is still true, correct what the model contradicts, add what is missing. Say at the start that you found one and are revising it.
+
+## 2. Analyze the model
+
+Call `model-browser.outlineModel` once. Tell framework modules (`tl.*` and the engine's own) apart from the application's; the context is about the application's.
+
+The outline shows that an attribute is derived, not how. Load TL_modelExploration and look closer at the application's modules:
+
+- For every derived attribute, read its calculation rule: `getCurrentAnnotations("module:Type#attribute", includeInherited=true)` - the expression is the `expr` of its `storage-algorithm`. Quote it verbatim; never paraphrase a rule you have not read.
+- Use `listTypeParts` and `listClassifiers` where the outline leaves out what you need: inherited parts, the values of an enumeration.
+- Compare what each type and attribute SAYS - its label and description - with what it DOES: a rule that computes something else than its description promises, a description naming values its enumeration does not have, an attribute described as required that is not mandatory, two types described as the same concept.
+
+Analyze the MODEL only. Do not query or list the application's objects: the context describes what the application is, not what is in it today.
+
+Report what you found to the user: the modules and their main types in a few lines, then every discrepancy as one item - the element (`module:Type#attribute`), what its description says, what the implementation does, and the quoted expression where there is one. Do not fix them. They are defects of the model, not knowledge for the agents, so they do NOT go into the document; say that each can be corrected as a change of its own.
+
+## 3. Interview
+
+Ask with `askUser`, one question per call, at most five calls. Skip a question the existing context or the user already answered, and put what you learned from the model into the question rather than asking for it ("I see projects with tickets and a status workflow - what is the application used for?").
+
+1. What the application is for.
+2. Who works with it, and on what: the groups of users, their tasks, what each of them typically asks.
+3. The terms the people working with it use: in-house names, abbreviations, words that mean something specific here - and what each one means (`type="text"`).
+4. Rules and procedures an agent must respect: who may decide what, what has to happen in which order, what must never be done.
+5. What the agents should take particular care of, or avoid.
+
+## 4. Draft the document and have it reviewed
+
+Write the document in the language of the user you are working with, in these sections - leave out a section you have nothing true for:
+
+```markdown
+# Application context: [application]
+
+## Purpose
+[What the application is for, in two or three sentences.]
+
+## Users
+- **[Group]**: [their tasks; what they typically ask an agent]
+
+## Terms
+- **[Term]**: [meaning] - `module:Type` / `module:Type#attribute` where the model has it
+
+## Core objects
+[The main types in business language with their qualified names, and how they belong together.]
+
+## Calculated values
+- `module:Type#attribute`: [what it means], computed as `[the expression, verbatim]`
+
+## Rules
+- [A rule or procedure an agent must respect.]
+```
+
+Keep it short - every run of every chosen agent pays for it. State what the model does NOT say: purpose, users, meaning, rules. Do not repeat the structure `outlineModel` returns anyway; name a model element only to tie a term or a rule to it. Write statements, not guesses: what neither the model nor the user told you does not go in.
+
+Show the complete document in ONE fenced code block, then ask with `askUser(type="choice", options=["Done", "Revise"])`. On "Revise", ask what to change, change it, and show the whole document again.
+
+## 5. Hand it over
+
+You cannot install the document yourself. End with the final document in one fenced code block and these steps for an administrator. Name every screen element by the label the administrator SEES, in the language you answer in - the labels below, German where you answer in German, English otherwise - and add the English label in brackets after a German one, so the step can also be followed in an English session:
+
+| Element | English | German |
+|---|---|---|
+| main tab | Administration | Administration |
+| sub tab | Development | Development |
+| editor | Service Editor | Service Editor |
+| service | LLM service | LLM-Dienst |
+| list on the service | Prompt contributors | Prompt-Beiträge |
+| entry type | Text prompt contributor | Text für den System-Prompt |
+| field | Text | Text |
+| field | Agents | Agenten |
+| commands | Save, Restart | Speichern, Neu starten |
+
+1. Open Administration > Development > Service Editor and choose the LLM service.
+2. Under Prompt contributors, add a Text prompt contributor - or, when revising, open the one that holds the current context.
+3. Paste the document into Text, in the field for the language it is written in.
+4. Choose under Agents the agents that get it. Agents that work with the application's data need it; one that only rewrites a draft does not, and would pay for it in every run.
+5. Save, then Restart the service. The context applies from the next message on, also in conversations that are already open.
+</workflow>
+]]></content>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_SingleAgent"
@@ -1626,6 +1732,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<skill name="TL_agenticAuthoring"/>
 							<skill name="TL_webAccess"/>
 							<skill name="TL_spawnSubagents"/>
+							<skill name="TL_init"/>
 						</skills>
 					</agent>
 					<agent name="TL_Orchestrator"

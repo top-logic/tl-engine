@@ -223,15 +223,34 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * A control that edits a selection is not published: it requires the value to be held by a
 	 * {@link SelectFieldModel}, which only the model side builds.
 	 * </p>
+	 *
+	 * <p>
+	 * Nor is a control published for a kind of value that further datatypes of the model hold as
+	 * well: a plain text, or a compiled TL-Script that is a script in one datatype and a template in
+	 * another. The control is configured for what the values of one datatype mean, and the kind of
+	 * value alone does not tell which datatype a value belongs to.
+	 * </p>
 	 */
 	private void publish(TLType type, ReactFieldControlProvider provider) {
 		if (provider instanceof SelectControlProvider) {
 			return;
 		}
 		Class<?> valueType = valueType(type);
-		if (valueType != String.class) {
+		if (valueType != String.class && !isShared(type, valueType)) {
 			FieldControlRegistry.getInstance().register(valueType, provider);
 		}
+	}
+
+	/**
+	 * Whether a datatype of the model other than the given one holds values of the given kind, too.
+	 */
+	private static boolean isShared(TLType type, Class<?> valueType) {
+		for (TLPrimitive other : TLModelUtil.getDataTypes(type.getModel())) {
+			if (other != type && valueType(other) == valueType) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

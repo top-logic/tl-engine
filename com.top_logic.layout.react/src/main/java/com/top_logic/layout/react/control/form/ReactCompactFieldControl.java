@@ -54,6 +54,11 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * A field that may not be edited and holds no value has nothing to show in a dialog: its opener is
+ * hidden until the field holds a value or becomes editable.
+ * </p>
+ *
+ * <p>
  * The {@link #ReactCompactFieldControl(ReactContext, FieldModel, String, Function, EditorFactory)
  * editing of a value} works on a copy of the value. OK writes the copy to the field, Cancel
  * discards it, so the field changes once, when the user confirms. OK keeps the dialog open as long
@@ -208,11 +213,16 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		Resources resources = Resources.getInstance();
 		_opener = new ReactButtonControl(context, resources.getString(I18NConstants.COMPACT_FIELD_OPEN_BUTTON),
 			ctx -> {
+				if (!isOpenerShown()) {
+					// A click from a client whose display lags behind: there is nothing to open.
+					return HandlerResult.DEFAULT_RESULT;
+				}
 				openEditor(ctx);
 				return HandlerResult.DEFAULT_RESULT;
 			});
 		_opener.setImage(Icons.COMPACT_FIELD_OPEN);
 		_opener.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		updateOpener();
 
 		setChildren(List.of(_preview, _opener));
 		setGrowFirst(true);
@@ -221,11 +231,12 @@ public class ReactCompactFieldControl extends ReactStackControl {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
 				_preview.setText(_previewText.apply(newValue));
+				updateOpener();
 			}
 
 			@Override
 			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				// The dialog shows the value either way, editable or read-only.
+				updateOpener();
 			}
 
 			@Override
@@ -241,6 +252,25 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 */
 	public FieldModel getFieldModel() {
 		return _model;
+	}
+
+	/**
+	 * Whether the button opening the dialog is offered.
+	 *
+	 * <p>
+	 * It is, unless the field may not be edited and holds no value.
+	 * </p>
+	 */
+	public boolean isOpenerShown() {
+		return !_opener.isHidden();
+	}
+
+	/**
+	 * Offers the opener where the dialog has something to show: a value to look at, or the editor
+	 * entering one.
+	 */
+	private void updateOpener() {
+		_opener.setHidden(!_model.isEditable() && isEmpty(_model.getValue()));
 	}
 
 	/**
@@ -329,6 +359,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 */
 	private void updatePreview() {
 		_preview.setText(_previewText.apply(_model.getValue()));
+		updateOpener();
 	}
 
 	/**

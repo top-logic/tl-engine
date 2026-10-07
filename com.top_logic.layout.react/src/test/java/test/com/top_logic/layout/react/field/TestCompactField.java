@@ -333,6 +333,57 @@ public class TestCompactField extends TestCase {
 	}
 
 	/**
+	 * A read-only field without a value offers no dialog: there is nothing to show in it.
+	 */
+	public void testReadOnlyEmptyFieldHasNoOpener() {
+		for (Object empty : new Object[] { null, "", List.of() }) {
+			AbstractFieldModel model = new AbstractFieldModel(empty);
+			model.setEditable(false);
+			ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+
+			assertFalse("No opener for " + empty, compact.isOpenerShown());
+			open(compact);
+			assertNull("A click on the hidden opener opens nothing", _dialogs._open);
+		}
+	}
+
+	/**
+	 * The opener of a read-only field is offered as soon as the field holds a value, and hidden
+	 * again when the value is gone.
+	 */
+	public void testReadOnlyOpenerFollowsTheValue() {
+		AbstractFieldModel model = new AbstractFieldModel(null);
+		model.setEditable(false);
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+
+		model.setValue("A");
+		assertTrue(compact.isOpenerShown());
+		open(compact);
+		assertNotNull("The value is shown in the dialog", _dialogs._open);
+
+		model.setValue(null);
+		assertFalse(compact.isOpenerShown());
+	}
+
+	/**
+	 * An empty field that may be edited offers its editor to enter a value, also once it becomes
+	 * editable.
+	 */
+	public void testEditableEmptyFieldHasOpener() {
+		AbstractFieldModel model = new AbstractFieldModel(null);
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+		assertTrue(compact.isOpenerShown());
+
+		model.setEditable(false);
+		assertFalse(compact.isOpenerShown());
+
+		model.setEditable(true);
+		assertTrue(compact.isOpenerShown());
+		open(compact);
+		assertNotNull("The editor is offered", _dialogs._open);
+	}
+
+	/**
 	 * The first line of a source text that holds more than white space.
 	 */
 	public void testFirstNonBlankLine() {

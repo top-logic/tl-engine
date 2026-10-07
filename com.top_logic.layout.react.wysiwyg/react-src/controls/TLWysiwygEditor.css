@@ -24,8 +24,6 @@
    =================================================================== */
 
 .tlWysiwygEditor__content {
-  padding: 12px 16px;
-  min-height: 120px;
   outline: none;
   overflow-y: auto;
 }
@@ -34,7 +32,10 @@
   outline: none;
 }
 
+/* The inner spacing belongs to the editable element itself, so that a click anywhere inside the
+   visible field, close to its edge included, places the caret in the editor. */
 .tlWysiwygEditor__content .ProseMirror {
+  padding: 12px 16px;
   min-height: 120px;
 }
 

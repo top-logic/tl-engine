@@ -35,6 +35,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
@@ -422,7 +423,7 @@ public class FormElement extends ContainerElement {
 		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
 		formControl.setModelScope(context.getModelScope());
 
-		return FormLayoutOptions.insetIfRequested(context, _config, formControl);
+		return InsetOptions.insetIfRequested(context, _config, formControl);
 	}
 
 	/**
@@ -622,6 +623,11 @@ public class FormElement extends ContainerElement {
 		@Override
 		public KeyStroke getKeyGesture() {
 			return _inner.getKeyGesture();
+		}
+
+		@Override
+		public ButtonTone getTone() {
+			return _inner.getTone();
 		}
 
 		@Override

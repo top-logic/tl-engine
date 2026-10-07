@@ -11,7 +11,9 @@ public class WindowState_Impl extends com.top_logic.layout.react.state.impl.Cont
 
 	private String _height = "";
 
-	private String _minHeight = "";
+	private int _customWidth = 0;
+
+	private int _customHeight = 0;
 
 	private boolean _resizable = false;
 
@@ -83,19 +85,35 @@ public class WindowState_Impl extends com.top_logic.layout.react.state.impl.Cont
 	}
 
 	@Override
-	public final String getMinHeight() {
-		return _minHeight;
+	public final int getCustomWidth() {
+		return _customWidth;
 	}
 
 	@Override
-	public com.top_logic.layout.react.state.WindowState setMinHeight(String value) {
-		internalSetMinHeight(value);
+	public com.top_logic.layout.react.state.WindowState setCustomWidth(int value) {
+		internalSetCustomWidth(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getMinHeight()} without chain call utility. */
-	protected final void internalSetMinHeight(String value) {
-		_minHeight = value;
+	/** Internal setter for {@link #getCustomWidth()} without chain call utility. */
+	protected final void internalSetCustomWidth(int value) {
+		_customWidth = value;
+	}
+
+	@Override
+	public final int getCustomHeight() {
+		return _customHeight;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.WindowState setCustomHeight(int value) {
+		internalSetCustomHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getCustomHeight()} without chain call utility. */
+	protected final void internalSetCustomHeight(int value) {
+		_customHeight = value;
 	}
 
 	@Override
@@ -253,8 +271,10 @@ public class WindowState_Impl extends com.top_logic.layout.react.state.impl.Cont
 		out.value(getWidth());
 		out.name(HEIGHT__PROP);
 		out.value(getHeight());
-		out.name(MIN_HEIGHT__PROP);
-		out.value(getMinHeight());
+		out.name(CUSTOM_WIDTH__PROP);
+		out.value(getCustomWidth());
+		out.name(CUSTOM_HEIGHT__PROP);
+		out.value(getCustomHeight());
 		out.name(RESIZABLE__PROP);
 		out.value(isResizable());
 		out.name(CLOSABLE__PROP);
@@ -285,7 +305,8 @@ public class WindowState_Impl extends com.top_logic.layout.react.state.impl.Cont
 			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case WIDTH__PROP: setWidth(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case HEIGHT__PROP: setHeight(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case MIN_HEIGHT__PROP: setMinHeight(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case CUSTOM_WIDTH__PROP: setCustomWidth(in.nextInt()); break;
+			case CUSTOM_HEIGHT__PROP: setCustomHeight(in.nextInt()); break;
 			case RESIZABLE__PROP: setResizable(in.nextBoolean()); break;
 			case CLOSABLE__PROP: setClosable(in.nextBoolean()); break;
 			case CHILD__PROP: setChild(com.top_logic.layout.react.state.ChildControl.readChildControl(in)); break;

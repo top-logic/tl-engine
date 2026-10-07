@@ -13,6 +13,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
@@ -249,6 +250,25 @@ public class ViewCommandModel implements CommandModel {
 	@Override
 	public String getClique() {
 		return _config.getClique();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The tone the command {@link ViewCommand#getTone() takes from what it does}. A command that
+	 * states its meaning only by its {@link ViewCommand.Config#getClique() clique} - one without a
+	 * destructive action of its own, placed in {@link CommandCliques#DELETE} - is destructive as
+	 * well.
+	 * </p>
+	 */
+	@Override
+	public ButtonTone getTone() {
+		ButtonTone tone = _command.getTone();
+		if (tone == ButtonTone.DEFAULT && CommandCliques.DELETE.equals(_config.getClique())) {
+			return ButtonTone.DANGER;
+		}
+		return tone;
 	}
 
 	@Override

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,inputs"
+		model="selection(com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#List)"
+		multiSelection="true"
+		partnerGroup="assemblies"
+		type="test.flowchart:FlowNode"
+	>
+		<name key="dynamic.d7da5cc6-186f-4602-b9bd-c3442f3f13d2">
+			<en>All parts</en>
+			<de>Alle Bauteile</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model.get(`test.flowchart:Product#buildInstructions`)"
+			supportsElement="true"
+		/>
+	</arguments>
+</config:template-call>

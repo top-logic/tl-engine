@@ -33,6 +33,19 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<buttons>
+			<button id="ID_380e253c_891d_49eb_96cd_601a73dc1022"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique=""
+				disabledImage=""
+				image="css:fas fa-sync"
+			>
+				<resourceKey key="dynamic.8f5fb6af-a26a-4667-94f0-4611f59693d8">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
 		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
 			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
 		</selectionFilter>

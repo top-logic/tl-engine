@@ -5,7 +5,39 @@ import {
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
 import { ButtonDefaults } from './button/ButtonDefaults';
 
-const { useCallback, useRef, useState } = React;
+const { useCallback, useEffect, useRef, useState } = React;
+
+/** The smallest size a window can be resized to. */
+const MIN_WIDTH = 200;
+const MIN_HEIGHT = 100;
+
+/**
+ * The space a window keeps free towards each edge of the browser window, when it is resized and
+ * when a remembered size is checked against the browser window. Matches the margin the stylesheet
+ * keeps with the window's max-width.
+ */
+const VIEWPORT_MARGIN = 24;
+
+/** The largest width a window may take in a browser window of the given width. */
+function maxWindowWidth(viewportWidth: number): number {
+  return Math.max(MIN_WIDTH, viewportWidth - 2 * VIEWPORT_MARGIN);
+}
+
+/** The largest height a window may take in a browser window of the given height. */
+function maxWindowHeight(viewportHeight: number): number {
+  return Math.max(MIN_HEIGHT, viewportHeight - 2 * VIEWPORT_MARGIN);
+}
+
+/** The size of the browser window, updated when the browser window is resized. */
+function useViewportSize(): { width: number; height: number } {
+  const [size, setSize] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
+  useEffect(() => {
+    const update = () => setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return size;
+}
 
 /**
  * Registers Escape -> close in the enclosing window scope as a fallback. Rendered as the first
@@ -44,6 +76,9 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * - title: string
  * - width: string (CSS value, e.g. "500px")
  * - height: string | null
+ * - customWidth, customHeight: number | absent (the size the user gave the window when last resizing
+ *   it; used instead of width and the automatic height only while it fits into the browser window,
+ *   so a size remembered on a larger screen never pushes the title bar or footer out of reach)
  * - resizable: boolean
  * - closable: boolean (default: true)
  * - child: ChildDescriptor
@@ -53,6 +88,9 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * The footer holds that one toolbar and nothing beside it, so the width it is granted is the
  * footer's and the toolbar gives it up again down to its overflow trigger. A toolbar without a
  * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
+ *
+ * A double click on a resize handle gives the window its configured size back and makes the server
+ * forget the remembered one - the way back from a size the user no longer wants.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<WindowStateJson>>();
@@ -62,7 +100,12 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const title = state.title ?? '';
   const serverWidth = state.width ?? '32rem';
   const serverHeight = state.height ?? null;
-  const serverMinHeight = state.minHeight ?? null;
+  const customWidth = state.customWidth ?? null;
+  const customHeight = state.customHeight ?? null;
+  const viewport = useViewportSize();
+  const customFits = customWidth != null && customHeight != null
+    && customWidth <= maxWindowWidth(viewport.width)
+    && customHeight <= maxWindowHeight(viewport.height);
   const resizable = state.resizable === true;
   // A window held open by ongoing work: Escape is left to the enclosing scope and the close
   // button stays visible, but disabled.
@@ -159,17 +202,19 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           if (ds.dir.includes('n')) { h = ds.startH - dy; posYDelta = dy; }
         }
 
-        const newW = Math.max(200, w);
-        const newH = Math.max(100, h);
+        // The window never grows beyond the browser window, so the size reported and remembered
+        // for it fits again when the window is opened next time.
+        const newW = Math.min(maxWindowWidth(window.innerWidth), Math.max(MIN_WIDTH, w));
+        const newH = Math.min(maxWindowHeight(window.innerHeight), Math.max(MIN_HEIGHT, h));
 
         if (ds.symmetric) {
           // Keep center fixed: position shifts by half the size change.
           posXDelta = (ds.startW - newW) / 2;
           posYDelta = (ds.startH - newH) / 2;
         } else {
-          // Clamp position deltas if size hit minimum.
-          if (ds.dir.includes('w') && newW === 200) posXDelta = ds.startW - 200;
-          if (ds.dir.includes('n') && newH === 100) posYDelta = ds.startH - 100;
+          // The opposite edge stays anchored, also where the size hit its minimum or maximum.
+          if (ds.dir.includes('w')) posXDelta = ds.startW - newW;
+          if (ds.dir.includes('n')) posYDelta = ds.startH - newH;
         }
 
         localWidthRef.current = newW;
@@ -215,6 +260,17 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         dragState.current = null;
       },
     });
+  }, [sendCommand]);
+
+  const handleResetSize = useCallback(() => {
+    localWidthRef.current = null;
+    localHeightRef.current = null;
+    setLocalWidth(null);
+    setLocalHeight(null);
+    // Centered again, as a window with its configured size is when it opens.
+    positionRef.current = null;
+    setPosition(null);
+    sendCommand('resetSize');
   }, [sendCommand]);
 
   const handleTitlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -276,14 +332,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       }
       setMaximized(false);
     } else {
-      // Save current bounds.
-      const el = windowRef.current;
-      const rect = el?.getBoundingClientRect();
+      // Save current bounds. A centered window is restored centered and with the size it had
+      // (the configured or the remembered one), not pinned to the place and width it was rendered
+      // at: pinned, it would lose the 80vh height limit of a centered window and could reach below
+      // the bottom edge of the browser window.
       regularBoundsRef.current = {
-        x: positionRef.current?.x ?? (rect?.left ?? -1),
-        y: positionRef.current?.y ?? (rect?.top ?? -1),
-        w: localWidth ?? (rect?.width ?? null),
-        h: localHeight ?? null,
+        x: positionRef.current?.x ?? -1,
+        y: positionRef.current?.y ?? -1,
+        w: localWidth,
+        h: localHeight,
       };
       setMaximized(true);
       setPosition({ x: 0, y: 0 });
@@ -295,14 +352,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const style: React.CSSProperties = maximized
     ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }
     : {
-        width: localWidth != null ? localWidth + 'px' : serverWidth,
+        width: localWidth != null ? localWidth + 'px' : customFits ? customWidth + 'px' : serverWidth,
         ...(localHeight != null
           ? { height: localHeight + 'px' }
           : serverHeight != null
             ? { height: serverHeight }
             : {}),
-        ...(serverMinHeight != null && localHeight == null
-          ? { minHeight: serverMinHeight }
+        // The remembered height is a minimum only, so content that has grown since still fits.
+        ...(customFits && localHeight == null
+          ? { minHeight: customHeight + 'px' }
           : {}),
         maxHeight: position ? '100vh' : '80vh',
         ...(position
@@ -332,7 +390,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         onDoubleClick={resizable ? handleToggleMaximize : undefined}
       >
         <span className="tlWindow__title" id={titleId}>{title}</span>
-        {toolbar && (
+        {!!toolbar && (
           <div className="tlWindow__toolbar">
             <TLChild control={toolbar} />
           </div>
@@ -381,7 +439,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           <TLChild control={child} />
         </FillBarrier>
       </div>
-      {footer && (
+      {!!footer && (
         <ButtonDefaults appearance="secondary">
           <div className="tlWindow__footer">
             <TLChild control={footer} />
@@ -393,6 +451,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           key={dir}
           className={`tlWindow__resizeHandle tlWindow__resizeHandle--${dir}`}
           onPointerDown={(e) => handleResizePointerDown(dir, e)}
+          onDoubleClick={handleResetSize}
         />
       ))}
       </div>

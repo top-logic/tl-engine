@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -101,29 +101,19 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		ReactControl content = createContent(derivedContext);
 
 		// Phase 4: Build clique-grouped toolbars from placed commands. The controls are always
-		// created (even when empty) so implicit commands added later have a target for the
-		// reactive rebuild.
-		CliqueRegistry registry = new CliqueRegistry();
+		// created (even when empty) and follow the scope, so implicit commands added later show up
+		// in them.
+		CommandCliqueService cliques = CommandCliqueService.getInstance();
 		ReactToolbarControl toolbar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay);
+			ToolbarBuilder.buildLive(context, scope, CommandPlacement.TOOLBAR, cliques, _commandDisplay);
 		ReactToolbarControl buttonBar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry, _commandDisplay);
+			ToolbarBuilder.buildLive(context, scope, CommandPlacement.BUTTON_BAR, cliques, _commandDisplay);
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
 		chrome.setCssClass(_cssClass);
 
-		// Phase 6: Rebuild toolbars when implicit commands change. Groups are replaced in place so
-		// the existing toolbar controls keep their SSE registration.
-		scope.addListener(() -> {
-			toolbar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay));
-			buttonBar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry,
-					_commandDisplay));
-		});
-
-		// Phase 7: Lazy attach on render, cleanup on dispose.
+		// Phase 6: Lazy attach on render, cleanup on dispose.
 		registerLifecycle(context, commandModels, chrome);
 
 		return chrome;

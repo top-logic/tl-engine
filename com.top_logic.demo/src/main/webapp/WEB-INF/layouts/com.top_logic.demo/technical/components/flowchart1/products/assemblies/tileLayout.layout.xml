@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="26a6bc48-fc4b-4725-8fa8-16c5e579df54"
+		tileName="ID_bb6d0541_7121_46ff_a3c8_8ffdc397ebb4"
+	>
+		<tileLabel key="dynamic.14b0b4ea-e704-4b35-a1b6-782df3ba3f6f">
+			<en>Assemblies</en>
+			<de>Baugruppen</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:fa-solid fa-sitemap"
+		>
+			<description key="dynamic.c0e7db5b-96a4-4fe3-93a5-d78f3e166c2c">
+				<en>Assemblies of the product. Single parts are only listed in the table, the selection is shared between diagram and table.</en>
+				<de>Baugruppen des Produkts. Einzelteile stehen nur in der Tabelle, Diagramm und Tabelle teilen sich die Auswahl.</de>
+			</description>
+		</preview>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/assemblies/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

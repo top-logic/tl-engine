@@ -20,7 +20,7 @@ import type { ButtonStateJson } from '../state/control-state';
  *   <li>{@code none} — the invisible image, which renders nothing at all</li>
  * </ul>
  */
-export function ThemeIcon({ encoded, className }: { encoded: string; className?: string }) {
+export function ThemeIcon({ encoded, className }: { encoded?: string; className?: string }) {
   if (!encoded || encoded === 'none') {
     // The invisible image occupies no space: an element carrying an icon class that draws nothing
     // still takes the width of an icon, which indents whatever it sits beside.

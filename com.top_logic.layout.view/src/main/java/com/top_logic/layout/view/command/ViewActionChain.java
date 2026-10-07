@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 
 /**
  * Runs a chain of {@link ViewAction}s, each action's output becoming the next action's input.
@@ -63,7 +64,7 @@ public class ViewActionChain {
 			Consumer<Object> onComplete, Runnable onSettled) {
 		Settlement settlement = new Settlement(onSettled);
 		Deque<Runnable> compensations = new ArrayDeque<>();
-		runFrom(context, actions, 0, input, compensations, settlement,
+		runFrom(context, actions, 0, input, ButtonTone.DEFAULT, compensations, settlement,
 			value -> {
 				settlement.settle();
 				settled(onComplete, value);
@@ -85,7 +86,9 @@ public class ViewActionChain {
 	 * branch passes the chain's value through. An abort inside the nested chain aborts the
 	 * enclosing chain, and the compensations registered inside the nested chain take their place in
 	 * the enclosing chain's unwind: whenever the enclosing chain is aborted or fails, they run -
-	 * newest first - before the compensations of the actions that precede the nesting one.
+	 * newest first - before the compensations of the actions that precede the nesting one. A step
+	 * of the nested chain sees, as {@link Continuation#tone() the tone of what follows it}, what
+	 * follows it in the nested chain together with what follows the nesting action.
 	 * </p>
 	 *
 	 * @param continuation
@@ -95,7 +98,7 @@ public class ViewActionChain {
 			Continuation continuation) {
 		Deque<Runnable> compensations = new ArrayDeque<>();
 		continuation.onAbort(() -> runCompensations(compensations));
-		runFrom(context, actions, 0, input, compensations, settlementOf(continuation),
+		runFrom(context, actions, 0, input, continuation.tone(), compensations, settlementOf(continuation),
 			continuation::resume,
 			() -> {
 				runCompensations(compensations);
@@ -114,15 +117,24 @@ public class ViewActionChain {
 		return new Settlement(null);
 	}
 
+	/**
+	 * @param after
+	 *        The tone of what follows the chain being run: what follows the nesting action in the
+	 *        enclosing chain, {@link ButtonTone#DEFAULT} for an outermost chain.
+	 */
 	private static void runFrom(ReactContext context, List<ViewAction> actions, int index, Object input,
-			Deque<Runnable> compensations, Settlement settlement, Consumer<Object> onComplete, Runnable onAbort) {
+			ButtonTone after, Deque<Runnable> compensations, Settlement settlement, Consumer<Object> onComplete,
+			Runnable onAbort) {
 		if (index >= actions.size()) {
 			onComplete.accept(input);
 			return;
 		}
 		ViewAction action = actions.get(index);
-		ChainContinuation continuation = new ChainContinuation(settlement, compensations,
-			value -> runFrom(context, actions, index + 1, value, compensations, settlement, onComplete, onAbort),
+		ButtonTone rest = ViewActions.tone(actions.subList(index + 1, actions.size())) == ButtonTone.DANGER
+			? ButtonTone.DANGER
+			: after;
+		ChainContinuation continuation = new ChainContinuation(settlement, compensations, rest,
+			value -> runFrom(context, actions, index + 1, value, after, compensations, settlement, onComplete, onAbort),
 			onAbort);
 		try {
 			action.execute(context, input, continuation);
@@ -163,16 +175,19 @@ public class ViewActionChain {
 
 		private final Deque<Runnable> _compensations;
 
+		private final ButtonTone _tone;
+
 		private final Consumer<Object> _onResume;
 
 		private final Runnable _onAbort;
 
 		private boolean _spent;
 
-		ChainContinuation(Settlement settlement, Deque<Runnable> compensations, Consumer<Object> onResume,
-				Runnable onAbort) {
+		ChainContinuation(Settlement settlement, Deque<Runnable> compensations, ButtonTone tone,
+				Consumer<Object> onResume, Runnable onAbort) {
 			_settlement = settlement;
 			_compensations = compensations;
+			_tone = tone;
 			_onResume = onResume;
 			_onAbort = onAbort;
 		}
@@ -202,6 +217,11 @@ public class ViewActionChain {
 				throw new IllegalStateException("onAbort() after the action already continued.");
 			}
 			_compensations.push(compensation);
+		}
+
+		@Override
+		public ButtonTone tone() {
+			return _tone;
 		}
 
 		private void spend() {

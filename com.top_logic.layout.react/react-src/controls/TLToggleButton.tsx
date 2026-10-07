@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, ToggleButtonStateJson } from 'tl-react-bridge';
-import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
+import { buttonClassName, menuItemProps, useButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback } = React;
 
@@ -29,6 +29,10 @@ export interface TLToggleButtonProps {
  *
  * <p>When composed inside another React component, the parent passes {@code command},
  * {@code label}, {@code active}, and {@code disabled} as props to customise behaviour.</p>
+ *
+ * <p>Inside a menu ({@code ButtonDefaults.appearance} {@code menu-item}) it is a checkbox entry of
+ * that menu ({@code menuitemcheckbox} with {@code aria-checked}). It shows no icon, so a compact
+ * toolbar leaves it as it is.</p>
  */
 const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId, command, label, active, disabled }) => {
   const state = useTLState<Partial<ToggleButtonStateJson>>();
@@ -44,16 +48,21 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId
     sendCommand(resolvedCommand);
   }, [sendCommand, resolvedCommand]);
 
+  const appearance = defaults.appearance ?? 'secondary';
+  const asMenuItem = appearance === 'menu-item';
+
   return (
     <button
       type="button"
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      aria-pressed={resolvedActive ? true : undefined}
-      className={rootClassName(state, buttonClassName({ appearance: defaults.appearance ?? 'secondary' }))}
+      aria-pressed={!asMenuItem && resolvedActive ? true : undefined}
+      aria-checked={asMenuItem ? resolvedActive : undefined}
+      {...menuItemProps(defaults, resolvedActive)}
+      className={rootClassName(state, buttonClassName({ appearance }))}
     >
-      <span className="tl-button__label">{resolvedLabel}</span>
+      <span className={asMenuItem ? 'tl-menu__label' : 'tl-button__label'}>{resolvedLabel}</span>
     </button>
   );
 };

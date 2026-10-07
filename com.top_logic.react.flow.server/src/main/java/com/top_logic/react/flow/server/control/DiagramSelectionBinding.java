@@ -70,6 +70,21 @@ public class DiagramSelectionBinding extends SelectionChannelBinding {
 		return _control.isMultiSelect();
 	}
 
+	/**
+	 * A diagram often displays only some of the objects of a shared selection - the others are
+	 * listed by another selector only. Those are kept, unless the user replaces the selection by a
+	 * plain click in the diagram.
+	 */
+	@Override
+	protected boolean keepsUndisplayedSelection() {
+		return true;
+	}
+
+	@Override
+	protected boolean hasElement(Object key) {
+		return _control.hasElementFor(key);
+	}
+
 	@Override
 	protected void detach() {
 		_control.removeSelectionListener(_selectionListener);

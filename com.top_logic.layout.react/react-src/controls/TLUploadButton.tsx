@@ -1,6 +1,6 @@
-import { React, useTLState, useTLUpload, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
+import { buttonClassName, menuItemProps, useButtonDefaults } from './button/ButtonDefaults';
 import type { ButtonAppearance } from './button/ButtonDefaults';
 
 /**
@@ -11,6 +11,9 @@ import type { ButtonAppearance } from './button/ButtonDefaults';
  * dispatching a server command it triggers a hidden {@code <input type="file">} and POSTs the
  * chosen files as repeated {@code file} parts to the upload endpoint. The server-side
  * {@code ReactUploadButtonControl} then processes them.</p>
+ *
+ * <p>Like {@link TLButton} it follows its container: a compact toolbar makes it a square icon
+ * button if it shows its icon, a menu makes it an entry that shows its label.</p>
  */
 const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -24,7 +27,11 @@ const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
   const disabled = state.disabled === true;
   const hidden = state.hidden === true;
   const displayMode = (state.displayMode as string | undefined) ?? 'label-only';
-  const resolvedAppearance = (state.appearance as ButtonAppearance | undefined) ?? defaults.appearance ?? 'secondary';
+  // Inside a menu the container wins over the server: every button there is an entry.
+  const asMenuItem = defaults.appearance === 'menu-item';
+  const resolvedAppearance: ButtonAppearance = asMenuItem
+    ? 'menu-item'
+    : (state.appearance as ButtonAppearance | undefined) ?? defaults.appearance ?? 'secondary';
   const accept = state.accept as string | undefined;
   const multiple = state.multiple === true;
 
@@ -50,9 +57,15 @@ const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [upload]);
 
-  const iconOnly = displayMode === 'icon-only';
-  const showIcon = displayMode === 'icon-only' || displayMode === 'icon-label';
-  const showLabel = displayMode === 'label-only' || displayMode === 'icon-label' || (iconOnly && !image);
+  // Only a button that shows its icon goes compact; inside a menu every button shows its label.
+  const shows = displayMode !== 'label-only' && !!image;
+  const mode = defaults.iconOnly && shows
+    ? 'icon-only'
+    : asMenuItem && image ? 'icon-label' : displayMode;
+  const iconOnly = mode === 'icon-only';
+  const showIcon = mode === 'icon-only' || mode === 'icon-label';
+  const showLabel = mode === 'label-only' || mode === 'icon-label' || (iconOnly && !image);
+  const part = asMenuItem ? 'tl-menu' : 'tl-button';
 
   return (
     <span id={controlId} className="tl-upload" hidden={hidden || undefined}>
@@ -69,12 +82,13 @@ const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
         onClick={handleClick}
         disabled={disabled || uploading}
         aria-busy={uploading ? true : undefined}
-        className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: state.tone === 'danger', small: state.size === 'small' && iconOnly }))}
+        className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: state.tone === 'danger', small: state.size === 'small' && iconOnly, icon: iconOnly && !!image }))}
         aria-label={iconOnly ? label : undefined}
-        {...(iconOnly ? tooltipProps(label) : TOOLTIP_WHEN_CLIPPED)}
+        {...tooltipProps(iconOnly ? label : undefined)}
+        {...menuItemProps(defaults)}
       >
-        {showIcon && image && <ThemeIcon encoded={image} className={'tl-button__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />}
-        {showLabel && <span className="tl-button__label">{label}</span>}
+        {showIcon && image && <ThemeIcon encoded={image} className={part + '__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />}
+        {showLabel && <span className={part + '__label'}>{label}</span>}
       </button>
     </span>
   );

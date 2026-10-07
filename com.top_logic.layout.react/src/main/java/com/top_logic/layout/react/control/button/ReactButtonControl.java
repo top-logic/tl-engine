@@ -27,7 +27,8 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * When constructed with a {@link CommandModel}, the button automatically reads the label, the
  * disabled state, and the {@link CommandModel#isActive() active} state from the model, listens for
- * state changes, and removes its listener during cleanup.
+ * state changes, and removes its listener during cleanup. The {@link CommandModel#getTone() tone}
+ * is taken once, at construction: it is what the command does and does not change.
  * </p>
  */
 public class ReactButtonControl extends ReactControl {
@@ -91,6 +92,8 @@ public class ReactButtonControl extends ReactControl {
 		setKeyGesture(model.getKeyGesture());
 		setDisplayMode(offered(model, model.getDisplayMode(), true));
 		setCssClasses(model.getCssClasses());
+		// Fixed per command: handleModelChange() does not pull it again.
+		setTone(model.getTone());
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 

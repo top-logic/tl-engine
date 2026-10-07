@@ -41,21 +41,26 @@ public interface PathElementConfig extends PolymorphicConfiguration<PathNavigati
 	@Options(fun = NavigableReferences.class, mapping = TLModelPartRef.PartMapping.class)
 	TLModelPartRef getAttribute();
 
+	/** @see #getAttribute() */
+	void setAttribute(TLModelPartRef attribute);
+
 	/**
 	 * {@link AllReferences} offering only the {@link TLReference}s that a {@link PathNavigation} can
 	 * navigate.
 	 *
 	 * <p>
 	 * A derived (computed) reference is excluded, since it does not fire change notifications and
-	 * therefore cannot be tracked for role rule invalidation. Note that an abstract reference is
-	 * derived, too.
+	 * therefore cannot be tracked for role rule invalidation. An abstract reference is offered, as
+	 * long as none of its concrete overrides is derived.
 	 * </p>
+	 *
+	 * @see PathNavigation#isNavigable(TLStructuredTypePart)
 	 */
 	class NavigableReferences extends AllReferences {
 
 		@Override
 		protected boolean acceptPart(TLStructuredTypePart part) {
-			return super.acceptPart(part) && !part.isDerived();
+			return super.acceptPart(part) && PathNavigation.isNavigable(part);
 		}
 
 	}
@@ -72,6 +77,9 @@ public interface PathElementConfig extends PolymorphicConfiguration<PathNavigati
 	 */
 	@Name(PathElementConfig.XML_ATTRIBUTE_INVERSE)
 	boolean isInverse();
+
+	/** @see #isInverse() */
+	void setInverse(boolean inverse);
 
 }
 

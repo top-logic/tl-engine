@@ -21,7 +21,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Test for {@link HtmlFunctions#text(String, Object)}.
+ * Test for {@link HtmlFunctions#text(String, Object)} and {@link HtmlFunctions#images(StructuredText)}.
  */
 @SuppressWarnings("javadoc")
 public class TestHtmlFunctions extends TestCase {
@@ -89,6 +89,61 @@ public class TestHtmlFunctions extends TestCase {
 		assertEquals(
 			"<p><img src=\"" + REF_ID_PREFIX + LOGO + "\"><img src=\"https://example.com/x.png\"></p>",
 			text.getSourceCode());
+	}
+
+	public void testImageReference() {
+		BinaryData logo = image(LOGO);
+		StructuredText text =
+			HtmlFunctions.text("<p><img src=\"" + REF_ID_PREFIX + LOGO + "\"></p>", List.of(logo, image(OTHER)));
+
+		assertEquals("<p><img src=\"" + REF_ID_PREFIX + LOGO + "\"></p>", text.getSourceCode());
+		assertEquals(Map.of(LOGO, logo), text.getImages());
+	}
+
+	public void testMixedReferences() {
+		BinaryData logo = image(LOGO);
+		BinaryData other = image(OTHER);
+		StructuredText text = HtmlFunctions.text(
+			"<p><img src=\"" + REF_ID_PREFIX + LOGO + "\"><img src=\"other.png\"></p>", List.of(logo, other));
+
+		assertEquals("<p><img src=\"" + REF_ID_PREFIX + LOGO + "\"><img src=\"" + REF_ID_PREFIX + OTHER + "\"></p>",
+			text.getSourceCode());
+		assertEquals(Map.of(LOGO, logo, OTHER, other), text.getImages());
+	}
+
+	public void testUnknownImageReferenceKept() {
+		StructuredText text =
+			HtmlFunctions.text("<p><img src=\"" + REF_ID_PREFIX + OTHER + "\"></p>", List.of(image(LOGO)));
+
+		assertEquals("<p><img src=\"" + REF_ID_PREFIX + OTHER + "\"></p>", text.getSourceCode());
+		assertTrue(text.getImages().isEmpty());
+	}
+
+	public void testImages() {
+		BinaryData logo = image(LOGO);
+		StructuredText text = HtmlFunctions.text("<img src=\"logo.png\"/>", List.of(logo));
+
+		assertEquals(Map.of(LOGO, logo), HtmlFunctions.images(text));
+		assertTrue(HtmlFunctions.images(null).isEmpty());
+		assertTrue(HtmlFunctions.images(HtmlFunctions.text("<p>no images</p>", null)).isEmpty());
+	}
+
+	public void testImagesIsCopy() {
+		StructuredText text = HtmlFunctions.text("<img src=\"logo.png\"/>", List.of(image(LOGO)));
+
+		HtmlFunctions.images(text).clear();
+		assertEquals(1, text.getImages().size());
+	}
+
+	public void testRoundTrip() {
+		StructuredText text = HtmlFunctions.text(
+			"<p>Logo: <img src=\"logo.png\"/>, other: <img src=\"other.png\"/></p>",
+			List.of(image(LOGO), image(OTHER)));
+
+		StructuredText copy = HtmlFunctions.text(HtmlFunctions.source(text), HtmlFunctions.images(text));
+
+		assertEquals(text.getSourceCode(), copy.getSourceCode());
+		assertEquals(text.getImages(), copy.getImages());
 	}
 
 	public void testHtmlSyntax() {

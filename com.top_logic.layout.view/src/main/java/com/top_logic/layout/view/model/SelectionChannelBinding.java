@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLObject;
 
 /**
  * Two-way binding between the selection a selector displays and a {@link ViewChannel}.
@@ -31,6 +32,14 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </ul>
  *
  * <p>
+ * The elements of a selector are its data, not the part of it the selector currently shows: an
+ * element a filter hides, or one inside a collapsed group, is still an element of the selector. It
+ * takes a channel value naming it as its selection, and keeps that selection as long as it is part
+ * of the data - which it shows once it is visible again. Only an element gone from the data gives
+ * the selection up.
+ * </p>
+ *
+ * <p>
  * A value the selector merely does not have an element for means no more than "nothing selected
  * here": the selector shows no selection and leaves the channel alone. Clearing it would destroy
  * what another writer put there - the element a second selector over a different set of elements
@@ -44,6 +53,16 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * here" like any other foreign value, and leaves the channel alone. A selector showing a single
  * selected element cannot display such a value at all: it shows no selection and leaves the channel
  * alone for the same reason.
+ * </p>
+ *
+ * <p>
+ * A selector that {@link #keepsUndisplayedSelection() keeps the undisplayed selection} - a diagram
+ * showing only some of the objects another selector lists - treats the channel value as two parts:
+ * the keys it has an element for, and the rest. It only ever changes the first part: a refresh
+ * drops the vanished keys it displayed, and a selection made in it incrementally (a click with a
+ * modifier key, see {@link #selectionChanged(Set, boolean)}) adds or removes its own keys. The rest
+ * stays on the channel, unless it names a deleted object, and is only replaced by a selection that
+ * replaces the whole selection (a plain click).
  * </p>
  *
  * <p>
@@ -122,17 +141,36 @@ public abstract class SelectionChannelBinding {
 		// selector still holds tells which of the displayed elements survived. The refresh itself
 		// does not report a selection change, hence the last reported selection is the one
 		// displayed before it.
+		Set<Object> displayedBefore = _displayedKeys;
 		Set<Object> survivors = new LinkedHashSet<>(getSelectedKeys());
-		boolean displayedElementGone = !_displayedKeys.isEmpty() && !survivors.containsAll(_displayedKeys);
+		boolean displayedElementGone = !displayedBefore.isEmpty() && !survivors.containsAll(displayedBefore);
 		_displayedKeys = survivors;
+
+		// The part of the value this selector did not display before is not its to adjust, unless
+		// it names deleted objects.
+		Set<Object> undisplayed = new LinkedHashSet<>();
+		boolean deletedKept = false;
+		if (keepsUndisplayedSelection()) {
+			for (Object key : channelKeys()) {
+				if (displayedBefore.contains(key)) {
+					continue;
+				}
+				if (isDeleted(key)) {
+					deletedKept = true;
+				} else {
+					undisplayed.add(key);
+				}
+			}
+		}
 
 		applyChannelValue();
 
-		if (displayedElementGone) {
+		if (displayedElementGone || deletedKept) {
 			// The value names elements nobody can see any more, so it is replaced by what is left
 			// of the selection - which is no selection at all when every displayed element
 			// vanished.
-			writeSelection(survivors);
+			undisplayed.addAll(survivors);
+			writeSelection(undisplayed);
 		}
 	}
 
@@ -168,10 +206,68 @@ public abstract class SelectionChannelBinding {
 	 *        The keys the selector displays as selected.
 	 */
 	protected final void selectionChanged(Set<Object> selectedKeys) {
+		selectionChanged(selectedKeys, true);
+	}
+
+	/**
+	 * Reports a selection the selector now displays, telling whether it replaces the whole
+	 * selection.
+	 *
+	 * <p>
+	 * Like {@link #selectionChanged(Set)}, but for a selector that
+	 * {@link #keepsUndisplayedSelection() keeps the undisplayed selection}: a change that does not
+	 * replace the selection (a click with a modifier key, or no selection change at all) keeps the
+	 * keys of the channel value the selector has no element for.
+	 * </p>
+	 *
+	 * @param selectedKeys
+	 *        The keys the selector displays as selected.
+	 * @param replacing
+	 *        Whether the user replaced the whole selection, so that also the keys of the channel
+	 *        value the selector has no element for are dropped.
+	 */
+	protected final void selectionChanged(Set<Object> selectedKeys, boolean replacing) {
 		if (!_applyingFromChannel) {
-			writeSelection(selectedKeys);
+			if (replacing || !keepsUndisplayedSelection()) {
+				writeSelection(selectedKeys);
+			} else {
+				writeSelection(withUndisplayedKeys(selectedKeys));
+			}
 		}
 		_displayedKeys = new LinkedHashSet<>(selectedKeys);
+	}
+
+	/**
+	 * The given keys the selector displays, together with the keys of the channel value it has no
+	 * element for.
+	 */
+	private Set<Object> withUndisplayedKeys(Set<Object> selectedKeys) {
+		Set<Object> result = new LinkedHashSet<>();
+		if (canDisplaySeveral() || selectedKeys.isEmpty()) {
+			for (Object key : channelKeys()) {
+				if (!hasElement(key) && !isDeleted(key)) {
+					result.add(key);
+				}
+			}
+		}
+		// Else a displayed key replaces an undisplayed one, since the selector shows only one.
+		result.addAll(selectedKeys);
+		return result;
+	}
+
+	/**
+	 * The keys of the current channel value.
+	 */
+	private Set<Object> channelKeys() {
+		Object value = _channel.get();
+		if (value instanceof Collection<?> keys) {
+			return new LinkedHashSet<>(keys);
+		}
+		return value == null ? Set.of() : Set.of(value);
+	}
+
+	private static boolean isDeleted(Object key) {
+		return key instanceof TLObject obj && !obj.tValid();
 	}
 
 	/**
@@ -229,7 +325,7 @@ public abstract class SelectionChannelBinding {
 			return selectedKeys.isEmpty();
 		}
 		if (value instanceof Collection<?> keys) {
-			return selectedKeys.equals(new LinkedHashSet<Object>(keys));
+			return selectedKeys.equals(new LinkedHashSet<>(keys));
 		}
 		return selectedKeys.size() == 1 && selectedKeys.contains(value);
 	}
@@ -258,5 +354,33 @@ public abstract class SelectionChannelBinding {
 	 * Gives up the selection listener the subclass registered with the selector.
 	 */
 	protected abstract void detach();
+
+	/**
+	 * Whether keys of the channel value that this selector has no element for are kept, when the
+	 * selection changes in the selector or the selector's elements are refreshed.
+	 *
+	 * <p>
+	 * By default, a selection made in the selector and a refresh dropping a displayed element
+	 * write only the keys the selector displays. A selector showing only some of the objects of a
+	 * shared selection - a diagram rendering a part of the objects a table lists - returns
+	 * <code>true</code> here, reports its selection changes through
+	 * {@link #selectionChanged(Set, boolean)} and answers {@link #hasElement(Object)}.
+	 * </p>
+	 */
+	protected boolean keepsUndisplayedSelection() {
+		return false;
+	}
+
+	/**
+	 * Whether the selector has an element for the given key.
+	 *
+	 * <p>
+	 * Only asked when the selector {@link #keepsUndisplayedSelection() keeps the undisplayed
+	 * selection}.
+	 * </p>
+	 */
+	protected boolean hasElement(Object key) {
+		return true;
+	}
 
 }

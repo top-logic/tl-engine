@@ -240,7 +240,7 @@ public class EnumDefaultProvider implements DefaultProvider, ConfiguredInstance<
 	}
 
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		List<TLClassifier> resolvedParts;
 		try {
 			TLEnumeration type = (TLEnumeration) attribute.getType();

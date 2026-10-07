@@ -106,7 +106,7 @@ public class NavigationRulesImporter {
 			// new problems occurred
 			return;
 		}
-		addRule(new NavigationRule(metaElement, inherit, path));
+		addRule(new NavigationRule(rule.getId(), metaElement, inherit, path));
 	}
 
 	void addRule(NavigationRule rule) {

@@ -5,7 +5,9 @@
  */
 package com.top_logic.table;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A windowed sequence of displayed {@link Row}s - the green-field replacement for
@@ -42,6 +44,21 @@ public interface RowSource<R> {
 	 * {@code [0, size())}.
 	 */
 	List<Row<R>> window(int from, int to);
+
+	/**
+	 * The given row keys that belong to a data row of this source, in the order they are given.
+	 *
+	 * <p>
+	 * This is about the data, not about what is {@link #window(int, int) displayed}: a row the
+	 * filter hides, or one inside a collapsed group or tree node, still belongs to the source. A key
+	 * that is not returned names an object that is gone from the data.
+	 * </p>
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The keys among the given ones this source has a data row for.
+	 */
+	Set<Object> containedKeys(Collection<?> keys);
 
 	/**
 	 * A view of this source with the given sort order applied.

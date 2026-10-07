@@ -378,6 +378,7 @@
 									with-inset="true"
 								>
 									<field attribute="name"/>
+									<field attribute="locked"/>
 									<field attribute="string"/>
 									<field attribute="multiLine"/>
 									<field attribute="html"/>
@@ -405,6 +406,7 @@
 									<field attribute="tri"/>
 									<field attribute="activeRadio"/>
 									<field attribute="activeSelect"/>
+									<field attribute="priorityRadio"/>
 									<field attribute="flags"/>
 									<field attribute="date"/>
 									<field attribute="dateTime"/>

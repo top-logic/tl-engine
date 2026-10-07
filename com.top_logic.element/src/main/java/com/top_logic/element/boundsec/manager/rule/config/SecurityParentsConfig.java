@@ -31,12 +31,13 @@ public interface SecurityParentsConfig extends ConfigurationItem {
 	String RULES = "rules";
 
 	/**
-	 * The list of known {@link NavigationRuleConfig security rule} configurations.
+	 * The list of known {@link NavigationRuleConfig role parent rule} configurations.
 	 *
 	 * <p>
-	 * A security parent is determined by pure navigation: In contrast to a
+	 * A role parent is determined by pure navigation: In contrast to a
 	 * {@link RoleRulesConfig#getRules() role rule}, no role is granted, therefore the additional
-	 * options of a {@link RoleRuleConfig} are not offered here.
+	 * options of a {@link RoleRuleConfig} are not offered here. An object inherits every role the
+	 * user holds on its role parents.
 	 * </p>
 	 */
 	@Name(RULES)

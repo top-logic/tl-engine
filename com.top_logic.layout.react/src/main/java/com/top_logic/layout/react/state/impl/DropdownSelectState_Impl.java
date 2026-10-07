@@ -144,6 +144,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 
 	private com.top_logic.layout.react.state.DropdownSelectState.Display _display = com.top_logic.layout.react.state.DropdownSelectState.Display.DROPDOWN;
 
+	private com.top_logic.layout.react.state.DropdownSelectState.Orientation _orientation = com.top_logic.layout.react.state.DropdownSelectState.Orientation.HORIZONTAL;
+
 	private final java.util.List<com.top_logic.layout.react.state.DropdownSelectState.Option> _options = new java.util.ArrayList<>();
 
 	private boolean _optionsLoaded = false;
@@ -151,6 +153,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	private boolean _customOrder = false;
 
 	private boolean _multiSelect = false;
+
+	private boolean _noFilter = false;
 
 	private String _emptyOptionLabel = "";
 
@@ -178,6 +182,23 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	protected final void internalSetDisplay(com.top_logic.layout.react.state.DropdownSelectState.Display value) {
 		if (value == null) throw new IllegalArgumentException("Property 'display' cannot be null.");
 		_display = value;
+	}
+
+	@Override
+	public final com.top_logic.layout.react.state.DropdownSelectState.Orientation getOrientation() {
+		return _orientation;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation value) {
+		internalSetOrientation(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOrientation()} without chain call utility. */
+	protected final void internalSetOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation value) {
+		if (value == null) throw new IllegalArgumentException("Property 'orientation' cannot be null.");
+		_orientation = value;
 	}
 
 	@Override
@@ -263,6 +284,22 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	}
 
 	@Override
+	public final boolean isNoFilter() {
+		return _noFilter;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setNoFilter(boolean value) {
+		internalSetNoFilter(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isNoFilter()} without chain call utility. */
+	protected final void internalSetNoFilter(boolean value) {
+		_noFilter = value;
+	}
+
+	@Override
 	public final String getEmptyOptionLabel() {
 		return _emptyOptionLabel;
 	}
@@ -287,6 +324,12 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	@Override
 	public com.top_logic.layout.react.state.DropdownSelectState setEditable(boolean value) {
 		internalSetEditable(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setDisabled(boolean value) {
+		internalSetDisabled(value);
 		return this;
 	}
 
@@ -366,6 +409,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 		super.writeFields(out);
 		out.name(DISPLAY__PROP);
 		getDisplay().writeTo(out);
+		out.name(ORIENTATION__PROP);
+		getOrientation().writeTo(out);
 		out.name(OPTIONS__PROP);
 		out.beginArray();
 		for (com.top_logic.layout.react.state.DropdownSelectState.Option x : getOptions()) {
@@ -378,6 +423,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 		out.value(isCustomOrder());
 		out.name(MULTI_SELECT__PROP);
 		out.value(isMultiSelect());
+		out.name(NO_FILTER__PROP);
+		out.value(isNoFilter());
 		out.name(EMPTY_OPTION_LABEL__PROP);
 		out.value(getEmptyOptionLabel());
 	}
@@ -386,6 +433,7 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case DISPLAY__PROP: setDisplay(com.top_logic.layout.react.state.DropdownSelectState.Display.readDisplay(in)); break;
+			case ORIENTATION__PROP: setOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation.readOrientation(in)); break;
 			case OPTIONS__PROP: {
 				java.util.List<com.top_logic.layout.react.state.DropdownSelectState.Option> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -399,6 +447,7 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 			case OPTIONS_LOADED__PROP: setOptionsLoaded(in.nextBoolean()); break;
 			case CUSTOM_ORDER__PROP: setCustomOrder(in.nextBoolean()); break;
 			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
+			case NO_FILTER__PROP: setNoFilter(in.nextBoolean()); break;
 			case EMPTY_OPTION_LABEL__PROP: setEmptyOptionLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}

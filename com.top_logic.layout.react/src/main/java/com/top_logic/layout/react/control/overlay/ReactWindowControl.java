@@ -46,6 +46,8 @@ import com.top_logic.layout.table.ConfigKey;
  * <li>{@link WindowState#TITLE__PROP} - the window title</li>
  * <li>{@link WindowState#WIDTH__PROP} - the window width (CSS value, e.g. "500px")</li>
  * <li>{@link WindowState#HEIGHT__PROP} - the window height (CSS value or null for auto)</li>
+ * <li>{@link WindowState#CUSTOM_WIDTH__PROP}, {@link WindowState#CUSTOM_HEIGHT__PROP} - the
+ * remembered size in pixels, if any</li>
  * <li>{@link WindowState#RESIZABLE__PROP} - whether the window can be resized by dragging</li>
  * <li>{@link WindowState#CLOSABLE__PROP} - whether the close button is enabled and Escape closes
  * the window</li>
@@ -68,6 +70,12 @@ public class ReactWindowControl extends ToolbarControl {
 
 	/** The {@link ReactCommandHandler} that records a window resize. */
 	public static final String RESIZE_COMMAND = "resize";
+
+	/**
+	 * The {@link ReactCommandHandler} that forgets the size the user gave the window, so that it
+	 * takes its configured size again.
+	 */
+	public static final String RESET_SIZE_COMMAND = "resetSize";
 
 	/** The {@link ReactCommandHandler} that closes this window. */
 	public static final String CLOSE_COMMAND = "close";
@@ -297,13 +305,34 @@ public class ReactWindowControl extends ToolbarControl {
 		// The client performed the resize itself; no echo needed.
 		updateStateSilently(() -> {
 			if (w != null) {
-				putState(WindowState.WIDTH__PROP, w + "px");
+				putState(WindowState.CUSTOM_WIDTH__PROP, w);
 			}
 			if (h != null) {
-				putState(WindowState.HEIGHT__PROP, h + "px");
+				putState(WindowState.CUSTOM_HEIGHT__PROP, h);
 			}
 		});
 		saveCustomizedSize(w, h);
+	}
+
+	/**
+	 * Forgets the size the user gave the window, in this window and in the personal configuration,
+	 * so that this and every later opening of the window takes the configured size again.
+	 */
+	@ReactCommandHandler(RESET_SIZE_COMMAND)
+	void handleResetSize() {
+		// Sent to the client: it holds the remembered size and must drop it.
+		putState(WindowState.CUSTOM_WIDTH__PROP, null);
+		putState(WindowState.CUSTOM_HEIGHT__PROP, null);
+
+		String key = _configKey.get();
+		if (key == null) {
+			return;
+		}
+		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
+		if (config == null) {
+			return;
+		}
+		config.setJSONValue(key, null);
 	}
 
 	private void applyCustomizedSize() {
@@ -321,8 +350,13 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 		int width = ((Number) list.get(0)).intValue();
 		int height = ((Number) list.get(1)).intValue();
-		putState(WindowState.WIDTH__PROP, width + "px");
-		putState(WindowState.MIN_HEIGHT__PROP, height + "px");
+		if (width <= 0 || height <= 0) {
+			return;
+		}
+		// Sent beside the configured width instead of replacing it, so that the client falls back
+		// to the configured size where the remembered one does not fit.
+		putState(WindowState.CUSTOM_WIDTH__PROP, width);
+		putState(WindowState.CUSTOM_HEIGHT__PROP, height);
 	}
 
 	private void saveCustomizedSize(Integer widthValue, Integer heightValue) {

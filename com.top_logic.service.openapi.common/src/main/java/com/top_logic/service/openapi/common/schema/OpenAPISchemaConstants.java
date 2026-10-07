@@ -27,6 +27,13 @@ public class OpenAPISchemaConstants {
 	public static final String SCHEMA_PROPERTY_ITEMS = "items";
 
 	/**
+	 * Prefix of the name of a specification extension property in a schema.
+	 * 
+	 * @see Schema#getExtensions()
+	 */
+	public static final String SCHEMA_EXTENSION_PREFIX = "x-";
+
+	/**
 	 * Property in a schema that holds a description for the schema.
 	 */
 	public static final String SCHEMA_PROPERTY_DESCRIPTION = "description";

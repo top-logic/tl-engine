@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.command;
 
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -22,6 +23,11 @@ final class FakeCommandModels {
 
 	static CommandModel contextMenu(String name, String label, boolean visible, boolean executable,
 			boolean active) {
+		return contextMenu(name, label, visible, executable, active, ButtonTone.DEFAULT);
+	}
+
+	static CommandModel contextMenu(String name, String label, boolean visible, boolean executable,
+			boolean active, ButtonTone tone) {
 		return new CommandModel() {
 			@Override
 			public String getName() {
@@ -51,6 +57,11 @@ final class FakeCommandModels {
 			@Override
 			public boolean isActive() {
 				return active;
+			}
+
+			@Override
+			public ButtonTone getTone() {
+				return tone;
 			}
 
 			@Override

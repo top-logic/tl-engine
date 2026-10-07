@@ -19,6 +19,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
@@ -71,8 +72,16 @@ public class ViewElement implements UIElement {
 		 * Channels are named reactive values that can be read and written by UI elements within
 		 * this view.
 		 * </p>
+		 *
+		 * <p>
+		 * A channel is identified by its {@link ChannelConfig#getName()}, which is unique within the
+		 * view. An overlay of the view (a same-path copy in a depending module) redefines a
+		 * channel by declaring one of the same name; a channel of a name the view does not declare
+		 * is added to the view.
+		 * </p>
 		 */
 		@Name(CHANNELS)
+		@Key(ChannelConfig.NAME)
 		List<ChannelConfig> getChannels();
 
 		/** Configuration name for {@link #getContent()}. */

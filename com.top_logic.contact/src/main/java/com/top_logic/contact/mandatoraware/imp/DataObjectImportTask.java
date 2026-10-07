@@ -38,6 +38,7 @@ import com.top_logic.util.monitor.MonitorComponent;
 import com.top_logic.util.monitor.MonitorMessage;
 import com.top_logic.util.monitor.MonitorMessage.Status;
 import com.top_logic.util.monitor.MonitorResult;
+import com.top_logic.util.sched.task.TaskState;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
@@ -170,6 +171,11 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
 	@Override
 	public void inContext() {
 		startImport();
+		if (getLog().getState() != TaskState.INACTIVE) {
+			// No mandator was imported: Close the run the scheduler has opened for this task.
+			getLog().taskStarted();
+			getLog().taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());
+		}
 	}
 
     /**
@@ -529,4 +535,11 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
         }
         return aString;
     }
+
+	@Override
+	public boolean isNodeLocal() {
+		// Imports into persistent data; must run only once in the cluster.
+		return false;
+	}
+
 }

@@ -10,6 +10,8 @@ import java.util.Set;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.state.CheckboxState;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
@@ -20,8 +22,9 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
  * <p>
  * Both show the value in place and take a click to change it, and both name it by the label beside
  * them rather than by an option of their own; a boolean offered as a choice between labelled values
- * is {@link ReactBooleanChoiceControl} instead. Which of the two shapes it is, is the
- * {@link #getPresentation() presentation} of the field.
+ * is a {@link ReactDropdownSelectControl} choosing between yes and no instead (see
+ * {@link FieldControlRegistry#createBooleanControl(ReactContext, FieldModel, BooleanPresentation, boolean)}).
+ * Which of the two shapes it is, is the {@link #getPresentation() presentation} of the field.
  * </p>
  */
 public class ReactCheckboxControl extends ReactFormFieldControl {

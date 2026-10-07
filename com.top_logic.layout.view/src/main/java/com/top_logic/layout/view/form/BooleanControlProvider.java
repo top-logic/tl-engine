@@ -15,8 +15,7 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.form.ReactBooleanChoiceControl;
-import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
@@ -103,10 +102,7 @@ public class BooleanControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		BooleanPresentation presentation = _display == null ? field.getBooleanPresentation() : _display;
-		if (presentation == BooleanPresentation.RADIO || presentation == BooleanPresentation.SELECT) {
-			return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
-		}
-		return new ReactCheckboxControl(context, model, presentation, field.isTriState());
+		return FieldControlRegistry.createBooleanControl(context, model, presentation, field.isTriState());
 	}
 
 }

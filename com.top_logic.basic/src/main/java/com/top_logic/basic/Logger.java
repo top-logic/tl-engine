@@ -13,6 +13,8 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,11 @@ import com.top_logic.basic.thread.StackTrace;
 public class Logger {
 
 	private static final Marker FATAL_MARKER = MarkerFactory.getMarker("FATAL");
+
+	/**
+	 * The slf4j loggers by name, see {@link #getLogger(Object)}.
+	 */
+	private static final Map<String, org.slf4j.Logger> LOGGERS = new ConcurrentHashMap<>();
 
 	/**
 	 * Represents an entry in the log.
@@ -274,7 +281,7 @@ public class Logger {
      * @return true if debugging for the caller is enabled, else false
      */
     public static boolean isDebugEnabled (Object aCaller) {
-		return isEnabledFor(LoggerFactory.getLogger(getCallerName(aCaller)), Level.DEBUG);
+		return isEnabledFor(getLogger(aCaller), Level.DEBUG);
     }
 
     /**
@@ -344,8 +351,7 @@ public class Logger {
      *
      */
     private static void log(String aMessage, Throwable anException, Object aCaller, Level aPriority) {
-		String callerName = getCallerName(aCaller);
-		org.slf4j.Logger logger = LoggerFactory.getLogger(callerName);
+		org.slf4j.Logger logger = getLogger(aCaller);
 
 		if (isTraceExceptions()) {
 			if (anException == null && isTraceMessages()) {
@@ -432,6 +438,20 @@ public class Logger {
 			default:
 				throw new UnreachableAssertion("No such level: " + aPriority);
 		}
+	}
+
+	/**
+	 * The slf4j logger for the given caller.
+	 * <p>
+	 * The logger is looked up once per name. {@link LoggerFactory#getLogger(String)} is not cheap:
+	 * the log4j binding determines the logger context from the class loader of its caller and walks
+	 * the stack to find it on every call. Its caller is always this class, so the context, and
+	 * therefore the logger, never changes for a name. A reconfiguration of the logging system
+	 * updates the existing logger instances.
+	 * </p>
+	 */
+	private static org.slf4j.Logger getLogger(Object caller) {
+		return LOGGERS.computeIfAbsent(getCallerName(caller), LoggerFactory::getLogger);
 	}
 
     /**

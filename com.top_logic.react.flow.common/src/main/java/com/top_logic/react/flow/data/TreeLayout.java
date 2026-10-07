@@ -85,7 +85,7 @@ public interface TreeLayout extends com.top_logic.react.flow.data.FloatingLayout
 	com.top_logic.react.flow.data.TreeLayout setParentAlign(double value);
 
 	/**
-	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentRatio}.
+	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #getParentAlign()}.
 	 */
 	double getParentOffset();
 

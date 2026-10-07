@@ -31,7 +31,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
-import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -43,12 +43,15 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
@@ -58,6 +61,10 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
+import com.top_logic.model.annotate.ui.ClassificationDisplay;
+import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
+import com.top_logic.model.annotate.ui.ReferenceDisplay;
+import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
@@ -276,6 +283,46 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * Creates the input control editing the given attribute in a table cell.
+	 *
+	 * <p>
+	 * The control is resolved as for a form field, described by {@link #cellSpec(FieldSpec)}: a
+	 * value chosen from options is offered in a list that opens on demand, whatever display the
+	 * model annotations ask for.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param part
+	 *        The model attribute.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications.
+	 * @return A React control for the cell input widget.
+	 */
+	public ReactControl createCellControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+		return createFieldControl(context, part, cellSpec(fieldSpec(part, model)), model, null);
+	}
+
+	/**
+	 * Adapts the given field description to a table cell.
+	 *
+	 * <p>
+	 * A group of radio buttons takes the room of all its options and does not fit the row of a
+	 * table, so a cell offers the options of a value chosen from options in a list that opens on
+	 * demand, even where the model annotations ask for radio buttons. A display configured
+	 * explicitly for the control still wins, as for every other field.
+	 * </p>
+	 *
+	 * @param field
+	 *        The description of the edited value, see
+	 *        {@link #fieldSpec(TLType, AnnotationLookup, String, boolean, FieldModel)}.
+	 * @return The given description, adapted.
+	 */
+	public static FieldSpec cellSpec(FieldSpec field) {
+		return field.setSelectDisplay(SelectDisplay.DROPDOWN).setSelectOrientation(Orientation.VERTICAL);
+	}
+
+	/**
 	 * Creates the input control for the given attribute, described by the given specification.
 	 *
 	 * <p>
@@ -447,6 +494,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public static FieldSpec fieldSpec(TLType type, AnnotationLookup annotations, String label, boolean multiple,
 			FieldModel model) {
+		Orientation radio = radioOrientation(annotations, type);
 		return FieldSpec.of(valueType(type), label)
 			.setMultiple(multiple)
 			.setMandatory(model.isMandatory())
@@ -454,6 +502,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setMultilineRows(multilineRows(annotations))
 			.setBooleanPresentation(booleanPresentation(annotations, type))
 			.setTriState(isTriState(type))
+			.setSelectDisplay(radio == null ? SelectDisplay.DROPDOWN : SelectDisplay.RADIO)
+			.setSelectOrientation(radio == null ? Orientation.VERTICAL : radio)
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
 			.setNumberFormat(numberFormat(annotations, type));
@@ -681,6 +731,42 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * The direction of the radio buttons the options of a value chosen from options are offered
+	 * as, or {@code null} where the value asks for no radio buttons and its options are offered in
+	 * a list that opens on demand.
+	 *
+	 * <p>
+	 * Radio buttons are asked for by the {@link ClassificationDisplay} of a classifier or by the
+	 * {@link ReferenceDisplay} of an object reference. Inline radio buttons are laid out side by
+	 * side, all others one below the other. A checklist is the same group of buttons: a field
+	 * taking several values offers a checkbox for each option.
+	 * </p>
+	 */
+	private static Orientation radioOrientation(AnnotationLookup annotations, TLType type) {
+		if (type instanceof TLEnumeration) {
+			ClassificationDisplay annotation = annotation(annotations, type, ClassificationDisplay.class);
+			ClassificationPresentation presentation = annotation == null ? null : annotation.getValue();
+			if (presentation == ClassificationPresentation.RADIO_INLINE) {
+				return Orientation.HORIZONTAL;
+			}
+			if (presentation == ClassificationPresentation.RADIO
+				|| presentation == ClassificationPresentation.CHECKLIST) {
+				return Orientation.VERTICAL;
+			}
+			return null;
+		}
+		ReferenceDisplay annotation = annotation(annotations, type, ReferenceDisplay.class);
+		ReferencePresentation presentation = annotation == null ? null : annotation.getValue();
+		if (presentation == ReferencePresentation.RADIO_INLINE) {
+			return Orientation.HORIZONTAL;
+		}
+		if (presentation == ReferencePresentation.RADIO) {
+			return Orientation.VERTICAL;
+		}
+		return null;
+	}
+
+	/**
 	 * The annotation of the given type at a value: the one at its attribute where it has one, the
 	 * one at its type otherwise.
 	 *
@@ -801,10 +887,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (type == null) {
 			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
 		}
-		AbstractFieldModel model = new AbstractFieldModel(value);
+		AbstractFieldModel model = displayModel(type, columnType.multiple(), value);
 		model.setEditable(false);
 		FieldSpec field = fieldSpec(type, columnType.annotations(), null, columnType.multiple(), model);
 		return createFieldControl(context, type, field, model);
+	}
+
+	/**
+	 * The field holding a displayed value of the given type that no attribute declares: an
+	 * option-less select model where values of the type are chosen from options, so that objects
+	 * and classifiers render with the select control's read-only representation (label and icon),
+	 * and a plain field otherwise.
+	 *
+	 * @param multiple
+	 *        Whether the field holds a collection of values rather than a single one.
+	 */
+	private AbstractFieldModel displayModel(TLType type, boolean multiple, Object value) {
+		ReactFieldControlProvider mapped = byType(type);
+		boolean select =
+			mapped != null ? mapped instanceof SelectControlProvider : AttributeOptions.isStructuralSelect(type);
+		if (!select) {
+			return new AbstractFieldModel(value);
+		}
+		return new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple);
 	}
 
 	/**
@@ -900,15 +1005,15 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * The {@link OptionSource} for an attribute edited by the given {@link SelectControlProvider}.
 	 *
 	 * <p>
-	 * An attribute-level options generator (e.g. supported locales) takes precedence over the
-	 * provider's configured option source; otherwise the configured option source is used, falling
-	 * back to the attribute's structural options. Either way, only options the current user may read
-	 * are offered.
+	 * An {@link TLOptions options annotation of the attribute itself} (e.g. supported locales) takes
+	 * precedence over the provider's configured option source; otherwise the configured option source
+	 * is used, falling back to the attribute's structural options (including the options of the
+	 * attribute's value type). Either way, only options the current user may read are offered.
 	 * </p>
 	 */
 	private OptionSource optionSourceFor(TLStructuredTypePart part, SelectControlProvider provider) {
 		OptionProvider options = provider.getConfiguredOptions();
-		if (options != null && AttributeOperations.getOptions(part) == null) {
+		if (options != null && part.getAnnotationLocal(TLOptions.class) == null) {
 			OptionProvider configured = options;
 			return (self, overlays, dependencies) -> AttributeOptions.readable(
 				AttributeOptions.toList(configured.getOptions(SimpleEditContext.createContext(self, part))));

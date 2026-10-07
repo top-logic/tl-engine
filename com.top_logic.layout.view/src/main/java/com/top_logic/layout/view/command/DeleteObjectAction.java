@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -14,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -32,7 +35,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  *
  * <p>
  * The action brings its executability: a command deleting its input is offered only where the
- * user may delete that input. See {@link ModelAccessRule} for how a refusal is displayed.
+ * user may delete that input (see {@link ModelAccessRule} for how a refusal is displayed), and it
+ * is disabled for an input that vetoes its deletion (see {@link DeleteVetoDisabled}).
  * </p>
  *
  * <p>
@@ -77,11 +81,21 @@ public class DeleteObjectAction implements ViewAction {
 	}
 
 	/**
-	 * The deletion right on the command input.
+	 * The deletion right on the command input, and that the input does not veto its deletion.
 	 */
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
-		return ModelAccessRule.onInput(SimpleBoundCommandGroup.DELETE);
+		return CombinedViewExecutabilityRule.combine(List.of(
+			ModelAccessRule.onInput(SimpleBoundCommandGroup.DELETE),
+			DeleteVetoDisabled.INSTANCE));
+	}
+
+	/**
+	 * Deleting is destructive.
+	 */
+	@Override
+	public ButtonTone getTone() {
+		return ButtonTone.DANGER;
 	}
 
 	@Override

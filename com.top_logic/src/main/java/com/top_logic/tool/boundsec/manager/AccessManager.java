@@ -261,6 +261,25 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 		return true;
 	}
 
+	/**
+	 * Whether this access manager defines a source of roles for objects of the given type: a rule
+	 * computing a role on them, or a rule leading to the objects whose roles they inherit.
+	 * <p>
+	 * A type without a role source cannot decide access to its objects by roles. A composition part
+	 * without a role source therefore delegates its access decision to its container, see
+	 * {@link com.top_logic.model.security.ModelAccessRights#getAccessParent(TLClass)}.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to check.
+	 * @return Whether a user can hold a role on an object of the type by a definition of this
+	 *         access manager. This implementation, which has no rules and relies on the roles
+	 *         assigned to the objects themselves, answers <code>true</code> for every type.
+	 */
+	public boolean hasRoleSource(TLClass type) {
+		return true;
+	}
+
     /**
 	 * Hook for subclasses to update the access manager in case of a security change.
 	 * 

@@ -103,6 +103,9 @@ public interface MenuState extends com.top_logic.layout.react.state.ControlState
 		/** @see #getCssClasses() */
 		String CSS_CLASSES__PROP = "cssClasses";
 
+		/** @see #getTone() */
+		String TONE__PROP = "tone";
+
 		/**
 		 * The kind of the entry.
 		 */
@@ -173,6 +176,17 @@ public interface MenuState extends com.top_logic.layout.react.state.ControlState
 		 * @see #getCssClasses()
 		 */
 		com.top_logic.layout.react.state.MenuState.Entry setCssClasses(String value);
+
+		/**
+		 * The kind of action the item stands for. Absent means `default`, an ordinary action;
+		 * `danger` marks an item whose command destroys or discards what the user has.
+		 */
+		com.top_logic.layout.react.state.ButtonState.Tone getTone();
+
+		/**
+		 * @see #getTone()
+		 */
+		com.top_logic.layout.react.state.MenuState.Entry setTone(com.top_logic.layout.react.state.ButtonState.Tone value);
 
 		/** Reads a new instance from the given reader. */
 		static com.top_logic.layout.react.state.MenuState.Entry readEntry(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

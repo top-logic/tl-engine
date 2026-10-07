@@ -8,6 +8,7 @@ package com.top_logic.knowledge.gui.layout.person;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -21,6 +22,7 @@ import com.top_logic.layout.ScriptFunction1;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.tool.execution.service.CommandApprovalService;
 
 /**
  * {@link ExecutabilityRule} that disables a command operating on the anonymous account.
@@ -37,8 +39,14 @@ import com.top_logic.tool.execution.ExecutableState;
  * refers to an account, such as the contact of the account administration.
  * </p>
  *
+ * <p>
+ * The rule does not depend on the component the command is executed on, so that it can be used as
+ * global check in the {@link CommandApprovalService} to protect the anonymous account in all views.
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@InApp(classifiers = CommandApprovalService.APPROVAL_SERVICE_CLASSIFIER)
 public class AnonymousAccountDisabled extends AbstractConfiguredInstance<AnonymousAccountDisabled.Config<?>>
 		implements ExecutabilityRule {
 

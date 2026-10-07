@@ -187,34 +187,32 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 				size="45"
 				unit="%"
 			>
-				<inset>
-					<stack
-						direction="column"
-						gap="default"
-					>
-						<panel>
-							<title>
-								<en>Agent answer</en>
-								<de>Agenten-Antwort</de>
-							</title>
-							<html input="answer"/>
-						</panel>
+				<stack
+					direction="column"
+					gap="default"
+				>
+					<panel with-inset="true">
+						<title>
+							<en>Agent answer</en>
+							<de>Agenten-Antwort</de>
+						</title>
+						<html input="answer"/>
+					</panel>
 
-						<panel>
-							<title>
-								<en>Rejected fragment</en>
-								<de>Abgewiesenes Fragment</de>
-							</title>
-							<text>
-								<label>
-									<en>The content below carries a script tag. It is checked against the application's HTML whitelist before it reaches the page, and what the check refuses is not displayed.</en>
-									<de>Der Inhalt unten enthält ein Skript-Tag. Er wird gegen die HTML-Whitelist der Anwendung geprüft, bevor er die Seite erreicht; was die Prüfung ablehnt, wird nicht angezeigt.</de>
-								</label>
-							</text>
-							<html input="rejected"/>
-						</panel>
-					</stack>
-				</inset>
+					<panel with-inset="true">
+						<title>
+							<en>Rejected fragment</en>
+							<de>Abgewiesenes Fragment</de>
+						</title>
+						<text>
+							<label>
+								<en>The content below carries a script tag. It is checked against the application's HTML whitelist before it reaches the page, and what the check refuses is not displayed.</en>
+								<de>Der Inhalt unten enthält ein Skript-Tag. Er wird gegen die HTML-Whitelist der Anwendung geprüft, bevor er die Seite erreicht; was die Prüfung ablehnt, wird nicht angezeigt.</de>
+							</label>
+						</text>
+						<html input="rejected"/>
+					</panel>
+				</stack>
 			</pane>
 			<pane
 				min-size="260"
@@ -231,7 +229,7 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 							size="38"
 							unit="%"
 						>
-							<panel>
+							<panel with-inset="true">
 								<title>
 									<en>Exposés</en>
 									<de>Exposés</de>
@@ -245,27 +243,29 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 									min-column-width="8rem"
 								>
 									<item>
-										<card padding="compact">
+										<card padding="none">
 											<html
 												display="thumbnail"
 												input="element"
 											/>
-											<text
-												css-class="tlText--strong"
-												input="element"
-												overflow="ellipsis"
-											/>
-											<button appearance="link">
-												<action class="com.top_logic.layout.view.command.GenericViewCommand"
+											<inset>
+												<text
+													css-class="tlText--strong"
 													input="element"
-												>
-													<label>
-														<en>Show</en>
-														<de>Anzeigen</de>
-													</label>
-													<write-channel name="expose"/>
-												</action>
-											</button>
+													overflow="ellipsis"
+												/>
+												<button appearance="link">
+													<action class="com.top_logic.layout.view.command.GenericViewCommand"
+														input="element"
+													>
+														<label>
+															<en>Show</en>
+															<de>Anzeigen</de>
+														</label>
+														<write-channel name="expose"/>
+													</action>
+												</button>
+											</inset>
 										</card>
 									</item>
 									<empty-text>

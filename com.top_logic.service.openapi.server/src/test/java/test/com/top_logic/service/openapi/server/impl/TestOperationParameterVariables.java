@@ -19,6 +19,7 @@ import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.PathItem;
 import com.top_logic.service.openapi.server.impl.OperationParameterVariables;
 import com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression;
+import com.top_logic.service.openapi.server.parameter.HeaderParameter;
 import com.top_logic.service.openapi.server.parameter.PathParameter;
 
 /**
@@ -69,6 +70,28 @@ public class TestOperationParameterVariables extends BasicTestCase {
 
 		assertTrue(variables.contains("id"));
 		assertTrue(variables.contains("tenant"));
+	}
+
+	/**
+	 * A parameter with a {@link HeaderParameter.Config#getVariableName() variable name} is offered
+	 * under its variable name, not under its HTTP name.
+	 */
+	public void testOffersVariableName() {
+		OperationByMethod operation = TypedConfiguration.newConfigItem(OperationByMethod.class);
+		HeaderParameter.Config event = TypedConfiguration.newConfigItem(HeaderParameter.Config.class);
+		event.setName("X-Gitea-Event");
+		event.setVariableName("event");
+		operation.getParameters().add(event);
+		operation.getParameters().add(pathParam("id"));
+
+		ServiceMethodBuilderByExpression.Config impl =
+			TypedConfiguration.newConfigItem(ServiceMethodBuilderByExpression.Config.class);
+		operation.setImplementation(impl);
+
+		List<String> variables =
+			new OperationParameterVariables().getVariablesFromModel(impl);
+
+		assertEquals(List.of("event", "id"), variables);
 	}
 
 	/**

@@ -11,12 +11,15 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonAction;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonTone;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -68,6 +71,10 @@ public class TestReactButtonState extends TestCase {
 			super(context, label, action);
 		}
 
+		Button(ReactContext context, CommandModel model) {
+			super(context, model);
+		}
+
 		Object appearance() {
 			return getState("appearance");
 		}
@@ -78,6 +85,78 @@ public class TestReactButtonState extends TestCase {
 
 		Object size() {
 			return getState("size");
+		}
+	}
+
+	/**
+	 * A button built from a command takes the command's tone, so that a destructive command is
+	 * drawn as such wherever it is offered; an ordinary command sends no tone.
+	 */
+	public void testToneFollowsTheModel() {
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		assertEquals("danger", new Button(context, new TonedModel(ButtonTone.DANGER)).tone());
+		assertNull(new Button(context, new TonedModel(ButtonTone.DEFAULT)).tone());
+	}
+
+	/**
+	 * A command of the given tone, offered and executable.
+	 */
+	private static final class TonedModel implements CommandModel {
+
+		private final ButtonTone _tone;
+
+		TonedModel(ButtonTone tone) {
+			_tone = tone;
+		}
+
+		@Override
+		public ButtonTone getTone() {
+			return _tone;
+		}
+
+		@Override
+		public String getName() {
+			return "toned";
+		}
+
+		@Override
+		public String getLabel() {
+			return "Toned";
+		}
+
+		@Override
+		public ThemeImage getImage() {
+			return null;
+		}
+
+		@Override
+		public boolean isExecutable() {
+			return true;
+		}
+
+		@Override
+		public boolean isVisible() {
+			return true;
+		}
+
+		@Override
+		public HandlerResult perform(ReactContext context) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public CommandPlacement getPlacement() {
+			return CommandPlacement.NONE;
+		}
+
+		@Override
+		public void addStateChangeListener(Runnable listener) {
+			// The tone never changes.
+		}
+
+		@Override
+		public void removeStateChangeListener(Runnable listener) {
+			// The tone never changes.
 		}
 	}
 

@@ -1,5 +1,6 @@
-import { React, useI18N, TLChild, tooltipProps } from 'tl-react-bridge';
-import type { Editor } from '@tiptap/react';
+import { React, useI18N, TLChild, tooltipProps, anchoredOverlayProps } from 'tl-react-bridge';
+import { useEditorState } from '@tiptap/react';
+import type { Editor, EditorStateSnapshot } from '@tiptap/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Popover from '@radix-ui/react-popover';
 
@@ -16,6 +17,52 @@ interface ToolbarProps {
    * null where the editor carries none.
    */
   toolbar: unknown;
+}
+
+/** The formatting at the cursor and the history, as far as the toolbar shows them. */
+interface ToolbarState {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  strike: boolean;
+  blockquote: boolean;
+  codeBlock: boolean;
+
+  /** The level of the heading at the cursor, or null in a paragraph. */
+  headingLevel: number | null;
+
+  bulletList: boolean;
+  orderedList: boolean;
+  link: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
+/** The levels a heading can have. */
+const HEADING_LEVELS = [1, 2, 3, 4, 5, 6] as const;
+
+/**
+ * Reads the toolbar state from the editor. The toolbar renders from this selection only, so it
+ * re-renders exactly when one of its flags changes, not on every transaction of the editor.
+ */
+function selectToolbarState({ editor }: EditorStateSnapshot<Editor | null>): ToolbarState | null {
+  if (!editor) {
+    return null;
+  }
+  return {
+    bold: editor.isActive('bold'),
+    italic: editor.isActive('italic'),
+    underline: editor.isActive('underline'),
+    strike: editor.isActive('strike'),
+    blockquote: editor.isActive('blockquote'),
+    codeBlock: editor.isActive('codeBlock'),
+    headingLevel: HEADING_LEVELS.find((level) => editor.isActive('heading', { level })) ?? null,
+    bulletList: editor.isActive('bulletList'),
+    orderedList: editor.isActive('orderedList'),
+    link: editor.isActive('link'),
+    canUndo: editor.can().undo(),
+    canRedo: editor.can().redo(),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -58,6 +105,17 @@ function t(labels: Record<string, string>, key: string): string {
   return labels['js.wysiwyg.' + key] || ALL_I18N_KEYS['js.wysiwyg.' + key] || key;
 }
 
+/**
+ * Handler for the closing of a toolbar popup that puts the caret back into the text at its
+ * previous selection, instead of onto the button that opened the popup.
+ */
+function useFocusEditorOnClose(editor: Editor): (e: Event) => void {
+  return React.useCallback((e: Event) => {
+    e.preventDefault();
+    editor.commands.focus();
+  }, [editor]);
+}
+
 // ---------------------------------------------------------------------------
 // ToolbarButton -- simple icon button with tooltip
 // ---------------------------------------------------------------------------
@@ -98,7 +156,11 @@ interface HeadingLevel {
   icon: string;
 }
 
-const HeadingDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }> = ({ editor, labels }) => {
+const HeadingDropdown: React.FC<{
+  editor: Editor;
+  labels: Record<string, string>;
+  activeLevel: number | null;
+}> = ({ editor, labels, activeLevel }) => {
   const levels: HeadingLevel[] = [
     { label: t(labels, 'paragraph'), level: null, icon: 'ri-paragraph' },
     { label: t(labels, 'heading1'), level: 1, icon: 'ri-h-1' },
@@ -109,16 +171,9 @@ const HeadingDropdown: React.FC<{ editor: Editor; labels: Record<string, string>
     { label: t(labels, 'heading6'), level: 6, icon: 'ri-h-6' },
   ];
 
-  // Determine current heading level
-  let currentIcon = 'ri-paragraph';
-  let currentLabel = t(labels, 'paragraph');
-  for (let lvl = 1; lvl <= 6; lvl++) {
-    if (editor.isActive('heading', { level: lvl })) {
-      currentIcon = 'ri-h-' + lvl;
-      currentLabel = t(labels, 'HEADING_' + lvl);
-      break;
-    }
-  }
+  const focusEditor = useFocusEditorOnClose(editor);
+  const currentIcon = activeLevel === null ? 'ri-paragraph' : 'ri-h-' + activeLevel;
+  const currentLabel = activeLevel === null ? t(labels, 'paragraph') : t(labels, 'heading' + activeLevel);
 
   return (
     <DropdownMenu.Root>
@@ -130,11 +185,15 @@ const HeadingDropdown: React.FC<{ editor: Editor; labels: Record<string, string>
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="tlWysiwygToolbar__dropdown" sideOffset={4} align="start">
+        <DropdownMenu.Content
+          className="tlWysiwygToolbar__dropdown"
+          sideOffset={4}
+          align="start"
+          onCloseAutoFocus={focusEditor}
+          {...anchoredOverlayProps}
+        >
           {levels.map((h) => {
-            const isActive = h.level === null
-              ? !editor.isActive('heading')
-              : editor.isActive('heading', { level: h.level });
+            const isActive = h.level === activeLevel;
             return (
               <DropdownMenu.Item
                 key={h.level ?? 'p'}
@@ -162,9 +221,13 @@ const HeadingDropdown: React.FC<{ editor: Editor; labels: Record<string, string>
 // ListDropdown
 // ---------------------------------------------------------------------------
 
-const ListDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }> = ({ editor, labels }) => {
-  const isBullet = editor.isActive('bulletList');
-  const isOrdered = editor.isActive('orderedList');
+const ListDropdown: React.FC<{
+  editor: Editor;
+  labels: Record<string, string>;
+  isBullet: boolean;
+  isOrdered: boolean;
+}> = ({ editor, labels, isBullet, isOrdered }) => {
+  const focusEditor = useFocusEditorOnClose(editor);
   const currentIcon = isOrdered ? 'ri-list-ordered' : 'ri-list-unordered';
   const listsLabel = t(labels, 'lists');
 
@@ -182,7 +245,13 @@ const ListDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }>
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="tlWysiwygToolbar__dropdown" sideOffset={4} align="start">
+        <DropdownMenu.Content
+          className="tlWysiwygToolbar__dropdown"
+          sideOffset={4}
+          align="start"
+          onCloseAutoFocus={focusEditor}
+          {...anchoredOverlayProps}
+        >
           <DropdownMenu.Item
             className={'tlWysiwygToolbar__dropdownItem' + (isBullet ? ' tlWysiwygToolbar__dropdownItem--active' : '')}
             onSelect={() => editor.chain().focus().toggleBulletList().run()}
@@ -207,13 +276,17 @@ const ListDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }>
 // LinkPopover
 // ---------------------------------------------------------------------------
 
-const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> = ({ editor, labels }) => {
+const LinkPopover: React.FC<{
+  editor: Editor;
+  labels: Record<string, string>;
+  isActive: boolean;
+}> = ({ editor, labels, isActive }) => {
   const [open, setOpen] = React.useState(false);
   const [url, setUrl] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const isActive = editor.isActive('link');
   const linkLabel = t(labels, 'link');
+  const focusEditor = useFocusEditorOnClose(editor);
 
   const handleOpen = React.useCallback((nextOpen: boolean) => {
     if (nextOpen) {
@@ -256,7 +329,13 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="tlWysiwygToolbar__linkPopover" sideOffset={6} align="start">
+        <Popover.Content
+          className="tlWysiwygToolbar__linkPopover"
+          sideOffset={6}
+          align="start"
+          onCloseAutoFocus={focusEditor}
+          {...anchoredOverlayProps}
+        >
           <div className="tlWysiwygToolbar__linkForm">
             <label className="tlWysiwygToolbar__linkLabel">{t(labels, 'linkUrl')}</label>
             <input
@@ -302,8 +381,9 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
 
 const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar }) => {
   const labels = useI18N(ALL_I18N_KEYS);
+  const state = useEditorState({ editor, selector: selectToolbarState });
 
-  if (!editor) return null;
+  if (!editor || !state) return null;
 
   return (
     <div className="tlWysiwygToolbar" role="toolbar" aria-label="Editor toolbar">
@@ -313,33 +393,38 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
           <ToolbarButton
             icon="ri-bold"
             tooltip={t(labels, 'bold')}
-            active={editor.isActive('bold')}
+            active={state.bold}
             onClick={() => editor.chain().focus().toggleBold().run()}
           />
           <ToolbarButton
             icon="ri-italic"
             tooltip={t(labels, 'italic')}
-            active={editor.isActive('italic')}
+            active={state.italic}
             onClick={() => editor.chain().focus().toggleItalic().run()}
           />
           <ToolbarButton
             icon="ri-underline"
             tooltip={t(labels, 'underline')}
-            active={editor.isActive('underline')}
+            active={state.underline}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
           />
           <ToolbarButton
             icon="ri-strikethrough"
             tooltip={t(labels, 'strikethrough')}
-            active={editor.isActive('strike')}
+            active={state.strike}
             onClick={() => editor.chain().focus().toggleStrike().run()}
           />
         </div>
 
         {/* Heading and list dropdowns */}
         <div className="tlWysiwygToolbar__group">
-          <HeadingDropdown editor={editor} labels={labels} />
-          <ListDropdown editor={editor} labels={labels} />
+          <HeadingDropdown editor={editor} labels={labels} activeLevel={state.headingLevel} />
+          <ListDropdown
+            editor={editor}
+            labels={labels}
+            isBullet={state.bulletList}
+            isOrdered={state.orderedList}
+          />
         </div>
 
         {/* Block elements */}
@@ -347,20 +432,20 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
           <ToolbarButton
             icon="ri-double-quotes-l"
             tooltip={t(labels, 'blockquote')}
-            active={editor.isActive('blockquote')}
+            active={state.blockquote}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
           />
           <ToolbarButton
             icon="ri-code-s-slash-line"
             tooltip={t(labels, 'codeBlock')}
-            active={editor.isActive('codeBlock')}
+            active={state.codeBlock}
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           />
         </div>
 
         {/* Link, Image, Table */}
         <div className="tlWysiwygToolbar__group">
-          <LinkPopover editor={editor} labels={labels} />
+          <LinkPopover editor={editor} labels={labels} isActive={state.link} />
           <ToolbarButton
             icon="ri-image-line"
             tooltip={t(labels, 'image')}
@@ -385,13 +470,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
           <ToolbarButton
             icon="ri-arrow-go-back-line"
             tooltip={t(labels, 'undo')}
-            disabled={!editor.can().undo()}
+            disabled={!state.canUndo}
             onClick={() => editor.chain().focus().undo().run()}
           />
           <ToolbarButton
             icon="ri-arrow-go-forward-line"
             tooltip={t(labels, 'redo')}
-            disabled={!editor.can().redo()}
+            disabled={!state.canRedo}
             onClick={() => editor.chain().focus().redo().run()}
           />
         </div>

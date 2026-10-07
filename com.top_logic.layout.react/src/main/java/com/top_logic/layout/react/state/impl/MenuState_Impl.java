@@ -23,6 +23,8 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 
 		private String _cssClasses = "";
 
+		private com.top_logic.layout.react.state.ButtonState.Tone _tone = com.top_logic.layout.react.state.ButtonState.Tone.DEFAULT;
+
 		/**
 		 * Creates a {@link Entry_Impl} instance.
 		 *
@@ -146,6 +148,23 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 		}
 
 		@Override
+		public final com.top_logic.layout.react.state.ButtonState.Tone getTone() {
+			return _tone;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.MenuState.Entry setTone(com.top_logic.layout.react.state.ButtonState.Tone value) {
+			internalSetTone(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getTone()} without chain call utility. */
+		protected final void internalSetTone(com.top_logic.layout.react.state.ButtonState.Tone value) {
+			if (value == null) throw new IllegalArgumentException("Property 'tone' cannot be null.");
+			_tone = value;
+		}
+
+		@Override
 		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 			writeContent(out);
 		}
@@ -167,6 +186,8 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 			out.value(isActive());
 			out.name(CSS_CLASSES__PROP);
 			out.value(getCssClasses());
+			out.name(TONE__PROP);
+			getTone().writeTo(out);
 		}
 
 		@Override
@@ -179,6 +200,7 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 				case DISABLED__PROP: setDisabled(in.nextBoolean()); break;
 				case ACTIVE__PROP: setActive(in.nextBoolean()); break;
 				case CSS_CLASSES__PROP: setCssClasses(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case TONE__PROP: setTone(com.top_logic.layout.react.state.ButtonState.Tone.readTone(in)); break;
 				default: super.readField(in, field);
 			}
 		}

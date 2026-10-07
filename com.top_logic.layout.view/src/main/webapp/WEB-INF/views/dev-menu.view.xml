@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The tools for building and testing an application, gathered under one entry of the app bar.
+	
+	Referenced rather than copied - an application places <view-ref view="dev-menu.view.xml"/> in
+	the trailing area of its app bar, left of the user menu. Every entry carries the rule deciding
+	whether the current session may use it, and the menu shows no trigger while none of them is
+	available, so nothing is to be wired around it.
+	
+	A depending module or the application adds entries with a same-path overlay
+	(WEB-INF/views/dev-menu.view.xml of its own module): inside <menu> and <groups>, it names the
+	group to extend by its id in a <group id="automation" config:operation="update"> element and
+	lists its entries there. The ViewLoader merges all copies in dependency order and appends the
+	contributed entries to that group; a group with an id of its own is added after the existing
+	ones.
+-->
+<view>
+	<menu>
+		<theme-icon image="css:bi bi-tools">
+			<tooltip>
+				<en>Tools for designing, inspecting and automating this application.</en>
+				<de>Werkzeuge zum Gestalten, Untersuchen und Automatisieren dieser Anwendung.</de>
+			</tooltip>
+		</theme-icon>
+		<text css-class="tl-button__label">
+			<label>
+				<en>Development</en>
+				<de>Entwicklung</de>
+			</label>
+		</text>
+
+		<groups>
+			<!-- What concerns the page being displayed: changing its definition, examining its controls. -->
+			<group id="page">
+				<label>
+					<en>Page</en>
+					<de>Seite</de>
+				</label>
+
+				<open-designer image="css:bi bi-easel">
+					<label>
+						<en>Designer</en>
+						<de>Designer</de>
+					</label>
+					<tooltip>
+						<en>Open the view designer to edit the current page.</en>
+						<de>Öffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
+					</tooltip>
+				</open-designer>
+
+				<!--
+					Pops out the UI-inspector side-window: pick an element of this window and see the
+					control behind it. Shown only where UI inspection is switched on.
+				-->
+				<open-window
+					height="640"
+					image="css:bi bi-binoculars"
+					singleton-key="ui-inspector"
+					view="ui-inspector.view.xml"
+					width="720"
+				>
+					<title>
+						<en>UI inspector</en>
+						<de>UI-Inspektor</de>
+					</title>
+					<label>
+						<en>Inspect</en>
+						<de>Untersuchen</de>
+					</label>
+					<tooltip>
+						<en>Open the UI inspector to examine the elements of this window.</en>
+						<de>Öffnet den UI-Inspektor zur Untersuchung der Elemente dieses Fensters.</de>
+					</tooltip>
+					<executability>
+						<inspect-enabled/>
+					</executability>
+				</open-window>
+			</group>
+
+			<!-- What lets something other than the user at the keyboard drive the application. -->
+			<group id="automation">
+				<label>
+					<en>Automation</en>
+					<de>Automatisierung</de>
+				</label>
+
+				<!-- Pops out the script-recorder side-window, capturing interactions as a replayable script. -->
+				<open-window
+					height="320"
+					image="css:bi bi-record-circle"
+					singleton-key="script-recorder"
+					view="script-recorder.view.xml"
+					width="420"
+				>
+					<title>
+						<en>Script Recorder</en>
+						<de>Skript-Rekorder</de>
+					</title>
+					<label>
+						<en>Record</en>
+						<de>Aufzeichnen</de>
+					</label>
+					<tooltip>
+						<en>Open the script recorder to capture interactions as a replayable script.</en>
+						<de>Öffnet den Skript-Rekorder, um Interaktionen als abspielbares Skript aufzuzeichnen.</de>
+					</tooltip>
+					<executability>
+						<authenticated-only/>
+					</executability>
+				</open-window>
+			</group>
+		</groups>
+	</menu>
+</view>

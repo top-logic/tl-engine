@@ -39,6 +39,21 @@ message Diagram extends Widget {
 	
 	/** Whether multi-selection is supported */
 	boolean multiSelect;
+
+	/**
+	 * Whether the last selection change by a click in the diagram was incremental.
+	 *
+	 * <p>
+	 * Set by the client on every click that changes the {@link #selection}, before the selection
+	 * is changed: {@code true} for a click with a modifier key pressed (the clicked element is
+	 * added to or removed from the selection), {@code false} for a plain click on an element or on
+	 * the diagram background (the selection is replaced). The value must be set on every such
+	 * click, even if it does not change, since the server reacts on the set, not on a change of
+	 * the value: A non-incremental click drops selected objects that are not displayed in the
+	 * diagram.
+	 * </p>
+	 */
+	boolean incrementalSelection;
 	
 	/** Internal field for storing the current click handler registration (client-side only). */
 	transient com.top_logic.react.flow.svg.event.Registration clickHandler;
@@ -103,7 +118,7 @@ message TreeLayout extends FloatingLayout {
 	double parentAlign;
 	
 	/**
-	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentRatio}.
+	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentAlign}.
 	 */	
 	double parentOffset;
 	
@@ -1320,8 +1335,8 @@ message GanttRangeDecoration extends GanttDecoration {
  *
  * <p>
  * Row heights are computed per-row from the maximum item intrinsic height plus padding, with
- * {@link #rowMinContentHeight} as a floor. The effective total height of a row is:
- * {@code max(rowMinContentHeight, max(item.intrinsicHeight in row)) + 2 * rowPadding}.
+ * {@link GanttRow#minContentHeight} as a floor. The effective total height of a row is:
+ * {@code max(row.minContentHeight, max(item.intrinsicHeight in row)) + 2 * row.rowPadding}.
  * All items in the same row receive the same final content height so that neighbouring boxes
  * can grow together.
  * </p>

@@ -16,6 +16,7 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -80,11 +81,17 @@ public class SetThemeCommand implements ViewCommand {
 	 *        The context whose update queue carries the change to the browser.
 	 * @param themeId
 	 *        Id of the theme to activate, or {@code null} to drop the user's preference and follow
-	 *        the appearance preference of the operating system.
+	 *        the appearance preference of the operating system. An id naming no selectable theme -
+	 *        an unknown or an {@link UITheme#isAbstract() abstract} one - changes nothing.
 	 * @return The result of the activation.
 	 */
 	public static HandlerResult applyTheme(ReactContext context, String themeId) {
-		UIThemeService.getInstance().setSelectedThemeId(themeId);
+		UIThemeService themes = UIThemeService.getInstance();
+		if (themeId != null && !themes.isSelectable(themeId)) {
+			// Neither stored nor put into effect, so that the page keeps the theme the user sees.
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		themes.setSelectedThemeId(themeId);
 
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue != null) {

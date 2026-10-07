@@ -24,6 +24,7 @@
 					<de>Text</de>
 				</label>
 				<field attribute="name"/>
+				<field attribute="locked"/>
 				<field attribute="string"/>
 				<field attribute="multiLine"/>
 				<field attribute="html"/>
@@ -76,6 +77,7 @@
 				<field attribute="tri"/>
 				<field attribute="activeRadio"/>
 				<field attribute="activeSelect"/>
+				<field attribute="priorityRadio"/>
 				<field attribute="priority"/>
 				<field attribute="tags"/>
 			</group>

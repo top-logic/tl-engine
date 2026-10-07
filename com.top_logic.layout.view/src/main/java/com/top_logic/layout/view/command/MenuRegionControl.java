@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
@@ -25,15 +26,23 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
  * to the {@link ContextMenuOpener} of the enclosing frame, reading the current target value from
  * the injected target supplier before opening the menu. The {@link MenuTrigger} decides which
  * gesture the client listens for, and thus where the menu appears: at the pointer for
- * {@link MenuTrigger#CONTEXT_MENU}, below the region for {@link MenuTrigger#CLICK}. Either way the
- * client sends the viewport coordinates the menu is placed at, so the opener needs to know nothing
- * about the trigger.
+ * {@link MenuTrigger#CONTEXT_MENU}, hanging off the region for {@link MenuTrigger#CLICK}. The client
+ * sends either the viewport coordinates or the ID of the element the menu is placed at, so the
+ * opener needs to know nothing about the trigger.
  * </p>
  *
  * <p>
  * The commands arrive as several {@link ContextMenuContribution}s rather than one, because the
  * opener separates the entries of one contribution from those of the next: the groups are what
  * gives a menu of many entries its structure.
+ * </p>
+ *
+ * <p>
+ * A region built to hide while empty is {@link #setHidden(boolean) hidden} for as long as its menu
+ * {@link #offersEntry() offers no entry}, so that a trigger never opens onto nothing. It
+ * follows the commands' state changes, and shows again as soon as one of them becomes visible. A
+ * visible command that is not executable keeps the region shown, since the menu offers it as a
+ * disabled entry.
  * </p>
  *
  * @see com.top_logic.layout.view.element.ContextMenuElement
@@ -61,11 +70,26 @@ public class MenuRegionControl extends ReactControl {
 	/** Argument key for the viewport y coordinate the menu is placed at. */
 	private static final String ARG_Y = "y";
 
+	/**
+	 * Argument key for the ID of the client-side element the menu hangs off; when given, it wins
+	 * over {@link #ARG_X} and {@link #ARG_Y}.
+	 */
+	private static final String ARG_ANCHOR = "anchorId";
+
+	/** State key for whether the menu this region opened is open, see {@link MenuTrigger#CLICK}. */
+	private static final String MENU_OPEN = "menuOpen";
+
 	private final List<ContextMenuContribution> _contributions;
 
 	private final Supplier<Object> _targetSupplier;
 
 	private final ContextMenuOpener _opener;
+
+	/**
+	 * Listener updating the visibility of this region when a command's state changes, or
+	 * {@code null} when the region is shown regardless of its commands.
+	 */
+	private final Runnable _commandChangeHandler;
 
 	/**
 	 * Creates a {@link MenuRegionControl}.
@@ -82,10 +106,13 @@ public class MenuRegionControl extends ReactControl {
 	 *        The frame's context menu opener.
 	 * @param trigger
 	 *        The gesture that opens the menu.
+	 * @param hideWhileEmpty
+	 *        Whether the region is hidden while none of its commands is visible, see
+	 *        {@link #offersEntry()}.
 	 */
 	public MenuRegionControl(ReactContext context, ReactControl child,
 			List<ContextMenuContribution> contributions, Supplier<Object> targetSupplier,
-			ContextMenuOpener opener, MenuTrigger trigger) {
+			ContextMenuOpener opener, MenuTrigger trigger, boolean hideWhileEmpty) {
 		super(context, null, REACT_MODULE);
 		_contributions = List.copyOf(contributions);
 		_targetSupplier = targetSupplier;
@@ -94,22 +121,84 @@ public class MenuRegionControl extends ReactControl {
 		putState(CHILD, child);
 		putState(CHILD_ID, child.getID());
 		putState(TRIGGER, trigger.getExternalName());
+
+		if (hideWhileEmpty) {
+			_commandChangeHandler = this::updateHidden;
+			for (ContextMenuContribution contribution : _contributions) {
+				for (CommandModel command : contribution.commands()) {
+					command.addStateChangeListener(_commandChangeHandler);
+				}
+			}
+			updateHidden();
+		} else {
+			_commandChangeHandler = null;
+		}
 	}
 
 	/**
-	 * Opens the menu at the given client coordinates, using the current target supplier value as the
-	 * selection target.
+	 * Whether the menu of this region currently has an entry to show.
+	 *
+	 * <p>
+	 * Exactly the commands the {@link ContextMenuOpener} shows count: the
+	 * {@link ContextMenuContribution#visibleCommands() visible} ones, whether executable or not.
+	 * </p>
+	 */
+	public boolean offersEntry() {
+		for (ContextMenuContribution contribution : _contributions) {
+			if (!contribution.visibleCommands().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void updateHidden() {
+		boolean hidden = !offersEntry();
+		if (hidden != isHidden()) {
+			setHidden(hidden);
+		}
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_commandChangeHandler != null) {
+			for (ContextMenuContribution contribution : _contributions) {
+				for (CommandModel command : contribution.commands()) {
+					command.removeStateChangeListener(_commandChangeHandler);
+				}
+			}
+		}
+		super.onCleanup();
+	}
+
+	/**
+	 * Opens the menu, using the current target supplier value as the selection target.
+	 *
+	 * <p>
+	 * The menu hangs off the element the client names in {@link #ARG_ANCHOR}, or stands at the
+	 * viewport coordinates {@link #ARG_X}, {@link #ARG_Y} if it names none. While the menu is open,
+	 * the region's state {@link #MENU_OPEN} says so, so that a drop-down trigger reports itself as
+	 * expanded.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_OPEN_MENU)
 	void handleOpen(Map<String, Object> arguments) {
-		int x = intArg(arguments, ARG_X);
-		int y = intArg(arguments, ARG_Y);
 		Object target = _targetSupplier == null ? null : _targetSupplier.get();
 		List<Targeted> targeted = new ArrayList<>(_contributions.size());
 		for (ContextMenuContribution contribution : _contributions) {
 			targeted.add(new Targeted(contribution, target));
 		}
-		_opener.open(x, y, targeted);
+		Runnable closed = () -> putState(MENU_OPEN, false);
+		Object anchor = arguments.get(ARG_ANCHOR);
+		boolean shown;
+		if (anchor instanceof String anchorId && !anchorId.isEmpty()) {
+			shown = _opener.open(anchorId, targeted, closed);
+		} else {
+			shown = _opener.open(intArg(arguments, ARG_X), intArg(arguments, ARG_Y), targeted, closed);
+		}
+		if (shown) {
+			putState(MENU_OPEN, true);
+		}
 	}
 
 	private static int intArg(Map<String, Object> arguments, String key) {

@@ -24,7 +24,6 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -210,9 +209,9 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 		 * Creates a {@link ScriptOptionTree}.
 		 */
 		public ScriptOptionTree(EditContext editContext) {
-			super(editContext.getOverlay());
+			super(contextObject(editContext));
+			_updateContainer = updateContainer(editContext);
 			_optionsFilter = createSelectionFilter(editContext);
-			_updateContainer = editContext.getOverlay().getScope();
 		}
 
 		@Override
@@ -251,14 +250,14 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 		private Filter<? super Object> createSelectionFilter(EditContext editContext) {
 			List<Filter<Object>> filters = new ArrayList<>();
 
-			addConfiguredSelectionFilter(filters, editContext.getOverlay());
+			addConfiguredSelectionFilter(filters, getObject());
 			addInstanceFilter(filters, editContext);
 			addAttributeConstraintFilter(filters, editContext);
 
 			return FilterFactory.and(filters);
 		}
 
-		private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLFormObject currentObject) {
+		private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLObject currentObject) {
 			if (_selectionFilter != null) {
 				filters.add(node -> SearchExpression
 					.asBoolean(_selectionFilter.execute(this, _updateContainer, node, currentObject)));

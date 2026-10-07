@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.state.MenuState;
 import com.top_logic.layout.react.state.MenuState.EntryType;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -89,6 +91,9 @@ public class ReactMenuControl extends ReactControl {
 				}
 				if (entry.cssClasses() != null) {
 					map.put(MenuState.Entry.CSS_CLASSES__PROP, entry.cssClasses());
+				}
+				if (entry.tone() != ButtonTone.DEFAULT) {
+					map.put(MenuState.Entry.TONE__PROP, entry.tone().getExternalName());
 				}
 			}
 			itemList.add(map);
@@ -173,9 +178,19 @@ public class ReactMenuControl extends ReactControl {
 	 * @param active
 	 *        Whether the effect of the command this entry renders is currently in force, so that
 	 *        the entry is marked as the chosen one among its alternatives.
+	 * @param tone
+	 *        The kind of action the command this entry renders stands for; a
+	 *        {@link ButtonTone#DANGER destructive} entry is drawn as such. Never {@code null}.
 	 */
 	public record MenuEntry(EntryType type, String id, String label, String icon, ExecutableState state,
-			String cssClasses, boolean active) {
+			String cssClasses, boolean active, ButtonTone tone) {
+
+		/**
+		 * Creates a {@link MenuEntry}.
+		 */
+		public MenuEntry {
+			Objects.requireNonNull(tone, "tone");
+		}
 
 		/**
 		 * Whether the item is displayed as disabled, see {@link #state()}.
@@ -188,39 +203,49 @@ public class ReactMenuControl extends ReactControl {
 		 * Creates a simple menu item.
 		 */
 		public static MenuEntry item(String id, String label) {
-			return new MenuEntry(EntryType.ITEM, id, label, null, ExecutableState.EXECUTABLE, null, false);
+			return item(id, label, null);
 		}
 
 		/**
 		 * Creates a menu item with an icon.
 		 */
 		public static MenuEntry item(String id, String label, String icon) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, ExecutableState.EXECUTABLE, null, false);
+			return item(id, label, icon, false);
 		}
 
 		/**
 		 * Creates a menu item with an icon and an explicit disabled state.
 		 */
 		public static MenuEntry item(String id, String label, String icon, boolean disabled) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon,
-				disabled ? ExecutableState.NOT_EXEC_DISABLED : ExecutableState.EXECUTABLE, null, false);
+			return item(id, label, icon, disabled ? ExecutableState.NOT_EXEC_DISABLED : ExecutableState.EXECUTABLE,
+				null, false);
 		}
 
 		/**
-		 * Creates a menu item for a command in the given {@link MenuEntry#state() state}, carrying
-		 * additional CSS classes, marked as {@link MenuEntry#active() active} when its command is
-		 * the one in force.
+		 * Creates a menu item for an ordinary command in the given {@link MenuEntry#state() state},
+		 * carrying additional CSS classes, marked as {@link MenuEntry#active() active} when its
+		 * command is the one in force.
 		 */
 		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
 				String cssClasses, boolean active) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active);
+			return item(id, label, icon, state, cssClasses, active, ButtonTone.DEFAULT);
+		}
+
+		/**
+		 * Creates a menu item for a command of the given {@link MenuEntry#tone() tone}, see
+		 * {@link #item(String, String, String, ExecutableState, String, boolean)}.
+		 */
+		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
+				String cssClasses, boolean active, ButtonTone tone) {
+			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active, tone);
 		}
 
 		/**
 		 * Creates a separator.
 		 */
 		public static MenuEntry separator() {
-			return new MenuEntry(EntryType.SEPARATOR, null, null, null, ExecutableState.EXECUTABLE, null, false);
+			return new MenuEntry(EntryType.SEPARATOR, null, null, null, ExecutableState.EXECUTABLE, null, false,
+				ButtonTone.DEFAULT);
 		}
 
 		/**
@@ -228,7 +253,8 @@ public class ReactMenuControl extends ReactControl {
 		 * or focused.
 		 */
 		public static MenuEntry header(String label) {
-			return new MenuEntry(EntryType.HEADER, null, label, null, ExecutableState.EXECUTABLE, null, false);
+			return new MenuEntry(EntryType.HEADER, null, label, null, ExecutableState.EXECUTABLE, null, false,
+				ButtonTone.DEFAULT);
 		}
 	}
 

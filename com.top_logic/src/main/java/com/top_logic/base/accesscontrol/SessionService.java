@@ -10,8 +10,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +27,7 @@ import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
@@ -37,20 +40,39 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.UpdateEvent;
+import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
  * Holds and manages the currently active user sessions.
+ * 
+ * <p>
+ * When an {@link Person account} is deleted, all its sessions are terminated. This happens
+ * independently of the way the account is deleted and also for deletions made on another cluster
+ * node.
+ * </p>
+ * 
+ * @implNote The service listens for commits of the {@link PersistencyLayer#getKnowledgeBase()
+ *           default knowledge base}. Sessions of deleted persons are terminated with
+ *           {@link #terminateSession(String)} in a background task of the {@link SchedulerService},
+ *           because ending a session announces the logout to the {@link UserEventListener}s, which
+ *           may commit changes themselves; committing is not allowed while a commit is announced
+ *           to {@link UpdateListener}s.
  */
 @ServiceDependencies({
 	ThreadContextManager.Module.class,
-	/* The SessionService itself does not use the PersistencyLayer, but it caches Persons which
-	 * depend on the KB. Therefore it must be restarted, when the KB is restarted. */
-	PersistencyLayer.Module.class
+	/* The SessionService caches Persons which depend on the KB and listens for deleted Persons.
+	 * Therefore it must be restarted, when the KB is restarted. */
+	PersistencyLayer.Module.class,
+	SchedulerService.Module.class
 })
 @Label("User sessions")
 public final class SessionService extends ConfiguredManagedClass<SessionService.Config>
@@ -120,10 +142,19 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	public static final String ERROR = "SessionValidationError";
 
 	/**
-	 * Hashtable containing session_ids and SessionInfo-objects as key/value pairs. The session info is
-	 * another Hastable. It's values can be retrieved by using the appropriate methods of SessionInfo.
+	 * The registered sessions indexed by their session IDs.
 	 */
-	private final Map<String, SessionInfo> _sessionMap = new ConcurrentHashMap<>(100);
+	private final Map<String, Registration> _sessionMap = new ConcurrentHashMap<>(100);
+
+	/**
+	 * {@link UpdateListener} terminating the sessions of deleted {@link Person}s.
+	 */
+	private final UpdateListener _personDeletionListener = this::handleUpdate;
+
+	/**
+	 * The {@link KnowledgeBase} {@link #_personDeletionListener} is registered at.
+	 */
+	private KnowledgeBase _kb;
 
 	/**
 	 * Consumers to consume {@link UserEvent}.
@@ -196,16 +227,122 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         }
     }
 
-    /**
-     * Removes the given session from the session map.
-     * Used to remove a previous invalidated (maybe timed out)
-     * Session.
-     *
-     * @param sessionid  The ID of the Session to be removed
-     */
+	/**
+	 * Removes the given session from the session map.
+	 * 
+	 * <p>
+	 * Used to remove a previously invalidated (maybe timed out) session. The {@link HttpSession}
+	 * itself is not touched. To end a session that is still active, use
+	 * {@link #terminateSession(String)}.
+	 * </p>
+	 *
+	 * @param sessionid
+	 *        The ID of the Session to be removed
+	 */
 	public void invalidateSession(String sessionid) {
         this.removeSession (sessionid);
     }
+
+	/**
+	 * Ends the session with the given ID.
+	 * 
+	 * <p>
+	 * The session is removed from the session map, its logout is announced to the
+	 * {@link UserEventListener}s, and the {@link HttpSession} is invalidated. The next request of
+	 * the client is therefore processed without a user.
+	 * </p>
+	 * 
+	 * @param sessionId
+	 *        The ID of the session to end. Nothing happens, if no such session is registered.
+	 */
+	public void terminateSession(String sessionId) {
+		Registration registration = _sessionMap.get(sessionId);
+		if (registration == null) {
+			return;
+		}
+
+		// Removing first ensures that the logout is announced exactly once, independent of whether
+		// the invalidation below reaches valueUnbound(), which removes the session again.
+		removeSession(sessionId);
+
+		try {
+			registration.session().invalidate();
+		} catch (IllegalStateException ex) {
+			// The session was already invalidated (e.g. timed out).
+			if (Logger.isDebugEnabled(SessionService.class)) {
+				Logger.debug("Session already was invalidated.", SessionService.class);
+			}
+		}
+	}
+
+	/**
+	 * Ends all sessions of the given user.
+	 * 
+	 * @param user
+	 *        The user whose sessions are ended. The user may already be deleted.
+	 * 
+	 * @see #terminateSession(String)
+	 */
+	public void terminateSessions(Person user) {
+		for (String sessionId : sessionIdsOf(Set.of(user.tId()))) {
+			terminateSession(sessionId);
+		}
+	}
+
+	/**
+	 * The IDs of all registered sessions whose user has one of the given identities.
+	 */
+	private List<String> sessionIdsOf(Set<ObjectKey> userIds) {
+		List<String> result = new ArrayList<>();
+		for (Registration registration : _sessionMap.values()) {
+			Person user = registration.info().getUser();
+			if (user != null && userIds.contains(user.tId())) {
+				result.add(registration.info().getSessionId());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Terminates the sessions of all {@link Person}s deleted in the given commit.
+	 */
+	private void handleUpdate(KnowledgeBase sender, UpdateEvent event) {
+		Set<ObjectKey> deletedKeys = event.getDeletedObjectKeys();
+		if (deletedKeys.isEmpty() || _sessionMap.isEmpty()) {
+			return;
+		}
+
+		Set<ObjectKey> deletedPersons = new HashSet<>();
+		for (ObjectKey key : deletedKeys) {
+			if (Person.OBJECT_NAME.equals(key.getObjectType().getName())) {
+				deletedPersons.add(key);
+			}
+		}
+		if (deletedPersons.isEmpty()) {
+			return;
+		}
+
+		List<String> sessionIds = sessionIdsOf(deletedPersons);
+		if (sessionIds.isEmpty()) {
+			return;
+		}
+
+		SchedulerService.getInstance().execute(
+			() -> ThreadContextManager.inSystemInteraction(SessionService.class, () -> {
+				for (String sessionId : sessionIds) {
+					try {
+						terminateSession(sessionId);
+					} catch (RuntimeException ex) {
+						Logger.error("Failed to terminate session of deleted user.", ex, SessionService.class);
+					}
+				}
+			}));
+	}
+
+	private SessionInfo info(String sessionId) {
+		Registration registration = _sessionMap.get(sessionId);
+		return registration == null ? null : registration.info();
+	}
 
     /**
      * Checks if we have an valid session for the given request
@@ -246,7 +383,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
             return (false);
         }
 
-		SessionInfo sessioninfo = _sessionMap.get(session.getId());
+		SessionInfo sessioninfo = info(session.getId());
 		if (sessioninfo == null) {
             if(debug) {
                Logger.debug("The session object is not valid because it's ID is not found "+
@@ -262,6 +399,27 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         return(true);
     }
 
+	/**
+	 * The ID of the registered session to which the given {@link SessionContext} belongs.
+	 * 
+	 * @param context
+	 *        The context to look up, e.g. {@link ThreadContextManager#getSession()} for the session
+	 *        of the current request. May be {@code null}.
+	 * @return The ID of the session, or {@code null} if the given context belongs to no registered
+	 *         session (e.g. the context of a system thread).
+	 */
+	public String getSessionId(SessionContext context) {
+		if (context == null) {
+			return null;
+		}
+		for (Map.Entry<String, Registration> entry : _sessionMap.entrySet()) {
+			if (entry.getValue().context() == context) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
     /**
      * Returns the User object associated to the given session
      *
@@ -271,7 +429,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
      * @return the user which is associated with the given session id
      */
 	public Person getUser(String sessionid) {
-		SessionInfo sessioninfo = _sessionMap.get(sessionid);
+		SessionInfo sessioninfo = info(sessionid);
 
         //if no session info found for the given session id
 
@@ -291,7 +449,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 *         deployment.
 	 */
     public String getClientIP (String sessionid) {
-		SessionInfo sessioninfo = _sessionMap.get(sessionid);
+		SessionInfo sessioninfo = info(sessionid);
 
         //if no session data found for the given session id
         if (sessioninfo == null) {
@@ -312,7 +470,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 *         given session id is unknown
 	 */
 	public Date getCreationTime(String sessionid) {
-		SessionInfo sessioninfo = _sessionMap.get(sessionid);
+		SessionInfo sessioninfo = info(sessionid);
 
         //if no session data found for the given session id
         if (sessioninfo == null) {
@@ -333,7 +491,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 *         the given session id is unknown
 	 */
 	public Date getLastAccessedTime(String sessionid) {
-		SessionInfo sessioninfo = _sessionMap.get(sessionid);
+		SessionInfo sessioninfo = info(sessionid);
 
 		// if no session data found for the given session id
 		if (sessioninfo == null) {
@@ -453,7 +611,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		sessionContext.addHttpSessionBindingListener(this);
 
         //storing session id and session info in session map
-		_sessionMap.put(session.getId(), sessioninfo);
+		_sessionMap.put(session.getId(), new Registration(sessioninfo, session, sessionContext));
     }
 
 	@Override
@@ -534,11 +692,12 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
      */
 	private void removeSession(String sessionid) {
         
-		SessionInfo sessioninfo = _sessionMap.remove(sessionid);
-		if (sessioninfo == null) {
+		Registration registration = _sessionMap.remove(sessionid);
+		if (registration == null) {
 			return;
 		}
-		
+		SessionInfo sessioninfo = registration.info();
+
 		Person theRemovedUser = sessioninfo.getUser();
 		{
 			Person theRemovingUser = null;
@@ -551,7 +710,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
                 theRemovingUser = theRemovedUser; 
             }
             else if (!theRemovingUser.equals(theRemovedUser)) {
-				Logger.warn(theRemovedUser.getName()
+				// The removed user may already be deleted, use the name stored in the session info.
+				Logger.warn(sessioninfo.getUserName()
                             + " was removed by "
 					+ theRemovingUser.getName(), this);
             }
@@ -600,9 +760,20 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
     }
     
 	@Override
+	protected void startUp() {
+		super.startUp();
+		_kb = PersistencyLayer.getKnowledgeBase();
+		_kb.addUpdateListener(_personDeletionListener);
+	}
+
+	@Override
 	protected void shutDown() {
-		for (SessionInfo info : new ArrayList<>(_sessionMap.values())) {
-			invalidateSession(info.getSessionId());
+		if (_kb != null) {
+			_kb.removeUpdateListener(_personDeletionListener);
+			_kb = null;
+		}
+		for (String sessionId : new ArrayList<>(_sessionMap.keySet())) {
+			invalidateSession(sessionId);
 		}
 		_sessionMap.clear();
 		super.shutDown();
@@ -623,6 +794,20 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 */
 	public boolean getSecureSessionCookie() {
 		return getConfig().getSecureSessionCookie();
+	}
+
+	/**
+	 * A session registered in the session map.
+	 * 
+	 * @param info
+	 *        Information about the session.
+	 * @param session
+	 *        The session itself.
+	 * @param context
+	 *        The {@link TLSessionContext} installed in the session.
+	 */
+	private record Registration(SessionInfo info, HttpSession session, TLSessionContext context) {
+		// Pure data.
 	}
 
 	/**

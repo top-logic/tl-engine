@@ -8,6 +8,7 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -56,21 +57,58 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		if (!(part instanceof TLReference reference)) {
 			throw new ConfigurationError(I18NConstants.NOT_A_REFERENCE__PART.fill(part));
 		}
-		if (reference.isDerived()) {
-			// Do not check definition, because this may be an abstract attribute. Abstract
-			// attributes are derived: See NoStorage#isReadOnly.
-			context.error("Path-navigation references derived (computed) attribute '"
+		List<TLStructuredTypePart> untrackable = untrackableParts(reference);
+		if (!untrackable.isEmpty()) {
+			context.error("Path-navigation references attribute '"
 					+ TLModelUtil.qualifiedName(part)
-					+ "'. Derived attributes do not fire change notifications and cannot be tracked"
+					+ "' that is derived (computed) in "
+					+ untrackable.stream().map(TLModelUtil::qualifiedName).collect(Collectors.joining(", "))
+					+ ". Derived attributes do not fire change notifications and cannot be tracked"
 					+ " for role-rule invalidation.");
 		}
 
-		TLModelOperations operations = TLModelCacheService.getOperations();
 		_relevantParts = Stream.concat(
-			operations.getOverrides(reference).stream().filter(Predicate.not(TLStructuredTypePart::isDerived)),
+			concreteParts(reference).filter(Predicate.not(TLStructuredTypePart::isDerived)),
 			Stream.of(reference))
 			.collect(Collectors.toSet());
 		_reference = reference;
+	}
+
+	/**
+	 * Whether a {@link PathNavigation} can navigate the given part.
+	 *
+	 * <p>
+	 * A role rule navigating a part must be invalidated when the value of the part changes. This is
+	 * not possible for a derived (computed) part, because it does not fire change notifications.
+	 * An abstract part is derived, too (see {@link TLStructuredTypePart#isDerived()}), but has no
+	 * values of its own: Its values are those of its concrete overrides. Therefore, the part is
+	 * navigable, if neither the part itself nor any of its overrides is a concrete derived part.
+	 * </p>
+	 *
+	 * @see #untrackableParts(TLStructuredTypePart)
+	 */
+	public static boolean isNavigable(TLStructuredTypePart part) {
+		return untrackableParts(part).isEmpty();
+	}
+
+	/**
+	 * The parts holding values of the given part that do not fire change notifications.
+	 *
+	 * @return The given part and its overrides that are derived (computed) but not abstract.
+	 */
+	public static List<TLStructuredTypePart> untrackableParts(TLStructuredTypePart part) {
+		return concreteParts(part)
+			.filter(TLStructuredTypePart::isDerived)
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * The given part and all its overrides that are not abstract, i.e. that hold values.
+	 */
+	private static Stream<TLStructuredTypePart> concreteParts(TLStructuredTypePart part) {
+		TLModelOperations operations = TLModelCacheService.getOperations();
+		return Stream.concat(Stream.of(part), operations.getOverrides(part).stream())
+			.filter(Predicate.not(TLStructuredTypePart::isAbstract));
 	}
 
 	@Override
@@ -78,7 +116,27 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		return _relevantParts;
 	}
     
-	private boolean isInverse() {
+	/**
+	 * The {@link TLReference} this step navigates.
+	 *
+	 * @see #isInverse()
+	 */
+	public TLReference getReference() {
+		return _reference;
+	}
+
+	/**
+	 * Whether {@link #getReference()} is navigated backwards.
+	 *
+	 * <p>
+	 * A forward step reaches the values of the reference, a backwards step the objects referring to
+	 * the base object through it. The type reached by a step is therefore the reference's target
+	 * type in forward direction and its owner type in backwards direction.
+	 * </p>
+	 *
+	 * @see PathElementConfig#isInverse()
+	 */
+	public boolean isInverse() {
 		return getConfig().isInverse();
     }
     

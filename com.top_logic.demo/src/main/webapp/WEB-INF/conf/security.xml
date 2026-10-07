@@ -437,6 +437,9 @@
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
+			<view name="com.top_logic.demo/technical/components/flowchart1/products/assemblies/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Read"/>
+			</view>
 			<view name="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/tileLayout.layout.xml#TileLayout">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>

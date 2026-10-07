@@ -36,6 +36,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.element.AppBarElement;
 
@@ -182,9 +183,11 @@ public class TestAppBarElement extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module, which resolves the element tags of a view.
+	 * Test suite requiring the {@link TypeIndex} module, which resolves the element tags of a view,
+	 * and the {@link CommandCliqueService}, which groups the commands of the bar.
 	 */
 	public static Test suite() throws ModuleException {
-		return ServiceTestSetup.createSetup(TestAppBarElement.class, TypeIndex.Module.INSTANCE);
+		return ServiceTestSetup.createSetup(TestAppBarElement.class, TypeIndex.Module.INSTANCE,
+			CommandCliqueService.Module.INSTANCE);
 	}
 }

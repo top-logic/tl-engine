@@ -34,6 +34,11 @@ export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
 export type { InsideRef } from './bridge/outside-press';
+export { usePopover } from './bridge/popover';
+export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+// A popover surface needs both its own ref and the hook's setFloating on one element; controls
+// must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
+export { useMergeRefs } from '@floating-ui/react';
 export { useListReorder } from './bridge/list-reorder';
 export type {
   ListReorder,
@@ -64,10 +69,12 @@ export type {
   SelectStateJson,
   DropdownSelectStateJson,
   TabBarStateJson,
+  AccordionStateJson,
   WindowStateJson,
   DialogStateJson,
   MenuStateJson,
   SnackbarStateJson,
+  AlertStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';

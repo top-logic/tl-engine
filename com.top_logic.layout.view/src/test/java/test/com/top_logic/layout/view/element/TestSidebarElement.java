@@ -35,6 +35,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.element.SidebarElement;
 import com.top_logic.layout.view.navigation.MountPath;
 import com.top_logic.layout.view.navigation.MountStep;
@@ -389,7 +390,8 @@ public class TestSidebarElement extends BasicTestCase {
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestSidebarElement.class,
 			ServiceTestSetup.createStarterFactoryForModules(
-				TypeIndex.Module.INSTANCE, SecurityScopeService.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, SecurityScopeService.Module.INSTANCE,
+				CommandCliqueService.Module.INSTANCE));
 	}
 
 }

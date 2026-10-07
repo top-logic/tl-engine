@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -119,17 +120,7 @@ public class FlowChartComponent extends BuilderComponent
 	private final SelectionListener<Object> _updateChannelSelection = new SelectionListener<>() {
 		@Override
 		public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
-			// Forward selection to component channel.
-			Set<?> selectedUserObjects = event.getNewSelection().stream()
-				.map(s -> s instanceof Widget w ? w.getUserObject() : null)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
-
-			if (_selectionModel.isMultiSelectionSupported()) {
-				setSelected(selectedUserObjects);
-			} else {
-				setSelected(CollectionUtil.getFirst(selectedUserObjects));
-			}
+			forwardToChannel(event.getNewSelection());
 		}
 	};
 
@@ -144,6 +135,11 @@ public class FlowChartComponent extends BuilderComponent
 		public void beforeSet(Observable obj, String property, Object value) {
 			if (Diagram.SELECTION__PROP.equals(property)) {
 				update(selectionModel -> selectionModel.setSelection(new HashSet<>((Collection<?>) value)));
+			} else if (Diagram.INCREMENTAL_SELECTION__PROP.equals(property) && !((Boolean) value)
+				&& !undisplayedSelection().isEmpty()) {
+				// A plain click in the diagram replaces the selection, also its part not displayed
+				// in the diagram. The displayed part is adjusted by the following selection changes.
+				update(selectionModel -> dropUndisplayedSelection());
 			}
 		}
 
@@ -372,15 +368,21 @@ public class FlowChartComponent extends BuilderComponent
 		}
 
 		if (diagram != null) {
+			Map<Object, List<SelectableBox>> indexBefore = _selectableIndex;
 			_selectableIndex = diagram.getRoot().visit(new SelectableIndexCreator(), null).getIndex();
 			_observedIndex = diagram.getRoot()
 				.visit(new ObservedIndexCreator(node -> builder().getObserved(node, this)), null).getIndex();
 
+			// Only the part of the selection displayed in the diagram before is adjusted to the new
+			// diagram. Objects never displayed in the diagram (e.g. selected by a selection partner)
+			// are left alone, unless deleted.
 			Collection<?> oldSelection = SearchExpression.asCollection(getSelected());
 			Collection<?> newSelection = oldSelection.stream()
-				.filter(x -> _selectableIndex.containsKey(x)).toList();
+				.filter(x -> !isDeleted(x))
+				.filter(x -> !indexBefore.containsKey(x) || _selectableIndex.containsKey(x))
+				.toList();
 			if (newSelection.size() != oldSelection.size()) {
-				setSelected(newSelection);
+				setChannelSelection(newSelection);
 			}
 
 			boolean removed = _selectionModel.removeSelectionListener(_updateChannelSelection);
@@ -511,11 +513,78 @@ public class FlowChartComponent extends BuilderComponent
 			invalidate();
 		}
 
+		// Deleted objects are removed from the selection, also if not displayed in the diagram.
+		Collection<?> selected = SearchExpression.asCollection(getSelected());
+		if (selected.stream().anyMatch(deletedObjects::contains)) {
+			setChannelSelection(selected.stream().filter(x -> !deletedObjects.contains(x)).toList());
+		}
+
 		return result;
 	}
 
 	private FlowChartBuilder builder() {
 		return (FlowChartBuilder) getBuilder();
+	}
+
+	/**
+	 * Forwards the selected boxes of the diagram to the selection channel.
+	 *
+	 * <p>
+	 * Objects in the channel selection that are not displayed in the diagram are kept.
+	 * </p>
+	 *
+	 * @param selectedBoxes
+	 *        The selected diagram elements.
+	 */
+	void forwardToChannel(Set<?> selectedBoxes) {
+		Set<Object> selectedUserObjects = selectedBoxes.stream()
+			.map(s -> s instanceof Widget w ? w.getUserObject() : null)
+			.filter(Objects::nonNull)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
+
+		Set<Object> newSelection = undisplayedSelection();
+		if (!_selectionModel.isMultiSelectionSupported() && !selectedUserObjects.isEmpty()) {
+			// A displayed object replaces an undisplayed one.
+			newSelection.clear();
+		}
+		newSelection.addAll(selectedUserObjects);
+		setChannelSelection(newSelection);
+	}
+
+	/**
+	 * Removes the objects from the channel selection that are not displayed in the diagram.
+	 */
+	void dropUndisplayedSelection() {
+		Collection<?> selected = SearchExpression.asCollection(getSelected());
+		Set<Object> undisplayed = undisplayedSelection();
+		if (!undisplayed.isEmpty()) {
+			setChannelSelection(selected.stream().filter(x -> !undisplayed.contains(x)).toList());
+		}
+	}
+
+	/**
+	 * The objects in the channel selection that are not displayed in the diagram.
+	 */
+	private Set<Object> undisplayedSelection() {
+		return SearchExpression.asCollection(getSelected()).stream()
+			.filter(x -> !_selectableIndex.containsKey(x))
+			.collect(Collectors.toCollection(LinkedHashSet::new));
+	}
+
+	/**
+	 * Sets the given objects as selection channel value, considering whether multiple selection is
+	 * supported.
+	 */
+	private void setChannelSelection(Collection<?> selection) {
+		if (_selectionModel.isMultiSelectionSupported()) {
+			setSelected(new LinkedHashSet<>(selection));
+		} else {
+			setSelected(CollectionUtil.getFirst(selection));
+		}
+	}
+
+	private static boolean isDeleted(Object obj) {
+		return obj instanceof TLObject tlObj && !tlObj.tValid();
 	}
 
 	void updateUISelection(Set<?> newSelection) {

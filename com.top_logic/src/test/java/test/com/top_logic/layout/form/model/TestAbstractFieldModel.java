@@ -10,6 +10,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -27,6 +28,7 @@ public class TestAbstractFieldModel extends TestCase {
 		assertEquals("hello", model.getValue());
 		assertFalse(model.isDirty());
 		assertTrue(model.isEditable());
+		assertFalse(model.isDisabled());
 		assertFalse(model.isMandatory());
 		assertFalse(model.hasError());
 		assertNull(model.getError());
@@ -79,6 +81,113 @@ public class TestAbstractFieldModel extends TestCase {
 	}
 
 	/**
+	 * Test setDisabled makes the field non-editable and fires both the disabled and the
+	 * editability change.
+	 */
+	public void testSetDisabled() {
+		AbstractFieldModel model = createModel(null);
+		RecordingListener listener = new RecordingListener();
+		model.addListener(listener);
+
+		model.setDisabled(true);
+
+		assertTrue(model.isDisabled());
+		assertFalse(model.isEditable());
+		assertEquals(List.of(Boolean.TRUE), listener._disabledChanges);
+		assertEquals(List.of(Boolean.FALSE), listener._editabilityChanges);
+		assertEquals(1, listener._validationChanges);
+
+		model.setDisabled(false);
+
+		assertFalse(model.isDisabled());
+		assertTrue(model.isEditable());
+		assertEquals(List.of(Boolean.TRUE, Boolean.FALSE), listener._disabledChanges);
+		assertEquals(List.of(Boolean.FALSE, Boolean.TRUE), listener._editabilityChanges);
+		assertEquals(2, listener._validationChanges);
+	}
+
+	/**
+	 * Test setDisabled with the current state does not fire.
+	 */
+	public void testSetSameDisabled() {
+		AbstractFieldModel model = createModel(null);
+		RecordingListener listener = new RecordingListener();
+		model.addListener(listener);
+
+		model.setDisabled(false);
+
+		assertFalse(model.isDisabled());
+		assertTrue(model.isEditable());
+		assertEquals(0, listener._disabledChanges.size());
+		assertEquals(0, listener._editabilityChanges.size());
+		assertEquals(0, listener._validationChanges);
+	}
+
+	/**
+	 * Test disabling a non-editable field fires no editability change, since the effective
+	 * editability stays the same.
+	 */
+	public void testDisableNonEditable() {
+		AbstractFieldModel model = createModel(null);
+		model.setEditable(false);
+		RecordingListener listener = new RecordingListener();
+		model.addListener(listener);
+
+		model.setDisabled(true);
+
+		assertTrue(model.isDisabled());
+		assertFalse(model.isEditable());
+		assertEquals(List.of(Boolean.TRUE), listener._disabledChanges);
+		assertEquals(0, listener._editabilityChanges.size());
+		assertEquals(0, listener._validationChanges);
+	}
+
+	/**
+	 * Test setEditable on a disabled field keeps the field non-editable and fires no editability
+	 * change; the editable state applies once the field is no longer disabled.
+	 */
+	public void testSetEditableWhileDisabled() {
+		AbstractFieldModel model = createModel(null);
+		model.setEditable(false);
+		model.setDisabled(true);
+		RecordingListener listener = new RecordingListener();
+		model.addListener(listener);
+
+		model.setEditable(true);
+
+		assertFalse(model.isEditable());
+		assertTrue(model.isDisabled());
+		assertEquals(0, listener._editabilityChanges.size());
+		assertEquals(0, listener._disabledChanges.size());
+
+		model.setDisabled(false);
+
+		assertTrue(model.isEditable());
+		assertEquals(List.of(Boolean.FALSE), listener._disabledChanges);
+		assertEquals(List.of(Boolean.TRUE), listener._editabilityChanges);
+	}
+
+	/**
+	 * Test model validation errors and warnings are hidden while the field is disabled, like for
+	 * any non-editable field.
+	 */
+	public void testValidationHiddenWhileDisabled() {
+		AbstractFieldModel model = createModel(null);
+		model.setRevealed(true);
+		model.setModelValidationError(ResKey.text("error"));
+		model.setModelValidationWarnings(List.of(ResKey.text("warning")));
+		assertTrue(model.hasError());
+		assertTrue(model.hasWarnings());
+
+		model.setDisabled(true);
+
+		assertFalse(model.hasError());
+		assertNull(model.getError());
+		assertFalse(model.hasWarnings());
+		assertTrue(model.getWarnings().isEmpty());
+	}
+
+	/**
 	 * Test removeListener stops notifications.
 	 */
 	public void testRemoveListener() {
@@ -120,6 +229,9 @@ public class TestAbstractFieldModel extends TestCase {
 		/** Recorded editability changes. */
 		public final List<Boolean> _editabilityChanges = new ArrayList<>();
 
+		/** Recorded disabled state changes. */
+		public final List<Boolean> _disabledChanges = new ArrayList<>();
+
 		/** Count of validation change notifications. */
 		public int _validationChanges = 0;
 
@@ -131,6 +243,11 @@ public class TestAbstractFieldModel extends TestCase {
 		@Override
 		public void onEditabilityChanged(FieldModel source, boolean editable) {
 			_editabilityChanges.add(editable);
+		}
+
+		@Override
+		public void onDisabledChanged(FieldModel source, boolean disabled) {
+			_disabledChanges.add(disabled);
 		}
 
 		@Override

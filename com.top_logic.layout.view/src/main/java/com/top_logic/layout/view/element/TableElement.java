@@ -17,14 +17,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -36,7 +37,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
-import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -84,9 +84,9 @@ import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SecurityFilterReport;
@@ -94,16 +94,16 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
-import com.top_logic.table.NamedFilter;
-import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -112,30 +112,32 @@ import com.top_logic.table.impl.PersonalConfigViewStateStore;
 import com.top_logic.util.TLContext;
 
 /**
- * Declarative {@link UIElement} that renders a model-defined table (the {@code <table>} tag) through
- * the green-field table model ({@link com.top_logic.table.TableView}) via a {@link TableViewControl}.
+ * Declarative {@link UIElement} that renders a model-defined table (the {@code 
+ * <table>
+ * } tag) through the green-field table model ({@link com.top_logic.table.TableView}) via a
+ * {@link TableViewControl}.
  *
  * <p>
  * Input data comes from {@link ViewChannel}s, rows are computed by a TL-Script expression, and each
- * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows, over
- * a value computed from them, or over an object they point to. Columns are sortable and (per-column)
- * filterable.
+ * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows,
+ * over a value computed from them, or over an object they point to. Columns are sortable and
+ * (per-column) filterable.
  * </p>
  *
  * <p>
  * What the user personalizes about a table - the column order, the column widths, which columns are
  * displayed, the sort order - and the filters the user saves under a name are stored under the
  * element's personalization key. Without a configured one, that key is the table's structural
- * signature: its row types plus the names of its declared columns. That signature changes whenever a
- * column is added or removed, and everything the users of the table personalized - their saved
+ * signature: its row types plus the names of its declared columns. That signature changes whenever
+ * a column is added or removed, and everything the users of the table personalized - their saved
  * filters included - is then left behind. Setting {@code personalization-key} gives the table an
  * identity of its own that survives such an edit of the view, so set it on every table whose
  * personalization is meant to last.
  * </p>
  *
  * @implNote {@link #tableId()} derives the {@link TableId} from
- *           {@link UIElement.Config#getPersonalizationKey()} when one is configured, and from the
- *           structural signature otherwise.
+ *           {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()} when one is
+ *           configured, and from the structural signature otherwise.
  */
 @InApp
 public class TableElement implements UIElement {
@@ -867,12 +869,17 @@ public class TableElement implements UIElement {
 	 *
 	 * @param columns
 	 *        All columns of the table, whose filters translate the criteria.
+	 * @param declaredNames
+	 *        The names of the columns the table declares; one of them missing from the given
+	 *        columns is withheld from the current user, see
+	 *        {@link ColumnDeclarations#withheld(Collection, List)}.
 	 * @param arguments
 	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
 	 *        the arguments of every criterion expression, as they are the arguments of
 	 *        {@link Config#getRows()}.
 	 */
-	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Object[] arguments) {
+	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Collection<String> declaredNames,
+			Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -884,7 +891,8 @@ public class TableElement implements UIElement {
 			}
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
 		}
-		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns);
+		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
+			ColumnDeclarations.withheld(declaredNames, columns));
 	}
 
 	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
@@ -892,7 +900,8 @@ public class TableElement implements UIElement {
 
 	/**
 	 * Prefix distinguishing a {@link TableId} built from a configured
-	 * {@link UIElement.Config#getPersonalizationKey() personalization key}.
+	 * {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey() personalization
+	 * key}.
 	 */
 	private static final String KEY_PREFIX = "key:";
 
@@ -1324,8 +1333,10 @@ public class TableElement implements UIElement {
 		ViewCommandModel activation = activationModel(context);
 
 		TLStructuredType rowType = resolveRowType(rows);
+		List<ColumnDeclaration> declarations = columns(rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		List<ColumnSetup> setups =
-			ColumnDeclarations.resolve(columns(rowType), new ColumnResolution(rowType, context));
+			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.buildColumn());
@@ -1339,7 +1350,7 @@ public class TableElement implements UIElement {
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
-			declaredFilters(columns, inputValues), filterStore(), _initialFilter);
+			declaredFilters(columns, declaredNames, inputValues), filterStore(), _initialFilter);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 		control.setCssClass(_config.getCssClass());
@@ -1378,7 +1389,8 @@ public class TableElement implements UIElement {
 				// The criteria of the presets are computed from the inputs, so a changed input means
 				// other criteria: they are resolved again, and a chip the user has applied goes on
 				// filtering by what it now means.
-				view.setDeclaredFilters(declaredFilters(columns, ChannelInputs.arguments(inputChannels)));
+				view.setDeclaredFilters(
+					declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)));
 			}
 			control.refreshData();
 			if (selectionBinding != null) {
@@ -1496,14 +1508,17 @@ public class TableElement implements UIElement {
 
 		ViewCommandModel activation = activationModel(context);
 
+		List<ColumnDeclaration> declarations = columns(rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, columns(rowType), _config.getRowEdit());
+			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
 		diagnosticsTarget[0] = control;
 		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
-		control.setNamedFilters(columns -> declaredFilters(columns, ChannelInputs.arguments(inputChannels)),
+		control.setNamedFilters(
+			columns -> declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)),
 			filterStore(), _initialFilter);
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
@@ -1583,10 +1598,11 @@ public class TableElement implements UIElement {
 	 * filters are stored.
 	 *
 	 * <p>
-	 * The configured {@link UIElement.Config#getPersonalizationKey() personalization key} when
-	 * there is one. Without it, the identity is the table's structural signature - its row types
-	 * plus the names of its declared columns - which changes whenever a column is added or removed,
-	 * so that a configured key is what keeps a personalization across an edit of the view.
+	 * The configured {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()
+	 * personalization key} when there is one. Without it, the identity is the table's structural
+	 * signature - its row types plus the names of its declared columns - which changes whenever a
+	 * column is added or removed, so that a configured key is what keeps a personalization across
+	 * an edit of the view.
 	 * </p>
 	 */
 	public TableId tableId() {

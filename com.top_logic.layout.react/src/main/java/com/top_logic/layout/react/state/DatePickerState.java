@@ -112,6 +112,9 @@ public interface DatePickerState extends com.top_logic.layout.react.state.FieldS
 	com.top_logic.layout.react.state.DatePickerState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.DatePickerState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.DatePickerState setMandatory(boolean value);
 
 	@Override

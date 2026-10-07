@@ -34,7 +34,7 @@ import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -252,8 +252,8 @@ public class AppBarElement implements UIElement {
 		// Build the bar's actions as one toolbar, so that the commands that do not fit fold into
 		// its overflow menu. The control is created even while there is no command, so that a
 		// command contributed later has a target for the reactive rebuild.
-		CliqueRegistry registry = new CliqueRegistry();
-		ReactToolbarControl actions = buildActions(derivedContext, scope, registry);
+		CommandCliqueService cliques = CommandCliqueService.getInstance();
+		ReactToolbarControl actions = buildActions(derivedContext, scope, cliques);
 
 		// Create the app bar control.
 		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, leadingControl,
@@ -263,7 +263,7 @@ public class AppBarElement implements UIElement {
 		// Rebuild the actions when the commands of the scope change (commands contributed by
 		// descendants come and go). Groups are replaced in place, so the toolbar on display keeps
 		// its SSE registration.
-		scope.addListener(() -> actions.replaceGroups(buildActions(derivedContext, scope, registry)));
+		scope.addListener(() -> actions.replaceGroups(buildActions(derivedContext, scope, cliques)));
 
 		// Register cleanup for command model lifecycle. When using a shared scope,
 		// also remove our contributed commands.
@@ -334,7 +334,7 @@ public class AppBarElement implements UIElement {
 	 * </p>
 	 */
 	private static ReactToolbarControl buildActions(ViewContext context, CommandScope scope,
-			CliqueRegistry registry) {
-		return ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, null);
+			CommandCliqueService cliques) {
+		return ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, cliques, null);
 	}
 }

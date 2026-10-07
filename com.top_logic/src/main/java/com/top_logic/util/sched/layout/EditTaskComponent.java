@@ -122,7 +122,6 @@ public class EditTaskComponent extends EditComponent {
 			theGroup.addMember(createBooleanField(TaskAccessor.IS_ENABLED, theModel));
 			theGroup.addMember(createBooleanField(TaskAccessor.PERSISTENT, theModel));
 			theGroup.addMember(createBooleanField(TaskAccessor.PER_NODE, theModel));
-			theGroup.addMember(createBooleanField(TaskAccessor.RUN_ON_STARTUP, theModel));
 			theGroup.addMember(createBooleanField(TaskAccessor.NEEDS_MAINTENANCE_MODE, theModel));
         	
         	theContext.addMember(theGroup);

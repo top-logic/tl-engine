@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabledManagers": [
+    "maven",
+    "npm",
+    "custom.regex"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  }
+}

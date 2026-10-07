@@ -21,7 +21,7 @@ import com.top_logic.tools.resources.ResourceFile;
 /**
  * Maven goal to normalize project resources.
  */
-@Mojo(name = "normalize")
+@Mojo(name = "normalize", threadSafe = true)
 public class NormalizeResources extends AbstractResourcesMojo {
 
 	@Override

@@ -7,7 +7,6 @@ package com.top_logic.knowledge.service.db2;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 import static com.top_logic.basic.db.sql.SQLFactory.column;
-import static com.top_logic.basic.db.sql.SQLFactory.table;
 import static com.top_logic.dob.sql.SQLFactory.column;
 import static com.top_logic.dob.sql.SQLFactory.parameter;
 import static com.top_logic.dob.sql.SQLFactory.parameterDef;

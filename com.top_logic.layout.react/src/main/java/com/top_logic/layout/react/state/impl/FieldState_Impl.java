@@ -9,6 +9,8 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 
 	private boolean _editable = false;
 
+	private boolean _disabled = false;
+
 	private boolean _mandatory = false;
 
 	private boolean _nullable = false;
@@ -71,6 +73,22 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 	/** Internal setter for {@link #isEditable()} without chain call utility. */
 	protected final void internalSetEditable(boolean value) {
 		_editable = value;
+	}
+
+	@Override
+	public final boolean isDisabled() {
+		return _disabled;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.FieldState setDisabled(boolean value) {
+		internalSetDisabled(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isDisabled()} without chain call utility. */
+	protected final void internalSetDisabled(boolean value) {
+		_disabled = value;
 	}
 
 	@Override
@@ -243,6 +261,8 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 		}
 		out.name(EDITABLE__PROP);
 		out.value(isEditable());
+		out.name(DISABLED__PROP);
+		out.value(isDisabled());
 		out.name(MANDATORY__PROP);
 		out.value(isMandatory());
 		out.name(NULLABLE__PROP);
@@ -268,6 +288,7 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 		switch (field) {
 			case VALUE__PROP: setValue(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case EDITABLE__PROP: setEditable(in.nextBoolean()); break;
+			case DISABLED__PROP: setDisabled(in.nextBoolean()); break;
 			case MANDATORY__PROP: setMandatory(in.nextBoolean()); break;
 			case NULLABLE__PROP: setNullable(in.nextBoolean()); break;
 			case HAS_ERROR__PROP: setHasError(in.nextBoolean()); break;

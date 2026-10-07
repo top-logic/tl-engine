@@ -16,7 +16,8 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 	 * The component draws {@link #CHECKBOX} and {@link #SWITCH}; the control does not send
 	 * {@link #CHECKBOX}, an absent display means a box that is ticked. {@link #SELECT} and
 	 * {@link #RADIO} are presentations of a boolean offered as a choice between labelled values,
-	 * which is a component of its own; they are never sent to this component.
+	 * which is a field choosing one object ({@link DropdownSelectState}); they are never sent to
+	 * this component.
 	 */
 	public enum Display implements de.haumacher.msgbuf.data.ProtocolEnum {
 
@@ -123,6 +124,9 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 
 	@Override
 	com.top_logic.layout.react.state.CheckboxState setEditable(boolean value);
+
+	@Override
+	com.top_logic.layout.react.state.CheckboxState setDisabled(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.CheckboxState setMandatory(boolean value);

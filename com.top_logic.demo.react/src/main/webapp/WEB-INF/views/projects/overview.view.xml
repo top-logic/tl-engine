@@ -6,7 +6,8 @@
 	announced with the project's name.
 	
 	The toolbar creates a project and deletes the selected one; the table observes projects, so
-	both are reflected in the rows without a reload.
+	both are reflected in the rows without a reload. A project being created has its creator as
+	administrator, so the creator sees and administers it once it is created.
 -->
 <view>
 	<channels>
@@ -28,6 +29,7 @@
 					<de>Neues Projekt</de>
 				</label>
 				<create-transient type="tl.demo.projectManagement:ProjectScope"/>
+				<execute-script function="p -> { $p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()]); $p; }"/>
 				<open-dialog
 					bind-input-to="model"
 					dialog-view="demo/create-project-scope.view.xml"
@@ -63,6 +65,7 @@
 			<columns>
 				<column attribute="name"/>
 				<column attribute="description"/>
+				<column attribute="budget"/>
 			</columns>
 			<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"

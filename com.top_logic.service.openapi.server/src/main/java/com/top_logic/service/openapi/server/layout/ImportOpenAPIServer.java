@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationErrorProtocol;
 import com.top_logic.basic.config.ConfigurationException;
@@ -55,6 +56,7 @@ import com.top_logic.service.openapi.common.layout.MultiPartBodyTransferType;
 import com.top_logic.service.openapi.common.schema.ArraySchema;
 import com.top_logic.service.openapi.common.schema.ObjectSchema;
 import com.top_logic.service.openapi.common.schema.ObjectSchemaProperty;
+import com.top_logic.service.openapi.common.schema.OpenAPISchemaUtils;
 import com.top_logic.service.openapi.common.schema.PrimitiveSchema;
 import com.top_logic.service.openapi.common.schema.Schema;
 import com.top_logic.service.openapi.common.schema.SchemaVisitor;
@@ -73,6 +75,7 @@ import com.top_logic.service.openapi.server.impl.ServiceMethodBuilder;
 import com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter.ParameterConfiguration;
+import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter.ParameterConfiguration.ValidVariableName;
 import com.top_logic.service.openapi.server.parameter.CookieParameter;
 import com.top_logic.service.openapi.server.parameter.HeaderParameter;
 import com.top_logic.service.openapi.server.parameter.MultiPartBodyParameter;
@@ -108,6 +111,21 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		OpenApiServer.Config<?> serviceConfiguration =
 			(OpenApiServer.Config<?>) m.getServiceConfiguration();
 
+		importDocument(config, serviceConfiguration, warnings);
+	}
+
+	/**
+	 * Transfers the given <i>OpenAPI</i> document into the given server configuration.
+	 * 
+	 * @param config
+	 *        The imported <i>OpenAPI</i> document.
+	 * @param serviceConfiguration
+	 *        The server configuration to enhance.
+	 * @param warnings
+	 *        Log to add potential warnings to.
+	 */
+	public void importDocument(OpenapiDocument config, OpenApiServer.Config<?> serviceConfiguration,
+			List<ResKey> warnings) {
 		Information information = serviceConfiguration.getInformation();
 		if (information != null) {
 			copyInfoObject(config, information);
@@ -413,6 +431,8 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				MultiPartBodyParameter.BodyPart newPart =
 					TypedConfiguration.newConfigItem(MultiPartBodyParameter.BodyPart.class);
 				newPart.setName(property.getName());
+				setVariableName(newPart,
+					OpenAPISchemaUtils.stringExtension(propertySchema, ParameterObject.X_TL_VARIABLE_NAME));
 				newPart.setRequired(property.isRequired());
 				OpenAPIConfigs.transferIfNotEmpty(propertySchema::getDescription, newPart::setDescription);
 				ResKey problem = propertySchema.visit(applySchema(), newPart);
@@ -503,6 +523,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				throw new UnreachableAssertion("No such parameter location: " + paramObject.getIn());
 		}
 		requestParam.setName(paramObject.getName());
+		setVariableName(requestParam, paramObject.getVariableName());
 		OpenAPIConfigs.transferIfNotEmpty(paramObject::getDescription, requestParam::setDescription);
 		if (paramObject.getIn() != ParameterLocation.PATH) {
 			// Path is always required and can not be set.
@@ -510,6 +531,31 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		}
 		addSchema(paramObject.getSchema(), requestParam, warnings, completeAPI);
 		return requestParam;
+	}
+
+	/**
+	 * Sets the variable name of an imported parameter.
+	 * 
+	 * <p>
+	 * Without an explicit variable name, a parameter whose name is not a valid TL-Script variable
+	 * name gets a variable name derived from its name.
+	 * </p>
+	 *
+	 * @param parameter
+	 *        The imported parameter with its name already set.
+	 * @param variableName
+	 *        The variable name given in the imported document, <code>null</code> if none is
+	 *        given.
+	 */
+	private static void setVariableName(ParameterConfiguration parameter, String variableName) {
+		if (!StringServices.isEmpty(variableName)) {
+			parameter.setVariableName(variableName);
+			return;
+		}
+		String name = parameter.getName();
+		if (!ValidVariableName.isScriptIdentifier(name)) {
+			parameter.setVariableName(ValidVariableName.toScriptIdentifier(name));
+		}
 	}
 
 	private Schema addSchema(String schema, ConcreteRequestParameter.Config<?> paramConf, List<ResKey> warnings,

@@ -135,6 +135,12 @@ public class WindowElement extends CommandScopeElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getActions();
 	}
 
+	/**
+	 * Segment appended to the {@link ViewContext#getPersonalizationKey() personalization key} of
+	 * the context to form the key the window size is stored under.
+	 */
+	private static final String PERSONALIZATION_SEGMENT = "window";
+
 	private final ResKey _title;
 
 	private final String _width;
@@ -177,7 +183,9 @@ public class WindowElement extends CommandScopeElement {
 		DisplayDimension width = parseWidth(_width);
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 
-		ConfigKey configKey = ConfigKey.named(context.getPersonalizationKey());
+		// Qualified like the keys of the other stateful elements: a dialog's view context is rooted
+		// in a path of its own, so each dialog remembers its own size.
+		ConfigKey configKey = ConfigKey.named(context.getPersonalizationKey() + "." + PERSONALIZATION_SEGMENT);
 		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler, configKey);
 		window.setResizable(_resizable);
 		window.setChild(content);

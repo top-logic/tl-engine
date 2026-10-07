@@ -5,7 +5,29 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<module name="tl.accounts">
+		<interface name="GroupMember">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[obj -> all(`tl.accounts:Group`)
+    // No representative groups
+    .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
+    // Combined with all accounts except the anonymous one
+    .union(all(`tl.accounts:Person`).filter(p -> !$p.accountIsAnonymous()))]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</interface>
 		<class name="Person">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[// All accounts except the anonymous one
+obj -> all(`tl.accounts:Person`)
+    .filter(p -> !$p.accountIsAnonymous())]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
 			<attributes>
 				<property name="firstName">
 					<annotations>
@@ -85,8 +107,8 @@
     .filter(x -> $x != $g)
     // No representative groups
     .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
-    // Combined with all accounts
-    .union(all(`tl.accounts:Person`))]]></function>
+    // Combined with all accounts except the anonymous one
+    .union(all(`tl.accounts:Person`).filter(p -> !$p.accountIsAnonymous()))]]></function>
 							</options-by-expression>
 						</options>
 						<constraints>
@@ -104,6 +126,8 @@
 							<options-by-expression>
 								<function><![CDATA[// All accounts
 g -> all(`tl.accounts:Person`)
+    // Excluding the anonymous one
+    .filter(p -> !$p.accountIsAnonymous())
     // Excluding the one that is the owner of this representative group.
     .filter(p -> !$g
         .referers(`tl.accounts:Person#representativeGroup`)

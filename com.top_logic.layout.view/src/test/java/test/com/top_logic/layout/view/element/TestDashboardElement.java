@@ -49,7 +49,6 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.DashboardCommandModel;
 import com.top_logic.layout.view.element.DashboardElement;
 import com.top_logic.layout.view.element.I18NConstants;
-import com.top_logic.layout.view.element.TileElement;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -352,7 +351,7 @@ public class TestDashboardElement extends BasicTestCase {
 	 *           {@link ThemeFactory}; whether the layout may be edited depends on the account
 	 *           logged in, which the {@link PersonManager} provides.
 	 *
-	 * @see TileElement.Config#getAction()
+	 * @see com.top_logic.layout.view.element.TileElement.Config#getAction()
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestDashboardElement.class,

@@ -3,7 +3,8 @@
   "version": "7.11.0",
   "private": true,
   "scripts": {
-    "build": "vite build --config vite.config.bridge.ts && vite build --config vite.config.controls.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "npm run typecheck && vite build --config vite.config.bridge.ts && vite build --config vite.config.controls.ts",
     "dev": "vite build --config vite.config.bridge.ts --watch"
   },
   "dependencies": {

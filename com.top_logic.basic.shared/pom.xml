@@ -22,7 +22,7 @@
 
 		<!-- Note: This module must not have the "internal" parent, because dependencies of GWT modules require full source. -->
 		<!-- For framework modules, combine all JavaDoc to its deploy location. -->
-		<javadocOutput>${basedir}/../tl-doc/javadoc</javadocOutput>
+		<javadocOutput>${tl.javadoc.aggregateDir}</javadocOutput>
 	</properties>
 
   <dependencies />

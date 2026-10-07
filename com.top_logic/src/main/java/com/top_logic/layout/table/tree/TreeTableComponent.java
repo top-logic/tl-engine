@@ -726,6 +726,13 @@ public class TreeTableComponent extends BoundComponent
 				setSelection(newSelectedNodes);
 			}
 		}
+
+		/* Publish the selection that is actually established. The selection listener does this only
+		 * when the selection model changes. If it does not change, e.g. because the tree is rebuilt
+		 * for another model and neither the retained selection path nor a default selection
+		 * resolves in it, the channel would otherwise keep pointing to an object that is no longer
+		 * displayed. */
+		setSelectionPathToChannel(getSelectedNodes());
 	}
 
 	private void setDefaultTreeSelection() {
@@ -1048,8 +1055,9 @@ public class TreeTableComponent extends BoundComponent
 			 * the selection channel so that the selection can be restored when the tree is rebuilt
 			 * for the same model (invalidate). Removing the listener during the clear prevents the
 			 * (temporary) empty selection from being propagated to the selection channel. When the
-			 * displayed model actually changes, the retained selection paths do not resolve in the
-			 * new tree and the default selection is installed as before. */
+			 * tree is rebuilt, validateSelection() resolves the retained selection paths in the
+			 * new tree, falls back to the default selection if they do not resolve, and writes the
+			 * resulting selection (possibly empty) back to the selection channel. */
 			unregisterSelectionListener();
 			_selectionModel.clear();
 			registerSelectionListener();

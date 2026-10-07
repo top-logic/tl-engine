@@ -79,6 +79,7 @@
 			<columns>
 				<column attribute="name"/>
 				<column attribute="dueDate"/>
+				<column attribute="approved"/>
 			</columns>
 			<inputs>
 				<input channel="project"/>

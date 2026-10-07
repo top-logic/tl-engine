@@ -47,7 +47,7 @@ public class DefaultCountryDefault extends DefaultValueProvider implements Defau
 	}
 
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		return defaultCountry();
 	}
 

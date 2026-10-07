@@ -30,6 +30,7 @@ import com.top_logic.knowledge.search.BranchParam;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.knowledge.search.HistoryQuery;
+import com.top_logic.knowledge.search.HistoryQueryArguments;
 import com.top_logic.knowledge.search.InSet;
 import com.top_logic.knowledge.search.RangeParam;
 import com.top_logic.knowledge.search.RevisionParam;
@@ -766,6 +767,57 @@ public class TestHistoryQuery extends AbstractHistoryQueryTest {
 
 		List<LongRange> b2Range2 = result.get(getObjectID(b2));
 		assertEquals(range(tx2, tx2), b2Range2);
+	}
+
+	/**
+	 * Test that a {@link RevisionParam#range} search is restricted to the revisions given in the
+	 * {@link HistoryQueryArguments}.
+	 */
+	public void testRevisionRange() throws DataObjectException {
+		Transaction tx1 = begin();
+		KnowledgeItem b1 = newB("b1");
+		tx1.commit();
+
+		Transaction tx2 = begin();
+		KnowledgeObject b2 = newB("b2");
+		b1.delete();
+		tx2.commit();
+
+		Transaction tx3 = begin();
+		b1 = revive(kb(), b1.tId());
+		b1.setAttributeValue(A1_NAME, "b1");
+		b2.delete();
+		tx3.commit();
+
+		HistoryQuery query = ExpressionFactory.historyQuery(BranchParam.single, RevisionParam.range,
+			RangeParam.complete, NO_QUERY_PARAMETERS, allOf(B_NAME));
+
+		HistoryQueryArguments untilTx3 = historyArgs()
+			.setStartRevision(tx2.getCommitRevision().getCommitNumber())
+			.setStopRevision(tx3.getCommitRevision().getCommitNumber());
+		Map<?, List<LongRange>> resultUntilTx3 = kb().search(query, untilTx3);
+		assertNull("b1 does not exist in the requested range.", resultUntilTx3.get(getObjectID(b1)));
+		assertEquals(range(tx2, tx2), resultUntilTx3.get(getObjectID(b2)));
+		assertHistorySearch(kb(), query, untilTx3);
+
+		HistoryQueryArguments fromTx2 = historyArgs().setStartRevision(tx2.getCommitRevision().getCommitNumber());
+		Map<?, List<LongRange>> resultFromTx2 = kb().search(query, fromTx2);
+		assertEquals(endSection(tx3), resultFromTx2.get(getObjectID(b1)));
+		assertEquals(range(tx2, tx2), resultFromTx2.get(getObjectID(b2)));
+		assertHistorySearch(kb(), query, fromTx2);
+
+		// Only rows within the revision range count for the stop row.
+		HistoryQueryArguments fromTx3Limited = historyArgs()
+			.setStartRevision(tx3.getCommitRevision().getCommitNumber())
+			.setStopRow(1);
+		Map<?, List<LongRange>> resultFromTx3Limited = kb().search(query, fromTx3Limited);
+		assertEquals(1, resultFromTx3Limited.size());
+		assertEquals(endSection(tx3), resultFromTx3Limited.get(getObjectID(b1)));
+
+		// The complete history is searched regardless of the revision arguments.
+		HistoryQuery allQuery = newHistoryQuery(BranchParam.single, allOf(B_NAME));
+		Map<?, List<LongRange>> resultAll = kb().search(allQuery, untilTx3);
+		assertEquals(union(range(tx1, tx1), endSection(tx3)), resultAll.get(getObjectID(b1)));
 	}
 
 	private HistoryQuery newHistoryQuery(BranchParam branchParam, SetExpression search) {

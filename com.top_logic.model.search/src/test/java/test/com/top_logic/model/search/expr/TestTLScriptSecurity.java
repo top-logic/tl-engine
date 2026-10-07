@@ -21,7 +21,6 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
-import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -827,6 +826,43 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 		becomeUser(_reader);
 		assertFalse((Boolean) execute(search(script), _p1));
+	}
+
+	/**
+	 * {@code canCreate(...)} with an explicit type checks the create right on that specialization of
+	 * the reference's target type: the responsible may create an {@code Employee} in {@code members},
+	 * but not an {@code ExternalEmployee}, whose create right is revoked.
+	 */
+	public void testCanCreateSpecialization() throws Exception {
+		String employee = "p -> canCreate($p, `TestTLScriptSecurity:Project#members`, `TestTLScriptSecurity:Employee`)";
+		String external =
+			"p -> canCreate($p, `TestTLScriptSecurity:Project#members`, `TestTLScriptSecurity:ExternalEmployee`)";
+
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search(employee), _p1));
+		assertFalse((Boolean) execute(search(external), _p1));
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLStructuredTypePart members = part(PROJECT, "members");
+		TLClass externalType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:ExternalEmployee");
+		assertTrue(accessRights.isAllowedCreate(_user, _p1, members));
+		assertFalse(accessRights.isAllowedCreate(_user, _p1, members, externalType));
+	}
+
+	/**
+	 * {@code canCreate(...)} with a type that is not compatible with the reference's target type
+	 * fails with a {@link TopLogicException}.
+	 */
+	public void testCanCreateIncompatibleType() throws Exception {
+		String script = "p -> canCreate($p, `TestTLScriptSecurity:Project#members`, `TestTLScriptSecurity:Project`)";
+
+		becomeUser(_user);
+		try {
+			execute(search(script), _p1);
+			fail("Incompatible type must be rejected.");
+		} catch (TopLogicException ex) {
+			// Expected.
+		}
 	}
 
 	/**

@@ -46,6 +46,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -69,6 +70,10 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
+import com.top_logic.model.annotate.ui.ClassificationDisplay;
+import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
+import com.top_logic.model.annotate.ui.ReferenceDisplay;
+import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
@@ -611,6 +616,120 @@ public class TestValueInputElement extends TestCase {
 			SelectDisplay.DROPDOWN, ((ReactDropdownSelectControl) control).getDisplay());
 	}
 
+	/**
+	 * An enumeration displayed as radio buttons by its {@link ClassificationDisplay} is offered as
+	 * a group of radio buttons, one below the other.
+	 */
+	public void testAnEnumerationAnnotatedAsRadioIsARadioGroup() {
+		TLEnumeration status = enumeration("Radio");
+		status.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.RADIO));
+
+		ReactDropdownSelectControl control = select(entered(status, choice(status, false), null));
+
+		assertEquals(SelectDisplay.RADIO, control.getDisplay());
+		assertEquals(Orientation.VERTICAL, control.getOrientation());
+	}
+
+	/**
+	 * The annotation at an attribute wins over the one of its type: inline radio buttons stand side
+	 * by side although the type asks for a list.
+	 */
+	public void testAnAttributeAnnotatedAsInlineRadioOverridesItsType() {
+		TLEnumeration status = enumeration("Inline");
+		status.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.DROP_DOWN));
+		TLStructuredTypePart part = _model.addClassProperty(_row, "inline", status);
+		part.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.RADIO_INLINE));
+
+		SimpleSelectFieldModel field = choice(status, false);
+		FieldSpec spec = FieldControlService.fieldSpec(status, part, LABEL, false, field);
+		ReactDropdownSelectControl control =
+			select(controlService().createFieldControl(_context, status, spec, field, null));
+
+		assertEquals(SelectDisplay.RADIO, control.getDisplay());
+		assertEquals(Orientation.HORIZONTAL, control.getOrientation());
+	}
+
+	/** A checklist is the group of buttons, a checkbox for each option of a multi-valued field. */
+	public void testAChecklistIsARadioGroup() {
+		TLEnumeration status = enumeration("Checklist");
+		status.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.CHECKLIST));
+
+		ReactDropdownSelectControl control = select(entered(status, choice(status, true), null));
+
+		assertEquals(SelectDisplay.RADIO, control.getDisplay());
+		assertEquals(Orientation.VERTICAL, control.getOrientation());
+	}
+
+	/**
+	 * A reference to objects of a class displayed as inline radio buttons by its
+	 * {@link ReferenceDisplay} is offered as radio buttons side by side; a presentation without
+	 * radio buttons stays a list that opens on demand.
+	 */
+	public void testAReferenceAnnotatedAsRadioIsARadioGroup() {
+		TLClass target = _model.addClass(_module, _module, "Target");
+		target.setAnnotation(ReferenceDisplay.display(ReferencePresentation.RADIO_INLINE));
+		SimpleSelectFieldModel field = new SimpleSelectFieldModel(null, List.of("a", "b"), false);
+
+		ReactDropdownSelectControl inline = select(entered(target, field, null));
+		assertEquals(SelectDisplay.RADIO, inline.getDisplay());
+		assertEquals(Orientation.HORIZONTAL, inline.getOrientation());
+
+		target.setAnnotation(ReferenceDisplay.display(ReferencePresentation.TABLE));
+		assertEquals(SelectDisplay.DROPDOWN, select(entered(target, field, null)).getDisplay());
+	}
+
+	/** A control named by the input overrides the display the model annotation asks for. */
+	public void testTheNamedControlOverridesTheAnnotation() {
+		TLEnumeration status = enumeration("Overridden");
+		status.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.RADIO_INLINE));
+		SimpleSelectFieldModel field = choice(status, false);
+
+		assertEquals(SelectDisplay.SEGMENTED,
+			select(entered(status, field, selectDisplay(SelectDisplay.SEGMENTED))).getDisplay());
+		assertEquals(SelectDisplay.DROPDOWN,
+			select(entered(status, field, selectDisplay(SelectDisplay.DROPDOWN))).getDisplay());
+	}
+
+	/**
+	 * A table cell offers the options in a list that opens on demand although the annotation asks
+	 * for radio buttons; a display named for the control still wins.
+	 */
+	public void testACellIsADropdownWhateverTheAnnotationSays() {
+		TLEnumeration status = enumeration("Cell");
+		status.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.RADIO_INLINE));
+		SimpleSelectFieldModel field = choice(status, false);
+
+		FieldSpec cell = FieldControlService.cellSpec(FieldControlService.fieldSpec(status, status, null, false, field));
+		assertEquals(SelectDisplay.DROPDOWN,
+			select(controlService().createFieldControl(_context, status, cell, field, null)).getDisplay());
+
+		FieldSpec named = FieldControlService.cellSpec(FieldControlService.fieldSpec(status, status, null, false, field));
+		assertEquals(SelectDisplay.RADIO,
+			select(controlService().createFieldControl(_context, status, named, field,
+				selectDisplay(SelectDisplay.RADIO))).getDisplay());
+	}
+
+	/** An enumeration of the given name with two classifiers. */
+	private TLEnumeration enumeration(String name) {
+		TLEnumeration result = _model.addEnumeration(_module, _module, name);
+		TLModelUtil.addClassifier(result, "open");
+		TLModelUtil.addClassifier(result, "closed");
+		return result;
+	}
+
+	/** A field choosing from the classifiers of the given enumeration. */
+	private static SimpleSelectFieldModel choice(TLEnumeration enumeration, boolean multiple) {
+		return new SimpleSelectFieldModel(multiple ? List.of() : null, AttributeOptions.optionsFor(enumeration),
+			multiple);
+	}
+
+	/** The given control as the select control a choice is made on. */
+	private static ReactDropdownSelectControl select(ReactControl control) {
+		assertTrue("A selection is made on a select control, but is made on " + control.getClass(),
+			control instanceof ReactDropdownSelectControl);
+		return (ReactDropdownSelectControl) control;
+	}
+
 	/** A number is dragged along a track where the input names a slider. */
 	public void testANumberIsDraggedWhereASliderIsNamed() {
 		TLType number = datatype("Amount", Kind.INT, Integer.class);
@@ -746,7 +865,7 @@ public class TestValueInputElement extends TestCase {
 	 * control selection reads from it.
 	 */
 	private static <T> StorageMapping<T> valuesOf(Class<?> applicationType) {
-		return new StorageMapping<T>() {
+		return new StorageMapping<>() {
 			@SuppressWarnings("unchecked")
 			@Override
 			public Class<T> getApplicationType() {

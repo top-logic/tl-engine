@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.reflect.TypeIndex;

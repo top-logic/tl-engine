@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
-import { useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
+import { useButtonDefaults, buttonClassName, menuItemProps } from './button/ButtonDefaults';
 import type { ButtonAppearance } from './button/ButtonDefaults';
 
 const { useCallback } = React;
@@ -45,9 +45,16 @@ export interface TLButtonProps {
  *
  * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
  * rendered through {@link ThemeIcon}. In {@code label-only} mode the icon is not rendered. A
- * collapsing toolbar hides the label of a button that carries an icon through its stylesheet.
- * The label always provides the accessible name via {@code aria-label} when the icon is present,
- * so hiding the label text keeps the button named for assistive technology.</p>
+ * compact toolbar tells its buttons through {@code ButtonDefaults.iconOnly} to present themselves
+ * by their icon: a button that shows its icon then drops its label and becomes a square icon
+ * button. The label always provides the accessible name via {@code aria-label} when the icon is
+ * present, and the tooltip carries it, so the compact button stays named.</p>
+ *
+ * <p>Inside a menu ({@code ButtonDefaults.appearance} {@code menu-item}) the button is an entry
+ * of that menu: it shows its label (with its icon, if it has one), takes the role
+ * {@code menuitem} and joins the menu's roving tabindex. An active button - the alternative in
+ * force - is marked there as the menu marks it: {@code aria-current} and strong text, instead of
+ * {@code aria-pressed}.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
   const state = useTLState<Partial<ButtonStateJson>>();
@@ -58,21 +65,27 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedImage = image ?? state.image;
   const resolvedDisabled = disabled ?? state.disabled === true;
   // The button's command is the alternative currently in force (e.g. the active theme) or a
-  // pressed toggle; marked visually and reported to assistive technology as pressed.
+  // pressed toggle; marked visually and reported to assistive technology as pressed - in a menu as
+  // the current entry.
   const resolvedActive = state.active === true;
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip;
   const defaults = useButtonDefaults();
   // The default appearance of the server is the one the container suggests.
   const serverAppearance = state.appearance === 'default' ? undefined : state.appearance;
-  const resolvedAppearance: ButtonAppearance = appearance
-    ?? serverAppearance
-    ?? defaults.appearance ?? 'secondary';
+  // Inside a menu the container wins over the server: every button there is an entry.
+  const resolvedAppearance: ButtonAppearance = defaults.appearance === 'menu-item'
+    ? 'menu-item'
+    : (appearance ?? serverAppearance ?? defaults.appearance ?? 'secondary');
   const resolvedDanger = danger ?? state.tone === 'danger';
   const resolvedMode = displayMode ?? state.displayMode ?? 'label-only';
-  const small = state.size === 'small' && resolvedMode === 'icon-only';
-  // Additional CSS classes declared on the command this button renders, e.g. to mark a
-  // destructive action.
+  // Only a button that shows its icon goes compact; inside a menu every button shows its label.
+  const shows = resolvedMode !== 'label-only' && !!resolvedImage;
+  const mode: ButtonStateJson.DisplayMode = defaults.iconOnly && shows
+    ? 'icon-only'
+    : resolvedAppearance === 'menu-item' && resolvedImage ? 'icon-label' : resolvedMode;
+  // Additional CSS classes declared on the command this button renders. A destructive command is
+  // not a class but its tone (`state.tone`).
   const cssClasses = state.cssClasses;
   // When set, clicking navigates the browser directly (e.g. an external SSO redirect) instead of
   // dispatching a server command - this avoids depending on the asynchronous SSE round-trip.
@@ -108,15 +121,19 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
     return true;
   });
 
-  const iconOnly = resolvedMode === 'icon-only';
+  const iconOnly = mode === 'icon-only';
+  const icon = iconOnly && !!resolvedImage;
+  const small = state.size === 'small' && iconOnly;
   // In icon-only mode without an image, the label glyph is the visible content.
-  const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label'
+  const showLabel = mode === 'label-only' || mode === 'icon-label'
     || (iconOnly && !resolvedImage);
+  // Part classes: an entry of a menu is drawn by the menu, a button by the button.
+  const asMenuItem = resolvedAppearance === 'menu-item';
+  const part = asMenuItem ? 'tl-menu' : 'tl-button';
 
   // An explicit tooltip is shown as it is. Otherwise the label serves as tooltip wherever the
-  // button does not read it out: in icon-only mode always, and in the other modes whenever the
-  // label is clipped or hidden - a toolbar drops the labels of its buttons by CSS once it runs out
-  // of room, and the tooltip is what names such a button then.
+  // button does not read it out: in icon-only mode always - which is also what names the button of
+  // a compact toolbar - and in the other modes whenever the label is clipped.
   const tooltipText = tooltip ?? resolvedLabel;
   const tooltipProps: Record<string, string> = {};
   if (tooltipText) {
@@ -139,15 +156,17 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: resolvedDanger, small, extra: cssClasses }))}
+      className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: resolvedDanger, small, icon, current: resolvedActive, extra: cssClasses }))}
       {...tooltipProps}
-      aria-pressed={resolvedActive ? true : undefined}
+      {...menuItemProps(defaults)}
+      aria-pressed={!asMenuItem && resolvedActive ? true : undefined}
+      aria-current={asMenuItem && resolvedActive ? 'true' : undefined}
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >
-      {resolvedImage && !(resolvedMode === 'label-only') && (
-        <ThemeIcon encoded={resolvedImage} className={'tl-button__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />
+      {resolvedImage && mode !== 'label-only' && (
+        <ThemeIcon encoded={resolvedImage} className={part + '__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />
       )}
-      {showLabel && <span className="tl-button__label">{resolvedLabel}</span>}
+      {showLabel && <span className={part + '__label'}>{resolvedLabel}</span>}
     </button>
   );
 };

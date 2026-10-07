@@ -23,10 +23,12 @@
  *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
  *   TLTabBar          - TabBarState
+ *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
+ *   TLAlert           - AlertState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -68,6 +70,13 @@ export interface FieldStateJson extends ControlStateJson {
 	 * Whether the value can be edited. A field that cannot be edited displays its value only.
 	 */
 	editable: boolean;
+
+	/**
+	 * Whether the field is shown as an inactive input. A disabled field accepts no input, but
+	 * presents its value in a visibly inactive input instead of displaying the value only. Only
+	 * set while {@link FieldStateJson.editable} is not.
+	 */
+	disabled: boolean;
 
 	/**
 	 * Whether a value is required.
@@ -292,7 +301,8 @@ export namespace CheckboxStateJson {
 	 * The component draws `'checkbox'` and `'switch'`; the control does not send
 	 * `'checkbox'`, an absent display means a box that is ticked. `'select'` and
 	 * `'radio'` are presentations of a boolean offered as a choice between labelled values,
-	 * which is a component of its own; they are never sent to this component.
+	 * which is a field choosing one object ({@link DropdownSelectStateJson}); they are never sent to
+	 * this component.
 	 */
 	export type Display =
 		/**
@@ -552,8 +562,9 @@ export namespace SelectStateJson {
 
 /**
  * State of a field choosing one or more objects, the components `TLDropdownSelect` (a list
- * that opens on demand), `TLOptionChips` (every option a toggle of its own) and
- * `TLSegmentedChoice` (the options as the segments of one bar).
+ * that opens on demand), `TLOptionChips` (every option a toggle of its own),
+ * `TLSegmentedChoice` (the options as the segments of one bar) and `TLChoiceGroup`
+ * (a radio button or a checkbox for every option).
  *
  * The {@link FieldStateJson.value} is the list of the chosen objects, each an {@link DropdownSelectStateJson.Option} (also for a field
  * choosing one object). A change is sent as the command `valueChanged` with the list of the
@@ -565,6 +576,12 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	 * opens on demand.
 	 */
 	display: DropdownSelectStateJson.Display;
+
+	/**
+	 * The direction the options are laid out in. Only the shape `'radio'` reads it.
+	 * Absent means `'vertical'`, the options one below the other.
+	 */
+	orientation: DropdownSelectStateJson.Orientation;
 
 	/**
 	 * The objects that can be chosen, valid while {@link DropdownSelectStateJson.optionsLoaded} is set. A list that opens
@@ -589,7 +606,15 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	multiSelect: boolean;
 
 	/**
-	 * The label of the choice of no object.
+	 * Whether the list that opens on demand offers no input to filter its options by; absent means
+	 * it does. Without the input, typing the beginning of a label moves to the option it starts.
+	 * Only the shape `'dropdown'` reads it.
+	 */
+	noFilter: boolean;
+
+	/**
+	 * The label of the choice of no object: the option of its own a group of radio buttons offers
+	 * for it, the text the other shapes show while nothing is chosen.
 	 */
 	emptyOptionLabel: string;
 }
@@ -613,7 +638,28 @@ export namespace DropdownSelectStateJson {
 		/**
 		 * The options as the segments of one bar.
 		 */
-		| 'segmented';
+		| 'segmented'
+		/**
+		 * A radio button for every option, or a checkbox for every option of a field choosing
+		 * several objects.
+		 */
+		| 'radio';
+
+	/**
+	 * The direction the options of a group of radio buttons or checkboxes are laid out in.
+	 *
+	 * The control does not send `'vertical'`: an absent orientation means the options stand
+	 * one below the other.
+	 */
+	export type Orientation =
+		/**
+		 * The options side by side, wrapping onto further lines where the room ends.
+		 */
+		| 'horizontal'
+		/**
+		 * The options one below the other.
+		 */
+		| 'vertical';
 
 	/**
 	 * An object that can be chosen.
@@ -696,6 +742,69 @@ export namespace TabBarStateJson {
 }
 
 /**
+ * State of an accordion: a stack of sections, each with a header and a body that is expanded or
+ * collapsed independently, the component `TLAccordion`.
+ *
+ * A click on the header of a section sends the command `toggleSection` to the server with the
+ * arguments `sectionId` (the {@link AccordionStateJson.Section.id} of the section) and `expanded` (whether
+ * the section is to be expanded). The server answers with the resulting {@link AccordionStateJson.sections}: in an
+ * {@link AccordionStateJson.exclusive} accordion, expanding a section collapses all others.
+ */
+export interface AccordionStateJson extends ControlStateJson {
+	/**
+	 * The sections, in the order from top to bottom.
+	 */
+	sections: AccordionStateJson.Section[];
+
+	/**
+	 * Whether at most one section is expanded at a time. Expanding a section of an exclusive
+	 * accordion collapses the section expanded before. All sections may be collapsed.
+	 */
+	exclusive: boolean;
+}
+
+export namespace AccordionStateJson {
+	/**
+	 * A section of the accordion.
+	 */
+	export interface Section {
+		/**
+		 * The ID of the section, unique within the accordion.
+		 */
+		id: string;
+
+		/**
+		 * The label displayed in the header of the section.
+		 */
+		label: string;
+
+		/**
+		 * The icon displayed in the header of the section before the {@link AccordionStateJson.Section.label}, the encoded form
+		 * of a theme image. Absent for a section without an icon.
+		 */
+		icon: string;
+
+		/**
+		 * Whether the body of the section is displayed.
+		 */
+		expanded: boolean;
+
+		/**
+		 * The actions displayed at the end of the header of the section, a toolbar for instance.
+		 * Absent for a section without actions.
+		 */
+		actions?: ChildControlJson;
+
+		/**
+		 * The body of the section. Absent until the section is expanded for the first time; from
+		 * then on it stays present when the section is collapsed, so that the component can keep it
+		 * mounted (with its local state) and only hide it.
+		 */
+		content?: ChildControlJson;
+	}
+}
+
+/**
  * State of a window: a frame with a title bar, a body and a footer, the component
  * `TLWindow`.
  *
@@ -718,9 +827,19 @@ export interface WindowStateJson extends ControlStateJson {
 	height: string;
 
 	/**
-	 * The least height of the window, a CSS length. Absent: none.
+	 * The width in pixels the user gave the window when last resizing it. Absent: none remembered.
+	 *
+	 * Together with {@link WindowStateJson.customHeight}, the remembered size replaces the configured
+	 * {@link WindowStateJson.width} and the automatic height, but only while it fits into the browser window: the
+	 * client decides this, as only it knows the size of the browser window.
 	 */
-	minHeight: string;
+	customWidth: number;
+
+	/**
+	 * The height in pixels the user gave the window when last resizing it. Absent: none
+	 * remembered.
+	 */
+	customHeight: number;
 
 	/**
 	 * Whether the user can resize the window by dragging its edges.
@@ -871,6 +990,12 @@ export namespace MenuStateJson {
 		 * Additional CSS classes of the item, separated by spaces.
 		 */
 		cssClasses: string;
+
+		/**
+		 * The kind of action the item stands for. Absent means `default`, an ordinary action;
+		 * `danger` marks an item whose command destroys or discards what the user has.
+		 */
+		tone: ButtonStateJson.Tone;
 	}
 }
 
@@ -934,4 +1059,49 @@ export namespace SnackbarStateJson {
 		 * The report of an error.
 		 */
 		| 'error';
+}
+
+/**
+ * State of a highlighted message standing in the content of a page, the component `TLAlert`.
+ *
+ * A hidden alert (see {@link ControlStateJson.hidden}) renders nothing. Dismissing the alert sends the
+ * command `dismiss` with the {@link AlertStateJson.generation} of the content dismissed as argument
+ * `generation`.
+ */
+export interface AlertStateJson extends ControlStateJson {
+	/**
+	 * The kind of the message, selecting its color and its icon. Absent: an information.
+	 */
+	variant: SnackbarStateJson.Variant;
+
+	/**
+	 * The heading of the message, plain text. Absent: no heading.
+	 */
+	title: string;
+
+	/**
+	 * The message, plain text.
+	 */
+	message: string;
+
+	/**
+	 * The icon of the message, the encoded form of a theme image matching the {@link AlertStateJson.variant}.
+	 */
+	icon: string;
+
+	/**
+	 * Whether the user can dismiss the message.
+	 */
+	closable: boolean;
+
+	/**
+	 * The buttons offering what to do about the message, in display order.
+	 */
+	actions: ChildControlJson[];
+
+	/**
+	 * The number of the content shown, counting the contents this control has shown. A dismiss
+	 * reporting another number refers to a content that is no longer shown.
+	 */
+	generation: number;
 }

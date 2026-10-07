@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<accordion css-class="my-accordion">
+		<section id="general"
+			expanded="true"
+			icon="css:bi bi-gear"
+		>
+			<label>
+				<en>General</en>
+				<de>Allgemein</de>
+			</label>
+			<commands>
+				<generic-command name="refresh"
+					label="Refresh"
+					placement="TOOLBAR"
+				/>
+				<generic-command name="apply"
+					label="Apply"
+					placement="BUTTON_BAR"
+				/>
+			</commands>
+			<panel/>
+		</section>
+		<section id="advanced"
+			label="Advanced"
+		>
+			<form input="item"/>
+		</section>
+	</accordion>
+</view>

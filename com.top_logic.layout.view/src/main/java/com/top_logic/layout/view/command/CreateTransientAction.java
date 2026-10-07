@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelPartRef;
@@ -25,7 +26,10 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * The result is a fresh transient object of the {@link Config#getType() type}, as the TL-Script
- * {@code new(type, transient: true)} creates it; the action ignores its input. A
+ * {@code new(type, transient: true)} creates it; the action ignores its input. With a
+ * {@link Config#getContainer() container}, the draft is created in the context of the container,
+ * as {@code new(type, context: $container, transient: true)} creates it: the container is the
+ * draft's container, and the default values of the draft are computed in its context. A
  * {@link PersistTransientAction} in the dialog later makes the draft persistent.
  * </p>
  *
@@ -34,9 +38,9 @@ import com.top_logic.model.util.TLModelPartRef;
  * user may create an object of the type. Without a {@link Config#getContainer() container}, that is
  * checked against the security root, and a refused command is hidden. With a container, it is
  * checked in the context of the container and, with a {@link Config#getReference() reference},
- * together with the right to write that reference; a refused command is disabled. The container
- * and the reference are only checked here: the dialog receives the container through the bindings
- * of the {@link OpenDialogAction}. See {@link ModelAccessRule} for how a refusal is displayed.
+ * together with the right to write that reference; a refused command is disabled. The reference
+ * serves this check only. The dialog receives the container through the bindings of the
+ * {@link OpenDialogAction}. See {@link ModelAccessRule} for how a refusal is displayed.
  * </p>
  *
  * <p>
@@ -105,6 +109,7 @@ public class CreateTransientAction implements ViewAction {
 			throw new IllegalArgumentException("The '" + Config.TYPE + "' '" + _config.getType().qualifiedName()
 				+ "' of a '" + Config.TAG_NAME + "' action is not a class.");
 		}
-		return TransientObjectFactory.INSTANCE.createObject(clazz, null);
+		TLObject container = CreationContainer.resolveContainer(context, _config, Config.TAG_NAME);
+		return TransientObjectFactory.INSTANCE.createObject(clazz, container);
 	}
 }

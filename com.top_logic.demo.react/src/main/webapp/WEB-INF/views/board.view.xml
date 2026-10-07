@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Kanban board demo: the tickets in the columns of their status.
+	
+	The columns are the classifiers of the status enumeration, in their declaration order; the
+	tickets are sorted by name, which is their order within a column. Each card shows the name of
+	its ticket and its status, and a button opening the ticket with its conversation in a dialog.
+	Clicking a card selects its ticket, and the form beside the board edits the selected one: saving
+	another status moves the card into the column of that status, since the board follows the
+	tickets it displays. The selection travels both ways - the card of the ticket the form shows is
+	the highlighted one.
+	
+	Several tickets are selected at once: a click with Ctrl adds a ticket or takes it out again, a
+	click with Shift adds the tickets up to the clicked one, and on a touch screen a long press
+	toggles a ticket. The selected channel holds the set of them, and the form shows a ticket only
+	while exactly one is selected.
+	
+	Cards are dragged between the columns - with the mouse, or on a touch screen by a long press and
+	a move -, and dragging a selected card takes all selected ones along. Dropping a ticket on a
+	column sets its status to that column's status, which is what the <drop> does with the column
+	value it receives on the dropColumn channel. A closed ticket is not reopened directly: dropping it on "Open" is refused,
+	and the reason is shown while it hovers there - it goes through "In progress" first.
+	
+	Within a column, the cards are reordered by dragging them before or after another card: the
+	on-reorder function numbers the tickets of the column in their new order, and the tickets are
+	sorted by that number (tickets without one at the end, by name). A ticket dropped on another
+	column lands where it was dropped: the status is set first, then the column is renumbered.
+	
+	"Generate samples" on the object list page creates tickets in every status.
+-->
+<view>
+	<channels>
+		<channel name="selected"/>
+		<derived-channel name="ticket"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
+		<channel name="dropColumn"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="320"
+				size="65"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Board</en>
+						<de>Board</de>
+					</title>
+					<kanban-board
+						column="t -> $t.get(`demo.tickets:Ticket#status`)"
+						columns="all(`demo.tickets:TicketStatus`)"
+						element-channel="ticket"
+						items="all(`demo.tickets:Ticket`).sort(x -> y -> { ox = $x.get(`demo.tickets:Ticket#order`); oy = $y.get(`demo.tickets:Ticket#order`); c = compare(if($ox == null, 1000000, $ox), if($oy == null, 1000000, $oy)); if($c != 0, $c, compare($x.get(`demo.tickets:Ticket#name`), $y.get(`demo.tickets:Ticket#name`))); })"
+						observed-types="demo.tickets:Ticket"
+						on-reorder="column -> tickets -> count($tickets.size()).foreach(i -> $tickets[$i].set(`demo.tickets:Ticket#order`, $i))"
+						selection="selected"
+						selection-mode="multi"
+					>
+						<card>
+							<view-ref view="board/ticket-card.view.xml">
+								<bind
+									channel="ticket"
+									to="ticket"
+								/>
+							</view-ref>
+						</card>
+						<drag/>
+						<drop
+							accept="demo.tickets:Ticket"
+							target-channel="dropColumn"
+						>
+							<refuse-if>column -&gt; tickets -&gt; if($column == `demo.tickets:TicketStatus#open` &amp;&amp; $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size() &gt; 0, #('Closed tickets are reopened through "In progress".'@en, 'Geschlossene Tickets werden über "In Bearbeitung" wieder geöffnet.'@de), null)</refuse-if>
+							<with-transaction>
+								<execute-script function="column -> tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))">
+									<inputs>
+										<input channel="dropColumn"/>
+									</inputs>
+								</execute-script>
+							</with-transaction>
+						</drop>
+					</kanban-board>
+				</panel>
+			</pane>
+			<pane
+				size="35"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Ticket</en>
+						<de>Ticket</de>
+					</title>
+					<form
+						input="ticket"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="status"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

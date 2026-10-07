@@ -17,8 +17,12 @@ import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.common.json.gstream.JsonWriter;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
  * Builds a stable, locale- and session-independent identity for a business object, for use as a
@@ -157,6 +161,79 @@ public final class ScriptingModelKey {
 		} catch (Throwable ex) {
 			return null;
 		}
+	}
+
+	/**
+	 * An {@link ActionContext} of the running interaction for resolving a {@link ModelName}.
+	 *
+	 * @throws RuntimeException
+	 *         if there is no running interaction offering a display context to build one from.
+	 */
+	public static ActionContext newActionContext() {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+	}
+
+	/**
+	 * An {@link ActionContext} of the running interaction for resolving a {@link ModelName}, or
+	 * {@code null} if there is no running interaction to build one from.
+	 *
+	 * @see #newActionContext()
+	 */
+	public static ActionContext newActionContextOrNull() {
+		try {
+			return newActionContext();
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve a business identity outside an interaction.", ex, ScriptingModelKey.class);
+			return null;
+		}
+	}
+
+	/**
+	 * The object the given {@link ModelName} designates, or {@code null} if it designates none.
+	 *
+	 * <p>
+	 * Inverse of {@link #name(Object, Object)}. Best-effort: a name that cannot be resolved, and a
+	 * missing {@code context}, yield {@code null} rather than an error.
+	 * </p>
+	 *
+	 * @param context
+	 *        The action context to resolve the name in, or {@code null} if there is none.
+	 * @param valueContext
+	 *        The context object the name was built relative to, or {@code null} for a global name.
+	 * @param name
+	 *        The name to resolve.
+	 * @return The designated object, or {@code null}.
+	 */
+	public static Object locate(ActionContext context, Object valueContext, ModelName name) {
+		if (context == null || name == null) {
+			return null;
+		}
+		try {
+			return ModelResolver.locateModel(context, valueContext, name);
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve object for key: " + name, ex, ScriptingModelKey.class);
+			return null;
+		}
+	}
+
+	/**
+	 * The object the given {@link ModelName} designates within the running interaction, or
+	 * {@code null} if it designates none (or there is no running interaction).
+	 *
+	 * @param valueContext
+	 *        The context object the name was built relative to, or {@code null} for a global name.
+	 * @param name
+	 *        The name to resolve.
+	 * @return The designated object, or {@code null}.
+	 *
+	 * @see #locate(ActionContext, Object, ModelName)
+	 */
+	public static Object locate(Object valueContext, ModelName name) {
+		if (name == null) {
+			return null;
+		}
+		return locate(newActionContextOrNull(), valueContext, name);
 	}
 
 	/**

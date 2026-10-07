@@ -1124,7 +1124,7 @@
 			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
 			    <groupId>com.github.luben</groupId>
 			    <artifactId>zstd-jni</artifactId>
-			    <version>1.5.7-21</version>
+			    <version>1.5.7-22</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>

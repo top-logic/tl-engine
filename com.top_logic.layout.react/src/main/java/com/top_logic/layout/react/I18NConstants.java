@@ -509,6 +509,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 I18N_EDITOR_TRANSLATE_FROM__LANG;
 
 	/**
+	 * @en Show the full value
+	 */
+	public static ResKey COMPACT_FIELD_OPEN_BUTTON;
+
+	/**
+	 * @en Value
+	 */
+	public static ResKey COMPACT_FIELD_TITLE;
+
+	/**
+	 * @en A value is required.
+	 */
+	public static ResKey COMPACT_FIELD_ERROR_VALUE_REQUIRED;
+
+	/**
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;

@@ -5,7 +5,11 @@
  */
 package com.top_logic.layout.react.field;
 
+import java.util.Collection;
+
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.CollectionLabelProvider;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -89,6 +93,72 @@ public interface ReactFieldControlProvider {
 	 */
 	default boolean editsCollections() {
 		return false;
+	}
+
+	/**
+	 * Whether the control this provider creates for the given field needs more room than a
+	 * {@link FieldSpec#isCompact() compact} display offers.
+	 *
+	 * <p>
+	 * A control taller than a single line of text - a multi-line text, a code editor, a rich text
+	 * editor - does. In a compact display, such a field is shown as its
+	 * {@link #previewText(FieldSpec, Object) preview} together with a button opening the control in
+	 * a dialog.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 */
+	default boolean isLarge(FieldSpec field) {
+		return false;
+	}
+
+	/**
+	 * A single line of text standing for the given value where the control editing it has no room.
+	 *
+	 * <p>
+	 * By default the label of the value, the labels of its elements separated by commas for a
+	 * collection, and of a text spanning several lines only the first one. Nothing is displayed for
+	 * no value.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param value
+	 *        The value to preview, or {@code null}.
+	 * @return The preview text, never {@code null}.
+	 */
+	default String previewText(FieldSpec field, Object value) {
+		if (value == null) {
+			return "";
+		}
+		String label;
+		if (value instanceof Collection<?>) {
+			label = new CollectionLabelProvider(MetaLabelProvider.INSTANCE, ", ").getLabel(value);
+		} else {
+			label = MetaLabelProvider.INSTANCE.getLabel(value);
+		}
+		return firstLine(label);
+	}
+
+	/**
+	 * The first line of the given text.
+	 *
+	 * @param text
+	 *        The text, or {@code null}.
+	 * @return The text up to its first line break, the empty string for {@code null}.
+	 */
+	static String firstLine(String text) {
+		if (text == null) {
+			return "";
+		}
+		for (int n = 0, cnt = text.length(); n < cnt; n++) {
+			char ch = text.charAt(n);
+			if (ch == '\n' || ch == '\r') {
+				return text.substring(0, n);
+			}
+		}
+		return text;
 	}
 
 }

@@ -150,7 +150,7 @@ UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. 
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md)). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [docs/faq/react-theme-tokens.md](docs/faq/react-theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [docs/faq/customer-component-library.md](docs/faq/customer-component-library.md).
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [react-view-layer.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/react-view-layer.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [react-view-layer.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/react-view-layer.md)). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [docs/faq/react-theme-tokens.md](docs/faq/react-theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [docs/faq/customer-component-library.md](docs/faq/customer-component-library.md).
 
 ### Model Definitions
 
@@ -300,7 +300,12 @@ mvn exec:java@migrate-ticket28336
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
-- **docs/faq/** - FAQ articles for common development tasks and pitfalls
+- **docs/faq/** - FAQ articles for engine development tasks and pitfalls
+- **`<module>/src/main/java/META-INF/tl-docs/*.md`** - developer articles that also apply when building an
+  application on the engine. They ship in the module's jar, so an application workspace finds them through
+  the `tl-mcp` tools `list_docs` / `read_doc`. Each starts with a front matter block whose `description`
+  says when to read it; the file name is the article name. An article that only matters for engine
+  development belongs in `docs/faq/` instead.
 
 ## Trac Ticket System
 

@@ -7,7 +7,7 @@ The names below are placeholders: the module is `my.app.module`, its Java packag
 `com.example.app.view`, the element `MyElement` (tag `my-element`), its control `MyControl` and the
 client component `MyWidget`. Replace them by your own.
 
-Before writing a new client component, check [react-view-layer.md](react-view-layer.md): the
+Before writing a new client component, check [react-view-layer.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/react-view-layer.md): the
 `.view.xml` layer is a *composition* layer. A new component is justified for a genuinely new generic
 widget, not for assembling panels, forms and buttons that already exist. An element that only
 composes existing controls needs steps 1, 2, 4 and 5 — the whole client part falls away.
@@ -38,7 +38,7 @@ state; the component only renders what the control publishes and sends back gest
 | `src/main/java/com/example/app/view/MyElement.java` | `UIElement` implementation plus its `Config` (the `@TagName` is the element's name in XML) |
 | `src/main/java/com/example/app/view/MyControl.java` | `ReactControl`: names the client component, publishes state, answers commands |
 | `src/main/webapp/WEB-INF/views/my-view.view.xml` | uses the new tag |
-| `src/main/webapp/WEB-INF/views/app.view.xml` (or another view) | makes the view reachable, e.g. as a `nav-item` in the application's overlay of the shell (see [the application shell](react-view-layer.md#the-application-shell-extending-appviewxml)) |
+| `src/main/webapp/WEB-INF/views/app.view.xml` (or another view) | makes the view reachable, e.g. as a `nav-item` in the application's overlay of the shell (see [the application shell](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/react-view-layer.md#the-application-shell-extending-appviewxml)) |
 | `src/main/java/META-INF/messages_de.properties` | German labels of the new configuration properties (English is generated) |
 | **Client — only for a new component** | |
 | `react-src/controls/MyWidget.tsx` | the component |
@@ -102,7 +102,7 @@ public class MyElement implements UIElement {
 - Keep the element stateless: it is parsed once and shared by every session. Anything the user
   changes belongs in the control.
 - An element that should not claim a global tag can be placed by `class=` instead — see
-  [react-view-layer.md](react-view-layer.md).
+  [react-view-layer.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/react-view-layer.md).
 - **Every element inherits `css-class`** from `UIElement.Config`, so the configuration declares
   nothing for it. The element passes the configured class to the control it returns —
   `result.setCssClass(_config.getCssClass())` — and the control writes it on the root element of its
@@ -433,7 +433,7 @@ my.app.module/
 
 ## See also
 
-- [react-view-layer.md](react-view-layer.md) — when a new component is justified at all, and how to
+- [react-view-layer.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/react-view-layer.md) — when a new component is justified at all, and how to
   compose existing ones
 - [new-react-module.md](new-react-module.md) — a module whose purpose *is* React controls, including
   third-party libraries and their React shims

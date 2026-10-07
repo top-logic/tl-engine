@@ -1,3 +1,7 @@
+---
+description: Read before writing or changing a .view.xml of the React view layer - composing panels, forms, tables, dialogs, commands and channels, the application shell (app.view.xml), spacing, text variants and the React table (TableViewControl).
+---
+
 # FAQ: React view layer (`com.top_logic.layout.view` and the React table)
 
 ## The `.view.xml` layer is a composition layer, not a place for new React components
@@ -161,14 +165,14 @@ class of the application's own naming.
 
 On the server, the class travels as one state key of `ReactControl` (`setCssClass(String)`); on the
 client, the component composes its root `className` from it with `rootClassName(state, …)`. Both are
-described in [new-ui-element.md](new-ui-element.md), which an element of an application follows.
+described in [new-ui-element.md](../../../../../../docs/faq/new-ui-element.md), which an element of an application follows.
 
 ## Text: variant, tone and appearance
 
 A `<text>` says what it is *for* rather than which font and colour it is drawn in. Three properties
 carry that, each one a role filled from the design tokens of the active theme, so a theme restyles
 every text of a role at once — see
-[react-theme-tokens.md](react-theme-tokens.md#typography-tokens) for the token per variant.
+[react-theme-tokens.md](../../../../../../docs/faq/react-theme-tokens.md#typography-tokens) for the token per variant.
 
 ```xml
 <stack>

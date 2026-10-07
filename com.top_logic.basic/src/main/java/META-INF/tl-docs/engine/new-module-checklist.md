@@ -1,4 +1,9 @@
-# FAQ: New Module Checklist
+---
+description: Read when creating a new TopLogic module or when its configuration, scripts or CSS are silently not loaded - metaConf.txt, web-fragment.xml, theme.xml, registration in the parent POM and the React library shims.
+order: 10
+---
+
+# New Module Checklist
 
 ## Problem: Configuration not loaded / JS scripts not included / CSS not applied
 

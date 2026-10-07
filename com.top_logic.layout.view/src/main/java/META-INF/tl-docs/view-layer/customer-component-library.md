@@ -1,4 +1,9 @@
-# FAQ: Rendering the React UI with a customer's component library
+---
+description: Read when the React UI must appear in a customer's own React component library - a theme from its design tokens, root wrappers and replace-based adapter components registered through tl-react-bridge, the state.proto state contract, and the Material UI module com.top_logic.layout.react.mui as the worked example.
+order: 38
+---
+
+# Rendering the React UI with a customer's component library
 
 A customer often brings a React component library of its own that defines the corporate design,
 stylesheets included. Such a library knows nothing about TopLogic: it keeps no server state and binds
@@ -57,7 +62,7 @@ Map the customer's tokens (brand colours, fonts, radii, shadows) onto a theme of
 
 The shipped themes are in `com.top_logic.layout.react/src/main/webapp/WEB-INF/conf/tl-react-theme.config.xml`;
 the tokens, their tiers and the audit test are described in
-[react-theme-tokens.md](react-theme-tokens.md). Where possible, let the customer's CSS variables and
+[Theme tokens in React stylesheets](doc:view-layer/theme-tokens). Where possible, let the customer's CSS variables and
 the TopLogic tokens refer to the same source.
 
 This level alone covers a large part of the appearance, in particular of the complex components that
@@ -76,7 +81,7 @@ callbacks to TopLogic commands.
 
 ### The module
 
-The adapter module is a React module as described in [new-react-module.md](new-react-module.md)
+The adapter module is a React module as described in [New React control module](doc:engine/new-react-module)
 (`package.json`, `tsconfig.json`, `vite.config.ts`, `pom.xml` with the `frontend-maven-plugin`). Its
 bundle is announced as a client resource in a configuration file listed in
 `WEB-INF/conf/metaConf.txt` (`com.top_logic.layout.react.mui/src/main/webapp/WEB-INF/conf/tl-layout-react-mui.conf.config.xml`):
@@ -317,7 +322,7 @@ the state as `Partial<XStateJson>`.
 ## Level 3: new UIElements only for widgets without a TopLogic counterpart
 
 If the customer has a widget TopLogic has no counterpart for (a stepper, a KPI tile), build a
-`UIElement` + `ReactControl` + component as described in [new-ui-element.md](new-ui-element.md). Make
+`UIElement` + `ReactControl` + component as described in [A new `UIElement` with a client component of its own](doc:view-layer/new-ui-element). Make
 it generic and parameterized by configuration, not tailored to one view.
 
 ## What to avoid
@@ -343,7 +348,7 @@ it generic and parameterized by configuration, not tailored to one view.
   key argument of `jsx(type, props, key)` as children. The `react` and `react-dom` shims name the
   complete public API of React and react-dom, since a library reads it from a namespace import,
   partly under computed names (see `com.top_logic.layout.react.mui/react-src/react-shim.ts` and
-  [new-react-module.md](new-react-module.md)).
+  [New React control module](doc:engine/new-react-module)).
 - **Controlled components only.** The state belongs to the server. A component that keeps state of
   its own (an uncontrolled input, a self-managed open or selected flag) is used in its controlled mode
   (`value` + `onChange`, `open` + `onOpenChange`), otherwise it drifts away from the server.
@@ -351,7 +356,7 @@ it generic and parameterized by configuration, not tailored to one view.
   stylesheets. Load the library's stylesheet through `ClientResources` and check it for side effects
   early. Its rules belong to the cascade layer of the component library (`layer="mui"` on the
   `<stylesheet>`, or a layer of its own in the layer order, see
-  [react-theme-tokens.md](react-theme-tokens.md#cascade-layers)), not unlayered: unlayered rules win
+  [Theme tokens in React stylesheets](doc:view-layer/theme-tokens#cascade-layers)), not unlayered: unlayered rules win
   against every layered rule, so an unlayered reset would override the engine and the library
   everywhere.
 - **CSS-in-JS.** Styles a library writes into the page at runtime are unlayered unless the library
@@ -430,7 +435,7 @@ uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emoti
 An application that wants the Material UI look depends on it and installs it with its own theme
 (see [An application on Material UI](#an-application-on-material-ui)).
 The step-by-step recipe for an application in a customer's MUI theme, including customer-specific
-components, is [mui-customer-theme.md](mui-customer-theme.md).
+components, is [A TopLogic React application in a customer's Material UI theme](doc:view-layer/mui-customer-theme).
 
 | Path | Content |
 |---|---|
@@ -452,7 +457,7 @@ Loading the bundle changes nothing on the page; `installMui` does. How it attach
   Material UI in the cascade layer `mui` (as MUI's `StyledEngineProvider` with `enableCssLayer`
   does; that provider is not used, since it writes the theme's CSS variables to the start of
   `<head>`, before the layer order of the page), which the page orders after the layer `tl` of the TopLogic stylesheets
-  ([react-theme-tokens.md](react-theme-tokens.md#cascade-layers)): MUI wins on its own elements,
+  ([Theme tokens in React stylesheets](doc:view-layer/theme-tokens#cascade-layers)): MUI wins on its own elements,
   whatever the specificity, and an application's `css-class` rule, which is unlayered, wins against
   MUI. The theme is the application's theme passed to
   `installMui` (with CSS variables), in the language of the page (`<html lang>`, German or
@@ -584,8 +589,8 @@ export default defineConfig({
 
 A module with React code of its own (an MUI-based control) compiles its JSX with
 `@vitejs/plugin-react` in the classic runtime and needs `@types/react` for the type checker; the
-React shims of [new-react-module.md](new-react-module.md) only when it bundles a third-party library
-that imports `react` itself (see [mui-customer-theme.md](mui-customer-theme.md#building-jsx)).
+React shims of [New React control module](doc:engine/new-react-module) only when it bundles a third-party library
+that imports `react` itself (see [A TopLogic React application in a customer's Material UI theme](doc:view-layer/mui-customer-theme#building-jsx)).
 
 The re-export makes the bundle contain all of Material UI, not only the components the adapters use:
 about 1.23 MB (gzip about 306 kB) instead of about 0.98 MB (gzip about 251 kB) with the adapters alone. The difference is what
@@ -595,7 +600,7 @@ lets an application use any MUI component without a second copy.
 
 ```bash
 mvn -B install -pl com.top_logic.layout.react.mui,com.top_logic.demo.react.mui,com.top_logic.demo.react -P mui
-MAVEN_ARGS=-Pmui   # start the app with the same profile, see demo-apps.md
+MAVEN_ARGS=-Pmui   # start the app with the same profile, see engine/demo-apps
 ```
 
 ### Following the MUI theme

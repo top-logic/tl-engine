@@ -142,7 +142,7 @@ Objects are read/written through `PersistencyLayer.getKnowledgeBase()`. Wrap eve
 
 ### Access Control
 
-Whether a user may perform an operation on an object is decided by two independent definitions: the grants of the object's type (`SecurityConfigurationService`) and the roles the user holds on the object (rules of the `AccessManager`). A security parent inherits roles, not grants. See [docs/faq/access-configuration.md](docs/faq/access-configuration.md) for the check, the configuration syntax, the `internal` / `without-security` marks and the coverage check.
+Whether a user may perform an operation on an object is decided by two independent definitions: the grants of the object's type (`SecurityConfigurationService`) and the roles the user holds on the object (rules of the `AccessManager`). A security parent inherits roles, not grants. See [the access configuration article](com.top_logic/src/main/java/META-INF/tl-docs/access-configuration.md) for the check, the configuration syntax, the `internal` / `without-security` marks and the coverage check.
 
 ### Layout Components
 
@@ -150,7 +150,7 @@ UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. 
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md)). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [docs/faq/react-theme-tokens.md](docs/faq/react-theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [docs/faq/customer-component-library.md](docs/faq/customer-component-library.md). For an application in a customer's Material UI theme (the theme module calling `installMui`, restyled, replaced and additional MUI-based components) — see [docs/faq/mui-customer-theme.md](docs/faq/mui-customer-theme.md).
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [engine/new-react-module.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/engine/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see the [React view layer chapter](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/index.md) and its [tables article](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/tables.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [view-layer/basics.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/basics.md#spacing-model)). For adding a `UIElement` (with a client component of its own), see [new-ui-element.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [theme-tokens.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [view-layer/customer-component-library.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/customer-component-library.md). For an application in a customer's Material UI theme (the theme module calling `installMui`, restyled, replaced and additional MUI-based components) — see [view-layer/mui-customer-theme.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/mui-customer-theme.md).
 
 ### Model Definitions
 
@@ -163,13 +163,13 @@ Application data types are defined in `*.model.xml` files under `WEB-INF/model/`
 - **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the `TLDoclet` runs in the javadoc lifecycle, so skipping it leaves the `messages_*.properties` stale.
 - To change a label, add a `@Label` annotation (tooltip = getter JavaDoc), run `mvn install`, and commit both the Java change and the regenerated `messages_*.properties`.
 
-See [docs/faq/i18n.md](docs/faq/i18n.md) for the full workflow and examples.
+See [the i18n article](com.top_logic.basic/src/main/java/META-INF/tl-docs/i18n.md) for the full workflow and examples.
 
 ### Exception Handling
 
 Throw `com.top_logic.util.error.TopLogicException` for user-visible errors that need an internationalized message; use a plain `RuntimeException` for internal programming errors users cannot act on. User-facing messages are `ResKey` constants declared in an `I18NConstants` class with an `@en` JavaDoc default, named `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>` (`ResKey`, `ResKey1`, … chosen by parameter count).
 
-See [docs/faq/i18n.md](docs/faq/i18n.md) for the `I18NConstants` pattern and a full example.
+See [the i18n article](com.top_logic.basic/src/main/java/META-INF/tl-docs/i18n.md) for the `I18NConstants` pattern and a full example.
 
 ### TL-Script Builtin Functions
 
@@ -201,7 +201,7 @@ external/JS identifiers.
   them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
 - **Never downgrade a `{@link}` to `{@code}` to silence a doclet warning** — relocate the link (e.g.
   into `@implNote`, or link the class instead of the member) so it stays a checked reference. See
-  [docs/faq/javadoc-warnings.md](docs/faq/javadoc-warnings.md) for the full set of TLDoclet warnings
+  [the JavaDoc warnings article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/javadoc-warnings.md) for the full set of TLDoclet warnings
   and their fixes.
 
 ## Testing Conventions
@@ -211,7 +211,7 @@ external/JS identifiers.
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
 
-**A green local `mvn install` is not a green CI build** (tests are skipped locally). Before pushing a branch that adds or edits source or layouts: every new `.java` needs an SPDX header + class doc comment, every new/edited `*.xml` layout must be `XMLPrettyPrinter`-normalized, and `-DskipTests=true` even skips test *compilation* so broken test code can pass a local build. See [docs/faq/build-conformance.md](docs/faq/build-conformance.md).
+**A green local `mvn install` is not a green CI build** (tests are skipped locally). Before pushing a branch that adds or edits source or layouts: every new `.java` needs an SPDX header + class doc comment, every new/edited `*.xml` layout must be `XMLPrettyPrinter`-normalized, and `-DskipTests=true` even skips test *compilation* so broken test code can pass a local build. See [the build conformance article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/build-conformance.md).
 
 ### Manual Verification with Playwright
 
@@ -226,7 +226,7 @@ After implementing a UI feature or fix, always verify it manually in a running a
 
 ### Demo App Credentials
 
-The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [docs/faq/demo-apps.md](docs/faq/demo-apps.md).
+The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [the demo apps article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/demo-apps.md).
 
 ### Version Management
 
@@ -268,7 +268,7 @@ This runs `com.top_logic.basic.xml.XMLPrettyPrinter` on layout directories.
 
 ### Migration Tools
 
-For upgrading an application from TL 7.11 to 8.0, see [docs/faq/upgrade-7.11-to-8.0.md](docs/faq/upgrade-7.11-to-8.0.md).
+For upgrading an application from TL 7.11 to 8.0, see [the upgrade runbook](com.top_logic/src/main/java/META-INF/tl-docs/upgrade-7.11-to-8.0.md).
 
 For layout migrations after API changes:
 
@@ -300,7 +300,20 @@ mvn exec:java@migrate-ticket28336
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
-- **docs/faq/** - FAQ articles for common development tasks and pitfalls
+- **`<module>/src/main/java/META-INF/tl-docs/**/*.md`** - developer articles that also apply when building
+  an application on the engine. They ship in the module's jar, so an application workspace finds them
+  through the `tl-mcp` tools `list_docs` / `read_doc`, and a running React application shows them in the
+  *Documentation* window of its development menu (`dev-docs.view.xml`, shown while UI inspection is on).
+  - The path without `.md` is the article name (`view-layer/tables`). A folder is a chapter, described by
+    its `index.md`; folders of the same path in several modules form one chapter.
+  - Each file starts with a front matter block: `description` says when to read it (worded as a trigger
+    for an agent, naming the concrete tags / classes it covers), optional `order` places it in its chapter.
+  - A link to another article uses the `doc:` scheme with the article name relative to the `tl-docs` root:
+    `[spacing](doc:view-layer/basics#spacing-model)`, also across modules. `TestDocumentation` (run by
+    every module's `TestAll`) checks descriptions and links of the module's articles, see
+    [build-conformance.md](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/build-conformance.md).
+  - Keep an article to one theme (a few hundred lines); split a growing one into a chapter.
+  - An article that only matters for engine development belongs in the `engine/` chapter (in `com.top_logic.basic`).
 
 ## Trac Ticket System
 
@@ -369,7 +382,7 @@ Commit messages in this project must follow a specific format:
 
 ## msgbuf Library
 
-The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files. For the `JsonWriter` writer-type pitfall and the generator-plugin invocation, see [docs/faq/msgbuf.md](docs/faq/msgbuf.md).
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files. For the `JsonWriter` writer-type pitfall and the generator-plugin invocation, see [the msgbuf article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/msgbuf.md).
 
 
 ## Additional Resources

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Documentation side-window: the developer documentation the modules of the application ship
+	(META-INF/tl-docs/**/*.md in their jars), as a tree of chapters and articles. A search input
+	narrows the tree to the articles containing every word typed; the selected entry is displayed
+	beside the tree, titled with the file it comes from (module and class path), by which it is
+	found in the sources; the title of the entry is the heading of its text. A link of an article to
+	another one selects that one.
+	
+	The selected entry is part of the address of the window, so each change of it is a step in the
+	history of the window: the Back command (or the back button of a browser window) returns to the
+	entry shown before, and a reload shows the same entry again.
+-->
+<view>
+	<channels>
+		<channel name="search"/>
+		<channel name="doc"/>
+		<derived-channel name="docHtml"
+			expr="doc -> devDocsHtml($doc)"
+			inputs="doc"
+		/>
+		<derived-channel name="docSource"
+			expr="doc -> devDocsSource($doc)"
+			inputs="doc"
+		/>
+		<derived-channel name="docKey"
+			expr="doc -> devDocsRouteKey($doc)"
+			inputs="doc"
+			reverse="key -> devDocsByRouteKey($key)"
+		/>
+	</channels>
+	<param-bindings>
+		<bind
+			channel="docKey"
+			prefix="doc"
+			route-param="doc"
+		/>
+	</param-bindings>
+	<adaptive-detail selection="doc">
+		<selector>
+			<panel>
+				<title-content>
+					<value-input
+						clearable="true"
+						icon="css:bi bi-search"
+						label-position="hide-label"
+						value="search"
+					>
+						<label>
+							<en>Search</en>
+							<de>Suche</de>
+						</label>
+						<placeholder>
+							<en>Search</en>
+							<de>Suche</de>
+						</placeholder>
+					</value-input>
+				</title-content>
+				<tree selection="doc">
+					<inputs>
+						<input channel="search"/>
+					</inputs>
+					<root>search -&gt; devDocsRoot()</root>
+					<children>search -&gt; node -&gt; devDocsChildren($node, $search)</children>
+					<parents>search -&gt; node -&gt; devDocsParent($node)</parents>
+				</tree>
+			</panel>
+		</selector>
+		<detail>
+			<panel with-inset="true">
+				<title-content>
+					<text input="docSource"/>
+				</title-content>
+				<commands>
+					<generic-command
+						image="css:bi bi-arrow-left"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Back</en>
+							<de>Zurück</de>
+						</label>
+						<tooltip>
+							<en>Show the entry shown before.</en>
+							<de>Zeigt den zuvor angezeigten Eintrag.</de>
+						</tooltip>
+						<history-back/>
+					</generic-command>
+				</commands>
+				<html input="docHtml">
+					<on-link class="com.top_logic.layout.view.command.GenericViewCommand">
+						<execute-script function="link -> devDocsGet($link)"/>
+						<write-channel name="doc"/>
+					</on-link>
+				</html>
+			</panel>
+		</detail>
+	</adaptive-detail>
+</view>

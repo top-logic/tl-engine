@@ -3467,6 +3467,13 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-size: var(--body-compact-01-font-size);
 	line-height: 1.5;
 	overflow-wrap: break-word;
+	/* Scrolled to its start, the content keeps the inset of the container it stands in. */
+	scroll-margin-top: var(--page-inset);
+}
+
+/* A section scrolled to keeps a distance to the top edge. */
+.tlHtml--inline [id] {
+	scroll-margin-top: var(--page-inset);
 }
 
 .tlHtml--inline > :first-child {
@@ -3523,6 +3530,8 @@ button.tlDrawer__closeBtn:focus-visible {
 	padding: var(--spacing-02) var(--spacing-03);
 	border: 1px solid var(--border-subtle);
 	text-align: left;
+	/* The text of a cell is the text of the content, not the smaller size the page gives table cells. */
+	font-size: inherit;
 }
 
 .tlHtml--inline th {
@@ -3543,6 +3552,17 @@ button.tlDrawer__closeBtn:focus-visible {
 	border-radius: var(--border-radius-02);
 	background: var(--layer);
 	overflow-x: auto;
+	font-family: var(--font-family-mono);
+	font-size: 0.9em;
+	tab-size: 4;
+}
+
+/* The code of a block is the block's text, not a chip within it. */
+.tlHtml--inline pre code {
+	padding: 0;
+	border-radius: 0;
+	background: none;
+	font-size: inherit;
 }
 
 .tlHtml--inline blockquote {

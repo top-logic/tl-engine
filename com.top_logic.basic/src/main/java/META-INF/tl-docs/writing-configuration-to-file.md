@@ -1,4 +1,9 @@
-# FAQ: Writing a ConfigurationItem to an XML file
+---
+description: Read before serializing a ConfigurationItem to an XML file - ConfigurationWriter with UTF-8 and XMLPrettyPrinter.normalizeFile(), and the common encoding and formatting mistakes.
+order: 40
+---
+
+# Writing a ConfigurationItem to an XML file
 
 ## Problem: Configuration XML is malformed, uses wrong encoding, or is unreadable
 

@@ -1,4 +1,9 @@
-# FAQ: New React Control Module
+---
+description: Read when creating a module of its own for React controls - package.json, tsconfig.json, vite.config.ts with tl-react-bridge shims, the entry file, frontend-maven-plugin in the pom.xml, ClientResources registration, building and common errors.
+order: 15
+---
+
+# New React Control Module
 
 ## When to use
 
@@ -8,7 +13,7 @@ When you need React controls in a separate module (not in `com.top_logic.layout.
 
 ## Required files
 
-All files from the [general module checklist](new-module-checklist.md) plus the following.
+All files from the [general module checklist](doc:engine/new-module-checklist) plus the following.
 
 ### 1. `package.json`
 
@@ -258,7 +263,7 @@ repository does it. `requires` orders the bundle after the bridge that owns the 
 A stylesheet of an engine module names the cascade layer `tl` of the engine's styles (`layer="tl"`),
 so that a component library (layer `mui`) and the stylesheets of an application (unlayered) override
 it, whatever the specificity of their rules — see
-[react-theme-tokens.md](react-theme-tokens.md#cascade-layers). The page imports it into that layer
+[Cascade layers](doc:view-layer/theme-tokens#cascade-layers). The page imports it into that layer
 with a `<style>@import url("…") layer(tl);</style>` instead of a `<link>`. Without `layer` stay an
 application's own stylesheet and a stylesheet that overrides unlayered styles a library writes into
 the page at runtime (e.g. `tlCodeEditor.css` against the base theme of CodeMirror).
@@ -280,7 +285,7 @@ export default MyControl;
 
 ### 8. Java UIElement + ReactControl
 
-Step by step in [new-ui-element.md](new-ui-element.md). For a full pattern see `ChartElement.java`
+Step by step in [A new `UIElement` with a client component of its own](doc:view-layer/new-ui-element). For a full pattern see `ChartElement.java`
 and `ReactChartJsControl.java` in `com.top_logic.layout.react.chartjs`.
 
 ## Build

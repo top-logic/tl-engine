@@ -1,4 +1,9 @@
-# FAQ: A TopLogic React application in a customer's Material UI theme
+---
+description: Read when an application is to look like a Material UI application in a customer's MUI theme - the theme module calling installMui, which components are replaced, what of the theme reaches the TopLogic components, and restyled, replaced and additional MUI-based components of the customer.
+order: 39
+---
+
+# A TopLogic React application in a customer's Material UI theme
 
 A customer brings an existing [Material UI](https://mui.com/) theme — a `createTheme(...)` call of
 its own design system — and expects the application built with the view layer (`.view.xml`) to
@@ -15,7 +20,7 @@ This article walks through both:
 The building blocks are the Material UI module `com.top_logic.layout.react.mui` (artifact
 `tl-layout-react-mui`, import specifier `tl-react-mui`) and the bridge `tl-react-bridge`. The
 mechanism behind them — root wrappers, `replace`, the state contract `state.proto` — is described in
-[customer-component-library.md](customer-component-library.md); this article is the recipe for the
+[Rendering the React UI with a customer's component library](doc:view-layer/customer-component-library); this article is the recipe for the
 Material UI case. The runnable reference is `com.top_logic.demo.react.mui` (artifact
 `tl-demo-react-mui`), a module in exactly the shape of a customer project; the excerpts below are
 taken from it.
@@ -39,7 +44,7 @@ tl-react-bridge bundle       React, the component registry (register / replace),
   from the customer's `ThemeOptions` unchanged; the MUI components render with it.
 - **The TopLogic components that are not replaced follow the theme.** Tables, trees, panels, the
   sidebar and toolbars read CSS custom properties that `installMui` derives from the MUI theme and
-  writes into the page ([Following the MUI theme](customer-component-library.md#following-the-mui-theme)).
+  writes into the page ([Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme)).
 - **Which components are MUI is a free choice**: all 25 replaceable components, or a selection.
 - **There is exactly one Material UI on the page**, the one in `tl-react-mui`. The theme and every
   customer component import Material UI from there, so they share the theme context, the emotion
@@ -68,7 +73,7 @@ acme.theme/
 
 ### 1. `pom.xml`
 
-A module like any React module ([new-react-module.md](new-react-module.md), step 5), with a
+A module like any React module ([New React control module](doc:engine/new-react-module), step 5), with a
 dependency on `tl-layout-react-mui` (`com.top_logic.demo.react.mui/pom.xml`, abbreviated):
 
 ```xml
@@ -113,7 +118,7 @@ the TopLogic parent POMs (`tl-parent-all`); the version of `tl-layout-react-mui`
 dependency management (`${tl.version}`). Inside the engine reactor, the demo uses the parent
 `tl-parent-core-internal`, is listed in `tl-parent-engine/pom.xml` and has a managed version in the
 root `pom.xml`; an application project uses its usual parent and module list. Everything else a
-module needs is in [new-module-checklist.md](new-module-checklist.md).
+module needs is in [New module checklist](doc:engine/new-module-checklist).
 
 ### 2. `package.json`
 
@@ -145,7 +150,7 @@ A module with components of its own (Part 2) adds `@types/react` and `@vitejs/pl
 
 ### 3. `tsconfig.json`
 
-The usual compiler options of a React module ([new-react-module.md](new-react-module.md), step 2)
+The usual compiler options of a React module ([New React control module](doc:engine/new-react-module), step 2)
 with one `paths` entry per bundle the module imports:
 
 ```json
@@ -406,7 +411,7 @@ anything.
 
 - `'all'` (`ALL_COMPONENTS`, the default) — every one of `COMPONENT_NAMES`, the 25 components of
   the state contract listed in
-  [The replaceable components](customer-component-library.md#the-replaceable-components);
+  [The replaceable components](doc:view-layer/customer-component-library#the-replaceable-components);
 - a list of names (typed as the union `ComponentName`), e.g.
   `replace: ['TLButton', 'TLCheckbox', 'TLTextInput']` — the other components keep their TopLogic
   rendering and follow the theme through the derived properties.
@@ -422,7 +427,7 @@ The derived properties cover the palette (brand, text, surfaces, actions, status
 the typography (font families, the sizes and line heights of `body2`, `caption`, `subtitle1/2`,
 `h3`–`h6`), `shape.borderRadius`, four elevations of `shadows` and the heights of the small MUI
 controls. The complete mapping is the table in
-[Following the MUI theme](customer-component-library.md#following-the-mui-theme); the
+[Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme); the
 computation is `com.top_logic.layout.react.mui/react-src/themeProperties.ts`.
 
 #### Limits
@@ -436,7 +441,7 @@ computation is `com.top_logic.layout.react.mui/react-src/themeProperties.ts`.
 ### Where customer CSS goes
 
 The page orders its styles by CSS cascade layers, `tl` (the engine) before `mui` (Material UI),
-with unlayered rules on top ([react-theme-tokens.md](react-theme-tokens.md#cascade-layers)). Each
+with unlayered rules on top ([Theme tokens in React stylesheets](doc:view-layer/theme-tokens#cascade-layers)). Each
 kind of customer CSS has its place there:
 
 | Customer CSS | Place | Effect |
@@ -501,7 +506,7 @@ Two things to know about the adapters:
   (`com.top_logic.layout.react.mui/react-src/adapters/Mui*Adapter.tsx`).
 - **A custom variant name** (`variant: 'dashed'`) is never selected by an adapter, since the
   adapters map the server state to MUI's own variants. A different look for one particular
-  control is a `css-class` in the view ([react-view-layer.md](react-view-layer.md#styling-a-single-element-css-class));
+  control is a `css-class` in the view ([Basics: composition, spacing, height and styling](doc:view-layer/basics#styling-a-single-element-css-class));
   the adapters put it on their root element (`rootClassName`).
 
 ### B. Replacing a TopLogic component by a customer adapter
@@ -535,7 +540,7 @@ export default defineConfig({
 ```
 
 The bundle then imports from nothing but `tl-react-bridge` and `tl-react-mui`. The React shims of
-[new-react-module.md](new-react-module.md) are needed only if the module bundles a third-party
+[New React control module](doc:engine/new-react-module) are needed only if the module bundles a third-party
 library that imports `react` itself.
 
 #### The adapter
@@ -596,7 +601,7 @@ the `menu-item` appearance with `menuItemProps`, `tooltip`, `keyGesture` (`useKe
 `navigateUrl`, `active`, `size`. `MuiButtonAdapter.tsx` is the complete mapping to start from.
 The state contract and the helpers of the bridge (`useTLFieldValue` for fields, `useFormLayout`,
 `useButtonDefaults`, `ThemeIcon`, `rootClassName`) are described in
-[customer-component-library.md](customer-component-library.md#level-2-adapter-components-for-leaf-widgets).
+[Rendering the React UI with a customer's component library](doc:view-layer/customer-component-library#level-2-adapter-components-for-leaf-widgets).
 
 #### Registering it
 
@@ -623,7 +628,7 @@ states the intent and keeps the console clean.
 A widget TopLogic has no counterpart for (a key-figure tile, a stepper, a domain-specific
 visualization) becomes an additional view element: a `UIElement` with its `Config` and tag, a
 `ReactControl` that publishes the state, and a client component. The server side is exactly as in
-[new-ui-element.md](new-ui-element.md) (steps 1, 2, 4–6); the control names the client component
+[A new `UIElement` with a client component of its own](doc:view-layer/new-ui-element) (steps 1, 2, 4–6); the control names the client component
 in its constructor:
 
 ```java
@@ -679,8 +684,8 @@ register('AcmeKpiTile', AcmeKpiTile);
 The state keys and command names are the contract with the `ReactControl` (`putState(LABEL, …)`,
 `@ReactCommandHandler(CMD_OPEN)`); keep them as constants on both sides. Make the element generic
 and parameterized by configuration, not tailored to one view
-([customer-component-library.md](customer-component-library.md#level-3-new-uielements-only-for-widgets-without-a-toplogic-counterpart)),
-and check [react-view-layer.md](react-view-layer.md) first: a composition of existing elements
+([Rendering the React UI with a customer's component library](doc:view-layer/customer-component-library#level-3-new-uielements-only-for-widgets-without-a-toplogic-counterpart)),
+and check [React view layer chapter](doc:view-layer) first: a composition of existing elements
 needs no component at all.
 
 ## Checklist and pitfalls
@@ -711,7 +716,7 @@ needs no component at all.
 
   ```bash
   mvn -B install -pl com.top_logic.layout.react.mui,com.top_logic.demo.react.mui,com.top_logic.demo.react -P mui
-  MAVEN_ARGS=-Pmui   # start the app with the same profile, see demo-apps.md
+  MAVEN_ARGS=-Pmui   # start the app with the same profile, see engine/demo-apps
   ```
 
   Compare the customer application against it when something looks off; the adapters' wire tests

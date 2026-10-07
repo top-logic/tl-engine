@@ -29,7 +29,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
-import com.top_logic.model.security.ContainerAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -498,7 +497,8 @@ public class SecurityDefinitionEditor {
 	 * @param type
 	 *        The type whose access parent is set.
 	 * @param definition
-	 *        The definition to store, e.g. a {@link ContainerAccessParent.Config}; <code>null</code>
+	 *        The definition to store, e.g. a
+	 *        {@link com.top_logic.model.security.ContainerAccessParent.Config}; <code>null</code>
 	 *        to drop the setting.
 	 * @throws IOException
 	 *         When the file cannot be written.

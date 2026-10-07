@@ -262,7 +262,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		putState("fullLine", Boolean.TRUE);
 
 		putState(ERROR_ICON,
-			ReactImages.encode(context, com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR));
+			ReactImages.encode(_context, com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR));
 	}
 
 	@Override

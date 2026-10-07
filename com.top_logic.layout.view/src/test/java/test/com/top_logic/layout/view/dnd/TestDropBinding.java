@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.layout.view.table;
+package test.com.top_logic.layout.view.dnd;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,8 +34,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.layout.view.table.DropTargetMode;
-import com.top_logic.layout.view.table.TableDropBinding;
+import com.top_logic.layout.view.dnd.DropBinding;
+import com.top_logic.layout.view.dnd.DropScope;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -44,16 +44,17 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * Tests the drop target a declared table's {@code <drop>}s produce: which type tags it accepts,
- * whether its rows are targets, and which declared drop applies a drop that arrives.
+ * Tests {@link DropBinding}, the drop target of declared {@code <drop>}s: which type tags it
+ * accepts, whether single items are targets, and which declared drop applies a drop that arrives.
  *
  * <p>
- * The drop is driven through the control seam the client uses - the {@code drop} command of the
- * receiving table, naming the source table and its dragged row - so what is exercised is the same
- * path a dragged row takes.
+ * Tables serve as source and target control: the drop is driven through the control seam the client
+ * uses - the {@code drop} command of the receiving table, naming the source table and its dragged
+ * row - so what is exercised is the same path a dragged item takes. A row of the target table is
+ * the item an {@link DropScope#ITEM} drop is made on.
  * </p>
  */
-public class TestTableDropBinding extends TestCase {
+public class TestDropBinding extends TestCase {
 
 	/** The type the rows of the source table are dragged as. */
 	private static final String ROW_TYPE = "demo.test:Row";
@@ -117,18 +118,18 @@ public class TestTableDropBinding extends TestCase {
 	/**
 	 * A table accepting the given drops.
 	 */
-	private TableViewControl<String> newTargetTable(List<TableDropBinding.Drop> drops) {
+	private TableViewControl<String> newTargetTable(List<DropBinding.Drop> drops) {
 		TableViewControl<String> target = newTable(TARGET_ROWS);
-		target.setDropTarget(new TableDropBinding(_context, drops));
+		target.setDropTarget(new DropBinding(_context, drops));
 		return target;
 	}
 
-	private TableDropBinding.Drop tableDrop(String acceptedTag, Recorder action) {
-		return new TableDropBinding.Drop(Set.of(acceptedTag), DropTargetMode.TABLE, null, List.of(action));
+	private DropBinding.Drop tableDrop(String acceptedTag, Recorder action) {
+		return new DropBinding.Drop(Set.of(acceptedTag), DropScope.CONTROL, null, List.of(action));
 	}
 
-	private TableDropBinding.Drop rowDrop(String acceptedTag, Recorder action) {
-		return new TableDropBinding.Drop(Set.of(acceptedTag), DropTargetMode.ROW, _targetChannel,
+	private DropBinding.Drop rowDrop(String acceptedTag, Recorder action) {
+		return new DropBinding.Drop(Set.of(acceptedTag), DropScope.ITEM, _targetChannel,
 			List.of(action));
 	}
 
@@ -160,14 +161,14 @@ public class TestTableDropBinding extends TestCase {
 	 * of them targets rows.
 	 */
 	public void testAcceptedTagsAndRowTargeting() {
-		TableDropBinding both = new TableDropBinding(_context,
+		DropBinding both = new DropBinding(_context,
 			List.of(tableDrop(ROW_TYPE, _onTable), rowDrop(OTHER_TYPE, _onRow)));
 
 		assertEquals(Set.of(ROW_TYPE, OTHER_TYPE), Set.copyOf(both.acceptedTypes()));
 		assertTrue("A drop targeting rows makes the rows targets.", both.dropOnRows());
 
-		TableDropBinding onTableOnly =
-			new TableDropBinding(_context, List.of(tableDrop(ROW_TYPE, _onTable)));
+		DropBinding onTableOnly =
+			new DropBinding(_context, List.of(tableDrop(ROW_TYPE, _onTable)));
 		assertEquals(Set.of(ROW_TYPE), Set.copyOf(onTableOnly.acceptedTypes()));
 		assertFalse("Without a row drop the rows are no targets.", onTableOnly.dropOnRows());
 	}
@@ -258,9 +259,9 @@ public class TestTableDropBinding extends TestCase {
 	 */
 	public void testTableWideRefusalRemovesTheDrop() {
 		ExecutableState[] state = { ExecutableState.createDisabledState(REASON) };
-		TableDropBinding.Drop restricted = new TableDropBinding.Drop(Set.of(ROW_TYPE), DropTargetMode.ROW,
+		DropBinding.Drop restricted = new DropBinding.Drop(Set.of(ROW_TYPE), DropScope.ITEM,
 			_targetChannel, List.of(_onRow), () -> state[0], ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
-		TableDropBinding binding = new TableDropBinding(_context, List.of(restricted, tableDrop(OTHER_TYPE, _onTable)));
+		DropBinding binding = new DropBinding(_context, List.of(restricted, tableDrop(OTHER_TYPE, _onTable)));
 
 		assertEquals("A disabled drop contributes no tag.", Set.of(OTHER_TYPE), Set.copyOf(binding.acceptedTypes()));
 		assertFalse("A disabled row drop makes no row a target.", binding.dropOnRows());
@@ -283,9 +284,9 @@ public class TestTableDropBinding extends TestCase {
 		String refusedRow = TARGET_ROWS.get(1);
 		ViewExecutabilityRule targetRule = row -> refusedRow.equals(row)
 			? ExecutableState.createDisabledState(REASON) : ExecutableState.EXECUTABLE;
-		TableDropBinding.Drop restricted = new TableDropBinding.Drop(Set.of(ROW_TYPE), DropTargetMode.ROW,
+		DropBinding.Drop restricted = new DropBinding.Drop(Set.of(ROW_TYPE), DropScope.ITEM,
 			_targetChannel, List.of(_onRow), () -> ExecutableState.EXECUTABLE, targetRule, null);
-		TableDropBinding binding = new TableDropBinding(_context, List.of(restricted));
+		DropBinding binding = new DropBinding(_context, List.of(restricted));
 		TableViewControl<String> target = newTable(TARGET_ROWS);
 		target.setDropTarget(binding);
 
@@ -314,8 +315,8 @@ public class TestTableDropBinding extends TestCase {
 			seen.add(objects);
 			return result[0];
 		};
-		TableDropBinding binding = new TableDropBinding(_context, List.of(new TableDropBinding.Drop(
-			Set.of(ROW_TYPE), DropTargetMode.ROW, _targetChannel, List.of(_onRow),
+		DropBinding binding = new DropBinding(_context, List.of(new DropBinding.Drop(
+			Set.of(ROW_TYPE), DropScope.ITEM, _targetChannel, List.of(_onRow),
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf)));
 
 		result[0] = null;
@@ -338,7 +339,7 @@ public class TestTableDropBinding extends TestCase {
 	 * A drag no declared drop matches is refused with the generic reason.
 	 */
 	public void testNoMatchIsRefused() {
-		TableDropBinding binding = new TableDropBinding(_context, List.of(tableDrop(OTHER_TYPE, _onTable)));
+		DropBinding binding = new DropBinding(_context, List.of(tableDrop(OTHER_TYPE, _onTable)));
 
 		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED, binding.check(event(null)));
 	}
@@ -347,14 +348,14 @@ public class TestTableDropBinding extends TestCase {
 	 * Applying a drop passes over a disabled declared drop - to the next matching one, or to none.
 	 */
 	public void testOnDropSkipsDisabledDrops() {
-		TableDropBinding.Drop disabled = new TableDropBinding.Drop(Set.of(ROW_TYPE), DropTargetMode.TABLE, null,
+		DropBinding.Drop disabled = new DropBinding.Drop(Set.of(ROW_TYPE), DropScope.CONTROL, null,
 			List.of(_onRow), () -> ExecutableState.createDisabledState(REASON),
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 
-		new TableDropBinding(_context, List.of(disabled)).onDrop(event(null));
+		new DropBinding(_context, List.of(disabled)).onDrop(event(null));
 		assertFalse("A disabled drop applies nothing.", _onRow._executed);
 
-		new TableDropBinding(_context, List.of(disabled, tableDrop(ROW_TYPE, _onTable))).onDrop(event(null));
+		new DropBinding(_context, List.of(disabled, tableDrop(ROW_TYPE, _onTable))).onDrop(event(null));
 		assertFalse(_onRow._executed);
 		assertTrue("The next matching drop applies.", _onTable._executed);
 	}
@@ -378,7 +379,7 @@ public class TestTableDropBinding extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestTableDropBinding.class, ResourcesModule.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestDropBinding.class, ResourcesModule.Module.INSTANCE));
 	}
 
 }

@@ -200,6 +200,7 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	/**
 	 * Detaches this model from the form's field-change notifications.
 	 */
+	@Override
 	public void dispose() {
 		_formControl.removeFieldChangeListener(_fieldChangeListener);
 	}

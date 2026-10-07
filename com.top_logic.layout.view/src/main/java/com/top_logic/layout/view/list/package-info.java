@@ -6,6 +6,7 @@
 /**
  * Repeating a content template over a computed list of model objects: the
  * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;} element and its
- * supporting actions.
+ * supporting actions, and the {@link com.top_logic.layout.view.list.KanbanBoardElement
+ * &lt;kanban-board&gt;} element distributing the objects into columns.
  */
 package com.top_logic.layout.view.list;

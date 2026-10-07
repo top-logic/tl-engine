@@ -7,7 +7,6 @@ package com.top_logic.layout.view.form;
 
 import java.util.List;
 
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -20,12 +19,12 @@ import com.top_logic.model.TLStructuredTypePart;
  * objects are the rows, how a new row comes into existence (and which types are offered), what
  * removing a row means at commit time, and what is written back when the form is saved. The
  * cell-editing mechanics (row overlays, per-cell field models, validation) are independent of the
- * binding and implemented by {@link AbstractCompositionControl}.
+ * binding and implemented by {@link RowSetEditSession}.
  * </p>
  *
  * <p>
  * Implementations: {@link AttributeRowSetBinding} derives everything from a reference attribute of
- * the form object (composition references delete removed rows, plain references only unlink them);
+ * the object holding the rows (composition references delete removed rows, plain references only unlink them);
  * {@link QueryRowSetBinding} computes rows from an arbitrary query and takes its membership
  * semantics from explicit configuration.
  * </p>
@@ -48,11 +47,12 @@ public interface RowSetBinding {
 	}
 
 	/**
-	 * Re-resolves this binding against the given form object.
+	 * Re-resolves this binding against the given owner object.
 	 *
 	 * @param formObject
-	 *        The form's current base object, or {@code null} if the form has none. Bindings that
-	 *        are not anchored at an object (queries) may still resolve successfully.
+	 *        The object holding the rows (the form's current object or a row of an edited row set),
+	 *        or {@code null} if there is none. Bindings that are not anchored at an object
+	 *        (queries) may still resolve successfully.
 	 * @return Whether the binding is available, i.e. {@link #readRows(TLObject)} can produce rows.
 	 */
 	boolean resolve(TLObject formObject);
@@ -71,7 +71,7 @@ public interface RowSetBinding {
 	 * without a bound attribute.
 	 *
 	 * <p>
-	 * When non-{@code null}, the {@link AbstractCompositionControl} re-evaluates constraints on this attribute
+	 * When non-{@code null}, the {@link RowSetEditSession} re-evaluates constraints on this attribute
 	 * whenever the row set changes.
 	 * </p>
 	 */
@@ -81,7 +81,7 @@ public interface RowSetBinding {
 	 * The current row objects, read from the given object.
 	 *
 	 * @param object
-	 *        The object to read from (the form's base object or its overlay), or {@code null} for
+	 *        The object to read from (the owner of the row set or its editing buffer), or {@code null} for
 	 *        bindings without a bound attribute.
 	 */
 	List<TLObject> readRows(TLObject object);
@@ -97,41 +97,39 @@ public interface RowSetBinding {
 	RemoveMode getRemoveMode();
 
 	/**
-	 * Publishes a membership change (row added or removed) of the running edit session to the form
-	 * overlay, so that constraints on the {@link #getBoundPart() bound attribute} observe the
-	 * current row set.
+	 * Publishes a membership change (row added or removed) of the running edit session to the
+	 * editing buffer of the owner, so that constraints on the {@link #getBoundPart() bound
+	 * attribute} observe the current row set.
 	 *
 	 * <p>
 	 * Bindings without a bound attribute do nothing here; membership changes are buffered in the
 	 * edit session only.
 	 * </p>
 	 *
-	 * @param form
-	 *        The form whose overlay buffers the edit session.
+	 * @param owner
+	 *        The editing buffer of the object holding the rows.
 	 * @param currentRows
 	 *        The current row objects (row overlays and transient new objects).
 	 */
-	void updateMembership(FormControl form, List<TLObject> currentRows);
+	void updateMembership(TLObject owner, List<TLObject> currentRows);
 
 	/**
-	 * Commits the row set within the given transaction.
+	 * Commits the row set, within the transaction storing the edit session.
 	 *
 	 * <p>
-	 * Attribute bindings write the persisted row list back to the bound attribute of the form
-	 * overlay. All bindings apply their remove semantics to the objects taken out of the row set
-	 * during the edit session.
+	 * Attribute bindings write the persisted row list back to the bound attribute of the editing
+	 * buffer of the owner. All bindings apply their remove semantics to the objects taken out of
+	 * the row set during the edit session.
 	 * </p>
 	 *
-	 * @param tx
-	 *        The open transaction the commit takes part in.
-	 * @param form
-	 *        The form whose overlay buffers the edit session.
+	 * @param owner
+	 *        The editing buffer of the object holding the rows.
 	 * @param persistedRows
 	 *        The current rows with overlays and transient creations replaced by their persistent
 	 *        objects.
 	 * @param originalRows
 	 *        The persistent rows at edit-session start.
 	 */
-	void commit(Transaction tx, FormControl form, List<TLObject> persistedRows, List<TLObject> originalRows);
+	void commit(TLObject owner, List<TLObject> persistedRows, List<TLObject> originalRows);
 
 }

@@ -75,6 +75,10 @@
 					<class name="TestViewModelAccess:Step"
 						access-parent="container"
 					/>
+					<!-- An item of a step is decided by the step. -->
+					<class name="TestViewModelAccess:Item"
+						access-parent="container"
+					/>
 					<class name="TestViewModelAccess:Category">
 						<!-- A category may only be read, by its reader. -->
 						<grant
@@ -137,6 +141,10 @@
 					</part>
 					<part name="TestViewModelAccess:Step#secret">
 						<!-- Nobody but a super-user may write the secret of a step. -->
+						<grant operation="Write"/>
+					</part>
+					<part name="TestViewModelAccess:Step#lockedItems">
+						<!-- Nobody but a super-user may change the locked items of a step. -->
 						<grant operation="Write"/>
 					</part>
 					<part name="TestViewModelAccess:Task#secret">

@@ -254,7 +254,7 @@ export default MyControl;
 
 ### 8. Java UIElement + ReactControl
 
-Step by step in [new-ui-element.md](new-ui-element.md). For a full pattern see `ChartElement.java`
+Step by step in [new-ui-element.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/new-ui-element.md). For a full pattern see `ChartElement.java`
 and `ReactChartJsControl.java` in `com.top_logic.layout.react.chartjs`.
 
 ## Build

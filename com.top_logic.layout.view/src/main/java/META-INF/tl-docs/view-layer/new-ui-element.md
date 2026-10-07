@@ -1,4 +1,9 @@
-# FAQ: New `UIElement` — with a client component of its own
+---
+description: Read before adding a new view element (UIElement with its own tag, ReactControl and client component) that a .view.xml can use - the files involved, the state contract, registration, i18n and verification.
+order: 100
+---
+
+# A new `UIElement` with a client component of its own
 
 How to add an element that a `.view.xml` can use, and what else has to be in place when the element
 brings a React component that does not exist yet.
@@ -7,7 +12,7 @@ The names below are placeholders: the module is `my.app.module`, its Java packag
 `com.example.app.view`, the element `MyElement` (tag `my-element`), its control `MyControl` and the
 client component `MyWidget`. Replace them by your own.
 
-Before writing a new client component, check [view-layer/basics.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/basics.md): the
+Before writing a new client component, check [view-layer/basics.md](doc:view-layer/basics): the
 `.view.xml` layer is a *composition* layer. A new component is justified for a genuinely new generic
 widget, not for assembling panels, forms and buttons that already exist. An element that only
 composes existing controls needs steps 1, 2, 4 and 5 — the whole client part falls away.
@@ -38,7 +43,7 @@ state; the component only renders what the control publishes and sends back gest
 | `src/main/java/com/example/app/view/MyElement.java` | `UIElement` implementation plus its `Config` (the `@TagName` is the element's name in XML) |
 | `src/main/java/com/example/app/view/MyControl.java` | `ReactControl`: names the client component, publishes state, answers commands |
 | `src/main/webapp/WEB-INF/views/my-view.view.xml` | uses the new tag |
-| `src/main/webapp/WEB-INF/views/app.view.xml` (or another view) | makes the view reachable, e.g. as a `nav-item` in the application's overlay of the shell (see [the application shell](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/app-shell.md#the-application-shell-extending-appviewxml)) |
+| `src/main/webapp/WEB-INF/views/app.view.xml` (or another view) | makes the view reachable, e.g. as a `nav-item` in the application's overlay of the shell (see [the application shell](doc:view-layer/app-shell#the-application-shell-extending-appviewxml)) |
 | `src/main/java/META-INF/messages_de.properties` | German labels of the new configuration properties (English is generated) |
 | **Client — only for a new component** | |
 | `react-src/controls/MyWidget.tsx` | the component |
@@ -102,7 +107,7 @@ public class MyElement implements UIElement {
 - Keep the element stateless: it is parsed once and shared by every session. Anything the user
   changes belongs in the control.
 - An element that should not claim a global tag can be placed by `class=` instead — see
-  [view-layer/basics.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/basics.md#the-viewxml-layer-is-a-composition-layer-not-a-place-for-new-react-components).
+  [view-layer/basics.md](doc:view-layer/basics#the-viewxml-layer-is-a-composition-layer-not-a-place-for-new-react-components).
 - **Every element inherits `css-class`** from `UIElement.Config`, so the configuration declares
   nothing for it. The element passes the configured class to the control it returns —
   `result.setCssClass(_config.getCssClass())` — and the control writes it on the root element of its
@@ -215,7 +220,7 @@ framework module `com.top_logic.layout.react` itself.
 
 Do **not** depend on `react` / `react-dom` — they come from `tl-react-bridge`. Third-party React
 libraries go under `dependencies` and then need the shim aliases described in
-[new-react-module.md](new-react-module.md).
+[new-react-module.md](../../../../../../../docs/faq/new-react-module.md).
 
 `tsconfig.json` is the same in every module; the `paths` entry is what makes `tl-react-bridge`
 resolvable for the type checker:
@@ -303,7 +308,7 @@ configuration (`WEB-INF/conf/<module>.conf.config.xml`; in an application module
 instance. Without this whole section the browser reports “Component not registered”.
 
 A **new** module also needs its config file listed in its own `WEB-INF/conf/metaConf.txt`, plus the
-rest of the [new module checklist](new-module-checklist.md).
+rest of the [new module checklist](../../../../../../../docs/faq/new-module-checklist.md).
 
 ### 3.6 Git
 
@@ -359,7 +364,7 @@ Resource check: Missing resource keys in '…/messages_de.properties':
   com.example.app.view.MyElement.Config.label.tooltip, …
 ```
 
-Keep the file sorted the way the generated English one is. Details in [i18n.md](i18n.md).
+Keep the file sorted the way the generated English one is. Details in [i18n.md](../../../../../../../docs/faq/i18n.md).
 
 ## 6. Build and verify
 
@@ -394,7 +399,7 @@ Two traps worth knowing:
   grep -rl "<a string from your component>" my.app.module/target
   ```
 
-Then start the application (see [demo-apps.md](demo-apps.md)) and exercise the element in the
+Then start the application (see [demo-apps.md](../../../../../../../docs/faq/demo-apps.md)) and exercise the element in the
 browser.
 
 ## Troubleshooting
@@ -403,7 +408,7 @@ browser.
 |---------|-------|-----|
 | `… has no property 'my-element'` when loading the view | Type index missing or stale | `mvn clean install -pl my.app.module` (step 6) |
 | Element renders as an empty box, console says “Component not registered” | Bundle not announced, or the name in `register(…)` differs from the one passed to `super(…)` | Step 3.5, then compare the two names |
-| “useState is null” / “useRef is null” | Second React instance: a component or a third-party library imports from `react` | Import from `tl-react-bridge`; for libraries add the shim aliases ([new-react-module.md](new-react-module.md)) |
+| “useState is null” / “useRef is null” | Second React instance: a component or a third-party library imports from `react` | Import from `tl-react-bridge`; for libraries add the shim aliases ([new-react-module.md](../../../../../../../docs/faq/new-react-module.md)) |
 | Component shows the initial state but never updates | State written into fields instead of `putState`, or the client keeps its own copy | Publish every change with `putState`; render from `useTLState()` |
 | Command does nothing | Name mismatch between `sendCommand('x')` and `@ReactCommandHandler("x")` | Align the names |
 | CSS not applied | Stylesheet not announced | Add the `<stylesheet>` resource (step 3.5) |
@@ -433,9 +438,9 @@ my.app.module/
 
 ## See also
 
-- [view-layer/basics.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/basics.md) — when a new component is justified at all, and how to
+- [view-layer/basics.md](doc:view-layer/basics) — when a new component is justified at all, and how to
   compose existing ones
-- [new-react-module.md](new-react-module.md) — a module whose purpose *is* React controls, including
+- [new-react-module.md](../../../../../../../docs/faq/new-react-module.md) — a module whose purpose *is* React controls, including
   third-party libraries and their React shims
-- [new-module-checklist.md](new-module-checklist.md) — everything a new module needs beyond this
-- [i18n.md](i18n.md) — the resource workflow
+- [new-module-checklist.md](../../../../../../../docs/faq/new-module-checklist.md) — everything a new module needs beyond this
+- [i18n.md](../../../../../../../docs/faq/i18n.md) — the resource workflow

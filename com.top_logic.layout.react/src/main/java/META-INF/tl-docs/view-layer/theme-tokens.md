@@ -1,4 +1,9 @@
-# FAQ: Theme tokens in React stylesheets
+---
+description: Read before writing or changing CSS of a React control or view - which theme tokens a stylesheet consumes (colors by role, typography, the radius tiers, the elevation scale) and the audit test enforcing them.
+order: 35
+---
+
+# Theme tokens in React stylesheets
 
 ## How a token reaches the CSS
 
@@ -101,7 +106,7 @@ the surface it styles, and the default leaves every surface without one.
 ## Typography tokens
 
 The `<text>` element states what a text is for as a
-[variant](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/display.md#text-variant-tone-and-appearance), and the stylesheet fills the role
+[variant](doc:view-layer/display#text-variant-tone-and-appearance), and the stylesheet fills the role
 from these tokens:
 
 | Variant | Family | Size | Line height | Weight |

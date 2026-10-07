@@ -55,7 +55,7 @@ Map the customer's tokens (brand colours, fonts, radii, shadows) onto a theme of
 
 The shipped themes are in `com.top_logic.layout.react/src/main/webapp/WEB-INF/conf/tl-react-theme.config.xml`;
 the tokens, their tiers and the audit test are described in
-[react-theme-tokens.md](react-theme-tokens.md). Where possible, let the customer's CSS variables and
+[react-theme-tokens.md](../../com.top_logic.layout.react/src/main/java/META-INF/tl-docs/view-layer/theme-tokens.md). Where possible, let the customer's CSS variables and
 the TopLogic tokens refer to the same source.
 
 This level alone covers a large part of the appearance, in particular of the complex components that
@@ -234,7 +234,7 @@ the state as `Partial<XStateJson>`.
 ## Level 3: new UIElements only for widgets without a TopLogic counterpart
 
 If the customer has a widget TopLogic has no counterpart for (a stepper, a KPI tile), build a
-`UIElement` + `ReactControl` + component as described in [new-ui-element.md](new-ui-element.md). Make
+`UIElement` + `ReactControl` + component as described in [new-ui-element.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/new-ui-element.md). Make
 it generic and parameterized by configuration, not tailored to one view.
 
 ## What to avoid

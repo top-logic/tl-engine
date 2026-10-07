@@ -105,6 +105,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private final boolean _editable;
 
+	/**
+	 * The button adding an entry, once it is offered in the header of the group around this editor
+	 * instead of below the entries - see {@link #headerAddButton()}; {@code null} before.
+	 */
+	private ReactButtonControl _headerAddButton;
+
 	private final List<ListenerRegistration> _listeners = new ArrayList<>();
 
 	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
@@ -302,10 +308,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			// after confirming one of two entries that were being given the same key.
 			_pending.checkKeys();
 
-			// Add button at the bottom. Not rendered at all while !_editable - the requirement is
-			// that no collection action is offered in view mode, not merely a disabled one - nor
-			// while the collection cannot take another element.
-			if (!_value.isFull()) {
+			// Add button at the bottom, unless the header of the surrounding group carries it. Not
+			// rendered at all while !_editable - the requirement is that no collection action is
+			// offered in view mode, not merely a disabled one - nor while the collection cannot take
+			// another element.
+			if (_headerAddButton != null) {
+				_headerAddButton.setDisabled(_value.isFull());
+			} else if (!_value.isFull()) {
 				ReactButtonControl addButton =
 					new ReactButtonControl(_context, "+ " + _value.label(),
 						ctx -> {
@@ -317,6 +326,37 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		putState("children", getChildren());
+	}
+
+	/**
+	 * Moves the button adding an entry from below the entries into the header of the group around
+	 * this editor.
+	 *
+	 * <p>
+	 * Below the entries, the buttons of nested collections stand one under the other at the end of
+	 * their entries, and none of them shows which collection it adds to. In the header it stands next
+	 * to the name of its collection. The caller puts the button among the header actions of the
+	 * group around this editor; this editor stops rendering it below the entries, and disables it
+	 * while the collection cannot take another entry.
+	 * </p>
+	 *
+	 * @return The button for the header, or {@code null} if this editor offers no entry to add,
+	 *         since it is not {@link #_editable editable}.
+	 */
+	public ReactButtonControl headerAddButton() {
+		if (!_editable) {
+			return null;
+		}
+		if (_headerAddButton == null) {
+			_headerAddButton = new ReactButtonControl(_context, "+", ctx -> {
+				addElement();
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			_headerAddButton.setTooltip(
+				Resources.getInstance().getString(I18NConstants.ADD_ENTRY__COLLECTION.fill(_value.label())));
+			rebuild(null);
+		}
+		return _headerAddButton;
 	}
 
 	/**
@@ -366,8 +406,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		PropertyDescriptor keyProperty = _value.keyProperty(item);
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, null);
 
+		// Framed, so that the fields of an entry - and the collections nested in it - read as
+		// belonging to the entry, and its frame inside the frame of the entry around it shows the
+		// level it is on.
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, !expanded, GroupBorder.SUBTLE, true,
+			_context, null, true, !expanded, GroupBorder.OUTLINED, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(item, keyProperty, null, label);
 		group.setHeader(header);
@@ -438,8 +481,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			_listeners.add(new ListenerRegistration(entry, keyProperty, keyListener));
 		}
 
+		// Framed like a committed entry, see createElementGroup(ConfigurationItem, int, int, boolean).
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, false, GroupBorder.SUBTLE, true,
+			_context, null, true, false, GroupBorder.OUTLINED, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(entry, keyProperty, pending, label);
 		group.setHeader(header);
@@ -480,6 +524,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			bodyChildren.add(new ConfigEditorControl(_context, item,
 				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index,
 				_editable, formModelOr(item)));
+		}
+		if (bodyChildren.size() > 1) {
+			// The type selector and the fields of the entry are laid out by one form, so that the
+			// selector gets a column as wide as the ones of the fields. Directly in the body of the
+			// group, it would take a column of the grid around the entry, narrowed by the frame.
+			return List.of(new ReactFormLayoutControl(_context, bodyChildren));
 		}
 		return bodyChildren;
 	}

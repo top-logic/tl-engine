@@ -80,6 +80,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey TYPE_SELECTOR;
 
+	/**
+	 * @en Add an entry to "{0}".
+	 */
+	public static ResKey1 ADD_ENTRY__COLLECTION;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

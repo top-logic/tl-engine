@@ -21,6 +21,9 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.customization.NoCustomizations;
+import com.top_logic.basic.config.order.DefaultOrderStrategy;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -31,6 +34,7 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
@@ -55,6 +59,12 @@ import com.top_logic.util.Resources;
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
  * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * </p>
+ *
+ * <p>
+ * The properties are displayed in the order of a {@link DisplayOrder} annotation of the item's
+ * interface, the same as in other configuration forms. Without one, the properties of a super
+ * interface come before the ones the interface declares itself.
  * </p>
  *
  * <p>
@@ -234,7 +244,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		_formModel = formModel;
 		_displays = displays;
 
-		for (PropertyDescriptor property : config.descriptor().getProperties()) {
+		for (PropertyDescriptor property : displayProperties(config)) {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
@@ -301,9 +311,12 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				// forms - one per entry, each with its own header and actions - and a third of the
 				// row is not a place to put a form. It also keeps a collection recognizable as one
 				// section rather than as a column of the surrounding grid.
+				// The button adding an entry stands next to the name of the collection, so that it is
+				// clear which collection it adds to - see ConfigListEditorControl#headerAddButton().
+				ReactButtonControl addButton = listEditor.headerAddButton();
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
 					context, null, true, false, GroupBorder.SUBTLE, true,
-					List.of(), List.of(listEditor));
+					addButton == null ? List.of() : List.of(addButton), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);
 				followMode(config, property, listGroup, null);
@@ -637,6 +650,15 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				field.setDisabled(true);
 			}
 		}
+	}
+
+	/**
+	 * The properties of the given item in the order they are displayed.
+	 *
+	 * @see DisplayOrder
+	 */
+	private static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
+		return new DefaultOrderStrategy.Collector(NoCustomizations.INSTANCE, config.descriptor()).collect();
 	}
 
 	/**

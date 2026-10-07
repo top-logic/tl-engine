@@ -465,8 +465,9 @@ public class TestConfigFormControl extends TestCase {
 	 *
 	 * <p>
 	 * Identified by the literal {@code "+ "} prefix {@code ConfigListEditorControl#rebuild}
-	 * hardcodes ahead of the property's own (locale-dependent) label, rather than by the full label
-	 * text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
+	 * hardcodes ahead of the property's own (locale-dependent) label, or by the bare {@code "+"} of
+	 * the button {@link ConfigListEditorControl#headerAddButton()} puts in the header of the
+	 * collection's group, rather than by the full label text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
 	 * translated property label here would tie this test to whatever the JVM's default locale
 	 * happens to resolve it to.
 	 * </p>
@@ -474,7 +475,7 @@ public class TestConfigFormControl extends TestCase {
 	private ReactButtonControl findAddButton(ReactControl control) {
 		if (control instanceof ReactButtonControl button) {
 			Object label = button.scriptingScalarState().get("label");
-			if (label instanceof String text && text.startsWith("+ ")) {
+			if (label instanceof String text && (text.equals("+") || text.startsWith("+ "))) {
 				return button;
 			}
 		}

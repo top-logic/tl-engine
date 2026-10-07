@@ -40,6 +40,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -73,6 +74,7 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -571,6 +573,32 @@ public class TestConfigEditorControl extends TestCase {
 	 * requiring Resources/ThreadContextManager in unit tests.
 	 */
 	/**
+	 * A configuration that displays its properties in an order of its own, not the order of their
+	 * names.
+	 */
+	@DisplayOrder({
+		OrderedConfig.ZETA,
+		OrderedConfig.ALPHA,
+	})
+	public interface OrderedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getAlpha()}. */
+		String ALPHA = "alpha";
+
+		/** Property name for {@link #getZeta()}. */
+		String ZETA = "zeta";
+
+		/** Displayed second. */
+		@Name(ALPHA)
+		String getAlpha();
+
+		/** Displayed first. */
+		@Name(ZETA)
+		String getZeta();
+
+	}
+
+	/**
 	 * A configuration whose {@link #getName() name} is hidden or disabled depending on two other
 	 * properties, and whose {@link #getItems() items} are hidden with the name.
 	 */
@@ -870,6 +898,11 @@ public class TestConfigEditorControl extends TestCase {
 	 * Finds the field model of the type selector rendered inside the given element group, by its
 	 * {@link ReactControl#scriptingName()}, which does not depend on the language of its label,
 	 * plus the public {@link ReactControl#getModel()} of the field control found that way.
+	 *
+	 * <p>
+	 * The selector shares a form with the fields of the entry, so it is looked for in the form the
+	 * body of the group holds, too.
+	 * </p>
 	 */
 	private FieldModel findTypeFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
@@ -877,6 +910,9 @@ public class TestConfigEditorControl extends TestCase {
 				for (ReactControl field : child.scriptingChildren()) {
 					return (FieldModel) field.getModel();
 				}
+			}
+			if (child instanceof ReactFormLayoutControl && !(child instanceof ConfigEditorControl)) {
+				return findTypeFieldModel(child);
 			}
 		}
 		fail("Should have a type selector field in the element group");
@@ -1716,6 +1752,67 @@ public class TestConfigEditorControl extends TestCase {
 		// 3 rendered (count, enabled, label) + 1 inherited = at least 4 children (each wrapped in
 		// chrome); bindingOnly contributes none.
 		assertTrue("Should have at least 3 child controls", editor.getChildCount() >= 3);
+	}
+
+	/**
+	 * The button adding an entry to a collection stands in the header of the collection's group,
+	 * next to its name, not below its entries - so it is clear which collection it adds to.
+	 */
+	public void testTheAddButtonStandsInTheHeaderOfTheCollection() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		int collections = 0;
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (!(child instanceof ReactFormGroupControl group)) {
+				continue;
+			}
+			ReactButtonControl addButton = null;
+			ConfigListEditorControl listEditor = null;
+			for (ReactControl groupChild : group.scriptingChildren()) {
+				if (groupChild instanceof ReactButtonControl button) {
+					addButton = button;
+				} else if (groupChild instanceof ConfigListEditorControl list) {
+					listEditor = list;
+				}
+			}
+			assertNotNull("Group without a collection: " + group, listEditor);
+			assertNotNull("No add button in the header of " + group, addButton);
+			for (ReactControl entry : listEditor.scriptingChildren()) {
+				assertFalse("Add button below the entries: " + entry, entry instanceof ReactButtonControl);
+			}
+			collections++;
+		}
+		assertEquals(3, collections);
+	}
+
+	/**
+	 * The button in the header adds an entry, the same as the one below the entries did.
+	 */
+	public void testTheAddButtonInTheHeaderAddsAnEntry() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ConfigListEditorControl listEditor = new ConfigListEditorControl(createTestContext(), config,
+			config.descriptor().getProperty(ListTestConfig.PLAIN_ITEMS));
+
+		click(listEditor.headerAddButton());
+		assertEquals(1, config.getPlainItems().size());
+	}
+
+	/**
+	 * The fields follow the {@link DisplayOrder} of the configuration, as in any other
+	 * configuration form, and a property it does not list is not displayed.
+	 */
+	public void testFieldsFollowTheDisplayOrder() {
+		OrderedConfig config = TypedConfiguration.newConfigItem(OrderedConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		List<Object> labels = new ArrayList<>();
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				labels.add(child.scriptingScalarState().get("label"));
+			}
+		}
+		assertEquals(List.of(OrderedConfig.ZETA, OrderedConfig.ALPHA), labels);
 	}
 
 	/**

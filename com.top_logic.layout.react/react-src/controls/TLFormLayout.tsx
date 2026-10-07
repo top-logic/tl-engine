@@ -27,6 +27,9 @@ const LABEL_SIDE_MIN_WIDTH = 320;
  * A form inside another form - the body of a group, an entry of an edited list - is a section of the
  * outer one and takes its whole row. In a single column of the outer grid it would lay out its own
  * columns in that column alone, and leave the rest of the row empty for everything nested in it.
+ * Like any form, it lays out as many columns as fit into the width it gets - it is indented by the
+ * frames around it, so it may get fewer columns than the outer one. Unlike the outermost form, it
+ * keeps the columns it has no field for: a single field is not stretched over the whole row.
  */
 const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -81,10 +84,10 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   // narrower than minColWidth (e.g. a single-column form in a slim dialog) the column cannot
   // shrink and the form overflows horizontally. min(..., 100%) caps the floor at the available
   // width, so the column always fits while still wrapping multi-column layouts at minColWidth.
-  const style: React.CSSProperties = {
-    gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColWidth}, 100%), 1fr))`,
-    gridColumn: insideForm ? '1 / -1' : undefined,
-  };
+  const tracks = `minmax(min(${minColWidth}, 100%), 1fr)`;
+  const style: React.CSSProperties = insideForm
+    ? { gridTemplateColumns: `repeat(auto-fill, ${tracks})`, gridColumn: '1 / -1' }
+    : { gridTemplateColumns: `repeat(auto-fit, ${tracks})` };
 
   const className = [
     'tl-form-layout',

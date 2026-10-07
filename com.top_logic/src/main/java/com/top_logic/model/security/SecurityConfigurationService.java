@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NotBothTrue;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
@@ -206,6 +207,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * identified by its qualified name.
 	 */
 	@TagName("class")
+	@DisplayOrder({
+		TLClassAccessRights.NAME_ATTRIBUTE,
+		TLClassAccessRights.WITHOUT_SECURITY,
+		TLClassAccessRights.INTERNAL,
+		TLClassAccessRights.ACCESS_PARENT,
+		TLClassAccessRights.GRANTS
+	})
 	@Label("Class based access rights")
 	public static interface TLClassAccessRights extends TypeBasedAccessRights {
 
@@ -252,6 +260,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * Configuration of access rights on a module singleton, identified by its qualified name.
 	 */
 	@TagName("singleton")
+	@DisplayOrder({
+		TLSingletonAccessRights.NAME_ATTRIBUTE,
+		TLSingletonAccessRights.GRANTS
+	})
 	@Label("Singleton access rights")
 	public static interface TLSingletonAccessRights extends ModelAccessRights {
 
@@ -267,6 +279,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * identified by its qualified name.
 	 */
 	@TagName("part")
+	@DisplayOrder({
+		TLPartAccessRights.NAME_ATTRIBUTE,
+		TLPartAccessRights.GRANTS
+	})
 	@Label("Attribute value access rights")
 	public static interface TLPartAccessRights extends ModelAccessRights {
 
@@ -282,6 +298,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * module is identified by the module name.
 	 */
 	@TagName("module")
+	@DisplayOrder({
+		TLModuleAccessRights.NAME_ATTRIBUTE,
+		TLModuleAccessRights.WITHOUT_SECURITY,
+		TLModuleAccessRights.INTERNAL,
+		TLModuleAccessRights.GRANTS
+	})
 	@Label("Module based access rights")
 	public static interface TLModuleAccessRights extends TypeBasedAccessRights {
 

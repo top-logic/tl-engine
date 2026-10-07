@@ -15,9 +15,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.table.dnd.BusinessObjectTableDrop;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -25,6 +26,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.model.ModelService;
 
@@ -96,6 +98,29 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		@Override
 		Expr getCanDrop();
 
+		/**
+		 * Function computing the message to annotate to the change performed by the drop.
+		 * 
+		 * <p>
+		 * The function receives the dragged elements as first argument, the referenced row as
+		 * second argument and the model of the table as third argument.
+		 * </p>
+		 * 
+		 * <p>
+		 * Depending on the {@link #getDropType()} setting, the drop operation happens either just
+		 * before the referenced row (or at the end of all rows in case of a <code>null</code>
+		 * referenced row) in case of an ordered drop, or on the referenced row, otherwise.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function returns either a string or an internationalized text. If not set, or if the
+		 * function returns nothing, a default message is used that names the dropped objects and
+		 * the table they are dropped into.
+		 * </p>
+		 */
+		@Override
+		Expr getCommitMessage();
+
 	}
 
 	private final DropType _dropType;
@@ -107,6 +132,9 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 	private final List<PostCreateAction> _postCreateActions;
 
 	private final boolean _inTransaction;
+
+	private final DropCommitMessage _commitMessage;
+	private final DropSecurity _security;
 
 	private LayoutComponent _contextComponent;
 
@@ -128,6 +156,8 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_inTransaction = config.getInTransaction();
+		_commitMessage = new DropCommitMessage(config);
+		_security = new DropSecurity(config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -148,10 +178,17 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	@Override
 	public void handleDrop(Collection<?> droppedObjects, Object referenceRow) {
+		_security.checkAllowed(_contextComponent, Args.some(droppedObjects, referenceRow), referenceRow);
+
 		Object createdObject;
 
 		if (_inTransaction) {
-			createdObject = KBUtils.inTransaction(() -> _handleDrop.execute(droppedObjects, referenceRow));
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			ResKey message = _commitMessage.create(droppedObjects, Args.some(referenceRow), _contextComponent);
+			try (Transaction tx = kb.beginTransaction(message)) {
+				createdObject = _handleDrop.execute(droppedObjects, referenceRow);
+				tx.commit();
+			}
 		} else {
 			createdObject = _handleDrop.execute(droppedObjects, referenceRow);
 		}
@@ -165,6 +202,9 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	@Override
 	public boolean canDrop(Collection<?> draggedObjects, Object referenceRow) {
+		if (!_security.isAllowed(_contextComponent, Args.some(draggedObjects, referenceRow), referenceRow)) {
+			return false;
+		}
 		return SearchExpression.isTrue(_canDrop.execute(draggedObjects, referenceRow));
 	}
 

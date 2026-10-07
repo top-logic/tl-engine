@@ -51,12 +51,18 @@ public class DefaultByExpression extends AbstractConfiguredInstance<DefaultByExp
 		Expr getValue();
 
 		/**
-		 * Whether the computation in {@link #getValue()} should be delayed until the create
-		 * transaction is performed.
+		 * Whether the computation in {@link #getValue()} is delayed until the create transaction
+		 * is performed.
 		 * 
 		 * <p>
 		 * This setting is necessary, if the script in {@link #getValue()} performs operation that
 		 * can only be executed when in transaction context (e.g. <code>new</code>).
+		 * </p>
+		 * 
+		 * <p>
+		 * When set, the default is not computed for an object created outside a transaction, e.g. a
+		 * transient object or the object edited in the create dialog. The attribute stays empty
+		 * there, and the default is computed when the persistent object is created.
 		 * </p>
 		 * 
 		 * <p>
@@ -81,13 +87,19 @@ public class DefaultByExpression extends AbstractConfiguredInstance<DefaultByExp
 		_defaultExpr = QueryExecutor.compile(config.getValue());
 	}
 
+	/**
+	 * Whether the expression contains transactional operations and cannot be executed without a
+	 * transaction context.
+	 * 
+	 * @see Config#getInTransaction()
+	 */
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
-		if (getConfig().getInTransaction() && createForUI) {
-			// The expression contains transactional operations and cannot be executed without a
-			// transaction context.
-			return null;
-		}
+	public boolean isComputedInTransaction() {
+		return getConfig().getInTransaction();
+	}
+
+	@Override
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		return _defaultExpr.execute(context);
 	}
 

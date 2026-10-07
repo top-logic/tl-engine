@@ -6,6 +6,7 @@
 package com.top_logic.graphic.flow.server.ui.handler;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -23,7 +24,10 @@ import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.DropSecurity;
+import com.top_logic.model.search.providers.DropSecurityConfig;
 import com.top_logic.model.search.providers.WithTransaction;
 
 /**
@@ -38,11 +42,13 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 	@DisplayOrder({
 		Config.NAME_ATTRIBUTE,
 		Config.SCRIPT,
+		Config.GROUP,
+		Config.TARGET,
 		Config.TRANSACTION,
 		Config.POST_CREATE_ACTIONS,
 	})
 	public interface Config<I extends ScriptedDropHandler>
-			extends HandlerDefinition<I>, WithPostCreateActions.Config, WithTransaction.Config {
+			extends HandlerDefinition<I>, WithPostCreateActions.Config, WithTransaction.Config, DropSecurityConfig {
 
 		/**
 		 * @see #getScript()
@@ -66,6 +72,11 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 		 * of the clicked diagram element as first element and the list of dragged objects as second
 		 * element is used as input for {@link #getPostCreateActions() further UI actions}.
 		 * </p>
+		 * 
+		 * <p>
+		 * The drop is only performed, if the current user has the permission for the drop, see
+		 * {@link #getGroup()} and {@link #getTarget()}.
+		 * </p>
 		 */
 		@Name(SCRIPT)
 		Expr getScript();
@@ -75,6 +86,8 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 	private final QueryExecutor _script;
 
 	private final List<PostCreateAction> _actions;
+
+	private final DropSecurity _security;
 
 	private LayoutComponent _component;
 
@@ -91,18 +104,23 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 		super(context, config);
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_script = QueryExecutor.compileOptional(config.getScript());
+		_security = new DropSecurity(config);
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 
 	@Override
 	public void onDrop(DropRegion target, DndData data) {
+		Collection<?> dragData = data.getDragData();
+		Object sourceModel = data.getSource().getDragSourceModel();
+		_security.checkAllowed(_component, Args.some(target, dragData, sourceModel), target.getUserObject());
+
 		Object result;
 		if (_script == null) {
-			result = Arrays.asList(target.getUserObject(), data.getDragData(), data.getSource().getDragSourceModel());
+			result = Arrays.asList(target.getUserObject(), dragData, sourceModel);
 		} else {
 			Transaction tx = beginTransaction(getConfig().isInTransaction());
 			try {
-				result = _script.execute(target, data.getDragData(), data.getSource().getDragSourceModel());
+				result = _script.execute(target, dragData, sourceModel);
 			} finally {
 				tx.commit();
 			}

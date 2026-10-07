@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.base.locking.handler.LockHandler;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -24,6 +22,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -214,9 +213,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * decision governs the button, a command a client sends directly, the initial edit mode, an object
 	 * switch of an auto-edit form, and the edit-mode channel.
 	 * </p>
+	 *
+	 * <p>
+	 * The permission combines the {@link #setEditRule(ViewExecutabilityRule) configured rule} with
+	 * the model right to write the displayed object, see
+	 * {@link ModelAccessPolicy#onEdit(TLObject)}: editing is offered only where both allow it. Of two
+	 * refusals, the stronger one wins (a hidden command beats a disabled one, see
+	 * {@link ExecutableState#combine(ExecutableState)}); of two equally strong refusals, the one of
+	 * the model right gives the reason. A transient draft (e.g. of a create dialog) is not refused
+	 * by the model right: its creation was checked when it was created.
+	 * </p>
 	 */
 	public ExecutableState editPermission() {
-		return _editRule.isExecutable(getCurrentObject());
+		if (_currentObject == null || !_currentObject.tValid()) {
+			// Nothing to edit, and a deleted object has no rights to ask for.
+			return _editRule.isExecutable(getCurrentObject());
+		}
+		ExecutableState right = ModelAccessPolicy.onEdit(_currentObject);
+		return right.combine(_editRule.isExecutable(getCurrentObject()));
 	}
 
 	@Override
@@ -632,7 +646,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Applies overlay changes to the knowledge base without leaving edit mode.
 	 *
 	 * <p>
-	 * Persists changes, then sets up a fresh edit session (new overlay, new validation model).
+	 * {@link #executeStoreState() Stores} the changes, then sets up a fresh edit session (new overlay,
+	 * new validation model).
 	 * Participants re-register via {@link FormModelListener#onFormStateChanged(FormModel)}.
 	 * </p>
 	 */
@@ -641,24 +656,47 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
-		persistChanges();
+		executeStoreState();
 
 		setupEditSession();
 	}
 
 	/**
-	 * Validates the form and applies overlay edits to the base object.
+	 * Validates the form and stores all its changes.
 	 *
 	 * <p>
-	 * This is the core form-state application. All paths that commit form changes
-	 * ({@link #executeApply()}, {@link #executeSave()}, and external callers like
-	 * {@code StoreFormStateAction}) go through this method.
+	 * This is the single path storing form state: {@link #executeApply()}, {@link #executeSave()}
+	 * and the {@link com.top_logic.layout.view.command.StoreFormStateAction} all go through this
+	 * method. It runs in this order:
+	 * </p>
+	 * <ol>
+	 * <li>{@link #validateOrThrow() Validates} all participants.</li>
+	 * <li>{@link #checkWriteRights() Checks the write rights} of all changes.</li>
+	 * <li>For a persistent base object, opens a KB transaction and lets every participant
+	 * {@link FormParticipant#persist(Transaction) persist} its KB-specific changes (e.g. a composition
+	 * table creates its new rows and writes the persisted row list into the overlay).</li>
+	 * <li>Lets every participant {@link FormParticipant#applyState() apply} its state.</li>
+	 * <li>Applies the overlay to the base object, and commits the transaction.</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * KB transactions nest: when called within an open transaction (e.g. from an action inside a
+	 * {@link com.top_logic.layout.view.command.WithTransactionAction}), the transaction of this
+	 * method joins the outer one and the outer transaction decides whether the changes are
+	 * committed. Without an outer transaction, the changes are committed by this method.
+	 * </p>
+	 *
+	 * <p>
+	 * For a transient base object (e.g. in a create dialog), no transaction is opened: all changes
+	 * are applied to the transient object and its transient rows, which become persistent together
+	 * when the object is made persistent.
 	 * </p>
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error, or if the current user is not allowed
-	 *         to write one of the changes, see {@link #checkWriteRights()}.
+	 *         to write one of the changes, see {@link #checkWriteRights()}. In that case nothing is
+	 *         stored.
 	 */
 	public TLObject executeStoreState() {
 		validateOrThrow();
@@ -668,11 +706,34 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		checkWriteRights();
+
+		TLObject base = _overlay.getBase();
+		if (base.tTransient()) {
+			applyState();
+			return base;
+		}
+
+		Transaction tx = base.tKnowledgeBase().beginTransaction(I18NConstants.FORM_SAVE);
+		try {
+			for (FormParticipant participant : _participants) {
+				participant.persist(tx);
+			}
+			applyState();
+			tx.commit();
+		} finally {
+			tx.rollback();
+		}
+		return base;
+	}
+
+	/**
+	 * Transfers the state of all participants and of the overlay to the base objects.
+	 */
+	private void applyState() {
 		for (FormParticipant participant : _participants) {
 			participant.applyState();
 		}
 		_overlay.apply();
-		return _overlay.getBase();
 	}
 
 	/**
@@ -685,7 +746,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		if (_overlay.isDirty() || hasParticipantChanges()) {
-			persistChanges();
+			executeStoreState();
 		}
 
 		exitEditMode();
@@ -882,31 +943,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 		if (_overlay != null) {
 			_overlay.checkApply();
-		}
-	}
-
-	/**
-	 * Validates, lets participants apply, and commits form state in a KB transaction.
-	 *
-	 * <p>
-	 * The {@link #checkWriteRights() write rights} of all changes are checked before anything is
-	 * persisted. Participants apply first (e.g. composition tables persist new objects and update reference
-	 * lists in the overlay), then {@link #executeStoreState()} validates and transfers overlay
-	 * changes to the base object.
-	 * </p>
-	 */
-	private void persistChanges() {
-		checkWriteRights();
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
-		try {
-			for (FormParticipant participant : _participants) {
-				participant.persist(tx);
-			}
-			executeStoreState();
-			tx.commit();
-		} finally {
-			tx.rollback();
 		}
 	}
 

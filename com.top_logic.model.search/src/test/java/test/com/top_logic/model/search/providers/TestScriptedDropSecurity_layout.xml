@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="sl">
+	<component class="test.com.top_logic.model.search.providers.TestScriptedDropSecurity$DropTestComponent"
+		name="dropComponent"
+		securityObject="model"
+	>
+		<table-drops>
+			<drop name="default">
+				<impl class="com.top_logic.model.search.providers.TableDropTargetByExpression"
+					dropType="ROW"
+					handleDrop="objs -> ref -> throw('handleDrop executed')"
+					in-transaction="false"
+				/>
+			</drop>
+			<drop name="dragged-target">
+				<impl class="com.top_logic.model.search.providers.TableDropTargetByExpression"
+					dropType="ROW"
+					handleDrop="objs -> ref -> throw('handleDrop executed')"
+					in-transaction="false"
+					target="objs -> ref -> $objs[0]"
+				/>
+			</drop>
+			<drop name="delete-group">
+				<impl class="com.top_logic.model.search.providers.TableDropTargetByExpression"
+					dropType="ROW"
+					group="Delete"
+					handleDrop="objs -> ref -> throw('handleDrop executed')"
+					in-transaction="false"
+				/>
+			</drop>
+		</table-drops>
+		<tree-drops>
+			<drop name="onto">
+				<impl class="com.top_logic.model.search.providers.OntoTreeDropByExpression"
+					handleDrop="objs -> node -> throw('handleDrop executed')"
+					in-transaction="false"
+				/>
+			</drop>
+			<drop name="ordered">
+				<impl class="com.top_logic.model.search.providers.OrderedTreeDropByExpression"
+					handleDrop="objs -> parent -> ref -> throw('handleDrop executed')"
+					in-transaction="false"
+				/>
+			</drop>
+		</tree-drops>
+	</component>
+</securityLayout>

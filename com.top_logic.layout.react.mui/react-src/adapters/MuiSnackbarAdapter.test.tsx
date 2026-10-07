@@ -14,7 +14,7 @@ const CMD_DISMISS = 'dismiss';
 const ARG_GENERATION = 'generation';
 
 /** The label of the close button: the key, as the test stub translates each key to itself. */
-const LABEL_DISMISS = 'js.alert.dismiss';
+const LABEL_DISMISS = 'js.snackbar.dismiss';
 
 /** The display time of the messages of the tests. */
 const DURATION_MS = 3000;

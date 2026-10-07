@@ -17,6 +17,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,6 +49,8 @@ import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
+import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
@@ -155,11 +158,22 @@ public class OpenAPIExporter {
 	 *        Current rendering context to determine correct server URL.
 	 */
 	public OpenapiDocument createDocument(DisplayContext context) {
+		return createDocument(DisplayFullPathTemplate.createFullBaseURL(context, _serverConfig.getBaseURL()));
+	}
+
+	/**
+	 * Creates the {@link OpenapiDocument} corresponding to the the given {@link OpenApiServer}
+	 * configuration.
+	 * 
+	 * @param serverURL
+	 *        The URL under which the server is reachable.
+	 */
+	public OpenapiDocument createDocument(String serverURL) {
 		OpenapiDocument doc = newItem(OpenapiDocument.class);
 		doc.setOpenapi(OpenapiDocument.VERSION_3_0_3);
 
 		ServerObject server = newItem(ServerObject.class);
-		server.setUrl(DisplayFullPathTemplate.createFullBaseURL(context, _serverConfig.getBaseURL()));
+		server.setUrl(serverURL);
 		doc.getServers().add(server);
 
 		doc.setInfo(copyInfoObject(_serverConfig));
@@ -448,6 +462,7 @@ public class OpenAPIExporter {
 			}
 		}
 		OpenAPIConfigs.transferIfNotEmpty(source::getName, target::setName);
+		OpenAPIConfigs.transferIfNotEmpty(source::getVariableName, target::setVariableName);
 		OpenAPIConfigs.transferIfNotEmpty(source::getDescription, target::setDescription);
 		OpenAPIConfigs.transferIfTrue(source::getRequired, target::setRequired);
 		OpenAPIConfigs.transferIfNotEmpty(source::getParameterLocation, target::setIn);
@@ -512,8 +527,13 @@ public class OpenAPIExporter {
 				{
 					for (BodyPart part : parameter.getParts().values()) {
 						json.name(part.getName());
-						json.jsonValue(
-							newSchema(part.getFormat(), part.isMultiple(), part.getSchema(), part.getDescription()));
+						String partSchema =
+							newSchema(part.getFormat(), part.isMultiple(), part.getSchema(), part.getDescription());
+						String variableName = part.getVariableName();
+						if (!StringServices.isEmpty(variableName)) {
+							partSchema = withExtension(partSchema, ParameterObject.X_TL_VARIABLE_NAME, variableName);
+						}
+						json.jsonValue(partSchema);
 					}
 				}
 				json.endObject();
@@ -521,6 +541,24 @@ public class OpenAPIExporter {
 			json.endObject();
 		}));
 		return result;
+	}
+
+	/**
+	 * Adds a specification extension with a string value to the given serialized schema.
+	 */
+	private static String withExtension(String schema, String extension, String value) {
+		Object parsedSchema;
+		try {
+			parsedSchema = JSON.fromString(schema);
+		} catch (ParseException ex) {
+			throw new IllegalArgumentException("Schema is not valid JSON: " + schema, ex);
+		}
+		if (!(parsedSchema instanceof Map<?, ?>)) {
+			throw new IllegalArgumentException("Schema is not a JSON object: " + schema);
+		}
+		Map<Object, Object> schemaAsMap = new LinkedHashMap<>((Map<?, ?>) parsedSchema);
+		schemaAsMap.put(extension, value);
+		return JSON.toString(schemaAsMap);
 	}
 
 	private String newSchema(ParameterFormat format, boolean multiple, String schema) {

@@ -4,6 +4,7 @@ import {
 } from 'tl-react-bridge';
 import type { TLCellProps, SliderStateJson } from 'tl-react-bridge';
 import Slider from '@mui/material/Slider';
+import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -23,8 +24,17 @@ const DEFAULT_STEP = 1;
 /** The track takes the width the text beside it leaves. */
 const SLIDER_SX: SxProps<Theme> = { flex: '1 1 auto' };
 
-/** The text beside the track keeps its width and shows its digits in columns of equal width. */
-const VALUE_SX: SxProps<Theme> = { flexShrink: 0, fontVariantNumeric: 'tabular-nums' };
+/**
+ * The text beside the track keeps its width and shows its digits in columns of equal width. The
+ * value and the two bounds stand in the same grid cell, so the box is as wide as the widest of them.
+ */
+const VALUE_SX: SxProps<Theme> = { flexShrink: 0, display: 'inline-grid', fontVariantNumeric: 'tabular-nums' };
+
+/** A text in the grid cell of {@link VALUE_SX}, at its end. */
+const VALUE_PART_SX: SxProps<Theme> = { gridArea: '1 / 1', justifySelf: 'end' };
+
+/** A bound written only to give the box beside the track its width. */
+const VALUE_SIZER_SX: SxProps<Theme> = { gridArea: '1 / 1', justifySelf: 'end', visibility: 'hidden' };
 
 /**
  * Renders the state of a TopLogic slider (module name `TLSlider`) with the MUI `Slider`.
@@ -40,6 +50,9 @@ const VALUE_SX: SxProps<Theme> = { flexShrink: 0, fontVariantNumeric: 'tabular-n
  * <li>valueLabel → the value label of the handle (`valueLabelDisplay="auto"`, shown while the
  *     handle is hovered or moved), the text beside the track and the `aria-valuetext`: the value
  *     the server wrote in the format of the field;</li>
+ * <li>minLabel, maxLabel → invisible texts in the same grid cell as the text beside the track, so
+ *     that it takes the width of the wider bound and the track keeps its length while the value
+ *     changes, as with TLSlider;</li>
  * <li>hasError → color `error`, `aria-invalid` and the error message as tooltip; hasWarnings →
  *     color `warning`; mandatory → `aria-required`;</li>
  * <li>a field that is not editable shows the value label as text, as TLSlider does; disabled →
@@ -77,6 +90,8 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   const min = state.min ?? DEFAULT_MIN;
+  const minLabel = state.minLabel ?? '';
+  const maxLabel = state.maxLabel ?? '';
   const hasError = state.hasError === true;
   const color = hasError ? 'error' : state.hasWarnings === true ? 'warning' : 'primary';
 
@@ -107,7 +122,13 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
           },
         }}
       />
-      {label !== '' && <Typography component="output" variant="body2" sx={VALUE_SX}>{label}</Typography>}
+      {(label !== '' || minLabel !== '' || maxLabel !== '') && (
+        <Typography component="output" variant="body2" sx={VALUE_SX}>
+          <Box component="span" sx={VALUE_PART_SX}>{label}</Box>
+          <Box component="span" sx={VALUE_SIZER_SX} aria-hidden="true">{minLabel}</Box>
+          <Box component="span" sx={VALUE_SIZER_SX} aria-hidden="true">{maxLabel}</Box>
+        </Typography>
+      )}
     </Stack>
   );
 };

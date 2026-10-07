@@ -310,6 +310,16 @@
 				<table name="Contact"/>
 				<implementation-binding class-name="com.top_logic.contact.business.PersonContact"/>
 				<main-properties properties="name,email,phone,phone_mobile"/>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[// All person contacts except the one of the anonymous account
+obj -> all(`Contacts:PersonContact`)
+    .filter(c -> {
+        account = $c.get(`Contacts:PersonContact#account`);
+        $account == null || !$account.accountIsAnonymous()
+    })]]></function>
+					</options-by-expression>
+				</options>
 			</annotations>
 			<attributes>
 				<reference name="account"

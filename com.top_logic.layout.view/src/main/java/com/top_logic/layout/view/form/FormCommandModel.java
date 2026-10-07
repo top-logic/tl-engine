@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -60,6 +61,11 @@ public class FormCommandModel implements CommandModel {
 
 	private boolean _visible;
 
+	/**
+	 * The tooltip of the command: the reason of a disabled command, see {@link #getTooltip()}.
+	 */
+	private String _tooltip;
+
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
 	private final FormModelListener _formModelListener = new FormModelListener() {
@@ -94,6 +100,7 @@ public class FormCommandModel implements CommandModel {
 		_visibleWhen = visibleWhen;
 		_executable = executableWhen.test(form);
 		_visible = visibleWhen.test(form);
+		_tooltip = tooltip();
 	}
 
 	/**
@@ -269,6 +276,35 @@ public class FormCommandModel implements CommandModel {
 		return _image;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A command disabled by a permission rule - the Edit command, whose rule denies editing the
+	 * displayed object - shows the rule's reason.
+	 * </p>
+	 */
+	@Override
+	public String getTooltip() {
+		return _tooltip;
+	}
+
+	private String tooltip() {
+		if (!_visible || _executable) {
+			return null;
+		}
+		ExecutableState state = state(true, false);
+		if (state == ExecutableState.NOT_EXEC_DISABLED) {
+			// Disabled by the form's lifecycle state, no reason to show.
+			return null;
+		}
+		ResKey reason = state.getI18NReasonKey();
+		if (reason == null || reason == ResKey.NONE) {
+			return null;
+		}
+		return Resources.getInstance().getString(reason);
+	}
+
 	@Override
 	public boolean isExecutable() {
 		return _executable;
@@ -346,9 +382,13 @@ public class FormCommandModel implements CommandModel {
 	private void handleFormStateChanged(FormModel source) {
 		boolean newExecutable = _executableWhen.test(_form);
 		boolean newVisible = _visibleWhen.test(_form);
-		if (newExecutable != _executable || newVisible != _visible) {
-			_executable = newExecutable;
-			_visible = newVisible;
+		boolean wasExecutable = _executable;
+		boolean wasVisible = _visible;
+		String oldTooltip = _tooltip;
+		_executable = newExecutable;
+		_visible = newVisible;
+		_tooltip = tooltip();
+		if (newExecutable != wasExecutable || newVisible != wasVisible || !Objects.equals(oldTooltip, _tooltip)) {
 			for (Runnable listener : _stateChangeListeners) {
 				listener.run();
 			}

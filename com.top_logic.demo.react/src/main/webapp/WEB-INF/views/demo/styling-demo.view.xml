@@ -55,7 +55,7 @@
 		/>
 	</channels>
 
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Styling</en>
 			<de>Gestaltung</de>
@@ -221,7 +221,7 @@
 				tone="error"
 			/>
 		</stack>
-		<fields with-inset="true">
+		<fields>
 			<value-input
 				type="demo.tickets:TicketStatus"
 				value="status"
@@ -464,7 +464,7 @@
 				<de>Eine Eingabe, die einschränkt, was eine Ansicht zeigt, braucht kein eigenes Element: Das Symbol wird vor dem Getippten gezeichnet, die Schaltfläche zum Leeren erscheint, solange etwas darin steht, und die Verzögerung sagt, wie lange der getippte Wert zurückgehalten wird, bevor er den Kanal erreicht. Der Text darunter liest diesen Kanal und folgt der Eingabe damit um die angegebene Verzögerung versetzt.</de>
 			</label>
 		</text>
-		<fields with-inset="true">
+		<fields>
 			<value-input
 				clearable="true"
 				debounce="300ms"
@@ -516,7 +516,6 @@
 			initial-edit-mode="true"
 			input="obj"
 			mode-switch="false"
-			with-inset="true"
 		>
 			<field attribute="locked"/>
 			<field attribute="tags">
@@ -558,7 +557,7 @@
 				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
 			</label>
 		</text>
-		<fields with-inset="true">
+		<fields>
 			<value-input
 				type="demo.react:Priority"
 				value="choice"

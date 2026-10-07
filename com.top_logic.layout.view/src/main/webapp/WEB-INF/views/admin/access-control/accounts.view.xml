@@ -51,11 +51,11 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
+								<disabled-if expr="a -> if($a == currentUser(), #('A user cannot delete himself.'@en, 'Ein Benutzer kann sich nicht selber löschen.'@de), null)"/>
+								<disabled-if expr="a -> if($a.get(`tl.accounts:Person#admin`), #('An administrator cannot be deleted.'@en, 'Ein Administrator kann nicht gelöscht werden.'@de), null)"/>
 							</executability>
 							<confirm expr="a -> #('Delete account {0}?'@en, 'Konto {0} löschen?'@de).fill($a.get(`tl.accounts:Person#name`))"/>
-							<with-transaction>
-								<execute-script function="obj -> $obj.delete()"/>
-							</with-transaction>
+							<delete-object/>
 							<write-channel name="selectedAccount"/>
 						</generic-command>
 						<generic-command
@@ -70,6 +70,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
+								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="acc -> new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $acc)"/>
 							<open-dialog
@@ -93,6 +94,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
+								<model-access operation="Write"/>
 							</executability>
 							<expire-password/>
 						</generic-command>
@@ -112,6 +114,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
+								<model-access operation="Write"/>
 							</executability>
 							<enable-mfa/>
 						</generic-command>
@@ -141,6 +144,9 @@
 						input="selectedAccount"
 						with-inset="true"
 					>
+						<edit-executability>
+							<model-access operation="Write"/>
+						</edit-executability>
 						<field attribute="name"/>
 						<field attribute="firstName"/>
 						<field attribute="lastName"/>

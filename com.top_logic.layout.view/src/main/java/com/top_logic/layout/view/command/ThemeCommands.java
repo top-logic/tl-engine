@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -23,8 +22,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.util.Resources;
 
 /**
- * The commands offering the user a UI theme to switch to: one per configured theme, headed by an
- * entry following the appearance preference of the operating system.
+ * The commands offering the user a UI theme to switch to: one per configured theme that is not
+ * abstract, headed by an entry following the appearance preference of the operating system.
  *
  * <p>
  * The set follows {@link UIThemeService}, so an application offers its own themes by configuring
@@ -37,8 +36,9 @@ import com.top_logic.util.Resources;
  * <p>
  * The entry describing what the user sees is marked as the active one, so the menu shows the
  * current appearance among the alternatives on offer. It stays executable: applying the appearance
- * already in force is a no-op the user cannot get wrong. An application with a single configured
- * theme has nothing to switch to and gets no entries at all.
+ * already in force is a no-op the user cannot get wrong. An application with a single theme that is
+ * not abstract has nothing to switch to and gets no entries at all; an abstract theme only serves as
+ * the base of other themes and is never offered.
  * </p>
  *
  * <p>
@@ -85,8 +85,8 @@ public class ThemeCommands implements ViewCommandSource {
 	@Override
 	public List<CommandModel> getCommands(ViewContext context) {
 		UIThemeService themes = UIThemeService.getInstance();
-		Collection<UITheme> configured = themes.getThemes();
-		if (configured.size() < 2) {
+		List<UITheme> selectable = themes.getSelectableThemes();
+		if (selectable.size() < 2) {
 			// Nothing to switch to.
 			return List.of();
 		}
@@ -99,7 +99,7 @@ public class ThemeCommands implements ViewCommandSource {
 				.setImage(Icons.THEME_FOLLOW_SYSTEM)
 				.setActive(() -> UIThemeService.getInstance().getSelectedThemeId() == null));
 		}
-		for (UITheme theme : configured) {
+		for (UITheme theme : selectable) {
 			String id = theme.getId();
 			result.add(SimpleCommandModel
 				.create(id, Resources.getInstance().getString(theme.getLabel()),

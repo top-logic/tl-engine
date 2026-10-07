@@ -25,6 +25,11 @@
 							type="tl.core:Date"
 						/>
 						<field
+							attribute="approved"
+							fullQualifiedName="tl.demo.projectManagement:Milestone#approved"
+							type="tl.core:Boolean"
+						/>
+						<field
 							attribute="tickets"
 							fullQualifiedName="tl.demo.projectManagement:Milestone#tickets"
 							type="tl.demo.projectManagement:Ticket"
@@ -43,6 +48,9 @@
 				/>
 				<property name="dueDate"
 					type="tl.core:Date"
+				/>
+				<property name="approved"
+					type="tl.core:Boolean"
 				/>
 				<reference name="tickets"
 					inverse-reference="milestone"
@@ -133,6 +141,9 @@
 				/>
 				<property name="description"
 					type="tl.core:String"
+				/>
+				<property name="budget"
+					type="tl.core:Double"
 				/>
 				<reference name="members"
 					multiple="true"

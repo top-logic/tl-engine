@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29741_hide_anonymous_in_options"
+		module="tl-contact"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29617_color_role"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.accounts:Group#members">
+			<annotation class="com.top_logic.element.config.annotation.TLOptions"/>
+		</remove-annotations>
+		<remove-annotations name="tl.accounts:RepresentativeGroup#members">
+			<annotation class="com.top_logic.element.config.annotation.TLOptions"/>
+		</remove-annotations>
+		<add-annotations name="tl.accounts:GroupMember">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[obj -> all(`tl.accounts:Group`)
+    // No representative groups
+    .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
+    // Combined with all accounts except the anonymous one
+    .union(all(`tl.accounts:Person`).filter(p -> !$p.accountIsAnonymous()))]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Group#members">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[g -> all(`tl.accounts:Group`)
+    // Not the group itself
+    .filter(x -> $x != $g)
+    // No representative groups
+    .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
+    // Combined with all accounts except the anonymous one
+    .union(all(`tl.accounts:Person`).filter(p -> !$p.accountIsAnonymous()))]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:RepresentativeGroup#members">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[// All accounts
+g -> all(`tl.accounts:Person`)
+    // Excluding the anonymous one
+    .filter(p -> !$p.accountIsAnonymous())
+    // Excluding the one that is the owner of this representative group.
+    .filter(p -> !$g
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .containsElement($p))]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Person">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[// All accounts except the anonymous one
+obj -> all(`tl.accounts:Person`)
+    .filter(p -> !$p.accountIsAnonymous())]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:PersonContact">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[// All person contacts except the one of the anonymous account
+obj -> all(`Contacts:PersonContact`)
+    .filter(c -> {
+        account = $c.get(`Contacts:PersonContact#account`);
+        $account == null || !$account.accountIsAnonymous()
+    })]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

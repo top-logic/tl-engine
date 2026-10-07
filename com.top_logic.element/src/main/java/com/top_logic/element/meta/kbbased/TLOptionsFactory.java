@@ -5,7 +5,10 @@
  */
 package com.top_logic.element.meta.kbbased;
 
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import java.lang.ref.SoftReference;
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.MOAttribute;
@@ -32,6 +35,18 @@ public class TLOptionsFactory extends AnnotationsBasedCacheValueFactory {
 	 */
 	public static final TLOptionsFactory INSTANCE = new TLOptionsFactory();
 
+	/**
+	 * {@link Generator}s of annotations that are not stored at the attribute they apply to.
+	 * 
+	 * <p>
+	 * Keys are compared by identity (configuration items do not override
+	 * {@link Object#equals(Object)}), so a changed annotation yields a fresh generator. A generator
+	 * may reference its configuration and thus its key, therefore it is held softly to keep the
+	 * entry collectable once the annotation is no longer used.
+	 * </p>
+	 */
+	private static final Map<TLOptions, SoftReference<Generator>> GENERATORS = new WeakHashMap<>();
+
 	private TLOptionsFactory() {
 		// Singleton constructor.
 	}
@@ -42,9 +57,36 @@ public class TLOptionsFactory extends AnnotationsBasedCacheValueFactory {
 		if (tlAnnotation == null) {
 			return null;
 		}
-		PolymorphicConfiguration<Generator> generatorConfig = tlAnnotation.getGenerator();
-		Generator generator = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(generatorConfig);
-		return generator;
+		return createGenerator(tlAnnotation);
+	}
+
+	/**
+	 * The {@link Generator} of the given annotation, shared by all callers asking for the same
+	 * annotation instance.
+	 * 
+	 * <p>
+	 * Used for an annotation that is not stored at the attribute it applies to (e.g. an annotation
+	 * of the attribute's value type), where the attribute's own cache cannot hold the generator.
+	 * </p>
+	 * 
+	 * @param annotation
+	 *        The annotation to get the generator for.
+	 * @return The generator configured in the given annotation.
+	 */
+	public static Generator getGenerator(TLOptions annotation) {
+		synchronized (GENERATORS) {
+			SoftReference<Generator> reference = GENERATORS.get(annotation);
+			Generator generator = reference == null ? null : reference.get();
+			if (generator == null) {
+				generator = createGenerator(annotation);
+				GENERATORS.put(annotation, new SoftReference<>(generator));
+			}
+			return generator;
+		}
+	}
+
+	private static Generator createGenerator(TLOptions annotation) {
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(annotation.getGenerator());
 	}
 
 }

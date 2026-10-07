@@ -33,6 +33,12 @@ public interface SliderState extends com.top_logic.layout.react.state.FieldState
 	/** @see #getValueLabel() */
 	String VALUE_LABEL__PROP = "valueLabel";
 
+	/** @see #getMinLabel() */
+	String MIN_LABEL__PROP = "minLabel";
+
+	/** @see #getMaxLabel() */
+	String MAX_LABEL__PROP = "maxLabel";
+
 	/** @see #getDebounceMs() */
 	String DEBOUNCE_MS__PROP = "debounceMs";
 
@@ -76,6 +82,29 @@ public interface SliderState extends com.top_logic.layout.react.state.FieldState
 	 * @see #getValueLabel()
 	 */
 	com.top_logic.layout.react.state.SliderState setValueLabel(String value);
+
+	/**
+	 * The smallest value written in the format of the field, plain text. The client reserves the
+	 * width of the wider of the two bound texts for the value text, so the track keeps its length
+	 * while the value changes. Absent: no text.
+	 */
+	String getMinLabel();
+
+	/**
+	 * @see #getMinLabel()
+	 */
+	com.top_logic.layout.react.state.SliderState setMinLabel(String value);
+
+	/**
+	 * The largest value written in the format of the field, plain text. See {@link #getMinLabel()}.
+	 * Absent: no text.
+	 */
+	String getMaxLabel();
+
+	/**
+	 * @see #getMaxLabel()
+	 */
+	com.top_logic.layout.react.state.SliderState setMaxLabel(String value);
 
 	/**
 	 * How long a value is held back after the handle last moved before it is sent, in

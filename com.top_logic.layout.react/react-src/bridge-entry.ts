@@ -73,6 +73,7 @@ export type {
   SelectStateJson,
   DropdownSelectStateJson,
   TabBarStateJson,
+  AccordionStateJson,
   WindowStateJson,
   DialogStateJson,
   MenuStateJson,

@@ -162,4 +162,8 @@
   --tl-shadow-6: 0 12px 32px rgba(0,0,0,0.64);
   --tl-scrim-1: rgba(22, 24, 27, 0.48);
   --tl-scrim-2: rgba(0, 0, 0, 0.64);
+  --tl-veil-1: rgba(27, 29, 33, 0.06);
+  --tl-veil-2: rgba(27, 29, 33, 0.12);
+  --tl-veil-3: rgba(240, 243, 249, 0.06);
+  --tl-veil-4: rgba(240, 243, 249, 0.12);
 }

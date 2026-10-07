@@ -1,0 +1,92 @@
+<model>
+	<module name="test.com.top_logic.element.meta.options.TestTypeDefaultOptions">
+		<class name="Target">
+			<annotations>
+				<options>
+					<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+						id="type"
+					/>
+				</options>
+			</annotations>
+		</class>
+
+		<class name="SubTarget">
+			<generalizations>
+				<generalization type="Target"/>
+			</generalizations>
+		</class>
+
+		<class name="OwnSubTarget">
+			<generalizations>
+				<generalization type="Target"/>
+			</generalizations>
+			<annotations>
+				<options>
+					<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+						id="own"
+					/>
+				</options>
+			</annotations>
+		</class>
+
+		<class name="Plain"/>
+
+		<class name="SubPlain">
+			<generalizations>
+				<generalization type="Plain"/>
+			</generalizations>
+		</class>
+
+		<class name="Holder">
+			<attributes>
+				<reference name="typeDefault" type="Target"/>
+				<reference name="otherTypeDefault" type="Target"/>
+				<reference name="local" type="Target">
+					<annotations>
+						<options>
+							<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+								id="local"
+							/>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="plain" type="Plain"/>
+				<reference name="subTypeDefault" type="SubTarget"/>
+				<reference name="ownSubTypeDefault" type="OwnSubTarget"/>
+			</attributes>
+		</class>
+
+		<class name="Base">
+			<attributes>
+				<reference name="ref" type="Plain">
+					<annotations>
+						<options>
+							<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+								id="base"
+							/>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="specialized" type="Plain">
+					<annotations>
+						<options>
+							<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+								id="base"
+							/>
+						</options>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<class name="Sub">
+			<generalizations>
+				<generalization type="Base"/>
+			</generalizations>
+			<attributes>
+				<reference name="ref" type="Plain" override="true"/>
+				<reference name="specialized" type="SubPlain" override="true"/>
+			</attributes>
+		</class>
+	</module>
+</model>

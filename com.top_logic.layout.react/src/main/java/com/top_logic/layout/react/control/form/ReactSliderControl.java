@@ -29,6 +29,12 @@ import com.top_logic.layout.react.state.SliderState;
  * </p>
  *
  * <p>
+ * The bounds are written in the same format as well ({@link SliderState#MIN_LABEL__PROP},
+ * {@link SliderState#MAX_LABEL__PROP}): the client reserves the width of the wider of the two for the
+ * text, so the track keeps its length while the text changes.
+ * </p>
+ *
+ * <p>
  * The state is described by {@link SliderState}.
  * </p>
  *
@@ -74,6 +80,8 @@ public class ReactSliderControl extends ReactFormFieldControl {
 		putState(SliderState.MIN__PROP, Double.valueOf(min));
 		putState(SliderState.MAX__PROP, Double.valueOf(max));
 		putState(SliderState.STEP__PROP, Double.valueOf(step));
+		putState(SliderState.MIN_LABEL__PROP, format(Double.valueOf(min)));
+		putState(SliderState.MAX_LABEL__PROP, format(Double.valueOf(max)));
 		putState(SliderState.VALUE_LABEL__PROP, format(model.getValue()));
 	}
 
@@ -131,13 +139,14 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * The range the handle travels and the text beside it are how the value is shown, not what it
-	 * is: the value itself is the number the field holds.
+	 * The range the handle travels, the text beside it and the bounds written as text are how the
+	 * value is shown, not what it is: the value itself is the number the field holds.
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), SliderState.MIN__PROP,
-			SliderState.MAX__PROP, SliderState.STEP__PROP, SliderState.VALUE_LABEL__PROP);
+			SliderState.MAX__PROP, SliderState.STEP__PROP, SliderState.VALUE_LABEL__PROP,
+			SliderState.MIN_LABEL__PROP, SliderState.MAX_LABEL__PROP);
 	}
 
 	private String format(Object value) {

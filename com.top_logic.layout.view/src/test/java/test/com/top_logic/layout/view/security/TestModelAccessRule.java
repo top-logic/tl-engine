@@ -5,7 +5,7 @@
  */
 package test.com.top_logic.layout.view.security;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,7 +37,11 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.view.command.ContextDependentRule;
+import com.top_logic.layout.view.command.DeleteObjectAction;
+import com.top_logic.layout.view.command.DeleteVetoDisabled;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.ViewAction;
@@ -48,11 +52,13 @@ import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.tool.boundsec.CommandGroupReference;
-import com.top_logic.util.Resources;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.tool.execution.service.CommandApprovalService;
+import com.top_logic.util.Resources;
 
 /**
- * Tests the {@link ModelAccessRule} and the executability rules that actions bring of their own.
+ * Tests the {@link ModelAccessRule}, the {@link DeleteVetoDisabled} rule, and the executability
+ * rules that actions bring of their own.
  */
 public class TestModelAccessRule extends AbstractModelAccessTest {
 
@@ -125,16 +131,21 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * An attribute-level check decides by the rights on the attribute.
+	 * An attribute-level check decides by the rights on the attribute. An attribute granting the
+	 * operation to no role refuses it independent of the object: the command is hidden, unless the
+	 * rule demands to disable it.
 	 */
 	public void testAttributeWrite() throws Exception {
 		ViewExecutabilityRule name = rule("<model-access operation='Write' attribute='" + NAME + "'/>");
 		ViewExecutabilityRule secret = rule("<model-access operation='Write' attribute='" + SECRET + "'/>");
+		ViewExecutabilityRule disabledSecret =
+			rule("<model-access operation='Write' attribute='" + SECRET + "' denied='disable'/>");
 
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, name.isExecutable(_project));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, secret.isExecutable(_project));
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_ATTRIBUTE_WRITE_DENIED__ATTRIBUTE,
-			secret.isExecutable(_project));
+			disabledSecret.isExecutable(_project));
 
 		becomeUser(_root);
 		assertSame(ExecutableState.EXECUTABLE, secret.isExecutable(_project));
@@ -355,11 +366,110 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		assertSame(ViewExecutabilityRule.ALWAYS_EXECUTABLE, command.getIntrinsicRule());
 	}
 
+	/**
+	 * An operation the access rights allow is refused when the {@link CommandApprovalService}
+	 * refuses it on the object: the command is disabled with the reason of the approval.
+	 */
+	public void testApprovalRefuses() throws Exception {
+		ViewExecutabilityRule write = rule("<model-access operation='Write'/>");
+		ViewExecutabilityRule read = rule("<model-access operation='Read'/>");
+		ViewExecutabilityRule hiddenWrite = rule("<model-access operation='Write' denied='hide'/>");
+		TLObject frozen = newObject(qualified(PROJECT), FROZEN);
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, write.isExecutable(_project));
+		ExecutableState state = write.isExecutable(frozen);
+		assertTrue("Expected a visible command, got: " + state, state.isVisible());
+		assertFalse("Expected a disabled command, got: " + state, state.isExecutable());
+		assertEquals("The project is frozen.",
+			Resources.getInstance(Locale.ENGLISH).getString(state.getI18NReasonKey()));
+		assertSame("The approval checks writing only.", ExecutableState.EXECUTABLE, read.isExecutable(frozen));
+		assertSame("The configured display overrides the derived one.", ExecutableState.NOT_EXEC_HIDDEN,
+			hiddenWrite.isExecutable(frozen));
+	}
+
+	/**
+	 * An approval check hiding the command hides it, unless the rule demands another display.
+	 */
+	public void testApprovalHides() throws Exception {
+		ViewExecutabilityRule delete = rule("<model-access operation='Delete'/>");
+		ViewExecutabilityRule disabledDelete = rule("<model-access operation='Delete' denied='disable'/>");
+		TLObject frozen = newObject(qualified(PROJECT), FROZEN);
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, delete.isExecutable(_project));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, delete.isExecutable(frozen));
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
+			disabledDelete.isExecutable(frozen));
+	}
+
+	/**
+	 * The approval configured by the framework disables modifying and deleting the anonymous
+	 * account, even for a user the access rights allow everything.
+	 */
+	public void testApprovalAnonymousAccount() throws Exception {
+		ViewExecutabilityRule write = rule("<model-access operation='Write'/>");
+		ViewExecutabilityRule delete = rule("<model-access operation='Delete'/>");
+		Person anonymous = PersonManager.getManager().getAnonymous();
+
+		becomeUser(_root);
+		assertDisabled(com.top_logic.knowledge.gui.layout.person.I18NConstants.ERROR_NOT_EXECUTABLE_FOR_ANONYMOUS_ACCOUNT,
+			write.isExecutable(anonymous));
+		assertDisabled(com.top_logic.knowledge.gui.layout.person.I18NConstants.ERROR_NOT_EXECUTABLE_FOR_ANONYMOUS_ACCOUNT,
+			delete.isExecutable(anonymous));
+		assertSame(ExecutableState.EXECUTABLE, write.isExecutable(_roleless));
+		assertSame(ExecutableState.EXECUTABLE, delete.isExecutable(_roleless));
+	}
+
+	/**
+	 * An object vetoing its deletion disables a command deleting it, giving the veto as reason.
+	 */
+	public void testDeleteVeto() throws Exception {
+		ViewExecutabilityRule rule = rule("<delete-veto-disabled/>");
+		Person anonymous = PersonManager.getManager().getAnonymous();
+
+		becomeUser(_root);
+		assertDisabled(com.top_logic.knowledge.wrap.person.I18NConstants.ERROR_ANONYMOUS_ACCOUNT_CANNOT_BE_DELETED,
+			rule.isExecutable(anonymous));
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_roleless));
+		assertSame("Nothing to check.", ExecutableState.EXECUTABLE, rule.isExecutable(null));
+
+		assertDisabled("Each object of a collection is checked.",
+			com.top_logic.knowledge.wrap.person.I18NConstants.ERROR_ANONYMOUS_ACCOUNT_CANNOT_BE_DELETED,
+			rule.isExecutable(List.of(_project, anonymous, _roleless)));
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(List.of(_project, _roleless)));
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(List.of()));
+	}
+
+	/**
+	 * Deleting an object brings both the deletion right and the delete veto as its rule.
+	 */
+	public void testDeleteObjectActionRule() {
+		ViewAction delete = instantiate(TypedConfiguration.newConfigItem(DeleteObjectAction.Config.class));
+		ViewExecutabilityRule rule =
+			ViewExecutabilityRules.withIntrinsicRule(_context, new GenericViewCommand(List.of(delete)),
+				NullInputDisabled.INSTANCE);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
+
+		becomeUser(_roleless);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
+			rule.isExecutable(_project));
+
+		becomeUser(_root);
+		ExecutableState anonymous = rule.isExecutable(PersonManager.getManager().getAnonymous());
+		assertTrue("Deleting the anonymous account is disabled, got: " + anonymous, anonymous.isDisabled());
+	}
+
 	private ViewExecutabilityRule rule(String xml) throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestModelAccessRule.class);
 		ViewExecutabilityRule rule = context.getInstance(parse(context, xml));
 		context.checkErrors();
-		((ContextDependentRule) rule).bind(_context);
+		if (rule instanceof ContextDependentRule contextDependent) {
+			contextDependent.bind(_context);
+		}
 		return rule;
 	}
 
@@ -369,13 +479,17 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		assertTrue("Expected an error for: " + xml, context.hasErrors());
 	}
 
-	private static ModelAccessRule.Config parse(InstantiationContext context, String xml)
-			throws ConfigurationException {
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			ModelAccessRule.Config.TAG_NAME, TypedConfiguration.getConfigurationDescriptor(ModelAccessRule.Config.class));
+	@SuppressWarnings("unchecked")
+	private static PolymorphicConfiguration<? extends ViewExecutabilityRule> parse(InstantiationContext context,
+			String xml) throws ConfigurationException {
+		Map<String, ConfigurationDescriptor> descriptors = new HashMap<>();
+		descriptors.put(ModelAccessRule.Config.TAG_NAME,
+			TypedConfiguration.getConfigurationDescriptor(ModelAccessRule.Config.class));
+		descriptors.put(DeleteVetoDisabled.Config.TAG_NAME,
+			TypedConfiguration.getConfigurationDescriptor(DeleteVetoDisabled.Config.class));
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		reader.setSource(CharacterContents.newContent(xml));
-		return (ModelAccessRule.Config) reader.read();
+		return (PolymorphicConfiguration<? extends ViewExecutabilityRule>) reader.read();
 	}
 
 	private static RuleAction.Config ruleAction(String operation, String channel) {
@@ -402,6 +516,11 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 
 	private static void assertDisabled(ResKeyTemplate expectedReason, ExecutableState state) {
 		assertDisabled(expectedReason.getKey(), state);
+	}
+
+	private static void assertDisabled(String message, ResKey expectedReason, ExecutableState state) {
+		assertTrue(message + " Expected a disabled command, got: " + state, state.isDisabled());
+		assertEquals(message, expectedReason.getKey(), state.getI18NReasonKey().getKey());
 	}
 
 	private static void assertDisabled(String expectedReasonKey, ExecutableState state) {

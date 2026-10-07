@@ -7,7 +7,9 @@ package com.top_logic.element.model.copy;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -19,8 +21,10 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
@@ -43,6 +47,14 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 
 	private Boolean _useSecurity;
 
+	private boolean _skipTransactionDefaults;
+
+	/**
+	 * Whether a part of a copy has a default computed in the creating transaction, indexed by the
+	 * part of the copy's type.
+	 */
+	private final Map<TLStructuredTypePart, Boolean> _computedInTransaction = new HashMap<>();
+
 	@Override
 	public CopyOperationImpl setFilter(CopyFilter filter) {
 		_filter = filter;
@@ -59,6 +71,38 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	public CopyOperation withSecurity(Boolean useSecurity) {
 		_useSecurity = useSecurity;
 		return this;
+	}
+
+	@Override
+	public CopyOperation skipTransactionDefaults(boolean skip) {
+		_skipTransactionDefaults = skip;
+		return this;
+	}
+
+	/**
+	 * Whether the given part is copied to the given copy.
+	 *
+	 * <p>
+	 * A part is not copied, if the copy keeps the default computed in its creating transaction,
+	 * see {@link #skipTransactionDefaults(boolean)}.
+	 * </p>
+	 *
+	 * @param copy
+	 *        The copy that defines the given part.
+	 * @param part
+	 *        The part of the original's type.
+	 */
+	final boolean isCopied(TLObject copy, TLStructuredTypePart part) {
+		if (!_skipTransactionDefaults || copy.tTransient()) {
+			return true;
+		}
+		TLStructuredTypePart targetPart = resolve(copy, part);
+		return !_computedInTransaction.computeIfAbsent(targetPart, CopyOperationImpl::isComputedInTransaction);
+	}
+
+	private static boolean isComputedInTransaction(TLStructuredTypePart part) {
+		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
+		return defaultProvider != null && defaultProvider.isComputedInTransaction();
 	}
 
 	/**
@@ -179,6 +223,9 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 		// Note: The target object may be of another type than the source object and not
 		// define all properties of the source.
 		if (!defines(copy, reference)) {
+			return;
+		}
+		if (!isCopied(copy, reference)) {
 			return;
 		}
 

@@ -7,6 +7,9 @@ package com.top_logic.basic;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -58,6 +61,16 @@ public class FileManagerDelegate extends FileManager {
 	@Override
 	public BinaryData getDataOrNull(String aName) {
 		return _delegate.getDataOrNull(aName);
+	}
+
+	@Override
+	public InputStream getStreamOrNull(String name) throws IOException {
+		return _delegate.getStreamOrNull(name);
+	}
+
+	@Override
+	public URL getResourceUrl(String name) throws MalformedURLException {
+		return _delegate.getResourceUrl(name);
 	}
 
 	@Override

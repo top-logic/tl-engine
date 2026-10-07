@@ -13,6 +13,10 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 
 	private String _valueLabel = "";
 
+	private String _minLabel = "";
+
+	private String _maxLabel = "";
+
 	private long _debounceMs = 0L;
 
 	/**
@@ -86,6 +90,38 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 	/** Internal setter for {@link #getValueLabel()} without chain call utility. */
 	protected final void internalSetValueLabel(String value) {
 		_valueLabel = value;
+	}
+
+	@Override
+	public final String getMinLabel() {
+		return _minLabel;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.SliderState setMinLabel(String value) {
+		internalSetMinLabel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMinLabel()} without chain call utility. */
+	protected final void internalSetMinLabel(String value) {
+		_minLabel = value;
+	}
+
+	@Override
+	public final String getMaxLabel() {
+		return _maxLabel;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.SliderState setMaxLabel(String value) {
+		internalSetMaxLabel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMaxLabel()} without chain call utility. */
+	protected final void internalSetMaxLabel(String value) {
+		_maxLabel = value;
 	}
 
 	@Override
@@ -204,6 +240,10 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 		out.value(getStep());
 		out.name(VALUE_LABEL__PROP);
 		out.value(getValueLabel());
+		out.name(MIN_LABEL__PROP);
+		out.value(getMinLabel());
+		out.name(MAX_LABEL__PROP);
+		out.value(getMaxLabel());
 		out.name(DEBOUNCE_MS__PROP);
 		out.value(getDebounceMs());
 	}
@@ -215,6 +255,8 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 			case MAX__PROP: setMax(in.nextDouble()); break;
 			case STEP__PROP: setStep(in.nextDouble()); break;
 			case VALUE_LABEL__PROP: setValueLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MIN_LABEL__PROP: setMinLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MAX_LABEL__PROP: setMaxLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DEBOUNCE_MS__PROP: setDebounceMs(in.nextLong()); break;
 			default: super.readField(in, field);
 		}

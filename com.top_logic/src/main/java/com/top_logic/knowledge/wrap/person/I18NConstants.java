@@ -58,6 +58,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_ACCOUNT_NAME__NAME;
 
+	/**
+	 * @en The anonymous account cannot be deleted, it represents visitors that are not logged in.
+	 */
+	public static ResKey ERROR_ANONYMOUS_ACCOUNT_CANNOT_BE_DELETED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

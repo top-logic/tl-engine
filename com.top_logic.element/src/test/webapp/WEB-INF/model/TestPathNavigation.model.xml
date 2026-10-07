@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestPathNavigation">
+			<types>
+				<class name="Item"/>
+
+				<!-- Abstract reference whose concrete overrides are all stored. -->
+				<class name="Container"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="items"
+							abstract="true"
+							multiple="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<class name="StoredContainer">
+					<generalizations>
+						<generalization type="Container"/>
+					</generalizations>
+					<attributes>
+						<reference name="items"
+							override="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Redeclares the reference as abstract. -->
+				<class name="IntermediateContainer"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="Container"/>
+					</generalizations>
+					<attributes>
+						<reference name="items"
+							abstract="true"
+							override="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<class name="IndirectContainer">
+					<generalizations>
+						<generalization type="IntermediateContainer"/>
+					</generalizations>
+					<attributes>
+						<reference name="items"
+							override="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Abstract reference with a computed concrete override. -->
+				<class name="Source"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="targets"
+							abstract="true"
+							multiple="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<class name="StoredSource">
+					<generalizations>
+						<generalization type="Source"/>
+					</generalizations>
+					<attributes>
+						<reference name="targets"
+							override="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<class name="ComputedSource">
+					<generalizations>
+						<generalization type="Source"/>
+					</generalizations>
+					<attributes>
+						<reference name="targets"
+							override="true"
+							type="Item"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
+				<!-- Abstract reference without any concrete override. -->
+				<class name="Unimplemented"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="items"
+							abstract="true"
+							multiple="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

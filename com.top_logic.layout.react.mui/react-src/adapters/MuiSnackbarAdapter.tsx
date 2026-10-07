@@ -26,7 +26,7 @@ const REASON_TIMEOUT: SnackbarCloseReason = 'timeout';
 const ALERT_SX: SxProps<Theme> = { width: '100%', maxWidth: 'min(40rem, calc(100vw - 32px))' };
 
 const I18N_KEYS = {
-  'js.alert.dismiss': 'Dismiss',
+  'js.snackbar.dismiss': 'Dismiss',
 };
 
 /**
@@ -49,8 +49,8 @@ const I18N_KEYS = {
  * <li>hidden → nothing is rendered; the configured CSS class → className of the `Snackbar`.</li>
  * </ul>
  *
- * <p>The close button is not part of TLSnackbar; it lets the user dismiss a message that stays.
- * A click beside the message and Escape leave it standing, as with TLSnackbar.</p>
+ * <p>The close button of the `Alert` dismisses the message at once, as the close button of
+ * TLSnackbar does. A click beside the message and Escape leave it standing, as with TLSnackbar.</p>
  */
 const MuiSnackbarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SnackbarStateJson>>();
@@ -90,7 +90,7 @@ const MuiSnackbarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         severity={state.variant ?? 'info'}
         variant="filled"
         onClose={dismiss}
-        closeText={i18n['js.alert.dismiss']}
+        closeText={i18n['js.snackbar.dismiss']}
         role="status"
         sx={ALERT_SX}
       >

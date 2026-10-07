@@ -136,6 +136,15 @@ describe('TLSlider as MUI Slider', () => {
     expect(document.getElementById(CONTROL_ID)!.querySelector('output')).toBeNull();
   });
 
+  it('reserves the width of the wider bound for the text beside the track', () => {
+    mountSlider({ minLabel: '0 %', maxLabel: '100 %' });
+
+    const output = document.getElementById(CONTROL_ID)!.querySelector('output')!;
+    const sizers = Array.from(output.querySelectorAll('[aria-hidden="true"]')).map(e => e.textContent);
+    expect(sizers).toEqual(['0 %', '100 %']);
+    expect(output.querySelector(':scope > :not([aria-hidden])')!.textContent).toBe('20 %');
+  });
+
   it('marks an invalid value', () => {
     mountSlider({ hasError: true, errorMessage: 'Zu hoch', mandatory: true });
 

@@ -1,4 +1,9 @@
-# FAQ: Rendering the React UI with a customer's component library
+---
+description: Read when the React UI must appear in a customer's own React component library - a theme from its design tokens, root wrappers and replace-based adapter components registered through tl-react-bridge, the state.proto state contract, and the com.top_logic.demo.react.corporate example module.
+order: 38
+---
+
+# Rendering the React UI with a customer's component library
 
 A customer often brings a React component library of its own that defines the corporate design,
 stylesheets included. Such a library knows nothing about TopLogic: it keeps no server state and binds
@@ -55,7 +60,7 @@ Map the customer's tokens (brand colours, fonts, radii, shadows) onto a theme of
 
 The shipped themes are in `com.top_logic.layout.react/src/main/webapp/WEB-INF/conf/tl-react-theme.config.xml`;
 the tokens, their tiers and the audit test are described in
-[react-theme-tokens.md](../../com.top_logic.layout.react/src/main/java/META-INF/tl-docs/view-layer/theme-tokens.md). Where possible, let the customer's CSS variables and
+[Theme tokens in React stylesheets](doc:view-layer/theme-tokens). Where possible, let the customer's CSS variables and
 the TopLogic tokens refer to the same source.
 
 This level alone covers a large part of the appearance, in particular of the complex components that
@@ -69,7 +74,7 @@ callbacks to TopLogic commands.
 
 ### The module
 
-The adapter module is a React module as described in [new-react-module.md](new-react-module.md)
+The adapter module is a React module as described in [New React control module](doc:engine/new-react-module)
 (`package.json`, `tsconfig.json`, `vite.config.ts`, `pom.xml` with the `frontend-maven-plugin`). Its
 bundle and the library's stylesheet are announced as client resources in a configuration file
 listed in `WEB-INF/conf/metaConf.txt`:
@@ -234,7 +239,7 @@ the state as `Partial<XStateJson>`.
 ## Level 3: new UIElements only for widgets without a TopLogic counterpart
 
 If the customer has a widget TopLogic has no counterpart for (a stepper, a KPI tile), build a
-`UIElement` + `ReactControl` + component as described in [new-ui-element.md](../../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/new-ui-element.md). Make
+`UIElement` + `ReactControl` + component as described in [A new `UIElement` with a client component of its own](doc:view-layer/new-ui-element). Make
 it generic and parameterized by configuration, not tailored to one view.
 
 ## What to avoid
@@ -345,4 +350,4 @@ MAVEN_ARGS=-Pcorporate-example   # start the app with the same profile, see demo
 ```
 
 Every button and checkbox of the demo — in forms, toolbars and dialogs — then renders as a brand
-component with the pill-shaped accent style. See [demo-apps.md](demo-apps.md) for URL and login.
+component with the pill-shaped accent style. See [Demo apps](doc:engine/demo-apps) for URL and login.

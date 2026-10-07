@@ -220,7 +220,7 @@ framework module `com.top_logic.layout.react` itself.
 
 Do **not** depend on `react` / `react-dom` — they come from `tl-react-bridge`. Third-party React
 libraries go under `dependencies` and then need the shim aliases described in
-[new-react-module.md](../../../../../../../docs/faq/new-react-module.md).
+[New React control module](doc:engine/new-react-module).
 
 `tsconfig.json` is the same in every module; the `paths` entry is what makes `tl-react-bridge`
 resolvable for the type checker:
@@ -308,7 +308,7 @@ configuration (`WEB-INF/conf/<module>.conf.config.xml`; in an application module
 instance. Without this whole section the browser reports “Component not registered”.
 
 A **new** module also needs its config file listed in its own `WEB-INF/conf/metaConf.txt`, plus the
-rest of the [new module checklist](../../../../../../../docs/faq/new-module-checklist.md).
+rest of the [new module checklist](doc:engine/new-module-checklist).
 
 ### 3.6 Git
 
@@ -364,7 +364,7 @@ Resource check: Missing resource keys in '…/messages_de.properties':
   com.example.app.view.MyElement.Config.label.tooltip, …
 ```
 
-Keep the file sorted the way the generated English one is. Details in [i18n.md](../../../../../../../docs/faq/i18n.md).
+Keep the file sorted the way the generated English one is. Details in [Internationalization](doc:i18n).
 
 ## 6. Build and verify
 
@@ -399,7 +399,7 @@ Two traps worth knowing:
   grep -rl "<a string from your component>" my.app.module/target
   ```
 
-Then start the application (see [demo-apps.md](../../../../../../../docs/faq/demo-apps.md)) and exercise the element in the
+Then start the application (see [Demo apps](doc:engine/demo-apps)) and exercise the element in the
 browser.
 
 ## Troubleshooting
@@ -408,7 +408,7 @@ browser.
 |---------|-------|-----|
 | `… has no property 'my-element'` when loading the view | Type index missing or stale | `mvn clean install -pl my.app.module` (step 6) |
 | Element renders as an empty box, console says “Component not registered” | Bundle not announced, or the name in `register(…)` differs from the one passed to `super(…)` | Step 3.5, then compare the two names |
-| “useState is null” / “useRef is null” | Second React instance: a component or a third-party library imports from `react` | Import from `tl-react-bridge`; for libraries add the shim aliases ([new-react-module.md](../../../../../../../docs/faq/new-react-module.md)) |
+| “useState is null” / “useRef is null” | Second React instance: a component or a third-party library imports from `react` | Import from `tl-react-bridge`; for libraries add the shim aliases ([New React control module](doc:engine/new-react-module)) |
 | Component shows the initial state but never updates | State written into fields instead of `putState`, or the client keeps its own copy | Publish every change with `putState`; render from `useTLState()` |
 | Command does nothing | Name mismatch between `sendCommand('x')` and `@ReactCommandHandler("x")` | Align the names |
 | CSS not applied | Stylesheet not announced | Add the `<stylesheet>` resource (step 3.5) |
@@ -440,7 +440,7 @@ my.app.module/
 
 - [Basics](doc:view-layer/basics) — when a new component is justified at all, and how to
   compose existing ones
-- [new-react-module.md](../../../../../../../docs/faq/new-react-module.md) — a module whose purpose *is* React controls, including
+- [New React control module](doc:engine/new-react-module) — a module whose purpose *is* React controls, including
   third-party libraries and their React shims
-- [new-module-checklist.md](../../../../../../../docs/faq/new-module-checklist.md) — everything a new module needs beyond this
-- [i18n.md](../../../../../../../docs/faq/i18n.md) — the resource workflow
+- [New module checklist](doc:engine/new-module-checklist) — everything a new module needs beyond this
+- [Internationalization](doc:i18n) — the resource workflow

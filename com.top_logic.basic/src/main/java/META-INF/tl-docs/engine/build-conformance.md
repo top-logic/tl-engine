@@ -1,4 +1,9 @@
-# FAQ: Build conformance & CI gates
+---
+description: Read before pushing an engine branch that adds or edits source or layouts - the CI gates a local mvn install misses - SPDX header and class comment (TestComment), XMLPrettyPrinter-normalized layouts (TestLayoutsNormalized), and -DskipTests=true skipping test compilation.
+order: 20
+---
+
+# Build conformance & CI gates
 
 A green local `mvn install` does **not** prove a branch will pass CI. Tests are skipped by default locally, and several conformance checks run only per-module via `TestAll` (plus TLDoclet warnings that make the Jenkins build UNSTABLE). Before pushing a branch that adds or edits source or layout files, check the following.
 

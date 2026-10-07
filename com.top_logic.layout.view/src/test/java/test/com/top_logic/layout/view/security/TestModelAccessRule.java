@@ -131,16 +131,21 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * An attribute-level check decides by the rights on the attribute.
+	 * An attribute-level check decides by the rights on the attribute. An attribute granting the
+	 * operation to no role refuses it independent of the object: the command is hidden, unless the
+	 * rule demands to disable it.
 	 */
 	public void testAttributeWrite() throws Exception {
 		ViewExecutabilityRule name = rule("<model-access operation='Write' attribute='" + NAME + "'/>");
 		ViewExecutabilityRule secret = rule("<model-access operation='Write' attribute='" + SECRET + "'/>");
+		ViewExecutabilityRule disabledSecret =
+			rule("<model-access operation='Write' attribute='" + SECRET + "' denied='disable'/>");
 
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, name.isExecutable(_project));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, secret.isExecutable(_project));
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_ATTRIBUTE_WRITE_DENIED__ATTRIBUTE,
-			secret.isExecutable(_project));
+			disabledSecret.isExecutable(_project));
 
 		becomeUser(_root);
 		assertSame(ExecutableState.EXECUTABLE, secret.isExecutable(_project));

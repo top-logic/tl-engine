@@ -11,6 +11,7 @@ import java.util.Set;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -147,11 +148,87 @@ public interface ModelAccessRights {
 	 * </p>
 	 *
 	 * <p>
-	 * An empty set means there is no additional attribute-level restriction: the user may perform
-	 * the command group on the attribute whenever he has the corresponding rights on the object.
+	 * An empty set has two meanings, which {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}
+	 * tells apart: without an attribute-level grant for the command group, there is no additional
+	 * restriction, the user may perform the command group on the attribute whenever he has the
+	 * corresponding rights on the object. With an attribute-level grant, an empty set means that no
+	 * role may perform the command group on the attribute.
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Whether the given attribute has an attribute-level grant for the given command group.
+	 *
+	 * <p>
+	 * Only an attribute with such a grant restricts the command group beyond the rights on the
+	 * object, to the roles {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists.
+	 * A grant listing no role at all denies the command group on the attribute to every user except
+	 * one bypassing the model security, independent of the object the attribute is accessed on.
+	 * </p>
+	 *
+	 * @param attribute
+	 *        The attribute to check, any override of it decides like its
+	 *        {@link TLStructuredTypePart#getDefinition() definition}.
+	 * @param commandGroup
+	 *        The operation on the attribute.
+	 */
+	boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Checks whether the given person can perform the given command group on the given attribute
+	 * of the given object to be created.
+	 *
+	 * <p>
+	 * The object to be created (e.g. a transient draft that is persisted later on) holds no roles
+	 * yet. Its attribute rights are decided as follows:
+	 * </p>
+	 * <ul>
+	 * <li>The attributes of a type {@link #isWithoutSecurity(TLClass) without security} are not
+	 * restricted.</li>
+	 * <li>Without an attribute-level grant for the command group (see
+	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the attribute is not restricted
+	 * beyond the object: the command group is allowed for every person, also for a restricted one or
+	 * without a person at all. The right to create the object, checked where it is created, covers
+	 * filling in its initial values, and a transient object that is never persisted (e.g. the input
+	 * of a dialog) is accessible to whoever holds it.</li>
+	 * <li>For an attribute with such a grant, a person bypassing the model security decides by the
+	 * bypass.</li>
+	 * <li>An attribute-level grant listing no role denies the command group.</li>
+	 * <li>For a type with an {@link #getAccessParent(TLClass) access parent}, the person must hold
+	 * one of the granted roles on the object deciding for the access parent, as for an attribute of
+	 * a persistent object. The access parent of the object to be created is resolved on the object:
+	 * its {@link TLObject#tContainer() container}, also for a relation navigating a composition the
+	 * object is not yet held by, or the value of its reference. An access parent that is itself to
+	 * be created continues the chain through its own access parent, up to the first committed
+	 * object. The edited object stands for a {@link TLFormObjectBase form object} editing it. An
+	 * object to be created without access parent (in no container, or with an empty reference) is
+	 * not restricted, it is not accessible until it is put into a container, which is a write of
+	 * the container checked in its own right.</li>
+	 * <li>Attribute grants of a type deciding by its own roles (without access parent) do not
+	 * restrict an object to be created, since the roles it will hold are computed only once it
+	 * exists. This also holds for an object reaching such an object to be created on its chain of
+	 * access parents.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The right to create the object itself is not part of this check, see
+	 * {@link #isAllowedCreate(Person, TLClass, TLObject)}.
+	 * </p>
+	 *
+	 * @param person
+	 *        The person to check.
+	 * @param draft
+	 *        The object to be created, e.g. a transient object or an object created in the current
+	 *        transaction.
+	 * @param attribute
+	 *        The attribute of the given object to access.
+	 * @param commandGroup
+	 *        The operation on the attribute, e.g. {@link SimpleBoundCommandGroup#WRITE} for setting
+	 *        its initial value.
+	 */
+	boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup);
 
 	/**
 	 * Checks whether the current person can perform the given command group on the given instance.

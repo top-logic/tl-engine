@@ -7,18 +7,20 @@ package com.top_logic.model.search.providers;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
 /**
  * Configuration for drop targets that are fully configured by model queries.
@@ -26,7 +28,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @Abstract
-public interface DropTargetByExpressionConfig extends ConfigurationItem {
+public interface DropTargetByExpressionConfig extends DropSecurityConfig {
 
 	/**
 	 * Name of {@link #getHandleDrop()}.
@@ -42,6 +44,16 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 	 * Name of {@link #getCanDrop()}.
 	 */
 	public static final String CAN_DROP = "canDrop";
+
+	/**
+	 * Name of {@link #getInTransaction()}.
+	 */
+	public static final String IN_TRANSACTION = "in-transaction";
+
+	/**
+	 * Name of {@link #getCommitMessage()}.
+	 */
+	public static final String COMMIT_MESSAGE = "commit-message";
 
 	/**
 	 * Operation executing a drop in the context of a referenced element.
@@ -73,6 +85,11 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 
 	/**
 	 * Function checking whether a drop in the context of a referenced element can be performed.
+	 * 
+	 * <p>
+	 * The function is only called, if the current user has the permission for the drop, see
+	 * {@link #getGroup()} and {@link #getTarget()}.
+	 * </p>
 	 */
 	@Name(CAN_DROP)
 	@ItemDefault(Expr.True.class)
@@ -81,7 +98,26 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 	/**
 	 * Whether the drop operation should be executed in a {@link Transaction transaction}.
 	 */
+	@Name(IN_TRANSACTION)
 	@BooleanDefault(true)
 	boolean getInTransaction();
+
+	/**
+	 * Function computing the message to annotate to the change performed by the drop.
+	 * 
+	 * <p>
+	 * The function receives the arguments of the {@link #getHandleDrop() drop operation} followed
+	 * by the model of the component the drop happens in. The result is either a string or an
+	 * internationalized text.
+	 * </p>
+	 * 
+	 * <p>
+	 * If not set, or if the function returns nothing, a default message is used that names the
+	 * dropped objects and the component the objects are dropped into.
+	 * </p>
+	 */
+	@Name(COMMIT_MESSAGE)
+	@DynamicMode(fun = VisibleIf.class, args = @Ref(IN_TRANSACTION))
+	Expr getCommitMessage();
 
 }

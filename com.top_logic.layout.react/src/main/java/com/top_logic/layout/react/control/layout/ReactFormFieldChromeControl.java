@@ -71,7 +71,12 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	private static final String HAS_TOOLTIP = "hasTooltip";
 
-	private static final String TOOLTIP_TEXT = "tooltipText";
+	/**
+	 * State key of the plain text offered as the tooltip of the field label.
+	 *
+	 * @see #setTooltipText(String)
+	 */
+	public static final String TOOLTIP_TEXT = "tooltipText";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
 	private static final String TOOLTIP_KEY = "tooltip";

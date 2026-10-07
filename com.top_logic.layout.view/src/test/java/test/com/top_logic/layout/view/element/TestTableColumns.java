@@ -29,6 +29,7 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.CompatibilityService;
@@ -149,6 +150,18 @@ public class TestTableColumns extends TestCase {
 
 	private static void set(ConfigurationItem config, String property, Object value) {
 		config.update(config.descriptor().getProperty(property), value);
+	}
+
+	/**
+	 * Runs the test without access checks: it builds columns over a model of its own, for which no
+	 * security configuration exists, and tests their structure rather than the access rights.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		ModelAccessRights.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	/**

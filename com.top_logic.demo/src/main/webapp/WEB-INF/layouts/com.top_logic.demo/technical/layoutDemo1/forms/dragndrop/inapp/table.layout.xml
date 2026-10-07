@@ -35,6 +35,10 @@
 	  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
 	};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
 	]]></handleDrop>
+				<commit-message><![CDATA[draggedObjects -> referenceRow -> model ->
+	#("{0} unter {1} verschoben."@de, "Moved {0} below {1}."@en).fill(
+		$draggedObjects.map(x -> $x.get(`DemoTypes:DemoTypes.All#name`)).join(separator: ", "),
+		$referenceRow.get(`DemoTypes:DemoTypes.All#name`))]]></commit-message>
 			</dropTarget>
 		</dropTargets>
 		<buttons>

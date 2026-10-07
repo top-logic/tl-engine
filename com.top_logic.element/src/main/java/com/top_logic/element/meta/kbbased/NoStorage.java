@@ -21,7 +21,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * <p>
  * An attribute is inaccessible, if instantiating its configured {@link StorageImplementation}
- * fails, or if the attribute is declared <code>abstract</code>.
+ * fails. An attribute declared <code>abstract</code> is inaccessible, too, but uses the
+ * {@link AbstractAttributeStorage}.
  * </p>
  * 
  * <p>
@@ -31,14 +32,19 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-final class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>> {
+class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>> {
 
 	/**
 	 * Singleton {@link NoStorage} instance.
 	 */
 	public static final NoStorage INSTANCE = new NoStorage();
 
-	private NoStorage() {
+	/**
+	 * Creates a {@link NoStorage}.
+	 * 
+	 * @see #INSTANCE
+	 */
+	NoStorage() {
 		super(null, null);
 	}
 
@@ -91,7 +97,10 @@ final class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>>
 		throw unsupported(part);
 	}
 
-	private RuntimeException unsupported(TLStructuredTypePart attribute) {
+	/**
+	 * The exception to throw when the value of the given attribute is accessed.
+	 */
+	RuntimeException unsupported(TLStructuredTypePart attribute) {
 		return new TopLogicException(
 			I18NConstants.ERROR_ABSTRACT_ATTRIBUTE_ACCESS__ATTR.fill(TLModelUtil.qualifiedName(attribute)));
 	}

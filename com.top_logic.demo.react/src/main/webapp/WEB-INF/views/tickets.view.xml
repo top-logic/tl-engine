@@ -212,7 +212,7 @@
 									/>
 								</executability>
 								<with-transaction>
-									<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, `demo.tickets:TicketStatus#open`)); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
+									<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command

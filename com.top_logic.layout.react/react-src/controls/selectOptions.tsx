@@ -104,10 +104,15 @@ export function ReadonlyValue({
   return <span className="tl-field-value tl-type-body">{content}</span>;
 }
 
+/** Stands between two values shown as plain text, as in the other lists of values on one line. */
+const VALUE_SEPARATOR = ', ';
+
 /**
  * Renders the values of a select field that only displays its value: a `tl-select__values` holding
- * one {@link ReadonlyValue} per value. An empty selection renders an empty list - the "empty
- * option" label is an edit affordance and would mislead in a read-only display.
+ * one {@link ReadonlyValue} per value. Two values shown as plain text are separated by a comma, so
+ * that they do not run into each other; a value shown as a pill is set apart by its pill. An empty
+ * selection renders an empty list - the "empty option" label is an edit affordance and would
+ * mislead in a read-only display.
  *
  * @param id the id of the element, the control id of the field
  * @param className further classes, e.g. the result of rootClassName
@@ -127,8 +132,12 @@ export function ReadonlyValues({
 }) {
   return (
     <span id={id} className={className ? 'tl-select__values ' + className : 'tl-select__values'}>
-      {value.map((v) => (
-        <ReadonlyValue key={v.value} option={v} onGoto={onGoto} />
+      {value.map((v, n) => (
+        <React.Fragment key={v.value}>
+          {n > 0 && !value[n - 1].colorRole && !v.colorRole
+            && <span className="tl-select__separator">{VALUE_SEPARATOR}</span>}
+          <ReadonlyValue option={v} onGoto={onGoto} />
+        </React.Fragment>
       ))}
     </span>
   );

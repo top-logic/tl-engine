@@ -50,7 +50,7 @@
 								/>
 							</executability>
 							<with-transaction>
-								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o.set(`demo.react:Demo#aliases`, ['Alpha ' + ($i + 1), 'Bravo ' + ($i + 1), 'Charlie ' + ($i + 1)]); $o.set(`demo.react:Demo#notes`, ['Checked on site.', 'Waiting for the supplier.']); $o.set(`demo.react:Demo#scores`, [$i + 1, $i + 3, $i + 5]); $o.set(`demo.react:Demo#ratios`, [($i + 1) * 1.5, ($i + 1) * 2.25]); $o.set(`demo.react:Demo#deadlines`, [date(2026, ($i % 12) + 1, 10), date(2026, ($i % 12) + 1, 24)]); $o.set(`demo.react:Demo#flags`, [$i % 2 == 0, $i % 3 == 0]); $o; })"/>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o.set(`demo.react:Demo#aliases`, ['Alpha ' + ($i + 1), 'Bravo ' + ($i + 1), 'Charlie ' + ($i + 1)]); $o.set(`demo.react:Demo#notes`, ['Checked on site.', 'Waiting for the supplier.']); $o.set(`demo.react:Demo#scores`, [$i + 1, $i + 3, $i + 5]); $o.set(`demo.react:Demo#ratios`, [($i + 1) * 1.5, ($i + 1) * 2.25]); $o.set(`demo.react:Demo#deadlines`, [date(2026, ($i % 12) + 1, 10), date(2026, ($i % 12) + 1, 24)]); $o.set(`demo.react:Demo#flags`, [$i % 2 == 0, $i % 3 == 0]); $o.set(`demo.react:Demo#multiLine`, 'First line of object ' + ($i + 1) + '\nSecond line\nThird line'); $o.set(`demo.react:Demo#html`, htmlText('&lt;p>Rich text of &lt;b>object ' + ($i + 1) + '&lt;/b> with a &lt;i>formatted&lt;/i> paragraph.&lt;/p>&lt;ul>&lt;li>First point&lt;/li>&lt;li>Second point&lt;/li>&lt;/ul>')); $o.set(`demo.react:Demo#xmlSource`, '&lt;config id=&quot;' + ($i + 1) + '&quot;>\n\t&lt;entry key=&quot;a&quot; value=&quot;1&quot;/>\n\t&lt;entry key=&quot;b&quot; value=&quot;2&quot;/>\n&lt;/config>'); $o.set(`demo.react:Demo#parts`, [1, 2].map(k -> { p = new(`demo.react:DemoPart`, transient: false); $p.set(`demo.react:DemoPart#name`, 'Part ' + ($i + 1) + '.' + $k); $p.set(`demo.react:DemoPart#amount`, ($i + 1) * $k * 2.5); if($k == 1, $p.set(`demo.react:DemoPart#parts`, [1, 2].map(m -> { q = new(`demo.react:DemoPart`, transient: false); $q.set(`demo.react:DemoPart#name`, 'Part ' + ($i + 1) + '.' + $k + '.' + $m); $q.set(`demo.react:DemoPart#amount`, $m * 1.25); if($m == 1, $q.set(`demo.react:DemoPart#parts`, [1].map(n -> { r = new(`demo.react:DemoPart`, transient: false); $r.set(`demo.react:DemoPart#name`, 'Part ' + ($i + 1) + '.' + $k + '.' + $m + '.' + $n); $r.set(`demo.react:DemoPart#amount`, 0.5); $r; }))); $q; }))); $p; })); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command
@@ -268,8 +268,14 @@
 								width="200"
 							/>
 							<column attribute="multiLine"/>
+							<column attribute="html"/>
 							<column attribute="i18n"/>
 							<column attribute="i18nMultiline"/>
+							<column attribute="i18nHtml"/>
+							<column attribute="xmlSource"/>
+							<column attribute="javascriptSource"/>
+							<column attribute="script"/>
+							<column attribute="parts"/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
 							<column attribute="count">
@@ -448,6 +454,7 @@
 									<field attribute="htmlSource"/>
 									<field attribute="markdownSource"/>
 									<field attribute="plainSource"/>
+									<field attribute="script"/>
 									<field attribute="i18n"/>
 									<field attribute="i18nMultiline"/>
 									<field attribute="i18nHtml"/>
@@ -488,6 +495,13 @@
 									<field attribute="owner"/>
 									<field attribute="watchers"/>
 									<field attribute="related"/>
+									<composition-table attribute="parts">
+										<columns>
+											<column attribute="name"/>
+											<column attribute="amount"/>
+											<column attribute="parts"/>
+										</columns>
+									</composition-table>
 								</form>
 							</panel>
 						</pane>
@@ -519,7 +533,14 @@
 							<columns>
 								<column attribute="name"/>
 								<column attribute="string"/>
+								<column attribute="multiLine"/>
+								<column attribute="html"/>
+								<column attribute="i18nHtml"/>
+								<column attribute="xmlSource"/>
+								<column attribute="script"/>
 								<column attribute="aliases"/>
+								<column attribute="notes"/>
+								<column attribute="parts"/>
 								<column attribute="scores"/>
 								<column attribute="priority"/>
 								<column attribute="active"/>

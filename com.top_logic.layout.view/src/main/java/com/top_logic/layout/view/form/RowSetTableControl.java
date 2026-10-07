@@ -45,6 +45,7 @@ import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -78,14 +79,17 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Renders as a {@code TLPanel} React component with a {@link TableViewControl} as content. The
- * editing lifecycle (row overlays, per-cell field models, validation, participation in the form's
- * save) is inherited from {@link AbstractCompositionControl}; the membership semantics (row
- * objects, add, remove, commit) come from the configured {@link RowSetBinding}.
+ * editing (row overlays, per-cell field models, validation, participation in the form's save) is
+ * the {@link RowSetEditSession} the table displays, see {@link AbstractCompositionControl}; the
+ * membership semantics (row objects, add, remove, commit) come from the configured
+ * {@link RowSetBinding}.
  * </p>
  *
  * <p>
- * Data columns come from the declarations the table is built with (sortable, filterable, cells
- * displayed through the view-mode field display of the column's values). While the form is in edit
+ * Data columns come from the declarations the table is built with, and from the
+ * {@link ColumnDeclarations#mainColumns(TLStructuredType) main columns} of the row type for a table
+ * declaring none (sortable, filterable, cells displayed through the view-mode field display of the
+ * column's values). While the form is in edit
  * mode, the cells of rows covered by the {@link RowEditPolicy} render the input the column's
  * {@link CellEditing} builds, where it offers one.
  * An action column for row removal is appended in edit mode when the binding supports removal; a
@@ -103,6 +107,9 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class RowSetTableControl extends AbstractCompositionControl {
+
+	/** The React module rendering this control. */
+	private static final String REACT_MODULE = "TLPanel";
 
 	/** Column name for the detail-open action column. */
 	static final String COLUMN_DETAIL = "_detail";
@@ -226,11 +233,39 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public RowSetTableControl(ViewContext context, FormControl formControl, RowSetBinding binding,
 			List<ColumnDeclaration> columns, RowEditPolicy policy) {
-		super(context, formControl, binding, "TLPanel");
+		super(context, formControl, binding, REACT_MODULE);
 		_context = context;
 		_columns = columns;
 		_policy = policy;
+		initState();
+	}
 
+	/**
+	 * Creates a {@link RowSetTableControl} displaying the given running session.
+	 *
+	 * <p>
+	 * The table displays and edits the rows of the session, which outlives the table.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view context (channels, model scope, React wiring).
+	 * @param session
+	 *        The session editing the rows.
+	 * @param columns
+	 *        The declarations of the data columns to display and edit.
+	 * @param policy
+	 *        Which rows are editable while the session runs.
+	 */
+	public RowSetTableControl(ViewContext context, RowSetEditSession session, List<ColumnDeclaration> columns,
+			RowEditPolicy policy) {
+		super(context, session, REACT_MODULE);
+		_context = context;
+		_columns = columns;
+		_policy = policy;
+		initState();
+	}
+
+	private void initState() {
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
 
@@ -665,8 +700,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, List<ColumnSetup> setups) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		ColumnResolution scope = new ColumnResolution(binding().getRowType(), _context);
-		for (ColumnSetup setup : ColumnDeclarations.resolve(_columns, scope)) {
+		TLClass rowType = binding().getRowType();
+		ColumnResolution scope = new ColumnResolution(rowType, _context);
+		List<ColumnDeclaration> declarations =
+			_columns.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _columns;
+		for (ColumnSetup setup : ColumnDeclarations.resolve(declarations, scope)) {
 			setups.add(setup);
 			columns.add(adapt(setup.buildColumn(), setup, editMode));
 		}

@@ -32,6 +32,8 @@ export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';
+export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
 export type { InsideRef } from './bridge/outside-press';

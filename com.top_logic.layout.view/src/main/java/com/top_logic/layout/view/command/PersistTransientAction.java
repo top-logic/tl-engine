@@ -24,6 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} making the transient object it receives persistent, the draft a create dialog
@@ -139,15 +140,7 @@ public class PersistTransientAction implements ViewAction {
 		TLObject container = CreationContainer.resolveContainer(context, _config, Config.TAG_NAME);
 		TLStructuredTypePart reference = reference(container);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			CopyOperation operation = CopyOperation.initial();
-			if (container != null) {
-				operation.setContext(container, reference instanceof TLReference ref ? ref : null);
-			}
-			operation.setTransient(Boolean.FALSE);
-			operation.withSecurity(Boolean.TRUE);
-			operation.skipTransactionDefaults(true);
-			TLObject created = (TLObject) operation.copyReference(draft);
-			operation.finish();
+			TLObject created = persistentCopy(draft, container, reference instanceof TLReference ref ? ref : null);
 
 			if (reference != null) {
 				Update.checkWritePermission(container, reference);
@@ -160,6 +153,41 @@ public class PersistTransientAction implements ViewAction {
 			tx.commit();
 			return created;
 		}
+	}
+
+	/**
+	 * Creates the persistent object standing for the given transient one: with its values and the
+	 * parts of its compositions, which become persistent as well, however deep they are nested.
+	 *
+	 * <p>
+	 * Creating the object and each of its parts requires the right of the current user to create
+	 * it, reading the values of the transient objects is subject to the read rights of the current
+	 * user, and an attribute whose {@link DefaultProvider} computes its default in the creating
+	 * transaction keeps the default computed for the persistent object. Must be called within a
+	 * transaction.
+	 * </p>
+	 *
+	 * @param draft
+	 *        The transient object to make persistent.
+	 * @param container
+	 *        The object the persistent object is created in the context of, or {@code null}.
+	 * @param reference
+	 *        The reference of the container that will hold the persistent object, or {@code null}.
+	 * @return The persistent object.
+	 * @throws TopLogicException
+	 *         If the current user may not create the object or one of its parts.
+	 */
+	public static TLObject persistentCopy(TLObject draft, TLObject container, TLReference reference) {
+		CopyOperation operation = CopyOperation.initial();
+		if (container != null) {
+			operation.setContext(container, reference);
+		}
+		operation.setTransient(Boolean.FALSE);
+		operation.withSecurity(Boolean.TRUE);
+		operation.skipTransactionDefaults(true);
+		TLObject created = (TLObject) operation.copyReference(draft);
+		operation.finish();
+		return created;
 	}
 
 	private TLStructuredTypePart reference(TLObject container) {

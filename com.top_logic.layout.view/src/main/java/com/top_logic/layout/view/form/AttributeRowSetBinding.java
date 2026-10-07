@@ -23,8 +23,8 @@ import com.top_logic.model.TLStructuredTypePart;
  *
  * <p>
  * The row set is the reference value; adding a row creates a new object of the reference's target
- * type; committing writes the persisted row list back to the reference on the form overlay. The
- * remove semantics follow the model: rows removed from a {@link TLReference#isComposite()
+ * type; committing writes the persisted row list back to the reference on the editing buffer of the
+ * owner. The remove semantics follow the model: rows removed from a {@link TLReference#isComposite()
  * composition} reference are deleted (they cannot exist outside their container), rows removed
  * from a plain reference are only unlinked and keep existing.
  * </p>
@@ -111,15 +111,15 @@ public class AttributeRowSetBinding implements RowSetBinding {
 	}
 
 	@Override
-	public void updateMembership(FormControl form, List<TLObject> currentRows) {
-		form.getOverlay().tUpdate(_part, currentRows);
+	public void updateMembership(RowSetOwner owner, List<TLObject> currentRows) {
+		owner.object().tUpdate(_part, currentRows);
 	}
 
 	@Override
-	public void commit(Transaction tx, FormControl form, List<TLObject> persistedRows, List<TLObject> originalRows) {
-		// Update the reference in the main overlay so that the main overlay's apply() writes the
-		// persisted row list to the base object.
-		form.getOverlay().tUpdate(_part, persistedRows);
+	public void commit(Transaction tx, RowSetOwner owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
+		// Update the reference in the editing buffer of the owner, so that applying the buffer
+		// writes the persisted row list to the owner.
+		owner.object().tUpdate(_part, persistedRows);
 
 		if (getRemoveMode() == RemoveMode.DELETE) {
 			// Delete objects taken out of a composition (present originally, absent now).

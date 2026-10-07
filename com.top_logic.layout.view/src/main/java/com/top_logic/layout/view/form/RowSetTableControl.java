@@ -76,9 +76,10 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Renders as a {@code TLPanel} React component with a {@link TableViewControl} as content. The
- * editing lifecycle (row overlays, per-cell field models, validation, participation in the form's
- * save) is inherited from {@link AbstractCompositionControl}; the membership semantics (row
- * objects, add, remove, commit) come from the configured {@link RowSetBinding}.
+ * editing (row overlays, per-cell field models, validation, participation in the form's save) is
+ * the {@link RowSetEditSession} the table displays, see {@link AbstractCompositionControl}; the
+ * membership semantics (row objects, add, remove, commit) come from the configured
+ * {@link RowSetBinding}.
  * </p>
  *
  * <p>
@@ -101,6 +102,9 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class RowSetTableControl extends AbstractCompositionControl {
+
+	/** The React module rendering this control. */
+	private static final String REACT_MODULE = "TLPanel";
 
 	/** Column name for the detail-open action column. */
 	static final String COLUMN_DETAIL = "_detail";
@@ -217,11 +221,39 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public RowSetTableControl(ViewContext context, FormControl formControl, RowSetBinding binding,
 			List<ColumnDeclaration> columns, RowEditPolicy policy) {
-		super(context, formControl, binding, "TLPanel");
+		super(context, formControl, binding, REACT_MODULE);
 		_context = context;
 		_columns = columns;
 		_policy = policy;
+		initState();
+	}
 
+	/**
+	 * Creates a {@link RowSetTableControl} displaying the given running session.
+	 *
+	 * <p>
+	 * The table displays and edits the rows of the session, which outlives the table.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view context (channels, model scope, React wiring).
+	 * @param session
+	 *        The session editing the rows.
+	 * @param columns
+	 *        The declarations of the data columns to display and edit.
+	 * @param policy
+	 *        Which rows are editable while the session runs.
+	 */
+	public RowSetTableControl(ViewContext context, RowSetEditSession session, List<ColumnDeclaration> columns,
+			RowEditPolicy policy) {
+		super(context, session, REACT_MODULE);
+		_context = context;
+		_columns = columns;
+		_policy = policy;
+		initState();
+	}
+
+	private void initState() {
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
 

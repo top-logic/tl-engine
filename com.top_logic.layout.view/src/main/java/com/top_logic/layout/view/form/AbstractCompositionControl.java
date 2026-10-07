@@ -5,40 +5,34 @@
  */
 package com.top_logic.layout.view.form;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import com.top_logic.element.meta.form.validation.FormValidationModel;
-import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnSetup;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.form.ConstraintValidationListener;
-import com.top_logic.model.impl.TransientObjectFactory;
-import com.top_logic.model.security.ModelAccessRights;
-import com.top_logic.util.TLContext;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Base class for form controls that display and edit a set of row objects inline.
  *
  * <p>
- * Owns the complete editing lifecycle independent of the concrete presentation: implements
- * {@link FormModelListener} to react to form state changes (enter/exit edit mode, object switch)
- * and {@link FormParticipant} for validation, apply, cancel, and dirty tracking. On entering edit
- * mode, creates {@link TLObjectOverlay}s for the existing row objects and buffers the overlay list;
- * on save, persists new transient objects, applies overlay changes, and applies the binding's
- * remove semantics to orphaned objects.
+ * The editing itself - row overlays, per-cell field models, validation, participation in the
+ * form's save - is a {@link RowSetEditSession}; this control displays the rows of a session and
+ * offers to change them.
+ * </p>
+ *
+ * <p>
+ * A control created for a form ({@link #AbstractCompositionControl(ReactContext, FormControl,
+ * RowSetBinding, String)}) edits rows of the form object and owns its sessions: it implements
+ * {@link FormModelListener} to react to form state changes and starts a session whenever the form
+ * enters edit mode, ending it when the form leaves edit mode or the control is disposed. A control
+ * created for a running session
+ * ({@link #AbstractCompositionControl(ReactContext, RowSetEditSession, String)}) only displays that
+ * session, which outlives the control.
  * </p>
  *
  * <p>
@@ -55,28 +49,36 @@ import com.top_logic.util.error.TopLogicException;
  * {@link #deleteRow(TLObject, int)} changed the list.
  * </p>
  */
-public abstract class AbstractCompositionControl extends ReactControl
-		implements FormModelListener, FormParticipant {
+public abstract class AbstractCompositionControl extends ReactControl implements FormModelListener {
 
 	private final FormControl _formControl;
 
 	private final RowSetBinding _binding;
 
-	private CompositionFieldModel _fieldModel;
+	/**
+	 * Whether this control starts and ends its sessions itself, following the edit mode of its
+	 * form.
+	 */
+	private final boolean _ownsSession;
 
-	private final List<CompositionRowModel> _rowModels = new ArrayList<>();
+	/** The session displayed, {@code null} while no session runs. */
+	private RowSetEditSession _session;
 
-	/** The persistent objects at edit-mode entry, for orphan detection on save. */
-	private List<TLObject> _originalPersistentObjects;
+	private final RowSetEditSession.Listener _sessionListener = new RowSetEditSession.Listener() {
+		@Override
+		public void onRowsChanged(RowSetEditSession session) {
+			refreshRows();
+		}
 
-	/** Validation listeners registered per cell, for cleanup on exit edit mode. */
-	private final List<ConstraintValidationListener> _cellValidationListeners = new ArrayList<>();
-
-	/** The validation model on which cell listeners were registered, for correct cleanup. */
-	private FormValidationModel _registeredValidationModel;
+		@Override
+		public void onRowSetValidationChanged(RowSetEditSession session) {
+			updateCompositionErrorDisplay();
+		}
+	};
 
 	/**
-	 * Creates a new {@link AbstractCompositionControl} over the given row-set binding.
+	 * Creates a new {@link AbstractCompositionControl} over the given row-set binding of the form
+	 * object.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -92,6 +94,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 		super(context, null, reactModule);
 		_formControl = formControl;
 		_binding = binding;
+		_ownsSession = true;
 
 		formControl.addFormModelListener(this);
 	}
@@ -115,12 +118,36 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	/**
-	 * Initializes the presentation from the form's current object.
+	 * Creates a new {@link AbstractCompositionControl} displaying the given running session.
 	 *
 	 * <p>
-	 * Must be called after construction. Resolves the row-set binding and builds the initial
-	 * content; when the binding is not available (e.g. the current object's type does not declare
-	 * the bound attribute), builds empty view-mode content.
+	 * The control neither starts nor ends the session: the session keeps its state when the
+	 * control is disposed.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param session
+	 *        The session to display.
+	 * @param reactModule
+	 *        The React module rendering this control.
+	 */
+	public AbstractCompositionControl(ReactContext context, RowSetEditSession session, String reactModule) {
+		super(context, null, reactModule);
+		_formControl = session.owner().form();
+		_binding = session.binding();
+		_ownsSession = false;
+		_session = session;
+	}
+
+	/**
+	 * Initializes the presentation.
+	 *
+	 * <p>
+	 * Must be called after construction. A control displaying a given session builds the content
+	 * of that session. A control owning its sessions resolves the row-set binding against the form's
+	 * current object and builds the initial content; when the binding is not available (e.g. the
+	 * current object's type does not declare the bound attribute), builds empty view-mode content.
 	 * </p>
 	 *
 	 * <p>
@@ -130,13 +157,19 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 * </p>
 	 */
 	public void init() {
+		if (!_ownsSession) {
+			_session.addListener(_sessionListener);
+			buildContent(_session.currentRows(), _session.isRunning());
+			updateCompositionErrorDisplay();
+			return;
+		}
 		TLObject currentObject = _formControl.getCurrentObject();
 		if (!_binding.resolve(currentObject)) {
 			buildContent(List.of(), false);
 			return;
 		}
 		if (_formControl.isEditMode()) {
-			enterEditMode(currentObject);
+			enterEditMode();
 		} else {
 			buildContent(_binding.readRows(currentObject), false);
 		}
@@ -168,10 +201,25 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	/**
+	 * The object holding the displayed rows: the form's current object, or the owner of the
+	 * displayed session.
+	 */
+	protected final TLObject ownerObject() {
+		return _ownsSession ? _formControl.getCurrentObject() : _session.owner().object();
+	}
+
+	/**
 	 * The row-set semantics of this control.
 	 */
 	protected final RowSetBinding binding() {
 		return _binding;
+	}
+
+	/**
+	 * The displayed session, or {@code null} while no session runs.
+	 */
+	public final RowSetEditSession session() {
+		return _session;
 	}
 
 	/**
@@ -197,28 +245,21 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 * The field model holding the edited row list, or {@code null} outside edit mode.
 	 */
 	protected final CompositionFieldModel fieldModel() {
-		return _fieldModel;
+		return _session == null ? null : _session.fieldModel();
 	}
 
 	/**
 	 * Whether an edit session is running.
 	 */
 	protected final boolean isEditing() {
-		return _fieldModel != null;
-	}
-
-	/**
-	 * The per-row models tracking overlays and cell field models during edit mode.
-	 */
-	protected final List<CompositionRowModel> rowModels() {
-		return _rowModels;
+		return fieldModel() != null;
 	}
 
 	/**
 	 * The validation model in effect for the current edit session, or {@code null}.
 	 */
 	protected final FormValidationModel registeredValidationModel() {
-		return _registeredValidationModel;
+		return _session == null ? null : _session.validationModel();
 	}
 
 	// -- FormModelListener --
@@ -228,123 +269,27 @@ public abstract class AbstractCompositionControl extends ReactControl
 		TLObject currentObject = source.getCurrentObject();
 
 		if (!_binding.resolve(currentObject)) {
-			cleanupEditState();
+			endSession();
 			return;
 		}
 
 		if (source.isEditMode()) {
-			enterEditMode(currentObject);
+			enterEditMode();
 		} else {
 			exitEditMode(currentObject);
 		}
 	}
 
-	private void enterEditMode(TLObject currentObject) {
-		// Clean up previous edit state (e.g. after executeApply resets the session).
-		cleanupEditState();
+	private void enterEditMode() {
+		// End a previous session (e.g. after executeApply resets the form's edit session).
+		endSession();
 
-		// currentObject is the overlay in edit mode.
-		TLObject baseObject = currentObject;
-		if (currentObject instanceof TLObjectOverlay) {
-			baseObject = ((TLObjectOverlay) currentObject).getBase();
-		}
-
-		// Read the persistent row objects.
-		List<TLObject> persistentObjects = _binding.readRows(baseObject);
-		_originalPersistentObjects = new ArrayList<>(persistentObjects);
-
-		// Create overlays for each existing row object.
-		List<TLObject> overlayList = new ArrayList<>();
-		_rowModels.clear();
-
-		for (TLObject row : persistentObjects) {
-			TLObjectOverlay rowOverlay = new TLObjectOverlay(row);
-			CompositionRowModel rowModel = CompositionRowModel.forExisting(rowOverlay);
-			_rowModels.add(rowModel);
-			overlayList.add(rowOverlay);
-		}
-
-		// Publish the overlay list to the form overlay through the binding.
-		_binding.updateMembership(_formControl, overlayList);
-
-		// Create the row-list field model.
-		_fieldModel = new CompositionFieldModel(overlayList);
-		for (CompositionRowModel row : _rowModels) {
-			TLObjectOverlay rowOverlay = row.getRowOverlay();
-			if (rowOverlay != null) {
-				_fieldModel.addRowOverlay(rowOverlay);
-			}
-		}
-
-		// Register row overlays with the validation model so field-level
-		// constraints (mandatory, range) are evaluated for row objects.
-		_registeredValidationModel = _formControl.getValidationModel();
-		if (_registeredValidationModel != null) {
-			for (CompositionRowModel rowModel : _rowModels) {
-				TLObjectOverlay rowOverlay = rowModel.getRowOverlay();
-				if (rowOverlay != null) {
-					_registeredValidationModel.addOverlay(rowOverlay, rowOverlay.getBase());
-				}
-			}
-		}
-
-		// Register as participant.
-		_formControl.registerParticipant(this);
-
-		// Reflect constraints of the bound attribute itself in the field model and display.
-		wireCompositionValidation();
+		_session = new RowSetEditSession(RowSetOwner.ofForm(_formControl), _binding);
+		_session.addListener(_sessionListener);
+		_session.start();
 
 		// Rebuild the presentation in edit mode.
-		buildContent(overlayList, true);
-	}
-
-	/**
-	 * Reflects constraints of the bound attribute itself (e.g. a required minimum number of
-	 * entries) in the row-set {@link #fieldModel()} and notifies the subclass to display them.
-	 *
-	 * <p>
-	 * Without this wiring, such a constraint would only block saving without any visible location
-	 * of the problem: the bound attribute is displayed as a table and has no regular field chrome
-	 * showing validation errors.
-	 * </p>
-	 */
-	private void wireCompositionValidation() {
-		FormValidationModel validationModel = _registeredValidationModel;
-		TLObjectOverlay overlay = _formControl.getOverlay();
-		TLStructuredTypePart boundPart = _binding.getBoundPart();
-		if (validationModel == null || overlay == null || _fieldModel == null || boundPart == null) {
-			return;
-		}
-
-		_fieldModel.applyValidationResult(validationModel.getValidation(overlay, boundPart));
-
-		ConstraintValidationListener listener = (changedOverlay, attr, result) -> {
-			if (changedOverlay == overlay && attr.equals(boundPart)) {
-				_fieldModel.applyValidationResult(result);
-			}
-		};
-		validationModel.addConstraintValidationListener(listener);
-		_cellValidationListeners.add(listener);
-
-		_fieldModel.addListener(new FieldModelListener() {
-			@Override
-			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				// Value changes are handled by the table update logic.
-			}
-
-			@Override
-			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				// Not displayed.
-			}
-
-			@Override
-			public void onValidationChanged(FieldModel source) {
-				updateCompositionErrorDisplay();
-				_formControl.fireValidityChanged();
-			}
-		});
-
-		updateCompositionErrorDisplay();
+		buildContent(_session.currentRows(), true);
 	}
 
 	/**
@@ -362,7 +307,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	private void exitEditMode(TLObject currentObject) {
-		cleanupEditState();
+		endSession();
 
 		// Rebuild the presentation in view mode.
 		List<TLObject> rows = _binding.readRows(currentObject);
@@ -370,187 +315,21 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	/**
-	 * Discards all edit-session state: cell validation listeners, row overlays, the field model,
-	 * and the participant registration.
+	 * Ends the session this control owns, discarding all its state; stops displaying a session it
+	 * does not own.
 	 */
-	protected final void cleanupEditState() {
-		// Remove cell validation listeners and row overlays from the model they were
-		// registered on (which may differ from the current model after setupEditSession).
-		if (_registeredValidationModel != null) {
-			for (ConstraintValidationListener listener : _cellValidationListeners) {
-				_registeredValidationModel.removeConstraintValidationListener(listener);
-			}
-			for (CompositionRowModel row : _rowModels) {
-				TLObjectOverlay overlay = row.getRowOverlay();
-				if (overlay != null) {
-					_registeredValidationModel.removeOverlay(overlay);
-				}
-			}
-			_registeredValidationModel = null;
+	private void endSession() {
+		RowSetEditSession session = _session;
+		if (session == null) {
+			return;
 		}
-		_cellValidationListeners.clear();
-
-		if (_fieldModel != null) {
-			_formControl.unregisterParticipant(this);
-			_fieldModel = null;
+		session.removeListener(_sessionListener);
+		if (_ownsSession) {
+			_session = null;
+			session.end();
 		}
-		_rowModels.clear();
-		_originalPersistentObjects = null;
-
-		// Clear any displayed composition error (the field model is now gone).
+		// Clear any displayed composition error.
 		updateCompositionErrorDisplay();
-	}
-
-	// -- FormParticipant --
-
-	@Override
-	public boolean validate() {
-		if (_fieldModel == null) {
-			return true;
-		}
-
-		boolean valid = !_fieldModel.hasError();
-		for (CompositionRowModel row : _rowModels) {
-			for (BoundFieldModel colModel : row.getColumnModels().values()) {
-				if (colModel.hasError()) {
-					valid = false;
-				}
-			}
-		}
-		return valid;
-	}
-
-	/**
-	 * Checks the write right of every changed row and the right to create every added row.
-	 *
-	 * <p>
-	 * A row added to the rows of a persistent form object is created when the form is saved: the
-	 * user needs the right to create an object of its type in the context of the form object and,
-	 * for rows of an attribute of the form object, the right to write that attribute. Rows of a
-	 * transient form object become persistent together with it, where that creation is checked.
-	 * </p>
-	 */
-	@Override
-	public void checkApplyState() {
-		if (_fieldModel == null) {
-			return;
-		}
-		for (CompositionRowModel row : _rowModels) {
-			TLObjectOverlay overlay = row.getRowOverlay();
-			if (overlay != null && overlay.isDirty()) {
-				overlay.checkApply();
-			}
-		}
-		if (!isTransientOwner()) {
-			checkCreateRights();
-		}
-	}
-
-	private void checkCreateRights() {
-		TLObjectOverlay formOverlay = _formControl.getOverlay();
-		TLObject parent = formOverlay != null ? formOverlay.getBase() : null;
-		TLStructuredTypePart part = parent != null ? _binding.getBoundPart() : null;
-		ModelAccessRights rights = ModelAccessRights.getInstance();
-		Person user = TLContext.currentUser();
-		for (TLObject row : _fieldModel.getCurrentList()) {
-			if (row instanceof TLObjectOverlay || !row.tTransient()) {
-				continue;
-			}
-			TLClass type = (TLClass) row.tType();
-			boolean allowed = part == null
-				? rights.isAllowedCreate(user, type, (TLObject) null)
-				: rights.isAllowedCreate(user, parent, part, type);
-			if (!allowed) {
-				throw new TopLogicException(
-					com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));
-			}
-		}
-	}
-
-	@Override
-	public void applyState() {
-		if (_fieldModel == null) {
-			return;
-		}
-		for (CompositionRowModel row : _rowModels) {
-			TLObjectOverlay overlay = row.getRowOverlay();
-			if (overlay != null && overlay.isDirty()) {
-				overlay.apply();
-			}
-		}
-
-		if (isTransientOwner()) {
-			// A transient owner keeps transient row objects: write the current row list into the
-			// main overlay so applying it transfers the rows to the owner. The whole transient tree
-			// becomes persistent in one piece when the owner is copied persistent (e.g. by a create
-			// dialog's or a new-entry form's submit chain).
-			List<TLObject> bases = new ArrayList<>();
-			for (TLObject obj : _fieldModel.getCurrentList()) {
-				bases.add(obj instanceof TLObjectOverlay overlay ? overlay.getBase() : obj);
-			}
-			_binding.updateMembership(_formControl, bases);
-		}
-	}
-
-	/**
-	 * Whether the form's base object is transient, so row objects stay transient as well and are
-	 * persisted together with the owner.
-	 */
-	private boolean isTransientOwner() {
-		TLObjectOverlay overlay = _formControl.getOverlay();
-		return overlay != null && overlay.getBase() != null && overlay.getBase().tTransient();
-	}
-
-	@Override
-	public void persist(Transaction tx) {
-		if (_fieldModel == null) {
-			return;
-		}
-		if (isTransientOwner()) {
-			// Rows of a transient owner are not persisted individually - they are transferred to
-			// the owner by applyState() and become persistent together with it.
-			return;
-		}
-		List<TLObject> currentList = _fieldModel.getCurrentList();
-
-		// Persist new transient objects and build the persisted row list.
-		List<TLObject> persistedList = new ArrayList<>();
-		for (TLObject obj : currentList) {
-			if (obj instanceof TLObjectOverlay) {
-				persistedList.add(((TLObjectOverlay) obj).getBase());
-			} else if (obj.tTransient()) {
-				TLObject persisted = persistTransientObject(obj);
-				persistedList.add(persisted);
-			} else {
-				persistedList.add(obj);
-			}
-		}
-
-		// Write the row set back and apply the binding's remove semantics to orphaned objects.
-		_binding.commit(tx, _formControl, persistedList, _originalPersistentObjects);
-	}
-
-	@Override
-	public void cancel() {
-		_rowModels.clear();
-		_fieldModel = null;
-	}
-
-	@Override
-	public void revealAll() {
-		if (_fieldModel != null) {
-			_fieldModel.setRevealed(true);
-		}
-		for (CompositionRowModel row : _rowModels) {
-			for (BoundFieldModel colModel : row.getColumnModels().values()) {
-				colModel.setRevealed(true);
-			}
-		}
-	}
-
-	@Override
-	public boolean isDirty() {
-		return _fieldModel != null && _fieldModel.isDirty();
 	}
 
 	// -- Row Manipulation --
@@ -558,13 +337,9 @@ public abstract class AbstractCompositionControl extends ReactControl
 	/**
 	 * Adds a new, empty row to the row set.
 	 *
-	 * <p>
-	 * Creates a transient object of the binding's create type and appends it to the current list.
-	 * Publishes the membership change and refreshes the presentation.
-	 * </p>
-	 *
 	 * @return The created transient row object, or {@code null} if no edit session is running or the
 	 *         binding offers no row creation.
+	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow() {
 		return addRow(null);
@@ -578,54 +353,10 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 *        list, or {@code null} for an empty row.
 	 * @return The created transient row object, or {@code null} if no edit session is running or the
 	 *         binding offers no row creation.
+	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow(Consumer<TLObject> initializer) {
-		if (_fieldModel == null) {
-			return null;
-		}
-
-		// Determine the create type from the binding.
-		List<TLClass> createTypes = _binding.getCreateTypes();
-		if (createTypes.isEmpty()) {
-			return null;
-		}
-		TLClass targetType = createTypes.get(0);
-
-		// Create the transient object within the form object, so that it navigates to its owner
-		// (e.g. in an options expression) before it is stored.
-		TLObject owner = _formControl.getOverlay().getBase();
-		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType, owner);
-		if (initializer != null) {
-			initializer.accept(transientObject);
-		}
-
-		// Register with validation model so constraints are evaluated.
-		FormValidationModel validationModel = _registeredValidationModel;
-		if (validationModel != null) {
-			validationModel.addOverlay(transientObject, null);
-		}
-
-		// Create row model.
-		CompositionRowModel rowModel = CompositionRowModel.forNew(transientObject);
-		_rowModels.add(rowModel);
-
-		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
-		// the initial snapshot) and value-change events observe the membership change.
-		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
-		currentList.add(transientObject);
-		_fieldModel.setValue(currentList);
-
-		// Publish the membership change.
-		_binding.updateMembership(_formControl, currentList);
-
-		// Notify validation model that the bound attribute changed.
-		notifyValidationModelChanged();
-
-		_formControl.updateDirtyState();
-
-		refreshRows();
-
-		return transientObject;
+		return _session == null ? null : _session.addRow(initializer);
 	}
 
 	/**
@@ -636,12 +367,8 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 *        The row object (overlay or transient) to remove.
 	 */
 	public void removeRow(TLObject rowObject) {
-		if (_fieldModel == null) {
-			return;
-		}
-		int index = _fieldModel.getCurrentList().indexOf(rowObject);
-		if (index >= 0) {
-			deleteRow(rowObject, index);
+		if (_session != null) {
+			_session.removeRow(rowObject);
 		}
 	}
 
@@ -651,57 +378,11 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 * @param rowObject
 	 *        The row to remove from the current list.
 	 * @param rowIndex
-	 *        The row's index in {@link #rowModels()}.
+	 *        The row's index in the session's {@link RowSetEditSession#rowModels() row models}.
 	 */
 	public void deleteRow(TLObject rowObject, int rowIndex) {
-		if (_fieldModel == null) {
-			return;
-		}
-
-		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
-		// the initial snapshot) and value-change events observe the membership change.
-		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
-		currentList.remove(rowObject);
-		_fieldModel.setValue(currentList);
-
-		// Remove row model and unregister from validation model.
-		if (rowIndex >= 0 && rowIndex < _rowModels.size()) {
-			CompositionRowModel removedRow = _rowModels.remove(rowIndex);
-			TLObjectOverlay removedOverlay = removedRow.getRowOverlay();
-			if (removedOverlay != null) {
-				_fieldModel.removeRowOverlay(removedOverlay);
-			}
-			FormValidationModel validationModel = _registeredValidationModel;
-			if (validationModel != null) {
-				if (removedOverlay != null) {
-					validationModel.removeOverlay(removedOverlay);
-				} else if (rowObject.tTransient()) {
-					validationModel.removeOverlay(rowObject);
-				}
-			}
-		}
-
-		// Publish the membership change.
-		_binding.updateMembership(_formControl, currentList);
-
-		// Notify validation model that the bound attribute changed.
-		notifyValidationModelChanged();
-
-		_formControl.updateDirtyState();
-
-		refreshRows();
-	}
-
-	/**
-	 * Notifies the {@link FormValidationModel} that the bound attribute value has changed, so that
-	 * constraints on the attribute (e.g. min count) are re-evaluated.
-	 */
-	private void notifyValidationModelChanged() {
-		FormValidationModel validationModel = _registeredValidationModel;
-		TLObjectOverlay overlay = _formControl.getOverlay();
-		TLStructuredTypePart boundPart = _binding.getBoundPart();
-		if (validationModel != null && overlay != null && boundPart != null) {
-			validationModel.onValueChanged(overlay, boundPart);
+		if (_session != null) {
+			_session.deleteRow(rowObject, rowIndex);
 		}
 	}
 
@@ -709,8 +390,8 @@ public abstract class AbstractCompositionControl extends ReactControl
 
 	/**
 	 * Builds the editable control for a cell: the control the column's {@link CellEditing} says the
-	 * value is entered with, bound to the field model of that cell, which is created once per row
-	 * and column and wired for validation and dirty tracking.
+	 * value is entered with, bound to the field model of that cell, see
+	 * {@link RowSetEditSession#cellModel(TLObject, ColumnSetup)}.
 	 *
 	 * @param context
 	 *        The React context for control creation.
@@ -722,160 +403,29 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 *         offers no edit on this row, or the row is not part of the session).
 	 */
 	protected final ReactControl buildEditCellControl(ReactContext context, TLObject row, ColumnSetup column) {
-		CellEditing editing = column.editing();
-		if (editing == null || !editing.canEdit(row)) {
+		if (_session == null) {
 			return null;
 		}
-		CompositionRowModel rowModel = findRowModel(row);
-		if (rowModel == null) {
-			return null;
-		}
-		String columnName = column.name();
-		BoundFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
+		BoundFieldModel cellFieldModel = _session.cellModel(row, column);
 		if (cellFieldModel == null) {
-			cellFieldModel = editing.createModel(row, _formControl);
-			cellFieldModel.setEditable(true);
-			rowModel.putColumnModel(columnName, cellFieldModel);
-
-			wireCell(cellFieldModel, row);
+			return null;
 		}
-		return editing.createControl(context, row, cellFieldModel);
-	}
-
-	/**
-	 * Wires a freshly created cell model into the form: the validation of the attribute it edits,
-	 * dirty propagation and the live re-evaluation of constraints.
-	 *
-	 * <p>
-	 * Constraints are declared on attributes, so a cell holding a value no attribute holds has none
-	 * to show.
-	 * </p>
-	 */
-	private void wireCell(BoundFieldModel cellFieldModel, TLObject row) {
-		TLStructuredTypePart part =
-			cellFieldModel instanceof AttributeFieldModel attributeModel ? attributeModel.getPart() : null;
-		if (part != null) {
-			wireCellValidation(cellFieldModel, row, part);
-		}
-		addCellListener(cellFieldModel, row, part);
-	}
-
-	/**
-	 * Wires a {@link ConstraintValidationListener} that propagates validation results from the
-	 * {@link FormValidationModel} to the cell's field model.
-	 */
-	protected final void wireCellValidation(BoundFieldModel model, TLObject rowObject,
-			TLStructuredTypePart part) {
-		FormValidationModel validationModel = _registeredValidationModel;
-		if (validationModel == null) {
-			return;
-		}
-
-		// Apply initial validation state.
-		model.applyValidationResult(validationModel.getValidation(rowObject, part));
-
-		// Listen for future changes on this specific (object, attribute).
-		ConstraintValidationListener listener = (overlay, attr, result) -> {
-			if (overlay == rowObject && attr.equals(part)) {
-				model.applyValidationResult(result);
-			}
-		};
-		validationModel.addConstraintValidationListener(listener);
-		_cellValidationListeners.add(listener);
-	}
-
-	/**
-	 * Adds a listener to a cell field model that propagates dirty state, reveals the field after
-	 * user interaction, and triggers live constraint re-evaluation via the
-	 * {@link FormValidationModel}.
-	 *
-	 * @param cellFieldModel
-	 *        The field model holding the cell's edited value.
-	 * @param rowObject
-	 *        The row the cell belongs to.
-	 * @param part
-	 *        The attribute the cell writes to, or {@code null} for a cell holding a value no
-	 *        attribute holds - there is then no constraint to re-evaluate.
-	 */
-	protected final void addCellListener(BoundFieldModel cellFieldModel, TLObject rowObject,
-			TLStructuredTypePart part) {
-		cellFieldModel.addListener(new FieldModelListener() {
-			@Override
-			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				_formControl.updateDirtyState();
-
-				// Reveal validation errors after user interaction.
-				cellFieldModel.setRevealed(true);
-
-				// Trigger live constraint re-evaluation.
-				FormValidationModel validationModel = _registeredValidationModel;
-				if (validationModel != null && part != null) {
-					validationModel.onValueChanged(rowObject, part);
-				}
-			}
-
-			@Override
-			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				// No-op.
-			}
-
-			@Override
-			public void onValidationChanged(FieldModel source) {
-				// The cell's displayed validation changed, so commands gated on visible errors
-				// must re-evaluate - after the new result was applied, not while it is computed.
-				_formControl.fireValidityChanged();
-			}
-		});
+		return column.editing().createControl(context, row, cellFieldModel);
 	}
 
 	/**
 	 * The row model tracking the given row object, or {@code null} if unknown.
 	 */
 	protected final CompositionRowModel findRowModel(TLObject rowObject) {
-		for (CompositionRowModel row : _rowModels) {
-			if (row.getRowObject() == rowObject) {
-				return row;
-			}
-		}
-		return null;
-	}
-
-	// -- Utility --
-
-	/**
-	 * Persists a transient object by creating a new persistent KB object of the same type and
-	 * copying all attribute values.
-	 */
-	private TLObject persistTransientObject(TLObject transientObj) {
-		TLClass type = (TLClass) transientObj.tType();
-		TLObject persisted = DynamicModelService.getFactoryFor(type.getModule().getName())
-			.createObject(type, null);
-
-		// Copy attribute values.
-		for (TLStructuredTypePart part : type.getAllParts()) {
-			if (part instanceof TLReference) {
-				// Skip reverse references and non-composition references for now.
-				TLReference ref = (TLReference) part;
-				if (ref.isBackwards()) {
-					continue;
-				}
-			}
-			try {
-				Object value = transientObj.tValue(part);
-				if (value != null) {
-					persisted.tUpdate(part, value);
-				}
-			} catch (RuntimeException ex) {
-				// Skip attributes that cannot be copied (e.g. derived attributes).
-			}
-		}
-		return persisted;
+		return _session == null ? null : _session.findRowModel(rowObject);
 	}
 
 	@Override
 	protected void onCleanup() {
-		_formControl.removeFormModelListener(this);
-		cleanupEditState();
+		if (_ownsSession) {
+			_formControl.removeFormModelListener(this);
+		}
+		endSession();
 		super.onCleanup();
 	}
 }

@@ -10,6 +10,9 @@
 	configuration, and marks the pending channel: the stored definition differs from the running one
 	until the coverage display applies it.
 	
+	The name of the entry is the type or module the dialog was opened for, so it is shown but not
+	editable (mode immutable).
+	
 	Save first checks the form (check-config-form): a mandatory value missing, a constraint failing
 	or an entry the field rejected - a script that does not parse - is put on its field and keeps
 	the dialog open; while such a problem is on display, Save is disabled (config-form-valid).
@@ -49,7 +52,13 @@
 			<config-form
 				input="rights"
 				withEditMode="false"
-			/>
+			>
+				<fields>
+					<field name="name"
+						mode="immutable"
+					/>
+				</fields>
+			</config-form>
 		</inset>
 		<actions>
 			<button>

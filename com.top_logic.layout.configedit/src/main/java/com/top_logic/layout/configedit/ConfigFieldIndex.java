@@ -6,6 +6,7 @@
 package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -120,6 +121,18 @@ public final class ConfigFieldIndex {
 	public ConfigFieldModel lookup(ConfigurationItem item, PropertyDescriptor property) {
 		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
 		return byProperty == null ? null : byProperty.get(property);
+	}
+
+	/**
+	 * The fields registered for the properties of the given item.
+	 *
+	 * @param item
+	 *        The configuration item the fields belong to.
+	 * @return The fields, empty if none was registered.
+	 */
+	public Collection<ConfigFieldModel> fieldsOf(ConfigurationItem item) {
+		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
+		return byProperty == null ? Collections.emptyList() : List.copyOf(byProperty.values());
 	}
 
 	/**

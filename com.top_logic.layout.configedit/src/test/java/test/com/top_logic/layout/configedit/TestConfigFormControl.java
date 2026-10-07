@@ -38,8 +38,11 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
+import com.top_logic.layout.configedit.ConfigValidation;
+import com.top_logic.layout.configedit.FieldDisplay;
 import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -732,6 +735,90 @@ public class TestConfigFormControl extends TestCase {
 
 		assertNotNull("Clearing a mandatory value must say so at the field, even without edit mode.",
 			fieldOf(form, MandatoryConfig.NAME).getError());
+	}
+
+	/**
+	 * A property displayed {@link FieldMode#IMMUTABLE immutable} shows its value, but does not
+	 * accept a change, while the other properties stay editable.
+	 */
+	public void testImmutableFieldShowsItsValueOnly() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("fixed");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(WarningConfig.NAME, new FieldDisplay(FieldMode.IMMUTABLE, false)));
+
+		assertEquals("fixed", fieldOf(form, WarningConfig.NAME).getValue());
+		assertFalse(fieldOf(form, WarningConfig.NAME).isEditable());
+		assertFalse("Shown as a value, not as an inactive input.", fieldOf(form, WarningConfig.NAME).isDisabled());
+		assertTrue(fieldOf(form, WarningConfig.AMOUNT).isEditable());
+	}
+
+	/** A property displayed {@link FieldMode#DISABLED disabled} is an input that cannot be used. */
+	public void testDisabledFieldIsAnInactiveInput() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(WarningConfig.AMOUNT, new FieldDisplay(FieldMode.DISABLED, false)));
+
+		assertTrue(fieldOf(form, WarningConfig.AMOUNT).isDisabled());
+		assertFalse(fieldOf(form, WarningConfig.AMOUNT).isEditable());
+	}
+
+	/** A property displayed {@link FieldMode#INVISIBLE invisible} has no field. */
+	public void testInvisibleFieldIsNotDisplayed() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(WarningConfig.AMOUNT, new FieldDisplay(FieldMode.INVISIBLE, false)));
+
+		assertNull(fieldOf(form, WarningConfig.AMOUNT));
+		assertNotNull(fieldOf(form, WarningConfig.NAME));
+	}
+
+	/**
+	 * A property the user interface requires is marked as mandatory and refuses the save without a
+	 * value, although the property does not declare it - a collection without entries as well.
+	 */
+	public void testMandatoryByDisplayRefusesTheSave() {
+		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(
+			CollectionConfig.NAME, new FieldDisplay(null, true),
+			CollectionConfig.ITEMS, new FieldDisplay(null, true)));
+
+		assertTrue(fieldOf(form, CollectionConfig.NAME).isMandatory());
+		assertNotNull("Without a value, the save is refused.", form.checkForSave());
+		assertNotNull(fieldOf(form, CollectionConfig.NAME).getError());
+
+		config.setName("given");
+		ConfigValidation.Refusal refusal = form.checkForSave();
+		assertNotNull("The list has no entry yet.", refusal);
+		assertEquals(1, refusal.details().size());
+
+		ListEntry entry = TypedConfiguration.newConfigItem(ListEntry.class);
+		config.getItems().add(entry);
+		assertNull(form.checkForSave());
+	}
+
+	/**
+	 * A collection displayed {@link FieldMode#DISABLED disabled} offers no entry to add or remove,
+	 * and the fields of its entries are inactive inputs.
+	 */
+	public void testDisabledGroupOffersNothingAndDisablesItsFields() {
+		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+		ListEntry entry = TypedConfiguration.newConfigItem(ListEntry.class);
+		entry.setTitle("a");
+		config.getItems().add(entry);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(CollectionConfig.ITEMS, new FieldDisplay(FieldMode.DISABLED, false)));
+
+		assertNull("Nothing can be added.", findAddButton(form));
+		assertTrue(fieldOf(form, ListEntry.TITLE).isDisabled());
+		assertFalse(fieldOf(form, ListEntry.TITLE).isEditable());
+		assertTrue("Other properties stay editable.", fieldOf(form, CollectionConfig.NAME).isEditable());
 	}
 
 	/**

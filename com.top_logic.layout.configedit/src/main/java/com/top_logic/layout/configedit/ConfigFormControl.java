@@ -7,9 +7,14 @@ package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -116,6 +121,13 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	private final List<ConfigFormCommand> _toolbarCommands;
 
 	private final ConfigFieldIndex _index = new ConfigFieldIndex();
+
+	/**
+	 * How the properties of the edited item are displayed, by property name.
+	 *
+	 * @see #setFieldDisplays(Map)
+	 */
+	private Map<String, FieldDisplay> _displays = Collections.emptyMap();
 
 	/**
 	 * Runs {@link #recheck()} whenever a field of the current editor changes.
@@ -253,7 +265,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * @return Why the configuration must not be saved, <code>null</code> if it may.
 	 */
 	public ConfigValidation.Refusal checkForSave() {
-		return ConfigValidation.refusalFor(_model.edited(), _index);
+		ConfigurationItem edited = _model.edited();
+		return ConfigValidation.refusalFor(edited, _index, mandatory(edited));
 	}
 
 	/**
@@ -353,7 +366,9 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		_index.clear();
 
 		boolean editable = _commands == Commands.NONE || _model.isEditMode();
-		addChild(new ConfigEditorControl(_context, _model.edited(), Collections.emptySet(), false, _index, editable));
+		ConfigurationItem edited = _model.edited();
+		addChild(new ConfigEditorControl(_context, edited, Collections.emptySet(), displays(edited),
+			false, _index, editable, edited));
 
 		if (_commands == Commands.INLINE) {
 			if (_model.isEditMode()) {
@@ -371,6 +386,51 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		}
 
 		_onFieldChange.armed();
+	}
+
+	/**
+	 * Displays properties of the edited item as the user interface wants them, in this form only.
+	 *
+	 * <p>
+	 * For instance a value the context of the form fixes, e.g. the name of the model element whose
+	 * access rights a dialog edits: it is shown, so that the user sees what is edited, but cannot
+	 * be changed there. A property required here is also checked before the form is saved.
+	 * </p>
+	 *
+	 * @param displays
+	 *        How to display the properties, by property name. A name the edited item does not have
+	 *        is ignored.
+	 */
+	public void setFieldDisplays(Map<String, FieldDisplay> displays) {
+		_displays = Map.copyOf(displays);
+		rebuild();
+	}
+
+	/**
+	 * The {@link #setFieldDisplays(Map) displays} of the properties of the given item.
+	 */
+	private Map<PropertyDescriptor, FieldDisplay> displays(ConfigurationItem item) {
+		Map<PropertyDescriptor, FieldDisplay> result = new HashMap<>();
+		for (Map.Entry<String, FieldDisplay> entry : _displays.entrySet()) {
+			PropertyDescriptor property = item.descriptor().getProperty(entry.getKey());
+			if (property != null) {
+				result.put(property, entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The properties of the given item the {@link #setFieldDisplays(Map) displays} require.
+	 */
+	private Set<PropertyDescriptor> mandatory(ConfigurationItem item) {
+		Set<PropertyDescriptor> result = new HashSet<>();
+		for (Map.Entry<PropertyDescriptor, FieldDisplay> entry : displays(item).entrySet()) {
+			if (entry.getValue().mandatory()) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -412,7 +472,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		if (_commands != Commands.NONE && !_model.isEditMode()) {
 			return;
 		}
-		ConfigValidation.recheckWhileEditing(_model.edited(), _index);
+		ConfigurationItem edited = _model.edited();
+		ConfigValidation.recheckWhileEditing(edited, _index, mandatory(edited));
 	}
 
 	/**
@@ -479,7 +540,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private HandlerResult apply() {
-		ConfigValidation.Refusal refusal = ConfigValidation.refusalFor(_model.edited(), _index);
+		ConfigValidation.Refusal refusal =
+			ConfigValidation.refusalFor(_model.edited(), _index, mandatory(_model.edited()));
 		if (refusal != null) {
 			return refusal(refusal.message(), refusal.details());
 		}

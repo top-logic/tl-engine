@@ -6,19 +6,26 @@
 package com.top_logic.layout.view.element;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigFormControl;
+import com.top_logic.layout.configedit.FieldDisplay;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -78,6 +85,9 @@ public class ConfigFormElement implements UIElement {
 		/** Configuration name for {@link #getNoModelMessage()}. */
 		String NO_MODEL_MESSAGE = "noModelMessage";
 
+		/** Configuration name for {@link #getFields()}. */
+		String FIELDS = "fields";
+
 		@Override
 		@ClassDefault(ConfigFormElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -121,9 +131,80 @@ public class ConfigFormElement implements UIElement {
 		 */
 		@Name(NO_MODEL_MESSAGE)
 		ResKey getNoModelMessage();
+
+		/**
+		 * How properties of the edited item are displayed in this form, beyond what the properties
+		 * declare themselves.
+		 *
+		 * <p>
+		 * For instance a value the context of the form fixes, e.g. the name of the model element
+		 * whose access rights a dialog edits: it is shown, so that the user sees what is edited, but
+		 * cannot be changed there.
+		 * </p>
+		 */
+		@Name(FIELDS)
+		@EntryTag(FieldConfig.TAG)
+		List<FieldConfig> getFields();
+	}
+
+	/**
+	 * How one property of the edited item is displayed, see {@link FieldDisplay}.
+	 */
+	public interface FieldConfig extends ConfigurationItem {
+
+		/** Tag name of an entry of {@link Config#getFields()}. */
+		String TAG = "field";
+
+		/** Configuration name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Configuration name for {@link #getMode()}. */
+		String MODE = "mode";
+
+		/** Configuration name for {@link #getMandatory()}. */
+		String MANDATORY = "mandatory";
+
+		/**
+		 * The name of the property of the edited item.
+		 */
+		@Name(NAME)
+		@Mandatory
+		String getName();
+
+		/**
+		 * The mode the property is displayed in: <code>active</code> accepts input,
+		 * <code>disabled</code> shows an input that cannot be used, <code>immutable</code> shows the
+		 * value only, <code>invisible</code> hides the property. Without a mode, the property is
+		 * displayed as it declares itself.
+		 *
+		 * @see FieldDisplay#mode()
+		 */
+		@Name(MODE)
+		@Nullable
+		FieldMode getMode();
+
+		/**
+		 * Whether the property must have a value, even if it does not declare it. The form refuses
+		 * to be saved without it.
+		 *
+		 * @see FieldDisplay#mandatory()
+		 */
+		@Name(MANDATORY)
+		boolean getMandatory();
 	}
 
 	private final Config _config;
+
+	/**
+	 * The {@link Config#getFields() configured} displays, by property name.
+	 */
+	private Map<String, FieldDisplay> fieldDisplays() {
+		Map<String, FieldDisplay> result = new HashMap<>();
+		for (FieldConfig field : _config.getFields()) {
+			result.put(field.getName(), new FieldDisplay(field.getMode(), field.getMandatory()));
+		}
+		return result;
+	}
 
 	/**
 	 * Creates a new {@link ConfigFormElement} from configuration.
@@ -205,6 +286,9 @@ public class ConfigFormElement implements UIElement {
 				? ConfigFormControl.Commands.TOOLBAR
 				: ConfigFormControl.Commands.NONE;
 			_form = new ConfigFormControl(_context, item, commands);
+			if (!_config.getFields().isEmpty()) {
+				_form.setFieldDisplays(fieldDisplays());
+			}
 			contribute(_form);
 			register(_form);
 			_holder.setChildren(List.of(_form));

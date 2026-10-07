@@ -5,7 +5,9 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -307,7 +309,21 @@ public final class ConfigValidation {
 	 * @see #recheck(ConfigurationItem, ConfigFieldIndex)
 	 */
 	public static List<Violation> recheckWhileEditing(ConfigurationItem edited, ConfigFieldIndex index) {
-		return recheck(Collections.singletonList(edited), index, false);
+		return recheckWhileEditing(edited, index, Collections.emptySet());
+	}
+
+	/**
+	 * The same, with properties of the edited item the user interface requires in addition.
+	 *
+	 * @param mandatory
+	 *        Properties of the edited item that must have a value although they do not declare
+	 *        it, see {@link FieldDisplay#mandatory()}.
+	 *
+	 * @see #recheckWhileEditing(ConfigurationItem, ConfigFieldIndex)
+	 */
+	public static List<Violation> recheckWhileEditing(ConfigurationItem edited, ConfigFieldIndex index,
+			Set<PropertyDescriptor> mandatory) {
+		return recheck(Collections.singletonList(edited), index, false, mandatory);
 	}
 
 	/**
@@ -318,11 +334,16 @@ public final class ConfigValidation {
 	 * @see #refusalFor(Iterable, ConfigFieldIndex)
 	 */
 	public static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
-		return recheck(edited, index, true);
+		return recheck(edited, index, true, Collections.emptySet());
 	}
 
+	/**
+	 * @param mandatory
+	 *        Properties of the edited items that must have a value although they do not declare
+	 *        it, see {@link FieldDisplay#mandatory()}.
+	 */
 	private static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index,
-			boolean revealMissing) {
+			boolean revealMissing, Set<PropertyDescriptor> mandatory) {
 		index.clearFindings();
 
 		List<Violation> violations = new ArrayList<>();
@@ -331,6 +352,7 @@ public final class ConfigValidation {
 			Findings findings = check(item);
 			violations.addAll(findings.violations());
 			warnings.addAll(findings.warnings());
+			addRequiredByDisplay(item, mandatory, violations);
 		}
 		// Reported whatever comes of it: a warning is shown at its field and refuses nothing, so a
 		// configuration whose only finding is a warning is handed over with the warning on display
@@ -378,6 +400,20 @@ public final class ConfigValidation {
 	}
 
 	/**
+	 * The same, with properties of the edited item the user interface requires in addition.
+	 *
+	 * @param mandatory
+	 *        Properties of the edited item that must have a value although they do not declare
+	 *        it, see {@link FieldDisplay#mandatory()}.
+	 *
+	 * @see #refusalFor(ConfigurationItem, ConfigFieldIndex)
+	 */
+	public static Refusal refusalFor(ConfigurationItem edited, ConfigFieldIndex index,
+			Set<PropertyDescriptor> mandatory) {
+		return refusalFor(Collections.singletonList(edited), index, mandatory);
+	}
+
+	/**
 	 * The same for several configurations checked as one, where what is edited is a collection
 	 * rather than a single item.
 	 *
@@ -389,6 +425,11 @@ public final class ConfigValidation {
 	 * </p>
 	 */
 	public static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		return refusalFor(edited, index, Collections.emptySet());
+	}
+
+	private static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index,
+			Set<PropertyDescriptor> mandatory) {
 		// Also cleared here, not only in the recheck further down: the two refusals in between
 		// never reach it, and a finding the previous attempt placed must not outlive them either.
 		index.clearFindings();
@@ -403,7 +444,7 @@ public final class ConfigValidation {
 		if (index.hasInputError()) {
 			return new Refusal(I18NConstants.ERROR_INPUT_NOT_READABLE, Collections.emptyList());
 		}
-		List<Violation> violations = recheck(edited, index);
+		List<Violation> violations = recheck(edited, index, true, mandatory);
 		if (!violations.isEmpty()) {
 			// Every violation is listed, not only those that found no field: the fields are spread
 			// over a form taller than the screen, and the list is what says how many there are and
@@ -413,6 +454,57 @@ public final class ConfigValidation {
 				violations.stream().map(Violation::message).toList());
 		}
 		return null;
+	}
+
+	/**
+	 * Adds a {@link Violation} for every property of the given item the user interface requires
+	 * that has no value, unless a violation of it was found already.
+	 *
+	 * <p>
+	 * A value is missing if it is <code>null</code>, an empty text, or an empty collection: the
+	 * user interface asks for a value, and an empty list has no entry.
+	 * </p>
+	 */
+	private static void addRequiredByDisplay(ConfigurationItem item, Set<PropertyDescriptor> mandatory,
+			List<Violation> violations) {
+		for (PropertyDescriptor property : mandatory) {
+			if (item.descriptor().getProperty(property.getPropertyName()) != property) {
+				// A property of another item.
+				continue;
+			}
+			if (!isEmpty(item.value(property))) {
+				continue;
+			}
+			boolean found = violations.stream()
+				.anyMatch(violation -> violation.item() == item && violation.property() == property);
+			if (!found) {
+				violations.add(new Violation(item, property,
+					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false)), true));
+			}
+		}
+	}
+
+	/**
+	 * Whether the given value is no value: <code>null</code>, an empty text, or an empty
+	 * collection.
+	 */
+	private static boolean isEmpty(Object value) {
+		if (value == null) {
+			return true;
+		}
+		if (value instanceof String text) {
+			return text.isEmpty();
+		}
+		if (value instanceof Collection<?> collection) {
+			return collection.isEmpty();
+		}
+		if (value instanceof Map<?, ?> map) {
+			return map.isEmpty();
+		}
+		if (value.getClass().isArray()) {
+			return Array.getLength(value) == 0;
+		}
+		return false;
 	}
 
 	/**

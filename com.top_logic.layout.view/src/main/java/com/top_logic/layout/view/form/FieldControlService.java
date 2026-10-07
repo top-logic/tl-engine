@@ -880,6 +880,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * </p>
 	 *
 	 * <p>
+	 * The parts of a composition are shown by their labels with a button opening a read-only table
+	 * of the parts, see {@link CompositionEditing#createDisplayControl(ReactContext,
+	 * TLStructuredTypePart, Object)}.
+	 * </p>
+	 *
+	 * <p>
 	 * A value of an unknown type is displayed by its label, the one thing every value has.
 	 * </p>
 	 *
@@ -894,6 +900,10 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		TLStructuredTypePart part = columnType.part();
 		boolean multiple = columnType.multiple();
 		if (part != null) {
+			if (displaysPartsAsSelection(part)) {
+				// The parts of a composition are viewed in a dialog, with their own attributes.
+				return CompositionEditing.createDisplayControl(context, part, value);
+			}
 			AbstractFieldModel model = displayModel(part, multiple, value);
 			return createFieldControl(context, part, cellSpec(fieldSpec(part, multiple, model)), model, null);
 		}
@@ -940,8 +950,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * Whether the given attribute is a composition whose parts are displayed as a selection of
-	 * objects.
+	 * Whether the given attribute is a composition whose parts are displayed as objects, by their
+	 * labels and icons, rather than by a control annotated at the composition itself.
 	 */
 	private boolean displaysPartsAsSelection(TLStructuredTypePart part) {
 		return AttributeOptions.isComposition(part)

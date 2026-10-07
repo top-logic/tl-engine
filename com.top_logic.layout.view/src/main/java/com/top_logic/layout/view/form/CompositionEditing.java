@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.util.Utils;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -16,7 +18,10 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl.EditorSession;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.table.ReadOnlyObjectTable;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * The edit of the parts of a composition of a table row in a dialog: a
@@ -32,6 +37,12 @@ import com.top_logic.model.TLObject;
  * dialog's table, so the edit nests as deep as the compositions do. When the edit of the row ends
  * while the dialog is open, because the form leaves edit mode or a dialog below is closed, the
  * dialog closes.
+ * </p>
+ *
+ * <p>
+ * A composition that is only displayed - in a table in view mode, in a row that is not edited -
+ * shows the same preview, with a button opening a read-only table of the parts, see
+ * {@link #createDisplayControl(ReactContext, TLStructuredTypePart, Object)}.
  * </p>
  */
 public class CompositionEditing implements ReactCompactFieldControl.Editing {
@@ -65,6 +76,39 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 	public static ReactControl createControl(ReactContext context, CompositionCellModel model, String label) {
 		return new ReactCompactFieldControl(context, model, label, CompositionEditing::previewText,
 			Utils::isEmpty, new CompositionEditing(model));
+	}
+
+	/**
+	 * Creates the read-only control of a composition cell: the labels of the parts and, unless
+	 * there are none, a button opening a read-only table of the parts in a dialog.
+	 *
+	 * <p>
+	 * The table shows the main columns of the parts, and a composition of a part is displayed the
+	 * same way, so the parts can be viewed as deep as the compositions nest. Nothing is buffered:
+	 * the dialog displays the given parts as they are.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param part
+	 *        The composition.
+	 * @param value
+	 *        The parts to display: a collection of parts, a single part, or {@code null}.
+	 */
+	public static ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
+		AbstractFieldModel model = new AbstractFieldModel(value);
+		model.setEditable(false);
+		ReactCompactFieldControl.Editing display =
+			(field, editable) -> new DisplaySession((TLStructuredType) part.getType(), parts(field.getValue()));
+		return new ReactCompactFieldControl(context, model, MetaLabelProvider.INSTANCE.getLabel(part),
+			CompositionEditing::previewText, Utils::isEmpty, display);
+	}
+
+	private static List<?> parts(Object value) {
+		if (value instanceof Collection<?> collection) {
+			return new ArrayList<>(collection);
+		}
+		return value == null ? List.of() : List.of(value);
 	}
 
 	/**
@@ -158,6 +202,37 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 				_model.removeDisposeAction(_onDispose);
 				_onDispose = null;
 			}
+		}
+
+	}
+
+	/**
+	 * The display of the parts in a read-only dialog.
+	 */
+	private static final class DisplaySession implements EditorSession {
+
+		private final TLStructuredType _type;
+
+		private final List<?> _parts;
+
+		DisplaySession(TLStructuredType type, List<?> parts) {
+			_type = type;
+			_parts = parts;
+		}
+
+		@Override
+		public ReactControl createEditor(ReactContext context, Runnable closeDialog) {
+			return ReadOnlyObjectTable.create(context, _type, _parts);
+		}
+
+		@Override
+		public boolean apply() {
+			return true;
+		}
+
+		@Override
+		public void revert() {
+			// Nothing was changed.
 		}
 
 	}

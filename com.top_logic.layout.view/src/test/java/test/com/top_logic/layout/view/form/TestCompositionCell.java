@@ -27,6 +27,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.control.overlay.DialogHandle;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
@@ -36,13 +38,17 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AbstractCompositionControl;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.CompositionCellModel;
+import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.RowSetEditSession;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLObject;
+import com.top_logic.table.CellContent;
 
 /**
  * Tests the cell of a composition of a row edited in a table: a one-line preview of the parts with
@@ -333,6 +339,56 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A composition displayed in a table in view mode shows the labels of its parts with a button
+	 * opening a read-only table of the parts, whose composition cells open nested read-only
+	 * dialogs; an empty composition offers no button.
+	 */
+	public void testDisplayCellOfComposition() {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			_substep.tUpdateByName(SUBSTEPS, List.of(named(STEP, NEW_SUBSTEP)));
+			tx.commit();
+		}
+
+		ReactCompactFieldControl cell = displayCell(_step);
+		assertFalse(cell.getFieldModel().isEditable());
+		assertEquals(SUBSTEP, cell.getPreviewText());
+
+		open(cell);
+		assertEquals(1, _dialogs._open.size());
+		assertEquals("A read-only dialog only offers to close it.", 1, dialogActions().size());
+		assertTrue(descendants(_dialogs._open.peek(), RowSetTableControl.class).isEmpty());
+		assertEquals(1, descendants(_dialogs._open.peek(), TableViewControl.class).size());
+
+		// The cell of the substeps of the substep, as the dialog's table displays it.
+		ReactCompactFieldControl nested = displayCell(_substep);
+		assertEquals(NEW_SUBSTEP, nested.getPreviewText());
+		open(nested);
+		assertEquals(2, _dialogs._open.size());
+		assertEquals(1, dialogActions().size());
+
+		press(dialogActions().get(0));
+		press(dialogActions().get(0));
+		assertTrue(_dialogs._open.isEmpty());
+
+		assertTrue(cell.isOpenerShown());
+		ReactCompactFieldControl empty = displayCell(singleObject(_substep.tValueByName(SUBSTEPS)));
+		assertEquals("", empty.getPreviewText());
+		assertFalse("An empty composition offers nothing to view.", empty.isOpenerShown());
+	}
+
+	/**
+	 * Creates the display cell of the substeps of the given step, as a table in view mode creates
+	 * it.
+	 */
+	private ReactCompactFieldControl displayCell(TLObject step) {
+		ColumnType type = ColumnType.of(type(STEP).getPartOrFail(SUBSTEPS));
+		CellContent content = ColumnProviderService.displayContent(type, step.tValueByName(SUBSTEPS));
+		ReactControl control = ((CellControlFactory) ((CellContent.Raw) content).payload()).create(_context);
+		assertTrue(control instanceof ReactCompactFieldControl);
+		return (ReactCompactFieldControl) control;
+	}
+
+	/**
 	 * Creates the cell of the given composition of the edited step, as the table of the steps
 	 * creates it.
 	 */
@@ -476,7 +532,8 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	 */
 	public static Test suite() {
 		return suiteWith(TestCompositionCell.class, ThemeFactory.Module.INSTANCE, ResourcesModule.Module.INSTANCE,
-			LabelProviderService.Module.INSTANCE);
+			LabelProviderService.Module.INSTANCE, FieldControlService.Module.INSTANCE,
+			ColumnProviderService.Module.INSTANCE);
 	}
 
 }

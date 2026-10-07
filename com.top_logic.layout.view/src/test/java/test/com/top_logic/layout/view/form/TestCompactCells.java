@@ -32,11 +32,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
-import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
-import com.top_logic.layout.react.state.DropdownSelectState;
-import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -175,15 +172,20 @@ public class TestCompactCells extends TestCase {
 		assertEquals(ReactTextInputControl.class, form.getClass());
 	}
 
-	/** The parts of a composition are displayed by their labels, as the objects of a reference are. */
+	/**
+	 * The parts of a composition are displayed by their labels, with a button opening a read-only
+	 * table of the parts.
+	 */
 	public void testThePartsOfACompositionAreDisplayedByTheirLabels() {
 		List<TLObject> parts = List.of(part("Alpha"), part("Beta"));
 
 		ReactControl control = _controls.createDisplayControl(_context, ColumnType.of(composition()), parts);
 
-		assertEquals(ReactDropdownSelectControl.class, control.getClass());
-		List<?> selection = (List<?>) control.scriptingScalarState().get(FieldState.VALUE__PROP);
-		assertEquals(labels(parts), optionLabels(selection));
+		assertEquals(ReactCompactFieldControl.class, control.getClass());
+		ReactCompactFieldControl compact = (ReactCompactFieldControl) control;
+		assertFalse("The parts are displayed, not edited.", compact.getFieldModel().isEditable());
+		assertEquals(String.join(", ", labels(parts)), compact.getPreviewText());
+		assertTrue(compact.isOpenerShown());
 	}
 
 	/** A single part of a composition is displayed by its label as well. */
@@ -194,9 +196,8 @@ public class TestCompactCells extends TestCase {
 
 		ReactControl control = _controls.createDisplayControl(_context, ColumnType.of(composition), part);
 
-		assertEquals(ReactDropdownSelectControl.class, control.getClass());
-		List<?> selection = (List<?>) control.scriptingScalarState().get(FieldState.VALUE__PROP);
-		assertEquals(labels(List.of(part)), optionLabels(selection));
+		assertEquals(ReactCompactFieldControl.class, control.getClass());
+		assertEquals(String.join(", ", labels(List.of(part))), ((ReactCompactFieldControl) control).getPreviewText());
 	}
 
 	/** A column of the parts of a composition is searched, sorted and filtered by their labels. */
@@ -256,15 +257,6 @@ public class TestCompactCells extends TestCase {
 		List<String> result = new ArrayList<>();
 		for (TLObject object : objects) {
 			result.add(ColumnProviderService.label(object));
-		}
-		return result;
-	}
-
-	/** The labels of the given option descriptors of a select control. */
-	private static List<String> optionLabels(List<?> descriptors) {
-		List<String> result = new ArrayList<>();
-		for (Object descriptor : descriptors) {
-			result.add((String) ((Map<?, ?>) descriptor).get(DropdownSelectState.Option.LABEL__PROP));
 		}
 		return result;
 	}

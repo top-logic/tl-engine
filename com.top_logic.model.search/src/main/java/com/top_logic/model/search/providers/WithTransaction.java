@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.NoTransaction;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -51,6 +52,20 @@ public interface WithTransaction {
 	default Transaction beginTransaction(boolean inTransaction) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		return inTransaction ? kb.beginTransaction() : new NoTransaction(kb);
+	}
+
+	/**
+	 * Starts a (real) transaction annotated with the given commit message, if the argument given is
+	 * <code>true</code>.
+	 * 
+	 * @param inTransaction
+	 *        Whether to start a real transaction.
+	 * @param message
+	 *        The message annotated to the changes committed by the transaction.
+	 */
+	default Transaction beginTransaction(boolean inTransaction, ResKey message) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		return inTransaction ? kb.beginTransaction(message) : new NoTransaction(kb);
 	}
 
 }

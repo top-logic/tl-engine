@@ -66,21 +66,62 @@ public interface WithCommitMessage extends ConfigurationItem {
 
 	/**
 	 * Resolves a commit message to use for the given command.
+	 * 
+	 * @see #buildCommitMessage(ResKey, Object)
 	 */
 	default ResKey buildCommandMessage(LayoutComponent component, CommandHandler handler, Object model) {
-		ResKey message;
+		return buildCommitMessage(handler.getResourceKey(component), model);
+	}
+
+	/**
+	 * Resolves the commit message for an operation performed on the given model.
+	 * 
+	 * <p>
+	 * The {@link #getCommitMessage() configured message} is filled with the label of the given model.
+	 * Without a configured message, the message names the operation and the model.
+	 * </p>
+	 * 
+	 * @param operationLabel
+	 *        The label of the performed operation, {@code null} for an operation without a label.
+	 * @param model
+	 *        The model the operation is performed on, {@code null} for an operation without a
+	 *        target model.
+	 * @return The message to annotate to the change.
+	 */
+	default ResKey buildCommitMessage(ResKey operationLabel, Object model) {
 		ResKey1 customMessage = getCommitMessage();
-		if (customMessage == null) {
+		if (customMessage != null) {
+			return customMessage.fill(MetaLabelProvider.INSTANCE.getLabel(model));
+		}
+		return defaultCommitMessage(operationLabel, model);
+	}
+
+	/**
+	 * The message annotated to an operation performed on the given model, when no message is
+	 * configured.
+	 * 
+	 * @param operationLabel
+	 *        The label of the performed operation, {@code null} for an operation without a label.
+	 * @param model
+	 *        The model the operation is performed on, {@code null} for an operation without a
+	 *        target model.
+	 * @return A message naming the operation and the model, as far as they are given.
+	 */
+	static ResKey defaultCommitMessage(ResKey operationLabel, Object model) {
+		if (operationLabel == null) {
 			if (model == null) {
-				message = I18NConstants.PERFORMED__OPERATION.fill(handler.getResourceKey(component));
+				return I18NConstants.PERFORMED_CHANGES;
 			} else {
-				message = I18NConstants.PERFORMED__OPERATION_MODEL.fill(handler.getResourceKey(component),
-					MetaLabelProvider.INSTANCE.getLabel(model));
+				return I18NConstants.UPDATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(model));
 			}
 		} else {
-			message = customMessage.fill(MetaLabelProvider.INSTANCE.getLabel(model));
+			if (model == null) {
+				return I18NConstants.PERFORMED__OPERATION.fill(operationLabel);
+			} else {
+				return I18NConstants.PERFORMED__OPERATION_MODEL.fill(operationLabel,
+					MetaLabelProvider.INSTANCE.getLabel(model));
+			}
 		}
-		return message;
 	}
 
 }

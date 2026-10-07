@@ -12,6 +12,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.TestComment;
+import test.com.top_logic.basic.TestDocumentation;
 import test.com.top_logic.basic.TestLayoutsNormalized;
 import test.com.top_logic.basic.TestNameClashClassVsPackage;
 import test.com.top_logic.basic.jsp.TestCompileJSPs;
@@ -100,6 +101,9 @@ public class BasicTestCollector implements TestCollector {
 		suite.addTest(TestNameClashClassVsPackage.suiteWithConfig());
 		if (config.getTestLayoutsNormalized()) {
 			suite.addTest(TestLayoutsNormalized.suite());
+		}
+		if (config.getTestDocumentation()) {
+			suite.addTest(TestDocumentation.suite());
 		}
 		if (config.getTestJSPContent()) {
 			suite.addTest(TestJSPContent.suite());

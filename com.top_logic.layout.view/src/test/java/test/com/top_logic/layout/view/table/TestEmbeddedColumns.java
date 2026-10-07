@@ -39,6 +39,7 @@ import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -493,6 +494,18 @@ public class TestEmbeddedColumns extends TestCase {
 
 	private static void assertContains(String expected, String actual) {
 		assertTrue("Expected '" + expected + "' in: " + actual, actual != null && actual.contains(expected));
+	}
+
+	/**
+	 * Runs the test without access checks: it builds columns over a model of its own, for which no
+	 * security configuration exists, and tests their structure rather than the access rights.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		ModelAccessRights.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	/**

@@ -41,10 +41,13 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -56,6 +59,8 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BoundCodec;
@@ -736,14 +741,26 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The raw model value of an attribute, or {@code null} for a non-model row.
+	 * The model value of an attribute, or {@code null} for a non-model row.
 	 *
 	 * <p>
-	 * The value function of a column over a model attribute.
+	 * The value function of a column over a model attribute. A value the current user may not read
+	 * on the row (see {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)})
+	 * is the empty value of the attribute, as a TL-Script access yields it: the cell is empty, and
+	 * sorting, filtering and exporting the column see nothing else.
 	 * </p>
 	 */
 	public static Object attributeValue(Object row, String attribute) {
-		return row instanceof TLObject object ? object.tValueByName(attribute) : null;
+		if (!(row instanceof TLObject object)) {
+			return null;
+		}
+		TLStructuredType type = object.tType();
+		TLStructuredTypePart part = type == null ? null : type.getPart(attribute);
+		if (part != null
+			&& !ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
+			return TLModelUtil.getEmptyValue(part);
+		}
+		return object.tValueByName(attribute);
 	}
 
 	/**

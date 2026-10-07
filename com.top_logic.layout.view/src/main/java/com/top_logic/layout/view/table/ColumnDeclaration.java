@@ -66,6 +66,13 @@ public interface ColumnDeclaration {
 	/**
 	 * The columns this declaration contributes, in display order.
 	 *
+	 * <p>
+	 * Every {@link #declaredNames() declared name} is resolved to a column, except one the access
+	 * rights of the current user withhold (e.g. a column of an attribute the user may read on no
+	 * row). Which columns are withheld is therefore the difference of both, see
+	 * {@link ColumnDeclarations#withheld(java.util.Collection, List)}.
+	 * </p>
+	 *
 	 * @param scope
 	 *        What the columns are resolved against: the type of the rows, and the session.
 	 */

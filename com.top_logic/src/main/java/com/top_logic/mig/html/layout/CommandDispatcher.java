@@ -12,7 +12,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ProcessingInfo;
@@ -38,11 +37,9 @@ import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
+import com.top_logic.tool.boundsec.CommandSecurity;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -342,32 +339,8 @@ public class CommandDispatcher {
 			return commandState;
 		}
 
-        // system commands may bypass the security check 
-        // check business rules
-		boolean isSystem = aCommand.getCommandGroup().isSystemGroup();
-		if (isSystem) {
-			return ExecutableState.EXECUTABLE;
-        }
-
-		ExecutableState approvalState =
-			CommandApprovalService.getInstance().isExecutable(aChecker, aCommand.getCommandGroup(), aCommand.getID(),
-				model, someArguments);
-		if (!approvalState.isExecutable()) {
-			return approvalState;
-		}
-
-        if (aChecker instanceof BoundChecker) {
-        	Person currentPerson = TLContext.getContext().getCurrentPersonWrapper();
-			if (!SimpleBoundCommandGroup.isAllowedCommandGroup(currentPerson, aCommand.getCommandGroup())) {
-				return ExecutableState.NO_EXEC_RESTRICTED_USER;
-        	}
-        	
-			if (!checkSecurity(aCommand, (BoundChecker) aChecker, model, someArguments)) {
-                return ExecutableState.NO_EXEC_PERMISSION;
-            }
-        }
-
-		return ExecutableState.EXECUTABLE;
+		return CommandSecurity.checkSecurity(aChecker, aCommand.getCommandGroup(), aCommand.getID(), model,
+			someArguments, checker -> checkSecurity(aCommand, checker, model, someArguments));
     }
 
     /**

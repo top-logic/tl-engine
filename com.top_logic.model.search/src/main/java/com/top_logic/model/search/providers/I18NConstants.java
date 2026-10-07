@@ -43,6 +43,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 TASK_MESSAGE__VALUE;
 
 	/**
+	 * @en The drop is not allowed: {0}
+	 */
+	public static ResKey1 ERROR_DROP_NOT_ALLOWED__REASON;
+
+	/**
 	 * @en New row
 	 */
 	@CalledByReflection
@@ -85,6 +90,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invalid update value in function "{0}": {1}
 	 */
 	public static ResKey2 INVALID_UPDATE_TYPE__FUN_EX;
+
+	/**
+	 * Default commit message of a drop, naming the dropped objects and the component they are
+	 * dropped into.
+	 * 
+	 * @en Dropped {0} in {1}.
+	 */
+	public static ResKey2 DROPPED__OBJECTS_COMPONENT;
 
 	static {
 		initConstants(I18NConstants.class);

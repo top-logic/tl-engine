@@ -885,12 +885,17 @@ public class TableElement implements UIElement {
 	 *
 	 * @param columns
 	 *        All columns of the table, whose filters translate the criteria.
+	 * @param declaredNames
+	 *        The names of the columns the table declares; one of them missing from the given
+	 *        columns is withheld from the current user, see
+	 *        {@link ColumnDeclarations#withheld(Collection, List)}.
 	 * @param arguments
 	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
 	 *        the arguments of every criterion expression, as they are the arguments of
 	 *        {@link Config#getRows()}.
 	 */
-	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Object[] arguments) {
+	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Collection<String> declaredNames,
+			Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -902,7 +907,8 @@ public class TableElement implements UIElement {
 			}
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
 		}
-		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns);
+		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
+			ColumnDeclarations.withheld(declaredNames, columns));
 	}
 
 	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
@@ -1343,8 +1349,10 @@ public class TableElement implements UIElement {
 		ViewCommandModel activation = activationModel(context);
 
 		TLStructuredType rowType = resolveRowType(rows);
+		List<ColumnDeclaration> declarations = columns(rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		List<ColumnSetup> setups =
-			ColumnDeclarations.resolve(columns(rowType), new ColumnResolution(rowType, context));
+			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.buildColumn());
@@ -1358,7 +1366,7 @@ public class TableElement implements UIElement {
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
-			declaredFilters(columns, inputValues), filterStore(), _initialFilter);
+			declaredFilters(columns, declaredNames, inputValues), filterStore(), _initialFilter);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 		control.setCssClass(_config.getCssClass());
@@ -1398,7 +1406,8 @@ public class TableElement implements UIElement {
 				// The criteria of the presets are computed from the inputs, so a changed input means
 				// other criteria: they are resolved again, and a chip the user has applied goes on
 				// filtering by what it now means.
-				view.setDeclaredFilters(declaredFilters(columns, ChannelInputs.arguments(inputChannels)));
+				view.setDeclaredFilters(
+					declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)));
 			}
 			control.refreshData();
 			if (selectionBinding != null) {
@@ -1516,14 +1525,17 @@ public class TableElement implements UIElement {
 
 		ViewCommandModel activation = activationModel(context);
 
+		List<ColumnDeclaration> declarations = columns(rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, columns(rowType), _config.getRowEdit());
+			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
 		diagnosticsTarget[0] = control;
 		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
-		control.setNamedFilters(columns -> declaredFilters(columns, ChannelInputs.arguments(inputChannels)),
+		control.setNamedFilters(
+			columns -> declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)),
 			filterStore(), _initialFilter);
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));

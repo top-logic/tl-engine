@@ -49,6 +49,23 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    object, on the end of its chain of access parents; without attribute-level grants the
    class-level decision stands.
 
+## What a read right protects
+
+A `Read` grant protects the **attributes** of an object, not the knowledge that the object exists:
+
+- A user without the read right on an object cannot see its attribute values.
+- The label of such an object stays visible wherever the object is reached through a reference
+  from an object the user may read: the UI shows the reference by its label, and a TL-Script
+  attribute access or navigation delivers the referenced object.
+- TL-Script `all(...)` (evaluated with security, the default) delivers only the instances the user
+  may read. A script cannot discover an unreadable object except through a reference, and a count
+  over `all(...)` counts the readable instances only.
+- The final result of a script is filtered for the user's read rights by the script's executor
+  (`filterSecurity`).
+
+Scripts the system evaluates on its own behalf (derived attributes, internal queries) run without
+security and see every instance.
+
 ## Grants: which roles may do what on a type
 
 Grants live in the `SecurityConfigurationService` configuration (`<security-config>`). Each entry

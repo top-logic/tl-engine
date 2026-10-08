@@ -22,6 +22,23 @@ import com.top_logic.util.TLContext;
 /**
  * Central service for checking access rights based on the model's type configuration.
  *
+ * <p>
+ * What a {@link SimpleBoundCommandGroup#READ read} right protects:
+ * </p>
+ * <ul>
+ * <li>Without the read right on an object, the user cannot see the object's attributes, see
+ * {@link #isReadAllowed(Person, TLObject, TLStructuredTypePart)}.</li>
+ * <li>The label of such an object stays visible wherever the object is reached through a reference
+ * from an object the user may read: the user interface shows the reference by the object's label,
+ * and a TL-Script attribute access or navigation delivers the referenced object.</li>
+ * <li>The TL-Script function <code>all(...)</code> (evaluated with security, the default) delivers
+ * only the instances the user may read. A script therefore cannot discover an unreadable object
+ * except through a reference, and a count over <code>all(...)</code> counts the readable instances
+ * only.</li>
+ * <li>The final result of a script is filtered for the user's read rights by the executor of the
+ * script (<code>filterSecurity</code>).</li>
+ * </ul>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface ModelAccessRights {

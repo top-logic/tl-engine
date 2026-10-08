@@ -845,7 +845,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleRootDrop = React.useCallback((event: React.DragEvent) => {
     if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
-      // Not a row drag: a dragged column heading has ended at its heading (useListReorder).
+      // Not a row drag: a column heading released anywhere in the table lands where its mark shows
+      // (useListReorder).
+      if (columnDragging) columnReorder.containerProps.onDrop?.(event);
       return;
     }
     event.preventDefault();
@@ -868,7 +870,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
       sendCommand('drop', args);
     }
-  }, [dropAccepts, dropTargetAt, sendCommand]);
+  }, [columnDragging, columnReorder.containerProps, dropAccepts, dropTargetAt, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {

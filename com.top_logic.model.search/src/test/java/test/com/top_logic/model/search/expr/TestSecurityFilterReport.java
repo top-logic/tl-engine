@@ -54,7 +54,12 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 @SuppressWarnings("javadoc")
 public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 
-	private static final String ALL_EMPLOYEES = "all(`TestTLScriptSecurity:Employee`)";
+	/**
+	 * The responsible employees of all projects: readable projects reference employees the user
+	 * must not read, so the result filter removes them.
+	 */
+	private static final String RESPONSIBLES = "all(`TestTLScriptSecurity:Project`)"
+		+ ".map(p -> $p.get(`TestTLScriptSecurity:Project#responsible`))";
 
 	private KnowledgeBase _kb;
 
@@ -199,7 +204,7 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 	public void testExecutorFillsReport() throws Exception {
 		becomeUser(_user);
 
-		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(RESPONSIBLES));
 		SecurityFilterReport report = new SecurityFilterReport();
 		EvalContext context = query.context();
 		context.setSecurityReport(report);
@@ -215,7 +220,7 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 	public void testExecutionWithoutReport() throws Exception {
 		becomeUser(_user);
 
-		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(RESPONSIBLES));
 		assertEquals(set(), asSet(query.execute()));
 	}
 
@@ -225,7 +230,7 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 	public void testDisabledSecurityRecordsNothing() throws Exception {
 		becomeUser(_user);
 
-		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(RESPONSIBLES));
 		query.disableSecurity();
 		SecurityFilterReport report = new SecurityFilterReport();
 		EvalContext context = query.context();

@@ -24,14 +24,16 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * Execution of a pre-compiled knowledge base query.
  * 
  * <p>
- * {@link KBQuery} expressions are created internally during the query optimization process.
+ * {@link KBQuery} expressions are created internally during the query optimization process from
+ * an {@link All} expression. Like the {@link All} expression it is created from, it delivers only the
+ * instances the current user may read when it {@link #usesSecurity() uses security}.
  * </p>
  * 
- * @see SearchExpressionFactory#query(TLClass, SetExpression, List)
+ * @see SearchExpressionFactory#query(TLClass, SetExpression, List, boolean)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class KBQuery extends SearchExpression {
+public class KBQuery extends SearchExpressionWithSecurity {
 
 	private final TLClass _classType;
 
@@ -39,7 +41,8 @@ public class KBQuery extends SearchExpression {
 
 	private final List<CompiledValue> _dynamic;
 
-	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters) {
+	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters, boolean usesSecurity) {
+		super(usesSecurity);
 		_classType = classType;
 		_query = query;
 		_dynamic = dynamicFilters;
@@ -87,9 +90,8 @@ public class KBQuery extends SearchExpression {
 			}
 		}
 
-		// The result is not filtered for security: access to the individual objects' data is secured
-		// when their attributes are accessed, and the final result of a script is secured by the
-		// caller. The deferred filter parts below are the query's own (non-security) predicates.
+		// The deferred filter parts below are the query's own predicates, the read rights are
+		// applied to the result.
 		List<TLObject> result = new ArrayList<>();
 		try (CloseableIterator<TLObject> dbResult =
 			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {
@@ -105,7 +107,7 @@ public class KBQuery extends SearchExpression {
 			}
 		}
 
-		return result;
+		return usesSecurity() ? All.filterReadable(result) : result;
 	}
 
 	@Override

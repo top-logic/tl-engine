@@ -36,8 +36,21 @@ public class SearchExpressionFactory {
 	 * @param type
 	 *        See {@link All#getInstanceType()}.
 	 */
+	@NoFactory
 	public static All all(TLStructuredType type) {
-		return new All(type);
+		return all(type, true);
+	}
+
+	/**
+	 * Creates an {@link All} expression with explicit security setting.
+	 *
+	 * @param type
+	 *        See {@link All#getInstanceType()}.
+	 * @param usesSecurity
+	 *        See {@link All#usesSecurity()}.
+	 */
+	public static All all(TLStructuredType type, boolean usesSecurity) {
+		return new All(type, usesSecurity);
 	}
 
 	/**
@@ -104,9 +117,12 @@ public class SearchExpressionFactory {
 	 * @param compiled
 	 *        Factories to create an additional filter {@link Expression} that could not be created
 	 *        during compile time to use at execution time.
+	 * @param usesSecurity
+	 *        See {@link KBQuery#usesSecurity()}.
 	 */
-	public static KBQuery query(TLClass classType, SetExpression query, List<CompiledValue> compiled) {
-		return new KBQuery(classType, query, compiled);
+	public static KBQuery query(TLClass classType, SetExpression query, List<CompiledValue> compiled,
+			boolean usesSecurity) {
+		return new KBQuery(classType, query, compiled, usesSecurity);
 	}
 
 	/**

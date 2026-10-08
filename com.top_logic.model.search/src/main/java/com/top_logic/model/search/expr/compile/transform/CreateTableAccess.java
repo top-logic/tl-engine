@@ -29,6 +29,12 @@ import com.top_logic.model.search.expr.interpreter.Rewriter;
 /**
  * Transformation replacing {@link All} expressions by unions of {@link KBQuery} expressions directly
  * accessing corresponding tables.
+ *
+ * <p>
+ * Each {@link KBQuery} takes over the {@link All#usesSecurity() security setting} of the replaced
+ * {@link All} expression, so that the instances delivered are restricted to the readable ones in the
+ * same way.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -61,7 +67,7 @@ public class CreateTableAccess extends Rewriter<Void> {
 					MOClass tableType = (MOClass) _typeContext.getType(tableName);
 					SetExpression tableQuery = AttributeOperations.tableQuery(tableType, types);
 					result = union(result,
-						query(classType, tableQuery, Collections.emptyList()));
+						query(classType, tableQuery, Collections.emptyList(), expr.usesSecurity()));
 				} catch (UnknownTypeException ex) {
 					throw new IllegalArgumentException("Reference to undefined table type '" + tableName + "'.", ex);
 				}

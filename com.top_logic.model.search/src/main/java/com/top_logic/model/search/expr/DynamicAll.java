@@ -18,21 +18,26 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 
 /**
  * {@link SearchExpression} looking up all instances of a type given as argument.
+ *
+ * <p>
+ * Delivers the same instances as {@link All}, in particular only the readable ones when the
+ * expression {@link #usesSecurity() uses security}.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Void> {
+public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMapSemantics<Void> {
 
 	/**
 	 * Creates a {@link DynamicAll}.
 	 */
-	public DynamicAll(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicAll(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicAll(getName(), arguments);
+		return new DynamicAll(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -53,7 +58,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getArguments()[0]);
 
-		return All.all(this, type);
+		return All.all(this, type, usesSecurity());
 	}
 
 	/**
@@ -92,7 +97,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		public DynamicAll build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new DynamicAll(getConfig().getName(), args);
+			return new DynamicAll(getConfig().getName(), args, true);
 		}
 
 	}

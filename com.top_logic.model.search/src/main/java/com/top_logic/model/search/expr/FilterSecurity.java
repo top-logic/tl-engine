@@ -21,11 +21,13 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * permissions, removing all business objects the user must not see.
  *
  * <p>
- * Access operations in TL-Script return referenced objects <em>unfiltered</em> (consistent with the
- * user interface, which always shows a referenced object by its label and only secures navigation
- * into it); only the access to the <em>attributes</em> of an object is denied if the user must not
- * read the object. As a consequence, an intermediate result of a search expression may well contain
- * objects the user must not read. This expression applies
+ * The enumeration of the instances of a type ({@link All}, {@link DynamicAll}) delivers only the
+ * objects the current user may read. Access operations in TL-Script, in contrast, return referenced
+ * objects <em>unfiltered</em> (consistent with the user interface, which shows a referenced object
+ * by its label and only secures navigation into it); only the access to the <em>attributes</em> of
+ * an object is denied if the user must not read the object. As a consequence, an intermediate
+ * result of a search expression may contain objects the user must not read, if they are reached
+ * through a reference from a readable object. This expression applies
  * {@link SearchExpression#filterSecurity(Object)} to its argument and thereby removes them
  * (recursively: a single forbidden object becomes <code>null</code>, forbidden elements are dropped
  * from collections, primitive values are kept).

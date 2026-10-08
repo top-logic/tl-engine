@@ -482,6 +482,145 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		assertEquals(set(), asSet(eval(mixed)));
 	}
 
+	private static final String ALL_PROJECTS = "all(`TestTLScriptSecurity:Project`)";
+
+	/**
+	 * {@code all(...)} delivers only the instances the user may read, already as intermediate
+	 * result (before the result filter of the {@link QueryExecutor} applies).
+	 *
+	 * <p>
+	 * {@code _reader} holds {@code ProjectReader} on {@code p1} only (the read right of that role on
+	 * {@code SpecialProject} is revoked), the administrator reads all projects.
+	 * </p>
+	 */
+	public void testAllDeliversOnlyReadableInstances() throws Exception {
+		becomeUser(_reader);
+		assertIntermediate(set(_p1), ALL_PROJECTS);
+
+		becomeUser(_root);
+		assertIntermediate(set(_p1, _p2, _sp1), ALL_PROJECTS);
+	}
+
+	/**
+	 * The labels of the instances a user must not read are not disclosed by converting the
+	 * enumerated instances to strings.
+	 */
+	public void testAllDisclosesNoLabelsOfUnreadableInstances() throws Exception {
+		becomeUser(_root);
+		Object labelP1 = execute(search("p -> toString($p)"), _p1);
+
+		becomeUser(_reader);
+		assertIntermediate(set(labelP1), ALL_PROJECTS + ".map(p -> toString($p))");
+		assertIntermediate(set(labelP1), "{p = " + ALL_PROJECTS + "; '' + $p.singleElement()}");
+	}
+
+	/**
+	 * The size of an enumeration counts only the readable instances.
+	 */
+	public void testAllCountsOnlyReadableInstances() throws Exception {
+		becomeUser(_reader);
+		assertIntermediate(1, ALL_PROJECTS + ".size()");
+
+		becomeUser(_root);
+		assertIntermediate(3, ALL_PROJECTS + ".size()");
+	}
+
+	/**
+	 * A filter that is compiled into a database query delivers only readable instances, too.
+	 */
+	public void testAllWithDatabaseFilterDeliversOnlyReadableInstances() throws Exception {
+		// budget: p1 = 100, p2 = 200, sp1 = 100; the condition matches all of them.
+		String filtered =
+			ALL_PROJECTS + ".filter(p -> $p.get(`TestTLScriptSecurity:Project#budget`) > 50)";
+
+		assertTrue("Test premise: the filter is compiled into a database query.",
+			QueryExecutor.compile(kb(), model(), search(filtered)).getSearch().toString().contains("query("));
+
+		becomeUser(_reader);
+		assertIntermediate(set(_p1), filtered);
+		assertIntermediate(1, filtered + ".size()");
+
+		becomeUser(_root);
+		assertIntermediate(set(_p1, _p2, _sp1), filtered);
+	}
+
+	/**
+	 * The dynamic form {@code all($type)} delivers only readable instances, too.
+	 */
+	public void testDynamicAllDeliversOnlyReadableInstances() throws Exception {
+		becomeUser(_reader);
+		assertIntermediate(set(_p1), "t -> all($t)", projectType());
+		assertIntermediate(1, "t -> all($t).size()", projectType());
+
+		becomeUser(_root);
+		assertIntermediate(set(_p1, _p2, _sp1), "t -> all($t)", projectType());
+	}
+
+	/**
+	 * An object the user must not read is still reachable through a reference from a readable
+	 * object, like the user interface shows a referenced object by its label.
+	 */
+	public void testReferenceToUnreadableObjectIsKept() throws Exception {
+		becomeUser(_root);
+		Object labelE1 = execute(search("e -> toString($e)"), _e1);
+		Object labelE2 = execute(search("e -> toString($e)"), _e2);
+
+		becomeUser(_user);
+		assertFalse("Test premise: the user must not read the employee.",
+			ModelAccessRights.getInstance().isReadAllowed(_user, _e1));
+		assertIntermediate(set(_e1, _e2), ALL_PROJECTS + ".map(" + RESPONSIBLE_OF + ")");
+		assertIntermediate(set(labelE1, labelE2),
+			ALL_PROJECTS + ".map(p -> toString($p.get(`TestTLScriptSecurity:Project#responsible`)))");
+	}
+
+	/**
+	 * An expression evaluated without security enumerates all instances.
+	 */
+	public void testAllWithoutSecurityDeliversAllInstances() throws Exception {
+		becomeUser(_reader);
+
+		for (QueryExecutor executor : executors(ALL_PROJECTS + ".size()")) {
+			executor.disableSecurity();
+			assertEquals(3, ((Number) executor.executeIntermediate()).intValue());
+		}
+		for (QueryExecutor executor : executors(ALL_PROJECTS)) {
+			executor.disableSecurity();
+			assertEquals(set(_p1, _p2, _sp1), asSet(executor.execute()));
+		}
+	}
+
+	/**
+	 * Asserts that the given script delivers the expected intermediate result, both when it is
+	 * interpreted and when it is compiled (with database queries).
+	 *
+	 * @param expected
+	 *        The expected result. A number is compared numerically, a collection result is
+	 *        compared as set.
+	 */
+	private void assertIntermediate(Object expected, String script, Object... args) throws Exception {
+		for (QueryExecutor executor : executors(script)) {
+			Object result = executor.executeIntermediate(args);
+			if (expected instanceof Number) {
+				assertEquals(executor.getSearch().toString(), ((Number) expected).intValue(),
+					((Number) result).intValue());
+			} else if (result instanceof Collection<?>) {
+				assertEquals(executor.getSearch().toString(), expected, asSet(result));
+			} else {
+				assertEquals(executor.getSearch().toString(), expected, set(result));
+			}
+		}
+	}
+
+	/**
+	 * An interpreting and a compiling {@link QueryExecutor} for the given script.
+	 */
+	private static QueryExecutor[] executors(String script) throws Exception {
+		return new QueryExecutor[] {
+			QueryExecutor.interpret(kb(), model(), search(script)),
+			QueryExecutor.compile(kb(), model(), search(script)),
+		};
+	}
+
 	private static final String UPDATE_BUDGET = "p -> $p.set(`TestTLScriptSecurity:Project#budget`, 999)";
 
 	private static final String ADD_MEMBER = "p -> e -> $p.add(`TestTLScriptSecurity:Project#members`, $e)";

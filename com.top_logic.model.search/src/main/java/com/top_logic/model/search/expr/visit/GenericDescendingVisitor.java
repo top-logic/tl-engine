@@ -82,7 +82,7 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitAll(All expr, A arg) {
-		return compose(expr, arg, wrap(expr.getInstanceType()));
+		return compose(expr, arg, wrap(expr.getInstanceType()), wrap(expr.usesSecurity()));
 	}
 
 	@Override
@@ -109,7 +109,8 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitKBQuery(KBQuery expr, A arg) {
-		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getDynamicFilters()));
+		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getDynamicFilters()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override

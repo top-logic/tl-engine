@@ -125,6 +125,38 @@ html, body {
 	user-select: none;
 }
 
+/* --- Touch drag --------------------------------------------------------- */
+
+/* A draggable element is picked up by a long press (see the bridge's touch-drag), so on a touch
+   screen the press opens neither the long-press menu nor a text selection. */
+@media (pointer: coarse) {
+	[draggable="true"] {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+}
+
+/* Picked up by a finger that has not moved yet. */
+[data-touch-drag="armed"] {
+	box-shadow: var(--shadow-raised);
+	transform: scale(1.02);
+	transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+/* Dragged by a finger: the place it was taken from. */
+[data-touch-drag="source"] {
+	opacity: 0.4;
+}
+
+/* The copy of the dragged element following the finger. Above the drag shield, below the hint
+   naming why a drop is refused. */
+.tlTouchDragImage {
+	z-index: 12500;
+	opacity: 0.9;
+	box-shadow: var(--shadow-menu);
+}
+
 /* --- TLCounter ---------------------------------------------------------- */
 
 .tlCounter {
@@ -2161,12 +2193,6 @@ button.tlDrawerToggle:focus-visible {
 /* Übergang bis Welle 4 (Shell): die AppBar ist keine Markenfläche, sie liest die Flächen des Design Systems. */
 .tlAppBar--primary { background: var(--tl-surface-layer); color: var(--tl-text-primary); }
 
-.tlAppBar--surface {
-	background: var(--layer-01);
-	color: var(--text-primary);
-	border-bottom: 1px solid var(--border-subtle);
-}
-
 .tlAppBar--elevated {
 	box-shadow: var(--shadow-raised);
 }
@@ -3936,8 +3962,9 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* Why the target under the running drag refuses it, next to the pointer (left/top set by the
-   table), above every other layer like a tooltip. */
-.tlTableView__dropHint {
+   table or the board), above every other layer like a tooltip. */
+.tlTableView__dropHint,
+.tlKanbanBoard__dropHint {
 	position: fixed;
 	z-index: 13000;
 	max-width: min(400px, calc(100vw - 2 * var(--spacing-05)));
@@ -5867,3 +5894,136 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 .tlCalMiniDay--today { background: var(--button-primary); color: var(--text-on-color); }
 .tlCalMiniDay--today.tlCalMiniDay--event::after { background: #fff; }
+
+/* --- TLKanbanBoard ------------------------------------------------------ */
+
+.tlKanbanBoard {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	gap: var(--tl-space-md);
+	padding: var(--tl-space-sm);
+	overflow-x: auto;
+	overflow-y: hidden;
+	min-height: 0;
+	box-sizing: border-box;
+}
+
+.tlKanbanBoard__column {
+	display: flex;
+	flex-direction: column;
+	flex: 1 0 16rem;
+	min-width: 16rem;
+	max-width: 24rem;
+	min-height: 0;
+	background: var(--tl-surface-base);
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	border-radius: var(--border-radius-02);
+}
+
+.tlKanbanBoard__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--tl-space-xs);
+	padding: var(--tl-space-sm) var(--tl-space-md);
+	border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	color: var(--tl-text-primary);
+	font-size: var(--tl-font-size-body);
+	font-weight: 600;
+}
+
+.tlKanbanBoard__label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlKanbanBoard__count {
+	flex: none;
+	min-width: 1.5em;
+	padding: 0 var(--tl-space-xs);
+	border-radius: 999px;
+	background: var(--tl-surface-interactive-hover);
+	color: var(--tl-text-secondary);
+	font-size: var(--tl-font-size-label);
+	text-align: center;
+}
+
+.tlKanbanBoard__cards {
+	display: flex;
+	flex-direction: column;
+	gap: var(--tl-space-sm);
+	flex: 1 1 auto;
+	min-height: 0;
+	margin: 0;
+	padding: var(--tl-space-sm);
+	list-style: none;
+	overflow-y: auto;
+}
+
+.tlKanbanBoard__card {
+	padding: var(--tl-space-sm) var(--tl-space-md);
+	background: var(--tl-surface-layer);
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-raised);
+	cursor: pointer;
+}
+
+.tlKanbanBoard__card:hover {
+	border-color: var(--tl-border-emphasis);
+}
+
+.tlKanbanBoard__card--selected,
+.tlKanbanBoard__card--selected:hover {
+	background: var(--tl-surface-brand-subtle);
+	border-color: var(--tl-border-interactive);
+}
+
+.tlKanbanBoard__card[draggable="true"] {
+	cursor: grab;
+}
+
+.tlKanbanBoard__column--dragover {
+	border-color: var(--tl-border-interactive);
+	background: var(--tl-surface-brand-subtle);
+}
+
+.tlKanbanBoard__column--dropRefused {
+	border-color: var(--tl-status-error-border);
+	background: var(--tl-status-error-subtle);
+	cursor: not-allowed;
+}
+
+/* The insertion line between two cards where a drop reorders the column: drawn into the gap
+   above or below the card, so the cards do not move while the pointer does. */
+.tlKanbanBoard__card {
+	position: relative;
+}
+
+.tlKanbanBoard__card--dropBefore::before,
+.tlKanbanBoard__card--dropAfter::after,
+.tlKanbanBoard__cards--dropEnd::after {
+	content: "";
+	display: block;
+	height: var(--tl-border-width-accent);
+	background: var(--tl-border-interactive);
+	pointer-events: none;
+}
+
+.tlKanbanBoard__card--dropBefore::before,
+.tlKanbanBoard__card--dropAfter::after {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+.tlKanbanBoard__card--dropBefore::before {
+	top: calc(-0.5 * var(--tl-space-sm) - 0.5 * var(--tl-border-width-accent) - var(--tl-border-width-sm));
+}
+
+.tlKanbanBoard__card--dropAfter::after {
+	bottom: calc(-0.5 * var(--tl-space-sm) - 0.5 * var(--tl-border-width-accent) - var(--tl-border-width-sm));
+}

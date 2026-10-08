@@ -23,6 +23,10 @@
 						resource="/script/tl-script-editor.js"
 						requires="tl-react-bridge,tl-code-editor"
 					/>
+					<!--
+						Unlayered: the stylesheet overrides the base theme CodeMirror writes into the page
+						at runtime, which is unlayered and would win against every rule of a layer.
+					-->
 					<stylesheet name="tl-script-editor-css"
 						resource="/style/tlScriptEditor.css"
 					/>

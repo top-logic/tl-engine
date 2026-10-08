@@ -85,4 +85,24 @@ public interface DropTarget {
 	 */
 	void onDrop(DropEvent event);
 
+	/**
+	 * Applies a drop, and runs the given follow-up once the drop is applied.
+	 *
+	 * <p>
+	 * A target whose application of a drop may come to an end only later - after the user answered
+	 * a question, say - runs the follow-up then, and not at all where the application is abandoned.
+	 * By default, the drop is applied by {@link #onDrop(DropEvent)} and the follow-up runs right
+	 * after it.
+	 * </p>
+	 *
+	 * @param event
+	 *        The dragged objects, the row they were dropped on and the position relative to it.
+	 * @param onApplied
+	 *        Runs once the drop is applied.
+	 */
+	default void onDrop(DropEvent event, Runnable onApplied) {
+		onDrop(event);
+		onApplied.run();
+	}
+
 }

@@ -13,23 +13,29 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.SliderState;
 
 /**
  * A {@link ReactFormFieldControl} for a number set by dragging a handle along a track.
  *
  * <p>
  * The value travels as a number: the client is handed the number itself in {@link FieldState#VALUE__PROP} and sends
- * back the number the handle stands on, within the {@link #MIN lower} and {@link #MAX upper} bound
- * and on the grid of the {@link #STEP smallest step}. The text beside the handle is written on the
- * server ({@link #VALUE_LABEL}) with the same {@link Format} the number input uses, so the same
+ * back the number the handle stands on, within the {@link SliderState#MIN__PROP lower} and
+ * {@link SliderState#MAX__PROP upper} bound and on the grid of the {@link SliderState#STEP__PROP
+ * smallest step}. The text beside the handle is written on the server
+ * ({@link SliderState#VALUE_LABEL__PROP}) with the same {@link Format} the number input uses, so the same
  * value reads the same wherever it is shown - {@code 12,50} for a German user where an English one
  * reads {@code 12.50}.
  * </p>
  *
  * <p>
- * The bounds are written in the same format as well ({@link #MIN_LABEL}, {@link #MAX_LABEL}): the
- * client reserves the width of the wider of the two for the text, so the track keeps its length
- * while the text changes.
+ * The bounds are written in the same format as well ({@link SliderState#MIN_LABEL__PROP},
+ * {@link SliderState#MAX_LABEL__PROP}): the client reserves the width of the wider of the two for the
+ * text, so the track keeps its length while the text changes.
+ * </p>
+ *
+ * <p>
+ * The state is described by {@link SliderState}.
  * </p>
  *
  * <p>
@@ -41,32 +47,7 @@ import com.top_logic.layout.react.state.FieldState;
  */
 public class ReactSliderControl extends ReactFormFieldControl {
 
-	/** State key for the smallest value the handle can stand on. */
-	private static final String MIN = "min";
-
-	/** State key for the largest value the handle can stand on. */
-	private static final String MAX = "max";
-
-	/** State key for the distance between two positions the handle can stand on. */
-	private static final String STEP = "step";
-
-	/**
-	 * State key for the value written in the {@link #getFormat() format of the field}, the text
-	 * shown beside the handle.
-	 */
-	private static final String VALUE_LABEL = "valueLabel";
-
-	/**
-	 * State key for the {@link #MIN smallest value} written in the {@link #getFormat() format of the
-	 * field}.
-	 */
-	private static final String MIN_LABEL = "minLabel";
-
-	/**
-	 * State key for the {@link #MAX largest value} written in the {@link #getFormat() format of the
-	 * field}.
-	 */
-	private static final String MAX_LABEL = "maxLabel";
+	private static final String REACT_MODULE = "TLSlider";
 
 	private final Format _format;
 
@@ -88,7 +69,7 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	 */
 	public ReactSliderControl(ReactContext context, FieldModel model, Format format, double min, double max,
 			double step) {
-		super(context, model, "TLSlider");
+		super(context, model, REACT_MODULE);
 		if (min >= max) {
 			throw new IllegalArgumentException("A slider needs a range to travel: " + min + " is not below " + max);
 		}
@@ -96,12 +77,12 @@ public class ReactSliderControl extends ReactFormFieldControl {
 			throw new IllegalArgumentException("A slider needs a step to move by: " + step + " is not above zero.");
 		}
 		_format = format;
-		putState(MIN, Double.valueOf(min));
-		putState(MAX, Double.valueOf(max));
-		putState(STEP, Double.valueOf(step));
-		putState(MIN_LABEL, format(Double.valueOf(min)));
-		putState(MAX_LABEL, format(Double.valueOf(max)));
-		putState(VALUE_LABEL, format(model.getValue()));
+		putState(SliderState.MIN__PROP, Double.valueOf(min));
+		putState(SliderState.MAX__PROP, Double.valueOf(max));
+		putState(SliderState.STEP__PROP, Double.valueOf(step));
+		putState(SliderState.MIN_LABEL__PROP, format(Double.valueOf(min)));
+		putState(SliderState.MAX_LABEL__PROP, format(Double.valueOf(max)));
+		putState(SliderState.VALUE_LABEL__PROP, format(model.getValue()));
 	}
 
 	/**
@@ -148,13 +129,13 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
 		super.applyRawClientValue(rawValue);
-		putState(VALUE_LABEL, format(getFieldModel().getValue()));
+		putState(SliderState.VALUE_LABEL__PROP, format(getFieldModel().getValue()));
 	}
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		super.handleModelValueChanged(source, oldValue, newValue);
-		putState(VALUE_LABEL, format(newValue));
+		putState(SliderState.VALUE_LABEL__PROP, format(newValue));
 	}
 
 	/**
@@ -163,8 +144,9 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), MIN, MAX, STEP, VALUE_LABEL, MIN_LABEL,
-			MAX_LABEL);
+		return presentationKeys(super.scriptingPresentationKeys(), SliderState.MIN__PROP,
+			SliderState.MAX__PROP, SliderState.STEP__PROP, SliderState.VALUE_LABEL__PROP,
+			SliderState.MIN_LABEL__PROP, SliderState.MAX_LABEL__PROP);
 	}
 
 	private String format(Object value) {

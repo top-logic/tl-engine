@@ -9,7 +9,7 @@ import {
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { pillClassName } from './pill/TLPill';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';

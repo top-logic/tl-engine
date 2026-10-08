@@ -188,6 +188,12 @@ The stylesheet the classes are defined in belongs to the application and is anno
 </config>
 ```
 
+The application's stylesheet names no `layer`, so its rules are unlayered: they win against the
+engine's stylesheets (layer `tl`) and against the rules of a component library rendering the
+element, e.g. Material UI (layer `mui`), whatever the specificity and the position in the page. A
+rule `.tlDemoGlass { background: … }` therefore beats the background of the MUI `Card` the element
+is rendered with. See [Cascade layers](doc:view-layer/theme-tokens#cascade-layers).
+
 A modifier class of a kind — `tlText--ellipsis`, `tlCard--outlined` — is not the way to reach one
 element. Those classes are what a control writes for the display options of its own kind, so writing
 one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the

@@ -89,15 +89,62 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 		return _resolved.computeIfAbsent(resource, _resolver::resolve);
 	}
 
+	/**
+	 * Writes a reference for every registered stylesheet, in cascade order.
+	 *
+	 * <p>
+	 * A stylesheet without {@link StyleSheetConfig#getLayer() layer} is referenced by a
+	 * {@code <link>}. A {@code <link>} cannot name a cascade layer, so a stylesheet with a layer is
+	 * referenced by a {@code <style>} element importing it into its layer:
+	 * {@code @import url("...") layer(tl);}. Its rules take the position of that element in the
+	 * cascade order of its layer.
+	 * </p>
+	 */
 	@Override
 	public void writeStyleRefs(TagWriter out, String contextPath) throws IOException {
 		for (ResourceConfig resource : _ordered) {
-			if (resource instanceof StyleSheetConfig) {
+			if (resource instanceof StyleSheetConfig stylesheet) {
+				String layer = stylesheet.getLayer();
 				for (String url : resolve(resource)) {
-					HTMLUtil.writeStylesheetRef(out, contextPath, url);
+					if (StringServices.isEmpty(layer)) {
+						HTMLUtil.writeStylesheetRef(out, contextPath, url);
+					} else {
+						writeLayerImport(out, contextPath + url, layer);
+					}
 				}
 			}
 		}
+	}
+
+	private static void writeLayerImport(TagWriter out, String url, String layer) throws IOException {
+		out.beginBeginTag(HTMLConstants.STYLE_ELEMENT);
+		out.endBeginTag();
+		out.writeContent("@import url(\"");
+		out.writeContent(cssString(url));
+		out.writeContent("\") layer(");
+		out.writeContent(layer);
+		out.writeContent(");");
+		out.endTag(HTMLConstants.STYLE_ELEMENT);
+	}
+
+	/**
+	 * The content of a double-quoted CSS string with the given value.
+	 *
+	 * <p>
+	 * Escapes the characters ending the string, and the start of a tag, which would end the
+	 * {@code <style>} element.
+	 * </p>
+	 */
+	private static String cssString(String value) {
+		StringBuilder result = new StringBuilder(value.length());
+		for (int n = 0, cnt = value.length(); n < cnt; n++) {
+			char ch = value.charAt(n);
+			switch (ch) {
+				case '"', '\\', '<', '\n', '\r' -> result.append('\\').append(Integer.toHexString(ch)).append(' ');
+				default -> result.append(ch);
+			}
+		}
+		return result.toString();
 	}
 
 	private void writeImportMap(TagWriter out, String contextPath) throws IOException {

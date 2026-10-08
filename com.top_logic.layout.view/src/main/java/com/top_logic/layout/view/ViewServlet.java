@@ -913,6 +913,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("charset", "UTF-8");
 		out.endEmptyTag();
+		ClientResources clientResources = ClientResources.getInstance();
+		// The order of the CSS cascade layers, before any style of the page mentions a layer.
+		clientResources.writeLayerOrder(out);
 		// The theme switch, put into effect before the first paint: a page carrying no theme yet
 		// follows the operating system's appearance preference.
 		themes.writeThemeScript(out);
@@ -924,13 +927,12 @@ public class ViewServlet extends TopLogicServlet {
 		out.endBeginTag();
 		out.writeText("TopLogic View");
 		out.endTag(HTMLConstants.TITLE);
-		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
 		// Emit the design tokens of every registered theme as CSS custom properties, each scoped by
-		// the theme attribute of <html> naming the theme in effect.
+		// the theme attribute of <html> naming the theme in effect, in the engine's cascade layer.
 		themes.writeThemeStyles(out);
-		// Append the React stylesheets (fonts, icons, component CSS).
+		// Append the React stylesheets (fonts, icons, component CSS), each in its cascade layer.
 		clientResources.writeStyleRefs(out, contextPath);
 		out.endTag(HTMLConstants.HEAD);
 

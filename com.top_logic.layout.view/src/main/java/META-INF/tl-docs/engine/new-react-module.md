@@ -135,30 +135,47 @@ export default defineConfig({
 The three shim files:
 
 **`react-src/react-shim.ts`**
+
+Libraries import React as a namespace (`import * as React from 'react'`) and read its API from it,
+some of it under a computed name (emotion looks up `useInsertionEffect` that way). Name the
+complete public API of React, not only the hooks the library is seen to use (see
+`com.top_logic.layout.react.mui/react-src/react-shim.ts`):
+
 ```typescript
 import { React } from 'tl-react-bridge';
 export default React;
 export const {
-  useState, useRef, useEffect, useCallback, useMemo,
-  forwardRef, createRef, createElement, createContext,
-  useContext, useReducer, useImperativeHandle, useLayoutEffect,
-  memo, Fragment, Children, isValidElement, cloneElement
-} = React;
+  Activity, Children, Component, Fragment, Profiler, PureComponent, StrictMode, Suspense,
+  addTransitionType, cache, cacheSignal, cloneElement, createContext, createElement, createRef,
+  forwardRef, isValidElement, lazy, memo, startTransition, use, useActionState, useCallback,
+  useContext, useDebugValue, useDeferredValue, useEffect, useEffectEvent, useId,
+  useImperativeHandle, useInsertionEffect, useLayoutEffect, useMemo, useOptimistic, useReducer,
+  useRef, useState, useSyncExternalStore, useTransition, version,
+} = React as typeof React & Record<string, any>;
 ```
 
 **`react-src/react-dom-shim.ts`**
 ```typescript
 import { ReactDOM } from 'tl-react-bridge';
 export default ReactDOM;
+export const {
+  createPortal, flushSync, preconnect, prefetchDNS, preinit, preinitModule, preload,
+  preloadModule, requestFormReset, unstable_batchedUpdates, useFormState, useFormStatus, version,
+} = ReactDOM as typeof ReactDOM & Record<string, any>;
 ```
 
 **`react-src/react-jsx-runtime-shim.ts`**
+
+The bridge re-exports the automatic JSX runtime of its React instance; the shim passes it on:
+
 ```typescript
-import { React } from 'tl-react-bridge';
-export const jsx = React.createElement;
-export const jsxs = React.createElement;
-export const Fragment = React.Fragment;
+export { jsx, jsxs, Fragment } from 'tl-react-bridge';
 ```
+
+Never substitute `React.createElement` for `jsx`: prebuilt library code calls
+`jsx(type, props, key)` with the children inside `props`, and `createElement` reads the third
+argument as children — every keyed element (and every call passing an explicit `undefined` key)
+would lose its children.
 
 ### 4. Entry file
 
@@ -233,6 +250,7 @@ repository does it. `requires` orders the bundle after the bridge that owns the 
             specifier="tl-my-module"
           />
           <stylesheet name="tl-my-module-css"
+            layer="tl"
             resource="/style/tlMyModule.css"
           />
         </resources>
@@ -241,6 +259,14 @@ repository does it. `requires` orders the bundle after the bridge that owns the 
   </services>
 </application>
 ```
+
+A stylesheet of an engine module names the cascade layer `tl` of the engine's styles (`layer="tl"`),
+so that a component library (layer `mui`) and the stylesheets of an application (unlayered) override
+it, whatever the specificity of their rules — see
+[Cascade layers](doc:view-layer/theme-tokens#cascade-layers). The page imports it into that layer
+with a `<style>@import url("…") layer(tl);</style>` instead of a `<link>`. Without `layer` stay an
+application's own stylesheet and a stylesheet that overrides unlayered styles a library writes into
+the page at runtime (e.g. `tlCodeEditor.css` against the base theme of CodeMirror).
 
 ### 7. Control component pattern
 

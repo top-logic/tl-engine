@@ -1,5 +1,5 @@
 import { React, useTLState, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, TextStateJson } from 'tl-react-bridge';
 import { TLPill } from './pill/TLPill';
 
 /** Typographic role written as a class; the role the server omits. */
@@ -23,27 +23,17 @@ function roleOfTone(tone: string): string {
 /**
  * Simple read-only text control rendering a {@code <span>}.
  *
- * State:
- * - text: string - the text to display
- * - overflow: "wrap" | "ellipsis" - how text longer than the available width is displayed; wrapped
- *   onto several lines, or truncated on a single one
- * - variant: what the text is for ("body" | "title" | "headline" | "display" | "label" |
- *   "caption"), written as the class tlText--<variant>
- * - tone: what its color means ("primary" | "secondary" | "helper" | "accent" | "success" |
- *   "warning" | "error" | "on-color"), written as the class tlText--tone-<tone>
- * - appearance: "text" | "pill" - plain text, or a pill whether or not the value carries a role
- * - role: string - optional ARIA role (e.g. "alert" for a message announced when it appears)
- * - colorRole: string - optional color role the value carries in the model (neutral, brand, error,
- *   warning, success, info, category-1 … category-8); shown as a pill of that role
+ * The state is described by TextStateJson. The variant and the tone are written as the classes
+ * tlText--<variant> and tlText--tone-<tone>.
  */
 const TLText: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
-  const text = (state.text as string) ?? '';
+  const state = useTLState<Partial<TextStateJson>>();
+  const text = state.text ?? '';
   const hasTooltip = state.hasTooltip === true;
-  const role = (state.role as string) || undefined;
-  const colorRole = (state.colorRole as string) || undefined;
-  const variant = (state.variant as string) || DEFAULT_VARIANT;
-  const tone = (state.tone as string) || DEFAULT_TONE;
+  const role = state.role || undefined;
+  const colorRole = state.colorRole || undefined;
+  const variant = state.variant || DEFAULT_VARIANT;
+  const tone = state.tone || DEFAULT_TONE;
   const pill = state.appearance === 'pill';
   const className = rootClassName(
     state,

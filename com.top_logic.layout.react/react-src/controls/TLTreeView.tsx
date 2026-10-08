@@ -26,6 +26,9 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-right';
 /** The indent of a level until the token is read: the toggle's width, size-control-sm. */
 const INDENT_FALLBACK_PX = 24;
 
+/** The editors a node's content may hold: they answer arrows, Space and Enter themselves. */
+const EDITOR_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+
 /** The server's names of the three drop positions (ReactTreeControl), by the shared calculator's. */
 const SERVER_POSITION = { before: 'above', onto: 'within', after: 'below' } as const;
 
@@ -81,7 +84,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   // from the token, so the indent follows the density. The list is rendered unconditionally, so the
   // ref is attached when the hook first measures: the token is read at the tree, not at the root.
   const indent = useTokenPx(listRef, '--tl-size-control-sm', INDENT_FALLBACK_PX);
-  const nodeId = (id: string) => `${controlId}-node-${id}`;
+  const domId = (id: string) => `${controlId}-node-${id}`;
 
   // The node being dragged out of this tree, faded by drag.css while the drag runs.
   const [draggingNodeId, setDraggingNodeId] = React.useState<string | null>(null);
@@ -218,11 +221,20 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [nodes, isMulti, sendCommand]);
 
+  // The node the cursor names. Every node in the list is rendered with its id, so the tree points
+  // aria-activedescendant at a rendered node or leaves the attribute out (no cursor, empty tree) -
+  // a reference to a missing id would hide the focus (WCAG 2.4.7); without it the tree shows the
+  // ring itself.
+  const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : undefined;
+
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
     if (nodes.length === 0) {
       return;
     }
-    const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : null;
+    // An editor inside a node keeps its keys: Space, Enter and the arrows are its own.
+    if (e.target !== e.currentTarget && (e.target as Element).closest(EDITOR_SELECTOR)) {
+      return;
+    }
     let newIndex = cursorIndex;
 
     switch (e.key) {
@@ -294,13 +306,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     if (newIndex !== cursorIndex) {
       moveCursor(newIndex, e.shiftKey);
     }
-  }, [cursorIndex, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
-
-  // The node the cursor names. Every node in the list is rendered with its id, so the tree points
-  // aria-activedescendant at a rendered node or leaves the attribute out (no cursor, empty tree) -
-  // a reference to a missing id would hide the focus (WCAG 2.4.7); without it the tree shows the
-  // ring itself.
-  const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : undefined;
+  }, [cursorIndex, cursorNode, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
 
   return (
     <ul
@@ -308,7 +314,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
       role="tree"
       aria-label={i18n['js.tree.label']}
       aria-multiselectable={isMulti || undefined}
-      aria-activedescendant={cursorNode ? nodeId(cursorNode.id) : undefined}
+      aria-activedescendant={cursorNode ? domId(cursorNode.id) : undefined}
       className={rootClassName(state, 'tl-tree', 'tl-type-body')}
       tabIndex={0}
       onKeyDown={handleKeyDown}
@@ -316,7 +322,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
       {nodes.map((node, index) => (
         <React.Fragment key={node.id}>
           <li
-            id={nodeId(node.id)}
+            id={domId(node.id)}
             role="treeitem"
             aria-expanded={node.expandable ? node.expanded : undefined}
             aria-selected={node.selected}
@@ -328,7 +334,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
               draggingNodeId === node.id && 'dragging',
               dropIndicatorNodeId === node.id && dropIndicatorPosition ? DROP_STATE[dropIndicatorPosition] : undefined,
             )}
-            style={{ paddingLeft: node.depth * indent }}
+            style={{ paddingInlineStart: node.depth * indent }}
             draggable={dragEnabled}
             onMouseDown={(e) => {
               // Suppress the text selection the browser would start as a side
@@ -356,6 +362,8 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
                   e.stopPropagation();
                   handleToggle(node.id, node.expanded);
                 }}
+                // A press on the toggle keeps the focus on the tree, so the keys and the ring stay with it.
+                onMouseDown={(e) => e.preventDefault()}
                 tabIndex={-1}
                 aria-expanded={node.expanded}
                 aria-label={toggleLabel(i18n, node.expanded)}
@@ -381,7 +389,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
               aria-level={node.depth + 2}
               aria-label={i18n['js.tree.loading']}
               className="tl-status"
-              style={{ paddingLeft: (node.depth + 1) * indent }}
+              style={{ paddingInlineStart: (node.depth + 1) * indent }}
             >
               <ProgressBar fraction={null} ariaHidden />
             </li>

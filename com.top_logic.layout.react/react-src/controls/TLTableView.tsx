@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { Menu, MenuItem } from './menu/Menu';
@@ -693,14 +693,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand, rowHeight, measureWindow]);
 
   // A density switch changes the row height: the rows the server sends for the viewport change with
-  // it. Not on mount - the height has not switched, and a scroll command then would only repeat the
-  // window the server already sent.
-  const reportedRowHeightRef = React.useRef(rowHeight);
+  // it. Not for the first measurement - useTokenPx starts from its fallback (36) and reaches the
+  // token's value (32 in compact density) one render later; a scroll command then would only repeat
+  // the window the server already sent. A height the hook has not caught up with yet is skipped, the
+  // first one that matches the token is recorded without a command.
+  const reportedRowHeightRef = React.useRef<number | null>(null);
   React.useEffect(() => {
-    if (reportedRowHeightRef.current === rowHeight) {
+    if (rowHeight !== tokenPx(gridRef.current, '--tl-size-row', 36)) {
       return;
     }
+    const previous = reportedRowHeightRef.current;
     reportedRowHeightRef.current = rowHeight;
+    if (previous === null || previous === rowHeight) {
+      return;
+    }
     if (scrollContainerRef.current) {
       handleScroll();
     }
@@ -1352,9 +1358,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [someSelected]);
 
   // The cursor row as the grid's active descendant: only while it is rendered - the body renders
-  // exactly the rows the server sent for the window - otherwise the grid keeps the ring itself
-  // (base.css). A reference to a row that is not there would hide the focus (WCAG 2.4.7).
-  const cursorRendered = cursorIndex >= 0 && rows.some((r) => r.index === cursorIndex);
+  // exactly the rows the server sent - and within the visible part of the body; otherwise the grid
+  // keeps the ring itself (base.css). A reference to a row that is not there, or scrolled out of
+  // sight, would hide the focus (WCAG 2.4.7).
+  const cursorRendered = cursorIndex >= 0
+    && cursorIndex >= windowRange.first && cursorIndex <= windowRange.last
+    && rows.some((r) => r.index === cursorIndex);
 
   // The rows of the visible window the server has not sent yet: skeleton rows of row height.
   const sentIndexes = new Set(rows.map((r) => r.index));
@@ -1691,6 +1700,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         className="tl-table__body tl-type-body"
         role="rowgroup"
         tabIndex={-1}
+        // A press on the body or a part of it that takes no focus - the empty area below the rows,
+        // the selection cell beside its box - focuses the body (it carries a tabindex); the focus
+        // belongs to the grid, which holds the keyboard and shows the ring.
+        onFocus={(e) => {
+          if (e.target === e.currentTarget) {
+            gridRef.current?.focus({ preventScroll: true });
+          }
+        }}
         onScroll={handleScroll}
         onKeyDown={handleBodyKeyDown}
       >

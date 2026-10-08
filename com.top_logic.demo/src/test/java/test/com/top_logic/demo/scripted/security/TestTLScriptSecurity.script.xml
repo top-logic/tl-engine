@@ -556,9 +556,12 @@ demoNewA(name: "newChild", parent: $p);
 									tab-path="Administration > Development > Script Konsole > Editor"
 								/>
 							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="all(`DemoTypes:A`).delete()"
-							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+p = all(`DemoTypes:BNotUnderA`).filter(b -> $b.get(`DemoTypes:BNotUnderA#name`) == "TestTLSecurity").singleElement();
+$p.get(`DemoTypes:BNotUnderA#children`).delete();
+}]]></value>
+							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 							expected-failure-message="Der Benutzer darf Objekt (?:.*) nicht löschen."

@@ -32,8 +32,8 @@ import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 
 /**
- * Keeps the {@link DefaultTreeUINodeModel} a {@link ReactTreeControl} displays in sync with the
- * model behind it: changes of the displayed objects arrive through a {@link ModelScope}, changes of
+ * Keeps the {@link DefaultTreeUINodeModel} a {@link Display} - a {@link ReactTreeControl}, a table
+ * whose rows form a tree - displays in sync with the model behind it: changes of the displayed objects arrive through a {@link ModelScope}, changes of
  * the input the tree is built from through the {@link ViewChannel}s it reads.
  *
  * <p>
@@ -79,7 +79,61 @@ import com.top_logic.model.listen.ModelScope;
  */
 public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelListener, TreeModelListener {
 
-	private final ReactTreeControl _treeControl;
+	/**
+	 * What displays the tree an {@link ObservableTreeModel} keeps in sync, and is told about its
+	 * changes.
+	 */
+	public interface Display {
+
+		/**
+		 * The object of the given node changed, so what the display shows of it is stale.
+		 *
+		 * <p>
+		 * Every change reported this way is followed by {@link #nodesChanged()}.
+		 * </p>
+		 *
+		 * @param node
+		 *        A node of the displayed tree.
+		 */
+		void invalidateNode(DefaultTreeUINode node);
+
+		/**
+		 * The nodes of the tree changed: nodes were taken out, put in or moved, or the display of
+		 * a node was {@link #invalidateNode(DefaultTreeUINode) invalidated}.
+		 */
+		void nodesChanged();
+
+		/**
+		 * The tree was built anew from another root object; the given model replaces the one
+		 * displayed so far.
+		 */
+		void treeReplaced(DefaultTreeUINodeModel treeModel);
+
+		/**
+		 * The {@link Display} of the given tree control.
+		 */
+		static Display of(ReactTreeControl tree) {
+			return new Display() {
+				@Override
+				public void invalidateNode(DefaultTreeUINode node) {
+					tree.invalidateNodeControl(node);
+				}
+
+				@Override
+				public void nodesChanged() {
+					tree.updateVisibleState();
+				}
+
+				@Override
+				public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+					tree.setTreeModel(treeModel);
+				}
+			};
+		}
+
+	}
+
+	private final Display _display;
 
 	private final Function<Object[], Object> _rootFunction;
 
@@ -116,8 +170,8 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	/**
 	 * Creates a new {@link ObservableTreeModel}.
 	 *
-	 * @param treeControl
-	 *        The tree control displaying the given model.
+	 * @param display
+	 *        What displays the given model.
 	 * @param treeModel
 	 *        The tree model the control was built with.
 	 * @param rootFunction
@@ -132,13 +186,13 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 * @param inputChannels
 	 *        The channels whose values the root function is called with.
 	 */
-	public ObservableTreeModel(ReactTreeControl treeControl, DefaultTreeUINodeModel treeModel,
+	public ObservableTreeModel(Display display, DefaultTreeUINodeModel treeModel,
 			Function<Object[], Object> rootFunction,
 			TreeBuilder<DefaultTreeUINode> builder,
 			Function<Object, Object> parentFunction,
 			Set<TLStructuredType> observedTypes,
 			List<ViewChannel> inputChannels) {
-		_treeControl = treeControl;
+		_display = display;
 		_treeModel = treeModel;
 		_rootFunction = rootFunction;
 		_observedTypes = observedTypes;
@@ -189,6 +243,20 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		for (Runnable listener : new ArrayList<>(_structureListeners)) {
 			listener.run();
 		}
+	}
+
+	/**
+	 * Observes the objects of the nodes whose children were computed since the tree last changed.
+	 *
+	 * <p>
+	 * A display computing the children of a node without {@link TreeModelEvent#AFTER_EXPAND
+	 * expanding} it in the model - a table whose rows form the tree keeps the expansion of its own -
+	 * calls this after it did, so that the objects it shows from then on are followed like every
+	 * other displayed object.
+	 * </p>
+	 */
+	public void nodesComputed() {
+		syncObjectListeners();
 	}
 
 	/**
@@ -272,7 +340,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		if (changed) {
 			syncObjectListeners();
-			_treeControl.updateVisibleState();
+			_display.nodesChanged();
 			notifyStructureChanged();
 		}
 	}
@@ -340,7 +408,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 		if (changed) {
 			syncObjectListeners();
-			_treeControl.updateVisibleState();
+			_display.nodesChanged();
 			notifyStructureChanged();
 		}
 	}
@@ -391,7 +459,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			if (node == null) {
 				continue;
 			}
-			_treeControl.invalidateNodeControl(node);
+			_display.invalidateNode(node);
 			toReconcile.add(node);
 
 			DefaultTreeUINode parent = node.getParent();
@@ -594,7 +662,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			endUpdate(before);
 		}
 
-		_treeControl.setTreeModel(_treeModel);
+		_display.treeReplaced(_treeModel);
 		syncObjectListeners();
 		notifyStructureChanged();
 	}

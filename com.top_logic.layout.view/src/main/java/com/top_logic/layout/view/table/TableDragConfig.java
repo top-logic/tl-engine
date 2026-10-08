@@ -13,10 +13,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DragConfig;
 import com.top_logic.layout.view.element.TableElement;
+import com.top_logic.layout.view.element.TreeTableElement;
 
 /**
- * Configuration of the {@code <drag>} of a {@link TableElement}: that its rows may be dragged, the
- * {@link #getKind() kind} of such a drag, and when they may be dragged.
+ * Configuration of the {@code <drag>} of a {@link TableElement} or a {@link TreeTableElement}: that
+ * its rows may be dragged, the {@link #getKind() kind} of such a drag, and when they may be dragged.
  *
  * <p>
  * The {@link #getExecutability() executability} rules decide for the table as a whole over the

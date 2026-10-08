@@ -43,7 +43,9 @@ import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropTreeNavigation;
 import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.dnd.TreeDropPlace;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -65,6 +67,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowHierarchy;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NamedFilter;
@@ -110,6 +113,13 @@ import com.top_logic.util.Resources;
  * {@link DropMode#ORDERED insertion} in the upper part of a row inserts before it, in the lower part
  * before the next data row (at the end below the last one), and beside the rows at the end; a drop
  * on the {@link DropMode#CONTROL table as a whole} is one wherever it is made.
+ * </p>
+ *
+ * <p>
+ * A table whose rows form a tree - a {@link TableView#hierarchy() hierarchy} - resolves them by the
+ * rules of a {@link TreeDropPlace} instead, as a tree does: an insertion is made under a parent row
+ * before one of its children, and the client splits a row as a tree node (see
+ * {@link #DROP_TREE_ZONES}).
  * </p>
  *
  * <p>
@@ -192,6 +202,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
 	private static final String TREE_MODE = "treeMode";
+
+	/**
+	 * State key telling the client to split a row into the {@link DropZone zones} of a tree node
+	 * rather than those of an item of a flat list: a row whose drops are resolved by the rules of a
+	 * {@link TreeDropPlace} has a middle third for an insertion into it.
+	 */
+	public static final String DROP_TREE_ZONES = "dropTreeZones";
 
 	/**
 	 * State key holding the name of the column the rows are grouped by, {@link #NOTHING} when they
@@ -1494,6 +1511,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		String grouped = getGroupedColumn();
 		putState(GROUPING, grouped == null ? NOTHING : grouped);
 		putState(TREE_MODE, Boolean.valueOf(treeMode()));
+		putState(DROP_TREE_ZONES, Boolean.valueOf(rowTree() != null));
+	}
+
+	/**
+	 * The tree the rows form, {@code null} while they form none - a flat table, and a grouped one,
+	 * whose group headers stand for no object.
+	 */
+	private RowHierarchy<R> rowTree() {
+		return getGroupedColumn() != null ? null : _view.hierarchy();
 	}
 
 	/**
@@ -2104,6 +2130,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @see DropPlace.Resolver#place(String, DropZone)
 	 */
 	private DropPlace dropPlace(String rowKey, DropZone zone) {
+		RowHierarchy<R> tree = rowTree();
+		if (tree != null) {
+			return treePlace(tree, rowKey, zone);
+		}
 		if (rowKey == null) {
 			return new RowPlace(-1, DropZone.NONE);
 		}
@@ -2112,6 +2142,74 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return null;
 		}
 		return new RowPlace(rowIndex, zone);
+	}
+
+	/**
+	 * The place of a drop on the rows of a tree, see {@link #dropPlace(String, DropZone)}.
+	 */
+	private DropPlace treePlace(RowHierarchy<R> tree, String rowKey, DropZone zone) {
+		RowNavigation navigation = new RowNavigation(tree);
+		if (rowKey == null) {
+			return TreeDropPlace.beside(navigation);
+		}
+		Row<R> row = rowById(rowKey);
+		if (!isDataRow(row)) {
+			return null;
+		}
+		return new TreeDropPlace<>(navigation, row, rowKey, zone);
+	}
+
+	/**
+	 * The rows of a tree as the {@link TreeDropPlace drop rules} see them.
+	 */
+	private static final class RowNavigation implements DropTreeNavigation<Row<?>> {
+
+		private final RowHierarchy<?> _tree;
+
+		RowNavigation(RowHierarchy<?> tree) {
+			_tree = tree;
+		}
+
+		@Override
+		public List<? extends Row<?>> topLevel() {
+			return _tree.roots();
+		}
+
+		@Override
+		public Object topLevelParent() {
+			return _tree.rootParent();
+		}
+
+		@Override
+		public Row<?> parent(Row<?> row) {
+			return parentOf(_tree, row);
+		}
+
+		@Override
+		public List<? extends Row<?>> children(Row<?> row) {
+			return childrenOf(_tree, row);
+		}
+
+		@Override
+		public boolean isExpanded(Row<?> row) {
+			return row.expanded();
+		}
+
+		@Override
+		public Object businessObject(Row<?> row) {
+			return row.data();
+		}
+
+		@SuppressWarnings("unchecked")
+		private static <T> Row<?> parentOf(RowHierarchy<T> tree, Row<?> row) {
+			return tree.parent((Row<T>) row);
+		}
+
+		@SuppressWarnings("unchecked")
+		private static <T> List<Row<T>> childrenOf(RowHierarchy<T> tree, Row<?> row) {
+			return tree.children((Row<T>) row);
+		}
+
 	}
 
 	/**
@@ -2262,9 +2360,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Whether the reference objects of the given location are rows of this table; a flat table has
-	 * no parent to insert under.
+	 * no parent to insert under, the rows of a tree are checked as a tree's nodes are (see
+	 * {@link TreeDropPlace#displays(DropTreeNavigation, java.util.function.Function, DropLocation)}).
 	 */
 	private boolean displaysLocation(DropLocation location) {
+		RowHierarchy<R> tree = rowTree();
+		if (tree != null) {
+			return TreeDropPlace.displays(new RowNavigation(tree), this::rowFor, location);
+		}
 		if (location instanceof DropLocation.Onto onto) {
 			return onto.target() == null || rowFor(onto.target()) != null;
 		}

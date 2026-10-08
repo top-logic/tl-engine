@@ -8,6 +8,7 @@ package com.top_logic.table.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -20,6 +21,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowHierarchy;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
 import com.top_logic.table.SortSpec;
@@ -44,6 +46,12 @@ import com.top_logic.table.TreeStructure;
  * </ul>
  *
  * <p>
+ * The rows are keyed by {@link TreeStructure#key(Object)}, and the source is its own
+ * {@link #hierarchy() hierarchy}: it answers which row holds a row, and which rows a row holds
+ * whether it is expanded or not, in the order of the displayed siblings.
+ * </p>
+ *
+ * <p>
  * Grouping over a tree is not supported.
  * </p>
  *
@@ -52,7 +60,7 @@ import com.top_logic.table.TreeStructure;
  * @param <R>
  *        The business object type exposed as row data.
  */
-public class TreeRowSource<N, R> implements RowSource<R> {
+public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 
 	private final TreeStructure<N, R> _structure;
 
@@ -67,6 +75,24 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 	private FilterSpec _filter = FilterSpec.NONE;
 
 	private List<Row<R>> _displayed;
+
+	/** The filter of the current {@link #_filter}, {@code null} when nothing is filtered. */
+	private Predicate<R> _predicate;
+
+	/** The sibling order of the current {@link #_sort}, {@code null} for the structure's order. */
+	private Comparator<N> _nodeOrder;
+
+	/**
+	 * The nodes of the rows handed out since the last {@link #recompute()}, by {@link Row#key() row
+	 * key}.
+	 */
+	private final Map<Object, N> _nodes = new HashMap<>();
+
+	/**
+	 * The node holding a node of {@link #_nodes} among its children, by the row key of the held
+	 * node; absent for a root node.
+	 */
+	private final Map<Object, N> _parents = new HashMap<>();
 
 	/**
 	 * Creates a {@link TreeRowSource}.
@@ -138,8 +164,8 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 	 *        Whether the descendants of collapsed nodes are searched, too.
 	 */
 	private void collectContained(N node, Set<Object> missing, boolean complete) {
-		missing.remove(node);
-		if (missing.isEmpty() || _structure.isLeaf(node) || !(complete || _expanded.contains(node))) {
+		missing.remove(_structure.key(node));
+		if (missing.isEmpty() || _structure.isLeaf(node) || !(complete || _expanded.contains(_structure.key(node)))) {
 			return;
 		}
 		for (N child : _structure.children(node)) {
@@ -183,6 +209,86 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 		}
 	}
 
+	/**
+	 * Takes up a change of the {@link TreeStructure}: the displayed rows are computed again from
+	 * the nodes it holds now.
+	 *
+	 * <p>
+	 * A node whose {@link TreeStructure#key(Object) key} is still there keeps being expanded.
+	 * </p>
+	 */
+	public void structureChanged() {
+		recompute();
+		fireInvalidated();
+	}
+
+	@Override
+	public RowHierarchy<R> hierarchy() {
+		return this;
+	}
+
+	@Override
+	public List<Row<R>> roots() {
+		return rows(null, _structure.roots(), 0);
+	}
+
+	@Override
+	public Object rootParent() {
+		return _structure.rootParent();
+	}
+
+	@Override
+	public Row<R> parent(Row<R> row) {
+		N parent = _parents.get(row.key());
+		if (parent == null) {
+			return null;
+		}
+		return row(_parents.get(_structure.key(parent)), parent, Math.max(0, row.depth() - 1));
+	}
+
+	@Override
+	public List<Row<R>> children(Row<R> row) {
+		N node = _nodes.get(row.key());
+		if (node == null || _structure.isLeaf(node)) {
+			return List.of();
+		}
+		return rows(node, _structure.children(node), row.depth() + 1);
+	}
+
+	/**
+	 * The rows of the given siblings that the filter lets through, in display order.
+	 *
+	 * @param parent
+	 *        The node holding the siblings, {@code null} for the roots.
+	 */
+	private List<Row<R>> rows(N parent, List<N> siblings, int depth) {
+		List<Row<R>> result = new ArrayList<>(siblings.size());
+		for (N node : sortedSiblings(siblings, _nodeOrder)) {
+			if (_predicate != null && !isVisible(node, _predicate)) {
+				continue;
+			}
+			result.add(row(parent, node, depth));
+		}
+		return result;
+	}
+
+	/**
+	 * The row of the given node, remembered for the {@link #hierarchy() hierarchy}.
+	 *
+	 * @param parent
+	 *        The node holding the given one, {@code null} for a root.
+	 */
+	private Row<R> row(N parent, N node, int depth) {
+		Object key = _structure.key(node);
+		_nodes.put(key, node);
+		if (parent != null) {
+			_parents.put(key, parent);
+		}
+		boolean leaf = _structure.isLeaf(node);
+		boolean expanded = !leaf && (_predicate != null || _expanded.contains(key));
+		return new TreeRow<>(key, _structure.businessObject(node), depth, !leaf, expanded);
+	}
+
 	@Override
 	public void addListener(RowSourceListener listener) {
 		_listeners.add(listener);
@@ -194,29 +300,28 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 	}
 
 	private void recompute() {
-		Predicate<R> predicate = ColumnLogic.predicate(_filter, _byName);
 		Comparator<R> order = ColumnLogic.comparator(_sort, _byName);
-		Comparator<N> nodeOrder = order == null ? null : Comparator.comparing(_structure::businessObject, order);
-		boolean filterActive = predicate != null;
+		_predicate = ColumnLogic.predicate(_filter, _byName);
+		_nodeOrder = order == null ? null : Comparator.comparing(_structure::businessObject, order);
+		_nodes.clear();
+		_parents.clear();
 
 		List<Row<R>> displayed = new ArrayList<>();
-		for (N root : sortedSiblings(_structure.roots(), nodeOrder)) {
-			visit(root, 0, displayed, predicate, nodeOrder, filterActive);
+		for (N root : sortedSiblings(_structure.roots(), _nodeOrder)) {
+			visit(null, root, 0, displayed);
 		}
 		_displayed = displayed;
 	}
 
-	private void visit(N node, int depth, List<Row<R>> out, Predicate<R> predicate, Comparator<N> nodeOrder,
-			boolean filterActive) {
-		if (predicate != null && !isVisible(node, predicate)) {
+	private void visit(N parent, N node, int depth, List<Row<R>> out) {
+		if (_predicate != null && !isVisible(node, _predicate)) {
 			return;
 		}
-		boolean leaf = _structure.isLeaf(node);
-		boolean expanded = !leaf && (filterActive || _expanded.contains(node));
-		out.add(new TreeRow<>(node, _structure.businessObject(node), depth, !leaf, expanded));
-		if (expanded) {
-			for (N child : sortedSiblings(_structure.children(node), nodeOrder)) {
-				visit(child, depth + 1, out, predicate, nodeOrder, filterActive);
+		Row<R> row = row(parent, node, depth);
+		out.add(row);
+		if (row.expanded()) {
+			for (N child : sortedSiblings(_structure.children(node), _nodeOrder)) {
+				visit(node, child, depth + 1, out);
 			}
 		}
 	}

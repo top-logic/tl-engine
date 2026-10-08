@@ -53,4 +53,29 @@ public interface TreeStructure<N, R> {
 	 */
 	R businessObject(N node);
 
+	/**
+	 * The stable {@link Row#key() row key} of the given node.
+	 *
+	 * <p>
+	 * By default the node itself. A structure whose nodes are replaced while the business objects
+	 * they stand for stay - a tree that is rebuilt after a change of its input - keys its rows by
+	 * something that survives, so that the expansion and the selection of a row survive with it.
+	 * </p>
+	 */
+	default Object key(N node) {
+		return node;
+	}
+
+	/**
+	 * The business object the {@link #roots() root nodes} are the children of, {@code null} if
+	 * they are no children of any object.
+	 *
+	 * <p>
+	 * This is the parent object an insertion among the root nodes refers to.
+	 * </p>
+	 */
+	default Object rootParent() {
+		return null;
+	}
+
 }

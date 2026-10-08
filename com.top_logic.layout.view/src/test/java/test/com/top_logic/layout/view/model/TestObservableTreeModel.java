@@ -369,7 +369,7 @@ public class TestObservableTreeModel extends TestCase {
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER),
 			(context, model) -> new ReactTextControl(context, String.valueOf(model)));
 
-		_observer = new ObservableTreeModel(_treeControl, treeModel, args -> args[0], builder,
+		_observer = new ObservableTreeModel(ObservableTreeModel.Display.of(_treeControl), treeModel, args -> args[0], builder,
 			parentFunction, observedTypes, List.of(_input));
 		_observer.attach(_scope);
 	}

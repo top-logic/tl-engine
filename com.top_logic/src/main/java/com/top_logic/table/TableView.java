@@ -83,6 +83,15 @@ public interface TableView<R> {
 	List<Row<R>> rows(int from, int to);
 
 	/**
+	 * The tree the rows of this table form, {@code null} for a table whose rows form none.
+	 *
+	 * @see RowSource#hierarchy()
+	 */
+	default RowHierarchy<R> hierarchy() {
+		return null;
+	}
+
+	/**
 	 * The given row keys that belong to a data row of this table, whether that row is displayed or
 	 * hidden by a filter, a collapsed group or a collapsed tree node.
 	 *

@@ -8,11 +8,8 @@ package test.com.top_logic.layout.react.control.tree;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -20,6 +17,8 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
+import test.com.top_logic.layout.react.control.dnd.DropOperations;
+import test.com.top_logic.layout.react.control.dnd.DropOperations.Operation;
 
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
@@ -37,10 +36,7 @@ import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
-import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
-import com.top_logic.layout.react.control.dnd.DropTarget;
-import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.control.tree.CollapseNodeArguments;
@@ -95,9 +91,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	/** The drag kind the tests' sources and targets agree on. */
 	private static final String ITEM = "item";
 
-	private static final String REFUSAL_TEXT = "Refused.";
-
-	private static final ResKey REFUSAL = ResKey.text(REFUSAL_TEXT);
+	private static final ResKey REFUSAL = DropOperations.REFUSAL;
 
 	/** A {@link ReactTreeControl} whose client state the test reads. */
 	private static final class Tree extends ReactTreeControl {
@@ -108,96 +102,6 @@ public class TestReactTreeControlDragDrop extends TestCase {
 
 		Object clientState(String key) {
 			return getState(key);
-		}
-
-	}
-
-	/**
-	 * One operation of a {@link Target}: a mode and the reason it refuses a location with
-	 * ({@code null} to accept); remembers the locations it applied a drop at.
-	 */
-	private static final class Operation {
-
-		final DropMode _mode;
-
-		final Function<DropLocation, ResKey> _refusal;
-
-		final List<DropEvent> _applied = new ArrayList<>();
-
-		Operation(DropMode mode, Function<DropLocation, ResKey> refusal) {
-			_mode = mode;
-			_refusal = refusal;
-		}
-
-		Operation(DropMode mode) {
-			this(mode, location -> null);
-		}
-
-		DropLocation lastLocation() {
-			assertFalse("A drop must have been applied.", _applied.isEmpty());
-			return _applied.get(_applied.size() - 1).location();
-		}
-
-	}
-
-	/**
-	 * A {@link DropTarget} of several operations, tried in their order: the first one finding a
-	 * location for its mode and not refusing it wins.
-	 */
-	private static final class Target implements DropTarget {
-
-		final AcceptedKinds _accepted;
-
-		final List<Operation> _operations;
-
-		Target(AcceptedKinds accepted, Operation... operations) {
-			_accepted = accepted;
-			_operations = List.of(operations);
-		}
-
-		@Override
-		public AcceptedKinds acceptedKinds() {
-			return _accepted;
-		}
-
-		@Override
-		public Set<DropMode> dropModes() {
-			Set<DropMode> result = new LinkedHashSet<>();
-			for (Operation operation : _operations) {
-				result.add(operation._mode);
-			}
-			return result;
-		}
-
-		@Override
-		public DropVerdict check(DropRequest request) {
-			ResKey first = null;
-			for (Operation operation : _operations) {
-				DropLocation location = request.location(operation._mode);
-				if (location == null) {
-					continue;
-				}
-				ResKey refusal = operation._refusal.apply(location);
-				if (refusal == null) {
-					return DropVerdict.accepted(location);
-				}
-				if (first == null) {
-					first = refusal;
-				}
-			}
-			return DropVerdict.refused(first != null ? first : REFUSAL);
-		}
-
-		@Override
-		public void onDrop(DropEvent event) {
-			for (Operation operation : _operations) {
-				DropLocation location = DropRequest.of(event).location(operation._mode);
-				if (location != null && operation._refusal.apply(location) == null) {
-					operation._applied.add(event);
-					return;
-				}
-			}
-			fail("A drop nothing accepts must not be applied.");
 		}
 
 	}
@@ -245,12 +149,12 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		assertEquals("A tree accepting no drop announces no mode.", List.of(),
 			_tree.clientState(DropSupport.DROP_MODES));
 
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, new Operation(DropMode.ORDERED), new Operation(DropMode.ONTO)));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, new Operation(DropMode.ORDERED), new Operation(DropMode.ONTO)));
 		assertEquals(List.of(DropMode.ORDERED.wireName(), DropMode.ONTO.wireName()),
 			_tree.clientState(DropSupport.DROP_MODES));
 		assertEquals(Boolean.TRUE, _tree.clientState(DropSupport.DROP_ACCEPTS_ANY));
 
-		_tree.setDropTarget(new Target(AcceptedKinds.of(List.of(ITEM)), new Operation(DropMode.CONTROL)));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), new Operation(DropMode.CONTROL)));
 		assertEquals(List.of(DropMode.CONTROL.wireName()), _tree.clientState(DropSupport.DROP_MODES));
 		assertEquals(List.of(ITEM), _tree.clientState(DropSupport.DROP_ACCEPTS));
 	}
@@ -263,7 +167,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	 */
 	public void testOrderedLocations() {
 		Operation ordered = new Operation(DropMode.ORDERED);
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, ordered));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, ordered));
 
 		assertInserted(ordered, A, DropZone.UPPER, ROOT, A);
 		assertInserted(ordered, A2, DropZone.UPPER, A, A2);
@@ -284,7 +188,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		_tree = newTree(true);
 		_tree.setDragSource(ITEM, null);
 		Operation ordered = new Operation(DropMode.ORDERED);
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, ordered));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, ordered));
 
 		assertInserted(ordered, ROOT, DropZone.UPPER, null, ROOT);
 		assertInserted(ordered, ROOT, DropZone.LOWER, ROOT, A);
@@ -305,7 +209,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	 * beside the nodes.
 	 */
 	public void testOrderedMarkers() {
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, new Operation(DropMode.ORDERED)));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, new Operation(DropMode.ORDERED)));
 
 		probe("drag1", "upper", dropAt(_tree, C, B, DropZone.UPPER));
 		probe("drag1", "middle", dropAt(_tree, C, B, DropZone.MIDDLE));
@@ -325,15 +229,15 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	 */
 	public void testOnto() {
 		Operation onto = new Operation(DropMode.ONTO);
-		_tree.setDropTarget(new Target(AcceptedKinds.of(List.of(ITEM)), onto));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), onto));
 
 		for (DropZone zone : List.of(DropZone.UPPER, DropZone.MIDDLE, DropZone.LOWER)) {
 			assertApplied("A drop onto a node applies in its " + zone + " zone.",
 				drop(_tree, dropAt(_tree, C, A1, zone)));
 			assertEquals(new DropLocation.Onto(A1), onto.lastLocation());
 		}
-		assertEquals(List.of(C), onto._applied.get(0).objects());
-		assertSame(_tree, onto._applied.get(0).source());
+		assertEquals(List.of(C), onto.applied().get(0).objects());
+		assertSame(_tree, onto.applied().get(0).source());
 
 		probe("drag1", "p1", dropAt(_tree, C, A1, DropZone.MIDDLE));
 		assertMarker(verdicts().get("p1"), DropMarker.INTO, nodeId(A1));
@@ -351,11 +255,11 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		Operation ordered = new Operation(DropMode.ORDERED,
 			location -> C.equals(((DropLocation.Insert) location).parent()) ? REFUSAL : null);
 		Operation onto = new Operation(DropMode.ONTO);
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, ordered, onto));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, ordered, onto));
 
 		assertApplied("", drop(_tree, dropAt(_tree, A1, B, DropZone.MIDDLE)));
 		assertEquals(new DropLocation.Insert(B, B1), ordered.lastLocation());
-		assertEquals(List.of(), onto._applied);
+		assertEquals(List.of(), onto.applied());
 
 		assertApplied("", drop(_tree, dropAt(_tree, A1, C, DropZone.MIDDLE)));
 		assertEquals("The refused insertion falls through to the drop onto the node.",
@@ -368,10 +272,10 @@ public class TestReactTreeControlDragDrop extends TestCase {
 
 		Operation ontoFirst = new Operation(DropMode.ONTO);
 		Operation orderedSecond = new Operation(DropMode.ORDERED);
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, ontoFirst, orderedSecond));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, ontoFirst, orderedSecond));
 		assertApplied("", drop(_tree, dropAt(_tree, A1, B, DropZone.UPPER)));
 		assertEquals(new DropLocation.Onto(B), ontoFirst.lastLocation());
-		assertEquals(List.of(), orderedSecond._applied);
+		assertEquals(List.of(), orderedSecond.applied());
 		assertApplied("", drop(_tree, dropAt(_tree, A1, null, DropZone.NONE)));
 		assertEquals("Beside the nodes, only the insertion has a location.",
 			new DropLocation.Insert(ROOT, null), orderedSecond.lastLocation());
@@ -383,7 +287,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	 */
 	public void testDragSource() {
 		Operation onto = new Operation(DropMode.ONTO);
-		_tree.setDropTarget(new Target(AcceptedKinds.ANY, onto));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.ANY, onto));
 		expand(B);
 		select(A1, false);
 		select(B1, true);
@@ -392,7 +296,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		Map<String, Object> ofSelection = dropAt(_tree, A1, C, DropZone.MIDDLE);
 		ofSelection.put(DropArguments.SELECTION, Boolean.TRUE);
 		assertApplied("", drop(_tree, ofSelection));
-		assertEquals(List.of(A1, B1), onto._applied.get(0).objects());
+		assertEquals(List.of(A1, B1), onto.applied().get(0).objects());
 
 		_tree.setDragSource(ITEM, object -> !A2.equals(object));
 		assertEquals(Boolean.TRUE, nodeState(A1).get("draggable"));
@@ -411,7 +315,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	public void testDragBetweenTreeAndTable() {
 		TableViewControl<String> table = stringTable(List.of("t1", "t2"));
 		Operation ontoRow = new Operation(DropMode.ONTO);
-		table.setDropTarget(new Target(AcceptedKinds.of(List.of(ITEM)), ontoRow));
+		table.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ontoRow));
 		table.setDragSource(ITEM);
 
 		Map<String, Object> treeToTable = new HashMap<>();
@@ -421,12 +325,12 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		treeToTable.put(DropArguments.TARGET_KEY, "row_1");
 		treeToTable.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
 		assertApplied("A node is dropped onto a table row.", table.executeClientCommand(DropSupport.CMD_DROP, treeToTable));
-		assertEquals(List.of(A2), ontoRow._applied.get(0).objects());
-		assertSame(_tree, ontoRow._applied.get(0).source());
+		assertEquals(List.of(A2), ontoRow.applied().get(0).objects());
+		assertSame(_tree, ontoRow.applied().get(0).source());
 		assertEquals(new DropLocation.Onto("t2"), ontoRow.lastLocation());
 
 		Operation ordered = new Operation(DropMode.ORDERED);
-		_tree.setDropTarget(new Target(AcceptedKinds.of(List.of(ITEM)), ordered));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 		Map<String, Object> tableToTree = new HashMap<>();
 		tableToTree.put(DropArguments.SOURCE, table.getID());
 		tableToTree.put(DropArguments.KEYS, "row_0");
@@ -434,8 +338,8 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		tableToTree.put(DropArguments.TARGET_KEY, nodeId(A1));
 		tableToTree.put(DropArguments.ZONE, DropZone.LOWER.wireName());
 		assertApplied("A table row is inserted into the tree.", drop(_tree, tableToTree));
-		assertEquals(List.of("t1"), ordered._applied.get(0).objects());
-		assertSame(table, ordered._applied.get(0).source());
+		assertEquals(List.of("t1"), ordered.applied().get(0).objects());
+		assertSame(table, ordered.applied().get(0).source());
 		assertEquals(new DropLocation.Insert(A, A2), ordered.lastLocation());
 	}
 
@@ -446,17 +350,17 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	 */
 	public void testRecordingRoundTrip() {
 		Operation ordered = new Operation(DropMode.ORDERED);
-		_tree.setDropTarget(new Target(AcceptedKinds.of(List.of(ITEM)), ordered));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 
 		DropObjectsArguments lower = record(dropAt(_tree, C, A, DropZone.LOWER));
 		assertEquals(DropMode.ORDERED.wireName(), lower.getMode());
 		assertNotNull(lower.getParent());
 		assertNotNull(lower.getBefore());
-		assertEquals("Recording applies nothing.", List.of(), ordered._applied);
+		assertEquals("Recording applies nothing.", List.of(), ordered.applied());
 		assertEquals(new DropLocation.Insert(A, A1), replay(ordered, lower).location());
-		assertEquals(List.of(C), ordered._applied.get(0).objects());
-		assertNull("A replayed drop names no source control.", ordered._applied.get(0).source());
-		assertEquals(ITEM, ordered._applied.get(0).kind());
+		assertEquals(List.of(C), ordered.applied().get(0).objects());
+		assertNull("A replayed drop names no source control.", ordered.applied().get(0).source());
+		assertEquals(ITEM, ordered.applied().get(0).kind());
 
 		DropObjectsArguments intoCollapsed = record(dropAt(_tree, C, B, DropZone.MIDDLE));
 		assertEquals(new DropLocation.Insert(B, B1), replay(ordered, intoCollapsed).location());
@@ -472,7 +376,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	 */
 	public void testReplayOfAMisplacedLocationFails() {
 		Operation ordered = new Operation(DropMode.ORDERED);
-		_tree.setDropTarget(new Target(AcceptedKinds.of(List.of(ITEM)), ordered));
+		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 		DropObjectsArguments recorded = record(dropAt(_tree, C, A, DropZone.LOWER));
 		recorded.setParent(record(dropAt(_tree, C, B, DropZone.MIDDLE)).getParent());
 
@@ -480,7 +384,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded)));
 		assertFalse("A drop before a child of another parent must not replay.", result.isSuccess());
 		assertEquals(ErrorSeverity.ERROR, result.getErrorSeverity());
-		assertEquals(List.of(), ordered._applied);
+		assertEquals(List.of(), ordered.applied());
 	}
 
 	/** The probe is technical: it is never recorded. */
@@ -499,12 +403,12 @@ public class TestReactTreeControlDragDrop extends TestCase {
 
 	/** Replays the given recorded drop, and returns the event the given operation applied. */
 	private DropEvent replay(Operation ordered, DropObjectsArguments recorded) {
-		int before = ordered._applied.size();
+		int before = ordered.applied().size();
 		HandlerResult result = new InteractionWithoutSession().runWithContext(
 			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded)));
 		assertApplied("The recorded drop must replay.", result);
-		assertEquals(before + 1, ordered._applied.size());
-		return ordered._applied.get(before);
+		assertEquals(before + 1, ordered.applied().size());
+		return ordered.applied().get(before);
 	}
 
 	private HandlerResult drop(ReactTreeControl tree, Map<String, Object> arguments) {

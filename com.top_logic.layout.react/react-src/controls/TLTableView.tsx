@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
@@ -305,7 +305,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropModes = (state.dropModes as string[]) ?? [];
-  const zoneSplit = flatZoneSplit(dropModes);
+  // Rows forming a tree are split as tree nodes: an insertion has a middle part going into the row.
+  const dropTreeZones = (state.dropTreeZones as boolean) ?? false;
+  const zoneSplit = dropTreeZones ? treeZoneSplit(dropModes) : flatZoneSplit(dropModes);
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const sortedColumnCount = React.useMemo(

@@ -22,14 +22,15 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropLocation;
-import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropPlace;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropTreeNavigation;
 import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.dnd.TreeDropPlace;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -59,12 +60,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * The tree resolves a node and a {@link DropZone zone} into the {@link DropLocation} of each
- * {@link DropMode}: a drop {@link DropMode#ONTO onto} a node in any of its zones is made onto that
- * node. An {@link DropMode#ORDERED insertion} in the upper part of a node inserts before it among
- * its siblings; in its middle part as the first child of the node; in its lower part as the first
- * child of an expanded node with children, and after the node among its siblings otherwise; beside
- * the nodes as the last top-level node. A drop on the {@link DropMode#CONTROL tree as a whole} is
- * one wherever it is made.
+ * {@link DropMode} by the rules of a {@link TreeDropPlace}, which it shares with every control
+ * displaying a tree.
  * </p>
  */
 public class ReactTreeControl extends ReactControl implements DragSourceControl {
@@ -210,6 +207,9 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 
 	/** The drop protocol shared with every control accepting drops. */
 	private final DropSupport _dropSupport = new DropSupport(this);
+
+	/** The nodes as the drop rules see them. */
+	private final DropTreeNavigation<Object> _navigation = new Navigation();
 
 	private ContextMenuProvider _contextMenuProvider;
 
@@ -893,169 +893,64 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 */
 	private DropPlace dropPlace(String nodeId, DropZone zone) {
 		if (nodeId == null) {
-			return new NodePlace(null, DropZone.NONE);
+			return TreeDropPlace.beside(_navigation);
 		}
 		Object node = findNodeById(nodeId);
 		if (node == null) {
 			return null;
 		}
-		return new NodePlace(node, zone);
+		return new TreeDropPlace<>(_navigation, node, nodeId, zone);
 	}
 
 	/**
-	 * A place of a drop in this tree.
-	 *
-	 * <p>
-	 * An insertion from the upper part of a node is marked before the node, from its middle part as
-	 * a highlight of the node, from its lower part after the node, and beside the nodes as a
-	 * highlight of the tree as a whole.
-	 * </p>
-	 */
-	private final class NodePlace implements DropPlace {
-
-		/** The node the drop was made on, {@code null} for a drop beside the nodes. */
-		private final Object _node;
-
-		/** The zone of the node the drop was made in, {@link DropZone#NONE} without a node. */
-		private final DropZone _zone;
-
-		NodePlace(Object node, DropZone zone) {
-			_node = node;
-			_zone = node == null ? DropZone.NONE : zone;
-		}
-
-		@Override
-		public DropLocation location(DropMode mode) {
-			switch (mode) {
-				case CONTROL:
-					return new DropLocation.Control();
-				case ONTO:
-					if (_zone == DropZone.NONE) {
-						return null;
-					}
-					return new DropLocation.Onto(businessObject(_node));
-				case ORDERED:
-					return insertion();
-			}
-			throw new IllegalArgumentException("Unknown drop mode: " + mode);
-		}
-
-		private DropLocation.Insert insertion() {
-			switch (_zone) {
-				case UPPER:
-					return new DropLocation.Insert(businessObject(parentOf(_node)), businessObject(_node));
-				case MIDDLE:
-					return new DropLocation.Insert(businessObject(_node), businessObject(firstChild(_node)));
-				case LOWER: {
-					Object firstChild = _treeModel.isExpanded(_node) ? firstChild(_node) : null;
-					if (firstChild != null) {
-						return new DropLocation.Insert(businessObject(_node), businessObject(firstChild));
-					}
-					return new DropLocation.Insert(businessObject(parentOf(_node)), businessObject(nextSibling(_node)));
-				}
-				case NONE:
-					break;
-			}
-			Object root = _treeModel.getRoot();
-			return new DropLocation.Insert(_treeModel.isRootVisible() ? null : businessObject(root), null);
-		}
-
-		@Override
-		public DropMarker marker(DropLocation location) {
-			if (location instanceof DropLocation.Onto) {
-				return DropMarker.INTO;
-			}
-			if (location instanceof DropLocation.Insert) {
-				switch (_zone) {
-					case UPPER:
-						return DropMarker.BEFORE;
-					case MIDDLE:
-						return DropMarker.INTO;
-					case LOWER:
-						return DropMarker.AFTER;
-					case NONE:
-						break;
-				}
-			}
-			return DropMarker.CONTROL;
-		}
-
-		@Override
-		public String markerKey(DropMarker marker) {
-			return marker == DropMarker.CONTROL ? null : getNodeId(_node);
-		}
-
-	}
-
-	/** The business object of the given node, {@code null} for no node. */
-	private Object businessObject(Object node) {
-		return node == null ? null : _treeModel.getBusinessObject(node);
-	}
-
-	/** The node holding the given one in its child list, {@code null} for the root. */
-	private Object parentOf(Object node) {
-		return _treeModel.getParent(node);
-	}
-
-	/**
-	 * The first child of the given node in the model's child order, loading the children of a node
-	 * that has not computed them yet; {@code null} for a node without children.
-	 */
-	private Object firstChild(Object node) {
-		if (_treeModel.isLeaf(node)) {
-			return null;
-		}
-		List<?> children = _treeModel.getChildren(node);
-		return children.isEmpty() ? null : children.get(0);
-	}
-
-	/** The node following the given one in its parent's child list, {@code null} for the last one. */
-	private Object nextSibling(Object node) {
-		Object parent = parentOf(node);
-		if (parent == null) {
-			return null;
-		}
-		List<?> siblings = _treeModel.getChildren(parent);
-		int index = siblings.indexOf(node);
-		return index >= 0 && index + 1 < siblings.size() ? siblings.get(index + 1) : null;
-	}
-
-	/**
-	 * Whether the reference objects of the given location are places of this tree: the target of a
-	 * drop onto a node is the object of a node, the parent of an insertion is the object of a node
-	 * - or the parent of the top-level nodes -, and the object an insertion is made before is a
-	 * child of that parent.
+	 * Whether the reference objects of the given location are places of this tree, see
+	 * {@link TreeDropPlace#displays(DropTreeNavigation, java.util.function.Function, DropLocation)}.
 	 */
 	private boolean displaysLocation(DropLocation location) {
-		if (location instanceof DropLocation.Onto onto) {
-			return onto.target() == null || nodeOf(onto.target()) != null;
+		return TreeDropPlace.displays(_navigation, this::nodeOf, location);
+	}
+
+	/**
+	 * The nodes of this tree as the {@link TreeDropPlace drop rules} see them: the top-level nodes
+	 * are the root, where it is displayed, and its children otherwise.
+	 */
+	private final class Navigation implements DropTreeNavigation<Object> {
+
+		@Override
+		public List<?> topLevel() {
+			Object root = _treeModel.getRoot();
+			return _treeModel.isRootVisible() ? List.of(root) : children(root);
 		}
-		if (location instanceof DropLocation.Insert insert) {
-			if (insert.parent() == null) {
-				if (!_treeModel.isRootVisible()) {
-					return false;
-				}
-				return insert.before() == null
-					|| insert.before().equals(_treeModel.getBusinessObject(_treeModel.getRoot()));
-			}
-			Object parent = nodeOf(insert.parent());
-			if (parent == null) {
-				return false;
-			}
-			if (insert.before() == null) {
-				return true;
-			}
-			if (_treeModel.isLeaf(parent)) {
-				return false;
-			}
-			for (Object child : _treeModel.getChildren(parent)) {
-				if (insert.before().equals(_treeModel.getBusinessObject(child))) {
-					return true;
-				}
-			}
-			return false;
+
+		@Override
+		public Object topLevelParent() {
+			return _treeModel.isRootVisible() ? null : _treeModel.getBusinessObject(_treeModel.getRoot());
 		}
-		return true;
+
+		@Override
+		public Object parent(Object node) {
+			Object parent = _treeModel.getParent(node);
+			if (parent == _treeModel.getRoot() && !_treeModel.isRootVisible()) {
+				return null;
+			}
+			return parent;
+		}
+
+		@Override
+		public List<?> children(Object node) {
+			return _treeModel.isLeaf(node) ? List.of() : _treeModel.getChildren(node);
+		}
+
+		@Override
+		public boolean isExpanded(Object node) {
+			return _treeModel.isExpanded(node);
+		}
+
+		@Override
+		public Object businessObject(Object node) {
+			return _treeModel.getBusinessObject(node);
+		}
+
 	}
 
 	/**

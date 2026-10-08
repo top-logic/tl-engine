@@ -13,6 +13,14 @@ import com.top_logic.layout.view.dnd.DropSignature;
  * What a declared drop of a table targets: the table as a whole, a single row of it, or a place in
  * the order of its rows.
  *
+ * <p>
+ * The rows of a table are a flat list or - in a tree table - a tree; a place in their order refers
+ * to the row inserted before in either, and in a tree to the row inserted under as well.
+ * </p>
+ *
+ * @implNote A flat table applies a drop with the {@link #signature()} of its target, a tree table
+ *           with its {@link #treeSignature()}.
+ *
  * @see TableDropConfig
  * @see DropBinding
  */
@@ -26,7 +34,7 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * objects - what the drop means is the same wherever it was made.
 	 * </p>
 	 */
-	TABLE("table", DropSignature.CONTROL),
+	TABLE("table", DropSignature.CONTROL, DropSignature.CONTROL),
 
 	/**
 	 * A single row is the target.
@@ -37,7 +45,7 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * nothing. The rows are highlighted individually while such a drag moves over the table.
 	 * </p>
 	 */
-	ROW("row", DropSignature.ONTO),
+	ROW("row", DropSignature.ONTO, DropSignature.ONTO),
 
 	/**
 	 * A place between two rows is the target: the dropped objects are inserted there.
@@ -59,24 +67,50 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * {@code row} drop declared first takes the whole row, and leaves the insertion only the place
 	 * beside the rows.
 	 * </p>
+	 *
+	 * <p>
+	 * In a tree table, the place is one among the children of a row, as in a tree: a row is split
+	 * into thirds, a drop in the upper third inserts before the row among its siblings, in the
+	 * middle third as the first children of the row, in the lower third as the first children of an
+	 * expanded row with children and after the row among its siblings otherwise, and beside the rows
+	 * as the last top-level rows. The row the objects are inserted under is what the drop's
+	 * {@code parent-channel} carries, the object the top-level rows are the children of for an
+	 * insertion among them; {@code refuse-if} receives it first,
+	 * {@code parent -> before -> objects -> reason}. An insertion declared first takes the middle
+	 * third of a row as an insertion into it, and leaves it to a {@code row} drop only where it
+	 * refuses.
+	 * </p>
 	 */
-	ORDERED("ordered", DropSignature.ORDERED_LIST);
+	ORDERED("ordered", DropSignature.ORDERED_LIST, DropSignature.ORDERED_TREE);
 
 	private final String _externalName;
 
 	private final DropSignature _signature;
 
-	private DropTargetMode(String externalName, DropSignature signature) {
+	private final DropSignature _treeSignature;
+
+	private DropTargetMode(String externalName, DropSignature signature, DropSignature treeSignature) {
 		_externalName = externalName;
 		_signature = signature;
+		_treeSignature = treeSignature;
 	}
 
 	/**
-	 * The {@link DropSignature} a {@link DropBinding} applies a drop of this target with: on the
-	 * table as a whole, onto a row, or as an insertion among the rows.
+	 * The {@link DropSignature} a {@link DropBinding} applies a drop of this target with in a table
+	 * whose rows are a flat list: on the table as a whole, onto a row, or as an insertion among the
+	 * rows.
 	 */
 	public DropSignature signature() {
 		return _signature;
+	}
+
+	/**
+	 * The {@link DropSignature} a {@link DropBinding} applies a drop of this target with in a table
+	 * whose rows form a tree: on the table as a whole, onto a row, or as an insertion under a row
+	 * among its children.
+	 */
+	public DropSignature treeSignature() {
+		return _treeSignature;
 	}
 
 	@Override

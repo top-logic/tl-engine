@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selected"/>
+		<channel name="parent"/>
+		<channel name="before"/>
+		<channel name="target"/>
+	</channels>
+
+	<tree-table
+		children="node -> if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
+		root="'root'"
+		selection="selected"
+	>
+		<drag kind="item">
+			<row-executability>
+				<disabled-if expr="row -> $row == 'b'"/>
+			</row-executability>
+		</drag>
+		<drop
+			accept="item"
+			before-channel="before"
+			parent-channel="parent"
+			refuse-if="parent -> before -> objects -> $parent == 'b' || $objects.size() != 1"
+			target="ordered"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<drop
+			accept="item"
+			target="row"
+			target-channel="target"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>row -&gt; $row</value>
+			</computed-column>
+		</columns>
+	</tree-table>
+</view>

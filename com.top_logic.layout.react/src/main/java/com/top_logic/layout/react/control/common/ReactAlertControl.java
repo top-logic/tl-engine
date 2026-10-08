@@ -11,6 +11,7 @@ import java.util.Set;
 
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonAction;
@@ -326,6 +327,6 @@ public class ReactAlertControl extends ReactControl {
 	}
 
 	private String encoded(ThemeImage image) {
-		return ClientImage.encode(getReactContext(), image);
+		return ReactImages.encode(getReactContext(), image);
 	}
 }

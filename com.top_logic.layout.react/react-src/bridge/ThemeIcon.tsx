@@ -16,8 +16,8 @@ import type { ButtonStateJson } from '../state/control-state';
  * <ul>
  *   <li>{@code css:fa-solid fa-home} — icon font (monochrome)</li>
  *   <li>{@code colored:fa-solid fa-star} — icon font (colored variant)</li>
- *   <li>{@code /my-app/themes/core/icons/edit.png} — image resource: the URL the browser loads it
- *       from, context path included</li>
+ *   <li>{@code /app/themes/core/icons/edit.png} — the URL of an image file, context path and theme
+ *       included, as the server sends it for display</li>
  *   <li>{@code none} — the invisible image, which renders nothing at all</li>
  * </ul>
  */

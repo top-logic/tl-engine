@@ -14,6 +14,8 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRevoke;
 import com.top_logic.model.annotate.security.AccessRule;
@@ -42,6 +44,7 @@ public interface AccessRightsConfig extends ConfigurationItem {
 	 */
 	@DefaultContainer
 	@Name(GRANTS)
+	@Options(fun = AllInAppImplementations.class)
 	@Subtypes({
 		@Subtype(tag = AccessGrant.TAG_NAME, type = AccessGrant.class),
 		@Subtype(tag = AccessRevoke.TAG_NAME, type = AccessRevoke.class),

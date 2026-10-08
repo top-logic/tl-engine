@@ -10,10 +10,10 @@ import java.util.stream.Collectors;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ClientImage;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.util.Resources;
@@ -108,8 +108,8 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 			boolean fullLine, boolean visible, ReactControl field) {
 		super(context, null, REACT_MODULE);
 		_field = field;
-		putState(FormFieldState.ERROR_ICON__PROP, ClientImage.encode(context, Icons.VALIDATION_ERROR));
-		putState(FormFieldState.WARNING_ICON__PROP, ClientImage.encode(context, Icons.VALIDATION_WARNING));
+		putState(FormFieldState.ERROR_ICON__PROP, ReactImages.encode(context, Icons.VALIDATION_ERROR));
+		putState(FormFieldState.WARNING_ICON__PROP, ReactImages.encode(context, Icons.VALIDATION_WARNING));
 		setLabel(label);
 		setRequired(required);
 		setDirty(dirty);

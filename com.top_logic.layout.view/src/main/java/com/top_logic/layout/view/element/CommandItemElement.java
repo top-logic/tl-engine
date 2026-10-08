@@ -17,7 +17,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.react.control.common.ClientImage;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.view.ViewContext;
@@ -99,7 +99,7 @@ public class CommandItemElement implements SidebarItemElement {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _command, _commandConfig);
 
 		ThemeImage image = model.getImage();
-		CommandItem item = new CommandItem(_id, model.getLabel(), ClientImage.encode(context, image),
+		CommandItem item = new CommandItem(_id, model.getLabel(), ReactImages.encode(context, image),
 			model::executeCommand);
 
 		// The state the rules assign right now is part of what the sidebar is first sent.

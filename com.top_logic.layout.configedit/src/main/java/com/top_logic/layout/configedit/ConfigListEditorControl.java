@@ -28,6 +28,8 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
@@ -104,6 +106,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private final boolean _editable;
+
+	/**
+	 * The button adding an entry, once it is offered in the header of the group around this editor
+	 * instead of below the entries - see {@link #headerAddButton()}; {@code null} before.
+	 */
+	private ReactButtonControl _headerAddButton;
 
 	private final List<ListenerRegistration> _listeners = new ArrayList<>();
 
@@ -302,18 +310,78 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			// after confirming one of two entries that were being given the same key.
 			_pending.checkKeys();
 
-			// Add button at the bottom. Not rendered at all while !_editable - the requirement is
-			// that no collection action is offered in view mode, not merely a disabled one.
-			ReactButtonControl addButton =
-				new ReactButtonControl(_context, "+ " + _value.label(),
-					ctx -> {
-						addElement();
-						return HandlerResult.DEFAULT_RESULT;
-					});
-			addChild(addButton);
+			// Add button at the bottom, unless the header of the surrounding group carries it. Not
+			// rendered at all while !_editable - the requirement is that no collection action is
+			// offered in view mode, not merely a disabled one - nor while the collection cannot take
+			// another element.
+			if (_headerAddButton != null) {
+				_headerAddButton.setDisabled(_value.isFull());
+			} else if (!_value.isFull()) {
+				if (_value instanceof ConfigItemValue) {
+					// An item that is not set is shown as the header its entry would have, with the
+					// button creating it - the same as a collection carries its button in its header.
+					addChild(new ReactFormGroupControl(_context, _value.label(), false, false,
+						GroupBorder.SUBTLE, true, List.of(createHeaderAddButton()), List.of()));
+				} else {
+					ReactButtonControl addButton =
+						new ReactButtonControl(_context, "+ " + _value.label(),
+							ctx -> {
+								addElement();
+								return HandlerResult.DEFAULT_RESULT;
+							});
+					addChild(addButton);
+				}
+			}
 		}
 
 		putState("children", getChildren());
+	}
+
+	/**
+	 * Moves the button adding an entry from below the entries into the header of the group around
+	 * this editor.
+	 *
+	 * <p>
+	 * Below the entries, the buttons of nested collections stand one under the other at the end of
+	 * their entries, and none of them shows which collection it adds to. In the header it stands next
+	 * to the name of its collection. The caller puts the button among the header actions of the
+	 * group around this editor; this editor stops rendering it below the entries, and disables it
+	 * while the collection cannot take another entry.
+	 * </p>
+	 *
+	 * @return The button for the header, or {@code null} if this editor offers no entry to add,
+	 *         since it is not {@link #_editable editable}.
+	 */
+	public ReactButtonControl headerAddButton() {
+		if (!_editable) {
+			return null;
+		}
+		if (_headerAddButton == null) {
+			_headerAddButton = createHeaderAddButton();
+			rebuild(null);
+		}
+		return _headerAddButton;
+	}
+
+	/**
+	 * A button for the header of a group that adds an entry to the edited collection.
+	 *
+	 * <p>
+	 * It shows an icon only. Its label names what it does, which the user reads as its tooltip and
+	 * a screen reader announces as its name.
+	 * </p>
+	 */
+	private ReactButtonControl createHeaderAddButton() {
+		ReactButtonControl result = new ReactButtonControl(_context,
+			Resources.getInstance().getString(I18NConstants.ADD_ENTRY__COLLECTION.fill(_value.label())),
+			ctx -> {
+				addElement();
+				return HandlerResult.DEFAULT_RESULT;
+			});
+		result.setImage(Icons.CONFIG_LIST_ADD);
+		result.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		result.setSize(ButtonSize.SMALL);
+		return result;
 	}
 
 	/**
@@ -347,22 +415,27 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				headerActions.add(moveDownButton);
 			}
 
-			ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
-				int currentIndex = _value.indexOf(item);
-				if (currentIndex >= 0) {
-					removeElement(currentIndex);
-				}
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-			headerActions.add(removeButton);
+			if (_value.isRemovable()) {
+				ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
+					int currentIndex = _value.indexOf(item);
+					if (currentIndex >= 0) {
+						removeElement(currentIndex);
+					}
+					return HandlerResult.DEFAULT_RESULT;
+				});
+				removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				headerActions.add(removeButton);
+			}
 		}
 
 		PropertyDescriptor keyProperty = _value.keyProperty(item);
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, null);
 
+		// Framed, so that the fields of an entry - and the collections nested in it - read as
+		// belonging to the entry, and its frame inside the frame of the entry around it shows the
+		// level it is on.
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, !expanded, GroupBorder.SUBTLE, true,
+			_context, null, true, !expanded, GroupBorder.OUTLINED, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(item, keyProperty, null, label);
 		group.setHeader(header);
@@ -433,8 +506,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			_listeners.add(new ListenerRegistration(entry, keyProperty, keyListener));
 		}
 
+		// Framed like a committed entry, see createElementGroup(ConfigurationItem, int, int, boolean).
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, false, GroupBorder.SUBTLE, true,
+			_context, null, true, false, GroupBorder.OUTLINED, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(entry, keyProperty, pending, label);
 		group.setHeader(header);
@@ -455,7 +529,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * The body children shared by {@link #createElementGroup(ConfigurationItem, int, int, boolean)}
 	 * and {@link #createPendingElementGroup(PendingEntry)}: the type selector (for a polymorphic
-	 * collection with more than one choice), the key field (for a keyed collection), and the
+	 * collection with more than one choice, unless it is in the header), the key field (for a keyed collection), and the
 	 * nested {@link ConfigEditorControl} over the entry's own properties (with the key property
 	 * hidden from it, since this class already renders it). {@code pending} is passed straight
 	 * through to {@link #createKeyField(ConfigurationItem, PropertyDescriptor, PendingEntry)} -
@@ -466,15 +540,22 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			PendingEntry pending) {
 		List<ReactControl> bodyChildren = new ArrayList<>();
 		boolean polymorphic = _choices.hasOptions();
-		// Only where the type is not the key. Where it is, it is the entry's key control and
-		// belongs in the header with every other key - see #createEntryHeader.
-		if (polymorphic && _choices.options().size() > 1 && !isTypeKeyed(item)) {
-			bodyChildren.add(createTypeSelector(item, pending, false));
-		}
+		// Only where the type neither is the key nor heads the entry. Where it does, it is in the
+		// header - see #createEntryHeader. Otherwise it is the first field of the entry, laid out
+		// with the others.
+		ReactControl typeSelector = offersType(item) && !isTypeKeyed(item) && !typeHeadsEntry(item)
+			? createTypeSelector(item, pending, false, false)
+			: null;
 		if (!polymorphic || isTypeSelected(item)) {
-			bodyChildren.add(new ConfigEditorControl(_context, item,
+			ConfigEditorControl editor = new ConfigEditorControl(_context, item,
 				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index,
-				_editable, formModelOr(item)));
+				_editable, formModelOr(item));
+			if (typeSelector != null) {
+				editor.addLeadingField(typeSelector);
+			}
+			bodyChildren.add(editor);
+		} else if (typeSelector != null) {
+			bodyChildren.add(typeSelector);
 		}
 		return bodyChildren;
 	}
@@ -602,11 +683,15 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				// A key that is the entry's type is picked, not typed: offering it as text would
 				// invite writing a class name by hand.
 				if (_choices.hasOptions() && _choices.options().size() > 1) {
-					return createTypeSelector(item, pending, true);
+					return createTypeSelector(item, pending, true, true);
 				}
 			} else {
 				return createKeyField(item, keyProperty, pending);
 			}
+		}
+		if (typeHeadsEntry(item)) {
+			// The header would show the name of the type: show it where it is chosen.
+			return createTypeSelector(item, pending, false, true);
 		}
 		return createHeaderControl(label);
 	}
@@ -622,7 +707,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * currently chosen type must stay legible to the reader even where it may not be changed.
 	 */
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending,
-			boolean inHeader) {
+			boolean key, boolean inHeader) {
 		List<Object> options = _choices.options();
 		List<String> keys = new ArrayList<>(options.size());
 		for (Object option : options) {
@@ -636,10 +721,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
-		// In the header the type is the entry's key, so it follows the key's rule: settled before
-		// the entry joins the collection, fixed afterwards. Elsewhere it is an ordinary property of
-		// the entry and may be changed for as long as the form is editable.
-		typeModel.setEditable(inHeader ? _editable && pending != null : _editable);
+		// Where the type is the entry's key, it follows the key's rule: settled before the entry
+		// joins the collection, fixed afterwards. Otherwise it is an ordinary property of the entry
+		// and may be changed for as long as the form is editable.
+		typeModel.setEditable(key ? _editable && pending != null : _editable);
 
 		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(options);
 
@@ -662,8 +747,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ReactSelectFormFieldControl typeSelect =
 			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
-		return new ReactFormFieldChromeControl(_context, "Type", false, false, null, null,
+		ReactFormFieldChromeControl result = new ReactFormFieldChromeControl(_context,
+			Resources.getInstance().getString(I18NConstants.TYPE_SELECTOR), false, false, null, null,
 			inHeader ? LabelPosition.HIDDEN : null, false, true, typeSelect);
+		result.setAgentName(PolymorphicItemControl.TYPE_SELECTOR_NAME);
+		return result;
 	}
 
 	/**
@@ -743,12 +831,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Creates a new element of this property's element type, honouring a polymorphic collection's
-	 * first option just as the pre-pending-entry {@link #addElement()} always did.
+	 * Creates a new element of this property's element type, of a polymorphic collection's
+	 * {@link PolymorphicOptions.Choices#newOption() default option}.
 	 */
 	private ConfigurationItem newEntry() {
 		if (_choices.hasOptions()) {
-			return (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
+			return (ConfigurationItem) _choices.mapping().toSelection(_choices.newOption());
 		}
 		return _value.newElement();
 	}
@@ -788,6 +876,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private Label resolveElementLabel(ConfigurationItem item) {
+		String fixedTitle = _value.entryTitle(item);
+		if (fixedTitle != null) {
+			return new Label(fixedTitle, false);
+		}
 		String typeName = ConfigTagName.of(item);
 		if (isTypeKeyed(item)) {
 			// The key is the entry's own type, so the type is what it should be called - and by the
@@ -808,6 +900,30 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		String label = Resources.getInstance()
 			.getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(typeName));
 		return new Label(label, true);
+	}
+
+	/**
+	 * Whether the type of the given entry can be chosen among several.
+	 */
+	private boolean offersType(ConfigurationItem item) {
+		return _choices.hasOptions() && _choices.options().size() > 1;
+	}
+
+	/**
+	 * Whether the type selector of the given entry stands in its header.
+	 *
+	 * <p>
+	 * Where the entry has no title of its own, its header would show the name of its type - see
+	 * {@link #resolveElementLabel(ConfigurationItem)}. The selector shows that name as well and is
+	 * where it is changed, so it takes the place of the title. An entry with a title keeps it, and
+	 * has its type selector as the first of its fields.
+	 * </p>
+	 */
+	private boolean typeHeadsEntry(ConfigurationItem item) {
+		return offersType(item)
+			&& !isTypeKeyed(item)
+			&& _value.entryTitle(item) == null
+			&& resolveTitleProperty(item) == null;
 	}
 
 	/**

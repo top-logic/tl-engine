@@ -18,11 +18,11 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.common.ClientImage;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
@@ -262,7 +262,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		putState("fullLine", Boolean.TRUE);
 
 		putState(ERROR_ICON,
-			ClientImage.encode(_context, com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR));
+			ReactImages.encode(_context, com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR));
 	}
 
 	@Override

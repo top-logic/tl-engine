@@ -5,7 +5,9 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -16,6 +18,7 @@ import java.util.Set;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
@@ -68,9 +71,18 @@ public final class ConfigValidation {
 	 *        The property of {@link #item()} the violation belongs to.
 	 * @param message
 	 *        The message describing the violation.
+	 * @param missing
+	 *        Whether the violation is a mandatory value not given, rather than a value given that
+	 *        a constraint rejects.
 	 */
-	public record Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message) {
-		// Nothing beyond the components.
+	public record Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message, boolean missing) {
+
+		/**
+		 * Creates a {@link Violation} of a value given that a constraint rejects.
+		 */
+		public Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message) {
+			this(item, property, message, false);
+		}
 	}
 
 	/**
@@ -170,6 +182,22 @@ public final class ConfigValidation {
 	 *         nothing - one that found no field is simply not shown.
 	 */
 	public static boolean report(Findings findings, ConfigFieldIndex index) {
+		return report(findings, index, true);
+	}
+
+	/**
+	 * Puts the given findings on the fields that caused them, revealing a missing value or not.
+	 *
+	 * @param revealMissing
+	 *        Whether to {@link com.top_logic.layout.form.model.AbstractFieldModel#setRevealed(boolean)
+	 *        reveal} the field of a {@link Violation#missing() missing} value. Without, such a
+	 *        finding is on display only at a field already revealed - one the user has changed, or
+	 *        one a refusal has revealed. A value given that a constraint rejects is revealed either
+	 *        way: it is a verdict on what is there.
+	 *
+	 * @see #report(Findings, ConfigFieldIndex)
+	 */
+	public static boolean report(Findings findings, ConfigFieldIndex index, boolean revealMissing) {
 		boolean complete = true;
 		for (Violation violation : findings.violations()) {
 			ConfigFieldModel field = index.lookup(violation.item(), violation.property());
@@ -177,7 +205,9 @@ public final class ConfigValidation {
 				complete = false;
 			} else {
 				field.setModelValidationError(violation.message());
-				field.setRevealed(true);
+				if (revealMissing || !violation.missing()) {
+					field.setRevealed(true);
+				}
 			}
 		}
 		Map<ConfigFieldModel, List<ResKey>> warningsByField = warningsByField(findings.warnings(), index);
@@ -266,6 +296,37 @@ public final class ConfigValidation {
 	}
 
 	/**
+	 * The same while the user is still editing: a mandatory value not given is put on its field
+	 * without revealing it.
+	 *
+	 * <p>
+	 * A field the user has not touched yet - one of an entry just added, say - must not turn red
+	 * before the user had a chance to fill it: its finding becomes visible once the user changes
+	 * the field, or once a refusal reveals it. A value a constraint rejects is shown at once, at
+	 * either end of the constraint, since it is a verdict on a value that is there.
+	 * </p>
+	 *
+	 * @see #recheck(ConfigurationItem, ConfigFieldIndex)
+	 */
+	public static List<Violation> recheckWhileEditing(ConfigurationItem edited, ConfigFieldIndex index) {
+		return recheckWhileEditing(edited, index, Collections.emptySet());
+	}
+
+	/**
+	 * The same, with properties of the edited item the user interface requires in addition.
+	 *
+	 * @param mandatory
+	 *        Properties of the edited item that must have a value although they do not declare
+	 *        it, see {@link FieldDisplay#mandatory()}.
+	 *
+	 * @see #recheckWhileEditing(ConfigurationItem, ConfigFieldIndex)
+	 */
+	public static List<Violation> recheckWhileEditing(ConfigurationItem edited, ConfigFieldIndex index,
+			Set<PropertyDescriptor> mandatory) {
+		return recheck(Collections.singletonList(edited), index, false, mandatory);
+	}
+
+	/**
 	 * The same for several configurations checked as one, where what is edited is a collection
 	 * rather than a single item.
 	 *
@@ -273,6 +334,16 @@ public final class ConfigValidation {
 	 * @see #refusalFor(Iterable, ConfigFieldIndex)
 	 */
 	public static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		return recheck(edited, index, true, Collections.emptySet());
+	}
+
+	/**
+	 * @param mandatory
+	 *        Properties of the edited items that must have a value although they do not declare
+	 *        it, see {@link FieldDisplay#mandatory()}.
+	 */
+	private static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index,
+			boolean revealMissing, Set<PropertyDescriptor> mandatory) {
 		index.clearFindings();
 
 		List<Violation> violations = new ArrayList<>();
@@ -281,11 +352,12 @@ public final class ConfigValidation {
 			Findings findings = check(item);
 			violations.addAll(findings.violations());
 			warnings.addAll(findings.warnings());
+			addRequiredByDisplay(item, mandatory, violations);
 		}
 		// Reported whatever comes of it: a warning is shown at its field and refuses nothing, so a
 		// configuration whose only finding is a warning is handed over with the warning on display
 		// until the form is rebuilt over the applied value.
-		report(new Findings(violations, warnings), index);
+		report(new Findings(violations, warnings), index, revealMissing);
 		return violations;
 	}
 
@@ -328,6 +400,20 @@ public final class ConfigValidation {
 	}
 
 	/**
+	 * The same, with properties of the edited item the user interface requires in addition.
+	 *
+	 * @param mandatory
+	 *        Properties of the edited item that must have a value although they do not declare
+	 *        it, see {@link FieldDisplay#mandatory()}.
+	 *
+	 * @see #refusalFor(ConfigurationItem, ConfigFieldIndex)
+	 */
+	public static Refusal refusalFor(ConfigurationItem edited, ConfigFieldIndex index,
+			Set<PropertyDescriptor> mandatory) {
+		return refusalFor(Collections.singletonList(edited), index, mandatory);
+	}
+
+	/**
 	 * The same for several configurations checked as one, where what is edited is a collection
 	 * rather than a single item.
 	 *
@@ -339,6 +425,11 @@ public final class ConfigValidation {
 	 * </p>
 	 */
 	public static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		return refusalFor(edited, index, Collections.emptySet());
+	}
+
+	private static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index,
+			Set<PropertyDescriptor> mandatory) {
 		// Also cleared here, not only in the recheck further down: the two refusals in between
 		// never reach it, and a finding the previous attempt placed must not outlive them either.
 		index.clearFindings();
@@ -353,7 +444,7 @@ public final class ConfigValidation {
 		if (index.hasInputError()) {
 			return new Refusal(I18NConstants.ERROR_INPUT_NOT_READABLE, Collections.emptyList());
 		}
-		List<Violation> violations = recheck(edited, index);
+		List<Violation> violations = recheck(edited, index, true, mandatory);
 		if (!violations.isEmpty()) {
 			// Every violation is listed, not only those that found no field: the fields are spread
 			// over a form taller than the screen, and the list is what says how many there are and
@@ -363,6 +454,57 @@ public final class ConfigValidation {
 				violations.stream().map(Violation::message).toList());
 		}
 		return null;
+	}
+
+	/**
+	 * Adds a {@link Violation} for every property of the given item the user interface requires
+	 * that has no value, unless a violation of it was found already.
+	 *
+	 * <p>
+	 * A value is missing if it is <code>null</code>, an empty text, or an empty collection: the
+	 * user interface asks for a value, and an empty list has no entry.
+	 * </p>
+	 */
+	private static void addRequiredByDisplay(ConfigurationItem item, Set<PropertyDescriptor> mandatory,
+			List<Violation> violations) {
+		for (PropertyDescriptor property : mandatory) {
+			if (item.descriptor().getProperty(property.getPropertyName()) != property) {
+				// A property of another item.
+				continue;
+			}
+			if (!isEmpty(item.value(property))) {
+				continue;
+			}
+			boolean found = violations.stream()
+				.anyMatch(violation -> violation.item() == item && violation.property() == property);
+			if (!found) {
+				violations.add(new Violation(item, property,
+					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false)), true));
+			}
+		}
+	}
+
+	/**
+	 * Whether the given value is no value: <code>null</code>, an empty text, or an empty
+	 * collection.
+	 */
+	private static boolean isEmpty(Object value) {
+		if (value == null) {
+			return true;
+		}
+		if (value instanceof String text) {
+			return text.isEmpty();
+		}
+		if (value instanceof Collection<?> collection) {
+			return collection.isEmpty();
+		}
+		if (value instanceof Map<?, ?> map) {
+			return map.isEmpty();
+		}
+		if (value.getClass().isArray()) {
+			return Array.getLength(value) == 0;
+		}
+		return false;
 	}
 
 	/**
@@ -382,7 +524,7 @@ public final class ConfigValidation {
 		for (PropertyDescriptor property : item.descriptor().getProperties()) {
 			if (property.isMandatory() && isMissing(item, property)) {
 				violations.add(new Violation(item, property,
-					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false))));
+					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false)), true));
 			}
 			descendMissingMandatory(item, property, violations, visited);
 		}
@@ -405,9 +547,10 @@ public final class ConfigValidation {
 	 *
 	 * <p>
 	 * Deliberately narrow: only a {@code null} value or an empty {@link String} count as missing,
-	 * and only for a property this editor actually renders as a field. A {@link PropertyKind#LIST},
-	 * {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or {@link PropertyKind#ITEM} property
-	 * is never flagged here, whatever it holds. The first three mirror
+	 * and only for a property this editor actually renders as a field, or as a type selector. A
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or monomorphic
+	 * {@link PropertyKind#ITEM} property is never flagged here, whatever it holds. The first three
+	 * mirror
 	 * {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)}, which excludes exactly
 	 * those kinds because they are "not nullable, but may be empty" - the same rule the classic
 	 * declarative form applies. Two reasons this method keeps step with that rule rather than
@@ -420,17 +563,24 @@ public final class ConfigValidation {
 	 * </p>
 	 *
 	 * <p>
-	 * {@link PropertyKind#ITEM} is excluded for the second of those two reasons alone: it has no
-	 * {@link ConfigFieldModel} either. A monomorphic ITEM property renders as a
-	 * {@link com.top_logic.layout.react.control.layout.ReactFormGroupControl group} - and, while
-	 * its value is {@code null}, as nothing at all, since {@link ConfigEditorControl} builds no
-	 * group for an absent nested item; a polymorphic one renders a {@link PolymorphicItemControl}
-	 * whose type selector is a {@link com.top_logic.layout.form.model.SimpleSelectFieldModel},
-	 * which the {@link ConfigFieldIndex} does not carry. Flagging a mandatory ITEM would therefore
-	 * refuse Apply pointing at nothing the user can fill in - the very trap this rule exists to
-	 * avoid. The polymorphic case still tells the reader that a value is expected:
-	 * {@link PolymorphicItemControl} passes {@link PropertyDescriptor#isMandatory()} on to its type
-	 * selector, so the mandatory marker is on screen even though nothing enforces it here.
+	 * A monomorphic {@link PropertyKind#ITEM} property is excluded for the second of those two
+	 * reasons alone: it has no {@link ConfigFieldModel} either, but renders as a list of at most one
+	 * entry, see {@link ConfigItemValue}, and an empty list is a value the configuration can hold.
+	 * </p>
+	 *
+	 * <p>
+	 * A polymorphic ITEM property renders a {@link PolymorphicItemControl}, whose type selector is a
+	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} the {@link ConfigFieldIndex}
+	 * does not carry either. Left unset, a mandatory one is nevertheless missing: it would be
+	 * written as an empty element the configuration cannot read back. The refusal lists it, so it
+	 * does not point at nothing, and the type selector carries the mandatory marker.
+	 * </p>
+	 *
+	 * <p>
+	 * An ITEM property written as text, like a TL-Script expression, is the exception:
+	 * {@link ConfigEditorControl} edits an item that
+	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}
+	 * in a field of its own, so an unset mandatory one is checked like any other field.
 	 * </p>
 	 *
 	 * <p>
@@ -450,7 +600,19 @@ public final class ConfigValidation {
 			case LIST:
 			case ARRAY:
 			case MAP:
+				return false;
+
 			case ITEM:
+				if (ConfigControlService.hasTextForm(item, property)) {
+					// An item written as text is edited in a field of its own, see
+					// ConfigEditorControl.
+					break;
+				}
+				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
+					// The type selector of a PolymorphicItemControl chooses the item: none chosen,
+					// none given.
+					return item.value(property) == null;
+				}
 				return false;
 
 			default:

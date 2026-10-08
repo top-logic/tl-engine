@@ -9,10 +9,10 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
-import com.top_logic.layout.react.control.common.ClientImage;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -292,7 +292,7 @@ public class ReactButtonControl extends ReactControl {
 
 	private void putImageState(ThemeImage image) {
 		if (image != null) {
-			putState(ButtonState.IMAGE__PROP, ClientImage.encode(getReactContext(), image));
+			putState(ButtonState.IMAGE__PROP, ReactImages.encode(getReactContext(), image));
 		} else {
 			putState(ButtonState.IMAGE__PROP, null);
 		}

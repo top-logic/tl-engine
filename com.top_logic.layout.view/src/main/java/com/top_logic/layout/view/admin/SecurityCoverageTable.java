@@ -50,11 +50,18 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
-import com.top_logic.model.security.AccessParent;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.rules.PathByExpression;
+import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableViewState;
@@ -87,6 +94,12 @@ import com.top_logic.util.Resources;
  * the {@link Config#getSelectedRules() rules in effect}, all cleared when the selection is empty. The channels are pushed again once the rows
  * were replaced, so the detail of the row that stays selected describes the analysis the table now
  * shows.
+ * </p>
+ *
+ * <p>
+ * The header of the group of a module can be selected as well: it stands for the module, which is
+ * written to the {@link Config#getSelectedModule() module channel} for the commands acting on a
+ * whole module, while the channels describing a type are empty.
  * </p>
  *
  * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by the
@@ -196,6 +209,9 @@ public class SecurityCoverageTable implements UIElement {
 		/** Configuration name for {@link #getSelectedRules()}. */
 		String SELECTED_RULES = "selected-rules";
 
+		/** Configuration name for {@link #getSelectedModule()}. */
+		String SELECTED_MODULE = "selected-module";
+
 		@Override
 		@ClassDefault(SecurityCoverageTable.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -230,6 +246,12 @@ public class SecurityCoverageTable implements UIElement {
 		/**
 		 * Channel receiving whether the selected type is internal to the application code, as the
 		 * analysis reports it; <code>null</code> while nothing is selected.
+		 *
+		 * <p>
+		 * The value is <code>true</code> for a type carrying the mark of its own, which can be
+		 * dropped for the type, <code>false</code> for a type not internal at all, and the
+		 * generalization or module declaring the mark for a type inheriting it.
+		 * </p>
 		 */
 		@Name(SELECTED_INTERNAL)
 		@Nullable
@@ -239,6 +261,12 @@ public class SecurityCoverageTable implements UIElement {
 		/**
 		 * Channel receiving whether the selected type is excluded from access control, as the
 		 * analysis reports it; <code>null</code> while nothing is selected.
+		 *
+		 * <p>
+		 * The value is <code>true</code> for a type carrying the mark of its own, which can be
+		 * dropped for the type, <code>false</code> for a type access controlled, and the
+		 * generalization or module declaring the mark for a type inheriting it.
+		 * </p>
 		 */
 		@Name(SELECTED_WITHOUT_SECURITY)
 		@Nullable
@@ -270,6 +298,16 @@ public class SecurityCoverageTable implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelectedRules();
+
+		/**
+		 * Channel the selected module is written to, when the user selects the header of the group
+		 * of a module rather than a type; <code>null</code> otherwise. The channels describing a
+		 * selected type are empty while a module is selected.
+		 */
+		@Name(SELECTED_MODULE)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelectedModule();
 	}
 
 	private final ChannelRef _inputRef;
@@ -286,6 +324,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedRulesRef;
 
+	private final ChannelRef _selectedModuleRef;
+
 	/**
 	 * Creates a new {@link SecurityCoverageTable} from configuration.
 	 */
@@ -297,6 +337,7 @@ public class SecurityCoverageTable implements UIElement {
 		_selectedInternalRef = config.getSelectedInternal();
 		_selectedWithoutSecurityRef = config.getSelectedWithoutSecurity();
 		_selectedFindingsRef = config.getSelectedFindings();
+		_selectedModuleRef = config.getSelectedModule();
 		_selectedRulesRef = config.getSelectedRules();
 	}
 
@@ -328,6 +369,8 @@ public class SecurityCoverageTable implements UIElement {
 		initialState.setGrouping(new GroupSpec(List.of(COLUMN_MODULE)));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+		// The header of the group of a module stands for the module, for the commands acting on it.
+		control.setGroupsSelectable(true);
 
 		Detail detail = new Detail(
 			_selectionRef == null ? null : context.resolveChannel(_selectionRef),
@@ -335,12 +378,13 @@ public class SecurityCoverageTable implements UIElement {
 			_selectedInternalRef == null ? null : context.resolveChannel(_selectedInternalRef),
 			_selectedWithoutSecurityRef == null ? null : context.resolveChannel(_selectedWithoutSecurityRef),
 			_selectedFindingsRef == null ? null : context.resolveChannel(_selectedFindingsRef),
-			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef));
+			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef),
+			_selectedModuleRef == null ? null : context.resolveChannel(_selectedModuleRef));
 		if (detail.isBound()) {
 			control.addSelectionListener(keys -> {
 				Object key = keys.size() == 1 ? keys.iterator().next() : null;
 				detail.setKey(key);
-				detail.show(key == null ? null : rowByKey.get(key));
+				detail.show(key, rowByKey);
 			});
 		}
 
@@ -354,7 +398,7 @@ public class SecurityCoverageTable implements UIElement {
 				if (detail.isBound()) {
 					// The rows are fresh instances, so the display of the row that stays selected
 					// would otherwise keep describing the analysis that was replaced.
-					detail.show(rowByKey.get(detail.getKey()));
+					detail.show(detail.getKey(), rowByKey);
 				}
 			};
 			dataChannel.addListener(listener);
@@ -372,7 +416,7 @@ public class SecurityCoverageTable implements UIElement {
 	 * and the channels are pushed again for it without the user having to select it anew.
 	 * </p>
 	 */
-	private static final class Detail {
+	public static final class Detail {
 
 		private final ViewChannel _selection;
 
@@ -386,20 +430,23 @@ public class SecurityCoverageTable implements UIElement {
 
 		private final ViewChannel _rules;
 
+		private final ViewChannel _module;
+
 		private Object _key;
 
 		/**
 		 * Creates a {@link Detail} over the channels the table is configured with, each of them
 		 * <code>null</code> where the configuration names none.
 		 */
-		Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
-				ViewChannel findings, ViewChannel rules) {
+		public Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
+				ViewChannel findings, ViewChannel rules, ViewChannel module) {
 			_selection = selection;
 			_type = type;
 			_internal = internal;
 			_withoutSecurity = withoutSecurity;
 			_findings = findings;
 			_rules = rules;
+			_module = module;
 		}
 
 		/**
@@ -407,7 +454,7 @@ public class SecurityCoverageTable implements UIElement {
 		 */
 		boolean isBound() {
 			return _selection != null || _type != null || _internal != null || _withoutSecurity != null
-				|| _findings != null || _rules != null;
+				|| _findings != null || _rules != null || _module != null;
 		}
 
 		/**
@@ -425,10 +472,22 @@ public class SecurityCoverageTable implements UIElement {
 		}
 
 		/**
+		 * Writes what the row with the given key is described by to the bound channels: a type, or
+		 * the module whose group header is selected; clearing them all for <code>null</code>.
+		 */
+		public void show(Object key, Map<Object, TypeCoverage> rowByKey) {
+			TLModule module = moduleOf(key);
+			show(module != null || key == null ? null : rowByKey.get(key));
+			if (_module != null) {
+				_module.set(module);
+			}
+		}
+
+		/**
 		 * Writes what the given row is described by to the bound channels, clearing them all for
 		 * <code>null</code>.
 		 */
-		void show(TypeCoverage row) {
+		private void show(TypeCoverage row) {
 			if (_selection != null) {
 				_selection.set(row);
 			}
@@ -436,10 +495,10 @@ public class SecurityCoverageTable implements UIElement {
 				_type.set(row == null ? null : row.type());
 			}
 			if (_internal != null) {
-				_internal.set(row == null ? null : row.internal());
+				_internal.set(row == null ? null : mark(row.type(), row.internalOrigin()));
 			}
 			if (_withoutSecurity != null) {
-				_withoutSecurity.set(row == null ? null : row.withoutSecurity());
+				_withoutSecurity.set(row == null ? null : mark(row.type(), row.withoutSecurityOrigin()));
 			}
 			if (_findings != null) {
 				_findings.set(row == null ? null : findingsHtml(row));
@@ -448,6 +507,19 @@ public class SecurityCoverageTable implements UIElement {
 				_rules.set(row == null ? List.of() : ruleEntries(row));
 			}
 		}
+	}
+
+	/**
+	 * The module the given selection key stands for: the module of a selected group header, the
+	 * table being grouped by module; <code>null</code> for the key of a type, or of a group of
+	 * another column.
+	 */
+	public static TLModule moduleOf(Object key) {
+		if (key instanceof GroupKey group && group.values().size() == 1
+			&& group.values().get(0) instanceof TLModule module) {
+			return module;
+		}
+		return null;
 	}
 
 	/**
@@ -617,22 +689,15 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The access parent the type delegates to: the reference navigated, marked with
-	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the container relation, configured
-	 * or as a composition part gets it by default.
+	 * The access parent the type delegates to, described by its
+	 * {@link AccessParentFunction#getLabel() label}.
 	 */
 	private static String accessParent(Object row) {
-		AccessParent parent = coverage(row).accessParent();
+		AccessParentFunction parent = coverage(row).accessParent();
 		if (parent == null) {
 			return "";
 		}
-		if (parent.isContainer()) {
-			return Resources.getInstance().getString(parent.explicit()
-				? I18NConstants.COVERAGE_ACCESS_PARENT_CONTAINER
-				: I18NConstants.COVERAGE_ACCESS_PARENT_DEFAULT);
-		}
-		String reference = TLModelUtil.qualifiedName(parent.reference());
-		return parent.inverse() ? INVERSE_MARKER + reference : reference;
+		return Resources.getInstance().getString(parent.getLabel());
 	}
 
 	/**
@@ -646,12 +711,17 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The given navigation step: the qualified name of the reference it navigates, marked with
-	 * {@link #INVERSE_MARKER} when it is navigated backwards.
+	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the script computing it, as it is
+	 * written in the configuration and shown for a script access parent.
 	 */
 	private static String step(PathElement element) {
 		if (element instanceof PathNavigation navigation) {
 			String reference = TLModelUtil.qualifiedName(navigation.getReference());
 			return navigation.isInverse() ? INVERSE_MARKER + reference : reference;
+		}
+		if (element instanceof PathByExpression script) {
+			// The tooltip text is HTML and shows the compiled expression, not what was written.
+			return ExprFormat.INSTANCE.getSpecification(script.getConfig().getExpression());
 		}
 		StringBuilder buffer = new StringBuilder();
 		try {
@@ -679,16 +749,48 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
+	 * The value a channel receives for a mark of the given type.
+	 *
+	 * @param type
+	 *        The marked type.
+	 * @param origin
+	 *        The part declaring the mark, <code>null</code> when the type is not marked.
+	 * @return <code>true</code> for a mark of the type's own, <code>false</code> for no mark, the
+	 *         origin for an inherited mark.
+	 *
+	 * @see Config#getSelectedInternal()
+	 */
+	static Object mark(TLClass type, TLModelPart origin) {
+		if (origin == null) {
+			return Boolean.FALSE;
+		}
+		return origin == type ? Boolean.TRUE : origin;
+	}
+
+	/**
 	 * The mark exempting the given type from the check, <code>null</code> when it is checked.
 	 */
 	private static ResKey exemption(TypeCoverage coverage) {
 		if (coverage.internal()) {
-			return I18NConstants.COVERAGE_EXEMPT_INTERNAL;
+			return inherited(coverage, coverage.internalOrigin())
+				? I18NConstants.COVERAGE_EXEMPT_INTERNAL_INHERITED__ORIGIN.fill(coverage.internalOrigin())
+				: I18NConstants.COVERAGE_EXEMPT_INTERNAL;
 		}
 		if (coverage.withoutSecurity()) {
-			return I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY;
+			return inherited(coverage, coverage.withoutSecurityOrigin())
+				? I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY_INHERITED__ORIGIN
+					.fill(coverage.withoutSecurityOrigin())
+				: I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY;
 		}
 		return null;
+	}
+
+	/**
+	 * Whether the given mark of the type is declared by a generalization or a module, not by the
+	 * type itself.
+	 */
+	private static boolean inherited(TypeCoverage coverage, TLModelPart origin) {
+		return origin != coverage.type();
 	}
 
 	/**
@@ -731,15 +833,15 @@ public class SecurityCoverageTable implements UIElement {
 	 * type deciding for itself.
 	 */
 	private static ResKey delegation(TypeCoverage coverage) {
-		AccessParent parent = coverage.accessParent();
+		AccessParentFunction parent = coverage.accessParent();
 		if (parent == null) {
 			return null;
 		}
-		if (parent.isContainer()) {
+		if (parent instanceof ContainerRelation container && container.composition() == null) {
 			String containers = coverage.containerReferences().stream()
 				.map(TLModelUtil::qualifiedName)
 				.collect(Collectors.joining(VALUE_SEPARATOR));
-			return parent.explicit()
+			return container.configured()
 				? I18NConstants.COVERAGE_DELEGATED_CONTAINER__CONTAINERS.fill(containers)
 				: I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
 		}

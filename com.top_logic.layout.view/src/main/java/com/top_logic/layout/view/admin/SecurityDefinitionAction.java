@@ -19,8 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
-import com.top_logic.basic.i18n.log.BufferingI18NLog;
-import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
@@ -32,6 +31,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
@@ -117,7 +117,7 @@ public class SecurityDefinitionAction implements ViewAction {
 		/** Fetch the access rights of the selected type for editing. */
 		EDIT_ACCESS_RIGHTS,
 
-		/** Fetch the access rights of the module of the selected type for editing. */
+		/** Fetch the access rights of the selected module for editing. */
 		EDIT_MODULE_ACCESS_RIGHTS,
 
 		/** Store the edited access rights. */
@@ -197,7 +197,7 @@ public class SecurityDefinitionAction implements ViewAction {
 			case REMOVE_ROLE_PARENT_RULE -> removeRoleParentRule(ruleId(input));
 			case REMOVE_ROLE_RULE -> removeRoleRule(ruleId(input));
 			case EDIT_ACCESS_RIGHTS -> editAccessRights(coverage(context, input));
-			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(coverage(context, input));
+			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(module(input));
 			case SAVE_ACCESS_RIGHTS -> saveAccessRights(accessRights(input));
 			case MARK_INTERNAL -> setInternal(coverage(context, input), true);
 			case UNMARK_INTERNAL -> setInternal(coverage(context, input), false);
@@ -353,8 +353,8 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * type do.
 	 * </p>
 	 */
-	private Object editModuleAccessRights(TypeCoverage coverage) {
-		return load(() -> editor().editableAccessRights(coverage.type().getModule()));
+	private Object editModuleAccessRights(TLModule module) {
+		return load(() -> editor().editableAccessRights(module));
 	}
 
 	/**
@@ -379,16 +379,27 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * Rejects access rights violating a constraint of their configuration, such as the two marks
 	 * of a type set together.
+	 *
+	 * <p>
+	 * The message is what the constraint says went wrong, as the form shows it at the field, not
+	 * the wording of the server log naming the configuration interface, the raw value and the
+	 * source location.
+	 * </p>
 	 */
 	private static void checkConstraints(ModelAccessRights entry) {
-		BufferingI18NLog log = new BufferingI18NLog();
-		new ConstraintChecker().check(log, entry);
-		ResKey[] errors = log.getEntries().stream()
-			.filter(event -> event.getLevel() == Level.ERROR)
-			.map(BufferingI18NLog.Entry::getMessage)
-			.toArray(ResKey[]::new);
-		if (errors.length > 0) {
-			throw new TopLogicException(I18NConstants.ERROR_ACCESS_RIGHTS_INVALID__ERRORS.fill(errors));
+		ConstraintChecker checker = new ConstraintChecker();
+		try {
+			checker.check(entry);
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException("Cannot check the constraints of the access rights.", ex);
+		}
+		ConstraintFailure error = checker.getFailures().stream()
+			.filter(failure -> !failure.isWarning())
+			.findFirst()
+			.orElse(null);
+		if (error != null) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_ACCESS_RIGHTS_INVALID__PROBLEM.fill(error.getConstraintName()));
 		}
 	}
 
@@ -424,6 +435,19 @@ public class SecurityDefinitionAction implements ViewAction {
 	private Object apply() {
 		editor().apply();
 		return analyze();
+	}
+
+	/**
+	 * The module to edit, given as input: the selected module, or the module of a selected type.
+	 */
+	private static TLModule module(Object input) {
+		if (input instanceof TLModule module) {
+			return module;
+		}
+		if (input instanceof TypeCoverage coverage) {
+			return coverage.type().getModule();
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NO_MODULE_SELECTED);
 	}
 
 	/**

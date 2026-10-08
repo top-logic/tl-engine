@@ -2768,22 +2768,50 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--text-secondary);
 }
 
-/* --- TLTableView ----------------------------------------------------------- */
+/* --- Table cells holding legacy controls (until waves 4 and 5) ------------ */
 
-/* The table always fills (see the fill contract above): inside a flex column, .tlFill sizes it
-   from the height its container offers, and its flex basis takes precedence over the height set
-   here. The height applies to a container laying the table out as a block, which then gives it
-   its own definite height. */
-.tlTableView {
-	display: flex;
-	flex-direction: column;
-	/* Anchor for the preview of the dragged frozen-column boundary, which spans header and rows. */
-	position: relative;
+/* Cell rules that read classes of controls not yet migrated: they read the design system's cell
+   (tl-table__cell) and leave with their controls. A value beside an adornment - the language button
+   of an internationalized text - sits in a row with it that follows the column width. */
+.tl-table__cell > .tlStack--row {
 	width: 100%;
-	height: 100%;
-	font-family: var(--font-family);
-	overflow: hidden;
+	min-width: 0;
 }
+
+.tl-table__cell > .tlStack--grow-first.tlStack--row > *:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A displayed list of values is a read value like a text: it fills the cell and ends in an ellipsis
+   where the column runs out of room (table.css fills only a span without class and tl-text). */
+.tl-table__cell > span.tlValueList {
+	display: block;
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tl-table__cell > span.tlValueList[hidden] {
+	display: none;
+}
+
+/* In a cell, a text of several values reads as the one line the row is high. */
+.tl-table__cell .tlValueList--block .tlValueList__item,
+.tl-table__cell .tlValueList--block .tlValueList__separator {
+	display: inline;
+}
+
+/* A column offering a command on every row (RowCommandColumn.CSS_CLASS): the button is ghost and
+   small, carrying its own frame, so the column needs none of its own. */
+.tl-table__cell.tlRowCommandCell,
+.tl-table__header-cell.tlRowCommandCell {
+	padding: 0;
+	justify-content: center;
+}
+
+/* --- TLTableView ----------------------------------------------------------- */
 
 /* The filter bar above the column headings: the criteria the table offers under a name as chips on
    the left, the search over the displayed columns and saving the current criteria on the right. It
@@ -2945,15 +2973,8 @@ button.tlDrawer__closeBtn:focus-visible {
    view, so the last column's heading stays cut off however far the user scrolls. Overlaying instead
    keeps every heading complete; only while the table is scrolled fully right does the button cover
    the tail of the last column - which is why it is opaque. */
-.tlTableView__headerArea {
-	position: relative;
-	display: flex;
-	flex-shrink: 0;
-	align-items: stretch;
-}
-
 .tlTableView__header {
-	flex: 1 1 auto;
+	flex-shrink: 0;
 	min-width: 0;
 	overflow: hidden;
 	border-bottom: 2px solid var(--border-subtle);
@@ -2963,8 +2984,9 @@ button.tlDrawer__closeBtn:focus-visible {
 	position: absolute;
 	top: 0;
 	right: 0;
-	/* Leaves the header's bottom border uncovered, so the line runs through below the button. */
-	bottom: 2px;
+	/* As high as a heading: leaves the header's bottom border uncovered, so the line runs through
+	   below the button, and stays clear of the rows in the frame. */
+	height: 2.5rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -3061,205 +3083,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-weight: 600;
 	line-height: 1;
 	vertical-align: middle;
-}
-
-.tlTableView__body {
-	flex: 1;
-	overflow-y: auto;
-	overflow-x: auto;
-}
-
-/* Must not clip: an ancestor with a clipping overflow between a sticky cell and the scroll container
-   turns the row into the cell's scroll context, and a frozen cell would scroll away with the row
-   instead of sticking to the left edge. Each cell clips its own content anyway. */
-.tlTableView__row {
-	display: flex;
-	border-bottom: 1px solid var(--border-subtle);
-	box-sizing: border-box;
-	cursor: pointer;
-}
-
-.tlTableView__row:hover {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover {
-	background: var(--layer-selected-hover);
-}
-
-/* The row the keyboard cursor is on. The ring is drawn on the cells rather than on the row itself:
-   the frozen and the pinned cells are sticky and opaque, so they would paint over a ring belonging
-   to the row, leaving it visible only in the part that scrolls. Every cell carries the top and the
-   bottom edge, the first and the last cell of the row close it at the sides. Inset shadows keep the
-   cells' size, so no row moves as the cursor passes. */
-.tlTableView__row--cursor .tlTableView__cell {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus);
-}
-
-.tlTableView__row--cursor .tlTableView__cell:first-child {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus);
-}
-
-.tlTableView__row--cursor .tlTableView__cell:last-child {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus);
-}
-
-/* The cells marking the edge of the frozen and of the pinned area keep the shadow that marks it. */
-.tlTableView__row--cursor .tlTableView__cell--frozenLast {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), var(--shadow-raised);
-}
-
-.tlTableView__row--cursor .tlTableView__cell--frozenLast:first-child {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus),
-		var(--shadow-raised);
-}
-
-.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), var(--shadow-raised);
-}
-
-.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst:last-child {
-	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus),
-		var(--shadow-raised);
-}
-
-.tlTableView__cell {
-	display: flex;
-	align-items: center;
-	padding: 0 var(--spacing-03);
-	overflow: hidden;
-	min-width: 0;
-	box-sizing: border-box;
-	border-right: 1px solid var(--border-subtle);
-	/* A cell reads as one line: the row is of a fixed height, so a value that wrapped would be cut
-	   through the middle of its letters. The display controls within the cell inherit this. */
-	white-space: nowrap;
-}
-
-/* The root element of a read-only value control spans the cell, so a value wider than its column
-   is cut off at the column edge and ends in an ellipsis that says so. */
-.tlTableView__cell > span {
-	display: block;
-	width: 100%;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* A value that points somewhere - a web address, an e-mail address, a phone number - is the link
-   there. It ends in an ellipsis like any other value, but it stays as wide as the text it reads
-   as: a link stretched over the cell would follow the address on a click anywhere in the cell,
-   where the user is aiming at the row. The text input's full width is therefore given up: as an
-   item of the flex layout the cell is, the link is then as wide as its text and shrinks with the
-   column on its own. */
-.tlTableView__cell > a {
-	width: auto;
-	max-width: 100%;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* A group of radio buttons or checkboxes whose options stand one below the other, each as wide as its
-   label, rather than side by side in a row that wraps. */
-.tl-choice-group--vertical {
-	flex-direction: column;
-	align-items: flex-start;
-}
-
-/* A flex row of its own - a value with its icon, a row of values, a group of radios - stays one in
-   a cell rather than the block the more specific rule for the root span asks for, and does not wrap. */
-.tlTableView__cell > .tl-field-value,
-.tlTableView__cell > .tl-select__values,
-.tlTableView__cell > .tl-choice-group {
-	display: flex;
-	flex-wrap: nowrap;
-}
-
-/* A value shown beside an adornment - the language button of an internationalized text - sits in a
-   row with it. The row follows the width of the column instead of the width its content asks for,
-   so that the value within it is the part that gives way. */
-.tlTableView__cell > .tlStack--row {
-	width: 100%;
-	min-width: 0;
-}
-
-.tlTableView__cell > .tlStack--grow-first.tlStack--row > *:first-child {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* The values of a multi-valued selection follow each other in one row (see above) and are cut off
-   at the column edge, rather than wrapping into lines the row has no height for. */
-.tlTableView__cell > .tl-select__values {
-	overflow: hidden;
-	width: 100%;
-}
-
-/* Each value keeps its label's width: a row of them is cut off at the column edge, not squeezed. */
-.tlTableView__cell > .tl-select__values > * {
-	flex-shrink: 0;
-}
-
-/* In a cell, a text of several values or of several lines reads as the one line the row is high. */
-.tlTableView__cell .tlValueList--block .tlValueList__item,
-.tlTableView__cell .tlValueList--block .tlValueList__separator {
-	display: inline;
-}
-
-.tlTableView__cell .tl-field-value--multiline {
-	flex-direction: row;
-	white-space: nowrap;
-}
-
-/* A cell holding an input (tl-field, not the read-only tl-field-value) leaves its padding to it. */
-.tlTableView__cell:has(.tl-field) {
-	padding: 0;
-}
-
-/* Inline-edit inputs inside table cells: Excel-style, cell = input */
-.tlTableView__cell .tl-field {
-	border: none;
-	border-radius: 0;
-	background: transparent;
-	padding: 0 var(--spacing-03);
-	min-height: 0;
-	height: 100%;
-	outline: none;
-}
-
-/* The group spans the cell, so its input fills the cell and keeps the room of icon and action. */
-.tlTableView__cell .tl-field-group {
-	height: 100%;
-}
-
-/* Excel-style focus: highlight the entire cell only when an input is focused */
-.tlTableView__cell:has(.tl-field:focus) {
-	outline: 2px solid var(--focus);
-	outline-offset: -1px;
-	z-index: 1;
-}
-
-/* Error state: red cell border */
-.tlTableView__cell:has(.tl-field[aria-invalid="true"]) {
-	outline: 2px solid var(--support-error);
-	outline-offset: -1px;
-	z-index: 1;
-}
-
-/* Warning state: yellow cell border (only when no error) */
-.tlTableView__cell:has(.tl-field[data-tl-state~="warning"]) {
-	outline: 2px solid var(--support-warning);
-	outline-offset: -1px;
-	z-index: 1;
-}
-
-.tlTableView__cell:last-child {
-	border-right: none;
 }
 
 /* --- TLHtml ---------------------------------------------------------------- */
@@ -3541,18 +3364,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--text-error);
 }
 
-.tlTableView__checkboxCell {
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.tlTableView__checkbox {
-	cursor: pointer;
-	width: 1rem;
-	height: 1rem;
-	accent-color: var(--interactive);
-}
-
 .tlTableView__resizeHandle {
 	position: absolute;
 	top: 0;
@@ -3653,68 +3464,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	pointer-events: none;
 }
 
-/* -- Frozen columns -- */
-
-.tlTableView__headerCell--frozen,
-.tlTableView__cell--frozen {
-	background: var(--layer-01);
-}
-
-.tlTableView__row:hover .tlTableView__cell--frozen {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected .tlTableView__cell--frozen {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover .tlTableView__cell--frozen {
-	background: var(--layer-selected-hover);
-}
-
-.tlTableView__headerCell--frozenLast,
-.tlTableView__cell--frozenLast {
-	box-shadow: var(--shadow-raised);
-	clip-path: inset(0 -4px 0 0);
-}
-
-/* -- Columns pinned to the end of the table --
-   They stick to the right edge while the columns in front of them scroll past underneath, so their
-   background is opaque, exactly like a frozen column's. */
-
-.tlTableView__headerCell--pinnedEnd,
-.tlTableView__cell--pinnedEnd {
-	background: var(--layer-01);
-}
-
-.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
-	background: var(--layer-selected-hover);
-}
-
-/* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
-.tlTableView__headerCell--pinnedEndFirst,
-.tlTableView__cell--pinnedEndFirst {
-	box-shadow: var(--shadow-raised);
-	clip-path: inset(0 0 0 -4px);
-}
-
-/* -- A column offering a command on every row: the button is ghost and small, carrying its own
-   frame under the pointer and keyboard focus, so the column needs none of its own. */
-
-.tlTableView__cell.tlRowCommandCell,
-.tlTableView__headerCell.tlRowCommandCell {
-	padding: 0;
-	justify-content: center;
-}
-
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
    (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. It
    reaches to the right of the boundary only, leaving the border-side resize handle of the last
@@ -3723,7 +3472,7 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlTableView__frozenSplitter {
 	position: absolute;
 	top: 0;
-	bottom: 2px;
+	height: 2.5rem;
 	z-index: 3;
 	width: 7px;
 	cursor: col-resize;
@@ -3757,81 +3506,11 @@ button.tlDrawer__closeBtn:focus-visible {
 	pointer-events: none;
 }
 
-/* -- Tree table -- */
-
-.tlTableView__treeCell {
-	display: flex;
-	align-items: center;
-	overflow: hidden;
-	height: 100%;
-}
-
-.tlTableView__treeToggle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 20px;
-	height: 20px;
-	flex-shrink: 0;
-	border: none;
-	background: none;
-	padding: 0;
-	cursor: pointer;
-	color: var(--text-secondary);
-	font-size: 12px;
-	border-radius: var(--corner-radius);
-}
-
-.tlTableView__treeToggle:hover {
-	background-color: var(--layer-hover);
-}
-
-.tlTableView__treeToggleSpacer {
-	display: inline-block;
-	width: 20px;
-	flex-shrink: 0;
-}
-
-/* The value of a tree column's cell, sharing the cell with the expand toggle and the indent: it
-   ends in an ellipsis where the column runs out of room, exactly as the value of any other cell
-   does. Being the box the value is clipped in is also what lets the tooltip tell that the value is
-   not fully readable, and what keeps the toggle's glyph out of that tooltip. */
-.tlTableView__treeValue {
-	/* Shrinks with the column, but never grows: what follows it in a group header row - the size of
-	   the group - stays next to the value instead of being pushed to the cell's edge. */
-	flex: 0 1 auto;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* A group header row: the group value, its size, and the columns' aggregates. */
-.tlTableView__row--group {
-	background-color: var(--layer);
-	font-weight: 600;
-}
-
-.tlTableView__groupCount {
-	margin-left: var(--spacing-03);
-	font-weight: 400;
-	color: var(--text-secondary);
-}
-
 /* Marks the column header the rows are grouped by. */
 .tlTableView__groupMark {
 	margin-left: var(--spacing-02);
 	color: var(--text-secondary);
 	flex-shrink: 0;
-}
-
-/* --- TLRelativeTime ---------------------------------------------------- */
-
-.tlRelativeTime {
-	color: var(--text-secondary);
-	font-family: var(--font-family);
-	font-size: 0.8125rem;
-	white-space: nowrap;
-	cursor: default;
 }
 
 /* --- TLFileChips ------------------------------------------------------- */

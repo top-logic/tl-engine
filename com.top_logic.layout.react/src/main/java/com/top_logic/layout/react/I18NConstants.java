@@ -590,6 +590,24 @@ public class I18NConstants extends I18NConstantsBase {
 	// -- Table client-side i18n keys --
 
 	/**
+	 * @en Select all rows
+	 */
+	@CustomKey("js.table.selectAll")
+	public static ResKey JS_TABLE_SELECT_ALL;
+
+	/**
+	 * @en Select this row
+	 */
+	@CustomKey("js.table.selectRow")
+	public static ResKey JS_TABLE_SELECT_ROW;
+
+	/**
+	 * @en No entries
+	 */
+	@CustomKey("js.table.empty")
+	public static ResKey JS_TABLE_EMPTY;
+
+	/**
 	 * @en Freeze up to here
 	 */
 	@CustomKey("js.table.freezeUpTo")

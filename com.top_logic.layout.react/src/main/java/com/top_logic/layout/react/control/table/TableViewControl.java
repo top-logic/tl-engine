@@ -175,8 +175,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String ROWS = "rows";
 
-	private static final String ROW_HEIGHT = "rowHeight";
-
 	private static final String SELECTION_MODE = "selectionMode";
 
 	private static final String SELECTED_COUNT = "selectedCount";
@@ -536,7 +534,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_treeMode = treeMode;
 		_selectionMode = view.state().getSelection().mode();
 
-		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode.getExternalName());
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));

@@ -1965,13 +1965,17 @@ a.tl-field-value:hover {
 /* --- Rahmen und Raster ------------------------------------------------------------ */
 
 /* Der Rahmen trägt das Raster und, was über ihm liegt, aber keine Zelle ist: die Spaltenwahl, den Griff
-   der Fixiergrenze und ihre Vorschau. Das Raster (role=grid) besteht nur aus Kopf und Körper. */
+   der Fixiergrenze und ihre Vorschau. Das Raster (role=grid) besteht nur aus Kopf und Körper.
+   isolation hält die Ebenen darin (haftende Kopfzellen layer-raised, Griff und Vorschau layer-sticky)
+   in seinem Stapel: nichts aus der Tabelle liegt über einem Popover oder einem Nachbarn der Seite. Was
+   die Tabelle öffnet (Menü, Ablehnungshinweis), steht als Portal im body, nicht im Rahmen. */
 .tl-table__frame {
   position: relative;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  isolation: isolate;
 }
 .tl-table__frame[hidden] { display: none; }
 

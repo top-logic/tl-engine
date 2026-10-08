@@ -16,6 +16,9 @@ import com.top_logic.layout.react.control.ReactControl;
  *        The control the objects were dragged out of, or {@code null} when the drop was replayed
  *        from a recorded script (which names the dragged objects themselves, not the control they
  *        came from).
+ * @param kind
+ *        The {@link DragSourceControl#dragKind() kind} of the drag, {@code null} for a drag without
+ *        a kind. A replayed drop carries the kind the drag had when it was recorded.
  * @param objects
  *        The dragged business objects, as resolved by the {@link DragSourceControl}. Never empty.
  * @param target
@@ -25,6 +28,7 @@ import com.top_logic.layout.react.control.ReactControl;
  *        Where the drop happened relative to {@code target}; {@link DropPosition#NONE} when there
  *        is no {@code target}.
  */
-public record DropEvent(ReactControl source, List<?> objects, Object target, DropPosition position) {
+public record DropEvent(ReactControl source, String kind, List<?> objects, Object target,
+		DropPosition position) {
 	// Value type.
 }

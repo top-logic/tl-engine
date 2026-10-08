@@ -71,9 +71,9 @@
 								/>
 							</view-ref>
 						</card>
-						<drag/>
+						<drag kind="ticket"/>
 						<drop
-							accept="demo.tickets:Ticket"
+							accept="ticket"
 							target-channel="dropColumn"
 						>
 							<refuse-if>column -&gt; tickets -&gt; if($column == `demo.tickets:TicketStatus#open` &amp;&amp; $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size() &gt; 0, #('Closed tickets are reopened through "In progress".'@en, 'Geschlossene Tickets werden über "In Bearbeitung" wieder geöffnet.'@de), null)</refuse-if>

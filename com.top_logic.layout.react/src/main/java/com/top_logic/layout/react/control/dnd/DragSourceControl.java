@@ -25,16 +25,25 @@ import com.top_logic.layout.react.control.ReactControl;
 public interface DragSourceControl {
 
 	/**
-	 * The type tag of the objects dragged out of this control, or {@code null} while dragging is
-	 * switched off.
+	 * Whether objects may be dragged out of this control at all.
 	 *
 	 * <p>
-	 * The tag classifies what a drag carries, and a {@link DropTarget} accepts a drop by it (see
-	 * {@link DropTarget#acceptedTypes()}). It is an application-level identifier — typically a model
-	 * type name — and is compared literally, so a source and a target must agree on its spelling.
+	 * A drop from a control that has dragging switched off is refused, whatever it names.
 	 * </p>
 	 */
-	String dragType();
+	boolean isDragEnabled();
+
+	/**
+	 * The kind of the drags out of this control, {@code null} for a drag without a kind.
+	 *
+	 * <p>
+	 * The kind classifies what a drag carries, and a {@link DropTarget} accepts a drop by it (see
+	 * {@link DropTarget#acceptedKinds()}). It is an application-level name, compared literally, so a
+	 * source and a target must agree on its spelling. A drag without a kind is accepted only by a
+	 * target accepting {@link AcceptedKinds#ANY any} drag.
+	 * </p>
+	 */
+	String dragKind();
 
 	/**
 	 * Whether the given object may be dragged out of this control.

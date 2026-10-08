@@ -6,7 +6,6 @@
 package com.top_logic.layout.react.control.dnd;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +40,22 @@ public final class DropSupport {
 	/** State key telling the client whether the control's items may be dragged. */
 	public static final String DRAG_ENABLED = "dragEnabled";
 
-	/** State key holding the {@link DragSourceControl#dragType() type tag} of a drag payload. */
-	public static final String DRAG_TYPE = "dragType";
+	/**
+	 * State key holding the {@link DragSourceControl#dragKind() kind} of a drag payload, absent for a
+	 * drag without a kind.
+	 */
+	public static final String DRAG_KIND = "dragKind";
 
-	/** State key holding the {@link DropTarget#acceptedTypes() type tags} a drop is accepted of. */
+	/**
+	 * State key telling the client whether a drop is accepted of {@link AcceptedKinds#any() any}
+	 * drag, with any kind or none.
+	 */
+	public static final String DROP_ACCEPTS_ANY = "dropAcceptsAny";
+
+	/**
+	 * State key holding the {@link AcceptedKinds#kinds() kinds} a drop is accepted of, where
+	 * {@link #DROP_ACCEPTS_ANY} is not set.
+	 */
 	public static final String DROP_ACCEPTS = "dropAccepts";
 
 	/**
@@ -90,18 +101,21 @@ public final class DropSupport {
 	 *
 	 * @param source
 	 *        The control the drag started in, {@code null} if the drop is refused.
+	 * @param kind
+	 *        The {@link DragSourceControl#dragKind() kind} of the drag, {@code null} for a drag
+	 *        without a kind and if the drop is refused.
 	 * @param objects
 	 *        The dragged objects, {@code null} if the drop is refused.
 	 * @param refusal
 	 *        Why the drop cannot be made, {@code null} if it can.
 	 */
-	public record Dragged(ReactControl source, List<?> objects, ResKey refusal) {
+	public record Dragged(ReactControl source, String kind, List<?> objects, ResKey refusal) {
 
 		/**
 		 * The objects of a drop that cannot be made for the given reason.
 		 */
 		public static Dragged refused(ResKey reason) {
-			return new Dragged(null, null, reason);
+			return new Dragged(null, null, null, reason);
 		}
 
 	}
@@ -141,23 +155,23 @@ public final class DropSupport {
 	 * {@link DropArguments#getSource() source id} designates.
 	 *
 	 * <p>
-	 * A drop from a control that is no drag source, of a type that is not among the accepted ones,
+	 * A drop from a control that is no drag source or has dragging switched off, of a kind that is
+	 * not among the accepted ones,
 	 * naming no object the source still displays, or including an object the source does not let be
 	 * {@link DragSourceControl#isDraggable(Object) dragged} is refused.
 	 * </p>
 	 *
-	 * @param acceptedTypes
-	 *        The {@link DragSourceControl#dragType() type tags} the owner accepts a drop of.
+	 * @param accepted
+	 *        The {@link DragSourceControl#dragKind() kinds} the owner accepts a drop of.
 	 * @param args
 	 *        The client drop.
 	 */
-	public Dragged dragged(Collection<String> acceptedTypes, DropArguments args) {
+	public Dragged dragged(AcceptedKinds accepted, DropArguments args) {
 		ReactCommandTarget registered = registeredControl(args.getSource());
 		if (!(registered instanceof DragSourceControl source) || !(registered instanceof ReactControl sourceControl)) {
 			return Dragged.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
-		String dragType = source.dragType();
-		if (dragType == null || !acceptedTypes.contains(dragType)) {
+		if (!source.isDragEnabled() || !accepted.accepts(source.dragKind())) {
 			return Dragged.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
@@ -169,7 +183,7 @@ public final class DropSupport {
 				return Dragged.refused(I18NConstants.ERROR_DROP_NOT_DRAGGABLE);
 			}
 		}
-		return new Dragged(sourceControl, objects, null);
+		return new Dragged(sourceControl, source.dragKind(), objects, null);
 	}
 
 	/**
@@ -247,6 +261,7 @@ public final class DropSupport {
 		}
 		DropObjectsArguments recorded = TypedConfiguration.newConfigItem(DropObjectsArguments.class);
 		recorded.setName(CMD_DROP_OBJECTS);
+		recorded.setKind(source.dragKind());
 		for (Object object : objects) {
 			ModelName name = ScriptingModelKey.name(null, object);
 			if (name == null) {

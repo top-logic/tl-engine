@@ -56,8 +56,8 @@ public class TestTableElementDragDrop extends BasicTestCase {
 	/** Name of the channel the table-wide drop rules decide over. */
 	private static final String DROP_ALLOWED = "dropAllowed";
 
-	/** The type the rows are dragged as, and the drop accepts. */
-	private static final String ROW_TYPE = "tl.core:String";
+	/** The kind the rows are dragged as, and the drop accepts. */
+	private static final String ROW_KIND = "value";
 
 	/** The row the row rules of the test view let be dragged. */
 	private static final String FREE = "free";
@@ -66,7 +66,7 @@ public class TestTableElementDragDrop extends BasicTestCase {
 	private static final String LOCKED = "locked";
 
 	/**
-	 * State key holding the tags a table accepts a drop of.
+	 * State key holding the kinds a table accepts a drop of.
 	 *
 	 * @implNote Restated here because {@link TableViewControl} keeps it private.
 	 */
@@ -114,17 +114,18 @@ public class TestTableElementDragDrop extends BasicTestCase {
 		TableViewControl<?> control = createControl();
 		control.attach();
 
-		assertNull("The rules refuse without input, so the rows are not draggable.", control.dragType());
+		assertFalse("The rules refuse without input, so the rows are not draggable.", control.isDragEnabled());
+		assertEquals("The kind is declared whether or not dragging is enabled.", ROW_KIND, control.dragKind());
 
 		_dragAllowed.set("yes");
-		assertEquals("The input allows dragging now.", ROW_TYPE, control.dragType());
+		assertTrue("The input allows dragging now.", control.isDragEnabled());
 
 		_dragAllowed.set(null);
-		assertNull("Without input, dragging is refused again.", control.dragType());
+		assertFalse("Without input, dragging is refused again.", control.isDragEnabled());
 
 		control.cleanupTree();
 		_dragAllowed.set("yes");
-		assertNull("A disposed table follows its rules no more.", control.dragType());
+		assertFalse("A disposed table follows its rules no more.", control.isDragEnabled());
 	}
 
 	/**
@@ -134,7 +135,8 @@ public class TestTableElementDragDrop extends BasicTestCase {
 		_dragAllowed.set("yes");
 		TableViewControl<?> control = createControl();
 
-		assertEquals(ROW_TYPE, control.dragType());
+		assertTrue(control.isDragEnabled());
+		assertEquals(ROW_KIND, control.dragKind());
 		assertTrue("The free row may be dragged.", control.isDraggable(FREE));
 		assertFalse("The locked row is refused by the row rules.", control.isDraggable(LOCKED));
 	}
@@ -151,7 +153,7 @@ public class TestTableElementDragDrop extends BasicTestCase {
 
 		_dropAllowed.set("yes");
 		assertEquals("The drop is announced as soon as its rules allow it.",
-			List.of(ROW_TYPE), state(control).get(DROP_ACCEPTS));
+			List.of(ROW_KIND), state(control).get(DROP_ACCEPTS));
 		assertEquals(Boolean.TRUE, state(control).get(DROP_ON_ROWS));
 
 		_dropAllowed.set(null);

@@ -11,15 +11,14 @@ import java.util.function.Supplier;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.LiveExecutability;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
-import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -64,8 +63,8 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 
 	/**
 	 * The {@link DropBinding} applying the given drops to the given control, resolved for the
-	 * session of the given context: the accepted types against the application model, the target
-	 * channels against the view, the rules against the context.
+	 * session of the given context: the target channels against the view, the rules against the
+	 * context.
 	 *
 	 * <p>
 	 * The control-wide {@link DropConfig#getExecutability() executability} of each drop is followed
@@ -77,7 +76,7 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 	 * @param control
 	 *        The control accepting the drops.
 	 * @param refresh
-	 *        Announces the {@link DropBinding#acceptedTypes() accepted types} and the item targeting
+	 *        Announces the {@link DropBinding#acceptedKinds() accepted kinds} and the item targeting
 	 *        of the binding to the client again.
 	 * @param drops
 	 *        The compiled drops, in declaration order.
@@ -92,20 +91,20 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 	}
 
 	/**
+	 * The kinds this drop accepts: those {@link DropConfig#getAccept() declared}, every drag where
+	 * none is.
+	 */
+	public AcceptedKinds acceptedKinds() {
+		List<String> accept = config.getAccept();
+		return accept.isEmpty() ? AcceptedKinds.ANY : AcceptedKinds.of(accept);
+	}
+
+	/**
 	 * This drop resolved for the session of the given context.
 	 *
 	 * @see #bind(ViewContext, ReactControl, Runnable, List)
 	 */
 	private DropBinding.Drop resolve(ViewContext context, ReactControl control, Runnable refresh) {
-		List<TLType> accepted = new ArrayList<>(config.getAccept().size());
-		for (TLModelPartRef ref : config.getAccept()) {
-			TLType type = ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("A <" + DropConfig.TAG_NAME + "> accepts an unknown type: "
-					+ ref.qualifiedName());
-			}
-			accepted.add(type);
-		}
 		ChannelRef targetChannelRef = config.getTargetChannel();
 
 		Supplier<ExecutableState> executability;
@@ -118,7 +117,7 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 		}
 
 		QueryExecutor compiledRefuseIf = refuseIf;
-		return new DropBinding.Drop(DropBinding.tagsOf(accepted), scope,
+		return new DropBinding.Drop(acceptedKinds(), scope,
 			targetChannelRef == null ? null : context.resolveChannel(targetChannelRef),
 			actions,
 			executability,

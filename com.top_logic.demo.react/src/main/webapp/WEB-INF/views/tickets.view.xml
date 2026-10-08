@@ -362,12 +362,12 @@
 								selection="ticket"
 								types="demo.tickets:Ticket"
 							>
-								<drag>
+								<drag kind="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
 								</drag>
-								<drop accept="demo.tickets:Ticket">
+								<drop accept="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -461,7 +461,7 @@
 								selection="ticket"
 								types="demo.tickets:Ticket"
 							>
-								<drag>
+								<drag kind="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -469,7 +469,7 @@
 										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
 									</row-executability>
 								</drag>
-								<drop accept="demo.tickets:Ticket">
+								<drop accept="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -499,7 +499,7 @@
 							</title>
 							<table types="tl.accounts:Person">
 								<drop
-									accept="demo.tickets:Ticket"
+									accept="ticket"
 									target="row"
 									target-channel="dropPerson"
 								>

@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
@@ -74,10 +75,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * and {@link #CARD_CONTENT} (the card's child control).</li>
  * <li>{@link #SELECTED}: the keys of the displayed selected cards.</li>
  * <li>{@link #MULTI_SELECT}: whether several cards may be selected.</li>
- * <li>{@link #DRAG_ENABLED}, {@link #DRAG_TYPE}: whether and under which type tag cards are
- * dragged; while they are, each card descriptor tells by {@link #CARD_DRAGGABLE} whether that
- * card may be dragged.</li>
- * <li>{@link #DROP_ACCEPTS}: the type tags a drop on the board is accepted of;
+ * <li>{@link #DRAG_ENABLED}, {@link #DRAG_KIND}: whether cards are dragged, and the kind of such a
+ * drag; while they are, each card descriptor tells by {@link #CARD_DRAGGABLE} whether that card
+ * may be dragged.</li>
+ * <li>{@link #DROP_ACCEPTS_ANY}, {@link #DROP_ACCEPTS}: whether a drop on the board is accepted of
+ * any drag, and otherwise the kinds a drop is accepted of;
  * {@link #REORDER}: whether a drop within a column reorders it; {@link #DROP_VERDICTS}: the
  * answers to the probes of the running drag.</li>
  * </ul>
@@ -131,8 +133,11 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** @see DropSupport#DRAG_ENABLED */
 	public static final String DRAG_ENABLED = DropSupport.DRAG_ENABLED;
 
-	/** @see DropSupport#DRAG_TYPE */
-	public static final String DRAG_TYPE = DropSupport.DRAG_TYPE;
+	/** @see DropSupport#DRAG_KIND */
+	public static final String DRAG_KIND = DropSupport.DRAG_KIND;
+
+	/** @see DropSupport#DROP_ACCEPTS_ANY */
+	public static final String DROP_ACCEPTS_ANY = DropSupport.DROP_ACCEPTS_ANY;
 
 	/** @see DropSupport#DROP_ACCEPTS */
 	public static final String DROP_ACCEPTS = DropSupport.DROP_ACCEPTS;
@@ -250,10 +255,13 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** The displayed columns, see {@link #setColumns(List)}. */
 	private List<Column> _columns = List.of();
 
-	/** The type tag cards are dragged under, {@code null} while they are not draggable. */
-	private String _dragType;
+	/** Whether cards may be dragged at all. */
+	private boolean _dragEnabled;
 
-	/** Which objects may be dragged while {@link #_dragType} is set, {@code null} for all. */
+	/** The kind of a drag of cards, {@code null} for a drag without a kind. */
+	private String _dragKind;
+
+	/** Which objects may be dragged while {@link #_dragEnabled} is set, {@code null} for all. */
 	private Predicate<Object> _draggable;
 
 	/** What a drop of objects from another column is done with, {@code null} for nothing. */
@@ -291,6 +299,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		putState(SELECTED, List.of());
 		putState(MULTI_SELECT, Boolean.FALSE);
 		putState(DRAG_ENABLED, Boolean.FALSE);
+		putState(DROP_ACCEPTS_ANY, Boolean.FALSE);
 		putState(DROP_ACCEPTS, List.of());
 		putState(REORDER, Boolean.FALSE);
 	}
@@ -341,7 +350,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 				Map<String, Object> cardDescriptor = new LinkedHashMap<>();
 				cardDescriptor.put(CARD_KEY, cardKey);
 				cardDescriptor.put(CARD_CONTENT, card.content());
-				if (_dragType != null) {
+				if (_dragEnabled) {
 					cardDescriptor.put(CARD_DRAGGABLE, Boolean.valueOf(isDraggable(card.item())));
 				}
 				cardDescriptors.add(cardDescriptor);
@@ -609,25 +618,36 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	// -- Drag and drop --
 
 	/**
-	 * Makes the cards draggable, announcing them under the given type tag.
+	 * Makes the cards draggable as drags of the given kind.
 	 *
 	 * <p>
 	 * A card the given predicate refuses offers no drag (see
 	 * {@link DragSourceControl#isDraggable(Object)}).
 	 * </p>
 	 *
-	 * @param dragType
-	 *        The {@link #dragType() type tag}, or {@code null} to make the cards undraggable again.
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
 	 * @param draggable
 	 *        Which objects may be dragged, {@code null} for all of them. Asked whenever the columns
 	 *        are published; when its answer changes for other reasons, call
 	 *        {@link #refreshDragSource()}.
+	 *
+	 * @see #setDragEnabled(boolean)
 	 */
-	public void setDragSource(String dragType, Predicate<Object> draggable) {
-		_dragType = dragType;
+	public void setDragSource(String dragKind, Predicate<Object> draggable) {
+		_dragKind = dragKind;
 		_draggable = draggable;
-		putState(DRAG_ENABLED, Boolean.valueOf(dragType != null));
-		putState(DRAG_TYPE, dragType);
+		putState(DRAG_KIND, dragKind);
+		setDragEnabled(true);
+	}
+
+	/**
+	 * Switches dragging of cards on or off, keeping the kind and the predicate given to
+	 * {@link #setDragSource(String, Predicate)}.
+	 */
+	public void setDragEnabled(boolean enabled) {
+		_dragEnabled = enabled;
+		putState(DRAG_ENABLED, Boolean.valueOf(enabled));
 		pushColumns();
 		refreshDropTarget();
 	}
@@ -668,37 +688,46 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * Announces the {@link #acceptedTypes() accepted type tags} to the client again, after the
+	 * Announces the {@link #acceptedKinds() accepted kinds} to the client again, after the
 	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
 	 */
 	public void refreshDropTarget() {
-		putState(DROP_ACCEPTS, List.copyOf(acceptedTypes()));
+		AcceptedKinds accepted = acceptedKinds();
+		putState(DROP_ACCEPTS_ANY, Boolean.valueOf(accepted.any()));
+		putState(DROP_ACCEPTS, List.copyOf(accepted.kinds()));
 	}
 
 	/**
-	 * The type tags a drop on the board is accepted of: those of the
-	 * {@link #setDropTarget(DropTarget) drop target}, and the board's own {@link #dragType()} where
-	 * a drop reorders a column.
+	 * The kinds a drop on the board is accepted of: those of the {@link #setDropTarget(DropTarget)
+	 * drop target}, and the kind of the board's own drags where a drop reorders a column.
+	 *
+	 * <p>
+	 * The board's own drags have no kind to be named by where the board drags without one; a board
+	 * reordering its columns then accepts any drag, and the drop target decides over a drag from
+	 * elsewhere.
+	 * </p>
 	 */
-	private Collection<String> acceptedTypes() {
-		Set<String> result = new LinkedHashSet<>();
-		if (_dropTarget != null) {
-			result.addAll(_dropTarget.acceptedTypes());
-		}
-		if (_reorder != null && _dragType != null) {
-			result.add(_dragType);
+	private AcceptedKinds acceptedKinds() {
+		AcceptedKinds result = _dropTarget == null ? AcceptedKinds.NONE : _dropTarget.acceptedKinds();
+		if (_reorder != null && _dragEnabled) {
+			result = result.union(_dragKind == null ? AcceptedKinds.ANY : AcceptedKinds.of(List.of(_dragKind)));
 		}
 		return result;
 	}
 
 	@Override
-	public String dragType() {
-		return _dragType;
+	public boolean isDragEnabled() {
+		return _dragEnabled;
+	}
+
+	@Override
+	public String dragKind() {
+		return _dragKind;
 	}
 
 	@Override
 	public boolean isDraggable(Object object) {
-		return _dragType != null && (_draggable == null || _draggable.test(object));
+		return _dragEnabled && (_draggable == null || _draggable.test(object));
 	}
 
 	@Override
@@ -765,7 +794,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
 		DropPosition position = DropPosition.fromWire(args.getPosition());
-		if (position == null) {
+		if (position == null || !acceptedKinds().accepts(args.getKind())) {
 			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
@@ -781,7 +810,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		if (!unresolved.isEmpty() || objects.isEmpty()) {
 			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}
-		return applyDrop(boardDrop(null, objects, target, position));
+		return applyDrop(boardDrop(null, args.getKind(), objects, target, position));
 	}
 
 	/**
@@ -789,7 +818,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * control, the target through this board.
 	 */
 	private BoardDrop resolveDrop(DropArguments args) {
-		DropSupport.Dragged dragged = _dropSupport.dragged(acceptedTypes(), args);
+		DropSupport.Dragged dragged = _dropSupport.dragged(acceptedKinds(), args);
 		if (dragged.refusal() != null) {
 			return BoardDrop.refused(dragged.refusal());
 		}
@@ -799,7 +828,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		if (position == null || target == null) {
 			return BoardDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
 		}
-		return boardDrop(dragged.source(), dragged.objects(), target, position);
+		return boardDrop(dragged.source(), dragged.kind(), dragged.objects(), target, position);
 	}
 
 	/**
@@ -814,6 +843,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/**
 	 * The drop of the given objects on the given target.
 	 *
+	 * @param kind
+	 *        The {@link DragSourceControl#dragKind() kind} of the drag.
 	 * @param target
 	 *        The object of a card - the drop is made beside it, in the card's column - or a column
 	 *        value - the drop appends to the column.
@@ -821,7 +852,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 *        For a card target, whether the drop is made {@link DropPosition#BEFORE before} or after
 	 *        the card.
 	 */
-	private BoardDrop boardDrop(ReactControl source, List<?> objects, Object target, DropPosition position) {
+	private BoardDrop boardDrop(ReactControl source, String kind, List<?> objects, Object target,
+			DropPosition position) {
 		Object column;
 		Object reference;
 		if (displays(target)) {
@@ -834,7 +866,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			return BoardDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(target));
 		}
 		List<Object> order = newOrder(column, objects, reference, position == DropPosition.BEFORE);
-		return new BoardDrop(new DropEvent(source, objects, column, DropPosition.NONE), order, null);
+		return new BoardDrop(new DropEvent(source, kind, objects, column, DropPosition.NONE), order, null);
 	}
 
 	/**

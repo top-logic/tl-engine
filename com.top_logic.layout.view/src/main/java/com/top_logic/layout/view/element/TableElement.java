@@ -454,7 +454,7 @@ public class TableElement implements UIElement {
 
 		/**
 		 * Makes the rows of this table draggable, so they can be dropped on a display that accepts
-		 * their type.
+		 * the drag's kind.
 		 *
 		 * <p>
 		 * Dragging a selected row drags the whole selection, an unselected row drags itself. Unset
@@ -790,11 +790,6 @@ public class TableElement implements UIElement {
 	/** @see #initialFilter() */
 	private final String _initialFilter;
 
-	/**
-	 * The type tag the rows are dragged under, or {@code null} while the table declares no
-	 * {@link Config#getDrag() drag}.
-	 */
-	private final String _dragType;
 
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
@@ -864,9 +859,8 @@ public class TableElement implements UIElement {
 		_config = config;
 		_log = context;
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
-		_dragType = dragType(context, config);
 		_drops = compileDrops(context, config.getDrops());
-		if (config.getRowEdit() != RowEditPolicy.NONE && (_dragType != null || !_drops.isEmpty())) {
+		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a
 			// declaration there would apply to nothing.
 			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
@@ -882,32 +876,6 @@ public class TableElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
 		_onActivate = context.getInstance(onActivate);
-	}
-
-	/**
-	 * The type tag the rows of a table declaring a {@link Config#getDrag() drag} are dragged under:
-	 * the declared {@link TableDragConfig#getType() type}, or the first of the table's
-	 * {@link Config#getTypes() row types}. {@code null} for a table whose rows are not draggable,
-	 * and for one that says nothing about what its rows are - which is reported as a configuration
-	 * error.
-	 */
-	private static String dragType(Log log, Config config) {
-		TableDragConfig drag = config.getDrag();
-		if (drag == null) {
-			return null;
-		}
-		TLModelPartRef declared = drag.getType();
-		if (declared != null) {
-			return declared.qualifiedName();
-		}
-		List<TLModelPartRef> types = config.getTypes();
-		if (types == null || types.isEmpty()) {
-			log.error("A <table> whose rows are dragged must say what they are: either '"
-				+ TableDragConfig.TYPE + "' on its <" + Config.DRAG + ">, or '" + Config.TYPES
-				+ "' on the table itself.");
-			return null;
-		}
-		return types.get(0).qualifiedName();
 	}
 
 	/**
@@ -939,13 +907,18 @@ public class TableElement implements UIElement {
 		TableDragConfig drag = _config.getDrag();
 		DragSourceBinding.Source source = new DragSourceBinding.Source() {
 			@Override
-			public String dragType() {
-				return control.dragType();
+			public boolean isDragEnabled() {
+				return control.isDragEnabled();
 			}
 
 			@Override
-			public void setDragSource(String dragType, Predicate<Object> draggable) {
-				control.setDragSource(dragType, draggable);
+			public void setDragSource(String dragKind, Predicate<Object> draggable) {
+				control.setDragSource(dragKind, draggable);
+			}
+
+			@Override
+			public void setDragEnabled(boolean enabled) {
+				control.setDragEnabled(enabled);
 			}
 
 			@Override
@@ -953,7 +926,7 @@ public class TableElement implements UIElement {
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, _dragType, drag.getRowExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getRowExecutability());
 	}
 
 	/**
@@ -1098,7 +1071,7 @@ public class TableElement implements UIElement {
 		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFilterBar(filterBar());
-		if (_dragType != null) {
+		if (_config.getDrag() != null) {
 			installDragSource(context, control);
 		}
 		if (!_drops.isEmpty()) {

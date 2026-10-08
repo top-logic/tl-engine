@@ -37,6 +37,9 @@ public interface DropObjectsArguments extends ReactCommand {
 	/** @see #getObjects() */
 	String OBJECTS = "objects";
 
+	/** @see #getKind() */
+	String KIND = "kind";
+
 	/** @see #getTargetObject() */
 	String TARGET_OBJECT = "targetObject";
 
@@ -48,6 +51,19 @@ public interface DropObjectsArguments extends ReactCommand {
 	 */
 	@Name(OBJECTS)
 	List<ModelName> getObjects();
+
+	/**
+	 * The kind the objects were dragged as, absent for a drag without a kind.
+	 *
+	 * @implNote The {@link DragSourceControl#dragKind()} of the control the objects were dragged
+	 *           out of when the drop was recorded.
+	 */
+	@Name(KIND)
+	@Nullable
+	String getKind();
+
+	/** @see #getKind() */
+	void setKind(String value);
 
 	/**
 	 * The business identity of the row the objects were dropped on, or {@code null} when they were

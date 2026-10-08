@@ -6,12 +6,12 @@
 package com.top_logic.layout.view.dnd;
 
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.view.command.ExecutabilityConfig;
-import com.top_logic.model.util.TLModelPartRef;
 
 /**
- * Configuration of the {@code <drag>} of an element: that its items may be dragged, what they are
- * announced as, and when they may be dragged.
+ * Configuration of the {@code <drag>} of an element: that its items may be dragged, the kind of
+ * such a drag, and when they may be dragged.
  *
  * <p>
  * The {@link #getExecutability() executability} rules decide for the element as a whole over the
@@ -24,19 +24,20 @@ import com.top_logic.model.util.TLModelPartRef;
  */
 public interface DragConfig extends ExecutabilityConfig {
 
-	/** Configuration name for {@link #getType()}. */
-	String TYPE = "type";
+	/** Configuration name for {@link #getKind()}. */
+	String KIND = "kind";
 
 	/**
-	 * The type the dragged items are announced as, which a {@link DropConfig#getAccept() drop}
-	 * accepts them by.
+	 * The kind of a drag of the items, which a {@link DropConfig#getAccept() drop} accepts it by.
 	 *
 	 * <p>
-	 * Unset (default), the element derives the type from what it displays; an element that cannot
-	 * say what its items are reports this as a configuration error.
+	 * A free name chosen by the application, such as {@code ticket}, compared literally: a drop
+	 * listing it in its {@link DropConfig#getAccept() accepted kinds} takes the drag. Unset (default),
+	 * the drag has no kind and is taken only by a drop accepting every drag.
 	 * </p>
 	 */
-	@Name(TYPE)
-	TLModelPartRef getType();
+	@Name(KIND)
+	@Nullable
+	String getKind();
 
 }

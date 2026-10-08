@@ -6,16 +6,13 @@
 package com.top_logic.layout.view.dnd;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.dnd.DragSourceControl;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
@@ -25,10 +22,6 @@ import com.top_logic.layout.view.command.DisabledIf;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
-import com.top_logic.model.TLType;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -36,11 +29,11 @@ import com.top_logic.tool.execution.ExecutableState;
  * applies a drop by running the action chain of the drop that matches it.
  *
  * <p>
- * Acceptance is decided over the model here, where the model is known, and reaches the client as a
- * plain set of type tags: a declared type contributes its own qualified name and those of all its
- * subtypes, so the client's comparison of tags accepts a subtype exactly as this side does. The
- * client thereby offers only a drop that can apply, and the drop that arrives is matched against the
- * same tags again - per declared drop this time, to find the one that applies.
+ * The {@link #acceptedKinds() accepted kinds} of the binding are those of its enabled drops
+ * together, and reach the client, which thereby offers only a drop that can apply. The drop that
+ * arrives is matched by its {@link DropEvent#kind() kind} again - per declared drop this time, to
+ * find the one that applies: a drop accepting {@link AcceptedKinds#ANY any} drag matches every
+ * kind and a drag without one, a drop listing kinds matches only a drag of one of them.
  * </p>
  *
  * <p>
@@ -52,7 +45,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * A drop is restricted in three stages, each asked only after the previous one accepted: its
  * {@link Drop#executability() control-wide state} decides whether the drop is offered at all - a
- * disabled drop contributes no tag and applies nothing; its {@link Drop#targetRule() target rule}
+ * disabled drop contributes no kind and applies nothing; its {@link Drop#targetRule() target rule}
  * decides over the item an {@link DropScope#ITEM item} drop is made on; its
  * {@link Drop#refuseIf() refusal function} decides over the target and the dragged objects together.
  * The first refusal is what the user is shown while dragging, see {@link #check(DropEvent)}.
@@ -66,8 +59,8 @@ public class DropBinding implements DropTarget {
 	/**
 	 * One declared drop.
 	 *
-	 * @param acceptedTags
-	 *        The qualified names of the accepted types and of their subtypes.
+	 * @param accepted
+	 *        The kinds of the drags the drop accepts.
 	 * @param scope
 	 *        Whether the control as a whole or a single item is the target.
 	 * @param targetChannel
@@ -86,19 +79,19 @@ public class DropBinding implements DropTarget {
 	 *        the control as a whole) and the list of dropped objects; the result is interpreted as by
 	 *        {@link DisabledIf#stateFor(Object)}. {@code null} refuses nothing.
 	 */
-	public record Drop(Set<String> acceptedTags, DropScope scope, ViewChannel targetChannel,
+	public record Drop(AcceptedKinds accepted, DropScope scope, ViewChannel targetChannel,
 			List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
 			BiFunction<Object, List<?>, Object> refuseIf) {
 
 		/**
 		 * Creates an unrestricted {@link Drop}: always enabled, accepting every target.
 		 *
-		 * @see #Drop(Set, DropScope, ViewChannel, List, Supplier, ViewExecutabilityRule,
+		 * @see #Drop(AcceptedKinds, DropScope, ViewChannel, List, Supplier, ViewExecutabilityRule,
 		 *      BiFunction)
 		 */
-		public Drop(Set<String> acceptedTags, DropScope scope, ViewChannel targetChannel,
+		public Drop(AcceptedKinds accepted, DropScope scope, ViewChannel targetChannel,
 				List<ViewAction> actions) {
-			this(acceptedTags, scope, targetChannel, actions, () -> ExecutableState.EXECUTABLE,
+			this(accepted, scope, targetChannel, actions, () -> ExecutableState.EXECUTABLE,
 				ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 		}
 
@@ -150,18 +143,18 @@ public class DropBinding implements DropTarget {
 	}
 
 	/**
-	 * The qualified names of the accepted types and of their subtypes, over all declared drops that
-	 * are currently {@link Drop#isEnabled() enabled}.
+	 * The kinds accepted by any of the declared drops that are currently {@link Drop#isEnabled()
+	 * enabled}.
 	 */
 	@Override
-	public Collection<String> acceptedTypes() {
-		Set<String> tags = new LinkedHashSet<>();
+	public AcceptedKinds acceptedKinds() {
+		AcceptedKinds result = AcceptedKinds.NONE;
 		for (Drop drop : _drops) {
 			if (drop.isEnabled()) {
-				tags.addAll(drop.acceptedTags());
+				result = result.union(drop.accepted());
 			}
 		}
-		return tags;
+		return result;
 	}
 
 	/**
@@ -191,16 +184,12 @@ public class DropBinding implements DropTarget {
 	 */
 	@Override
 	public DropVerdict check(DropEvent event) {
-		String tag = draggedType(event);
-		if (tag == null) {
-			return DropVerdict.refused(com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		Drop drop = select(event, tag, true);
+		Drop drop = select(event, true);
 		ResKey refusal;
 		if (drop != null) {
 			refusal = drop.refusal(targetOf(drop, event), event.objects());
 		} else {
-			Drop disabled = select(event, tag, false);
+			Drop disabled = select(event, false);
 			refusal = disabled == null ? com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED
 				: reasonOf(disabled.executability().get());
 			if (refusal == null) {
@@ -217,7 +206,7 @@ public class DropBinding implements DropTarget {
 	 * <p>
 	 * A drop made on an item is offered to the {@link DropScope#ITEM item} drops first, and falls
 	 * back to a {@link DropScope#CONTROL control} drop when none of them accepts the drag - a control
-	 * whose items are targets for one kind of object still accepts another kind as a whole, wherever
+	 * whose items are targets for drags of one kind still accepts drags of another kind as a whole, wherever
 	 * the pointer happened to be. A drop nothing accepts does nothing, and neither does one whose
 	 * matching declared drop is {@link Drop#isEnabled() disabled}.
 	 * </p>
@@ -239,36 +228,34 @@ public class DropBinding implements DropTarget {
 	 */
 	@Override
 	public void onDrop(DropEvent event, Runnable onApplied) {
-		String tag = draggedType(event);
-		if (tag == null) {
-			return;
-		}
-		Drop drop = select(event, tag, true);
+		Drop drop = select(event, true);
 		if (drop != null) {
 			apply(drop, event.objects(), targetOf(drop, event), onApplied);
 		}
 	}
 
 	/**
-	 * The declared drop that applies a drop of the given tag: a matching item drop for a drop made on
-	 * an item, otherwise a matching control drop; {@code null} if none matches.
+	 * The declared drop that applies the given drop: the first item drop accepting its
+	 * {@link DropEvent#kind() kind} for a drop made on an item, otherwise the first such control
+	 * drop; {@code null} if none matches.
 	 *
 	 * @param enabledOnly
 	 *        Whether only the currently {@link Drop#isEnabled() enabled} drops are considered.
 	 */
-	private Drop select(DropEvent event, String tag, boolean enabledOnly) {
+	private Drop select(DropEvent event, boolean enabledOnly) {
+		String kind = event.kind();
 		if (event.target() != null) {
-			Drop itemDrop = matching(DropScope.ITEM, tag, enabledOnly);
+			Drop itemDrop = matching(DropScope.ITEM, kind, enabledOnly);
 			if (itemDrop != null) {
 				return itemDrop;
 			}
 		}
-		return matching(DropScope.CONTROL, tag, enabledOnly);
+		return matching(DropScope.CONTROL, kind, enabledOnly);
 	}
 
-	private Drop matching(DropScope scope, String tag, boolean enabledOnly) {
+	private Drop matching(DropScope scope, String kind, boolean enabledOnly) {
 		for (Drop drop : _drops) {
-			if (drop.scope() == scope && drop.acceptedTags().contains(tag) && (!enabledOnly || drop.isEnabled())) {
+			if (drop.scope() == scope && drop.accepted().accepts(kind) && (!enabledOnly || drop.isEnabled())) {
 				return drop;
 			}
 		}
@@ -303,35 +290,6 @@ public class DropBinding implements DropTarget {
 		return reason;
 	}
 
-	/**
-	 * The type tag of what was dropped, or {@code null} if the drop says nothing about it.
-	 *
-	 * <p>
-	 * The control the objects were dragged out of is the authority on what it drags, so its declared
-	 * tag is what the drops are matched against - the very tag the client offered the drop by. A drop
-	 * replayed from a recorded script names no such control; there the objects say what they are, and
-	 * they have to agree on it, so that a drag of several items is never applied in part.
-	 * </p>
-	 */
-	private static String draggedType(DropEvent event) {
-		if (event.source() instanceof DragSourceControl source && source.dragType() != null) {
-			return source.dragType();
-		}
-		String tag = null;
-		for (Object object : event.objects()) {
-			if (!(object instanceof TLObject model)) {
-				return null;
-			}
-			String objectTag = TLModelUtil.qualifiedName(model.tType());
-			if (tag == null) {
-				tag = objectTag;
-			} else if (!tag.equals(objectTag)) {
-				return null;
-			}
-		}
-		return tag;
-	}
-
 	private void apply(Drop drop, List<?> objects, Object target, Runnable onApplied) {
 		ViewChannel targetChannel = drop.targetChannel();
 		if (targetChannel != null) {
@@ -346,26 +304,6 @@ public class DropBinding implements DropTarget {
 			});
 		}
 		ViewActionChain.run(_context, actions, objects, null);
-	}
-
-	/**
-	 * The tags a declared type is accepted under: its own qualified name and those of its subtypes,
-	 * so that the client accepts a subtype by comparing tags.
-	 *
-	 * @param types
-	 *        The declared accepted types.
-	 */
-	public static Set<String> tagsOf(Collection<? extends TLType> types) {
-		Set<String> tags = new LinkedHashSet<>();
-		for (TLType type : types) {
-			tags.add(TLModelUtil.qualifiedName(type));
-			if (type instanceof TLClass generalization) {
-				for (TLClass specialization : TLModelUtil.getTransitiveSpecializations(generalization)) {
-					tags.add(TLModelUtil.qualifiedName(specialization));
-				}
-			}
-		}
-		return tags;
 	}
 
 }

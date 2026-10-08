@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.layout.react.control.table;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +21,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropPosition;
@@ -44,7 +44,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link DropTarget} are the ones that source resolves them to.
  *
  * <p>
- * Both directions of the two-stage acceptance are exercised: a drop of a type the target never
+ * Both directions of the two-stage acceptance are exercised: a drop of a kind the target never
  * declared, and one naming rows the source does not display, are refused without the handler being
  * asked - the client-side check that precedes a drop narrows the gesture for the user, it does not
  * decide it.
@@ -58,7 +58,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class TestTableViewDragDrop extends TestCase {
 
-	/** The type tag both tables agree on. */
+	/** The drag kind both tables agree on. */
 	private static final String PERSON = "person";
 
 	private static final String DROP = "drop";
@@ -74,7 +74,10 @@ public class TestTableViewDragDrop extends TestCase {
 	/** Entry of a refusing verdict holding the reason. */
 	private static final String VERDICT_REASON = "reason";
 
-	/** State key of the accepted type tags. */
+	/** State key telling whether any drag is accepted. */
+	private static final String DROP_ACCEPTS_ANY = "dropAcceptsAny";
+
+	/** State key of the accepted drag kinds. */
 	private static final String DROP_ACCEPTS = "dropAccepts";
 
 	/** State key of the client's row list. */
@@ -111,7 +114,7 @@ public class TestTableViewDragDrop extends TestCase {
 	 */
 	private static final class Announced implements DropTarget {
 
-		private Collection<String> _acceptedTypes;
+		private AcceptedKinds _acceptedKinds;
 
 		private final boolean _dropOnRows;
 
@@ -121,14 +124,14 @@ public class TestTableViewDragDrop extends TestCase {
 
 		Function<DropEvent, DropVerdict> _check = event -> DropVerdict.ACCEPTED;
 
-		Announced(Collection<String> acceptedTypes, boolean dropOnRows) {
-			_acceptedTypes = acceptedTypes;
+		Announced(AcceptedKinds acceptedKinds, boolean dropOnRows) {
+			_acceptedKinds = acceptedKinds;
 			_dropOnRows = dropOnRows;
 		}
 
 		@Override
-		public Collection<String> acceptedTypes() {
-			return _acceptedTypes;
+		public AcceptedKinds acceptedKinds() {
+			return _acceptedKinds;
 		}
 
 		@Override
@@ -167,7 +170,7 @@ public class TestTableViewDragDrop extends TestCase {
 		_source = newTable();
 		_source.setDragSource(PERSON);
 		_target = newTable();
-		_announced = new Announced(List.of(PERSON), true);
+		_announced = new Announced(AcceptedKinds.of(List.of(PERSON)), true);
 		_target.setDropTarget(_announced);
 
 		// Both tables are displayed: only a displayed control can be addressed by its ID.
@@ -227,6 +230,7 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(PEOPLE.get(0), event.target());
 		assertEquals(DropPosition.ONTO, event.position());
 		assertSame("The event names the control the objects were dragged out of.", _source, event.source());
+		assertEquals("The event names the kind of the drag.", PERSON, event.kind());
 	}
 
 	/**
@@ -277,7 +281,7 @@ public class TestTableViewDragDrop extends TestCase {
 	 * announced on a row.
 	 */
 	public void testARowTargetIsIgnoredWhenRowsAreNoTargets() {
-		Announced onTableOnly = new Announced(List.of(PERSON), false);
+		Announced onTableOnly = new Announced(AcceptedKinds.of(List.of(PERSON)), false);
 		_target.setDropTarget(onTableOnly);
 
 		HandlerResult result = drop(_target, Map.of(
@@ -293,8 +297,8 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(DropPosition.NONE, onTableOnly._event.position());
 	}
 
-	/** A drop whose source drags a type the target never declared is refused. */
-	public void testDropOfAnUnacceptedTypeIsRefused() {
+	/** A drop whose source drags a kind the target never declared is refused. */
+	public void testDropOfAnUnacceptedKindIsRefused() {
 		_source.setDragSource("milestone");
 
 		HandlerResult result = drop(_target, Map.of(
@@ -304,7 +308,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(0),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertRefused("A drop of an unaccepted type must be refused.", result);
+		assertRefused("A drop of an unaccepted kind must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -347,9 +351,39 @@ public class TestTableViewDragDrop extends TestCase {
 		assertRefused("A table accepting no drop must refuse one.", result);
 	}
 
-	/** A drop whose source control is not a drag source at all is refused. */
-	public void testDropFromANonDraggingSourceIsRefused() {
+	/**
+	 * A drag without a kind is refused by a target listing kinds, and accepted by one accepting any
+	 * drag.
+	 */
+	public void testUnkindedDragIsAcceptedOnlyByATargetAcceptingAny() {
 		_source.setDragSource(null);
+
+		assertRefused("A target listing kinds refuses a drag without a kind.",
+			drop(_target, dropOn(rowKey(1), rowKey(0))));
+		assertNull(_announced._event);
+
+		Announced any = new Announced(AcceptedKinds.ANY, true);
+		_target.setDropTarget(any);
+		assertApplied("A target accepting any drag takes one without a kind.",
+			drop(_target, dropOn(rowKey(1), rowKey(0))));
+		assertNotNull(any._event);
+		assertNull("The event of a drag without a kind names none.", any._event.kind());
+	}
+
+	/** A target accepting any drag takes a drag of any kind as well. */
+	public void testTargetAcceptingAnyTakesAKindedDrag() {
+		Announced any = new Announced(AcceptedKinds.ANY, true);
+		_target.setDropTarget(any);
+		_source.setDragSource("milestone");
+
+		assertApplied("A target accepting any drag takes one of any kind.",
+			drop(_target, dropOn(rowKey(1), rowKey(0))));
+		assertEquals("milestone", any._event.kind());
+	}
+
+	/** A drop whose source control has dragging switched off is refused. */
+	public void testDropFromANonDraggingSourceIsRefused() {
+		_source.setDragEnabled(false);
 
 		HandlerResult result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
@@ -402,7 +436,7 @@ public class TestTableViewDragDrop extends TestCase {
 	}
 
 	/** A drop the resolution refuses already is answered as refused by a probe, too. */
-	public void testProbeOfAnUnacceptedTypeIsRefused() {
+	public void testProbeOfAnUnacceptedKindIsRefused() {
 		_source.setDragSource("milestone");
 
 		assertApplied("A probe never fails.", probe("drag1", "p1", rowKey(1), rowKey(0)));
@@ -465,14 +499,21 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(Boolean.TRUE, rowState(_source, 1).get(ROW_DRAGGABLE));
 	}
 
-	/** Refreshing the drop target announces its changed accepted types. */
-	public void testRefreshDropTargetAnnouncesTheAcceptedTypes() {
+	/** Refreshing the drop target announces its changed accepted kinds. */
+	public void testRefreshDropTargetAnnouncesTheAcceptedKinds() {
+		assertEquals(Boolean.FALSE, _target.clientState(DROP_ACCEPTS_ANY));
 		assertEquals(List.of(PERSON), _target.clientState(DROP_ACCEPTS));
 
-		_announced._acceptedTypes = List.of(PERSON, "milestone");
+		_announced._acceptedKinds = AcceptedKinds.of(List.of(PERSON, "milestone"));
 		_target.refreshDropTarget();
 
 		assertEquals(List.of(PERSON, "milestone"), _target.clientState(DROP_ACCEPTS));
+
+		_announced._acceptedKinds = AcceptedKinds.ANY;
+		_target.refreshDropTarget();
+
+		assertEquals(Boolean.TRUE, _target.clientState(DROP_ACCEPTS_ANY));
+		assertEquals(List.of(), _target.clientState(DROP_ACCEPTS));
 	}
 
 	/** The arguments of a drop of the given source row on the given target row. */

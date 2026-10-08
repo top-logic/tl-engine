@@ -7,11 +7,11 @@ package com.top_logic.layout.view.dnd;
 
 import java.util.List;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -25,7 +25,6 @@ import com.top_logic.layout.view.command.ExecutabilityConfig;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Configuration of one {@code <drop>} of an element: what it accepts, when it applies, and what it
@@ -66,18 +65,19 @@ public interface DropConfig extends ExecutabilityConfig {
 	String ACTIONS = "actions";
 
 	/**
-	 * The types of the objects this drop accepts.
+	 * The {@link DragConfig#getKind() kinds} of the drags this drop accepts.
 	 *
 	 * <p>
-	 * A subtype of an accepted type is accepted as well. Acceptance is decided over the model on
-	 * the server; the client is told the resulting set of type names, so a drag it cannot be applied
-	 * to is not offered in the first place.
+	 * Empty (default), the drop accepts every drag, of any kind or none. Otherwise it accepts
+	 * exactly the drags of a listed kind; a drag without a kind is then refused. The client is told
+	 * the accepted kinds, so a drag the drop cannot take is not offered to it in the first place.
+	 * Which objects the drop takes beyond that - for instance only those of a certain model type -
+	 * is decided by the {@link #getRefuseIf() refusal function}.
 	 * </p>
 	 */
 	@Name(ACCEPT)
-	@Mandatory
-	@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-	List<TLModelPartRef> getAccept();
+	@Format(CommaSeparatedStrings.class)
+	List<String> getAccept();
 
 	/**
 	 * A {@link ViewChannel} the target item is written to before the {@link #getActions() actions}

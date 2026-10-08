@@ -20,12 +20,12 @@
 		selection-mode="multi"
 		types="demo.test:Row"
 	>
-		<drag/>
-		<drop accept="demo.test:Row">
+		<drag kind="row"/>
+		<drop>
 			<execute-script function="rows -> $rows"/>
 		</drop>
 		<drop
-			accept="demo.test:Row, demo.test:Other"
+			accept="row, other"
 			target="row"
 			target-channel="dropTarget"
 		>

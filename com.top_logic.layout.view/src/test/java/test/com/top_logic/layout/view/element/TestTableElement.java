@@ -252,24 +252,17 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
-	 * Tests that the {@code <drag>} of a {@code <table>} is parsed, and that a table declaring no row
-	 * type at all is reported: nothing would then say what its rows are.
+	 * Tests that the {@code <drag>} of a {@code <table>} is parsed with the kind it declares.
 	 */
 	public void testParseDrag() throws Exception {
 		TableElement.Config tableConfig = readTableConfig();
 
 		assertNotNull("The table declares its rows draggable.", tableConfig.getDrag());
-		assertNull("The drag takes the table's row type, so it declares none of its own.",
-			tableConfig.getDrag().getType());
-
-		TableElement.Config withoutType = TypedConfiguration.copy(tableConfig);
-		withoutType.update(withoutType.descriptor().getProperty(TableElement.Config.TYPES), List.of());
-
-		assertContains("must say what they are", errors(withoutType));
+		assertEquals("row", tableConfig.getDrag().getKind());
 	}
 
 	/**
-	 * Tests that the {@code <drop>}s of a {@code <table>} are parsed with the types they accept, what
+	 * Tests that the {@code <drop>}s of a {@code <table>} are parsed with the kinds they accept, what
 	 * they target, and the action chain applying them.
 	 */
 	public void testParseDrops() throws Exception {
@@ -277,16 +270,15 @@ public class TestTableElement extends TestCase {
 		assertEquals("Should have two drops", 2, drops.size());
 
 		TableDropConfig onTable = drops.get(0);
-		assertEquals(List.of("demo.test:Row"),
-			onTable.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
+		assertEquals("A drop without 'accept' lists no kind, so it accepts every drag.", List.of(),
+			onTable.getAccept());
 		assertEquals("A drop targets the table unless it says otherwise.",
 			DropTargetMode.TABLE, onTable.getTarget());
 		assertNull("A table drop has no target row to publish.", onTable.getTargetChannel());
 		assertEquals("Should declare one action", 1, onTable.getActions().size());
 
 		TableDropConfig onRow = drops.get(1);
-		assertEquals(List.of("demo.test:Row", "demo.test:Other"),
-			onRow.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
+		assertEquals(List.of("row", "other"), onRow.getAccept());
 		assertEquals(DropTargetMode.ROW, onRow.getTarget());
 		assertNotNull("The row drop publishes the row dropped on.", onRow.getTargetChannel());
 		assertEquals("dropTarget", onRow.getTargetChannel().getChannelName());

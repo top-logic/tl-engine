@@ -5,16 +5,14 @@
  */
 package com.top_logic.layout.react.control.dnd;
 
-import java.util.Collection;
-
 /**
  * What a control does with objects dropped on it, and what it accepts a drop of.
  *
  * <p>
- * Acceptance is decided in two stages. The {@link #acceptedTypes() accepted type tags} reach the
+ * Acceptance is decided in two stages. The {@link #acceptedKinds() accepted kinds} reach the
  * client, which uses them while a drag moves over the control to tell the user whether a drop is
- * possible at all; the same tags are checked again against the
- * {@link DragSourceControl#dragType() source's tag} when the drop arrives, so a client announcing a
+ * possible at all; the same kinds are checked again against the
+ * {@link DragSourceControl#dragKind() source's kind} when the drop arrives, so a client announcing a
  * drop the control never offered is refused. Whatever else makes a particular drop impossible — the
  * objects, the target row, the position — is decided by {@link #check(DropEvent)}, which has the
  * resolved objects at hand.
@@ -28,7 +26,7 @@ import java.util.Collection;
  * </p>
  *
  * <p>
- * A target whose {@link #acceptedTypes()} or {@link #dropOnRows()} answer changes over its life
+ * A target whose {@link #acceptedKinds()} or {@link #dropOnRows()} answer changes over its life
  * tells the control displaying it to announce the change to the client again (for a table:
  * {@link com.top_logic.layout.react.control.table.TableViewControl#refreshDropTarget()}).
  * </p>
@@ -38,9 +36,9 @@ import java.util.Collection;
 public interface DropTarget {
 
 	/**
-	 * The {@link DragSourceControl#dragType() type tags} of the drags this target accepts.
+	 * The {@link DragSourceControl#dragKind() kinds} of the drags this target accepts.
 	 */
-	Collection<String> acceptedTypes();
+	AcceptedKinds acceptedKinds();
 
 	/**
 	 * Whether a single row is a drop target of its own, so that a drop names the row it was made on.

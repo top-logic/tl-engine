@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.dnd;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -34,22 +33,27 @@ public final class DragSourceBinding {
 	public interface Source {
 
 		/**
-		 * The type tag the items are currently dragged under, {@code null} while they are not
-		 * draggable.
+		 * Whether the items are currently draggable.
 		 *
-		 * @see DragSourceControl#dragType()
+		 * @see DragSourceControl#isDragEnabled()
 		 */
-		String dragType();
+		boolean isDragEnabled();
 
 		/**
-		 * Makes the items draggable under the given type tag.
+		 * Makes the items draggable as drags of the given kind.
 		 *
-		 * @param dragType
-		 *        The {@link #dragType() type tag}, or {@code null} to make the items undraggable.
+		 * @param dragKind
+		 *        The {@link DragSourceControl#dragKind() kind} of a drag, {@code null} for a drag
+		 *        without a kind.
 		 * @param draggable
 		 *        Which items may be dragged, {@code null} for all of them.
 		 */
-		void setDragSource(String dragType, Predicate<Object> draggable);
+		void setDragSource(String dragKind, Predicate<Object> draggable);
+
+		/**
+		 * Switches dragging on or off, keeping what {@link #setDragSource(String, Predicate)} set.
+		 */
+		void setDragEnabled(boolean enabled);
 
 		/**
 		 * Asks the predicate given to {@link #setDragSource(String, Predicate)} again for the
@@ -76,33 +80,34 @@ public final class DragSourceBinding {
 	 * @param drag
 	 *        The declared drag, whose control-wide {@link DragConfig#getExecutability()
 	 *        executability} is followed.
-	 * @param dragType
-	 *        The type tag the items are dragged under.
+	 * @param dragKind
+	 *        The {@link DragConfig#getKind() kind} of a drag, {@code null} or empty for a drag
+	 *        without a kind.
 	 * @param itemExecutability
 	 *        The rules deciding which single item may be dragged, each item being their input. Empty
 	 *        lets every item be dragged.
 	 */
 	public static void install(ViewContext context, ReactControl control, Source source, DragConfig drag,
-			String dragType, List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> itemExecutability) {
+			String dragKind, List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> itemExecutability) {
 		ViewExecutabilityRule itemRule = ViewExecutabilityRules.build(itemExecutability, context);
 		Predicate<Object> draggable = itemRule == ViewExecutabilityRule.ALWAYS_EXECUTABLE ? null
 			: item -> itemRule.isExecutable(item).isExecutable();
+		source.setDragSource(dragKind == null || dragKind.isEmpty() ? null : dragKind, draggable);
 		if (drag.getExecutability().isEmpty()) {
-			source.setDragSource(dragType, draggable);
 			return;
 		}
 
 		LiveExecutability[] live = new LiveExecutability[1];
 		Runnable update = () -> {
-			String type = live[0].getState().isExecutable() ? dragType : null;
-			if (Objects.equals(type, source.dragType())) {
+			boolean enabled = live[0].getState().isExecutable();
+			if (enabled == source.isDragEnabled()) {
 				source.refreshDragSource();
 			} else {
-				source.setDragSource(type, draggable);
+				source.setDragEnabled(enabled);
 			}
 		};
 		live[0] = LiveExecutability.create(drag, context, update);
-		source.setDragSource(live[0].getState().isExecutable() ? dragType : null, draggable);
+		source.setDragEnabled(live[0].getState().isExecutable());
 		live[0].followWhileDisplayed(context, control, update);
 	}
 

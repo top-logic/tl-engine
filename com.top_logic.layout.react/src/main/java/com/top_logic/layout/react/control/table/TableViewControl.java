@@ -33,6 +33,7 @@ import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
@@ -94,8 +95,8 @@ import com.top_logic.util.Resources;
  * <p>
  * Rows are dragged and dropped through the seam of
  * {@link com.top_logic.layout.react.control.dnd}: {@link #setDragSource(String, Predicate)} makes
- * the rows draggable under a type tag, {@link #setDropTarget(DropTarget)} accepts a drop of such
- * objects and applies it. A drag names client-side row keys only, and each control resolves the keys
+ * the rows draggable as drags of a kind, {@link #setDropTarget(DropTarget)} accepts a drop of the
+ * kinds its target accepts and applies it. A drag names client-side row keys only, and each control resolves the keys
  * it owns, so the two ends of a drag between two tables need know nothing of each other. While a drag
  * hovers the table, the client probes each row and position it passes for the
  * {@link DropTarget#check(DropEvent) verdict} of a drop there, and shows a refusal with its reason.
@@ -306,10 +307,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** State key telling the client whether the rows may be dragged. */
 	private static final String DRAG_ENABLED = DropSupport.DRAG_ENABLED;
 
-	/** State key holding the {@link #dragType() type tag} the client tags a drag payload with. */
-	private static final String DRAG_TYPE = DropSupport.DRAG_TYPE;
+	/** @see DropSupport#DRAG_KIND */
+	private static final String DRAG_KIND = DropSupport.DRAG_KIND;
 
-	/** State key holding the {@link DropTarget#acceptedTypes() type tags} a drop is accepted of. */
+	/** @see DropSupport#DROP_ACCEPTS_ANY */
+	private static final String DROP_ACCEPTS_ANY = DropSupport.DROP_ACCEPTS_ANY;
+
+	/** @see DropSupport#DROP_ACCEPTS */
 	private static final String DROP_ACCEPTS = DropSupport.DROP_ACCEPTS;
 
 	/** State key telling the client whether a single row is a drop target of its own. */
@@ -476,12 +480,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether a group header can be selected, see {@link #setGroupsSelectable(boolean)}. */
 	private boolean _groupsSelectable;
 
-	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
-	private String _dragType;
+	/** Whether rows may be dragged at all. */
+	private boolean _dragEnabled;
+
+	/** The kind of a drag of rows, {@code null} for a drag without a kind. */
+	private String _dragKind;
 
 	/**
-	 * Which rows may be dragged while {@link #_dragType} is set, {@code null} when every data row may
-	 * be.
+	 * Which rows may be dragged while {@link #_dragEnabled} is set, {@code null} when every data row
+	 * may be.
 	 */
 	private Predicate<? super R> _draggable;
 
@@ -606,24 +613,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Makes all data rows draggable, announcing them under the given type tag.
+	 * Makes all data rows draggable as drags of the given kind.
 	 *
-	 * @param dragType
-	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
 	 *
 	 * @see #setDragSource(String, Predicate)
 	 */
-	public void setDragSource(String dragType) {
-		setDragSource(dragType, null);
+	public void setDragSource(String dragKind) {
+		setDragSource(dragKind, null);
 	}
 
 	/**
-	 * Makes the rows draggable, announcing them under the given type tag.
+	 * Makes the rows draggable as drags of the given kind.
 	 *
 	 * <p>
 	 * Dragging a selected row drags the whole {@link #getSelectedKeys() selection}, an unselected row
-	 * drags itself. What a receiving {@link DropTarget} gets are the row business objects; the tag is
-	 * what it accepts the drop by.
+	 * drags itself. What a receiving {@link DropTarget} gets are the row business objects; the kind
+	 * is what it accepts the drop by.
 	 * </p>
 	 *
 	 * <p>
@@ -632,20 +639,36 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * never draggable.
 	 * </p>
 	 *
-	 * @param dragType
-	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
 	 * @param draggable
 	 *        Which row business objects may be dragged, {@code null} for all of them. Asked whenever
 	 *        rows are rendered; when its answer changes for other reasons, call
 	 *        {@link #refreshDragSource()}.
+	 *
+	 * @see #setDragEnabled(boolean)
 	 */
-	public void setDragSource(String dragType, Predicate<? super R> draggable) {
+	public void setDragSource(String dragKind, Predicate<? super R> draggable) {
 		Object update = beginUpdate();
 		try {
-			_dragType = dragType;
+			_dragKind = dragKind;
 			_draggable = draggable;
-			putState(DRAG_ENABLED, Boolean.valueOf(dragType != null));
-			putState(DRAG_TYPE, dragType == null ? NOTHING : dragType);
+			putState(DRAG_KIND, dragKind);
+			setDragEnabled(true);
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Switches dragging of rows on or off, keeping the kind and the predicate given to
+	 * {@link #setDragSource(String, Predicate)}.
+	 */
+	public void setDragEnabled(boolean enabled) {
+		Object update = beginUpdate();
+		try {
+			_dragEnabled = enabled;
+			putState(DRAG_ENABLED, Boolean.valueOf(enabled));
 			updateViewport(_viewportStart, _viewportCount);
 		} finally {
 			commitUpdate(update);
@@ -673,7 +696,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Announces the {@link DropTarget#acceptedTypes() accepted type tags} and whether
+	 * Announces the {@link DropTarget#acceptedKinds() accepted kinds} and whether
 	 * {@link DropTarget#dropOnRows() rows are drop targets} to the client again, after the
 	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
 	 */
@@ -681,8 +704,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		DropTarget dropTarget = _dropTarget;
 		Object update = beginUpdate();
 		try {
-			putState(DROP_ACCEPTS,
-				dropTarget == null ? List.of() : List.copyOf(dropTarget.acceptedTypes()));
+			AcceptedKinds accepted = dropTarget == null ? AcceptedKinds.NONE : dropTarget.acceptedKinds();
+			putState(DROP_ACCEPTS_ANY, Boolean.valueOf(accepted.any()));
+			putState(DROP_ACCEPTS, List.copyOf(accepted.kinds()));
 			putState(DROP_ON_ROWS, Boolean.valueOf(dropTarget != null && dropTarget.dropOnRows()));
 		} finally {
 			commitUpdate(update);
@@ -951,7 +975,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
-			if (_dragType != null) {
+			if (_dragEnabled) {
 				rowState.put(ROW_DRAGGABLE, Boolean.valueOf(isDraggableRow(row)));
 			}
 			if (treeMode()) {
@@ -2001,14 +2025,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	// -- Drag and drop --
 
 	@Override
-	public String dragType() {
-		return _dragType;
+	public boolean isDragEnabled() {
+		return _dragEnabled;
+	}
+
+	@Override
+	public String dragKind() {
+		return _dragKind;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean isDraggable(Object object) {
-		return _dragType != null && (_draggable == null || _draggable.test((R) object));
+		return _dragEnabled && (_draggable == null || _draggable.test((R) object));
 	}
 
 	/** Whether the given row offers a drag, see {@link #setDragSource(String, Predicate)}. */
@@ -2106,7 +2135,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * <p>
 	 * The dragged objects are resolved by the {@link DragSourceControl} the
 	 * {@link DropArguments#getSource() source id} designates, the target by this table. A drop of a
-	 * type the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
+	 * kind the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
 	 * no drag source, including an object the source does not let be
 	 * {@link DragSourceControl#isDraggable(Object) dragged}, or naming a row this table no longer
 	 * displays is refused.
@@ -2117,7 +2146,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (dropTarget == null) {
 			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
-		DropSupport.Dragged dragged = _dropSupport.dragged(dropTarget.acceptedTypes(), args);
+		DropSupport.Dragged dragged = _dropSupport.dragged(dropTarget.acceptedKinds(), args);
 		if (dragged.refusal() != null) {
 			return ResolvedDrop.refused(dragged.refusal());
 		}
@@ -2138,7 +2167,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 		}
 
-		return new ResolvedDrop(new DropEvent(dragged.source(), dragged.objects(),
+		return new ResolvedDrop(new DropEvent(dragged.source(), dragged.kind(), dragged.objects(),
 			targetRow == null ? null : targetRow.data(), position), null);
 	}
 
@@ -2170,7 +2199,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		DropPosition position = DropPosition.fromWire(args.getPosition());
-		if (position == null) {
+		if (position == null || !dropTarget.acceptedKinds().accepts(args.getKind())) {
 			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
@@ -2198,7 +2227,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}
 
-		return applyDrop(new DropEvent(null, objects, target,
+		return applyDrop(new DropEvent(null, args.getKind(), objects, target,
 			dropTarget.dropOnRows() ? position : DropPosition.NONE));
 	}
 

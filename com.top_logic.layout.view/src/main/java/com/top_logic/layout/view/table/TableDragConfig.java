@@ -15,15 +15,14 @@ import com.top_logic.layout.view.dnd.DragConfig;
 import com.top_logic.layout.view.element.TableElement;
 
 /**
- * Configuration of the {@code <drag>} of a {@link TableElement}: that its rows may be dragged, what
- * they are announced as, and when they may be dragged.
+ * Configuration of the {@code <drag>} of a {@link TableElement}: that its rows may be dragged, the
+ * {@link #getKind() kind} of such a drag, and when they may be dragged.
  *
  * <p>
  * The {@link #getExecutability() executability} rules decide for the table as a whole over the
  * value of the {@link #getInput() input} channel, and are followed live: while they refuse, no row
  * can be dragged. The {@link #getRowExecutability() row executability} rules decide for each row
- * separately, with the row as their input. Without a {@link #getType() type}, the rows are announced
- * as the first of the table's {@link TableElement.Config#getTypes() declared row types}.
+ * separately, with the row as their input.
  * </p>
  */
 public interface TableDragConfig extends DragConfig {

@@ -15,15 +15,13 @@ import com.top_logic.layout.view.dnd.DragConfig;
 
 /**
  * Configuration of the {@code <drag>} of a {@link KanbanBoardElement}: that its cards may be
- * dragged, what they are announced as, and when they may be dragged.
+ * dragged, the {@link #getKind() kind} of such a drag, and when they may be dragged.
  *
  * <p>
  * The {@link #getExecutability() executability} rules decide for the board as a whole over the
  * value of the {@link #getInput() input} channel, and are followed live: while they refuse, no card
  * can be dragged. The {@link #getCardExecutability() card executability} rules decide for each card
- * separately, with the card's object as their input. Without a {@link #getType() type}, the cards
- * are announced as the first of the board's {@link KanbanBoardElement.Config#getObservedTypes()
- * observed types}.
+ * separately, with the card's object as their input.
  * </p>
  */
 public interface KanbanDragConfig extends DragConfig {

@@ -3,7 +3,7 @@
  * it.
  *
  * A drag names client-side identities only: the control the drag started in, the keys of the rows
- * it started on, and a type tag classifying what is being dragged. The server resolves the objects
+ * it started on, and optionally a kind classifying what is being dragged. The server resolves the objects
  * from those, so a control keeps sole authority over what its own keys mean.
  */
 
@@ -12,13 +12,13 @@ export const DRAG_PAYLOAD_TYPE = 'application/x-tl-drag+json';
 
 /**
  * Prefix of the `dataTransfer` entry whose type name carries the payload's
- * {@link TLDragPayload.type} tag, lower-cased.
+ * {@link TLDragPayload.kind}, lower-cased; a drag without a kind has no such entry.
  *
  * A `dragover` handler may read `dataTransfer.types` but not the entries' data, so the one
  * property a drop target needs while the pointer is still moving - what is being dragged - is
  * encoded in a type name rather than in a value.
  */
-export const DRAG_TAG_TYPE_PREFIX = 'application/x-tl-drag-tag.';
+export const DRAG_KIND_TYPE_PREFIX = 'application/x-tl-drag-kind.';
 
 /** Where a drop happened relative to the row it was made on. */
 export type TLDropPosition = 'before' | 'after' | 'onto' | 'none';
@@ -31,8 +31,8 @@ export interface TLDragPayload {
   keys: string[];
   /** Whether the drag carries the source control's whole selection instead of {@link keys}. */
   selection: boolean;
-  /** The type tag classifying the dragged objects. */
-  type: string;
+  /** The kind classifying the dragged objects, absent for a drag without a kind. */
+  kind?: string;
 }
 
 /**
@@ -118,9 +118,9 @@ export function onDragEnd(listener: () => void): () => void {
 }
 
 /**
- * Writes a drag payload into a `dragstart` event's `dataTransfer`, as the JSON entry plus the type
- * tag entry {@link DRAG_TAG_TYPE_PREFIX a `dragover` handler} can read, and registers it as the
- * {@link runningDrag running drag}.
+ * Writes a drag payload into a `dragstart` event's `dataTransfer`, as the JSON entry plus - for a
+ * drag of a kind - the kind entry {@link DRAG_KIND_TYPE_PREFIX a `dragover` handler} can read, and
+ * registers it as the {@link runningDrag running drag}.
  *
  * The element the drag starts on is also listened to for the drag's `dragend`, which it receives
  * even when it is removed from the document before the drag ends.
@@ -131,7 +131,9 @@ export function writeDragPayload(event: TLDragStart, payload: TLDragPayload): TL
   const dataTransfer = event.dataTransfer;
   dataTransfer.effectAllowed = 'move';
   dataTransfer.setData(DRAG_PAYLOAD_TYPE, JSON.stringify(payload));
-  dataTransfer.setData(DRAG_TAG_TYPE_PREFIX + payload.type.toLowerCase(), '');
+  if (payload.kind) {
+    dataTransfer.setData(DRAG_KIND_TYPE_PREFIX + payload.kind.toLowerCase(), '');
+  }
   installEndListeners();
   const source = event.currentTarget;
   source.addEventListener('dragend', endDrag, { once: true });
@@ -176,20 +178,29 @@ export function readDragPayload(dataTransfer: DataTransfer): TLDragPayload | nul
 }
 
 /**
- * Whether the running drag carries a payload whose type tag is one of the accepted ones.
+ * Whether the running drag carries a payload a drop target accepts: any payload where the target
+ * accepts any drag, otherwise one whose kind is among the accepted kinds - a drag without a kind
+ * then never is.
  *
  * Readable from `dragover`, where the payload itself is not: the decision rests on the type names
  * of the `dataTransfer` entries alone.
+ *
+ * @param acceptsAny Whether the target accepts every drag, with any kind or none.
+ * @param acceptedKinds The kinds the target accepts where it does not accept any drag.
  */
-export function dragTypeAccepted(dataTransfer: DataTransfer, acceptedTypes: readonly string[]): boolean {
-  if (acceptedTypes.length === 0) {
-    return false;
-  }
+export function dragKindAccepted(
+  dataTransfer: DataTransfer,
+  acceptsAny: boolean,
+  acceptedKinds: readonly string[],
+): boolean {
   const types = Array.from(dataTransfer.types);
   if (!types.includes(DRAG_PAYLOAD_TYPE)) {
     return false;
   }
-  return acceptedTypes.some((accepted) => types.includes(DRAG_TAG_TYPE_PREFIX + accepted.toLowerCase()));
+  if (acceptsAny) {
+    return true;
+  }
+  return acceptedKinds.some((accepted) => types.includes(DRAG_KIND_TYPE_PREFIX + accepted.toLowerCase()));
 }
 
 /**

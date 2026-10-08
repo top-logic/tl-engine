@@ -2,7 +2,7 @@
 
 <view>
 	<table>
-		<drop accept="tl.core:String">
+		<drop accept="value">
 			<target-executability>
 				<null-input-disabled/>
 			</target-executability>

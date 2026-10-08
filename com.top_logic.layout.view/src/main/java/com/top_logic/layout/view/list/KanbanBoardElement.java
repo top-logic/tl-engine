@@ -13,7 +13,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Log;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -102,7 +101,7 @@ import com.top_logic.table.SelectionMode;
  *
  * <p>
  * With a {@link Config#getDrag() drag}, cards are dragged like the rows of a table - onto another
- * column, or onto any display accepting their type. Each column is a drop target for the
+ * column, or onto any display accepting the drag's kind. Each column is a drop target for the
  * {@link Config#getDrops() drops}: a drop is made on the column, whose value is the target of the
  * drop and published on its {@code target-channel}. An {@link Config#getOnReorder() reorder
  * function} keeps the order within the columns: a drop within a column runs it alone, and after a
@@ -113,8 +112,8 @@ import com.top_logic.table.SelectionMode;
  * &lt;kanban-board ...
  *   on-reorder="column -&gt; tickets -&gt; count($tickets.size()).foreach(i -&gt; $tickets[$i].set(`demo.tickets:Ticket#order`, $i))"
  * &gt;
- *   &lt;drag/&gt;
- *   &lt;drop accept="demo.tickets:Ticket" target-channel="dropColumn"&gt;
+ *   &lt;drag kind="ticket"/&gt;
+ *   &lt;drop accept="ticket" target-channel="dropColumn"&gt;
  *     ...
  *   &lt;/drop&gt;
  * &lt;/kanban-board&gt;
@@ -296,7 +295,7 @@ public class KanbanBoardElement implements UIElement {
 
 		/**
 		 * Makes the cards of this board draggable, so they can be dropped on another column or on a
-		 * display that accepts their type.
+		 * display that accepts the drag's kind.
 		 *
 		 * <p>
 		 * Unset (default) leaves the cards undraggable.
@@ -355,9 +354,6 @@ public class KanbanBoardElement implements UIElement {
 
 	private final List<UIElement> _cardContent;
 
-	/** The type tag the cards are dragged under, {@code null} while they are not draggable. */
-	private final String _dragType;
-
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
 
@@ -376,37 +372,10 @@ public class KanbanBoardElement implements UIElement {
 		_cardContent = config.getCard().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
-		_dragType = dragType(context, config);
 		_drops = config.getDrops().stream()
 			.map(drop -> DeclaredDrop.compile(context, drop, DropScope.ITEM))
 			.toList();
 		_onReorder = QueryExecutor.compileOptional(config.getOnReorder());
-	}
-
-	/**
-	 * The type tag the cards of a board declaring a {@link Config#getDrag() drag} are dragged under:
-	 * the declared {@link KanbanDragConfig#getType() type}, or the first of the board's
-	 * {@link Config#getObservedTypes() observed types}. {@code null} for a board whose cards are not
-	 * draggable, and for one that says nothing about what its cards are - which is reported as a
-	 * configuration error.
-	 */
-	private static String dragType(Log log, Config config) {
-		KanbanDragConfig drag = config.getDrag();
-		if (drag == null) {
-			return null;
-		}
-		TLModelPartRef declared = drag.getType();
-		if (declared != null) {
-			return declared.qualifiedName();
-		}
-		List<TLModelPartRef> types = config.getObservedTypes();
-		if (types == null || types.isEmpty()) {
-			log.error("A <" + TAG_NAME + "> whose cards are dragged must say what they are: either '"
-				+ KanbanDragConfig.TYPE + "' on its <" + Config.DRAG + ">, or '" + Config.OBSERVED_TYPES
-				+ "' on the board itself.");
-			return null;
-		}
-		return types.get(0).qualifiedName();
 	}
 
 	@Override
@@ -442,7 +411,7 @@ public class KanbanBoardElement implements UIElement {
 
 		ReactKanbanBoardControl board = cards.board();
 		board.setCssClass(_config.getCssClass());
-		if (_dragType != null) {
+		if (_config.getDrag() != null) {
 			installDragSource(context, board);
 		}
 		if (!_drops.isEmpty()) {
@@ -466,13 +435,18 @@ public class KanbanBoardElement implements UIElement {
 		KanbanDragConfig drag = _config.getDrag();
 		DragSourceBinding.Source source = new DragSourceBinding.Source() {
 			@Override
-			public String dragType() {
-				return board.dragType();
+			public boolean isDragEnabled() {
+				return board.isDragEnabled();
 			}
 
 			@Override
-			public void setDragSource(String dragType, Predicate<Object> draggable) {
-				board.setDragSource(dragType, draggable);
+			public void setDragSource(String dragKind, Predicate<Object> draggable) {
+				board.setDragSource(dragKind, draggable);
+			}
+
+			@Override
+			public void setDragEnabled(boolean enabled) {
+				board.setDragEnabled(enabled);
 			}
 
 			@Override
@@ -480,7 +454,7 @@ public class KanbanBoardElement implements UIElement {
 				board.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, board, source, drag, _dragType, drag.getCardExecutability());
+		DragSourceBinding.install(context, board, source, drag, drag.getKind(), drag.getCardExecutability());
 	}
 
 	private static void inTransaction(Runnable action) {

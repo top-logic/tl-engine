@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
@@ -291,7 +291,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const serverSearch = (state.search as string) ?? '';
   const filterSaving = (state.filterSaving as boolean) ?? false;
   const dragEnabled = (state.dragEnabled as boolean) ?? false;
-  const dragType = (state.dragType as string) ?? '';
+  const dragKind = (state.dragKind as string | null) ?? undefined;
+  const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropOnRows = (state.dropOnRows as boolean) ?? false;
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
@@ -671,9 +672,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       source: controlId,
       keys: [row.id],
       selection: row.selected,
-      type: dragType,
+      kind: dragKind,
     });
-  }, [controlId, dragType]);
+  }, [controlId, dragKind]);
 
   /** Which row an event points at, and where within it, or the table itself. */
   const dropTargetAt = React.useCallback(
@@ -706,10 +707,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (header) header.scrollLeft = body.scrollLeft;
       return;
     }
-    // Coarse acceptance from the payload's type tag alone: during a drag the payload itself is
-    // unreadable, and the tag is what the table declares its accepted types against. Whether this
+    // Coarse acceptance from the payload's kind alone: during a drag the payload itself is
+    // unreadable, and the kind is what the table declares its accepted drags against. Whether this
     // particular drop is possible is the server's answer, given once it arrives.
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
     dragPointerRef.current = { x: event.clientX, y: event.clientY };
@@ -758,7 +759,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, [dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
+  }, [dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the table's own descendants fires a leave on each one left behind; only leaving
@@ -769,7 +770,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleRootDrop = React.useCallback((event: React.DragEvent) => {
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       // Not a row drag: a dragged column heading ends here.
       handleDrop(event);
       return;
@@ -794,7 +795,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
       sendCommand('drop', args);
     }
-  }, [dropAccepts, dropTargetAt, handleDrop, sendCommand]);
+  }, [dropAcceptsAny, dropAccepts, dropTargetAt, handleDrop, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {

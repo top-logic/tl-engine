@@ -894,7 +894,7 @@ public class TableElement implements UIElement {
 					+ DropConfig.TARGET_EXECUTABILITY + "' could decide over; only a drop with "
 					+ TableDropConfig.TARGET + "=\"" + DropTargetMode.ROW.getExternalName() + "\" declares one.");
 			}
-			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().scope()));
+			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().mode()));
 		}
 		return result;
 	}

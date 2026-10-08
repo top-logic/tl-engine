@@ -22,10 +22,11 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
+import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropArguments;
-import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropSupport;
+import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl;
 import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl.Card;
 import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl.Column;
@@ -36,7 +37,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DropBinding;
-import com.top_logic.layout.view.dnd.DropScope;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
@@ -117,7 +117,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	}
 
 	private DropBinding.Drop columnDrop(String acceptedKind) {
-		return new DropBinding.Drop(AcceptedKinds.of(List.of(acceptedKind)), DropScope.ITEM, _targetChannel, List.of(_onColumn));
+		return new DropBinding.Drop(AcceptedKinds.of(List.of(acceptedKind)), DropMode.ONTO, _targetChannel, List.of(_onColumn));
 	}
 
 	/**
@@ -127,7 +127,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	public void testDropOnColumnRunsChain() {
 		_board.setDropTarget(new DropBinding(_context, List.of(columnDrop(CARD_KIND))));
 
-		assertTrue(drop(A1, columnKey(1), DropPosition.NONE).isSuccess());
+		assertTrue(drop(A1, columnKey(1), DropZone.NONE).isSuccess());
 
 		assertTrue("The chain of the column drop must run.", _onColumn._executed);
 		assertEquals("The chain receives the dragged objects.", List.of(A1), _onColumn._input);
@@ -140,14 +140,14 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	 */
 	public void testRefuseIfBlocksWithReason() {
 		_board.setDropTarget(new DropBinding(_context, List.of(new DropBinding.Drop(
-			AcceptedKinds.of(List.of(CARD_KIND)), DropScope.ITEM, _targetChannel, List.of(_onColumn),
+			AcceptedKinds.of(List.of(CARD_KIND)), DropMode.ONTO, _targetChannel, List.of(_onColumn),
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
 			(column, objects) -> DONE.equals(column) ? "Not here." : null))));
 
-		assertFalse("The drop must be refused.", drop(A1, columnKey(1), DropPosition.NONE).isSuccess());
+		assertFalse("The drop must be refused.", drop(A1, columnKey(1), DropZone.NONE).isSuccess());
 		assertFalse("A refused drop runs no chain.", _onColumn._executed);
 
-		Map<?, ?> verdict = probe(A1, columnKey(1), DropPosition.NONE);
+		Map<?, ?> verdict = probe(A1, columnKey(1), DropZone.NONE);
 		assertEquals(Boolean.FALSE, verdict.get(DropSupport.VERDICT_ACCEPTED));
 		assertEquals("Not here.", verdict.get(DropSupport.VERDICT_REASON));
 	}
@@ -158,9 +158,9 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	public void testUnacceptedKindIsRefused() {
 		_board.setDropTarget(new DropBinding(_context, List.of(columnDrop(OTHER_KIND))));
 
-		assertFalse(drop(A1, columnKey(1), DropPosition.NONE).isSuccess());
+		assertFalse(drop(A1, columnKey(1), DropZone.NONE).isSuccess());
 		assertFalse(_onColumn._executed);
-		assertEquals(Boolean.FALSE, probe(A1, columnKey(1), DropPosition.NONE).get(DropSupport.VERDICT_ACCEPTED));
+		assertEquals(Boolean.FALSE, probe(A1, columnKey(1), DropZone.NONE).get(DropSupport.VERDICT_ACCEPTED));
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 			reorders.add(objects);
 		});
 
-		assertTrue(drop(A1, cardKey(B1), DropPosition.BEFORE).isSuccess());
+		assertTrue(drop(A1, cardKey(B1), DropZone.UPPER).isSuccess());
 
 		assertEquals("The chain runs before the reorder function.", List.of("chain", "reorder"), _sequence);
 		assertEquals(List.of(DONE, List.of(A1, B1)), reorders);
@@ -190,7 +190,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 		_board.setDropTarget(new DropBinding(_context, List.of(columnDrop(CARD_KIND))));
 
 		assertFalse("Without a reorder function, a drop within a column is refused.",
-			drop(A2, cardKey(A1), DropPosition.BEFORE).isSuccess());
+			drop(A2, cardKey(A1), DropZone.UPPER).isSuccess());
 		assertFalse(_onColumn._executed);
 
 		List<Object> reorders = new ArrayList<>();
@@ -199,16 +199,16 @@ public class TestKanbanBoardDragDrop extends TestCase {
 			reorders.add(objects);
 		});
 
-		assertTrue(drop(A2, cardKey(A1), DropPosition.BEFORE).isSuccess());
+		assertTrue(drop(A2, cardKey(A1), DropZone.UPPER).isSuccess());
 		assertFalse("A drop within a column runs no drop chain.", _onColumn._executed);
 		assertEquals(List.of(OPEN, List.of(A2, A1)), reorders);
 
 		reorders.clear();
-		assertTrue(drop(A1, columnKey(0), DropPosition.NONE).isSuccess());
+		assertTrue(drop(A1, columnKey(0), DropZone.NONE).isSuccess());
 		assertEquals("A drop on the column appends.", List.of(OPEN, List.of(A2, A1)), reorders);
 
 		reorders.clear();
-		assertTrue(drop(A2, cardKey(A1), DropPosition.AFTER).isSuccess());
+		assertTrue(drop(A2, cardKey(A1), DropZone.LOWER).isSuccess());
 		assertEquals("A drop that keeps the order changes nothing.", List.of(), reorders);
 	}
 
@@ -243,29 +243,29 @@ public class TestKanbanBoardDragDrop extends TestCase {
 		});
 
 		assertEquals(Boolean.TRUE, state().get(ReactKanbanBoardControl.DROP_ACCEPTS_ANY));
-		assertTrue(drop(A2, cardKey(A1), DropPosition.BEFORE).isSuccess());
+		assertTrue(drop(A2, cardKey(A1), DropZone.UPPER).isSuccess());
 		assertEquals(List.of(OPEN, List.of(A2, A1)), reorders);
 	}
 
-	private HandlerResult drop(String item, String targetKey, DropPosition position) {
-		return _board.executeClientCommand(ReactKanbanBoardControl.CMD_DROP, dropArguments(item, targetKey, position));
+	private HandlerResult drop(String item, String targetKey, DropZone zone) {
+		return _board.executeClientCommand(ReactKanbanBoardControl.CMD_DROP, dropArguments(item, targetKey, zone));
 	}
 
-	private Map<?, ?> probe(String item, String targetKey, DropPosition position) {
-		Map<String, Object> arguments = dropArguments(item, targetKey, position);
+	private Map<?, ?> probe(String item, String targetKey, DropZone zone) {
+		Map<String, Object> arguments = dropArguments(item, targetKey, zone);
 		arguments.put(DropProbeArguments.DRAG, "drag1");
 		arguments.put(DropProbeArguments.PROBE, "probe1");
 		_board.executeClientCommand(ReactKanbanBoardControl.CMD_DROP_PROBE, arguments);
 		return (Map<?, ?>) ((Map<?, ?>) state().get(ReactKanbanBoardControl.DROP_VERDICTS)).get("probe1");
 	}
 
-	private Map<String, Object> dropArguments(String item, String targetKey, DropPosition position) {
+	private Map<String, Object> dropArguments(String item, String targetKey, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _board.getID());
 		arguments.put(DropArguments.KEYS, cardKey(item));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.TARGET_KEY, targetKey);
-		arguments.put(DropArguments.POSITION, position.wireName());
+		arguments.put(DropArguments.ZONE, zone.wireName());
 		return arguments;
 	}
 

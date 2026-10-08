@@ -20,8 +20,35 @@ export const DRAG_PAYLOAD_TYPE = 'application/x-tl-drag+json';
  */
 export const DRAG_KIND_TYPE_PREFIX = 'application/x-tl-drag-kind.';
 
-/** Where a drop happened relative to the row it was made on. */
-export type TLDropPosition = 'before' | 'after' | 'onto' | 'none';
+/** Wire name of the drop mode inserting among the items (`DropMode.ORDERED`). */
+export const DROP_MODE_ORDERED = 'ordered';
+
+/** Wire name of the drop mode dropping onto a single item (`DropMode.ONTO`). */
+export const DROP_MODE_ONTO = 'onto';
+
+/** Wire name of the drop mode dropping on the control as a whole (`DropMode.CONTROL`). */
+export const DROP_MODE_CONTROL = 'control';
+
+/**
+ * Where within an item the pointer is (`DropZone`): its upper, middle or lower part, or `none`
+ * beside the items. The client only reports the zone; the server decides what a drop there does.
+ */
+export type TLDropZone = 'upper' | 'middle' | 'lower' | 'none';
+
+/**
+ * What a drop target draws for an accepted drop (`DropMarker`): an insertion line before or after
+ * an item, a highlight of the item, or a highlight of the control as a whole.
+ */
+export type TLDropMarker = 'before' | 'after' | 'into' | 'control';
+
+/**
+ * How an item is split into zones:
+ * - `thirds`: upper, middle and lower third,
+ * - `halves`: upper and lower half,
+ * - `whole`: the whole item is its middle,
+ * - `none`: an item has no zone of its own, the pointer is always beside the items.
+ */
+export type TLZoneSplit = 'thirds' | 'halves' | 'whole' | 'none';
 
 /** What a drag carries from the control it started in to the control it is dropped on. */
 export interface TLDragPayload {
@@ -204,18 +231,48 @@ export function dragKindAccepted(
 }
 
 /**
- * Where a pointer at the given vertical position sits within a row: its outer thirds insert
- * `before` respectively `after` the row, its middle drops `onto` it.
+ * The split of a row of a flat list for the given announced drop modes: an insertion between two
+ * rows needs their upper and lower halves told apart, a drop onto a row needs the row itself, both
+ * together need the row in thirds, and a drop on the control as a whole needs no row at all.
+ *
+ * @param modes The wire names of the drop modes the target announces.
  */
-export function dropPositionAt(clientY: number, row: HTMLElement): TLDropPosition {
-  const rect = row.getBoundingClientRect();
+export function flatZoneSplit(modes: readonly string[]): TLZoneSplit {
+  const ordered = modes.includes(DROP_MODE_ORDERED);
+  const onto = modes.includes(DROP_MODE_ONTO);
+  if (ordered && onto) {
+    return 'thirds';
+  }
+  if (ordered) {
+    return 'halves';
+  }
+  if (onto) {
+    return 'whole';
+  }
+  return 'none';
+}
+
+/**
+ * The zone of the given item a pointer at the given vertical position is in, under the given split.
+ */
+export function dropZoneAt(clientY: number, item: HTMLElement, split: TLZoneSplit): TLDropZone {
+  if (split === 'none') {
+    return 'none';
+  }
+  if (split === 'whole') {
+    return 'middle';
+  }
+  const rect = item.getBoundingClientRect();
   const offset = clientY - rect.top;
+  if (split === 'halves') {
+    return offset < rect.height / 2 ? 'upper' : 'lower';
+  }
   const third = rect.height / 3;
   if (offset < third) {
-    return 'before';
+    return 'upper';
   }
   if (offset > third * 2) {
-    return 'after';
+    return 'lower';
   }
-  return 'onto';
+  return 'middle';
 }

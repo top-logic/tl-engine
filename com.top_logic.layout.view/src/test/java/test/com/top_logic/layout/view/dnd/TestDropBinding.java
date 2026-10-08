@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import junit.framework.Test;
@@ -24,8 +25,11 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
-import com.top_logic.layout.react.control.dnd.DropPosition;
+import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
+import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -35,7 +39,6 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DropBinding;
-import com.top_logic.layout.view.dnd.DropScope;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -45,13 +48,13 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests {@link DropBinding}, the drop target of declared {@code <drop>}s: which drag kinds it
- * accepts, whether single items are targets, and which declared drop applies a drop that arrives.
+ * accepts, which modes it announces, and which declared drop applies a drop that arrives.
  *
  * <p>
  * Tables serve as source and target control: the drop is driven through the control seam the client
  * uses - the {@code drop} command of the receiving table, naming the source table and its dragged
  * row - so what is exercised is the same path a dragged item takes. A row of the target table is
- * the item an {@link DropScope#ITEM} drop is made on.
+ * the item an {@link DropMode#ONTO} drop is made on.
  * </p>
  */
 public class TestDropBinding extends TestCase {
@@ -133,11 +136,11 @@ public class TestDropBinding extends TestCase {
 	}
 
 	private DropBinding.Drop tableDrop(AcceptedKinds accepted, Recorder action) {
-		return new DropBinding.Drop(accepted, DropScope.CONTROL, null, List.of(action));
+		return new DropBinding.Drop(accepted, DropMode.CONTROL, null, List.of(action));
 	}
 
 	private DropBinding.Drop rowDrop(String acceptedKind, Recorder action) {
-		return new DropBinding.Drop(kinds(acceptedKind), DropScope.ITEM, _targetChannel,
+		return new DropBinding.Drop(kinds(acceptedKind), DropMode.ONTO, _targetChannel,
 			List.of(action));
 	}
 
@@ -157,28 +160,30 @@ public class TestDropBinding extends TestCase {
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (targetIndex >= 0) {
 			arguments.put(DropArguments.TARGET_KEY, rowKey(targetIndex));
-			arguments.put(DropArguments.POSITION, DropPosition.ONTO.wireName());
+			arguments.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
 		} else {
-			arguments.put(DropArguments.POSITION, DropPosition.NONE.wireName());
+			arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		}
 		return target.executeClientCommand("drop", arguments);
 	}
 
 	/**
-	 * The kinds the table accepts are those of all its drops, and its rows are targets as soon as one
-	 * of them targets rows.
+	 * The kinds the table accepts are those of all its drops, and the modes it announces those of
+	 * all its drops, in declaration order.
 	 */
-	public void testAcceptedKindsAndRowTargeting() {
+	public void testAcceptedKindsAndModes() {
 		DropBinding both = new DropBinding(_context,
 			List.of(tableDrop(ROW_KIND, _onTable), rowDrop(OTHER_KIND, _onRow)));
 
 		assertEquals(kinds(ROW_KIND, OTHER_KIND), both.acceptedKinds());
-		assertTrue("A drop targeting rows makes the rows targets.", both.dropOnRows());
+		assertEquals("A drop onto rows announces its mode.", List.of(DropMode.CONTROL, DropMode.ONTO),
+			List.copyOf(both.dropModes()));
 
 		DropBinding onTableOnly =
 			new DropBinding(_context, List.of(tableDrop(ROW_KIND, _onTable)));
 		assertEquals(kinds(ROW_KIND), onTableOnly.acceptedKinds());
-		assertFalse("Without a row drop the rows are no targets.", onTableOnly.dropOnRows());
+		assertEquals("Without a row drop only the table is a target.", Set.of(DropMode.CONTROL),
+			onTableOnly.dropModes());
 
 		DropBinding withAny = new DropBinding(_context,
 			List.of(tableDrop(ROW_KIND, _onTable), tableDrop(AcceptedKinds.ANY, _onRow)));
@@ -253,7 +258,7 @@ public class TestDropBinding extends TestCase {
 	 */
 	public void testRowDropPublishesTheTargetRow() {
 		TableViewControl<String> target =
-			newTargetTable(List.of(tableDrop(ROW_KIND, _onTable), rowDrop(ROW_KIND, _onRow)));
+			newTargetTable(List.of(rowDrop(ROW_KIND, _onRow), tableDrop(ROW_KIND, _onTable)));
 
 		assertTrue(drop(target, 2, 1).isSuccess());
 
@@ -262,6 +267,60 @@ public class TestDropBinding extends TestCase {
 		assertEquals(List.of(SOURCE_ROWS.get(2)), _onRow._input);
 		assertEquals("The row dropped on is published before the chain runs.",
 			TARGET_ROWS.get(1), _targetChannel.get());
+	}
+
+	/**
+	 * The declared order decides between a table drop and a row drop accepting the same kind: the
+	 * one declared first applies a drop on a row; a drop beside the rows has no row the row drop
+	 * could take, and goes to the table drop wherever that is declared.
+	 */
+	public void testDeclaredOrderDecidesBetweenTableAndRowDrop() {
+		TableViewControl<String> tableFirst =
+			newTargetTable(List.of(tableDrop(ROW_KIND, _onTable), rowDrop(ROW_KIND, _onRow)));
+
+		assertTrue(drop(tableFirst, 0, 1).isSuccess());
+		assertTrue("The table drop declared first takes a drop on a row.", _onTable._executed);
+		assertFalse(_onRow._executed);
+		assertNull("A table drop publishes no row.", _targetChannel.get());
+
+		_onTable._executed = false;
+		TableViewControl<String> rowFirst =
+			newTargetTable(List.of(rowDrop(ROW_KIND, _onRow), tableDrop(ROW_KIND, _onTable)));
+
+		assertTrue(drop(rowFirst, 0, 1).isSuccess());
+		assertTrue("The row drop declared first takes a drop on a row.", _onRow._executed);
+		assertFalse(_onTable._executed);
+		assertEquals(TARGET_ROWS.get(1), _targetChannel.get());
+
+		_onRow._executed = false;
+		assertTrue(drop(rowFirst, 0, -1).isSuccess());
+		assertTrue("A drop beside the rows goes to the table drop.", _onTable._executed);
+		assertFalse(_onRow._executed);
+	}
+
+	/**
+	 * A row drop refusing a drop on a row hands it on to a table drop declared after it, and the
+	 * verdict names the location of the table drop.
+	 */
+	public void testARefusingRowDropHandsOnToTheTableDrop() {
+		DropBinding.Drop refusing = new DropBinding.Drop(kinds(ROW_KIND), DropMode.ONTO, _targetChannel,
+			List.of(_onRow), () -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
+			(row, objects) -> "Not here.");
+		DropBinding binding = new DropBinding(_context, List.of(refusing, tableDrop(ROW_KIND, _onTable)));
+
+		DropVerdict verdict = binding.check(request(TARGET_ROWS.get(0)));
+		assertTrue(verdict.isAccepted());
+		assertEquals(new DropLocation.Control(), verdict.location());
+
+		TableViewControl<String> target = newTable(TARGET_ROWS);
+		target.setDropTarget(binding);
+		assertTrue(drop(target, 0, 0).isSuccess());
+		assertTrue("The table drop applies what the row drop refuses.", _onTable._executed);
+		assertFalse(_onRow._executed);
+		assertNull(_targetChannel.get());
+
+		DropBinding alone = new DropBinding(_context, List.of(refusing));
+		assertRefused(REASON, alone.check(request(TARGET_ROWS.get(0))));
 	}
 
 	/**
@@ -305,7 +364,7 @@ public class TestDropBinding extends TestCase {
 		arguments.put(DropArguments.SOURCE, _source.getID());
 		arguments.put(DropArguments.KEYS, rowKey(0));
 		arguments.put(DropArguments.SELECTION, Boolean.TRUE);
-		arguments.put(DropArguments.POSITION, DropPosition.NONE.wireName());
+		arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		assertTrue(target.executeClientCommand("drop", arguments).isSuccess());
 
 		assertEquals(List.of(SOURCE_ROWS.get(0)), _onTable._input);
@@ -315,26 +374,26 @@ public class TestDropBinding extends TestCase {
 	private static final ResKey REASON = ResKey.text("Not here.");
 
 	/**
-	 * A drop whose table-wide state refuses is not announced - its kinds and its row targeting drop
-	 * out - and is refused with the state's reason; it is offered again as soon as the state allows.
+	 * A drop whose table-wide state refuses is not announced - its kinds and its mode drop out -
+	 * and is refused with the state's reason; it is offered again as soon as the state allows.
 	 */
 	public void testTableWideRefusalRemovesTheDrop() {
 		ExecutableState[] state = { ExecutableState.createDisabledState(REASON) };
-		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropScope.ITEM,
+		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropMode.ONTO,
 			_targetChannel, List.of(_onRow), () -> state[0], ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 		DropBinding binding = new DropBinding(_context, List.of(restricted, tableDrop(OTHER_KIND, _onTable)));
 
 		assertEquals("A disabled drop contributes no kind.", kinds(OTHER_KIND), binding.acceptedKinds());
-		assertFalse("A disabled row drop makes no row a target.", binding.dropOnRows());
-		assertRefused(REASON, binding.check(event(TARGET_ROWS.get(0))));
+		assertEquals("A disabled row drop announces no mode.", Set.of(DropMode.CONTROL), binding.dropModes());
+		assertRefused(REASON, binding.check(request(TARGET_ROWS.get(0))));
 
 		state[0] = ExecutableState.NOT_EXEC_HIDDEN;
-		assertRefused(I18NConstants.ERROR_DROP_REFUSED, binding.check(event(TARGET_ROWS.get(0))));
+		assertRefused(I18NConstants.ERROR_DROP_REFUSED, binding.check(request(TARGET_ROWS.get(0))));
 
 		state[0] = ExecutableState.EXECUTABLE;
 		assertEquals(kinds(ROW_KIND, OTHER_KIND), binding.acceptedKinds());
-		assertTrue(binding.dropOnRows());
-		assertTrue(binding.check(event(TARGET_ROWS.get(0))).isAccepted());
+		assertEquals(List.of(DropMode.ONTO, DropMode.CONTROL), List.copyOf(binding.dropModes()));
+		assertTrue(binding.check(request(TARGET_ROWS.get(0))).isAccepted());
 	}
 
 	/**
@@ -345,14 +404,14 @@ public class TestDropBinding extends TestCase {
 		String refusedRow = TARGET_ROWS.get(1);
 		ViewExecutabilityRule targetRule = row -> refusedRow.equals(row)
 			? ExecutableState.createDisabledState(REASON) : ExecutableState.EXECUTABLE;
-		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropScope.ITEM,
+		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropMode.ONTO,
 			_targetChannel, List.of(_onRow), () -> ExecutableState.EXECUTABLE, targetRule, null);
 		DropBinding binding = new DropBinding(_context, List.of(restricted));
 		TableViewControl<String> target = newTable(TARGET_ROWS);
 		target.setDropTarget(binding);
 
-		assertTrue(binding.check(event(TARGET_ROWS.get(0))).isAccepted());
-		assertRefused(REASON, binding.check(event(refusedRow)));
+		assertTrue(binding.check(request(TARGET_ROWS.get(0))).isAccepted());
+		assertRefused(REASON, binding.check(request(refusedRow)));
 
 		HandlerResult result = drop(target, 0, 1);
 		assertFalse("A drop on a refused row must fail.", result.isSuccess());
@@ -377,22 +436,22 @@ public class TestDropBinding extends TestCase {
 			return result[0];
 		};
 		DropBinding binding = new DropBinding(_context, List.of(new DropBinding.Drop(
-			kinds(ROW_KIND), DropScope.ITEM, _targetChannel, List.of(_onRow),
+			kinds(ROW_KIND), DropMode.ONTO, _targetChannel, List.of(_onRow),
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf)));
 
 		result[0] = null;
-		assertTrue("No value accepts.", binding.check(event(TARGET_ROWS.get(1))).isAccepted());
+		assertTrue("No value accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
 		assertEquals("The function gets the target row and the dragged objects.",
 			List.of(TARGET_ROWS.get(1), List.of(SOURCE_ROWS.get(0))), seen);
 
 		result[0] = Boolean.FALSE;
-		assertTrue("False accepts.", binding.check(event(TARGET_ROWS.get(1))).isAccepted());
+		assertTrue("False accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
 
 		result[0] = Boolean.TRUE;
-		assertRefused(I18NConstants.ERROR_DROP_REFUSED, binding.check(event(TARGET_ROWS.get(1))));
+		assertRefused(I18NConstants.ERROR_DROP_REFUSED, binding.check(request(TARGET_ROWS.get(1))));
 
 		result[0] = "Not here.";
-		assertRefused(REASON, binding.check(event(TARGET_ROWS.get(1))));
+		assertRefused(REASON, binding.check(request(TARGET_ROWS.get(1))));
 		assertNull("A check writes no target channel.", _targetChannel.get());
 	}
 
@@ -402,32 +461,47 @@ public class TestDropBinding extends TestCase {
 	public void testNoMatchIsRefused() {
 		DropBinding binding = new DropBinding(_context, List.of(tableDrop(OTHER_KIND, _onTable)));
 
-		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED, binding.check(event(null)));
+		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED, binding.check(request(null)));
 	}
 
 	/**
 	 * Applying a drop passes over a disabled declared drop - to the next matching one, or to none.
 	 */
 	public void testOnDropSkipsDisabledDrops() {
-		DropBinding.Drop disabled = new DropBinding.Drop(kinds(ROW_KIND), DropScope.CONTROL, null,
+		DropBinding.Drop disabled = new DropBinding.Drop(kinds(ROW_KIND), DropMode.CONTROL, null,
 			List.of(_onRow), () -> ExecutableState.createDisabledState(REASON),
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 
-		new DropBinding(_context, List.of(disabled)).onDrop(event(null));
+		new DropBinding(_context, List.of(disabled)).onDrop(event());
 		assertFalse("A disabled drop applies nothing.", _onRow._executed);
 
-		new DropBinding(_context, List.of(disabled, tableDrop(ROW_KIND, _onTable))).onDrop(event(null));
+		new DropBinding(_context, List.of(disabled, tableDrop(ROW_KIND, _onTable))).onDrop(event());
 		assertFalse(_onRow._executed);
 		assertTrue("The next matching drop applies.", _onTable._executed);
 	}
 
 	/**
-	 * A drop of the source table's first row, on the given row of a target table, or on the table
-	 * itself for {@code null}.
+	 * A drop of the source table's first row on the table itself, ready for application.
 	 */
-	private DropEvent event(String targetRow) {
-		return new DropEvent(_source, _source.dragKind(), List.of(SOURCE_ROWS.get(0)), targetRow,
-			targetRow == null ? DropPosition.NONE : DropPosition.ONTO);
+	private DropEvent event() {
+		return new DropEvent(_source, _source.dragKind(), List.of(SOURCE_ROWS.get(0)), new DropLocation.Control());
+	}
+
+	/**
+	 * A drop of the source table's first row, on the given row of a target table, or beside its
+	 * rows for {@code null} - located as a table locates it.
+	 */
+	private DropRequest request(String targetRow) {
+		return new DropRequest(_source, _source.dragKind(), List.of(SOURCE_ROWS.get(0)), mode -> {
+			switch (mode) {
+				case CONTROL:
+					return new DropLocation.Control();
+				case ONTO:
+					return targetRow == null ? null : new DropLocation.Onto(targetRow);
+				default:
+					return null;
+			}
+		});
 	}
 
 	private static void assertRefused(ResKey expectedReason, DropVerdict verdict) {

@@ -1,4 +1,4 @@
-import type { TLRunningDrag } from 'tl-react-bridge';
+import type { TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 
 /**
  * What a drop target shows while a drag hovers it and the server refuses a drop there: the
@@ -10,6 +10,10 @@ export interface DropVerdict {
   accepted: boolean;
   /** Why the drop is refused, in the user's language. */
   reason?: string;
+  /** What to draw for an accepted drop; absent where the target draws its own feedback. */
+  marker?: TLDropMarker;
+  /** Key of the item the marker is drawn at; absent for a marker of the control as a whole. */
+  markerKey?: string;
 }
 
 /** Distance in pixels between the hint on a refused drop target and the pointer or drag image. */

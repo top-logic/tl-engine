@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
+import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.LiveExecutability;
@@ -23,7 +24,7 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link DropConfig} instantiated for the element declaring it: its action chain instantiated,
- * its refusal function compiled, and the {@link DropScope} the element assigns it.
+ * its refusal function compiled, and the {@link DropMode} the element assigns it.
  *
  * <p>
  * An element compiles its drops once, when it is instantiated, and {@link #bind(ViewContext,
@@ -32,14 +33,14 @@ import com.top_logic.tool.execution.ExecutableState;
  *
  * @param config
  *        What the drop accepts, when it applies and where it publishes its target.
- * @param scope
- *        Whether the drop is made on the control as a whole or on a single item of it.
+ * @param mode
+ *        Whether the drop is made on the control as a whole or onto a single item of it.
  * @param actions
  *        The instantiated action chain applying the drop.
  * @param refuseIf
  *        The compiled {@link DropConfig#getRefuseIf()}, {@code null} without one.
  */
-public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> actions, QueryExecutor refuseIf) {
+public record DeclaredDrop(DropConfig config, DropMode mode, List<ViewAction> actions, QueryExecutor refuseIf) {
 
 	/**
 	 * Instantiates the action chain of the given drop and compiles its refusal function, so that
@@ -49,16 +50,16 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 	 *        The context the actions are instantiated in, and where problems are reported.
 	 * @param config
 	 *        The declared drop.
-	 * @param scope
-	 *        Whether the element makes the drop on the control as a whole or on a single item.
+	 * @param mode
+	 *        Whether the element makes the drop on the control as a whole or onto a single item.
 	 */
-	public static DeclaredDrop compile(InstantiationContext context, DropConfig config, DropScope scope) {
+	public static DeclaredDrop compile(InstantiationContext context, DropConfig config, DropMode mode) {
 		List<ViewAction> actions = config.getActions().stream()
 			.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
 			.filter(action -> action != null)
 			.toList();
 		Expr refuseIf = config.getRefuseIf();
-		return new DeclaredDrop(config, scope, actions, refuseIf == null ? null : QueryExecutor.compile(refuseIf));
+		return new DeclaredDrop(config, mode, actions, refuseIf == null ? null : QueryExecutor.compile(refuseIf));
 	}
 
 	/**
@@ -76,8 +77,8 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 	 * @param control
 	 *        The control accepting the drops.
 	 * @param refresh
-	 *        Announces the {@link DropBinding#acceptedKinds() accepted kinds} and the item targeting
-	 *        of the binding to the client again.
+	 *        Announces the {@link DropBinding#acceptedKinds() accepted kinds} and the
+	 *        {@link DropBinding#dropModes() modes} of the binding to the client again.
 	 * @param drops
 	 *        The compiled drops, in declaration order.
 	 */
@@ -117,7 +118,7 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 		}
 
 		QueryExecutor compiledRefuseIf = refuseIf;
-		return new DropBinding.Drop(acceptedKinds(), scope,
+		return new DropBinding.Drop(acceptedKinds(), mode,
 			targetChannelRef == null ? null : context.resolveChannel(targetChannelRef),
 			actions,
 			executability,

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.TypedConfiguration;
@@ -59,11 +60,24 @@ public final class DropSupport {
 	public static final String DROP_ACCEPTS = "dropAccepts";
 
 	/**
+	 * State key holding the {@link DropMode#wireName() wire names} of the
+	 * {@link DropTarget#dropModes() modes} of the operations a drop is accepted by, in the target's
+	 * order.
+	 *
+	 * <p>
+	 * The client splits an item into the {@link DropZone zones} these modes need.
+	 * </p>
+	 */
+	public static final String DROP_MODES = "dropModes";
+
+	/**
 	 * State key holding the verdicts answered to the {@link #CMD_DROP_PROBE probes} of the running
 	 * drag, by {@link DropProbeArguments#getProbe() probe identifier}.
 	 *
 	 * <p>
-	 * Each entry holds {@link #VERDICT_ACCEPTED} and, for a refusal, {@link #VERDICT_REASON}. The
+	 * Each entry holds {@link #VERDICT_ACCEPTED} and, for a refusal, {@link #VERDICT_REASON}; an
+	 * acceptance may name the {@link #VERDICT_MARKER marker} to draw and the
+	 * {@link #VERDICT_MARKER_KEY item} to draw it at. The
 	 * verdicts of a drag accumulate, so a client receiving several answers at once misses none of
 	 * them; a probe of the next drag discards them.
 	 * </p>
@@ -77,6 +91,18 @@ public final class DropSupport {
 	 * Entry of a refusing {@link #DROP_VERDICTS} verdict holding the reason, in the user's language.
 	 */
 	public static final String VERDICT_REASON = "reason";
+
+	/**
+	 * Entry of an accepting {@link #DROP_VERDICTS} verdict holding the {@link DropMarker#wireName()
+	 * wire name} of the marker the client draws for the location the drop is accepted at.
+	 */
+	public static final String VERDICT_MARKER = "marker";
+
+	/**
+	 * Entry of an accepting {@link #DROP_VERDICTS} verdict holding the client-side key of the item
+	 * the {@link #VERDICT_MARKER marker} is drawn at, absent for a marker of the control as a whole.
+	 */
+	public static final String VERDICT_MARKER_KEY = "markerKey";
 
 	/** The command applying a drop the client made, see {@link DropArguments}. */
 	public static final String CMD_DROP = "drop";
@@ -187,6 +213,26 @@ public final class DropSupport {
 	}
 
 	/**
+	 * The {@link #DROP_MODES} state value announcing the given modes.
+	 */
+	public static List<String> wireNames(Set<DropMode> modes) {
+		List<String> result = new ArrayList<>(modes.size());
+		for (DropMode mode : modes) {
+			result.add(mode.wireName());
+		}
+		return result;
+	}
+
+	/**
+	 * Records the verdict on a probe without a marker.
+	 *
+	 * @see #answerProbe(DropProbeArguments, ResKey, DropMarker, String)
+	 */
+	public Map<String, Object> answerProbe(DropProbeArguments args, ResKey refusal) {
+		return answerProbe(args, refusal, null, null);
+	}
+
+	/**
 	 * Records the verdict on a probe, and returns all verdicts of the probe's drag as the value of
 	 * the owner's {@link #DROP_VERDICTS} state.
 	 *
@@ -194,8 +240,15 @@ public final class DropSupport {
 	 *        The probe.
 	 * @param refusal
 	 *        Why a drop at the probed target is refused, {@code null} if it is accepted.
+	 * @param marker
+	 *        What the client draws for an accepted drop, {@code null} for nothing beyond its own
+	 *        feedback. Ignored for a refusal.
+	 * @param markerKey
+	 *        The client-side key of the item the marker is drawn at, {@code null} for a marker of
+	 *        the control as a whole.
 	 */
-	public Map<String, Object> answerProbe(DropProbeArguments args, ResKey refusal) {
+	public Map<String, Object> answerProbe(DropProbeArguments args, ResKey refusal, DropMarker marker,
+			String markerKey) {
 		String drag = args.getDrag();
 		if (!drag.equals(_probedDrag)) {
 			_probedDrag = drag;
@@ -205,6 +258,11 @@ public final class DropSupport {
 		verdict.put(VERDICT_ACCEPTED, Boolean.valueOf(refusal == null));
 		if (refusal != null) {
 			verdict.put(VERDICT_REASON, Resources.getInstance().getString(refusal));
+		} else if (marker != null) {
+			verdict.put(VERDICT_MARKER, marker.wireName());
+			if (markerKey != null) {
+				verdict.put(VERDICT_MARKER_KEY, markerKey);
+			}
 		}
 		_verdicts.put(args.getProbe(), verdict);
 		return new LinkedHashMap<>(_verdicts);
@@ -237,18 +295,25 @@ public final class DropSupport {
 
 	/**
 	 * Rewrites a client {@link #CMD_DROP} into the replay-stable {@link #CMD_DROP_OBJECTS} form: the
-	 * live drop names the dragged items and the target by session-bound client keys, the recorded
-	 * step names the business objects themselves.
+	 * live drop names the dragged items and the place it was made at by session-bound client keys,
+	 * the recorded step names the business objects and the {@link DropLocation} the drop is applied
+	 * at.
+	 *
+	 * <p>
+	 * Recording the location rather than the place keeps a replay independent of what the control
+	 * displays next to the place: a drop below a row inserts before the row following it, which
+	 * after a sort is another one.
+	 * </p>
 	 *
 	 * @param arguments
 	 *        The arguments of the client drop.
-	 * @param targetOf
-	 *        The object the owner displays under a client-side target key, {@code null} for a key
-	 *        designating none.
-	 * @return The recorded step, or {@code null} when an object cannot be named, so the drop is
-	 *         recorded verbatim rather than as an incomplete set.
+	 * @param locationOf
+	 *        The location the owner applies the given drop at, {@code null} for a drop it refuses.
+	 *        Must not modify anything.
+	 * @return The recorded step, or {@code null} when the drop is refused or an object cannot be
+	 *         named, so the drop is recorded verbatim rather than as an incomplete set.
 	 */
-	public RecordedCommand recordDrop(Map<String, Object> arguments, Function<String, Object> targetOf) {
+	public RecordedCommand recordDrop(Map<String, Object> arguments, Function<DropArguments, DropLocation> locationOf) {
 		if (!(_owner.commandItem(CMD_DROP, arguments) instanceof DropArguments args)) {
 			return null;
 		}
@@ -257,6 +322,10 @@ public final class DropSupport {
 		}
 		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
 		if (objects.isEmpty()) {
+			return null;
+		}
+		DropLocation location = locationOf.apply(args);
+		if (location == null) {
 			return null;
 		}
 		DropObjectsArguments recorded = TypedConfiguration.newConfigItem(DropObjectsArguments.class);
@@ -269,17 +338,79 @@ public final class DropSupport {
 			}
 			recorded.getObjects().add(name);
 		}
-		String targetKey = args.getTargetKey();
-		Object target = targetKey == null || targetKey.isEmpty() ? null : targetOf.apply(targetKey);
-		if (target != null) {
-			ModelName targetName = ScriptingModelKey.name(null, target);
-			if (targetName == null) {
+		recorded.setMode(location.mode().wireName());
+		if (location instanceof DropLocation.Onto onto) {
+			ModelName target = ScriptingModelKey.name(null, onto.target());
+			if (target == null) {
 				return null;
 			}
-			recorded.setTargetObject(targetName);
+			recorded.setTargetObject(target);
+		} else if (location instanceof DropLocation.Insert insert) {
+			if (insert.parent() != null) {
+				ModelName parent = ScriptingModelKey.name(null, insert.parent());
+				if (parent == null) {
+					return null;
+				}
+				recorded.setParent(parent);
+			}
+			if (insert.before() != null) {
+				ModelName before = ScriptingModelKey.name(null, insert.before());
+				if (before == null) {
+					return null;
+				}
+				recorded.setBefore(before);
+			}
 		}
-		recorded.setPosition(args.getPosition());
 		return new RecordedCommand(recorded);
+	}
+
+	/**
+	 * The {@link DropLocation} a recorded drop names.
+	 *
+	 * @param context
+	 *        The action context to resolve the identities in, {@code null} if there is none.
+	 * @param args
+	 *        The recorded drop.
+	 * @param unresolvedOut
+	 *        Receives each identity of a reference object that designates no object; the location
+	 *        then holds {@code null} in its place.
+	 * @return The location, or {@code null} if the recorded drop names an unknown mode or omits the
+	 *         reference object its mode requires.
+	 */
+	public static DropLocation recordedLocation(ActionContext context, DropObjectsArguments args,
+			List<ModelName> unresolvedOut) {
+		DropMode mode = DropMode.fromWire(args.getMode());
+		if (mode == null) {
+			return null;
+		}
+		switch (mode) {
+			case CONTROL:
+				return new DropLocation.Control();
+			case ONTO:
+				if (args.getTargetObject() == null) {
+					return null;
+				}
+				return new DropLocation.Onto(locate(context, args.getTargetObject(), unresolvedOut));
+			case ORDERED:
+				return new DropLocation.Insert(locate(context, args.getParent(), unresolvedOut),
+					locate(context, args.getBefore(), unresolvedOut));
+		}
+		throw new IllegalArgumentException("Unknown drop mode: " + mode);
+	}
+
+	/**
+	 * The object the given identity designates, {@code null} for no identity; an identity
+	 * designating no object is added to the given list.
+	 */
+	private static Object locate(ActionContext context, ModelName name, List<ModelName> unresolvedOut) {
+		if (name == null) {
+			return null;
+		}
+		Object object = ScriptingModelKey.locate(context, null, name);
+		if (object == null) {
+			unresolvedOut.add(name);
+		}
+		return object;
 	}
 
 	/**

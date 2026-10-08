@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.dnd;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -14,6 +16,9 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropEvent;
+import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.view.I18NConstants;
@@ -26,29 +31,34 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * The {@link DropTarget} of an element's declared drops: it accepts what the drops declare, and
- * applies a drop by running the action chain of the drop that matches it.
+ * applies a drop by running the action chain of the drop that accepts it.
  *
  * <p>
  * The {@link #acceptedKinds() accepted kinds} of the binding are those of its enabled drops
- * together, and reach the client, which thereby offers only a drop that can apply. The drop that
- * arrives is matched by its {@link DropEvent#kind() kind} again - per declared drop this time, to
- * find the one that applies: a drop accepting {@link AcceptedKinds#ANY any} drag matches every
- * kind and a drag without one, a drop listing kinds matches only a drag of one of them.
+ * together, and reach the client, which thereby offers only a drop that can apply; so do the
+ * {@link #dropModes() modes} of the enabled drops, which tell the client how to split an item into
+ * zones. A drop that arrives is matched against the declared drops in their declaration order:
+ * the first drop that accepts its {@link DropRequest#kind() kind} - a drop accepting
+ * {@link AcceptedKinds#ANY any} drag matches every kind and a drag without one, a drop listing
+ * kinds matches only a drag of one of them -, finds a {@link DropRequest#location(DropMode)
+ * location} for its {@link DropMode mode} at the place the drop was made, and is not restricted
+ * there applies it.
  * </p>
  *
  * <p>
- * The binding knows nothing about what the control displays: a drop on a single item names that
- * item as the {@link DropEvent#target() target} of the event, and the {@link DropScope} of each
- * declared drop says whether it is made on such an item or on the control as a whole.
+ * The binding knows nothing about what the control displays: the control resolves the place a drop
+ * is made at into a location per mode, and the location of a {@link DropMode#ONTO} drop names the
+ * item the drop is made on.
  * </p>
  *
  * <p>
  * A drop is restricted in three stages, each asked only after the previous one accepted: its
  * {@link Drop#executability() control-wide state} decides whether the drop is offered at all - a
- * disabled drop contributes no kind and applies nothing; its {@link Drop#targetRule() target rule}
- * decides over the item an {@link DropScope#ITEM item} drop is made on; its
- * {@link Drop#refuseIf() refusal function} decides over the target and the dragged objects together.
- * The first refusal is what the user is shown while dragging, see {@link #check(DropEvent)}.
+ * disabled drop contributes no kind and no mode, and applies nothing; its
+ * {@link Drop#targetRule() target rule} decides over the item an {@link DropMode#ONTO} drop is made
+ * on; its {@link Drop#refuseIf() refusal function} decides over the target and the dragged objects
+ * together. A drop that refuses passes the drop on to the next declared one; where none accepts,
+ * the first refusal is what the user is shown, see {@link #check(DropRequest)}.
  * </p>
  *
  * @see DropConfig
@@ -61,37 +71,38 @@ public class DropBinding implements DropTarget {
 	 *
 	 * @param accepted
 	 *        The kinds of the drags the drop accepts.
-	 * @param scope
-	 *        Whether the control as a whole or a single item is the target.
+	 * @param mode
+	 *        How the drop relates to the items of the control: made on the control as a whole, or
+	 *        onto a single item.
 	 * @param targetChannel
 	 *        The channel the target item is written to before the actions run, or {@code null} if
-	 *        the drop declares none. A {@link DropScope#CONTROL} drop writes {@code null}.
+	 *        the drop declares none. A drop other than {@link DropMode#ONTO} writes {@code null}.
 	 * @param actions
 	 *        The action chain applying the drop, with the dropped objects as its input.
 	 * @param executability
 	 *        The control-wide state of the drop, asked anew on every use: while it is not
 	 *        executable, the drop is neither announced nor applied.
 	 * @param targetRule
-	 *        The rule deciding over the item a {@link DropScope#ITEM} drop is made on, the item
-	 *        being its input. Not asked for a {@link DropScope#CONTROL} drop.
+	 *        The rule deciding over the item a {@link DropMode#ONTO} drop is made on, the item being
+	 *        its input. Not asked for a drop of another mode.
 	 * @param refuseIf
-	 *        Computes the reason a drop is refused from the target item ({@code null} for a drop on
-	 *        the control as a whole) and the list of dropped objects; the result is interpreted as by
-	 *        {@link DisabledIf#stateFor(Object)}. {@code null} refuses nothing.
+	 *        Computes the reason a drop is refused from the target item ({@code null} for a drop
+	 *        other than {@link DropMode#ONTO}) and the list of dropped objects; the result is
+	 *        interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null} refuses nothing.
 	 */
-	public record Drop(AcceptedKinds accepted, DropScope scope, ViewChannel targetChannel,
+	public record Drop(AcceptedKinds accepted, DropMode mode, ViewChannel targetChannel,
 			List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
 			BiFunction<Object, List<?>, Object> refuseIf) {
 
 		/**
 		 * Creates an unrestricted {@link Drop}: always enabled, accepting every target.
 		 *
-		 * @see #Drop(AcceptedKinds, DropScope, ViewChannel, List, Supplier, ViewExecutabilityRule,
+		 * @see #Drop(AcceptedKinds, DropMode, ViewChannel, List, Supplier, ViewExecutabilityRule,
 		 *      BiFunction)
 		 */
-		public Drop(AcceptedKinds accepted, DropScope scope, ViewChannel targetChannel,
+		public Drop(AcceptedKinds accepted, DropMode mode, ViewChannel targetChannel,
 				List<ViewAction> actions) {
-			this(accepted, scope, targetChannel, actions, () -> ExecutableState.EXECUTABLE,
+			this(accepted, mode, targetChannel, actions, () -> ExecutableState.EXECUTABLE,
 				ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 		}
 
@@ -104,14 +115,14 @@ public class DropBinding implements DropTarget {
 		}
 
 		/**
-		 * Asks the {@link #targetRule() target rule} (for a {@link DropScope#ITEM} drop) and the
+		 * Asks the {@link #targetRule() target rule} (for a {@link DropMode#ONTO} drop) and the
 		 * {@link #refuseIf() refusal function} about a drop of the given objects on the given
 		 * target; the control-wide state is not asked here.
 		 *
 		 * @return The reason of the first refusal, {@code null} if the drop is accepted.
 		 */
 		ResKey refusal(Object target, List<?> objects) {
-			if (scope == DropScope.ITEM) {
+			if (mode == DropMode.ONTO) {
 				ResKey refusal = reasonOf(targetRule.isExecutable(target));
 				if (refusal != null) {
 					return refusal;
@@ -122,6 +133,20 @@ public class DropBinding implements DropTarget {
 			}
 			return null;
 		}
+	}
+
+	/**
+	 * The outcome of matching a drop against the declared drops.
+	 *
+	 * @param drop
+	 *        The declared drop that accepts the drop, {@code null} if none does.
+	 * @param location
+	 *        The location {@code drop} accepts the drop at, {@code null} if none does.
+	 * @param refusal
+	 *        The first refusal met on the way, {@code null} if there was none.
+	 */
+	private record Match(Drop drop, DropLocation location, ResKey refusal) {
+		// Pure data.
 	}
 
 	private final ReactContext _context;
@@ -158,57 +183,51 @@ public class DropBinding implements DropTarget {
 	}
 
 	/**
-	 * Whether one of the currently {@link Drop#isEnabled() enabled} drops targets a single item.
+	 * The modes of the declared drops that are currently {@link Drop#isEnabled() enabled}, in
+	 * declaration order.
 	 */
 	@Override
-	public boolean dropOnRows() {
+	public Set<DropMode> dropModes() {
+		Set<DropMode> result = new LinkedHashSet<>();
 		for (Drop drop : _drops) {
-			if (drop.scope() == DropScope.ITEM && drop.isEnabled()) {
-				return true;
+			if (drop.isEnabled()) {
+				result.add(drop.mode());
 			}
 		}
-		return false;
+		return result;
 	}
 
 	/**
-	 * Decides over the drop {@link #onDrop(DropEvent)} would apply.
+	 * Decides which declared drop applies the given drop, and where.
 	 *
 	 * <p>
-	 * The drop is matched exactly as {@link #onDrop(DropEvent)} matches it, among the enabled drops,
-	 * and its {@link Drop#targetRule() target rule} and its {@link Drop#refuseIf() refusal function}
-	 * are asked in this order; the first refusal is the verdict. Where no enabled drop matches, a
-	 * matching disabled one gives the reason of its {@link Drop#executability() control-wide state};
-	 * a drop nothing matches at all is refused as not accepted. Nothing is modified, in particular
-	 * no target channel is written.
+	 * The declared drops are tried in declaration order. A drop not accepting the drag's kind, or
+	 * finding no location for its mode in the request, is skipped silently; one that is
+	 * {@link Drop#isEnabled() disabled}, or whose {@link Drop#targetRule() target rule} or
+	 * {@link Drop#refuseIf() refusal function} refuses the drop at its location, is skipped with its
+	 * reason. The first drop that accepts wins, and the verdict accepts the drop at its location.
+	 * Where none accepts, the verdict is the first refusal met, or a refusal as not accepted where
+	 * there was none. Nothing is modified, in particular no target channel is written.
 	 * </p>
 	 */
 	@Override
-	public DropVerdict check(DropEvent event) {
-		Drop drop = select(event, true);
-		ResKey refusal;
-		if (drop != null) {
-			refusal = drop.refusal(targetOf(drop, event), event.objects());
-		} else {
-			Drop disabled = select(event, false);
-			refusal = disabled == null ? com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED
-				: reasonOf(disabled.executability().get());
-			if (refusal == null) {
-				// The drop turned enabled between the two lookups; it is refused all the same.
-				refusal = I18NConstants.ERROR_DROP_REFUSED;
-			}
+	public DropVerdict check(DropRequest request) {
+		Match match = match(request);
+		if (match.drop() != null) {
+			return DropVerdict.accepted(match.location());
 		}
-		return refusal == null ? DropVerdict.ACCEPTED : DropVerdict.refused(refusal);
+		return DropVerdict.refused(match.refusal() != null ? match.refusal()
+			: com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 	}
 
 	/**
-	 * Applies the drop through the first enabled declared drop that matches it.
+	 * Applies the drop through the declared drop that accepts it at its location.
 	 *
 	 * <p>
-	 * A drop made on an item is offered to the {@link DropScope#ITEM item} drops first, and falls
-	 * back to a {@link DropScope#CONTROL control} drop when none of them accepts the drag - a control
-	 * whose items are targets for drags of one kind still accepts drags of another kind as a whole, wherever
-	 * the pointer happened to be. A drop nothing accepts does nothing, and neither does one whose
-	 * matching declared drop is {@link Drop#isEnabled() disabled}.
+	 * The drop is matched as {@link #check(DropRequest)} matches a {@link DropRequest#of(DropEvent)
+	 * request of exactly the event's location} - which picks the same declared drop the check of the
+	 * place it was made at picked: a drop declared before it either has no location of the event's
+	 * mode, or refused that same location. A drop nothing accepts does nothing.
 	 * </p>
 	 */
 	@Override
@@ -223,51 +242,57 @@ public class DropBinding implements DropTarget {
 	 * <p>
 	 * The follow-up runs as a last step of the chain: after an action that waits for the user, it
 	 * runs once the chain resumes, and an aborted chain does not run it - neither does a drop
-	 * nothing matches.
+	 * nothing accepts.
 	 * </p>
 	 */
 	@Override
 	public void onDrop(DropEvent event, Runnable onApplied) {
-		Drop drop = select(event, true);
-		if (drop != null) {
-			apply(drop, event.objects(), targetOf(drop, event), onApplied);
+		Match match = match(DropRequest.of(event));
+		if (match.drop() != null) {
+			apply(match.drop(), event.objects(), targetOf(match.location()), onApplied);
 		}
 	}
 
 	/**
-	 * The declared drop that applies the given drop: the first item drop accepting its
-	 * {@link DropEvent#kind() kind} for a drop made on an item, otherwise the first such control
-	 * drop; {@code null} if none matches.
-	 *
-	 * @param enabledOnly
-	 *        Whether only the currently {@link Drop#isEnabled() enabled} drops are considered.
+	 * Matches the given drop against the declared drops in declaration order, see
+	 * {@link #check(DropRequest)}.
 	 */
-	private Drop select(DropEvent event, boolean enabledOnly) {
-		String kind = event.kind();
-		if (event.target() != null) {
-			Drop itemDrop = matching(DropScope.ITEM, kind, enabledOnly);
-			if (itemDrop != null) {
-				return itemDrop;
-			}
-		}
-		return matching(DropScope.CONTROL, kind, enabledOnly);
-	}
-
-	private Drop matching(DropScope scope, String kind, boolean enabledOnly) {
+	private Match match(DropRequest request) {
+		ResKey firstRefusal = null;
 		for (Drop drop : _drops) {
-			if (drop.scope() == scope && drop.accepted().accepts(kind) && (!enabledOnly || drop.isEnabled())) {
-				return drop;
+			if (!drop.accepted().accepts(request.kind())) {
+				continue;
+			}
+			DropLocation location = request.location(drop.mode());
+			if (location == null) {
+				continue;
+			}
+			ResKey refusal;
+			if (!drop.isEnabled()) {
+				refusal = reasonOf(drop.executability().get());
+				if (refusal == null) {
+					// The drop turned enabled between the two lookups; it is refused all the same.
+					refusal = I18NConstants.ERROR_DROP_REFUSED;
+				}
+			} else {
+				refusal = drop.refusal(targetOf(location), request.objects());
+			}
+			if (refusal == null) {
+				return new Match(drop, location, null);
+			}
+			if (firstRefusal == null) {
+				firstRefusal = refusal;
 			}
 		}
-		return null;
+		return new Match(null, null, firstRefusal);
 	}
 
 	/**
-	 * The target the given declared drop applies a drop to: the item dropped on for an item drop,
-	 * {@code null} for a drop on the control as a whole.
+	 * The target item a drop at the given location applies to: the item dropped onto for a
+	 * {@link DropLocation.Onto} location, {@code null} for any other.
 	 */
-	private static Object targetOf(Drop drop, DropEvent event) {
-		return drop.scope() == DropScope.ITEM ? event.target() : null;
+	private static Object targetOf(DropLocation location) {
+		return location instanceof DropLocation.Onto onto ? onto.target() : null;
 	}
 
 	/**

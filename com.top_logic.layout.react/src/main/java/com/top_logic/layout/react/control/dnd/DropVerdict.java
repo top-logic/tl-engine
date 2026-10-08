@@ -10,24 +10,38 @@ import java.util.Objects;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * Whether a {@link DropTarget} accepts a concrete {@link DropEvent drop}, and if not, why.
+ * Whether a {@link DropTarget} accepts a concrete {@link DropRequest drop}, where, and if not, why.
  *
  * <p>
- * A verdict is either {@link #ACCEPTED} or {@link #refused(ResKey) refused} with a reason the user
- * is shown: while the drag still hovers the target, and as the error of a drop made anyway.
+ * A verdict is either {@link #accepted(DropLocation) accepted} at the location of the operation
+ * that accepts the drop, or {@link #refused(ResKey) refused} with a reason the user is shown: while
+ * the drag still hovers the target, and as the error of a drop made anyway. The location of an
+ * accepting verdict is where the drop is applied, and what the control displaying the target draws
+ * its {@link DropMarker marker} for.
  * </p>
  *
- * @see DropTarget#check(DropEvent)
+ * @see DropTarget#check(DropRequest)
  */
 public final class DropVerdict {
 
-	/** The verdict accepting a drop. */
-	public static final DropVerdict ACCEPTED = new DropVerdict(null);
+	private final DropLocation _location;
 
 	private final ResKey _reason;
 
-	private DropVerdict(ResKey reason) {
+	private DropVerdict(DropLocation location, ResKey reason) {
+		_location = location;
 		_reason = reason;
+	}
+
+	/**
+	 * The verdict accepting a drop at the given location.
+	 *
+	 * @param location
+	 *        The location the accepting operation applies the drop at, one the
+	 *        {@link DropRequest#location(DropMode) request} offered.
+	 */
+	public static DropVerdict accepted(DropLocation location) {
+		return new DropVerdict(Objects.requireNonNull(location, "An accepted drop needs a location."), null);
 	}
 
 	/**
@@ -37,7 +51,7 @@ public final class DropVerdict {
 	 *        Why the drop is impossible, phrased for the user.
 	 */
 	public static DropVerdict refused(ResKey reason) {
-		return new DropVerdict(Objects.requireNonNull(reason, "A refusal needs a reason."));
+		return new DropVerdict(null, Objects.requireNonNull(reason, "A refusal needs a reason."));
 	}
 
 	/**
@@ -45,6 +59,13 @@ public final class DropVerdict {
 	 */
 	public boolean isAccepted() {
 		return _reason == null;
+	}
+
+	/**
+	 * Where the drop is applied, {@code null} when it is refused.
+	 */
+	public DropLocation location() {
+		return _location;
 	}
 
 	/**
@@ -56,7 +77,7 @@ public final class DropVerdict {
 
 	@Override
 	public String toString() {
-		return isAccepted() ? "accepted" : "refused(" + _reason + ")";
+		return isAccepted() ? "accepted(" + _location + ")" : "refused(" + _reason + ")";
 	}
 
 }

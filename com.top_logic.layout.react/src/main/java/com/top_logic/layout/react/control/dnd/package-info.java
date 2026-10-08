@@ -24,5 +24,15 @@
  * is still moving: it highlights a control whose {@link AcceptedKinds accepted kinds} the drag
  * matches, and the server decides the drop itself once it arrives.
  * </p>
+ *
+ * <p>
+ * Of the place a drop is made at, the client reports only the item under the pointer and the
+ * {@link com.top_logic.layout.react.control.dnd.DropZone zone} within it, split as the
+ * {@link com.top_logic.layout.react.control.dnd.DropMode modes} of the target's operations need. The
+ * receiving control resolves the place into a {@link com.top_logic.layout.react.control.dnd.DropLocation}
+ * per mode, the target picks the first of its operations that accepts the drop at the location of
+ * its mode, and the control draws the {@link com.top_logic.layout.react.control.dnd.DropMarker marker}
+ * of that location.
+ * </p>
  */
 package com.top_logic.layout.react.control.dnd;

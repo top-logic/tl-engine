@@ -1,5 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
@@ -126,11 +126,21 @@ interface RowState {
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
-/** Where a running drag hovers the table: a row and the position within it, or the table itself. */
+/** Command applying a drop (DropSupport.CMD_DROP). */
+const CMD_DROP = 'drop';
+
+/** Row class suffix of each marker drawn at a row. */
+const ROW_MARKER_CLASS: Record<Exclude<TLDropMarker, 'control'>, string> = {
+  before: 'tlTableView__row--dragOver-before',
+  after: 'tlTableView__row--dragOver-after',
+  into: 'tlTableView__row--dragOver-onto',
+};
+
+/** Where a running drag hovers the table: a row and the zone within it, or beside the rows. */
 interface DropState {
-  /** The hovered row, `null` for the table as a whole. */
+  /** The hovered row, `null` beside the rows. */
   row: string | null;
-  position: TLDropPosition;
+  zone: TLDropZone;
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
 }
@@ -294,7 +304,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dragKind = (state.dragKind as string | null) ?? undefined;
   const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
-  const dropOnRows = (state.dropOnRows as boolean) ?? false;
+  const dropModes = (state.dropModes as string[]) ?? [];
+  const zoneSplit = flatZoneSplit(dropModes);
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const sortedColumnCount = React.useMemo(
@@ -338,6 +349,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // accepted until the server says otherwise.
   const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
   const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
+
+  // The marker of the drop accepted at the hovered place. Until the verdict on a newly hovered place
+  // arrives, the marker of the place hovered before stays, so the marker does not flicker.
+  const lastAcceptedRef = React.useRef<DropVerdict | null>(null);
+  if (dropState === null || dropRefused) {
+    lastAcceptedRef.current = null;
+  } else if (dropVerdict !== undefined) {
+    lastAcceptedRef.current = dropVerdict;
+  }
+  const dropMarker = lastAcceptedRef.current?.marker;
+  const dropMarkerKey = lastAcceptedRef.current?.markerKey;
 
   // A drag hovering this table may end without any event reaching it: a refused drop is not
   // dispatched here, and the source's dragend reaches the source's control only.
@@ -676,18 +698,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [controlId, dragKind]);
 
-  /** Which row an event points at, and where within it, or the table itself. */
+  /**
+   * Which row an event points at and the zone within it, split as the announced drop modes need,
+   * or no row where the pointer is beside the rows or the rows have no zones.
+   */
   const dropTargetAt = React.useCallback(
-    (event: React.DragEvent): { row: string | null; position: TLDropPosition } => {
-      if (dropOnRows && event.target instanceof Element) {
+    (event: React.DragEvent): { row: string | null; zone: TLDropZone } => {
+      if (zoneSplit !== 'none' && event.target instanceof Element) {
         const rowElement = event.target.closest('.tlTableView__row') as HTMLElement | null;
         const key = rowElement?.dataset.dropRow;
         if (rowElement && key) {
-          return { row: key, position: dropPositionAt(event.clientY, rowElement) };
+          return { row: key, zone: dropZoneAt(event.clientY, rowElement, zoneSplit) };
         }
       }
-      return { row: null, position: 'none' };
-    }, [dropOnRows]);
+      return { row: null, zone: 'none' };
+    }, [zoneSplit]);
 
   const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
     if (dragColumnRef.current) {
@@ -724,7 +749,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (drag) {
       // The payload is unreadable here, but a drag started in this document is known: ask the
       // server once per drag and target whether a drop there would be accepted.
-      probe = drag.id + '|' + (target.row ?? '') + '|' + target.position;
+      probe = drag.id + '|' + (target.row ?? '') + '|' + target.zone;
       let probes = probesRef.current;
       if (!probes || probes.drag !== drag.id) {
         probes = { drag: drag.id, sent: new Set() };
@@ -736,7 +761,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           source: drag.payload.source,
           keys: drag.payload.keys.join(','),
           selection: drag.payload.selection,
-          position: target.position,
+          zone: target.zone,
           drag: drag.id,
           probe,
         };
@@ -747,7 +772,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
     }
     setDropState((previous) =>
-      previous && previous.row === target.row && previous.position === target.position
+      previous && previous.row === target.row && previous.zone === target.zone
           && previous.probe === probe
         ? previous
         : { ...target, probe });
@@ -787,13 +812,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         // no comma.
         keys: payload.keys.join(','),
         selection: payload.selection,
-        position: target.position,
+        zone: target.zone,
       };
       if (target.row) {
-        // Named only for a drop on a row; a drop on the table as a whole names none.
+        // Named only for a drop on a row; a drop beside the rows names none.
         args.targetKey = target.row;
       }
-      sendCommand('drop', args);
+      sendCommand(CMD_DROP, args);
     }
   }, [dropAcceptsAny, dropAccepts, dropTargetAt, handleDrop, sendCommand]);
 
@@ -1223,7 +1248,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tlTableView',
-        dropState && dropState.row === null && (dropRefused ? 'tlTableView--dropRefused' : 'tlTableView--dragover'),
+        dropState && (dropRefused
+          ? (dropState.row === null && 'tlTableView--dropRefused')
+          : (dropMarker === 'control' && 'tlTableView--dragover')),
         fillClass)}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
@@ -1532,8 +1559,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 'tlTableView__row' +
                 (row.selected ? ' tlTableView__row--selected' : '') +
                 (row.index === cursorIndex ? ' tlTableView__row--cursor' : '') +
-                (dropState && dropState.row === row.id
-                  ? (dropRefused ? ' tlTableView__row--dropRefused' : ' tlTableView__row--dragOver-' + dropState.position)
+                (dropState && dropRefused && dropState.row === row.id ? ' tlTableView__row--dropRefused' : '') +
+                (dropState && !dropRefused && dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id
+                  ? ' ' + ROW_MARKER_CLASS[dropMarker]
                   : '') +
                 (row.groupCount != null ? ' tlTableView__row--group' : '')
               }

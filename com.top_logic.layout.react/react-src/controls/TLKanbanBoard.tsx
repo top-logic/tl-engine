@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
@@ -49,6 +49,22 @@ interface ColumnDescriptor {
   cards: CardDescriptor[];
 }
 
+/**
+ * Where a drop is made relative to the card it names: before or after it, or `none` for a drop on
+ * the column beside its cards.
+ */
+type CardPosition = 'before' | 'after' | 'none';
+
+/**
+ * The zone a drop at a position is reported in: the upper part of the card it is made before, the
+ * lower part of the card it is made after, none on the column beside its cards.
+ */
+const ZONE_OF_POSITION: Record<CardPosition, TLDropZone> = {
+  before: 'upper',
+  after: 'lower',
+  none: 'none',
+};
+
 /** Where a running drag hovers the board. */
 interface DropState {
   /** Key of the hovered column. */
@@ -58,7 +74,7 @@ interface DropState {
   target: string;
 
   /** Where the drop is made relative to the card, `none` for a drop on the column. */
-  position: TLDropPosition;
+  position: CardPosition;
 
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
@@ -181,7 +197,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
    * no drop of the running drag.
    */
   const dropTargetAt = React.useCallback(
-    (column: ColumnDescriptor, event: React.DragEvent): { target: string; position: TLDropPosition } | null => {
+    (column: ColumnDescriptor, event: React.DragEvent): { target: string; position: CardPosition } | null => {
       const drag = runningDrag();
       const withinColumn = drag !== null && drag.payload.source === controlId
         && drag.payload.keys.every((key) => column.cards.some((card) => card.key === key));
@@ -245,7 +261,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
           keys: drag.payload.keys.join(','),
           selection: drag.payload.selection,
           targetKey: target.target,
-          position: target.position,
+          zone: ZONE_OF_POSITION[target.position],
           drag: drag.id,
           probe,
         });
@@ -285,7 +301,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
         keys: payload.keys.join(','),
         selection: payload.selection,
         targetKey: target.target,
-        position: target.position,
+        zone: ZONE_OF_POSITION[target.position],
       });
     }
   }, [dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);

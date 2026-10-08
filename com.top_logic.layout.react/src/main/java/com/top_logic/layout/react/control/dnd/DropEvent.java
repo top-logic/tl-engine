@@ -10,7 +10,8 @@ import java.util.List;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
- * A drop announced to a {@link DropTarget}.
+ * A drop announced to a {@link DropTarget} for application: the dragged objects and the
+ * {@link DropLocation} the accepting operation applies them at.
  *
  * @param source
  *        The control the objects were dragged out of, or {@code null} when the drop was replayed
@@ -21,14 +22,18 @@ import com.top_logic.layout.react.control.ReactControl;
  *        a kind. A replayed drop carries the kind the drag had when it was recorded.
  * @param objects
  *        The dragged business objects, as resolved by the {@link DragSourceControl}. Never empty.
- * @param target
- *        The business object of the row the drop was made on, or {@code null} when the drop was
- *        made on the control as a whole.
- * @param position
- *        Where the drop happened relative to {@code target}; {@link DropPosition#NONE} when there
- *        is no {@code target}.
+ * @param location
+ *        Where the drop is applied, the location the {@link DropTarget#check(DropRequest) check}
+ *        accepted the drop at.
  */
-public record DropEvent(ReactControl source, String kind, List<?> objects, Object target,
-		DropPosition position) {
-	// Value type.
+public record DropEvent(ReactControl source, String kind, List<?> objects, DropLocation location) {
+
+	/**
+	 * The business object of the item the drop is made {@link DropLocation.Onto onto},
+	 * {@code null} for a drop at another kind of location.
+	 */
+	public Object target() {
+		return location instanceof DropLocation.Onto onto ? onto.target() : null;
+	}
+
 }

@@ -21,6 +21,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -73,11 +74,11 @@ public class TestTableElementDragDrop extends BasicTestCase {
 	private static final String DROP_ACCEPTS = "dropAccepts";
 
 	/**
-	 * State key telling whether the rows of a table are drop targets.
+	 * State key holding the modes of the drop operations a table offers.
 	 *
 	 * @implNote Restated here because {@link TableViewControl} keeps it private.
 	 */
-	private static final String DROP_ON_ROWS = "dropOnRows";
+	private static final String DROP_MODES = "dropModes";
 
 	private ViewChannel _dragAllowed;
 
@@ -149,12 +150,12 @@ public class TestTableElementDragDrop extends BasicTestCase {
 		control.attach();
 
 		assertEquals("A refused drop is not announced.", List.of(), state(control).get(DROP_ACCEPTS));
-		assertEquals(Boolean.FALSE, state(control).get(DROP_ON_ROWS));
+		assertEquals("A refused drop announces no mode.", List.of(), state(control).get(DROP_MODES));
 
 		_dropAllowed.set("yes");
 		assertEquals("The drop is announced as soon as its rules allow it.",
 			List.of(ROW_KIND), state(control).get(DROP_ACCEPTS));
-		assertEquals(Boolean.TRUE, state(control).get(DROP_ON_ROWS));
+		assertEquals(List.of(DropMode.ONTO.wireName()), state(control).get(DROP_MODES));
 
 		_dropAllowed.set(null);
 		assertEquals(List.of(), state(control).get(DROP_ACCEPTS));

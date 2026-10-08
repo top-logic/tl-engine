@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { Menu, MenuItem } from './menu/Menu';
@@ -77,9 +77,6 @@ const TableKeyBindings: React.FC<{
   useKeyboardBinding('Enter', () => !inEditor() && onActivate());
   return null;
 };
-
-/** The editors a cell may hold: they answer arrows, Space and Enter themselves. */
-const EDITOR_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
 const I18N_KEYS = {
   'js.table.selectAll': 'Select all rows',
@@ -360,7 +357,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const isEditorFocused = React.useCallback(() => {
     const active = document.activeElement;
     return !!active && active !== gridRef.current && !!gridRef.current?.contains(active)
-      && !!active.closest(EDITOR_SELECTOR);
+      && isEditorTarget(active);
   }, []);
 
   const columns = (state.columns as ColumnState[]) ?? [];

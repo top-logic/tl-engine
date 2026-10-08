@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, useI18N, tooltipProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, useI18N, tooltipProps, ThemeIcon, isEditorTarget } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ProgressBar } from './TLProgress';
 
@@ -25,9 +25,6 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-right';
 
 /** The indent of a level until the token is read: the toggle's width, size-control-sm. */
 const INDENT_FALLBACK_PX = 24;
-
-/** The editors a node's content may hold: they answer arrows, Space and Enter themselves. */
-const EDITOR_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
 /** The server's names of the three drop positions (ReactTreeControl), by the shared calculator's. */
 const SERVER_POSITION = { before: 'above', onto: 'within', after: 'below' } as const;
@@ -232,7 +229,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     // An editor inside a node keeps its keys: Space, Enter and the arrows are its own.
-    if (e.target !== e.currentTarget && (e.target as Element).closest(EDITOR_SELECTOR)) {
+    if (e.target !== e.currentTarget && isEditorTarget(e.target)) {
       return;
     }
     let newIndex = cursorIndex;

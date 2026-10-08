@@ -80,6 +80,7 @@ export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, useTokenPx } from './bridge/token-px';
+export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions } from './bridge/filter-options';
 export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
 export type { KeyedTransitionOptions } from './bridge/transition';

@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!-- Notes: the palette of the drag-and-drop demo; dropped onto a node, a note is added to its notes. -->
+	<object id="note-1"
+		type="demo.dnd:Note"
+	>
+		<attribute name="name"
+			value="Customer call"
+		/>
+	</object>
+	<object id="note-2"
+		type="demo.dnd:Note"
+	>
+		<attribute name="name"
+			value="Needs review"
+		/>
+	</object>
+	<object id="note-3"
+		type="demo.dnd:Note"
+	>
+		<attribute name="name"
+			value="Blocked"
+		/>
+	</object>
+	<object id="note-4"
+		type="demo.dnd:Note"
+	>
+		<attribute name="name"
+			value="Idea"
+		/>
+	</object>
+	<object id="note-5"
+		type="demo.dnd:Note"
+	>
+		<attribute name="name"
+			value="Urgent"
+		/>
+	</object>
+	<!-- The containers of the demo, found by their key: the root of the list, of the tree and of the tree table. They have no lane, so the board does not show them. -->
+	<object id="node-1"
+		type="demo.dnd:Node"
+	>
+		<attribute name="name"
+			value="List"
+		/>
+		<attribute name="key"
+			value="list"
+		/>
+		<attribute name="children">
+			<object id="node-2"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="List item 1"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#doing"/>
+				</attribute>
+			</object>
+			<object id="node-3"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="List item 2"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#done"/>
+				</attribute>
+			</object>
+			<object id="node-4"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="List item 3"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#backlog"/>
+				</attribute>
+			</object>
+			<object id="node-5"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="List item 4"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#doing"/>
+				</attribute>
+				<attribute name="notes">
+					<ref id="note-5"/>
+				</attribute>
+			</object>
+			<object id="node-6"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="List item 5"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#done"/>
+				</attribute>
+			</object>
+		</attribute>
+	</object>
+	<object id="node-7"
+		type="demo.dnd:Node"
+	>
+		<attribute name="name"
+			value="Tree"
+		/>
+		<attribute name="key"
+			value="tree"
+		/>
+		<attribute name="children">
+			<object id="node-8"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="Alpha"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#backlog"/>
+				</attribute>
+				<attribute name="children">
+					<object id="node-9"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Alpha 1"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#backlog"/>
+						</attribute>
+					</object>
+					<object id="node-10"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Alpha 2"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#done"/>
+						</attribute>
+						<attribute name="notes">
+							<ref id="note-4"/>
+						</attribute>
+						<attribute name="children">
+							<object id="node-11"
+								type="demo.dnd:Node"
+							>
+								<attribute name="name"
+									value="Alpha 2.1"
+								/>
+								<attribute name="lane">
+									<model-ref name="demo.dnd:Lane#doing"/>
+								</attribute>
+							</object>
+						</attribute>
+					</object>
+				</attribute>
+			</object>
+			<object id="node-12"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="Beta"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#backlog"/>
+				</attribute>
+				<attribute name="notes">
+					<ref id="note-3"/>
+				</attribute>
+				<attribute name="children">
+					<object id="node-13"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Beta 1"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#doing"/>
+						</attribute>
+					</object>
+					<object id="node-14"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Beta 2"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#done"/>
+						</attribute>
+					</object>
+				</attribute>
+			</object>
+			<object id="node-15"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="Gamma"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#doing"/>
+				</attribute>
+			</object>
+		</attribute>
+	</object>
+	<object id="node-16"
+		type="demo.dnd:Node"
+	>
+		<attribute name="name"
+			value="Tree table"
+		/>
+		<attribute name="key"
+			value="treeTable"
+		/>
+		<attribute name="children">
+			<object id="node-17"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="Red"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#backlog"/>
+				</attribute>
+				<attribute name="children">
+					<object id="node-18"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Red 1"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#done"/>
+						</attribute>
+					</object>
+					<object id="node-19"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Red 2"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#done"/>
+						</attribute>
+						<attribute name="children">
+							<object id="node-20"
+								type="demo.dnd:Node"
+							>
+								<attribute name="name"
+									value="Red 2.1"
+								/>
+								<attribute name="lane">
+									<model-ref name="demo.dnd:Lane#backlog"/>
+								</attribute>
+							</object>
+							<object id="node-21"
+								type="demo.dnd:Node"
+							>
+								<attribute name="name"
+									value="Red 2.2"
+								/>
+								<attribute name="lane">
+									<model-ref name="demo.dnd:Lane#doing"/>
+								</attribute>
+								<attribute name="notes">
+									<ref id="note-2"/>
+								</attribute>
+							</object>
+						</attribute>
+					</object>
+				</attribute>
+			</object>
+			<object id="node-22"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="Green"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#done"/>
+				</attribute>
+				<attribute name="notes">
+					<ref id="note-1"/>
+				</attribute>
+				<attribute name="children">
+					<object id="node-23"
+						type="demo.dnd:Node"
+					>
+						<attribute name="name"
+							value="Green 1"
+						/>
+						<attribute name="lane">
+							<model-ref name="demo.dnd:Lane#doing"/>
+						</attribute>
+					</object>
+				</attribute>
+			</object>
+			<object id="node-24"
+				type="demo.dnd:Node"
+			>
+				<attribute name="name"
+					value="Blue"
+				/>
+				<attribute name="lane">
+					<model-ref name="demo.dnd:Lane#backlog"/>
+				</attribute>
+			</object>
+		</attribute>
+	</object>
+</objects>

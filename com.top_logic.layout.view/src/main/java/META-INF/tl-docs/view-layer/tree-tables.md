@@ -51,10 +51,15 @@ A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table â
     </drag>
     <!-- Move items: insert the dragged items under `parent` before its child `before`. -->
     <drop accept="item" target="ordered" parent-channel="dropParent" before-channel="dropBefore"
-        refuse-if="parent -> before -> items -> $items.contains($parent)"
+        refuse-if="parent -> before -> items -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
     >
         <with-transaction>
-            <execute-script function="parent -> before -> items -> $items.foreach(item -> $parent.add(`demo.tickets:Item#children`, $item, $before))">
+            <!-- Take the items out of their containers, then insert them at the index of `before`, at the end without one. -->
+            <execute-script function="parent -> before -> items -> {
+                $items.foreach(i -> $i.container().remove(`demo.tickets:Item#children`, $i));
+                children = $parent.get(`demo.tickets:Item#children`);
+                $parent.add(`demo.tickets:Item#children`, if($before == null, $children.size(), $children.elementIndex($before)), $items);
+            }">
                 <inputs><input channel="dropParent"/><input channel="dropBefore"/></inputs>
             </execute-script>
         </with-transaction>

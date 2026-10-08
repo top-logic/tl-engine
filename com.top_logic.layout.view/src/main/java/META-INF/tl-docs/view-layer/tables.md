@@ -193,9 +193,14 @@ A **reorderable table** declares an `ordered` drop; next to a `row` drop, a row 
     <drag kind="ticket"/>
     <!-- Reorder within the list: insert the dragged tickets before the row `before`. -->
     <drop accept="ticket" target="ordered" before-channel="insertBefore"
-        refuse-if="before -> tickets -> $tickets.contains($before)">
+        refuse-if="before -> tickets -> $tickets.containsElement($before)">
         <with-transaction>
-            <execute-script function="sprint -> before -> tickets -> …">
+            <!-- Take the tickets out, then insert them at the index of `before`, at the end without one. -->
+            <execute-script function="sprint -> before -> tickets -> {
+                $sprint.remove(`demo.tickets:Sprint#tickets`, $tickets);
+                list = $sprint.get(`demo.tickets:Sprint#tickets`);
+                $sprint.add(`demo.tickets:Sprint#tickets`, if($before == null, $list.size(), $list.elementIndex($before)), $tickets);
+            }">
                 <inputs><input channel="sprint"/><input channel="insertBefore"/></inputs>
             </execute-script>
         </with-transaction>
@@ -233,10 +238,15 @@ A `<tree>` declares `<drag>` and `<drop>` exactly as a table does, and takes par
     </drag>
     <!-- Move nodes: insert the dragged items under `parent` before its child `before`. -->
     <drop accept="item" target="ordered" parent-channel="dropParent" before-channel="dropBefore"
-        refuse-if="parent -> before -> items -> $items.contains($parent)"
+        refuse-if="parent -> before -> items -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
     >
         <with-transaction>
-            <execute-script function="parent -> before -> items -> …">
+            <!-- Take the items out of their containers, then insert them at the index of `before`, at the end without one. -->
+            <execute-script function="parent -> before -> items -> {
+                $items.foreach(i -> $i.container().remove(`demo.tickets:Item#children`, $i));
+                children = $parent.get(`demo.tickets:Item#children`);
+                $parent.add(`demo.tickets:Item#children`, if($before == null, $children.size(), $children.elementIndex($before)), $items);
+            }">
                 <inputs><input channel="dropParent"/><input channel="dropBefore"/></inputs>
             </execute-script>
         </with-transaction>

@@ -358,6 +358,15 @@
 								<de>Kalender</de>
 							</label>
 						</nav-item>
+						<nav-item id="dnd-demo"
+							icon="css:bi bi-arrows-move"
+						>
+							<view-ref view="demo/dnd-demo.view.xml"/>
+							<label>
+								<en>Drag and drop</en>
+								<de>Drag and Drop</de>
+							</label>
+						</nav-item>
 						<nav-item id="styling-demo"
 							icon="css:bi bi-palette"
 						>

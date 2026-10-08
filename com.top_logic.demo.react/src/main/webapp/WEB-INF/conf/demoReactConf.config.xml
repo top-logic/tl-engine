@@ -22,6 +22,7 @@
 					<bundle name="model.demo.filter.messages"/>
 					<bundle name="model.demo.calendar.messages"/>
 					<bundle name="model.demo.documents.messages"/>
+					<bundle name="model.demo.dnd.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -60,6 +61,7 @@
 					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.documents.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.dnd.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

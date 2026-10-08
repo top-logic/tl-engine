@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Drag and drop between all kinds of displays: a flat table, a tree, a tree table and a Kanban
+	board, plus a palette of notes.
+	
+	The nodes of the demo.dnd model form three containers - "List", "Tree" and "Tree table", the
+	roots found by their key - and a node is in exactly one of them, as a part of the composite
+	children list of its parent. Every display drags its nodes with the kind "node", the palette
+	drags its notes with the kind "note".
+	
+	- The list, the tree and the tree table each declare two drops: an ordered drop accepting
+	"node" moves the dropped nodes to the place between the rows or nodes they are dropped at - out
+	of the child list they were in, into the child list of the container or the parent node, before
+	the row or node "before" (at the end where there is none) - and a drop onto a row or node
+	accepting "note" adds the notes to the node dropped on. The ordered drop is declared first, so
+	in a tree the middle of a node is an insertion into it for a node, and the node itself the
+	target for a note.
+	- The tree and the tree table refuse to move a node into itself or below itself, and every
+	ordered drop refuses to insert a node before itself; the reason shows next to the pointer.
+	- The board shows every node in the column of its lane; a node dropped on a column, from the
+	board or from any of the other displays, takes the lane of that column. A node dragged from the
+	board to the list, the tree or the tree table moves there.
+	- The notes palette accepts no drop, and a note dropped on the board is refused, since the board
+	accepts nodes alone.
+-->
+<view>
+	<channels>
+		<derived-channel name="listRoot"
+			expr="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#key`) == &quot;list&quot;).firstElement()"
+		/>
+		<channel name="listSelection"/>
+		<channel name="treeSelection"/>
+		<channel name="treeTableSelection"/>
+		<channel name="boardSelection"/>
+		<channel name="listBefore"/>
+		<channel name="listTarget"/>
+		<channel name="treeParent"/>
+		<channel name="treeBefore"/>
+		<channel name="treeTarget"/>
+		<channel name="treeTableParent"/>
+		<channel name="treeTableBefore"/>
+		<channel name="treeTableTarget"/>
+		<channel name="boardColumn"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="16"
+				unit="%"
+			>
+				<split-panel orientation="vertical">
+					<panes>
+						<pane
+							size="35"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Notes</en>
+									<de>Notizen</de>
+								</title>
+								<table
+									observed-types="demo.dnd:Note"
+									types="demo.dnd:Note"
+								>
+									<drag kind="note"/>
+									<columns>
+										<column attribute="name"/>
+									</columns>
+									<rows>all(`demo.dnd:Note`).sort(a -&gt; b -&gt; compare($a.get(`demo.dnd:Note#name`), $b.get(`demo.dnd:Note#name`)))</rows>
+								</table>
+							</panel>
+						</pane>
+						<pane
+							size="65"
+							unit="%"
+						>
+							<panel with-inset="true">
+								<title>
+									<en>What goes where</en>
+									<de>Was wohin geht</de>
+								</title>
+								<stack gap="compact">
+									<text>
+										<label>
+											<en>Drag a note onto a node in the list, the tree or the tree table: the note is added to the node.</en>
+											<de>Eine Notiz auf einen Knoten in der Liste, im Baum oder in der Baumtabelle ziehen: Die Notiz wird dem Knoten hinzugefügt.</de>
+										</label>
+									</text>
+									<text>
+										<label>
+											<en>Drag nodes between the rows of the list, the tree and the tree table, in either direction: they move there. In the middle of a tree node, they move into it.</en>
+											<de>Knoten zwischen die Zeilen der Liste, des Baums und der Baumtabelle ziehen, in jeder Richtung: Sie werden dorthin verschoben. In die Mitte eines Baumknotens gezogen, werden sie zu seinen Kindern.</de>
+										</label>
+									</text>
+									<text>
+										<label>
+											<en>Drag nodes onto a column of the board: they get its lane. Drag a card into a list or tree: the node moves there.</en>
+											<de>Knoten auf eine Spalte des Boards ziehen: Sie erhalten deren Spalte. Eine Karte in eine Liste oder einen Baum ziehen: Der Knoten wird dorthin verschoben.</de>
+										</label>
+									</text>
+									<text>
+										<label>
+											<en>A node cannot move into itself or below itself, and notes cannot be dropped on the board.</en>
+											<de>Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden, und Notizen können nicht auf dem Board abgelegt werden.</de>
+										</label>
+									</text>
+								</stack>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+			<pane
+				size="84"
+				unit="%"
+			>
+				<split-panel
+					orientation="vertical"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							size="55"
+							unit="%"
+						>
+							<split-panel
+								orientation="horizontal"
+								resizable="true"
+							>
+								<panes>
+									<pane
+										size="33"
+										unit="%"
+									>
+										<panel>
+											<title>
+												<en>List</en>
+												<de>Liste</de>
+											</title>
+											<table
+												observed-types="demo.dnd:Node"
+												selection="listSelection"
+												selection-mode="multi"
+												types="demo.dnd:Node"
+											>
+												<inputs>
+													<input channel="listRoot"/>
+												</inputs>
+												<drag kind="node"/>
+												<drop
+													accept="node"
+													before-channel="listBefore"
+													target="ordered"
+												>
+													<refuse-if>before -&gt; nodes -&gt; if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null)</refuse-if>
+													<with-transaction>
+														<execute-script>
+															<inputs>
+																<input channel="listRoot"/>
+																<input channel="listBefore"/>
+															</inputs>
+															<function>parent -&gt; before -&gt; nodes -&gt; { $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
+														</execute-script>
+													</with-transaction>
+												</drop>
+												<drop
+													accept="note"
+													target="row"
+													target-channel="listTarget"
+												>
+													<with-transaction>
+														<execute-script function="node -> notes -> $node.add(`demo.dnd:Node#notes`, $notes)">
+															<inputs>
+																<input channel="listTarget"/>
+															</inputs>
+														</execute-script>
+													</with-transaction>
+												</drop>
+												<columns>
+													<column attribute="name"/>
+													<column attribute="lane"/>
+													<column attribute="notes"/>
+												</columns>
+												<rows>root -&gt; $root.get(`demo.dnd:Node#children`)</rows>
+											</table>
+										</panel>
+									</pane>
+									<pane
+										size="33"
+										unit="%"
+									>
+										<panel>
+											<title>
+												<en>Tree</en>
+												<de>Baum</de>
+											</title>
+											<tree
+												children="node -> $node.get(`demo.dnd:Node#children`)"
+												observed-types="demo.dnd:Node"
+												parents="node -> $node.container()"
+												root="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#key`) == &quot;tree&quot;).firstElement()"
+												selection="treeSelection"
+											>
+												<drag kind="node"/>
+												<drop
+													accept="node"
+													before-channel="treeBefore"
+													parent-channel="treeParent"
+													target="ordered"
+												>
+													<refuse-if>parent -&gt; before -&gt; nodes -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
+													<with-transaction>
+														<execute-script>
+															<inputs>
+																<input channel="treeParent"/>
+																<input channel="treeBefore"/>
+															</inputs>
+															<function>parent -&gt; before -&gt; nodes -&gt; { $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
+														</execute-script>
+													</with-transaction>
+												</drop>
+												<drop
+													accept="note"
+													target="node"
+													target-channel="treeTarget"
+												>
+													<with-transaction>
+														<execute-script function="node -> notes -> $node.add(`demo.dnd:Node#notes`, $notes)">
+															<inputs>
+																<input channel="treeTarget"/>
+															</inputs>
+														</execute-script>
+													</with-transaction>
+												</drop>
+											</tree>
+										</panel>
+									</pane>
+									<pane
+										size="34"
+										unit="%"
+									>
+										<panel>
+											<title>
+												<en>Tree table</en>
+												<de>Baumtabelle</de>
+											</title>
+											<tree-table
+												children="node -> $node.get(`demo.dnd:Node#children`)"
+												observed-types="demo.dnd:Node"
+												parents="node -> $node.container()"
+												root="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#key`) == &quot;treeTable&quot;).firstElement()"
+												selection="treeTableSelection"
+												selection-mode="multi"
+												types="demo.dnd:Node"
+											>
+												<drag kind="node"/>
+												<drop
+													accept="node"
+													before-channel="treeTableBefore"
+													parent-channel="treeTableParent"
+													target="ordered"
+												>
+													<refuse-if>parent -&gt; before -&gt; nodes -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
+													<with-transaction>
+														<execute-script>
+															<inputs>
+																<input channel="treeTableParent"/>
+																<input channel="treeTableBefore"/>
+															</inputs>
+															<function>parent -&gt; before -&gt; nodes -&gt; { $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
+														</execute-script>
+													</with-transaction>
+												</drop>
+												<drop
+													accept="note"
+													target="row"
+													target-channel="treeTableTarget"
+												>
+													<with-transaction>
+														<execute-script function="node -> notes -> $node.add(`demo.dnd:Node#notes`, $notes)">
+															<inputs>
+																<input channel="treeTableTarget"/>
+															</inputs>
+														</execute-script>
+													</with-transaction>
+												</drop>
+												<columns>
+													<column attribute="name"/>
+													<column attribute="lane"/>
+													<column attribute="notes"/>
+												</columns>
+											</tree-table>
+										</panel>
+									</pane>
+								</panes>
+							</split-panel>
+						</pane>
+						<pane
+							size="45"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Board</en>
+									<de>Board</de>
+								</title>
+								<kanban-board
+									column="n -> $n.get(`demo.dnd:Node#lane`)"
+									columns="all(`demo.dnd:Lane`)"
+									element-channel="node"
+									items="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#lane`) != null).sort(a -> b -> compare($a.get(`demo.dnd:Node#name`), $b.get(`demo.dnd:Node#name`)))"
+									observed-types="demo.dnd:Node"
+									selection="boardSelection"
+									selection-mode="multi"
+								>
+									<card>
+										<text input="node"/>
+									</card>
+									<drag kind="node"/>
+									<drop
+										accept="node"
+										target-channel="boardColumn"
+									>
+										<with-transaction>
+											<execute-script function="lane -> nodes -> $nodes.foreach(n -> $n.set(`demo.dnd:Node#lane`, $lane))">
+												<inputs>
+													<input channel="boardColumn"/>
+												</inputs>
+											</execute-script>
+										</with-transaction>
+									</drop>
+								</kanban-board>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

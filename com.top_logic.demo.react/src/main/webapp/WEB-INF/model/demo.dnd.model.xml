@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="demo.dnd">
+			<enum name="Lane">
+				<classifier name="backlog"/>
+				<classifier name="doing"/>
+				<classifier name="done"/>
+			</enum>
+			<class name="Node">
+				<annotations>
+					<main-properties properties="name, lane"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="key"
+						type="tl.core:String"
+					/>
+					<reference name="lane"
+						kind="forwards"
+						type="Lane"
+					/>
+					<reference name="children"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="Node"
+					/>
+					<reference name="notes"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="Note"
+					/>
+				</attributes>
+			</class>
+			<class name="Note">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

@@ -1046,6 +1046,12 @@
   padding-inline-end: calc(var(--tl-space-2xs) + var(--tl-size-control-sm) + var(--tl-space-xs));
 }
 
+/* Der Endplatz gehört dem Endknopf: ein Suchfeld (type="search") zeigt daneben nicht auch das Löschen des
+   Browsers. Nur Chromium und WebKit kennen das Pseudo-Element; die Regel steht darum allein. */
+.tl-field-group:has(> .tl-button) > .tl-field::-webkit-search-cancel-button {
+  appearance: none;
+}
+
 /* --- Lesewert ---------------------------------------------------------------------- */
 
 /* Schreibgeschützt: kein Rahmen, eine Zeile, Ellipse. Kinder (Pill, Icon) dürfen schrumpfen, damit
@@ -2176,8 +2182,8 @@ a.tl-field-value:hover {
   position: relative;
 }
 
-/* Die Fläche der Zeile steht in :where: Ziehen (drag.css) übermalt sie ohne Spezifitätskampf, und
-   haftende Zellen erben sie und bleiben deckend. Eine Zeile schneidet nicht ab: ein abschneidender
+/* Die Fläche der Zeile steht in :where, auch gezeigt und ausgewählt: Ablegen darauf (drag.css, eine
+   Klasse stark) übermalt sie ohne Spezifitätskampf, und haftende Zellen erben sie und bleiben deckend. Eine Zeile schneidet nicht ab: ein abschneidender
    Vorfahr zwischen haftender Zelle und Rollbehälter machte die Zeile zum Bezug, und die Zelle scrollte
    mit. Die Zeile ist positioniert — Bezug der Flächen von Cursor-Ring (base.css, ::after) und
    Ziehen-Marke (drag.css, ::before); das TSX setzt sie im Körper absolute, im Specimen bleibt relative. */
@@ -2194,11 +2200,11 @@ a.tl-field-value:hover {
 }
 .tl-table__row[hidden] { display: none; }
 
-.tl-table__row:hover {
+:where(.tl-table__row:hover) {
   background: var(--tl-surface-interactive-hover);
 }
 
-.tl-table__row[aria-selected="true"] {
+:where(.tl-table__row[aria-selected="true"]) {
   background: var(--tl-surface-interactive-selected);
 }
 

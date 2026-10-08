@@ -102,6 +102,7 @@ const I18N_KEYS = {
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
   'js.table.cancelSave': 'Do not save',
+  'js.textInput.clear': 'Clear the input',
 };
 
 /**
@@ -183,30 +184,39 @@ interface DropState {
   probe: string | null;
 }
 
-/** Distance in pixels between the hint on a refused drop target and the pointer or drag image. */
-const DROP_HINT_GAP = 8;
+/**
+ * Where the hint on a refused drop target stands: at the pointer's `x`, beside the drag image, which
+ * spans `height` pixels down from `y` (see {@link TLRunningDrag.image}).
+ */
+interface HintAnchor {
+  x: number;
+  y: number;
+  height: number;
+}
 
 /**
- * Places the hint on a refused drop target right of the pointer at viewport position (`x`, `y`)
- * and below the drag image, or on the other side where the viewport has no room for it there.
- *
- * @param image Vertical extent of the drag image relative to the pointer, see
- *        {@link TLRunningDrag.image}.
+ * Why the target under the running drag refuses it: a tl-popover at the pointer, below the drag image
+ * or, where the viewport has no room there, above it - never on it, since the browser draws the drag
+ * image over everything (a native tooltip is not shown while a drag runs). The table moves it through
+ * `moveRef` on every dragover, so only the hint renders while the pointer moves, not the table.
  */
-function placeDropHint(hint: HTMLElement, x: number, y: number, image: TLRunningDrag['image']): void {
-  const width = hint.offsetWidth;
-  const height = hint.offsetHeight;
-  let left = x + DROP_HINT_GAP;
-  if (left + width > window.innerWidth) {
-    left = x - DROP_HINT_GAP - width;
-  }
-  let top = y + image.bottom + DROP_HINT_GAP;
-  if (top + height > window.innerHeight) {
-    top = y + image.top - DROP_HINT_GAP - height;
-  }
-  hint.style.left = Math.max(0, left) + 'px';
-  hint.style.top = Math.max(0, top) + 'px';
-}
+const DropHint: React.FC<{
+  reason: string;
+  start: HintAnchor;
+  moveRef: React.MutableRefObject<((at: HintAnchor) => void) | null>;
+}> = ({ reason, start, moveRef }) => {
+  const [at, setAt] = React.useState(start);
+  React.useEffect(() => {
+    moveRef.current = (next) => setAt((p) => (p.x === next.x && p.y === next.y && p.height === next.height ? p : next));
+    return () => { moveRef.current = null; };
+  }, [moveRef]);
+  const { setFloating, style } = usePopover({ open: true, anchor: at, placement: 'bottom-start' });
+  return createPortal(
+    <div ref={setFloating} className="tl-popover tl-table__hint tl-type-body" role="status" style={style}>
+      {reason}
+    </div>,
+    document.body);
+};
 
 /** Drag image extent for a drag of unknown origin: none. */
 const NO_DRAG_IMAGE: TLRunningDrag['image'] = { top: 0, bottom: 0 };
@@ -440,6 +450,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
   const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
 
+  // -- The rows a drag started here carries, faded by drag.css (data-tl-state~="dragging") while it
+  //    runs: the grabbed row, or the whole selection when the grabbed row is part of it. --
+  const [draggedRow, setDraggedRow] = React.useState<{ id: string; selection: boolean } | null>(null);
+  // The grabbed row may scroll out of the rendered window and take its dragend handler with it.
+  React.useEffect(() => (draggedRow ? onDragEnd(() => setDraggedRow(null)) : undefined), [draggedRow]);
+
   // A drag hovering this table may end without any event reaching it: a refused drop is not
   // dispatched here, and the source's dragend reaches the source's control only.
   const dragHovers = dropState !== null;
@@ -450,18 +466,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return onDragEnd(() => setDropState(null));
   }, [dragHovers]);
 
-  // -- The pointer of the running drag over the table, in viewport coordinates, and the hint that
-  //    follows it. Moved directly in the DOM: dragover fires continuously, and re-rendering the
-  //    table for each pointer move is not needed to move one element. --
-  const dragPointerRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const dropHintRef = React.useRef<HTMLDivElement | null>(null);
-  const attachDropHint = React.useCallback((hint: HTMLDivElement | null) => {
-    dropHintRef.current = hint;
-    if (hint) {
-      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y,
-        runningDrag()?.image ?? NO_DRAG_IMAGE);
-    }
-  }, []);
+  // -- Where the hint on a refused target stands - at the pointer, beside the drag image - and the
+  //    hint's way to follow it: dragover fires continuously, and only the hint re-renders for each
+  //    move, not the table. --
+  const hintAnchorRef = React.useRef<HintAnchor>({ x: 0, y: 0, height: 0 });
+  const hintMoveRef = React.useRef<((at: HintAnchor) => void) | null>(null);
 
   // -- Column context menu state --
   const [contextMenu, setContextMenu] = React.useState<{
@@ -748,6 +757,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       selection: row.selected,
       type: dragType,
     });
+    // Faded only after the browser has taken the drag image from the row: a change within dragstart
+    // would fade the image as well.
+    const dragged = { id: row.id, selection: row.selected };
+    window.setTimeout(() => setDraggedRow(runningDrag() ? dragged : null), 0);
   }, [controlId, dragType]);
 
   /** Which row an event points at, and where within it, or the table itself. */
@@ -787,12 +800,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
       return;
     }
-    dragPointerRef.current = { x: event.clientX, y: event.clientY };
     const drag = runningDrag();
-    const hint = dropHintRef.current;
-    if (hint) {
-      placeDropHint(hint, event.clientX, event.clientY, drag?.image ?? NO_DRAG_IMAGE);
-    }
+    // The browser draws the drag image around the pointer; the hint stands beside it.
+    const image = drag?.image ?? NO_DRAG_IMAGE;
+    hintAnchorRef.current = { x: event.clientX, y: event.clientY + image.top, height: image.bottom - image.top };
+    hintMoveRef.current?.(hintAnchorRef.current);
     const target = dropTargetAt(event);
     let probe: string | null = null;
     if (drag) {
@@ -1349,6 +1361,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const dropWord = (row: RowState) =>
     dropState && dropState.row === row.id ? (dropRefused ? 'drop-refused' : 'drop-' + dropState.position) : undefined;
+  const draggedWord = (row: RowState) =>
+    draggedRow && (row.id === draggedRow.id || (draggedRow.selection && row.selected)) ? 'dragging' : undefined;
 
   return (
     <KeyboardScopeProvider active={isTableFocused}>
@@ -1370,82 +1384,89 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
     >
-      {/* Why the target under the running drag refuses it. A native tooltip is not shown while a
-          drag runs, so the reason follows the pointer, placed in the document body so that neither
-          the table's scrolling nor its clipping can hide it. */}
-      {dropRefused && dropVerdict?.reason && createPortal(
-        <div ref={attachDropHint} className="tlTableView__dropHint" role="status">
-          {dropVerdict.reason}
-        </div>,
-        document.body)}
-      {/* Filter bar above the headings: the named criteria as chips, the cross-column search, and
-          saving the current criteria under a name. Outside both scrollers, so it neither scrolls
-          with the columns nor takes part in the header/body width alignment. */}
+      {/* Why the target under the running drag refuses it: a tl-popover in the document body, so that
+          neither the table's scrolling nor its clipping can hide it. */}
+      {dropRefused && dropVerdict?.reason && (
+        <DropHint reason={dropVerdict.reason} start={hintAnchorRef.current} moveRef={hintMoveRef} />
+      )}
+      {/* Filter bar above the headings: the named criteria as removable chips, the cross-column
+          search, and saving the current criteria under a name. Outside both scrollers, so it
+          neither scrolls with the columns nor takes part in the header/body width alignment. */}
       {filterBar && (
-        <div className="tlTableView__filterBar">
+        <div className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
-            <div className="tlTableView__filterChips">
+            <span className="tl-chip-group">
               {namedFilters.map((named) => {
                 const isActive = named.id === activeNamedFilter;
                 return (
-                  <span
-                    key={named.id}
-                    className={'tlTableView__chip' + (isActive ? ' tlTableView__chip--active' : '')}
-                  >
+                  <span key={named.id} className="tl-chip tl-type-label">
                     <button
                       type="button"
-                      className="tlTableView__chipLabel"
+                      className="tl-chip__toggle"
                       aria-pressed={isActive}
                       {...tooltipProps(isActive ? i18n['js.table.clearFilter'] : named.label)}
                       onClick={() => handleNamedFilter(named.id)}
                     >
-                      {named.label}
+                      <span className="tl-chip__label">{named.label}</span>
                     </button>
                     {/* Only a filter of the user's own can be deleted; a declared one is part of
                         the table and offers no remove affordance. */}
                     {named.deletable && (
                       <button
                         type="button"
-                        className="tlTableView__chipRemove"
+                        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-chip__remove' })}
                         {...tooltipProps(i18n['js.table.deleteFilter'])}
                         aria-label={i18n['js.table.deleteFilter']}
                         onClick={(e) => handleDeleteNamedFilter(named.id, e)}
                       >
-                        &times;
+                        <ThemeIcon encoded={ICON.clear} className="tl-button__icon tl-icon-sm" />
                       </button>
                     )}
                   </span>
                 );
               })}
-            </div>
+            </span>
           )}
-          <div className="tlTableView__search" {...tooltipProps(i18n['js.table.searchHint'])}>
-            <i className="bi bi-search" aria-hidden="true" />
+          <span className="tl-field-group tl-table__search" {...tooltipProps(i18n['js.table.searchHint'])}>
+            <span className="tl-field-group__icon" aria-hidden="true">
+              <ThemeIcon encoded={ICON.search} className="tl-icon-sm" />
+            </span>
             <input
               type="search"
-              className="tlTableView__searchInput"
+              className="tl-field tl-type-body"
               placeholder={i18n['js.table.search']}
               aria-label={i18n['js.table.searchHint']}
               value={searchDraft}
               onChange={(e) => handleSearchChange(e.target.value)}
               onKeyDown={handleSearchKeyDown}
             />
-          </div>
+            {searchDraft !== '' && (
+              <button
+                type="button"
+                className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+                aria-label={i18n['js.textInput.clear']}
+                {...tooltipProps(i18n['js.textInput.clear'])}
+                onClick={() => { setSearchDraft(''); sendSearch(''); }}
+              >
+                <ThemeIcon encoded={ICON.clear} className="tl-button__icon tl-icon-sm" />
+              </button>
+            )}
+          </span>
           {filterSaving && (saveName === null ? (
             <button
               type="button"
-              className="tlTableView__barButton"
+              className={buttonClassName({ appearance: 'ghost', icon: true })}
               {...tooltipProps(i18n['js.table.saveFilter'])}
               aria-label={i18n['js.table.saveFilter']}
               onClick={() => setSaveName('')}
             >
-              <i className="bi bi-bookmark-plus" />
+              <ThemeIcon encoded={ICON.save} className="tl-button__icon tl-icon-sm" />
             </button>
           ) : (
-            <div className="tlTableView__saveForm">
+            <span className="tl-table__save">
               <input
                 type="text"
-                className="tlTableView__saveInput"
+                className="tl-field tl-type-body"
                 autoFocus
                 placeholder={i18n['js.table.filterName']}
                 aria-label={i18n['js.table.filterName']}
@@ -1455,24 +1476,24 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               />
               <button
                 type="button"
-                className="tlTableView__barButton"
+                className={buttonClassName({ appearance: 'ghost', icon: true })}
                 {...tooltipProps(i18n['js.table.saveFilter'])}
                 aria-label={i18n['js.table.saveFilter']}
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
               >
-                <i className="bi bi-check-lg" />
+                <ThemeIcon encoded={ICON.confirm} className="tl-button__icon tl-icon-sm" />
               </button>
               <button
                 type="button"
-                className="tlTableView__barButton"
+                className={buttonClassName({ appearance: 'ghost', icon: true })}
                 {...tooltipProps(i18n['js.table.cancelSave'])}
                 aria-label={i18n['js.table.cancelSave']}
                 onClick={() => setSaveName(null)}
               >
-                <i className="bi bi-x-lg" />
+                <ThemeIcon encoded={ICON.cancel} className="tl-button__icon tl-icon-sm" />
               </button>
-            </div>
+            </span>
           ))}
         </div>
       )}
@@ -1655,7 +1676,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
               className={'tl-table__row' + (row.groupCount != null ? ' tl-type-body-strong' : '')}
-              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', dropWord(row))}
+              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,
@@ -1678,7 +1699,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               }}
               onClick={(e) => handleRowClick(row.index, e)}
               onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, e) : undefined}
-              onDragEnd={dragEnabled && row.draggable !== false ? () => setDropState(null) : undefined}
+              onDragEnd={dragEnabled && row.draggable !== false ? () => { setDropState(null); setDraggedRow(null); } : undefined}
               onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
               {isMulti && (

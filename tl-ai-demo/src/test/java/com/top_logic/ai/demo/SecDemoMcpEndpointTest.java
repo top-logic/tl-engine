@@ -42,6 +42,7 @@ import com.top_logic.service.openapi.server.authentication.AuthenticationFailure
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
+import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
@@ -539,6 +540,23 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		HistoryUtils.updateSessionRevision();
 
 		assertNotNull("The use must be recorded.", created.token().getLastUsed());
+	}
+
+	/**
+	 * A person reads their own tokens and nobody else's, so that the token list is theirs.
+	 *
+	 * <p>
+	 * Model access is deny-by-default: without the role rule that makes the owner
+	 * {@code McpAccessTokenOwner} of their token, a person holding no role on it could not even list
+	 * it, and the settings tab would stay empty for everybody but an administrator.
+	 * </p>
+	 */
+	public void testOnlyTheOwnerReadsAToken() {
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+
+		assertTrue("Anna reads her own token.", new ModelAccessRightsSecurity(account(ANNA)).canRead(annas));
+		assertFalse("Ben does not read Anna's token.",
+			new ModelAccessRightsSecurity(account(BEN)).canRead(annas));
 	}
 
 	/**

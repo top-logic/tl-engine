@@ -41,6 +41,57 @@
 				keep-alive-interval="30"
 			/>
 		</config>
+		<!--
+			Who may read a personal access token (Issue #671): its owner, plus administrators. Model
+			access is deny-by-default, so without this an account that is no administrator could not
+			even list its own tokens.
+
+			Built the way tl-ai-core's binary policy is (tl-ai-core.binarySecurity.config.xml): the
+			technical role "McpAccessTokenOwner", held by nobody globally, is derived per token from
+			its "owner" by a role rule, and the security configuration grants Read to that role.
+			Administrators bypass the check. Revoking goes through mcpAccessTokenRevoke, which checks
+			owner or administrator itself, so no Delete grant is written here.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="McpAccessTokenOwner"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="tl.ai.mcp.server.accessToken.owner"
+							inherit="true"
+							meta-element="tl.ai.mcp.server:AccessToken"
+							role="McpAccessTokenOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.mcp.server:AccessToken#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.mcp.server:AccessToken">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="McpAccessTokenOwner"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

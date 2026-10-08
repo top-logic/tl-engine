@@ -6,6 +6,7 @@
 package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -123,6 +124,18 @@ public final class ConfigFieldIndex {
 	}
 
 	/**
+	 * The fields registered for the properties of the given item.
+	 *
+	 * @param item
+	 *        The configuration item the fields belong to.
+	 * @return The fields, empty if none was registered.
+	 */
+	public Collection<ConfigFieldModel> fieldsOf(ConfigurationItem item) {
+		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
+		return byProperty == null ? Collections.emptyList() : List.copyOf(byProperty.values());
+	}
+
+	/**
 	 * Forgets the registration made for the given item and property, if there is one.
 	 *
 	 * <p>
@@ -148,6 +161,25 @@ public final class ConfigFieldIndex {
 		if (byProperty.isEmpty()) {
 			_fields.remove(item);
 		}
+	}
+
+	/**
+	 * Whether some field shows an error: an input it rejected, or a violation a check placed on it.
+	 *
+	 * <p>
+	 * What a command saving the configuration is disabled over: the problems are on screen, so the
+	 * save would be refused anyway.
+	 * </p>
+	 */
+	public boolean hasVisibleError() {
+		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
+			for (ConfigFieldModel field : byProperty.values()) {
+				if (field.hasError()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

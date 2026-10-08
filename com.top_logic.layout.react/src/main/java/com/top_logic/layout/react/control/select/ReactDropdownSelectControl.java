@@ -10,39 +10,40 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel.SelectOptionsListener;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.layout.react.control.ScriptingModelKey;
-import com.top_logic.layout.react.control.form.FieldValueArguments;
-import com.top_logic.layout.react.scripting.ReactOptionScope;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
-import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -100,7 +101,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private static final String CMD_GOTO = "goto";
 
 	/**
-	 * Argument of {@link #CMD_GOTO}: the {@link DropdownSelectState.Option#VALUE__PROP} of the option
+	 * Argument of {@link #CMD_GOTO}: the
+	 * {@link com.top_logic.layout.react.state.DropdownSelectState.Option#VALUE__PROP} of the option
 	 * to display.
 	 */
 	private static final String ARG_OPTION = "option";
@@ -646,7 +648,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *
 	 * <p>
 	 * These are the options the field displays as its value, so they are the ones that carry
-	 * {@link DropdownSelectState.Option#LINK__PROP}.
+	 * {@link com.top_logic.layout.react.state.DropdownSelectState.Option#LINK__PROP}.
 	 * </p>
 	 */
 	private List<Map<String, Object>> toOptionDescriptors(List<?> options) {
@@ -763,16 +765,17 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * <p>
 	 * The image is resolved first, so a reference - the icon a theme configures for a type, say -
 	 * reaches the client as the image it stands for rather than as the reference, which the client
-	 * has no theme to look up. An invisible image is left out altogether: an option with no icon is
+	 * has no theme to look up, and an image file as the URL it is served at, see
+	 * {@link ReactImages}. An invisible image is left out altogether: an option with no icon is
 	 * one whose descriptor names none, not one naming an icon that draws nothing but still takes
 	 * the width of one.
 	 * </p>
 	 */
-	private static void putImage(Map<String, Object> descriptor, ThemeImage image) {
+	private void putImage(Map<String, Object> descriptor, ThemeImage image) {
 		if (image == null || image == ThemeImage.none()) {
 			return;
 		}
-		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, image.resolve().toEncodedForm());
+		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, ReactImages.encode(getReactContext(), image));
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

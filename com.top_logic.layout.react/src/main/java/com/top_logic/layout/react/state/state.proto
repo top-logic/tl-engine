@@ -229,7 +229,7 @@ message ButtonState extends ControlState {
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
-	 * an icon font class, or the path of an image file).
+	 * an icon font class, or the URL of an image file).
 	 */
 	string image;
 

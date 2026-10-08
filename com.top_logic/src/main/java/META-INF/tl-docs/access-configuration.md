@@ -98,13 +98,24 @@ instead of replacing them.
 			<class name="my.module:Cache" internal="true"/>
 			<class name="my.module:PublicNotice" without-security="true"/>
 			<!-- Access parents, see below: the container through any composition, the container
-			     through one composition, the target of a to-one reference, and no delegation. -->
-			<class name="demo.tickets:Attachment" access-parent="container"/>
-			<class name="demo.tickets:Comment" access-parent="container"
-				access-reference="demo.tickets:Ticket#comments"/>
-			<class name="demo.tickets:Reminder" access-parent="target"
-				access-reference="demo.tickets:Reminder#ticket"/>
-			<class name="demo.tickets:Signature" access-parent="self">
+			     through one composition, the target of a to-one reference, a computed parent, and no
+			     delegation. -->
+			<class name="demo.tickets:Attachment">
+				<access-parent><container/></access-parent>
+			</class>
+			<class name="demo.tickets:Comment">
+				<access-parent><container reference="demo.tickets:Ticket#comments"/></access-parent>
+			</class>
+			<class name="demo.tickets:Reminder">
+				<access-parent><target reference="demo.tickets:Reminder#ticket"/></access-parent>
+			</class>
+			<class name="demo.tickets:Task">
+				<access-parent>
+					<script expr="t -> $t.get(`demo.tickets:Task#milestone`).container()"/>
+				</access-parent>
+			</class>
+			<class name="demo.tickets:Signature">
+				<access-parent><self/></access-parent>
 				<grant operation="Read" roles="Signer"/>
 			</class>
 		</security-config>
@@ -140,7 +151,7 @@ the one mark when the other is set, and the access rights dialog refuses to save
 
 ### Access parent: delegating the whole decision
 
-A `<class>` entry with `access-parent="container"` or `access-parent="target"` makes the type
+A `<class>` entry with an `<access-parent>` element other than `<self/>` makes the type
 delegate to its **access parent**, the object whose access definition decides. The type has no
 grants, no marks and no roles of its own (an entry combining them is rejected at startup and by the
 editor):
@@ -158,39 +169,73 @@ editor):
   end of the chain.
 - Specializations inherit the setting unless they have one of their own.
 
-The kind of relation is stated explicitly, the reference only names the way. There is no guessing
-from the shape of the reference, so a to-one composition a type both owns and is held in
-(`Node#detail : Node`) is unambiguous:
+The `<access-parent>` element holds exactly one definition of the relation. The kind of relation is
+stated explicitly, the reference only names the way. There is no guessing from the shape of the
+reference, so a to-one composition a type both owns and is held in (`Node#detail : Node`) is
+unambiguous:
 
-| `access-parent` | `access-reference` | Access parent |
-|---|---|---|
-| `auto` (default) | — | inherited from the generalizations, else the default below |
-| `container` | — | the container, whichever composition holds the object (`TLObject.tContainer()`) |
-| `container` | a composition holding the type | the container, only when it holds the object through that composition (navigated backwards) |
-| `target` | a to-one reference of the type (mandatory) | the object the reference points to (navigated forwards) |
-| `self` | — | none: the type decides through its own grants and roles |
+| `<access-parent>` content | Access parent |
+|---|---|
+| (no `<access-parent>` element) | inherited from the generalizations, else the default below |
+| `<container/>` | the container, whichever composition holds the object (`TLObject.tContainer()`) |
+| `<container reference="..."/>` with a composition holding the type | the container, only when it holds the object through that composition (navigated backwards) |
+| `<target reference="..."/>` with a to-one reference of the type (mandatory) | the object the reference points to (navigated forwards) |
+| `<script expr="..."/>` | the object a TL-Script function computes, see below |
+| `<self/>` | none: the type decides through its own grants and roles |
 
-A reference not fitting the kind (a composition not holding the type for `container`, a multiple or
-foreign reference for `target`, any reference for `self`/`auto`) is a configuration error.
+A reference not fitting the definition (a composition not holding the type for `container`, a
+multiple or foreign reference for `target`) and an empty `<access-parent/>` are configuration errors.
+
+**Upgrading from `TL_8.0.0-alpha9`.** The attributes `access-parent="..."` and `access-reference="..."`
+of a `<class>` entry are gone and rejected at startup: `access-parent="container"` becomes
+`<access-parent><container/></access-parent>`, `access-parent="container" access-reference="X"`
+becomes `<access-parent><container reference="X"/></access-parent>`, `access-parent="target"
+access-reference="X"` becomes `<access-parent><target reference="X"/></access-parent>`,
+`access-parent="self"` becomes `<access-parent><self/></access-parent>`, and `access-parent="auto"`
+is dropped. Check the `WEB-INF/autoconf/com.top_logic.model.security.SecurityConfigurationService.config.xml`
+of the application, too: the access rights dialog of the coverage view writes there.
+
+**Computed access parent (TL-Script).** Where none of the fixed relations fits - several steps, a
+backward navigation over a reference that is no composition, a multi-valued or derived attribute -
+a TL-Script function computes the access parent (`ScriptAccessParent`, module `tl-model-search`):
+
+- The function receives the object and yields its access parent: one object, or a collection
+  holding exactly one object.
+- `null` or an empty collection: no access parent, so nobody but the technical admin may access
+  the object. Not logged.
+- Several objects, a value that is no object, an object without access control of its own (a
+  transient object, for instance), or a failure of the function: access is denied and an error is
+  logged. Following an object nobody decides access for would open the object to every user. The
+  author of the function must make sure it yields at most one access controlled object, also when
+  it navigates a multi-valued reference.
+- The function is evaluated without access checks: it can navigate through objects the user may
+  not read, and it does not recurse into the check it is part of.
+- A check that depends on no concrete object (the commands of a type) counts a type with a
+  computed access parent as accessible, since the types of its parents are unknown; the check of
+  each object follows the function.
+- The coverage view shows such a type as delegated, with the script text in the access parent
+  column.
 
 **The default for composition parts.** A type held in a composition that has no role rule, no role
-parent rule, no marks and no `access-parent` setting (own or inherited) delegates to its container by
+parent rule, no marks and no `<access-parent>` setting (own or inherited) delegates to its container by
 default, whichever composition holds the object. Most helper types of an application therefore need
 no configuration at all. A role rule or a role parent rule applying to the type (inherited ones
-included), one of the marks, or any `access-parent` other than `auto` switches the default off.
+included), one of the marks, or any `<access-parent>` setting switches the default off.
 
-- `access-parent="container"` without a reference states the default explicitly. It is needed for
+- `<container/>` without a reference states the default explicitly. It is needed for
   a composition part that inherits a role rule but should delegate nevertheless; the coverage check
   then reports the shadowed rules.
-- `access-parent="self"` switches the default off for a composition part that decides for itself,
+- `<self/>` switches the default off for a composition part that decides for itself,
   e.g. with its own grants and roles assigned directly on its objects (which do not count as a
   role source for the default). It also stops a specialization from inheriting the access parent
   of its generalization.
 
 In Java, `ModelAccessRights.getAccessParent(TLClass)` returns the relation in effect as an
-`AccessParent` (container, backward or forward reference, explicit or default; `null` for a type
-deciding for itself), and
-`AccessManager.hasRoleSource(TLClass)` is the hook the default consults.
+`AccessParentFunction` (`ContainerRelation` - configured or default, any or one composition -,
+`TargetRelation`, `ScriptAccessParent`; `null` for a type deciding for itself). The configured side
+is an `AccessParentDefinition`, resolved once per type at startup; an application can add its own
+implementation with a tag name of its own. `AccessManager.hasRoleSource(TLClass)` is the hook the
+default consults.
 
 ### Caching of decisions
 
@@ -300,7 +345,9 @@ when it has an access parent (whether the parent is accessible is reported with 
   of a type ("Access rights…"), the grants and marks of its module, mark a type internal or exclude
   it from access control. Every edit is written to the
   `autoconf` files; "Apply configuration" reads the files again and restarts the access services,
-  and only then does the table show the change.
+  and only then does the table show the change. An access parent the underlying configuration
+  sets is dropped - by a mark, or by removing it in the dialog - by storing `<self/>`, written with
+  `config:override="true"`, since an access parent left out would leave that one in effect.
 - An application makes the check part of its test suite with `test-security-coverage="true"` in
   the `ElementTestCollector` global test configuration; `TestSecurityCoverage` then fails on every
   incomplete type.

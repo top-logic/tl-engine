@@ -18,12 +18,16 @@ export interface FormLayout {
    * above it, as the form layout resolved its own position (`auto` by the width of its columns).
    */
   readonly resolvedLabelPosition: 'side' | 'top';
+
+  /** Whether the content is rendered inside a form layout. */
+  readonly insideForm: boolean;
 }
 
 /** Outside a form layout: an editable form with the labels beside the inputs. */
 const NO_FORM_LAYOUT: FormLayout = Object.freeze({
   readOnly: false,
   resolvedLabelPosition: 'side',
+  insideForm: false,
 });
 
 /** The form layout around the rendered control. */

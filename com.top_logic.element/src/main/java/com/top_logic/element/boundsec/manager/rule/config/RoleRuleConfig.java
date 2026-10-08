@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -18,7 +19,6 @@ import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.config.TLModelPartMapping;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
 import com.top_logic.model.util.AllClasses;
@@ -61,10 +61,11 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	String XML_ATTRIBUTE_TYPE = "type";
 
 	/**
-	 * Optional name of the {@link TLClass} which the source object must have to get the given
-	 * {@link #getRole()}.
+	 * The type the object reached at the end of the path must have for the rule to apply, as its
+	 * qualified name. Without a type, the rule applies whatever type that object has.
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_ELEMENT)
+	@Label("Type at path end")
 	@Nullable
 	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
@@ -72,33 +73,40 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	String getSourceMetaElement();
 
 	/**
-	 * Target roles which a user gets on the target objects.
+	 * The roles a user gets on an object of the {@link #getMetaElement() type}.
 	 */
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_ROLE)
+	@Label("Granted roles")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
 	@ControlProvider(SelectionControlProvider.class)
 	List<String> getRole();
 
 	/**
-	 * If the user has one of the role on the source object, it gets the {@link #getRole() target
-	 * role} on the target object.
+	 * For a rule of the kind {@link Type#inheritance inheritance}: a user holding one of these roles
+	 * on the object reached at the end of the path gets the {@link #getRole() granted roles}.
 	 */
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE)
+	@Label("Role at path end")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
 	@ControlProvider(SelectionControlProvider.class)
 	List<String> getSourceRole();
 
 	/**
-	 * Which kind of rule is this?
+	 * How the rule decides who gets the {@link #getRole() granted roles}: by
+	 * {@link Type#reference reference}, the users and groups the path reaches; by
+	 * {@link Type#inheritance inheritance}, the users holding a {@link #getSourceRole() role} on
+	 * the object the path reaches.
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_TYPE)
+	@Label("Kind")
 	Type getType();
 
 	/**
-	 * {@link ResKey} defining the internationalisation for the rule.
+	 * The label of the rule, in the languages of the application.
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_RESOURCE_KEY)
+	@Label("Label")
 	ResKey getResKey();
 }

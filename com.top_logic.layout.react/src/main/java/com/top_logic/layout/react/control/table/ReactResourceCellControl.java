@@ -9,6 +9,7 @@ import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -258,13 +259,13 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		if (resolved == ThemeImage.none()) {
 			return;
 		}
-		String encoded = resolved.toEncodedForm();
+		String encoded = ReactImages.encode(getReactContext(), resolved);
 		if (encoded.startsWith(CSS_PREFIX)) {
 			putState(ICON_CSS, encoded.substring(CSS_PREFIX.length()));
 		} else if (encoded.startsWith(COLORED_CSS_PREFIX)) {
 			putState(ICON_CSS, encoded.substring(COLORED_CSS_PREFIX.length()));
 		} else {
-			// Resource image path.
+			// The URL of an image file.
 			putState(ICON_SRC, encoded);
 		}
 	}

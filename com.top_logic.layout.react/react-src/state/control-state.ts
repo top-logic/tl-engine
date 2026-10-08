@@ -156,7 +156,7 @@ export interface ButtonStateJson extends ControlStateJson {
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. `css:fas fa-edit` for
-	 * an icon font class, or the path of an image file).
+	 * an icon font class, or the URL of an image file).
 	 */
 	image: string;
 

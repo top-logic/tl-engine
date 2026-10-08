@@ -19,6 +19,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
@@ -49,9 +50,6 @@ public abstract class AbstractTicketFormTest extends BasicTestCase {
 
 	/** The message the form shows when it displays no object. */
 	protected static final String NO_MODEL_MESSAGE = "no model";
-
-	/** Key of the value an input shows, see {@link ReactFormFieldControl#VALUE}. */
-	private static final String SHOWN_VALUE = "value";
 
 	protected ReactContext _context;
 
@@ -144,7 +142,7 @@ public abstract class AbstractTicketFormTest extends BasicTestCase {
 	 * The value the input of the given field shows, as the client receives it.
 	 */
 	protected static Object shown(AttributeFieldControl field) {
-		return field.getInnerControl().scriptingScalarState().get(SHOWN_VALUE);
+		return field.getInnerControl().scriptingScalarState().get(FieldState.VALUE__PROP);
 	}
 
 	/**

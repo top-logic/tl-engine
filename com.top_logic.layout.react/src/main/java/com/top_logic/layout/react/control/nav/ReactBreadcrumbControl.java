@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.BreadcrumbState;
 
 /**
  * Navigation trail showing the current location in a hierarchy.
@@ -22,19 +23,14 @@ import com.top_logic.layout.react.control.ReactControl;
  * Renders a breadcrumb bar with clickable ancestor items. The last item is displayed as plain text
  * (current page).
  * </p>
+ *
+ * <p>
+ * The state is described by {@link BreadcrumbState}.
+ * </p>
  */
 public class ReactBreadcrumbControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLBreadcrumb";
-
-	/** @see #updateItems(List) */
-	private static final String ITEMS = "items";
-
-	/** Entry identifier within the breadcrumb trail. */
-	private static final String ENTRY_ID = "id";
-
-	/** Entry display label. */
-	private static final String ENTRY_LABEL = "label";
 
 	/** The {@link ReactCommandHandler} that navigates to a breadcrumb ancestor. */
 	public static final String NAVIGATE_COMMAND = "navigate";
@@ -65,11 +61,11 @@ public class ReactBreadcrumbControl extends ReactControl {
 		List<Map<String, String>> itemList = new ArrayList<>();
 		for (BreadcrumbEntry entry : items) {
 			Map<String, String> map = new HashMap<>();
-			map.put(ENTRY_ID, entry.id());
-			map.put(ENTRY_LABEL, entry.label());
+			map.put(BreadcrumbState.Item.ID__PROP, entry.id());
+			map.put(BreadcrumbState.Item.LABEL__PROP, entry.label());
 			itemList.add(map);
 		}
-		putState(ITEMS, itemList);
+		putState(BreadcrumbState.ITEMS__PROP, itemList);
 	}
 
 	/**

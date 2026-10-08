@@ -18,6 +18,7 @@
  *   TLDropdownSelect  - DropdownSelectState
  *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
+ *   TLChoiceGroup     - DropdownSelectState
  *   TLTabBar          - TabBarState
  *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
@@ -25,6 +26,13 @@
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
  *   TLAlert           - AlertState
+ *   TLFormField       - FormFieldState
+ *   TLText            - TextState
+ *   TLCard            - CardState
+ *   TLAppBar          - AppBarState
+ *   TLBreadcrumb      - BreadcrumbState
+ *   TLProgress        - ProgressState
+ *   TLSlider          - SliderState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -242,7 +250,9 @@ message ButtonState extends ControlState {
 
 	/**
 	 * How the button is drawn. Absent means {@link Appearance#DEFAULT}: the standard appearance, or
-	 * the appearance its container suggests.
+	 * the appearance its container suggests, read with {@code useButtonDefaults} of
+	 * 'tl-react-bridge'. Inside a menu the container wins: the button is an entry of the menu and
+	 * carries the role and the tabindex {@code menuItemProps} of 'tl-react-bridge' gives it.
 	 */
 	Appearance appearance;
 
@@ -1100,4 +1110,503 @@ message AlertState extends ControlState {
 	 * reporting another number refers to a content that is no longer shown.
 	 */
 	int32 generation;
+}
+
+/**
+ * State of the frame around a form field, the component {@code TLFormField}: the label, the
+ * marks for a required and a modified field, the error and warning messages and the help text,
+ * around the control of the input itself ({@link #field}).
+ *
+ * The frame is not a field of its own: the value, its editability and its validation belong to the
+ * embedded {@link #field}. A label that names its input states this to the input through
+ * {@code FieldLabelContext} of 'tl-react-bridge'. Messages, help and the mark for a required
+ * field belong to editing: the component omits them inside a read-only form layout. Whether the
+ * form layout around the field is read-only, and the label position it resolved for fields that
+ * state none ({@link #labelPosition}), are read with {@code useFormLayout} of 'tl-react-bridge'.
+ * The component sends no commands.
+ */
+message FormFieldState extends ControlState {
+
+	/**
+	 * Where the label of a field stands relative to its input.
+	 */
+	enum LabelPosition {
+		/** The label beside the input. */
+		@Name("side")
+		SIDE;
+
+		/** The label above the input. */
+		@Name("top")
+		TOP;
+
+		/** The label after the input, e.g. trailing a checkbox. */
+		@Name("after")
+		AFTER;
+
+		/**
+		 * No visible label; the input spans the full width of the field. The label text still names
+		 * the input for assistive technology.
+		 */
+		@Name("hidden")
+		HIDDEN;
+
+		/**
+		 * {@link #SIDE} or {@link #TOP}, chosen from the width available. A position of a form
+		 * layout, which resolves it for the fields it contains; a field is not given it.
+		 */
+		@Name("auto")
+		AUTO;
+	}
+
+	/**
+	 * The label of the field, plain text. Absent or empty: no label, and the input is not named by
+	 * one.
+	 */
+	string label;
+
+	/**
+	 * Whether a value is required, marked next to the label.
+	 */
+	bool required;
+
+	/**
+	 * The message describing why the value of the {@link #field} is invalid. Absent: no error.
+	 */
+	string error;
+
+	/**
+	 * The icon shown in front of the {@link #error} message, the encoded form of a theme image.
+	 */
+	string errorIcon;
+
+	/**
+	 * The messages describing why the value of the {@link #field} is questionable, shown while
+	 * there is no {@link #error}. Absent: no warnings.
+	 */
+	repeated string warnings;
+
+	/**
+	 * The icon shown in front of each of the {@link #warnings}, the encoded form of a theme image.
+	 */
+	string warningIcon;
+
+	/**
+	 * A text explaining the field, plain text, shown on demand below the input. Absent: no help.
+	 */
+	string helpText;
+
+	/**
+	 * A description of the field, plain text, offered as the tooltip of its label. Absent: none.
+	 * A rich tooltip ({@link #hasTooltip}) takes precedence.
+	 */
+	string tooltipText;
+
+	/**
+	 * Whether the server offers a rich tooltip for the label, HTML fetched from the control under
+	 * the key {@code tooltip} (the attribute {@code data-tooltip} with the value
+	 * {@code key:tooltip}). Takes precedence over {@link #tooltipText}.
+	 */
+	bool hasTooltip;
+
+	/**
+	 * Whether the value of the field has been modified and not yet saved.
+	 */
+	bool dirty;
+
+	/**
+	 * Where the label stands relative to the input. Absent: the position the enclosing form layout
+	 * gives its fields.
+	 */
+	LabelPosition labelPosition;
+
+	/**
+	 * Whether the field spans the full row of a form layout of several columns.
+	 */
+	bool fullLine;
+
+	/**
+	 * Whether the field is shown. Absent: shown. A field not shown keeps its {@link #field}
+	 * mounted, so that the field control keeps receiving its updates.
+	 */
+	bool visible;
+
+	/**
+	 * The control of the input.
+	 */
+	ChildControl field;
+}
+
+/**
+ * State of a read-only text, the component {@code TLText}.
+ *
+ * How the text is drawn is stated as roles rather than as font and color values: a typographic
+ * role ({@link #variant}), a color role ({@link #tone}) and the shape it takes
+ * ({@link #appearance}). The component sends no commands.
+ */
+message TextState extends ControlState {
+
+	/**
+	 * How text longer than the available width is displayed.
+	 */
+	enum Overflow {
+		/** Wrapped onto several lines. */
+		@Name("wrap")
+		WRAP;
+
+		/** Kept on a single line, the overflow truncated with an ellipsis. */
+		@Name("ellipsis")
+		ELLIPSIS;
+	}
+
+	/**
+	 * What a text is for, its typographic role.
+	 */
+	enum Variant {
+		/** Running text, the size a page is read at. */
+		@Name("body")
+		BODY;
+
+		/** The heading of a section within a page. */
+		@Name("title")
+		TITLE;
+
+		/** The heading a page is introduced with. */
+		@Name("headline")
+		HEADLINE;
+
+		/** The largest text on a page, for the one statement a landing page is built around. */
+		@Name("display")
+		DISPLAY;
+
+		/** The name of a value, shown above or beside what it names. */
+		@Name("label")
+		LABEL;
+
+		/** A remark accompanying another text: a hint, a date, an attribution. */
+		@Name("caption")
+		CAPTION;
+	}
+
+	/**
+	 * What the color of a text means, its color role.
+	 */
+	enum Tone {
+		/** The color text is read in. */
+		@Name("primary")
+		PRIMARY;
+
+		/** Text of lesser weight than what stands beside it. */
+		@Name("secondary")
+		SECONDARY;
+
+		/** An explanation of the value or the field it accompanies. */
+		@Name("helper")
+		HELPER;
+
+		/** Text the application draws attention to, in the color interactive elements share. */
+		@Name("accent")
+		ACCENT;
+
+		/** An outcome that went well. */
+		@Name("success")
+		SUCCESS;
+
+		/** A condition the reader should act on before it becomes a failure. */
+		@Name("warning")
+		WARNING;
+
+		/** A failure. */
+		@Name("error")
+		ERROR;
+
+		/** Text on a filled surface, which brings its own background color. */
+		@Name("on-color")
+		ON_COLOR;
+	}
+
+	/**
+	 * The shape a text is drawn in.
+	 */
+	enum Appearance {
+		/** Plain text, drawn as a pill when the text carries a color role of its own. */
+		@Name("text")
+		TEXT;
+
+		/**
+		 * A pill, whether or not the text carries a color role: a badge, a status, a tag. Its color
+		 * is the color role of the text, or the color of its tone for a text without one.
+		 */
+		@Name("pill")
+		PILL;
+	}
+
+	/**
+	 * The text, plain text. Absent: empty. An empty text is never drawn as a pill.
+	 */
+	string text;
+
+	/**
+	 * How text longer than the available width is displayed. Absent means {@link Overflow#WRAP},
+	 * wrapped onto several lines.
+	 */
+	Overflow overflow;
+
+	/**
+	 * The typographic role of the text. Absent means {@link Variant#BODY}, running text.
+	 */
+	Variant variant;
+
+	/**
+	 * The color role of the text. Absent means {@link Tone#PRIMARY}, the color text is read in.
+	 */
+	Tone tone;
+
+	/**
+	 * The shape the text is drawn in. Absent means {@link Appearance#TEXT}, plain text.
+	 */
+	Appearance appearance;
+
+	/**
+	 * The ARIA role of the element (e.g. {@code alert} for a message announced when it appears).
+	 * Absent: none.
+	 */
+	string role;
+
+	/**
+	 * The color role the displayed value carries in the model (the external name of a value color:
+	 * neutral, brand, error, …, category-8). A text with a color role is drawn as a pill of that
+	 * role. Absent: none.
+	 */
+	string colorRole;
+
+	/**
+	 * Whether the server offers a rich tooltip for the text, HTML fetched from the control under
+	 * the key {@code tooltip} (the attribute {@code data-tooltip} with the value
+	 * {@code key:tooltip}).
+	 */
+	bool hasTooltip;
+}
+
+/**
+ * State of a card: a container grouping its content visually, with an optional header, the
+ * component {@code TLCard}.
+ *
+ * A card has no behaviour of its own (no minimizing, maximizing or popping out); it sends no
+ * commands.
+ */
+message CardState extends ControlState {
+
+	/**
+	 * How a card sets itself off from its surroundings.
+	 */
+	enum Variant {
+		/** A thin border. */
+		@Name("outlined")
+		OUTLINED;
+
+		/** A drop shadow. */
+		@Name("elevated")
+		ELEVATED;
+	}
+
+	/**
+	 * The space between the edge of a card and its content.
+	 */
+	enum Padding {
+		/** The standard space. */
+		@Name("default")
+		DEFAULT;
+
+		/** A reduced space. */
+		@Name("compact")
+		COMPACT;
+
+		/** No space. */
+		@Name("none")
+		NONE;
+	}
+
+	/**
+	 * The title shown in the header, plain text. Absent: no title. The header is shown while there
+	 * is a title or {@link #headerActions}.
+	 */
+	string title;
+
+	/**
+	 * How the card sets itself off. Absent means {@link Variant#OUTLINED}, a thin border.
+	 */
+	Variant variant;
+
+	/**
+	 * The space around the content. Absent means {@link Padding#DEFAULT}, the standard space.
+	 */
+	Padding padding;
+
+	/**
+	 * The buttons in the header, in display order. Absent: none.
+	 */
+	repeated ChildControl headerActions;
+
+	/**
+	 * The content of the card.
+	 */
+	ChildControl child;
+}
+
+/**
+ * State of the bar at the top of an application, the component {@code TLAppBar}: a control
+ * opening it, the title, inline content, the commands placed in it and a control closing it, in
+ * this order.
+ *
+ * The component suggests the appearance {@code ghost} to the buttons of its {@link #actions}
+ * through {@code ButtonDefaults} of 'tl-react-bridge' (see {@link ButtonState#appearance}). It sends
+ * no commands.
+ */
+message AppBarState extends ControlState {
+
+	/**
+	 * How the bar sets itself off from the content below it.
+	 */
+	enum Variant {
+		/** A flat bar without a shadow. */
+		@Name("flat")
+		FLAT;
+
+		/** A bar raised above the content by a drop shadow. */
+		@Name("elevated")
+		ELEVATED;
+	}
+
+	/**
+	 * The text naming the application, plain text. Absent: empty.
+	 */
+	string title;
+
+	/**
+	 * How the bar sets itself off. Absent means {@link Variant#FLAT}, a flat bar.
+	 */
+	Variant variant;
+
+	/**
+	 * The control opening the bar, ahead of the title (e.g. a button opening the navigation).
+	 * Absent: none.
+	 */
+	ChildControl leading;
+
+	/**
+	 * Inline content between the title and the {@link #actions}, in display order. Absent: none.
+	 */
+	repeated ChildControl children;
+
+	/**
+	 * The toolbar of the commands placed in the bar. It renders nothing while it holds no command,
+	 * and folds the commands that do not fit into its overflow menu. Absent: none.
+	 */
+	ChildControl actions;
+
+	/**
+	 * The control closing the bar, after the {@link #actions}. Absent: none.
+	 */
+	ChildControl trailing;
+}
+
+/**
+ * State of a navigation trail showing the current location in a hierarchy, the component
+ * {@code TLBreadcrumb}.
+ *
+ * Every item before the last one leads back to its place: a click on it sends the command
+ * {@code navigate} with the {@link Item#id} of the item as argument {@code itemId}. The last item
+ * is the current location and leads nowhere.
+ */
+message BreadcrumbState extends ControlState {
+
+	/**
+	 * A place in the trail.
+	 */
+	message Item {
+		/**
+		 * The ID of the item, by which the client names it to the server.
+		 */
+		string id;
+
+		/**
+		 * The label of the item, plain text.
+		 */
+		string label;
+	}
+
+	/**
+	 * The places from the outermost to the current location, which is the last item. Absent: none.
+	 */
+	repeated Item items;
+}
+
+/**
+ * State of a bar displaying a fraction, with an optional label beside it, the component
+ * {@code TLProgress}.
+ *
+ * The component sends no commands.
+ */
+message ProgressState extends ControlState {
+	/**
+	 * The filled part of the track, a number between 0 and 1. Absent or {@code null}: the
+	 * indeterminate bar, which says that something is going on without saying how far it has come.
+	 */
+	double fraction;
+
+	/**
+	 * The text beside the bar, plain text (e.g. {@code 3 / 4}). Absent: the bar stands alone.
+	 */
+	string label;
+}
+
+/**
+ * State of a number field set by dragging a handle along a track, the component
+ * {@code TLSlider}.
+ *
+ * The {@link #value} is the number itself, or {@code null} for a field holding no value; the
+ * handle of an empty field stands at the {@link #min} and no text is shown. A change is sent as
+ * the command {@code valueChanged} with the number the handle stands on as argument
+ * {@code value}, once the handle comes to rest.
+ */
+message SliderState extends FieldState {
+	/**
+	 * The smallest value the handle can stand on. Absent: 0.
+	 */
+	double min;
+
+	/**
+	 * The largest value the handle can stand on. Absent: 100.
+	 */
+	double max;
+
+	/**
+	 * The distance between two values the handle can stand on. Absent: 1.
+	 */
+	double step;
+
+	/**
+	 * The value written in the format of the field, plain text, shown beside the handle and as the
+	 * whole display of a field that is not editable. Absent: no text.
+	 */
+	string valueLabel;
+
+	/**
+	 * The smallest value written in the format of the field, plain text. The client reserves the
+	 * width of the wider of the two bound texts for the value text, so the track keeps its length
+	 * while the value changes. Absent: no text.
+	 */
+	string minLabel;
+
+	/**
+	 * The largest value written in the format of the field, plain text. See {@link #minLabel}.
+	 * Absent: no text.
+	 */
+	string maxLabel;
+
+	/**
+	 * How long a value is held back after the handle last moved before it is sent, in
+	 * milliseconds; releasing the handle sends it at once. Absent: the default of the component.
+	 */
+	int64 debounceMs;
 }

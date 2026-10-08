@@ -1,0 +1,16 @@
+{
+  "name": "tl-demo-react-mui",
+  "version": "7.11.0",
+  "private": true,
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@fontsource/roboto-condensed": "^5.3.0",
+    "@fontsource/work-sans": "^5.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}

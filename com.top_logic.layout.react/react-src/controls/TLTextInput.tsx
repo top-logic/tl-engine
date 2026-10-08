@@ -15,7 +15,7 @@ import {
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useRef } = React;
 

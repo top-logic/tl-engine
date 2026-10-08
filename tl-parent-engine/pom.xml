@@ -94,6 +94,7 @@
 		<module>../com.top_logic.layout.view.selfservice</module>
 		<module>../com.top_logic.layout.react.chartjs</module>
 		<module>../com.top_logic.layout.react.codeedit</module>
+		<module>../com.top_logic.layout.react.mui</module>
 		<module>../com.top_logic.layout.react.wysiwyg</module>
 		<module>../com.top_logic.layout.scripting.template</module>
 		<module>../com.top_logic.layout.themeedit</module>
@@ -159,7 +160,7 @@
 		<!-- Demos -->
 		<module>../com.top_logic.demo</module>
 		<module>../com.top_logic.demo.react</module>
-		<module>../com.top_logic.demo.react.corporate</module>
+		<module>../com.top_logic.demo.react.mui</module>
 		<module>../com.top_logic.kafka.demo</module>
 		<module>../test.com.top_logic.kafka.demo</module>
 	</modules>

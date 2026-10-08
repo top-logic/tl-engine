@@ -8,5 +8,6 @@
         <entry name="%POSTGRESQL_SCHEMA%" value="${env:postgresql_schema:public}"/>
         
         <entry name="%POSTGRESQL_AUTOSAVE%" value="${env:postgresql_autosave:org.postgresql.jdbc.AutoSave:ALWAYS}" />
+        <entry name="%POSTGRESQL_CLEANUP_SAVEPOINTS%" value="${env:postgresql_cleanup_savepoints:true}" />
 	</alias>
 </root>

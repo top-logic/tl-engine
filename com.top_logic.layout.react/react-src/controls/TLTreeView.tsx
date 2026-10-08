@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, useI18N, tooltipProps, ThemeIcon, isEditorTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, afterDragImage, useI18N, tooltipProps, ThemeIcon, isEditorTarget } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ProgressBar } from './TLProgress';
 
@@ -166,7 +166,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleDragStart = React.useCallback((nodeId: string, e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', nodeId);
-    setDraggingNodeId(nodeId);
+    afterDragImage(() => setDraggingNodeId(nodeId));
   }, []);
 
   const handleDragOver = React.useCallback((nodeId: string, e: React.DragEvent) => {

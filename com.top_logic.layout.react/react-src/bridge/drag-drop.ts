@@ -84,6 +84,30 @@ function endDrag(): void {
 }
 
 /**
+ * Calls `callback` once the browser has taken the drag image, if the drag still runs then: the one
+ * moment at which a drag source is marked as dragged (`data-tl-state~="dragging"`, faded by drag.css).
+ * Called from a `dragstart` handler. A change made within `dragstart` itself would show in the drag
+ * image, which the browser takes from the source after the handler returns; React renders a state set
+ * there before that.
+ *
+ * Whether the drag still runs is watched here rather than read from {@link runningDrag}: a drag
+ * started without {@link writeDragPayload} (tree, list reordering) is not registered there.
+ */
+export function afterDragImage(callback: () => void): void {
+  let ended = false;
+  const end = () => { ended = true; };
+  window.addEventListener('dragend', end, true);
+  window.addEventListener('drop', end, true);
+  window.setTimeout(() => {
+    window.removeEventListener('dragend', end, true);
+    window.removeEventListener('drop', end, true);
+    if (!ended) {
+      callback();
+    }
+  }, 0);
+}
+
+/**
  * Ends the running drag once it ends, wherever it ends.
  *
  * `dragend` is dispatched at the element the drag started on, which may have been removed from the

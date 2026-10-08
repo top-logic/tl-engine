@@ -1046,9 +1046,10 @@
   padding-inline-end: calc(var(--tl-space-2xs) + var(--tl-size-control-sm) + var(--tl-space-xs));
 }
 
-/* Der Endplatz gehört dem Endknopf: ein Suchfeld (type="search") zeigt daneben nicht auch das Löschen des
-   Browsers. Nur Chromium und WebKit kennen das Pseudo-Element; die Regel steht darum allein. */
-.tl-field-group:has(> .tl-button) > .tl-field::-webkit-search-cancel-button {
+/* Der Endplatz gehört dem Löschknopf (button, nicht der Öffnen-Link a): ein Suchfeld (type="search") zeigt
+   daneben nicht auch das Löschen des Browsers. Nur Chromium und WebKit kennen das Pseudo-Element; die Regel
+   steht darum allein. */
+.tl-field-group:has(> button.tl-button) > .tl-field::-webkit-search-cancel-button {
   appearance: none;
 }
 
@@ -1637,7 +1638,8 @@ a.tl-field-value:hover {
 }
 .tl-reorder-list__item[hidden] { display: none; }
 
-.tl-reorder-list__item:hover {
+/* In :where wie jede Fläche eines Ablage-Ziels (drag.css übermalt sie). */
+:where(.tl-reorder-list__item:hover) {
   background: var(--tl-surface-interactive-hover);
 }
 
@@ -2626,11 +2628,13 @@ a.tl-field-value:hover {
 }
 .tl-tree__node[hidden] { display: none; }
 
-.tl-tree__node:hover {
+/* Gezeigt und ausgewählt stehen in :where: Ablegen darauf (drag.css, eine Attribut-Spezifität) übermalt
+   sie, wie in der Tabelle. */
+:where(.tl-tree__node:hover) {
   background: var(--tl-surface-interactive-hover);
 }
 
-.tl-tree__node[aria-selected="true"] {
+:where(.tl-tree__node[aria-selected="true"]) {
   background: var(--tl-surface-interactive-selected);
 }
 

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { Menu, MenuItem } from './menu/Menu';
@@ -757,10 +757,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       selection: row.selected,
       type: dragType,
     });
-    // Faded only after the browser has taken the drag image from the row: a change within dragstart
-    // would fade the image as well.
     const dragged = { id: row.id, selection: row.selected };
-    window.setTimeout(() => setDraggedRow(runningDrag() ? dragged : null), 0);
+    afterDragImage(() => setDraggedRow(dragged));
   }, [controlId, dragType]);
 
   /** Which row an event points at, and where within it, or the table itself. */
@@ -1264,6 +1262,26 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // The name being typed for a filter to save; null while the save affordance is a plain button.
   const [saveName, setSaveName] = React.useState<string | null>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const saveButtonRef = React.useRef<HTMLButtonElement>(null);
+  // Whether closing the save form took the focus with it: the form's input and buttons vanish.
+  const saveFocusReturnRef = React.useRef(false);
+
+  // Closes the save form and hands the focus back to the button that opened it (WCAG 2.4.3).
+  const closeSaveForm = React.useCallback(() => {
+    saveFocusReturnRef.current = true;
+    setSaveName(null);
+  }, []);
+
+  // Once the form is gone, the focus goes to the save button, or to the grid where the table offers
+  // no saving any more; it must not fall to the document body.
+  React.useLayoutEffect(() => {
+    if (saveName !== null || !saveFocusReturnRef.current) {
+      return;
+    }
+    saveFocusReturnRef.current = false;
+    (saveButtonRef.current ?? gridRef.current)?.focus();
+  }, [saveName, filterSaving]);
 
   const handleSaveSubmit = React.useCallback(() => {
     const name = (saveName ?? '').trim();
@@ -1271,8 +1289,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     sendCommand('saveNamedFilter', { filterName: name });
-    setSaveName(null);
-  }, [saveName, sendCommand]);
+    closeSaveForm();
+  }, [saveName, sendCommand, closeSaveForm]);
 
   const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -1281,9 +1299,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     } else if (event.key === 'Escape') {
       // Stops the enclosing dialog/window from reading the Escape as "close me".
       event.preventDefault();
-      setSaveName(null);
+      closeSaveForm();
     }
-  }, [handleSaveSubmit]);
+  }, [handleSaveSubmit, closeSaveForm]);
 
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
@@ -1432,6 +1450,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <ThemeIcon encoded={ICON.search} className="tl-icon-sm" />
             </span>
             <input
+              ref={searchInputRef}
               type="search"
               className="tl-field tl-type-body"
               placeholder={i18n['js.table.search']}
@@ -1446,7 +1465,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
                 aria-label={i18n['js.textInput.clear']}
                 {...tooltipProps(i18n['js.textInput.clear'])}
-                onClick={() => { setSearchDraft(''); sendSearch(''); }}
+                onClick={() => {
+                  setSearchDraft('');
+                  sendSearch('');
+                  // The button vanishes with the text; the focus stays in the search (WCAG 2.4.3).
+                  searchInputRef.current?.focus();
+                }}
               >
                 <ThemeIcon encoded={ICON.clear} className="tl-button__icon tl-icon-sm" />
               </button>
@@ -1454,6 +1478,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           </span>
           {filterSaving && (saveName === null ? (
             <button
+              ref={saveButtonRef}
               type="button"
               className={buttonClassName({ appearance: 'ghost', icon: true })}
               {...tooltipProps(i18n['js.table.saveFilter'])}
@@ -1489,7 +1514,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 className={buttonClassName({ appearance: 'ghost', icon: true })}
                 {...tooltipProps(i18n['js.table.cancelSave'])}
                 aria-label={i18n['js.table.cancelSave']}
-                onClick={() => setSaveName(null)}
+                onClick={closeSaveForm}
               >
                 <ThemeIcon encoded={ICON.cancel} className="tl-button__icon tl-icon-sm" />
               </button>

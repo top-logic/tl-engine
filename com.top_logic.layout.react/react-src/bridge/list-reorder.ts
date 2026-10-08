@@ -29,6 +29,7 @@
 
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useI18N } from './i18n';
+import { afterDragImage } from './drag-drop';
 
 /** Texts of the keyboard gesture; the server translates them (I18NConstants, js.reorder.*). */
 const I18N_KEYS = {
@@ -283,11 +284,17 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   }, []);
 
   const handleDragStart = useCallback((index: number, event: React.DragEvent) => {
-    setDragIndex(index);
+    // dragover reads the ref at once; the item is marked dragged only after the drag image is taken.
+    dragIndexRef.current = index;
+    afterDragImage(() => {
+      if (dragIndexRef.current === index) {
+        setDragIndexState(index);
+      }
+    });
     event.dataTransfer.effectAllowed = 'move';
     // Firefox starts no drag at all without payload.
     event.dataTransfer.setData('text/plain', String(index));
-  }, [setDragIndex]);
+  }, []);
 
   const handleDragOver = useCallback((index: number, event: React.DragEvent) => {
     const dragged = dragIndexRef.current;

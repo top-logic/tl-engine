@@ -22,7 +22,6 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
-import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropSupport;
@@ -37,6 +36,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DropBinding;
+import com.top_logic.layout.view.dnd.DropReference;
+import com.top_logic.layout.view.dnd.DropSignature;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
@@ -117,7 +118,8 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	}
 
 	private DropBinding.Drop columnDrop(String acceptedKind) {
-		return new DropBinding.Drop(AcceptedKinds.of(List.of(acceptedKind)), DropMode.ONTO, _targetChannel, List.of(_onColumn));
+		return new DropBinding.Drop(AcceptedKinds.of(List.of(acceptedKind)), DropSignature.ONTO,
+			Map.of(DropReference.TARGET, _targetChannel), List.of(_onColumn));
 	}
 
 	/**
@@ -140,9 +142,10 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	 */
 	public void testRefuseIfBlocksWithReason() {
 		_board.setDropTarget(new DropBinding(_context, List.of(new DropBinding.Drop(
-			AcceptedKinds.of(List.of(CARD_KIND)), DropMode.ONTO, _targetChannel, List.of(_onColumn),
+			AcceptedKinds.of(List.of(CARD_KIND)), DropSignature.ONTO, Map.of(DropReference.TARGET, _targetChannel),
+			List.of(_onColumn),
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
-			(column, objects) -> DONE.equals(column) ? "Not here." : null))));
+			(references, objects) -> DONE.equals(references.get(0)) ? "Not here." : null))));
 
 		assertFalse("The drop must be refused.", drop(A1, columnKey(1), DropZone.NONE).isSuccess());
 		assertFalse("A refused drop runs no chain.", _onColumn._executed);

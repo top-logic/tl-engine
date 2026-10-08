@@ -31,8 +31,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * does.
  *
  * <p>
- * What a drop is made on - the element as a whole, or a single item of it - is decided by the
- * element. A drop is restricted in three stages, each asked only after the previous one accepted:
+ * What a drop is made on - the element as a whole, a single item of it, or a place in the order of
+ * its items - is decided by the element, and so are the objects the drop refers to there: the item
+ * dropped onto as its target, the item the dropped objects are inserted before. A drop is restricted in three stages, each asked only after the previous one accepted:
  * the {@link #getExecutability() executability} rules decide for the element as a whole over the
  * value of the {@link #getInput() input} channel, and are followed live - while they refuse, the
  * drop is not offered at all; the {@link #getTargetExecutability() target executability} rules
@@ -54,6 +55,9 @@ public interface DropConfig extends ExecutabilityConfig {
 
 	/** Configuration name for {@link #getTargetChannel()}. */
 	String TARGET_CHANNEL = "target-channel";
+
+	/** Configuration name for {@link #getBeforeChannel()}. */
+	String BEFORE_CHANNEL = "before-channel";
 
 	/** Configuration name for {@link #getTargetExecutability()}. */
 	String TARGET_EXECUTABILITY = "target-executability";
@@ -84,8 +88,10 @@ public interface DropConfig extends ExecutabilityConfig {
 	 * run, so they can read what was dropped on.
 	 *
 	 * <p>
-	 * Unset (default) leaves the target unpublished, which is what a drop on the element as a whole
-	 * needs - it has no target item, and writes {@code null} where a channel is declared anyway.
+	 * Unset (default) leaves the target unpublished. A drop on the element as a whole has no target
+	 * item, and writes {@code null} where a channel is declared anyway. An insertion has no target
+	 * item either, but the item it inserts before, see {@link #getBeforeChannel()}; declaring a
+	 * target channel there is a configuration error.
 	 * </p>
 	 */
 	@Name(TARGET_CHANNEL)
@@ -94,12 +100,27 @@ public interface DropConfig extends ExecutabilityConfig {
 	ChannelRef getTargetChannel();
 
 	/**
+	 * A {@link ViewChannel} the item the dropped objects are inserted before is written to before
+	 * the {@link #getActions() actions} run, so they can place the objects there.
+	 *
+	 * <p>
+	 * Only an insertion - a drop at a place in the order of the items - has such an item; it is
+	 * {@code null} for an insertion at the end. Declaring this channel for any other drop is a
+	 * configuration error. Unset (default) leaves the item unpublished.
+	 * </p>
+	 */
+	@Name(BEFORE_CHANNEL)
+	@Format(ChannelRefFormat.class)
+	@Nullable
+	ChannelRef getBeforeChannel();
+
+	/**
 	 * Rules deciding on which items the drop may be made, each target item being the input they
 	 * decide over.
 	 *
 	 * <p>
-	 * Only a drop on a single item has a target to decide over; declaring rules here for a drop on
-	 * the element as a whole is a configuration error. Empty (default) accepts every item.
+	 * Only a drop onto a single item has a target to decide over; declaring rules here for any
+	 * other drop is a configuration error. Empty (default) accepts every item.
 	 * </p>
 	 */
 	@Name(TARGET_EXECUTABILITY)
@@ -107,15 +128,19 @@ public interface DropConfig extends ExecutabilityConfig {
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getTargetExecutability();
 
 	/**
-	 * TL-Script function computing why a drop must not be made, from the target and the dragged
-	 * objects: {@code target -> objects -> reason}.
+	 * TL-Script function computing why a drop must not be made, from the objects the drop refers to
+	 * at its place and the dragged objects.
 	 *
 	 * <p>
-	 * The target is the item dropped on, or {@code null} for a drop on the element as a whole; the
-	 * objects are the list of dragged objects. No value or <code>false</code> accepts the drop,
-	 * <code>true</code> refuses it with a generic reason, a resource key or a text refuses it with
-	 * that reason - the same interpretation as the {@link DisabledIf.Config disabled-if} rule. Unset
-	 * (default) refuses nothing.
+	 * The leading arguments are the objects the drop refers to, which depend on what the drop is
+	 * made on: a drop on the element as a whole or onto a single item gets the target,
+	 * {@code target -> objects -> reason}, which is the item dropped onto, or {@code null} for a
+	 * drop on the element as a whole; an insertion into a list gets the item the objects are
+	 * inserted before, {@code before -> objects -> reason}, which is {@code null} for an insertion
+	 * at the end. The objects are the list of dragged objects. No value or <code>false</code>
+	 * accepts the drop, <code>true</code> refuses it with a generic reason, a resource key or a text
+	 * refuses it with that reason - the same interpretation as the {@link DisabledIf.Config
+	 * disabled-if} rule. Unset (default) refuses nothing.
 	 * </p>
 	 */
 	@Name(REFUSE_IF)

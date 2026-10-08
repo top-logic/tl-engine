@@ -71,7 +71,6 @@ import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
-import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.TableDragConfig;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.FilterStateConfig;
@@ -889,12 +888,7 @@ public class TableElement implements UIElement {
 		}
 		List<DeclaredDrop> result = new ArrayList<>(dropConfigs.size());
 		for (TableDropConfig dropConfig : dropConfigs) {
-			if (!dropConfig.getTargetExecutability().isEmpty() && dropConfig.getTarget() != DropTargetMode.ROW) {
-				context.error("A <" + DropConfig.TAG_NAME + "> on the table as a whole has no target row its '"
-					+ DropConfig.TARGET_EXECUTABILITY + "' could decide over; only a drop with "
-					+ TableDropConfig.TARGET + "=\"" + DropTargetMode.ROW.getExternalName() + "\" declares one.");
-			}
-			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().mode()));
+			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().signature()));
 		}
 		return result;
 	}

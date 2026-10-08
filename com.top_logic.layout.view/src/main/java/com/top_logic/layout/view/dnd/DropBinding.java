@@ -8,6 +8,7 @@ package com.top_logic.layout.view.dnd;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -47,8 +48,11 @@ import com.top_logic.tool.execution.ExecutableState;
  *
  * <p>
  * The binding knows nothing about what the control displays: the control resolves the place a drop
- * is made at into a location per mode, and the location of a {@link DropMode#ONTO} drop names the
- * item the drop is made on.
+ * is made at into a location per mode - the location of a {@link DropMode#ONTO} drop names the item
+ * the drop is made on, that of a {@link DropMode#ORDERED} drop the place among the items. What a
+ * declared drop is told about its location is fixed by its {@link DropSignature}: the objects the
+ * location refers to, which the refusal function receives as its leading arguments and which are
+ * written to the drop's channels before its action chain runs.
  * </p>
  *
  * <p>
@@ -56,8 +60,8 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link Drop#executability() control-wide state} decides whether the drop is offered at all - a
  * disabled drop contributes no kind and no mode, and applies nothing; its
  * {@link Drop#targetRule() target rule} decides over the item an {@link DropMode#ONTO} drop is made
- * on; its {@link Drop#refuseIf() refusal function} decides over the target and the dragged objects
- * together. A drop that refuses passes the drop on to the next declared one; where none accepts,
+ * on; its {@link Drop#refuseIf() refusal function} decides over the objects the location refers to
+ * and the dragged objects together. A drop that refuses passes the drop on to the next declared one; where none accepts,
  * the first refusal is what the user is shown, see {@link #check(DropRequest)}.
  * </p>
  *
@@ -71,12 +75,12 @@ public class DropBinding implements DropTarget {
 	 *
 	 * @param accepted
 	 *        The kinds of the drags the drop accepts.
-	 * @param mode
-	 *        How the drop relates to the items of the control: made on the control as a whole, or
-	 *        onto a single item.
-	 * @param targetChannel
-	 *        The channel the target item is written to before the actions run, or {@code null} if
-	 *        the drop declares none. A drop other than {@link DropMode#ONTO} writes {@code null}.
+	 * @param signature
+	 *        The mode of the drop - made on the control as a whole, onto a single item, or at a
+	 *        place in the order of the items - and the objects it refers to at its location.
+	 * @param channels
+	 *        The channel each {@link DropSignature#references() reference} of the signature is
+	 *        written to before the actions run; a reference without an entry is written nowhere.
 	 * @param actions
 	 *        The action chain applying the drop, with the dropped objects as its input.
 	 * @param executability
@@ -86,24 +90,32 @@ public class DropBinding implements DropTarget {
 	 *        The rule deciding over the item a {@link DropMode#ONTO} drop is made on, the item being
 	 *        its input. Not asked for a drop of another mode.
 	 * @param refuseIf
-	 *        Computes the reason a drop is refused from the target item ({@code null} for a drop
-	 *        other than {@link DropMode#ONTO}) and the list of dropped objects; the result is
-	 *        interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null} refuses nothing.
+	 *        Computes the reason a drop is refused from the objects the drop refers to at its
+	 *        location, in the order of the signature's references, and the list of dropped objects;
+	 *        the result is interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null}
+	 *        refuses nothing.
 	 */
-	public record Drop(AcceptedKinds accepted, DropMode mode, ViewChannel targetChannel,
+	public record Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
 			List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
-			BiFunction<Object, List<?>, Object> refuseIf) {
+			BiFunction<List<?>, List<?>, Object> refuseIf) {
 
 		/**
 		 * Creates an unrestricted {@link Drop}: always enabled, accepting every target.
 		 *
-		 * @see #Drop(AcceptedKinds, DropMode, ViewChannel, List, Supplier, ViewExecutabilityRule,
+		 * @see #Drop(AcceptedKinds, DropSignature, Map, List, Supplier, ViewExecutabilityRule,
 		 *      BiFunction)
 		 */
-		public Drop(AcceptedKinds accepted, DropMode mode, ViewChannel targetChannel,
+		public Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
 				List<ViewAction> actions) {
-			this(accepted, mode, targetChannel, actions, () -> ExecutableState.EXECUTABLE,
+			this(accepted, signature, channels, actions, () -> ExecutableState.EXECUTABLE,
 				ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
+		}
+
+		/**
+		 * The mode of the drop's {@link #signature()}.
+		 */
+		public DropMode mode() {
+			return signature.mode();
 		}
 
 		/**
@@ -115,23 +127,35 @@ public class DropBinding implements DropTarget {
 		}
 
 		/**
-		 * Asks the {@link #targetRule() target rule} (for a {@link DropMode#ONTO} drop) and the
-		 * {@link #refuseIf() refusal function} about a drop of the given objects on the given
-		 * target; the control-wide state is not asked here.
+		 * Asks the {@link #targetRule() target rule} (for a drop onto an item) and the
+		 * {@link #refuseIf() refusal function} about a drop of the given objects at the given
+		 * location; the control-wide state is not asked here.
 		 *
 		 * @return The reason of the first refusal, {@code null} if the drop is accepted.
 		 */
-		ResKey refusal(Object target, List<?> objects) {
-			if (mode == DropMode.ONTO) {
-				ResKey refusal = reasonOf(targetRule.isExecutable(target));
+		ResKey refusal(DropLocation location, List<?> objects) {
+			if (location instanceof DropLocation.Onto onto) {
+				ResKey refusal = reasonOf(targetRule.isExecutable(onto.target()));
 				if (refusal != null) {
 					return refusal;
 				}
 			}
 			if (refuseIf != null) {
-				return reasonOf(DisabledIf.stateFor(refuseIf.apply(target, objects)));
+				return reasonOf(DisabledIf.stateFor(refuseIf.apply(signature.valuesAt(location), objects)));
 			}
 			return null;
+		}
+
+		/**
+		 * Writes the objects the drop refers to at the given location to their channels.
+		 */
+		void publish(DropLocation location) {
+			for (DropReference reference : signature.references()) {
+				ViewChannel channel = channels.get(reference);
+				if (channel != null) {
+					channel.set(reference.value().apply(location));
+				}
+			}
 		}
 	}
 
@@ -207,7 +231,7 @@ public class DropBinding implements DropTarget {
 	 * {@link Drop#refuseIf() refusal function} refuses the drop at its location, is skipped with its
 	 * reason. The first drop that accepts wins, and the verdict accepts the drop at its location.
 	 * Where none accepts, the verdict is the first refusal met, or a refusal as not accepted where
-	 * there was none. Nothing is modified, in particular no target channel is written.
+	 * there was none. Nothing is modified, in particular no channel of a reference is written.
 	 * </p>
 	 */
 	@Override
@@ -249,7 +273,7 @@ public class DropBinding implements DropTarget {
 	public void onDrop(DropEvent event, Runnable onApplied) {
 		Match match = match(DropRequest.of(event));
 		if (match.drop() != null) {
-			apply(match.drop(), event.objects(), targetOf(match.location()), onApplied);
+			apply(match.drop(), event.objects(), match.location(), onApplied);
 		}
 	}
 
@@ -275,7 +299,7 @@ public class DropBinding implements DropTarget {
 					refusal = I18NConstants.ERROR_DROP_REFUSED;
 				}
 			} else {
-				refusal = drop.refusal(targetOf(location), request.objects());
+				refusal = drop.refusal(location, request.objects());
 			}
 			if (refusal == null) {
 				return new Match(drop, location, null);
@@ -285,14 +309,6 @@ public class DropBinding implements DropTarget {
 			}
 		}
 		return new Match(null, null, firstRefusal);
-	}
-
-	/**
-	 * The target item a drop at the given location applies to: the item dropped onto for a
-	 * {@link DropLocation.Onto} location, {@code null} for any other.
-	 */
-	private static Object targetOf(DropLocation location) {
-		return location instanceof DropLocation.Onto onto ? onto.target() : null;
 	}
 
 	/**
@@ -315,11 +331,8 @@ public class DropBinding implements DropTarget {
 		return reason;
 	}
 
-	private void apply(Drop drop, List<?> objects, Object target, Runnable onApplied) {
-		ViewChannel targetChannel = drop.targetChannel();
-		if (targetChannel != null) {
-			targetChannel.set(target);
-		}
+	private void apply(Drop drop, List<?> objects, DropLocation location, Runnable onApplied) {
+		drop.publish(location);
 		List<ViewAction> actions = drop.actions();
 		if (onApplied != null) {
 			actions = new ArrayList<>(actions);

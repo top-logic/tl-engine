@@ -1,8 +1,36 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
+	<channels>
+		<channel name="ch"/>
+	</channels>
+
 	<table>
 		<drop accept="value">
+			<target-executability>
+				<null-input-disabled/>
+			</target-executability>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<drop
+			accept="value"
+			before-channel="ch"
+			target="table"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<drop
+			accept="value"
+			before-channel="ch"
+			target="row"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<drop
+			accept="value"
+			target="ordered"
+			target-channel="ch"
+		>
 			<target-executability>
 				<null-input-disabled/>
 			</target-executability>

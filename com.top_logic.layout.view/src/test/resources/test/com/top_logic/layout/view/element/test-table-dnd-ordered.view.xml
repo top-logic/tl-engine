@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="before"/>
+		<channel name="target"/>
+	</channels>
+
+	<table>
+		<drop
+			accept="value"
+			before-channel="before"
+			refuse-if="before -> objects -> $before == 'locked' || $objects.size() != 1"
+			target="ordered"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<drop
+			accept="value"
+			target="row"
+			target-channel="target"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>row -&gt; $row</value>
+			</computed-column>
+		</columns>
+		<rows>['free', 'locked']</rows>
+	</table>
+</view>

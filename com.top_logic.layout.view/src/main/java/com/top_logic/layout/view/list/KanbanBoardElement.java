@@ -29,7 +29,6 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
@@ -40,6 +39,7 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.dnd.DropSignature;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -373,7 +373,7 @@ public class KanbanBoardElement implements UIElement {
 			.map(context::getInstance)
 			.collect(Collectors.toList());
 		_drops = config.getDrops().stream()
-			.map(drop -> DeclaredDrop.compile(context, drop, DropMode.ONTO))
+			.map(drop -> DeclaredDrop.compile(context, drop, DropSignature.ONTO))
 			.toList();
 		_onReorder = QueryExecutor.compileOptional(config.getOnReorder());
 	}

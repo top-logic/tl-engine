@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.dnd;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropRequest;
+import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -39,6 +41,8 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DropBinding;
+import com.top_logic.layout.view.dnd.DropReference;
+import com.top_logic.layout.view.dnd.DropSignature;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -92,6 +96,8 @@ public class TestDropBinding extends TestCase {
 
 	private ViewChannel _targetChannel;
 
+	private ViewChannel _beforeChannel;
+
 	private Recorder _onTable;
 
 	private Recorder _onRow;
@@ -107,6 +113,7 @@ public class TestDropBinding extends TestCase {
 		// The source table is displayed: only a displayed control can be addressed by its ID.
 		_source.attach();
 		_targetChannel = new DefaultViewChannel("dropTarget");
+		_beforeChannel = new DefaultViewChannel("dropBefore");
 		_onTable = new Recorder();
 		_onRow = new Recorder();
 	}
@@ -136,12 +143,26 @@ public class TestDropBinding extends TestCase {
 	}
 
 	private DropBinding.Drop tableDrop(AcceptedKinds accepted, Recorder action) {
-		return new DropBinding.Drop(accepted, DropMode.CONTROL, null, List.of(action));
+		return new DropBinding.Drop(accepted, DropSignature.CONTROL, Map.of(), List.of(action));
 	}
 
 	private DropBinding.Drop rowDrop(String acceptedKind, Recorder action) {
-		return new DropBinding.Drop(kinds(acceptedKind), DropMode.ONTO, _targetChannel,
-			List.of(action));
+		return new DropBinding.Drop(kinds(acceptedKind), DropSignature.ONTO, targetChannel(), List.of(action));
+	}
+
+	/** The channel map publishing the target of a drop on {@link #_targetChannel}. */
+	private Map<DropReference, ViewChannel> targetChannel() {
+		return Map.of(DropReference.TARGET, _targetChannel);
+	}
+
+	/**
+	 * An insertion among the rows, publishing the row it inserts before on {@link #_beforeChannel}.
+	 */
+	private DropBinding.Drop orderedDrop(String acceptedKind, Recorder action,
+			BiFunction<List<?>, List<?>, Object> refuseIf) {
+		return new DropBinding.Drop(kinds(acceptedKind), DropSignature.ORDERED_LIST,
+			Map.of(DropReference.BEFORE, _beforeChannel), List.of(action), () -> ExecutableState.EXECUTABLE,
+			ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf);
 	}
 
 	/** The client-side key of the row at the given index of a table. */
@@ -154,17 +175,25 @@ public class TestDropBinding extends TestCase {
 	 * {@code targetIndex}, or on the table itself when that is negative.
 	 */
 	private HandlerResult drop(TableViewControl<String> target, int sourceIndex, int targetIndex) {
+		return drop(target, sourceIndex, targetIndex, targetIndex >= 0 ? DropZone.MIDDLE : DropZone.NONE);
+	}
+
+	/**
+	 * Drops the source table's row {@code sourceIndex} in the given zone of the given table's row
+	 * {@code targetIndex}, or beside its rows when that is negative.
+	 */
+	private HandlerResult drop(TableViewControl<String> target, int sourceIndex, int targetIndex, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
 		arguments.put(DropArguments.KEYS, rowKey(sourceIndex));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (targetIndex >= 0) {
 			arguments.put(DropArguments.TARGET_KEY, rowKey(targetIndex));
-			arguments.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
+			arguments.put(DropArguments.ZONE, zone.wireName());
 		} else {
 			arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		}
-		return target.executeClientCommand("drop", arguments);
+		return target.executeClientCommand(DropSupport.CMD_DROP, arguments);
 	}
 
 	/**
@@ -303,9 +332,9 @@ public class TestDropBinding extends TestCase {
 	 * verdict names the location of the table drop.
 	 */
 	public void testARefusingRowDropHandsOnToTheTableDrop() {
-		DropBinding.Drop refusing = new DropBinding.Drop(kinds(ROW_KIND), DropMode.ONTO, _targetChannel,
+		DropBinding.Drop refusing = new DropBinding.Drop(kinds(ROW_KIND), DropSignature.ONTO, targetChannel(),
 			List.of(_onRow), () -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
-			(row, objects) -> "Not here.");
+			(references, objects) -> "Not here.");
 		DropBinding binding = new DropBinding(_context, List.of(refusing, tableDrop(ROW_KIND, _onTable)));
 
 		DropVerdict verdict = binding.check(request(TARGET_ROWS.get(0)));
@@ -365,7 +394,7 @@ public class TestDropBinding extends TestCase {
 		arguments.put(DropArguments.KEYS, rowKey(0));
 		arguments.put(DropArguments.SELECTION, Boolean.TRUE);
 		arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
-		assertTrue(target.executeClientCommand("drop", arguments).isSuccess());
+		assertTrue(target.executeClientCommand(DropSupport.CMD_DROP, arguments).isSuccess());
 
 		assertEquals(List.of(SOURCE_ROWS.get(0)), _onTable._input);
 	}
@@ -379,8 +408,8 @@ public class TestDropBinding extends TestCase {
 	 */
 	public void testTableWideRefusalRemovesTheDrop() {
 		ExecutableState[] state = { ExecutableState.createDisabledState(REASON) };
-		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropMode.ONTO,
-			_targetChannel, List.of(_onRow), () -> state[0], ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
+		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropSignature.ONTO,
+			targetChannel(), List.of(_onRow), () -> state[0], ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 		DropBinding binding = new DropBinding(_context, List.of(restricted, tableDrop(OTHER_KIND, _onTable)));
 
 		assertEquals("A disabled drop contributes no kind.", kinds(OTHER_KIND), binding.acceptedKinds());
@@ -404,8 +433,8 @@ public class TestDropBinding extends TestCase {
 		String refusedRow = TARGET_ROWS.get(1);
 		ViewExecutabilityRule targetRule = row -> refusedRow.equals(row)
 			? ExecutableState.createDisabledState(REASON) : ExecutableState.EXECUTABLE;
-		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropMode.ONTO,
-			_targetChannel, List.of(_onRow), () -> ExecutableState.EXECUTABLE, targetRule, null);
+		DropBinding.Drop restricted = new DropBinding.Drop(kinds(ROW_KIND), DropSignature.ONTO,
+			targetChannel(), List.of(_onRow), () -> ExecutableState.EXECUTABLE, targetRule, null);
 		DropBinding binding = new DropBinding(_context, List.of(restricted));
 		TableViewControl<String> target = newTable(TARGET_ROWS);
 		target.setDropTarget(binding);
@@ -430,19 +459,19 @@ public class TestDropBinding extends TestCase {
 	public void testRefuseIf() {
 		Object[] result = new Object[1];
 		List<Object> seen = new ArrayList<>();
-		BiFunction<Object, List<?>, Object> refuseIf = (target, objects) -> {
-			seen.add(target);
+		BiFunction<List<?>, List<?>, Object> refuseIf = (references, objects) -> {
+			seen.add(references);
 			seen.add(objects);
 			return result[0];
 		};
 		DropBinding binding = new DropBinding(_context, List.of(new DropBinding.Drop(
-			kinds(ROW_KIND), DropMode.ONTO, _targetChannel, List.of(_onRow),
+			kinds(ROW_KIND), DropSignature.ONTO, targetChannel(), List.of(_onRow),
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf)));
 
 		result[0] = null;
 		assertTrue("No value accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
 		assertEquals("The function gets the target row and the dragged objects.",
-			List.of(TARGET_ROWS.get(1), List.of(SOURCE_ROWS.get(0))), seen);
+			List.of(List.of(TARGET_ROWS.get(1)), List.of(SOURCE_ROWS.get(0))), seen);
 
 		result[0] = Boolean.FALSE;
 		assertTrue("False accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
@@ -468,7 +497,7 @@ public class TestDropBinding extends TestCase {
 	 * Applying a drop passes over a disabled declared drop - to the next matching one, or to none.
 	 */
 	public void testOnDropSkipsDisabledDrops() {
-		DropBinding.Drop disabled = new DropBinding.Drop(kinds(ROW_KIND), DropMode.CONTROL, null,
+		DropBinding.Drop disabled = new DropBinding.Drop(kinds(ROW_KIND), DropSignature.CONTROL, Map.of(),
 			List.of(_onRow), () -> ExecutableState.createDisabledState(REASON),
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 
@@ -478,6 +507,112 @@ public class TestDropBinding extends TestCase {
 		new DropBinding(_context, List.of(disabled, tableDrop(ROW_KIND, _onTable))).onDrop(event());
 		assertFalse(_onRow._executed);
 		assertTrue("The next matching drop applies.", _onTable._executed);
+	}
+
+	/** A value no drop publishes, marking a channel as not written. */
+	private static final String UNWRITTEN = "unwritten";
+
+	/**
+	 * An insertion gets the row it inserts before in its refusal function and its before channel:
+	 * the row of the upper zone, the row following the lower zone, and {@code null} below the last
+	 * row and beside the rows.
+	 */
+	public void testOrderedDropPublishesTheRowToInsertBefore() {
+		List<List<?>> seen = new ArrayList<>();
+		TableViewControl<String> target = newTargetTable(List.of(orderedDrop(ROW_KIND, _onTable,
+			(references, objects) -> {
+				seen.add(references);
+				return null;
+			})));
+
+		assertInsertion(target, 0, DropZone.UPPER, TARGET_ROWS.get(0), seen);
+		assertInsertion(target, 0, DropZone.LOWER, TARGET_ROWS.get(1), seen);
+		assertInsertion(target, 1, DropZone.UPPER, TARGET_ROWS.get(1), seen);
+		assertInsertion(target, 1, DropZone.LOWER, null, seen);
+		assertInsertion(target, -1, DropZone.NONE, null, seen);
+		assertEquals("An insertion has no target row.", UNWRITTEN, _targetChannel.get());
+	}
+
+	private void assertInsertion(TableViewControl<String> target, int rowIndex, DropZone zone, String expectedBefore,
+			List<List<?>> seen) {
+		String place = "row " + rowIndex + ", zone " + zone;
+		seen.clear();
+		_beforeChannel.set(UNWRITTEN);
+		_targetChannel.set(UNWRITTEN);
+		_onTable._executed = false;
+
+		assertTrue(place, drop(target, 0, rowIndex, zone).isSuccess());
+		assertTrue(place, _onTable._executed);
+		assertEquals(place + ": the chain receives the dragged objects.", List.of(SOURCE_ROWS.get(0)),
+			_onTable._input);
+		assertEquals(place + ": the before channel is written before the chain runs.", expectedBefore,
+			_beforeChannel.get());
+		assertFalse(place + ": the refusal function is asked.", seen.isEmpty());
+		for (List<?> references : seen) {
+			assertEquals(place + ": the refusal function gets the row to insert before.",
+				Collections.singletonList(expectedBefore), references);
+		}
+	}
+
+	/**
+	 * The middle of a row is no insertion: an ordered drop alone has no location there.
+	 */
+	public void testOrderedDropHasNoLocationInTheMiddleOfARow() {
+		TableViewControl<String> target = newTargetTable(List.of(orderedDrop(ROW_KIND, _onTable, null)));
+
+		assertFalse(drop(target, 0, 0, DropZone.MIDDLE).isSuccess());
+		assertFalse(_onTable._executed);
+	}
+
+	/**
+	 * An ordered drop declared before a row drop takes the upper and lower zones of a row and the
+	 * place beside the rows, and leaves the middle of a row to the row drop; a row drop declared
+	 * first takes the whole row, and leaves only the place beside the rows to the ordered drop.
+	 */
+	public void testOrderedAndRowDropsAreSelectedByZoneAndDeclaredOrder() {
+		TableViewControl<String> orderedFirst = newTargetTable(
+			List.of(orderedDrop(ROW_KIND, _onTable, null), rowDrop(ROW_KIND, _onRow)));
+
+		assertApplied(orderedFirst, 0, DropZone.UPPER, _onTable, _onRow);
+		assertEquals(TARGET_ROWS.get(0), _beforeChannel.get());
+		assertApplied(orderedFirst, 0, DropZone.MIDDLE, _onRow, _onTable);
+		assertEquals(TARGET_ROWS.get(0), _targetChannel.get());
+		assertApplied(orderedFirst, 0, DropZone.LOWER, _onTable, _onRow);
+		assertEquals(TARGET_ROWS.get(1), _beforeChannel.get());
+		assertApplied(orderedFirst, -1, DropZone.NONE, _onTable, _onRow);
+		assertNull(_beforeChannel.get());
+
+		TableViewControl<String> rowFirst = newTargetTable(
+			List.of(rowDrop(ROW_KIND, _onRow), orderedDrop(ROW_KIND, _onTable, null)));
+
+		assertApplied(rowFirst, 0, DropZone.UPPER, _onRow, _onTable);
+		assertApplied(rowFirst, 0, DropZone.LOWER, _onRow, _onTable);
+		assertApplied(rowFirst, -1, DropZone.NONE, _onTable, _onRow);
+	}
+
+	/**
+	 * An ordered drop refusing an insertion hands the drop on to the row drop declared after it.
+	 */
+	public void testARefusingOrderedDropHandsOnToTheRowDrop() {
+		TableViewControl<String> target = newTargetTable(List.of(
+			orderedDrop(ROW_KIND, _onTable,
+				(references, objects) -> TARGET_ROWS.get(0).equals(references.get(0)) ? "Not here." : null),
+			rowDrop(ROW_KIND, _onRow)));
+
+		assertApplied(target, 0, DropZone.UPPER, _onRow, _onTable);
+		assertEquals(TARGET_ROWS.get(0), _targetChannel.get());
+		assertApplied(target, 0, DropZone.LOWER, _onTable, _onRow);
+		assertEquals(TARGET_ROWS.get(1), _beforeChannel.get());
+	}
+
+	private void assertApplied(TableViewControl<String> target, int rowIndex, DropZone zone, Recorder applied,
+			Recorder notApplied) {
+		String place = "row " + rowIndex + ", zone " + zone;
+		applied._executed = false;
+		notApplied._executed = false;
+		assertTrue(place, drop(target, 0, rowIndex, zone).isSuccess());
+		assertTrue(place + ": expected drop not applied.", applied._executed);
+		assertFalse(place + ": unexpected drop applied.", notApplied._executed);
 	}
 
 	/**

@@ -11,14 +11,15 @@ import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.element.TableElement;
 
 /**
- * Configuration of one {@code <drop>} of a {@link TableElement}: a drop made either on the table
- * as a whole or on a single row of it.
+ * Configuration of one {@code <drop>} of a {@link TableElement}: a drop made on the table as a
+ * whole, on a single row of it, or between two rows.
  *
  * <p>
  * The {@link #getTargetChannel() target channel}, the {@link #getTargetExecutability() target
  * executability} rules and the {@link #getRefuseIf() refusal function} get the row dropped on for a
  * drop on a {@link DropTargetMode#ROW row}; a drop on the {@link DropTargetMode#TABLE table} has no
- * target row.
+ * target row. An {@link DropTargetMode#ORDERED insertion} has the row it inserts before instead,
+ * which the {@link #getBeforeChannel() before channel} and the refusal function get.
  * </p>
  */
 @TagName(DropConfig.TAG_NAME)
@@ -28,7 +29,8 @@ public interface TableDropConfig extends DropConfig {
 	String TARGET = "target";
 
 	/**
-	 * Whether the table as a whole or a single row is the target of this drop.
+	 * Whether the table as a whole, a single row, or a place between two rows is the target of this
+	 * drop.
 	 */
 	@Name(TARGET)
 	DropTargetMode getTarget();

@@ -44,6 +44,7 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
+					input="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -63,6 +64,10 @@
 					</verify-identity>
 					<confirm expr="group -> #('Grant the selected accounts every right of your account?'@en, 'Den ausgewählten Konten alle Rechte Ihres Kontos einräumen?'@de)"/>
 					<with-transaction>
+						<commitMessage>
+							<en>Named the deputies of {0}.</en>
+							<de>Stellvertreter von {0} benannt.</de>
+						</commitMessage>
 						<store-form-state/>
 					</with-transaction>
 					<close-dialog/>

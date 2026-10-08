@@ -16,9 +16,11 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.mig.html.layout.LayoutUtils;
@@ -86,7 +88,9 @@ public class IssueAccessTokenAction extends AbstractConfiguredInstance<IssueAcce
 
 		String sessionKey = UUID.randomUUID().toString();
 		String secret;
-		try (Transaction tx = account.tKnowledgeBase().beginTransaction()) {
+		ResKey message =
+			I18NConstants.ACCESS_TOKEN_ISSUED__LABEL_ACCOUNT.fill(label, MetaLabelProvider.INSTANCE.getLabel(account));
+		try (Transaction tx = account.tKnowledgeBase().beginTransaction(message)) {
 			secret = AccessTokens.issue(account, label, validHours.intValue(), mayAct, sessionKey);
 			tx.commit();
 		}

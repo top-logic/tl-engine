@@ -5,8 +5,14 @@
  */
 package test.com.top_logic.layout.react;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -34,6 +40,30 @@ public class TestReactImages extends TestCase {
 	}
 
 	/**
+	 * An image given by its theme-local key is resolved in the current theme and reaches the client
+	 * as the URL of the file in that theme.
+	 */
+	public void testImageFileResolvedInTheme() {
+		ThemeImage image = ThemeImage.internalDecode("/mimetypes/tl/TLProperty.png");
+		ThemeImage.Img resolved = (ThemeImage.Img) image.resolve();
+
+		String encoded = ReactImages.encode(_context, image);
+
+		assertEquals("/app" + resolved.getFileLink(), encoded);
+		assertTrue("Served from the theme folder: " + encoded, encoded.endsWith("/mimetypes/tl/TLProperty.png"));
+	}
+
+	/**
+	 * Without a context, the URL of an image file is relative to the server root.
+	 */
+	public void testImageFileWithoutContext() {
+		ThemeImage image = ThemeImage.resourceIcon("/mimetypes/tl/TLReference.png",
+			"/themes/core/mimetypes/tl/TLReference.png");
+
+		assertEquals("/themes/core/mimetypes/tl/TLReference.png", ReactImages.encode(null, image));
+	}
+
+	/**
 	 * An icon font class needs no URL and keeps its encoded form.
 	 */
 	public void testCssIcon() {
@@ -54,6 +84,14 @@ public class TestReactImages extends TestCase {
 	 */
 	public void testNull() {
 		assertNull(ReactImages.encode(_context, null));
+	}
+
+	/**
+	 * The suite of tests, providing the theme images are resolved in.
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(ServiceTestSetup.createSetup(TestReactImages.class,
+			ThemeFactory.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
 	}
 
 }

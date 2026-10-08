@@ -13,8 +13,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.security.ModelAccessRule;
@@ -31,6 +33,11 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * right to delete the object; a refusal aborts the chain with the message of {@code delete()}.
  * The action results in {@code null}, so that a following {@link WriteChannelAction} clears the
  * channel that held the deleted object.
+ * </p>
+ *
+ * <p>
+ * The deletion is committed with the configured commit message, by default with a message naming
+ * the deleted object.
  * </p>
  *
  * <p>
@@ -62,7 +69,7 @@ public class DeleteObjectAction implements ViewAction {
 	 * Configuration for {@link DeleteObjectAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<DeleteObjectAction> {
+	public interface Config extends PolymorphicConfiguration<DeleteObjectAction>, WithCommitMessage {
 
 		/** Tag name of a {@link DeleteObjectAction} in an action chain. */
 		String TAG_NAME = "delete-object";
@@ -70,14 +77,32 @@ public class DeleteObjectAction implements ViewAction {
 		@Override
 		@ClassDefault(DeleteObjectAction.class)
 		Class<? extends DeleteObjectAction> getImplementationClass();
+
+		/**
+		 * The message to annotate to the deletion.
+		 *
+		 * <p>
+		 * If not set, the message names the deleted object.
+		 * </p>
+		 *
+		 * <p>
+		 * A message may contain the placeholder '{0}' that is replaced with the label of the deleted
+		 * object.
+		 * </p>
+		 */
+		@Override
+		ResKey1 getCommitMessage();
 	}
+
+	private final ViewCommitMessage _commitMessage;
 
 	/**
 	 * Creates a {@link DeleteObjectAction} from configuration.
 	 */
 	@CalledByReflection
 	public DeleteObjectAction(InstantiationContext context, Config config) {
-		// No configuration.
+		_commitMessage = new ViewCommitMessage(context, config,
+			com.top_logic.layout.form.component.I18NConstants.DELETED__MODEL);
 	}
 
 	/**
@@ -103,7 +128,7 @@ public class DeleteObjectAction implements ViewAction {
 		if (input == null) {
 			return null;
 		}
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(_commitMessage.create(input))) {
 			DeleteObject.delete(input, true);
 			tx.commit();
 		}

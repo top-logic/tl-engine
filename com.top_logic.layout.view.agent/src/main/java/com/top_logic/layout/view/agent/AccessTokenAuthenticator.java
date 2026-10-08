@@ -54,7 +54,8 @@ public class AccessTokenAuthenticator extends AbstractConfiguredInstance<AccessT
 				return null;
 			}
 
-			try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
+			try (Transaction tx = token.tKnowledgeBase()
+				.beginTransaction(AccessTokens.commitMessage(I18NConstants.ACCESS_TOKEN_USED__LABEL_ACCOUNT, token))) {
 				AccessTokens.markUsed(token);
 				tx.commit();
 			} catch (RuntimeException ex) {

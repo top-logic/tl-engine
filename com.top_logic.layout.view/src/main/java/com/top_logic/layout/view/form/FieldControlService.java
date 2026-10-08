@@ -497,7 +497,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        a single one, see {@link ColumnType#collected()}.
 	 */
 	private static FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
-		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
+		return fieldSpec(part, part, multiple, model);
+	}
+
+	/**
+	 * Describes a value of the given attribute for the control that edits it, holding as many
+	 * values as stated and reading its display annotations from the given lookup.
+	 *
+	 * <p>
+	 * The attribute decides everything but how many values there are and which display annotations
+	 * apply: its type and its order shape the field, while the multiplicity is the one of the
+	 * field, see {@link ColumnType#collected()}, and the display annotations are the given ones.
+	 * </p>
+	 *
+	 * @param annotations
+	 *        Where the display annotations are read from: the attribute itself, or a column's
+	 *        annotations layered over it, see {@link ColumnType#annotatedBy(AnnotationLookup)}.
+	 * @param multiple
+	 *        Whether the described field holds a collection of the attribute's values rather than
+	 *        a single one.
+	 */
+	private static FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
+			FieldModel model) {
+		return fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
 			.setOrdered(multiple && part.isOrdered());
 	}
 
@@ -874,9 +896,11 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * ({@link ColumnType#type()}, {@link ColumnType#multiple()}) and where its display annotations
 	 * come from ({@link ColumnType#annotations()}) is all the display needs. Where an attribute
 	 * <em>does</em> hold the value ({@link ColumnType#part()}), that attribute decides the display,
-	 * so its options and its own annotations keep shaping the cell - all but how many values the
-	 * cell holds, which is the column's answer ({@link ColumnType#multiple()}): a column reaching a
-	 * single-valued attribute over a multi-valued step shows all the values it collected.
+	 * so its options and its own control annotation keep shaping the cell - all but how many values
+	 * the cell holds, which is the column's answer ({@link ColumnType#multiple()}): a column
+	 * reaching a single-valued attribute over a multi-valued step shows all the values it
+	 * collected. The display annotations are read from {@link ColumnType#annotations()} in either
+	 * case, which are the attribute's own unless the column declares some over them.
 	 * </p>
 	 *
 	 * <p>
@@ -905,7 +929,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				return CompositionEditing.createDisplayControl(context, part, value);
 			}
 			AbstractFieldModel model = displayModel(part, multiple, value);
-			return createFieldControl(context, part, cellSpec(fieldSpec(part, multiple, model)), model, null);
+			FieldSpec field = cellSpec(fieldSpec(part, columnType.annotations(), multiple, model));
+			return createFieldControl(context, part, field, model, null);
 		}
 		TLType type = columnType.type();
 		if (type == null) {

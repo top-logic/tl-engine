@@ -15,8 +15,11 @@ import java.util.Date;
 import java.util.List;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -214,6 +217,20 @@ public class AccessTokens {
 	 */
 	public static TLClass issuedType() {
 		return (TLClass) TLModelUtil.findType(ModelService.getApplicationModel(), ISSUED_TYPE);
+	}
+
+	/**
+	 * The commit message of a change of the given token.
+	 *
+	 * @param key
+	 *        The message, filled with the {@link #LABEL} of the token and the label of its
+	 *        {@link #OWNER}.
+	 * @param token
+	 *        The changed token.
+	 */
+	public static ResKey commitMessage(ResKey2 key, TLObject token) {
+		return key.fill(token.tValue(part(LABEL)),
+			MetaLabelProvider.INSTANCE.getLabel(token.tValue(part(OWNER))));
 	}
 
 	/**

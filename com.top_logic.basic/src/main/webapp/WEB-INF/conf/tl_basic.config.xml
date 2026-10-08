@@ -301,8 +301,8 @@
 					</format>
 					<format id="long">
 						<label key="dynamic.da667b7d-fc00-4fe8-9673-07da24e16e06">
-							<en>Integer (without separator)</en>
-							<de>Ganzzahl (ohne Trenner)</de>
+							<en>Integer (default)</en>
+							<de>Ganzzahl (Standard)</de>
 						</label>
 						<number
 							result-type="long"

@@ -11,11 +11,14 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.format.ColorFormat;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
 import com.top_logic.layout.react.control.calendar.CalendarModel;
 import com.top_logic.layout.react.control.calendar.CalendarModelListener;
@@ -181,7 +184,9 @@ public class ExpressionCalendarModel implements CalendarModel {
 		if (_onMove == null) {
 			return;
 		}
-		inTransaction(() -> _onMove.execute(event.getBusinessObject(), newStart, newEnd));
+		Object entry = event.getBusinessObject();
+		inTransaction(I18NConstants.MOVED_CALENDAR_ENTRY__ENTRY.fill(label(entry)),
+			tx -> _onMove.execute(entry, newStart, newEnd));
 		fireChanged();
 	}
 
@@ -190,7 +195,9 @@ public class ExpressionCalendarModel implements CalendarModel {
 		if (_onResize == null) {
 			return;
 		}
-		inTransaction(() -> _onResize.execute(event.getBusinessObject(), newEnd));
+		Object entry = event.getBusinessObject();
+		inTransaction(I18NConstants.RESIZED_CALENDAR_ENTRY__ENTRY.fill(label(entry)),
+			tx -> _onResize.execute(entry, newEnd));
 		fireChanged();
 	}
 
@@ -200,7 +207,14 @@ public class ExpressionCalendarModel implements CalendarModel {
 			return null;
 		}
 		Object[] created = {null};
-		inTransaction(() -> created[0] = _onCreate.execute(start, end, Boolean.valueOf(allDay), title));
+		inTransaction(com.top_logic.layout.form.component.I18NConstants.CREATED__MODEL.fill(title), tx -> {
+			created[0] = _onCreate.execute(start, end, Boolean.valueOf(allDay), title);
+			if (created[0] != null && tx.getState() == Transaction.STATE_OPEN) {
+				// Name the created object as it is, rather than by the title it was requested with.
+				tx.setCommitMessage(
+					com.top_logic.layout.form.component.I18NConstants.CREATED__MODEL.fill(label(created[0])));
+			}
+		});
 		if (created[0] != null) {
 			_objects.add(created[0]);
 		}
@@ -208,12 +222,16 @@ public class ExpressionCalendarModel implements CalendarModel {
 		return created[0] != null ? new WrappedEvent(created[0], _exprs) : null;
 	}
 
-	private static void inTransaction(Runnable action) {
+	private static void inTransaction(ResKey message, Consumer<Transaction> action) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
-			action.run();
+		try (Transaction tx = kb.beginTransaction(message)) {
+			action.accept(tx);
 			tx.commit();
 		}
+	}
+
+	private static String label(Object object) {
+		return MetaLabelProvider.INSTANCE.getLabel(object);
 	}
 
 	@Override

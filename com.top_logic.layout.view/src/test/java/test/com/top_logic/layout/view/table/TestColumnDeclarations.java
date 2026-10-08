@@ -21,6 +21,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
+import com.top_logic.basic.format.DecimalFormatDefinition;
+import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
@@ -32,6 +34,7 @@ import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive.Kind;
+import com.top_logic.model.annotate.ui.Format;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -147,6 +150,37 @@ public class TestColumnDeclarations extends TestCase {
 			ComparableColumnFilter.class, column.filter().get().getClass());
 		assertEquals("A computed whole number is shown in the number width, too.",
 			ColumnProviderService.getInstance().getConfig().getNumberWidth(), column.defaultWidth());
+	}
+
+	/**
+	 * A display annotation a {@code <computed-column>} declares decides how its values are
+	 * written: a whole number formatted by the pattern {@code 0} has no grouping separator.
+	 */
+	public void testComputedColumnFormatsByItsAnnotation() {
+		ComputedColumn.Config config = computedColumn("revision", MODULE + ":Integer");
+		config.getAnnotations().add(plainNumberFormat());
+
+		ColumnSetup setup = single(config);
+
+		assertEquals("The declared format writes the number without grouping.", "1234567",
+			FieldControlService.numberFormat(setup.type().annotations(), setup.type().type())
+				.format(Integer.valueOf(1234567)));
+	}
+
+	/**
+	 * A display annotation a {@code <column>} declares takes precedence over the attribute's
+	 * annotations, while the column still shows the attribute.
+	 */
+	public void testAttributeColumnAnnotationOverridesTheAttribute() {
+		AttributeColumn.Config config = attributeColumn("count", null);
+		config.getAnnotations().add(plainNumberFormat());
+
+		ColumnSetup setup = single(config);
+
+		assertEquals("The column still shows the attribute.", _rowType.getPart("count"), setup.type().part());
+		assertEquals("The declared format writes the number without grouping.", "1234567",
+			FieldControlService.numberFormat(setup.type().annotations(), setup.type().type())
+				.format(Integer.valueOf(1234567)));
 	}
 
 	/**
@@ -299,6 +333,16 @@ public class TestColumnDeclarations extends TestCase {
 			set(config, ComputedColumn.Config.TYPE, TLModelPartRef.ref(type));
 		}
 		return config;
+	}
+
+	/** A {@link Format} annotation writing a number by the pattern {@code 0}. */
+	private static Format plainNumberFormat() {
+		DecimalFormatDefinition.Config<?> definition =
+			TypedConfiguration.newConfigItem(DecimalFormatDefinition.Config.class);
+		set(definition, DecimalFormatDefinition.Config.PATTERN, "0");
+		Format format = TypedConfiguration.newConfigItem(Format.class);
+		set(format, Format.DEFINITION, definition);
+		return format;
 	}
 
 	private static void set(ConfigurationItem config, String property, Object value) {

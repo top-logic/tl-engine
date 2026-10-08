@@ -20,6 +20,13 @@ import com.top_logic.layout.basic.ThemeImage;
  * </p>
  *
  * <p>
+ * The image is resolved in the theme of the current user before it is encoded, so a reference - the
+ * icon a theme configures for a type, say - reaches the client as the image it stands for; the
+ * client has no theme to look a reference up in. The invisible image keeps its encoded form
+ * <code>none</code>, which the client renders as nothing.
+ * </p>
+ *
+ * <p>
  * Only an image the client displays is encoded this way. Where the encoded form is a value - the
  * icon a user picks in an icon chooser, say - it is sent unchanged, since a URL depends on the
  * theme and the deployment and cannot be stored.
@@ -32,7 +39,8 @@ public class ReactImages {
 	 *
 	 * @param context
 	 *        The context of the control sending the image, giving the context path of the
-	 *        application.
+	 *        application. May be <code>null</code> where no context is at hand, in which case the
+	 *        URL of an image file is relative to the server root.
 	 * @param image
 	 *        The image to display, or <code>null</code> for none.
 	 * @return The URL of an image file, the encoded form of any other image, or <code>null</code>
@@ -44,7 +52,8 @@ public class ReactImages {
 		}
 		ThemeImage resolved = image.resolve();
 		if (resolved instanceof ThemeImage.Img file) {
-			return context.getContextPath() + file.getFileLink();
+			String contextPath = context == null ? "" : context.getContextPath();
+			return contextPath + file.getFileLink();
 		}
 		return resolved.toEncodedForm();
 	}

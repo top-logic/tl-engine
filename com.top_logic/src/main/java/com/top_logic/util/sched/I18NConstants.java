@@ -50,12 +50,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CLEANED_TASK_LOG__TASK;
 
 	/**
-	 * @en Cleaned task log of global task: {0}.
+	 * @en Cleaned task log of global task: {0}
 	 */
 	public static ResKey1 CLEANED_GLOBAL_TASK_LOG__TASK;
 
 	/**
-	 * @en Requested cluster lock for task: {0}.
+	 * @en Requested cluster lock for task: {0}
 	 */
 	public static ResKey1 REQUESTED_CLUSTER_LOCK_FOR__TASK;
 
@@ -90,7 +90,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CLEARED_CLUSTER_LOCK__TASK;
 
 	/**
-	 * @en Cleaned up died custer-global tasks.
+	 * @en Cleaned up dead cluster-global tasks.
 	 */
 	public static ResKey CLUSER_TASK_CLEANUP;
 

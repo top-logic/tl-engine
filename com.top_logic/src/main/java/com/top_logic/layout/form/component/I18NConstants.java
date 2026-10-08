@@ -139,6 +139,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 PERFORMED__OPERATION;
 
 	/**
+	 * @en Performed changes.
+	 */
+	public static ResKey PERFORMED_CHANGES;
+
+	/**
 	 * @en Created object.
 	 */
 	public static ResKey CREATED_OBJECT;

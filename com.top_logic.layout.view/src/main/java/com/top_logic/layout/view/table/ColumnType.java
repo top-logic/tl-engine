@@ -9,6 +9,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.TLAnnotation;
 
 /**
  * What a table column holds: the model type of its values, whether a cell holds a single value or
@@ -37,7 +38,8 @@ import com.top_logic.model.annotate.AnnotationLookup;
  *        Whether a cell holds a collection of values rather than a single one.
  * @param annotations
  *        Where the display annotations of the values are read from: the attribute holding them
- *        where one does, the type itself otherwise.
+ *        where one does, the type itself otherwise, either of them possibly overridden by the
+ *        annotations a column declares, see {@link #annotatedBy(AnnotationLookup)}.
  * @param part
  *        The model attribute holding the values, or {@code null} when no attribute holds them.
  */
@@ -95,6 +97,45 @@ public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotat
 	 */
 	public ColumnType collected() {
 		return multiple ? this : new ColumnType(type, true, annotations, part);
+	}
+
+	/**
+	 * The descriptor of a column whose values are displayed according to the given annotations
+	 * where they say something, and according to the annotations described here otherwise.
+	 *
+	 * <p>
+	 * A column declaration states display annotations of its own - the format of a number, say -
+	 * that take precedence over the ones of the attribute or type holding its values. An
+	 * unresolved descriptor stays unresolved: without a type, no annotation is read.
+	 * </p>
+	 *
+	 * @param overrides
+	 *        The annotations taking precedence.
+	 */
+	public ColumnType annotatedBy(AnnotationLookup overrides) {
+		if (!resolved()) {
+			return this;
+		}
+		return new ColumnType(type, multiple, new LayeredAnnotations(overrides, annotations), part);
+	}
+
+	/**
+	 * Annotations looked up in the {@link #overrides()} first and in the {@link #base()} where the
+	 * overrides have none of the requested type.
+	 *
+	 * @param overrides
+	 *        The annotations taking precedence.
+	 * @param base
+	 *        The annotations answering where the overrides say nothing.
+	 */
+	private record LayeredAnnotations(AnnotationLookup overrides, AnnotationLookup base) implements AnnotationLookup {
+
+		@Override
+		public <T extends TLAnnotation> T getAnnotation(Class<T> annotationType) {
+			T result = overrides.getAnnotation(annotationType);
+			return result != null ? result : base.getAnnotation(annotationType);
+		}
+
 	}
 
 }

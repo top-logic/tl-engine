@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.agent;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -38,6 +39,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_ACCESS_TOKEN_NO_TOKEN;
 
+
+	/**
+	 * @en Issued access token "{0}" for {1}.
+	 */
+	public static ResKey2 ACCESS_TOKEN_ISSUED__LABEL_ACCOUNT;
+
+	/**
+	 * @en Withdrew access token "{0}" of {1}.
+	 */
+	public static ResKey2 ACCESS_TOKEN_WITHDRAWN__LABEL_ACCOUNT;
+
+	/**
+	 * @en Used access token "{0}" of {1}.
+	 */
+	public static ResKey2 ACCESS_TOKEN_USED__LABEL_ACCOUNT;
 
 	static {
 		initConstants(I18NConstants.class);

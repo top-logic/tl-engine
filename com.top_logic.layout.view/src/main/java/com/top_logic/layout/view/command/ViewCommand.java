@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Id;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -35,6 +36,7 @@ public interface ViewCommand {
 	/**
 	 * Configuration for {@link ViewCommand}.
 	 */
+	@Id(ViewCommand.class)
 	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig {
 
 		/** Configuration name for {@link #getName()}. */
@@ -229,5 +231,17 @@ public interface ViewCommand {
 	 */
 	default ButtonTone getTone() {
 		return ButtonTone.DEFAULT;
+	}
+
+	/**
+	 * The label of this command, used e.g. to name the command in the commit messages of its
+	 * actions.
+	 *
+	 * @return {@code null} for a command without a label.
+	 *
+	 * @see ViewCommitMessage
+	 */
+	default ResKey getLabel() {
+		return null;
 	}
 }

@@ -18,7 +18,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 NO_KBCONFIG__NAME;
 
 	/**
-	 * @en Initial import.
+	 * @en Performed initial import.
 	 */
 	public static ResKey INITIAL_IMPORT;
 

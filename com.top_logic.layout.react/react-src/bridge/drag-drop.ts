@@ -253,6 +253,23 @@ export function flatZoneSplit(modes: readonly string[]): TLZoneSplit {
 }
 
 /**
+ * The split of a node of a tree for the given announced drop modes: an insertion needs the upper,
+ * middle and lower third of a node told apart - before the node, into it, after it -, a drop onto
+ * a node only needs the node itself, and a drop on the control as a whole needs no node at all.
+ *
+ * @param modes The wire names of the drop modes the target announces.
+ */
+export function treeZoneSplit(modes: readonly string[]): TLZoneSplit {
+  if (modes.includes(DROP_MODE_ORDERED)) {
+    return 'thirds';
+  }
+  if (modes.includes(DROP_MODE_ONTO)) {
+    return 'whole';
+  }
+  return 'none';
+}
+
+/**
  * The zone of the given item a pointer at the given vertical position is in, under the given split.
  */
 export function dropZoneAt(clientY: number, item: HTMLElement, split: TLZoneSplit): TLDropZone {

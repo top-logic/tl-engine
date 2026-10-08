@@ -3962,8 +3962,9 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* Why the target under the running drag refuses it, next to the pointer (left/top set by the
-   table or the board), above every other layer like a tooltip. */
+   table, the tree or the board), above every other layer like a tooltip. */
 .tlTableView__dropHint,
+.tlTreeView__dropHint,
 .tlKanbanBoard__dropHint {
 	position: fixed;
 	z-index: 13000;
@@ -4486,21 +4487,48 @@ button.tlDrawer__closeBtn:focus-visible {
   white-space: nowrap;
 }
 
-.tlTreeView__node--drop-above {
+.tlTreeView__node[draggable="true"] {
+  cursor: grab;
+}
+
+.tlTreeView__node[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* The marker of the drop the tree accepts where the running drag hovers: an insertion line before
+   or after a node, a highlight of the node dropped onto or inserted into. */
+.tlTreeView__node--dragOver-before {
   box-shadow: inset 0 2px 0 0 var(--interactive);
 }
 
-.tlTreeView__node--drop-within {
-  outline: 2px solid var(--interactive);
-  outline-offset: -2px;
-  background: var(--layer-hover);
-}
-
-.tlTreeView__node--drop-below {
+.tlTreeView__node--dragOver-after {
   box-shadow: inset 0 -2px 0 0 var(--interactive);
 }
 
-.tlTreeView__node--no-drop {
+.tlTreeView__node--dragOver-into {
+  background: var(--layer-selected-hover);
+  outline: 2px solid var(--interactive);
+  outline-offset: -2px;
+}
+
+/* The tree accepts the running drag as a drop on the tree as a whole. */
+.tlTreeView--dragover {
+  outline: 2px dashed var(--focus);
+  outline-offset: -2px;
+  border-radius: var(--corner-radius);
+}
+
+/* The target under the running drag refuses it: the tree as a whole, or a single node. */
+.tlTreeView--dropRefused {
+  outline: 2px dashed var(--support-error);
+  outline-offset: -2px;
+  border-radius: var(--corner-radius);
+  cursor: not-allowed;
+}
+
+.tlTreeView__node--dropRefused {
+  outline: 2px solid var(--support-error);
+  outline-offset: -2px;
   cursor: not-allowed;
 }
 

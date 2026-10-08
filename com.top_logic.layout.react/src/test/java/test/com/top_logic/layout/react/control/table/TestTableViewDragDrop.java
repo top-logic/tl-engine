@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.layout.react.control.table;
 
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -14,19 +13,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.layout.basic.DummyDisplayContext;
-import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommands;
@@ -834,39 +830,6 @@ public class TestTableViewDragDrop extends TestCase {
 			assertApplied("The recorded drop must replay.", result);
 			assertNotNull(_dropTarget._event);
 			return _dropTarget._event;
-		}
-
-	}
-
-	/**
-	 * The display context of an interaction whose request belongs to no session, as much of an
-	 * interaction as a replay needs to resolve recorded identities.
-	 */
-	private static final class InteractionWithoutSession extends DummyDisplayContext {
-
-		private final HttpServletRequest _request = (HttpServletRequest) Proxy.newProxyInstance(
-			HttpServletRequest.class.getClassLoader(), new Class<?>[] { HttpServletRequest.class },
-			(proxy, method, args) -> {
-				Class<?> type = method.getReturnType();
-				if (type == boolean.class) {
-					return Boolean.FALSE;
-				}
-				if (type == int.class) {
-					return Integer.valueOf(0);
-				}
-				if (type == long.class) {
-					return Long.valueOf(0);
-				}
-				return null;
-			});
-
-		InteractionWithoutSession() {
-			initScope(new ControlSupport(null));
-		}
-
-		@Override
-		public HttpServletRequest asRequest() {
-			return _request;
 		}
 
 	}

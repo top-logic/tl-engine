@@ -8,16 +8,29 @@ package com.top_logic.layout.react.control.tree;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.dnd.DragSourceControl;
+import com.top_logic.layout.react.control.dnd.DropArguments;
+import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMarker;
+import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
+import com.top_logic.layout.react.control.dnd.DropPlace;
+import com.top_logic.layout.react.control.dnd.DropProbeArguments;
+import com.top_logic.layout.react.control.dnd.DropSupport;
+import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
-import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.table.SelectionMode;
@@ -35,16 +48,34 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * where the application shows it. Expansion, collapse, selection and activation are handled
  * server-side via commands.
  * </p>
+ *
+ * <p>
+ * Nodes are dragged and dropped through the seam of {@link com.top_logic.layout.react.control.dnd}:
+ * {@link #setDragSource(String, Predicate)} makes the nodes draggable as drags of a kind - a
+ * selected node drags the whole selection -, {@link #setDropTarget(DropTarget)} accepts a drop of
+ * the kinds its target accepts and applies it. The objects of a drag and the reference objects of a
+ * drop are the business objects of the nodes.
+ * </p>
+ *
+ * <p>
+ * The tree resolves a node and a {@link DropZone zone} into the {@link DropLocation} of each
+ * {@link DropMode}: a drop {@link DropMode#ONTO onto} a node in any of its zones is made onto that
+ * node. An {@link DropMode#ORDERED insertion} in the upper part of a node inserts before it among
+ * its siblings; in its middle part as the first child of the node; in its lower part as the first
+ * child of an expanded node with children, and after the node among its siblings otherwise; beside
+ * the nodes as the last top-level node. A drop on the {@link DropMode#CONTROL tree as a whole} is
+ * one wherever it is made.
+ * </p>
  */
-public class ReactTreeControl extends ReactControl {
+public class ReactTreeControl extends ReactControl implements DragSourceControl {
 
 	// -- Command names --
 
-	/** @see #handleExpand(ExpandNodeArguments) */
-	private static final String EXPAND_COMMAND = "expand";
+	/** Id of the command expanding a node, see {@link #handleExpand(ExpandNodeArguments)}. */
+	public static final String EXPAND_COMMAND = "expand";
 
-	/** @see #handleCollapse(CollapseNodeArguments) */
-	private static final String COLLAPSE_COMMAND = "collapse";
+	/** Id of the command collapsing a node, see {@link #handleCollapse(CollapseNodeArguments)}. */
+	public static final String COLLAPSE_COMMAND = "collapse";
 
 	/** Id of the command a click on a node sends, see {@link #handleSelect(SelectNodeArguments)}. */
 	public static final String SELECT_COMMAND = "select";
@@ -57,11 +88,14 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #handleContextMenu(ContextMenuArguments) */
 	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
 
-	/** @see #handleDragOver(DragOverArguments) */
-	private static final String DRAG_OVER_COMMAND = "dragOver";
-
 	/** @see #handleDrop(DropArguments) */
-	private static final String DROP_COMMAND = "drop";
+	private static final String CMD_DROP = DropSupport.CMD_DROP;
+
+	/** @see #handleDropProbe(DropProbeArguments) */
+	private static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
+
+	/** @see #handleDropObjects(DropObjectsArguments) */
+	private static final String CMD_DROP_OBJECTS = DropSupport.CMD_DROP_OBJECTS;
 
 	// -- State keys --
 
@@ -71,17 +105,14 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #setSelectionMode(SelectionMode) */
 	private static final String SELECTION_MODE = "selectionMode";
 
-	/** @see #setDragEnabled(boolean) */
-	private static final String DRAG_ENABLED = "dragEnabled";
+	/** @see DropSupport#DRAG_ENABLED */
+	private static final String DRAG_ENABLED = DropSupport.DRAG_ENABLED;
 
-	/** @see #setDropEnabled(boolean) */
-	private static final String DROP_ENABLED = "dropEnabled";
+	/** @see DropSupport#DRAG_KIND */
+	private static final String DRAG_KIND = DropSupport.DRAG_KIND;
 
-	/** @see #handleDragOver(DragOverArguments) */
-	private static final String DROP_INDICATOR_NODE_ID = "dropIndicatorNodeId";
-
-	/** @see #handleDragOver(DragOverArguments) */
-	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
+	/** @see DropSupport#DROP_VERDICTS */
+	private static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
 
 	// -- Node state keys (used in {@link #addNodeState}) --
 
@@ -108,6 +139,12 @@ public class ReactTreeControl extends ReactControl {
 
 	/** The child {@link ReactControl} rendering the node content. */
 	private static final String NODE_CONTENT = "content";
+
+	/**
+	 * Whether the node may be dragged, present while the nodes are
+	 * {@link #setDragSource(String, Predicate) draggable} at all.
+	 */
+	private static final String NODE_DRAGGABLE = "draggable";
 
 	// -- Nested interfaces --
 
@@ -159,22 +196,25 @@ public class ReactTreeControl extends ReactControl {
 
 	private SelectionMode _selectionMode = SelectionMode.SINGLE;
 
+	/** Whether nodes may be dragged at all. */
 	private boolean _dragEnabled;
 
-	private boolean _dropEnabled;
+	/** The kind of a drag of nodes, {@code null} for a drag without a kind. */
+	private String _dragKind;
+
+	/**
+	 * Which business objects may be dragged while {@link #_dragEnabled} is set, {@code null} when
+	 * every node may be.
+	 */
+	private Predicate<Object> _draggable;
+
+	/** The drop protocol shared with every control accepting drops. */
+	private final DropSupport _dropSupport = new DropSupport(this);
 
 	private ContextMenuProvider _contextMenuProvider;
 
 	/** What a node activation runs, {@code null} for a tree whose nodes cannot be opened. */
 	private ActivationHandler _activationHandler;
-
-	private List<TreeDropTarget> _dropTargets = new ArrayList<>();
-
-	/** The node ID currently showing a drop indicator, or null. */
-	private String _dropIndicatorNodeId;
-
-	/** The current drop position indicator. */
-	private String _dropIndicatorPosition;
 
 	/** Index into the flat visible node list of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
@@ -205,8 +245,8 @@ public class ReactTreeControl extends ReactControl {
 		_contentProvider = contentProvider;
 
 		setSelectionMode(_selectionMode);
-		setDragEnabled(false);
-		setDropEnabled(false);
+		putState(DRAG_ENABLED, Boolean.FALSE);
+		refreshDropTarget();
 		buildFullState();
 	}
 
@@ -253,19 +293,88 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Enables or disables drag from tree nodes.
+	 * Makes the nodes draggable as drags of the given kind.
+	 *
+	 * <p>
+	 * Dragging a selected node drags the whole selection, an unselected node drags itself. What a
+	 * receiving {@link DropTarget} gets are the business objects of the nodes; the kind is what it
+	 * accepts the drop by.
+	 * </p>
+	 *
+	 * <p>
+	 * A node whose business object the given predicate refuses offers no drag, and a drag of a
+	 * selection including such a node is refused as a whole (see
+	 * {@link DragSourceControl#isDraggable(Object)}).
+	 * </p>
+	 *
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
+	 * @param draggable
+	 *        Which business objects may be dragged, {@code null} for all of them. Asked whenever
+	 *        nodes are rendered; when its answer changes for other reasons, call
+	 *        {@link #refreshDragSource()}.
+	 *
+	 * @see #setDragEnabled(boolean)
 	 */
-	public void setDragEnabled(boolean enabled) {
-		_dragEnabled = enabled;
-		putState(DRAG_ENABLED, Boolean.valueOf(enabled));
+	public void setDragSource(String dragKind, Predicate<Object> draggable) {
+		Object update = beginUpdate();
+		try {
+			_dragKind = dragKind;
+			_draggable = draggable;
+			putState(DRAG_KIND, dragKind);
+			setDragEnabled(true);
+		} finally {
+			commitUpdate(update);
+		}
 	}
 
 	/**
-	 * Enables or disables drop onto tree nodes.
+	 * Switches dragging of nodes on or off, keeping the kind and the predicate given to
+	 * {@link #setDragSource(String, Predicate)}.
 	 */
-	public void setDropEnabled(boolean enabled) {
-		_dropEnabled = enabled;
-		putState(DROP_ENABLED, Boolean.valueOf(enabled));
+	public void setDragEnabled(boolean enabled) {
+		Object update = beginUpdate();
+		try {
+			_dragEnabled = enabled;
+			putState(DRAG_ENABLED, Boolean.valueOf(enabled));
+			buildFullState();
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Asks the {@link #setDragSource(String, Predicate) draggable predicate} again for the displayed
+	 * nodes, after its answer may have changed.
+	 */
+	public void refreshDragSource() {
+		buildFullState();
+	}
+
+	/**
+	 * Makes the tree accept a drop of the objects the given target accepts, and applies such a drop
+	 * through it.
+	 *
+	 * @param dropTarget
+	 *        What dropped objects are done with, or {@code null} to accept no drop again.
+	 */
+	public void setDropTarget(DropTarget dropTarget) {
+		_dropSupport.setTarget(dropTarget);
+		refreshDropTarget();
+	}
+
+	/**
+	 * Announces the {@link DropTarget#acceptedKinds() accepted kinds} and the
+	 * {@link DropTarget#dropModes() modes} of the drop operations to the client again, after the
+	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
+	 */
+	public void refreshDropTarget() {
+		Object update = beginUpdate();
+		try {
+			_dropSupport.targetState().forEach(this::putState);
+		} finally {
+			commitUpdate(update);
+		}
 	}
 
 	/**
@@ -288,13 +397,6 @@ public class ReactTreeControl extends ReactControl {
 	 */
 	public void setActivationHandler(ActivationHandler handler) {
 		_activationHandler = handler;
-	}
-
-	/**
-	 * Adds a drop target to this tree.
-	 */
-	public void addDropTarget(TreeDropTarget target) {
-		_dropTargets.add(target);
 	}
 
 	/**
@@ -401,6 +503,9 @@ public class ReactTreeControl extends ReactControl {
 		nodeState.put(NODE_LOADING, Boolean.FALSE);
 		nodeState.put(NODE_SELECTED, Boolean.valueOf(_selectionModel.isSelected(node)));
 		nodeState.put(NODE_CONTENT, contentControl);
+		if (_dragEnabled) {
+			nodeState.put(NODE_DRAGGABLE, Boolean.valueOf(isDraggable(_treeModel.getBusinessObject(node))));
+		}
 
 		nodeStates.add(nodeState);
 	}
@@ -669,53 +774,311 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Evaluates whether a drop is allowed at the given position and updates the drop indicator
-	 * state.
+	 * Records a drop in replay-stable form: a {@link #CMD_DROP} becomes a
+	 * {@link #CMD_DROP_OBJECTS} naming the dragged objects and the location of the drop by their
+	 * business identities, see {@link DropSupport#recordDrop(Map, DropPlace.Resolver)}.
 	 */
-	@ReactCommandHandler(DRAG_OVER_COMMAND)
-	void handleDragOver(DragOverArguments args) {
-		String nodeId = args.getNodeId();
-		String position = args.getPosition();
-		Object node = findNodeById(nodeId);
-		if (node != null) {
-			_dropIndicatorNodeId = nodeId;
-			_dropIndicatorPosition = position;
-			putState(DROP_INDICATOR_NODE_ID, nodeId);
-			putState(DROP_INDICATOR_POSITION, position);
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if (CMD_DROP.equals(command) && arguments != null) {
+			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::dropPlace);
+			if (recorded != null) {
+				return recorded;
+			}
 		}
+		return super.recordCommand(command, arguments);
+	}
+
+	// -- Drag and drop --
+
+	@Override
+	public boolean isDragEnabled() {
+		return _dragEnabled;
+	}
+
+	@Override
+	public String dragKind() {
+		return _dragKind;
+	}
+
+	@Override
+	public boolean isDraggable(Object object) {
+		return _dragEnabled && (_draggable == null || _draggable.test(object));
+	}
+
+	@Override
+	public List<?> dragObjects(List<String> keys) {
+		if (keys == null) {
+			return List.of();
+		}
+		List<Object> result = new ArrayList<>(keys.size());
+		for (String key : keys) {
+			Object node = findNodeById(key);
+			if (node != null) {
+				result.add(_treeModel.getBusinessObject(node));
+			}
+		}
+		return result;
 	}
 
 	/**
-	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
+	 * The business objects of the selected nodes: the displayed ones in display order, followed by
+	 * those of selected nodes that are currently hidden in a collapsed subtree.
 	 */
-	@ReactCommandHandler(DROP_COMMAND)
-	void handleDrop(DropArguments args) {
-		String nodeId = args.getNodeId();
-		String position = args.getPosition();
-		Object node = findNodeById(nodeId);
-
-		// Clear drop indicators.
-		_dropIndicatorNodeId = null;
-		_dropIndicatorPosition = null;
-		putState(DROP_INDICATOR_NODE_ID, null);
-		putState(DROP_INDICATOR_POSITION, null);
-
-		if (node != null) {
-			// TODO: Integrate with full DnD framework (DndData, TreeDropTarget.handleDrop).
-			// For now, the drop event is received but not processed. Full integration
-			// requires a TreeData adapter for the React tree.
+	@Override
+	public List<?> dragSelection() {
+		Set<?> selection = _selectionModel.getSelection();
+		Set<Object> nodes = new LinkedHashSet<>();
+		for (Object node : collectVisibleNodes()) {
+			if (selection.contains(node)) {
+				nodes.add(node);
+			}
 		}
+		nodes.addAll(selection);
+		List<Object> result = new ArrayList<>(nodes.size());
+		for (Object node : nodes) {
+			result.add(_treeModel.getBusinessObject(node));
+		}
+		return result;
 	}
 
 	/**
-	 * Clears the drop indicator state when a drag operation ends.
+	 * Applies a drop the client made on this tree.
+	 *
+	 * <p>
+	 * The node the drop names is resolved into the place the drop was made at (see
+	 * {@link #dropPlace(String, DropZone)}), everything else is
+	 * {@link DropSupport#drop(DropArguments, DropPlace.Resolver) shared} with every control accepting
+	 * drops.
+	 * </p>
 	 */
-	@ReactCommandHandler("dragEnd")
-	void handleDragEnd() {
-		_dropIndicatorNodeId = null;
-		_dropIndicatorPosition = null;
-		putState(DROP_INDICATOR_NODE_ID, null);
-		putState(DROP_INDICATOR_POSITION, null);
+	@ReactCommandHandler(CMD_DROP)
+	HandlerResult handleDrop(DropArguments args) {
+		return _dropSupport.drop(args, this::dropPlace);
 	}
 
+	/**
+	 * Answers whether a drop right where a drag hovers would be accepted, without applying it.
+	 *
+	 * <p>
+	 * The verdict is added to {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe()
+	 * probe's identifier}, see {@link DropSupport#probe(DropProbeArguments, DropPlace.Resolver)}. The
+	 * probe is technical: it is neither recorded nor offered as an action, and it never fails, since
+	 * a refusal is its answer.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_DROP_PROBE, technical = true)
+	void handleDropProbe(DropProbeArguments args) {
+		putState(DROP_VERDICTS, _dropSupport.probe(args, this::dropPlace));
+	}
+
+	/**
+	 * Applies a drop of the objects named by their business identity - the replay-stable
+	 * counterpart of {@link #handleDrop(DropArguments)}, which a recorded drop is captured as.
+	 *
+	 * @see DropSupport#dropObjects(DropObjectsArguments, Predicate)
+	 */
+	@ReactCommandHandler(CMD_DROP_OBJECTS)
+	HandlerResult handleDropObjects(DropObjectsArguments args) {
+		return _dropSupport.dropObjects(args, this::displaysLocation);
+	}
+
+	/**
+	 * The place of a drop made in the given zone of the node with the given client-side id, or
+	 * beside the nodes.
+	 *
+	 * @return The place, {@code null} if the id names a node this tree no longer displays.
+	 *
+	 * @see DropPlace.Resolver#place(String, DropZone)
+	 */
+	private DropPlace dropPlace(String nodeId, DropZone zone) {
+		if (nodeId == null) {
+			return new NodePlace(null, DropZone.NONE);
+		}
+		Object node = findNodeById(nodeId);
+		if (node == null) {
+			return null;
+		}
+		return new NodePlace(node, zone);
+	}
+
+	/**
+	 * A place of a drop in this tree.
+	 *
+	 * <p>
+	 * An insertion from the upper part of a node is marked before the node, from its middle part as
+	 * a highlight of the node, from its lower part after the node, and beside the nodes as a
+	 * highlight of the tree as a whole.
+	 * </p>
+	 */
+	private final class NodePlace implements DropPlace {
+
+		/** The node the drop was made on, {@code null} for a drop beside the nodes. */
+		private final Object _node;
+
+		/** The zone of the node the drop was made in, {@link DropZone#NONE} without a node. */
+		private final DropZone _zone;
+
+		NodePlace(Object node, DropZone zone) {
+			_node = node;
+			_zone = node == null ? DropZone.NONE : zone;
+		}
+
+		@Override
+		public DropLocation location(DropMode mode) {
+			switch (mode) {
+				case CONTROL:
+					return new DropLocation.Control();
+				case ONTO:
+					if (_zone == DropZone.NONE) {
+						return null;
+					}
+					return new DropLocation.Onto(businessObject(_node));
+				case ORDERED:
+					return insertion();
+			}
+			throw new IllegalArgumentException("Unknown drop mode: " + mode);
+		}
+
+		private DropLocation.Insert insertion() {
+			switch (_zone) {
+				case UPPER:
+					return new DropLocation.Insert(businessObject(parentOf(_node)), businessObject(_node));
+				case MIDDLE:
+					return new DropLocation.Insert(businessObject(_node), businessObject(firstChild(_node)));
+				case LOWER: {
+					Object firstChild = _treeModel.isExpanded(_node) ? firstChild(_node) : null;
+					if (firstChild != null) {
+						return new DropLocation.Insert(businessObject(_node), businessObject(firstChild));
+					}
+					return new DropLocation.Insert(businessObject(parentOf(_node)), businessObject(nextSibling(_node)));
+				}
+				case NONE:
+					break;
+			}
+			Object root = _treeModel.getRoot();
+			return new DropLocation.Insert(_treeModel.isRootVisible() ? null : businessObject(root), null);
+		}
+
+		@Override
+		public DropMarker marker(DropLocation location) {
+			if (location instanceof DropLocation.Onto) {
+				return DropMarker.INTO;
+			}
+			if (location instanceof DropLocation.Insert) {
+				switch (_zone) {
+					case UPPER:
+						return DropMarker.BEFORE;
+					case MIDDLE:
+						return DropMarker.INTO;
+					case LOWER:
+						return DropMarker.AFTER;
+					case NONE:
+						break;
+				}
+			}
+			return DropMarker.CONTROL;
+		}
+
+		@Override
+		public String markerKey(DropMarker marker) {
+			return marker == DropMarker.CONTROL ? null : getNodeId(_node);
+		}
+
+	}
+
+	/** The business object of the given node, {@code null} for no node. */
+	private Object businessObject(Object node) {
+		return node == null ? null : _treeModel.getBusinessObject(node);
+	}
+
+	/** The node holding the given one in its child list, {@code null} for the root. */
+	private Object parentOf(Object node) {
+		return _treeModel.getParent(node);
+	}
+
+	/**
+	 * The first child of the given node in the model's child order, loading the children of a node
+	 * that has not computed them yet; {@code null} for a node without children.
+	 */
+	private Object firstChild(Object node) {
+		if (_treeModel.isLeaf(node)) {
+			return null;
+		}
+		List<?> children = _treeModel.getChildren(node);
+		return children.isEmpty() ? null : children.get(0);
+	}
+
+	/** The node following the given one in its parent's child list, {@code null} for the last one. */
+	private Object nextSibling(Object node) {
+		Object parent = parentOf(node);
+		if (parent == null) {
+			return null;
+		}
+		List<?> siblings = _treeModel.getChildren(parent);
+		int index = siblings.indexOf(node);
+		return index >= 0 && index + 1 < siblings.size() ? siblings.get(index + 1) : null;
+	}
+
+	/**
+	 * Whether the reference objects of the given location are places of this tree: the target of a
+	 * drop onto a node is the object of a node, the parent of an insertion is the object of a node
+	 * - or the parent of the top-level nodes -, and the object an insertion is made before is a
+	 * child of that parent.
+	 */
+	private boolean displaysLocation(DropLocation location) {
+		if (location instanceof DropLocation.Onto onto) {
+			return onto.target() == null || nodeOf(onto.target()) != null;
+		}
+		if (location instanceof DropLocation.Insert insert) {
+			if (insert.parent() == null) {
+				if (!_treeModel.isRootVisible()) {
+					return false;
+				}
+				return insert.before() == null
+					|| insert.before().equals(_treeModel.getBusinessObject(_treeModel.getRoot()));
+			}
+			Object parent = nodeOf(insert.parent());
+			if (parent == null) {
+				return false;
+			}
+			if (insert.before() == null) {
+				return true;
+			}
+			if (_treeModel.isLeaf(parent)) {
+				return false;
+			}
+			for (Object child : _treeModel.getChildren(parent)) {
+				if (insert.before().equals(_treeModel.getBusinessObject(child))) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * The node of the given business object among the nodes whose parents have computed their
+	 * children, {@code null} if there is none.
+	 */
+	private Object nodeOf(Object businessObject) {
+		return nodeOf(_treeModel.getRoot(), businessObject);
+	}
+
+	private Object nodeOf(Object node, Object businessObject) {
+		if (businessObject.equals(_treeModel.getBusinessObject(node))) {
+			return node;
+		}
+		if (_treeModel.isLeaf(node) || !_treeModel.childrenInitialized(node)) {
+			return null;
+		}
+		for (Object child : _treeModel.getChildren(node)) {
+			Object result = nodeOf(child, businessObject);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
 }

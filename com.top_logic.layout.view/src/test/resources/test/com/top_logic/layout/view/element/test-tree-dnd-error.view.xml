@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="ch"/>
+	</channels>
+
+	<tree
+		children="node -> []"
+		root="'root'"
+	>
+		<drop
+			accept="item"
+			parent-channel="ch"
+			target="tree"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<drop
+			accept="item"
+			parent-channel="ch"
+			target="node"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<drop
+			accept="item"
+			target="ordered"
+			target-channel="ch"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+	</tree>
+</view>

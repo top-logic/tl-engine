@@ -11,11 +11,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -45,6 +47,8 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.model.NodeLocator;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -80,6 +84,12 @@ import com.top_logic.table.SelectionMode;
  * The selection channel is read as well as written, see {@link TreeSelectionBinding}: the tree
  * reveals and selects the node of an object another writer puts on it - the object a create command
  * just made, for instance - and writes what the user selects back.
+ * </p>
+ *
+ * <p>
+ * Nodes are dragged as a {@link Config#getDrag() drag} declares and dropped as the
+ * {@link Config#getDrops() drops} declare: onto a node, on the tree as a whole, or inserted at a
+ * place among the nodes - under a parent object, before one of its children.
  * </p>
  */
 @InApp
@@ -121,6 +131,12 @@ public class TreeElement implements UIElement {
 
 		/** Configuration name for {@link #getOnActivate()}. */
 		String ON_ACTIVATE = "on-activate";
+
+		/** Configuration name for {@link #getDrag()}. */
+		String DRAG = "drag";
+
+		/** Configuration name for {@link #getDrops()}. */
+		String DROPS = "drops";
 
 		/**
 		 * TL-Script function computing the root object of the tree.
@@ -271,6 +287,31 @@ public class TreeElement implements UIElement {
 		@Name(NODE_CONTENT)
 		@ItemDefault(NodeDisplay.class)
 		PolymorphicConfiguration<ReactControlProvider> getNodeContent();
+
+		/**
+		 * Makes the nodes of this tree draggable, so they can be dropped on a display that accepts
+		 * the drag's kind.
+		 *
+		 * <p>
+		 * What is dragged are the objects of the nodes. Dragging a selected node drags the whole
+		 * selection, an unselected node drags itself. Unset (default) leaves the nodes undraggable.
+		 * </p>
+		 */
+		@Name(DRAG)
+		TreeDragConfig getDrag();
+
+		/**
+		 * What this tree accepts a drop of, and what it does with the dropped objects.
+		 *
+		 * <p>
+		 * A drop is applied by the first declared entry that accepts it, so a tree can accept
+		 * several kinds of object - and insert one of them among its nodes while dropping another
+		 * onto a node. Empty (default) leaves the tree accepting no drop.
+		 * </p>
+		 */
+		@Name(DROPS)
+		@DefaultContainer
+		List<TreeDropConfig> getDrops();
 	}
 
 	/**
@@ -314,6 +355,9 @@ public class TreeElement implements UIElement {
 	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
 	private final ViewCommand.Config _onActivateConfig;
 
+	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
+	private final List<DeclaredDrop> _drops;
+
 	/**
 	 * Creates a new {@link TreeElement} from configuration.
 	 *
@@ -336,6 +380,50 @@ public class TreeElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
 		_onActivate = context.getInstance(onActivate);
+
+		_drops = compileDrops(context, config.getDrops());
+	}
+
+	/**
+	 * Instantiates the action chains of the declared drops, so that applying one only has to run
+	 * them.
+	 */
+	private static List<DeclaredDrop> compileDrops(InstantiationContext context, List<TreeDropConfig> dropConfigs) {
+		List<DeclaredDrop> result = new ArrayList<>(dropConfigs.size());
+		for (TreeDropConfig dropConfig : dropConfigs) {
+			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().signature()));
+		}
+		return result;
+	}
+
+	/**
+	 * Makes the nodes of the given control draggable as the {@link Config#getDrag() drag} declares,
+	 * the {@link TreeDragConfig#getNodeExecutability() node rules} deciding per node object.
+	 */
+	private void installDragSource(ViewContext context, ReactTreeControl control) {
+		TreeDragConfig drag = _config.getDrag();
+		DragSourceBinding.Source source = new DragSourceBinding.Source() {
+			@Override
+			public boolean isDragEnabled() {
+				return control.isDragEnabled();
+			}
+
+			@Override
+			public void setDragSource(String dragKind, Predicate<Object> draggable) {
+				control.setDragSource(dragKind, draggable);
+			}
+
+			@Override
+			public void setDragEnabled(boolean enabled) {
+				control.setDragEnabled(enabled);
+			}
+
+			@Override
+			public void refreshDragSource() {
+				control.refreshDragSource();
+			}
+		};
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getNodeExecutability());
 	}
 
 	@Override
@@ -400,7 +488,15 @@ public class TreeElement implements UIElement {
 			treeControl.setActivationHandler(node -> activation.execute(context, businessObject(node)));
 		}
 
-		// 9. Observe the model only while the tree is displayed.
+		// 9. Wire dragging and dropping of nodes.
+		if (_config.getDrag() != null) {
+			installDragSource(context, treeControl);
+		}
+		if (!_drops.isEmpty()) {
+			treeControl.setDropTarget(DeclaredDrop.bind(context, treeControl, treeControl::refreshDropTarget, _drops));
+		}
+
+		// 10. Observe the model only while the tree is displayed.
 		treeControl.addAttachListener(() -> {
 			observableModel.attach(context.getModelScope());
 		});

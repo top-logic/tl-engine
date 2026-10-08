@@ -33,7 +33,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * <p>
  * What a drop is made on - the element as a whole, a single item of it, or a place in the order of
  * its items - is decided by the element, and so are the objects the drop refers to there: the item
- * dropped onto as its target, the item the dropped objects are inserted before. A drop is restricted in three stages, each asked only after the previous one accepted:
+ * dropped onto as its target, the object the dropped objects are inserted under as their parent (in
+ * a tree), the item the dropped objects are inserted before. A drop is restricted in three stages, each asked only after the previous one accepted:
  * the {@link #getExecutability() executability} rules decide for the element as a whole over the
  * value of the {@link #getInput() input} channel, and are followed live - while they refuse, the
  * drop is not offered at all; the {@link #getTargetExecutability() target executability} rules
@@ -55,6 +56,9 @@ public interface DropConfig extends ExecutabilityConfig {
 
 	/** Configuration name for {@link #getTargetChannel()}. */
 	String TARGET_CHANNEL = "target-channel";
+
+	/** Configuration name for {@link #getParentChannel()}. */
+	String PARENT_CHANNEL = "parent-channel";
 
 	/** Configuration name for {@link #getBeforeChannel()}. */
 	String BEFORE_CHANNEL = "before-channel";
@@ -100,6 +104,23 @@ public interface DropConfig extends ExecutabilityConfig {
 	ChannelRef getTargetChannel();
 
 	/**
+	 * A {@link ViewChannel} the object the dropped objects are inserted under is written to before
+	 * the {@link #getActions() actions} run, so they can add the objects to its children.
+	 *
+	 * <p>
+	 * Only an insertion into a tree has such a parent: the object whose children the dropped
+	 * objects become, which is the object the tree is built from for an insertion among the
+	 * top-level nodes - or {@code null} where that object is displayed as a node itself. Declaring
+	 * this channel for any other drop, including an insertion into a flat list, is a configuration
+	 * error. Unset (default) leaves the parent unpublished.
+	 * </p>
+	 */
+	@Name(PARENT_CHANNEL)
+	@Format(ChannelRefFormat.class)
+	@Nullable
+	ChannelRef getParentChannel();
+
+	/**
 	 * A {@link ViewChannel} the item the dropped objects are inserted before is written to before
 	 * the {@link #getActions() actions} run, so they can place the objects there.
 	 *
@@ -137,7 +158,8 @@ public interface DropConfig extends ExecutabilityConfig {
 	 * {@code target -> objects -> reason}, which is the item dropped onto, or {@code null} for a
 	 * drop on the element as a whole; an insertion into a list gets the item the objects are
 	 * inserted before, {@code before -> objects -> reason}, which is {@code null} for an insertion
-	 * at the end. The objects are the list of dragged objects. No value or <code>false</code>
+	 * at the end; an insertion into a tree gets the object the objects are inserted under in
+	 * addition, {@code parent -> before -> objects -> reason}. The objects are the list of dragged objects. No value or <code>false</code>
 	 * accepts the drop, <code>true</code> refuses it with a generic reason, a resource key or a text
 	 * refuses it with that reason - the same interpretation as the {@link DisabledIf.Config
 	 * disabled-if} rule. Unset (default) refuses nothing.

@@ -36,6 +36,13 @@
 			</target-executability>
 			<execute-script function="rows -> $rows"/>
 		</drop>
+		<drop
+			accept="value"
+			parent-channel="ch"
+			target="ordered"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
 		<columns>
 			<computed-column name="value"
 				type="tl.core:String"

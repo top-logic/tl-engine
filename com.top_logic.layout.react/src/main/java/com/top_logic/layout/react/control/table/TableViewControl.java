@@ -24,7 +24,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -33,18 +32,17 @@ import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
-import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropPlace;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
-import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -322,15 +320,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** @see DropSupport#DRAG_KIND */
 	private static final String DRAG_KIND = DropSupport.DRAG_KIND;
 
-	/** @see DropSupport#DROP_ACCEPTS_ANY */
-	private static final String DROP_ACCEPTS_ANY = DropSupport.DROP_ACCEPTS_ANY;
-
-	/** @see DropSupport#DROP_ACCEPTS */
-	private static final String DROP_ACCEPTS = DropSupport.DROP_ACCEPTS;
-
-	/** @see DropSupport#DROP_MODES */
-	private static final String DROP_MODES = DropSupport.DROP_MODES;
-
 	/** @see DropSupport#DROP_VERDICTS */
 	private static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
 
@@ -506,9 +495,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** The drop protocol shared with every control accepting drops. */
 	private final DropSupport _dropSupport = new DropSupport(this);
-
-	/** What dropped objects are done with, or {@code null} while the table accepts no drop. */
-	private DropTarget _dropTarget;
 
 	/**
 	 * Creates a {@link TableViewControl}.
@@ -703,7 +689,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        What dropped objects are done with, or {@code null} to accept no drop again.
 	 */
 	public void setDropTarget(DropTarget dropTarget) {
-		_dropTarget = dropTarget;
+		_dropSupport.setTarget(dropTarget);
 		refreshDropTarget();
 	}
 
@@ -713,13 +699,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
 	 */
 	public void refreshDropTarget() {
-		DropTarget dropTarget = _dropTarget;
 		Object update = beginUpdate();
 		try {
-			AcceptedKinds accepted = dropTarget == null ? AcceptedKinds.NONE : dropTarget.acceptedKinds();
-			putState(DROP_ACCEPTS_ANY, Boolean.valueOf(accepted.any()));
-			putState(DROP_ACCEPTS, List.copyOf(accepted.kinds()));
-			putState(DROP_MODES, dropTarget == null ? List.of() : DropSupport.wireNames(dropTarget.dropModes()));
+			_dropSupport.targetState().forEach(this::putState);
 		} finally {
 			commitUpdate(update);
 		}
@@ -2087,119 +2069,93 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * Applies a drop the client made on this table.
 	 *
 	 * <p>
-	 * The arguments name client-side identities only, so both ends of the gesture are resolved by the
-	 * control that owns them (see {@link #resolveDrop(DropArguments)}). A drop the resolution or the
-	 * {@link DropTarget#check(DropRequest) drop target's check} refuses is answered with a warning
-	 * naming the reason and not applied - the client-side acceptance check that precedes it narrows
-	 * the gesture for the user, it does not decide it.
+	 * The row the drop names is resolved into the place the drop was made at (see
+	 * {@link #dropPlace(String, DropZone)}), everything else is
+	 * {@link DropSupport#drop(DropArguments, DropPlace.Resolver) shared} with every control accepting
+	 * drops.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
 	HandlerResult handleDrop(DropArguments args) {
-		ResolvedDrop resolved = resolveDrop(args);
-		if (resolved.refusal() != null) {
-			return DropSupport.refused(resolved.refusal());
-		}
-		return applyDrop(resolved.request());
+		return _dropSupport.drop(args, this::dropPlace);
 	}
 
 	/**
 	 * Answers whether a drop right where a drag hovers would be accepted, without applying it.
 	 *
 	 * <p>
-	 * The drop is resolved exactly like {@link #handleDrop(DropArguments) a drop} and then put to the
-	 * {@link DropTarget#check(DropRequest) drop target's check}. The verdict is added to
-	 * {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe() probe's identifier},
-	 * refusal reasons resolved to the user's language, an acceptance with the {@link DropMarker
-	 * marker} of the location it accepts the drop at. The probe is technical: it is neither recorded
-	 * nor offered as an action, and it never fails, since a refusal is its answer.
+	 * The verdict is added to {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe()
+	 * probe's identifier}, see {@link DropSupport#probe(DropProbeArguments, DropPlace.Resolver)}. The
+	 * probe is technical: it is neither recorded nor offered as an action, and it never fails, since
+	 * a refusal is its answer.
 	 * </p>
 	 */
 	@ReactCommandHandler(value = CMD_DROP_PROBE, technical = true)
 	void handleDropProbe(DropProbeArguments args) {
-		ResolvedDrop resolved = resolveDrop(args);
-		ResKey refusal = resolved.refusal();
-		DropMarker marker = null;
-		String markerKey = null;
-		if (refusal == null) {
-			DropVerdict verdict = _dropTarget.check(resolved.request());
-			refusal = verdict.reason();
-			if (verdict.isAccepted()) {
-				int markerRow = resolved.rowIndex() >= 0 ? resolved.rowIndex() : lastDataRowIndex();
-				marker = markerOf(verdict.location(), resolved.rowIndex(), resolved.zone(), markerRow);
-				markerKey = marker == DropMarker.CONTROL ? null : ROW_ID_PREFIX + markerRow;
-			}
-		}
-		putState(DROP_VERDICTS, _dropSupport.answerProbe(args, refusal, marker, markerKey));
+		putState(DROP_VERDICTS, _dropSupport.probe(args, this::dropPlace));
 	}
 
 	/**
-	 * A drop resolved from its client-side identities: either the {@link DropRequest} to put to the
-	 * drop target together with the place it was made at, or the reason it cannot be made.
+	 * The place of a drop made in the given zone of the row with the given client-side key, or
+	 * beside the rows.
 	 *
-	 * @param request
-	 *        The drop to check, {@code null} if it is refused.
-	 * @param rowIndex
-	 *        The index of the row the drop was made on, {@code -1} for a drop beside the rows.
-	 * @param zone
-	 *        The zone of the row the drop was made in, {@link DropZone#NONE} without a row.
-	 * @param refusal
-	 *        Why the drop cannot be made, {@code null} if it can.
+	 * @return The place, {@code null} if the key names a row this table no longer displays.
+	 *
+	 * @see DropPlace.Resolver#place(String, DropZone)
 	 */
-	private record ResolvedDrop(DropRequest request, int rowIndex, DropZone zone, ResKey refusal) {
-
-		static ResolvedDrop refused(ResKey reason) {
-			return new ResolvedDrop(null, -1, DropZone.NONE, reason);
+	private DropPlace dropPlace(String rowKey, DropZone zone) {
+		if (rowKey == null) {
+			return new RowPlace(-1, DropZone.NONE);
 		}
-
+		int rowIndex = rowIndex(rowKey);
+		if (rowAt(rowIndex) == null) {
+			return null;
+		}
+		return new RowPlace(rowIndex, zone);
 	}
 
 	/**
-	 * Resolves the client-side identities a drop names.
+	 * A place of a drop in this table, resolved as in a flat list.
 	 *
 	 * <p>
-	 * The dragged objects are resolved by the {@link DragSourceControl} the
-	 * {@link DropArguments#getSource() source id} designates, the row by this table. A drop of a
-	 * kind the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
-	 * no drag source, including an object the source does not let be
-	 * {@link DragSourceControl#isDraggable(Object) dragged}, naming an unknown zone, or naming a row
-	 * this table no longer displays is refused. A target offering only drops on the table as a whole
-	 * ignores the row.
+	 * An insertion from the upper part of a row is marked before that row, one from its lower part
+	 * after it, one beside the rows after the last data row - or on the table as a whole, if it has
+	 * none.
 	 * </p>
 	 */
-	private ResolvedDrop resolveDrop(DropArguments args) {
-		DropTarget dropTarget = _dropTarget;
-		if (dropTarget == null) {
-			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		DropSupport.Dragged dragged = _dropSupport.dragged(dropTarget.acceptedKinds(), args);
-		if (dragged.refusal() != null) {
-			return ResolvedDrop.refused(dragged.refusal());
+	private final class RowPlace implements DropPlace {
+
+		/** The index of the row the drop was made on, {@code -1} for a drop beside the rows. */
+		private final int _rowIndex;
+
+		/** The zone of the row the drop was made in, {@link DropZone#NONE} without a row. */
+		private final DropZone _zone;
+
+		RowPlace(int rowIndex, DropZone zone) {
+			_rowIndex = rowIndex;
+			_zone = rowIndex < 0 ? DropZone.NONE : zone;
 		}
 
-		int rowIndex = -1;
-		DropZone zone = DropZone.NONE;
-		if (!dropTarget.dropModes().stream().allMatch(mode -> mode == DropMode.CONTROL)) {
-			zone = DropZone.fromWire(args.getZone());
-			if (zone == null) {
-				return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-			}
-			String targetKey = args.getTargetKey();
-			if (targetKey != null && !targetKey.isEmpty()) {
-				rowIndex = rowIndex(targetKey);
-				if (rowAt(rowIndex) == null) {
-					return ResolvedDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
-				}
-			}
-			if (rowIndex < 0) {
-				zone = DropZone.NONE;
-			}
+		@Override
+		public DropLocation location(DropMode mode) {
+			return locationOf(mode, _rowIndex, _zone);
 		}
 
-		int placeRow = rowIndex;
-		DropZone placeZone = zone;
-		return new ResolvedDrop(new DropRequest(dragged.source(), dragged.kind(), dragged.objects(),
-			mode -> locationOf(mode, placeRow, placeZone)), rowIndex, zone, null);
+		@Override
+		public DropMarker marker(DropLocation location) {
+			return markerOf(location, _rowIndex, _zone, markerRow());
+		}
+
+		@Override
+		public String markerKey(DropMarker marker) {
+			return marker == DropMarker.CONTROL ? null : ROW_ID_PREFIX + markerRow();
+		}
+
+		/** The index of the row a marker of an item is drawn at, {@code -1} if there is none. */
+		private int markerRow() {
+			return _rowIndex >= 0 ? _rowIndex : lastDataRowIndex();
+		}
+
 	}
 
 	/**
@@ -2272,12 +2228,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * The marker the client draws for a drop accepted at the given location, made in the given zone
 	 * of the row with the given index.
 	 *
-	 * <p>
-	 * An insertion from the upper part of a row is marked before that row, one from its lower part
-	 * after it, one beside the rows after the last data row - or on the table as a whole, if it has
-	 * none.
-	 * </p>
-	 *
 	 * @param rowIndex
 	 *        The index of the row the drop was made on, {@code -1} for a drop beside the rows.
 	 * @param markerRow
@@ -2299,86 +2249,39 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Applies the given drop through the {@link #setDropTarget(DropTarget) drop target}, at the
-	 * location its {@link DropTarget#check(DropRequest) check} accepts it at, unless the check
-	 * refuses it.
-	 */
-	private HandlerResult applyDrop(DropRequest request) {
-		DropVerdict verdict = _dropTarget.check(request);
-		if (!verdict.isAccepted()) {
-			return DropSupport.refused(verdict.reason());
-		}
-		_dropTarget.onDrop(request.event(verdict.location()));
-		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	/**
 	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} - the
 	 * replay-stable counterpart of {@link #handleDrop} by client-side keys, which a recorded drop is
 	 * captured as so it survives sorting, filtering and a fresh session.
 	 *
-	 * <p>
-	 * The drop is offered exactly the recorded location, for the recorded mode: the operation that
-	 * applied it when it was recorded applies it again.
-	 * </p>
-	 *
-	 * @param args
-	 *        Carries the identities of the dropped objects and of the reference objects of the
-	 *        location.
+	 * @see DropSupport#dropObjects(DropObjectsArguments, java.util.function.Predicate)
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
-		DropTarget dropTarget = _dropTarget;
-		if (dropTarget == null || !dropTarget.acceptedKinds().accepts(args.getKind())) {
-			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
+		return _dropSupport.dropObjects(args, this::displaysLocation);
+	}
 
-		List<ModelName> unresolved = new ArrayList<>();
-		List<Object> objects = DropSupport.locateAll(actionContext, args.getObjects(), unresolved);
-		DropLocation location = DropSupport.recordedLocation(actionContext, args, unresolved);
-		if (location == null) {
-			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		// The reference objects must be rows of this table: a recorded drop that lands somewhere
-		// else is a drift, not a drop.
-		if (location instanceof DropLocation.Onto onto && onto.target() != null && rowFor(onto.target()) == null) {
-			unresolved.add(args.getTargetObject());
+	/**
+	 * Whether the reference objects of the given location are rows of this table; a flat table has
+	 * no parent to insert under.
+	 */
+	private boolean displaysLocation(DropLocation location) {
+		if (location instanceof DropLocation.Onto onto) {
+			return onto.target() == null || rowFor(onto.target()) != null;
 		}
 		if (location instanceof DropLocation.Insert insert) {
-			if (insert.parent() != null) {
-				// A flat table has no parent to insert under.
-				unresolved.add(args.getParent());
-			}
-			if (insert.before() != null && rowFor(insert.before()) == null) {
-				unresolved.add(args.getBefore());
-			}
+			return insert.parent() == null && (insert.before() == null || rowFor(insert.before()) != null);
 		}
-		// Drift contract: a recorded identity that no longer designates a present object is an
-		// explicit failure (replay reports success:false), never a partially applied drop. Unlike a
-		// refusal, a drift means the replayed script no longer matches the application, hence an
-		// error rather than a warning.
-		if (!unresolved.isEmpty() || objects.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
-		}
-
-		return applyDrop(DropRequest.at(null, args.getKind(), objects, location));
+		return true;
 	}
 
 	/**
 	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form, naming the
 	 * location the drop target accepts the drop at.
 	 *
-	 * @see DropSupport#recordDrop(Map, java.util.function.Function)
+	 * @see DropSupport#recordDrop(Map, DropPlace.Resolver)
 	 */
 	private RecordedCommand recordDrop(Map<String, Object> arguments) {
-		return _dropSupport.recordDrop(arguments, args -> {
-			ResolvedDrop resolved = resolveDrop(args);
-			if (resolved.refusal() != null) {
-				return null;
-			}
-			return _dropTarget.check(resolved.request()).location();
-		});
+		return _dropSupport.recordDrop(arguments, this::dropPlace);
 	}
 
 	private Object keyAt(int rowIndex) {

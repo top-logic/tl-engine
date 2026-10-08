@@ -43,6 +43,14 @@ public record DropReference(String channelProperty, Function<DropConfig, Channel
 		location -> location instanceof DropLocation.Onto onto ? onto.target() : null);
 
 	/**
+	 * The object the dropped objects are inserted under: the {@link DropLocation.Insert#parent()
+	 * parent} of an {@link DropLocation.Insert} location, {@code null} at any other location.
+	 */
+	public static final DropReference PARENT = new DropReference(DropConfig.PARENT_CHANNEL,
+		DropConfig::getParentChannel,
+		location -> location instanceof DropLocation.Insert insert ? insert.parent() : null);
+
+	/**
 	 * The item the dropped objects are inserted before: the {@link DropLocation.Insert#before()
 	 * before} item of an {@link DropLocation.Insert} location, {@code null} for an insertion at the
 	 * end and at any other location.
@@ -60,6 +68,6 @@ public record DropReference(String channelProperty, Function<DropConfig, Channel
 	 * {@link DeclaredDrop#compile(com.top_logic.basic.config.InstantiationContext, DropConfig, DropSignature)}.
 	 * </p>
 	 */
-	public static final List<DropReference> ALL = List.of(TARGET, BEFORE);
+	public static final List<DropReference> ALL = List.of(TARGET, PARENT, BEFORE);
 
 }

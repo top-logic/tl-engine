@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
@@ -34,6 +35,11 @@ import com.top_logic.util.Resources;
  * <p>
  * A control accepting drops creates one {@link DropSupport} and keeps to itself only what its
  * drop targets are: which client-side key designates which target, and what a drop on it does.
+ * A control whose items are places of a drop - rows of a table, nodes of a tree - hands its
+ * {@link DropTarget} to {@link #setTarget(DropTarget)} and resolves the item and zone a drop names
+ * into a {@link DropPlace}; applying, probing, recording and replaying a drop is then
+ * {@link #drop(DropArguments, DropPlace.Resolver)}, {@link #probe(DropProbeArguments, DropPlace.Resolver)},
+ * {@link #recordDrop(Map, DropPlace.Resolver)} and {@link #dropObjects(DropObjectsArguments, Predicate)}.
  * </p>
  */
 public final class DropSupport {
@@ -146,7 +152,30 @@ public final class DropSupport {
 
 	}
 
+	/**
+	 * The {@link DropPlace#location(DropMode) place} of a drop resolved from its client-side
+	 * identities: either the {@link DropRequest} to put to the drop target together with the place
+	 * it was made at, or the reason it cannot be made.
+	 *
+	 * @param request
+	 *        The drop to check, {@code null} if it is refused.
+	 * @param place
+	 *        Where the drop was made, {@code null} if it is refused.
+	 * @param refusal
+	 *        Why the drop cannot be made, {@code null} if it can.
+	 */
+	private record Resolved(DropRequest request, DropPlace place, ResKey refusal) {
+
+		static Resolved refused(ResKey reason) {
+			return new Resolved(null, null, reason);
+		}
+
+	}
+
 	private final ReactControl _owner;
+
+	/** What dropped objects are done with, {@code null} while the owner accepts no drop. */
+	private DropTarget _target;
 
 	/** The {@link DropProbeArguments#getDrag() drag} the {@link #_verdicts} belong to. */
 	private String _probedDrag;
@@ -210,6 +239,239 @@ public final class DropSupport {
 			}
 		}
 		return new Dragged(sourceControl, source.dragKind(), objects, null);
+	}
+
+	/**
+	 * Makes the owner accept a drop of the objects the given target accepts, and apply such a drop
+	 * through it.
+	 *
+	 * <p>
+	 * The owner announces the target to the client with {@link #targetState()}.
+	 * </p>
+	 *
+	 * @param target
+	 *        What dropped objects are done with, or {@code null} to accept no drop.
+	 */
+	public void setTarget(DropTarget target) {
+		_target = target;
+	}
+
+	/**
+	 * What dropped objects are done with, {@code null} while the owner accepts no drop.
+	 */
+	public DropTarget getTarget() {
+		return _target;
+	}
+
+	/**
+	 * The state announcing the {@link #setTarget(DropTarget) target} to the client: the values of
+	 * {@link #DROP_ACCEPTS_ANY}, {@link #DROP_ACCEPTS} and {@link #DROP_MODES}, by state key.
+	 *
+	 * <p>
+	 * The owner puts them into its state whenever the target or its answers change.
+	 * </p>
+	 */
+	public Map<String, Object> targetState() {
+		DropTarget target = _target;
+		AcceptedKinds accepted = target == null ? AcceptedKinds.NONE : target.acceptedKinds();
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(DROP_ACCEPTS_ANY, Boolean.valueOf(accepted.any()));
+		result.put(DROP_ACCEPTS, List.copyOf(accepted.kinds()));
+		result.put(DROP_MODES, target == null ? List.of() : wireNames(target.dropModes()));
+		return result;
+	}
+
+	/**
+	 * Resolves the client-side identities a drop names.
+	 *
+	 * <p>
+	 * The dragged objects are resolved by the {@link DragSourceControl} the
+	 * {@link DropArguments#getSource() source id} designates (see
+	 * {@link #dragged(AcceptedKinds, DropArguments)}), the place by the owner. A drop on an owner
+	 * without a {@link #setTarget(DropTarget) target}, naming an unknown zone, or naming an item
+	 * the owner no longer displays is refused. A target offering only drops on the control as a
+	 * whole ignores the item: the place is then the one beside the items.
+	 * </p>
+	 */
+	private Resolved resolve(DropArguments args, DropPlace.Resolver places) {
+		DropTarget target = _target;
+		if (target == null) {
+			return Resolved.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		Dragged dragged = dragged(target.acceptedKinds(), args);
+		if (dragged.refusal() != null) {
+			return Resolved.refused(dragged.refusal());
+		}
+
+		String itemKey = null;
+		DropZone zone = DropZone.NONE;
+		if (!target.dropModes().stream().allMatch(mode -> mode == DropMode.CONTROL)) {
+			zone = DropZone.fromWire(args.getZone());
+			if (zone == null) {
+				return Resolved.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			}
+			String targetKey = args.getTargetKey();
+			if (targetKey != null && !targetKey.isEmpty()) {
+				itemKey = targetKey;
+			} else {
+				zone = DropZone.NONE;
+			}
+		}
+		DropPlace place = places.place(itemKey, zone);
+		if (place == null) {
+			return Resolved.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(itemKey));
+		}
+		return new Resolved(new DropRequest(dragged.source(), dragged.kind(), dragged.objects(), place::location),
+			place, null);
+	}
+
+	/**
+	 * Applies a drop the client made on the owner.
+	 *
+	 * <p>
+	 * The arguments name client-side identities only, so both ends of the gesture are resolved by
+	 * the control that owns them. A drop the resolution or the {@link DropTarget#check(DropRequest)
+	 * target's check} refuses is answered with a warning naming the reason and not applied - the
+	 * client-side acceptance check that precedes it narrows the gesture for the user, it does not
+	 * decide it.
+	 * </p>
+	 *
+	 * @param args
+	 *        The client drop.
+	 * @param places
+	 *        Resolves the item the drop names into the place it was made at.
+	 */
+	public HandlerResult drop(DropArguments args, DropPlace.Resolver places) {
+		Resolved resolved = resolve(args, places);
+		if (resolved.refusal() != null) {
+			return refused(resolved.refusal());
+		}
+		return apply(resolved.request());
+	}
+
+	/**
+	 * Answers whether a drop right where a drag hovers would be accepted, without applying it.
+	 *
+	 * <p>
+	 * The drop is resolved exactly like {@link #drop(DropArguments, DropPlace.Resolver) a drop} and
+	 * then put to the {@link DropTarget#check(DropRequest) target's check}; an acceptance is answered
+	 * with the {@link DropPlace#marker(DropLocation) marker} of the location it accepts the drop at.
+	 * </p>
+	 *
+	 * @param args
+	 *        The probe.
+	 * @param places
+	 *        Resolves the item the probe names into the place it was made at.
+	 * @return All verdicts of the probe's drag, the value of the owner's {@link #DROP_VERDICTS}
+	 *         state.
+	 *
+	 * @see #answerProbe(DropProbeArguments, ResKey, DropMarker, String)
+	 */
+	public Map<String, Object> probe(DropProbeArguments args, DropPlace.Resolver places) {
+		Resolved resolved = resolve(args, places);
+		ResKey refusal = resolved.refusal();
+		DropMarker marker = null;
+		String markerKey = null;
+		if (refusal == null) {
+			DropVerdict verdict = _target.check(resolved.request());
+			refusal = verdict.reason();
+			if (verdict.isAccepted()) {
+				marker = resolved.place().marker(verdict.location());
+				markerKey = resolved.place().markerKey(marker);
+			}
+		}
+		return answerProbe(args, refusal, marker, markerKey);
+	}
+
+	/**
+	 * Applies the given drop through the {@link #setTarget(DropTarget) target}, at the location its
+	 * {@link DropTarget#check(DropRequest) check} accepts it at, unless the check refuses it.
+	 */
+	private HandlerResult apply(DropRequest request) {
+		DropVerdict verdict = _target.check(request);
+		if (!verdict.isAccepted()) {
+			return refused(verdict.reason());
+		}
+		_target.onDrop(request.event(verdict.location()));
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Rewrites a client {@link #CMD_DROP} into the replay-stable {@link #CMD_DROP_OBJECTS} form,
+	 * naming the location the {@link #setTarget(DropTarget) target} accepts the drop at.
+	 *
+	 * @param arguments
+	 *        The arguments of the client drop.
+	 * @param places
+	 *        Resolves the item the drop names into the place it was made at.
+	 * @return The recorded step, or {@code null} when the drop is refused or cannot be named.
+	 *
+	 * @see #recordDrop(Map, Function)
+	 */
+	public RecordedCommand recordDrop(Map<String, Object> arguments, DropPlace.Resolver places) {
+		return recordDrop(arguments, args -> {
+			Resolved resolved = resolve(args, places);
+			if (resolved.refusal() != null) {
+				return null;
+			}
+			return _target.check(resolved.request()).location();
+		});
+	}
+
+	/**
+	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} -
+	 * the replay-stable counterpart of {@link #drop(DropArguments, DropPlace.Resolver)}, which a
+	 * recorded drop is captured as so it survives sorting, filtering and a fresh session.
+	 *
+	 * <p>
+	 * The drop is offered exactly the recorded location, for the recorded mode: the operation that
+	 * applied it when it was recorded applies it again.
+	 * </p>
+	 *
+	 * <p>
+	 * Drift contract: a recorded identity that no longer designates a present object, or a location
+	 * the owner does not display, is an explicit failure (replay reports {@code success:false}),
+	 * never a partially applied drop. Unlike a refusal, a drift means the replayed script no longer
+	 * matches the application, hence an error rather than a warning.
+	 * </p>
+	 *
+	 * @param args
+	 *        Carries the identities of the dropped objects and of the reference objects of the
+	 *        location.
+	 * @param displayed
+	 *        Whether the owner displays the place the resolved location names - the item dropped
+	 *        onto, the parent and the item inserted before. Not asked for a
+	 *        {@link DropLocation.Control} location.
+	 */
+	public HandlerResult dropObjects(DropObjectsArguments args, Predicate<DropLocation> displayed) {
+		DropTarget target = _target;
+		if (target == null || !target.acceptedKinds().accepts(args.getKind())) {
+			return refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
+
+		List<ModelName> unresolved = new ArrayList<>();
+		List<Object> objects = locateAll(actionContext, args.getObjects(), unresolved);
+		DropLocation location = recordedLocation(actionContext, args, unresolved);
+		if (location == null) {
+			return refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		// The reference objects must be places of the owner: a recorded drop that lands somewhere
+		// else is a drift, not a drop.
+		boolean elsewhere = unresolved.isEmpty() && !(location instanceof DropLocation.Control)
+			&& !displayed.test(location);
+		if (elsewhere) {
+			for (ModelName reference : new ModelName[] { args.getTargetObject(), args.getParent(), args.getBefore() }) {
+				if (reference != null) {
+					unresolved.add(reference);
+				}
+			}
+		}
+		if (elsewhere || !unresolved.isEmpty() || objects.isEmpty()) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
+		}
+
+		return apply(DropRequest.at(null, args.getKind(), objects, location));
 	}
 
 	/**

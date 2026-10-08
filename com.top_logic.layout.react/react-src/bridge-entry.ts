@@ -33,7 +33,7 @@ export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
-export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
+export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
 export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';

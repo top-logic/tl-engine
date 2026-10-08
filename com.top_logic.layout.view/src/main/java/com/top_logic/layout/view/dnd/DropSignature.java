@@ -49,6 +49,15 @@ public record DropSignature(DropMode mode, List<DropReference> references) {
 		new DropSignature(DropMode.ORDERED, List.of(DropReference.BEFORE));
 
 	/**
+	 * An insertion into a tree: it refers to the object the dropped objects are inserted under as
+	 * their {@link DropReference#PARENT parent}, and to the object they are inserted
+	 * {@link DropReference#BEFORE before} among its children, {@code null} for an insertion as the
+	 * last children.
+	 */
+	public static final DropSignature ORDERED_TREE =
+		new DropSignature(DropMode.ORDERED, List.of(DropReference.PARENT, DropReference.BEFORE));
+
+	/**
 	 * The objects the given location refers to, in the order of the {@link #references()}.
 	 *
 	 * @param location

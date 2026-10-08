@@ -191,7 +191,7 @@ public class TestTableElementDragDrop extends BasicTestCase {
 	/**
 	 * Options a drop cannot use with its target are configuration errors: target rules on a drop
 	 * not made onto a row, a before channel on a drop other than an insertion, a target channel on
-	 * an insertion.
+	 * an insertion, and a parent channel on any drop of a flat table.
 	 */
 	public void testMisplacedOptionsAreReported() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
@@ -204,7 +204,9 @@ public class TestTableElementDragDrop extends BasicTestCase {
 			2, count(errors, "declares '" + DropConfig.BEFORE_CHANNEL + "'"));
 		assertEquals("Expected the target channel of the insertion to be reported: " + errors,
 			1, count(errors, "'" + DropMode.ORDERED.wireName() + "' declares '" + DropConfig.TARGET_CHANNEL + "'"));
-		assertEquals("No other error expected: " + errors, 5, errors.size());
+		assertEquals("Expected the parent channel of the insertion into the flat table to be reported: " + errors,
+			1, count(errors, "declares '" + DropConfig.PARENT_CHANNEL + "'"));
+		assertEquals("No other error expected: " + errors, 6, errors.size());
 	}
 
 	private static long count(List<String> errors, String part) {

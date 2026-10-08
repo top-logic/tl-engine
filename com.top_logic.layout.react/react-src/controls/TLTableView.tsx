@@ -92,6 +92,8 @@ const I18N_KEYS = {
   'js.table.grouped': 'The rows are grouped by this column',
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
+  'js.table.filterActive': 'Filter (active)',
+  'js.table.columnWidth': 'Change the width of {0}',
   'js.table.columns': 'Columns',
   'js.table.search': 'Search',
   'js.table.searchHint': 'Search the displayed columns',
@@ -320,7 +322,7 @@ const ColumnsButton: React.FC<{
 }> = ({ label, inCell, onClick }) => (
   <button
     type="button"
-    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
+    className={buttonClassName({ appearance: 'ghost', small: inCell, icon: true, extra: 'tl-table__columns' })}
     {...tooltipProps(label)}
     aria-label={label}
     // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
@@ -328,7 +330,8 @@ const ColumnsButton: React.FC<{
     onMouseDown={(e) => e.stopPropagation()}
     onClick={onClick}
   >
-    <i className="bi bi-gear" />
+    {/* Spec §12: icons are tl-icon-sm, also in a full-size icon button (Entscheidung 16). */}
+    <ThemeIcon encoded={ICON.columns} className="tl-button__icon tl-icon-sm" />
   </button>
 );
 
@@ -416,9 +419,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
   const justResizedRef = React.useRef(false);
 
-  // -- Drag reorder state --
-  const dragColumnRef = React.useRef<string | null>(null);
-  const [dragOver, setDragOver] = React.useState<{ column: string; side: 'left' | 'right' } | null>(null);
+  // -- Column reordering: the common gesture (useListReorder, halves along the row of headings) --
+  const columnReorder = useListReorder({
+    axis: 'horizontal',
+    count: columns.length,
+    onMove: (from, to) => sendCommand('columnReorder', { column: columns[from].name, targetIndex: to }),
+  });
+  const columnDragging = columnReorder.dragIndex !== null;
 
   // -- Row drop state: where an accepted drag currently hovers, or null while none does. A null row
   //    means the drag hovers the table itself rather than one of its rows. --
@@ -709,8 +716,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [rowHeight]);
 
-  // -- Sort handler --
-  const handleSort = React.useCallback((columnName: string, currentDirection: string | undefined, event: React.MouseEvent) => {
+  // -- Sort handler: click or Enter on the label sorts by the column; with Shift it adds a level to the
+  //    sort order. --
+  const handleSort = React.useCallback((columnName: string, currentDirection: string | undefined, event: { shiftKey: boolean }) => {
     if (justResizedRef.current) return;
     let newDirection: string;
     if (!currentDirection || currentDirection === 'desc') {
@@ -721,68 +729,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const mode = event.shiftKey ? 'add' : 'replace';
     sendCommand('sort', { column: columnName, direction: newDirection, mode });
   }, [sendCommand]);
-
-  // -- Drag reorder handlers --
-  const handleDragStart = React.useCallback((columnName: string, event: React.DragEvent) => {
-    dragColumnRef.current = columnName;
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', columnName);
-  }, []);
-
-  const handleDragOver = React.useCallback((columnName: string, event: React.DragEvent) => {
-    if (!dragColumnRef.current || dragColumnRef.current === columnName
-        || columns.find((c) => c.name === columnName)?.pinnedEnd) {
-      setDragOver(null);
-      return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const side = (event.clientX < rect.left + rect.width / 2) ? 'left' : 'right';
-    setDragOver({ column: columnName, side });
-  }, [columns]);
-
-  const handleDrop = React.useCallback((event: React.DragEvent) => {
-    const draggedName = dragColumnRef.current;
-    if (!draggedName) {
-      // Without a column drag of this table the drop is none of this handler's business. Leaving
-      // the event untouched lets it bubble to the table root, where a row drop landing on the
-      // header counts as a drop on the table as a whole.
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    if (!dragOver) {
-      dragColumnRef.current = null;
-      setDragOver(null);
-      return;
-    }
-
-    // Compute target index based on drop side.
-    let targetIndex = columns.findIndex((c) => c.name === dragOver.column);
-    if (targetIndex < 0) {
-      dragColumnRef.current = null;
-      setDragOver(null);
-      return;
-    }
-    const draggedIndex = columns.findIndex((c) => c.name === draggedName);
-    if (dragOver.side === 'right') {
-      targetIndex++;
-    }
-    // Adjust for removal: if dragged is before target, removal shifts indices down.
-    if (draggedIndex < targetIndex) {
-      targetIndex--;
-    }
-
-    sendCommand('columnReorder', { column: draggedName, targetIndex });
-    dragColumnRef.current = null;
-    setDragOver(null);
-  }, [columns, dragOver, sendCommand]);
-
-  const handleDragEnd = React.useCallback(() => {
-    dragColumnRef.current = null;
-    setDragOver(null);
-  }, []);
 
   // -- Row drag-and-drop handlers --
 
@@ -818,7 +764,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }, [dropOnRows]);
 
   const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
-    if (dragColumnRef.current) {
+    if (columnDragging) {
       event.preventDefault();
       // Auto-scroll horizontally during column drag.
       const body = scrollContainerRef.current;
@@ -887,7 +833,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, [dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
+  }, [columnDragging, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the table's own descendants fires a leave on each one left behind; only leaving
@@ -899,8 +845,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleRootDrop = React.useCallback((event: React.DragEvent) => {
     if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
-      // Not a row drag: a dragged column heading ends here.
-      handleDrop(event);
+      // Not a row drag: a dragged column heading has ended at its heading (useListReorder).
       return;
     }
     event.preventDefault();
@@ -923,7 +868,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
       sendCommand('drop', args);
     }
-  }, [dropAccepts, dropTargetAt, handleDrop, sendCommand]);
+  }, [dropAccepts, dropTargetAt, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
@@ -1393,6 +1338,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const widthStyle = (colIdx: number, w: number, isFrozen: boolean): React.CSSProperties =>
     colIdx === lastUnpinnedIdx && !isFrozen ? { flex: `1 0 ${w}px`, minWidth: w } : { width: w, minWidth: w };
 
+  // The sort order as the heading announces it. WAI-ARIA knows no levels: aria-sort names the first
+  // level only, and only there (APG sortable table); every other heading leaves it out.
+  const ariaSort = (col: ColumnState): 'ascending' | 'descending' | undefined => {
+    if (!col.sortable || !col.sortDirection || (col.sortPriority ?? 1) > 1) return undefined;
+    return col.sortDirection === 'asc' ? 'ascending' : 'descending';
+  };
+
   const dropWord = (row: RowState) =>
     dropState && dropState.row === row.id ? (dropRefused ? 'drop-refused' : 'drop-' + dropState.position) : undefined;
 
@@ -1538,32 +1490,26 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         aria-activedescendant={cursorRendered ? rowId(cursorIndex) : undefined}
         tabIndex={0}
       >
-      <div className="tlTableView__header" ref={headerRef}>
+      <div className="tl-table__header" ref={headerRef} role="rowgroup">
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
-            cannot leave its row, so a row ending with the last column would hold the pinned cells
-            back from that edge. The reserve is padding, which a sticky cell never enters. */}
-        <div className="tlTableView__headerRow"
+            cannot leave its row. The reserve is padding, which a sticky cell never enters. */}
+        <div className="tl-table__header-row tl-type-label-strong" role="row" aria-rowindex={1}
+          data-tl-axis="horizontal" {...columnReorder.containerProps}
           style={{ minWidth: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
-            <div className={'tlTableView__headerCell tlTableView__checkboxCell'
-                + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
-              style={{
-                width: checkboxWidth, minWidth: checkboxWidth,
-                ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
-              }}
-              onDragOver={(e) => {
-                if (!dragColumnRef.current) return;
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                if (columns.length > 0 && columns[0].name !== dragColumnRef.current) {
-                  setDragOver({ column: columns[0].name, side: 'left' });
-                }
-              }}
+            <div role="columnheader"
+              className="tl-table__header-cell tl-table__select"
+              data-tl-state={stateAttr(frozenColumnCount > 0 && 'frozen')}
+              style={{ width: checkboxWidth, minWidth: checkboxWidth, ...(frozenColumnCount > 0 ? { left: 0 } : {}) }}
             >
+              {/* "Some selected" is the box's indeterminate property (headerCheckboxRef), which the
+                  browser reports as mixed; a native checkbox carries no ARIA checked state of its
+                  own (ARIA in HTML, Entscheidung 22). */}
               <input
                 type="checkbox"
                 ref={headerCheckboxRef}
-                className="tlTableView__checkbox"
+                className="tl-checkbox"
+                aria-label={i18n['js.table.selectAll']}
                 checked={allSelected}
                 onChange={handleSelectAll}
               />
@@ -1571,96 +1517,84 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           )}
           {columns.map((col, colIdx) => {
             const w = getColWidth(col);
-            let cellClass = 'tlTableView__headerCell';
-            if (col.sortable) cellClass += ' tlTableView__headerCell--sortable';
-            if (dragOver && dragOver.column === col.name) {
-              cellClass += ' tlTableView__headerCell--dragOver-' + dragOver.side;
-            }
-            const isFrozen = colIdx < frozenColumnCount;
-            const isFrozenLast = colIdx === frozenColumnCount - 1;
-            if (isFrozen) cellClass += ' tlTableView__headerCell--frozen';
-            if (isFrozenLast) cellClass += ' tlTableView__headerCell--frozenLast';
-            const isPinned = !!col.pinnedEnd;
-            if (isPinned) cellClass += ' tlTableView__headerCell--pinnedEnd';
-            if (isPinned && colIdx === lastUnpinnedIdx + 1) {
-              cellClass += ' tlTableView__headerCell--pinnedEndFirst';
-            }
-            if (col.cssClass) cellClass += ' ' + col.cssClass;
+            const { isFrozen, isPinned, words } = placeOf(colIdx);
+            const sortIcon = col.sortDirection === 'asc' ? ICON.sortAsc : ICON.sortDesc;
+            // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
+            // #29752); only a tooltip the column declares is set here.
+            const label = (
+              <span className="tl-table__label" {...tooltipProps(col.tooltip)}>{col.label}</span>
+            );
+            const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
             return (
               <div
                 key={col.name}
-                className={cellClass}
+                role="columnheader"
+                aria-sort={ariaSort(col)}
+                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
                 data-col={col.name}
                 data-col-idx={colIdx}
+                data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
+                  reorderState(columnReorder.itemState(colIdx)))}
                 style={{
-                  // The last column the user arranges takes the space left over, in the heading
-                  // exactly as in the rows - otherwise the two drift apart as soon as the columns
-                  // no longer fill the table. The configured width is the flex basis, so the cell
-                  // is that wide whatever its content measures: a heading whose label, funnel and
-                  // sort mark need more room than the user gave the column keeps the column's
-                  // width and clips the label instead of pushing its own tail - the resize handle
-                  // included - under the column behind it.
-                  ...(colIdx === lastUnpinnedIdx && !isFrozen
-                    ? { flex: `1 0 ${w}px`, minWidth: w }
-                    : { width: w, minWidth: w }),
-                  position: isFrozen || isPinned ? 'sticky' as const : 'relative' as const,
-                  ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                  ...widthStyle(colIdx, w, isFrozen),
+                  ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
                   // The header ends with the reserve the body's scrollbar and, where it is not in a
-                  // heading, the column button take; its cells therefore stick that much further
-                  // from the right edge than the body's - which is what puts a heading above its
-                  // column at every scroll position.
-                  ...(isPinned
-                    ? {
-                      right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth,
-                      zIndex: 2,
-                    }
-                    : {}),
+                  // heading, the column button take; its cells stick that much further from the right
+                  // edge than the body's - which puts a heading above its column at every scroll position.
+                  ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth } : {}),
                 }}
-                draggable={!isPinned}
-                onClick={col.sortable ? (e) => handleSort(col.name, col.sortDirection, e) : undefined}
+                {...(isPinned ? {} : columnReorder.itemProps(colIdx))}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
-                onDragStart={(e) => handleDragStart(col.name, e)}
-                onDragOver={(e) => handleDragOver(col.name, e)}
-                onDrop={handleDrop}
-                onDragEnd={handleDragEnd}
               >
-                <span className="tlTableView__headerLabel"
-                  {...tooltipProps(col.tooltip)}>{col.label}</span>
-                {col.name === grouping && (
-                  <i className="tlTableView__groupMark bi bi-collection"
-                    {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />
-                )}
-                {col.filterable && (
+                {col.sortable ? (
                   <button
                     type="button"
-                    className={'tlTableView__filterButton'
-                      + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
-                    {...tooltipProps(i18n['js.table.filter'])}
-                    aria-label={i18n['js.table.filter']}
-                    style={{
-                      border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px',
-                      color: col.filterActive ? '#1565c0' : 'inherit',
+                    className="tl-table__sort"
+                    onClick={(e) => handleSort(col.name, col.sortDirection, e)}
+                    onKeyDown={(e) => {
+                      // Enter sorts here, with Shift as a further level: a keyboard click carries no Shift
+                      // in every browser.
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSort(col.name, col.sortDirection, e);
+                      }
                     }}
+                  >
+                    {label}
+                    {col.sortDirection && <ThemeIcon encoded={sortIcon} className="tl-table__mark tl-icon-sm" />}
+                    {col.sortDirection && sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
+                      <span className="tl-badge tl-type-label-strong tl-nums" aria-hidden="true">{col.sortPriority}</span>
+                    )}
+                  </button>
+                ) : label}
+                {col.name === grouping && (
+                  <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
+                    <ThemeIcon encoded={ICON.grouped} className="tl-icon-sm" />
+                  </span>
+                )}
+                {col.filterable && (
+                  // One glyph; an active filter is the column's state (data-tl-state~="filtered",
+                  // icon-primary) and the button's name says so as well.
+                  <button
+                    type="button"
+                    className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-table__filter' })}
+                    {...tooltipProps(filterLabel)}
+                    aria-label={filterLabel}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
                   >
-                    <i className={col.filterActive ? 'bi bi-funnel-fill' : 'bi bi-funnel'} />
+                    <ThemeIcon encoded={ICON.filter} className="tl-button__icon tl-icon-sm" />
                   </button>
-                )}
-                {col.sortDirection && (
-                  <span className="tlTableView__sortIndicator">
-                    {col.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}
-                    {sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
-                      <span className="tlTableView__sortPriority">{col.sortPriority}</span>
-                    )}
-                  </span>
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
                   <ColumnsButton label={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
                 )}
                 {!isPinned && (
                   <div
-                    className="tlTableView__resizeHandle"
+                    className="tl-table__resize"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label={i18n['js.table.columnWidth'].replace('{0}', col.label)}
                     onPointerDown={(e) => handleResizeStart(col.name, w, e)}
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => {
@@ -1672,22 +1606,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               </div>
             );
           })}
-          {/* Drop zone for reordering past the last column */}
-          <div
-            style={{ flex: '0 0 0', minHeight: '100%' }}
-            onDragOver={(e) => {
-              if (!dragColumnRef.current) return;
-              if (lastUnpinnedIdx >= 0) {
-                const lastCol = columns[lastUnpinnedIdx];
-                if (lastCol.name !== dragColumnRef.current) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                  setDragOver({ column: lastCol.name, side: 'right' });
-                }
-              }
-            }}
-            onDrop={handleDrop}
-          />
         </div>
       </div>
       {/* Scrollable body; the focus stays on the grid. tabIndex -1: Chromium makes a scrolling
@@ -1848,22 +1766,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       </div>
       </div>
 
-        {/* Grip on the boundary of the frozen columns. Confined to the header: a grip running down
+        {/* Grip on the boundary of the frozen columns, confined to the heading: a grip running down
             the body would swallow the clicks on the cells behind it. */}
         <div
-          className={'tlTableView__frozenSplitter'
-            + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
+          className="tl-table__freeze"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={i18n['js.table.freezeSplitter']}
           style={{ left: frozenWidth }}
           {...tooltipProps(i18n['js.table.freezeSplitter'])}
-          aria-label={i18n['js.table.freezeSplitter']}
           onPointerDown={handleFrozenSplitStart}
         />
         {columnSelect && !cogInHeaderCell && (
           <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
         )}
-
-        {/* Where the frozen area would end if the splitter were dropped now. Drawn over the whole
-            grid, so the boundary can be judged against the rows, not only against the headings. */}
+        {/* Where the frozen area would end if the grip were dropped now, over heading and rows. */}
         {frozenPreview && (
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />
         )}

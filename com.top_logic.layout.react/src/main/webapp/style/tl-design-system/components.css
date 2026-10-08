@@ -2005,6 +2005,9 @@ a.tl-field-value:hover {
 }
 .tl-table__header-row[hidden] { display: none; }
 
+/* Jede Kopfzelle isoliert ihren Stapel: die Einfügemarke eines Spaltenzugs (drag.css, ::before auf
+   layer-sticky) bleibt in ihrer Zelle. Eine Überschrift, die unter die fixierten rollt, zeichnet ihre
+   Marke so nicht über deren Zellen, und der Griff der Breite (layer-raised) wirkt nur in seiner Zelle. */
 .tl-table__header-cell {
   position: relative;
   display: flex;
@@ -2014,6 +2017,7 @@ a.tl-field-value:hover {
   padding: 0 var(--tl-space-control-x);
   overflow: hidden;
   border-right: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  isolation: isolate;
   user-select: none;
 }
 .tl-table__header-cell[hidden] { display: none; }
@@ -2065,8 +2069,9 @@ a.tl-field-value:hover {
   color: var(--tl-icon-secondary);
 }
 
-/* Der Trichter ist ein tl-button--icon --sm --ghost. Ein aktiver Filter ist ein Zustand der Spalte:
-   gefüllte Glyphe in icon-primary statt der leeren in icon-secondary. */
+/* Der Trichter ist ein tl-button--icon --sm --ghost mit einer Glyphe. Ein aktiver Filter ist ein Zustand
+   der Spalte: dieselbe Glyphe in icon-primary statt icon-secondary, der Name des Knopfs sagt es mit
+   (js.table.filterActive) — die Farbe allein trägt keine Bedeutung. */
 .tl-table__filter {
   flex-shrink: 0;
   color: var(--tl-icon-secondary);

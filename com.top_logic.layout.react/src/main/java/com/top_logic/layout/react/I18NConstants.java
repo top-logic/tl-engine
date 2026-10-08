@@ -626,10 +626,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_FREEZE_SPLITTER;
 
 	/**
+	 * @en Change the width of {0}
+	 */
+	@CustomKey("js.table.columnWidth")
+	public static ResKey JS_TABLE_COLUMN_WIDTH;
+
+	/**
 	 * @en Filter
 	 */
 	@CustomKey("js.table.filter")
 	public static ResKey JS_TABLE_FILTER;
+
+	/**
+	 * @en Filter (active)
+	 */
+	@CustomKey("js.table.filterActive")
+	public static ResKey JS_TABLE_FILTER_ACTIVE;
 
 	/**
 	 * @en Reset

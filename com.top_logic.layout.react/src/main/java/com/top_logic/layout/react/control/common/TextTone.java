@@ -26,8 +26,8 @@ public enum TextTone implements ExternallyNamed {
 	/** An explanation of the value or the field it accompanies. */
 	HELPER("helper"),
 
-	/** Text the application draws attention to, in the color interactive elements share. */
-	ACCENT("accent"),
+	/** Text that stands in for a value not yet there: a name not given, a list without entries. */
+	PLACEHOLDER("placeholder"),
 
 	/** An outcome that went well. */
 	SUCCESS("success"),

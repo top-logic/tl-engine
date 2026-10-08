@@ -34,7 +34,7 @@
 			</layer>
 		</overlay>
 		<text
-			css-class="tlText--strong"
+			css-class="tl-type-body-strong"
 			input="element"
 		/>
 	</card>

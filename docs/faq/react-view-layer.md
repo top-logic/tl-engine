@@ -130,7 +130,7 @@ element of the control displaying that element, beside the classes the control's
 
 ```html
 <div class="tlStack tlStack--column tlStack--gap-normal tlDemoHero">
-  <span class="tlText tlDemoHeroTitle">Welcome</span>
+  <span class="tl-text tl-type-body tlDemoHeroTitle">Welcome</span>
 </div>
 ```
 
@@ -151,7 +151,7 @@ The stylesheet the classes are defined in belongs to the application and is anno
 </config>
 ```
 
-A modifier class of a kind — `tlText--ellipsis`, `tlCard--outlined` — is not the way to reach one
+A modifier class of a kind — `tl-text--truncate`, `tlCard--outlined` — is not the way to reach one
 element. Those classes are what a control writes for the display options of its own kind, so writing
 one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the
 one element only by accident, since the engine writes the same class on every element that carries
@@ -191,26 +191,20 @@ every text of a role at once — see
 
 - **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
   `label`, `caption`. The family, size, line height and weight come from the tokens.
-- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`, `accent`,
-  `success`, `warning`, `error`, `on-color`.
+- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`,
+  `placeholder`, `success`, `warning`, `error`, `on-color`.
 - **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
 
-Every text carries a class per role — `tlText--<variant>`, `tlText--tone-<tone>`, and
-`tlText--pill` where the appearance asks for one — beside `tlText` and the element's own
-`css-class`:
+Every text is a `tl-text` with the type class of its variant (`tl-type-heading-lg` …) and its tone
+as the attribute `data-tl-tone` (`secondary`, `helper`, `placeholder`, `success`, `warning`, `error`,
+`on-brand`); the primary tone carries no attribute and inherits the colour of its surroundings, which
+is how text on the primary app bar reads in the bar's colour. A strong text names the strong type
+class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
+role (a live region).
 
 ```html
-<span class="tlText tlText--caption tlText--tone-helper">Figures as of yesterday.</span>
+<span class="tl-text tl-type-label" data-tl-tone="helper">Figures as of yesterday.</span>
 ```
-
-The classes are a stable contract the stylesheet of the application may read, not something to
-write into a `css-class`: a display option of the element is a property of the element.
-
-The colour of a tone travels as the custom property `--tlText-tone`, which the text colour is taken
-from and which tints a pill that has no colour of its own — one declaration per tone. That is also
-how a text keeps its tone where the surrounding control re-maps the text colour: the primary app bar
-re-maps `.tlAppBar--primary .tlText--tone-primary`, so a text that follows the default tone reads in
-the on-accent colour while a text that states a tone of its own — an error, a success — keeps it.
 
 ## Layout: stack and grid
 
@@ -738,7 +732,7 @@ A value of any other type has no HTML representation; the element reports that i
 	<item>
 		<card padding="compact">
 			<html display="thumbnail" input="element"/>
-			<text css-class="tlText--strong" input="element"/>
+			<text css-class="tl-type-body-strong" input="element"/>
 			<button appearance="link">
 				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
 					<label><en>Show</en></label>

@@ -132,7 +132,7 @@ public class TextElement implements UIElement {
 		/**
 		 * What the color of the text means: the {@link TextTone#PRIMARY color it is read in} (the
 		 * default), a {@link TextTone#SECONDARY lesser weight}, an explaining
-		 * {@link TextTone#HELPER hint}, an {@link TextTone#ACCENT accent}, or an outcome
+		 * {@link TextTone#HELPER hint}, a {@link TextTone#PLACEHOLDER placeholder}, or an outcome
 		 * ({@link TextTone#SUCCESS success}, {@link TextTone#WARNING warning},
 		 * {@link TextTone#ERROR error}); {@link TextTone#ON_COLOR on-color} for text on a filled
 		 * surface.

@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -88,6 +89,8 @@ public class UploadCommand implements ViewCommand {
 
 	private final boolean _multiple;
 
+	private final ResKey _label;
+
 	/**
 	 * Creates a new {@link UploadCommand} from configuration.
 	 */
@@ -99,6 +102,16 @@ public class UploadCommand implements ViewCommand {
 			.toList();
 		_accept = config.getAccept();
 		_multiple = config.isMultiple();
+		_label = config.getLabel();
+	}
+
+	/**
+	 * The {@link Config#getLabel() label} this command is configured with, {@code null} for a
+	 * command without a label.
+	 */
+	@Override
+	public ResKey getLabel() {
+		return _label;
 	}
 
 	/**

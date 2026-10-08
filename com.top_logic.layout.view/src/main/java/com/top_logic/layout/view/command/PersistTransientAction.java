@@ -13,9 +13,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.element.model.copy.CopyOperation;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.TLObject;
@@ -40,6 +42,11 @@ import com.top_logic.model.util.TLModelPartRef;
  * of the container and, with a {@link Config#getReference() reference}, added to that reference of
  * the container, the way {@code $container.add(reference, $created)} adds it. The action results in
  * the persistent object.
+ * </p>
+ *
+ * <p>
+ * The creation is committed with the configured commit message, by default with a message naming
+ * the created object, labeled as the draft.
  * </p>
  *
  * <p>
@@ -81,7 +88,7 @@ public class PersistTransientAction implements ViewAction {
 	 * Configuration for {@link PersistTransientAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<PersistTransientAction>, CreationContainer {
+	public interface Config extends PolymorphicConfiguration<PersistTransientAction>, CreationContainer, WithCommitMessage {
 
 		/** Tag name of a {@link PersistTransientAction} in an action chain. */
 		String TAG_NAME = "persist-transient";
@@ -105,9 +112,26 @@ public class PersistTransientAction implements ViewAction {
 		@Name(TYPE)
 		@Nullable
 		TLModelPartRef getType();
+
+		/**
+		 * The message to annotate to the creation.
+		 *
+		 * <p>
+		 * If not set, the message names the created object.
+		 * </p>
+		 *
+		 * <p>
+		 * A message may contain the placeholder '{0}' that is replaced with the label of the created
+		 * object.
+		 * </p>
+		 */
+		@Override
+		ResKey1 getCommitMessage();
 	}
 
 	private final Config _config;
+
+	private final ViewCommitMessage _commitMessage;
 
 	/**
 	 * Creates a {@link PersistTransientAction} from configuration.
@@ -115,6 +139,8 @@ public class PersistTransientAction implements ViewAction {
 	@CalledByReflection
 	public PersistTransientAction(InstantiationContext context, Config config) {
 		_config = config;
+		_commitMessage = new ViewCommitMessage(context, config,
+			com.top_logic.layout.form.component.I18NConstants.CREATED__MODEL);
 		CreationContainer.checkContainer(context, config);
 	}
 
@@ -138,7 +164,7 @@ public class PersistTransientAction implements ViewAction {
 
 		TLObject container = CreationContainer.resolveContainer(context, _config, Config.TAG_NAME);
 		TLStructuredTypePart reference = reference(container);
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(_commitMessage.create(draft))) {
 			CopyOperation operation = CopyOperation.initial();
 			if (container != null) {
 				operation.setContext(container, reference instanceof TLReference ref ? ref : null);

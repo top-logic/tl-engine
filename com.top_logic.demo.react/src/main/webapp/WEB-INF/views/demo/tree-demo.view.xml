@@ -137,6 +137,10 @@
 					/>
 				</executability>
 				<with-transaction>
+					<commitMessage>
+						<en>Created a ticket in milestone {0}.</en>
+						<de>Ticket in Meilenstein {0} angelegt.</de>
+					</commitMessage>
 					<execute-script function="milestone -> { scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
 				</with-transaction>
 				<write-channel name="selected"/>

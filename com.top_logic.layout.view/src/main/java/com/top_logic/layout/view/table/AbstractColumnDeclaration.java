@@ -17,6 +17,9 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.AnnotatedConfig;
+import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.table.ColumnFilter;
@@ -26,7 +29,8 @@ import com.top_logic.table.SortDirection;
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
  * such column has: its label, its filter, its width, whether it can be edited, the order it sorts
- * the table in, and what it aggregates over a group of rows.
+ * the table in, what it aggregates over a group of rows, and the display annotations it states
+ * over the ones of its values' attribute or type.
  *
  * <p>
  * A subclass says what the column is named and what its cells hold; everything the table does with
@@ -41,7 +45,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * @param <I>
 	 *        The declaration this configuration describes.
 	 */
-	public interface Config<I extends AbstractColumnDeclaration> extends ColumnDeclaration.Config<I>, ColumnExportConfig {
+	public interface Config<I extends AbstractColumnDeclaration>
+			extends ColumnDeclaration.Config<I>, ColumnExportConfig, AnnotatedConfig<TLAttributeAnnotation> {
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -141,6 +146,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final ColumnExport _export;
 
+	/** The display annotations the declaration states, {@code null} where it states none. */
+	private final AnnotationLookup _annotations;
+
 	/**
 	 * Creates an {@link AbstractColumnDeclaration} from configuration.
 	 *
@@ -158,6 +166,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = aggregate(config.getAggregate());
 		_hiddenByDefault = false;
 		_export = ColumnExport.of(context, config);
+		_annotations = config.getAnnotations().isEmpty() ? null : config;
 	}
 
 	/**
@@ -179,6 +188,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = null;
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
+		_annotations = null;
 	}
 
 	/**
@@ -210,7 +220,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * @param label
 	 *        The header label the column derives, used when the declaration configures none.
 	 * @param type
-	 *        What the column's values are.
+	 *        What the column's values are. The display annotations the declaration states take
+	 *        precedence over the ones described there.
 	 * @param value
 	 *        Reads the cell value from a row.
 	 * @param editing
@@ -221,7 +232,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
-		return new ColumnSetup(name, _label != null ? _label : label, type, value, scope.context(), _binding,
+		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
+		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, _aggregate, _hiddenByDefault, _export);
 	}
 

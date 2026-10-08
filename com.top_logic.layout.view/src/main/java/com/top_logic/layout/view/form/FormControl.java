@@ -15,7 +15,6 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
-import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -32,6 +31,7 @@ import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.util.error.TopLogicException;
 
@@ -139,10 +139,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_noModelMessage = noModelMessage;
 		_lockHandler = lockHandler;
 		_editMode = false;
-		putState(EDIT_MODE, Boolean.FALSE);
+		showEditMode(false);
 		putState(DIRTY, Boolean.FALSE);
 		updateNoModelMessage();
 		FormLayoutEditModeBinding.bind(this, readOnly -> putState(ReactFormLayoutControl.READ_ONLY, readOnly), this);
+	}
+
+	/**
+	 * Tells the client whether the form is being edited.
+	 *
+	 * <p>
+	 * Outside edit mode the form's grid is {@link ReactFormLayoutControl#READ_ONLY read-only}: its
+	 * fields show their values only, without the required marker, help and messages that belong to
+	 * editing.
+	 * </p>
+	 */
+	private void showEditMode(boolean editMode) {
+		putState(EDIT_MODE, Boolean.valueOf(editMode));
+		putState(ReactFormLayoutControl.READ_ONLY, Boolean.valueOf(!editMode));
 	}
 
 	/**
@@ -618,7 +632,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_lockHandler.acquireLock(_currentObject);
 
 		_editMode = true;
-		putState(EDIT_MODE, Boolean.TRUE);
+		showEditMode(true);
 		updateEditModeChannel();
 
 		if (_inputChannel != null && _inputVeto == null) {
@@ -713,7 +727,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return base;
 		}
 
-		Transaction tx = base.tKnowledgeBase().beginTransaction(I18NConstants.FORM_SAVE);
+		Transaction tx = base.tKnowledgeBase().beginTransaction(
+			I18NConstants.UPDATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(base)));
 		try {
 			for (FormParticipant participant : _participants) {
 				participant.persist(tx);
@@ -983,7 +998,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		releaseLock();
 
-		putState(EDIT_MODE, Boolean.FALSE);
+		showEditMode(false);
 		updateEditModeChannel();
 		updateDirtyState();
 

@@ -73,7 +73,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey INIT_AUTHENTICATOR_MESSAGE2;
 
 	/**
-	 * @en MFA password updated
+	 * @en Updated MFA password.
 	 */
 	public static ResKey MFA_PASSWORD_UPDATED;
 

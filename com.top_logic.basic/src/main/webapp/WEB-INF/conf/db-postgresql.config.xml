@@ -19,6 +19,7 @@
 								<option name="sslmode" value="%POSTGRESQL_SSL_MODE%" />
 								
 								<option name="autosave" value="%POSTGRESQL_AUTOSAVE%" />
+								<option name="cleanupSavepoints" value="%POSTGRESQL_CLEANUP_SAVEPOINTS%" />
 							</options>
 						</data-source>
 					</pool>

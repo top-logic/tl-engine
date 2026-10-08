@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.list;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -32,6 +33,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The new element cannot be attached: an input of the list holds no value.
 	 */
 	public static ResKey ERROR_MISSING_INPUT_VALUE;
+
+	/**
+	 * @en Added list element: {0}
+	 */
+	public static ResKey1 ADDED_LIST_ELEMENT__ELEMENT;
+
+	/**
+	 * @en Removed list element: {0}
+	 */
+	public static ResKey1 REMOVED_LIST_ELEMENT__ELEMENT;
 
 	static {
 		initConstants(I18NConstants.class);

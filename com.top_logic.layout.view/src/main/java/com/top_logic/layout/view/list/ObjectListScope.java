@@ -9,9 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -94,7 +96,8 @@ public class ObjectListScope {
 		if (!InputValues.complete(Arrays.asList(arguments).subList(0, _inputs.size()))) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_INPUT_VALUE);
 		}
-		return inTransaction(() -> _link.execute(arguments));
+		return inTransaction(I18NConstants.ADDED_LIST_ELEMENT__ELEMENT.fill(label(element)),
+			() -> _link.execute(arguments));
 	}
 
 	/**
@@ -120,7 +123,8 @@ public class ObjectListScope {
 			throw new TopLogicException(I18NConstants.ERROR_NO_REMOVE_FUNCTION);
 		}
 		Object[] arguments = arguments(element);
-		return inTransaction(() -> _remove.execute(arguments));
+		return inTransaction(I18NConstants.REMOVED_LIST_ELEMENT__ELEMENT.fill(label(element)),
+			() -> _remove.execute(arguments));
 	}
 
 	/**
@@ -131,9 +135,13 @@ public class ObjectListScope {
 		return InputValues.alive(ChannelInputs.arguments(_inputs, element));
 	}
 
-	private static Object inTransaction(Supplier<Object> operation) {
+	private static String label(Object element) {
+		return MetaLabelProvider.INSTANCE.getLabel(element);
+	}
+
+	private static Object inTransaction(ResKey message, Supplier<Object> operation) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(message);
 		try {
 			Object result = operation.get();
 			tx.commit();

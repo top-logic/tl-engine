@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The personal access tokens of the logged-in account (Issue #671): a person creates one for an MCP
+	client, sees it exactly once, and revokes it here when the client no longer needs it. A request
+	with the token acts as this account, with exactly its rights.
+
+	Self-contained, so it works wherever it is referenced: the settings dialog's "Access tokens" tab
+	(settings-tabs.view.xml of this module) and any page of an application that has no settings
+	dialog. The rows are filtered by owner, and the revoke command goes through mcpAccessTokenRevoke,
+	which refuses a token of somebody else even when a channel happens to hold one.
+-->
+<view>
+	<channels>
+		<channel name="selectedToken"/>
+	</channels>
+	<panel>
+		<title>
+			<en>Access tokens</en>
+			<de>Zugriffstokens</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-plus-lg"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>New token</en>
+					<de>Neues Token</de>
+				</label>
+				<execute-script function="x -> new(`tl.ai.mcp.server:AccessTokenRequest`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="tl-ai-mcp-server/new-access-token.view.xml"
+				/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-x-circle"
+				input="selectedToken"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Revoke</en>
+					<de>Widerrufen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<confirm expr="t -> #('Revoke the token {0}? A client that uses it is refused from now on.'@en, 'Das Token {0} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($t.get(`tl.ai.mcp.server:AccessToken#name`))"/>
+				<with-transaction>
+					<execute-script function="t -> { mcpAccessTokenRevoke($t); null; }"/>
+				</with-transaction>
+				<write-channel name="selectedToken"/>
+			</generic-command>
+		</commands>
+		<table
+			observed-types="tl.ai.mcp.server:AccessToken"
+			selection="selectedToken"
+			types="tl.ai.mcp.server:AccessToken"
+		>
+			<!-- Sized to fit the 560px settings dialog; the creation date is one click away in the column selection. -->
+			<columns>
+				<column attribute="name" width="135"/>
+				<column attribute="hint" width="95"/>
+				<column attribute="expiresAt" width="150"/>
+				<column attribute="lastUsed" width="150"/>
+			</columns>
+			<rows><![CDATA[all(`tl.ai.mcp.server:AccessToken`)
+				.filter(t -> $t.get(`tl.ai.mcp.server:AccessToken#owner`) == currentUser())
+				.sort((t -> $t.get(`tl.ai.mcp.server:AccessToken#createdAt`)).comparator().desc())]]></rows>
+		</table>
+	</panel>
+</view>

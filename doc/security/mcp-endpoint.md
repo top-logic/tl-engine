@@ -73,11 +73,12 @@ surface and one set of secrets in the application. Configure it on `MCPServerSer
 </config>
 ```
 
-Three schemes are available, and a caller may present any one of the configured ones:
+Four schemes are available, and a caller may present any one of the configured ones:
 
 | Scheme | Element | What it checks | When to use it |
 |---|---|---|---|
-| **API key** | `<api-key-authentication>` + `<api-key-server-secret>` | A key in a header, query parameter or cookie, mapped to one account | **The recommended default.** Revocable on its own, attributable to one account, and keeps a person's login out of a client configuration file. Every mainstream MCP client can send a static header |
+| **Personal access token** | `<personal-access-token-authentication>` | A `tlpat_` token a person created for their own account, see [below](#personal-access-tokens) | **When people connect their own MCP client.** Each person creates, sees and revokes their own tokens; no configuration per person |
+| **API key** | `<api-key-authentication>` + `<api-key-server-secret>` | A key in a header, query parameter or cookie, mapped to one account | **The default for a service account.** Revocable on its own, attributable to one account, and keeps a person's login out of a client configuration file. Every mainstream MCP client can send a static header |
 | **HTTP basic** | `<basic-authentication in-user-context="true"/>` | The account's own password, against its `AuthenticationDevice` | A one-line `curl` smoke test, or a deployment with no key management. Puts a real password in a client config, so not the default |
 | **OAuth bearer** | `<token-based-authentication>` + `<server-credentials>` | A bearer token, validated by RFC 7662 introspection against your authorization server | A deployment that already runs an OIDC provider. TopLogic issues no tokens of its own, so this needs one |
 
@@ -91,6 +92,68 @@ Three schemes are available, and a caller may present any one of the configured 
 
 A misconfigured authentication - a scheme with no matching secret, say - authenticates nobody rather
 than being skipped, so a configuration mistake cannot widen access.
+
+## Personal access tokens
+
+A personal access token lets a person connect an MCP client - Claude Code, Cursor, any client that
+can send a static header - as themselves, without an administrator configuring anything per person
+and without putting their password into a client configuration file.
+
+**Switching it on** is one line beside the module switch; the scheme needs no secret, because the
+tokens are not configured:
+
+```xml
+<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
+    <instance>
+        <authentications>
+            <personal-access-token-authentication domain="tokens"/>
+        </authentications>
+    </instance>
+</config>
+```
+
+**Creating one.** *Settings -> Access tokens -> New token* (the engine's settings dialog, which this
+module extends): a name, typically the client it is for, and optionally how many days it stays
+valid. The token is shown **once**, in the dialog that follows; nothing can show it again, so a lost
+token is revoked and replaced. The same tab lists the person's tokens - name, the first characters,
+created, expires, last used - and revokes one. An application without the settings dialog places
+`tl-ai-mcp-server/access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on
+*My settings*.
+
+**Administering them.** *Administration -> MCP -> Access tokens* lists the tokens of every
+account and revokes any of them - what to do when a token leaked or an account must lose MCP access
+at once. Deleting an account deletes its tokens. A person reads only their own tokens: model access is
+deny-by-default, so the owner holds the technical role `McpAccessTokenOwner` on each of their
+tokens through a role rule on `owner`, and that role is granted Read.
+
+**Connecting Claude Code:**
+
+```bash
+claude mcp add --transport http <name> https://<host>/<context>/mcp \
+    --header "Authorization: Bearer <token>"
+```
+
+**What a request with a token can do** is exactly what its owner can do, through the same gates as
+every other scheme: their roles, their model access rights and the `<background-allowlist>` - see
+below. A token carries no scopes of its own.
+
+**Refusals.** No token, a token that does not exist, a revoked and an expired one are all answered
+**HTTP 401** with `WWW-Authenticate: Bearer` (`error="invalid_token"` for a token that was presented).
+Neither the answer nor the log line contains the token.
+
+### The format, and what is stored
+
+A token is `tlpat_` followed by 43 characters of `[0-9A-Za-z]` from a `SecureRandom` - about 256
+bits. The prefix is what lets a secret scanner (GitHub secret scanning, a pre-commit hook) find a
+leaked one by pattern - `tlpat_[0-9A-Za-z]{43}` - and what lets the authenticator turn away another
+bearer value without a database lookup, so an OAuth `<client-credentials-authentication>` can be
+configured beside it. Base 62 rather than base 64 keeps the token one word for a double click.
+
+The database holds the token's **SHA-256**, never the token, plus its first four secret characters
+as a hint for matching a row to a client configuration. A fast unsalted hash is right for 256 random
+bits - there is no dictionary to run against it - and it is what makes the lookup one indexed query.
+`last used` is written at most once a minute per token, so a busy client does not turn every request
+into a commit.
 
 ## What the endpoint publishes: nothing you did not list
 
@@ -271,12 +334,13 @@ demo only; the file says how to connect Claude Code.
   instructions, `tools/list` shows only the published tool with its title and annotations, a tool that
   is not published is unknown, a foreign `Origin` is refused and a missing one is served),
   `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused),
-  `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401
-  challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches
+  `TestAccessTokens` (the token format and its hash), `TestMcpAuthentication` (nothing configured
+  serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches
   the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table
   above, that the hints survive the JSON mapper, and that a tl-ai consuming them still says
   `EXTERNAL`).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and real
   access rights - a resource read filtered per object, an attribute left out, a listing counted after
   filtering, an API key resolved to its account, a tool call authorized and one refused by the
-  background allowlist.
+  background allowlist, and a personal access token acting as its owner, refused when revoked or
+  expired.

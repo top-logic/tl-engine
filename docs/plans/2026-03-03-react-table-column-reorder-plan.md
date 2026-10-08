@@ -1,5 +1,7 @@
 # React Table Column Reorder Implementation Plan
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add drag-and-drop column reorder on header cells with drop indicator and server persistence.

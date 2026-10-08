@@ -1,5 +1,7 @@
 # React Table Control - Phase 1 Implementation Plan
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Implement the core React table control with virtual scrolling, cell child controls, single-column sorting, single row selection, and a demo page for verification.

@@ -1,5 +1,7 @@
 # React Table Selection — Design
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 ## Selection Modes
 
 Two modes: `single` and `multi`.

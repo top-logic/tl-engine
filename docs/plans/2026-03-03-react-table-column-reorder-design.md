@@ -1,5 +1,7 @@
 # React Table Column Reorder — Design
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 ## Interaction
 
 - Drag a header cell to reorder columns.

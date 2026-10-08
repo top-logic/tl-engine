@@ -1,5 +1,7 @@
 # Multi-Column Sort Design for React Table
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 ## Goal
 
 Add multi-column sorting to the React table so users can sort by multiple columns with priority ordering.

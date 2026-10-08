@@ -1,5 +1,7 @@
 # React Table: TableModel Integration & Tree Table Support — Design
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 ## Goal
 
 Refactor ReactTableControl to use TopLogic's `TableModel` as its data source (replacing the static `List<Object>`), then add tree table support by detecting `TreeTableModel` and rendering tree metadata.

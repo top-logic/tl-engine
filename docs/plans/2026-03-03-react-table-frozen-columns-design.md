@@ -1,5 +1,7 @@
 # Frozen Columns Design for React Table
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` sind jetzt `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 ## Goal
 
 Add left-side frozen (sticky) columns to the React table control so that key columns remain visible while the user scrolls horizontally.

@@ -15,7 +15,7 @@
 			tone="error"
 		/>
 		<text
-			label="Empty"
+			label="Unnamed"
 			tone="placeholder"
 		/>
 	</stack>

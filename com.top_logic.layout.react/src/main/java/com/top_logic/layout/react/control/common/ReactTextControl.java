@@ -156,7 +156,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *
 	 * @param tone
 	 *        What the color of the text means: the color it is read in, a lesser weight, an
-	 *        explanation, an outcome.
+	 *        explanation, a placeholder, an outcome.
 	 */
 	public void setTone(TextTone tone) {
 		putState(TONE, tone.getExternalName());

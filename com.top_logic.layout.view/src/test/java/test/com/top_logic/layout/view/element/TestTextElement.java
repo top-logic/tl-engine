@@ -162,8 +162,7 @@ public class TestTextElement extends TestCase {
 	}
 
 	/**
-	 * A placeholder is a tone of its own, not a shape: it arrives by its external name, and the client
-	 * draws it in the placeholder color without a font style.
+	 * The placeholder tone reaches the client by its external name.
 	 */
 	public void testPlaceholderTone() {
 		assertEquals(TextTone.PLACEHOLDER.getExternalName(), child(3).get(TONE));

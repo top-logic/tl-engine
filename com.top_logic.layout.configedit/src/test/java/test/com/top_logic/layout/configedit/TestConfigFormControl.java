@@ -38,8 +38,11 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
+import com.top_logic.layout.configedit.ConfigValidation;
+import com.top_logic.layout.configedit.FieldDisplay;
 import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -462,16 +465,28 @@ public class TestConfigFormControl extends TestCase {
 	 *
 	 * <p>
 	 * Identified by the literal {@code "+ "} prefix {@code ConfigListEditorControl#rebuild}
-	 * hardcodes ahead of the property's own (locale-dependent) label, rather than by the full label
-	 * text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
+	 * hardcodes ahead of the property's own (locale-dependent) label, or for the button in the
+	 * header of the collection's group - see {@link ConfigListEditorControl#headerAddButton()} - by
+	 * the text around the collection's label in {@link I18NConstants#ADD_ENTRY__COLLECTION}, rather
+	 * than by the full label text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
 	 * translated property label here would tie this test to whatever the JVM's default locale
 	 * happens to resolve it to.
 	 * </p>
 	 */
+	/**
+	 * Whether the given text is the label {@link I18NConstants#ADD_ENTRY__COLLECTION} gives, for
+	 * whatever collection.
+	 */
+	private boolean isAddEntryLabel(String text) {
+		String marker = "\u0000";
+		String[] around = label(I18NConstants.ADD_ENTRY__COLLECTION.fill(marker)).split(marker, -1);
+		return around.length == 2 && text.startsWith(around[0]) && text.endsWith(around[1]);
+	}
+
 	private ReactButtonControl findAddButton(ReactControl control) {
 		if (control instanceof ReactButtonControl button) {
 			Object label = button.scriptingScalarState().get("label");
-			if (label instanceof String text && text.startsWith("+ ")) {
+			if (label instanceof String text && (text.startsWith("+ ") || isAddEntryLabel(text))) {
 				return button;
 			}
 		}
@@ -511,10 +526,9 @@ public class TestConfigFormControl extends TestCase {
 	 * <p>
 	 * Both {@link PolymorphicItemControl} and {@link ConfigListEditorControl}'s own type selector
 	 * wrap their {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} in a
-	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} carrying the
-	 * literal, hardcoded label {@code "Type"} - never resolved through {@link Resources}, so
-	 * matching it is locale-independent by construction, the same reason
-	 * {@code TestConfigEditorControl#findTypeFieldModel} matches it too. Walked fully recursively
+	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} named
+	 * {@link PolymorphicItemControl#TYPE_SELECTOR_NAME}, which unlike its label does not depend on
+	 * the language - the same way {@code TestConfigEditorControl#findTypeFieldModel} finds it. Walked fully recursively
 	 * (unlike that one-level sibling helper), since the selector sits at a different depth in each
 	 * of the two tests this is used for - directly under a {@link PolymorphicItemControl} for a
 	 * single polymorphic property, one level deeper inside a {@link ConfigListEditorControl}
@@ -522,7 +536,7 @@ public class TestConfigFormControl extends TestCase {
 	 * </p>
 	 */
 	private FieldModel findTypeFieldModel(ReactControl control) {
-		if ("Type".equals(control.scriptingScalarState().get("label"))) {
+		if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(control.scriptingName())) {
 			for (ReactControl field : control.scriptingChildren()) {
 				return (FieldModel) field.getModel();
 			}
@@ -733,6 +747,168 @@ public class TestConfigFormControl extends TestCase {
 
 		assertNotNull("Clearing a mandatory value must say so at the field, even without edit mode.",
 			fieldOf(form, MandatoryConfig.NAME).getError());
+	}
+
+	/**
+	 * A property displayed {@link FieldMode#IMMUTABLE immutable} shows its value, but does not
+	 * accept a change, while the other properties stay editable.
+	 */
+	public void testImmutableFieldShowsItsValueOnly() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("fixed");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(WarningConfig.NAME, new FieldDisplay(FieldMode.IMMUTABLE, false)));
+
+		assertEquals("fixed", fieldOf(form, WarningConfig.NAME).getValue());
+		assertFalse(fieldOf(form, WarningConfig.NAME).isEditable());
+		assertFalse("Shown as a value, not as an inactive input.", fieldOf(form, WarningConfig.NAME).isDisabled());
+		assertTrue(fieldOf(form, WarningConfig.AMOUNT).isEditable());
+	}
+
+	/** A property displayed {@link FieldMode#DISABLED disabled} is an input that cannot be used. */
+	public void testDisabledFieldIsAnInactiveInput() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(WarningConfig.AMOUNT, new FieldDisplay(FieldMode.DISABLED, false)));
+
+		assertTrue(fieldOf(form, WarningConfig.AMOUNT).isDisabled());
+		assertFalse(fieldOf(form, WarningConfig.AMOUNT).isEditable());
+	}
+
+	/** A property displayed {@link FieldMode#INVISIBLE invisible} has no field. */
+	public void testInvisibleFieldIsNotDisplayed() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(WarningConfig.AMOUNT, new FieldDisplay(FieldMode.INVISIBLE, false)));
+
+		assertNull(fieldOf(form, WarningConfig.AMOUNT));
+		assertNotNull(fieldOf(form, WarningConfig.NAME));
+	}
+
+	/**
+	 * A property the user interface requires is marked as mandatory and refuses the save without a
+	 * value, although the property does not declare it - a collection without entries as well.
+	 */
+	public void testMandatoryByDisplayRefusesTheSave() {
+		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(
+			CollectionConfig.NAME, new FieldDisplay(null, true),
+			CollectionConfig.ITEMS, new FieldDisplay(null, true)));
+
+		assertTrue(fieldOf(form, CollectionConfig.NAME).isMandatory());
+		assertNotNull("Without a value, the save is refused.", form.checkForSave());
+		assertNotNull(fieldOf(form, CollectionConfig.NAME).getError());
+
+		config.setName("given");
+		ConfigValidation.Refusal refusal = form.checkForSave();
+		assertNotNull("The list has no entry yet.", refusal);
+		assertEquals(1, refusal.details().size());
+
+		ListEntry entry = TypedConfiguration.newConfigItem(ListEntry.class);
+		config.getItems().add(entry);
+		assertNull(form.checkForSave());
+	}
+
+	/**
+	 * A collection displayed {@link FieldMode#DISABLED disabled} offers no entry to add or remove,
+	 * and the fields of its entries are inactive inputs.
+	 */
+	public void testDisabledGroupOffersNothingAndDisablesItsFields() {
+		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+		ListEntry entry = TypedConfiguration.newConfigItem(ListEntry.class);
+		entry.setTitle("a");
+		config.getItems().add(entry);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		form.setFieldDisplays(Map.of(CollectionConfig.ITEMS, new FieldDisplay(FieldMode.DISABLED, false)));
+
+		assertNull("Nothing can be added.", findAddButton(form));
+		assertTrue(fieldOf(form, ListEntry.TITLE).isDisabled());
+		assertFalse(fieldOf(form, ListEntry.TITLE).isEditable());
+		assertTrue("Other properties stay editable.", fieldOf(form, CollectionConfig.NAME).isEditable());
+	}
+
+	/**
+	 * Changing one field does not flag another mandatory field the user has not touched yet - one
+	 * of an entry just added, say: the user had no chance to fill it. The save reveals it.
+	 */
+	public void testChangingAFieldDoesNotFlagAnUntouchedMandatoryValue() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(5));
+
+		assertNull("The mandatory value nobody touched yet is not complained about.",
+			fieldOf(form, WarningConfig.NAME).getError());
+		assertNull("Nor by the chrome around the field.", chromeErrorOf(form, WarningConfig.NAME));
+		assertFalse(form.hasVisibleErrors());
+
+		assertNotNull("The save refuses.", form.checkForSave());
+		assertNotNull("And reveals the missing value at its field.", fieldOf(form, WarningConfig.NAME).getError());
+	}
+
+	/**
+	 * A form without edit mode is saved by its caller, which asks the form first: an untouched
+	 * mandatory property refuses, and the check puts the violation on the field.
+	 */
+	public void testCheckForSaveRefusesAnUntouchedMandatoryValue() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertNotNull("A missing mandatory value refuses the save.", form.checkForSave());
+		assertNotNull("The check makes the violation visible at the field.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertTrue(form.hasVisibleErrors());
+	}
+
+	/** Input a field rejected never reached the configuration, but refuses the save all the same. */
+	public void testCheckForSaveRefusesARejectedInput() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+
+		assertNotNull("A rejected input refuses the save.", form.checkForSave());
+	}
+
+	/** A form without findings may be saved. */
+	public void testCheckForSavePassesAValidForm() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertNull(form.checkForSave());
+		assertFalse(form.hasVisibleErrors());
+	}
+
+	/**
+	 * Whoever disables a command while the form shows errors is told when errors appear and when
+	 * they are gone again.
+	 */
+	public void testVisibleErrorsAreObserved() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+		int[] notified = { 0 };
+		Runnable stop = form.observeValidity(() -> notified[0]++);
+
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+		assertTrue(form.hasVisibleErrors());
+		assertTrue("A new error is reported.", notified[0] > 0);
+
+		int before = notified[0];
+		fieldOf(form, MandatoryConfig.NAME).setValue("again");
+		assertFalse(form.hasVisibleErrors());
+		assertTrue("The error going away is reported.", notified[0] > before);
+
+		stop.run();
+		int stopped = notified[0];
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+		assertEquals("No report after the observation ended.", stopped, notified[0]);
 	}
 
 	/**

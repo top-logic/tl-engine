@@ -10,6 +10,7 @@ import junit.framework.TestCase;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
+import com.top_logic.layout.react.state.ProgressState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
@@ -48,7 +49,7 @@ public class TestReactProgressControl extends TestCase {
 
 	/** A bar without a label names none, so the client draws the bar alone. */
 	public void testABarWithoutALabelNamesNone() {
-		assertNull(control(0.5, null).scriptingScalarState().get(ReactProgressControl.LABEL));
+		assertNull(control(0.5, null).scriptingScalarState().get(ProgressState.LABEL__PROP));
 	}
 
 	/** Both are updated together: the fraction and the text describing it never disagree. */
@@ -58,7 +59,7 @@ public class TestReactProgressControl extends TestCase {
 		control.setProgress(0.75, "3 / 4");
 
 		assertEquals(0.75, fractionOf(control), 0.0);
-		assertEquals("3 / 4", control.scriptingScalarState().get(ReactProgressControl.LABEL));
+		assertEquals("3 / 4", control.scriptingScalarState().get(ProgressState.LABEL__PROP));
 	}
 
 	/** A bar that knows no share states no fraction, and still says what it is busy with. */
@@ -66,7 +67,7 @@ public class TestReactProgressControl extends TestCase {
 		ReactProgressControl control = control(null, "Collecting");
 
 		assertNoFraction(control);
-		assertEquals("Collecting", control.scriptingScalarState().get(ReactProgressControl.LABEL));
+		assertEquals("Collecting", control.scriptingScalarState().get(ProgressState.LABEL__PROP));
 	}
 
 	/** A share learned later turns the sweeping bar into a filled one. */
@@ -94,16 +95,16 @@ public class TestReactProgressControl extends TestCase {
 		control.setProgress(null, "Finishing");
 
 		assertNoFraction(control);
-		assertEquals("Finishing", control.scriptingScalarState().get(ReactProgressControl.LABEL));
+		assertEquals("Finishing", control.scriptingScalarState().get(ProgressState.LABEL__PROP));
 	}
 
 	private static void assertNoFraction(ReactProgressControl control) {
-		Object fraction = control.scriptingScalarState().get(ReactProgressControl.FRACTION);
+		Object fraction = control.scriptingScalarState().get(ProgressState.FRACTION__PROP);
 		assertNull("The bar must state no share: " + fraction, fraction);
 	}
 
 	private static double fractionOf(ReactProgressControl control) {
-		Object fraction = control.scriptingScalarState().get(ReactProgressControl.FRACTION);
+		Object fraction = control.scriptingScalarState().get(ProgressState.FRACTION__PROP);
 		assertTrue("The bar must tell the client a number: " + fraction, fraction instanceof Number);
 		return ((Number) fraction).doubleValue();
 	}

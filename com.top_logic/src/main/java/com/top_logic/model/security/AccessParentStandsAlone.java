@@ -8,14 +8,15 @@ import java.util.Collection;
 
 import com.top_logic.basic.config.constraint.algorithm.GenericPropertyConstraint;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Constraint rejecting an access parent on a type that has a definition of its own.
  * <p>
- * The first checked property holds the {@link AccessParentKind kind of access parent}; the others
+ * The first checked property holds the {@link AccessParentConfig access parent setting}; the others
  * hold the grants and the marks of the same entry. A type delegating its access decision to another
- * object has no grants and no marks, so a {@link AccessParentKind#delegates() delegating} kind is
- * reported as the problem whenever one of the others is set.
+ * object has no grants and no marks, so a {@link AccessParentConfig#delegates(AccessParentConfig)
+ * delegating} setting is reported as the problem whenever one of the others is set.
  * </p>
  * 
  * @see SecurityConfigurationService.TLClassAccessRights#getAccessParent()
@@ -39,16 +40,28 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 			return;
 		}
 		PropertyModel<?> self = models[0];
-		if (!(self.getValue() instanceof AccessParentKind kind) || !kind.delegates()) {
+		if (!(self.getValue() instanceof AccessParentConfig config) || !AccessParentConfig.delegates(config)) {
 			return;
 		}
 		for (int n = 1, cnt = models.length; n < cnt; n++) {
 			PropertyModel<?> other = models[n];
 			if (isSet(other.getValue())) {
 				self.setProblemDescription(
-					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(other.getLabel()));
+					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(other)));
 			}
 		}
+	}
+
+	/**
+	 * The label the user knows the given property by, its technical name if it has none.
+	 *
+	 * <p>
+	 * The label of the model is the name of the property, which the user editing the access rights
+	 * never sees.
+	 * </p>
+	 */
+	private static ResKey label(PropertyModel<?> model) {
+		return ResKey.fallback(model.getProperty().labelKey(null), model.getLabel());
 	}
 
 	/**

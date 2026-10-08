@@ -329,7 +329,7 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
-	 * an icon font class, or the path of an image file).
+	 * an icon font class, or the URL of an image file).
 	 */
 	String getImage();
 
@@ -370,7 +370,9 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 
 	/**
 	 * How the button is drawn. Absent means {@link Appearance#DEFAULT}: the standard appearance, or
-	 * the appearance its container suggests.
+	 * the appearance its container suggests, read with {@code useButtonDefaults} of
+	 * 'tl-react-bridge'. Inside a menu the container wins: the button is an entry of the menu and
+	 * carries the role and the tabindex {@code menuItemProps} of 'tl-react-bridge' gives it.
 	 */
 	com.top_logic.layout.react.state.ButtonState.Appearance getAppearance();
 

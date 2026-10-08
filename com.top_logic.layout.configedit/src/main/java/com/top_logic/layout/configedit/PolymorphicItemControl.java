@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.util.Resources;
 
 /**
  * A control that renders a type selector dropdown and a nested {@link ConfigEditorControl} for
@@ -64,6 +65,12 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	 * server should a stale or forged client message arrive anyway.
 	 */
 	private final boolean _editable;
+
+	/**
+	 * The {@link ReactFormFieldChromeControl#scriptingName() scripting name} of a type selector,
+	 * independent of the language its label is shown in.
+	 */
+	public static final String TYPE_SELECTOR_NAME = "type";
 
 	/**
 	 * Creates a {@link PolymorphicItemControl}, deciding whether the type selector accepts a
@@ -112,8 +119,10 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		if (showSelector) {
 			ReactSelectFormFieldControl typeSelect =
 				new ReactSelectFormFieldControl(context, _typeModel, labelProvider);
-			ReactFormFieldChromeControl typeChrome =
-				new ReactFormFieldChromeControl(context, "Type", typeSelect);
+			ReactFormFieldChromeControl typeChrome = new ReactFormFieldChromeControl(context,
+				Resources.getInstance().getString(I18NConstants.TYPE_SELECTOR), property.isMandatory(), false, null,
+				null, null, false, true, typeSelect);
+			typeChrome.setAgentName(TYPE_SELECTOR_NAME);
 			addChild(typeChrome);
 		}
 

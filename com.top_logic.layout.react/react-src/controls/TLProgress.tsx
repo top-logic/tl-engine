@@ -1,5 +1,5 @@
 import { React, useTLState, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, ProgressStateJson } from 'tl-react-bridge';
 
 /**
  * Displays a fraction as a bar with an optional label beside it: `tl-progress` of the design
@@ -46,15 +46,12 @@ export function ProgressBar({
 /**
  * Control displaying the progress its state reports.
  *
- * State:
- * - fraction: number | null - the filled part of the track, between 0 and 1; null is the
- *   indeterminate bar
- * - label?: string - the text beside the bar; the bar stands alone without one
+ * The state is described by ProgressStateJson.
  */
 const TLProgress: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<ProgressStateJson>>();
   const fraction = typeof state.fraction === 'number' ? state.fraction : null;
-  const label = (state.label as string) || undefined;
+  const label = state.label || undefined;
 
   return <ProgressBar id={controlId} fraction={fraction} label={label} className={rootClassName(state)} />;
 };

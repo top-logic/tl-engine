@@ -2193,12 +2193,6 @@ button.tlDrawerToggle:focus-visible {
 /* Übergang bis Welle 4 (Shell): die AppBar ist keine Markenfläche, sie liest die Flächen des Design Systems. */
 .tlAppBar--primary { background: var(--tl-surface-layer); color: var(--tl-text-primary); }
 
-.tlAppBar--surface {
-	background: var(--layer-01);
-	color: var(--text-primary);
-	border-bottom: 1px solid var(--border-subtle);
-}
-
 .tlAppBar--elevated {
 	box-shadow: var(--shadow-raised);
 }

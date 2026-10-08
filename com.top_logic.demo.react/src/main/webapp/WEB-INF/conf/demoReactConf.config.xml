@@ -212,20 +212,22 @@
 							roles="demo.react.ProjectAdmin"
 						/>
 					</part>
-					<class name="tl.demo.projectManagement:Milestone"
-						access-parent="container"
-						access-reference="tl.demo.projectManagement:ProjectScope#milestones"
-					/>
+					<class name="tl.demo.projectManagement:Milestone">
+						<access-parent>
+							<container reference="tl.demo.projectManagement:ProjectScope#milestones"/>
+						</access-parent>
+					</class>
 					<part name="tl.demo.projectManagement:Milestone#approved">
 						<grant
 							operation="Write"
 							roles="demo.react.ProjectAdmin"
 						/>
 					</part>
-					<class name="tl.demo.projectManagement:Note"
-						access-parent="container"
-						access-reference="tl.demo.projectManagement:ProjectScope#notes"
-					/>
+					<class name="tl.demo.projectManagement:Note">
+						<access-parent>
+							<container reference="tl.demo.projectManagement:ProjectScope#notes"/>
+						</access-parent>
+					</class>
 					<class name="tl.demo.projectManagement:Contributor">
 						<grant
 							inherit="true"

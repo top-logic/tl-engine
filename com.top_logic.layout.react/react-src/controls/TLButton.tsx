@@ -1,7 +1,6 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
-import { useButtonDefaults, buttonClassName, menuItemProps } from './button/ButtonDefaults';
-import type { ButtonAppearance } from './button/ButtonDefaults';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, ThemeIcon, useButtonDefaults, menuItemProps } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson, ButtonAppearance } from 'tl-react-bridge';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback } = React;
 
@@ -123,6 +122,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
 
   const iconOnly = mode === 'icon-only';
   const icon = iconOnly && !!resolvedImage;
+  // A small icon button carries a small icon: the icon of a regular one would fill it.
   const small = state.size === 'small' && iconOnly;
   // In icon-only mode without an image, the label glyph is the visible content.
   const showLabel = mode === 'label-only' || mode === 'icon-label'
@@ -164,7 +164,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >
       {resolvedImage && mode !== 'label-only' && (
-        <ThemeIcon encoded={resolvedImage} className={part + '__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />
+        <ThemeIcon encoded={resolvedImage} className={part + '__icon ' + (showLabel || small ? 'tl-icon-sm' : 'tl-icon-md')} />
       )}
       {showLabel && <span className={part + '__label'}>{resolvedLabel}</span>}
     </button>

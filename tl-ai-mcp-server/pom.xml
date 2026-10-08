@@ -79,4 +79,31 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>generate-binding</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-maven-plugin</artifactId>
+						<version>${tl.version}</version>
+						<executions>
+							<execution>
+								<id>generate-binding</id>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>generate-java</goal>
+								</goals>
+								<configuration>
+									<modules>tl.ai.mcp.server</modules>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

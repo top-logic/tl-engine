@@ -20,6 +20,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.GroupArguments;
 import com.top_logic.layout.react.control.table.SearchArguments;
@@ -66,6 +67,12 @@ public class TestTableGrouping extends TestCase {
 
 	/** Per-row state key of whether the row is selected. */
 	private static final String SELECTED = "selected";
+
+	/** Per-row state key of the cell controls, by column name. */
+	private static final String CELLS = "cells";
+
+	/** The type class the text of a group header is drawn in. */
+	private static final String STRONG = "tl-type-body-strong";
 
 	/** Per-row state key of a group's size. */
 	private static final String GROUP_COUNT = "groupCount";
@@ -189,6 +196,25 @@ public class TestTableGrouping extends TestCase {
 		assertEquals(CLOSED_LABEL, cell(rows.get(3), COLUMN_NAME));
 		assertEquals("2", cell(rows.get(3), COLUMN_AMOUNT));
 		assertEquals("A data row shows its own value.", "1", cell(rows.get(1), COLUMN_AMOUNT));
+	}
+
+	/**
+	 * Tests that the text of a group header is strong: every cell of the header carries the strong
+	 * type class where its text is drawn - a class on the row could not override the type class the
+	 * text brings itself - while the cells of a data row keep the type of the table.
+	 */
+	public void testGroupHeaderTextIsStrong() {
+		group(COLUMN_STATUS);
+
+		List<Map<String, Object>> rows = clientRows();
+		Map<String, ReactControl> header = cells(rows.get(0));
+		assertEquals(Set.of(COLUMN_NAME, COLUMN_STATUS, COLUMN_AMOUNT), header.keySet());
+		for (Map.Entry<String, ReactControl> cell : header.entrySet()) {
+			assertEquals("Header cell " + cell.getKey() + " is strong.", STRONG, cell.getValue().getCssClass());
+		}
+		for (Map.Entry<String, ReactControl> cell : cells(rows.get(1)).entrySet()) {
+			assertNull("Data cell " + cell.getKey() + " keeps the type of the table.", cell.getValue().getCssClass());
+		}
 	}
 
 	/**
@@ -357,6 +383,12 @@ public class TestTableGrouping extends TestCase {
 	@SuppressWarnings("unchecked")
 	private static List<Map<String, Object>> clientRows(TestTable table) {
 		return (List<Map<String, Object>>) table.clientState(ROWS);
+	}
+
+	/** The cell controls of a row as pushed to the client, by column name. */
+	@SuppressWarnings("unchecked")
+	private static Map<String, ReactControl> cells(Map<String, Object> clientRow) {
+		return (Map<String, ReactControl>) clientRow.get(CELLS);
 	}
 
 	/** The rows as projected for a headless consumer, which carries the cell texts. */

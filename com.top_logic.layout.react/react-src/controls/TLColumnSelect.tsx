@@ -1,11 +1,7 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, tooltipProps, ThemeIcon, ICON_HANDLE, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { buttonClassName } from './button/ButtonDefaults';
-
-/** The glyphs of the handle, the search and the grouping button. */
-const HANDLE_ICON = 'css:fa-solid fa-grip-vertical';
-const SEARCH_ICON = 'css:fa-solid fa-magnifying-glass';
-const GROUP_ICON = 'css:fa-solid fa-layer-group';
+import { SearchField } from './SearchField';
 
 const I18N_KEYS = {
   'js.table.columnSearch': 'Find column',
@@ -97,19 +93,13 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div id={controlId} className={rootClassName(state)} {...reorder.containerProps}>
       {searchable && (
-        <span className="tl-field-group tl-reorder-list__search">
-          <span className="tl-field-group__icon" aria-hidden="true">
-            <ThemeIcon encoded={SEARCH_ICON} className="tl-icon-sm" />
-          </span>
-          <input
-            type="search"
-            className="tl-field tl-type-body"
-            placeholder={i18n['js.table.columnSearch']}
-            aria-label={i18n['js.table.columnSearch']}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </span>
+        <SearchField
+          className="tl-reorder-list__search"
+          label={i18n['js.table.columnSearch']}
+          placeholder={i18n['js.table.columnSearch']}
+          value={search}
+          onChange={setSearch}
+        />
       )}
       <ul className="tl-reorder-list tl-type-body">
         {shown.map(({ entry, index }) => {
@@ -130,7 +120,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 {...tooltipProps(handle['aria-label'])}
                 {...handle}
               >
-                <ThemeIcon encoded={HANDLE_ICON} className="tl-button__icon tl-icon-sm" />
+                <ThemeIcon encoded={ICON_HANDLE} className="tl-button__icon tl-icon-sm" />
               </button>
               <button
                 type="button"
@@ -140,7 +130,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 aria-pressed={entry.grouped}
                 onClick={() => handleGroupBy(entry.name)}
               >
-                <ThemeIcon encoded={GROUP_ICON} className="tl-button__icon tl-icon-sm" />
+                <ThemeIcon encoded={ICON_GROUP} className="tl-button__icon tl-icon-sm" />
               </button>
               <label className="tl-choice">
                 <input

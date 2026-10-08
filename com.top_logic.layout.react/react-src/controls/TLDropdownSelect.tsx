@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, useFocusAfterRemove, ICON_HANDLE, ICON_REMOVE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -15,9 +15,6 @@ import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
-
-/** The glyph of the handle a chip is moved by. */
-const HANDLE_ICON = 'css:fa-solid fa-grip-vertical';
 
 // -- Sub-components --
 
@@ -37,7 +34,7 @@ function Chip({
 }: {
   option: OptionDescriptor;
   removable: boolean;
-  onRemove: (value: string) => void;
+  onRemove: (value: string, removed: Element) => void;
   removeLabel: string;
   reorderable: boolean;
   itemProps?: ReorderItemProps;
@@ -47,7 +44,7 @@ function Chip({
   const handleRemove = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      onRemove(option.value);
+      onRemove(option.value, e.currentTarget);
     },
     [onRemove, option.value]
   );
@@ -67,7 +64,7 @@ function Chip({
           {...tooltipProps(handleProps?.['aria-label'])}
           {...handleProps}
         >
-          <ThemeIcon encoded={HANDLE_ICON} className="tl-button__icon tl-icon-sm" />
+          <ThemeIcon encoded={ICON_HANDLE} className="tl-button__icon tl-icon-sm" />
         </button>
       )}
       <OptionImage image={option.image} inPill />
@@ -80,7 +77,7 @@ function Chip({
           aria-label={removeLabel}
           {...tooltipProps(removeLabel)}
         >
-          <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
+          <ThemeIcon encoded={ICON_REMOVE} className="tl-button__icon tl-icon-sm" />
         </button>
       )}
     </span>
@@ -218,9 +215,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const valueRef = useRef(value);
   valueRef.current = value;
 
-  // Index of the last removed chip, used to restore focus after SSE update.
-  const removalIndexRef = useRef(-1);
-
   // Type-ahead in a list without a search field. A prefix typed before the options have arrived
   // waits for them in pendingPrefixRef.
   const typeAhead = useTypeAhead();
@@ -265,21 +259,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [isOpen, optionsLoaded, value]);
 
-  // After a chip is removed, focus the next remove button (or previous, or container).
-  useEffect(() => {
-    if (removalIndexRef.current < 0) return;
-    const idx = removalIndexRef.current;
-    removalIndexRef.current = -1;
-
-    const buttons = containerRef.current?.querySelectorAll<HTMLElement>(
-      '.tl-select__chip > .tl-button:not(.tl-select__drag-handle)'
-    );
-    if (buttons && buttons.length > 0) {
-      buttons[Math.min(idx, buttons.length - 1)].focus();
-    } else {
-      containerRef.current?.focus();
-    }
-  }, [value]);
+  // A chip vanishes with its focused remove button once the server has dropped its value: the focus
+  // goes to the neighbour's remove button (same place, else the one before), without any to the field.
+  const noteRemoval = useFocusAfterRemove(
+    value,
+    () => containerRef.current?.querySelectorAll<HTMLElement>('.tl-select__chip > .tl-button:not(.tl-select__drag-handle)'),
+    () => containerRef.current,
+  );
 
   // Close the dropdown on a press outside the control and its (portalled) list.
   useCloseOnOutsidePress(isOpen, [containerRef, dropdownRef], () => {
@@ -350,13 +336,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   );
 
   const removeOption = useCallback(
-    (optionValue: string) => {
-      removalIndexRef.current = valueRef.current.findIndex((v) => v.value === optionValue);
+    (optionValue: string, removed: Element | null = null) => {
+      noteRemoval(valueRef.current.findIndex((v) => v.value === optionValue), removed);
       const newValue = valueRef.current.filter((v) => v.value !== optionValue);
       valueRef.current = newValue;
       sendCommand(CMD_VALUE_CHANGED, { value: newValue.map((v) => v.value) });
     },
-    [sendCommand]
+    [sendCommand, noteRemoval]
   );
 
   // A click anywhere on the field toggles the list. Clicks inside the list bubble up here as well,
@@ -562,7 +548,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       {!noFilter && (optionsLoaded || loadError) && (
         <span className="tl-field-group tl-select__search-group">
           <span className="tl-field-group__icon" aria-hidden="true">
-            <ThemeIcon encoded="css:fa-solid fa-magnifying-glass" className="tl-icon-sm" />
+            <ThemeIcon encoded={ICON_SEARCH} className="tl-icon-sm" />
           </span>
           <input
             ref={searchRef}
@@ -682,12 +668,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
               aria-label={i18n['js.dropdownSelect.clear']}
               {...tooltipProps(i18n['js.dropdownSelect.clear'])}
             >
-              <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
+              <ThemeIcon encoded={ICON_CLEAR} className="tl-button__icon tl-icon-sm" />
             </button>
           )}
           <span className="tl-select__arrow" aria-hidden="true">
             <ThemeIcon
-              encoded={isOpen ? 'css:fa-solid fa-chevron-up' : 'css:fa-solid fa-chevron-down'}
+              encoded={isOpen ? ICON_LIST_OPEN : ICON_LIST_CLOSED}
               className="tl-icon-sm"
             />
           </span>

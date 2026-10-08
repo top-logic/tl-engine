@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon, ICON_ADD, ICON_REMOVE, ICON_HANDLE } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -22,10 +22,6 @@ const ARG_INDEX = 'index';
 
 /** Argument of {@link CMD_MOVE_ELEMENT}: the position the moved value ends up at. */
 const ARG_TARGET_INDEX = 'targetIndex';
-
-const ADD_ICON = 'css:fa-solid fa-plus';
-const REMOVE_ICON = 'css:fa-solid fa-xmark';
-const HANDLE_ICON = 'css:fa-solid fa-grip-vertical';
 
 /**
  * The text between two values. It is written out rather than drawn by the style sheet, so that the
@@ -111,7 +107,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
                 {...tooltipProps(t['js.valueList.move'])}
                 {...reorder.handleProps(index)}
               >
-                <ThemeIcon encoded={HANDLE_ICON} />
+                <ThemeIcon encoded={ICON_HANDLE} />
               </button>
             )}
             <span className="tlValueList__item">
@@ -125,7 +121,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
               disabled={disabled}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
             >
-              <ThemeIcon encoded={REMOVE_ICON} />
+              <ThemeIcon encoded={ICON_REMOVE} />
             </button>
           </div>
         );
@@ -138,7 +134,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
         disabled={disabled}
         onClick={() => sendCommand(CMD_ADD_ELEMENT)}
       >
-        <ThemeIcon encoded={ADD_ICON} />
+        <ThemeIcon encoded={ICON_ADD} />
       </button>
       {arrangeable && reorder.announcer}
     </div>

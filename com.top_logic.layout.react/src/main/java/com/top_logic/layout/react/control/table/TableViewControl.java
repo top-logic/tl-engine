@@ -243,6 +243,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private static final String ROW_GROUP_COUNT = "groupCount";
 
+	/**
+	 * The type class of the design system the text of a group header row is drawn in: the header
+	 * is strong where its text is set, since the text brings its own type class, which a class on
+	 * the row could not override.
+	 */
+	private static final String GROUP_HEADER_TYPE_CLASS = "tl-type-body-strong";
+
 	private static final int PREFETCH_ROWS = 20;
 
 	private static final int MIN_WIDTH = 50;
@@ -1066,9 +1073,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private RowCells createCells(Row<R> row) {
 		Map<String, ReactControl> controls = new LinkedHashMap<>();
 		Map<String, String> tooltips = new LinkedHashMap<>();
+		String typeClass = row.kind() == RowKind.GROUP_HEADER ? GROUP_HEADER_TYPE_CLASS : null;
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
-			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
+			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content, typeClass);
 			controls.put(column.name(), cell);
 			String tooltip = content.tooltip();
 			if (!StringServices.isEmpty(tooltip)) {

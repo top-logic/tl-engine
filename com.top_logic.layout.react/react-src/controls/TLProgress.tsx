@@ -10,8 +10,10 @@ import type { TLCellProps } from 'tl-react-bridge';
  * of the fill is data, not design: it is the same share `aria-valuenow` states, and the only thing
  * set inline.
  *
- * A bar inside an element that carries the name of what loads itself (the loading row of a tree, a
- * tree item with its own name) is hidden from assistive technology, so the name is announced once.
+ * A progress bar needs a name (ARIA 1.2): a bar with a label is named by it (`aria-labelledby` on the
+ * label's id), the label also standing as its value text. A bar inside an element that carries the
+ * name of what loads itself (the loading row of a tree, a tree item with its own name) is hidden from
+ * assistive technology and has no name of its own, so the name is announced once.
  */
 export function ProgressBar({
   id,
@@ -26,7 +28,9 @@ export function ProgressBar({
   className?: string;
   ariaHidden?: boolean;
 }) {
+  const labelId = React.useId();
   const indeterminate = typeof fraction !== 'number';
+  const named = !!label && !ariaHidden;
   const percent = indeterminate ? 0 : Math.round((fraction as number) * 100);
 
   return (
@@ -38,13 +42,14 @@ export function ProgressBar({
       aria-valuemax={100}
       aria-valuenow={indeterminate ? undefined : percent}
       aria-valuetext={label || undefined}
+      aria-labelledby={named ? labelId : undefined}
       aria-busy={indeterminate || undefined}
       aria-hidden={ariaHidden || undefined}
     >
       <span className="tl-progress__track">
         <span className="tl-progress__fill" style={indeterminate ? undefined : { width: percent + '%' }} />
       </span>
-      {label && <span className="tl-progress__label tl-type-label tl-nums">{label}</span>}
+      {label && <span id={named ? labelId : undefined} className="tl-progress__label tl-type-label tl-nums">{label}</span>}
     </div>
   );
 }

@@ -1,23 +1,9 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { Menu, MenuItem } from './menu/Menu';
 import { buttonClassName } from './button/ButtonDefaults';
-
-// The glyphs of the table (Font Awesome Free through ThemeIcon; no glyph is a text character).
-const ICON = {
-  sortAsc: 'css:fa-solid fa-arrow-up',
-  sortDesc: 'css:fa-solid fa-arrow-down',
-  filter: 'css:fa-solid fa-filter',
-  grouped: 'css:fa-solid fa-layer-group',
-  columns: 'css:fa-solid fa-gear',
-  toggle: 'css:fa-solid fa-chevron-right',
-  search: 'css:fa-solid fa-magnifying-glass',
-  clear: 'css:fa-solid fa-xmark',
-  save: 'css:fa-regular fa-bookmark',
-  confirm: 'css:fa-solid fa-check',
-  cancel: 'css:fa-solid fa-xmark',
-};
+import { SearchField } from './SearchField';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -102,7 +88,6 @@ const I18N_KEYS = {
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
   'js.table.cancelSave': 'Do not save',
-  'js.textInput.clear': 'Clear the input',
 };
 
 /**
@@ -341,7 +326,7 @@ const ColumnsButton: React.FC<{
     onClick={onClick}
   >
     {/* Spec §12: icons are tl-icon-sm, also in a full-size icon button (Entscheidung 16). */}
-    <ThemeIcon encoded={ICON.columns} className="tl-button__icon tl-icon-sm" />
+    <ThemeIcon encoded={ICON_COLUMNS} className="tl-button__icon tl-icon-sm" />
   </button>
 );
 
@@ -758,7 +743,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       type: dragType,
     });
     const dragged = { id: row.id, selection: row.selected };
-    afterDragImage(() => setDraggedRow(dragged));
+    // A drag cancelled before the image was taken has already ended: no row stays marked dragging.
+    afterDragImage(() => { if (runningDrag()) setDraggedRow(dragged); });
   }, [controlId, dragType]);
 
   /** Which row an event points at, and where within it, or the table itself. */
@@ -1255,14 +1241,26 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [activeNamedFilter, sendCommand]);
 
-  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    sendCommand('deleteNamedFilter', { id });
-  }, [sendCommand]);
-
   // The name being typed for a filter to save; null while the save affordance is a plain button.
   const [saveName, setSaveName] = React.useState<string | null>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const filterBarRef = React.useRef<HTMLDivElement>(null);
+
+  // A deleted filter's chip vanishes with its focused remove button once the server has dropped it:
+  // the focus goes to the neighbour's remove button (same place, else the one before), without any
+  // to the search, else to the grid - the same hand-over as the select's chips.
+  const noteFilterRemoval = useFocusAfterRemove(
+    namedFilters,
+    () => filterBarRef.current?.querySelectorAll<HTMLElement>('.tl-chip__remove'),
+    () => searchInputRef.current ?? gridRef.current,
+  );
+
+  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    const removable = namedFilters.filter((named) => named.deletable);
+    noteFilterRemoval(removable.findIndex((named) => named.id === id), event.currentTarget);
+    sendCommand('deleteNamedFilter', { id });
+  }, [namedFilters, noteFilterRemoval, sendCommand]);
   const saveButtonRef = React.useRef<HTMLButtonElement>(null);
   // Whether closing the save form took the focus with it: the form's input and buttons vanish.
   const saveFocusReturnRef = React.useRef(false);
@@ -1411,7 +1409,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           search, and saving the current criteria under a name. Outside both scrollers, so it
           neither scrolls with the columns nor takes part in the header/body width alignment. */}
       {filterBar && (
-        <div className="tl-table__filter-bar">
+        <div ref={filterBarRef} className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
             <span className="tl-chip-group">
               {namedFilters.map((named) => {
@@ -1437,7 +1435,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         aria-label={i18n['js.table.deleteFilter']}
                         onClick={(e) => handleDeleteNamedFilter(named.id, e)}
                       >
-                        <ThemeIcon encoded={ICON.clear} className="tl-button__icon tl-icon-sm" />
+                        <ThemeIcon encoded={ICON_REMOVE} className="tl-button__icon tl-icon-sm" />
                       </button>
                     )}
                   </span>
@@ -1445,37 +1443,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               })}
             </span>
           )}
-          <span className="tl-field-group tl-table__search" {...tooltipProps(i18n['js.table.searchHint'])}>
-            <span className="tl-field-group__icon" aria-hidden="true">
-              <ThemeIcon encoded={ICON.search} className="tl-icon-sm" />
-            </span>
-            <input
-              ref={searchInputRef}
-              type="search"
-              className="tl-field tl-type-body"
-              placeholder={i18n['js.table.search']}
-              aria-label={i18n['js.table.searchHint']}
-              value={searchDraft}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-            />
-            {searchDraft !== '' && (
-              <button
-                type="button"
-                className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
-                aria-label={i18n['js.textInput.clear']}
-                {...tooltipProps(i18n['js.textInput.clear'])}
-                onClick={() => {
-                  setSearchDraft('');
-                  sendSearch('');
-                  // The button vanishes with the text; the focus stays in the search (WCAG 2.4.3).
-                  searchInputRef.current?.focus();
-                }}
-              >
-                <ThemeIcon encoded={ICON.clear} className="tl-button__icon tl-icon-sm" />
-              </button>
-            )}
-          </span>
+          <SearchField
+            className="tl-table__search"
+            tooltip={i18n['js.table.searchHint']}
+            label={i18n['js.table.searchHint']}
+            placeholder={i18n['js.table.search']}
+            inputRef={searchInputRef}
+            value={searchDraft}
+            onChange={handleSearchChange}
+            onClear={() => {
+              setSearchDraft('');
+              sendSearch('');
+            }}
+            onKeyDown={handleSearchKeyDown}
+          />
           {filterSaving && (saveName === null ? (
             <button
               ref={saveButtonRef}
@@ -1485,7 +1466,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               aria-label={i18n['js.table.saveFilter']}
               onClick={() => setSaveName('')}
             >
-              <ThemeIcon encoded={ICON.save} className="tl-button__icon tl-icon-sm" />
+              <ThemeIcon encoded={ICON_SAVE} className="tl-button__icon tl-icon-sm" />
             </button>
           ) : (
             <span className="tl-table__save">
@@ -1507,7 +1488,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
               >
-                <ThemeIcon encoded={ICON.confirm} className="tl-button__icon tl-icon-sm" />
+                <ThemeIcon encoded={ICON_CONFIRM} className="tl-button__icon tl-icon-sm" />
               </button>
               <button
                 type="button"
@@ -1516,7 +1497,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 aria-label={i18n['js.table.cancelSave']}
                 onClick={closeSaveForm}
               >
-                <ThemeIcon encoded={ICON.cancel} className="tl-button__icon tl-icon-sm" />
+                <ThemeIcon encoded={ICON_CANCEL} className="tl-button__icon tl-icon-sm" />
               </button>
             </span>
           ))}
@@ -1566,7 +1547,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {columns.map((col, colIdx) => {
             const w = getColWidth(col);
             const { isFrozen, isPinned, words } = placeOf(colIdx);
-            const sortIcon = col.sortDirection === 'asc' ? ICON.sortAsc : ICON.sortDesc;
+            const sortIcon = col.sortDirection === 'asc' ? ICON_SORT_ASC : ICON_SORT_DESC;
             // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
             // #29752); only a tooltip the column declares is set here.
             const label = (
@@ -1617,7 +1598,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 ) : label}
                 {col.name === grouping && (
                   <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
-                    <ThemeIcon encoded={ICON.grouped} className="tl-icon-sm" />
+                    <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
                   </span>
                 )}
                 {col.filterable && (
@@ -1631,7 +1612,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
                   >
-                    <ThemeIcon encoded={ICON.filter} className="tl-button__icon tl-icon-sm" />
+                    <ThemeIcon encoded={ICON_FILTER} className="tl-button__icon tl-icon-sm" />
                   </button>
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
@@ -1675,7 +1656,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         onKeyDown={handleBodyKeyDown}
       >
         {totalRowCount === 0 && (
-          <div role="row" aria-rowindex={2}>
+          <div role="row" aria-rowindex={2} aria-level={treegrid ? 1 : undefined}>
             <div role="gridcell" className="tl-status">{i18n['js.table.empty']}</div>
           </div>
         )}
@@ -1695,12 +1676,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               id={rowId(row.index)}
               role="row"
               aria-rowindex={row.index + 2}
-              aria-selected={row.selected}
+              aria-selected={!!row.selected}
               aria-level={treegrid ? (row.treeDepth ?? 0) + 1 : undefined}
               aria-expanded={treegrid && row.expandable ? !!row.expanded : undefined}
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
-              className={'tl-table__row' + (row.groupCount != null ? ' tl-type-body-strong' : '')}
+              className="tl-table__row"
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
@@ -1774,7 +1755,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     }}
                   >
                     {isTreeColumn ? (
-                      <div className="tl-table__tree" style={{ paddingLeft: treeDepth * treeIndentWidth }}>
+                      <div className="tl-table__tree" style={{ paddingInlineStart: treeDepth * treeIndentWidth }}>
                         {row.expandable ? (
                           // The toggle opens its own row, so it points at no other element. A press
                           // keeps the focus where it is - on the grid, whose ring stays at the cursor.
@@ -1788,7 +1769,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={(e) => handleExpand(row.index, !row.expanded, e)}
                           >
-                            <ThemeIcon encoded={ICON.toggle} className="tl-icon-sm" />
+                            <ThemeIcon encoded={ICON_EXPAND} className="tl-icon-sm" />
                           </button>
                         ) : (
                           <span className="tl-table__spacer" />

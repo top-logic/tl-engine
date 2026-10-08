@@ -853,7 +853,7 @@
    Zeilen, an einer Zeile unter ihren haftenden Zellen (layer-raised). ::after ist der Cursor-Ring
    (base.css). Die Fläche erbt die Ecke des Ziels: die Marke folgt der runden Pille, eckige Ziele bleiben
    eckig. Die Fläche von drop-onto steht am Ziel; eine Fläche, die sie übermalen soll, steht beim
-   Block in :where (Tabellenzeile). */
+   Block in :where (Tabellenzeile, Baumknoten, Listeneintrag der Spaltenwahl). */
 
 /* Die Fläche braucht ein positioniertes Ziel. :where hat keine Spezifität: eine Lage, die der Block
    setzt (absolute Zeile, haftende Kopfzelle), bleibt. */
@@ -1929,8 +1929,12 @@ a.tl-field-value:hover {
    drag.css. Breiten, Versätze und die Lage der Zeilen sind Daten und stehen inline; alles andere hier.
    Eine Zeile schwebt nicht (skalen.md „Elevation“): kein Schatten, Kanten sind Linien. */
 
+/* isolation hält die Marke an der Wurzel (drop-onto, drop-refused: Fläche ::before auf layer-sticky,
+   drag.css) im Stapel der Tabelle: sie liegt über Filterleiste, Kopf und Zeilen, nie über einem Nachbarn
+   der Seite. */
 .tl-table {
   position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   width: 100%;

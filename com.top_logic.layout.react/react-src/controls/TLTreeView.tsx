@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, afterDragImage, useI18N, tooltipProps, ThemeIcon, isEditorTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, afterDragImage, useI18N, tooltipProps, ThemeIcon, ICON_EXPAND, isEditorTarget } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ProgressBar } from './TLProgress';
 
@@ -19,9 +19,6 @@ const I18N_KEYS = {
   'js.tree.label': 'Tree',
   'js.tree.loading': 'Loading entries\u2026',
 };
-
-/** The glyph of the expand toggle (tl-toggle): right is closed, the toggle turns it down when open. */
-const CHEVRON_ICON = 'css:fa-solid fa-chevron-right';
 
 /** The indent of a level until the token is read: the toggle's width, size-control-sm. */
 const INDENT_FALLBACK_PX = 24;
@@ -322,7 +319,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
             id={domId(node.id)}
             role="treeitem"
             aria-expanded={node.expandable ? node.expanded : undefined}
-            aria-selected={node.selected}
+            aria-selected={!!node.selected}
             aria-level={node.depth + 1}
             aria-busy={node.loading || undefined}
             className="tl-tree__node"
@@ -366,7 +363,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
                 aria-label={toggleLabel(i18n, node.expanded)}
                 {...tooltipProps(toggleLabel(i18n, node.expanded))}
               >
-                <ThemeIcon encoded={CHEVRON_ICON} className="tl-icon-sm" />
+                <ThemeIcon encoded={ICON_EXPAND} className="tl-icon-sm" />
               </button>
             ) : (
               <span className="tl-tree__spacer" />
@@ -384,6 +381,8 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
             <li
               role="treeitem"
               aria-level={node.depth + 2}
+              // In a multi-selectable tree every item states whether it is selected; this one never is.
+              aria-selected={isMulti ? false : undefined}
               aria-label={i18n['js.tree.loading']}
               className="tl-status"
               style={{ paddingInlineStart: (node.depth + 1) * indent }}

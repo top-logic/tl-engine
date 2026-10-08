@@ -1,4 +1,4 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, tooltipProps } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, tooltipProps, ThemeIcon, ICON_SEARCH } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -182,7 +182,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       {/* Search */}
       <div className="tlIconSelect__searchWrapper">
         <span className="tlIconSelect__searchIcon" aria-hidden="true">
-          <i className="fa-solid fa-magnifying-glass" />
+          <ThemeIcon encoded={ICON_SEARCH} />
         </span>
         <input
           ref={searchRef}

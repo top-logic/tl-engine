@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -22,7 +23,6 @@ import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
-import com.top_logic.layout.react.control.common.ClientImage;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.view.command.CommandCliqueService.CliqueInfo;
@@ -236,7 +236,7 @@ public class ToolbarBuilder {
 				String groupName = groupNames.add(cliqueName) ? cliqueName : cliqueName + GROUP_NAME_SEPARATOR
 					+ placement.name();
 				groupNames.add(groupName);
-				toolbar.addGroup(groupName, info.display(), label(info.label()), ClientImage.encode(context, info.icon()), controls);
+				toolbar.addGroup(groupName, info.display(), label(info.label()), ReactImages.encode(context, info.icon()), controls);
 			}
 		}
 

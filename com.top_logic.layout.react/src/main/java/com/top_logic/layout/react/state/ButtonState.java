@@ -329,7 +329,7 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
-	 * an icon font class, or the path of an image file).
+	 * an icon font class, or the URL of an image file).
 	 */
 	String getImage();
 

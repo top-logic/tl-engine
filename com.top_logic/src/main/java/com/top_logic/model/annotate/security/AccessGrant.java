@@ -6,6 +6,7 @@
 
 package com.top_logic.model.annotate.security;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.annotate.TLAccessRights;
 
@@ -23,6 +24,7 @@ import com.top_logic.model.annotate.TLAccessRights;
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @TagName(AccessGrant.TAG_NAME)
+@InApp(priority = 1000)
 public interface AccessGrant extends AccessRule {
 
 	/** Tag name to use for an {@link AccessGrant} in a rule sequence. */

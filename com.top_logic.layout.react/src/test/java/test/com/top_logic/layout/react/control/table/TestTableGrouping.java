@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableViewState;
@@ -126,14 +128,16 @@ public class TestTableGrouping extends TestCase {
 
 	private TestTable _table;
 
+	private ListRowSource<Item> _rows;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
 				new ReactWindowRegistry("test"));
-		ListRowSource<Item> rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
-		_table = new TestTable(context, DefaultTableView.create(columns(), rows));
+		_rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
+		_table = new TestTable(context, DefaultTableView.create(columns(), _rows));
 		// Order the rows, so what a group holds is decided but the group order still follows the
 		// rows: a grouping is applied to the sorted rows, not instead of the sort.
 		sort(COLUMN_NAME, "asc");
@@ -260,6 +264,80 @@ public class TestTableGrouping extends TestCase {
 
 		assertEquals(Set.of(A), _table.getSelectedKeys());
 		assertEquals("And expanded again.", 5, clientRows().size());
+	}
+
+	/**
+	 * Tests that a table whose group headers stand for their group value selects a header instead
+	 * of collapsing it: the selection is the key of the group, which names its value.
+	 */
+	public void testSelectableGroupHeaderIsSelected() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+
+		select(0);
+
+		Set<Object> selected = _table.getSelectedKeys();
+		assertEquals(1, selected.size());
+		Object key = selected.iterator().next();
+		assertTrue("The selection is the group: " + key, key instanceof GroupKey);
+		assertEquals("The group did not collapse.", 5, clientRows().size());
+		assertEquals(Boolean.TRUE, clientRows().get(0).get(SELECTED));
+	}
+
+	/**
+	 * Tests that a selected group header stays selected when the data is refreshed, the data
+	 * knowing the keys of its rows only.
+	 */
+	public void testSelectedGroupSurvivesRefresh() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+		select(0);
+		Set<Object> selected = new HashSet<>(_table.getSelectedKeys());
+		assertTrue(selected.iterator().next() instanceof GroupKey);
+
+		_table.refreshData();
+
+		assertEquals(selected, _table.getSelectedKeys());
+	}
+
+	/** And that it leaves the selection once its group has no members any more. */
+	public void testSelectedGroupLeavesWithItsMembers() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+		select(0);
+
+		_rows.setElements(new ArrayList<>(List.of(B)));
+		_table.refreshData();
+
+		assertEquals(Set.of(), _table.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that selecting a data row after a selectable group header replaces the group in the
+	 * selection.
+	 */
+	public void testDataRowReplacesASelectedGroup() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+		select(0);
+
+		select(1);
+
+		assertEquals(Set.of(A), _table.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that a selected group header leaves the selection once the grouping changes: the
+	 * group it stood for is no longer displayed.
+	 */
+	public void testChangingTheGroupingDropsASelectedGroup() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+		select(0);
+
+		group("");
+
+		assertEquals(Set.of(), _table.getSelectedKeys());
 	}
 
 	/**

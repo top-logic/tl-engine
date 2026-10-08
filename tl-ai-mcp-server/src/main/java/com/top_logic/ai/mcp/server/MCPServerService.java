@@ -6,6 +6,7 @@
 package com.top_logic.ai.mcp.server;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,12 +28,19 @@ import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
+import com.top_logic.ai.mcp.server.tools.ExposedTool;
+import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
@@ -42,15 +50,19 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
+import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
 import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.DefaultServerTransportSecurityValidator;
 import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 
@@ -91,7 +103,8 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  */
 @ServiceDependencies({
 	ServletContextService.Module.class,
-	ToolRegistryService.Module.class
+	ToolRegistryService.Module.class,
+	AiToolAccessService.Module.class,
 })
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
@@ -107,6 +120,10 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		Config.KEEP_ALIVE_INTERVAL,
 		ServerAuthentications.AUTHENTICATIONS,
 		Config.SECRETS,
+		Config.ALLOWED_ORIGINS,
+		Config.ALLOWED_HOSTS,
+		Config.INSTRUCTIONS,
+		Config.EXPOSED_TOOLS,
 		Config.DYNAMIC_RESOURCES,
 	})
 	@DisplayInherited(DisplayStrategy.PREPEND)
@@ -147,6 +164,34 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 * @see #getSecrets()
 		 */
 		String SECRETS = "secrets";
+
+		/**
+		 * Configuration property name for the tools the server publishes.
+		 *
+		 * @see #getExposedTools()
+		 */
+		String EXPOSED_TOOLS = "exposed-tools";
+
+		/**
+		 * Configuration property name for the instructions sent to a client.
+		 *
+		 * @see #getInstructions()
+		 */
+		String INSTRUCTIONS = "instructions";
+
+		/**
+		 * Configuration property name for the origins a browser-based client may call from.
+		 *
+		 * @see #getAllowedOrigins()
+		 */
+		String ALLOWED_ORIGINS = "allowed-origins";
+
+		/**
+		 * Configuration property name for the host names the endpoint answers to.
+		 *
+		 * @see #getAllowedHosts()
+		 */
+		String ALLOWED_HOSTS = "allowed-hosts";
 
 		/**
 		 * The name of the MCP server.
@@ -218,6 +263,63 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		@Name(SECRETS)
 		@DisplayMinimized
 		List<ServerSecret> getSecrets();
+
+		/**
+		 * The tools of the application an MCP client sees and may call.
+		 *
+		 * <p>
+		 * Nothing is published that is not listed here, so an empty list publishes no tool. An entry
+		 * names a single tool - and may give it the name, title and description an external model
+		 * reads - or a whole tool group. A tool that is not listed is unknown to an MCP client. A
+		 * listed tool is still authorized per call against the caller's roles and the background
+		 * allowlist.
+		 * </p>
+		 */
+		@Name(EXPOSED_TOOLS)
+		@EntryTag("exposed-tool")
+		List<ExposedTool> getExposedTools();
+
+		/**
+		 * What an MCP client is told about this server when it connects.
+		 *
+		 * <p>
+		 * Sent in the answer to {@code initialize}; clients put it in front of their model. Say what
+		 * the application is, which published tool to use for what, and how its identifiers look.
+		 * Empty sends no instructions.
+		 * </p>
+		 */
+		@Name(INSTRUCTIONS)
+		@Nullable
+		@ControlProvider(MultiLineText.class)
+		String getInstructions();
+
+		/**
+		 * The origins a browser may call this endpoint from, for example
+		 * {@code https://app.example.com} or {@code http://localhost:*}.
+		 *
+		 * <p>
+		 * A request that carries an {@code Origin} header not in this list is refused with 403, which
+		 * is what stops a web page from reaching the endpoint through DNS rebinding. A request without
+		 * an {@code Origin} header - every command-line and desktop client - is not affected. Empty
+		 * refuses every request that carries an {@code Origin}. {@code :*} matches any port.
+		 * </p>
+		 */
+		@Name(ALLOWED_ORIGINS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getAllowedOrigins();
+
+		/**
+		 * The host names this endpoint answers to, for example {@code mcp.example.com} or
+		 * {@code localhost:*}.
+		 *
+		 * <p>
+		 * When set, a request whose {@code Host} header is not in this list is refused with 421.
+		 * Empty checks no {@code Host}. {@code :*} matches any port.
+		 * </p>
+		 */
+		@Name(ALLOWED_HOSTS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getAllowedHosts();
 	}
 
 	private static volatile MCPServerService _instance;
@@ -227,6 +329,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	private HttpServletStreamableServerTransportProvider _transportProvider;
 
 	private Authenticator _authenticator;
+
+	private List<String> _publishedTools = List.of();
 
 	private final McpSessionPrincipals _sessionPrincipals = new McpSessionPrincipals();
 
@@ -299,11 +403,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			// Create HTTP transport provider
 			// Note: A statically registered servlet (MCPTransportServlet) delegates requests
 			// to this transport provider, so no dynamic servlet registration is needed.
-			_transportProvider = HttpServletStreamableServerTransportProvider.builder()
-				.jsonMapper(McpJsonDefaults.getMapper())
-				.mcpEndpoint(MCP_ENDPOINT)
-				.keepAliveInterval(Duration.ofSeconds(config.getKeepAliveInterval()))
-				.build();
+			_transportProvider = createTransport(config);
 
 			// Initialize the transport provider
 			jakarta.servlet.ServletContext servletContext = ServletContextService.getInstance().getServletContext();
@@ -313,17 +413,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 				throw new RuntimeException("Failed to initialize MCP transport provider: " + ex.getMessage(), ex);
 			}
 
-			// Create MCP server builder with sync API.
-			//
-			// immediateExecution(true) keeps every protocol handler on the servlet request thread
-			// instead of offloading it to Schedulers.boundedElastic(). That is what lets
-			// McpAuthenticationFilter establish the caller's TLContext for the whole request: the
-			// transport blocks the request thread while the handler runs, so the handler sees the
-			// context the filter opened. Without it the handlers would run on a pooled thread with
-			// no interaction and no account, and every read would have to be refused.
-			var builder = McpServer.sync(_transportProvider)
-				.immediateExecution(true)
-				.serverInfo(config.getServerName(), config.getServerVersion());
+			var builder = createServer(_transportProvider, config);
 
 			// Configure the server with application-specific capabilities BEFORE building
 			configureServer(builder);
@@ -338,6 +428,48 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		} catch (Exception ex) {
 			throw new RuntimeException("Failed to start MCP server: " + ex.getMessage(), ex);
 		}
+	}
+
+	/**
+	 * The HTTP transport for the given configuration.
+	 *
+	 * <p>
+	 * It refuses a request from a foreign {@link Config#getAllowedOrigins() origin} or to a foreign
+	 * {@link Config#getAllowedHosts() host} before it reads the request.
+	 * </p>
+	 */
+	static HttpServletStreamableServerTransportProvider createTransport(Config<?> config) {
+		return HttpServletStreamableServerTransportProvider.builder()
+			.jsonMapper(McpJsonDefaults.getMapper())
+			.mcpEndpoint(MCP_ENDPOINT)
+			.keepAliveInterval(Duration.ofSeconds(config.getKeepAliveInterval()))
+			.securityValidator(DefaultServerTransportSecurityValidator.builder()
+				.allowedOrigins(config.getAllowedOrigins())
+				.allowedHosts(config.getAllowedHosts())
+				.build())
+			.build();
+	}
+
+	/**
+	 * The MCP server on the given transport, with the server information and instructions of the
+	 * given configuration and nothing published yet.
+	 */
+	static McpServer.SyncSpecification<?> createServer(
+			HttpServletStreamableServerTransportProvider transport, Config<?> config) {
+		// immediateExecution(true) keeps every protocol handler on the servlet request thread
+		// instead of offloading it to Schedulers.boundedElastic(). That is what lets
+		// McpAuthenticationFilter establish the caller's TLContext for the whole request: the
+		// transport blocks the request thread while the handler runs, so the handler sees the
+		// context the filter opened. Without it the handlers would run on a pooled thread with
+		// no interaction and no account, and every read would have to be refused.
+		var builder = McpServer.sync(transport)
+			.immediateExecution(true)
+			.serverInfo(config.getServerName(), config.getServerVersion());
+		String instructions = StringServices.nonEmpty(config.getInstructions());
+		if (instructions != null) {
+			builder.instructions(instructions.strip());
+		}
+		return builder;
 	}
 
 	/**
@@ -362,12 +494,14 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		}
 
 		Logger.info("MCP server started on " + MCP_ENDPOINT + "/* with "
-			+ getConfig().getAuthentications().keySet() + " as accepted authentication(s). Every"
+			+ getConfig().getAuthentications().keySet() + " as accepted authentication(s), publishing "
+			+ (_publishedTools.isEmpty() ? "no tool" : "the tools " + _publishedTools)
+			+ " and accepting the browser origins " + getConfig().getAllowedOrigins() + ". Every"
 			+ " request is authenticated and acts as the account it authenticated: resource reads are"
 			+ " filtered by that account's model access rights, and tool calls are authorized against"
 			+ " its roles, bounded by the <background-allowlist> because an MCP caller has no human to"
-			+ " answer an approval prompt. tools/list still discloses every tool name, description and"
-			+ " input schema to any authenticated caller. See doc/security/mcp-endpoint.md.",
+			+ " answer an approval prompt. tools/list shows every published tool to any authenticated"
+			+ " caller. See doc/security/mcp-endpoint.md.",
 			MCPServerService.class);
 	}
 
@@ -392,8 +526,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * </ul>
 	 *
 	 * <p>
-	 * All tools are provided by the {@link McpToolAdapter} which adapts tools from the
-	 * {@link ToolRegistryService} to MCP tool specifications.
+	 * The tools are the ones {@link Config#getExposedTools()} publishes from the
+	 * {@link ToolRegistryService}, adapted by the {@link McpToolAdapter}.
 	 * </p>
 	 *
 	 * <p>
@@ -437,11 +571,14 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			builder.resourceTemplates(resource.createSpecification());
 		}
 
-		// Register tools from ToolRegistryService (if available)
-		for (io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification adaptedTool :
-				McpToolAdapter.adaptAllTools()) {
-			builder.tools(adaptedTool);
+		// Register the published tools, and only those: a tool that is not registered here is an
+		// unknown tool to every MCP client.
+		List<String> published = new ArrayList<>();
+		for (McpExposure.Published tool : McpExposure.resolve(getConfig().getExposedTools())) {
+			builder.tools(McpToolAdapter.adapt(tool));
+			published.add(tool.name());
 		}
+		_publishedTools = published;
 	}
 
 	@Override

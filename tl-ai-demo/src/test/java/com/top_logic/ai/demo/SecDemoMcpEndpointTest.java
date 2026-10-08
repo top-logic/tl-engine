@@ -18,6 +18,8 @@ import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
+import com.top_logic.ai.mcp.server.tools.ExposedTool;
+import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -460,8 +462,11 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 	private static BiFunction<McpSyncServerExchange, McpSchema.CallToolRequest,
 			McpSchema.CallToolResult> toolHandler(String qualifiedToolName) {
-		McpServerFeatures.SyncToolSpecification specification =
-			McpToolAdapter.adapt(tool(qualifiedToolName), qualifiedToolName);
+		ExposedTool entry = TypedConfiguration.newConfigItem(ExposedTool.class);
+		entry.setTool(qualifiedToolName);
+		List<McpExposure.Published> published = McpExposure.resolve(List.of(entry));
+		assertEquals("The live registry publishes " + qualifiedToolName, 1, published.size());
+		McpServerFeatures.SyncToolSpecification specification = McpToolAdapter.adapt(published.get(0));
 		return specification.callHandler();
 	}
 

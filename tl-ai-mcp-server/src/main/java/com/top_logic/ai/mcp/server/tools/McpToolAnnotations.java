@@ -105,7 +105,7 @@ import io.modelcontextprotocol.spec.McpSchema;
  * application by definition.
  * </p>
  *
- * @see McpToolAdapter#adapt(Tool, String)
+ * @see McpToolAdapter#adapt(McpExposure.Published)
  */
 public final class McpToolAnnotations {
 
@@ -117,14 +117,16 @@ public final class McpToolAnnotations {
 	 * here as well as on the tool definition itself. A client's display name for a tool is
 	 * {@code title}, then {@code annotations.title}, then {@code name}; the first field arrived
 	 * with the 2025-06-18 revision, so a client older than that finds a readable name only in the
-	 * second one - and {@code name} is the qualified, hyphenated wire name, which is not it.
+	 * second one - and {@code name} is the wire name, which is not it.
 	 * </p>
 	 *
 	 * @param tool
 	 *        The tool being published.
+	 * @param title
+	 *        The name a person reads for it.
 	 * @return The {@code annotations} object of its MCP definition, never <code>null</code>.
 	 */
-	public static McpSchema.ToolAnnotations of(Tool tool) {
+	public static McpSchema.ToolAnnotations of(Tool tool, String title) {
 		ToolMode mode = tool.mode();
 
 		boolean readOnly = mode == ToolMode.READ;
@@ -134,7 +136,7 @@ public final class McpToolAnnotations {
 		};
 		boolean openWorld = mode == ToolMode.EXTERNAL || ToolGroups.EGRESS.equals(tool.group());
 
-		return new McpSchema.ToolAnnotations(tool.name(), Boolean.valueOf(readOnly),
+		return new McpSchema.ToolAnnotations(title, Boolean.valueOf(readOnly),
 			Boolean.valueOf(destructive), null, Boolean.valueOf(openWorld), null);
 	}
 

@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.mcp.server.tools;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -29,7 +27,8 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
 /**
- * Adapter that converts {@link Tool}s from the {@link ToolRegistryService} to MCP tool specifications.
+ * Adapter that converts the {@link McpExposure published} tools of the application to MCP tool
+ * specifications.
  *
  * <p>
  * This adapter bridges the tl-ai-core tool system (used by in-app AI agents) with the MCP
@@ -47,25 +46,15 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
  *
  * <p>
  * <b>{@code tools/list} is not filtered per caller.</b> The SDK answers it from the globally
- * registered set without reference to the exchange, so every authenticated caller sees every tool
- * name, description and input schema, and only execution is authorized. Closing that needs an
- * exchange-aware {@code tools/list} hook the SDK does not offer (MCP Java SDK 1.1.4).
+ * registered set without reference to the exchange, so every authenticated caller sees every
+ * published tool's name, description and input schema, and only execution is authorized. Closing
+ * that needs an exchange-aware {@code tools/list} hook the SDK does not offer (MCP Java SDK 1.1.4).
  * </p>
  */
 public class McpToolAdapter {
 
 	/**
-	 * Prefix used for adapted tool names in MCP.
-	 *
-	 * <p>
-	 * Tools use qualified names like "factory.tool", but MCP tool names should use hyphens. This
-	 * prefix helps identify adapted tools.
-	 * </p>
-	 */
-	private static final String TOOL_NAME_PREFIX = "tl-";
-
-	/**
-	 * Adapts a single {@link Tool} to an MCP tool specification.
+	 * Adapts a published tool to an MCP tool specification.
 	 *
 	 * <p>
 	 * The definition carries {@link McpToolAnnotations annotations} derived from the tool's
@@ -73,24 +62,21 @@ public class McpToolAdapter {
 	 * this application can still tell a read from a write before it calls one.
 	 * </p>
 	 *
-	 * @param tool
-	 *        The tool to adapt.
-	 * @param qualifiedName
-	 *        The qualified name of the tool from the registry (e.g., "model-browser.listModules").
+	 * @param published
+	 *        The tool and how it is published.
 	 * @return An MCP tool specification that wraps the tool.
 	 */
-	public static McpServerFeatures.SyncToolSpecification adapt(Tool tool, String qualifiedName) {
-		String mcpToolName = TOOL_NAME_PREFIX + qualifiedName.replace('.', '-');
-
+	public static McpServerFeatures.SyncToolSpecification adapt(McpExposure.Published published) {
+		Tool tool = published.tool();
 		McpJsonMapper jsonMapper = McpJsonDefaults.getMapper();
 
-		McpSchema.ToolAnnotations annotations = McpToolAnnotations.of(tool);
+		McpSchema.ToolAnnotations annotations = McpToolAnnotations.of(tool, published.title());
 		McpSchema.Tool mcpTool = McpSchema.Tool.builder()
-			.name(mcpToolName)
+			.name(published.name())
 			// The same display name in both places, because the top-level field is the newer one and
 			// an older client reads only the one in the annotations. See McpToolAnnotations.of.
-			.title(annotations.title())
-			.description(tool.description())
+			.title(published.title())
+			.description(published.description())
 			.inputSchema(jsonMapper, tool.schema().inputSchemaJson())
 			.annotations(annotations)
 			.build();
@@ -99,42 +85,6 @@ public class McpToolAdapter {
 			.tool(mcpTool)
 			.callHandler((exchange, request) -> handleToolCall(request, tool))
 			.build();
-	}
-
-	/**
-	 * Creates MCP tool specifications for all tools registered in the {@link ToolRegistryService}.
-	 *
-	 * <p>
-	 * This method should only be called when the {@link ToolRegistryService} is active.
-	 * </p>
-	 *
-	 * @return List of MCP tool specifications for all registered tools.
-	 */
-	public static List<McpServerFeatures.SyncToolSpecification> adaptAllTools() {
-		List<McpServerFeatures.SyncToolSpecification> result = new ArrayList<>();
-
-		if (!ToolRegistryService.Module.INSTANCE.isActive()) {
-			Logger.info("ToolRegistryService is not active, skipping tool adaptation",
-				McpToolAdapter.class);
-			return result;
-		}
-
-		ToolRegistryService registry = ToolRegistryService.getInstance();
-		for (String qualifiedName : registry.getToolNames()) {
-			try {
-				Tool tool = registry.getTool(qualifiedName);
-				if (tool != null) {
-					result.add(adapt(tool, qualifiedName));
-					Logger.info("Adapted tool '" + qualifiedName + "' for MCP",
-						McpToolAdapter.class);
-				}
-			} catch (Exception ex) {
-				Logger.error("Failed to adapt tool '" + qualifiedName + "': " + ex.getMessage(),
-					ex, McpToolAdapter.class);
-			}
-		}
-
-		return result;
 	}
 
 	/**

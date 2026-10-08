@@ -136,7 +136,18 @@ public class ListElementFieldModel extends AbstractFieldModel {
 	 *         collection is the single element of that list.
 	 */
 	public static List<Object> elementsOf(FieldModel listModel) {
-		Object value = listModel.getValue();
+		return elementsOfValue(listModel.getValue());
+	}
+
+	/**
+	 * The values of the given collection, in element order.
+	 *
+	 * @param value
+	 *        The value of a collection-valued field.
+	 * @return A mutable list of the values, empty for {@code null}. A value that is no collection
+	 *         is the single element of that list.
+	 */
+	public static List<Object> elementsOfValue(Object value) {
 		if (value == null) {
 			return new ArrayList<>();
 		}

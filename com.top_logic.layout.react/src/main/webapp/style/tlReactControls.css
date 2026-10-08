@@ -125,6 +125,38 @@ html, body {
 	user-select: none;
 }
 
+/* --- Touch drag --------------------------------------------------------- */
+
+/* A draggable element is picked up by a long press (see the bridge's touch-drag), so on a touch
+   screen the press opens neither the long-press menu nor a text selection. */
+@media (pointer: coarse) {
+	[draggable="true"] {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+}
+
+/* Picked up by a finger that has not moved yet. */
+[data-touch-drag="armed"] {
+	box-shadow: var(--shadow-raised);
+	transform: scale(1.02);
+	transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+/* Dragged by a finger: the place it was taken from. */
+[data-touch-drag="source"] {
+	opacity: 0.4;
+}
+
+/* The copy of the dragged element following the finger. Above the drag shield, below the hint
+   naming why a drop is refused. */
+.tlTouchDragImage {
+	z-index: 12500;
+	opacity: 0.9;
+	box-shadow: var(--shadow-menu);
+}
+
 /* --- TLCounter ---------------------------------------------------------- */
 
 .tlCounter {
@@ -1733,6 +1765,66 @@ button.tlDrawerToggle:focus-visible {
 .tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
 .tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
 
+/* --- Compact field (ReactCompactFieldControl) ------------------------------ */
+
+/* A row of the preview of a value and the button opening its editor. The preview takes the width
+   the button leaves and ends in an ellipsis - its full text is then offered as its tooltip -, the
+   button keeps its size however long the preview is. */
+.tlCompactField {
+	min-width: 0;
+}
+.tlCompactField > .tlCompactField__preview {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.tlCompactField > .tlCompactField__opener {
+	flex: 0 0 auto;
+	margin-inline-start: auto;
+	color: var(--tl-icon-secondary);
+}
+
+/* The icon of the button reads like the chevron of a dropdown select: small and muted. */
+.tlCompactField > .tlCompactField__opener > .tl-button__icon {
+	font-size: var(--tl-size-icon-sm);
+}
+
+/* Editable: an input field (the control carries tl-field: its frame, and in a table cell the
+   borderless cell-filling input of the other cell editors), laid out like a dropdown select
+   (tl-select): the preview fills the field, the button sits inside the frame at its end, space-2xs
+   from the border, and shows hover and press a step stronger, as the controls of the select do. */
+.tlCompactField.tlCompactField--edit {
+	display: flex;
+	align-items: center;
+	gap: var(--tl-space-xs);
+	padding-inline-end: var(--tl-space-2xs);
+}
+.tlCompactField--edit > .tlCompactField__opener.tl-button--ghost:not(:disabled):hover {
+	background: var(--tl-surface-interactive-selected);
+}
+.tlCompactField--edit > .tlCompactField__opener.tl-button--ghost:not(:disabled):active {
+	background: var(--tl-surface-interactive-active);
+}
+
+/* Read-only: plain text like any other read-only value. The button showing the full value is muted
+   and stays out of sight until the row or the field is pointed at, or the keyboard focus is on the
+   button (:focus-visible - the focus put back on it when its dialog is closed after a pointer click
+   does not show it). It is made invisible rather than removed, so that it can still be reached by
+   the keyboard. Without a pointer that hovers, it is always shown. */
+.tlCompactField--view > .tlCompactField__opener {
+	opacity: 0;
+	transition: opacity var(--tl-duration-fast) var(--tl-easing-standard);
+}
+.tlTableView__row:hover .tlCompactField--view > .tlCompactField__opener,
+.tlCompactField--view:hover > .tlCompactField__opener,
+.tlCompactField--view > .tlCompactField__opener:focus-visible {
+	opacity: 1;
+}
+@media (hover: none) {
+	.tlCompactField--view > .tlCompactField__opener {
+		opacity: 1;
+	}
+}
+
 /* --- TLTileStack ----------------------------------------------------------- */
 
 /* Positioning context for the covered frames below. */
@@ -2110,12 +2202,6 @@ button.tlDrawerToggle:focus-visible {
 
 /* Übergang bis Welle 4 (Shell): die AppBar ist keine Markenfläche, sie liest die Flächen des Design Systems. */
 .tlAppBar--primary { background: var(--tl-surface-layer); color: var(--tl-text-primary); }
-
-.tlAppBar--surface {
-	background: var(--layer-01);
-	color: var(--text-primary);
-	border-bottom: 1px solid var(--border-subtle);
-}
 
 .tlAppBar--elevated {
 	box-shadow: var(--shadow-raised);
@@ -3298,10 +3384,9 @@ button.tlDrawer__closeBtn:focus-visible {
 	align-items: flex-start;
 }
 
-/* A flex row of its own - a value with its icon, a row of values, a group of radios - stays one in
-   a cell rather than the block the more specific rule for the root span asks for, and does not wrap. */
+/* A flex row of its own - a value with its icon, a group of radios - stays one in a cell rather than
+   the block the more specific rule for the root span asks for, and does not wrap. */
 .tlTableView__cell > .tl-field-value,
-.tlTableView__cell > .tl-select__values,
 .tlTableView__cell > .tl-choice-group {
 	display: flex;
 	flex-wrap: nowrap;
@@ -3320,16 +3405,33 @@ button.tlDrawer__closeBtn:focus-visible {
 	text-overflow: ellipsis;
 }
 
-/* The values of a multi-valued selection follow each other in one row (see above) and are cut off
-   at the column edge, rather than wrapping into lines the row has no height for. */
-.tlTableView__cell > .tl-select__values {
-	overflow: hidden;
-	width: 100%;
+/* The comma between two read-only values shown as text follows the value before it; the gap of the
+   row stands after it as the space (the space the separator ends with is dropped at the end of its
+   flex item). */
+.tl-select__values > .tl-select__separator {
+	margin-inline-start: calc(-1 * var(--tl-space-2xs));
+	color: var(--tl-text-primary);
 }
 
-/* Each value keeps its label's width: a row of them is cut off at the column edge, not squeezed. */
-.tlTableView__cell > .tl-select__values > * {
-	flex-shrink: 0;
+/* In a cell, the values of a multi-valued selection run as one line of text, rather than wrapping
+   into lines the row has no height for: a line that is too long for the column ends in an ellipsis
+   and offers its full text as tooltip, as any other cut-off cell text. The values are inline for
+   this, the separator brings its own space, and two pills keep a gap between them. */
+.tlTableView__cell > .tl-select__values {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.tlTableView__cell > .tl-select__values > .tl-field-value {
+	display: inline;
+}
+.tlTableView__cell > .tl-select__values > .tl-select__separator {
+	margin-inline-start: 0;
+}
+.tlTableView__cell > .tl-select__values > .tl-field-value + .tl-field-value {
+	margin-inline-start: var(--tl-space-2xs);
 }
 
 /* In a cell, a text of several values or of several lines reads as the one line the row is high. */
@@ -3898,8 +4000,9 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* Why the target under the running drag refuses it, next to the pointer (left/top set by the
-   table), above every other layer like a tooltip. */
-.tlTableView__dropHint {
+   table or the board), above every other layer like a tooltip. */
+.tlTableView__dropHint,
+.tlKanbanBoard__dropHint {
 	position: fixed;
 	z-index: 13000;
 	max-width: min(400px, calc(100vw - 2 * var(--spacing-05)));
@@ -5848,3 +5951,136 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 .tlCalMiniDay--today { background: var(--button-primary); color: var(--text-on-color); }
 .tlCalMiniDay--today.tlCalMiniDay--event::after { background: #fff; }
+
+/* --- TLKanbanBoard ------------------------------------------------------ */
+
+.tlKanbanBoard {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	gap: var(--tl-space-md);
+	padding: var(--tl-space-sm);
+	overflow-x: auto;
+	overflow-y: hidden;
+	min-height: 0;
+	box-sizing: border-box;
+}
+
+.tlKanbanBoard__column {
+	display: flex;
+	flex-direction: column;
+	flex: 1 0 16rem;
+	min-width: 16rem;
+	max-width: 24rem;
+	min-height: 0;
+	background: var(--tl-surface-base);
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	border-radius: var(--border-radius-02);
+}
+
+.tlKanbanBoard__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--tl-space-xs);
+	padding: var(--tl-space-sm) var(--tl-space-md);
+	border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	color: var(--tl-text-primary);
+	font-size: var(--tl-font-size-body);
+	font-weight: 600;
+}
+
+.tlKanbanBoard__label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlKanbanBoard__count {
+	flex: none;
+	min-width: 1.5em;
+	padding: 0 var(--tl-space-xs);
+	border-radius: 999px;
+	background: var(--tl-surface-interactive-hover);
+	color: var(--tl-text-secondary);
+	font-size: var(--tl-font-size-label);
+	text-align: center;
+}
+
+.tlKanbanBoard__cards {
+	display: flex;
+	flex-direction: column;
+	gap: var(--tl-space-sm);
+	flex: 1 1 auto;
+	min-height: 0;
+	margin: 0;
+	padding: var(--tl-space-sm);
+	list-style: none;
+	overflow-y: auto;
+}
+
+.tlKanbanBoard__card {
+	padding: var(--tl-space-sm) var(--tl-space-md);
+	background: var(--tl-surface-layer);
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-raised);
+	cursor: pointer;
+}
+
+.tlKanbanBoard__card:hover {
+	border-color: var(--tl-border-emphasis);
+}
+
+.tlKanbanBoard__card--selected,
+.tlKanbanBoard__card--selected:hover {
+	background: var(--tl-surface-brand-subtle);
+	border-color: var(--tl-border-interactive);
+}
+
+.tlKanbanBoard__card[draggable="true"] {
+	cursor: grab;
+}
+
+.tlKanbanBoard__column--dragover {
+	border-color: var(--tl-border-interactive);
+	background: var(--tl-surface-brand-subtle);
+}
+
+.tlKanbanBoard__column--dropRefused {
+	border-color: var(--tl-status-error-border);
+	background: var(--tl-status-error-subtle);
+	cursor: not-allowed;
+}
+
+/* The insertion line between two cards where a drop reorders the column: drawn into the gap
+   above or below the card, so the cards do not move while the pointer does. */
+.tlKanbanBoard__card {
+	position: relative;
+}
+
+.tlKanbanBoard__card--dropBefore::before,
+.tlKanbanBoard__card--dropAfter::after,
+.tlKanbanBoard__cards--dropEnd::after {
+	content: "";
+	display: block;
+	height: var(--tl-border-width-accent);
+	background: var(--tl-border-interactive);
+	pointer-events: none;
+}
+
+.tlKanbanBoard__card--dropBefore::before,
+.tlKanbanBoard__card--dropAfter::after {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+.tlKanbanBoard__card--dropBefore::before {
+	top: calc(-0.5 * var(--tl-space-sm) - 0.5 * var(--tl-border-width-accent) - var(--tl-border-width-sm));
+}
+
+.tlKanbanBoard__card--dropAfter::after {
+	bottom: calc(-0.5 * var(--tl-space-sm) - 0.5 * var(--tl-border-width-accent) - var(--tl-border-width-sm));
+}

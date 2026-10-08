@@ -20,15 +20,11 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -36,7 +32,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
@@ -45,10 +40,9 @@ import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
+import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
-import com.top_logic.layout.react.scripting.ReactActionContext;
-import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -67,6 +61,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
@@ -85,7 +80,6 @@ import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -347,36 +341,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String NOTHING = "";
 
 	/** State key telling the client whether the rows may be dragged. */
-	private static final String DRAG_ENABLED = "dragEnabled";
+	private static final String DRAG_ENABLED = DropSupport.DRAG_ENABLED;
 
 	/** State key holding the {@link #dragType() type tag} the client tags a drag payload with. */
-	private static final String DRAG_TYPE = "dragType";
+	private static final String DRAG_TYPE = DropSupport.DRAG_TYPE;
 
 	/** State key holding the {@link DropTarget#acceptedTypes() type tags} a drop is accepted of. */
-	private static final String DROP_ACCEPTS = "dropAccepts";
+	private static final String DROP_ACCEPTS = DropSupport.DROP_ACCEPTS;
 
 	/** State key telling the client whether a single row is a drop target of its own. */
 	private static final String DROP_ON_ROWS = "dropOnRows";
 
-	/**
-	 * State key holding the verdicts answered to the {@link #CMD_DROP_PROBE probes} of the running
-	 * drag, by {@link DropProbeArguments#getProbe() probe identifier}.
-	 *
-	 * <p>
-	 * Each entry holds {@link #VERDICT_ACCEPTED} and, for a refusal, {@link #VERDICT_REASON}. The
-	 * verdicts of a drag accumulate, so a client receiving several answers at once misses none of
-	 * them; a probe of the next drag discards them.
-	 * </p>
-	 */
-	private static final String DROP_VERDICTS = "dropVerdicts";
-
-	/** Entry of a {@link #DROP_VERDICTS} verdict telling whether the drop is accepted. */
-	private static final String VERDICT_ACCEPTED = "accepted";
-
-	/**
-	 * Entry of a refusing {@link #DROP_VERDICTS} verdict holding the reason, in the user's language.
-	 */
-	private static final String VERDICT_REASON = "reason";
+	/** @see DropSupport#DROP_VERDICTS */
+	private static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
 
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
@@ -450,17 +427,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String CMD_DELETE_NAMED_FILTER = "deleteNamedFilter";
 
-	private static final String CMD_DROP = "drop";
+	private static final String CMD_DROP = DropSupport.CMD_DROP;
 
-	private static final String CMD_DROP_OBJECTS = "dropObjects";
+	private static final String CMD_DROP_OBJECTS = DropSupport.CMD_DROP_OBJECTS;
 
-	/**
-	 * The command the client sends while a drag hovers the table, asking whether a drop right there
-	 * would be accepted; answered in {@link #DROP_VERDICTS}.
-	 *
-	 * @see DropProbeArguments
-	 */
-	private static final String CMD_DROP_PROBE = "dropProbe";
+	/** @see DropSupport#CMD_DROP_PROBE */
+	private static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
 
 	// Command argument names (shared with the typed SelectRowArguments so dispatch, recording and
 	// projection agree on the wire keys).
@@ -541,6 +513,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the table tells below its rows how many it has. */
 	private boolean _rowCount = true;
 
+	/** Whether a group header can be selected, see {@link #setGroupsSelectable(boolean)}. */
+	private boolean _groupsSelectable;
+
 	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
 	private String _dragType;
 
@@ -550,11 +525,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private Predicate<? super R> _draggable;
 
-	/** The {@link DropProbeArguments#getDrag() drag} the {@link #_dropVerdicts} belong to. */
-	private String _probedDrag;
-
-	/** The verdicts answered to the probes of {@link #_probedDrag}, see {@link #DROP_VERDICTS}. */
-	private Map<String, Object> _dropVerdicts = new LinkedHashMap<>();
+	/** The drop protocol shared with every control accepting drops. */
+	private final DropSupport _dropSupport = new DropSupport(this);
 
 	/** What dropped objects are done with, or {@code null} while the table accepts no drop. */
 	private DropTarget _dropTarget;
@@ -639,6 +611,22 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Whether a group header stands for its group value and can be selected.
+	 *
+	 * <p>
+	 * By default a group header stands for no object: the gesture selecting a row collapses or
+	 * expands a group instead. A table whose rows are grouped by an object the user acts on - the
+	 * module of a type, say - can let the header be selected instead; its key in the
+	 * {@link #getSelectedKeys() selection} is a {@link GroupKey} naming the group value. The group
+	 * is then collapsed and expanded by its toggle only. A selected group leaves the selection when
+	 * the grouping changes, since the group is no longer displayed.
+	 * </p>
+	 */
+	public void setGroupsSelectable(boolean groupsSelectable) {
+		_groupsSelectable = groupsSelectable;
 	}
 
 	/**
@@ -1443,13 +1431,37 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * A selected key whose object is gone from the data is dropped from the selection. A selected
 	 * row the table merely does not display - hidden by a filter, or inside a collapsed group or
 	 * tree node - is still part of the data and stays selected (see
-	 * {@link TableView#containedKeys(Collection)}).
+	 * {@link TableView#containedKeys(Collection)}). A selected group header stays selected as long
+	 * as its group is still displayed.
 	 * </p>
 	 */
 	public void refreshData() {
+		Set<Object> groups = shownGroups(_selectedKeys);
 		_selectedKeys.retainAll(_view.containedKeys(_selectedKeys));
+		_selectedKeys.addAll(groups);
 		commitSelection();
 		rebuildAfterRowChange();
+	}
+
+	/**
+	 * The {@link GroupKey}s among the given keys whose group header the table displays.
+	 *
+	 * <p>
+	 * The data of the table knows the keys of its rows only, not those of the groups formed over
+	 * them, so a group is looked up among the rows displayed.
+	 * </p>
+	 */
+	private Set<Object> shownGroups(Collection<Object> keys) {
+		if (keys.stream().noneMatch(GroupKey.class::isInstance)) {
+			return Set.of();
+		}
+		Set<Object> result = new LinkedHashSet<>();
+		for (Row<R> row : _view.rows(0, _view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER && keys.contains(row.key())) {
+				result.add(row.key());
+			}
+		}
+		return result;
 	}
 
 	private void rebuildAfterRowChange() {
@@ -1528,6 +1540,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return;
 		}
 		_view.group(grouping);
+		// A selected group is not displayed any more under the new grouping.
+		_selectedKeys.removeIf(GroupKey.class::isInstance);
 		Object update = beginUpdate();
 		try {
 			// A grouping rearranges the rows, it does not replace them: the selected rows are the
@@ -1612,12 +1626,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		boolean shiftKey = args.isShiftKey();
 		Row<R> clicked = rowAt(rowIndex);
 		if (clicked != null && clicked.kind() != RowKind.DATA) {
-			// A group header stands for no object: the gesture that would select it collapses or
-			// expands the group instead, and the selection stays what it was.
-			_cursorIndex = rowIndex;
-			commitSelection();
-			toggleExpansion(clicked);
-			return;
+			if (!(_groupsSelectable && clicked.kind() == RowKind.GROUP_HEADER)) {
+				// A group header stands for no object: the gesture that would select it collapses
+				// or expands the group instead, and the selection stays what it was.
+				_cursorIndex = rowIndex;
+				commitSelection();
+				toggleExpansion(clicked);
+				return;
+			}
+			// A selectable group header stands for its group value, which is selected alone: it is
+			// no member of a range, and no object to add to a selection of rows.
+			ctrlKey = false;
+			shiftKey = false;
 		}
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;
@@ -1763,7 +1783,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * {@code -1} when the key resolves to no object or no row displays it.
 	 */
 	private int rowIndexOf(ModelName name) {
-		Object target = name == null ? null : locate(newActionContext(), name);
+		Object target = ScriptingModelKey.locate(null, name);
 		if (target == null) {
 			return -1;
 		}
@@ -2174,7 +2194,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	HandlerResult handleDrop(DropArguments args) {
 		ResolvedDrop resolved = resolveDrop(args);
 		if (resolved.refusal() != null) {
-			return dropRefused(resolved.refusal());
+			return DropSupport.refused(resolved.refusal());
 		}
 		return applyDrop(resolved.event());
 	}
@@ -2197,19 +2217,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (refusal == null) {
 			refusal = _dropTarget.check(resolved.event()).reason();
 		}
-
-		String drag = args.getDrag();
-		if (!drag.equals(_probedDrag)) {
-			_probedDrag = drag;
-			_dropVerdicts = new LinkedHashMap<>();
-		}
-		Map<String, Object> verdict = new LinkedHashMap<>();
-		verdict.put(VERDICT_ACCEPTED, Boolean.valueOf(refusal == null));
-		if (refusal != null) {
-			verdict.put(VERDICT_REASON, Resources.getInstance().getString(refusal));
-		}
-		_dropVerdicts.put(args.getProbe(), verdict);
-		putState(DROP_VERDICTS, new LinkedHashMap<>(_dropVerdicts));
+		putState(DROP_VERDICTS, _dropSupport.answerProbe(args, refusal));
 	}
 
 	/**
@@ -2246,13 +2254,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (dropTarget == null) {
 			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
-		ReactCommandTarget registered = registeredControl(args.getSource());
-		if (!(registered instanceof DragSourceControl source) || !(registered instanceof ReactControl sourceControl)) {
-			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		String dragType = source.dragType();
-		if (dragType == null || !dropTarget.acceptedTypes().contains(dragType)) {
-			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		DropSupport.Dragged dragged = _dropSupport.dragged(dropTarget.acceptedTypes(), args);
+		if (dragged.refusal() != null) {
+			return ResolvedDrop.refused(dragged.refusal());
 		}
 
 		Row<R> targetRow = null;
@@ -2271,18 +2275,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 		}
 
-		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
-		if (objects.isEmpty()) {
-			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(args.getKeys()));
-		}
-		for (Object object : objects) {
-			if (!source.isDraggable(object)) {
-				return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_DRAGGABLE);
-			}
-		}
-
-		return new ResolvedDrop(
-			new DropEvent(sourceControl, objects, targetRow == null ? null : targetRow.data(), position), null);
+		return new ResolvedDrop(new DropEvent(dragged.source(), dragged.objects(),
+			targetRow == null ? null : targetRow.data(), position), null);
 	}
 
 	/**
@@ -2292,23 +2286,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private HandlerResult applyDrop(DropEvent event) {
 		DropVerdict verdict = _dropTarget.check(event);
 		if (!verdict.isAccepted()) {
-			return dropRefused(verdict.reason());
+			return DropSupport.refused(verdict.reason());
 		}
 		_dropTarget.onDrop(event);
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	/**
-	 * The answer to a drop that is refused for the given reason.
-	 *
-	 * <p>
-	 * A refused drop is no malfunction but a refusal like that of a command its executability rule
-	 * forbids: the result is the {@link HandlerResult#notExecutable(ExecutableState) warning} of
-	 * such a command, naming the reason.
-	 * </p>
-	 */
-	private static HandlerResult dropRefused(ResKey reason) {
-		return HandlerResult.notExecutable(ExecutableState.createDisabledState(reason));
 	}
 
 	/**
@@ -2323,28 +2304,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
 		DropTarget dropTarget = _dropTarget;
 		if (dropTarget == null) {
-			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		DropPosition position = DropPosition.fromWire(args.getPosition());
 		if (position == null) {
-			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
-		ActionContext actionContext = newActionContext();
+		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
 
 		List<ModelName> unresolved = new ArrayList<>();
-		List<Object> objects = new ArrayList<>();
-		for (ModelName name : args.getObjects()) {
-			Object object = locate(actionContext, name);
-			if (object == null) {
-				unresolved.add(name);
-			} else {
-				objects.add(object);
-			}
-		}
+		List<Object> objects = DropSupport.locateAll(actionContext, args.getObjects(), unresolved);
 		Object target = null;
 		ModelName targetName = args.getTargetObject();
 		if (targetName != null) {
-			Object object = locate(actionContext, targetName);
+			Object object = ScriptingModelKey.locate(actionContext, null, targetName);
 			// The target must be a row of this table: a recorded drop that lands somewhere else is a
 			// drift, not a drop.
 			Row<R> targetRow = object == null ? null : rowFor(object);
@@ -2367,83 +2340,16 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form: the live
-	 * {@link #CMD_DROP} names the dragged rows by session-bound client keys, the recorded step names
-	 * the business objects themselves. {@code null} when an object cannot be named, so the drop is
-	 * recorded verbatim rather than as an incomplete set.
+	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form, naming the target
+	 * row by its business object.
+	 *
+	 * @see DropSupport#recordDrop(Map, java.util.function.Function)
 	 */
 	private RecordedCommand recordDrop(Map<String, Object> arguments) {
-		if (!(commandItem(CMD_DROP, arguments) instanceof DropArguments args)) {
-			return null;
-		}
-		if (!(registeredControl(args.getSource()) instanceof DragSourceControl source)) {
-			return null;
-		}
-		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
-		if (objects.isEmpty()) {
-			return null;
-		}
-		DropObjectsArguments recorded = TypedConfiguration.newConfigItem(DropObjectsArguments.class);
-		recorded.setName(CMD_DROP_OBJECTS);
-		for (Object object : objects) {
-			ModelName name = ScriptingModelKey.name(null, object);
-			if (name == null) {
-				return null;
-			}
-			recorded.getObjects().add(name);
-		}
-		Row<R> targetRow = rowById(args.getTargetKey());
-		if (targetRow != null) {
-			ModelName targetName = ScriptingModelKey.name(null, targetRow.data());
-			if (targetName == null) {
-				return null;
-			}
-			recorded.setTargetObject(targetName);
-		}
-		recorded.setPosition(args.getPosition());
-		return new RecordedCommand(recorded);
-	}
-
-	/**
-	 * The control registered in this window under the given id, or {@code null} if none is (or the
-	 * id is missing).
-	 */
-	private ReactCommandTarget registeredControl(String controlId) {
-		SSEUpdateQueue queue = getReactContext().getSSEQueue();
-		if (controlId == null || queue == null) {
-			return null;
-		}
-		return queue.getControl(controlId);
-	}
-
-	/**
-	 * An {@link ActionContext} for resolving a {@link ModelName}, or {@code null} if the running
-	 * interaction offers no display context to build one from.
-	 */
-	private ActionContext newActionContext() {
-		try {
-			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-			return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve a business identity outside an interaction.", ex, this);
-			return null;
-		}
-	}
-
-	/**
-	 * The object the given {@link ModelName} designates, or {@code null} if it designates none (or
-	 * there is no {@code context} to resolve it in).
-	 */
-	private Object locate(ActionContext context, ModelName name) {
-		if (context == null || name == null) {
-			return null;
-		}
-		try {
-			return ModelResolver.locateModel(context, null, name);
-		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve object for key: " + name, ex, this);
-			return null;
-		}
+		return _dropSupport.recordDrop(arguments, key -> {
+			Row<R> row = rowById(key);
+			return row == null ? null : row.data();
+		});
 	}
 
 	private Object keyAt(int rowIndex) {

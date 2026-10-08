@@ -12,6 +12,7 @@ import java.util.List;
 
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
@@ -57,6 +58,8 @@ public final class FieldSpec {
 	private boolean _ordered;
 
 	private int _multilineRows;
+
+	private boolean _compact;
 
 	private BooleanPresentation _booleanPresentation = BooleanPresentation.CHECKBOX;
 
@@ -345,6 +348,31 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * Whether the field is displayed in little room, a table cell for instance.
+	 *
+	 * <p>
+	 * A compact field has the height of a single line of text. A field whose control needs more
+	 * room than that - a multi-line text, a code editor, the list of the values of a
+	 * {@link #isMultiple() multi-valued} field - is displayed as a one-line preview of its value
+	 * together with a button opening the full control in a dialog, see
+	 * {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)}.
+	 * </p>
+	 */
+	public boolean isCompact() {
+		return _compact;
+	}
+
+	/**
+	 * Sets whether the field is displayed {@link #isCompact() compact}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setCompact(boolean compact) {
+		_compact = compact;
+		return this;
+	}
+
+	/**
 	 * How a boolean value asks to be displayed.
 	 */
 	public BooleanPresentation getBooleanPresentation() {
@@ -522,6 +550,24 @@ public final class FieldSpec {
 	 * @return A specification of one element, independent of this one.
 	 */
 	public FieldSpec elementSpec() {
+		FieldSpec result = copy();
+		// The element is one value: it is not several, and a single value has no order to arrange.
+		result._multiple = false;
+		result._ordered = false;
+		return result;
+	}
+
+	/**
+	 * A specification describing the same field as this one, independent of it.
+	 *
+	 * <p>
+	 * The way to derive a specification that deviates from this one in some property without
+	 * changing this one, which may be shared by several controls.
+	 * </p>
+	 *
+	 * @return A copy of this specification.
+	 */
+	public FieldSpec copy() {
 		FieldSpec result = new FieldSpec(_valueType, _label);
 		result._tooltip = _tooltip;
 		result._placeholder = _placeholder;
@@ -530,10 +576,10 @@ public final class FieldSpec {
 		result._debounce = _debounce;
 		result._mandatory = _mandatory;
 		result._editable = _editable;
-		// The element is one value: it is not several, and a single value has no order to arrange.
-		result._multiple = false;
-		result._ordered = false;
+		result._multiple = _multiple;
+		result._ordered = _ordered;
 		result._multilineRows = _multilineRows;
+		result._compact = _compact;
 		result._booleanPresentation = _booleanPresentation;
 		result._triState = _triState;
 		result._selectDisplay = _selectDisplay;

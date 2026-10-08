@@ -15,16 +15,21 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.mig.html.HTMLConstants;
 
 /**
  * Registry of all client-side resources of the React UI.
@@ -34,14 +39,60 @@ import com.top_logic.basic.xml.TagWriter;
  * emits the corresponding head references through a {@link ClientResourceProvider}. Resources are
  * emitted in topological order of their {@link ResourceConfig} dependencies.
  * </p>
+ *
+ * <p>
+ * The styles of the page are ordered by CSS cascade layers, independent of their position in the
+ * page head: the rules of a later one of the {@link Config#getLayers()} win against the rules of an
+ * earlier one, and unlayered rules win against all layered rules. The engine's stylesheets are in
+ * the layer {@value #ENGINE_LAYER}, the rules of a component library rendering the UI (Material
+ * UI) in the layer {@value #COMPONENT_LIBRARY_LAYER}, and the stylesheets of the application are
+ * unlayered: engine &lt; component library &lt; application.
+ * </p>
  */
 @Label("Client resources")
 public class ClientResources extends ConfiguredManagedClass<ClientResources.Config> {
 
 	/**
+	 * The CSS cascade layer of the engine's styles: its stylesheets, the libraries it bundles, and
+	 * the design tokens of the UI themes.
+	 */
+	public static final String ENGINE_LAYER = "tl";
+
+	/**
+	 * The CSS cascade layer of the styles of a component library rendering the UI, e.g. the rules
+	 * Material UI writes into the page.
+	 */
+	public static final String COMPONENT_LIBRARY_LAYER = "mui";
+
+	/**
+	 * Default of {@link Config#getLayers()}.
+	 */
+	public static final String DEFAULT_LAYERS = ENGINE_LAYER + ", " + COMPONENT_LIBRARY_LAYER;
+
+	/**
 	 * Configuration of {@link ClientResources}.
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ClientResources> {
+
+		/** Configuration name for {@link #getLayers()}. */
+		String LAYERS = "layers";
+
+		/**
+		 * The CSS cascade layers of the page, from the lowest to the highest priority.
+		 *
+		 * <p>
+		 * The rules of a later layer win against the rules of an earlier one, whatever their
+		 * specificity; unlayered rules win against all of them. The default puts the engine's
+		 * styles below the styles of a component library. An application may insert a layer of its
+		 * own, e.g. {@code tl, app-base, mui} for a global base stylesheet (resets, element
+		 * selectors) that overrides the engine but not the component library, and name it as the
+		 * {@link StyleSheetConfig#getLayer()} of that stylesheet.
+		 * </p>
+		 */
+		@Name(LAYERS)
+		@Format(CommaSeparatedStrings.class)
+		@FormattedDefault(DEFAULT_LAYERS)
+		List<String> getLayers();
 
 		/**
 		 * The registered client resources, contributed across modules.
@@ -80,6 +131,47 @@ public class ClientResources extends ConfiguredManagedClass<ClientResources.Conf
 	public ClientResources(InstantiationContext context, Config config) {
 		super(context, config);
 		_ordered = order(context, config.getResources());
+		checkLayers(context, config);
+	}
+
+	private static void checkLayers(Log log, Config config) {
+		List<String> layers = config.getLayers();
+		for (ResourceConfig resource : config.getResources()) {
+			if (resource instanceof StyleSheetConfig stylesheet) {
+				String layer = stylesheet.getLayer();
+				if (!StringServices.isEmpty(layer) && !layers.contains(layer)) {
+					log.error("Stylesheet '" + resource.getName() + "' names the CSS cascade layer '" + layer
+						+ "', which is not one of the layers " + layers + ".");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Emits the statement establishing the order of the CSS cascade {@link Config#getLayers()
+	 * layers}.
+	 *
+	 * <p>
+	 * Must be placed before any style of the page, since the first mention of a layer fixes its
+	 * position in the order.
+	 * </p>
+	 *
+	 * @param out
+	 *        The writer of the HTML {@code <head>}.
+	 * @throws IOException
+	 *         If writing fails.
+	 */
+	public void writeLayerOrder(TagWriter out) throws IOException {
+		List<String> layers = getConfig().getLayers();
+		if (layers.isEmpty()) {
+			return;
+		}
+		out.beginBeginTag(HTMLConstants.STYLE_ELEMENT);
+		out.endBeginTag();
+		out.writeContent("@layer ");
+		out.writeContent(String.join(", ", layers));
+		out.writeContent(";");
+		out.endTag(HTMLConstants.STYLE_ELEMENT);
 	}
 
 	/**
@@ -106,8 +198,9 @@ public class ClientResources extends ConfiguredManagedClass<ClientResources.Conf
 	 * Emits the stylesheet references.
 	 *
 	 * <p>
-	 * Must be placed after the design-token block so that the registered stylesheets, which
-	 * reference the tokens, form the overriding cascade layer.
+	 * Must be placed after the {@link #writeLayerOrder(TagWriter) layer order} and after the
+	 * design-token block, so that the registered stylesheets of the layer {@value #ENGINE_LAYER},
+	 * which reference the tokens, follow the tokens within that layer.
 	 * </p>
 	 *
 	 * @param out

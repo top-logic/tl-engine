@@ -176,6 +176,18 @@ public abstract class BoundFieldModel extends AbstractFieldModel {
 	}
 
 	/**
+	 * Releases what this field holds beyond its display, when the edit it belongs to ends: a
+	 * registration with the form, an edit session of its own.
+	 *
+	 * <p>
+	 * Nothing to release by default.
+	 * </p>
+	 */
+	public void dispose() {
+		// Nothing held.
+	}
+
+	/**
 	 * The value the bound object currently holds.
 	 */
 	protected abstract Object readValue();

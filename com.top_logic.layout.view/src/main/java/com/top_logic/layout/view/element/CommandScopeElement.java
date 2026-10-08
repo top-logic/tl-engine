@@ -21,6 +21,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ConfigFormScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommandModel;
 
@@ -89,7 +90,12 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	}
 
 	@Override
-	public IReactControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext outerContext) {
+		// Phase 0: The commands are built before the content, so a configuration form within the
+		// content cannot be handed to the commands saving it; it registers in this scope instead.
+		ViewContext context = outerContext.withScope(ConfigFormScope.class,
+			new ConfigFormScope(outerContext.getScope(ConfigFormScope.class)));
+
 		// Phase 1: Build command models.
 		List<ViewCommandModel> commandModels = buildCommandModels(context);
 

@@ -31,7 +31,8 @@ import com.top_logic.layout.react.resource.ClientResources;
 
 /**
  * Tests for {@link ClientResources}: a second configuration fragment replaces or removes a named
- * resource, and a dependency on a removed resource is a configuration error.
+ * resource, a dependency on a removed resource is a configuration error, and stylesheets are
+ * emitted into their CSS cascade layers.
  */
 public class TestClientResources extends TestCase {
 
@@ -67,6 +68,67 @@ public class TestClientResources extends TestCase {
 		+ "<stylesheet name='tokens' config:operation='remove'/>"
 		+ "</resources>"
 		+ "</config>";
+
+	/** Engine stylesheets in the engine's layer around an unlayered application stylesheet. */
+	private static final String LAYERED = "<config class='" + ClientResources.class.getName() + "'" + NS + ">"
+		+ "<resources>"
+		+ "<stylesheet name='tokens' layer='tl' resource='/style/tokens.css'/>"
+		+ "<stylesheet name='app' resource='/style/app.css' requires='components'/>"
+		+ "<stylesheet name='components' layer='tl' resource='/style/components.css' requires='tokens'/>"
+		+ "</resources>"
+		+ "</config>";
+
+	/** An application inserting a layer of its own between the engine and the component library. */
+	private static final String APP_LAYER = "<config class='" + ClientResources.class.getName() + "'" + NS
+		+ " layers='tl, app-base, mui'>"
+		+ "<resources>"
+		+ "<stylesheet name='reset' layer='app-base' resource='/style/reset.css'/>"
+		+ "</resources>"
+		+ "</config>";
+
+	/** A stylesheet naming a layer that is not one of the layers of the page. */
+	private static final String UNKNOWN_LAYER = "<config class='" + ClientResources.class.getName() + "'" + NS + ">"
+		+ "<resources>"
+		+ "<stylesheet name='reset' layer='app-base' resource='/style/reset.css'/>"
+		+ "</resources>"
+		+ "</config>";
+
+	/** The layer order names the engine's layer before the one of the component library. */
+	public void testDefaultLayerOrder() throws ConfigurationException, IOException {
+		assertEquals("<style>@layer tl, mui;</style>", layerOrder(service(BASE)));
+	}
+
+	/** An application names a layer order of its own, with a layer for its base stylesheet. */
+	public void testApplicationLayer() throws ConfigurationException, IOException {
+		ClientResources service = service(BASE, APP_LAYER);
+
+		assertEquals("<style>@layer tl, app-base, mui;</style>", layerOrder(service));
+		assertTrue(styles(service).contains("<style>@import url(\"/style/reset.css\") layer(app-base);</style>"));
+	}
+
+	/**
+	 * A layered stylesheet is imported into its layer by a style element, an unlayered one is
+	 * linked, and both keep their cascade order.
+	 */
+	public void testLayeredEmission() throws ConfigurationException, IOException {
+		String styles = styles(service(LAYERED), "/ctx");
+
+		String tokens = "<style>@import url(\"/ctx/style/tokens.css\") layer(tl);</style>";
+		String components = "<style>@import url(\"/ctx/style/components.css\") layer(tl);</style>";
+		String app = "<link rel=\"stylesheet\" type=\"text/css\" href=\"/ctx/style/app.css\"/>";
+		assertBefore(styles, tokens, components);
+		assertBefore(styles, components, app);
+		assertFalse(styles, styles.contains("<link rel=\"stylesheet\" type=\"text/css\" href=\"/ctx/style/tokens.css\""));
+	}
+
+	/** A stylesheet naming an unknown layer is an error, not a silently appended layer. */
+	public void testUnknownLayerIsAnError() throws ConfigurationException {
+		BufferingProtocol log = new BufferingProtocol();
+		service(log, BASE, UNKNOWN_LAYER);
+
+		assertTrue(log.getError(), log.hasErrors());
+		assertTrue(log.getError(), log.getError().contains("'reset' names the CSS cascade layer 'app-base'"));
+	}
 
 	/** The second fragment removes an entry by name and keeps the others. */
 	public void testRemoveByName() throws ConfigurationException, IOException {
@@ -127,8 +189,18 @@ public class TestClientResources extends TestCase {
 	}
 
 	private static String styles(ClientResources service) throws IOException {
+		return styles(service, "");
+	}
+
+	private static String styles(ClientResources service, String contextPath) throws IOException {
 		StringWriter buffer = new StringWriter();
-		service.writeStyleRefs(new TagWriter(buffer), "");
+		service.writeStyleRefs(new TagWriter(buffer), contextPath);
+		return buffer.toString();
+	}
+
+	private static String layerOrder(ClientResources service) throws IOException {
+		StringWriter buffer = new StringWriter();
+		service.writeLayerOrder(new TagWriter(buffer));
 		return buffer.toString();
 	}
 

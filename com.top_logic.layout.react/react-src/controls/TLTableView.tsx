@@ -1,6 +1,8 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
+import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import { isInteractiveTarget, isOperableTarget } from './interactive';
+import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
+import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
 
 /**
@@ -121,13 +123,6 @@ interface RowState {
   draggable?: boolean;
 }
 
-/** The server's answer to a drop probe: whether a drop there would be accepted, and if not, why. */
-interface DropVerdict {
-  accepted: boolean;
-  /** Why the drop is refused, in the user's language. */
-  reason?: string;
-}
-
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
@@ -139,34 +134,6 @@ interface DropState {
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
 }
-
-/** Distance in pixels between the hint on a refused drop target and the pointer or drag image. */
-const DROP_HINT_GAP = 8;
-
-/**
- * Places the hint on a refused drop target right of the pointer at viewport position (`x`, `y`)
- * and below the drag image, or on the other side where the viewport has no room for it there.
- *
- * @param image Vertical extent of the drag image relative to the pointer, see
- *        {@link TLRunningDrag.image}.
- */
-function placeDropHint(hint: HTMLElement, x: number, y: number, image: TLRunningDrag['image']): void {
-  const width = hint.offsetWidth;
-  const height = hint.offsetHeight;
-  let left = x + DROP_HINT_GAP;
-  if (left + width > window.innerWidth) {
-    left = x - DROP_HINT_GAP - width;
-  }
-  let top = y + image.bottom + DROP_HINT_GAP;
-  if (top + height > window.innerHeight) {
-    top = y + image.top - DROP_HINT_GAP - height;
-  }
-  hint.style.left = Math.max(0, left) + 'px';
-  hint.style.top = Math.max(0, top) + 'px';
-}
-
-/** Drag image extent for a drag of unknown origin: none. */
-const NO_DRAG_IMAGE: TLRunningDrag['image'] = { top: 0, bottom: 0 };
 
 const MIN_COL_WIDTH = 50;
 
@@ -862,12 +829,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
       }
     }
-    // Operating a control inside an already selected row is not a selection gesture. Sending one
-    // anyway would have the server re-render the row, and that answer overwrites the value the
-    // control is sending at the same moment - the edit would be lost.
-    const row = rows.find((r) => r.index === rowIndex);
-    if (isInteractiveTarget(event) && row?.selected
-        && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    // Operating a control inside a cell - a button, a checkbox, an input - is not a selection
+    // gesture: the click belongs to the control. Selecting the row anyway would not only change
+    // the selection the user did not ask to change; the server's re-render of the row would also
+    // overwrite the value the control is sending at the same moment, and the edit would be lost.
+    // A control that cannot be operated - the read-only checkbox of a row not yet editable - does
+    // nothing with the click, which then selects the row as a click on its text would.
+    if (isOperableTarget(event) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
       return;
     }
     sendCommand('select', {
@@ -875,7 +843,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand, rows]);
+  }, [sendCommand]);
 
   // A double-click opens the row: the server selects it and runs what the view configured for an
   // activation. A double-click inside an interactive cell element belongs to that element
@@ -1240,10 +1208,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // end frees the funnel there, too.
   // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
   // scroll range without offering the last cell space to grow into and without a sticky cell -
-  // confined to the content box - ever reaching underneath the button. The rows are laid out
-  // border-box, so their minimum width has to name the padding on top of the columns - a minimum
-  // of the columns' width alone holds the padding inside it, and the last column ends underneath
-  // the button again.
+  // confined to the content box - ever reaching underneath the button. The design system sizes every
+  // box as border-box, so a minimum width given for a row includes its padding: it must add the
+  // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
   const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
@@ -1597,8 +1564,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             the rows reach the right edge and a cell pinned there lands on it; the reserve is
             padding, so it widens the scroll range without taking any cell along. */}
         <div style={{
-          height: totalHeight, position: 'relative',
-          minWidth: tableWidth + buttonReserve, paddingRight: buttonReserve,
+          height: totalHeight, position: 'relative', minWidth: tableWidth + buttonReserve,
+          paddingRight: buttonReserve,
         }}>
           {rows.map((row) => (
             <div

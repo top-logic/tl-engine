@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
 

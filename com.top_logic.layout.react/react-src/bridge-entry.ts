@@ -29,9 +29,15 @@ export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
+export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
+export type { FormLayout } from './bridge/form-layout';
+export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
+export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';
+export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
 export type { InsideRef } from './bridge/outside-press';
@@ -76,9 +82,18 @@ export type {
   MenuStateJson,
   SnackbarStateJson,
   AlertStateJson,
+  FormFieldStateJson,
+  TextStateJson,
+  CardStateJson,
+  AppBarStateJson,
+  BreadcrumbStateJson,
+  ProgressStateJson,
+  SliderStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
+export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
+export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName } from './bridge/css';
 export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
 export type { KeyedTransitionOptions } from './bridge/transition';
@@ -107,6 +122,17 @@ export { React, ReactDOM };
 // exactly what the note above forbids.
 export const createPortal = ReactDOM.createPortal;
 export const flushSync = ReactDOM.flushSync;
+
+// Re-export the automatic JSX runtime of the same React instance. A module that bundles a library
+// compiled with the automatic runtime (e.g. Material UI, whose prebuilt code calls
+// `jsx(type, props, key)` from 'react/jsx-runtime') aliases 'react/jsx-runtime' to a shim
+// re-exporting these:
+//
+//   export { jsx, jsxs, Fragment } from 'tl-react-bridge';
+//
+// `React.createElement` is no substitute: it reads its third argument as children, so a keyed
+// `jsx` call would replace the children passed in the props.
+export { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 
 // Expose bridge functions on window so that server-generated inline scripts
 // (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code

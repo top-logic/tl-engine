@@ -30,6 +30,55 @@ is a defect to fix in the theme. The only custom properties that carry a fallbac
 stylesheet declares itself (`--page-inset`, `--cal-ev-bg`, …), where the fallback is the value of the
 default case rather than a stand-in for a missing token.
 
+## Cascade layers
+
+The styles of the React page are ordered by CSS cascade layers, not by their position in `<head>`:
+
+| Order | Layer | Rules |
+|---|---|---|
+| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, `tlReactControls.css`, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
+| 2 | `mui` | the rules of a component library rendering the UI: Material UI's emotion styles, its CSS variables, the styling properties derived from the MUI theme (`tl-mui-theme-properties`), the rules of a customer's `styled` components and `styleOverrides` |
+| — | unlayered | the stylesheets of the application, e.g. the rules of its `css-class` names |
+
+A rule of a later layer wins against a rule of an earlier one, whatever their specificity; an
+unlayered rule wins against every layered one. Within one layer, specificity and order decide as
+usual, and the order of the engine's stylesheets is their `requires` order. The page head starts
+with the layer order statement (`<style>@layer tl, mui;</style>`, `ClientResources.writeLayerOrder`),
+before any style mentions a layer.
+
+The order is the `layers` property of the `ClientResources` configuration (default `tl, mui`). An
+application inserts a layer of its own there, e.g. for a global base stylesheet (resets, element
+selectors) that must override the engine but not Material UI:
+
+```xml
+<config service-class="com.top_logic.layout.react.resource.ClientResources">
+  <instance class="com.top_logic.layout.react.resource.ClientResources"
+    layers="tl, app-base, mui"
+  >
+    <resources>
+      <stylesheet name="app-base-css"
+        layer="app-base"
+        resource="/style/app-base.css"
+      />
+    </resources>
+  </instance>
+</config>
+```
+
+A `<stylesheet>` with a `layer` is written as `<style>@import url("…") layer(<name>);</style>`; one
+without stays a `<link rel="stylesheet">`. A layer a stylesheet names must be one of the `layers`.
+
+Two consequences of layering:
+
+- `!important` inverts the order of the layers: an `!important` declaration of the layer `tl` wins
+  against an `!important` declaration of `mui` and of an application stylesheet. Avoid
+  `!important` in engine stylesheets.
+- Styles a library writes into the page at runtime (CSS-in-JS) are unlayered unless the library is
+  told otherwise, and then win against every engine stylesheet. CodeMirror writes its base theme
+  that way and cannot be told otherwise, so the stylesheets that override it (`tlCodeEditor.css`,
+  `tlScriptEditor.css`) are registered without `layer`: against the base theme, specificity
+  decides.
+
 ## Coloring a value in a model configuration
 
 A model configuration does not name a token where it asks for the color of a value; it names a

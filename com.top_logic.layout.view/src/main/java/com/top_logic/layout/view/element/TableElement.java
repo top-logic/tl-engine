@@ -12,10 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
@@ -37,13 +35,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -53,14 +49,11 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.DisabledIf;
-import com.top_logic.layout.view.command.ExecutabilityConfig;
-import com.top_logic.layout.view.command.LiveExecutability;
-import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
+import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.dnd.DragSourceBinding;
+import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
@@ -79,21 +72,20 @@ import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.TableDragConfig;
+import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.layout.view.table.RowCommandColumn;
-import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
@@ -486,7 +478,7 @@ public class TableElement implements UIElement {
 		 * </p>
 		 */
 		@Name(DRAG)
-		DragConfig getDrag();
+		TableDragConfig getDrag();
 
 		/**
 		 * What this table accepts a drop of, and what it does with the dropped objects.
@@ -499,161 +491,7 @@ public class TableElement implements UIElement {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
-		List<DropConfig> getDrops();
-	}
-
-	/**
-	 * Configuration of the {@code <drag>} of a {@link TableElement}: that its rows may be dragged,
-	 * what they are announced as, and when they may be dragged.
-	 *
-	 * <p>
-	 * The {@link #getExecutability() executability} rules decide for the table as a whole over the
-	 * value of the {@link #getInput() input} channel, and are followed live: while they refuse, no
-	 * row can be dragged. The {@link #getRowExecutability() row executability} rules decide for
-	 * each row separately, with the row as their input.
-	 * </p>
-	 */
-	public interface DragConfig extends ExecutabilityConfig {
-
-		/** Configuration name for {@link #getType()}. */
-		String TYPE = "type";
-
-		/** Configuration name for {@link #getRowExecutability()}. */
-		String ROW_EXECUTABILITY = "row-executability";
-
-		/**
-		 * The type the dragged rows are announced as, which a {@link DropConfig#getAccept() drop}
-		 * accepts them by.
-		 *
-		 * <p>
-		 * Defaults to the first of the table's {@link Config#getTypes() declared row types}. A table
-		 * declaring neither is a configuration error: nothing would say what its rows are.
-		 * </p>
-		 */
-		@Name(TYPE)
-		TLModelPartRef getType();
-
-		/**
-		 * Rules deciding which rows may be dragged, each row being the input they decide over.
-		 *
-		 * <p>
-		 * A row the rules refuse offers no drag, and a drag of a selection including such a row is
-		 * refused as a whole. Empty (default) lets every row be dragged while the table-wide
-		 * {@link #getExecutability() executability} allows dragging at all.
-		 * </p>
-		 */
-		@Name(ROW_EXECUTABILITY)
-		@EntryTag(RULE)
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getRowExecutability();
-	}
-
-	/**
-	 * Configuration of one {@code <drop>} of a {@link TableElement}: what it accepts, what it
-	 * targets, when it applies, and what it does.
-	 *
-	 * <p>
-	 * A drop is restricted in three stages, each asked only after the previous one accepted: the
-	 * {@link #getExecutability() executability} rules decide for the table as a whole over the value
-	 * of the {@link #getInput() input} channel, and are followed live - while they refuse, the drop
-	 * is not offered at all; the {@link #getTargetExecutability() target executability} rules decide
-	 * over the row a {@link DropTargetMode#ROW row} drop is made on; the {@link #getRefuseIf() refusal
-	 * function} decides over the target and the dragged objects together. While the user drags, the
-	 * first refusal is shown at the target under the pointer, with its reason.
-	 * </p>
-	 */
-	@TagName("drop")
-	public interface DropConfig extends ExecutabilityConfig {
-
-		/** Configuration name for {@link #getAccept()}. */
-		String ACCEPT = "accept";
-
-		/** Configuration name for {@link #getTarget()}. */
-		String TARGET = "target";
-
-		/** Configuration name for {@link #getTargetChannel()}. */
-		String TARGET_CHANNEL = "target-channel";
-
-		/** Configuration name for {@link #getTargetExecutability()}. */
-		String TARGET_EXECUTABILITY = "target-executability";
-
-		/** Configuration name for {@link #getRefuseIf()}. */
-		String REFUSE_IF = "refuse-if";
-
-		/** Configuration name for {@link #getActions()}. */
-		String ACTIONS = "actions";
-
-		/**
-		 * The types of the objects this drop accepts.
-		 *
-		 * <p>
-		 * A subtype of an accepted type is accepted as well. Acceptance is decided over the model
-		 * on the server; the client is told the resulting set of type names, so a drag it cannot be
-		 * applied to is not offered in the first place.
-		 * </p>
-		 */
-		@Name(ACCEPT)
-		@Mandatory
-		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-		List<TLModelPartRef> getAccept();
-
-		/**
-		 * Whether the table as a whole or a single row is the target of this drop.
-		 */
-		@Name(TARGET)
-		DropTargetMode getTarget();
-
-		/**
-		 * A {@link ViewChannel} the target row is written to before the {@link #getActions()
-		 * actions} run, so they can read what was dropped on.
-		 *
-		 * <p>
-		 * Unset (default) leaves the target unpublished, which is what a
-		 * {@link DropTargetMode#TABLE} drop needs - it has no target row, and writes {@code null}
-		 * where a channel is declared anyway.
-		 * </p>
-		 */
-		@Name(TARGET_CHANNEL)
-		@Format(ChannelRefFormat.class)
-		@Nullable
-		ChannelRef getTargetChannel();
-
-		/**
-		 * Rules deciding on which rows the drop may be made, each target row being the input they
-		 * decide over.
-		 *
-		 * <p>
-		 * Only a drop whose {@link #getTarget() target} is a row has a target row to decide over;
-		 * declaring rules here for a drop on the table as a whole is a configuration error. Empty
-		 * (default) accepts every row.
-		 * </p>
-		 */
-		@Name(TARGET_EXECUTABILITY)
-		@EntryTag(RULE)
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getTargetExecutability();
-
-		/**
-		 * TL-Script function computing why a drop must not be made, from the target and the dragged
-		 * objects: {@code target -> objects -> reason}.
-		 *
-		 * <p>
-		 * The target is the row dropped on, or {@code null} for a drop on the table as a whole; the
-		 * objects are the list of dragged objects. No value or <code>false</code> accepts the drop,
-		 * <code>true</code> refuses it with a generic reason, a resource key or a text refuses it
-		 * with that reason - the same interpretation as the {@link DisabledIf.Config disabled-if}
-		 * rule. Unset (default) refuses nothing.
-		 * </p>
-		 */
-		@Name(REFUSE_IF)
-		Expr getRefuseIf();
-
-		/**
-		 * The chain of actions applying the drop, receiving the dropped objects as the input of its
-		 * first action.
-		 */
-		@Name(ACTIONS)
-		@DefaultContainer
-		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
+		List<TableDropConfig> getDrops();
 	}
 
 	/**
@@ -975,7 +813,7 @@ public class TableElement implements UIElement {
 	private final String _dragType;
 
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
-	private final List<CompiledDrop> _drops;
+	private final List<DeclaredDrop> _drops;
 
 	/**
 	 * Where a preset that cannot be applied to this table's columns is reported.
@@ -1035,20 +873,6 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * A {@link DropConfig} with its action chain instantiated and its refusal function compiled.
-	 *
-	 * @param config
-	 *        What the drop accepts and targets.
-	 * @param actions
-	 *        The instantiated action chain applying it.
-	 * @param refuseIf
-	 *        The compiled {@link DropConfig#getRefuseIf()}, {@code null} without one.
-	 */
-	private record CompiledDrop(DropConfig config, List<ViewAction> actions, QueryExecutor refuseIf) {
-		// Pure data carrier.
-	}
-
-	/**
 	 * Creates a {@link TableElement} from configuration.
 	 */
 	@CalledByReflection
@@ -1062,7 +886,7 @@ public class TableElement implements UIElement {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a
 			// declaration there would apply to nothing.
 			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
-				+ "> nor <drop>.");
+				+ "> nor <" + DropConfig.TAG_NAME + ">.");
 		}
 
 		_declarations = ColumnDeclarations.instantiate(context, config.getColumns());
@@ -1078,13 +902,13 @@ public class TableElement implements UIElement {
 
 	/**
 	 * The type tag the rows of a table declaring a {@link Config#getDrag() drag} are dragged under:
-	 * the declared {@link DragConfig#getType() type}, or the first of the table's
+	 * the declared {@link TableDragConfig#getType() type}, or the first of the table's
 	 * {@link Config#getTypes() row types}. {@code null} for a table whose rows are not draggable,
 	 * and for one that says nothing about what its rows are - which is reported as a configuration
 	 * error.
 	 */
 	private static String dragType(Log log, Config config) {
-		DragConfig drag = config.getDrag();
+		TableDragConfig drag = config.getDrag();
 		if (drag == null) {
 			return null;
 		}
@@ -1095,7 +919,7 @@ public class TableElement implements UIElement {
 		List<TLModelPartRef> types = config.getTypes();
 		if (types == null || types.isEmpty()) {
 			log.error("A <table> whose rows are dragged must say what they are: either '"
-				+ DragConfig.TYPE + "' on its <" + Config.DRAG + ">, or '" + Config.TYPES
+				+ TableDragConfig.TYPE + "' on its <" + Config.DRAG + ">, or '" + Config.TYPES
 				+ "' on the table itself.");
 			return null;
 		}
@@ -1106,128 +930,46 @@ public class TableElement implements UIElement {
 	 * Instantiates the action chains of the declared drops, so that applying one only has to run
 	 * them.
 	 */
-	private static List<CompiledDrop> compileDrops(InstantiationContext context, List<DropConfig> dropConfigs) {
+	private static List<DeclaredDrop> compileDrops(InstantiationContext context,
+			List<TableDropConfig> dropConfigs) {
 		if (dropConfigs.isEmpty()) {
 			return List.of();
 		}
-		List<CompiledDrop> result = new ArrayList<>(dropConfigs.size());
-		for (DropConfig dropConfig : dropConfigs) {
-			List<ViewAction> actions = dropConfig.getActions().stream()
-				.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
-				.filter(action -> action != null)
-				.toList();
+		List<DeclaredDrop> result = new ArrayList<>(dropConfigs.size());
+		for (TableDropConfig dropConfig : dropConfigs) {
 			if (!dropConfig.getTargetExecutability().isEmpty() && dropConfig.getTarget() != DropTargetMode.ROW) {
-				context.error("A <drop> on the table as a whole has no target row its '"
+				context.error("A <" + DropConfig.TAG_NAME + "> on the table as a whole has no target row its '"
 					+ DropConfig.TARGET_EXECUTABILITY + "' could decide over; only a drop with "
-					+ DropConfig.TARGET + "=\"" + DropTargetMode.ROW.getExternalName() + "\" declares one.");
+					+ TableDropConfig.TARGET + "=\"" + DropTargetMode.ROW.getExternalName() + "\" declares one.");
 			}
-			Expr refuseIf = dropConfig.getRefuseIf();
-			result.add(new CompiledDrop(dropConfig, actions, refuseIf == null ? null : QueryExecutor.compile(refuseIf)));
+			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().scope()));
 		}
 		return result;
 	}
 
 	/**
-	 * The drop target of this table's declared drops, resolved for the given session: the accepted
-	 * types against the application model, the target channels against the view, the rules against
-	 * the context.
-	 *
-	 * <p>
-	 * The table-wide {@link DropConfig#getExecutability() executability} of each drop is followed
-	 * while the control is displayed, and a change of it is announced to the client again (see
-	 * {@link #followLive(ViewContext, ReactControl, LiveExecutability, Runnable)}).
-	 * </p>
-	 */
-	private DropTarget dropBinding(ViewContext context, TableViewControl<?> control) {
-		List<TableDropBinding.Drop> drops = new ArrayList<>(_drops.size());
-		for (CompiledDrop compiled : _drops) {
-			DropConfig dropConfig = compiled.config();
-			List<TLType> accepted = new ArrayList<>(dropConfig.getAccept().size());
-			for (TLModelPartRef ref : dropConfig.getAccept()) {
-				TLType type = ref.resolveType();
-				if (type == null) {
-					throw new RuntimeException(
-						"A <table> accepts a drop of an unknown type: " + ref.qualifiedName());
-				}
-				accepted.add(type);
-			}
-			ChannelRef targetChannelRef = dropConfig.getTargetChannel();
-
-			Supplier<ExecutableState> executability;
-			if (dropConfig.getExecutability().isEmpty()) {
-				executability = () -> ExecutableState.EXECUTABLE;
-			} else {
-				LiveExecutability live =
-					LiveExecutability.create(dropConfig, context, control::refreshDropTarget);
-				followLive(context, control, live, control::refreshDropTarget);
-				executability = live::getState;
-			}
-
-			QueryExecutor refuseIf = compiled.refuseIf();
-			drops.add(new TableDropBinding.Drop(TableDropBinding.tagsOf(accepted), dropConfig.getTarget(),
-				targetChannelRef == null ? null : context.resolveChannel(targetChannelRef),
-				compiled.actions(),
-				executability,
-				ViewExecutabilityRules.build(dropConfig.getTargetExecutability(), context),
-				refuseIf == null ? null : (target, objects) -> refuseIf.execute(target, objects)));
-		}
-		return new TableDropBinding(context, drops);
-	}
-
-	/**
-	 * Makes the rows of the given control draggable as the {@link Config#getDrag() drag} declares.
-	 *
-	 * <p>
-	 * The {@link DragConfig#getRowExecutability() row rules} decide per row; the table-wide
-	 * {@link DragConfig#getExecutability() executability} is followed while the control is
-	 * displayed, and takes the drag away from all rows while it refuses.
-	 * </p>
+	 * Makes the rows of the given control draggable as the {@link Config#getDrag() drag} declares,
+	 * the {@link TableDragConfig#getRowExecutability() row rules} deciding per row.
 	 */
 	private void installDragSource(ViewContext context, TableViewControl<Object> control) {
-		DragConfig drag = _config.getDrag();
-		ViewExecutabilityRule rowRule = ViewExecutabilityRules.build(drag.getRowExecutability(), context);
-		Predicate<Object> draggable = rowRule == ViewExecutabilityRule.ALWAYS_EXECUTABLE ? null
-			: row -> rowRule.isExecutable(row).isExecutable();
-		String dragType = _dragType;
-		if (drag.getExecutability().isEmpty()) {
-			control.setDragSource(dragType, draggable);
-			return;
-		}
+		TableDragConfig drag = _config.getDrag();
+		DragSourceBinding.Source source = new DragSourceBinding.Source() {
+			@Override
+			public String dragType() {
+				return control.dragType();
+			}
 
-		LiveExecutability[] live = new LiveExecutability[1];
-		Runnable update = () -> {
-			String type = live[0].getState().isExecutable() ? dragType : null;
-			if (Objects.equals(type, control.dragType())) {
+			@Override
+			public void setDragSource(String dragType, Predicate<Object> draggable) {
+				control.setDragSource(dragType, draggable);
+			}
+
+			@Override
+			public void refreshDragSource() {
 				control.refreshDragSource();
-			} else {
-				control.setDragSource(type, draggable);
 			}
 		};
-		live[0] = LiveExecutability.create(drag, context, update);
-		control.setDragSource(live[0].getState().isExecutable() ? dragType : null, draggable);
-		followLive(context, control, live[0], update);
-	}
-
-	/**
-	 * Follows the given rules while the given control is displayed.
-	 *
-	 * <p>
-	 * The rules are attached when the control is attached - the update then runs, since the rules
-	 * may answer differently than when the control was last displayed - and detached when it is
-	 * detached or cleaned up, so that no listener outlives the display.
-	 * </p>
-	 *
-	 * @param update
-	 *        Brings the control in line with what the rules answer now.
-	 */
-	private static void followLive(ViewContext context, ReactControl control, LiveExecutability live,
-			Runnable update) {
-		control.addAttachListener(() -> {
-			live.attach(context.getModelScope());
-			update.run();
-		});
-		control.addDetachListener(live::detach);
-		control.addCleanupAction(live::detach);
+		DragSourceBinding.install(context, control, source, drag, _dragType, drag.getRowExecutability());
 	}
 
 	/**
@@ -1377,7 +1119,7 @@ public class TableElement implements UIElement {
 			installDragSource(context, control);
 		}
 		if (!_drops.isEmpty()) {
-			control.setDropTarget(dropBinding(context, control));
+			control.setDropTarget(DeclaredDrop.bind(context, control, control::refreshDropTarget, _drops));
 		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).

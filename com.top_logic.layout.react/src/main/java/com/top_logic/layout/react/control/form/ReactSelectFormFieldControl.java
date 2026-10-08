@@ -19,9 +19,9 @@ import com.top_logic.layout.react.state.SelectState;
  * A {@link ReactFormFieldControl} for select fields that includes options in the field state.
  *
  * <p>
- * Options are passed as a list of {@link SelectState.Option} descriptors. They are included in the
- * field state under {@link SelectState#OPTIONS__PROP} so that the React {@code TLSelect} component
- * can render them.
+ * Options are passed as a list of {@link com.top_logic.layout.react.state.SelectState.Option}
+ * descriptors. They are included in the field state under {@link SelectState#OPTIONS__PROP} so that
+ * the React {@code TLSelect} component can render them.
  * </p>
  */
 public class ReactSelectFormFieldControl extends ReactFormFieldControl {

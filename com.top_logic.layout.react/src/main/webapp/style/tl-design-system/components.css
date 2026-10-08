@@ -1602,7 +1602,8 @@ a.tl-field-value:hover {
    tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter, was der
    Eintrag trägt (Gruppierungsknopf, label.tl-choice mit tl-checkbox). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
-   hoch; dann scrollt die Liste in sich, und ein Dialog um sie springt nicht beim Suchen. */
+   hoch; dann scrollt die Liste in sich. Steht die Suche davor, ist sie genau so hoch: ein Dialog um
+   sie schrumpft beim Tippen nicht unter dem Zeiger. */
 
 .tl-reorder-list {
   display: flex;
@@ -1614,6 +1615,12 @@ a.tl-field-value:hover {
   list-style: none;
 }
 .tl-reorder-list[hidden] { display: none; }
+
+/* Mit Suche davor eine feste Höhe: weniger Treffer lassen die Liste leer auslaufen, statt sie und den
+   Dialog um sie zu verkürzen. */
+.tl-reorder-list__search ~ .tl-reorder-list {
+  block-size: var(--tl-size-popover-max);
+}
 
 .tl-reorder-list__item {
   display: flex;

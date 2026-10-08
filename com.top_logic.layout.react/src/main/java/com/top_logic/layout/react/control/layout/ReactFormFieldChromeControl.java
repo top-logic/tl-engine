@@ -14,6 +14,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.util.Resources;
 
 /**
@@ -22,60 +23,12 @@ import com.top_logic.util.Resources;
  * component.
  *
  * <p>
- * State:
+ * The state is described by {@link FormFieldState}.
  * </p>
- * <ul>
- * <li>{@code label} - the field label text</li>
- * <li>{@code required} - whether the field is required</li>
- * <li>{@code error} - error message, or {@code null}</li>
- * <li>{@code errorIcon} - encoded theme icon displayed in front of the error message</li>
- * <li>{@code warningIcon} - encoded theme icon displayed in front of each warning message</li>
- * <li>{@code helpText} - help/description text, or {@code null}</li>
- * <li>{@value #TOOLTIP_TEXT} - plain text offered as the label's tooltip, or {@code null}; the
- * rich tooltip set by {@link #setTooltip(String, String, boolean)} takes precedence over it</li>
- * <li>{@code dirty} - whether the field has been modified</li>
- * <li>{@code labelPosition} - a {@link LabelPosition}, or {@code null} (inherit from layout)</li>
- * <li>{@code fullLine} - whether the field spans the full grid row</li>
- * <li>{@code visible} - whether the field is visible</li>
- * <li>{@code field} - the child field control descriptor</li>
- * </ul>
  */
 public class ReactFormFieldChromeControl extends ReactControl implements TooltipProvider {
 
 	private static final String REACT_MODULE = "TLFormField";
-
-	private static final String LABEL = "label";
-
-	private static final String REQUIRED = "required";
-
-	private static final String ERROR = "error";
-
-	private static final String ERROR_ICON = "errorIcon";
-
-	private static final String WARNINGS = "warnings";
-
-	private static final String WARNING_ICON = "warningIcon";
-
-	private static final String HELP_TEXT = "helpText";
-
-	private static final String DIRTY = "dirty";
-
-	private static final String LABEL_POSITION = "labelPosition";
-
-	private static final String FULL_LINE = "fullLine";
-
-	private static final String VISIBLE = "visible";
-
-	private static final String FIELD = "field";
-
-	private static final String HAS_TOOLTIP = "hasTooltip";
-
-	/**
-	 * State key of the plain text offered as the tooltip of the field label.
-	 *
-	 * @see #setTooltipText(String)
-	 */
-	public static final String TOOLTIP_TEXT = "tooltipText";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
 	private static final String TOOLTIP_KEY = "tooltip";
@@ -154,17 +107,17 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 			boolean fullLine, boolean visible, ReactControl field) {
 		super(context, null, REACT_MODULE);
 		_field = field;
-		putState(ERROR_ICON, Icons.VALIDATION_ERROR.resolve().toEncodedForm());
-		putState(WARNING_ICON, Icons.VALIDATION_WARNING.resolve().toEncodedForm());
+		putState(FormFieldState.ERROR_ICON__PROP, Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+		putState(FormFieldState.WARNING_ICON__PROP, Icons.VALIDATION_WARNING.resolve().toEncodedForm());
 		setLabel(label);
 		setRequired(required);
 		setDirty(dirty);
 		setError(error);
 		setHelpText(helpText);
 		setLabelPosition(labelPosition);
-		putState(FULL_LINE, fullLine);
+		putState(FormFieldState.FULL_LINE__PROP, fullLine);
 		setVisible(visible);
-		putState(FIELD, field);
+		putState(FormFieldState.FIELD__PROP, field);
 		followField();
 	}
 
@@ -248,7 +201,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The new label text.
 	 */
 	public void setLabel(String label) {
-		putState(LABEL, label);
+		putState(FormFieldState.LABEL__PROP, label);
 	}
 
 	/**
@@ -258,14 +211,14 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The new {@link LabelPosition}, or {@code null} to inherit from the enclosing layout.
 	 */
 	public void setLabelPosition(LabelPosition labelPosition) {
-		putState(LABEL_POSITION, labelPosition == null ? null : labelPosition.getExternalName());
+		putState(FormFieldState.LABEL_POSITION__PROP, labelPosition == null ? null : labelPosition.getExternalName());
 	}
 
 	/**
 	 * Updates whether this field spans the full grid row.
 	 */
 	public void setFullLine(boolean fullLine) {
-		putState(FULL_LINE, fullLine);
+		putState(FormFieldState.FULL_LINE__PROP, fullLine);
 	}
 
 	/**
@@ -275,7 +228,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The new help text, or {@code null} to clear.
 	 */
 	public void setHelpText(String helpText) {
-		putState(HELP_TEXT, helpText);
+		putState(FormFieldState.HELP_TEXT__PROP, helpText);
 	}
 
 	/**
@@ -285,7 +238,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The error message, or {@code null} to clear.
 	 */
 	public void setError(String error) {
-		putState(ERROR, error);
+		putState(FormFieldState.ERROR__PROP, error);
 	}
 
 	/**
@@ -295,7 +248,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The warning messages, or {@code null} to clear.
 	 */
 	public void setWarnings(java.util.List<String> warnings) {
-		putState(WARNINGS, warnings);
+		putState(FormFieldState.WARNINGS__PROP, warnings);
 	}
 
 	/**
@@ -305,7 +258,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        Whether the field has been modified.
 	 */
 	public void setDirty(boolean dirty) {
-		putState(DIRTY, dirty);
+		putState(FormFieldState.DIRTY__PROP, dirty);
 	}
 
 	/**
@@ -315,7 +268,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        Whether the field is visible.
 	 */
 	public void setVisible(boolean visible) {
-		putState(VISIBLE, visible);
+		putState(FormFieldState.VISIBLE__PROP, visible);
 	}
 
 	/**
@@ -324,7 +277,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 * @see #setVisible(boolean)
 	 */
 	public boolean isVisible() {
-		return !Boolean.FALSE.equals(getState(VISIBLE));
+		return !Boolean.FALSE.equals(getState(FormFieldState.VISIBLE__PROP));
 	}
 
 	/**
@@ -334,7 +287,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        Whether the field is required.
 	 */
 	public void setRequired(boolean required) {
-		putState(REQUIRED, required);
+		putState(FormFieldState.REQUIRED__PROP, required);
 	}
 
 	/**
@@ -348,7 +301,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 			_field.cleanupTree();
 		}
 		_field = field;
-		putState(FIELD, field);
+		putState(FormFieldState.FIELD__PROP, field);
 		followField();
 	}
 
@@ -380,7 +333,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		_tooltipHtml = (html == null || html.isEmpty()) ? null : html;
 		_tooltipCaption = caption;
 		_tooltipInteractive = interactive;
-		putState(HAS_TOOLTIP, _tooltipHtml != null);
+		putState(FormFieldState.HAS_TOOLTIP__PROP, _tooltipHtml != null);
 	}
 
 	/**
@@ -397,7 +350,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The description of the field, or {@code null} to clear.
 	 */
 	public void setTooltipText(String text) {
-		putState(TOOLTIP_TEXT, (text == null || text.isEmpty()) ? null : text);
+		putState(FormFieldState.TOOLTIP_TEXT__PROP, (text == null || text.isEmpty()) ? null : text);
 	}
 
 	@Override

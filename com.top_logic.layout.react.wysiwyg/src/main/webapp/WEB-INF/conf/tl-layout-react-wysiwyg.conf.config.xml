@@ -23,6 +23,7 @@
             requires="tl-react-bridge"
           />
           <stylesheet name="tl-react-wysiwyg-css"
+            layer="tl"
             resource="/script/tl-react-wysiwyg.css"
           />
         </resources>

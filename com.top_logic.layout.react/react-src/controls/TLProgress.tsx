@@ -9,17 +9,22 @@ import type { TLCellProps } from 'tl-react-bridge';
  * the stylesheet answers that state with a sweeping fill instead of a share of the track. The width
  * of the fill is data, not design: it is the same share `aria-valuenow` states, and the only thing
  * set inline.
+ *
+ * A bar inside an element that carries the name of what loads itself (the loading row of a tree, a
+ * tree item with its own name) is hidden from assistive technology, so the name is announced once.
  */
 export function ProgressBar({
   id,
   fraction,
   label,
   className,
+  ariaHidden,
 }: {
   id?: string;
   fraction: number | null;
   label?: string | null;
   className?: string;
+  ariaHidden?: boolean;
 }) {
   const indeterminate = typeof fraction !== 'number';
   const percent = indeterminate ? 0 : Math.round((fraction as number) * 100);
@@ -34,6 +39,7 @@ export function ProgressBar({
       aria-valuenow={indeterminate ? undefined : percent}
       aria-valuetext={label || undefined}
       aria-busy={indeterminate || undefined}
+      aria-hidden={ariaHidden || undefined}
     >
       <span className="tl-progress__track">
         <span className="tl-progress__fill" style={indeterminate ? undefined : { width: percent + '%' }} />

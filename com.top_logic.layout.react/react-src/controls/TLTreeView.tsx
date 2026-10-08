@@ -1,5 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, useI18N, tooltipProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ProgressBar } from './TLProgress';
 
 interface NodeState {
   id: string;
@@ -15,9 +16,21 @@ interface NodeState {
 const I18N_KEYS = {
   'js.treeView.expand': 'Expand',
   'js.treeView.collapse': 'Collapse',
+  'js.tree.label': 'Tree',
+  'js.tree.loading': 'Loading entries\u2026',
 };
 
-const INDENT_PX = 20;
+/** The glyph of the expand toggle (tl-toggle): right is closed, the toggle turns it down when open. */
+const CHEVRON_ICON = 'css:fa-solid fa-chevron-right';
+
+/** The indent of a level until the token is read: the toggle's width, size-control-sm. */
+const INDENT_FALLBACK_PX = 24;
+
+/** The server's names of the three drop positions (ReactTreeControl), by the shared calculator's. */
+const SERVER_POSITION = { before: 'above', onto: 'within', after: 'below' } as const;
+
+/** The data-tl-state word (drag.css) of a drop position the server reports. */
+const DROP_STATE: Record<string, string> = { above: 'drop-before', within: 'drop-onto', below: 'drop-after' };
 
 /** What the expansion toggle of a node in the given state does. */
 function toggleLabel(i18n: Record<string, string>, expanded: boolean): string {
@@ -43,7 +56,7 @@ const MULTI_SELECTION = 'multi';
 /**
  * React tree component with lazy-loaded children, selection, and keyboard navigation.
  */
-const TLTreeView: React.FC<TLCellProps> = () => {
+const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -64,6 +77,15 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   const [cursorNodeId, setCursorNodeId] = React.useState<string | null>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
 
+  // One level indents by the width of the toggle, so each child stands under its parent's label; read
+  // from the token, so the indent follows the density. The list is rendered unconditionally, so the
+  // ref is attached when the hook first measures: the token is read at the tree, not at the root.
+  const indent = useTokenPx(listRef, '--tl-size-control-sm', INDENT_FALLBACK_PX);
+  const nodeId = (id: string) => `${controlId}-node-${id}`;
+
+  // The node being dragged out of this tree, faded by drag.css while the drag runs.
+  const [draggingNodeId, setDraggingNodeId] = React.useState<string | null>(null);
+
   // Where the keyboard navigation continues. Without a cursor of its own it continues at the
   // selected node, so that the keys take up a selection made elsewhere (a click on another view
   // writing the tree's selection channel).
@@ -80,7 +102,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     if (selectedNodeId == null) {
       return;
     }
-    const selectedEl = listRef.current?.querySelector('.tlTreeView__node--selected');
+    const selectedEl = listRef.current?.querySelector('[role="treeitem"][aria-selected="true"]');
     if (selectedEl) {
       selectedEl.scrollIntoView({ block: 'nearest' });
     }
@@ -92,7 +114,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     if (cursorNodeId == null) {
       return;
     }
-    listRef.current?.querySelector('.tlTreeView__node--focused')?.scrollIntoView({ block: 'nearest' });
+    listRef.current?.querySelector('[data-tl-state~="cursor"]')?.scrollIntoView({ block: 'nearest' });
   }, [cursorNodeId]);
 
   const handleToggle = React.useCallback((nodeId: string, expanded: boolean) => {
@@ -135,18 +157,16 @@ const TLTreeView: React.FC<TLCellProps> = () => {
 
   const dragOverTimerRef = React.useRef<number | null>(null);
 
+  // The shared calculator (thirds: before, onto, after), in the server's names.
   const computeDropPosition = React.useCallback((e: React.DragEvent, element: HTMLElement): string => {
-    const rect = element.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const third = rect.height / 3;
-    if (y < third) return 'above';
-    if (y > third * 2) return 'below';
-    return 'within';
+    const position = dropPositionAt(e.clientY, element);
+    return position === 'none' ? 'within' : SERVER_POSITION[position];
   }, []);
 
   const handleDragStart = React.useCallback((nodeId: string, e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', nodeId);
+    setDraggingNodeId(nodeId);
   }, []);
 
   const handleDragOver = React.useCallback((nodeId: string, e: React.DragEvent) => {
@@ -174,6 +194,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   }, [sendCommand, computeDropPosition]);
 
   const handleDragEnd = React.useCallback(() => {
+    setDraggingNodeId(null);
     if (dragOverTimerRef.current != null) {
       window.clearTimeout(dragOverTimerRef.current);
       dragOverTimerRef.current = null;
@@ -275,74 +296,97 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     }
   }, [cursorIndex, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
 
+  // The node the cursor names. Every node in the list is rendered with its id, so the tree points
+  // aria-activedescendant at a rendered node or leaves the attribute out (no cursor, empty tree) -
+  // a reference to a missing id would hide the focus (WCAG 2.4.7); without it the tree shows the
+  // ring itself.
+  const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : undefined;
+
   return (
     <ul
       ref={listRef}
       role="tree"
-      className={rootClassName(state, 'tlTreeView')}
+      aria-label={i18n['js.tree.label']}
+      aria-multiselectable={isMulti || undefined}
+      aria-activedescendant={cursorNode ? nodeId(cursorNode.id) : undefined}
+      className={rootClassName(state, 'tl-tree', 'tl-type-body')}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
       {nodes.map((node, index) => (
-        <li
-          key={node.id}
-          role="treeitem"
-          aria-expanded={node.expandable ? node.expanded : undefined}
-          aria-selected={node.selected}
-          aria-level={node.depth + 1}
-          className={[
-            'tlTreeView__node',
-            node.selected ? 'tlTreeView__node--selected' : '',
-            index === cursorIndex ? 'tlTreeView__node--focused' : '',
-            dropIndicatorNodeId === node.id && dropIndicatorPosition === 'above' ? 'tlTreeView__node--drop-above' : '',
-            dropIndicatorNodeId === node.id && dropIndicatorPosition === 'within' ? 'tlTreeView__node--drop-within' : '',
-            dropIndicatorNodeId === node.id && dropIndicatorPosition === 'below' ? 'tlTreeView__node--drop-below' : '',
-          ].filter(Boolean).join(' ')}
-          style={{ paddingLeft: node.depth * INDENT_PX }}
-          draggable={dragEnabled}
-          onMouseDown={(e) => {
-            // Suppress the text selection the browser would start as a side
-            // effect of node-selection gestures (shift/ctrl range or toggle,
-            // double-click); plain click-and-drag still selects label text.
-            if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
-              e.preventDefault();
-            }
-          }}
-          onClick={(e) => handleSelect(node.id, e)}
-          onDoubleClick={() => handleActivate(node.id)}
-          onContextMenu={(e) => handleContextMenu(node.id, e)}
-          onDragStart={(e) => handleDragStart(node.id, e)}
-          onDragOver={dropEnabled ? (e) => handleDragOver(node.id, e) : undefined}
-          onDrop={dropEnabled ? (e) => handleDrop(node.id, e) : undefined}
-          onDragEnd={handleDragEnd}
-        >
-          {node.expandable ? (
-            <button
-              type="button"
-              className="tlTreeView__toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggle(node.id, node.expanded);
-              }}
-              tabIndex={-1}
-              aria-label={toggleLabel(i18n, node.expanded)}
-              {...tooltipProps(toggleLabel(i18n, node.expanded))}
+        <React.Fragment key={node.id}>
+          <li
+            id={nodeId(node.id)}
+            role="treeitem"
+            aria-expanded={node.expandable ? node.expanded : undefined}
+            aria-selected={node.selected}
+            aria-level={node.depth + 1}
+            aria-busy={node.loading || undefined}
+            className="tl-tree__node"
+            data-tl-state={stateAttr(
+              index === cursorIndex && 'cursor',
+              draggingNodeId === node.id && 'dragging',
+              dropIndicatorNodeId === node.id && dropIndicatorPosition ? DROP_STATE[dropIndicatorPosition] : undefined,
+            )}
+            style={{ paddingLeft: node.depth * indent }}
+            draggable={dragEnabled}
+            onMouseDown={(e) => {
+              // Suppress the text selection the browser would start as a side
+              // effect of node-selection gestures (shift/ctrl range or toggle,
+              // double-click); plain click-and-drag still selects label text.
+              if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
+                e.preventDefault();
+              }
+            }}
+            onClick={(e) => handleSelect(node.id, e)}
+            onDoubleClick={() => handleActivate(node.id)}
+            onContextMenu={(e) => handleContextMenu(node.id, e)}
+            onDragStart={(e) => handleDragStart(node.id, e)}
+            onDragOver={dropEnabled ? (e) => handleDragOver(node.id, e) : undefined}
+            onDrop={dropEnabled ? (e) => handleDrop(node.id, e) : undefined}
+            onDragEnd={handleDragEnd}
+          >
+            {node.expandable ? (
+              // The toggle expands its own node, so it points at no other element;
+              // pointing and pressing are the design system's veil.
+              <button
+                type="button"
+                className="tl-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggle(node.id, node.expanded);
+                }}
+                tabIndex={-1}
+                aria-expanded={node.expanded}
+                aria-label={toggleLabel(i18n, node.expanded)}
+                {...tooltipProps(toggleLabel(i18n, node.expanded))}
+              >
+                <ThemeIcon encoded={CHEVRON_ICON} className="tl-icon-sm" />
+              </button>
+            ) : (
+              <span className="tl-tree__spacer" />
+            )}
+            <span className="tl-tree__content">
+              <TLChild control={node.content} />
+            </span>
+          </li>
+          {/* The children are on their way: a status line one level deeper, with an indeterminate
+              progress - the one sign of loading the design system has. A tree owns tree items only,
+              so the line is one, named for what it says; the progress inside is hidden from
+              assistive technology, so the name is announced once. It is no cursor stop (no id, never
+              the active descendant). Its indent is that of its level: (aria-level - 1) toggle widths. */}
+          {node.loading && (
+            <li
+              role="treeitem"
+              aria-level={node.depth + 2}
+              aria-label={i18n['js.tree.loading']}
+              className="tl-status"
+              style={{ paddingLeft: (node.depth + 1) * indent }}
             >
-              {node.loading ? (
-                <span className="tlTreeView__spinner" />
-              ) : (
-                <span className={
-                  node.expanded ? 'tlTreeView__chevron--down' : 'tlTreeView__chevron--right'
-                } />
-              )}
-            </button>
-          ) : (
-            <span className="tlTreeView__toggleSpacer" />
+              <ProgressBar fraction={null} ariaHidden />
+            </li>
           )}
-          <span className="tlTreeView__content">
-            <TLChild control={node.content} />
-          </span>
-        </li>
+        </React.Fragment>
       ))}
     </ul>
   );

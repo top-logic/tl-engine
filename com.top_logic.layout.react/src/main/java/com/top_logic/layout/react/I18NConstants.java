@@ -561,6 +561,18 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.treeView.collapse")
 	public static ResKey JS_TREE_VIEW_COLLAPSE;
 
+	/**
+	 * @en Tree
+	 */
+	@CustomKey("js.tree.label")
+	public static ResKey JS_TREE_LABEL;
+
+	/**
+	 * @en Loading entries\u2026
+	 */
+	@CustomKey("js.tree.loading")
+	public static ResKey JS_TREE_LOADING;
+
 	// -- Form group client-side i18n keys --
 
 	/**

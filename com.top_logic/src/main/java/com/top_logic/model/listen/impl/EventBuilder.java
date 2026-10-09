@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.ListenerRegistration;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -137,11 +138,11 @@ public class EventBuilder {
 
 	private final ModelEventSettings _settings;
 
-	private final Map<ObjectKey, Set<ModelListener>> _objectListeners;
+	private final Map<ObjectKey, ModelListeners> _objectListeners;
 
-	private final Map<TLStructuredType, Set<ModelListener>> _typeListeners;
+	private final Map<TLStructuredType, ModelListeners> _typeListeners;
 
-	private final Set<ModelListener> _globalListeners;
+	private final ModelListeners _globalListeners;
 
 	private final Map<TLStructuredType, List<TLObject>> _updatedByType = new HashMap<>();
 
@@ -160,8 +161,8 @@ public class EventBuilder {
 	/**
 	 * Creates an {@link EventBuilder}.
 	 */
-	public EventBuilder(ModelEventSettings settings, Map<ObjectKey, Set<ModelListener>> objectListeners,
-			Map<TLStructuredType, Set<ModelListener>> typeListeners, Set<ModelListener> globalListeners) {
+	public EventBuilder(ModelEventSettings settings, Map<ObjectKey, ModelListeners> objectListeners,
+			Map<TLStructuredType, ModelListeners> typeListeners, ModelListeners globalListeners) {
 		super();
 
 		_settings = settings;
@@ -366,7 +367,7 @@ public class EventBuilder {
 		Set<TLStructuredType> touchedTypes = collectTouchedTypes();
 		Collection<TLStructuredType> deletedTypes = findDeletedObjects(touchedTypes);
 		touchedTypes.removeAll(deletedTypes);
-		Set<ModelListener> listeners = new HashSet<>(_globalListeners);
+		List<ListenerRegistration<ModelListener>> listeners = new ArrayList<>(_globalListeners.getRegistrations());
 
 		/* All touched sub-types (reflexive, transitive) of the key type. */
 		Map<TLStructuredType, List<TLStructuredType>> typeIndex = new HashMap<>();
@@ -391,17 +392,17 @@ public class EventBuilder {
 		return touchedTypes;
 	}
 
-	private void addObjectListeners(Set<ModelListener> listeners) {
+	private void addObjectListeners(List<ListenerRegistration<ModelListener>> listeners) {
 		Set<ObjectKey> updatedKeys = _updates.keySet();
 		Set<ObjectKey> deletedKeys = _deletes.keySet();
 
 		if (!_objectListeners.isEmpty()) {
 			int changeSize = updatedKeys.size() + deletedKeys.size();
 			if (changeSize > _objectListeners.size()) {
-				for (Entry<ObjectKey, Set<ModelListener>> entry : _objectListeners.entrySet()) {
+				for (Entry<ObjectKey, ModelListeners> entry : _objectListeners.entrySet()) {
 					ObjectKey key = entry.getKey();
 					if (updatedKeys.contains(key) || deletedKeys.contains(key)) {
-						listeners.addAll(entry.getValue());
+						listeners.addAll(entry.getValue().getRegistrations());
 					}
 				}
 			} else {
@@ -411,11 +412,11 @@ public class EventBuilder {
 		}
 	}
 
-	private void addListenersFor(Set<ModelListener> result, Set<ObjectKey> updatedKeys) {
+	private void addListenersFor(List<ListenerRegistration<ModelListener>> result, Set<ObjectKey> updatedKeys) {
 		for (ObjectKey key : updatedKeys) {
-			Set<ModelListener> listeners = _objectListeners.get(key);
+			ModelListeners listeners = _objectListeners.get(key);
 			if (listeners != null) {
-				result.addAll(listeners);
+				result.addAll(listeners.getRegistrations());
 			}
 		}
 	}
@@ -439,7 +440,7 @@ public class EventBuilder {
 	}
 
 	private void computeListenersAndIndex(Map<TLStructuredType, List<TLStructuredType>> typeIndex,
-			Set<ModelListener> listeners, TLStructuredType touchedType) {
+			List<ListenerRegistration<ModelListener>> listeners, TLStructuredType touchedType) {
 		if (touchedType.getModelKind() == ModelKind.CLASS) {
 			TLClass touchedClass = (TLClass) touchedType;
 			Set<TLClass> superClasses = TLModelUtil.getReflexiveTransitiveGeneralizations(touchedClass);
@@ -449,16 +450,18 @@ public class EventBuilder {
 		}
 	}
 
-	private void addDirect(Map<TLStructuredType, List<TLStructuredType>> typeIndex, Set<ModelListener> listeners,
+	private void addDirect(Map<TLStructuredType, List<TLStructuredType>> typeIndex,
+			List<ListenerRegistration<ModelListener>> listeners,
 			TLStructuredType generalization, TLStructuredType specialization) {
 		addToIndex(typeIndex, generalization, specialization);
 		addToListeners(listeners, generalization);
 	}
 
-	private void addToListeners(Set<ModelListener> listeners, TLStructuredType generalization) {
-		Set<ModelListener> typeListeners = _typeListeners.get(generalization);
+	private void addToListeners(List<ListenerRegistration<ModelListener>> listeners,
+			TLStructuredType generalization) {
+		ModelListeners typeListeners = _typeListeners.get(generalization);
 		if (typeListeners != null) {
-			listeners.addAll(typeListeners);
+			listeners.addAll(typeListeners.getRegistrations());
 		}
 	}
 
@@ -466,10 +469,29 @@ public class EventBuilder {
 		typeIndex.computeIfAbsent(generalization, x -> new ArrayList<>()).add(specialization);
 	}
 
-	private void notifyListeners(Map<TLStructuredType, List<TLStructuredType>> typeIndex, Set<ModelListener> listeners) {
+	/**
+	 * Delivers the change to the listeners of the given registrations.
+	 * 
+	 * <p>
+	 * A registration that is disposed before the delivery reaches it (e.g. by a listener notified
+	 * earlier) is skipped. A listener with multiple matching registrations is notified only once.
+	 * </p>
+	 */
+	private void notifyListeners(Map<TLStructuredType, List<TLStructuredType>> typeIndex,
+			List<ListenerRegistration<ModelListener>> registrations) {
 		ModelChangeEvent change = new ModelChangeEventImpl(typeIndex, _updates.keySet());
 
-		for (ModelListener listener : listeners) {
+		Set<ModelListener> notified = new HashSet<>();
+		for (ListenerRegistration<ModelListener> registration : registrations) {
+			ModelListener listener = registration.getListener();
+			if (listener == null) {
+				// Disposed in the meantime.
+				continue;
+			}
+			if (!notified.add(listener)) {
+				// Already notified through another registration.
+				continue;
+			}
 			try {
 				listener.notifyChange(change);
 			} catch (Exception ex) {

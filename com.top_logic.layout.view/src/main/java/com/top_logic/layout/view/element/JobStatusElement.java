@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
@@ -109,8 +110,8 @@ public class JobStatusElement implements UIElement {
 		ReactJobStatusControl control = new ReactJobStatusControl(context, display(channel.get()));
 
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setJob(display(newValue));
-		channel.addListener(listener);
-		control.addCleanupAction(() -> channel.removeListener(listener));
+		Registration registration = channel.addListener(listener);
+		control.addCleanupAction(registration::dispose);
 
 		control.setCssClass(_cssClass);
 		return control;

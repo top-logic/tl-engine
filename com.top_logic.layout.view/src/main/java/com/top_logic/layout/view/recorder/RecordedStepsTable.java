@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -164,8 +165,8 @@ public class RecordedStepsTable implements UIElement {
 				updating[0] = false;
 			}
 		};
-		selection.addListener(selectionListener);
-		control.addCleanupAction(() -> selection.removeListener(selectionListener));
+		Registration selectionRegistration = selection.addListener(selectionListener);
+		control.addCleanupAction(selectionRegistration::dispose);
 	}
 
 	/**

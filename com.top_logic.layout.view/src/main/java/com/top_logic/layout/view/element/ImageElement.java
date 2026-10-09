@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.image.ImageFit;
@@ -214,8 +215,8 @@ public class ImageElement implements UIElement {
 			ViewChannel channel = context.resolveChannel(inputRef);
 			control.setValue(channel.get());
 			ChannelListener listener = (sender, oldValue, newValue) -> control.setValue(newValue);
-			channel.addListener(listener);
-			control.addCleanupAction(() -> channel.removeListener(listener));
+			Registration registration = channel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 		return control;
 	}

@@ -8,10 +8,10 @@ package com.top_logic.model.listen.impl;
 import static java.util.Objects.*;
 
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
+import com.top_logic.basic.listener.ListenerRegistration;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.model.TLObject;
@@ -24,17 +24,22 @@ import com.top_logic.model.listen.ModelScope;
  * Default {@link ModelScope} implementation that transforms {@link UpdateEvent}s to
  * {@link ModelChangeEvent} events and dispatches them to registered listeners.
  * 
+ * <p>
+ * Registrations for an observed object or type are kept in a {@link ModelListeners} registry per
+ * object or type. A registry is dropped as soon as its last registration is disposed.
+ * </p>
+ * 
  * @see #eventBuilder()
  */
 public class DefaultModelScope implements ModelScope {
 
 	private final ModelEventSettings _settings;
 
-	private final Set<ModelListener> _globalListeners = new LinkedHashSet<>();
+	private final ModelListeners _globalListeners = new ModelListeners();
 
-	private final Map<TLStructuredType, Set<ModelListener>> _typeListeners = new LinkedHashMap<>();
+	private final Map<TLStructuredType, ModelListeners> _typeListeners = new LinkedHashMap<>();
 
-	private final Map<ObjectKey, Set<ModelListener>> _objectListeners = new LinkedHashMap<>();
+	private final Map<ObjectKey, ModelListeners> _objectListeners = new LinkedHashMap<>();
 
 	/**
 	 * Creates a {@link DefaultModelScope}.
@@ -51,47 +56,40 @@ public class DefaultModelScope implements ModelScope {
 	}
 
 	@Override
-	public boolean addModelListener(ModelListener listener) {
-		return _globalListeners.add(listener);
+	public Registration addModelListener(ModelListener listener) {
+		return _globalListeners.register(listener);
 	}
 
 	@Override
-	public boolean addModelListener(TLStructuredType type, ModelListener listener) {
-		Set<ModelListener> listeners = _typeListeners.computeIfAbsent(type, x -> new LinkedHashSet<>());
-		return listeners.add(listener);
+	public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+		return register(_typeListeners, type, listener);
 	}
 
 	@Override
-	public boolean addModelListener(TLObject object, ModelListener listener) {
+	public Registration addModelListener(TLObject object, ModelListener listener) {
 		if (object == null) {
-			return false;
+			return Registration.NONE;
 		}
 		if (object.tId() == null) {
 			/* TransientObject or something similar. Ignore, as tId() is used here and must not be null. */
-			return false;
+			return Registration.NONE;
 		}
-		Set<ModelListener> listeners = _objectListeners.computeIfAbsent(object.tId(), x -> new LinkedHashSet<>());
-		return listeners.add(listener);
+		return register(_objectListeners, object.tId(), listener);
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(ModelListener listener) {
-		return _globalListeners.remove(listener);
+		return _globalListeners.removeListener(listener);
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
-		Set<ModelListener> listeners = _typeListeners.get(type);
-		if (listeners == null) {
-			return false;
-		}
-		boolean result = listeners.remove(listener);
-		if (listeners.isEmpty()) {
-			_typeListeners.remove(type);
-		}
-		return result;
+		return remove(_typeListeners, type, listener);
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(TLObject object, ModelListener listener) {
 		if (object == null) {
@@ -100,15 +98,29 @@ public class DefaultModelScope implements ModelScope {
 		if (object.tId() == null) {
 			return false;
 		}
-		Set<ModelListener> listeners = _objectListeners.get(object.tId());
-		if (listeners == null) {
+		return remove(_objectListeners, object.tId(), listener);
+	}
+
+	private static <K> Registration register(Map<K, ModelListeners> registries, K key, ModelListener listener) {
+		ModelListeners registry = registries.computeIfAbsent(key, x -> new ModelListeners());
+		return new KeyedRegistration<>(registries, key, registry, registry.register(listener));
+	}
+
+	@SuppressWarnings("deprecation")
+	private static <K> boolean remove(Map<K, ModelListeners> registries, K key, ModelListener listener) {
+		ModelListeners registry = registries.get(key);
+		if (registry == null) {
 			return false;
 		}
-		boolean result = listeners.remove(listener);
-		if (listeners.isEmpty()) {
-			_objectListeners.remove(object.tId());
-		}
+		boolean result = registry.removeListener(listener);
+		dropIfEmpty(registries, key, registry);
 		return result;
+	}
+
+	private static <K> void dropIfEmpty(Map<K, ModelListeners> registries, K key, ModelListeners registry) {
+		if (!registry.hasRegisteredListeners()) {
+			registries.remove(key, registry);
+		}
 	}
 
 	/**
@@ -119,6 +131,44 @@ public class DefaultModelScope implements ModelScope {
 	 */
 	public EventBuilder eventBuilder() {
 		return new EventBuilder(_settings, _objectListeners, _typeListeners, _globalListeners);
+	}
+
+	/**
+	 * {@link Registration} of a listener for an observed object or type that drops the registry of
+	 * the object or type, when its last registration is disposed.
+	 */
+	private static final class KeyedRegistration<K> implements Registration {
+
+		private final Map<K, ModelListeners> _registries;
+
+		private final K _key;
+
+		private final ModelListeners _registry;
+
+		private final ListenerRegistration<ModelListener> _registration;
+
+		KeyedRegistration(Map<K, ModelListeners> registries, K key, ModelListeners registry,
+				ListenerRegistration<ModelListener> registration) {
+			_registries = registries;
+			_key = key;
+			_registry = registry;
+			_registration = registration;
+		}
+
+		@Override
+		public void dispose() {
+			if (!_registration.isActive()) {
+				return;
+			}
+			_registration.dispose();
+			dropIfEmpty(_registries, _key, _registry);
+		}
+
+		@Override
+		public boolean isActive() {
+			return _registration.isActive();
+		}
+
 	}
 
 }

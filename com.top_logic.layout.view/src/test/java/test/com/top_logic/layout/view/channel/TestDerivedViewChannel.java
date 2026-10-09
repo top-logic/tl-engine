@@ -5,11 +5,13 @@
  */
 package test.com.top_logic.layout.view.channel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DerivedViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
@@ -144,6 +146,7 @@ public class TestDerivedViewChannel extends TestCase {
 	/**
 	 * Tests that removeListener prevents further notifications.
 	 */
+	@SuppressWarnings("deprecation")
 	public void testRemoveListener() {
 		DefaultViewChannel input = new DefaultViewChannel("input");
 		input.set(null);
@@ -161,5 +164,83 @@ public class TestDerivedViewChannel extends TestCase {
 		derived.removeListener(listener);
 		input.set("b");
 		assertEquals("Listener should not be called after removal", 1, callCount[0]);
+	}
+
+	/**
+	 * Tests that a listener whose registration is disposed by an earlier listener of the same
+	 * notification is not called by that notification.
+	 */
+	public void testRegistrationDisposedDuringNotificationIsSkipped() {
+		DefaultViewChannel input = new DefaultViewChannel("input");
+		DerivedViewChannel derived = new DerivedViewChannel("derived");
+		derived.bind(List.of(input), args -> args[0]);
+
+		List<Object> calls = new ArrayList<>();
+		Registration[] second = new Registration[1];
+		derived.addListener((sender, oldVal, newVal) -> second[0].dispose());
+		second[0] = derived.addListener((sender, oldVal, newVal) -> calls.add(newVal));
+
+		input.set("a");
+
+		assertEquals("a", derived.get());
+		assertEquals("The disposed listener is not called.", List.of(), calls);
+	}
+
+	/**
+	 * Tests that a listener removed by an earlier listener of the same notification is not called
+	 * by that notification.
+	 */
+	@SuppressWarnings("deprecation")
+	public void testListenerRemovedDuringNotificationIsSkipped() {
+		DefaultViewChannel input = new DefaultViewChannel("input");
+		DerivedViewChannel derived = new DerivedViewChannel("derived");
+		derived.bind(List.of(input), args -> args[0]);
+
+		List<Object> calls = new ArrayList<>();
+		ChannelListener second = (sender, oldVal, newVal) -> calls.add(newVal);
+		derived.addListener((sender, oldVal, newVal) -> sender.removeListener(second));
+		derived.addListener(second);
+
+		input.set("a");
+
+		assertEquals("The removed listener is not called.", List.of(), calls);
+	}
+
+	/**
+	 * Tests that a listener registered during a notification is first called by the next
+	 * notification.
+	 */
+	public void testListenerAddedDuringNotificationIsCalledNextTime() {
+		DefaultViewChannel input = new DefaultViewChannel("input");
+		DerivedViewChannel derived = new DerivedViewChannel("derived");
+		derived.bind(List.of(input), args -> args[0]);
+
+		List<Object> calls = new ArrayList<>();
+		ChannelListener added = (sender, oldVal, newVal) -> calls.add(newVal);
+		Registration[] adder = new Registration[1];
+		adder[0] = derived.addListener((sender, oldVal, newVal) -> {
+			adder[0].dispose();
+			sender.addListener(added);
+		});
+
+		input.set("a");
+		assertEquals("The listener added during the notification is not called by it.", List.of(), calls);
+
+		input.set("b");
+		assertEquals(List.of("b"), calls);
+	}
+
+	/**
+	 * Tests that a released channel follows its inputs no more.
+	 */
+	public void testReleaseUnsubscribesFromInputs() {
+		DefaultViewChannel input = new DefaultViewChannel("input");
+		DerivedViewChannel derived = new DerivedViewChannel("derived");
+		derived.bind(List.of(input), args -> args[0]);
+
+		derived.release();
+		input.set("a");
+
+		assertNull("A released channel is not recomputed.", derived.get());
 	}
 }

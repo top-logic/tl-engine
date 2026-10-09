@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.configedit.ConfigTypeChoice;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -168,8 +169,8 @@ public class DesignerTreeElement implements UIElement {
 				}
 			}
 		};
-		inputChannel.addListener(rootListener);
-		treeControl.addCleanupAction(() -> inputChannel.removeListener(rootListener));
+		Registration rootRegistration = inputChannel.addListener(rootListener);
+		treeControl.addCleanupAction(rootRegistration::dispose);
 
 		return treeControl;
 	}

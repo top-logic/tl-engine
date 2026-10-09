@@ -9,15 +9,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
 
 /**
  * Default {@link ViewChannel} implementation that holds a mutable value.
  *
  * <p>
- * Thread-safe for listener management via {@link CopyOnWriteArrayList}. The {@link #set(Object)}
- * method uses {@link Objects#equals(Object, Object)} to detect changes and only fires listeners
- * when the value actually changes.
+ * The {@link #set(Object)} method uses {@link Objects#equals(Object, Object)} to detect changes and
+ * only notifies listeners when the value actually changes. A listener whose {@link Registration} is
+ * disposed while a notification runs is not called by that notification anymore.
+ * </p>
+ *
+ * <p>
+ * A channel is session state and is not synchronized: it is read and written by one thread at a
+ * time, the one holding the session's interaction (a request, or a background job delivering its
+ * progress under that interaction).
  * </p>
  *
  * <p>
@@ -33,7 +40,7 @@ public class DefaultViewChannel implements ViewChannel {
 
 	private Object _value;
 
-	private final CopyOnWriteArrayList<ChannelListener> _listeners = new CopyOnWriteArrayList<>();
+	private final ChannelListeners _listeners = new ChannelListeners(this);
 
 	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
 
@@ -70,18 +77,20 @@ public class DefaultViewChannel implements ViewChannel {
 		}
 
 		_value = newValue;
-		notifyListeners(oldValue, newValue);
+		_listeners.notifyChange(oldValue, newValue);
 		return true;
 	}
 
 	@Override
-	public void addListener(ChannelListener listener) {
-		_listeners.add(listener);
+	public Registration addListener(ChannelListener listener) {
+		return _listeners.register(listener);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
+	@Deprecated
 	public void removeListener(ChannelListener listener) {
-		_listeners.remove(listener);
+		_listeners.removeListener(listener);
 	}
 
 	@Override
@@ -104,18 +113,6 @@ public class DefaultViewChannel implements ViewChannel {
 	@Override
 	public void removeVetoListener(VetoListener listener) {
 		_vetoListeners.remove(listener);
-	}
-
-	private void notifyListeners(Object oldValue, Object newValue) {
-		ChannelNotificationScope scope = ChannelNotificationScope.current();
-		scope.enter();
-		try {
-			for (ChannelListener listener : _listeners) {
-				listener.handleNewValue(this, oldValue, newValue);
-			}
-		} finally {
-			scope.exit();
-		}
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLStructuredType;
@@ -56,7 +57,7 @@ public class DerivedViewChannel implements ObservingChannel {
 
 	private Object _value;
 
-	private final CopyOnWriteArrayList<ChannelListener> _listeners = new CopyOnWriteArrayList<>();
+	private final ChannelListeners _listeners = new ChannelListeners(this);
 
 	private Function<Object, Object> _reverseFunction;
 
@@ -71,10 +72,10 @@ public class DerivedViewChannel implements ObservingChannel {
 	private final List<Runnable> _vetoForwarderRemovers = new ArrayList<>();
 
 	/**
-	 * The listener recomputing the value, registered on every one of {@link #_inputs}, or
-	 * {@code null} while the channel is not bound.
+	 * The registrations of the listener recomputing the value on every one of {@link #_inputs},
+	 * empty while the channel is not bound.
 	 */
-	private ChannelListener _refreshListener;
+	private final List<Registration> _inputRegistrations = new ArrayList<>();
 
 	/**
 	 * Creates a {@link DerivedViewChannel}.
@@ -159,9 +160,9 @@ public class DerivedViewChannel implements ObservingChannel {
 		_value = evaluate(evaluator, inputs);
 		_inputObserver = new ChannelObjectObserver(inputs, observedTypes, this::recompute);
 
-		_refreshListener = (sender, oldVal, newVal) -> recompute();
+		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute();
 		for (ViewChannel input : inputs) {
-			input.addListener(_refreshListener);
+			_inputRegistrations.add(input.addListener(refreshListener));
 			_vetoForwarderRemovers.add(VetoForwarder.forward(input, this));
 		}
 	}
@@ -172,12 +173,10 @@ public class DerivedViewChannel implements ObservingChannel {
 	 */
 	@Override
 	public void release() {
-		if (_refreshListener != null) {
-			for (ViewChannel input : _inputs) {
-				input.removeListener(_refreshListener);
-			}
-			_refreshListener = null;
+		for (Registration registration : _inputRegistrations) {
+			registration.dispose();
 		}
+		_inputRegistrations.clear();
 		removeVetoForwarders();
 		if (_inputObserver != null) {
 			_inputObserver.detach();
@@ -223,13 +222,15 @@ public class DerivedViewChannel implements ObservingChannel {
 	}
 
 	@Override
-	public void addListener(ChannelListener listener) {
-		_listeners.add(listener);
+	public Registration addListener(ChannelListener listener) {
+		return _listeners.register(listener);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
+	@Deprecated
 	public void removeListener(ChannelListener listener) {
-		_listeners.remove(listener);
+		_listeners.removeListener(listener);
 	}
 
 	@Override
@@ -259,15 +260,7 @@ public class DerivedViewChannel implements ObservingChannel {
 		Object oldValue = _value;
 		if (!Objects.equals(oldValue, newValue)) {
 			_value = newValue;
-			ChannelNotificationScope scope = ChannelNotificationScope.current();
-			scope.enter();
-			try {
-				for (ChannelListener listener : _listeners) {
-					listener.handleNewValue(this, oldValue, newValue);
-				}
-			} finally {
-				scope.exit();
-			}
+			_listeners.notifyChange(oldValue, newValue);
 		}
 	}
 

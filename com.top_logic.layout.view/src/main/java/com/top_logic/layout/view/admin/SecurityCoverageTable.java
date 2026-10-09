@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
@@ -401,8 +402,8 @@ public class SecurityCoverageTable implements UIElement {
 					detail.show(detail.getKey(), rowByKey);
 				}
 			};
-			dataChannel.addListener(listener);
-			control.addCleanupAction(() -> dataChannel.removeListener(listener));
+			Registration registration = dataChannel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 		return control;
 	}

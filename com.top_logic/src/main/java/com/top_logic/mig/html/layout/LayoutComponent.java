@@ -75,6 +75,7 @@ import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.listener.PropertyListeners;
 import com.top_logic.basic.listener.PropertyObservable;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -841,9 +842,20 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private boolean _observeAllTypes = false;
 
-	private Set<TLStructuredType> _observedTypes = Set.of();
+	/**
+	 * {@link Registration}s of this component as {@link ModelListener} for everything, for the
+	 * {@link #getTypesToObserve() observed types} and the {@link #getObjectsToObserve() observed
+	 * objects}.
+	 * 
+	 * @see #registerListeners()
+	 */
+	private List<Registration> _observations = List.of();
 
-	private Set<TLObject> _observedObjects = Set.of();
+	/**
+	 * {@link Registration}s of this component as {@link ModelListener} for the {@link TLObject}s
+	 * of its current {@link #getModel() model}.
+	 */
+	private List<Registration> _modelObservations = List.of();
 
 	private Map<String, ChannelSPI> _allChannels;
 
@@ -1150,15 +1162,22 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	protected void registerListeners() {
 		/* Store which listeners were registered in fields for the deregistration. The ensures no
 		 * listener is forgotten, should the method output change until deregistration. */
+		_observations = dispose(_observations);
 		_observeAllTypes = observeAllTypes();
 		if (_observeAllTypes) {
-			getModelScope().addModelListener(this);
+			_observations = List.of(getModelScope().addModelListener(this));
 			return;
 		}
-		_observedTypes = Set.copyOf(getTypesToObserve());
-		_observedTypes.forEach(type -> getModelScope().addModelListener(type, this));
-		_observedObjects = Set.copyOf(getObjectsToObserve());
-		_observedObjects.forEach(object -> getModelScope().addModelListener(object, this));
+		/* The model scope is only requested if there is something to observe: A component outside
+		 * a main layout has none. */
+		List<Registration> observations = new ArrayList<>();
+		for (TLStructuredType type : Set.copyOf(getTypesToObserve())) {
+			observations.add(getModelScope().addModelListener(type, this));
+		}
+		for (TLObject object : Set.copyOf(getObjectsToObserve())) {
+			observations.add(getModelScope().addModelListener(object, this));
+		}
+		_observations = observations;
 
 		registerListenersForModel(getModel());
 	}
@@ -1171,16 +1190,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * </p>
 	 */
 	protected void deregisterListeners() {
-		if (_observeAllTypes) {
-			getModelScope().removeModelListener(this);
-			return;
-		}
-		_observedObjects.forEach(object -> getModelScope().removeModelListener(object, this));
-		_observedObjects = Set.of(); /* Prevent memory leaks. */
-		_observedTypes.forEach(type -> getModelScope().removeModelListener(type, this));
-		_observedTypes = Set.of();
+		_observations = dispose(_observations);
+		deregisterListenersForModel();
+	}
 
-		deregisterListenersForModel(getModel());
+	private static List<Registration> dispose(List<Registration> registrations) {
+		registrations.forEach(Registration::dispose);
+		return List.of();
 	}
 
 	/**
@@ -1234,27 +1250,27 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	/** Register as listener for {@link #getModel()} when it is a {@link TLObject}. */
 	private void registerListenersForModel(Object model) {
+		deregisterListenersForModel();
 		if (model == null) {
 			return;
 		}
+		/* The model scope is only requested if there is something to observe: A component outside
+		 * a main layout has none. */
 		if (model instanceof TLObject) {
 			/* Optimization for the most common case. */
-			getModelScope().addModelListener((TLObject) model, this);
+			_modelObservations = List.of(getModelScope().addModelListener((TLObject) model, this));
 		} else {
-			extractTLObjects(model).forEach(tlObject -> getModelScope().addModelListener(tlObject, this));
+			List<Registration> observations = new ArrayList<>();
+			for (TLObject tlObject : extractTLObjects(model)) {
+				observations.add(getModelScope().addModelListener(tlObject, this));
+			}
+			_modelObservations = observations;
 		}
 	}
 
 	/** @see #registerListenersForModel(Object) */
-	private void deregisterListenersForModel(Object model) {
-		if (model == null) {
-			return;
-		}
-		if (model instanceof TLObject) {
-			getModelScope().removeModelListener((TLObject) model, this);
-		} else {
-			extractTLObjects(model).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
-		}
+	private void deregisterListenersForModel() {
+		_modelObservations = dispose(_modelObservations);
 	}
 
 	/**
@@ -2331,7 +2347,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
 	protected void afterModelSet(Object oldModel, Object newModel) {
 		if (!_observeAllTypes) {
-			deregisterListenersForModel(oldModel);
 			registerListenersForModel(newModel);
 		}
 		invalidate();

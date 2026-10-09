@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.SimpleBinaryDataValue;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.pdf.ReactPdfViewerControl;
 import com.top_logic.layout.view.UIElement;
@@ -81,8 +82,8 @@ public class PdfElement implements UIElement {
 			ViewChannel channel = context.resolveChannel(_inputRef);
 			model.setData(pdf(channel.get()));
 			ChannelListener listener = (sender, oldValue, newValue) -> model.setData(pdf(newValue));
-			channel.addListener(listener);
-			control.addCleanupAction(() -> channel.removeListener(listener));
+			Registration registration = channel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 		control.setCssClass(_cssClass);
 		return control;

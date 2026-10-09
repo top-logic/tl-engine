@@ -5,8 +5,12 @@
  */
 package test.com.top_logic.layout.view.channel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
@@ -93,6 +97,7 @@ public class TestDefaultViewChannel extends TestCase {
 	/**
 	 * Tests that a removed listener is no longer notified.
 	 */
+	@SuppressWarnings("deprecation")
 	public void testRemoveListener() {
 		ViewChannel channel = new DefaultViewChannel("test");
 
@@ -106,5 +111,80 @@ public class TestDefaultViewChannel extends TestCase {
 		channel.removeListener(listener);
 		channel.set("b");
 		assertEquals("Listener should not be called after removal", 1, callCount[0]);
+	}
+
+	/**
+	 * Tests that a disposed registration ends the notification of the listener.
+	 */
+	public void testDisposedRegistration() {
+		ViewChannel channel = new DefaultViewChannel("test");
+
+		List<Object> calls = new ArrayList<>();
+		Registration registration = channel.addListener((sender, oldVal, newVal) -> calls.add(newVal));
+		channel.set("a");
+
+		registration.dispose();
+		registration.dispose();
+		channel.set("b");
+
+		assertEquals(List.of("a"), calls);
+		assertFalse(registration.isActive());
+	}
+
+	/**
+	 * Tests that a listener whose registration is disposed by an earlier listener of the same
+	 * notification is not called by that notification.
+	 */
+	public void testRegistrationDisposedDuringNotificationIsSkipped() {
+		ViewChannel channel = new DefaultViewChannel("test");
+
+		List<Object> calls = new ArrayList<>();
+		Registration[] second = new Registration[1];
+		channel.addListener((sender, oldVal, newVal) -> second[0].dispose());
+		second[0] = channel.addListener((sender, oldVal, newVal) -> calls.add(newVal));
+
+		channel.set("a");
+
+		assertEquals("The disposed listener is not called.", List.of(), calls);
+	}
+
+	/**
+	 * Tests that a listener removed by an earlier listener of the same notification is not called
+	 * by that notification.
+	 */
+	@SuppressWarnings("deprecation")
+	public void testListenerRemovedDuringNotificationIsSkipped() {
+		ViewChannel channel = new DefaultViewChannel("test");
+
+		List<Object> calls = new ArrayList<>();
+		ChannelListener second = (sender, oldVal, newVal) -> calls.add(newVal);
+		channel.addListener((sender, oldVal, newVal) -> sender.removeListener(second));
+		channel.addListener(second);
+
+		channel.set("a");
+
+		assertEquals("The removed listener is not called.", List.of(), calls);
+	}
+
+	/**
+	 * Tests that a listener registered during a notification is first called by the next
+	 * notification.
+	 */
+	public void testListenerAddedDuringNotificationIsCalledNextTime() {
+		ViewChannel channel = new DefaultViewChannel("test");
+
+		List<Object> calls = new ArrayList<>();
+		ChannelListener added = (sender, oldVal, newVal) -> calls.add(newVal);
+		Registration[] adder = new Registration[1];
+		adder[0] = channel.addListener((sender, oldVal, newVal) -> {
+			adder[0].dispose();
+			sender.addListener(added);
+		});
+
+		channel.set("a");
+		assertEquals("The listener added during the notification is not called by it.", List.of(), calls);
+
+		channel.set("b");
+		assertEquals(List.of("b"), calls);
 	}
 }

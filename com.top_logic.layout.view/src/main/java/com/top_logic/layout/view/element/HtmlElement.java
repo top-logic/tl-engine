@@ -22,6 +22,7 @@ import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -214,8 +215,8 @@ public class HtmlElement implements UIElement {
 		display(control, channel.get());
 
 		ChannelListener listener = (sender, oldValue, newValue) -> display(control, newValue);
-		channel.addListener(listener);
-		control.addCleanupAction(() -> channel.removeListener(listener));
+		Registration registration = channel.addListener(listener);
+		control.addCleanupAction(registration::dispose);
 
 		if (_onLink != null && _onLinkConfig != null) {
 			ViewCommandModel command = ViewCommandModel.forCommand(context, _onLink, _onLinkConfig);

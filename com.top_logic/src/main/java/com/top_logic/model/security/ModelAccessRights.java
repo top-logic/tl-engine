@@ -136,23 +136,21 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
-	 * object-level rights to perform the given command group on the given attribute. Relevant for
-	 * READ and WRITE command groups to implement attribute-level access restrictions.
+	 * Returns the roles granted the given command group on the given attribute. Relevant for READ
+	 * and WRITE command groups to implement attribute-level access rights.
 	 *
 	 * <p>
-	 * The returned roles further restrict access on top of the {@link #getAllowedRoles(TLClass,
-	 * BoundCommandGroup) object-level rights}: the user may perform the command group on the
-	 * attribute only if he is allowed to perform it on the object <em>and</em> holds one of the
-	 * returned roles.
+	 * If the attribute has a grant for the command group (see
+	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the returned roles
+	 * <b>replace</b> the {@link #getAllowedRoles(TLClass, BoundCommandGroup) object-level grant}
+	 * for this attribute: the user may perform the command group on the attribute if he holds one
+	 * of the returned roles, no matter whether the class grants him the command group on the object
+	 * as a whole. A grant listing no role at all denies the command group to everyone.
 	 * </p>
 	 *
 	 * <p>
-	 * An empty set has two meanings, which {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}
-	 * tells apart: without an attribute-level grant for the command group, there is no additional
-	 * restriction, the user may perform the command group on the attribute whenever he has the
-	 * corresponding rights on the object. With an attribute-level grant, an empty set means that no
-	 * role may perform the command group on the attribute.
+	 * Without a grant for the command group, the result is empty and the decision on the object
+	 * applies to the attribute.
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);

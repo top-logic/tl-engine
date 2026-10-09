@@ -29,6 +29,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -161,6 +162,21 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	public void testAdminDiscoversEverything() {
 		becomeUser(PersonManager.getManager().getRoot());
 		assertTrue(rights().isDiscoverAllowed(_a2));
+	}
+
+	public void testAttributeGrantWithoutClassRead() {
+		// a1 is not readable as a whole, but its structure attribute is.
+		assertFalse(rights().isReadAllowed(_pathUser, _a1));
+		assertTrue(rights().isReadAllowed(_pathUser, _a1, part("PathA", "bs")));
+		assertFalse(rights().isReadAllowed(_pathUser, _a1, part("PathNode", "name")));
+	}
+
+	public void testAttributeGrantOnlyForHolderOfRole() {
+		assertFalse(rights().isReadAllowed(_pathUser, _a2, part("PathA", "bs")));
+	}
+
+	TLStructuredTypePart part(String className, String partName) {
+		return ((TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className)).getPart(partName);
 	}
 
 	public static Test suite() {

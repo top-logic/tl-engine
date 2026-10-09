@@ -44,10 +44,12 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    singleton's own grants take precedence).
 6. `AccessManager.hasRole(person, object, roles)` decides whether the user holds one of them on the
    object.
-7. For an attribute value there is a second step: if the attribute has its own `<part>` grants for
-   the operation, the user must also hold one of those roles, on the object or, for a delegating
-   object, on the end of its chain of access parents; without attribute-level grants the
-   class-level decision stands.
+7. For an attribute value: if the attribute has its own `<part>` grants for the operation, they
+   **replace** the class grant for this attribute - the user must hold one of those roles, on the
+   object or, for a delegating object, on the end of its chain of access parents; a grant without
+   roles denies everyone. Without attribute-level grants the class-level decision stands.
+
+`Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 
 ## Grants: which roles may do what on a type
 

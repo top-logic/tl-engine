@@ -69,7 +69,7 @@ public class CompiledContext extends CompiledExpression {
 			// restrictions to honour, so the access may be compiled.
 			return false;
 		}
-		return !ModelAccessRights.getInstance().getAllowedRoles(part, SimpleBoundCommandGroup.READ).isEmpty();
+		return ModelAccessRights.getInstance().hasGrant(part, SimpleBoundCommandGroup.READ);
 	}
 
 }

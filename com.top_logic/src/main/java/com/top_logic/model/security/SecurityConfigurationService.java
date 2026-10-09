@@ -1161,22 +1161,17 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		boolean allowedOnInstance = decide(decisionCache(), person, instance, commandGroup);
-		if (!allowedOnInstance) {
-			return false;
-		}
 		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
 			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
 		if (!partRights.containsKey(commandGroup)) {
-			// No attribute-level grant for this operation: the attribute inherits the (passed)
-			// class-level decision.
-			return true;
+			// No grant of the attribute itself: the class decision applies.
+			return decide(decisionCache(), person, instance, commandGroup);
 		}
+		// The grants of the attribute replace the class grant for this attribute.
 		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
 		if (requiredPartRoles.isEmpty()) {
 			// An attribute-level grant is present but lists no roles: the operation is denied for
-			// every role. A role-based user can never satisfy it (only a bypassing super-user, which
-			// is already handled above, is unaffected).
+			// every role (only a bypassing super-user, handled above, is unaffected).
 			return false;
 		}
 		// An object with an access parent holds no roles itself: the roles the person holds on the

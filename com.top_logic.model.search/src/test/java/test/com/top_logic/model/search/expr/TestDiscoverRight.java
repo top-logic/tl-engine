@@ -19,7 +19,6 @@ import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -30,6 +29,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -37,6 +37,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the {@link SimpleBoundCommandGroup#DISCOVER Discover} right (ticket #29782) in the security
@@ -102,7 +103,12 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		becomeUser(PersonManager.getManager().getRoot());
 		_kb.removeUpdateListener(_creationListener);
 		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			KBUtils.deleteAllKI(_toDelete.values().iterator());
+			// A cascading delete may already have removed a tracked item (e.g. an association).
+			for (KnowledgeItem item : _toDelete.values()) {
+				if (item.isAlive()) {
+					_kb.delete(item);
+				}
+			}
 			tx.commit();
 		}
 		_toDelete.clear();
@@ -276,6 +282,165 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		becomeUser(_pathUser);
 		assertEquals(Arrays.asList(_a1), eval("x -> $x", Arrays.asList(_a1, _a2)));
 		assertEquals(Double.valueOf(1), eval("x -> $x.size()", Arrays.asList(_a1, _a2)));
+	}
+
+	/**
+	 * R5: A new reference target must be discoverable.
+	 */
+	public void testSetToUndiscoverableTargetDenied() throws Exception {
+		grantWrite(_pathUser, _b1);
+		TLObject hidden = createHiddenC("hidden");
+		becomeUser(_pathUser);
+		assertPermissionDenied(
+			() -> executeUnfiltered("b -> c -> $b.set(`TestTLScriptSecurity:PathB#cs`, list($c))", _b1, hidden));
+	}
+
+	/**
+	 * Objects already contained in the stored value are not checked.
+	 */
+	public void testSetKeepingStoredHiddenTargetAllowed() throws Exception {
+		grantWrite(_pathUser, _b1);
+		becomeUser(_pathUser);
+		executeUnfiltered("b -> c -> $b.set(`TestTLScriptSecurity:PathB#cs`, list($c))", _b1, _c2);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(_c2), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * The dynamic set checks the targets, too.
+	 */
+	public void testDynamicSetToUndiscoverableTargetDenied() throws Exception {
+		grantWrite(_pathUser, _b1);
+		TLObject hidden = createHiddenC("hidden");
+		becomeUser(_pathUser);
+		assertPermissionDenied(() -> executeUnfiltered(
+			"b -> c -> $b.dynamicSet(`TestTLScriptSecurity:PathB#cs`, list($c))", _b1, hidden));
+	}
+
+	/**
+	 * R5: Adding an undiscoverable target is denied.
+	 */
+	public void testAddUndiscoverableTargetDenied() throws Exception {
+		grantWrite(_pathUser, _b2);
+		becomeUser(_pathUser);
+		assertPermissionDenied(
+			() -> executeUnfiltered("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, $c)", _b2, _c2));
+	}
+
+	/**
+	 * R10: set replaces the whole value, including elements the user cannot discover.
+	 */
+	public void testSetReplacesIncludingHidden() throws Exception {
+		grantWrite(_pathUser, _b1);
+		becomeUser(_pathUser);
+		eval("b -> $b.set(`TestTLScriptSecurity:PathB#cs`, list())", _b1);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Collections.emptyList(), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * R10: add keeps the elements the user cannot discover.
+	 */
+	public void testAddKeepsHidden() throws Exception {
+		grantWrite(_pathUser, _b1);
+		TLObject c3 = createReadableC("c3");
+		becomeUser(_pathUser);
+		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, $c)", _b1, c3);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(_c1, _c2, c3), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * R10: The index of add refers to the list the user sees.
+	 */
+	public void testAddAtVisibleIndex() throws Exception {
+		grantWrite(_pathUser, _b1);
+		TLObject c3 = createReadableC("c3");
+		TLObject c4 = createReadableC("c4");
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			_b1.tUpdateByName("cs", Arrays.asList(_c2, _c1, c3));
+			tx.commit();
+		}
+		becomeUser(_pathUser);
+		// The user sees [c1, c3]; index 1 means "between c1 and c3" in the visible list.
+		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, 1, $c)", _b1, c4);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(_c2, _c1, c4, c3), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * Index 0 of the visible list inserts before the first visible element.
+	 */
+	public void testAddAtVisibleIndexZero() throws Exception {
+		grantWrite(_pathUser, _b1);
+		TLObject c3 = createReadableC("c3");
+		becomeUser(_pathUser);
+		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, 0, $c)", _b1, c3);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(c3, _c1, _c2), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * Evaluates the script with the inputs handed in unfiltered (the security of the script's own
+	 * operations stays on), so that an undiscoverable object can reach a write operation.
+	 */
+	private Object executeUnfiltered(String script, Object... args) throws Exception {
+		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search(script));
+		return executor.executeIntermediate(executor.context(), Args.some(args));
+	}
+
+	void grantWrite(Person person, TLObject b) throws Exception {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject writer = newObject("Employee");
+			writer.tUpdateByName("account", person);
+			b.tUpdateByName("editors", Collections.singletonList(writer));
+			tx.commit();
+		}
+	}
+
+	TLObject createHiddenC(String name) throws Exception {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject c = node("PathC", name);
+			tx.commit();
+			return c;
+		}
+	}
+
+	TLObject createReadableC(String name) throws Exception {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject reader = newObject("Employee");
+			reader.tUpdateByName("account", _pathUser);
+			TLObject c = node("PathC", name);
+			c.tUpdateByName("readers", Collections.singletonList(reader));
+			tx.commit();
+			return c;
+		}
+	}
+
+	private void assertPermissionDenied(ThrowingAction action) {
+		try {
+			action.run();
+		} catch (Throwable ex) {
+			if (hasCause(ex, TopLogicException.class)) {
+				return;
+			}
+			throw new AssertionError("Expected a permission-denial TopLogicException, but got: " + ex, ex);
+		}
+		fail("Expected a permission denial, but the operation succeeded.");
+	}
+
+	private static boolean hasCause(Throwable ex, Class<? extends Throwable> type) {
+		for (Throwable current = ex; current != null; current = current.getCause()) {
+			if (type.isInstance(current)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@FunctionalInterface
+	private interface ThrowingAction {
+		void run() throws Exception;
 	}
 
 	private static java.util.List<?> asList(Object value) {

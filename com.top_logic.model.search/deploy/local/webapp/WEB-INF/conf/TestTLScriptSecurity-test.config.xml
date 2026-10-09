@@ -18,6 +18,7 @@
 					<role name="TestTLScriptSecurity.PathReader"/>
 					<role name="TestTLScriptSecurity.PathViewer"/>
 					<role name="TestTLScriptSecurity.NoteWriter"/>
+					<role name="TestTLScriptSecurity.PathWriter"/>
 				</roles>
 			</instance>
 		</config>
@@ -110,6 +111,11 @@
 							operation="Read"
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
+						<!-- The path writer may replace the cs of a B. -->
+						<grant
+							operation="Write"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
 					</part>
 				</security-config>
 			</instance>
@@ -156,6 +162,16 @@
 						>
 							<path>
 								<step attribute="TestTLScriptSecurity:PathB#writers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c06"
+							meta-element="TestTLScriptSecurity:PathB"
+							role="TestTLScriptSecurity.PathWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathB#editors"/>
 								<step attribute="TestTLScriptSecurity:Employee#account"/>
 							</path>
 						</rule>

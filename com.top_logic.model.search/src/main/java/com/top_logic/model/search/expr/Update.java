@@ -5,7 +5,10 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.Collection;
+
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
@@ -85,6 +88,7 @@ public class Update extends SearchExpressionWithSecurity {
 
 		if (usesSecurity()) {
 			checkWritePermission(self, part);
+			checkNewTargets(self, part, value);
 		}
 
 		self.tUpdate(part, value);
@@ -111,6 +115,40 @@ public class Update extends SearchExpressionWithSecurity {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
 		if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
 			throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));
+		}
+	}
+
+	/**
+	 * Checks that the current user may discover every object the given new value adds to the
+	 * reference.
+	 *
+	 * <p>
+	 * Objects already contained in the stored value are not checked: they may stay even if the user
+	 * cannot discover them.
+	 * </p>
+	 *
+	 * @param self
+	 *        The object to modify.
+	 * @param part
+	 *        The attribute of the given object to modify. Only references are checked.
+	 * @param newValue
+	 *        The value that is going to be stored.
+	 * @throws TopLogicException
+	 *         If the new value refers to an object that is not already referenced and that the
+	 *         current user cannot discover.
+	 */
+	public static void checkNewTargets(TLObject self, TLStructuredTypePart part, Object newValue) {
+		if (!(part instanceof TLReference)) {
+			return;
+		}
+		Collection<?> stored = SearchExpression.asSet(self.tValue(part));
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		for (Object target : SearchExpression.asList(newValue)) {
+			if (target instanceof TLObject object && !stored.contains(object)
+				&& !accessRights.isDiscoverAllowed(object)) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE.fill(self, part));
+			}
 		}
 	}
 

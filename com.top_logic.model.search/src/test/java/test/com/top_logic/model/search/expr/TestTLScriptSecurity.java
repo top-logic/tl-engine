@@ -615,18 +615,34 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * {@code add(...)} / {@code remove(...)} succeed for the responsible's account (ProjectResponsible
-	 * grants write). Editing {@code members} cannot revoke the actor's own grant, which comes from
+	 * {@code remove(...)} succeeds for the responsible's account (ProjectResponsible grants write),
+	 * {@code add(...)} succeeds as long as the added employee is discoverable for the actor.
+	 * Editing {@code members} cannot revoke the actor's own grant, which comes from
 	 * {@code responsible}.
+	 *
+	 * <p>
+	 * The responsible does not discover employees, therefore the new member is added by an
+	 * administrator first. Adding that employee as the responsible is denied (R5 of the Discover
+	 * specification: a new reference target must be discoverable).
+	 * </p>
 	 */
 	public void testAddRemoveAllowedForResponsible() throws Exception {
 		becomeUser(_user);
+		assertPermissionDenied(() -> {
+			try (Transaction tx = beginTx()) {
+				execute(search(ADD_MEMBER), _p1, _e1);
+				tx.commit();
+			}
+		});
+
+		becomeUser(_root);
 		try (Transaction tx = beginTx()) {
 			execute(search(ADD_MEMBER), _p1, _e1);
 			tx.commit();
 		}
 		assertTrue(members(_p1).contains(_e1));
 
+		becomeUser(_user);
 		try (Transaction tx = beginTx()) {
 			execute(search(REMOVE_MEMBER), _p1, _e1);
 			tx.commit();

@@ -199,6 +199,10 @@
 							multiple="true"
 							type="Employee"
 						/>
+						<reference name="editors"
+							multiple="true"
+							type="Employee"
+						/>
 					</attributes>
 				</class>
 

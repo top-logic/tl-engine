@@ -7,9 +7,9 @@ filterSecurity($base)
 
 <h2>Description</h2>
 
-<p>Applies the read permissions of the logged-in user to a value and removes all business objects that the user is not allowed to see.</p>
+<p>Applies the discover right of the logged-in user to a value and removes all business objects that the user is not allowed to discover.</p>
 
-<p>When accessing model elements, referenced objects are returned <strong>unfiltered</strong> in TL-Script &ndash; consistent with the user interface, which always shows a referenced object by its label and only secures the navigation into the object. Only access to the <em>attributes</em> of an object is denied if the user must not read the object. An intermediate result of an evaluation may therefore contain objects that the user must not read. With <code class="hljs inlineCode">filterSecurity</code>, such a value can be explicitly secured so that it only contains objects the user may read.</p>
+<p>Every object source in a secured TL-Script (references, referers, container, object functions) already delivers only objects the user may discover. <code class="hljs inlineCode">filterSecurity</code> remains as a safety net for values assembled from unsecured sources.</p>
 
 <p>The check is applied recursively:</p>
 

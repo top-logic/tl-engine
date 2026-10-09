@@ -7,9 +7,9 @@ filterSecurity($base)
 
 <h2>Beschreibung</h2>
 
-<p>Wendet die Lese-Berechtigungen des angemeldeten Nutzers auf einen Wert an und entfernt alle Fachobjekte, die der Nutzer nicht sehen darf.</p>
+<p>Wendet das Entdecken-Recht des angemeldeten Nutzers auf einen Wert an und entfernt alle Fachobjekte, die der Nutzer nicht entdecken darf.</p>
 
-<p>Beim Zugriff auf Modellelemente werden referenzierte Objekte in TL-Script grunds&auml;tzlich <strong>ungefiltert</strong> zur&uuml;ckgegeben &ndash; konsistent zur Oberfl&auml;che, die ein referenziertes Objekt immer mit seiner Beschriftung anzeigt und nur die Navigation in das Objekt absichert. Lediglich der Zugriff auf die <em>Attribute</em> eines Objektes wird verweigert, wenn der Nutzer das Objekt nicht lesen darf. Ein Zwischenergebnis einer Auswertung kann daher Objekte enthalten, die der Nutzer nicht lesen darf. Mit <code class="hljs inlineCode">filterSecurity</code> kann ein solcher Wert explizit so abgesichert werden, dass er nur noch lesbare Objekte enth&auml;lt.</p>
+<p>Jede Objektquelle in einem abgesicherten TL-Script (Referenzen, Referrer, Container, Objektfunktionen) liefert bereits nur Objekte, die der Nutzer entdecken darf. <code class="hljs inlineCode">filterSecurity</code> bleibt als Sicherheitsnetz f&uuml;r Werte, die aus ungesicherten Quellen zusammengesetzt werden.</p>
 
 <p>Die Pr&uuml;fung erfolgt rekursiv:</p>
 

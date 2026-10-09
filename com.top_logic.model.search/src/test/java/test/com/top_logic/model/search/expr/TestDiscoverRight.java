@@ -30,6 +30,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -173,6 +174,38 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 
 	public void testAttributeGrantOnlyForHolderOfRole() {
 		assertFalse(rights().isReadAllowed(_pathUser, _a2, part("PathA", "bs")));
+	}
+
+	public void testNavigationDeliversOnlyDiscoverable() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(Arrays.asList(_a1), eval("r -> $r.get(`TestTLScriptSecurity:PathRoot#as`)", _root));
+		assertEquals(Arrays.asList(_b1), eval("a -> $a.get(`TestTLScriptSecurity:PathA#bs`)", _a1));
+		assertEquals(Arrays.asList(_c1), eval("b -> $b.get(`TestTLScriptSecurity:PathB#cs`)", _b1));
+	}
+
+	public void testLabelOfDiscoverableVisibleAttributeNot() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(Arrays.asList("a1"),
+			eval("r -> $r.get(`TestTLScriptSecurity:PathRoot#as`).map(a -> toString($a))", _root));
+		assertNull(eval("a -> $a.get(`TestTLScriptSecurity:PathNode#name`)", _a1));
+	}
+
+	public void testReferersFiltered() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(set(_b1), asSet(eval("c -> $c.referers(`TestTLScriptSecurity:PathB#cs`)", _c1)));
+	}
+
+	public void testUncommittedObjectNotFiltered() throws Exception {
+		becomeUser(_pathUser);
+		Object result = execute(search("x -> new(`TestTLScriptSecurity:PathC`, transient: true)"), _root);
+		assertNotNull(result);
+	}
+
+	public void testUnsecuredSeesEverything() throws Exception {
+		becomeUser(_pathUser);
+		QueryExecutor executor = QueryExecutor.compile(search("r -> $r.get(`TestTLScriptSecurity:PathRoot#as`)"));
+		executor.disableSecurity();
+		assertEquals(Arrays.asList(_a1, _a2), executor.execute(_root));
 	}
 
 	TLStructuredTypePart part(String className, String partName) {

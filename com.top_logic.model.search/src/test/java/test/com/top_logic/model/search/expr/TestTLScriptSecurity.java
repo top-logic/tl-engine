@@ -362,8 +362,8 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 	/**
 	 * The result of an execution is secured by the {@link QueryExecutor}: the reference navigation
-	 * itself delivers the referenced employee unfiltered, but the employee is not readable for the
-	 * user, so the result of the execution is {@code null}.
+	 * itself filters the referenced employee, since the user must not discover it (R4 of the Discover
+	 * specification), so the result of the execution is {@code null}.
 	 */
 	public void testResultSecuredByExecutor() throws Exception {
 		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
@@ -427,9 +427,16 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	public void testNestedResultNotFiltered() throws Exception {
 		becomeUser(_user);
 
+		// Since the reference navigation itself only delivers discoverable objects (R4 of the Discover
+		// specification), the responsible employee is no longer delivered by the navigation. An
+		// object handed in directly demonstrates that a nested result is not filtered.
 		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+		assertNull("The reference navigation filters undiscoverable objects (R4 of the Discover specification).",
+			responsible.executeIntermediate(_p1));
+
+		QueryExecutor identity = QueryExecutor.compile(kb(), model(), search("e -> $e"));
 		assertEquals("A nested result must keep the objects the calling script computes with.",
-			_e1, responsible.executeIntermediate(_p1));
+			_e1, identity.executeIntermediate(_e1));
 
 		QueryExecutor salary = QueryExecutor.compile(kb(), model(), search(SALARY_OF_RESPONSIBLE));
 		assertNull("The attribute of an unreadable object stays inaccessible in a nested execution.",

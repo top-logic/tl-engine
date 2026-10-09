@@ -135,7 +135,7 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 			conversion.convert(arguments);
 		}
 		try {
-			return _java.invoke(null, parameters(arguments));
+			return discoverable(_java.invoke(null, parameters(arguments)), usesSecurity());
 		} catch (InvocationTargetException ex) {
 			// The function itself failed: report its failure, not the reflective call.
 			Throwable cause = ex.getCause();

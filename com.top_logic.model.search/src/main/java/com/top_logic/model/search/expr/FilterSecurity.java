@@ -21,12 +21,10 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * permissions, removing all business objects the user must not see.
  *
  * <p>
- * Access operations in TL-Script return referenced objects <em>unfiltered</em> (consistent with the
- * user interface, which always shows a referenced object by its label and only secures navigation
- * into it); only the access to the <em>attributes</em> of an object is denied if the user must not
- * read the object. As a consequence, an intermediate result of a search expression may well contain
- * objects the user must not read. This expression applies
- * {@link SearchExpression#filterSecurity(Object)} to its argument and thereby removes them
+ * Every object source in a secured TL-Script delivers only discoverable objects (see the Discover
+ * specification); this function remains as a safety net for values assembled from unsecured
+ * sources. It applies {@link SearchExpression#filterSecurity(Object)} to its argument and thereby
+ * removes the objects the user must not discover
  * (recursively: a single forbidden object becomes <code>null</code>, forbidden elements are dropped
  * from collections, primitive values are kept).
  * </p>

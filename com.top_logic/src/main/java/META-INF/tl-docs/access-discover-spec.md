@@ -1,14 +1,14 @@
 ---
-description: Read before designing or implementing the Discover right of the model based security - the draft specification of an object-level right weaker than Read that makes an object visible (in references, enumerations, option lists, with its label) without exposing its attributes, the filtering of every object source in TL-Script and the UI, the checks on inputs, and the parent-path example Root -> A -> B -> C.
+description: Read before designing or implementing the Discover right of the model based security - the specification of an object-level right weaker than Read that makes an object visible (in references, enumerations, option lists, with its label) without exposing its attributes, the filtering of every object source in TL-Script and the UI, the checks on inputs, and the parent-path example Root -> A -> B -> C.
 order: 21
 ---
 
-# Specification: the `Discover` right (draft)
+# Specification: the `Discover` right
 
-**Status:** draft specification, not implemented. It describes the target behaviour of the model
-based security for TL-Script and the user interface. The current behaviour is described in
-[the access configuration article](doc:access-configuration). No application uses the model based
-security yet, so this specification is free to change the current semantics without a migration.
+**Status:** implemented by ticket #29782. It describes the behaviour of the model based security
+for TL-Script and the user interface. The configuration syntax and the access check are described
+in [the access configuration article](doc:access-configuration). No application used the model
+based security before, so the change of the earlier semantics needed no migration.
 
 ## Motivation
 
@@ -351,15 +351,21 @@ as the value of a reference (R7).
 
 1. **Cost of the upward role inheritance** in deep or wide structures.
 
-## Relation to the current state
+## Relation to the earlier behaviour
 
-- Attribute grants currently **narrow** the class grant (see
-  [the access configuration article](doc:access-configuration)); R3 changes this to replacement.
-- References currently deliver their targets unfiltered; R4 changes this.
-- Form fields currently show all elements of a reference with their labels; R11 masks the
-  undiscoverable ones.
-- Label scripts are currently evaluated secured; R12 evaluates them unsecured.
-- Constraint messages may currently name any object; R12 restricts them to discoverable objects.
-- Ticket #29453 restricts `all()`, `all($t)` and `kbQuery` in a secured evaluation to the readable
-  instances. This is R4 for enumeration with `Read` as criterion; with `Discover` the criterion
-  changes and the filter moves into the common layer (R8).
+The right is implemented by ticket #29782; this section lists what changed against the behaviour
+before it.
+
+- Attribute grants used to **narrow** the class grant; with R3 they **replace** it for their
+  attribute (see [the access configuration article](doc:access-configuration)).
+- References used to deliver their targets unfiltered; with R4 they are filtered for `Discover`.
+- Form fields used to show all elements of a reference with their labels; with R11 the
+  undiscoverable ones are masked.
+- Label scripts used to be evaluated secured; with R12 they are evaluated unsecured.
+- Constraint messages could name any object; with R12 they mask undiscoverable ones.
+- Ticket #29453 restricted `all()`, `all($t)` and `kbQuery` in a secured evaluation to the readable
+  instances. This is now R4 with `Discover` as criterion, and the filter lives in the common layer
+  (R8).
+- Object sources outside the TL-Script functions that do not use the common layer (for example
+  `loadFromSession`, `changeLog`, `inRevision`) are only covered by the input and result filters;
+  moving them onto the common layer is follow-up work.

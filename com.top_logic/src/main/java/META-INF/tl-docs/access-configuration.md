@@ -109,7 +109,9 @@ instead of replacing them.
 ```
 
 - `operation` is a command group id: `Read`, `Write`, `Create`, `Delete`, `Export`, … (see
-  `SimpleBoundCommandGroup`).
+  `SimpleBoundCommandGroup`). The operation `Discover` is implied by every other right on the
+  object or one of its attributes, so it is rarely granted on its own; see
+  [the Discover specification](doc:access-discover-spec).
 - `roles` is a comma separated list of role names (`InitialRolesManager` declares roles).
 - `<grant>` adds roles, `<revoke>` takes them away again, in the order the rules appear.
 - `inherit="true"` passes the rule on to the specializations of the type. The rights of a type are

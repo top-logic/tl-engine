@@ -17,18 +17,18 @@ path. Example: a structure `Root -> A -> B -> C` with the multi-valued reference
 `A#bs` and `B#cs`. The user may read some `C` objects. To show them in a tree, the UI must show the
 parent `B` and `A` of each such `C` - but not their data, and not the **siblings** of the path.
 
-With the current rules this is impossible:
+Before this change that was impossible:
 
-- Reading `A#bs` requires the class-level `Read` right on `A` (an attribute grant only narrows the
-  class grant). A role that makes `A#bs` readable therefore makes *all* attributes of `A` readable,
-  unless every other attribute is locked by its own grant (a deny list - a new attribute is
+- Reading `A#bs` requires the class-level `Read` right on `A` (an attribute grant only narrowed the
+  class grant). A role that makes `A#bs` readable therefore made *all* attributes of `A` readable,
+  unless every other attribute was locked by its own grant (a deny list - a new attribute was
   readable by default).
-- A reference delivers its targets unfiltered ("a referenced object shows its label"). `Root#as`
-  delivers *all* `A` objects, so the labels of all siblings are visible on every level.
-- An enumeration delivers all instances as well. `all(`pm:A`)` delivers every `A` in the system,
-  not only those on the user's path, and `all(`pm:A`).size()` discloses their number.
-- Every string coercion in TL-Script (`toString($a)`, `"" + $a`, sorting, formatting) shows the
-  label of whatever object the script holds.
+- A reference delivered its targets unfiltered ("a referenced object shows its label"). `Root#as`
+  delivered *all* `A` objects, so the labels of all siblings were visible on every level.
+- An enumeration delivered all instances as well. `all(`pm:A`)` delivered every `A` in the system,
+  not only those on the user's path, and `all(`pm:A`).size()` disclosed their number.
+- Every string coercion in TL-Script (`toString($a)`, `"" + $a`, sorting, formatting) showed the
+  label of whatever object the script held.
 
 ## Terms
 
@@ -91,8 +91,20 @@ to TL-Script and to the UI alike:
   agents),
 - option lists, table and tree models of the UI.
 
+A filter on `all(...)` is compiled into the database query for an access on the query root only if,
+for the owner type of the accessed attribute and its concrete specializations, every role holding
+`Discover` also holds `Read`, no access parent is configured and the attribute has no read grant of
+its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
+interpreted.
+
 Model elements (types, attributes, modules) are not filtered. A form field showing the value of a
 reference attribute masks instead of filtering, see R11.
+
+The security filter report (`SecurityFilterReport`, the diagnostic for hidden rows) records only the
+objects the executor removes from the final result, not the objects withheld by sources or inputs.
+
+Composition parts are rows, not reference elements: in table cells and in their read-only dialog
+the undiscoverable parts are filtered, not masked, and on save the hidden parts are kept.
 
 As a consequence, every object a secured computation holds is discoverable, and every string coercion
 (label) is allowed by R1. `filterSecurity` on the final result of a script becomes a safety net,
@@ -222,7 +234,7 @@ Rules for the individual kinds:
 
 - **Labels are computed unsecured.** By R1 the label belongs to `Discover`; a secured label script
   reading `A#name` would deliver an empty label for a user holding only `Discover` on `A`.
-  *This changes the current state, where label scripts are evaluated secured.*
+  *Before this change, label scripts were evaluated secured.*
 - **Default values are computed secured.** An unsecured default could set a reference to an object
   the user may not discover and thereby bypass R7. The default is user dependent (R6).
 - **Constraint messages name only discoverable objects.** A constraint is evaluated unsecured (a
@@ -329,12 +341,12 @@ as the value of a reference (R7).
 - **The `Read` right on a reference attribute discloses the number of its undiscoverable elements**
   in a form field (R11), though not their identity.
 - **Business logic is user dependent** (R6). Checks that must see everything run unsecured.
-- **Denials are silent - as today, but cleaner.** A missing object is an empty value or a shorter
-  list, not an error; a wrong configuration shows up as missing data. The current state is silent
-  as well, but leaves placeholders: with 20 `A` objects of which the user may read 5,
-  `all(`pm:A`).map(a -> $a.get(`pm:A#name`))` delivers 5 names and 15 `null` values today (the
-  final `filterSecurity` keeps `null`), and `all(`pm:A`).filter(a -> $a.get(`pm:A#name`) == null)`
-  delivers the 15 unreadable objects, whose number `size()` discloses. With R4 both deliver results
+- **Denials are silent.** A missing object is an empty value or a shorter
+  list, not an error; a wrong configuration shows up as missing data. Before this change denials were
+  silent as well, but left placeholders: with 20 `A` objects of which the user may read 5,
+  `all(`pm:A`).map(a -> $a.get(`pm:A#name`))` delivered 5 names and 15 `null` values (the
+  final `filterSecurity` kept `null`), and `all(`pm:A`).filter(a -> $a.get(`pm:A#name`) == null)`
+  delivered the 15 unreadable objects, whose number `size()` disclosed. With R4 both deliver results
   for the 5 discoverable objects only.
 - **Labels are disclosed by `Discover`.** Everything a label is computed from (the name, a label
   script) is visible to every user holding `Discover`. Labels must not contain confidential data;

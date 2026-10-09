@@ -75,7 +75,7 @@ instead of replacing them.
 			<singleton name="SecurityStructure#ROOT">
 				<grant operation="Read" roles="Viewer"/>
 			</singleton>
-			<!-- Grants on the values of one attribute, checked on top of the class grants. -->
+			<!-- Grants on the values of one attribute, replace the class grants for this attribute. -->
 			<part name="tl.accounts:Person#password">
 				<grant operation="Read" roles="Administrator"/>
 			</part>

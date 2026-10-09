@@ -626,12 +626,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_UNGROUP;
 
 	/**
-	 * @en Grouping over a tree is not supported.
-	 */
-	@CustomKey("js.table.groupByNotPossible")
-	public static ResKey JS_TABLE_GROUP_BY_NOT_POSSIBLE;
-
-	/**
 	 * @en The rows are grouped by this column
 	 */
 	@CustomKey("js.table.grouped")

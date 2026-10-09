@@ -174,8 +174,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 
 	/**
-	 * @en No read grant: no role is granted the read operation on the type, so its objects are
-	 *     inaccessible to every user.
+	 * @en No read grant: no role is granted any operation on the type or on one of its attributes,
+	 *     so its objects are inaccessible to every user.
 	 */
 	public static ResKey COVERAGE_PROBLEM_NO_READ_GRANT;
 
@@ -210,8 +210,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_SOLUTION_MARK_INTERNAL;
 
 	/**
-	 * @en Grant the read operation to a role on the type or on its module ("Access rights…",
-	 *     "Module access rights…").
+	 * @en Grant the read operation to a role on the type or one of its attributes, or on its module
+	 *     ("Access rights…", "Module access rights…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_READ_GRANT;
 

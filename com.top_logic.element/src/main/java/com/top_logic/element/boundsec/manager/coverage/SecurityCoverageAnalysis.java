@@ -171,6 +171,8 @@ public class SecurityCoverageAnalysis {
 		List<RoleProvider> roleRules = List.copyOf(_accessManager.getRules(type));
 		List<NavigationRule> parentRules = List.copyOf(_accessManager.getRoleParentRules(type));
 		Set<BoundedRole> readRoles = Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.READ));
+		Set<BoundedRole> discoverRoles =
+			Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.DISCOVER));
 		TLModelPart withoutSecurity = _accessRights.getWithoutSecurityOrigin(type);
 		TLModelPart internal = _accessRights.getInternalOrigin(type);
 		AccessParentFunction accessParent = _accessRights.getAccessParent(type);
@@ -188,7 +190,8 @@ public class SecurityCoverageAnalysis {
 			if (roleRules.isEmpty() && parentRules.isEmpty()) {
 				findings.add(CoverageFinding.noRoleSource(type));
 			}
-			if (readRoles.isEmpty()) {
+			// Every grant on the type or on one of its attributes implies Discover.
+			if (discoverRoles.isEmpty()) {
 				findings.add(CoverageFinding.noReadGrant(type));
 			}
 			addDeadGrantFindings(type, findings);

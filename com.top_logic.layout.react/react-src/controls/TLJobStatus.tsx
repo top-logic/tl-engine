@@ -14,6 +14,9 @@ const I18N_KEYS = {
   'js.jobStatus.cancel': 'Cancel',
 };
 
+/** The share of the job done, as the label beside its bar: a whole percentage in the browser's language. */
+const PERCENT = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
+
 /** One of the steps the job goes through, and where it stands. */
 interface PhaseEntry {
   label: string;
@@ -91,10 +94,15 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   // nothing is going on any more.
   const showBar = running || fraction != null;
 
+  // The bar shows its share as a percentage; the state above it says what progresses and names the
+  // bar, so the percentage is announced once, as the bar's value.
+  const stateId = `${controlId}-state`;
+  const percent = fraction != null ? PERCENT.format(fraction) : null;
+
   return (
     <div id={controlId} className={rootClassName(state, `tlJobStatus tlJobStatus--${status}`)} role="status" aria-live="polite">
       <div className="tlJobStatus__header">
-        <span className="tlJobStatus__state">{i18n[`js.jobStatus.${status}`] ?? status}</span>
+        <span id={stateId} className="tlJobStatus__state">{i18n[`js.jobStatus.${status}`] ?? status}</span>
         {elapsed !== null && (
           <span className="tlJobStatus__elapsed" {...tooltipProps(i18n['js.jobStatus.elapsed'])}>{elapsed}</span>
         )}
@@ -113,7 +121,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </ol>
       )}
-      {showBar && <ProgressBar fraction={fraction} className="tlJobStatus__bar" />}
+      {showBar && <ProgressBar fraction={fraction} label={percent} labelledBy={stateId} className="tlJobStatus__bar" />}
       {message !== null && message !== '' && <div className="tlJobStatus__message">{message}</div>}
       {error !== null && error !== '' && <div className="tlJobStatus__error">{error}</div>}
       {error == null && result !== null && result !== '' && (

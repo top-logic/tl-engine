@@ -183,6 +183,19 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 		}
 	}
 
+	/**
+	 * Recomputes the displayed rows after the tree changed - a node added or removed, children
+	 * replaced - and notifies the listeners.
+	 *
+	 * <p>
+	 * The expansion state is kept for every node that is still part of the tree.
+	 * </p>
+	 */
+	public void refresh() {
+		recompute();
+		fireInvalidated();
+	}
+
 	@Override
 	public void addListener(RowSourceListener listener) {
 		_listeners.add(listener);

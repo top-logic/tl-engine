@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.admin;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import junit.framework.TestCase;
 
@@ -19,11 +20,10 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.table.GroupKey;
 
 /**
- * Test for the selection of the {@link SecurityCoverageTable}: a selected group header stands for
- * its module, a selected row for its type and its marks.
+ * Test for the selection of the {@link SecurityCoverageTable}: a selected module node stands for
+ * the module, a selected type node for its analysis and its marks.
  */
 @SuppressWarnings("javadoc")
 public class TestSecurityCoverageSelection extends TestCase {
@@ -55,21 +55,9 @@ public class TestSecurityCoverageSelection extends TestCase {
 		_detail = new Detail(_selection, _typeChannel, null, null, null, null, _moduleChannel);
 	}
 
-	public void testGroupOfAModuleStandsForTheModule() {
-		assertSame(_module, SecurityCoverageTable.moduleOf(new GroupKey(List.of(_module))));
-	}
-
-	public void testOtherKeysStandForNoModule() {
-		assertNull("A type row.", SecurityCoverageTable.moduleOf(_type));
-		assertNull("Nothing selected.", SecurityCoverageTable.moduleOf(null));
-		assertNull("A group of another column.", SecurityCoverageTable.moduleOf(new GroupKey(List.of("other"))));
-		assertNull("A group of several columns.",
-			SecurityCoverageTable.moduleOf(new GroupKey(List.of(_module, "other"))));
-	}
-
 	public void testSelectedModuleClearsTheType() {
 		_detail.show(_type, rows());
-		_detail.show(new GroupKey(List.of(_module)), rows());
+		_detail.show(_module, rows());
 
 		assertSame(_module, _moduleChannel.get());
 		assertNull("No type is selected along with a module.", _selection.get());
@@ -77,7 +65,7 @@ public class TestSecurityCoverageSelection extends TestCase {
 	}
 
 	public void testSelectedTypeClearsTheModule() {
-		_detail.show(new GroupKey(List.of(_module)), rows());
+		_detail.show(_module, rows());
 		_detail.show(_type, rows());
 
 		assertSame(_row, _selection.get());
@@ -100,7 +88,7 @@ public class TestSecurityCoverageSelection extends TestCase {
 		TypeCoverage row =
 			new TypeCoverage(_type, null, _type, null, List.of(), Set.of(), List.of(), List.of(), List.of());
 
-		detail.show(_type, Map.of(_type, row));
+		detail.show(_type, Map.of(_type, row)::get);
 		assertEquals(Boolean.TRUE, internal.get());
 	}
 
@@ -110,7 +98,7 @@ public class TestSecurityCoverageSelection extends TestCase {
 		TypeCoverage row =
 			new TypeCoverage(_type, null, _module, null, List.of(), Set.of(), List.of(), List.of(), List.of());
 
-		detail.show(_type, Map.of(_type, row));
+		detail.show(_type, Map.of(_type, row)::get);
 		assertSame("The module declaring the mark, which cannot be dropped for the type.", _module, internal.get());
 	}
 
@@ -124,8 +112,8 @@ public class TestSecurityCoverageSelection extends TestCase {
 		assertNull("Nothing selected.", internal.get());
 	}
 
-	private Map<Object, TypeCoverage> rows() {
-		return Map.of(_type, _row);
+	private Function<Object, TypeCoverage> rows() {
+		return Map.of(_type, _row)::get;
 	}
 
 }

@@ -166,4 +166,20 @@ public class TestTreeRowSource extends TestCase {
 		assertEquals(java.util.Set.of(deep), source.containedKeys(List.of(deep, foreign)));
 	}
 
+	/**
+	 * A changed tree is displayed after a refresh, with the nodes that were expanded still
+	 * expanded.
+	 */
+	public void testRefreshShowsTheChangedTree() {
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
+		source.setExpanded(_root1, true);
+		assertEquals(List.of("a", "a2", "a1", "b"), names(source));
+
+		_root1._children.add(new Node("a3"));
+		assertEquals("Not seen before the refresh.", List.of("a", "a2", "a1", "b"), names(source));
+
+		source.refresh();
+		assertEquals(List.of("a", "a2", "a1", "a3", "b"), names(source));
+	}
+
 }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,15 +62,14 @@ import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
-import com.top_logic.table.GroupKey;
-import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableViewState;
+import com.top_logic.table.TreeStructure;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
-import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.TreeRowSource;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
@@ -77,10 +77,9 @@ import com.top_logic.util.Resources;
 /**
  * Table of the model based access definition, one row per analyzed type with the roles that may
  * read it, the rules that deliver a role on it, the access parent it delegates to and the gaps
- * found in its definition. The rows are
- * grouped by the module of the type when the table is opened, so the module column itself and the
- * findings column, whose text a detail display shows, start hidden; the user shows them from the
- * column selection and regroups or ungroups the table from a column header.
+ * found in its definition. The table is a tree: the modules of the analyzed types are its nodes,
+ * opened when the table is opened, the types are their children. The findings column, whose text a
+ * detail display shows, starts hidden; the user shows it from the column selection.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
@@ -97,24 +96,22 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * The header of the group of a module can be selected as well: it stands for the module, which is
- * written to the {@link Config#getSelectedModule() module channel} for the commands acting on a
- * whole module, while the channels describing a type are empty.
+ * A module can be selected as well: it is written to the {@link Config#getSelectedModule() module
+ * channel} for the commands acting on a whole module, while the channels describing a type are
+ * empty.
  * </p>
  *
- * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by the
- *           qualified name of its type, since every analysis yields fresh {@link TypeCoverage}
- *           instances and the selection is to survive a refresh. The type, module and role columns
- *           are built by the {@link ColumnProviderService} from the model types of their values, so
- *           they show, sort and filter those objects exactly as a table over model attributes does.
+ * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by its
+ *           module or type, since every analysis yields fresh {@link TypeCoverage} instances and
+ *           the selection and the opened modules are to survive a refresh. The type and role
+ *           columns are built by the {@link ColumnProviderService} from the model types of their
+ *           values, so they show, sort and filter those objects exactly as a table over model
+ *           attributes does.
  */
 public class SecurityCoverageTable implements UIElement {
 
 	/** Id of the column showing the analyzed type. */
 	public static final String COLUMN_TYPE = "type";
-
-	/** Id of the column showing the module of the analyzed type, the initial grouping column. */
-	public static final String COLUMN_MODULE = "module";
 
 	/** Id of the column showing the {@link CoverageStatus} of the analyzed type. */
 	public static final String COLUMN_STATUS = "status";
@@ -162,11 +159,11 @@ public class SecurityCoverageTable implements UIElement {
 	/** {@link #RULE_KIND} of an entry standing for a role rule. */
 	public static final String KIND_ROLE_RULE = "roleRule";
 
-	/** Qualified name of the model type of the values in the {@link #COLUMN_TYPE} column. */
-	private static final String TL_CLASS_TYPE = "tl.model:TLClass";
-
-	/** Qualified name of the model type of the values in the {@link #COLUMN_MODULE} column. */
-	private static final String TL_MODULE_TYPE = "tl.model:TLModule";
+	/**
+	 * Qualified name of the model type of the values in the {@link #COLUMN_TYPE} column: a module or
+	 * a type.
+	 */
+	private static final String TL_MODEL_PART_TYPE = "tl.model:TLModelPart";
 
 	/** Separator between the rules rendered into a cell. */
 	private static final String RULE_SEPARATOR = "; ";
@@ -300,9 +297,9 @@ public class SecurityCoverageTable implements UIElement {
 		ChannelRef getSelectedRules();
 
 		/**
-		 * Channel the selected module is written to, when the user selects the header of the group
-		 * of a module rather than a type; <code>null</code> otherwise. The channels describing a
-		 * selected type are empty while a module is selected.
+		 * Channel the selected module is written to, when the user selects a module rather than a
+		 * type; <code>null</code> otherwise. The channels describing a selected type are empty
+		 * while a module is selected.
 		 */
 		@Name(SELECTED_MODULE)
 		@Nullable
@@ -344,33 +341,30 @@ public class SecurityCoverageTable implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<Column<Object, ?>> columns = new ArrayList<>();
-		columns.add(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE, TL_CLASS_TYPE, false,
-			row -> coverage(row).type(), 240));
-		columns.add(objectColumn(COLUMN_MODULE, I18NConstants.COVERAGE_COLUMN_MODULE, TL_MODULE_TYPE, false,
-			row -> coverage(row).type().getModule(), 200));
+		columns.add(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE, TL_MODEL_PART_TYPE, false,
+			row -> row instanceof TypeCoverage coverage ? coverage.type() : row, 300));
 		columns.add(statusColumn());
 		columns.add(objectColumn(COLUMN_READ_ROLES, I18NConstants.COVERAGE_COLUMN_READ_ROLES, BoundedRole.ROLE_TYPE,
-			true, row -> readRoles(coverage(row)), 230));
+			true, ofType(SecurityCoverageTable::readRoles), 230));
 		columns.add(textColumn(COLUMN_ROLE_RULES, I18NConstants.COVERAGE_COLUMN_ROLE_RULES,
-			SecurityCoverageTable::roleRules, 200));
+			ofType(SecurityCoverageTable::roleRules), 200));
 		columns.add(textColumn(COLUMN_ROLE_PARENTS, I18NConstants.COVERAGE_COLUMN_ROLE_PARENTS,
-			SecurityCoverageTable::roleParents, 260));
+			ofType(SecurityCoverageTable::roleParents), 260));
 		columns.add(textColumn(COLUMN_ACCESS_PARENT, I18NConstants.COVERAGE_COLUMN_ACCESS_PARENT,
-			SecurityCoverageTable::accessParent, 260));
+			ofType(SecurityCoverageTable::accessParent), 260));
 		columns.add(textColumn(COLUMN_FINDINGS, I18NConstants.COVERAGE_COLUMN_FINDINGS,
-			SecurityCoverageTable::findings, 460));
+			ofType(SecurityCoverageTable::findings), 460));
 
 		ViewChannel dataChannel = _inputRef != null ? context.resolveChannel(_inputRef) : null;
-		List<Object> initialRows = rows(dataChannel == null ? null : dataChannel.get());
-		Map<Object, TypeCoverage> rowByKey = new HashMap<>(index(initialRows));
-		ListRowSource<Object> source = new ListRowSource<>(initialRows, columns, SecurityCoverageTable::rowKey);
-		Set<String> hiddenByDefault = Set.of(COLUMN_MODULE, COLUMN_FINDINGS);
-		TableViewState initialState = DefaultTableView.initialState(columns, SortSpec.NONE, hiddenByDefault);
-		initialState.setGrouping(new GroupSpec(List.of(COLUMN_MODULE)));
+		CoverageTree tree = new CoverageTree();
+		tree.update(rows(dataChannel == null ? null : dataChannel.get()));
+		TreeRowSource<Object, Object> source = new TreeRowSource<>(tree, columns);
+		TableViewState initialState =
+			DefaultTableView.initialState(columns, SortSpec.NONE, Set.of(COLUMN_FINDINGS));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
-		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
-		// The header of the group of a module stands for the module, for the commands acting on it.
-		control.setGroupsSelectable(true);
+		Set<TLModule> opened = new HashSet<>();
+		openNew(view, tree, opened);
+		TableViewControl<Object> control = new TableViewControl<>(context, view, true);
 
 		Detail detail = new Detail(
 			_selectionRef == null ? null : context.resolveChannel(_selectionRef),
@@ -382,23 +376,22 @@ public class SecurityCoverageTable implements UIElement {
 			_selectedModuleRef == null ? null : context.resolveChannel(_selectedModuleRef));
 		if (detail.isBound()) {
 			control.addSelectionListener(keys -> {
-				Object key = keys.size() == 1 ? keys.iterator().next() : null;
-				detail.setKey(key);
-				detail.show(key, rowByKey);
+				Object node = keys.size() == 1 ? keys.iterator().next() : null;
+				detail.setNode(node);
+				detail.show(node, tree::coverage);
 			});
 		}
 
 		if (dataChannel != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> {
-				List<Object> newRows = rows(newValue);
-				rowByKey.clear();
-				rowByKey.putAll(index(newRows));
-				source.setElements(newRows);
+				tree.update(rows(newValue));
+				source.refresh();
+				openNew(view, tree, opened);
 				control.refreshData();
 				if (detail.isBound()) {
-					// The rows are fresh instances, so the display of the row that stays selected
+					// The rows are fresh instances, so the display of the node that stays selected
 					// would otherwise keep describing the analysis that was replaced.
-					detail.show(detail.getKey(), rowByKey);
+					detail.show(detail.getNode(), tree::coverage);
 				}
 			};
 			dataChannel.addListener(listener);
@@ -408,12 +401,103 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The channels describing the selected row, and the key of the row they describe.
+	 * Opens the modules of the given tree that were not displayed before, so that every module shows
+	 * its types when it appears.
+	 */
+	private static void openNew(DefaultTableView<Object> view, CoverageTree tree, Set<TLModule> opened) {
+		for (TLModule module : tree.modules()) {
+			if (opened.add(module)) {
+				view.setExpanded(module, true);
+			}
+		}
+	}
+
+	/**
+	 * The analyzed types as a tree: the modules, sorted by name, with the types of each module as
+	 * their children.
 	 *
 	 * <p>
-	 * The key is remembered because the rows are replaced as a whole whenever the analysis is
-	 * repeated: the row that stays selected is a different {@link TypeCoverage} instance afterwards,
-	 * and the channels are pushed again for it without the user having to select it anew.
+	 * A node is the {@link TLModule} or {@link TLClass} itself, which stays the same object across
+	 * analyses; the row displayed for a type is its current {@link TypeCoverage}.
+	 * </p>
+	 */
+	private static final class CoverageTree implements TreeStructure<Object, Object> {
+
+		private List<TLModule> _modules = List.of();
+
+		private Map<TLModule, List<Object>> _types = Map.of();
+
+		private Map<TLClass, TypeCoverage> _coverages = Map.of();
+
+		/**
+		 * Replaces the tree by the given analyzed types.
+		 */
+		void update(List<?> rows) {
+			Map<TLModule, List<Object>> types = new HashMap<>();
+			Map<TLClass, TypeCoverage> coverages = new HashMap<>();
+			for (Object row : rows) {
+				TypeCoverage coverage = (TypeCoverage) row;
+				TLClass type = coverage.type();
+				coverages.put(type, coverage);
+				types.computeIfAbsent(type.getModule(), module -> new ArrayList<>()).add(type);
+			}
+			List<TLModule> modules = new ArrayList<>(types.keySet());
+			modules.sort(Comparator.comparing(TLModule::getName));
+			_modules = modules;
+			_types = types;
+			_coverages = coverages;
+		}
+
+		/**
+		 * The modules of the analyzed types.
+		 */
+		List<TLModule> modules() {
+			return _modules;
+		}
+
+		/**
+		 * The analysis of the given node if it is a type, else <code>null</code>.
+		 */
+		TypeCoverage coverage(Object node) {
+			return node instanceof TLClass type ? _coverages.get(type) : null;
+		}
+
+		@Override
+		public List<Object> roots() {
+			return new ArrayList<>(_modules);
+		}
+
+		@Override
+		public List<Object> children(Object node) {
+			return node instanceof TLModule module ? _types.getOrDefault(module, List.of()) : List.of();
+		}
+
+		@Override
+		public boolean isLeaf(Object node) {
+			return !(node instanceof TLModule);
+		}
+
+		@Override
+		public Object businessObject(Object node) {
+			TypeCoverage coverage = coverage(node);
+			return coverage != null ? coverage : node;
+		}
+	}
+
+	/**
+	 * The given value of an analyzed type as a column value, which is empty for a module.
+	 */
+	private static <T> Function<Object, T> ofType(Function<TypeCoverage, T> value) {
+		return row -> row instanceof TypeCoverage coverage ? value.apply(coverage) : null;
+	}
+
+	/**
+	 * The channels describing the selected node, and the node they describe.
+	 *
+	 * <p>
+	 * The node is remembered because the rows are replaced as a whole whenever the analysis is
+	 * repeated: the type that stays selected has a different {@link TypeCoverage} afterwards, and
+	 * the channels are pushed again for it without the user having to select it anew.
 	 * </p>
 	 */
 	public static final class Detail {
@@ -432,7 +516,7 @@ public class SecurityCoverageTable implements UIElement {
 
 		private final ViewChannel _module;
 
-		private Object _key;
+		private Object _node;
 
 		/**
 		 * Creates a {@link Detail} over the channels the table is configured with, each of them
@@ -458,26 +542,29 @@ public class SecurityCoverageTable implements UIElement {
 		}
 
 		/**
-		 * The key of the row being described, <code>null</code> while nothing is selected.
+		 * The node being described, <code>null</code> while nothing is selected.
 		 */
-		Object getKey() {
-			return _key;
+		Object getNode() {
+			return _node;
 		}
 
 		/**
-		 * @see #getKey()
+		 * @see #getNode()
 		 */
-		void setKey(Object key) {
-			_key = key;
+		void setNode(Object node) {
+			_node = node;
 		}
 
 		/**
-		 * Writes what the row with the given key is described by to the bound channels: a type, or
-		 * the module whose group header is selected; clearing them all for <code>null</code>.
+		 * Writes what the given node is described by to the bound channels: a type by its analysis,
+		 * a module by itself; clearing them all for <code>null</code>.
+		 *
+		 * @param coverages
+		 *        The analysis of a type node.
 		 */
-		public void show(Object key, Map<Object, TypeCoverage> rowByKey) {
-			TLModule module = moduleOf(key);
-			show(module != null || key == null ? null : rowByKey.get(key));
+		public void show(Object node, Function<Object, TypeCoverage> coverages) {
+			TLModule module = node instanceof TLModule selected ? selected : null;
+			show(node == null || module != null ? null : coverages.apply(node));
 			if (_module != null) {
 				_module.set(module);
 			}
@@ -507,19 +594,6 @@ public class SecurityCoverageTable implements UIElement {
 				_rules.set(row == null ? List.of() : ruleEntries(row));
 			}
 		}
-	}
-
-	/**
-	 * The module the given selection key stands for: the module of a selected group header, the
-	 * table being grouped by module; <code>null</code> for the key of a type, or of a group of
-	 * another column.
-	 */
-	public static TLModule moduleOf(Object key) {
-		if (key instanceof GroupKey group && group.values().size() == 1
-			&& group.values().get(0) instanceof TLModule module) {
-			return module;
-		}
-		return null;
 	}
 
 	/**
@@ -633,28 +707,10 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The given rows by their row key.
-	 */
-	private static Map<Object, TypeCoverage> index(List<Object> rows) {
-		Map<Object, TypeCoverage> result = new LinkedHashMap<>();
-		for (Object row : rows) {
-			result.put(rowKey(row), coverage(row));
-		}
-		return result;
-	}
-
-	/**
 	 * The row as the analyzed type it holds.
 	 */
 	private static TypeCoverage coverage(Object row) {
 		return (TypeCoverage) row;
-	}
-
-	/**
-	 * The qualified name of the analyzed type, which is the row key.
-	 */
-	private static String rowKey(Object row) {
-		return TLModelUtil.qualifiedName(coverage(row).type());
 	}
 
 	/**
@@ -915,10 +971,12 @@ public class SecurityCoverageTable implements UIElement {
 	 */
 	private static Column<Object, CoverageStatus> statusColumn() {
 		Resources resources = Resources.getInstance();
-		Function<CoverageStatus, String> text = status -> resources.getString(ResKey.forEnum(status));
-		return DefaultColumn.<Object, CoverageStatus> builder(COLUMN_STATUS, row -> coverage(row).status())
+		// A module has no status, and matches no filter on it.
+		Function<CoverageStatus, String> text =
+			status -> status == null ? null : resources.getString(ResKey.forEnum(status));
+		return DefaultColumn.<Object, CoverageStatus> builder(COLUMN_STATUS, ofType(TypeCoverage::status))
 			.label(I18NConstants.COVERAGE_COLUMN_STATUS)
-			.renderer(status -> new CellContent.Raw(
+			.renderer(status -> status == null ? CellContent.text("") : new CellContent.Raw(
 				(CellControlFactory) context -> STATUS_DISPLAY.createControl(context, status)))
 			.sort(() -> Comparator.<CoverageStatus> naturalOrder())
 			.filter(new TextColumnFilter<>(text))

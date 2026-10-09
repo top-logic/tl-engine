@@ -33,10 +33,10 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
 import com.top_logic.model.search.providers.I18NConstants;
 import com.top_logic.model.search.providers.LabelProviderByExpression;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -490,6 +490,20 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		ResKey message = ResKey.forTest("test.masking.one").asResKey1().fill(_a1);
 		becomeUser(_pathUser);
 		assertSame(message, ConstraintCheckByExpression.maskUndiscoverable(message));
+	}
+
+	public void testConstraintMessageMasksCollectionElements() {
+		ResKey message = ResKey.forTest("test.masking.list").asResKey1().fill(Arrays.asList(_a1, _a2));
+		becomeUser(_pathUser);
+		ResKey masked = ConstraintCheckByExpression.maskUndiscoverable(message);
+		assertEquals(Arrays.asList(_a1, I18NConstants.MASKED_OBJECT), masked.arguments()[0]);
+	}
+
+	public void testConstraintMessageMasksArrayElements() {
+		ResKey message = ResKey.forTest("test.masking.array").asResKey1().fill((Object) new Object[] { _a2, _a1 });
+		becomeUser(_pathUser);
+		ResKey masked = ConstraintCheckByExpression.maskUndiscoverable(message);
+		assertTrue(Arrays.equals(new Object[] { I18NConstants.MASKED_OBJECT, _a1 }, (Object[]) masked.arguments()[0]));
 	}
 
 	public static Test suite() {

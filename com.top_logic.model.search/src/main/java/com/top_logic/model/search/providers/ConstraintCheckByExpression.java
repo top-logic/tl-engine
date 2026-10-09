@@ -5,10 +5,16 @@
  */
 package com.top_logic.model.search.providers;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -164,17 +170,44 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 		boolean changed = false;
 		for (int n = 0; n < arguments.length; n++) {
 			Object argument = arguments[n];
-			if (argument instanceof TLObject object && !ModelAccessRights.getInstance().isDiscoverAllowed(object)) {
-				masked[n] = I18NConstants.MASKED_OBJECT;
-				changed = true;
-			} else if (argument instanceof ResKey nested) {
-				masked[n] = maskUndiscoverable(nested);
-				changed |= masked[n] != nested;
-			} else {
-				masked[n] = argument;
-			}
+			masked[n] = maskArgument(argument);
+			changed |= masked[n] != argument;
 		}
 		return changed ? message.plain().asResKeyN().fill(masked) : message;
+	}
+
+	private static Object maskArgument(Object argument) {
+		if (argument instanceof TLObject object) {
+			return ModelAccessRights.getInstance().isDiscoverAllowed(object) ? argument
+				: I18NConstants.MASKED_OBJECT;
+		} else if (argument instanceof ResKey nested) {
+			return maskUndiscoverable(nested);
+		} else if (argument instanceof Collection<?> collection) {
+			return maskElements(argument, collection);
+		} else if (argument instanceof TupleFactory.Tuple tuple) {
+			// Rendered element-wise like a collection.
+			return maskElements(argument, Arrays.asList(TupleFactory.toArray(tuple)));
+		} else if (argument instanceof Object[] array) {
+			Object[] result = new Object[array.length];
+			boolean changed = false;
+			for (int n = 0; n < array.length; n++) {
+				result[n] = maskArgument(array[n]);
+				changed |= result[n] != array[n];
+			}
+			return changed ? result : argument;
+		}
+		return argument;
+	}
+
+	private static Object maskElements(Object original, Collection<?> elements) {
+		List<Object> result = new ArrayList<>(elements.size());
+		boolean changed = false;
+		for (Object element : elements) {
+			Object maskedElement = maskArgument(element);
+			changed |= maskedElement != element;
+			result.add(maskedElement);
+		}
+		return changed ? result : original;
 	}
 
 	@Override

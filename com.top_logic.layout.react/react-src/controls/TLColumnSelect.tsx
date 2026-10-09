@@ -5,6 +5,7 @@ const I18N_KEYS = {
   'js.table.columnSearch': 'Find column',
   'js.table.groupBy': 'Group by this column',
   'js.table.ungroup': 'Remove grouping',
+  'js.table.groupByNotPossible': 'Grouping over a tree is not supported.',
 };
 
 /** Shows or hides one of the columns. */
@@ -39,7 +40,9 @@ interface ColumnEntry {
  *
  * Both the order and the checked state live on the server (see ReactColumnSelectControl), so a
  * gesture sends a command and the re-pushed list is what renders. Each row also offers to group
- * the table's rows by that column; the choice applies with the columns.
+ * the table's rows by that column; the choice applies with the columns. In a table whose rows
+ * cannot be grouped - a tree table - the offer is shown disabled (state.groupable), so that every
+ * column selection looks the same.
  */
 const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -47,6 +50,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
+  const groupable = state.groupable !== false;
   const visibleCount = entries.filter((entry) => entry.visible).length;
 
   // A table over a large type offers a column per attribute, which is a long list to scroll. The
@@ -105,7 +109,8 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
         // Keep the table from losing its last column: there would be nothing left to click.
         const lastVisible = entry.visible && visibleCount <= 1;
         const dragState = reorder.itemState(index);
-        const groupByLabel = entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy'];
+        const groupByLabel = !groupable ? i18n['js.table.groupByNotPossible']
+          : entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy'];
         let cls = 'tlColumnSelect__row';
         if (dragState.dropBefore) {
           cls += ' tlColumnSelect__row--dragOver-before';
@@ -127,6 +132,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               aria-label={groupByLabel}
               {...tooltipProps(groupByLabel)}
               aria-pressed={entry.grouped}
+              disabled={!groupable}
               onClick={() => handleGroupBy(entry.name)}
             >
               <i className={entry.grouped ? 'bi bi-collection-fill' : 'bi bi-collection'} aria-hidden="true" />

@@ -1202,7 +1202,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Resources resources = Resources.getInstance();
 
 		ReactColumnSelectControl selection =
-			new ReactColumnSelectControl(context, _view.columnOptions(), getGroupedColumn());
+			new ReactColumnSelectControl(context, _view.columnOptions(), getGroupedColumn(), !_treeMode);
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),

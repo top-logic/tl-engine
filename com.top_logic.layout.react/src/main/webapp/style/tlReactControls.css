@@ -4169,8 +4169,14 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--text-secondary);
 }
 
-.tlColumnSelect__groupBy:hover {
+.tlColumnSelect__groupBy:hover:not(:disabled) {
 	background-color: var(--layer-hover);
+}
+
+/* A table whose rows cannot be grouped - a tree table - shows the offer, but disabled. */
+.tlColumnSelect__groupBy:disabled {
+	cursor: default;
+	color: var(--text-disabled);
 }
 
 .tlColumnSelect__groupBy--active {

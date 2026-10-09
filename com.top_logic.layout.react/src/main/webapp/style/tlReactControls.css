@@ -3389,6 +3389,10 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlTableView__cell > .tl-select__values > .tl-field-value {
 	display: inline;
 }
+/* Inline, a value loses the gap its flex form puts between icon and name; the name keeps it. */
+.tlTableView__cell > .tl-select__values > .tl-field-value > * + .tl-field-value__text {
+	margin-inline-start: var(--tl-space-xs);
+}
 .tlTableView__cell > .tl-select__values > .tl-select__separator {
 	margin-inline-start: 0;
 }

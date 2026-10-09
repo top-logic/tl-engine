@@ -39,6 +39,7 @@ import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
@@ -62,6 +63,7 @@ import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BoundCodec;
@@ -773,9 +775,25 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * The localized display label of a value (empty for {@code null}).
+	 *
+	 * <p>
+	 * An object the current user may not discover is labelled by the placeholder of a
+	 * {@link ReactDropdownSelectControl#isMasked(Object) masked} value, also as element of a
+	 * collection: displaying, sorting, filtering and exporting a cell never see its label.
+	 * </p>
 	 */
 	public static String label(Object value) {
-		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
+		if (value == null) {
+			return "";
+		}
+		if (ReactDropdownSelectControl.isMasked(value)) {
+			return Resources.getInstance().getString(com.top_logic.layout.react.I18NConstants.MASKED_VALUE);
+		}
+		if (value instanceof Collection<?> collection
+			&& collection.stream().anyMatch(ReactDropdownSelectControl::isMasked)) {
+			return new CollectionLabelProvider(ColumnProviderService::label, VALUE_SEPARATOR).getLabel(value);
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
 	/**

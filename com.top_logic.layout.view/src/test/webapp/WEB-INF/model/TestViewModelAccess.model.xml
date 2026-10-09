@@ -46,6 +46,10 @@
 						<reference name="category"
 							type="Category"
 						/>
+						<reference name="categories"
+							multiple="true"
+							type="Category"
+						/>
 						<reference name="tasks"
 							composite="true"
 							multiple="true"

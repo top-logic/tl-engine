@@ -90,6 +90,16 @@
 							roles="TestViewModelAccess.Reader"
 						/>
 					</class>
+					<part name="TestViewModelAccess:Category#name">
+						<!--
+							The reader of a category may rename it, although the category grants writing
+							to no role.
+						-->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Reader"
+						/>
+					</part>
 					<part name="TestViewModelAccess:Project#secret">
 						<!--
 							Present grant with no roles: writing this attribute is denied for every

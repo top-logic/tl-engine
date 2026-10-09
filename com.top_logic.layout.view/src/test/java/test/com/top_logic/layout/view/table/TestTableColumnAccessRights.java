@@ -38,6 +38,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.table.Column;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests that the columns of a table follow the model access rights of the current user, see
@@ -132,14 +134,38 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A cell of an attribute without a read grant of its own shows the value without a check on the
-	 * row: the rows of a table are read-filtered already.
+	 * A cell of an attribute without a read grant of its own is decided by the read grant of the
+	 * row's type: a row is only known to be discoverable, which releases none of its attributes.
 	 */
 	public void testCellWithoutAttributeGrant() throws ConfigurationException {
+		TLObject foreign = newObject(qualified(PROJECT), "foreign");
 		becomeUser(_roleless);
 		ColumnSetup name = column(NAME);
 
-		assertEquals("project", name.value().apply(_project));
+		assertEquals("The viewer may read the project.", "project", name.value().apply(_project));
+		assertNull("No role on the project.", name.value().apply(foreign));
+	}
+
+	/**
+	 * The grant of an attribute replaces the grant of the type for this attribute: an operation the
+	 * type grants to no role is possible on an attribute granting it to a role, and a refusal
+	 * depends on the object then.
+	 */
+	public void testAttributeGrantReplacesTypeGrant() {
+		TLStructuredTypePart categoryName = part(CATEGORY, NAME);
+		TLStructuredTypePart categoryReader = part(CATEGORY, READER);
+		BoundCommandGroup write = SimpleBoundCommandGroup.WRITE;
+
+		becomeUser(_responsible);
+		assertTrue(ModelAccessPolicy.onAttributeOfType(write, type(CATEGORY), categoryName).isExecutable());
+		assertTrue(ModelAccessPolicy.onAttribute(write, _category, categoryName).isExecutable());
+		ExecutableState refused = ModelAccessPolicy.onAttribute(write, _hiddenCategory, categoryName);
+		assertTrue("Refused on the object: disabled, not hidden.", refused.isDisabled());
+		assertTrue(ModelAccessPolicy.onObject(write, _hiddenCategory, categoryName, null).isDisabled());
+
+		// Without a grant of its own, the type decides, which grants writing to no role.
+		assertTrue(ModelAccessPolicy.onAttributeOfType(write, type(CATEGORY), categoryReader).isHidden());
+		assertTrue(ModelAccessPolicy.onAttribute(write, _category, categoryReader).isHidden());
 	}
 
 	/**

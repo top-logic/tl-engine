@@ -74,8 +74,10 @@ import com.top_logic.util.error.TopLogicException;
  * role. Writing its composition {@value #LOCKED_ITEMS} is granted to no role either.</li>
  * <li>{@value #ITEM}: the type of the compositions {@value #ITEMS} and {@value #LOCKED_ITEMS} of a
  * step, with a mandatory {@value #NAME}. An item has its container as access parent.</li>
- * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
- * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
+ * <li>{@value #CATEGORY}: the type of the references {@value #CATEGORY_REF} and {@value #CATEGORIES}
+ * (multiple, unordered) of a project. The account in {@value #READER} holds the role
+ * {@value #ROLE_READER}, which grants read on the category and, by a grant of the attribute, writing
+ * its {@value #NAME}.</li>
  * </ul>
  *
  * <p>
@@ -160,6 +162,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} reference to a {@link #CATEGORY}. */
 	protected static final String CATEGORY_REF = "category";
+
+	/** Name of the unordered {@link #PROJECT} reference to several {@link #CATEGORY}s. */
+	protected static final String CATEGORIES = "categories";
 
 	/** Name of the {@link #PROJECT} composition of {@link #TASK}s. */
 	protected static final String TASKS = "tasks";

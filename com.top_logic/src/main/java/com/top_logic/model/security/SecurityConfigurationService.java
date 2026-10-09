@@ -350,6 +350,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
 
 	/**
+	 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of a class: the
+	 * union of all roles of its class rights, of the rights of its attributes, and of the
+	 * {@link SimpleBoundCommandGroup#CREATE} rights of the types creatable in its compositions.
+	 */
+	private final Map<TLClass, Set<BoundedRole>> _discoverRoles = new HashMap<>();
+
+	/**
 	 * The types without security, each mapped to the part whose definition declares the mark.
 	 *
 	 * @see #getWithoutSecurityOrigin(TLClass)
@@ -425,7 +432,28 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_typesWithoutSecurity = origins(_declaredWithoutSecurity);
 		_internalTypes = origins(_declaredInternal);
 		computeClassRights(classRules, moduleRules);
+		computeDiscoverRoles();
 		inheritAccessParents(explicitParents);
+	}
+
+	private void computeDiscoverRoles() {
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			Set<BoundedRole> roles = new HashSet<>();
+			_expandedClassRights.getOrDefault(type, Collections.emptyMap()).values().forEach(roles::addAll);
+			for (TLStructuredTypePart part : type.getAllParts()) {
+				_typePartRights.getOrDefault(part.getDefinition(), Collections.emptyMap()).values()
+					.forEach(roles::addAll);
+				if (part instanceof TLReference reference && reference.isComposite()
+					&& reference.getType() instanceof TLClass target) {
+					for (TLClass created : TLModelUtil.getConcreteSpecializations(target)) {
+						roles.addAll(getAllowedRoles(created, SimpleBoundCommandGroup.CREATE));
+					}
+				}
+			}
+			if (!roles.isEmpty()) {
+				_discoverRoles.put(type, roles);
+			}
+		}
 	}
 
 	/**
@@ -854,6 +882,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			_singletonRights.getOrDefault(object, Collections.emptyMap());
 		if (!singletonRights.isEmpty()) {
 			// Singleton!
+			if (SimpleBoundCommandGroup.DISCOVER.equals(group)) {
+				Set<BoundedRole> all = new HashSet<>();
+				singletonRights.values().forEach(all::addAll);
+				return all;
+			}
 			return singletonRights.getOrDefault(group, Collections.emptySet());
 		}
 		TLStructuredType tType = object.tType();
@@ -871,6 +904,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		if (SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)) {
+			return _discoverRoles.getOrDefault(type, Collections.emptySet());
+		}
 		return _expandedClassRights
 			.getOrDefault(type, Collections.emptyMap())
 			.getOrDefault(commandGroup, Collections.emptySet());

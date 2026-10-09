@@ -267,6 +267,33 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * Checks whether the current person may discover the given instance.
+	 *
+	 * @implSpec Just calls {@link #isDiscoverAllowed(Person, TLObject)} with the current user.
+	 */
+	default boolean isDiscoverAllowed(TLObject instance) {
+		return isDiscoverAllowed(TLContext.currentUser(), instance);
+	}
+
+	/**
+	 * Checks whether the given person may discover the given instance.
+	 *
+	 * <p>
+	 * A discoverable object appears in references, enumerations and option lists and shows its
+	 * label; its attributes are readable only by their own read right. A person holds
+	 * {@link SimpleBoundCommandGroup#DISCOVER} on an object if they hold a role on it that is granted
+	 * {@link SimpleBoundCommandGroup#DISCOVER}, any other operation on the object's type, any right on
+	 * one of its attributes, or the right to create objects in one of its compositions.
+	 * </p>
+	 *
+	 * @implSpec Just calls {@link #isAllowed(Person, TLObject, BoundCommandGroup)} with
+	 *           {@link SimpleBoundCommandGroup#DISCOVER}.
+	 */
+	default boolean isDiscoverAllowed(Person person, TLObject instance) {
+		return isAllowed(person, instance, SimpleBoundCommandGroup.DISCOVER);
+	}
+
+	/**
 	 * Checks whether the given person can perform the given command group on the given attribute of
 	 * the given instance.
 	 */

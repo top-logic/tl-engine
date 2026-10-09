@@ -218,6 +218,49 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 			asList(eval("all(`TestTLScriptSecurity:PathA`).filter(a -> $a.get(`TestTLScriptSecurity:PathNode#name`) == \"a1\")")));
 	}
 
+	/**
+	 * {@code all()} delivers only the discoverable instances.
+	 */
+	public void testAllDeliversOnlyDiscoverable() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(set(_a1), asSet(eval("all(`TestTLScriptSecurity:PathA`)")));
+		assertEquals(Double.valueOf(1), eval("all(`TestTLScriptSecurity:PathA`).size()"));
+	}
+
+	/**
+	 * The dynamic form {@code all($t)} filters as well.
+	 */
+	public void testDynamicAll() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(set(_a1), asSet(eval("t -> all($t)", TLModelUtil.findType("TestTLScriptSecurity:PathA"))));
+	}
+
+	/**
+	 * A filter compiled into the database query (KBQuery) still delivers only discoverable objects.
+	 */
+	public void testCompiledFilterOnAll() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(set(_b1), asSet(eval("all(`TestTLScriptSecurity:PathB`).filter(b -> $b.get(`TestTLScriptSecurity:PathB#cs`).size() > 0)")));
+	}
+
+	/**
+	 * A compiled filter that also matches undiscoverable objects does not deliver them.
+	 */
+	public void testCompiledFilterMatchingUndiscoverable() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(set(_b1), asSet(eval("all(`TestTLScriptSecurity:PathB`).filter(b -> $b.get(`TestTLScriptSecurity:PathB#cs`).size() >= 0)")));
+	}
+
+	/**
+	 * Without security, all instances are delivered.
+	 */
+	public void testUnsecuredAllSeesEverything() throws Exception {
+		becomeUser(_pathUser);
+		QueryExecutor executor = QueryExecutor.compile(search("all(`TestTLScriptSecurity:PathA`)"));
+		executor.disableSecurity();
+		assertEquals(set(_a1, _a2), asSet(executor.execute()));
+	}
+
 	private static java.util.List<?> asList(Object value) {
 		return new java.util.ArrayList<>((java.util.Collection<?>) value);
 	}

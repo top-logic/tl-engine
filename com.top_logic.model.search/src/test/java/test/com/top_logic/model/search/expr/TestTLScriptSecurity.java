@@ -38,6 +38,8 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -361,18 +363,28 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * The result of an execution is secured by the {@link QueryExecutor}: the reference navigation
-	 * itself filters the referenced employee, since the user must not discover it (R4 of the Discover
-	 * specification), so the result of the execution is {@code null}.
+	 * The result of an execution is secured by the {@link QueryExecutor}, even if the script
+	 * delivers an object it did not filter itself.
+	 *
+	 * <p>
+	 * The navigation is switched to unsecured evaluation with
+	 * {@link UpdateSecurityVisitor#disableSecurity(SearchExpression)} on the script, so it delivers
+	 * the employee unfiltered (an unsecured sub-expression does not depend on which secured sources
+	 * filter, now or later), while the {@link QueryExecutor} still secures the result.
+	 * </p>
 	 */
 	public void testResultSecuredByExecutor() throws Exception {
-		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+		SearchExpression script = search(RESPONSIBLE_OF);
+		UpdateSecurityVisitor.disableSecurity(script);
+		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), script);
 
 		becomeUser(_root);
 		assertEquals(_e1, responsible.execute(_p1));
 
 		becomeUser(_user);
-		assertNull("The user must not read the navigated employee.", responsible.execute(_p1));
+		assertEquals("The script itself delivers the employee.", _e1, responsible.executeIntermediate(_p1));
+		assertNull("The user must not discover the delivered employee, the executor removes it.",
+			responsible.execute(_p1));
 	}
 
 	/**
@@ -438,9 +450,12 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		assertEquals("A nested result must keep the objects the calling script computes with.",
 			_e1, identity.executeIntermediate(_e1));
 
-		QueryExecutor salary = QueryExecutor.compile(kb(), model(), search(SALARY_OF_RESPONSIBLE));
+		// The input of an intermediate execution is not filtered, so the attribute check itself is
+		// exercised here.
+		QueryExecutor salary =
+			QueryExecutor.compile(kb(), model(), search("e -> $e.get(`TestTLScriptSecurity:Employee#salary`)"));
 		assertNull("The attribute of an unreadable object stays inaccessible in a nested execution.",
-			salary.executeIntermediate(_p1));
+			salary.executeIntermediate(_e1));
 	}
 
 	/**

@@ -459,7 +459,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Rolle"
+						label="Vergebene Rollen"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
@@ -625,7 +625,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Rolle"
+						label="Vergebene Rollen"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
@@ -791,7 +791,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Rolle"
+						label="Vergebene Rollen"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>

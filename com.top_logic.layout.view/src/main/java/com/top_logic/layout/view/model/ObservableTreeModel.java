@@ -8,6 +8,7 @@ package com.top_logic.layout.view.model;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.layout.IndexPosition;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
@@ -97,8 +99,11 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	/** What to run when the tree changed, see {@link #addStructureListener(Runnable)}. */
 	private final List<Runnable> _structureListeners = new ArrayList<>();
 
-	/** The objects a listener is registered for, by their identity. */
-	private Map<ObjectKey, TLObject> _observed = new HashMap<>();
+	/** The registrations of this listener for the displayed objects, by their identity. */
+	private final Map<ObjectKey, Registration> _observed = new HashMap<>();
+
+	/** The registrations on the observed types and the input channels, while attached. */
+	private final List<Registration> _registrations = new ArrayList<>();
 
 	private ModelScope _modelScope;
 
@@ -229,8 +234,10 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
-		deregisterTypeListeners();
-		deregisterChannelListeners();
+		for (Registration registration : _registrations) {
+			registration.dispose();
+		}
+		_registrations.clear();
 
 		_modelScope = null;
 	}
@@ -612,17 +619,18 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		Map<ObjectKey, TLObject> displayed = new HashMap<>();
 		collectObjects(_treeModel.getRoot(), displayed);
 
-		for (Map.Entry<ObjectKey, TLObject> entry : _observed.entrySet()) {
+		for (Iterator<Map.Entry<ObjectKey, Registration>> it = _observed.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<ObjectKey, Registration> entry = it.next();
 			if (!displayed.containsKey(entry.getKey())) {
-				_modelScope.removeModelListener(entry.getValue(), this);
+				entry.getValue().dispose();
+				it.remove();
 			}
 		}
 		for (Map.Entry<ObjectKey, TLObject> entry : displayed.entrySet()) {
 			if (!_observed.containsKey(entry.getKey())) {
-				_modelScope.addModelListener(entry.getValue(), this);
+				_observed.put(entry.getKey(), _modelScope.addModelListener(entry.getValue(), this));
 			}
 		}
-		_observed = displayed;
 	}
 
 	/**
@@ -643,35 +651,21 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	}
 
 	private void deregisterObjectListeners() {
-		if (_modelScope != null) {
-			for (TLObject object : _observed.values()) {
-				_modelScope.removeModelListener(object, this);
-			}
+		for (Registration registration : _observed.values()) {
+			registration.dispose();
 		}
-		_observed = new HashMap<>();
+		_observed.clear();
 	}
 
 	private void registerTypeListeners() {
 		for (TLStructuredType type : _observedTypes) {
-			_modelScope.addModelListener(type, this);
-		}
-	}
-
-	private void deregisterTypeListeners() {
-		for (TLStructuredType type : _observedTypes) {
-			_modelScope.removeModelListener(type, this);
+			_registrations.add(_modelScope.addModelListener(type, this));
 		}
 	}
 
 	private void registerChannelListeners() {
 		for (ViewChannel channel : _inputChannels) {
-			channel.addListener(this);
-		}
-	}
-
-	private void deregisterChannelListeners() {
-		for (ViewChannel channel : _inputChannels) {
-			channel.removeListener(this);
+			_registrations.add(channel.addListener(this));
 		}
 	}
 

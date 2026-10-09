@@ -23,6 +23,9 @@ const CMD_VALUE_CHANGED = 'valueChanged';
 /** Command requesting diagnostics for a text. */
 const CMD_VALIDATE = 'validate';
 
+/** Command telling that the user left the editor, sent after the last {@link CMD_VALUE_CHANGED}. */
+const CMD_BLUR = 'blur';
+
 /** Command requesting completions at the cursor. */
 const CMD_COMPLETE = 'complete';
 
@@ -289,6 +292,10 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
     [sendCommand]
   );
 
+  const handleBlur = useCallback(() => {
+    sendCommand(CMD_BLUR, {});
+  }, [sendCommand]);
+
   return (
     <CodeEditor
       controlId={controlId}
@@ -299,6 +306,7 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       hoverSource={hoverSource}
       diagnostics={diagnostics}
       onChange={handleChange}
+      onBlur={handleBlur}
       className={rootClassName(state, 'tlScriptEditor')}
       contentAttributes={{ id: inputId, ...labelProps }}
     />

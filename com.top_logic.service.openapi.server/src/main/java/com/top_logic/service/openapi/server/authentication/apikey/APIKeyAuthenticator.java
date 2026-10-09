@@ -16,6 +16,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link Authenticator} to authenticate using an API key.
@@ -96,12 +97,14 @@ public class APIKeyAuthenticator implements Authenticator {
 			// No technical user.
 			return null;
 		} else {
-			Person result = Person.byName(userName);
-			if (result == null) {
-				throw new AuthenticationFailure(
-					I18NConstants.ERROR_REQUEST_USER_DOES_NOT_EXIST__NAME.fill(userName));
-			}
-			return result;
+			return TLContext.inSystemContext(APIKeyAuthenticator.class, () -> {
+				Person result = Person.byName(userName);
+				if (result == null) {
+					throw new AuthenticationFailure(
+						I18NConstants.ERROR_REQUEST_USER_DOES_NOT_EXIST__NAME.fill(userName));
+				}
+				return result;
+			});
 		}
 	}
 

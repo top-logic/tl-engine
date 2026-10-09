@@ -12,8 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -144,7 +146,12 @@ public class SecurityScope extends AbstractBoundChecker {
 		if (persBoundComp == null) {
 			return;
 		}
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		ResKey3 messageKey = granted
+			? I18NConstants.GRANTED_COMMAND_GROUP__GROUP_ROLE_SCOPE
+			: I18NConstants.REVOKED_COMMAND_GROUP__GROUP_ROLE_SCOPE;
+		ResKey message = messageKey.fill(MetaLabelProvider.INSTANCE.getLabel(group),
+			MetaLabelProvider.INSTANCE.getLabel(role), scopeLabel());
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(message)) {
 			if (granted) {
 				persBoundComp.addAccess(group, role);
 			} else {
@@ -152,6 +159,14 @@ public class SecurityScope extends AbstractBoundChecker {
 			}
 			tx.commit();
 		}
+	}
+
+	/**
+	 * The {@link #getLabel() label} of this scope, its security ID for a scope without a label.
+	 */
+	private ResKey scopeLabel() {
+		ResKey label = getLabel();
+		return label != null ? label : ResKey.text(String.valueOf(getSecurityId()));
 	}
 
 	@Override

@@ -175,6 +175,9 @@
 							</input-control>
 						</annotations>
 					</property>
+					<property name="script"
+						type="tl.model.search:Expr"
+					/>
 
 					<!-- Numbers -->
 					<property name="count"
@@ -464,6 +467,33 @@
 						multiple="true"
 						ordered="true"
 						type="tl.accounts:Person"
+					/>
+
+					<!-- Composition -->
+					<reference name="parts"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="DemoPart"
+					/>
+				</attributes>
+			</class>
+			<class name="DemoPart">
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="amount"
+						type="tl.core:Double"
+					/>
+					<reference name="parts"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="DemoPart"
 					/>
 				</attributes>
 			</class>

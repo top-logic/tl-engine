@@ -24,6 +24,9 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * Selected for an attribute through an {@code <input-control>} annotation; the configured language
  * fixes syntax highlighting and validation.
  * </p>
+ *
+ * @implNote The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the first line
+ *           of the source that holds more than white space stands for it.
  */
 public class CodeEditorControlProvider
 		extends AbstractConfiguredInstance<CodeEditorControlProvider.Config<?>>
@@ -62,6 +65,19 @@ public class CodeEditorControlProvider
 		CodeEditorLanguage language = getConfig().getLanguage();
 		return new ReactCodeEditorControl(context, model,
 			language != null ? language : CodeEditorLanguage.PLAIN);
+	}
+
+	@Override
+	public boolean isLarge(FieldSpec field) {
+		return true;
+	}
+
+	@Override
+	public String previewText(FieldSpec field, Object value) {
+		if (value instanceof String source) {
+			return ReactFieldControlProvider.firstNonBlankLine(source);
+		}
+		return ReactFieldControlProvider.super.previewText(field, value);
 	}
 
 }

@@ -86,16 +86,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_COLUMN_ACCESS_PARENT;
 
 	/**
-	 * @en container (default)
-	 */
-	public static ResKey COVERAGE_ACCESS_PARENT_DEFAULT;
-
-	/**
-	 * @en container
-	 */
-	public static ResKey COVERAGE_ACCESS_PARENT_CONTAINER;
-
-	/**
 	 * @en Findings
 	 */
 	public static ResKey COVERAGE_COLUMN_FINDINGS;
@@ -120,6 +110,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Please select the type to edit the access definition of.
 	 */
 	public static ResKey ERROR_NO_TYPE_SELECTED;
+
+	/**
+	 * @en Please select the module to edit the access definition of.
+	 */
+	public static ResKey ERROR_NO_MODULE_SELECTED;
 
 	/**
 	 * @en There is no rule to work on.
@@ -174,7 +169,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en The access rights cannot be stored: {0}
 	 */
-	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__ERRORS;
+	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__PROBLEM;
 
 	/**
 	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no
@@ -287,10 +282,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_EXEMPT_INTERNAL;
 
 	/**
+	 * @en The type is internal by the mark of "{0}": it is used by the application code alone, so
+	 *     it is exempt from the check and no user gets access to its objects. The mark can be dropped
+	 *     there only, not for this type alone.
+	 */
+	public static ResKey1 COVERAGE_EXEMPT_INTERNAL_INHERITED__ORIGIN;
+
+	/**
 	 * @en The type is excluded from access control: every user may access its objects, so it is
 	 *     exempt from the check.
 	 */
 	public static ResKey COVERAGE_EXEMPT_WITHOUT_SECURITY;
+
+	/**
+	 * @en The type is excluded from access control by the mark of "{0}": every user may access its
+	 *     objects, so it is exempt from the check. The mark can be dropped there only, not for this
+	 *     type alone.
+	 */
+	public static ResKey1 COVERAGE_EXEMPT_WITHOUT_SECURITY_INHERITED__ORIGIN;
 
 	/**
 	 * @en The access definition could not be written to the file "{0}".

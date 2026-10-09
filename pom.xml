@@ -40,6 +40,7 @@
 		<msgbuf.version>1.3.0</msgbuf.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
+		<commonmark.version>0.30.0</commonmark.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		<!-- renovate: datasource=node-version depName=node -->
 		<node.version>24.21.0</node.version>
@@ -63,8 +64,6 @@
 			
 			With -Dtl.javadoc.aggregate=false, the "javadoc-module-local" profiles of tl-parent-build and 
 			tl-parent-engine keep the JavaDoc of each module in its own build directory and skip the index. 
-			The profiles are not declared here, because activating any profile of this POM deactivates its 
-			"full-build" profile, which is active by default.
 		-->
 		<tl.javadoc.aggregateDir>${basedir}/../tl-doc/javadoc</tl.javadoc.aggregateDir>
 		
@@ -111,9 +110,17 @@
 
 	<profiles>
 		<profile>
+			<!--
+				Builds the engine modules. Active unless skipFullBuild is set or the profile is deactivated
+				explicitly (-P !full-build). A property activation is used instead of activeByDefault, because
+				Maven deactivates an activeByDefault profile as soon as any other profile of this POM is active
+				(e.g. no-multi-module-directory in an embedded Maven such as the Jenkins Maven integration).
+			-->
 			<id>full-build</id>
 			<activation>
-				<activeByDefault>true</activeByDefault>
+				<property>
+					<name>!skipFullBuild</name>
+				</property>
 			</activation>
 
 			<modules>
@@ -538,6 +545,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-mui</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-common-remote</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -951,7 +963,7 @@
 			<dependency>
 			    <groupId>org.postgresql</groupId>
 			    <artifactId>postgresql</artifactId>
-			    <version>42.7.13</version>
+			    <version>42.7.14</version>
 			</dependency>
 
 			<!-- External dependencies -->
@@ -1492,7 +1504,17 @@
     		<dependency>
 				<groupId>org.commonmark</groupId>
 				<artifactId>commonmark</artifactId>
-				<version>0.30.0</version>
+				<version>${commonmark.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.commonmark</groupId>
+				<artifactId>commonmark-ext-gfm-tables</artifactId>
+				<version>${commonmark.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.commonmark</groupId>
+				<artifactId>commonmark-ext-heading-anchor</artifactId>
+				<version>${commonmark.version}</version>
 			</dependency>
 			
 			<!-- Test modules -->
@@ -1526,7 +1548,7 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-demo-react-corporate</artifactId>
+				<artifactId>tl-demo-react-mui</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

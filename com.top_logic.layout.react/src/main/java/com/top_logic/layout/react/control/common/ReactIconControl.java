@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.common;
 
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -65,7 +66,7 @@ public class ReactIconControl extends ReactControl {
 	}
 
 	private void putImageState(ThemeImage image) {
-		putState(IMAGE, image == null ? null : image.resolve().toEncodedForm());
+		putState(IMAGE, ReactImages.encode(getReactContext(), image));
 	}
 
 	/**

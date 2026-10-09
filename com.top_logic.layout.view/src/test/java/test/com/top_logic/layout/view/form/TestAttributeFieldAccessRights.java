@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -359,13 +360,13 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 		assertTrue(fieldModel().isDisabled());
 		assertEquals(Boolean.FALSE, inputState(FieldState.EDITABLE__PROP));
 		assertEquals(Boolean.TRUE, inputState(FieldState.DISABLED__PROP));
-		Object tooltip = chrome().scriptingScalarState().get(ReactFormFieldChromeControl.TOOLTIP_TEXT);
+		Object tooltip = chrome().scriptingScalarState().get(FormFieldState.TOOLTIP_TEXT__PROP);
 		assertNotNull("The refusal is given as tooltip.", tooltip);
 		assertTrue("The tooltip gives the refusal: " + tooltip, tooltip.toString().contains(writeDenied(attribute)));
 	}
 
 	private void assertTooltipWithoutReason(TLStructuredTypePart attribute) {
-		Object tooltip = chrome().scriptingScalarState().get(ReactFormFieldChromeControl.TOOLTIP_TEXT);
+		Object tooltip = chrome().scriptingScalarState().get(FormFieldState.TOOLTIP_TEXT__PROP);
 		assertTrue("No refusal in the tooltip: " + tooltip,
 			tooltip == null || !tooltip.toString().contains(writeDenied(attribute)));
 	}

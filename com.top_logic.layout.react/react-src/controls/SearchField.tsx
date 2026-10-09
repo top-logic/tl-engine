@@ -1,5 +1,5 @@
 import { React, useI18N, useMergeRefs, tooltipProps, ThemeIcon, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 
 const I18N_KEYS = {
   'js.textInput.clear': 'Clear the input',

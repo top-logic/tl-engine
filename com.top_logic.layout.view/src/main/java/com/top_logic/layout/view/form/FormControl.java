@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.base.locking.handler.LockHandler;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
-import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -32,6 +32,7 @@ import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.util.error.TopLogicException;
 
@@ -92,9 +93,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private final List<FieldChangeListener> _fieldChangeListeners = new ArrayList<>();
 
-	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
+	/** The registration on the {@link #_inputChannel}, {@link Registration#NONE} without one. */
+	private Registration _inputRegistration = Registration.NONE;
 
-	private final ViewChannel.ChannelListener _editModeListener = this::handleEditModeChannelChanged;
+	/** The registration on the {@link #_editModeChannel}, {@link Registration#NONE} without one. */
+	private Registration _editModeRegistration = Registration.NONE;
 
 	private VetoListener _inputVeto;
 
@@ -111,10 +114,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private ModelScope _modelScope;
 
 	/**
-	 * The object this control is registered for as {@link ModelListener} in {@link #_modelScope},
-	 * {@code null} if not registered.
+	 * The registration of this control as {@link ModelListener} for its current object in
+	 * {@link #_modelScope}, not {@link Registration#isActive() active} if not registered.
 	 */
-	private TLObject _observedObject;
+	private Registration _modelRegistration = Registration.NONE;
 
 	/** Whether this control was {@link #detach() detached} and has not been attached again. */
 	private boolean _suspended;
@@ -139,9 +142,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_noModelMessage = noModelMessage;
 		_lockHandler = lockHandler;
 		_editMode = false;
-		putState(EDIT_MODE, Boolean.FALSE);
+		showEditMode(false);
 		putState(DIRTY, Boolean.FALSE);
 		updateNoModelMessage();
+		FormLayoutEditModeBinding.bind(this, readOnly -> putState(ReactFormLayoutControl.READ_ONLY, readOnly), this);
+	}
+
+	/**
+	 * Tells the client whether the form is being edited.
+	 *
+	 * <p>
+	 * Outside edit mode the form's grid is {@link ReactFormLayoutControl#READ_ONLY read-only}: its
+	 * fields show their values only, without the required marker, help and messages that belong to
+	 * editing.
+	 * </p>
+	 */
+	private void showEditMode(boolean editMode) {
+		putState(EDIT_MODE, Boolean.valueOf(editMode));
+		putState(ReactFormLayoutControl.READ_ONLY, Boolean.valueOf(!editMode));
 	}
 
 	/**
@@ -348,12 +366,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *        The input channel.
 	 */
 	public void setInputChannel(ViewChannel channel) {
-		if (_inputChannel != null) {
-			_inputChannel.removeListener(_inputListener);
-		}
+		_inputRegistration.dispose();
+		_inputRegistration = Registration.NONE;
 		_inputChannel = channel;
 		if (_inputChannel != null) {
-			_inputChannel.addListener(_inputListener);
+			_inputRegistration = _inputChannel.addListener(this::handleInputChanged);
 		}
 	}
 
@@ -375,12 +392,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *        The edit mode channel, may be {@code null}.
 	 */
 	public void setEditModeChannel(ViewChannel channel) {
-		if (_editModeChannel != null) {
-			_editModeChannel.removeListener(_editModeListener);
-		}
+		_editModeRegistration.dispose();
+		_editModeRegistration = Registration.NONE;
 		_editModeChannel = channel;
 		if (_editModeChannel != null) {
-			_editModeChannel.addListener(_editModeListener);
+			_editModeRegistration = _editModeChannel.addListener(this::handleEditModeChannelChanged);
 		}
 	}
 
@@ -456,23 +472,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	private void registerModelListener() {
-		if (!isAttached() || _observedObject != null || _modelScope == null || _currentObject == null
+		if (!isAttached() || _modelRegistration.isActive() || _modelScope == null || _currentObject == null
 			|| _currentObject.tTransient()) {
 			return;
 		}
-		_modelScope.addModelListener(_currentObject, this);
-		_observedObject = _currentObject;
+		_modelRegistration = _modelScope.addModelListener(_currentObject, this);
 	}
 
 	/**
 	 * Removes the registration made by {@link #registerModelListener()}, if any.
 	 */
 	private void deregisterModelListener() {
-		if (_observedObject == null) {
-			return;
-		}
-		_modelScope.removeModelListener(_observedObject, this);
-		_observedObject = null;
+		_modelRegistration.dispose();
+		_modelRegistration = Registration.NONE;
 	}
 
 	@Override
@@ -617,7 +629,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_lockHandler.acquireLock(_currentObject);
 
 		_editMode = true;
-		putState(EDIT_MODE, Boolean.TRUE);
+		showEditMode(true);
 		updateEditModeChannel();
 
 		if (_inputChannel != null && _inputVeto == null) {
@@ -712,7 +724,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return base;
 		}
 
-		Transaction tx = base.tKnowledgeBase().beginTransaction(I18NConstants.FORM_SAVE);
+		Transaction tx = base.tKnowledgeBase().beginTransaction(
+			I18NConstants.UPDATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(base)));
 		try {
 			for (FormParticipant participant : _participants) {
 				participant.persist(tx);
@@ -982,7 +995,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		releaseLock();
 
-		putState(EDIT_MODE, Boolean.FALSE);
+		showEditMode(false);
 		updateEditModeChannel();
 		updateDirtyState();
 
@@ -1083,12 +1096,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			discardEditSession();
 		}
 		deregisterModelListener();
-		if (_inputChannel != null) {
-			_inputChannel.removeListener(_inputListener);
-		}
-		if (_editModeChannel != null) {
-			_editModeChannel.removeListener(_editModeListener);
-		}
+		_inputRegistration.dispose();
+		_editModeRegistration.dispose();
 	}
 
 	/**

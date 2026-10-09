@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingControl;
@@ -27,7 +28,6 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.layout.view.form.StateHandler;
@@ -106,8 +106,6 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 	private final String _bindPathTo;
 
-	private final ChannelListener _pathListener;
-
 	private final VetoListener _pathVeto;
 
 	/**
@@ -157,9 +155,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
 		_bindPathTo = bindPathTo;
 
-		_pathListener = (sender, oldValue, newValue) -> exchangeFrames();
-		_pathChannel.addListener(_pathListener);
-		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
+		Registration pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> exchangeFrames());
+		addCleanupAction(pathRegistration::dispose);
 
 		_pathVeto = new VetoListener() {
 			@Override

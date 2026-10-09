@@ -54,6 +54,10 @@
 							</executability>
 							<confirm expr="r -> #('Delete role {0}?'@en, 'Rolle {0} löschen?'@de).fill($r.get(`tl.accounts:Role#name`))"/>
 							<with-transaction>
+								<commitMessage>
+									<en>Deleted role {0}.</en>
+									<de>Rolle {0} gelöscht.</de>
+								</commitMessage>
 								<execute-script function="obj -> $obj.delete()"/>
 							</with-transaction>
 							<write-channel name="selectedRole"/>

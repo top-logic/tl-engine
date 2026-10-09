@@ -23,6 +23,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.theme.ColorScheme;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
@@ -90,6 +91,13 @@ public class TestUIThemeService extends TestCase {
 			+ "</theme>"
 			+ "<theme name='light' extends='base'/>");
 
+	/** An abstract dark theme extended by a light theme only. */
+	private static final String ABSTRACT_DARK_BASE = config("light",
+		"<theme name='base' abstract='true' color-scheme='dark'>"
+			+ "<color name='background' value='#000000'/>"
+			+ "</theme>"
+			+ "<theme name='light' extends='base' color-scheme='light'/>");
+
 	/** An abstract theme marked as answering the operating system's preference. */
 	private static final String ABSTRACT_SYSTEM_DEFAULT = config("light",
 		"<theme name='base' abstract='true' color-scheme='dark' system-default='true'>"
@@ -107,6 +115,22 @@ public class TestUIThemeService extends TestCase {
 		assertTrue(css, css.contains(":root, " + selector("light") + "{"));
 		assertTrue(css, block(css, "light").startsWith("color-scheme:light;"));
 		assertTrue(css, block(css, "dark").startsWith("color-scheme:dark;"));
+	}
+
+	/**
+	 * The token blocks are in the cascade layer of the engine's styles, so that a component library
+	 * and the application override a token by a rule of their own.
+	 */
+	public void testTokensInEngineLayer() throws ConfigurationException {
+		String css = css(service(LIGHT_AND_DARK));
+
+		String layerStart = "@layer " + ClientResources.ENGINE_LAYER + "{";
+		int start = css.indexOf(layerStart);
+		assertTrue(css, start > 0);
+		assertTrue(css, css.indexOf(selector("light")) > start);
+		assertTrue(css, css.indexOf(selector("dark")) > start);
+		assertTrue(css, css.endsWith("}}</style>"));
+		assertEquals(css, start, css.lastIndexOf("@layer"));
 	}
 
 	/**
@@ -201,6 +225,46 @@ public class TestUIThemeService extends TestCase {
 	}
 
 	/**
+	 * The theme representing a color scheme while the page is held in that mode is the theme
+	 * answering the operating system's preference for it, if it has that scheme.
+	 */
+	public void testModeThemes() throws ConfigurationException {
+		UIThemeService service = service(LIGHT_AND_DARK);
+
+		assertEquals("light", service.getModeTheme(ColorScheme.LIGHT).getId());
+		assertEquals("dark", service.getModeTheme(ColorScheme.DARK).getId());
+	}
+
+	/**
+	 * A scheme the system theme does not have is represented by the first theme of that scheme, a
+	 * scheme no theme has by none.
+	 */
+	public void testModeThemeOfUnansweredScheme() throws ConfigurationException {
+		UIThemeService service = service(DARK_AND_CHILD);
+
+		// The default theme answers the light preference, but is dark.
+		assertEquals("night", service.getSystemTheme(ColorScheme.LIGHT).getId());
+		assertNull(service.getModeTheme(ColorScheme.LIGHT));
+		assertEquals("night", service.getModeTheme(ColorScheme.DARK).getId());
+	}
+
+	/**
+	 * The script offers holding the page in one appearance mode, with the theme representing each
+	 * scheme meanwhile, and leaves out a scheme no theme has.
+	 */
+	public void testThemeScriptLockMode() throws ConfigurationException {
+		String script = script(service(LIGHT_AND_DARK));
+
+		assertTrue(script, script.contains(UIThemeService.LOCK_MODE_FUNCTION + ": function(mode)"));
+		assertTrue(script, script.contains("var modeThemes = {"));
+		assertTrue(script, script.contains("'light': 'light','dark': 'dark'"));
+		assertTrue(script, script.contains("locked || modes[id] || 'light'"));
+
+		String darkOnly = script(service(DARK_AND_CHILD));
+		assertTrue(darkOnly, darkOnly.contains("var modeThemes = {'dark': 'night'};"));
+	}
+
+	/**
 	 * Nothing is selected without a personal configuration to select it in.
 	 */
 	public void testNoSelectionWithoutPersonalConfiguration() throws ConfigurationException {
@@ -239,6 +303,19 @@ public class TestUIThemeService extends TestCase {
 		assertTrue(css, block(css, "light").contains("--text:#000000;"));
 		String script = script(service);
 		assertFalse(script, script.contains("'base'"));
+	}
+
+	/**
+	 * An abstract theme never represents a color scheme while the page is held in that mode, so a
+	 * scheme only an abstract theme has is represented by none.
+	 */
+	public void testAbstractThemeIsNoModeTheme() throws ConfigurationException {
+		UIThemeService service = service(ABSTRACT_DARK_BASE);
+
+		assertEquals("light", service.getModeTheme(ColorScheme.LIGHT).getId());
+		assertNull(service.getModeTheme(ColorScheme.DARK));
+		String script = script(service);
+		assertTrue(script, script.contains("var modeThemes = {'light': 'light'};"));
 	}
 
 	/**

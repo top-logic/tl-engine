@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName, menuItemProps, useButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps, ToggleButtonStateJson } from 'tl-react-bridge';
-import { buttonClassName, menuItemProps, useButtonDefaults } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback } = React;
 

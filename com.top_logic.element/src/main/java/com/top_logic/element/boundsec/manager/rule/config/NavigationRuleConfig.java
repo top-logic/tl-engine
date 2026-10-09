@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -22,7 +23,6 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.config.TLModelPartMapping;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
 import com.top_logic.model.util.AllClasses;
@@ -74,10 +74,10 @@ public interface NavigationRuleConfig extends ConfigurationItem {
 	void setId(String id);
 
 	/**
-	 * Full qualified name of the {@link TLClass} that an object must have such that
-	 * {@link NavigationRuleConfig} is applied.
+	 * The type of the objects the rule applies to, as its qualified name.
 	 */
 	@Name(NavigationRuleConfig.XML_ATTRIBUTE_META_ELEMENT)
+	@Label("Type")
 	@Nullable
 	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
@@ -88,10 +88,11 @@ public interface NavigationRuleConfig extends ConfigurationItem {
 	void setMetaElement(String metaElement);
 
 	/**
-	 * Whether this {@link NavigationRuleConfig} should also be applied to all sub types of
-	 * {@link #getMetaElement()}.
+	 * Whether the rule also applies to the objects of the subtypes of the
+	 * {@link #getMetaElement() type}.
 	 */
 	@Name(NavigationRuleConfig.XML_ATTRIBUTE_INHERIT)
+	@Label("Including subtypes")
 	boolean isInherit();
 
 	/** @see #isInherit() */

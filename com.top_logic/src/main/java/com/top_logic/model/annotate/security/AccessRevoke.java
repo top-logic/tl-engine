@@ -6,6 +6,7 @@
 
 package com.top_logic.model.annotate.security;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.annotate.TLAccessRights;
 
@@ -31,6 +32,7 @@ import com.top_logic.model.annotate.TLAccessRights;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName(AccessRevoke.TAG_NAME)
+@InApp
 public interface AccessRevoke extends AccessRule {
 
 	/** Tag name to use for an {@link AccessRevoke} in a rule sequence. */

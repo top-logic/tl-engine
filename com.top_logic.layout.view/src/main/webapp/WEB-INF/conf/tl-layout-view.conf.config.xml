@@ -21,6 +21,18 @@
 				</security-config>
 			</instance>
 		</config>
+		<!-- The entries of the developer documentation, shown in its documentation window. -->
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<label-providers>
+					<provider
+						implementation="com.top_logic.layout.view.docs.DevDocResourceProvider"
+						kind="CODE"
+						type="com.top_logic.basic.docs.DevDoc"
+					/>
+				</label-providers>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>

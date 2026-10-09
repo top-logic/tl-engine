@@ -21,7 +21,8 @@ import com.top_logic.model.TLObject;
  *
  * <p>
  * Dirty tracking checks both the list membership (added/removed objects) and whether any row
- * overlay is dirty (attribute changes within composed objects).
+ * overlay is {@link EditLevel#isModified(Object) modified} (attribute changes within composed
+ * objects and within their own compositions).
  * </p>
  */
 public class CompositionFieldModel extends AbstractFieldModel {
@@ -79,9 +80,9 @@ public class CompositionFieldModel extends AbstractFieldModel {
 		if (super.isDirty()) {
 			return true;
 		}
-		// Check row overlay changes.
+		// Check row overlay changes, including the changes within the compositions of the rows.
 		for (TLObjectOverlay overlay : _rowOverlays) {
-			if (overlay.isDirty()) {
+			if (EditLevel.isModified(overlay)) {
 				return true;
 			}
 		}

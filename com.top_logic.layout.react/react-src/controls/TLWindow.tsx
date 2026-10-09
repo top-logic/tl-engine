@@ -1,9 +1,8 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
+  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
-import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -334,8 +333,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     } else {
       // Save current bounds. A centered window is restored centered and with the size it had
       // (the configured or the remembered one), not pinned to the place and width it was rendered
-      // at: pinned, it would lose the 80vh height limit of a centered window and could reach below
-      // the bottom edge of the browser window.
+      // at: pinned, its top would stay where it was while its content may have grown since, and it
+      // could reach below the bottom edge of the browser window.
       regularBoundsRef.current = {
         x: positionRef.current?.x ?? -1,
         y: positionRef.current?.y ?? -1,
@@ -362,7 +361,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         ...(customFits && localHeight == null
           ? { minHeight: customHeight + 'px' }
           : {}),
-        maxHeight: position ? '100vh' : '80vh',
+        // The height limit of the stylesheet holds until the user gives the window a height: a
+        // window that is moved keeps the height it had, also where its content is taller. A height
+        // given by resizing fits into the browser window already.
+        ...(localHeight != null ? { maxHeight: '100vh' } : {}),
         ...(position
           ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }
           : {}),

@@ -16,16 +16,25 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en A type with an access parent has no access definition of its own: "{0}" must stay
-	 *     empty.
+	 * @en A type with an access parent takes over the access definition of that parent and has none
+	 *     of its own: either remove the access parent, or clear "{0}".
 	 */
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 
 	/**
-	 * @en An access parent that is the target of a reference needs the to-one reference leading to
-	 *     it.
+	 * @en container (default)
 	 */
-	public static ResKey ACCESS_REFERENCE_REQUIRED;
+	public static ResKey ACCESS_PARENT_CONTAINER_DEFAULT;
+
+	/**
+	 * @en container
+	 */
+	public static ResKey ACCESS_PARENT_CONTAINER;
+
+	/**
+	 * @en container via {0}
+	 */
+	public static ResKey1 ACCESS_PARENT_CONTAINER_VIA__COMPOSITION;
 
 	static {
 		initConstants(I18NConstants.class);

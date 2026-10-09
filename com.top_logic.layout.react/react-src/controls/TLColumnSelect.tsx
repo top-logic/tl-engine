@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, tooltipProps, ThemeIcon, ICON_HANDLE, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 import { SearchField } from './SearchField';
 
 const I18N_KEYS = {

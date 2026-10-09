@@ -29,7 +29,6 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.element.TableElement.CriterionConfig;
-import com.top_logic.layout.view.element.TableElement.DropConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
 import com.top_logic.layout.view.form.RowEditPolicy;
@@ -38,6 +37,7 @@ import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.DynamicColumns;
 import com.top_logic.layout.view.table.EmbeddedColumns;
 import com.top_logic.layout.view.table.FilterStateConfig;
@@ -273,10 +273,10 @@ public class TestTableElement extends TestCase {
 	 * they target, and the action chain applying them.
 	 */
 	public void testParseDrops() throws Exception {
-		List<DropConfig> drops = readTableConfig().getDrops();
+		List<TableDropConfig> drops = readTableConfig().getDrops();
 		assertEquals("Should have two drops", 2, drops.size());
 
-		DropConfig onTable = drops.get(0);
+		TableDropConfig onTable = drops.get(0);
 		assertEquals(List.of("demo.test:Row"),
 			onTable.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
 		assertEquals("A drop targets the table unless it says otherwise.",
@@ -284,7 +284,7 @@ public class TestTableElement extends TestCase {
 		assertNull("A table drop has no target row to publish.", onTable.getTargetChannel());
 		assertEquals("Should declare one action", 1, onTable.getActions().size());
 
-		DropConfig onRow = drops.get(1);
+		TableDropConfig onRow = drops.get(1);
 		assertEquals(List.of("demo.test:Row", "demo.test:Other"),
 			onRow.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
 		assertEquals(DropTargetMode.ROW, onRow.getTarget());

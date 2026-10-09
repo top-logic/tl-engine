@@ -19,6 +19,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -33,12 +34,6 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  * </p>
  */
 public class TestFormFieldTooltips extends TestCase {
-
-	/** State key of the plain text offered as the label's tooltip. */
-	private static final String TOOLTIP_TEXT = "tooltipText";
-
-	/** State key telling the client that rich content is available under {@link #TOOLTIP_KEY}. */
-	private static final String HAS_TOOLTIP = "hasTooltip";
 
 	/** The key under which the control answers its rich tooltip content. */
 	private static final String TOOLTIP_KEY = "tooltip";
@@ -72,8 +67,8 @@ public class TestFormFieldTooltips extends TestCase {
 
 		chrome.setTooltipText(DESCRIPTION);
 
-		assertEquals(DESCRIPTION, chrome.clientState(TOOLTIP_TEXT));
-		assertFalse("No rich content is announced.", Boolean.TRUE.equals(chrome.clientState(HAS_TOOLTIP)));
+		assertEquals(DESCRIPTION, chrome.clientState(FormFieldState.TOOLTIP_TEXT__PROP));
+		assertFalse("No rich content is announced.", Boolean.TRUE.equals(chrome.clientState(FormFieldState.HAS_TOOLTIP__PROP)));
 	}
 
 	/**
@@ -85,7 +80,7 @@ public class TestFormFieldTooltips extends TestCase {
 		chrome.setTooltipText(DESCRIPTION);
 		chrome.setTooltipText("");
 
-		assertNull("An empty description is no description.", chrome.clientState(TOOLTIP_TEXT));
+		assertNull("An empty description is no description.", chrome.clientState(FormFieldState.TOOLTIP_TEXT__PROP));
 	}
 
 	/**
@@ -98,8 +93,8 @@ public class TestFormFieldTooltips extends TestCase {
 		chrome.setTooltipText(DESCRIPTION);
 		chrome.setTooltip(HTML, null);
 
-		assertEquals(Boolean.TRUE, chrome.clientState(HAS_TOOLTIP));
-		assertEquals(DESCRIPTION, chrome.clientState(TOOLTIP_TEXT));
+		assertEquals(Boolean.TRUE, chrome.clientState(FormFieldState.HAS_TOOLTIP__PROP));
+		assertEquals(DESCRIPTION, chrome.clientState(FormFieldState.TOOLTIP_TEXT__PROP));
 		TooltipContent content = chrome.getTooltipContent(TOOLTIP_KEY);
 		assertNotNull("The control answers its own key.", content);
 		assertEquals(HTML, content.getHtml());

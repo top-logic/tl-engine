@@ -4,7 +4,6 @@
 <module rename-to='TLReactFlowClient'>
     <inherits name="elemental2.dom.Dom" />
     <inherits name="com.google.gwt.user.User" />
-    <inherits name="com.google.gwt.user.theme.standard.Standard"/>
     <inherits name="com.top_logic.ajax.shared.TLAjaxShared"/>
     <inherits name="com.top_logic.ajax.client.TLAjaxClient"/>
 

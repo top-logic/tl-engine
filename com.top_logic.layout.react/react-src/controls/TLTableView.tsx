@@ -1,8 +1,10 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
+import { isInteractiveTarget, isOperableTarget } from './interactive';
+import { NO_DRAG_IMAGE } from './drop-hint';
+import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 import { SearchField } from './SearchField';
 
 /**
@@ -150,13 +152,6 @@ interface RowState {
   draggable?: boolean;
 }
 
-/** The server's answer to a drop probe: whether a drop there would be accepted, and if not, why. */
-interface DropVerdict {
-  accepted: boolean;
-  /** Why the drop is refused, in the user's language. */
-  reason?: string;
-}
-
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
@@ -202,9 +197,6 @@ const DropHint: React.FC<{
     </div>,
     document.body);
 };
-
-/** Drag image extent for a drag of unknown origin: none. */
-const NO_DRAG_IMAGE: TLRunningDrag['image'] = { top: 0, bottom: 0 };
 
 const MIN_COL_WIDTH = 50;
 
@@ -888,12 +880,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
       }
     }
-    // Operating a control inside an already selected row is not a selection gesture. Sending one
-    // anyway would have the server re-render the row, and that answer overwrites the value the
-    // control is sending at the same moment - the edit would be lost.
-    const row = rows.find((r) => r.index === rowIndex);
-    if (isInteractiveTarget(event) && row?.selected
-        && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    // Operating a control inside a cell - a button, a checkbox, an input - is not a selection
+    // gesture: the click belongs to the control. Selecting the row anyway would not only change
+    // the selection the user did not ask to change; the server's re-render of the row would also
+    // overwrite the value the control is sending at the same moment, and the edit would be lost.
+    // A control that cannot be operated - the read-only checkbox of a row not yet editable - does
+    // nothing with the click, which then selects the row as a click on its text would.
+    if (isOperableTarget(event) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
       return;
     }
     sendCommand('select', {
@@ -901,7 +894,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand, rows]);
+  }, [sendCommand]);
 
   // A double-click opens the row: the server selects it and runs what the view configured for an
   // activation. A double-click inside an interactive cell element belongs to that element
@@ -1317,7 +1310,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // scrolling to the right end frees the funnel there, too.
   // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
   // scroll range without offering the last cell space to grow into and without a sticky cell -
-  // confined to the content box - ever reaching underneath the button.
+  // confined to the content box - ever reaching underneath the button. The design system sizes every
+  // box as border-box, so a minimum width given for a row includes its padding: it must add the
+  // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
   const buttonReserve = columnSelect && !cogInHeaderCell ? columnsButtonWidth : 0;
 
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
@@ -1521,10 +1516,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       >
       <div className="tl-table__header" ref={headerRef} role="rowgroup">
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
-            cannot leave its row. The reserve is padding, which a sticky cell never enters. */}
+            cannot leave its row, so a row ending with the last column would hold the pinned cells
+            back from that edge. The reserve is padding, which a sticky cell never enters. */}
         <div className="tl-table__header-row tl-type-label-strong" role="row" aria-rowindex={1}
           data-tl-axis="horizontal" {...columnReorder.containerProps}
-          style={{ minWidth: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
+          style={{ minWidth: tableWidth + buttonReserve + scrollbarWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
             <div role="columnheader"
               className="tl-table__header-cell tl-table__select"
@@ -1663,7 +1659,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         {/* Spacer for virtual scrolling. Fills the body when the columns are narrower than it, so
             the rows reach the right edge and a cell pinned there lands on it; the reserve is
             padding, so it widens the scroll range without taking any cell along. */}
-        <div className="tl-table__canvas" style={{ height: totalHeight, minWidth: tableWidth, paddingRight: buttonReserve }}>
+        <div className="tl-table__canvas" style={{ height: totalHeight, minWidth: tableWidth + buttonReserve, paddingRight: buttonReserve }}>
           {missing.map((index) => (
             <div key={'skeleton-' + index} className="tl-table__placeholder" aria-hidden="true"
               style={{ position: 'absolute', top: index * rowHeight, height: rowHeight, left: 0, right: 0 }}>

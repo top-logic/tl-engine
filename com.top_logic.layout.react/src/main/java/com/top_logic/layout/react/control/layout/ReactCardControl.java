@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.CardState;
 
 /**
  * A {@link ReactControl} that renders an elevated content container via the {@code TLCard} React
@@ -20,20 +21,14 @@ import com.top_logic.layout.react.control.ReactControl;
  * A card is lighter than {@link ReactPanelControl} - it provides visual grouping with an optional
  * header but no minimize/maximize/pop-out behavior.
  * </p>
+ *
+ * <p>
+ * The state is described by {@link CardState}.
+ * </p>
  */
 public class ReactCardControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLCard";
-
-	private static final String TITLE = "title";
-
-	private static final String VARIANT = "variant";
-
-	private static final String PADDING = "padding";
-
-	private static final String HEADER_ACTIONS = "headerActions";
-
-	private static final String CHILD = "child";
 
 	/**
 	 * Visual variant of a card.
@@ -110,8 +105,8 @@ public class ReactCardControl extends ReactControl {
 		setTitle(title);
 		setVariant(variant);
 		setPadding(padding);
-		putState(HEADER_ACTIONS, _headerActions);
-		putState(CHILD, child);
+		putState(CardState.HEADER_ACTIONS__PROP, _headerActions);
+		putState(CardState.CHILD__PROP, child);
 	}
 
 	/**
@@ -133,21 +128,21 @@ public class ReactCardControl extends ReactControl {
 	 *        The new title, or {@code null} to remove the header.
 	 */
 	public void setTitle(String title) {
-		putState(TITLE, title);
+		putState(CardState.TITLE__PROP, title);
 	}
 
 	/**
 	 * Sets the visual variant.
 	 */
 	public void setVariant(CardVariant variant) {
-		putState(VARIANT, variant.getExternalName());
+		putState(CardState.VARIANT__PROP, variant.getExternalName());
 	}
 
 	/**
 	 * Sets the content padding.
 	 */
 	public void setPadding(CardPadding padding) {
-		putState(PADDING, padding.getExternalName());
+		putState(CardState.PADDING__PROP, padding.getExternalName());
 	}
 
 	/**
@@ -155,6 +150,7 @@ public class ReactCardControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), "padding", "variant");
+		return presentationKeys(super.scriptingPresentationKeys(), CardState.PADDING__PROP,
+			CardState.VARIANT__PROP);
 	}
 }

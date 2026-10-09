@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -147,8 +148,8 @@ public class LogLineTable implements UIElement {
 				source.setElements(lines(newValue));
 				control.refreshData();
 			};
-			input.addListener(listener);
-			control.addCleanupAction(() -> input.removeListener(listener));
+			Registration registration = input.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 		if (_reloadRef != null) {
 			ViewChannel reload = context.resolveChannel(_reloadRef);
@@ -156,8 +157,8 @@ public class LogLineTable implements UIElement {
 				source.setElements(lines(input == null ? null : input.get()));
 				control.refreshData();
 			};
-			reload.addListener(listener);
-			control.addCleanupAction(() -> reload.removeListener(listener));
+			Registration registration = reload.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 		control.setCssClass(_cssClass);
 		return control;

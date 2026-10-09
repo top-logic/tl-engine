@@ -10,6 +10,8 @@ import junit.framework.Test;
 import test.com.top_logic.element.model.util.TLModelTest;
 
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.element.meta.kbbased.I18NConstants;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
@@ -20,7 +22,7 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Tests for {@link com.top_logic.element.meta.kbbased.NoStorage}.
+ * Tests for the storage of abstract attributes.
  *
  * <p>
  * Tests that abstract attributes are inaccessible on transient objects.
@@ -82,6 +84,38 @@ public class TestNoStorage extends TLModelTest {
 			// Expected - abstract attributes are inaccessible
 			assertContains("testNoStorage:Base#abstractAttr", ex.getMessage());
 		}
+	}
+
+	/**
+	 * Tests that the storage of an abstract attribute reports a value access as access to an
+	 * abstract attribute.
+	 */
+	public void testValueAccessReportsAbstractAttribute() {
+		TLClass baseClass = type("testNoStorage:Base");
+		TLStructuredTypePart abstractAttr = baseClass.getPart("abstractAttr");
+		StorageImplementation storage = (StorageImplementation) abstractAttr.getStorageImplementation();
+		TLObject transientObject = getFactory().createObject(baseClass, null, null);
+
+		try {
+			storage.getAttributeValue(transientObject, abstractAttr);
+			fail("Reading an abstract attribute must fail.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_ACCESS_TO_ABSTRACT_ATTRIBUTE__ATTR.getKey(), ex.getErrorKey().getKey());
+			assertContains("testNoStorage:Base#abstractAttr", ex.getMessage());
+		}
+	}
+
+	/**
+	 * Tests that an abstract attribute is read only and therefore derived.
+	 */
+	public void testAbstractAttributeIsReadOnly() {
+		TLStructuredTypePart abstractAttr = type("testNoStorage:Base").getPart("abstractAttr");
+		assertTrue("An abstract attribute has no values that could be modified.",
+			((StorageImplementation) abstractAttr.getStorageImplementation()).isReadOnly());
+		assertTrue(abstractAttr.isDerived());
+
+		TLStructuredTypePart concreteAttr = type("testNoStorage:Ext").getPart("abstractAttr");
+		assertFalse(concreteAttr.isDerived());
 	}
 
 	/**

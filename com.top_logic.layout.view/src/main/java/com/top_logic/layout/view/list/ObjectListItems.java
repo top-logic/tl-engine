@@ -6,12 +6,9 @@
 package com.top_logic.layout.view.list;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactLayoutControl;
@@ -74,20 +71,16 @@ public class ObjectListItems {
 
 	private final List<ViewChannel> _inputs;
 
-	private final List<UIElement> _itemContent;
+	/** The instances of the item content, one per list element. */
+	private final TemplateInstances _items;
 
 	private final List<UIElement> _newElementContent;
-
-	private final String _elementChannelName;
 
 	private final String _newElementChannelName;
 
 	private final TLClass _elementType;
 
 	private final ResKey _emptyText;
-
-	/** Item controls by list element, in display order. */
-	private final Map<Object, ReactControl> _itemControls = new LinkedHashMap<>();
 
 	/** The new-element template's controls, created once and kept across refreshes. */
 	private final List<ReactControl> _newElementControls = new ArrayList<>();
@@ -99,9 +92,6 @@ public class ObjectListItems {
 
 	/** The input values the children were last built for, to reset the new element on a change. */
 	private List<Object> _lastInputValues;
-
-	/** Allocates stable slot-path segments for dynamically created item controls. */
-	private int _itemCounter;
 
 	/**
 	 * Creates the {@link ObjectListItems} of a list.
@@ -141,9 +131,8 @@ public class ObjectListItems {
 		_display = new ReactStackControl(templateContext, StackDirection.COLUMN, options.getGap(),
 			StackAlign.STRETCH, false, List.of(_elements));
 		_inputs = inputs;
-		_itemContent = itemContent;
+		_items = new TemplateInstances(itemContent, elementChannelName, "item");
 		_newElementContent = newElementContent;
-		_elementChannelName = elementChannelName;
 		_newElementChannelName = newElementChannelName;
 		_elementType = elementType;
 		_emptyText = emptyText;
@@ -231,21 +220,7 @@ public class ObjectListItems {
 			}
 		}
 
-		Map<Object, ReactControl> retained = new LinkedHashMap<>();
-		List<ReactControl> items = new ArrayList<>();
-		for (Object element : elements) {
-			ReactControl control = _itemControls.remove(element);
-			if (control == null) {
-				control = createItemControl(element);
-			}
-			retained.put(element, control);
-			items.add(control);
-		}
-		for (ReactControl dropped : _itemControls.values()) {
-			dropped.cleanupTree();
-		}
-		_itemControls.clear();
-		_itemControls.putAll(retained);
+		List<ReactControl> items = _items.update(_templateContext, elements);
 		_elements.setChildren(items);
 
 		// Only the elements are arranged; what is shown in addition to them follows the arrangement
@@ -269,27 +244,6 @@ public class ObjectListItems {
 		}
 
 		_display.setChildren(displayed);
-	}
-
-	/**
-	 * Instantiates the item content for one list element.
-	 */
-	private ReactControl createItemControl(Object element) {
-		DefaultViewChannel elementChannel = new DefaultViewChannel(_elementChannelName);
-		elementChannel.set(element);
-		ViewContext itemContext = _templateContext.withLocalChannel(_elementChannelName, elementChannel);
-
-		String itemSegment = "item-" + (_itemCounter++);
-		List<ReactControl> controls = new ArrayList<>(_itemContent.size());
-		for (int i = 0; i < _itemContent.size(); i++) {
-			ViewContext childContext = itemContext.withChildSlotPath(itemSegment + "." + i);
-			IReactControl control = _itemContent.get(i).createControl(childContext);
-			controls.add((ReactControl) control);
-		}
-
-		ReactControl itemControl =
-			controls.size() == 1 ? controls.get(0) : new ReactStackControl(itemContext, controls);
-		return itemControl;
 	}
 
 }

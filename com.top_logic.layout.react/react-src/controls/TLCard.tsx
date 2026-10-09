@@ -1,23 +1,18 @@
 import { React, useTLState, TLChild, FillBarrier, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, CardStateJson, ChildControlJson } from 'tl-react-bridge';
 
 /**
  * An elevated content container, lighter than TLPanel.
  *
- * State:
- * - title: string | null
- * - variant: "outlined" | "elevated"  (default: "outlined")
- * - padding: "none" | "compact" | "default"  (default: "default")
- * - headerActions: ChildDescriptor[]
- * - child: ChildDescriptor
+ * The state is described by CardStateJson.
  */
 const TLCard: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<CardStateJson>>();
 
-  const title = state.title as string | null;
-  const variant = (state.variant as string) ?? 'outlined';
-  const padding = (state.padding as string) ?? 'default';
-  const headerActions = (state.headerActions as unknown[]) ?? [];
+  const title = state.title ?? null;
+  const variant = state.variant ?? 'outlined';
+  const padding = state.padding ?? 'default';
+  const headerActions: ChildControlJson[] = state.headerActions ?? [];
   const child = state.child;
 
   const hasHeader = title != null || headerActions.length > 0;

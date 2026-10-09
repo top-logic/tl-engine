@@ -4,11 +4,26 @@
 	<services>
 		<config service-class="com.top_logic.layout.view.form.FieldControlService">
 			<instance>
+				<providers>
+					<provider type="tl.model.search:Expr">
+						<impl class="com.top_logic.model.search.react.TLScriptFieldControlProvider"/>
+					</provider>
+				</providers>
 				<value-type-providers>
 					<provider value-type="com.top_logic.model.search.expr.config.dom.Expr">
 						<impl class="com.top_logic.model.search.react.TLScriptFieldControlProvider"/>
 					</provider>
 				</value-type-providers>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.layout.configedit.ConfigControlService">
+			<instance class="com.top_logic.layout.configedit.ConfigControlService">
+				<providers>
+					<!-- A TL-Script valued configuration property is edited in the TL-Script editor. -->
+					<provider type="com.top_logic.model.search.expr.config.dom.Expr">
+						<impl class="com.top_logic.model.search.react.TLScriptConfigControlProvider"/>
+					</provider>
+				</providers>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
@@ -18,6 +33,10 @@
 						resource="/script/tl-script-editor.js"
 						requires="tl-react-bridge,tl-code-editor"
 					/>
+					<!--
+						Unlayered: the stylesheet overrides the base theme CodeMirror writes into the page
+						at runtime, which is unlayered and would win against every rule of a layer.
+					-->
 					<stylesheet name="tl-script-editor-css"
 						resource="/style/tlScriptEditor.css"
 					/>

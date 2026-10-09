@@ -29,4 +29,7 @@ public class Icons extends IconsBase {
 	@DefaultValue("css:fas fa-times")
 	public static ThemeImage CONFIG_FORM_CANCEL;
 
+	@DefaultValue("css:fas fa-plus")
+	public static ThemeImage CONFIG_LIST_ADD;
+
 }

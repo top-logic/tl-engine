@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.util.error.TopLogicException;
@@ -29,6 +30,12 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * All inner actions execute within the same transaction. If any action throws, the transaction is
  * rolled back. The result of the last inner action is returned.
+ * </p>
+ *
+ * <p>
+ * The changes are committed with the configured commit message, filled with the label of the
+ * action's input. Without one, the message names the label of the command the action runs in and
+ * the action's input.
  * </p>
  *
  * <p>
@@ -55,7 +62,7 @@ public class WithTransactionAction implements ViewAction {
 	 * Configuration for {@link WithTransactionAction}.
 	 */
 	@TagName("with-transaction")
-	public interface Config extends PolymorphicConfiguration<WithTransactionAction> {
+	public interface Config extends PolymorphicConfiguration<WithTransactionAction>, WithCommitMessage {
 
 		@Override
 		@ClassDefault(WithTransactionAction.class)
@@ -71,12 +78,15 @@ public class WithTransactionAction implements ViewAction {
 
 	private final List<ViewAction> _actions;
 
+	private final ViewCommitMessage _commitMessage;
+
 	/**
 	 * Creates a new {@link WithTransactionAction}.
 	 */
 	@CalledByReflection
 	public WithTransactionAction(InstantiationContext context, Config config) {
 		_actions = ViewActions.instantiate(context, config.getActions());
+		_commitMessage = new ViewCommitMessage(context, config);
 	}
 
 	@Override
@@ -104,7 +114,7 @@ public class WithTransactionAction implements ViewAction {
 	@Override
 	public Object execute(ReactContext context, Object input) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(_commitMessage.create(input));
 		try {
 			Object current = input;
 			for (ViewAction action : _actions) {

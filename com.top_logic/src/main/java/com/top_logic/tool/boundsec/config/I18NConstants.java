@@ -14,7 +14,7 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Import of access configuration.
+	 * @en Imported access configuration.
 	 */
 	public static ResKey ACCESS_CONFIG_IMPORT;
 

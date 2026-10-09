@@ -23,6 +23,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -444,30 +445,33 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 	private static class NoScope implements ModelScope {
 
 		@Override
-		public boolean addModelListener(ModelListener listener) {
-			return true;
+		public Registration addModelListener(ModelListener listener) {
+			return Registration.onDispose(() -> removeModelListener(listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLStructuredType type, ModelListener listener) {
-			return true;
+		public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+			return Registration.onDispose(() -> removeModelListener(type, listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLObject object, ModelListener listener) {
-			return true;
+		public Registration addModelListener(TLObject object, ModelListener listener) {
+			return Registration.onDispose(() -> removeModelListener(object, listener));
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(ModelListener listener) {
 			return true;
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 			return true;
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLObject object, ModelListener listener) {
 			return true;

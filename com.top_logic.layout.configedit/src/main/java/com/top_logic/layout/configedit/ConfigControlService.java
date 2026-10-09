@@ -28,12 +28,13 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -721,10 +722,13 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}.
 	 * @param property
 	 *        The property whose options are labelled.
+	 * @return The labels the property declares, or else the {@link MetaResourceProvider}: as for a
+	 *         {@link SelectField} without option labels of its own, an option is then presented
+	 *         with the label and the icon the resource provider of its type gives it.
 	 */
 	private LabelProvider selectLabels(ConfigurationItem formModel, PropertyDescriptor property) {
 		LabelProvider labels = ConfigPropertyOptions.optionLabels(formModel, property);
-		return labels != null ? labels : MetaLabelProvider.INSTANCE;
+		return labels != null ? labels : MetaResourceProvider.INSTANCE;
 	}
 
 	/**

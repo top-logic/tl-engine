@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.common;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.ProgressState;
 
 /**
  * A read-only control displaying a fraction as a bar with an optional label, via the
@@ -20,25 +21,20 @@ import com.top_logic.layout.react.control.ReactControl;
  * </p>
  *
  * <p>
- * A {@link #FRACTION} of {@code null} is the indeterminate bar: the bar says that something is
+ * A {@link ProgressState#FRACTION__PROP fraction} of {@code null} is the indeterminate bar: the bar says that something is
  * going on without saying how far it has come, and the client animates a sweep over the track
  * instead of filling a share of it. A caller that learns the share only later starts with
  * {@link #setIndeterminate()} and switches to a number as soon as it has one, and back whenever it
  * loses it again.
  * </p>
+ *
+ * <p>
+ * The state is described by {@link ProgressState}.
+ * </p>
  */
 public class ReactProgressControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLProgress";
-
-	/**
-	 * State key for the displayed fraction, between 0 and 1, or {@code null} for the indeterminate
-	 * bar.
-	 */
-	public static final String FRACTION = "fraction";
-
-	/** State key for the text displayed beside the bar, or {@code null} for a bar without one. */
-	public static final String LABEL = "label";
 
 	/**
 	 * Creates a {@link ReactProgressControl}.
@@ -52,8 +48,8 @@ public class ReactProgressControl extends ReactControl {
 	 */
 	public ReactProgressControl(ReactContext context, Double fraction, String label) {
 		super(context, null, REACT_MODULE);
-		putState(FRACTION, clamp(fraction));
-		putState(LABEL, label);
+		putState(ProgressState.FRACTION__PROP, clamp(fraction));
+		putState(ProgressState.LABEL__PROP, label);
 	}
 
 	/**
@@ -63,7 +59,7 @@ public class ReactProgressControl extends ReactControl {
 	 *        The new fraction, between 0 and 1, or {@code null} for the indeterminate bar.
 	 */
 	public void setFraction(Double fraction) {
-		putState(FRACTION, clamp(fraction));
+		putState(ProgressState.FRACTION__PROP, clamp(fraction));
 	}
 
 	/**
@@ -82,7 +78,7 @@ public class ReactProgressControl extends ReactControl {
 	 *        The new label, or {@code null} for a bar without one.
 	 */
 	public void setLabel(String label) {
-		putState(LABEL, label);
+		putState(ProgressState.LABEL__PROP, label);
 	}
 
 	/**

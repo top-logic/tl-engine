@@ -10,9 +10,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
@@ -23,13 +27,14 @@ import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.security.AccessParentKind;
+import com.top_logic.model.security.AccessParentConfig;
+import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
-import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
@@ -336,7 +341,8 @@ public class SecurityDefinitionEditor {
 	 * {@link #putAccessRights(ModelAccessRights)}, which stores it under the name of the type.
 	 * Since the grants of all configuration layers are appended to one sequence, the copy holds the
 	 * stored grants only: the grants of the underlying layers stay in effect without being repeated
-	 * here.
+	 * here. The marks and the access parent however are those in effect, also when an underlying
+	 * layer sets them.
 	 * </p>
 	 *
 	 * @param type
@@ -357,7 +363,8 @@ public class SecurityDefinitionEditor {
 	 * {@link #putAccessRights(ModelAccessRights)}, which stores it under the name of the module.
 	 * Since the grants of all configuration layers are appended to one sequence, the copy holds the
 	 * stored grants only: the grants of the underlying layers stay in effect without being repeated
-	 * here.
+	 * here. The marks and the access parent however are those in effect, also when an underlying
+	 * layer sets them.
 	 * </p>
 	 *
 	 * @param module
@@ -373,6 +380,12 @@ public class SecurityDefinitionEditor {
 	/**
 	 * Stores the given access rights entry, replacing a stored entry of the same name.
 	 *
+	 * <p>
+	 * An entry of a type without an access parent drops one an underlying configuration layer
+	 * sets: an unset access parent is not written at all and would leave that one in effect, so
+	 * the stored entry says that the type {@link SelfAccessParent decides for itself} instead.
+	 * </p>
+	 *
 	 * @param entry
 	 *        The entry to store. A copy is taken, the given configuration is left untouched.
 	 * @throws IOException
@@ -382,8 +395,40 @@ public class SecurityDefinitionEditor {
 	 */
 	public void putAccessRights(ModelAccessRights entry) throws IOException, ConfigurationException {
 		ApplicationConfig.Config appConfig = readGrantsFile();
-		grantsConfig(appConfig).getSecurityConfig().put(entry.getName(), TypedConfiguration.copy(entry));
+		Map<String, ModelAccessRights> stored = grantsConfig(appConfig).getSecurityConfig();
+		ModelAccessRights copy = TypedConfiguration.copy(entry);
+		if (copy instanceof TLClassAccessRights classCopy && classCopy.getAccessParent() == null
+			&& inheritsDelegation(stored.get(entry.getName()), effectiveAccessRights(entry.getName()))) {
+			classCopy.setAccessParent(selfAccessParent());
+		}
+		stored.put(entry.getName(), copy);
 		writeGrantsFile(appConfig);
+	}
+
+	/**
+	 * Whether the access parent in effect delegates and comes from an underlying configuration
+	 * layer, not from the stored entry.
+	 *
+	 * <p>
+	 * An access parent the stored entry sets is dropped by storing the entry without it: the
+	 * underlying layers then decide again.
+	 * </p>
+	 */
+	private static boolean inheritsDelegation(ModelAccessRights stored, ModelAccessRights effective) {
+		if (stored instanceof TLClassAccessRights storedClass && storedClass.getAccessParent() != null) {
+			return false;
+		}
+		return effective instanceof TLClassAccessRights effectiveClass
+			&& AccessParentConfig.delegates(effectiveClass.getAccessParent());
+	}
+
+	/**
+	 * A new access parent setting saying that the type decides for itself.
+	 */
+	private static AccessParentConfig selfAccessParent() {
+		AccessParentConfig result = TypedConfiguration.newConfigItem(AccessParentConfig.class);
+		result.setDefinition(TypedConfiguration.newConfigItem(SelfAccessParent.Config.class));
+		return result;
 	}
 
 	/**
@@ -445,45 +490,46 @@ public class SecurityDefinitionEditor {
 	/**
 	 * Sets the access parent of the given type, or drops that setting.
 	 * <p>
-	 * A type with an access parent has no grants and no marks of its own, so setting a
-	 * {@link AccessParentKind#delegates() delegating} access parent drops the grants and marks the
-	 * stored configuration holds for the type.
+	 * A type with a delegating access parent has no grants and no marks of its own, so setting one
+	 * drops the grants and marks the stored configuration holds for the type.
 	 * </p>
 	 * 
 	 * @param type
-	 *        The type delegating its access decision.
-	 * @param kind
-	 *        The value of {@link TLClassAccessRights#getAccessParent()} to store,
-	 *        {@link AccessParentKind#AUTO} to drop the setting.
-	 * @param reference
-	 *        The value of {@link TLClassAccessRights#getAccessReference()} to store. Ignored for a
-	 *        kind that does not delegate.
+	 *        The type whose access parent is set.
+	 * @param definition
+	 *        The definition to store, e.g. a
+	 *        {@link com.top_logic.model.security.ContainerAccessParent.Config}; <code>null</code>
+	 *        to drop the setting.
 	 * @throws IOException
 	 *         When the file cannot be written.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
-	public void setAccessParent(TLClass type, AccessParentKind kind, TLModelPartRef reference)
+	public void setAccessParent(TLClass type, PolymorphicConfiguration<? extends AccessParentDefinition> definition)
 			throws IOException, ConfigurationException {
 		TLClassAccessRights entry = editableAccessRights(type);
-		entry.setAccessParent(kind);
-		entry.setAccessReference(kind.delegates() ? reference : null);
-		if (kind.delegates()) {
-			entry.getGrants().clear();
-			entry.setInternal(false);
-			entry.setWithoutSecurity(false);
+		if (definition == null) {
+			entry.setAccessParent(null);
+		} else {
+			AccessParentConfig setting = TypedConfiguration.newConfigItem(AccessParentConfig.class);
+			setting.setDefinition(definition);
+			entry.setAccessParent(setting);
+			if (AccessParentConfig.delegates(setting)) {
+				entry.getGrants().clear();
+				entry.setInternal(false);
+				entry.setWithoutSecurity(false);
+			}
 		}
 		putAccessRights(entry);
 	}
 
 	/**
-	 * Drops a {@link AccessParentKind#delegates() delegating} access parent of the given entry,
-	 * which contradicts a definition of its own.
+	 * Drops a delegating access parent of the given entry, which contradicts a definition of its
+	 * own.
 	 */
 	private static void dropDelegation(TLClassAccessRights entry) {
-		if (entry.getAccessParent().delegates()) {
-			entry.setAccessParent(AccessParentKind.AUTO);
-			entry.setAccessReference(null);
+		if (AccessParentConfig.delegates(entry.getAccessParent())) {
+			entry.setAccessParent(null);
 		}
 	}
 
@@ -531,8 +577,18 @@ public class SecurityDefinitionEditor {
 		return InAppServiceConfigStore.read(_grantsFile);
 	}
 
+	/**
+	 * Writes the given configuration to {@link #getGrantsFile()}, layered onto the underlying
+	 * configuration.
+	 *
+	 * <p>
+	 * The definition of an access parent replaces the one of the underlying layers instead of being
+	 * merged into it: a definition of another kind - <code>&lt;self/&gt;</code> over
+	 * <code>&lt;container/&gt;</code> - would otherwise be dropped silently.
+	 * </p>
+	 */
 	private void writeGrantsFile(ApplicationConfig.Config appConfig) throws IOException {
-		InAppServiceConfigStore.write(_grantsFile, appConfig, InAppServiceConfigStore.LAYER_ONTO_BASE);
+		InAppServiceConfigStore.write(_grantsFile, appConfig, Set.of(AccessParentConfig.class));
 	}
 
 	/**
@@ -625,18 +681,75 @@ public class SecurityDefinitionEditor {
 
 	/**
 	 * A copy of the stored entry for the given model element, or a fresh entry carrying only its
-	 * name.
+	 * name, completed by the marks and the access parent currently in effect.
+	 *
+	 * <p>
+	 * A mark or an access parent an underlying configuration layer sets is in effect without being
+	 * stored. The copy shows it nevertheless, so that the user sees what is in effect and can drop
+	 * it: a value handed back to {@link #putAccessRights(ModelAccessRights)} is stored explicitly
+	 * and overrides the one of the underlying layers. A value the stored entry sets takes
+	 * precedence, even before it is {@link #apply() applied}.
+	 * </p>
 	 */
 	private <R extends TypeBasedAccessRights> R editableTypeBasedRights(String name, Class<R> entryType)
 			throws ConfigurationException {
 		SecurityConfigurationService.Config config = storedGrantsConfig(readGrantsFile());
 		ModelAccessRights stored = config == null ? null : config.getSecurityConfig().get(name);
+		R result;
 		if (entryType.isInstance(stored)) {
-			return TypedConfiguration.copy(entryType.cast(stored));
+			result = TypedConfiguration.copy(entryType.cast(stored));
+		} else {
+			result = TypedConfiguration.newConfigItem(entryType);
+			result.setName(name);
 		}
-		R result = TypedConfiguration.newConfigItem(entryType);
-		result.setName(name);
+		ModelAccessRights effective = effectiveAccessRights(name);
+		if (entryType.isInstance(effective)) {
+			addEffectiveSettings(result, entryType.cast(effective));
+		}
 		return result;
+	}
+
+	/**
+	 * The access rights entry for the given model element that is currently in effect, base
+	 * configuration and stored configuration merged; <code>null</code> when there is none.
+	 */
+	private static ModelAccessRights effectiveAccessRights(String name) {
+		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig()
+			.getSecurityConfig().get(name);
+	}
+
+	/**
+	 * Sets the marks and the access parent of the given effective entry that the given copy does
+	 * not set of its own.
+	 *
+	 * <p>
+	 * Only a value differing from the default is taken over, so that a copy handed back unchanged
+	 * does not store a value that merely repeats the default.
+	 * </p>
+	 */
+	private static void addEffectiveSettings(TypeBasedAccessRights copy, TypeBasedAccessRights effective) {
+		if (!isSet(copy, TypeBasedAccessRights.INTERNAL) && effective.isInternal()) {
+			copy.setInternal(true);
+		}
+		if (!isSet(copy, TypeBasedAccessRights.WITHOUT_SECURITY) && effective.isWithoutSecurity()) {
+			copy.setWithoutSecurity(true);
+		}
+		if (copy instanceof TLClassAccessRights classCopy
+			&& effective instanceof TLClassAccessRights classEffective
+			&& !isSet(copy, TLClassAccessRights.ACCESS_PARENT)
+			&& classEffective.getAccessParent() != null) {
+			classCopy.setAccessParent(TypedConfiguration.copy(classEffective.getAccessParent()));
+		}
+	}
+
+	/**
+	 * Whether the given entry sets the property with the given name of its own.
+	 */
+	private static boolean isSet(ConfigurationItem entry, String property) {
+		return entry.valueSet(entry.descriptor().getProperty(property));
 	}
 
 	/**

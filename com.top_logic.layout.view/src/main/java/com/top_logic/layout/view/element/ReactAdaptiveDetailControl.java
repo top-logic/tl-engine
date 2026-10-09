@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -97,8 +98,6 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 
 	private final DisplayClassListener _displayListener;
 
-	private final ChannelListener _selectionListener;
-
 	/** Whether this is the outermost element (renders the unified breadcrumb). */
 	private final boolean _coordinator;
 
@@ -170,17 +169,17 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		_displayModel.addListener(DisplayClassModel.DISPLAY_CLASS, _displayListener);
 		addCleanupAction(() -> _displayModel.removeListener(DisplayClassModel.DISPLAY_CLASS, _displayListener));
 
-		_selectionListener = (sender, oldValue, newValue) -> onSelectionChanged();
-		_selectionChannel.addListener(_selectionListener);
-		addCleanupAction(() -> _selectionChannel.removeListener(_selectionListener));
+		Registration selectionRegistration =
+			_selectionChannel.addListener((sender, oldValue, newValue) -> onSelectionChanged());
+		addCleanupAction(selectionRegistration::dispose);
 
 		// Reset this selection whenever a master selection it depends on changes, so a stale value
 		// cannot resurface under a different master (the selector that would prune it may not be
 		// rendered in compact mode).
 		ChannelListener resetListener = (sender, oldValue, newValue) -> _selectionChannel.set(null);
 		for (ViewChannel master : resetOn) {
-			master.addListener(resetListener);
-			addCleanupAction(() -> master.removeListener(resetListener));
+			Registration resetRegistration = master.addListener(resetListener);
+			addCleanupAction(resetRegistration::dispose);
 
 			// The reset discards the detail's selection, so the unsaved changes blocking it are
 			// reported when the master is asked, before the master is written.
@@ -194,8 +193,8 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 			ChannelListener breadcrumbListener = (sender, oldValue, newValue) -> updateBreadcrumb();
 			for (int i = 1; i < chain.size(); i++) {
 				ViewChannel deeper = chain.get(i);
-				deeper.addListener(breadcrumbListener);
-				addCleanupAction(() -> deeper.removeListener(breadcrumbListener));
+				Registration breadcrumbRegistration = deeper.addListener(breadcrumbListener);
+				addCleanupAction(breadcrumbRegistration::dispose);
 			}
 		}
 

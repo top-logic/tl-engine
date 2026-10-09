@@ -19,7 +19,9 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ListElementFieldModel;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
@@ -62,16 +64,33 @@ public class FieldControlRegistry {
 	/**
 	 * Edits a value as a single- or multi-line text.
 	 *
+	 * <p>
+	 * A text of more than one {@link FieldSpec#getMultilineRows() row} is
+	 * {@link ReactFieldControlProvider#isLarge(FieldSpec) large}: where the field is
+	 * {@link FieldSpec#isCompact() compact}, its first line stands for it.
+	 * </p>
+	 *
 	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
 	 *           being created.
 	 */
-	public static final ReactFieldControlProvider TEXT = (context, field, model) -> {
-		ReactTextInputControl control = new ReactTextInputControl(context, model);
-		if (field.getMultilineRows() > 0) {
-			control.setMultiline(field.getMultilineRows());
+	public static final ReactFieldControlProvider TEXT = new ReactFieldControlProvider() {
+		@Override
+		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+			ReactTextInputControl control = new ReactTextInputControl(context, model);
+			if (field.getMultilineRows() > 0) {
+				control.setMultiline(field.getMultilineRows());
+			}
+			return control;
 		}
-		return control;
+
+		@Override
+		public boolean isLarge(FieldSpec field) {
+			return isMultiline(field);
+		}
 	};
+
+	/** Separates the previews of the values of a multi-valued field. */
+	private static final String PREVIEW_SEPARATOR = ", ";
 
 	private static final FieldControlRegistry INSTANCE = new FieldControlRegistry();
 
@@ -91,8 +110,18 @@ public class FieldControlRegistry {
 		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
-		register(ResKey.class, (context, field, model) -> ReactI18NStringInputControl.createEditor(context, model,
-			field.getMultilineRows(), field.getLabel()));
+		register(ResKey.class, new ReactFieldControlProvider() {
+			@Override
+			public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+				return ReactI18NStringInputControl.createEditor(context, model, field.getMultilineRows(),
+					field.getLabel());
+			}
+
+			@Override
+			public boolean isLarge(FieldSpec field) {
+				return isMultiline(field);
+			}
+		});
 	}
 
 	/**
@@ -164,6 +193,14 @@ public class FieldControlRegistry {
 	 * applies what the specification says about the display of the control.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link FieldSpec#isCompact() compact} field whose control
+	 * {@link #isLarge(FieldSpec, ReactFieldControlProvider) needs more room} than it has is
+	 * displayed as a {@link ReactCompactFieldControl}: the {@link #previewText(FieldSpec,
+	 * ReactFieldControlProvider, Object) preview} of its value and a button opening the control
+	 * this method creates for the same field displayed with all the room it needs.
+	 * </p>
+	 *
 	 * @param context
 	 *        The context to create the control in.
 	 * @param field
@@ -176,10 +213,135 @@ public class FieldControlRegistry {
 	 */
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
 			ReactFieldControlProvider provider) {
+		if (field.isCompact() && isLarge(field, provider)) {
+			// The full control is displayed in the dialog, where it has the room it needs.
+			FieldSpec fullField = field.copy().setCompact(false);
+			ReactCompactFieldControl compact = new ReactCompactFieldControl(context, model, field.getLabel(),
+				value -> previewText(field, provider, value),
+				value -> isEmpty(field, provider, value),
+				(ReactContext dialogContext, FieldModel buffer) -> createControl(dialogContext, fullField, buffer,
+					provider));
+			compact.setPreviewShowsAll(previewShowsAll(field, provider));
+			return compact;
+		}
 		if (field.isMultiple() && !provider.editsCollections()) {
 			return new ReactValueListControl(context, model, field, provider);
 		}
 		return provider.createField(context, field, model);
+	}
+
+	/**
+	 * Whether the control the given provider creates for the given field needs more room than a
+	 * {@link FieldSpec#isCompact() compact} display offers.
+	 *
+	 * <p>
+	 * Either the provider says so for its own control, or the field holds
+	 * {@link FieldSpec#isMultiple() several values} the provider edits one at a time: the list of
+	 * one control per value is as high as there are values.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 */
+	public static boolean isLarge(FieldSpec field, ReactFieldControlProvider provider) {
+		return provider.isLarge(field) || (field.isMultiple() && !provider.editsCollections());
+	}
+
+	/**
+	 * Whether the {@link #previewText(FieldSpec, ReactFieldControlProvider, Object) preview} of a
+	 * value of the given field shows all of it, so that a dialog displaying the value read-only
+	 * would show nothing more.
+	 *
+	 * <p>
+	 * So for a field holding {@link FieldSpec#isMultiple() several values} the provider edits one at
+	 * a time, where the control of a single value is not {@link ReactFieldControlProvider#isLarge(FieldSpec)
+	 * large}: each value fits a line of text, and the preview lists them all. A value whose control
+	 * is large, a multi-line text for instance, shows more in the dialog than in its preview.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 */
+	public static boolean previewShowsAll(FieldSpec field, ReactFieldControlProvider provider) {
+		return field.isMultiple() && !provider.editsCollections() && !provider.isLarge(field.elementSpec());
+	}
+
+	/**
+	 * The single line of text standing for a value of the given field.
+	 *
+	 * <p>
+	 * For a field holding {@link FieldSpec#isMultiple() several values} the provider edits one at a
+	 * time, the {@link ReactFieldControlProvider#previewText(FieldSpec, Object) previews} the
+	 * provider gives for each of the values, separated by commas. Otherwise the preview the
+	 * provider gives for the value as a whole.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 * @param value
+	 *        The value to preview; the whole collection for a multi-valued field.
+	 * @return The preview text, never {@code null}.
+	 */
+	public static String previewText(FieldSpec field, ReactFieldControlProvider provider, Object value) {
+		if (field.isMultiple() && !provider.editsCollections()) {
+			FieldSpec elementSpec = field.elementSpec();
+			StringBuilder result = new StringBuilder();
+			for (Object element : ListElementFieldModel.elementsOfValue(value)) {
+				if (result.length() > 0) {
+					result.append(PREVIEW_SEPARATOR);
+				}
+				result.append(provider.previewText(elementSpec, element));
+			}
+			return result.toString();
+		}
+		return provider.previewText(field, value);
+	}
+
+	/**
+	 * Whether the given value of the given field has no content to display.
+	 *
+	 * <p>
+	 * For a field holding {@link FieldSpec#isMultiple() several values} the provider edits one at a
+	 * time, whether each of its values is {@link ReactFieldControlProvider#isEmpty(FieldSpec, Object)
+	 * empty} for the provider. Otherwise whether the provider finds the value as a whole empty.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 * @param value
+	 *        The value to check; the whole collection for a multi-valued field.
+	 */
+	public static boolean isEmpty(FieldSpec field, ReactFieldControlProvider provider, Object value) {
+		if (field.isMultiple() && !provider.editsCollections()) {
+			FieldSpec elementSpec = field.elementSpec();
+			for (Object element : ListElementFieldModel.elementsOfValue(value)) {
+				if (!provider.isEmpty(elementSpec, element)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return provider.isEmpty(field, value);
+	}
+
+	/**
+	 * Whether the given field displays its text on more than one row.
+	 *
+	 * <p>
+	 * A text control of such a field is {@link ReactFieldControlProvider#isLarge(FieldSpec)
+	 * large}.
+	 * </p>
+	 */
+	public static boolean isMultiline(FieldSpec field) {
+		return field.getMultilineRows() > 1;
 	}
 
 	/**

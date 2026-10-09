@@ -23,6 +23,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -34,13 +35,19 @@ import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.security.AccessParentKind;
+import com.top_logic.model.security.AccessParentConfig;
+import com.top_logic.model.security.AccessParentDefinition;
+import com.top_logic.model.security.ContainerAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
+import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
+import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
+import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -67,6 +74,21 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 
 	/** Type contained in exactly one composition. */
 	private static final String SINGLE_CONTAINED = MODULE + ":SingleContained";
+
+	/** Type marked internal. */
+	private static final String INTERNAL = MODULE + ":Internal";
+
+	/** Module marked internal. */
+	private static final String INTERNAL_MODULE = "TestSecurityCoverageInternal";
+
+	/** Type of {@link #INTERNAL_MODULE}. */
+	private static final String IN_INTERNAL_MODULE = INTERNAL_MODULE + ":InModule";
+
+	/** Type whose access parent the test application configures. */
+	private static final String EXPLICIT_PART = MODULE + ":ExplicitPart";
+
+	/** The composition {@link #EXPLICIT_PART} delegates to. */
+	private static final String EXPLICIT_PART_REFERENCE = MODULE + ":Covered#explicitParts";
 
 	/** Type without a role source and without a container. */
 	private static final String ORPHAN = MODULE + ":Orphan";
@@ -121,6 +143,48 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 				</services>
 			</application>
 			""".formatted(ACCESS_MANAGER_CLASS, BASE_PARENT_ID, CHILD_OF_COVERED, MODULE + ":Covered#children");
+
+	/**
+	 * The access rights of the underlying configuration layers, a module marked internal, in the
+	 * same shape as {@code element.test.config.xml} defines them.
+	 */
+	private static final String BASE_GRANTS = """
+			<application>
+				<services>
+					<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+						<instance class="com.top_logic.model.security.SecurityConfigurationService">
+							<security-config>
+								<module name="%s"
+									internal="true"
+								/>
+							</security-config>
+						</instance>
+					</config>
+				</services>
+			</application>
+			""";
+
+	/**
+	 * The access rights of the underlying configuration layers, a type with an access parent, in
+	 * the same shape as {@code element.test.config.xml} defines them.
+	 */
+	private static final String BASE_ACCESS_PARENT = """
+			<application>
+				<services>
+					<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+						<instance class="com.top_logic.model.security.SecurityConfigurationService">
+							<security-config>
+								<class name="%s">
+									<access-parent>
+										<container reference="%s"/>
+									</access-parent>
+								</class>
+							</security-config>
+						</instance>
+					</config>
+				</services>
+			</application>
+			""";
 
 	private SecurityDefinitionEditor _editor;
 
@@ -251,6 +315,38 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertEquals(ORPHAN, onlyEntry.getName());
 	}
 
+	public void testEditShowsTheMarkOfTheBaseConfiguration() throws Exception {
+		TLModule module = type(IN_INTERNAL_MODULE).getModule();
+		TLModuleAccessRights entry = _editor.editableAccessRights(module);
+		assertTrue("The mark of the underlying configuration is in effect, though not stored.", entry.isInternal());
+		assertFalse(entry.isWithoutSecurity());
+
+		assertTrue(_editor.editableAccessRights(type(INTERNAL)).isInternal());
+	}
+
+	public void testEditDoesNotSetDefaults() throws Exception {
+		TLClassAccessRights entry = _editor.editableAccessRights(type(ORPHAN));
+		assertFalse("A value in effect by default is not set explicitly.",
+			entry.valueSet(entry.descriptor().getProperty(TypeBasedAccessRights.INTERNAL)));
+		assertFalse(entry.valueSet(entry.descriptor().getProperty(TLClassAccessRights.ACCESS_PARENT)));
+	}
+
+	public void testDroppedMarkOverridesTheBaseConfiguration() throws Exception {
+		TLModule module = type(IN_INTERNAL_MODULE).getModule();
+		TLModuleAccessRights entry = _editor.editableAccessRights(module);
+		entry.setInternal(false);
+		_editor.putAccessRights(entry);
+
+		assertFalse("The stored value takes precedence over the one in effect.",
+			_editor.editableAccessRights(module).isInternal());
+
+		String base = BASE_GRANTS.formatted(INTERNAL_MODULE);
+		ModelAccessRights merged = grantsConfig(overlay(base, _editor.getGrantsFile())).getSecurityConfig()
+			.get(INTERNAL_MODULE);
+		assertFalse("The stored entry drops the mark of the underlying layers.",
+			((TLModuleAccessRights) merged).isInternal());
+	}
+
 	public void testAccessParentRoundTrip() throws Exception {
 		TLClass contained = type(SINGLE_CONTAINED);
 		TLClassAccessRights entry = _editor.editableAccessRights(contained);
@@ -258,23 +354,60 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		entry.setInternal(true);
 		_editor.putAccessRights(entry);
 
-		_editor.setAccessParent(contained, AccessParentKind.CONTAINER, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
 		TLClassAccessRights stored = _editor.editableAccessRights(contained);
-		assertEquals(AccessParentKind.CONTAINER, stored.getAccessParent());
-		assertEquals(CONTAINER_REFERENCE, stored.getAccessReference().qualifiedName());
+		assertEquals(CONTAINER_REFERENCE,
+			((ContainerAccessParent.Config) stored.getAccessParent().getDefinition()).getReference().qualifiedName());
 		assertEquals("A type with an access parent has no grants of its own.", 0, stored.getGrants().size());
 		assertFalse("A type with an access parent has no marks of its own.", stored.isInternal());
 
 		_editor.setInternal(contained, true);
 		stored = _editor.editableAccessRights(contained);
-		assertEquals("Marking the type internal drops its access parent.", AccessParentKind.AUTO,
-			stored.getAccessParent());
-		assertNull(stored.getAccessReference());
+		assertNull("Marking the type internal drops its access parent.", stored.getAccessParent());
 
-		_editor.setAccessParent(contained, AccessParentKind.CONTAINER, TLModelPartRef.ref(CONTAINER_REFERENCE));
-		_editor.setAccessParent(contained, AccessParentKind.AUTO, null);
-		assertEquals(AccessParentKind.AUTO, _editor.editableAccessRights(contained).getAccessParent());
-		assertNull(_editor.editableAccessRights(contained).getAccessReference());
+		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, null);
+		assertNull(_editor.editableAccessRights(contained).getAccessParent());
+	}
+
+	public void testMarkDropsAnInheritedAccessParent() throws Exception {
+		TLClass part = type(EXPLICIT_PART);
+		assertNotNull("The access parent of the underlying configuration is shown.",
+			_editor.editableAccessRights(part).getAccessParent());
+
+		_editor.setInternal(part, true);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(part);
+		assertTrue(stored.isInternal());
+		assertTrue("Not writing the access parent would leave the one of the underlying layers in effect.",
+			stored.getAccessParent().getDefinition() instanceof SelfAccessParent.Config);
+
+		String base = BASE_ACCESS_PARENT.formatted(EXPLICIT_PART, EXPLICIT_PART_REFERENCE);
+		TLClassAccessRights merged = (TLClassAccessRights) grantsConfig(overlay(base, _editor.getGrantsFile()))
+			.getSecurityConfig().get(EXPLICIT_PART);
+		assertTrue(merged.isInternal());
+		assertFalse("The stored entry overrides the access parent of the underlying layers.",
+			AccessParentConfig.delegates(merged.getAccessParent()));
+	}
+
+	public void testRemovingAnInheritedAccessParentStoresSelf() throws Exception {
+		TLClass part = type(EXPLICIT_PART);
+		TLClassAccessRights entry = _editor.editableAccessRights(part);
+		entry.setAccessParent(null);
+		_editor.putAccessRights(entry);
+
+		assertTrue(_editor.editableAccessRights(part).getAccessParent().getDefinition() instanceof SelfAccessParent.Config);
+	}
+
+	public void testRemovingAStoredAccessParentStoresNothing() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.setAccessParent(null);
+		_editor.putAccessRights(entry);
+
+		assertNull("The underlying layers set none, so dropping the stored one suffices.",
+			_editor.editableAccessRights(contained).getAccessParent());
 	}
 
 	public void testSelfKeepsOwnDefinition() throws Exception {
@@ -283,10 +416,9 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
 		_editor.putAccessRights(entry);
 
-		_editor.setAccessParent(contained, AccessParentKind.SELF, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, self());
 		TLClassAccessRights stored = _editor.editableAccessRights(contained);
-		assertEquals(AccessParentKind.SELF, stored.getAccessParent());
-		assertNull("A type deciding for itself names no access reference.", stored.getAccessReference());
+		assertTrue(stored.getAccessParent().getDefinition() instanceof SelfAccessParent.Config);
 		assertEquals("A type deciding for itself keeps its grants.", 1, stored.getGrants().size());
 	}
 
@@ -366,10 +498,26 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		return new ConfigurationReader(new DefaultInstantiationContext(log), descriptors);
 	}
 
+	private static SecurityConfigurationService.Config grantsConfig(ApplicationConfig.Config config) {
+		ModuleConfiguration entry = config.getServices().get(SecurityConfigurationService.class);
+		assertNotNull("The access rights are configured.", entry);
+		return (SecurityConfigurationService.Config) entry.getInstance();
+	}
+
 	private static ElementAccessManager.Config accessManagerConfig(ApplicationConfig.Config config) {
 		ModuleConfiguration entry = config.getServices().get(AccessManager.class);
 		assertNotNull("The access manager is configured.", entry);
 		return (ElementAccessManager.Config) entry.getInstance();
+	}
+
+	private static PolymorphicConfiguration<? extends AccessParentDefinition> container(String composition) {
+		ContainerAccessParent.Config config = TypedConfiguration.newConfigItem(ContainerAccessParent.Config.class);
+		config.setReference(TLModelPartRef.ref(composition));
+		return config;
+	}
+
+	private static PolymorphicConfiguration<? extends AccessParentDefinition> self() {
+		return TypedConfiguration.newConfigItem(SelfAccessParent.Config.class);
 	}
 
 	/** Return the suite of tests to perform. */

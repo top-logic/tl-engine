@@ -110,6 +110,42 @@
 					</executability>
 				</open-window>
 			</group>
+
+			<!-- What explains how the application is built. -->
+			<group id="reference">
+				<label>
+					<en>Reference</en>
+					<de>Referenz</de>
+				</label>
+
+				<!--
+					Pops out the documentation side-window: the developer articles of the modules
+					the application is built from. Shown only where UI inspection is switched on.
+				-->
+				<open-window
+					height="800"
+					image="css:bi bi-book"
+					singleton-key="dev-docs"
+					view="dev-docs.view.xml"
+					width="1200"
+				>
+					<title>
+						<en>Developer documentation</en>
+						<de>Entwicklerdokumentation</de>
+					</title>
+					<label>
+						<en>Documentation</en>
+						<de>Dokumentation</de>
+					</label>
+					<tooltip>
+						<en>Open the developer articles of the modules this application is built from.</en>
+						<de>Öffnet die Entwicklerartikel der Module, aus denen diese Anwendung besteht.</de>
+					</tooltip>
+					<executability>
+						<inspect-enabled/>
+					</executability>
+				</open-window>
+			</group>
 		</groups>
 	</menu>
 </view>

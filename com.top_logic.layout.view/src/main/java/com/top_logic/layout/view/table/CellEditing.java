@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FormControl;
 
 /**
@@ -50,8 +51,11 @@ public interface CellEditing {
 	 *        The row whose cell is edited, for which {@link #canEdit(Object)} holds.
 	 * @param form
 	 *        The form the edit takes place in.
+	 * @param level
+	 *        The level the row is edited in, holding the row's buffer: the level a cell editing a
+	 *        composition of the row opens its own level on.
 	 */
-	BoundFieldModel createModel(Object row, FormControl form);
+	BoundFieldModel createModel(Object row, FormControl form, EditLevel level);
 
 	/**
 	 * Creates the control the given row's cell is edited with.
@@ -61,7 +65,7 @@ public interface CellEditing {
 	 * @param row
 	 *        The row whose cell is edited.
 	 * @param model
-	 *        The field model of that cell, created by {@link #createModel(Object, FormControl)}.
+	 *        The field model of that cell, created by {@link #createModel(Object, FormControl, EditLevel)}.
 	 */
 	ReactControl createControl(ReactContext context, Object row, BoundFieldModel model);
 

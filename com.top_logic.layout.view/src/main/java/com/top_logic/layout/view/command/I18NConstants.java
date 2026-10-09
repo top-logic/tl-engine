@@ -50,7 +50,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CHANGED_LANGUAGE__USER;
 
 	/**
-	 * @en Reset the personal configuration of "{0}".
+	 * @en Reset personal configuration of "{0}".
 	 */
 	public static ResKey1 RESET_PERSONAL_CONFIGURATION__USER;
 

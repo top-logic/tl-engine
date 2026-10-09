@@ -14,7 +14,7 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Form action "{0}" in "{1}".
+	 * @en Executed form action "{0}" in "{1}".
 	 */
 	public static ResKey2 FORM_ACTION__NAME_COMP;
 

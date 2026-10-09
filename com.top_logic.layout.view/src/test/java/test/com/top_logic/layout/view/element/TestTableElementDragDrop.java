@@ -30,6 +30,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -167,7 +168,7 @@ public class TestTableElementDragDrop extends BasicTestCase {
 
 		List<String> errors = log.getErrors();
 		assertTrue("Expected the target rules to be reported: " + errors,
-			errors.stream().anyMatch(error -> error.contains(TableElement.DropConfig.TARGET_EXECUTABILITY)));
+			errors.stream().anyMatch(error -> error.contains(DropConfig.TARGET_EXECUTABILITY)));
 	}
 
 	/** The control of the table of the {@link #VIEW test view}. */

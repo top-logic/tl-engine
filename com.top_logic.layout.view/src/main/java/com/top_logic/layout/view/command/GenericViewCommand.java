@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.ViewContext;
@@ -64,12 +65,15 @@ public class GenericViewCommand implements ViewCommand {
 
 	private final List<ViewAction> _actions;
 
+	private final ResKey _label;
+
 	/**
 	 * Creates a new {@link GenericViewCommand}.
 	 */
 	@CalledByReflection
 	public GenericViewCommand(InstantiationContext context, Config config) {
 		_actions = ViewActions.instantiate(context, config.getActions());
+		_label = config.getLabel();
 	}
 
 	/**
@@ -80,6 +84,16 @@ public class GenericViewCommand implements ViewCommand {
 	 */
 	public GenericViewCommand(List<ViewAction> actions) {
 		_actions = List.copyOf(actions);
+		_label = null;
+	}
+
+	/**
+	 * The {@link Config#getLabel() label} this command is configured with, {@code null} for a
+	 * command without a label.
+	 */
+	@Override
+	public ResKey getLabel() {
+		return _label;
 	}
 
 	@Override

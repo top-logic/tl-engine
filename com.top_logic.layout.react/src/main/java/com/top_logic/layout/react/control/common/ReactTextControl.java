@@ -10,6 +10,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
+import com.top_logic.layout.react.state.TextState;
 
 /**
  * A simple read-only control that displays a text value as a {@code <span>}.
@@ -27,29 +28,17 @@ import com.top_logic.layout.react.control.ReactValueColor;
  * </p>
  *
  * <p>
+ * The state is described by {@link TextState}.
+ * </p>
+ *
+ * <p>
  * The caller is responsible for converting application objects to display strings, e.g. by using a
  * {@link com.top_logic.layout.LabelProvider}.
  * </p>
  */
 public class ReactTextControl extends ReactControl implements TooltipProvider {
 
-	private static final String TEXT = "text";
-
-	/** @see #setOverflow(TextOverflow) */
-	private static final String OVERFLOW = "overflow";
-
-	/** @see #setVariant(TextVariant) */
-	private static final String VARIANT = "variant";
-
-	/** @see #setTone(TextTone) */
-	private static final String TONE = "tone";
-
-	/** @see #setAppearance(TextAppearance) */
-	private static final String APPEARANCE = "appearance";
-
-	private static final String ROLE = "role";
-
-	private static final String HAS_TOOLTIP = "hasTooltip";
+	private static final String REACT_MODULE = "TLText";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
 	private static final String TOOLTIP_KEY = "tooltip";
@@ -77,8 +66,8 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *        {@code null}.
 	 */
 	public ReactTextControl(ReactContext context, String text, String cssClass) {
-		super(context, null, "TLText");
-		putState(TEXT, text != null ? text : "");
+		super(context, null, REACT_MODULE);
+		putState(TextState.TEXT__PROP, text != null ? text : "");
 		setCssClass(cssClass);
 	}
 
@@ -86,14 +75,14 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 * The displayed text.
 	 */
 	public String getText() {
-		return (String) getState(TEXT);
+		return (String) getState(TextState.TEXT__PROP);
 	}
 
 	/**
 	 * Updates the displayed text.
 	 */
 	public void setText(String text) {
-		putState(TEXT, text != null ? text : "");
+		putState(TextState.TEXT__PROP, text != null ? text : "");
 	}
 
 	/**
@@ -128,7 +117,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 * @see ReactValueColor#roleOf(Object)
 	 */
 	public void setColorRole(String colorRole) {
-		putState(ReactValueColor.ROLE, colorRole);
+		putState(TextState.COLOR_ROLE__PROP, colorRole);
 	}
 
 	/**
@@ -138,7 +127,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *        Whether the text wraps onto several lines or is truncated on a single one.
 	 */
 	public void setOverflow(TextOverflow overflow) {
-		putState(OVERFLOW, overflow.getExternalName());
+		putState(TextState.OVERFLOW__PROP, overflow.getExternalName());
 	}
 
 	/**
@@ -148,7 +137,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *        What the text is for: running text, a heading, the name of a value, a remark.
 	 */
 	public void setVariant(TextVariant variant) {
-		putState(VARIANT, variant.getExternalName());
+		putState(TextState.VARIANT__PROP, variant.getExternalName());
 	}
 
 	/**
@@ -159,7 +148,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *        explanation, a placeholder, an outcome.
 	 */
 	public void setTone(TextTone tone) {
-		putState(TONE, tone.getExternalName());
+		putState(TextState.TONE__PROP, tone.getExternalName());
 	}
 
 	/**
@@ -170,7 +159,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *        tone}.
 	 */
 	public void setAppearance(TextAppearance appearance) {
-		putState(APPEARANCE, appearance.getExternalName());
+		putState(TextState.APPEARANCE__PROP, appearance.getExternalName());
 	}
 
 	/**
@@ -186,7 +175,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *        The ARIA role, or {@code null} for none.
 	 */
 	public void setRole(String role) {
-		putState(ROLE, role);
+		putState(TextState.ROLE__PROP, role);
 	}
 
 	/**
@@ -204,7 +193,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 		_tooltipHtml = (html == null || html.isEmpty()) ? null : html;
 		_tooltipCaption = caption;
 		_tooltipInteractive = interactive;
-		putState(HAS_TOOLTIP, _tooltipHtml != null);
+		putState(TextState.HAS_TOOLTIP__PROP, _tooltipHtml != null);
 	}
 
 	@Override
@@ -220,7 +209,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), OVERFLOW, VARIANT, TONE, APPEARANCE,
-			ReactValueColor.ROLE);
+		return presentationKeys(super.scriptingPresentationKeys(), TextState.OVERFLOW__PROP,
+			TextState.VARIANT__PROP, TextState.TONE__PROP, TextState.APPEARANCE__PROP, TextState.COLOR_ROLE__PROP);
 	}
 }

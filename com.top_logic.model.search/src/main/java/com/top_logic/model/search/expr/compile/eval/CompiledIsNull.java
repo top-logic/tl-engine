@@ -6,8 +6,6 @@
 
 package com.top_logic.model.search.expr.compile.eval;
 
-import static com.top_logic.knowledge.search.ExpressionFactory.*;
-
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.EvalContext;

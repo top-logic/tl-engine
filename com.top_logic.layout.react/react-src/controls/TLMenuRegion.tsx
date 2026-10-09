@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, pressClosedSurface, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, pressClosedSurface, rootClassName, useButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useRef } = React;
 

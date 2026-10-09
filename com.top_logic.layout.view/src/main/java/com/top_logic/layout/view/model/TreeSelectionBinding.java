@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
@@ -89,7 +90,7 @@ public class TreeSelectionBinding {
 
 	private final ViewChannel _channel;
 
-	private final ViewChannel.ChannelListener _channelListener;
+	private final Registration _channelRegistration;
 
 	private final SelectionListener<Object> _selectionListener = this::handleSelectionChanged;
 
@@ -122,8 +123,7 @@ public class TreeSelectionBinding {
 		_channel = channel;
 
 		selectionModel.addSelectionListener(_selectionListener);
-		_channelListener = (sender, oldValue, newValue) -> applyChannelValue();
-		channel.addListener(_channelListener);
+		_channelRegistration = channel.addListener((sender, oldValue, newValue) -> applyChannelValue());
 
 		applyChannelValue();
 	}
@@ -175,7 +175,7 @@ public class TreeSelectionBinding {
 	 * </p>
 	 */
 	public void dispose() {
-		_channel.removeListener(_channelListener);
+		_channelRegistration.dispose();
 		_selectionModel.removeSelectionListener(_selectionListener);
 	}
 

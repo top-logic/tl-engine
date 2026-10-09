@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<!--
+						Material UI and the adapters of the TopLogic components. The bundle changes
+						nothing on the page by itself: the module of the application imports it by
+						its specifier and calls installMui() with the theme of the application.
+					-->
+					<module-script name="tl-react-mui"
+						requires="tl-react-bridge"
+						resource="/script/tl-react-mui.js"
+						specifier="tl-react-mui"
+					/>
+				</resources>
+			</instance>
+		</config>
+	</services>
+</application>

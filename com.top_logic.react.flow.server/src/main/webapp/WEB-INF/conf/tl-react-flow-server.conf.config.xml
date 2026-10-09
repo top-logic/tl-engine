@@ -13,6 +13,7 @@
 						requires="tl-react-bridge"
 					/>
 					<stylesheet name="tl-react-flow-css"
+						layer="tl"
 						resource="/style/tl-react-flow.css"
 					/>
 				</resources>

@@ -8,6 +8,7 @@ package com.top_logic.layout.provider;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ResourceRenderer;
+import com.top_logic.mig.html.DefaultResourceProvider;
 
 /**
  * {@link ResourceProvider} that looks up its implementation from the {@link LabelProviderService}.
@@ -33,8 +34,16 @@ public class MetaResourceProvider extends AbstractDispatchingResourceProvider {
 		super();
 	}
 	
+	/**
+	 * @implNote Without a running {@link LabelProviderService} - in a setup that does not start it,
+	 *           such as a test of a form control - the {@link DefaultResourceProvider} answers, as
+	 *           {@link MetaLabelProvider} falls back to the plain string form then.
+	 */
 	@Override
 	protected ResourceProvider getProviderImpl(Object anObject) {
+		if (!LabelProviderService.Module.INSTANCE.isActive()) {
+			return DefaultResourceProvider.INSTANCE;
+		}
 		return LabelProviderService.getInstance().getResourceProvider(anObject);
 	}
 	

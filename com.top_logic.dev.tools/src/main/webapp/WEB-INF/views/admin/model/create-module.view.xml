@@ -37,6 +37,10 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
+						<commitMessage>
+							<en>Created module {0}.</en>
+							<de>Modul {0} angelegt.</de>
+						</commitMessage>
 						<action class="com.top_logic.dev.tools.model.ModelEditAction"
 							mode="CREATE_MODULE"
 						/>

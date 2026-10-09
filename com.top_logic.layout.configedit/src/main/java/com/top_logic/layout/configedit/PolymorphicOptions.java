@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
@@ -44,11 +45,34 @@ public class PolymorphicOptions {
 	 * @param mapping
 	 *        The {@link OptionMapping} translating between an option and the stored configuration
 	 *        value.
+	 * @param defaultOption
+	 *        The option a new value is created as, {@code null} if the options name none - see
+	 *        {@link #newOption()}.
 	 */
-	public record Choices(List<Object> options, OptionMapping mapping) {
+	public record Choices(List<Object> options, OptionMapping mapping, Object defaultOption) {
 
 		/** Empty {@link Choices} (no options, {@code null} mapping). */
 		public static final Choices NONE = new Choices(List.of(), null);
+
+		/**
+		 * Creates {@link Choices} whose options name no default.
+		 */
+		public Choices(List<Object> options, OptionMapping mapping) {
+			this(options, mapping, null);
+		}
+
+		/**
+		 * The option a new value is created as: the {@link #defaultOption()} if it is one of the
+		 * {@link #options()}, the first option otherwise.
+		 *
+		 * @return The option, {@code null} if there is none.
+		 */
+		public Object newOption() {
+			if (defaultOption != null && options.contains(defaultOption)) {
+				return defaultOption;
+			}
+			return options.isEmpty() ? null : options.get(0);
+		}
 
 		/** Whether the property has polymorphic options at all. */
 		public boolean hasOptions() {
@@ -71,9 +95,20 @@ public class PolymorphicOptions {
 		if (provider == null) {
 			return Choices.NONE;
 		}
-		List<Object> options = ConfigPropertyOptions.toList(provider.get(parentConfig));
+		Iterable<?> computed = provider.get(parentConfig);
+		List<Object> options = ConfigPropertyOptions.toList(computed);
 		OptionMapping mapping = Fields.optionMapping(provider);
-		return new Choices(options, mapping);
+		return new Choices(options, mapping, defaultOf(computed));
+	}
+
+	/**
+	 * The default the given options name, as an {@link OptionModel} does, e.g. the one of the
+	 * highest {@link com.top_logic.basic.annotation.InApp#priority()} that
+	 * {@link com.top_logic.layout.form.values.edit.AllInAppImplementations} offers; {@code null}
+	 * for plain options.
+	 */
+	private static Object defaultOf(Iterable<?> options) {
+		return options instanceof OptionModel<?> model ? model.getDefaultValue() : null;
 	}
 
 	/**

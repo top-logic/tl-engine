@@ -41,6 +41,10 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
+						<commitMessage>
+							<en>Created classifier {0}.</en>
+							<de>Klassifikator {0} angelegt.</de>
+						</commitMessage>
 						<action class="com.top_logic.dev.tools.model.ModelEditAction"
 							container="container"
 							mode="CREATE_CLASSIFIER"

@@ -8,26 +8,32 @@
 	selectedFindings and selectedRules channels and its two marks to the selectedInternal and
 	selectedWithoutSecurity channels (the module and findings columns start hidden, the table being
 	grouped by module). Those channels are written again whenever the rows are, so the detail
-	describes the analysis the table shows.
+	describes the analysis the table shows. The header of the group of a module can be selected,
+	too: the module is written to the selectedModule channel then, and the channels of a type are
+	empty.
 	
 	The detail side holds two panels, one above the other: the findings of the selected type, and
 	the rules in effect for it. Each is a panel of its own because the rule table is a filling
 	child and a panel bounds the height of a single one.
 	
-	The commands of the findings panel edit the definition: "Role parent…" and "Role rule…" open a
-	dialog editing a rule of the selected type, and "Access rights…" one editing the grants, the
-	marks and the access parent the application sets for
-	it. The overflow clique holds the access rights dialog for the module of the selected type and
-	the two marks that exempt a type from the check ("Mark internal") or from access control
-	("Without access control"), each asking for confirmation with the selected type named - which is
-	what the selectedType channel carries. Each mark is a pair of commands, one setting and one
-	dropping it, of which the one applying to the selected type is visible: the mark channels
-	carry what the analysis reports, so the visible command asks for the state the table does not
-	show yet, and setting one mark drops the other, the two contradicting each other.
+	The commands of the findings panel edit the definition of the selected type: "Access rights…"
+	opens a dialog editing the grants, the marks and the access parent the application sets for it.
+	"Module access rights…" is offered while a module is selected and opens that dialog for the
+	module. The overflow clique holds the two marks that exempt a type from the check ("Mark
+	internal") or from access control ("Without access control"), each asking for confirmation with
+	the selected type named - which is what the selectedType channel carries. Each mark is a pair of
+	commands, one setting and one dropping it, of which the one applying to the selected type is
+	visible: the mark channels carry what the analysis reports, so the visible command asks for the
+	state the table does not show yet, and setting one mark drops the other, the two contradicting
+	each other. A mark the type inherits from a generalization or its module offers neither command:
+	it cannot be dropped for the type alone, and the mark channel carries the part declaring it
+	instead of true.
 	
 	The rules panel lists one entry per rule in effect and writes the picked one to the
-	selectedRuleEntry channel; "Edit rule…" opens the dialog belonging to the kind of that entry
-	with the rule prefilled, and "Delete rule" drops it from the application configuration - it is
+	selectedRuleEntry channel. It holds every command on rules, so that a rule is created where it
+	is listed, edited and deleted: "Role parent…" and "Role rule…" open a dialog creating a rule of
+	the selected type, "Edit rule…" opens the dialog belonging to the kind of the picked entry with
+	the rule prefilled, and "Delete rule" drops it from the application configuration - it is
 	shown only for an entry that configuration defines, a rule of the layers underneath being
 	overridable but not removable.
 	
@@ -49,6 +55,7 @@
 		<channel name="selectedFindings"/>
 		<channel name="selectedRules"/>
 		<channel name="selectedRuleEntry"/>
+		<channel name="selectedModule"/>
 		<channel name="pending"/>
 	</channels>
 	<split-panel
@@ -107,6 +114,7 @@
 						input="rows"
 						selected-findings="selectedFindings"
 						selected-internal="selectedInternal"
+						selected-module="selectedModule"
 						selected-rules="selectedRules"
 						selected-type="selectedType"
 						selected-without-security="selectedWithoutSecurity"
@@ -133,64 +141,6 @@
 									<de>Befunde</de>
 								</title>
 								<commands>
-									<generic-command
-										image="css:bi bi-diagram-2"
-										input="selection"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Role parent…</en>
-											<de>Rollenelternobjekt…</de>
-										</label>
-										<tooltip>
-											<en>Creates a rule determining the role parent of objects of the selected type, the object whose roles they inherit. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
-											<de>Legt eine Regel an, die das Rollenelternobjekt von Objekten des ausgewählten Typs bestimmt, also das Objekt, dessen Rollen sie erben. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
-										</tooltip>
-										<executability>
-											<null-input-disabled/>
-										</executability>
-										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-											mode="NEW_ROLE_PARENT_RULE"
-										/>
-										<open-dialog
-											bind-input-to="rule"
-											dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
-										>
-											<bind
-												channel="pending"
-												to="pending"
-											/>
-										</open-dialog>
-									</generic-command>
-									<generic-command
-										image="css:bi bi-person-badge"
-										input="selection"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Role rule…</en>
-											<de>Rollenregel…</de>
-										</label>
-										<tooltip>
-											<en>Creates a rule assigning users a role on objects of the selected type. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
-											<de>Legt eine Regel an, die Benutzern eine Rolle auf Objekten des ausgewählten Typs zuweist. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
-										</tooltip>
-										<executability>
-											<null-input-disabled/>
-										</executability>
-										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-											mode="NEW_ROLE_RULE"
-										/>
-										<open-dialog
-											bind-input-to="rule"
-											dialog-view="admin/access-control/coverage-role-rule.view.xml"
-										>
-											<bind
-												channel="pending"
-												to="pending"
-											/>
-										</open-dialog>
-									</generic-command>
 									<generic-command
 										image="css:bi bi-shield-check"
 										input="selection"
@@ -221,9 +171,8 @@
 										</open-dialog>
 									</generic-command>
 									<generic-command
-										clique="more"
 										image="css:bi bi-shield-shaded"
-										input="selection"
+										input="selectedModule"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -231,11 +180,11 @@
 											<de>Zugriffsrechte des Moduls…</de>
 										</label>
 										<tooltip>
-											<en>Edits the rights the application grants roles on all types of the module of the selected type, and the marks of the module. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
-											<de>Bearbeitet die Rechte, die die Anwendung Rollen an allen Typen des Moduls des ausgewählten Typs gewährt, sowie die Kennzeichnungen des Moduls. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Edits the rights the application grants roles on all types of the selected module, and the marks of the module. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
+											<de>Bearbeitet die Rechte, die die Anwendung Rollen an allen Typen des ausgewählten Moduls gewährt, sowie die Kennzeichnungen des Moduls. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<null-input-disabled/>
+											<visible-if expr="module -> $module != null"/>
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_MODULE_ACCESS_RIGHTS"
@@ -266,7 +215,7 @@
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
-											<visible-if expr="internal -> $internal != true"/>
+											<visible-if expr="internal -> $internal == false"/>
 										</executability>
 										<confirm
 											expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects. The mark is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte. Die Kennzeichnung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
@@ -321,7 +270,7 @@
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
-											<visible-if expr="withoutSecurity -> $withoutSecurity != true"/>
+											<visible-if expr="withoutSecurity -> $withoutSecurity == false"/>
 										</executability>
 										<confirm
 											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. This is meant as a temporary measure only, until the access rights of the type are configured. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Das ist nur als Übergangslösung gedacht, bis die Zugriffsrechte des Typs konfiguriert sind. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
@@ -394,6 +343,64 @@
 									<de>Geltende Regeln</de>
 								</title>
 								<commands>
+									<generic-command
+										image="css:bi bi-diagram-2"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Role parent…</en>
+											<de>Rollenelternobjekt…</de>
+										</label>
+										<tooltip>
+											<en>Creates a rule determining the role parent of objects of the selected type, the object whose roles they inherit. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Legt eine Regel an, die das Rollenelternobjekt von Objekten des ausgewählten Typs bestimmt, also das Objekt, dessen Rollen sie erben. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="NEW_ROLE_PARENT_RULE"
+										/>
+										<open-dialog
+											bind-input-to="rule"
+											dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+										>
+											<bind
+												channel="pending"
+												to="pending"
+											/>
+										</open-dialog>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-person-badge"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Role rule…</en>
+											<de>Rollenregel…</de>
+										</label>
+										<tooltip>
+											<en>Creates a rule assigning users a role on objects of the selected type. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Legt eine Regel an, die Benutzern eine Rolle auf Objekten des ausgewählten Typs zuweist. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="NEW_ROLE_RULE"
+										/>
+										<open-dialog
+											bind-input-to="rule"
+											dialog-view="admin/access-control/coverage-role-rule.view.xml"
+										>
+											<bind
+												channel="pending"
+												to="pending"
+											/>
+										</open-dialog>
+									</generic-command>
 									<generic-command
 										image="css:bi bi-pencil"
 										input="selectedRuleEntry"

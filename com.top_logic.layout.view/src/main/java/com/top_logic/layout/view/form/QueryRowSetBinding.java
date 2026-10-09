@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -28,7 +27,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * <p>
  * Nothing is written back to the form object on commit; created rows are persisted and removed rows
  * deleted (with {@link com.top_logic.layout.view.form.RowSetBinding.RemoveMode#DELETE}) by the
- * {@link AbstractCompositionControl}'s commit, after which a re-evaluation of the query observes the
+ * {@link RowSetEditSession}'s commit, after which a re-evaluation of the query observes the
  * new state.
  * </p>
  */
@@ -96,12 +95,12 @@ public class QueryRowSetBinding implements RowSetBinding {
 	}
 
 	@Override
-	public void updateMembership(FormControl form, List<TLObject> currentRows) {
+	public void updateMembership(TLObject owner, List<TLObject> currentRows) {
 		// No bound attribute: membership changes are buffered in the edit session only.
 	}
 
 	@Override
-	public void commit(Transaction tx, FormControl form, List<TLObject> persistedRows, List<TLObject> originalRows) {
+	public void commit(TLObject owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
 		if (_removeMode == RemoveMode.DELETE) {
 			Set<TLObject> current = new HashSet<>(persistedRows);
 			for (TLObject original : originalRows) {

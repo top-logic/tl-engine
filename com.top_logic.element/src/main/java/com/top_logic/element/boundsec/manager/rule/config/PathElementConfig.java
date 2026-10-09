@@ -10,10 +10,12 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.resources.TLPartInOwnerResourceProvider;
 import com.top_logic.model.util.AllReferences;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -39,6 +41,7 @@ public interface PathElementConfig extends PolymorphicConfiguration<PathNavigati
 	@Name(PathElementConfig.XML_ATTRIBUTE_ATTRIBUTE)
 	@Mandatory
 	@Options(fun = NavigableReferences.class, mapping = TLModelPartRef.PartMapping.class)
+	@OptionLabels(TLPartInOwnerResourceProvider.class)
 	TLModelPartRef getAttribute();
 
 	/** @see #getAttribute() */

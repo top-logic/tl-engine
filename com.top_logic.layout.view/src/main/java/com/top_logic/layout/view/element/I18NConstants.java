@@ -54,6 +54,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 TILE_ACTIVATE__TITLE;
 
+	/**
+	 * @en Moved calendar entry: {0}
+	 */
+	public static ResKey1 MOVED_CALENDAR_ENTRY__ENTRY;
+
+	/**
+	 * @en Changed duration of calendar entry: {0}
+	 */
+	public static ResKey1 RESIZED_CALENDAR_ENTRY__ENTRY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

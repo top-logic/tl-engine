@@ -20,6 +20,11 @@
  * to become of the unsaved changes - makes it again, in the direction the user pressed. The move
  * is reported like any other, so the display takes up the URL it leads to and the entry the user
  * came from stays where it is, reachable by the button that leads back to it.</p>
+ *
+ * <p>A step within the page - a jump to a section of a long text - is a history entry of its own as
+ * well, written by {@link pushLocalStep} with the address of the page. A move between such entries
+ * of the displayed page is not reported to the server, which has nothing to show differently: the
+ * entry the browser arrives at shows itself again, e.g. by scrolling to where the reader was.</p>
  */
 
 import { enqueueCommand, type CommandResponse } from './command-channel';
@@ -99,6 +104,59 @@ interface RefusedMove {
 /** The move the display refused last, or {@code null} if none is waiting to be resumed. */
 let _refusedMove: RefusedMove | null = null;
 
+/** A history entry written by {@link pushLocalStep}, or the one such a step was taken from. */
+interface LocalStep {
+  /** The address of the entry. */
+  url: string;
+  /** Shows the state of the page the entry stands for. */
+  show: () => void;
+}
+
+/** The entries within the displayed page that show themselves again, by position. */
+const _localSteps = new Map<number, LocalStep>();
+
+/** The address of the history entry the display belongs to. */
+let _displayUrl = '';
+
+/**
+ * Write a step within the displayed page to the history, e.g. a jump to a section of a long text.
+ *
+ * <p>The new entry has the address of the page. Going back to the entry the step was taken from
+ * calls {@code leave}, going forward to the step again calls {@code arrive}; neither move is
+ * reported to the server. A navigation of the display drops the steps beyond the entry it starts
+ * from, as the browser drops those entries.</p>
+ *
+ * @param leave
+ *        Shows the page as it was before the step, e.g. by restoring the scroll position.
+ * @param arrive
+ *        Shows the page as the step leaves it, e.g. by scrolling to the section jumped to.
+ */
+export function pushLocalStep(leave: () => void, arrive: () => void): void {
+  if (!_initialized) {
+    arrive();
+    return;
+  }
+  dropStepsBeyond(_displayPos);
+  _refusedMove = null;
+  const url = window.location.pathname + window.location.search;
+  _localSteps.set(_displayPos, { url, show: leave });
+  const pos = _displayPos + 1;
+  history.pushState(navState(pos), '', url);
+  _displayPos = pos;
+  _displayUrl = url;
+  _localSteps.set(pos, { url, show: arrive });
+  arrive();
+}
+
+/** Forget the local steps at positions after the given one. */
+function dropStepsBeyond(pos: number): void {
+  for (const key of [..._localSteps.keys()]) {
+    if (key > pos) {
+      _localSteps.delete(key);
+    }
+  }
+}
+
 /** The current page's window name (read from body data attribute). */
 function getWindowName(): string {
   return document.body.dataset.windowName ?? '';
@@ -126,6 +184,14 @@ export function initRouteSync(): void {
     // the unsaved changes that is awaited now, not a resume of a move the user has moved on from.
     _refusedMove = null;
     const target = readNavState(event.state);
+    const url = window.location.pathname + window.location.search;
+    const step = target !== null ? _localSteps.get(target.pos) : undefined;
+    if (step !== undefined && step.url === url && url === _displayUrl) {
+      // A step within the displayed page: the page shows it itself.
+      _displayPos = target!.pos;
+      step.show();
+      return;
+    }
     void sendRouteCommand(extractRoutePath() + window.location.search, target);
   });
 
@@ -143,10 +209,12 @@ export function handleRouteChangeEvent(event: RouteChangeEventData): void {
     // A navigation of the display leaves the entries beyond it behind, the refused move's target
     // among them.
     _refusedMove = null;
+    dropStepsBeyond(_displayPos);
     const pos = _displayPos + 1;
     history.pushState(navState(pos), '', fullUrl);
     _displayPos = pos;
   }
+  _displayUrl = fullUrl;
 }
 
 /**
@@ -204,6 +272,13 @@ async function sendRouteCommand(url: string, target: NavState | null): Promise<v
   if (answer?.[FIELD_REFUSED] === true) {
     _displayPos = displayPosBefore;
     restoreDisplayEntry(url, target, String(answer[FIELD_CURRENT_URL] ?? ''));
+  } else {
+    _displayUrl = getViewBasePath() + url;
+    // An entry written as a step within its page shows that step, once the display is on the page.
+    const step = target !== null ? _localSteps.get(target.pos) : undefined;
+    if (step !== undefined && step.url === _displayUrl) {
+      step.show();
+    }
   }
 }
 
@@ -283,7 +358,8 @@ function readNavState(state: unknown): NavState | null {
  */
 function initHistoryState(): void {
   _displayPos = 0;
-  history.replaceState(navState(0), '', visiblePath() + window.location.search);
+  _displayUrl = visiblePath() + window.location.search;
+  history.replaceState(navState(0), '', _displayUrl);
 }
 
 /** The current path with the window name segment removed. */

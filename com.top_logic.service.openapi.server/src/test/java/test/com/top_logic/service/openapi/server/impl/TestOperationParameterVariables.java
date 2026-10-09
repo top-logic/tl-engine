@@ -73,8 +73,9 @@ public class TestOperationParameterVariables extends BasicTestCase {
 	}
 
 	/**
-	 * A parameter with a {@link HeaderParameter.Config#getVariableName() variable name} is offered
-	 * under its variable name, not under its HTTP name.
+	 * A parameter with a
+	 * {@link com.top_logic.service.openapi.server.parameter.HeaderParameter.Config#getVariableName()
+	 * variable name} is offered under its variable name, not under its HTTP name.
 	 */
 	public void testOffersVariableName() {
 		OperationByMethod operation = TypedConfiguration.newConfigItem(OperationByMethod.class);

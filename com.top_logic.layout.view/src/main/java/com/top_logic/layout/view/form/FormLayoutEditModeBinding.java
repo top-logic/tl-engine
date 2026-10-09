@@ -5,17 +5,21 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.function.Consumer;
+
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
- * {@link FormModelListener} keeping a {@link ReactFormLayoutControl} read-only exactly while a
- * {@link FormModel} is not in edit mode.
+ * {@link FormModelListener} keeping a form grid read-only exactly while a {@link FormModel} is not
+ * in edit mode.
  *
  * <p>
- * A form grid standing inside a form lays out a part of that form's fields. The chrome of its fields
- * (the required marker, the read-only appearance, the visibility of errors and help) follows the
- * read-only state of the grid nearest to them, so such a grid displays the edit mode of the form it
- * belongs to rather than a state of its own.
+ * The chrome of the fields of a form grid (the required marker, the read-only appearance, the
+ * visibility of errors and help) follows the read-only state of the grid nearest to them
+ * ({@link ReactFormLayoutControl#READ_ONLY}). A grid displays the edit mode of the form it belongs
+ * to rather than a state of its own: the grid of the form itself as well as a grid standing inside a
+ * form, laying out a part of that form's fields.
  * </p>
  *
  * <p>
@@ -23,13 +27,14 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * </p>
  *
  * @see #bind(ReactFormLayoutControl, FormModel)
+ * @see #bind(ReactControl, Consumer, FormModel)
  */
 public final class FormLayoutEditModeBinding implements FormModelListener {
 
-	private final ReactFormLayoutControl _layout;
+	private final Consumer<Boolean> _setReadOnly;
 
-	private FormLayoutEditModeBinding(ReactFormLayoutControl layout) {
-		_layout = layout;
+	private FormLayoutEditModeBinding(Consumer<Boolean> setReadOnly) {
+		_setReadOnly = setReadOnly;
 	}
 
 	/**
@@ -42,15 +47,30 @@ public final class FormLayoutEditModeBinding implements FormModelListener {
 	 *        The form whose edit mode the grid displays.
 	 */
 	public static void bind(ReactFormLayoutControl layout, FormModel form) {
-		FormLayoutEditModeBinding binding = new FormLayoutEditModeBinding(layout);
+		bind(layout, layout::setReadOnly, form);
+	}
+
+	/**
+	 * Makes the given grid follow the edit mode of the given form, from now on until the grid is
+	 * disposed.
+	 *
+	 * @param grid
+	 *        The control rendering the grid.
+	 * @param setReadOnly
+	 *        Publishes the read-only state of the grid as {@link ReactFormLayoutControl#READ_ONLY}.
+	 * @param form
+	 *        The form whose edit mode the grid displays; may be the grid itself.
+	 */
+	public static void bind(ReactControl grid, Consumer<Boolean> setReadOnly, FormModel form) {
+		FormLayoutEditModeBinding binding = new FormLayoutEditModeBinding(setReadOnly);
 		binding.onFormStateChanged(form);
 		form.addFormModelListener(binding);
-		layout.addCleanupAction(() -> form.removeFormModelListener(binding));
+		grid.addCleanupAction(() -> form.removeFormModelListener(binding));
 	}
 
 	@Override
 	public void onFormStateChanged(FormModel source) {
-		_layout.setReadOnly(!source.isEditMode());
+		_setReadOnly.accept(Boolean.valueOf(!source.isEditMode()));
 	}
 
 }

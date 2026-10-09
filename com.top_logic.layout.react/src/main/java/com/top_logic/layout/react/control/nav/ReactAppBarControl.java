@@ -13,22 +13,15 @@ import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.state.AppBarState;
 
 /**
  * A {@link ReactControl} that renders a top-level application bar via the {@code TLAppBar} React
  * component.
  *
  * <p>
- * The React component receives:
+ * The state is described by {@link AppBarState}.
  * </p>
- * <ul>
- * <li>{@link #TITLE} - the text naming the application</li>
- * <li>{@link #VARIANT} - the {@link AppBarVariant} the bar is displayed in</li>
- * <li>{@link #LEADING} - the control opening the bar, ahead of the title (optional)</li>
- * <li>{@link #CHILDREN} - inline content between the title and the actions</li>
- * <li>{@link #ACTIONS} - the {@link ReactToolbarControl} of the commands placed in the bar</li>
- * <li>{@link #TRAILING} - the control closing the bar, right of the actions (optional)</li>
- * </ul>
  *
  * <p>
  * The commands form one toolbar, so those that do not fit the bar fold into its overflow menu
@@ -38,24 +31,6 @@ import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 public class ReactAppBarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLAppBar";
-
-	/** @see #setTitle(String) */
-	public static final String TITLE = "title";
-
-	/** State key for the control opening the bar, ahead of the title. */
-	public static final String LEADING = "leading";
-
-	/** State key for the toolbar of the commands placed in the bar. */
-	public static final String ACTIONS = "actions";
-
-	/** State key for the {@link AppBarVariant} the bar is displayed in. */
-	public static final String VARIANT = "variant";
-
-	/** State key for the inline content between the title and the actions. */
-	public static final String CHILDREN = "children";
-
-	/** State key for the control closing the bar, right of the actions. */
-	public static final String TRAILING = "trailing";
 
 	/**
 	 * Visual variant of the app bar.
@@ -103,22 +78,22 @@ public class ReactAppBarControl extends ReactControl {
 			List<? extends ReactControl> children, ReactControl trailing) {
 		super(context, null, REACT_MODULE);
 		setTitle(title);
-		putState(VARIANT, variant.getExternalName());
+		putState(AppBarState.VARIANT__PROP, variant.getExternalName());
 		if (leading != null) {
-			putState(LEADING, leading);
+			putState(AppBarState.LEADING__PROP, leading);
 		}
 		if (trailing != null) {
-			putState(TRAILING, trailing);
+			putState(AppBarState.TRAILING__PROP, trailing);
 		}
-		putState(ACTIONS, actions);
-		putState(CHILDREN, new ArrayList<>(children));
+		putState(AppBarState.ACTIONS__PROP, actions);
+		putState(AppBarState.CHILDREN__PROP, new ArrayList<>(children));
 	}
 
 	/**
 	 * Updates the bar title.
 	 */
 	public void setTitle(String title) {
-		putState(TITLE, title);
+		putState(AppBarState.TITLE__PROP, title);
 	}
 
 	/**
@@ -126,6 +101,6 @@ public class ReactAppBarControl extends ReactControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), VARIANT);
+		return presentationKeys(super.scriptingPresentationKeys(), AppBarState.VARIANT__PROP);
 	}
 }

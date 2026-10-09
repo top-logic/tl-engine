@@ -5,33 +5,47 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationAccess;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.util.Resources;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.customization.NoCustomizations;
+import com.top_logic.basic.config.order.DefaultOrderStrategy;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
-import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
@@ -48,6 +62,12 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
  * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * </p>
+ *
+ * <p>
+ * The properties are displayed in the order of a {@link DisplayOrder} annotation of the item's
+ * interface, the same as in other configuration forms. Without one, the properties of a super
+ * interface come before the ones the interface declares itself.
  * </p>
  *
  * <p>
@@ -82,6 +102,13 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	private final boolean _editable;
 
 	private final ConfigurationItem _formModel;
+
+	/**
+	 * How this editor displays properties of the edited item, beyond what the properties declare
+	 * themselves - unlike a {@link ReadOnly} or {@link Hidden} property, which is displayed so
+	 * wherever it is edited.
+	 */
+	private final Map<PropertyDescriptor, FieldDisplay> _displays;
 
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
@@ -198,15 +225,38 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
 			boolean editable, ConfigurationItem formModel) {
+		this(context, config, hiddenProperties, Collections.emptyMap(), skipTreeProperties, index, editable,
+			formModel);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl} displaying properties as the user interface wants them.
+	 *
+	 * @param displays
+	 *        How to display properties of the given item, see {@link #_displays}.
+	 *
+	 * @see #ConfigEditorControl(ReactContext, ConfigurationItem, Set, boolean, ConfigFieldIndex,
+	 *      boolean, ConfigurationItem)
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, Map<PropertyDescriptor, FieldDisplay> displays,
+			boolean skipTreeProperties, ConfigFieldIndex index, boolean editable, ConfigurationItem formModel) {
 		super(context);
 		_index = index;
 		_editable = editable;
 		_formModel = formModel;
+		_displays = displays;
 
-		for (PropertyDescriptor property : config.descriptor().getProperties()) {
+		for (PropertyDescriptor property : displayProperties(config)) {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
+			FieldDisplay display = _displays.get(property);
+			if (display != null && !display.isVisible()) {
+				continue;
+			}
+			// A group in a mode that does not accept input offers nothing to add or remove.
+			boolean groupEditable = _editable && (display == null || display.isAccepting());
 			if (!isSupportedKind(config, property)) {
 				continue;
 			}
@@ -226,21 +276,31 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
-						createPolymorphicGroup(context, label, config, property, _editable);
+						createPolymorphicGroup(context, label, config, property, groupEditable);
 					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
 					followMode(config, property, polyGroup, null);
+					disableIfDisabled(config, property, display);
 				} else {
 					ConfigurationAccess configAccess = property.getConfigurationAccess();
 					ConfigurationItem nested = configAccess.getConfig(config.value(property));
-					if (nested != null) {
-						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
+					// A read-only form has nothing to show for an item without value; an editable
+					// one offers to create it, since the item could not be entered otherwise. The
+					// item is edited as a list of at most one entry, so that creating and removing
+					// it looks the same as for an entry of a list.
+					if (nested != null || groupEditable) {
+						ConfigListEditorControl itemEditor = new ConfigListEditorControl(context,
+							new ConfigItemValue(config, property), PolymorphicOptions.Choices.NONE, _index,
+							groupEditable, _formModel);
+						// No heading of its own: the entry of the item is headed by the property
+						// already, see ConfigItemValue#entryTitle(ConfigurationItem). The group only
+						// gives the editor the whole row.
 						ReactFormGroupControl group = new ReactFormGroupControl(
-							context, null, true, false, GroupBorder.SUBTLE, true,
-							List.of(), List.of(nestedEditor));
-						group.setHeader(createGroupHeader(context, property));
+							context, null, false, false, GroupBorder.NONE, true,
+							List.of(), List.of(itemEditor));
 						addChild(group);
 						followMode(config, property, group, null);
+						disableIfDisabled(config, property, display);
 					}
 				}
 				continue;
@@ -249,24 +309,34 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
 				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
-					new ConfigListEditorControl(context, config, property, _index, _editable, _formModel);
+					new ConfigListEditorControl(context, config, property, _index, groupEditable, _formModel);
 				// Over the full row, like the nested-item group above: a collection holds whole
 				// forms - one per entry, each with its own header and actions - and a third of the
 				// row is not a place to put a form. It also keeps a collection recognizable as one
 				// section rather than as a column of the surrounding grid.
+				// The button adding an entry stands next to the name of the collection, so that it is
+				// clear which collection it adds to - see ConfigListEditorControl#headerAddButton().
+				ReactButtonControl addButton = listEditor.headerAddButton();
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
 					context, null, true, false, GroupBorder.SUBTLE, true,
-					List.of(), List.of(listEditor));
+					addButton == null ? List.of() : List.of(addButton), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);
 				followMode(config, property, listGroup, null);
+				disableIfDisabled(config, property, display);
 				continue;
 			}
 
 			ConfigFieldModel model =
 				ConfigControlService.getInstance().createModel(config, property, _formModel);
 			// A read-only value is displayed, but cannot be changed.
-			model.setEditable(_editable && !isReadOnly(property));
+			model.setEditable(_editable && !readOnly(property));
+			if (display != null) {
+				model.setDisabled(display.mode() == FieldMode.DISABLED);
+				if (display.mandatory()) {
+					model.setMandatory(true);
+				}
+			}
 			index(config, property, model);
 			addCleanupAction(model::detach);
 
@@ -280,13 +350,47 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
 				context, label, model.isMandatory(), false, null, null, labelPosition,
-				false, true, input);
+				rendersWholeLine(property), true, input);
 			if (tooltip != null && !tooltip.isEmpty()) {
 				chrome.setTooltip(tooltip, label, true);
+			}
+			if (!(input instanceof ReactFormFieldControl)) {
+				// A form field displays the error of its model itself; any other control - an editor
+				// of its own, such as the TL-Script editor - leaves that to the chrome around it.
+				showErrorInChrome(model, chrome);
 			}
 			addChild(chrome);
 			followMode(config, property, chrome, model);
 		}
+	}
+
+	/**
+	 * Displays the error of the given field in the given chrome, for a field whose control does not
+	 * display it itself.
+	 */
+	private void showErrorInChrome(ConfigFieldModel model, ReactFormFieldChromeControl chrome) {
+		Runnable update = () -> chrome.setError(
+			model.hasError() ? Resources.getInstance().getString(model.getError()) : null);
+		update.run();
+		FieldModelListener listener = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				// The error is reported separately.
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// An error is only shown while the field is editable, see the model.
+				update.run();
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				update.run();
+			}
+		};
+		model.addListener(listener);
+		addCleanupAction(() -> model.removeListener(listener));
 	}
 
 	/**
@@ -483,7 +587,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		}
 		if (model != null) {
 			boolean accepting = mode == null || mode == FieldMode.ACTIVE;
-			model.setEditable(_editable && !isReadOnly(property) && accepting);
+			model.setEditable(_editable && !readOnly(property) && accepting);
 		}
 	}
 
@@ -512,9 +616,118 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		}
 	}
 
+	/**
+	 * Whether the field of the given property takes the whole row of the form instead of a column.
+	 *
+	 * <p>
+	 * As in a form the legacy editor builds: the property, or else the type of its value, is
+	 * annotated with {@link RenderWholeLine} - a TL-Script expression, for instance, whose type
+	 * declares that its text needs the width.
+	 * </p>
+	 */
+	private static boolean rendersWholeLine(PropertyDescriptor property) {
+		RenderWholeLine annotation = annotation(property, RenderWholeLine.class);
+		if (annotation == null) {
+			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+			if (valueDescriptor != null) {
+				annotation = valueDescriptor.getConfigurationInterface().getAnnotation(RenderWholeLine.class);
+			}
+		}
+		return annotation != null && annotation.value();
+	}
+
 	private static boolean isHidden(PropertyDescriptor property) {
 		Hidden annotation = annotation(property, Hidden.class);
 		return annotation != null && annotation.value();
+	}
+
+	/**
+	 * Whether the field of the given property displays its value without accepting a change: the
+	 * property is {@link ReadOnly}, or {@link FieldMode#IMMUTABLE immutable} in this editor.
+	 */
+	private boolean readOnly(PropertyDescriptor property) {
+		FieldDisplay display = _displays.get(property);
+		return isReadOnly(property) || (display != null && display.mode() == FieldMode.IMMUTABLE);
+	}
+
+	/**
+	 * Displays the fields inside the group of the given property as
+	 * {@link FieldMode#DISABLED disabled}, if that is the property's display.
+	 *
+	 * <p>
+	 * The group is built without accepting input already, so that it offers nothing to add or
+	 * remove; its fields would show their values only. Disabling them shows them as inputs that
+	 * cannot be used instead. They are found through the {@link ConfigFieldIndex} by the items
+	 * the property holds: a group not accepting input is never rebuilt, so the fields found are
+	 * the ones displayed. Without an index, the fields keep showing their values only.
+	 * </p>
+	 */
+	private void disableIfDisabled(ConfigurationItem config, PropertyDescriptor property, FieldDisplay display) {
+		if (display == null || display.mode() != FieldMode.DISABLED || _index == null) {
+			return;
+		}
+		Set<ConfigurationItem> items = Collections.newSetFromMap(new IdentityHashMap<>());
+		collectItems(config.value(property), items);
+		for (ConfigurationItem item : items) {
+			for (ConfigFieldModel field : _index.fieldsOf(item)) {
+				field.setDisabled(true);
+			}
+		}
+	}
+
+	/**
+	 * Puts the given field before the fields of the properties, so that it is laid out with them.
+	 *
+	 * <p>
+	 * For a field this editor does not create itself: the type selector of an entry, which chooses
+	 * the configuration interface of the item rather than a value of one of its properties.
+	 * </p>
+	 */
+	public void addLeadingField(ReactControl field) {
+		List<ReactControl> children = new ArrayList<>(getChildren());
+		children.add(0, field);
+		replaceChildren(children);
+	}
+
+	/**
+	 * The properties of the given item in the order they are displayed.
+	 *
+	 * @see DisplayOrder
+	 */
+	private static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
+		return new DefaultOrderStrategy.Collector(NoCustomizations.INSTANCE, config.descriptor()).collect();
+	}
+
+	/**
+	 * Adds the items the given property value holds, and all items nested in them, to the given
+	 * set.
+	 */
+	private static void collectItems(Object value, Set<ConfigurationItem> items) {
+		if (value instanceof ConfigurationItem item) {
+			if (!items.add(item)) {
+				return;
+			}
+			for (PropertyDescriptor nested : item.descriptor().getProperties()) {
+				switch (nested.kind()) {
+					case ITEM:
+					case LIST:
+					case ARRAY:
+					case MAP:
+						collectItems(item.value(nested), items);
+						break;
+					default:
+						break;
+				}
+			}
+		} else if (value instanceof Collection<?> collection) {
+			for (Object entry : collection) {
+				collectItems(entry, items);
+			}
+		} else if (value instanceof Map<?, ?> map) {
+			collectItems(map.values(), items);
+		} else if (value instanceof Object[] array) {
+			collectItems(Arrays.asList(array), items);
+		}
 	}
 
 	/**

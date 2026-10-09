@@ -18,6 +18,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
 
 /**
  * {@link ReactFieldControlProvider} for string, tristate, binary, and other text-representable
@@ -35,6 +36,10 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
  * Also serves as the ultimate fallback when no other provider matches, where the text is a plain
  * one.
  * </p>
+ *
+ * @implNote A text displayed on {@link FieldControlRegistry#isMultiline(FieldSpec) several rows}
+ *           is {@link #isLarge(FieldSpec) large}: where it has no room, its first line stands for
+ *           it.
  */
 public class TextInputControlProvider implements ReactFieldControlProvider {
 
@@ -98,4 +103,8 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 		return control;
 	}
 
+	@Override
+	public boolean isLarge(FieldSpec field) {
+		return FieldControlRegistry.isMultiline(field);
+	}
 }

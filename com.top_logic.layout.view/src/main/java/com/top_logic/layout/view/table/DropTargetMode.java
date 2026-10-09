@@ -6,11 +6,14 @@
 package com.top_logic.layout.view.table;
 
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.layout.view.dnd.DropBinding;
+import com.top_logic.layout.view.dnd.DropScope;
 
 /**
  * What a declared drop of a table targets: the table as a whole, or a single row of it.
  *
- * @see TableDropBinding
+ * @see TableDropConfig
+ * @see DropBinding
  */
 public enum DropTargetMode implements ExternallyNamed {
 
@@ -22,7 +25,7 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * objects - what the drop means is the same wherever it was made.
 	 * </p>
 	 */
-	TABLE("table"),
+	TABLE("table", DropScope.CONTROL),
 
 	/**
 	 * A single row is the target.
@@ -33,12 +36,23 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * nothing. The rows are highlighted individually while such a drag moves over the table.
 	 * </p>
 	 */
-	ROW("row");
+	ROW("row", DropScope.ITEM);
 
 	private final String _externalName;
 
-	private DropTargetMode(String externalName) {
+	private final DropScope _scope;
+
+	private DropTargetMode(String externalName, DropScope scope) {
 		_externalName = externalName;
+		_scope = scope;
+	}
+
+	/**
+	 * What a {@link DropBinding} makes a drop of this mode on: the table as a whole is the control,
+	 * a row is an item of it.
+	 */
+	public DropScope scope() {
+		return _scope;
 	}
 
 	@Override

@@ -36,38 +36,46 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.configedit.ConfigCollection;
+import com.top_logic.layout.configedit.ConfigCollectionValue;
+import com.top_logic.layout.configedit.ConfigControl;
+import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
-import com.top_logic.layout.configedit.ConfigCollection;
-import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldModel;
+import com.top_logic.layout.configedit.ConfigItemValue;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.I18NConstants;
-import com.top_logic.layout.configedit.PolymorphicOptions;
-import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
+import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
+import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -87,6 +95,53 @@ public class TestConfigEditorControl extends TestCase {
 		String getTitle();
 
 		void setTitle(String value);
+	}
+
+	/**
+	 * {@link ConfigControlProvider} creating a control that, unlike a form field, does not display
+	 * the error of its field model itself.
+	 */
+	public static class PlainControlProvider implements ConfigControlProvider {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+			return new ReactTextControl(context, "plain");
+		}
+	}
+
+	/** Configuration with a property edited by a {@link PlainControlProvider} control. */
+	public interface PlainControlConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getText()}. */
+		String TEXT = "text";
+
+		@Name(TEXT)
+		@ConfigControl(PlainControlProvider.class)
+		String getText();
+	}
+
+	/** Configuration with a mandatory, non-polymorphic ITEM property. */
+	public interface MandatoryItemConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getInner()}. */
+		String INNER = "inner";
+
+		@Name(INNER)
+		@Mandatory
+		InnerConfig getInner();
+
+		void setInner(InnerConfig value);
+	}
+
+	/** Test configuration interface with an ITEM property that may not be <code>null</code>. */
+	public interface NonNullableItemConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getInner()}. */
+		String INNER = "inner";
+
+		@Name(INNER)
+		@NonNullable
+		@ItemDefault
+		InnerConfig getInner();
 	}
 
 	/**
@@ -519,6 +574,54 @@ public class TestConfigEditorControl extends TestCase {
 	 * requiring Resources/ThreadContextManager in unit tests.
 	 */
 	/**
+	 * A configuration with a field that needs the whole row.
+	 */
+	public interface WholeLineConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getScript()}. */
+		String SCRIPT = "script";
+
+		/** Property name for {@link #getShort()}. */
+		String SHORT = "short";
+
+		/** Rendered over the whole row. */
+		@Name(SCRIPT)
+		@RenderWholeLine
+		String getScript();
+
+		/** Rendered in a column. */
+		@Name(SHORT)
+		String getShort();
+
+	}
+
+	/**
+	 * A configuration that displays its properties in an order of its own, not the order of their
+	 * names.
+	 */
+	@DisplayOrder({
+		OrderedConfig.ZETA,
+		OrderedConfig.ALPHA,
+	})
+	public interface OrderedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getAlpha()}. */
+		String ALPHA = "alpha";
+
+		/** Property name for {@link #getZeta()}. */
+		String ZETA = "zeta";
+
+		/** Displayed second. */
+		@Name(ALPHA)
+		String getAlpha();
+
+		/** Displayed first. */
+		@Name(ZETA)
+		String getZeta();
+
+	}
+
+	/**
 	 * A configuration whose {@link #getName() name} is hidden or disabled depending on two other
 	 * properties, and whose {@link #getItems() items} are hidden with the name.
 	 */
@@ -670,8 +773,8 @@ public class TestConfigEditorControl extends TestCase {
 	 * that hides exactly this property (the {@code hiddenProperties} constructor parameter
 	 * {@link ConfigEditorControl} already offers): a property that was actually rendered
 	 * contributes exactly one child, so hiding it removes exactly one. This is the same
-	 * before/after comparison {@link #testNullItemPropertySkipped()} already relies on to prove
-	 * that a skipped property adds nothing.
+	 * before/after comparison {@link #testNullItemPropertySkippedWhenReadOnly()} already relies on
+	 * to prove that a skipped property adds nothing.
 	 * </p>
 	 */
 	private boolean rendersProperty(ConfigurationItem config, String propertyName) {
@@ -690,13 +793,37 @@ public class TestConfigEditorControl extends TestCase {
 	 * group header, not as direct children).
 	 */
 	private ReactButtonControl findAddButton(TestableConfigListEditorControl editor) {
+		ReactButtonControl result = addButtonOf(editor);
+		assertNotNull("Should have an add button", result);
+		return result;
+	}
+
+	/**
+	 * The add button of the given editor, or {@code null} if it offers none: a button among its
+	 * children, or the button in the header that stands for an item not set yet.
+	 */
+	private static ReactButtonControl addButtonOf(TestableConfigListEditorControl editor) {
 		for (ReactControl child : editor.getChildrenList()) {
 			if (child instanceof ReactButtonControl button) {
 				return button;
 			}
+			if (child instanceof ReactFormGroupControl group && !isEntry(group)) {
+				for (ReactControl headerChild : group.scriptingChildren()) {
+					if (headerChild instanceof ReactButtonControl button) {
+						return button;
+					}
+				}
+			}
 		}
-		fail("Should have an add button");
 		return null;
+	}
+
+	/**
+	 * Whether the given group is an entry of the collection - which the user can fold away - rather
+	 * than the header standing for an item not set yet.
+	 */
+	private static boolean isEntry(ReactControl group) {
+		return Boolean.TRUE.equals(group.scriptingScalarState().get(ReactFormGroupControl.COLLAPSIBLE));
 	}
 
 	/**
@@ -782,7 +909,7 @@ public class TestConfigEditorControl extends TestCase {
 	private List<ReactControl> elementGroups(TestableConfigListEditorControl editor) {
 		List<ReactControl> groups = new ArrayList<>();
 		for (ReactControl child : editor.getChildrenList()) {
-			if (child instanceof ReactFormGroupControl) {
+			if (child instanceof ReactFormGroupControl && isEntry(child)) {
 				groups.add(child);
 			}
 		}
@@ -815,20 +942,43 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Finds the field model of the "Type" selector rendered inside the given element group -
-	 * reached the same way as {@link #findHeaderButton(ReactControl, String)}, via
-	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()},
+	 * Finds the field model of the type selector rendered inside the given element group, by its
+	 * {@link ReactControl#scriptingName()}, which does not depend on the language of its label,
 	 * plus the public {@link ReactControl#getModel()} of the field control found that way.
+	 *
+	 * <p>
+	 * The selector heads the entry, or, for an entry with a title of its own, is the first field of
+	 * the form over the entry's properties - so it is looked for among the fields of that form, too.
+	 * </p>
 	 */
 	private FieldModel findTypeFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
-			if ("Type".equals(child.scriptingScalarState().get("label"))) {
+			FieldModel found = typeFieldModel(child);
+			if (found != null) {
+				return found;
+			}
+			if (child instanceof ReactFormLayoutControl) {
 				for (ReactControl field : child.scriptingChildren()) {
-					return (FieldModel) field.getModel();
+					found = typeFieldModel(field);
+					if (found != null) {
+						return found;
+					}
 				}
 			}
 		}
-		fail("Should have a \"Type\" selector field in the element group");
+		fail("Should have a type selector field in the element group");
+		return null;
+	}
+
+	/**
+	 * The field model of the given control if it is a type selector, else {@code null}.
+	 */
+	private static FieldModel typeFieldModel(ReactControl control) {
+		if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(control.scriptingName())) {
+			for (ReactControl field : control.scriptingChildren()) {
+				return (FieldModel) field.getModel();
+			}
+		}
 		return null;
 	}
 
@@ -838,9 +988,9 @@ public class TestConfigEditorControl extends TestCase {
 	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()}.
 	 *
 	 * <p>
-	 * Unlike the "Type" selector, the key field carries no fixed label (its label is the key
+	 * Unlike the type selector, the key field carries no fixed name (its label is the key
 	 * property's own, which varies by fixture), so it is identified by elimination among the
-	 * group's direct children: not the "Type" selector, and not the nested
+	 * group's direct children: not the type selector, and not the nested
 	 * {@link com.top_logic.layout.configedit.ConfigEditorControl} over the entry, which carries
 	 * no {@code "label"} scripting state of its own. A header action button (move up/down,
 	 * remove) also carries a non-{@code null} {@code "label"} and reaches this far, but is
@@ -856,7 +1006,7 @@ public class TestConfigEditorControl extends TestCase {
 	private String keyFieldChromeError(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
 			Object label = child.scriptingScalarState().get("label");
-			if (label == null || "Type".equals(label)) {
+			if (label == null || PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				continue;
 			}
 			// A header action button (Confirm, Remove) carries a label too, and now precedes the
@@ -886,7 +1036,7 @@ public class TestConfigEditorControl extends TestCase {
 	private FieldModel findKeyFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
 			Object label = child.scriptingScalarState().get("label");
-			if (label == null || "Type".equals(label)) {
+			if (label == null || PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				continue;
 			}
 			for (ReactControl field : child.scriptingChildren()) {
@@ -1668,6 +1818,136 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * The button adding an entry to a collection stands in the header of the collection's group,
+	 * next to its name, not below its entries - so it is clear which collection it adds to.
+	 */
+	public void testTheAddButtonStandsInTheHeaderOfTheCollection() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		int collections = 0;
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (!(child instanceof ReactFormGroupControl group)) {
+				continue;
+			}
+			ReactButtonControl addButton = null;
+			ConfigListEditorControl listEditor = null;
+			for (ReactControl groupChild : group.scriptingChildren()) {
+				if (groupChild instanceof ReactButtonControl button) {
+					addButton = button;
+				} else if (groupChild instanceof ConfigListEditorControl list) {
+					listEditor = list;
+				}
+			}
+			assertNotNull("Group without a collection: " + group, listEditor);
+			assertNotNull("No add button in the header of " + group, addButton);
+			for (ReactControl entry : listEditor.scriptingChildren()) {
+				assertFalse("Add button below the entries: " + entry, entry instanceof ReactButtonControl);
+			}
+			collections++;
+		}
+		assertEquals(3, collections);
+	}
+
+	/**
+	 * The button in the header adds an entry, the same as the one below the entries did.
+	 */
+	public void testTheAddButtonInTheHeaderAddsAnEntry() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ConfigListEditorControl listEditor = new ConfigListEditorControl(createTestContext(), config,
+			config.descriptor().getProperty(ListTestConfig.PLAIN_ITEMS));
+
+		click(listEditor.headerAddButton());
+		assertEquals(1, config.getPlainItems().size());
+	}
+
+	/**
+	 * An item that is not set is shown as the header its entry would have, with the button creating
+	 * it, the same as a collection - not as a button of its own below the fields.
+	 */
+	public void testAnUnsetItemIsAHeaderWithTheButtonCreatingIt() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		TestableConfigListEditorControl itemEditor = new TestableConfigListEditorControl(createTestContext(),
+			new ConfigItemValue(config, config.descriptor().getProperty(TestConfig.INNER)),
+			PolymorphicOptions.Choices.NONE, null, true);
+
+		List<ReactControl> children = itemEditor.getChildrenList();
+		assertEquals(1, children.size());
+		ReactFormGroupControl header = (ReactFormGroupControl) children.get(0);
+		ReactButtonControl addButton = null;
+		for (ReactControl child : header.scriptingChildren()) {
+			if (child instanceof ReactButtonControl button) {
+				addButton = button;
+			}
+		}
+		assertNotNull("No button in the header.", addButton);
+
+		click(addButton);
+		assertNotNull(config.getInner());
+	}
+
+	/**
+	 * An entry without a title of its own is headed by its type selector instead of by the name of
+	 * its type, and the selector stays changeable - the type is no key here - while the fields of
+	 * the entry are left to themselves.
+	 */
+	public void testTheTypeSelectorHeadsAnUntitledEntry() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		config.setHandlerArray(new HandlerConfig[] { TypedConfiguration.newConfigItem(HandlerAConfig.class) });
+		PropertyDescriptor property = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER_ARRAY);
+
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		ReactControl group = elementGroups(editor).get(0);
+		assertNull("The type selector takes the place of the title.", findHeaderText(group));
+		FieldModel type = null;
+		for (ReactControl child : group.scriptingChildren()) {
+			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
+				type = (FieldModel) child.scriptingChildren().get(0).getModel();
+			}
+		}
+		assertNotNull("The type selector heads the entry.", type);
+		assertTrue("The type of an entry it is no key of can be changed.", type.isEditable());
+	}
+
+	/**
+	 * A field annotated with {@link RenderWholeLine} takes the whole row, as in a form the legacy
+	 * editor builds; another one takes a column.
+	 */
+	public void testRenderWholeLineTakesTheWholeRow() {
+		WholeLineConfig config = TypedConfiguration.newConfigItem(WholeLineConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		Map<Object, Object> fullLine = new java.util.HashMap<>();
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				fullLine.put(child.scriptingScalarState().get("label"),
+					child.scriptingScalarState().get("fullLine"));
+			}
+		}
+		assertEquals(Boolean.TRUE, fullLine.get(WholeLineConfig.SCRIPT));
+		assertEquals(Boolean.FALSE, fullLine.get(WholeLineConfig.SHORT));
+	}
+
+	/**
+	 * The fields follow the {@link DisplayOrder} of the configuration, as in any other
+	 * configuration form, and a property it does not list is not displayed.
+	 */
+	public void testFieldsFollowTheDisplayOrder() {
+		OrderedConfig config = TypedConfiguration.newConfigItem(OrderedConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		List<Object> labels = new ArrayList<>();
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				labels.add(child.scriptingScalarState().get("label"));
+			}
+		}
+		assertEquals(List.of(OrderedConfig.ZETA, OrderedConfig.ALPHA), labels);
+	}
+
+	/**
 	 * A property with a dynamic mode is hidden while its mode says so, and shown again once the
 	 * properties the mode is computed from change back.
 	 */
@@ -2048,22 +2328,134 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Tests that a null ITEM property value is skipped (no group created).
+	 * A read-only form has nothing to show for an ITEM property without value, so it creates no
+	 * group for it.
 	 */
-	public void testNullItemPropertySkipped() {
+	public void testNullItemPropertySkippedWhenReadOnly() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
 		// inner is null by default
 
-		int childCountWithoutItem = new TestableConfigEditorControl(createTestContext(), config)
-			.getChildCount();
+		int childCountWithoutItem = readOnlyEditor(config).getChildCount();
 
 		InnerConfig inner = TypedConfiguration.newConfigItem(InnerConfig.class);
 		config.setInner(inner);
 
-		int childCountWithItem = new TestableConfigEditorControl(createTestContext(), config)
-			.getChildCount();
+		int childCountWithItem = readOnlyEditor(config).getChildCount();
 
 		assertEquals("Null ITEM should not add a child", childCountWithItem, childCountWithoutItem + 1);
+	}
+
+	/**
+	 * An editable form shows an ITEM property without value, so that its item can be created: the
+	 * group of the property is there whether the item exists or not.
+	 */
+	public void testNullItemPropertyShownWhenEditable() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		int childCountWithoutItem = new TestableConfigEditorControl(createTestContext(), config).getChildCount();
+
+		config.setInner(TypedConfiguration.newConfigItem(InnerConfig.class));
+		int childCountWithItem = new TestableConfigEditorControl(createTestContext(), config).getChildCount();
+
+		assertEquals(childCountWithItem, childCountWithoutItem);
+	}
+
+	/**
+	 * The value of an optional ITEM property is edited as a list of at most one entry: it is created
+	 * with the add button, which is gone while the entry exists, and removed by the remove action
+	 * in the header of the entry.
+	 */
+	public void testOptionalItemIsEditedAsListOfAtMostOneEntry() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		ConfigItemValue value = new ConfigItemValue(config, config.descriptor().getProperty(TestConfig.INNER));
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
+
+		assertTrue("No entry before the item is created.", elementGroups(editor).isEmpty());
+		clickAddButton(editor);
+
+		assertNotNull("The item is created in the edited configuration.", config.getInner());
+		assertEquals(1, elementGroups(editor).size());
+		assertEquals("The entry is headed by the property, not by the technical name of its type.",
+			value.label(), value.entryTitle(config.getInner()));
+		assertEquals("The entry is headed by the property it is the value of, not by its type.",
+			value.label(), findHeaderText(elementGroups(editor).get(0)));
+		assertFalse("A second item cannot be added.", hasAddButton(editor));
+
+		ReactButtonControl remove = findHeaderButton(elementGroups(editor).get(0), "\u2715");
+		assertNotNull("The entry can be removed from its header.", remove);
+		click(remove);
+
+		assertNull("The item is dropped from the edited configuration.", config.getInner());
+		assertTrue(elementGroups(editor).isEmpty());
+		assertTrue("The item can be created again.", hasAddButton(editor));
+	}
+
+	/**
+	 * The value of a mandatory ITEM property can be edited, but not removed.
+	 */
+	public void testMandatoryItemCannotBeRemoved() {
+		MandatoryItemConfig config = TypedConfiguration.newConfigItem(MandatoryItemConfig.class);
+		config.setInner(TypedConfiguration.newConfigItem(InnerConfig.class));
+		ConfigItemValue value =
+			new ConfigItemValue(config, config.descriptor().getProperty(MandatoryItemConfig.INNER));
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
+
+		assertEquals(1, elementGroups(editor).size());
+		assertNull(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+	}
+
+	/**
+	 * The value of an ITEM property that may not be <code>null</code> can be edited, but not
+	 * removed: removing it would set the property to <code>null</code>.
+	 */
+	public void testNonNullableItemCannotBeRemoved() {
+		NonNullableItemConfig config = TypedConfiguration.newConfigItem(NonNullableItemConfig.class);
+		ConfigItemValue value =
+			new ConfigItemValue(config, config.descriptor().getProperty(NonNullableItemConfig.INNER));
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
+
+		assertEquals(1, elementGroups(editor).size());
+		assertNull(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+	}
+
+	private static boolean hasAddButton(TestableConfigListEditorControl editor) {
+		return addButtonOf(editor) != null;
+	}
+
+	/**
+	 * A control that does not display the error of its field itself gets it displayed by the chrome
+	 * around it, so that a rejected value is reported however the field is edited.
+	 */
+	public void testErrorOfAControlWithoutOwnDisplayIsShownByItsChrome() {
+		PlainControlConfig config = TypedConfiguration.newConfigItem(PlainControlConfig.class);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		TestableConfigEditorControl editor =
+			new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, index, true);
+		ConfigFieldModel field = index.lookup(config, config.descriptor().getProperty(PlainControlConfig.TEXT));
+		ReactFormFieldChromeControl chrome = chromeOf(editor);
+
+		field.setError(ResKey.text("broken"));
+		assertEquals("broken", chrome.scriptingScalarState().get("error"));
+
+		field.setError(null);
+		assertNull(chrome.scriptingScalarState().get("error"));
+	}
+
+	private static ReactFormFieldChromeControl chromeOf(TestableConfigEditorControl editor) {
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof ReactFormFieldChromeControl chrome) {
+				return chrome;
+			}
+		}
+		fail("No field rendered.");
+		return null;
+	}
+
+	private TestableConfigEditorControl readOnlyEditor(ConfigurationItem config) {
+		return new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, new ConfigFieldIndex(),
+			false);
 	}
 
 	/**

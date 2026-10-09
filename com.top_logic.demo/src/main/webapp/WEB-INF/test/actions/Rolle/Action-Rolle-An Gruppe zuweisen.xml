@@ -62,7 +62,7 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Meta-Element"
+							label="Typ"
 						>
 							<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 						</model>
@@ -73,7 +73,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Meta-Element"
+						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
@@ -89,7 +89,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Rolle"
+						label="Vergebene Rollen"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>

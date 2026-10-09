@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-demo-react-mui</artifactId>
+  <name>${project.artifactId}</name>
+  <description>Material UI look of the React demo, built like a customer project: the MUI theme of the application with its fonts, installed with tl-layout-react-mui.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-mui</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>npm-install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

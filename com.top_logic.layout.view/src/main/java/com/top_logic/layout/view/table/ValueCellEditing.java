@@ -13,6 +13,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FunctionFieldModel;
@@ -97,7 +98,7 @@ public class ValueCellEditing implements CellEditing {
 	}
 
 	@Override
-	public BoundFieldModel createModel(Object row, FormControl form) {
+	public BoundFieldModel createModel(Object row, FormControl form, EditLevel level) {
 		return new FunctionFieldModel(row, _value, _update);
 	}
 

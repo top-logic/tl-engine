@@ -57,6 +57,10 @@
 								/>
 							</executability>
 							<with-transaction>
+								<commitMessage>
+									<en>Uploaded document {0}.</en>
+									<de>Dokument {0} hochgeladen.</de>
+								</commitMessage>
 								<execute-script function="file -> { doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
 							</with-transaction>
 							<write-channel name="document"/>

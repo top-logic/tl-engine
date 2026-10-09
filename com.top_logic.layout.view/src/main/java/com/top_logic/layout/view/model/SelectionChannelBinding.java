@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 
@@ -89,7 +90,8 @@ public abstract class SelectionChannelBinding {
 
 	private final ViewChannel _channel;
 
-	private final ViewChannel.ChannelListener _channelListener = (sender, oldValue, newValue) -> applyChannelValue();
+	/** The registration on the {@link #_channel}, while {@link #attach() attached}. */
+	private Registration _channelRegistration = Registration.NONE;
 
 	/**
 	 * Whether a channel value is currently being applied, so the selector's echo is not written
@@ -120,7 +122,7 @@ public abstract class SelectionChannelBinding {
 	 * </p>
 	 */
 	protected final void attach() {
-		_channel.addListener(_channelListener);
+		_channelRegistration = _channel.addListener((sender, oldValue, newValue) -> applyChannelValue());
 
 		applyChannelValue();
 	}
@@ -182,7 +184,7 @@ public abstract class SelectionChannelBinding {
 	 * </p>
 	 */
 	public final void dispose() {
-		_channel.removeListener(_channelListener);
+		_channelRegistration.dispose();
 
 		detach();
 	}

@@ -11,6 +11,10 @@
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<!-- Labels the input by the login of the account it creates. -->
+				<id-column value="login"/>
+			</annotations>
 			<attributes>
 				<property name="login"
 					type="tl.core:String"

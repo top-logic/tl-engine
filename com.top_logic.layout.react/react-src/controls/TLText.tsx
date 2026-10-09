@@ -1,5 +1,5 @@
 import { React, useTLState, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, TextStateJson } from 'tl-react-bridge';
 import { roleAttr } from './pill/TLPill';
 
 /**
@@ -47,25 +47,17 @@ function roleOfTone(tone: string): string {
  * pill - `appearance="pill"` or a value with a color role - the root is the `span.tl-pill` itself,
  * carrying the role as `data-tl-role`.
  *
- * State:
- * - text: string - the text to display
- * - overflow: "wrap" | "ellipsis"
- * - variant: "body" | "title" | "headline" | "display" | "label" | "caption"
- * - tone: "primary" | "secondary" | "helper" | "placeholder" | "success" | "warning" | "error" | "on-color"
- * - appearance: "text" | "pill" - plain text, or a pill whether or not the value carries a role
- * - role: string - optional ARIA role (e.g. "alert" for a message announced when it appears)
- * - colorRole: string - optional color role the value carries in the model; shown as a pill of that role
- *
- * A strong text is the strong type class given as the element's CSS class (`tl-type-body-strong`).
+ * The state is described by TextStateJson. A strong text is the strong type class given as the
+ * element's CSS class (`tl-type-body-strong`).
  */
 const TLText: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
-  const text = (state.text as string) ?? '';
+  const state = useTLState<Partial<TextStateJson>>();
+  const text = state.text ?? '';
   const hasTooltip = state.hasTooltip === true;
-  const role = (state.role as string) || undefined;
-  const colorRole = (state.colorRole as string) || undefined;
-  const variant = (state.variant as string) || 'body';
-  const tone = (state.tone as string) || 'primary';
+  const role = state.role || undefined;
+  const colorRole = state.colorRole || undefined;
+  const variant: string = state.variant || 'body';
+  const tone: string = state.tone || 'primary';
   const pill = state.appearance === 'pill';
   const tooltip = hasTooltip ? 'key:tooltip' : undefined;
   // A pill is drawn around content only: a value without a label - an empty channel, a value not

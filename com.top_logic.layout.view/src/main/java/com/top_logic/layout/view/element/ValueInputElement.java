@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -487,13 +488,9 @@ public class ValueInputElement implements UIElement {
 			ReactControl input) {
 		ChannelListener listener = (sender, oldValue, newValue) -> field.setOptions(options(type, optionInputs));
 		for (ViewChannel channel : optionInputs) {
-			channel.addListener(listener);
+			Registration registration = channel.addListener(listener);
+			input.addCleanupAction(registration::dispose);
 		}
-		input.addCleanupAction(() -> {
-			for (ViewChannel channel : optionInputs) {
-				channel.removeListener(listener);
-			}
-		});
 	}
 
 	/**

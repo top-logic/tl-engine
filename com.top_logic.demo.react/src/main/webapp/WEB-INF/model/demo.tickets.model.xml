@@ -42,6 +42,9 @@
 							</default-value>
 						</annotations>
 					</reference>
+					<property name="order"
+						type="tl.core:Integer"
+					/>
 					<property name="statusLabel"
 						type="tl.core:String"
 					>

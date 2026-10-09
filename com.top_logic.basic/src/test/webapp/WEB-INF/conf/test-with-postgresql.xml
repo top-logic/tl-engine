@@ -15,5 +15,6 @@
         <entry name="%POSTGRESQL_SSL_MODE%" value="${env:postgresql_ssl_mode:prefer}" />
         
         <entry name="%POSTGRESQL_AUTOSAVE%" value="${env:postgresql_autosave:org.postgresql.jdbc.AutoSave:ALWAYS}" />
+        <entry name="%POSTGRESQL_CLEANUP_SAVEPOINTS%" value="${env:postgresql_cleanup_savepoints:true}" />
 	</alias>
 </root>

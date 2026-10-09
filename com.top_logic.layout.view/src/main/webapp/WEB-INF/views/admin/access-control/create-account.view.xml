@@ -32,6 +32,10 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
+						<commitMessage>
+							<en>Created account {0}.</en>
+							<de>Konto {0} angelegt.</de>
+						</commitMessage>
 						<create-account/>
 					</with-transaction>
 					<write-channel name="selection"/>

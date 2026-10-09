@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -343,13 +344,9 @@ public class AlertElement implements UIElement {
 
 		ChannelListener inputListener = (sender, oldValue, newValue) -> display.inputChanged();
 		for (ViewChannel input : inputs) {
-			input.addListener(inputListener);
+			Registration inputRegistration = input.addListener(inputListener);
+			alert.addCleanupAction(inputRegistration::dispose);
 		}
-		alert.addCleanupAction(() -> {
-			for (ViewChannel input : inputs) {
-				input.removeListener(inputListener);
-			}
-		});
 
 		ChannelObjectObserver observer = new ChannelObjectObserver(inputs,
 			ObservedTypes.resolve(_config.getObservedTypes()), display::update);

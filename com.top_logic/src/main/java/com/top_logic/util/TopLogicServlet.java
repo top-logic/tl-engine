@@ -57,7 +57,27 @@ import com.top_logic.util.filter.CompressionServletResponseWrapper;
 
 /**
  * {@link AbstractTopLogicServlet} that checks that a valid session exists for the request.
- * 
+ *
+ * <p>
+ * A request with a valid session runs {@link #doService(HttpServletRequest, HttpServletResponse)}
+ * with the {@link TLSessionContext session} installed, but with no {@link TLSubSessionContext
+ * sub-session}. The user a request acts for, the {@link TLContext#currentUser() current user}, and
+ * the revision at which it reads the knowledge base belong to a sub-session, not to the session:
+ * each browser window of a session has a sub-session of its own, and the windows of one session
+ * can act for different users. Only a request that addresses a window therefore has a user. A
+ * servlet serving windows installs the sub-session of the addressed window itself, see
+ * {@link com.top_logic.basic.InteractionContext#installSubSessionContext(com.top_logic.basic.SubSessionContext)}.
+ * In a request that addresses no window, {@link TLContext#currentUser()} is <code>null</code> and
+ * the knowledge base cannot be read at a session revision. Content that depends on the user is
+ * therefore delivered within a window, e.g. through a {@link com.top_logic.layout.ContentHandler}
+ * registered in the scope of the window.
+ * </p>
+ *
+ * <p>
+ * A request that reaches a {@link TopLogicServlet} from another one, through an include or a
+ * forward, keeps the sub-session the outer request runs in.
+ * </p>
+ *
  * <p>
  * Every request entering a {@link TopLogicServlet} is wrapped into an {@link UploadGuardRequest},
  * so that uploaded files are inspected once per request, no matter which servlet or control

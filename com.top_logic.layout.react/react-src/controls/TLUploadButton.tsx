@@ -1,7 +1,6 @@
-import { React, useTLState, useTLUpload, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName, menuItemProps, useButtonDefaults } from './button/ButtonDefaults';
-import type { ButtonAppearance } from './button/ButtonDefaults';
+import { React, useTLState, useTLUpload, rootClassName, tooltipProps, ThemeIcon, menuItemProps, useButtonDefaults } from 'tl-react-bridge';
+import type { TLCellProps, ButtonAppearance } from 'tl-react-bridge';
+import { buttonClassName } from './button/buttonClassName';
 
 /**
  * A toolbar-style button that opens a native file picker on click and uploads the selected

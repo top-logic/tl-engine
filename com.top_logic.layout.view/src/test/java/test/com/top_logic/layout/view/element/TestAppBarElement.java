@@ -30,6 +30,7 @@ import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.AppBarState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
@@ -127,7 +128,7 @@ public class TestAppBarElement extends TestCase {
 
 	/** The descriptor of the bar's actions toolbar. */
 	private static Map<?, ?> actions(ReactControl appBar) {
-		Object actions = state(appBar).get(ReactAppBarControl.ACTIONS);
+		Object actions = state(appBar).get(AppBarState.ACTIONS__PROP);
 		assertNotNull("The bar always carries an actions toolbar, so commands added later have a"
 			+ " target for the rebuild.", actions);
 		return (Map<?, ?>) actions;

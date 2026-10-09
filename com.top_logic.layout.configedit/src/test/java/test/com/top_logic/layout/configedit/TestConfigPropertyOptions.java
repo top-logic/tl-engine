@@ -7,6 +7,8 @@ package test.com.top_logic.layout.configedit;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -21,8 +23,13 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
+import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.annotate.AccessRightsConfig;
+import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.AccessRevoke;
+import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 
 /**
  * Tests for {@link ConfigPropertyOptions}.
@@ -124,6 +131,22 @@ public class TestConfigPropertyOptions extends TestCase {
 	/**
 	 * Suite requiring {@link TypeIndex}: the option resolution looks up specializations.
 	 */
+	/**
+	 * A new entry of a polymorphic collection is created as the default the option function names:
+	 * {@link com.top_logic.layout.form.values.edit.AllInAppImplementations} names the type of the
+	 * highest in-app priority, so an access right is created as a grant, not as a revoke.
+	 */
+	public void testNewEntryFollowsTheDefaultOfTheOptions() {
+		TLClassAccessRights config = TypedConfiguration.newConfigItem(TLClassAccessRights.class);
+		PropertyDescriptor property = config.descriptor().getProperty(AccessRightsConfig.GRANTS);
+
+		PolymorphicOptions.Choices choices = PolymorphicOptions.compute(config, property);
+
+		assertEquals(Set.of(AccessGrant.class.getName(), AccessRevoke.class.getName()),
+			choices.options().stream().map(PolymorphicOptions::keyFor).collect(Collectors.toSet()));
+		assertEquals(AccessGrant.class.getName(), PolymorphicOptions.keyFor(choices.newOption()));
+	}
+
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestConfigPropertyOptions.class, TypeIndex.Module.INSTANCE);
 	}

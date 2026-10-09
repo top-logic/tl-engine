@@ -122,6 +122,26 @@
 						<generalization type="Project"/>
 					</generalizations>
 				</class>
+
+				<!--
+					The access parent of a task is computed by a script (see
+					TestTLScriptSecurity-test.config.xml): the project its assignee is responsible
+					for, reached backwards over a reference that is no composition, through an
+					employee the users may not read.
+				-->
+				<class name="ProjectTask">
+					<annotations>
+						<table name="TLSecProjectTask"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="assignee"
+							type="Employee"
+						/>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

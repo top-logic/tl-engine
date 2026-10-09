@@ -61,6 +61,12 @@ public class TLScriptEditorReactControl extends ReactControl {
 	private static final String CMD_VALIDATE = "validate";
 
 	/**
+	 * Command telling that the user left the editor, sent after the last edit was published by
+	 * {@link #CMD_VALUE_CHANGED}.
+	 */
+	private static final String CMD_BLUR = "blur";
+
+	/**
 	 * Command computing completions; arguments {@link #ARG_LINE}, {@link #ARG_PREFIX},
 	 * {@link #ARG_TEXT_TO_CURSOR} and {@link #ARG_REQUEST_ID}, answer in
 	 * {@link #COMPLETION_RESPONSE}.
@@ -164,6 +170,8 @@ public class TLScriptEditorReactControl extends ReactControl {
 
 	private Consumer<String> _valueCallback;
 
+	private Runnable _blurCallback;
+
 	private final List<String> _contextVariables;
 
 	/**
@@ -202,6 +210,22 @@ public class TLScriptEditorReactControl extends ReactControl {
 	 */
 	public void setValueCallback(Consumer<String> callback) {
 		_valueCallback = callback;
+	}
+
+	/**
+	 * Sets the callback that is invoked when the user leaves the editor.
+	 *
+	 * <p>
+	 * The last edit has reached the {@link #setValueCallback(Consumer) value callback} by then, so
+	 * this is the moment to report what is still wrong with the text, rather than on every key
+	 * stroke.
+	 * </p>
+	 *
+	 * @param callback
+	 *        The callback, or {@code null} to remove.
+	 */
+	public void setBlurCallback(Runnable callback) {
+		_blurCallback = callback;
 	}
 
 	/**
@@ -244,6 +268,14 @@ public class TLScriptEditorReactControl extends ReactControl {
 				_publishingClientValue = false;
 			}
 		}
+	}
+
+	@ReactCommandHandler(value = CMD_BLUR, technical = true)
+	void handleBlur() {
+		if (Boolean.TRUE.equals(getState(READ_ONLY)) || _blurCallback == null) {
+			return;
+		}
+		_blurCallback.run();
 	}
 
 	@ReactCommandHandler(CMD_VALIDATE)

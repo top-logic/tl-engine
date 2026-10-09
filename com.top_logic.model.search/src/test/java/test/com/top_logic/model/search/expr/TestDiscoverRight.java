@@ -218,17 +218,6 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 			asList(eval("all(`TestTLScriptSecurity:PathA`).filter(a -> $a.get(`TestTLScriptSecurity:PathNode#name`) == \"a1\")")));
 	}
 
-	/**
-	 * A comparison on a reference of the query root agrees with the filtering of the reference
-	 * navigation (R4).
-	 */
-	public void testCompiledReferenceComparisonAgreesWithFiltering() throws Exception {
-		becomeUser(_pathUser);
-		// The readers of c1 (an employee) are not discoverable for the path user.
-		assertEquals(Arrays.asList(_c1),
-			asList(eval("all(`TestTLScriptSecurity:PathC`).filter(c -> $c.get(`TestTLScriptSecurity:PathC#readers`).isEmpty())")));
-	}
-
 	private static java.util.List<?> asList(Object value) {
 		return new java.util.ArrayList<>((java.util.Collection<?>) value);
 	}

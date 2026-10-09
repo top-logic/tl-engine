@@ -388,6 +388,29 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * A comparison on a reference of the query root is not compiled into the database query: the
+	 * interpreted navigation delivers only discoverable targets (R4 of the Discover specification),
+	 * so a comparison of the stored reference would disagree.
+	 *
+	 * <p>
+	 * The {@code eval} helper asserts that the interpreted and the compiled evaluation agree.
+	 * </p>
+	 */
+	public void testRootReferenceComparisonNotCompiled() throws Exception {
+		// Precondition: no Project is discoverable without being readable, so only the reference
+		// exclusion decides whether the access is compiled.
+		for (TLClass type : TLModelUtil.getConcreteReflexiveTransitiveSpecializations(projectType())) {
+			assertTrue(ModelAccessRights.getInstance().getAllowedRoles(type, SimpleBoundCommandGroup.READ)
+				.containsAll(ModelAccessRights.getInstance().getAllowedRoles(type, SimpleBoundCommandGroup.DISCOVER)));
+		}
+
+		becomeUser(_user);
+		// _user reads p2 but cannot discover its responsible employee, which is therefore null.
+		assertEquals(set(_p2), asSet(eval(
+			"all(`TestTLScriptSecurity:Project`).filter(p -> $p.get(`TestTLScriptSecurity:Project#responsible`) == null)")));
+	}
+
+	/**
 	 * Disabling the security switches off the result filter as well.
 	 */
 	public void testDisableSecurityKeepsForbiddenResults() throws Exception {

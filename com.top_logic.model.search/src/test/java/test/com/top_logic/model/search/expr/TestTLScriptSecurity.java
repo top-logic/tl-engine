@@ -405,8 +405,9 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		}
 
 		becomeUser(_user);
-		// _user reads p2 but cannot discover its responsible employee, which is therefore null.
-		assertEquals(set(_p2), asSet(eval(
+		// _user reads p1 and p2 but cannot discover their responsible employees, which are therefore
+		// null.
+		assertEquals(set(_p1, _p2), asSet(eval(
 			"all(`TestTLScriptSecurity:Project`).filter(p -> $p.get(`TestTLScriptSecurity:Project#responsible`) == null)")));
 	}
 

@@ -1739,7 +1739,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     key={col.name}
                     role="gridcell"
-                    className={'tl-table__cell' + (col.cssClass ? ' ' + col.cssClass : '')}
+                    className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')}
                     data-row={row.id}
                     data-col={col.name}
                     data-tl-state={stateAttr(...words)}

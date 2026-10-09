@@ -16,6 +16,10 @@ const EMPTY_LINE = ' ';
  * model gives a color role is a `tl-pill` carrying the role as `data-tl-role`, icon and label side by
  * side within it.
  *
+ * The value sets no type class: it takes the type of the place it stands in - the input area of a
+ * form field and the body of a table carry `tl-type-body`, the cells of a group row
+ * `tl-type-body-strong` - so a place gives all its values its type without handing it to each.
+ *
  * @param id the id of the element, the control id of the field
  * @param className further classes after the design system's, e.g. the result of rootClassName
  * @param text the value as text
@@ -50,7 +54,7 @@ export function FieldValue({
   const cls = (base: string) => (className ? base + ' ' + className : base);
   if (multiline) {
     return (
-      <div id={id} className={cls('tl-field-value tl-field-value--multiline tl-type-body')} data-tooltip={tooltip}>
+      <div id={id} className={cls('tl-field-value tl-field-value--multiline')} data-tooltip={tooltip}>
         {text.split('\n').map((line, index) => (
           <span key={index} className="tl-field-value__text">{line === '' ? EMPTY_LINE : line}</span>
         ))}
@@ -68,7 +72,7 @@ export function FieldValue({
     : <>{image}{label}</>;
   if (href != null) {
     return (
-      <a id={id} className={cls('tl-field-value tl-type-body')} href={href} target="_blank" rel="noopener noreferrer"
+      <a id={id} className={cls('tl-field-value')} href={href} target="_blank" rel="noopener noreferrer"
         data-tooltip={tooltip}>
         {content}
       </a>
@@ -80,13 +84,13 @@ export function FieldValue({
       onGoto();
     };
     return (
-      <a id={id} className={cls('tl-field-value tl-type-body')} href="#" onClick={follow} data-tooltip={tooltip}>
+      <a id={id} className={cls('tl-field-value')} href="#" onClick={follow} data-tooltip={tooltip}>
         {content}
       </a>
     );
   }
   return (
-    <span id={id} className={cls('tl-field-value tl-type-body')} data-tooltip={tooltip}>
+    <span id={id} className={cls('tl-field-value')} data-tooltip={tooltip}>
       {content}
     </span>
   );

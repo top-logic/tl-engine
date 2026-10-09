@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -72,8 +73,10 @@ public class Add extends GenericMethodWithSecurity {
 			Collection<?> effectiveInsertion = insertion;
 
 			if (!part.isBag()) {
-				// Only filter duplicates if the reference does not allow duplicates
-				Set<Object> existingElements = (Set<Object>) asSet(rawValue);
+				// Only filter duplicates if the reference does not allow duplicates. The value of the
+				// object must not be modified, it may even be unmodifiable (e.g. an empty value of a
+				// transient object).
+				Set<Object> existingElements = new HashSet<>(oldValue);
 
 				// Filter out duplicates from insertion collection
 				List<Object> filtered = null;

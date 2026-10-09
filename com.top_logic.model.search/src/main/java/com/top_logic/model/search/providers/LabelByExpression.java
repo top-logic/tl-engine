@@ -93,6 +93,13 @@ public class LabelByExpression extends ProxyResourceProvider
 		_config = config;
 		_labelExpr = QueryExecutor.compileOptional(config.getLabel());
 		_tooltipExpr = QueryExecutor.compileOptional(config.getTooltip());
+		// Labels belong to Discover (R1/R12 of the Discover specification) and are computed unsecured.
+		if (_labelExpr != null) {
+			_labelExpr.disableSecurity();
+		}
+		if (_tooltipExpr != null) {
+			_tooltipExpr.disableSecurity();
+		}
 	}
 
 	/**

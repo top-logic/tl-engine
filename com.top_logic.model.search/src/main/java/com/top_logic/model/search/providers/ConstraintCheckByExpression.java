@@ -6,6 +6,7 @@
 package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -21,11 +22,18 @@ import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.Pointer;
 import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ConstraintCheck} that can be parameterized by TL-Script expressions.
+ * 
+ * <p>
+ * The check runs unsecured. Objects in the resulting message that the user may not discover are
+ * replaced by a placeholder. A message rendered to a string inside the
+ * script is not masked - pass objects as message arguments.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -111,7 +119,7 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 	@Override
 	public ResKey check(TLObject object, TLStructuredTypePart attribute) {
-		return toResKey(_check.execute(object.tValue(attribute), object));
+		return maskUndiscoverable(toResKey(_check.execute(object.tValue(attribute), object)));
 	}
 
 	@Override
@@ -132,6 +140,41 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 		} else {
 			return I18NConstants.ERROR_INVALID_VALUE;
 		}
+	}
+
+	/**
+	 * Replaces every argument of the given message that the current user may not discover by
+	 * {@link I18NConstants#MASKED_OBJECT}, also in nested messages.
+	 * 
+	 * @param message
+	 *        The message to mask, may be <code>null</code>.
+	 * @return The given message, if nothing had to be masked, otherwise a copy with masked
+	 *         arguments.
+	 */
+	@FrameworkInternal
+	public static ResKey maskUndiscoverable(ResKey message) {
+		if (message == null) {
+			return null;
+		}
+		Object[] arguments = message.arguments();
+		if (arguments == null || arguments.length == 0) {
+			return message;
+		}
+		Object[] masked = new Object[arguments.length];
+		boolean changed = false;
+		for (int n = 0; n < arguments.length; n++) {
+			Object argument = arguments[n];
+			if (argument instanceof TLObject object && !ModelAccessRights.getInstance().isDiscoverAllowed(object)) {
+				masked[n] = I18NConstants.MASKED_OBJECT;
+				changed = true;
+			} else if (argument instanceof ResKey nested) {
+				masked[n] = maskUndiscoverable(nested);
+				changed |= masked[n] != nested;
+			} else {
+				masked[n] = argument;
+			}
+		}
+		return changed ? message.plain().asResKeyN().fill(masked) : message;
 	}
 
 	@Override

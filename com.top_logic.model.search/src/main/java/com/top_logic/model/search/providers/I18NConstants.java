@@ -99,6 +99,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 DROPPED__OBJECTS_COMPONENT;
 
+	/**
+	 * Placeholder for an object in a constraint message that the user may not discover.
+	 * 
+	 * @en *****
+	 */
+	public static ResKey MASKED_OBJECT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

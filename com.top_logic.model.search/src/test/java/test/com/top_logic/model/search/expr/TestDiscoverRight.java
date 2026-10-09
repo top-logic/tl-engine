@@ -16,6 +16,9 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -30,6 +33,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.providers.ConstraintCheckByExpression;
+import com.top_logic.model.search.providers.I18NConstants;
+import com.top_logic.model.search.providers.LabelProviderByExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -449,6 +455,41 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 
 	TLStructuredTypePart part(String className, String partName) {
 		return ((TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className)).getPart(partName);
+	}
+
+	public void testLabelScriptUnsecured() throws Exception {
+		LabelProviderByExpression.Config<?> config =
+			TypedConfiguration.newConfigItem(LabelProviderByExpression.Config.class);
+		config.update(config.descriptor().getProperty("label"),
+			parse("x -> $x.get(`TestTLScriptSecurity:PathNode#name`)"));
+		LabelProviderByExpression<?> provider =
+			new LabelProviderByExpression<>(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		becomeUser(_pathUser);
+		assertEquals("a1", provider.getLabel(_a1));
+	}
+
+	public void testConstraintMessageMasksUndiscoverable() {
+		ResKey message = ResKey.forTest("test.masking.two").asResKey2().fill(_a2, _a1);
+		becomeUser(_pathUser);
+		ResKey masked = ConstraintCheckByExpression.maskUndiscoverable(message);
+		assertSame(I18NConstants.MASKED_OBJECT, masked.arguments()[0]);
+		assertSame(_a1, masked.arguments()[1]);
+		assertEquals(message.plain(), masked.plain());
+	}
+
+	public void testConstraintMessageMasksNested() {
+		ResKey inner = ResKey.forTest("test.masking.inner").asResKey1().fill(_a2);
+		ResKey message = ResKey.forTest("test.masking.outer").asResKey1().fill(inner);
+		becomeUser(_pathUser);
+		ResKey masked = ConstraintCheckByExpression.maskUndiscoverable(message);
+		ResKey maskedInner = (ResKey) masked.arguments()[0];
+		assertSame(I18NConstants.MASKED_OBJECT, maskedInner.arguments()[0]);
+	}
+
+	public void testConstraintMessageUnchangedForDiscoverable() {
+		ResKey message = ResKey.forTest("test.masking.one").asResKey1().fill(_a1);
+		becomeUser(_pathUser);
+		assertSame(message, ConstraintCheckByExpression.maskUndiscoverable(message));
 	}
 
 	public static Test suite() {

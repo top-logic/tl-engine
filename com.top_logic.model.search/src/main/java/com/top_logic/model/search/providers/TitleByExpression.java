@@ -62,6 +62,8 @@ public class TitleByExpression<C extends TitleByExpression.Config<?>> extends Mo
 	public TitleByExpression(InstantiationContext context, C config) {
 		super(context, config);
 		_expr = QueryExecutor.compile(config.getExpr());
+		// Labels belong to Discover (R1/R12 of the Discover specification) and are computed unsecured.
+		_expr.disableSecurity();
 	}
 
 	@Override

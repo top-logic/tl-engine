@@ -66,6 +66,8 @@ public class TooltipProviderByExpression<C extends TooltipProviderByExpression.C
 	public TooltipProviderByExpression(InstantiationContext context, C config) {
 		super(context, config);
 		_tooltipExpr = QueryExecutor.compile(config.getTooltip());
+		// Labels belong to Discover (R1/R12 of the Discover specification) and are computed unsecured.
+		_tooltipExpr.disableSecurity();
 	}
 
 	/**

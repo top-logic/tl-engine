@@ -261,6 +261,23 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		assertEquals(set(_a1, _a2), asSet(executor.execute()));
 	}
 
+	/**
+	 * R4: An undiscoverable object passed as input is not visible to the script.
+	 */
+	public void testInputFiltered() throws Exception {
+		becomeUser(_pathUser);
+		assertNull(eval("x -> $x", _a2));
+	}
+
+	/**
+	 * R4: Objects nested in an input collection are filtered, too.
+	 */
+	public void testNestedInputFiltered() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(Arrays.asList(_a1), eval("x -> $x", Arrays.asList(_a1, _a2)));
+		assertEquals(Double.valueOf(1), eval("x -> $x.size()", Arrays.asList(_a1, _a2)));
+	}
+
 	private static java.util.List<?> asList(Object value) {
 		return new java.util.ArrayList<>((java.util.Collection<?>) value);
 	}

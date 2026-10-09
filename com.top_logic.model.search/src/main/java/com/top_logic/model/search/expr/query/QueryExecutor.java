@@ -395,6 +395,11 @@ public abstract class QueryExecutor {
 	 * therefore nothing is recorded.
 	 * </p>
 	 *
+	 * <p>
+	 * The arguments are filtered the same way before the evaluation, so that a script only ever sees
+	 * discoverable objects, also those handed in by the caller.
+	 * </p>
+	 *
 	 * @param args
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
@@ -403,6 +408,11 @@ public abstract class QueryExecutor {
 	 *      Execution from within an ongoing evaluation, whose result is an intermediate one.
 	 */
 	public final Object executeWith(EvalContext definitions, Args args) {
+		if (_securityEnabled) {
+			// The inputs of a secured script are restricted to discoverable objects, like every
+			// other object source.
+			args = args.map(SearchExpression::filterSecurity);
+		}
 		Object result = internalExecuteWith(definitions, args);
 		if (_securityEnabled) {
 			return SearchExpression.filterSecurity(result, definitions.getSecurityReport());

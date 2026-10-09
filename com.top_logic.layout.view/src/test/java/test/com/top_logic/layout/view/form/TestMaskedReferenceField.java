@@ -35,11 +35,13 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeRowSetBinding;
+import com.top_logic.layout.view.form.CompositionEditing;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.Resources;
 
 /**
@@ -237,6 +239,34 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 		// The viewer of the project may read it, but holds no role on its tasks.
 		becomeUser(_roleless);
 		assertEquals(List.of(), binding.readRows(_project));
+	}
+
+	/**
+	 * A composition cell shows the parts the user may discover only, in its preview as well as in
+	 * the read-only dialog listing the parts.
+	 */
+	public void testCompositionCellFiltered() {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			_project.tUpdateByName(VIEWER, _roleless);
+			_task.tUpdateByName(NAME, "undiscoverableTask");
+			tx.commit();
+		}
+		TLStructuredTypePart tasks = part(PROJECT, TASKS);
+		Object parts = _project.tValue(tasks);
+
+		becomeUser(_responsible);
+		assertEquals("undiscoverableTask", CompositionEditing.previewText(parts));
+		assertEquals(List.of(_task), CompositionEditing.visibleParts(parts));
+
+		// The viewer of the project may read it, but holds no role on its tasks.
+		becomeUser(_roleless);
+		assertEquals("", CompositionEditing.previewText(parts));
+		assertEquals("", CompositionEditing.previewText(_task));
+		assertEquals(List.of(), CompositionEditing.visibleParts(parts));
+		ReactControl display = CompositionEditing.createDisplayControl(new DefaultReactContext("", "test",
+			new SSEUpdateQueue(), new ReactWindowRegistry("test")), tasks, parts);
+		String json = display.stateAsJSON();
+		assertFalse(json, json.contains("undiscoverableTask"));
 	}
 
 	/**

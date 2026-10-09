@@ -228,6 +228,10 @@ public class SecurityCoverageAnalysis {
 	 */
 	private void addDeadGrantFindings(TLClass type, List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : _operations) {
+			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)) {
+				// Its roles are derived; every source grant is already checked on its own.
+				continue;
+			}
 			Set<BoundedRole> granted = _accessRights.getAllowedRoles(type, operation);
 			if (granted.isEmpty()) {
 				continue;

@@ -51,7 +51,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * is made at into a location per mode - the location of a {@link DropMode#ONTO} drop names the item
  * the drop is made on, that of a {@link DropMode#ORDERED} drop the place among the items. What a
  * declared drop is told about its location is fixed by its {@link DropSignature}: the objects the
- * location refers to, which the refusal function receives as its leading arguments and which are
+ * location refers to, which the refusal function receives after the dragged objects and which are
  * written to the drop's channels before its action chain runs.
  * </p>
  *
@@ -60,8 +60,8 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link Drop#executability() control-wide state} decides whether the drop is offered at all - a
  * disabled drop contributes no kind and no mode, and applies nothing; its
  * {@link Drop#targetRule() target rule} decides over the item an {@link DropMode#ONTO} drop is made
- * on; its {@link Drop#refuseIf() refusal function} decides over the objects the location refers to
- * and the dragged objects together. A drop that refuses passes the drop on to the next declared one; where none accepts,
+ * on; its {@link Drop#refuseIf() refusal function} decides over the dragged objects and the objects
+ * the location refers to together. A drop that refuses passes the drop on to the next declared one; where none accepts,
  * the first refusal is what the user is shown, see {@link #check(DropRequest)}.
  * </p>
  *
@@ -90,9 +90,9 @@ public class DropBinding implements DropTarget {
 	 *        The rule deciding over the item a {@link DropMode#ONTO} drop is made on, the item being
 	 *        its input. Not asked for a drop of another mode.
 	 * @param refuseIf
-	 *        Computes the reason a drop is refused from the objects the drop refers to at its
-	 *        location, in the order of the signature's references, and the list of dropped objects;
-	 *        the result is interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null}
+	 *        Computes the reason a drop is refused from the list of dropped objects and the objects
+	 *        the drop refers to at its location, in the order of the signature's references; the
+	 *        result is interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null}
 	 *        refuses nothing.
 	 */
 	public record Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
@@ -141,7 +141,7 @@ public class DropBinding implements DropTarget {
 				}
 			}
 			if (refuseIf != null) {
-				return reasonOf(DisabledIf.stateFor(refuseIf.apply(signature.valuesAt(location), objects)));
+				return reasonOf(DisabledIf.stateFor(refuseIf.apply(objects, signature.valuesAt(location))));
 			}
 			return null;
 		}

@@ -175,13 +175,15 @@ A `<table>` declares that its rows may be dragged, and what it accepts a drop of
 ```
 
 - **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. `kind` classifies the drag with a free name the application chooses (`ticket`, `assignment`, …); without it, the drag has no kind.
-- **`<drop>`** is a list, so a table can accept several kinds of drag, and accept one kind on its rows and another as a whole. `accept` lists the kinds it takes, comma-separated (`accept="ticket, milestone"`); a drag without a kind or of an unlisted kind is refused. Without `accept`, the drop takes every drag, of any kind or none. Kinds are compared literally, so a drag and the drops meant to take it agree on the spelling. What a drop takes beyond the kind — only objects of a certain model type, say — is decided by its `refuse-if`, e.g. ``refuse-if="target -> objects -> $objects.filter(o -> !$o.instanceOf(`demo.tickets:Ticket`)).size() > 0"``. `target` is `table` (default), `row` or `ordered`, and decides which objects the drop refers to at its place — its *references*, the leading arguments of `refuse-if`, each written to its channel *before* the actions run, which is how the chain reads where the drop was made:
+- **`<drop>`** is a list, so a table can accept several kinds of drag, and accept one kind on its rows and another as a whole. `accept` lists the kinds it takes, comma-separated (`accept="ticket, milestone"`); a drag without a kind or of an unlisted kind is refused. Without `accept`, the drop takes every drag, of any kind or none. Kinds are compared literally, so a drag and the drops meant to take it agree on the spelling. What a drop takes beyond the kind — only objects of a certain model type, say — is decided by its `refuse-if`, e.g. ``refuse-if="objects -> $objects.filter(o -> !$o.instanceOf(`demo.tickets:Ticket`)).size() > 0"``. The first argument of `refuse-if` is the list of dragged objects. `target` is `table` (default), `row` or `ordered`, and decides which objects the drop refers to at its place — its *references*, the arguments of `refuse-if` following the dragged objects, each written to its channel *before* the actions run, which is how the chain reads where the drop was made:
 
   | `target` | applies | `refuse-if` | channel |
   |---|---|---|---|
-  | `table` | anywhere on the table | `target -> objects -> reason`, `target` is `null` | `target-channel` (written with `null`) |
-  | `row` | onto the row under the pointer | `target -> objects -> reason` | `target-channel`: the row dropped on |
-  | `ordered` | between two rows (insertion line); beside the rows appends | `before -> objects -> reason` | `before-channel`: the row to insert before, `null` at the end |
+  | `table` | anywhere on the table | `objects -> target -> reason`, `target` is `null` | `target-channel` (written with `null`) |
+  | `row` | onto the row under the pointer | `objects -> target -> reason` | `target-channel`: the row dropped on |
+  | `ordered` | between two rows (insertion line); beside the rows appends | `objects -> before -> reason` | `before-channel`: the row to insert before, `null` at the end |
+
+  A `refuse-if` deciding over the dragged objects alone is written `objects -> reason` for every `target`: TL-Script ignores the surplus arguments of a function with fewer parameters.
 
   A channel the drop's target has no reference for — `before-channel` on a `table` or `row` drop, `target-channel` on an `ordered` drop, `parent-channel` on any table drop (a flat list has no parent; see [tree nodes](#drag-and-drop-of-tree-nodes)) — and `target-executability` on anything but a `row` drop are reported as configuration errors. The element content is the action chain, declared exactly as a `<generic-command>` declares its actions, and its first action receives the **list of dropped objects** as its input. Nothing about a drop is implicit: a drop that changes persistent state wraps its script in `<with-transaction>`, as any other command does.
 - **Which drop applies**: the declared drops are tried in declaration order, and the first one that accepts the drop where it was made applies it. A drop is skipped where it does not accept the drag's kind, where it has no location at the place of the drop — a `row` drop beside the rows, an `ordered` drop in the middle third of a row —, and where its `executability`, `target-executability` or `refuse-if` refuses; a refusal hands the drop on to the next declared one. So a `row` drop declared before a `table` drop takes a drop on a row and leaves a drop beside the rows, or one the row drop refuses, to the table drop; a `table` drop declared first takes every drop of its kinds, the rows included. Where no drop accepts, the first refusal is shown.
@@ -193,7 +195,7 @@ A **reorderable table** declares an `ordered` drop; next to a `row` drop, a row 
     <drag kind="ticket"/>
     <!-- Reorder within the list: insert the dragged tickets before the row `before`. -->
     <drop accept="ticket" target="ordered" before-channel="insertBefore"
-        refuse-if="before -> tickets -> $tickets.containsElement($before)">
+        refuse-if="tickets -> before -> $tickets.containsElement($before)">
         <with-transaction>
             <!-- Take the tickets out, then insert them at the index of `before`, at the end without one. -->
             <execute-script function="sprint -> before -> tickets -> {
@@ -238,7 +240,7 @@ A `<tree>` declares `<drag>` and `<drop>` exactly as a table does, and takes par
     </drag>
     <!-- Move nodes: insert the dragged items under `parent` before its child `before`. -->
     <drop accept="item" target="ordered" parent-channel="dropParent" before-channel="dropBefore"
-        refuse-if="parent -> before -> items -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
+        refuse-if="items -> parent -> before -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
     >
         <with-transaction>
             <!-- Take the items out of their containers, then insert them at the index of `before`, at the end without one. -->
@@ -263,9 +265,9 @@ A `<tree>` declares `<drag>` and `<drop>` exactly as a table does, and takes par
 
   | `target` | applies | `refuse-if` | channels |
   |---|---|---|---|
-  | `tree` | anywhere on the tree | `target -> objects -> reason`, `target` is `null` | `target-channel` (written with `null`) |
-  | `node` | onto the node under the pointer, in any part of it | `target -> objects -> reason` | `target-channel`: the object of the node dropped on |
-  | `ordered` | at a place among the nodes | `parent -> before -> objects -> reason` | `parent-channel`: the object whose children the dropped objects become; `before-channel`: the child they are inserted before, `null` for an insertion as the last children |
+  | `tree` | anywhere on the tree | `objects -> target -> reason`, `target` is `null` | `target-channel` (written with `null`) |
+  | `node` | onto the node under the pointer, in any part of it | `objects -> target -> reason` | `target-channel`: the object of the node dropped on |
+  | `ordered` | at a place among the nodes | `objects -> parent -> before -> reason` | `parent-channel`: the object whose children the dropped objects become; `before-channel`: the child they are inserted before, `null` for an insertion as the last children |
 
   For an `ordered` drop the client splits a node X into thirds: the **upper third** inserts before X among its siblings (`parent` = parent of X, `before` = X, an insertion line above X); the **middle third** inserts into X as its first children (`parent` = X, `before` = the first child of X or `null`, X highlighted); the **lower third** inserts as the first children of X where X is expanded and has children, and after X among its siblings otherwise (`before` = the sibling following X, `null` after the last one; an insertion line below X). **Beside the nodes** the drop appends to the top-level nodes (`parent` = the object the tree is built from, `before` = `null`; the tree as a whole highlighted). The parent of a top-level node is the object `root` computes; where that object is itself displayed as a node, its own parent is `null`. Children are taken in the order the `children` function returns them, so the action chain inserting before `before` changes exactly the list `children` reads. A collapsed node the drag rests on in its middle third is expanded after a moment, so a drop can reach into it.
 - A `node` drop alone does not split a node; next to an `ordered` drop the declared order decides, as for a table: an `ordered` drop declared first takes the middle third as an insertion into the node and hands it to the `node` drop only where it refuses, a `node` drop declared first takes the whole node.

@@ -35,9 +35,9 @@ A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table â
 
 | `target` | applies | `refuse-if` | channels |
 |---|---|---|---|
-| `table` | anywhere on the table | `target -> objects -> reason`, `target` is `null` | `target-channel` (written with `null`) |
-| `row` | onto the row under the pointer, in any part of it | `target -> objects -> reason` | `target-channel`: the object of the row dropped on |
-| `ordered` | at a place among the rows | `parent -> before -> objects -> reason` | `parent-channel`: the object whose children the dropped objects become; `before-channel`: the child they are inserted before, `null` for an insertion as the last children |
+| `table` | anywhere on the table | `objects -> target -> reason`, `target` is `null` | `target-channel` (written with `null`) |
+| `row` | onto the row under the pointer, in any part of it | `objects -> target -> reason` | `target-channel`: the object of the row dropped on |
+| `ordered` | at a place among the rows | `objects -> parent -> before -> reason` | `parent-channel`: the object whose children the dropped objects become; `before-channel`: the child they are inserted before, `null` for an insertion as the last children |
 
 ```xml
 <tree-table root="$project" children="node -> $node.get(`demo.tickets:Item#children`)"
@@ -51,7 +51,7 @@ A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table â
     </drag>
     <!-- Move items: insert the dragged items under `parent` before its child `before`. -->
     <drop accept="item" target="ordered" parent-channel="dropParent" before-channel="dropBefore"
-        refuse-if="parent -> before -> items -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
+        refuse-if="items -> parent -> before -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
     >
         <with-transaction>
             <!-- Take the items out of their containers, then insert them at the index of `before`, at the end without one. -->

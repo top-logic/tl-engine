@@ -39,7 +39,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * value of the {@link #getInput() input} channel, and are followed live - while they refuse, the
  * drop is not offered at all; the {@link #getTargetExecutability() target executability} rules
  * decide over the item a drop is made on; the {@link #getRefuseIf() refusal function} decides over
- * the target and the dragged objects together. While the user drags, the first refusal is shown at
+ * the dragged objects and the target together. While the user drags, the first refusal is shown at
  * the target under the pointer, with its reason.
  * </p>
  *
@@ -149,18 +149,23 @@ public interface DropConfig extends ExecutabilityConfig {
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getTargetExecutability();
 
 	/**
-	 * TL-Script function computing why a drop must not be made, from the objects the drop refers to
-	 * at its place and the dragged objects.
+	 * TL-Script function computing why a drop must not be made, from the dragged objects and the
+	 * objects the drop refers to at its place.
 	 *
 	 * <p>
-	 * The leading arguments are the objects the drop refers to, which depend on what the drop is
-	 * made on: a drop on the element as a whole or onto a single item gets the target,
-	 * {@code target -> objects -> reason}, which is the item dropped onto, or {@code null} for a
-	 * drop on the element as a whole; an insertion into a list gets the item the objects are
-	 * inserted before, {@code before -> objects -> reason}, which is {@code null} for an insertion
-	 * at the end; an insertion into a tree gets the object the objects are inserted under in
-	 * addition, {@code parent -> before -> objects -> reason}. The objects are the list of dragged objects. No value or <code>false</code>
-	 * accepts the drop, <code>true</code> refuses it with a generic reason, a resource key or a text
+	 * The first argument is the list of dragged objects. The objects the drop refers to follow it,
+	 * and depend on what the drop is made on: a drop on the element as a whole or onto a single item
+	 * gets the target, {@code objects -> target -> reason}, which is the item dropped onto, or
+	 * {@code null} for a drop on the element as a whole; an insertion into a list gets the item the
+	 * objects are inserted before, {@code objects -> before -> reason}, which is {@code null} for an
+	 * insertion at the end; an insertion into a tree gets the object the objects are inserted under
+	 * before it, {@code objects -> parent -> before -> reason}. A function deciding over the dragged
+	 * objects alone is written {@code objects -> reason} for every drop: surplus arguments of a
+	 * function with fewer parameters are ignored.
+	 * </p>
+	 *
+	 * <p>
+	 * No value or <code>false</code> accepts the drop, <code>true</code> refuses it with a generic reason, a resource key or a text
 	 * refuses it with that reason - the same interpretation as the {@link DisabledIf.Config
 	 * disabled-if} rule. Unset (default) refuses nothing.
 	 * </p>

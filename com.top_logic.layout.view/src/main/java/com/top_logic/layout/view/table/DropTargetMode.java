@@ -55,7 +55,7 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * the upper half of a row inserts before that row, a drop in its lower half before the row
 	 * following it, and a drop beside the rows appends at the end. The row the objects are inserted
 	 * before is what the drop's {@code before-channel} carries into the action chain, and what its
-	 * {@code refuse-if} receives as first argument, {@code before -> objects -> reason}; it is
+	 * {@code refuse-if} receives after the dragged objects, {@code objects -> before -> reason}; it is
 	 * {@code null} for an insertion at the end. Which order the insertion changes is up to the
 	 * action chain - typically the list the {@code rows} of the table are computed from.
 	 * </p>
@@ -75,8 +75,8 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * expanded row with children and after the row among its siblings otherwise, and beside the rows
 	 * as the last top-level rows. The row the objects are inserted under is what the drop's
 	 * {@code parent-channel} carries, the object the top-level rows are the children of for an
-	 * insertion among them; {@code refuse-if} receives it first,
-	 * {@code parent -> before -> objects -> reason}. An insertion declared first takes the middle
+	 * insertion among them; {@code refuse-if} receives it before the row to insert before,
+	 * {@code objects -> parent -> before -> reason}. An insertion declared first takes the middle
 	 * third of a row as an insertion into it, and leaves it to a {@code row} drop only where it
 	 * refuses.
 	 * </p>

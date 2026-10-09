@@ -17,7 +17,8 @@ import com.top_logic.layout.view.channel.ChannelRef;
  *
  * <p>
  * The references of a drop are fixed by its {@link DropSignature}. Each reference is handed to the
- * {@link DropConfig#getRefuseIf() refusal function} as a leading argument, and is written to the
+ * {@link DropConfig#getRefuseIf() refusal function} as an argument following the dragged objects, and
+ * is written to the
  * channel the {@code <drop>} declares for it under {@link #channelProperty()} before the action
  * chain runs.
  * </p>

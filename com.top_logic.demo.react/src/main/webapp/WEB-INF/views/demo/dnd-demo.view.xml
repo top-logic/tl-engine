@@ -158,7 +158,7 @@
 													before-channel="listBefore"
 													target="ordered"
 												>
-													<refuse-if>before -&gt; nodes -&gt; if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null)</refuse-if>
+													<refuse-if>nodes -&gt; before -&gt; if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null)</refuse-if>
 													<with-transaction>
 														<execute-script>
 															<inputs>
@@ -214,7 +214,7 @@
 													parent-channel="treeParent"
 													target="ordered"
 												>
-													<refuse-if>parent -&gt; before -&gt; nodes -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
+													<refuse-if>nodes -&gt; parent -&gt; before -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
 													<with-transaction>
 														<execute-script>
 															<inputs>
@@ -266,7 +266,7 @@
 													parent-channel="treeTableParent"
 													target="ordered"
 												>
-													<refuse-if>parent -&gt; before -&gt; nodes -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
+													<refuse-if>nodes -&gt; parent -&gt; before -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
 													<with-transaction>
 														<execute-script>
 															<inputs>

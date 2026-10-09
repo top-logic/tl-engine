@@ -13,13 +13,14 @@ import com.top_logic.layout.react.control.dnd.DropMode;
 
 /**
  * What a declared drop is: its {@link DropMode}, and the {@link DropReference objects} its location
- * refers to, in the order the {@link DropConfig#getRefuseIf() refusal function} receives them.
+ * refers to, in the order the {@link DropConfig#getRefuseIf() refusal function} receives them after
+ * the dragged objects.
  *
  * <p>
  * The element declaring a drop assigns its signature: the mode decides where the drop applies, the
  * references are what the drop's script is told about the place it applies at. A refusal function
  * of a signature with the references {@code r1, ..., rn} has the form
- * {@code r1 -> ... -> rn -> objects -> reason}, and the drop may declare a channel for each of its
+ * {@code objects -> r1 -> ... -> rn -> reason}, and the drop may declare a channel for each of its
  * references.
  * </p>
  *

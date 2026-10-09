@@ -334,7 +334,7 @@ public class TestDropBinding extends TestCase {
 	public void testARefusingRowDropHandsOnToTheTableDrop() {
 		DropBinding.Drop refusing = new DropBinding.Drop(kinds(ROW_KIND), DropSignature.ONTO, targetChannel(),
 			List.of(_onRow), () -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
-			(references, objects) -> "Not here.");
+			(objects, references) -> "Not here.");
 		DropBinding binding = new DropBinding(_context, List.of(refusing, tableDrop(ROW_KIND, _onTable)));
 
 		DropVerdict verdict = binding.check(request(TARGET_ROWS.get(0)));
@@ -454,14 +454,14 @@ public class TestDropBinding extends TestCase {
 	/**
 	 * The refusal function is interpreted like a {@code disabled-if}: no value and {@code false}
 	 * accept, {@code true} refuses with the generic reason, a text refuses with that text. It is
-	 * called with the target row and the dragged objects.
+	 * called with the dragged objects and the target row.
 	 */
 	public void testRefuseIf() {
 		Object[] result = new Object[1];
 		List<Object> seen = new ArrayList<>();
-		BiFunction<List<?>, List<?>, Object> refuseIf = (references, objects) -> {
-			seen.add(references);
+		BiFunction<List<?>, List<?>, Object> refuseIf = (objects, references) -> {
 			seen.add(objects);
+			seen.add(references);
 			return result[0];
 		};
 		DropBinding binding = new DropBinding(_context, List.of(new DropBinding.Drop(
@@ -470,8 +470,8 @@ public class TestDropBinding extends TestCase {
 
 		result[0] = null;
 		assertTrue("No value accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
-		assertEquals("The function gets the target row and the dragged objects.",
-			List.of(List.of(TARGET_ROWS.get(1)), List.of(SOURCE_ROWS.get(0))), seen);
+		assertEquals("The function gets the dragged objects and the target row.",
+			List.of(List.of(SOURCE_ROWS.get(0)), List.of(TARGET_ROWS.get(1))), seen);
 
 		result[0] = Boolean.FALSE;
 		assertTrue("False accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
@@ -520,7 +520,7 @@ public class TestDropBinding extends TestCase {
 	public void testOrderedDropPublishesTheRowToInsertBefore() {
 		List<List<?>> seen = new ArrayList<>();
 		TableViewControl<String> target = newTargetTable(List.of(orderedDrop(ROW_KIND, _onTable,
-			(references, objects) -> {
+			(objects, references) -> {
 				seen.add(references);
 				return null;
 			})));
@@ -596,7 +596,7 @@ public class TestDropBinding extends TestCase {
 	public void testARefusingOrderedDropHandsOnToTheRowDrop() {
 		TableViewControl<String> target = newTargetTable(List.of(
 			orderedDrop(ROW_KIND, _onTable,
-				(references, objects) -> TARGET_ROWS.get(0).equals(references.get(0)) ? "Not here." : null),
+				(objects, references) -> TARGET_ROWS.get(0).equals(references.get(0)) ? "Not here." : null),
 			rowDrop(ROW_KIND, _onRow)));
 
 		assertApplied(target, 0, DropZone.UPPER, _onRow, _onTable);

@@ -145,7 +145,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 			AcceptedKinds.of(List.of(CARD_KIND)), DropSignature.ONTO, Map.of(DropReference.TARGET, _targetChannel),
 			List.of(_onColumn),
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
-			(references, objects) -> DONE.equals(references.get(0)) ? "Not here." : null))));
+			(objects, references) -> DONE.equals(references.get(0)) ? "Not here." : null))));
 
 		assertFalse("The drop must be refused.", drop(A1, columnKey(1), DropZone.NONE).isSuccess());
 		assertFalse("A refused drop runs no chain.", _onColumn._executed);

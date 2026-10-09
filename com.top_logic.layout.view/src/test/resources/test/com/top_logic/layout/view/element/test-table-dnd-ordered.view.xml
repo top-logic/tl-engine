@@ -10,7 +10,7 @@
 		<drop
 			accept="value"
 			before-channel="before"
-			refuse-if="before -> objects -> $before == 'locked' || $objects.size() != 1"
+			refuse-if="objects -> before -> $before == 'locked' || $objects.size() != 1"
 			target="ordered"
 		>
 			<execute-script function="rows -> $rows"/>

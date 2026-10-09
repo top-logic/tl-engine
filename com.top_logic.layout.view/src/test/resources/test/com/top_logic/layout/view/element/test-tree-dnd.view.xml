@@ -20,7 +20,7 @@
 			accept="item"
 			before-channel="before"
 			parent-channel="parent"
-			refuse-if="parent -> before -> objects -> $parent == 'b' || $objects.size() != 1"
+			refuse-if="objects -> parent -> before -> $parent == 'b' || $objects.size() != 1"
 			target="ordered"
 		>
 			<execute-script function="objects -> $objects"/>

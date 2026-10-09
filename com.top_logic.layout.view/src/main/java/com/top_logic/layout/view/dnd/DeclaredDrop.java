@@ -168,18 +168,18 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 			executability,
 			ViewExecutabilityRules.build(config.getTargetExecutability(), context),
 			compiledRefuseIf == null ? null
-				: (references, objects) -> compiledRefuseIf.execute(arguments(references, objects)));
+				: (objects, references) -> compiledRefuseIf.execute(arguments(objects, references)));
 	}
 
 	/**
-	 * The arguments of the refusal function: the referenced objects, followed by the dropped ones.
+	 * The arguments of the refusal function: the dropped objects, followed by the referenced ones.
 	 */
-	private static Object[] arguments(List<?> references, List<?> objects) {
+	private static Object[] arguments(List<?> objects, List<?> references) {
 		Object[] result = new Object[references.size() + 1];
+		result[0] = objects;
 		for (int n = 0; n < references.size(); n++) {
-			result[n] = references.get(n);
+			result[n + 1] = references.get(n);
 		}
-		result[references.size()] = objects;
 		return result;
 	}
 

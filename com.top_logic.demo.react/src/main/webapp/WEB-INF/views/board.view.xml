@@ -76,7 +76,7 @@
 							accept="ticket"
 							target-channel="dropColumn"
 						>
-							<refuse-if>column -&gt; tickets -&gt; if($column == `demo.tickets:TicketStatus#open` &amp;&amp; $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size() &gt; 0, #('Closed tickets are reopened through "In progress".'@en, 'Geschlossene Tickets werden über "In Bearbeitung" wieder geöffnet.'@de), null)</refuse-if>
+							<refuse-if>tickets -&gt; column -&gt; if($column == `demo.tickets:TicketStatus#open` &amp;&amp; $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size() &gt; 0, #('Closed tickets are reopened through "In progress".'@en, 'Geschlossene Tickets werden über "In Bearbeitung" wieder geöffnet.'@de), null)</refuse-if>
 							<with-transaction>
 								<execute-script function="column -> tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))">
 									<inputs>

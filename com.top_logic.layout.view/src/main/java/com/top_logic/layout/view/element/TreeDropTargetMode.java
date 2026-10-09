@@ -55,8 +55,8 @@ public enum TreeDropTargetMode implements ExternallyNamed {
 	 * <p>
 	 * The object whose children the dropped objects become is what the drop's
 	 * {@code parent-channel} carries into the action chain, the child they are inserted before is
-	 * what its {@code before-channel} carries; its {@code refuse-if} receives both as leading
-	 * arguments, {@code parent -> before -> objects -> reason}. The parent of the top-level nodes is
+	 * what its {@code before-channel} carries; its {@code refuse-if} receives both after the dragged
+	 * objects, {@code objects -> parent -> before -> reason}. The parent of the top-level nodes is
 	 * the object the tree is built from ({@code null} where that object is displayed as a node
 	 * itself), and {@code before} is {@code null} for an insertion as the last children. Which
 	 * structure the insertion changes is up to the action chain - typically the list the

@@ -66,7 +66,7 @@ public class All extends SearchExpressionWithSecurity {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		return all(this, _type, usesSecurity(), definitions.getSecurityReport());
+		return all(this, _type, usesSecurity());
 	}
 
 	/**
@@ -81,11 +81,6 @@ public class All extends SearchExpressionWithSecurity {
 	 */
 	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type,
 			boolean usesSecurity) {
-		return all(self, type, usesSecurity, null);
-	}
-
-	private static List<? extends TLObject> all(SearchExpression self, TLStructuredType type,
-			boolean usesSecurity, SecurityFilterReport report) {
 		switch (type.getModelKind()) {
 			case CLASS: {
 				ArrayList<TLObject> result = new ArrayList<>();
@@ -96,7 +91,7 @@ public class All extends SearchExpressionWithSecurity {
 						result.add(instance);
 					}
 				}
-				return usesSecurity ? filterDiscoverable(result, report) : result;
+				return usesSecurity ? filterDiscoverable(result) : result;
 			}
 
 			case ENUMERATION: {
@@ -110,8 +105,8 @@ public class All extends SearchExpressionWithSecurity {
 	}
 
 	@SuppressWarnings("unchecked")
-	static List<TLObject> filterDiscoverable(List<TLObject> instances, SecurityFilterReport report) {
-		return (List<TLObject>) filterSecurity(instances, report);
+	static List<TLObject> filterDiscoverable(List<TLObject> instances) {
+		return (List<TLObject>) filterSecurity(instances);
 	}
 
 }

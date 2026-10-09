@@ -105,7 +105,7 @@ public class KBQuery extends SearchExpressionWithSecurity {
 			}
 		}
 
-		return usesSecurity() ? All.filterDiscoverable(result, definitions.getSecurityReport()) : result;
+		return usesSecurity() ? All.filterDiscoverable(result) : result;
 	}
 
 	@Override

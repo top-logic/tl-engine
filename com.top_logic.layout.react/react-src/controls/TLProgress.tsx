@@ -11,7 +11,8 @@ import type { TLCellProps, ProgressStateJson } from 'tl-react-bridge';
  * set inline.
  *
  * A progress bar needs a name (ARIA 1.2): a bar with a label is named by it (`aria-labelledby` on the
- * label's id), the label also standing as its value text. A bar inside an element that carries the
+ * label's id). It states its value through `aria-valuenow` alone: the label as value text as well
+ * would be announced twice. A bar inside an element that carries the
  * name of what loads itself (the loading row of a tree, a tree item with its own name) is hidden from
  * assistive technology and has no name of its own, so the name is announced once.
  */
@@ -41,7 +42,6 @@ export function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={indeterminate ? undefined : percent}
-      aria-valuetext={label || undefined}
       aria-labelledby={named ? labelId : undefined}
       aria-busy={indeterminate || undefined}
       aria-hidden={ariaHidden || undefined}

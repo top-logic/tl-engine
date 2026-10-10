@@ -432,8 +432,10 @@ next turn when it did not.
 The injection is a **`UserMessage`**, not a `SystemMessage`: no provider's request builder transmits
 a mid-conversation system message, so that shape never reached the model (#359). It opens with
 `SubagentResultDelivery.NOTICE`, which says in the text what the role cannot - the user did not write
-this. Everything finishing in one gap becomes one message, in the order the parent started the
-subagents. Being an ordinary user message, it is compacted like any other turn content.
+this. The child's own text sits inside `<untrusted_subagent_report>` on every path - injection, wait,
+status and the synchronous `delegate_to_*` result - because a worker repeats what it read.
+Everything finishing in one gap becomes one message, in the order the parent started the subagents.
+Being an ordinary user message, it is compacted like any other turn content.
 
 The same text is recorded on the turn as a `Part.SystemPart` of type `SUBAGENT_RESULT`: an assistant-side
 part, so the admin transcript shows it while the chat does not draw it as a user bubble.

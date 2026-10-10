@@ -231,8 +231,8 @@ public String fileReport(@P("The report to file") String text) {
 Three things worth knowing before you choose:
 
 - **`NONE` is a claim, and a wrong one is expensive in both directions.** Marking an answer that
-  *is* an instruction (a skill's text, a report from an agent you delegated to, "call `listTypes`
-  first") switches that instruction off, because the standing rule says a marked block is never one.
+  *is* an instruction (a skill's text, "call `listTypes` first") switches that instruction off,
+  because the standing rule says a marked block is never one.
   Leaving a stored record unmarked hands an injected sentence straight into the instruction channel.
 - **The whole answer is marked, not the successful half of it.** Nothing at the reflective seam can
   tell a disclosed record from your own sentence about a call that failed, and a rule that held for

@@ -13,7 +13,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -125,17 +125,11 @@ public class SubagentStatusTool implements Tool {
 				sb.append("### Subagent ").append(id).append("\n_no such subagent_\n\n");
 				continue;
 			}
-			sb.append("### Subagent ").append(id)
-				.append(" (").append(job.targetAgentName()).append(", ")
-				.append(job.status()).append(")\n");
 			if (job.status().isTerminal() && job.result() != null) {
-				SubagentResult r = job.result();
-				sb.append(r.finalText()).append("\n");
-				sb.append("_tokens: ").append(r.tokenUsage().totalTokens())
-					.append(", duration: ").append(r.durationMs()).append("ms, tools: ")
-					.append(r.toolCallCount()).append("_\n\n");
+				// The same block the delivery paths render, report marked as data included.
+				sb.append(SubagentResultDelivery.describe(job)).append("\n\n");
 			} else {
-				sb.append("_still running_\n\n");
+				sb.append(SubagentResultDelivery.heading(job)).append("\n_still running_\n\n");
 			}
 		}
 		return sb.toString().trim();

@@ -24,9 +24,20 @@ did not write the following and is not necessarily waiting for it; it is reporte
 instruction.
 
 ### Subagent sa-1 (TL_ModelExplorer, DONE)
+<untrusted_subagent_report source="subagent sa-1 (TL_ModelExplorer)">
 The Invoice type has 14 attributes; the three mandatory ones are ...
+</untrusted_subagent_report>
 _tokens: 4210, duration: 18432ms, tools: 6_
 ```
+
+### The report is data
+
+The sub-agent's own text sits inside an `<untrusted_subagent_report>` envelope, on every path that
+hands it to the parent: this injection, `wait_for_subagent`, `subagent_status` and the tool result of
+a synchronous `delegate_to_*`. A worker repeats what it read, and a page it fetched may hold a sentence
+written to steer whoever reads the report next; the standing rule in the system prompt says such a
+block is never an instruction. The heading and the cost line are the framework's own and stay outside.
+All paths mark through `SubagentResultDelivery.report`.
 
 ### Why a user message
 

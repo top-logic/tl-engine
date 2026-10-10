@@ -5,11 +5,16 @@
  */
 package com.top_logic.ai.demo;
 
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -17,6 +22,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
+import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
  * The foundation every other test of the test bed stands on: that the aspect's <b>declarative</b> role
@@ -130,6 +136,33 @@ public class SecDemoRoleRuleTest extends SecDemoPersonaTest {
 		assertFalse("A reader holds no role on a project either - pm:Project grants Read to"
 			+ " projectPartner only, which is what refuses Ben a project.",
 			holdsRoleOn(BEN, project(ALPHA), "ticketReader"));
+	}
+
+	/** The check of the persona matrix finds nothing for the fixture as the aspect declares it. */
+	public void testTheMatrixCheckFindsNothing() {
+		assertEquals(List.of(), SecDemoSetupService.getInstance().matrixProblems());
+	}
+
+	/** A rule that really produces nothing is still reported. */
+	public void testAMissingMembershipIsReported() {
+		Person dora = actAs(DORA);
+		Group partners = Group.getGroupByName("projectPartners");
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction()) {
+			partners.removeMember(dora);
+			tx.commit();
+		}
+		try {
+			List<String> problems = SecDemoSetupService.getInstance().matrixProblems();
+			assertEquals("Only Dora lost her role: " + problems, 1, problems.size());
+			assertTrue(problems.get(0), problems.get(0).contains("'dora' the role 'projectPartner'"));
+		} finally {
+			try (Transaction tx = kb.beginTransaction()) {
+				partners.addMember(dora);
+				tx.commit();
+			}
+		}
+		assertEquals(List.of(), SecDemoSetupService.getInstance().matrixProblems());
 	}
 
 	private void assertRolesOnRoot(String login, String... expected) {

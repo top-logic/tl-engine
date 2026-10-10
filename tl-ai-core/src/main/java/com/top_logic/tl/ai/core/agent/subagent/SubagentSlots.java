@@ -39,7 +39,7 @@ final class SubagentSlots {
 	 * @return Whether there was one; when not, the registry is told once a slot frees up.
 	 */
 	static synchronized boolean tryAcquire(SubagentJobRegistry registry) {
-		int limit = RunLimitSettings.subagentWorkers();
+		int limit = limit();
 		if (limit > 0 && _running >= limit) {
 			WAITING.add(registry);
 			return false;
@@ -69,8 +69,21 @@ final class SubagentSlots {
 
 	/** Whether the installation's ceiling is reached. */
 	static synchronized boolean isFull() {
-		int limit = RunLimitSettings.subagentWorkers();
+		int limit = limit();
 		return limit > 0 && _running >= limit;
+	}
+
+	/**
+	 * The installation's ceiling, {@code 0} for none.
+	 *
+	 * <p>
+	 * Asked only where a capacity is configured: the shipped default is {@code 0} anyway, and reading
+	 * it needs the {@code TypeIndex}, which a unit test that spawns a subagent has no reason to start
+	 * (#713).
+	 * </p>
+	 */
+	private static int limit() {
+		return RunLimitSettings.capacityConfigured() ? RunLimitSettings.subagentWorkers() : 0;
 	}
 
 	/** How many slots are taken. For tests. */

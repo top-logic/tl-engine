@@ -22,7 +22,7 @@ public enum RunEntryPoint {
 	/** The chat, where a user typed the message and is waiting for the answer. */
 	CHAT,
 
-	/** A TL-Script call - {@code aiAgentChat}, {@code aiCallTool}, {@code aiAgentChatAsync}. */
+	/** A TL-Script call - {@code aiAgentChat}, {@code aiCallTool}, {@code aiAgentChatAsync}, {@code aiResearch}. */
 	SCRIPT,
 
 	/** A request that arrived over the MCP endpoint with a credential of its own. */

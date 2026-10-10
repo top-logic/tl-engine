@@ -60,7 +60,7 @@
 		-->
 		<data-list
 			collapsible="true"
-			observed-types="tl.ai.execution:AgentSession"
+			observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
 			row-actions="hover"
 			row-channel="session"
 			search="true"
@@ -101,7 +101,32 @@
 			}]]></group-by>
 			<lines>
 				<line attribute="title"/>
+				<!--
+					What goes on in the chat while the user looks elsewhere (#744): something waits for
+					them, a subagent finished since they last had the chat open, or an agent works there.
+					The list observes executions and interaction requests so that the line follows.
+				-->
+				<line emphasis="secondary">
+					<value><![CDATA[s -> {
+						activity = chatActivity($s);
+						switch {
+							$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
+							$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
+							$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+							default: null;
+						}
+					}]]></value>
+				</line>
 			</lines>
+			<row-css-class><![CDATA[s -> {
+				activity = chatActivity($s);
+				switch {
+					$activity == "waiting": "is-waiting";
+					$activity == "news": "has-news";
+					$activity == "running": "is-working";
+					default: null;
+				}
+			}]]></row-css-class>
 			<!--
 				What a row offers besides being opened. Ordinary view commands: they reach the row
 				the menu was opened on over the "session" channel this list registers, so an

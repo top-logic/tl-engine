@@ -23,6 +23,7 @@ import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.history.ChatScriptFunctions;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -68,6 +69,8 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 
 	private Watcher _watcherB;
 
+	private AgentExecution _lead;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -93,6 +96,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		turn.setUserParts(List.of(new Part.TextPart(UUID.randomUUID().toString(), Instant.now(),
 			"Zähle die Anmeldungen im Hintergrund.")));
 		_listener.recordSubagentStarted("sa-1", "Counter", "Anmeldungen zählen", "call-1", false, lead);
+		_lead = lead;
 		log.completeTurn();
 		store.finishExecution(lead, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, TokenUsage.EMPTY,
 			ConversationLogSerializer.toJson(List.of(turn)));
@@ -151,6 +155,40 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		assertTrue(_windowA.getSessionManager().switchSession(_chat, owner));
 		assertSame(before, _windowA.getSessionManager().getOrCreateConversationLog());
 		assertEquals("DONE", subagentPart(_windowA).status());
+	}
+
+	/**
+	 * A window shows the chat as the subagent ends: the chat list does not report the end as news,
+	 * because the user saw it.
+	 */
+	public void testAWindowShowingTheChatSeesTheEnd() throws Exception {
+		childRunEnded();
+		subagentFinished();
+
+		assertNull(ChatScriptFunctions.activity(chat()));
+	}
+
+	/** No window shows the chat as the subagent ends: the chat list reports it until it is opened. */
+	public void testNoWindowShowingTheChatMakesTheEndNews() throws Exception {
+		ChatEventHandlerRegistry.unregister(_watcherB);
+		childRunEnded();
+		subagentFinished();
+
+		assertEquals(ChatScriptFunctions.NEWS, ChatScriptFunctions.activity(chat()));
+	}
+
+	/** The subagent's own run, recorded under the lead's, ended - a moment after the chat was shown. */
+	private void childRunEnded() throws InterruptedException {
+		Thread.sleep(5);
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentExecution child = store.beginExecution(chat(), "child-run-1", "Counter", "model", null, _lead);
+		store.finishExecution(child, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, TokenUsage.EMPTY, null,
+			null);
+		HistoryUtils.updateSessionRevision();
+	}
+
+	private AgentSession chat() {
+		return (AgentSession) ChatHistoryService.findOwnedSessionById(_chat, owner);
 	}
 
 	private void subagentFinished() {

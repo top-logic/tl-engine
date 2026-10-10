@@ -1296,6 +1296,16 @@ message SessionMetadata {
 
 	/** Effort level last chosen in this session. */
 	string lastEffort;
+
+	/**
+	 * When a window of the owner last showed this chat, in milliseconds since the epoch; 0 if never.
+	 *
+	 * <p>
+	 * What tells a subagent's result the user has not looked at yet from one they have: the chat
+	 * list marks a chat whose subagent ended after this.
+	 * </p>
+	 */
+	int64 lastSeen;
 }
 
 /** Catalog of agents, models and MCP servers the chat UI can offer. */

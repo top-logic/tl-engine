@@ -332,6 +332,8 @@
     --background-danger--lighter,
     color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
   );
+  --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
+  --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
   --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
 
   display: flex;
@@ -451,6 +453,51 @@
 
 .tl-data-list .rail-item.is-pending .rail-line-primary {
   color: var(--text-secondary);
+}
+
+/*
+ * Something going on behind a row that its secondary line names (#744 - in the chat list, a chat
+ * whose agent works, waits for the user, or has a result the user has not seen). A dot before the
+ * line says the same at a glance; the line is the text a screen reader reads. Named after no domain,
+ * like the three states above.
+ */
+.tl-data-list .rail-item.is-working .rail-line-secondary,
+.tl-data-list .rail-item.is-waiting .rail-line-secondary,
+.tl-data-list .rail-item.has-news .rail-line-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.tl-data-list .rail-item.is-working .rail-line-secondary::before,
+.tl-data-list .rail-item.is-waiting .rail-line-secondary::before,
+.tl-data-list .rail-item.has-news .rail-line-secondary::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.tl-data-list .rail-item.is-working .rail-line-secondary::before {
+  background: var(--button-primary);
+  animation: chat-pulse 1.6s ease-in-out infinite;
+}
+
+/* The dot carries the warning colour; a yellow text would be too faint to read on light themes. */
+.tl-data-list .rail-item.is-waiting .rail-line-secondary {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tl-data-list .rail-item.is-waiting .rail-line-secondary::before {
+  background: var(--chat-warn);
+}
+
+.tl-data-list .rail-item.has-news .rail-line-secondary {
+  color: var(--chat-link);
+  font-weight: 600;
 }
 
 /* --- Composed conversation --------------------------------------------- */

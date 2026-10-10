@@ -39,6 +39,9 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getLastEffort() */
 	public static final String LAST_EFFORT__PROP = "lastEffort";
 
+	/** @see #getLastSeen() */
+	public static final String LAST_SEEN__PROP = "lastSeen";
+
 	private final java.util.List<String> _approvedTools = new java.util.ArrayList<>();
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _cumulativeUsage = null;
@@ -54,6 +57,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> _feedback = new java.util.ArrayList<>();
 
 	private String _lastEffort = "";
+
+	private long _lastSeen = 0L;
 
 	/**
 	 * Creates a {@link SessionMetadata} instance.
@@ -301,6 +306,31 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		_lastEffort = value;
 	}
 
+	/**
+	 * When a window of the owner last showed this chat, in milliseconds since the epoch; 0 if never.
+	 *
+	 * <p>
+	 * What tells a subagent's result the user has not looked at yet from one they have: the chat
+	 * list marks a chat whose subagent ended after this.
+	 * </p>
+	 */
+	public final long getLastSeen() {
+		return _lastSeen;
+	}
+
+	/**
+	 * @see #getLastSeen()
+	 */
+	public com.top_logic.ai.chat.api.messages.SessionMetadata setLastSeen(long value) {
+		internalSetLastSeen(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLastSeen()} without chain call utility. */
+	protected final void internalSetLastSeen(long value) {
+		_lastSeen = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SESSION_METADATA__TYPE;
@@ -316,7 +346,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			TASKS_JSON__PROP, 
 			LOADED_SKILLS__PROP, 
 			FEEDBACK__PROP, 
-			LAST_EFFORT__PROP);
+			LAST_EFFORT__PROP, 
+			LAST_SEEN__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -349,6 +380,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case LOADED_SKILLS__PROP: return getLoadedSkills();
 			case FEEDBACK__PROP: return getFeedback();
 			case LAST_EFFORT__PROP: return getLastEffort();
+			case LAST_SEEN__PROP: return getLastSeen();
 			default: return null;
 		}
 	}
@@ -364,6 +396,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case LOADED_SKILLS__PROP: internalSetLoadedSkills(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case FEEDBACK__PROP: internalSetFeedback(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.class, value)); break;
 			case LAST_EFFORT__PROP: internalSetLastEffort((String) value); break;
+			case LAST_SEEN__PROP: internalSetLastSeen((long) value); break;
 		}
 	}
 
@@ -412,6 +445,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.endArray();
 		out.name(LAST_EFFORT__PROP);
 		out.value(getLastEffort());
+		out.name(LAST_SEEN__PROP);
+		out.value(getLastSeen());
 	}
 
 	@Override
@@ -452,6 +487,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			}
 			break;
 			case LAST_EFFORT__PROP: setLastEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case LAST_SEEN__PROP: setLastSeen(in.nextLong()); break;
 			default: super.readField(in, field);
 		}
 	}

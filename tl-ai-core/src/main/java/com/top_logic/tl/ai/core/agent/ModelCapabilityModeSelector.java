@@ -122,7 +122,7 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 	}
 
 	@Override
-	public void traceDependencies(TLObject object, TLStructuredTypePart attribute,
+	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode,
 			Sink<Pointer> trace, OverlayLookup overlays) {
 		// Model is resolved from LLMService, not from the agent object.
 		// No form field dependency to trace.

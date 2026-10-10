@@ -11,13 +11,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import jakarta.servlet.http.HttpSession;
+
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.servletunit.InvocationContext;
+import com.meterware.servletunit.ServletRunner;
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelListener;
@@ -66,6 +73,8 @@ public class TestAgentViewRefresh extends BasicTestCase {
 	 */
 	private final List<String> _seenByTheList = new CopyOnWriteArrayList<>();
 
+	private HttpSession _session;
+
 	private ReactWindowRegistry _registry;
 
 	private ModelScope _scope;
@@ -81,7 +90,10 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		// The run's account has to be the account the window is logged in as - that is what decides
 		// whether a change reaches it, and it is the whole point of the register.
 		subSession().setPerson(user);
-		_registry = new ReactWindowRegistry("test-session");
+		// A logged-in session: the engine delivers model events only to the windows of a session
+		// that has a live user (since 8.0.0-alpha10).
+		_session = login(user);
+		_registry = ReactWindowRegistry.forSession(_session);
 		_scope = _registry.getOrCreateModelScope(WINDOW);
 		_listener = event -> {
 			for (UserMemory memory : memories()) {
@@ -98,6 +110,7 @@ public class TestAgentViewRefresh extends BasicTestCase {
 			// The production no-op; a case that replaced it must not leak it into the next one.
 		};
 		_scope.removeModelListener(TlAiExecutionFactory.getUserMemoryType(), _listener);
+		SessionService.getInstance().terminateSession(_session.getId());
 		super.tearDown();
 	}
 
@@ -174,6 +187,16 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		return false;
 	}
 
+	/** Logs the given account in, as the login page does, and keeps the test thread's context. */
+	private static HttpSession login(Person account) throws Exception {
+		ServletRunner runner = new ServletRunner();
+		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
+		InvocationContext invocation =
+			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
+		return TLContextManager.inSystemInteraction(TestAgentViewRefresh.class,
+			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), account));
+	}
+
 	private static TLSubSessionContext subSession() {
 		return TLContextManager.getSubSession();
 	}
@@ -186,6 +209,7 @@ public class TestAgentViewRefresh extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestAgentViewRefresh.class),
 				ModelService.Module.INSTANCE,
+				SessionService.Module.INSTANCE,
 				SchedulerService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AgentViewRefreshService.Module.INSTANCE));

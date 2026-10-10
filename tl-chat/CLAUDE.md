@@ -112,7 +112,7 @@ skipped when the run's window has moved on to another chat.
 `com.top_logic.ai.chat.sched.AgentTask` is a configured `Task` of the engine's `Scheduler` that puts
 one prompt to a named agent and records the run as a chat session of the `run-as` account. The prompt
 is plain text or a TL-Script expression evaluated at the start of every run; the rest of the frame -
-`name`, `enabled`, `run-on-startup`, `schedules` - is the engine's own.
+`name`, `enabled`, `schedules` - is the engine's own.
 
 It goes through `ChatProcessor.sendMessage`, not through `AgentRunner`, and that is the whole point:
 what an operator wants from a nightly agent is a **sitting** they can open in their chat history, not

@@ -55,7 +55,6 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  *     name="DailyInvoiceSummary"
  *     agent="Albert"
  *     run-as="root"
- *     run-on-startup="false"
  * &gt;
  *     &lt;prompt&gt;Summarise the invoices recorded today.&lt;/prompt&gt;
  *     &lt;schedules&gt;

@@ -100,12 +100,13 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * <b>A new object's attributes.</b> The engine allows every operation on an object that is not yet
  * committed, because the roles that would decide them are derived at commit time. A new object's
- * initial values are therefore checked the way the application's own create dialogs check them: by
- * {@link ModelSecurity#canSetInitial(TLObject, TLStructuredTypePart)}, which applies an attribute
- * grant where it can be decided before the object exists - on the object its access parent leads
- * to - and lets the right to create the object cover the rest.
+ * initial values are therefore checked the way the application's own create dialogs check them:
+ * with the engine's create-time question, which applies an attribute grant where it can be decided
+ * before the object exists - on the object its access parent leads to - and lets the right to
+ * create the object cover the rest.
  * </p>
  *
+ * @see ModelSecurity#canSetInitial(TLObject, TLStructuredTypePart)
  * @see #updateObject(String, Map, ToolContext)
  * @see #createObject(String, Map, String, String, ToolContext)
  * @see #deleteObject(String, ToolContext)

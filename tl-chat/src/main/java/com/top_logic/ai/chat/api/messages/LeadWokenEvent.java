@@ -22,9 +22,14 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getAsking() */
 	public static final String ASKING__PROP = "asking";
 
+	/** @see #getSubagents() */
+	public static final String SUBAGENTS__PROP = "subagents";
+
 	private int _finished = 0;
 
 	private int _asking = 0;
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.WokenSubagent> _subagents = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link LeadWokenEvent} instance.
@@ -75,6 +80,48 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_asking = value;
 	}
 
+	/**
+	 * Which subagents reported back, and why, in the order the lead is told.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.WokenSubagent> getSubagents() {
+		return _subagents;
+	}
+
+	/**
+	 * @see #getSubagents()
+	 */
+	public com.top_logic.ai.chat.api.messages.LeadWokenEvent setSubagents(java.util.List<? extends com.top_logic.ai.chat.api.messages.WokenSubagent> value) {
+		internalSetSubagents(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSubagents()} without chain call utility. */
+	protected final void internalSetSubagents(java.util.List<? extends com.top_logic.ai.chat.api.messages.WokenSubagent> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'subagents' cannot be null.");
+		_subagents.clear();
+		_subagents.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getSubagents()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.LeadWokenEvent addSubagent(com.top_logic.ai.chat.api.messages.WokenSubagent value) {
+		internalAddSubagent(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addSubagent(com.top_logic.ai.chat.api.messages.WokenSubagent)} without chain call utility. */
+	protected final void internalAddSubagent(com.top_logic.ai.chat.api.messages.WokenSubagent value) {
+		_subagents.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getSubagents()} list.
+	 */
+	public final void removeSubagent(com.top_logic.ai.chat.api.messages.WokenSubagent value) {
+		_subagents.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return LEAD_WOKEN_EVENT__TYPE;
@@ -84,7 +131,8 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			FINISHED__PROP, 
-			ASKING__PROP);
+			ASKING__PROP, 
+			SUBAGENTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -111,6 +159,7 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		switch (field) {
 			case FINISHED__PROP: return getFinished();
 			case ASKING__PROP: return getAsking();
+			case SUBAGENTS__PROP: return getSubagents();
 			default: return null;
 		}
 	}
@@ -120,6 +169,7 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		switch (field) {
 			case FINISHED__PROP: internalSetFinished((int) value); break;
 			case ASKING__PROP: internalSetAsking((int) value); break;
+			case SUBAGENTS__PROP: internalSetSubagents(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.WokenSubagent.class, value)); break;
 		}
 	}
 
@@ -142,6 +192,12 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		out.value(getFinished());
 		out.name(ASKING__PROP);
 		out.value(getAsking());
+		out.name(SUBAGENTS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.WokenSubagent x : getSubagents()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -149,6 +205,16 @@ public class LeadWokenEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		switch (field) {
 			case FINISHED__PROP: setFinished(in.nextInt()); break;
 			case ASKING__PROP: setAsking(in.nextInt()); break;
+			case SUBAGENTS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.WokenSubagent> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.WokenSubagent.readWokenSubagent(in));
+				}
+				in.endArray();
+				setSubagents(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

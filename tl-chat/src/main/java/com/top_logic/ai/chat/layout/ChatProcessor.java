@@ -55,6 +55,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
@@ -424,16 +425,16 @@ public class ChatProcessor {
 	 */
 	private static boolean openWithNews(ConversationLog convLog, Conversation conversation,
 			ToolContext toolContext, AgentEventListener listener) {
-		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
-		SubagentJobRegistry.News news = registry == null ? new SubagentJobRegistry.News(0, 0) : registry.news();
-		if (!AgentLoop.injectSubagentResults(conversation, toolContext)) {
+		List<SubagentNews> news = AgentLoop.injectSubagentNews(conversation, toolContext);
+		if (news.isEmpty()) {
 			int index = convLog.turns().indexOf(convLog.currentTurn());
 			if (index >= 0) {
 				convLog.removeFrom(index);
 			}
 			return false;
 		}
-		listener.onEvent(new AgentEvent.LeadWoken("", 0, Instant.now(), news.finished(), news.asking()));
+		int asking = (int) news.stream().filter(item -> item.reason() == SubagentNews.Reason.ASKS).count();
+		listener.onEvent(new AgentEvent.LeadWoken("", 0, Instant.now(), news.size() - asking, asking, news));
 		return true;
 	}
 

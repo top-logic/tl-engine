@@ -475,6 +475,53 @@ describe('a turn started for subagent news', () => {
     expect(html.match(/class="run-block"/g)).toHaveLength(2)
   })
 
+  /* Who reported back and why, so the reader knows which card to look at (#721). */
+  it('names the subagents and why they reported back, after a reload', () => {
+    const named = structuredClone(turns)
+    named[1].assistantParts.splice(1, 0, {
+      id: 'w',
+      type: 'system',
+      timestamp: 5000,
+      systemData: {
+        eventType: 'LEAD_WOKEN',
+        details: JSON.stringify([
+          { subagentId: 'sa-1', agentName: 'Counter', reason: 'FINISHED', parentToolCallId: 'call-1', question: '' },
+          { subagentId: 'sa-2', agentName: 'Writer', reason: 'ASKS', parentToolCallId: 'call-2', question: 'Welche Veranstaltung?' },
+          { subagentId: 'sa-3', agentName: 'Lister', reason: 'FAILED', parentToolCallId: 'call-3', question: '' },
+        ]),
+      },
+    })
+    const messages = turnsJsonToMessages(JSON.stringify(named))
+    expect(messages.find((m) => m.type === 'notice')).toMatchObject({
+      kind: 'lead_woken',
+      woken: [{ subagentId: 'sa-1', reason: 'FINISHED' }, { subagentId: 'sa-2', reason: 'ASKS' }, { subagentId: 'sa-3', reason: 'FAILED' }],
+    })
+
+    const de = bundle('de')
+    const text = render(messages, false, 'summary', 'de').replace(/<[^>]+>/g, '')
+    expect(text).toContain(`sa-1 (Counter) ${de.wokenFinished}`)
+    expect(text).toContain(`sa-2 (Writer) ${de.wokenAsks} Welche Veranstaltung?`)
+    expect(text).toContain(`sa-3 (Lister) ${de.wokenFailed}`)
+    expect(text).toContain(de.leadWokenContinues)
+    expect(text).not.toContain(de.leadWoken)
+  })
+
+  it('names them live as well, and says the old sentence for a log without names', () => {
+    const live = build([
+      { type: 'ADD_USER', id: 'u1', text: 'Recherchiere X im Hintergrund.' },
+      {
+        type: 'ADD_NOTICE',
+        kind: 'lead_woken',
+        detail: '',
+        woken: [{ subagentId: 'sa-1', agentName: 'Counter', reason: 'CANCELLED', parentToolCallId: 'call-1', question: '' }],
+      },
+    ])
+    expect(render(live, false).replace(/<[^>]+>/g, '')).toContain(`sa-1 (Counter) ${labels.wokenCancelled}`)
+
+    const old = build([{ type: 'ADD_NOTICE', kind: 'lead_woken', detail: '', woken: [] }])
+    expect(render(old, false)).toContain(labels.leadWoken)
+  })
+
   it('opens a turn of its own live as well', () => {
     const messages = build([
       { type: 'ADD_USER', id: 'u1', text: 'Recherchiere X im Hintergrund.' },

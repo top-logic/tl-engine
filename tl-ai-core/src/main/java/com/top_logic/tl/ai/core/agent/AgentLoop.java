@@ -48,6 +48,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInboxBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
@@ -468,16 +469,27 @@ public class AgentLoop {
 	 * @return Whether anything was delivered.
 	 */
 	public static boolean injectSubagentResults(Conversation conversation, ToolContext context) {
+		return !injectSubagentNews(conversation, context).isEmpty();
+	}
+
+	/**
+	 * Delivers what the subagents of the bound registry have to say, as
+	 * {@link #injectSubagentResults(Conversation, ToolContext)} does, and says who said what.
+	 *
+	 * @return The news delivered: the ended subagents in the order they were started, then the asking
+	 *         ones; empty when nothing was delivered.
+	 */
+	public static List<SubagentNews> injectSubagentNews(Conversation conversation, ToolContext context) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
-			return false;
+			return List.of();
 		}
 		List<SubagentJob> finished = registry.takeUndeliveredResults();
 		// A subagent's question to this run travels the same way: it is news from a worker, it waits
 		// in the same registry, and it is answered with reply_to_subagent.
 		List<SubagentJob> asking = registry.takeUndeliveredQuestions();
 		if (finished.isEmpty() && asking.isEmpty()) {
-			return false;
+			return List.of();
 		}
 		if (context != null) {
 			// The results are this run's from now on, and so is what they rest on.
@@ -493,7 +505,14 @@ public class AgentLoop {
 		if (log != null) {
 			log.recordSubagentResultsDelivered(text);
 		}
-		return true;
+		List<SubagentNews> news = new ArrayList<>();
+		for (SubagentJob job : finished) {
+			news.add(SubagentNews.ended(job));
+		}
+		for (SubagentJob job : asking) {
+			news.add(SubagentNews.asking(job));
+		}
+		return news;
 	}
 
 	/**

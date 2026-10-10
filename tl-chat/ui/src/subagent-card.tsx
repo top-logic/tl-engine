@@ -23,6 +23,8 @@ export interface SubagentCardModel {
   /** The run its recorded part names, for a subagent the server holds no job for any more. */
   childRunId?: string
   hasTranscript: boolean
+  /** The lead's call that started it; with the id, what a line pointing at the card finds it by. */
+  parentToolCallId?: string
 }
 
 /**
@@ -65,6 +67,7 @@ export function cardsForTurn(
         durationMs: job.durationMs,
         childRunId: ref?.childRunId || job.childRunId || undefined,
         hasTranscript: job.hasTranscript,
+        parentToolCallId: parent,
       },
     })
   }
@@ -83,6 +86,7 @@ export function cardsForTurn(
         durationMs: 0,
         childRunId: ref.childRunId || undefined,
         hasTranscript: Boolean(ref.childRunId),
+        parentToolCallId: ref.parentToolCallId,
       },
     })
   }
@@ -160,7 +164,12 @@ export function SubagentCard({
   }
 
   return (
-    <section className={`subagent-card status-${card.status.toLowerCase()}`} aria-label={card.agentName}>
+    <section
+      className={`subagent-card status-${card.status.toLowerCase()}`}
+      aria-label={card.agentName}
+      data-subagent-id={card.subagentId}
+      data-parent-call={card.parentToolCallId ?? ''}
+    >
       <button type="button" className="subagent-card-head" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         <span className={`subagent-chip${active ? ' is-active' : ''}`}>{statusLabel(card.status, labels)}</span>
         <strong className="subagent-card-agent">{card.agentName}</strong>

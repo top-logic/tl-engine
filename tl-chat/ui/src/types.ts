@@ -140,6 +140,19 @@ export interface NoticeMessage {
    */
   detail: string
   timestamp: number
+  /** For `lead_woken`: which subagents reported back and why; absent in a log written before #721. */
+  woken?: WokenSubagent[]
+}
+
+/** One subagent whose news a lead turn opens with (`SubagentNews` on the server). */
+export interface WokenSubagent {
+  subagentId: string
+  agentName: string
+  reason: 'FINISHED' | 'FAILED' | 'CANCELLED' | 'ASKS'
+  /** The lead's call that started it, where its card stands; empty if unknown. */
+  parentToolCallId: string
+  /** For `ASKS`, the start of the question; plain text. */
+  question: string
 }
 
 /**

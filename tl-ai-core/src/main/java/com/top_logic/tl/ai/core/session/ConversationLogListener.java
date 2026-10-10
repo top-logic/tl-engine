@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -162,6 +163,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleRunCompleted(e);
 		} else if (event instanceof AgentEvent.LeadMessageDelivered e) {
 			recordLeadMessage(e.text());
+		} else if (event instanceof AgentEvent.LeadWoken e) {
+			recordLeadWoken(e);
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
 		} else if (event instanceof AgentEvent.ContextComposition e) {
@@ -707,6 +710,20 @@ public class ConversationLogListener implements AgentEventListener {
 		turn.addAssistantPart(new Part.SystemPart(
 			UUID.randomUUID().toString(), Instant.now(),
 			Part.SystemEventType.LEAD_MESSAGE, text));
+	}
+
+	/**
+	 * Records which subagents' news a lead turn no message of the user started opens with, so that a
+	 * reloaded chat says who reported back and why, as the live one did.
+	 */
+	private void recordLeadWoken(AgentEvent.LeadWoken e) {
+		Turn turn = _log.currentTurn();
+		if (turn == null || e.news().isEmpty()) {
+			return;
+		}
+		turn.addAssistantPart(new Part.SystemPart(
+			UUID.randomUUID().toString(), Instant.now(),
+			Part.SystemEventType.LEAD_WOKEN, SubagentNews.toJson(e.news())));
 	}
 
 	/**

@@ -2145,6 +2145,46 @@
   text-decoration: underline;
 }
 
+/*
+ * The line of a turn subagents started (#721): one entry per subagent, its name a link to its card.
+ * The question after "asks:" is the subagent's own text and may be long; it wraps rather than
+ * widening the thread.
+ */
+.woken-list {
+  list-style: none;
+  margin: 0 0 0.125rem;
+  padding: 0;
+}
+
+.woken-list li {
+  overflow-wrap: anywhere;
+}
+
+.woken-link {
+  background: none;
+  border: 0;
+  color: var(--chat-link);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+}
+
+.woken-link:hover {
+  text-decoration: underline;
+}
+
+.woken-question {
+  color: var(--text-primary);
+}
+
+/* The card a woken line pointed at, marked for a moment so the eye finds it after the jump. */
+.subagent-card.is-highlighted {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  transition: outline-color 0.6s ease-out;
+}
+
 .jump-latest {
   position: absolute;
   left: 50%;

@@ -258,6 +258,16 @@ const EN = {
   interrupted: 'The server was restarted before this reply was finished. Send your message again to continue.',
   /** A turn no message of the user started: subagents finished or asked the agent something. */
   leadWoken: 'Subagents reported back. The agent continues on its own.',
+  /** What one subagent of such a turn did, after its name: "sa-2 (Counter) is done". */
+  wokenFinished: 'is done',
+  wokenFailed: 'failed',
+  wokenCancelled: 'was cancelled',
+  /** Followed by the start of the question. */
+  wokenAsks: 'asks:',
+  /** Ends the line that names the subagents. */
+  leadWokenContinues: 'The agent continues on its own.',
+  /** The accessible name of a subagent's name in that line, which scrolls to its card. */
+  wokenShowCard: (name: string) => `Show the card of ${name}`,
   /** The agent has been started for subagents' news as often as it may without the user. */
   leadWakesExhausted: 'More subagent results are waiting. The agent reads them with your next message.',
 
@@ -529,6 +539,12 @@ const DE: Bundle = {
   cancelled: 'Abgebrochen.',
   interrupted: 'Der Server wurde neu gestartet, bevor diese Antwort fertig war. Sende deine Nachricht noch einmal, um weiterzumachen.',
   leadWoken: 'Subagenten haben sich gemeldet. Der Agent macht von sich aus weiter.',
+  wokenFinished: 'ist fertig',
+  wokenFailed: 'ist fehlgeschlagen',
+  wokenCancelled: 'wurde abgebrochen',
+  wokenAsks: 'fragt:',
+  leadWokenContinues: 'Der Agent macht von sich aus weiter.',
+  wokenShowCard: (name: string) => `Karte von ${name} zeigen`,
   leadWakesExhausted: 'Weitere Ergebnisse von Subagenten warten. Der Agent liest sie mit deiner nächsten Nachricht.',
 
   sideRail: 'Leiste',

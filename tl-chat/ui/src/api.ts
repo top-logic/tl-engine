@@ -17,6 +17,7 @@ import type {
   SubagentStatus,
   TokenUsage,
   ToolCallStatus,
+  WokenSubagent,
 } from './types'
 
 export function apiBase(): string {
@@ -572,6 +573,34 @@ function subagentStatus(status: string | undefined): SubagentStatus {
   }
 }
 
+/**
+ * The subagents a wake names, from the server's frame or the recorded part, keeping only well-formed
+ * entries: the text is the server's, but a log of another version must not break the transcript.
+ */
+export function wokenList(value: unknown): WokenSubagent[] {
+  if (!Array.isArray(value)) return []
+  const reasons = ['FINISHED', 'FAILED', 'CANCELLED', 'ASKS']
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .filter((item) => typeof item.subagentId === 'string' && item.subagentId !== '')
+    .map((item) => ({
+      subagentId: String(item.subagentId),
+      agentName: typeof item.agentName === 'string' ? item.agentName : '',
+      reason: (reasons.includes(String(item.reason)) ? item.reason : 'FINISHED') as WokenSubagent['reason'],
+      parentToolCallId: typeof item.parentToolCallId === 'string' ? item.parentToolCallId : '',
+      question: typeof item.question === 'string' ? item.question : '',
+    }))
+}
+
+function parseJsonArray(text: string | undefined): unknown {
+  if (!text) return []
+  try {
+    return JSON.parse(text)
+  } catch {
+    return []
+  }
+}
+
 /** Whether a recorded turn was started for subagents' news: its first part is their delivery. */
 function opensWithSubagentNews(turn: PersistedTurn): boolean {
   const first = (turn.assistantParts ?? [])[0]
@@ -596,7 +625,18 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
       msgs.push({ type: 'user', id: `${turn.id}-u`, text: userText, timestamp: turn.timestamp })
     } else if (opensWithSubagentNews(turn)) {
       // Started by subagents reporting back, not by the user: drawn as the live wake line is.
-      msgs.push({ type: 'notice', id: `${turn.id}-w`, kind: 'lead_woken', detail: '', timestamp: turn.timestamp })
+      const recorded = (turn.assistantParts ?? []).find(
+        (part) => part.type === 'system' && part.systemData?.eventType === 'LEAD_WOKEN',
+      )
+      const woken = wokenList(parseJsonArray(recorded?.systemData?.details))
+      msgs.push({
+        type: 'notice',
+        id: `${turn.id}-w`,
+        kind: 'lead_woken',
+        detail: '',
+        timestamp: turn.timestamp,
+        ...(woken.length ? { woken } : {}),
+      })
     }
     // "Worked for" on a restored turn is measured the same way as on a live one: from when the turn
     // started to its last recorded part. Turns whose parts carry no later stamp show no duration

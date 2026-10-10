@@ -556,8 +556,10 @@ public sealed interface AgentEvent {
 	 * @param timestamp  when the lead was woken
 	 * @param finished   how many subagents' results the turn opens with
 	 * @param asking     how many subagents' questions it opens with
+	 * @param news       which subagents reported back, and why
 	 */
-	record LeadWoken(String runId, int turnNumber, Instant timestamp, int finished, int asking)
+	record LeadWoken(String runId, int turnNumber, Instant timestamp, int finished, int asking,
+			java.util.List<com.top_logic.tl.ai.core.agent.subagent.SubagentNews> news)
 			implements AgentEvent {}
 
 	/**

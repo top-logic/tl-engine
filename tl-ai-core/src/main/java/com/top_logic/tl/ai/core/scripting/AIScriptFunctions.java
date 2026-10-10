@@ -998,7 +998,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * A run still going on in the session is asked to stop first; the deletion then cascades over
 	 * the session's tasks, its interaction requests and its executions. It also tells the open
 	 * windows, which is what drops the deleted chat out of a list and out of the window's
-	 * in-memory chat state. Deletion cannot be undone.
+	 * in-memory chat state. Deletion cannot be undone. A session that is already gone answers
+	 * {@code true} at once: the call wanted it deleted, and it is deleted, so there is nothing
+	 * left to delete.
 	 * </p>
 	 *
 	 * <p>
@@ -1015,6 +1017,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @see #sessionRename(Object, String) The same ownership check.
 	 */
 	public static boolean sessionDelete(Object session) {
+		AgentSession resolved = unwrapSession(session);
+		if (resolved != null && !resolved.tValid()) {
+			// The session is already gone, which is what the call wanted; deleting it again would
+			// only throw.
+			return true;
+		}
 		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
 		return true;
 	}
@@ -1148,6 +1156,24 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The given value as an {@link AgentSession}, or <code>null</code> when it is not one.
+	 *
+	 * <p>
+	 * A one-element collection unwraps to its single element, so that a channel that hands over a
+	 * list of one still names the session. No ownership check here: the callers decide what to do
+	 * with the result.
+	 * </p>
+	 */
+	private static AgentSession unwrapSession(Object session) {
+		AgentSession resolved = session instanceof AgentSession found ? found : null;
+		if (resolved == null && session instanceof Collection<?> many && many.size() == 1) {
+			Object only = many.iterator().next();
+			resolved = only instanceof AgentSession found ? found : null;
+		}
+		return resolved;
+	}
+
+	/**
 	 * The given value as an {@link AgentSession} the acting account may change.
 	 *
 	 * <p>
@@ -1159,11 +1185,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 */
 	private static AgentSession ownedSession(Object session) {
-		AgentSession resolved = session instanceof AgentSession found ? found : null;
-		if (resolved == null && session instanceof Collection<?> many && many.size() == 1) {
-			Object only = many.iterator().next();
-			resolved = only instanceof AgentSession found ? found : null;
-		}
+		AgentSession resolved = unwrapSession(session);
 		if (resolved == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_SESSION);
 		}

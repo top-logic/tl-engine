@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
@@ -92,6 +93,31 @@ public class ChatHistoryService {
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to create chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
+		}
+	}
+
+	/**
+	 * Changes the session metadata in one step, see
+	 * {@link AgentExecutionStore#updateMetadata(AgentSession, UnaryOperator)}.
+	 *
+	 * @param session
+	 *        The chat whose metadata changes.
+	 * @param change
+	 *        Receives the stored metadata JSON ({@code null} when none was stored yet) and returns
+	 *        the JSON to store.
+	 */
+	public static void updateMetadata(TLObject session, UnaryOperator<String> change) {
+		try {
+			store().updateMetadata((AgentSession) session, change);
+		} catch (CancelledWriteException ex) {
+			// Expected: cancelling a run interrupts its thread, which ends the wait for the
+			// agent-data writer. The metadata write is queued and still commits - this is not a
+			// failure and must not be logged as one.
+			Logger.info("Chat run cancelled; session metadata is saved without waiting for it.",
+				ChatHistoryService.class);
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to save chat session metadata: " + ex.getMessage(), ex,
+				ChatHistoryService.class);
 		}
 	}
 

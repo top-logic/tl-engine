@@ -61,6 +61,7 @@ import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
@@ -314,6 +315,16 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	@Override
+	public void sendApprovalMode(ApprovalMode mode) {
+		enqueue("approval_mode", approvalModeFrame(mode));
+	}
+
+	/** The data of an {@code approval_mode} frame. */
+	private static String approvalModeFrame(ApprovalMode mode) {
+		return "{\"mode\":\"" + mode.name() + "\"}";
+	}
+
+	@Override
 	public void sendWakesExhausted(int wakes) {
 		enqueue("lead_wakes_exhausted", DtoMapper.toJson(LeadWakesExhaustedEvent.create().setWakes(wakes)));
 	}
@@ -393,8 +404,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
 		}
 
-		String mode = _tracker.getApprovalMode().name();
-		sendEvent("approval_mode", "{\"mode\":\"" + mode + "\"}");
+		sendEvent("approval_mode", approvalModeFrame(_tracker.getApprovalMode()));
 	}
 
 	/**

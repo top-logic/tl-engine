@@ -598,6 +598,13 @@ message ChatSessionDetailResponse {
 	string lastEffort;
 
 	/**
+	 * Whether this chat approves tools by itself: <code>AUTO_APPROVE</code> or <code>MANUAL</code>,
+	 * as the server now holds it for the window that loaded the chat. The chat's switch shows
+	 * this, so it never claims a mode the runs of this chat do not have (#658).
+	 */
+	string approvalMode;
+
+	/**
 	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
 	 * breakdown a live one does. Absent for a session whose transcript predates the field.
 	 */

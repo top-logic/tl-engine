@@ -11,6 +11,7 @@ import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
@@ -130,6 +131,27 @@ public interface ChatEventHandler extends AgentEventListener {
 	 */
 	default void sendInteractionResolved(InteractionResolvedEvent event) {
 		// Nothing to take back.
+	}
+
+	/**
+	 * Tells this chat UI that the approval mode of the chat it shows was changed in another window
+	 * of the account.
+	 *
+	 * <p>
+	 * The mode is a setting of the conversation, stored with it the moment it is switched (#658).
+	 * A window that keeps showing the old mode would let its user believe every write is still
+	 * confirmed - or switch it back without meaning to.
+	 * </p>
+	 *
+	 * <p>
+	 * Default: nothing. A chat UI that shows no approval switch has nothing to update.
+	 * </p>
+	 *
+	 * @param mode
+	 *        The chat's approval mode now.
+	 */
+	default void sendApprovalMode(ApprovalMode mode) {
+		// No switch to update.
 	}
 
 	/**

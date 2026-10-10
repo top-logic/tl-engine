@@ -112,21 +112,33 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		int getFetchTimeoutSeconds();
 
 		/**
-		 * Maximum number of bytes {@code webFetch} reads from a page before stopping.
+		 * Maximum number of bytes {@code webFetch} reads from a document before stopping.
+		 *
+		 * <p>
+		 * Of an HTML page or a text, the part up to this size is read. A PDF that is larger is not
+		 * read at all, because a PDF cannot be read without its end.
+		 * </p>
 		 *
 		 * @see #FETCH_MAX_BYTES
 		 */
 		@Name(FETCH_MAX_BYTES)
-		@IntDefault(5_000_000)
+		@IntDefault(WebFetchTool.DEFAULT_MAX_BYTES)
 		int getFetchMaxBytes();
 
 		/**
-		 * Maximum number of characters of extracted text {@code webFetch} returns.
+		 * Maximum number of characters of extracted text one {@code webFetch} answer shows.
+		 *
+		 * <p>
+		 * A longer document is shown in parts of this size. Each answer tells the agent the offset at
+		 * which the next part starts, and the agent reads on with a call that gives this offset. This
+		 * value is the only cap on a {@code webFetch} answer: the agent's own limit on the size of a
+		 * tool answer does not apply to it, so that the agent loop does not cut a part in the middle.
+		 * </p>
 		 *
 		 * @see #FETCH_MAX_CHARS
 		 */
 		@Name(FETCH_MAX_CHARS)
-		@IntDefault(50_000)
+		@IntDefault(WebFetchTool.DEFAULT_MAX_CHARS)
 		int getFetchMaxChars();
 
 		/**
@@ -275,7 +287,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	}
 
 	/**
-	 * Maximum number of characters of extracted text returned per fetch.
+	 * Maximum number of characters of extracted text one fetch answer shows.
 	 */
 	public int getFetchMaxChars() {
 		return getConfig().getFetchMaxChars();

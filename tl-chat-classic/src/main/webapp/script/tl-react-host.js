@@ -19,12 +19,16 @@
  *    head markup (ClientResources), in their order, then mounts the React controls present.
  * 2. Loads every stylesheet of that markup as a constructable sheet wrapped in
  *    "@layer tl-react { @scope (host, portal) { ... } }", so that no React rule reaches a classic
- *    element. Inside the scope ":root" means the scope root and "html"/"body" mean the host, which
+ *    element. A sheet the React page imports into a cascade layer ("@import url(...) layer(tl)")
+ *    is fetched and nested as that layer inside tl-react, since a constructable sheet ignores
+ *    @import; the engine's sheets thereby rank below the unlayered ones, as on a React page.
+ *    Inside the scope ":root" means the scope root and "html"/"body" mean the host, which
  *    is where the React page's document-level rules belong when the document is not theirs. Both are
  *    written with ":scope", and a rule keyed on a theme attribute ("[data-theme=dark]") gets a
  *    ":scope" variant: the host carries those attributes, and a selector without ":scope" never
  *    matches the scope root.
- *    @font-face, @keyframes and the like cannot stand in @scope and are kept beside it.
+ *    @font-face, @keyframes, the page's layer order statement and the like cannot stand in @scope
+ *    and are kept beside it.
  * 3. Adds one unlayered reset that reverts, inside the scope, every declaration of the unlayered
  *    (classic) stylesheets back to the React layer - so "button:focus" and similar rules of the
  *    classic theme no longer recolour React controls.
@@ -67,7 +71,8 @@
 			|| (window.CSSPropertyRule && rule instanceof CSSPropertyRule)
 			|| (window.CSSCounterStyleRule && rule instanceof CSSCounterStyleRule)
 			|| (window.CSSFontFeatureValuesRule && rule instanceof CSSFontFeatureValuesRule)
-			|| (window.CSSFontPaletteValuesRule && rule instanceof CSSFontPaletteValuesRule);
+			|| (window.CSSFontPaletteValuesRule && rule instanceof CSSFontPaletteValuesRule)
+			|| (window.CSSLayerStatementRule && rule instanceof CSSLayerStatementRule);
 	}
 
 	/**
@@ -134,8 +139,21 @@
 		}
 	}
 
-	/** One stylesheet of the React layer, scoped to the hosts and portals. */
-	function scopedSheet(text, baseURL) {
+	/**
+	 * A stylesheet the React page imports into a cascade layer: its <style> holds nothing but
+	 * '@import url("...") layer(name);'. A constructable sheet ignores @import, so the bridge fetches
+	 * the sheet itself.
+	 */
+	var LAYERED_IMPORT = /^\s*@import\s+url\(\s*(["']?)([^"')]+)\1\s*\)\s+layer\(\s*([\w-]+)\s*\)\s*;\s*$/;
+
+	/**
+	 * One stylesheet of the React layer, scoped to the hosts and portals.
+	 *
+	 * @param layer The cascade layer the React page puts the sheet into, or null for an unlayered
+	 *        sheet. It becomes a layer nested in the React layer, so that the engine's layered
+	 *        sheets rank below the unlayered ones here as they do on a React page.
+	 */
+	function scopedSheet(text, baseURL, layer) {
 		var parsed = new CSSStyleSheet({ baseURL: baseURL });
 		parsed.replaceSync(text);
 		var hoisted = [];
@@ -151,9 +169,10 @@
 				scoped.push(rule.cssText);
 			}
 		}
+		var open = layer ? '@layer tl-react { @layer ' + layer + ' { ' : '@layer tl-react { ';
+		var close = layer ? '\n} } }' : '\n} }';
 		var sheet = new CSSStyleSheet({ baseURL: baseURL });
-		sheet.replaceSync('@layer tl-react { ' + hoisted.join('\n') + '\n' + SCOPE + ' {\n'
-			+ scoped.join('\n') + '\n} }');
+		sheet.replaceSync(open + hoisted.join('\n') + '\n' + SCOPE + ' {\n' + scoped.join('\n') + close);
 		return sheet;
 	}
 
@@ -213,10 +232,18 @@
 	 */
 	function loadStyles(nodes) {
 		var loads = nodes.map(function(node) {
+			var layer = null;
+			var href;
 			if (node.nodeName === 'STYLE') {
-				return Promise.resolve(scopedSheet(node.textContent, document.baseURI));
+				var imported = LAYERED_IMPORT.exec(node.textContent);
+				if (!imported) {
+					return Promise.resolve(scopedSheet(node.textContent, document.baseURI, null));
+				}
+				href = new URL(imported[2], document.baseURI).href;
+				layer = imported[3];
+			} else {
+				href = new URL(node.getAttribute('href'), document.baseURI).href;
 			}
-			var href = new URL(node.getAttribute('href'), document.baseURI).href;
 			return fetch(href, { credentials: 'same-origin' })
 				.then(function(response) {
 					if (!response.ok) {
@@ -225,7 +252,7 @@
 					return response.text();
 				})
 				.then(function(text) {
-					return scopedSheet(text, href);
+					return scopedSheet(text, href, layer);
 				});
 		});
 		return Promise.all(loads).then(function(sheets) {

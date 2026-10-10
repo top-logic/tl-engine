@@ -192,6 +192,7 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		StringWriter buffer = new StringWriter();
 		TagWriter head = new TagWriter(buffer);
 		ClientResources resources = ClientResources.getInstance();
+		resources.writeLayerOrder(head);
 		resources.writeScriptRefs(head, contextPath);
 		UIThemeService.getInstance().writeThemeStyles(head);
 		resources.writeStyleRefs(head, contextPath);

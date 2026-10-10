@@ -102,6 +102,10 @@ source env.sh
 mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.injection.e2e=true -Dtest='TestPromptInjection*'
 ```
 
+`TestResearchInjection` uses the same gate for a research worker in front of a hostile page and search
+result, but against an OpenAI model: it needs `OPENAI_API_KEY`, and `-Dtl.ai.injection.openai.model=...`
+chooses the model (default `gpt-5.6-luna`).
+
 ### Vector-index end-to-end test
 
 `VectorIndexIntegrationTest` embeds text with a real Mistral model and stores the vectors in a real
@@ -420,6 +424,17 @@ not only by asking the engine. It composes with `BrowserToolsService`'s installa
 the unconditional SSRF check. Configure nothing and nothing changes. Administrators are **not** exempt
 here, unlike in #392 - this is a statement about the destination, not about the account. See
 `doc/security/browsing-governance.md`.
+
+**A worker opens only addresses it was given (#736).** Under `url-provenance` on `WebToolsService`
+(default `SUBAGENTS`: every run another run started) `webFetch` and `browserNavigate` refuse an address
+that the run's user or lead did not write, that no search returned and that no page it read links to -
+so an injected page cannot make a research worker write its task or findings into an address. The
+ledger is `SeenUrls` on the run's `ReadingList`: `AgentLoop` adds the addresses of the user's and the
+lead's messages at each turn start (not framework notices, subagent reports or summaries), the web tools
+add search result addresses and page links (`UrlProvenance.record*`). Never add addresses from a tool
+answer that echoes its arguments - the model could launder a composed address through it.
+`TestUrlProvenance` pins the rule, `TestResearchInjection` (behind `-Dtl.ai.injection.e2e=true`, OpenAI)
+puts a real model in front of it.
 
 ### Served binaries: two routes, two rules
 

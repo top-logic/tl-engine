@@ -149,11 +149,16 @@ public class BrowserTool {
 		if (url == null || url.isBlank()) {
 			return "Error: url is required.";
 		}
+		String trimmed = url.trim();
+		// Needs no network and no browser: an address this run was not given is not opened.
+		String unseen = UrlProvenance.refusal(trimmed);
+		if (unseen != null) {
+			return unseen;
+		}
 		BrowserToolsService service = BrowserToolsService.getInstance();
 		if (service == null) {
 			return "Error: the browser tool service is not available.";
 		}
-		String trimmed = url.trim();
 		URI uri;
 		try {
 			uri = URI.create(trimmed);
@@ -196,7 +201,7 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
-		return execute(service, () -> service.navigate(sessionKey, trimmed), false);
+		return readPage(execute(service, () -> service.navigate(sessionKey, trimmed), false));
 	}
 
 	/**
@@ -227,7 +232,7 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
-		return execute(service, () -> service.snapshot(sessionKey), false);
+		return readPage(execute(service, () -> service.snapshot(sessionKey), false));
 	}
 
 	/**
@@ -342,7 +347,7 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
-		return execute(service, () -> service.back(sessionKey), true);
+		return readPage(execute(service, () -> service.back(sessionKey), true));
 	}
 
 	/**
@@ -720,6 +725,22 @@ public class BrowserTool {
 	 * Auto-generates a screenshot filename {@code <host>-<yyyyMMdd-HHmmss>.png} from the captured URL,
 	 * falling back to {@code screenshot} for the host when it cannot be parsed.
 	 */
+	/**
+	 * Records the addresses on a page this run was shown, for the URL provenance rule, and returns
+	 * the page unchanged.
+	 *
+	 * <p>
+	 * Every address in the answer counts: the page's links and its own address. An error answer adds
+	 * none the run did not have, because it names at most the address the run was allowed to open.
+	 * </p>
+	 *
+	 * @see UrlProvenance
+	 */
+	private static String readPage(String answer) {
+		UrlProvenance.recordAllIn(answer);
+		return answer;
+	}
+
 	private static String autoName(String url) {
 		String host = null;
 		try {

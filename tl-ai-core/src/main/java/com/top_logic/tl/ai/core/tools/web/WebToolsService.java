@@ -14,6 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -83,6 +84,13 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		 * @see #getBrowsing()
 		 */
 		String BROWSING = "browsing";
+
+		/**
+		 * Configuration property name for the runs the URL provenance rule applies to.
+		 *
+		 * @see #getUrlProvenance()
+		 */
+		String URL_PROVENANCE = "url-provenance";
 
 		/**
 		 * The search engine backing {@code webSearch}. If unset, web search is unavailable.
@@ -155,6 +163,24 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		@Name(BROWSING)
 		@ItemDefault
 		BrowsingPolicyConfig getBrowsing();
+
+		/**
+		 * Which agent runs may open only the web addresses they were given.
+		 *
+		 * <p>
+		 * A run the rule applies to opens with {@code webFetch} or the browser only an address that its
+		 * user or lead wrote, that a web search returned, or that a page it read links to. An address
+		 * the agent wrote itself is refused. This stops an injected page from making the agent send
+		 * data out in an address of the attacker's choice. The default restricts the runs that
+		 * another run started, such as research workers, which read untrusted pages and have nobody
+		 * watching them.
+		 * </p>
+		 *
+		 * @see #URL_PROVENANCE
+		 */
+		@Name(URL_PROVENANCE)
+		@FormattedDefault("SUBAGENTS")
+		UrlProvenanceScope getUrlProvenance();
 	}
 
 	private static volatile WebToolsService _instance;
@@ -291,6 +317,13 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	 */
 	public int getFetchMaxChars() {
 		return getConfig().getFetchMaxChars();
+	}
+
+	/**
+	 * Which agent runs may open only the web addresses they were given.
+	 */
+	public UrlProvenanceScope getUrlProvenance() {
+		return getConfig().getUrlProvenance();
 	}
 
 	/**

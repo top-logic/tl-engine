@@ -177,6 +177,12 @@
 				</search-engine>
 				-->
 
+				<!-- URL PROVENANCE (issue #736). url-provenance="SUBAGENTS" is the default and need
+				     not be written: a run another run started (a research worker, a delegated agent)
+				     opens with webFetch or the browser only an address its user or lead gave, that a
+				     search returned, or that a page it read links to. "ALL" applies the rule to the
+				     chat's own agent too, "OFF" to no run. See doc/security/browsing-governance.md. -->
+
 				<!-- BROWSING GOVERNANCE (issue #347). Which origins an agent run may reach,
 				     resolved per security role. Nothing is configured here, and that is the
 				     shipped default: with no <browsing> section every origin that passes the

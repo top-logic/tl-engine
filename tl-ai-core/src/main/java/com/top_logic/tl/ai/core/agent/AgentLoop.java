@@ -51,12 +51,14 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
+import com.top_logic.tl.ai.core.citation.SeenUrls;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TokenEstimator;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -330,6 +332,49 @@ public class AgentLoop {
 			AgentEventListener listener, String runId, int turn) {
 		injectSubagentResults(conversation, context);
 		injectLeadMessages(conversation, listener, runId, turn);
+		recordGivenAddresses(conversation, context.readingList().seenUrls());
+	}
+
+	/**
+	 * The start of every text the framework puts into the user's role: subagent results and
+	 * questions, the notice after an empty reply, the rollback notice.
+	 */
+	private static final String FRAMEWORK_NOTICE = "[Framework notice]";
+
+	/**
+	 * Records the web addresses that the run's user or lead wrote, for the URL provenance rule.
+	 *
+	 * <p>
+	 * Every message in the user's role is read once, at the start of the turn after it arrived - the
+	 * user's message, a background subagent's task, a message of its lead. What the framework writes
+	 * into that role is not read: a subagent's report repeats what the subagent read, and a summary of
+	 * compacted history is the model's own text, and neither is an address somebody gave this run.
+	 * </p>
+	 *
+	 * @see SeenUrls
+	 */
+	static void recordGivenAddresses(Conversation conversation, SeenUrls seen) {
+		for (Message message : conversation.messages()) {
+			if (message instanceof UserMessage user && seen.firstLook(user.id()) && givenByUserOrLead(user)) {
+				for (ContentPart part : user.content()) {
+					if (part instanceof TextContent text) {
+						seen.addAllIn(text.text());
+					}
+				}
+			}
+		}
+	}
+
+	private static boolean givenByUserOrLead(UserMessage message) {
+		if (SummarizingStrategy.isSummary(message)) {
+			return false;
+		}
+		for (ContentPart part : message.content()) {
+			if (part instanceof TextContent text && text.text().startsWith(FRAMEWORK_NOTICE)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

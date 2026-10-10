@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.top_logic.basic.func.Function0;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelGrant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelRoleAccess;
 
@@ -37,10 +37,10 @@ public class AllModelNames extends Function0<List<String>> {
 
 	/** The names of the models the application has configured, empty while no provider service runs. */
 	static Collection<String> configuredModelNames() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return List.of();
 		}
-		return LLMService.getInstance().getConfiguredModelNames();
+		return LLMProviderService.getInstance().getConfiguredModelNames();
 	}
 
 	/**

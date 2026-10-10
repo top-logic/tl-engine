@@ -8,7 +8,7 @@ package com.top_logic.tl.ai.core.tools.perception;
 import java.util.Locale;
 import java.util.Objects;
 
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 
 /**
@@ -33,7 +33,7 @@ public record ModelPerception(String model, ModelInfo modelInfo) {
 	}
 
 	/**
-	 * Looks up the given model in the catalogue via {@link LLMService}.
+	 * Looks up the given model in the catalogue via {@link LLMProviderService}.
 	 *
 	 * <p>
 	 * When the service is not running or does not know the model, capability answers degrade to
@@ -48,7 +48,7 @@ public record ModelPerception(String model, ModelInfo modelInfo) {
 		if (model == null || model.isBlank()) {
 			return null;
 		}
-		LLMService service = LLMService.getInstance();
+		LLMProviderService service = LLMProviderService.getInstance();
 		return new ModelPerception(model, service == null ? null : service.getModel(model));
 	}
 

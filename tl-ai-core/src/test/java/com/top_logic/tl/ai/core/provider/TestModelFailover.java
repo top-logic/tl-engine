@@ -37,7 +37,6 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMService.AgentExecutionConfig;
 import com.top_logic.tl.ai.core.provider.ProviderException.Kind;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -48,7 +47,7 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  * run with no chain fails exactly as it did before (Gitea #344).
  *
  * <p>
- * Every case starts a real {@link LLMService} on a hand-built configuration whose providers are
+ * Every case starts a real {@link LLMProviderService} on a hand-built configuration whose providers are
  * scripted - each one answers or fails on command - and then runs a real {@link AgentLoop} against
  * it. The routing decision sits between the two, so neither can be faked out of the test.
  * </p>
@@ -64,7 +63,7 @@ public class TestModelFailover extends TestCase {
 	/** Keyed by provider name, so the configuration and the test see the same scripted provider. */
 	private static final Map<String, ScriptedProvider> PROVIDERS = new LinkedHashMap<>();
 
-	private LLMService _service;
+	private LLMProviderService _service;
 
 	/** The agent loop executes inside a TopLogic interaction, as in {@code TestAgentLoop}. */
 	public static Test suite() {
@@ -306,20 +305,19 @@ public class TestModelFailover extends TestCase {
 
 	private void start(FailoverConfig failover, LLMProviderConfig.Config... providers) {
 		@SuppressWarnings("unchecked")
-		LLMService.Config<LLMService> config =
-			(LLMService.Config<LLMService>) TypedConfiguration.newConfigItem(LLMService.Config.class);
+		LLMProviderService.Config<LLMProviderService> config =
+			(LLMProviderService.Config<LLMProviderService>) TypedConfiguration.newConfigItem(
+				LLMProviderService.Config.class);
 		for (LLMProviderConfig.Config provider : providers) {
 			config.getProviders().put(provider.getName(), provider);
 		}
-		AgentExecutionConfig execution = TypedConfiguration.newConfigItem(AgentExecutionConfig.class);
-		set(config, LLMService.Config.AGENT_EXECUTION, execution);
-		set(execution, AgentExecutionConfig.DEFAULT_MODEL, PRIMARY);
-		set(config, LLMService.Config.FAILOVER, failover);
+		set(config, LLMProviderService.Config.FAILOVER, failover);
 		// No model catalog: these cases are about routing, and a catalog would send the start
 		// looking for model metadata none of these invented models has.
-		set(config, LLMService.Config.MODEL_CATALOG, null);
+		set(config, LLMProviderService.Config.MODEL_CATALOG, null);
 
-		LLMService service = new LLMService(new DefaultInstantiationContext(TestModelFailover.class), config);
+		LLMProviderService service =
+			new LLMProviderService(new DefaultInstantiationContext(TestModelFailover.class), config);
 		service.startUp();
 		_service = service;
 	}

@@ -14,10 +14,13 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 
 /**
  * That the arms of the matrix differ in their model and in nothing else.
@@ -49,7 +52,7 @@ public class TestEvalArmsAreComparable extends BasicTestCase {
 				+ "', but its agent is assigned another model. The CSV would then name a model that"
 				+ " never answered.",
 				arm.getModel(),
-				LLMService.getInstance().resolveModelAssignment(arm.getAgent()).model());
+				AgentRuntimeService.getInstance().resolveModelAssignment(arm.getAgent()).model());
 		}
 	}
 
@@ -96,6 +99,9 @@ public class TestEvalArmsAreComparable extends BasicTestCase {
 		return ModuleTestSetup.setupModule(ServiceTestSetup.createSetup(
 			new TestSuite(TestEvalArmsAreComparable.class),
 			TopLogicAgentDefinitions.Module.INSTANCE,
-			LLMService.Module.INSTANCE));
+			LLMProviderService.Module.INSTANCE,
+			AgentRuntimeService.Module.INSTANCE,
+			AgentApplicationService.Module.INSTANCE,
+			AgentPolicyService.Module.INSTANCE));
 	}
 }

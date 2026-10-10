@@ -8,12 +8,15 @@ package com.top_logic.ai.demo;
 import junit.framework.Test;
 
 import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentFactory.RunOverrides;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Cause;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
@@ -116,7 +119,10 @@ public class SecDemoInfrastructureAgentTest extends SecDemoPersonaTest {
 	 */
 	public static Test suite() {
 		return suite(SecDemoInfrastructureAgentTest.class, TopLogicAgentDefinitions.Module.INSTANCE,
-			LLMService.Module.INSTANCE);
+			LLMProviderService.Module.INSTANCE,
+			AgentRuntimeService.Module.INSTANCE,
+			AgentApplicationService.Module.INSTANCE,
+			AgentPolicyService.Module.INSTANCE);
 	}
 
 }

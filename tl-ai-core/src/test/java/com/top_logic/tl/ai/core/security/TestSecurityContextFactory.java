@@ -22,6 +22,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.PermissionDecision;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -37,7 +38,6 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -193,7 +193,7 @@ public class TestSecurityContextFactory extends TestCase {
 	 * An installation that configures nothing gets the behaviour it had before the seam existed.
 	 */
 	public void testDefaultIsConfigured() {
-		LLMService.Config<?> config = TypedConfiguration.newConfigItem(LLMService.Config.class);
+		AgentRuntimeService.Config<?> config = TypedConfiguration.newConfigItem(AgentRuntimeService.Config.class);
 
 		assertNotNull("The property has a default item.", config.getSecurityContext());
 		assertEquals(DefaultSecurityContextFactory.class,

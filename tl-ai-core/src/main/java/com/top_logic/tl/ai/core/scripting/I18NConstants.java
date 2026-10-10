@@ -97,10 +97,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_MODEL_HEALTH_NOT_ADMIN;
 
 	/**
-	 * A model health function was called while the LLM service is not running.
+	 * A model health function was called while the LLM providers are not running.
 	 *
-	 * @en The LLM service is not running, so no model health is known.
-	 * @de Der LLM-Dienst läuft nicht, daher ist kein Modellzustand bekannt.
+	 * @en The LLM providers are not running, so no model health is known.
+	 * @de Die LLM-Anbieter laufen nicht, daher ist kein Modellzustand bekannt.
 	 */
 	public static ResKey ERROR_MODEL_HEALTH_UNAVAILABLE;
 

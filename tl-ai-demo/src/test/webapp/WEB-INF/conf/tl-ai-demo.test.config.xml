@@ -14,10 +14,10 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService"
 			config:override="true"
 		>
-			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 				<providers>
 					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
 						name="mistral"
@@ -32,9 +32,6 @@
 						models="claude-sonnet-4-5-20250929"
 					/>
 				</providers>
-				<agent-execution
-					default-model="mistral-large-latest"
-				/>
 				<model-catalog>
 					<llm-configuration>
 						<model name="mistral-large-latest"
@@ -54,6 +51,12 @@
 					</llm-configuration>
 				</model-catalog>
 			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
+				default-model="mistral-large-latest"
+			/>
 		</config>
 	</services>
 	<configs>

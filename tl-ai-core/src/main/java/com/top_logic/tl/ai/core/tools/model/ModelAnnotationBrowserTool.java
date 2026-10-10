@@ -76,7 +76,7 @@ import de.haumacher.msgbuf.io.StringW;
  *
  * <p>
  * Register this tool via {@link com.top_logic.tl.ai.tool.api.AnnotatedTools} and assign it to an
- * agent through the {@link com.top_logic.tl.ai.core.provider.LLMService} configuration.
+ * agent through the {@link com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions} configuration.
  * </p>
  */
 public class ModelAnnotationBrowserTool {

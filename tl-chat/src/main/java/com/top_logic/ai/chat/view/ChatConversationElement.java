@@ -41,7 +41,7 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService.AllAgentNameOptions;
 
 /**
  * Declarative {@code <chat-conversation/>} element: the transcript and the prompt field as one view

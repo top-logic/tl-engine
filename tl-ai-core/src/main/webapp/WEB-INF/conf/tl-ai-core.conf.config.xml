@@ -23,8 +23,16 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance>
 				<modules>
-					<!-- LLM Provider Registry for AI provider connections -->
-					<module key="com.top_logic.tl.ai.core.provider.LLMService$Module" value="true"/>
+					<!--
+						The four services an agent run reads its configuration from, cut by who sets it
+						(Gitea #691): LLM providers (operations), agent runtime (operations, development),
+						agent application knowledge (development, in the application's source), agent
+						policy (administration).
+					-->
+					<module key="com.top_logic.tl.ai.core.provider.LLMProviderService$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.agent.AgentRuntimeService$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.agent.AgentApplicationService$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.agent.AgentPolicyService$Module" value="true"/>
 					<!-- MCP Server Registry for external MCP connections -->
 					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 					<!-- Agent Definition Service for config-defined agents and skills -->
@@ -278,6 +286,139 @@
 				session-idle-timeout-seconds="300"
 				acquire-timeout-seconds="10"
 			/>
+		</config>
+
+		<!--
+			The four agent services. Shipped here, in WEB-INF/conf, rather than in autoconf: an
+			application overrides a section in its own autoconf file - without config:override, since
+			every map here is keyed and merges by key - and a library file of the name the Service Editor
+			writes would be hidden by the application's.
+
+			They replace LLMService (Gitea #691). A configuration that still names LLMService stops the
+			application from starting, with a message saying where each of its sections now belongs;
+			see tl-ai-core/doc/llm-service-migration.md.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+				<!--
+					Which models exist and how to reach them. An application names its providers in
+					<providers>, the metadata of a model models.dev does not know in
+					<model-catalog><model-overrides>, and where a run goes when its model cannot answer in
+					<failover>. The empty catalog element switches the models.dev fetch on.
+				-->
+				<model-catalog/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+				<!--
+					Which agent runs how. An application names the model its agents run on
+					(default-model, and default-provider when two providers expose it), per agent in
+					<agent-overrides>, the turn limit of an agent that names none (max-turns, 60 when
+					unset), the agent a chat starts with (chat-entry-point) and, if it needs one, its own
+					<security-context>. Every model named here must be exposed by a provider of
+					LLMProviderService, or this service does not start.
+
+					How many agent runs this installation carries at once. Nothing here is limited until
+					it is set: this product runs in applications with a thousand users, and a figure it
+					picked for them would refuse work the installation allowed before the upgrade.
+
+					  chat-workers  how many chat runs run at the same time. 0 (the default) means
+					                as many as arrive - a worker per send. A run thread waits on a
+					                provider almost all of its life, so a ceiling here is about
+					                memory and provider spend in flight, not about CPU.
+					  chat-queue    how many sends may wait for a free worker, once chat-workers
+					                names a ceiling. 0 (the default) is a queue of no fixed length:
+					                a send waits and its answer arrives late, which beats telling
+					                the user to ask again. A positive number bounds the queue and a
+					                send arriving at a full one is refused; -1 keeps no queue at
+					                all, so every send that finds the workers busy is refused.
+
+					What an installation that does want a ceiling writes here:
+
+					  <capacity chat-workers="32" chat-queue="0"/>        (32 at a time, the rest wait)
+					  <capacity chat-workers="32" chat-queue="-1"/>       (32 at a time, the rest refused)
+					  <capacity concurrent-runs-per-account="5"/>         (3 to 5 in a shared installation)
+
+					See tl-ai-core/doc/run-limits.md.
+				-->
+				<capacity/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+				<!--
+					What every agent run is told about the situation it runs in. The harness composes
+					this block once per run and puts it into the system prompt - at the {{environment}}
+					placeholder when the prompt names one, at the end otherwise, so every shipped agent
+					gets it without an edit.
+
+					Its wording is NOT here. It is the resource tl.ai.environment.template
+					(WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties), so that it is
+					translated like every other text this product ships and survives an application
+					that overrides this service wholesale - which is what a Service Editor save does.
+					Set <template> here only to say something different from what the product says.
+
+					Whatever it says, it must not contain anything that changes while a conversation
+					runs: the block sits in front of every request of that conversation and one changed
+					character invalidates the provider's prompt cache for all of them. That is why the
+					date is stated at day granularity and why only stable facts reach {{context}}.
+				-->
+				<environment/>
+				<!--
+					What this application knows about the identifiers a model passes to a tool.
+
+					When a tool cannot resolve one, TidDiagnostics says which kind of wrong identifier
+					it was - a uuid, a printed object, an unknown type, an id of the wrong shape - so
+					that the model corrects itself in one step instead of trying the same string in
+					the next tool. Those classes are the same everywhere and need no configuration.
+
+					What needs configuration is the identifier this application's own users speak: an
+					order number, a ticket code, a part number. Declare one hint per such code; the
+					pattern is matched against the whole identifier, and the explanation continues the
+					sentence that begins with the quoted identifier:
+
+					<object-ids>
+						<hints>
+							<hint pattern="[A-Za-z][A-Za-z0-9]*-[0-9]+"
+								explanation="is a record code. Search for it with sales__search and use the id from the answer."
+							/>
+						</hints>
+					</object-ids>
+
+					gives the model: 'LEAD-014' is a record code. Search for it with sales__search and
+					use the id from the answer.
+				-->
+				<object-ids/>
+				<!--
+					Standing instructions every run of this application is given: <prompt-contributors>.
+					The application context that Albert's TL_init skill writes is one of them, saved by
+					that skill into the application's own source.
+				-->
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+				<!--
+					What a run may cost and what an agent may keep about a person: the token budget of an
+					account, <user-memory>, and the preference text an account gives every agent
+					(user-preferences, max-preferences-length). Nothing is limited until it is set.
+
+					  <budget token-budget="2000000" budget-window-hours="24">
+					      <role-budgets>
+					          <role-budget name="tl.admin" tokens="0"/>     (0 means unlimited)
+					      </role-budgets>
+					  </budget>
+
+					The budget counts what the account's recorded runs consumed, so it needs run
+					recording; reading it costs one pass over the execution rows at every run start.
+					See tl-ai-core/doc/run-limits.md.
+				-->
+				<budget/>
+			</instance>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
@@ -1434,7 +1575,7 @@ When a subagent finishes, its result is delivered to you automatically at the st
 						context - what the application is for, who works with it, its terms and its rules -
 						and saves it, with the user's approval, into the application's source configuration:
 						the TextPromptContributor named "application-context" among the prompt contributors
-						of LLMService. Writing it is a development task, like setting up the agents, so the
+						of AgentApplicationService. Writing it is a development task, like setting up the agents, so the
 						save is only offered where the application runs from its source. The only tool it
 						brings that changes anything is that save; it reads the model with
 						TL_modelExploration. Albert's own write tools stay offered during the run, and the
@@ -1446,7 +1587,7 @@ When a subagent finishes, its result is delivered to you automatically at the st
 						<content><![CDATA[# Writing the application context
 
 <goal>
-You write ONE Markdown document, the application context, and save it with `saveApplicationContext`. It goes into the application's source configuration, and once the LLM service is restarted the agents are given it in their system prompt - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
+You write ONE Markdown document, the application context, and save it with `saveApplicationContext`. It goes into the application's source configuration, and once the agent application service is restarted the agents are given it in their system prompt - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
 
 This is a development task: the person you work with builds the application, and the document becomes part of its source, like the model. Saving is only possible where the application runs from its source; anywhere else you still write the document, and hand it over at the end.
 
@@ -1518,7 +1659,7 @@ Show the complete document in ONE fenced code block, then ask with `askUser(type
 
 Call `saveApplicationContext` with the complete document. The user approves the save and sees the text while doing so.
 
-- Saved: tell the user in a few sentences which file it was saved into (the answer names it), that it takes effect when the LLM service is restarted - in the Service Editor, or by restarting the application - and that the file is part of the application's source and is to be committed. Nothing else is needed: there is no screen to fill in.
+- Saved: tell the user in a few sentences which file it was saved into (the answer names it), that it takes effect when the agent application service is restarted - in the Service Editor, or by restarting the application - and that the file is part of the application's source and is to be committed. Nothing else is needed: there is no screen to fill in.
 - Not offered or refused - outside the development environment, or for an account that may not change the configuration: give the final document in one fenced code block and relay the reason in one sentence.
 - The user declined the approval: ask what to change, and continue with step 4.
 </workflow>
@@ -1694,7 +1835,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 								called has to be in front of the model before it decides to call one,
 								and a skill is loaded after that decision. An installation that keeps
 								no memories offers neither of them however this list reads - see
-								<user-memory> on LLMService.
+								<user-memory> on AgentPolicyService.
 							-->
 							<tool name="user-memory.remember"/>
 							<tool name="user-memory.recall"/>
@@ -2651,7 +2792,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					</factory>
 					<!--
 						remember / recall (Issue #439). Switched off wholesale by
-						<user-memory enabled="false"/> on LLMService, which then also keeps both
+						<user-memory enabled="false"/> on AgentPolicyService, which then also keeps both
 						out of every agent's catalog.
 					-->
 					<factory name="user-memory">
@@ -2662,7 +2803,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<!--
 						readApplicationContext / saveApplicationContext (Issue #667): the tools of TL_init.
 						They read and write the TextPromptContributor named "application-context" of
-						LLMService; the save writes it into the application's source configuration and is
+						AgentApplicationService; the save writes it into the application's source configuration and is
 						only offered in the development environment.
 					-->
 					<factory name="application-context">

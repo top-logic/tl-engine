@@ -46,8 +46,8 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
  * <h2>Why this is not a {@code ManagedClass}</h2>
  *
  * <p>
- * It is a component of {@link com.top_logic.tl.ai.core.provider.LLMService}, reached through
- * {@link com.top_logic.tl.ai.core.provider.LLMService#modelHealth()}, not a service of its own. The
+ * It is a component of {@link com.top_logic.tl.ai.core.provider.LLMProviderService}, reached through
+ * {@link com.top_logic.tl.ai.core.provider.LLMProviderService#modelHealth()}, not a service of its own. The
  * state is keyed by exactly the model names that service routes and is configured in the same
  * {@code <failover>} section, so a second {@link com.top_logic.basic.module.ManagedClass} would add
  * a module to the startup graph and a second place that has to agree about model names, and buy

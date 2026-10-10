@@ -68,7 +68,7 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.MessageHistorySanitizer;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -510,10 +510,10 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private String providerId() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return null;
 		}
-		return LLMService.getInstance().getProviderId(_config.model(), _activeProviderName);
+		return LLMProviderService.getInstance().getProviderId(_config.model(), _activeProviderName);
 	}
 
 	/**
@@ -1949,7 +1949,7 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private static long rateLimitWaitMs() {
-		LLMService service = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
+		LLMProviderService service = LLMProviderService.Module.INSTANCE.isActive() ? LLMProviderService.getInstance() : null;
 		int seconds = service != null ? service.rateLimitWaitSeconds()
 			: AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS;
 		return Math.max(0, seconds) * 1000L;
@@ -1994,7 +1994,7 @@ public class AgentLoop {
 		// one whose health state is the installation's, however it was started. Everything else in
 		// this class asks the module, because the answer there is "is this application configured",
 		// not "is there a service".
-		LLMService service = LLMService.getInstance();
+		LLMProviderService service = LLMProviderService.getInstance();
 		List<ModelTarget> chain = service == null ? List.of() : service.failoverChain(_config.model(), null);
 		return chain.isEmpty() ? List.of(new ModelTarget(_config.model(), null)) : chain;
 	}
@@ -2033,7 +2033,7 @@ public class AgentLoop {
 		if (chain.size() <= 1) {
 			return call.call();
 		}
-		ModelAvailability health = LLMService.getInstance().modelHealth();
+		ModelAvailability health = LLMProviderService.getInstance().modelHealth();
 		String turnToken = ModelAvailability.turnToken(runId, turn);
 		ProviderException pending = null;
 		while (_chainIndex < chain.size()) {
@@ -2108,7 +2108,7 @@ public class AgentLoop {
 	 */
 	private boolean activate(ModelTarget target, ToolContext context, AgentEventListener listener,
 			String runId, int turn) {
-		LLMService service = LLMService.getInstance();
+		LLMProviderService service = LLMProviderService.getInstance();
 		LLMProvider provider;
 		try {
 			provider = service.buildProvider(target.model(), target.provider());

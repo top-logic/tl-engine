@@ -8,10 +8,10 @@ package com.top_logic.tl.ai.core.agent.environment;
 import java.util.List;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 
 /**
- * Reads the {@code <user-memory>} section of the {@link LLMService} configuration.
+ * Reads the {@code <user-memory>} section of the {@link AgentPolicyService} configuration.
  *
  * <p>
  * Every accessor answers without the service, the way {@link EnvironmentSettings} does: a unit
@@ -52,10 +52,10 @@ public class UserMemorySettings {
 		if (overridden != null) {
 			return overridden;
 		}
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!AgentPolicyService.Module.INSTANCE.isActive()) {
 			return DEFAULTS;
 		}
-		UserMemoryConfig configured = LLMService.getInstance().getUserMemoryConfig();
+		UserMemoryConfig configured = AgentPolicyService.getInstance().getUserMemory();
 		return configured == null ? DEFAULTS : configured;
 	}
 
@@ -64,7 +64,7 @@ public class UserMemorySettings {
 	 *
 	 * <p>
 	 * <b>A test seam.</b> Whether an installation keeps memories is a property of the
-	 * {@link LLMService} configuration, and a unit test that wanted to exercise the switched-off
+	 * {@link AgentPolicyService} configuration, and a unit test that wanted to exercise the switched-off
 	 * half would otherwise have to boot that service. Nothing in production calls this - the
 	 * administrator's switch is the {@code <user-memory>} section, and there is no second way to
 	 * set it.

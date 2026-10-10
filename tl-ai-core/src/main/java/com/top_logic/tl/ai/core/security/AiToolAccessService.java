@@ -47,7 +47,7 @@ import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
@@ -104,7 +104,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	// check would silently be skipped on some of them. None of the three is switched on by this -
 	// all three are active by default and none depends on this service, so there is no cycle.
 	TopLogicAgentDefinitions.Module.class,
-	LLMService.Module.class,
+	LLMProviderService.Module.class,
 	McpServerRegistry.Module.class,
 })
 public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessService.Config<?>> {
@@ -299,10 +299,10 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	public static Set<String> knownNames(Dimension dimension) {
 		switch (dimension) {
 			case MODEL:
-				if (!LLMService.Module.INSTANCE.isActive()) {
+				if (!LLMProviderService.Module.INSTANCE.isActive()) {
 					return null;
 				}
-				return new TreeSet<>(LLMService.getInstance().getConfiguredModelNames());
+				return new TreeSet<>(LLMProviderService.getInstance().getConfiguredModelNames());
 			case MCP_SERVER:
 				if (!McpServerRegistry.Module.INSTANCE.isActive()) {
 					return null;

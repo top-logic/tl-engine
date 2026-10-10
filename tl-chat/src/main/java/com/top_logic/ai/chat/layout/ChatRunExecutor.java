@@ -44,8 +44,8 @@ import com.top_logic.tl.ai.core.limits.RunLimitSettings;
  * the application's, nothing to inject and nothing for another component to look up; making it a
  * {@code ConfiguredManagedClass} would add a service every application has to register in order to
  * get a thread pool it cannot do without. What it does need is a <em>configured</em> size, and that
- * lives where the installation's other ceilings live - the {@code <run-limits>} section of
- * {@code LLMService} - so an administrator sets all of them in one place. What this replaces is the
+ * lives where the installation's other ceilings live - the {@code <capacity>} section of
+ * {@code AgentRuntimeService} - so an administrator sets all of them in one place. What this replaces is the
  * {@code static} field in {@code ChatProcessor}, a layout class, which is where the pool did not
  * belong.
  * </p>
@@ -177,7 +177,7 @@ final class ChatRunExecutor {
 	 */
 	private static ThreadPoolExecutor unboundedPool() {
 		Logger.info("Chat agent runs are not limited in number."
-			+ " Set chat-workers in <run-limits> to bound them.", ChatRunExecutor.class);
+			+ " Set chat-workers in <capacity> of AgentRuntimeService to bound them.", ChatRunExecutor.class);
 		return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
 			new SynchronousQueue<>(), new WorkerThreads());
 	}

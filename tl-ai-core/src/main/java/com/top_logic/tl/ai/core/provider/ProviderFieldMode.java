@@ -16,11 +16,11 @@ import com.top_logic.layout.form.model.FieldMode;
  *
  * <p>
  * Receives the model name and the provider serving it (via {@code @Ref(MODEL)} and
- * {@code @Ref(PROVIDER)}), resolves the catalog provider ID via {@link LLMService}, and returns
+ * {@code @Ref(PROVIDER)}), resolves the catalog provider ID via {@link LLMProviderService}, and returns
  * {@link FieldMode#ACTIVE} if the provider matches, {@link FieldMode#INVISIBLE} otherwise.
  * </p>
  */
-abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
+public abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 
 	/**
 	 * The provider IDs for which the field should be visible.
@@ -34,7 +34,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 		if (model == null || model.isBlank()) {
 			return FieldMode.INVISIBLE;
 		}
-		LLMService registry = LLMService.getInstance();
+		LLMProviderService registry = LLMProviderService.getInstance();
 		if (registry == null) {
 			return FieldMode.INVISIBLE;
 		}
@@ -66,7 +66,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 	}
 
 	/**
-	 * Shows field when the model is from an OpenAI or xAI provider.
+	 * Shows field when the model is from an <code>OpenAI</code> or <code>xAI</code> provider.
 	 */
 	public static class OpenAIFieldMode extends ProviderFieldMode {
 		@Override
@@ -90,7 +90,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 			if (model == null || model.isBlank()) {
 				return FieldMode.INVISIBLE;
 			}
-			LLMService registry = LLMService.getInstance();
+			LLMProviderService registry = LLMProviderService.getInstance();
 			if (registry == null) {
 				return FieldMode.INVISIBLE;
 			}

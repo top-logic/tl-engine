@@ -10,7 +10,7 @@
 	the system prompt, below what the application itself states, and tells the model that the
 	application wins where the two disagree.
 
-	The length cap is configuration (LLMService, <environment max-preferences-length>), so it is
+	The length cap is configuration (AgentPolicyService, max-preferences-length), so it is
 	enforced by a constraint on the attribute rather than by this form: a text above it is refused
 	here with a message naming the limit, because the text is sent with every single request.
 

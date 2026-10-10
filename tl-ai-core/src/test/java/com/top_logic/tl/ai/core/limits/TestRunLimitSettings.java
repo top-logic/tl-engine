@@ -15,7 +15,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.limits.RunLimitsConfig.RoleBudget;
+import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 
 /**
  * What an installation allows by default, and how a role budget changes it.
@@ -29,7 +29,7 @@ import com.top_logic.tl.ai.core.limits.RunLimitsConfig.RoleBudget;
  */
 public class TestRunLimitSettings extends TestCase {
 
-	/** Reading the configuration asks {@code LLMService} whether it runs, which needs the modules. */
+	/** Reading the configuration asks {@code AgentRuntimeService} whether it runs, which needs the modules. */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(new TestSuite(TestRunLimitSettings.class));
 	}

@@ -37,8 +37,11 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
@@ -126,8 +129,8 @@ public class TestChatRunAccess extends BasicTestCase {
 		assertTrue("The security service decides here; without it nothing is checked.",
 			AiToolAccessService.Module.INSTANCE.isActive());
 		assertTrue("Two models must be configured for 'the other one' to mean anything: "
-			+ LLMService.getInstance().getConfiguredModelNames(),
-			LLMService.getInstance().getConfiguredModelNames().containsAll(
+			+ LLMProviderService.getInstance().getConfiguredModelNames(),
+			LLMProviderService.getInstance().getConfiguredModelNames().containsAll(
 				java.util.List.of(ASSIGNED_MODEL, OTHER_MODEL)));
 	}
 
@@ -511,7 +514,10 @@ public class TestChatRunAccess extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
-				LLMService.Module.INSTANCE,
+				LLMProviderService.Module.INSTANCE,
+				AgentRuntimeService.Module.INSTANCE,
+				AgentApplicationService.Module.INSTANCE,
+				AgentPolicyService.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE));
 	}

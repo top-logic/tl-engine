@@ -31,7 +31,7 @@ import com.top_logic.tl.ai.core.agent.environment.AgentFact;
  * <p>
  * Contains only identity and capabilities. All tuning parameters (temperature, max tokens, etc.)
  * are resolved from the per-agent model assignment in
- * {@link com.top_logic.tl.ai.core.provider.LLMService LLMService}.
+ * {@link AgentRuntimeService}.
  * </p>
  *
  * <p>

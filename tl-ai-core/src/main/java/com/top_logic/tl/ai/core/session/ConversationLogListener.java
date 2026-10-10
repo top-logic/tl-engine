@@ -22,7 +22,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
@@ -207,11 +207,11 @@ public class ConversationLogListener implements AgentEventListener {
 	 * running application (e.g. unit tests).
 	 */
 	private static String resolveProviderId(String model) {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return null;
 		}
 		try {
-			return LLMService.getInstance().getProviderId(model);
+			return LLMProviderService.getInstance().getProviderId(model);
 		} catch (RuntimeException ex) {
 			return null;
 		}

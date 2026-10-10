@@ -24,20 +24,21 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.tl.ai.core.provider.LLMService.AgentExecutionConfig;
-import com.top_logic.tl.ai.core.provider.LLMService.AgentOverride;
-import com.top_logic.tl.ai.core.provider.LLMService.ModelCatalogConfig;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeFixture;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService.AgentOverride;
+import com.top_logic.tl.ai.core.provider.LLMProviderService.ModelCatalogConfig;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
 
 /**
  * Tests that a model exposed by two providers stays routable (issue #105).
  *
  * <p>
- * Every case here starts the real {@link LLMService} on a hand-built configuration and asks it the
- * two questions the {@code AgentFactory} asks -
- * {@link LLMService#resolveModelAssignment(String)} followed by
- * {@link LLMService#buildProvider(String, String)} - because the defect this fixes was invisible in
- * the resolution result and showed only in which provider instance came back. The two providers
+ * Every case here starts the real {@link LLMProviderService} and {@link AgentRuntimeService} on a
+ * hand-built configuration and asks the two questions the {@code AgentFactory} asks -
+ * {@link AgentRuntimeService#resolveModelAssignment(String)} followed by
+ * {@link LLMProviderService#buildProvider(String, String)} - because the defect this fixes was
+ * invisible in the resolution result and showed only in which provider instance came back. The two providers
  * therefore differ in their endpoint, which is the one thing an
  * {@link AbstractStreamingProvider} makes visible.
  * </p>
@@ -58,7 +59,9 @@ public class TestProviderRouting extends TestCase {
 	 */
 	private static final String NO_CATALOG_URL = "urn:test:no-catalog";
 
-	private LLMService _service;
+	private LLMProviderService _service;
+
+	private AgentRuntimeService _runtime;
 
 	/**
 	 * Instantiating a provider configuration resolves its implementation class through the
@@ -70,6 +73,10 @@ public class TestProviderRouting extends TestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
+		if (_runtime != null) {
+			AgentRuntimeFixture.stop(_runtime);
+			_runtime = null;
+		}
 		if (_service != null) {
 			_service.shutDown();
 			_service = null;
@@ -93,7 +100,7 @@ public class TestProviderRouting extends TestCase {
 		start(MODEL, "a1", overrides(override("analyst", MODEL, "a2"), override("writer", MODEL, "a1")),
 			provider("a1", A1_URL, MODEL), provider("a2", A2_URL, MODEL));
 
-		assertEquals("a2", _service.resolveModelAssignment("analyst").provider());
+		assertEquals("a2", _runtime.resolveModelAssignment("analyst").provider());
 		assertEquals(A2_URL, endpointFor("analyst"));
 		assertEquals(A1_URL, endpointFor("writer"));
 	}
@@ -117,9 +124,9 @@ public class TestProviderRouting extends TestCase {
 		start(MODEL, null, overrides(override("analyst", MODEL, null)), provider("a1", A1_URL, MODEL));
 
 		assertEquals(List.of("a1"), _service.getProvidersOf(MODEL));
-		assertNull(_service.getDefaultProvider());
-		assertNull(_service.resolveModelAssignment("analyst").provider());
-		assertEquals(MODEL, _service.resolveModel("analyst"));
+		assertNull(_runtime.getDefaultProvider());
+		assertNull(_runtime.resolveModelAssignment("analyst").provider());
+		assertEquals(MODEL, _runtime.resolveModel("analyst"));
 		assertEquals(A1_URL, endpointFor("analyst"));
 		assertEquals(A1_URL, endpointFor("unlisted"));
 		assertEquals("anthropic", _service.getProviderId(MODEL));
@@ -131,8 +138,8 @@ public class TestProviderRouting extends TestCase {
 	public void testBlankProviderIsTreatedAsUnqualified() {
 		start(MODEL, "", overrides(override("analyst", MODEL, "  ")), provider("a1", A1_URL, MODEL));
 
-		assertNull(_service.getDefaultProvider());
-		assertNull(_service.resolveModelAssignment("analyst").provider());
+		assertNull(_runtime.getDefaultProvider());
+		assertNull(_runtime.resolveModelAssignment("analyst").provider());
 		assertEquals(A1_URL, endpointFor("analyst"));
 	}
 
@@ -215,14 +222,30 @@ public class TestProviderRouting extends TestCase {
 		start(null, null, overrides(), provider("a1", A1_URL, MODEL));
 
 		try {
-			_service.resolveModelAssignment("analyst");
+			_runtime.resolveModelAssignment("analyst");
 			fail("Expected the missing model to be reported.");
 		} catch (IllegalStateException ex) {
 			assertContains(ex.getMessage(), "analyst");
 		}
 	}
 
-	/** A model no provider exposes stays a runtime error, not a boot failure. */
+	/**
+	 * A default model or an agent's model that no provider exposes refuses the start of the agent
+	 * runtime: a model named in the configuration that cannot be reached is found at start, not by the
+	 * first user of that agent.
+	 */
+	public void testAModelNoProviderExposesRefusesStartUp() {
+		String message = refuseStart(OTHER_MODEL, null, overrides(override("analyst", "no-such-model", null)),
+			provider("a1", A1_URL, MODEL));
+
+		assertContains(message, "The default model");
+		assertContains(message, OTHER_MODEL);
+		assertContains(message, "Agent 'analyst'");
+		assertContains(message, "no-such-model");
+		assertContains(message, "no provider exposes");
+	}
+
+	/** A model no configuration names is an error of the run that asks for it. */
 	public void testUnknownModelIsARuntimeError() {
 		start(MODEL, null, overrides(), provider("a1", A1_URL, MODEL));
 
@@ -245,12 +268,12 @@ public class TestProviderRouting extends TestCase {
 	 * </p>
 	 */
 	public void testCatalogMetadataReachesAModelTwoProvidersExpose() {
-		LLMService.Config<?> config =
-			serviceConfig(MODEL, "gateway", overrides(), gateway("gateway", A1_URL, MODEL),
+		LLMProviderService.Config<?> config =
+			serviceConfig(gateway("gateway", A1_URL, MODEL),
 				provider("anthropic", A2_URL, MODEL));
 		ModelCatalogConfig catalog = TypedConfiguration.newConfigItem(ModelCatalogConfig.class);
 		set(catalog, ModelCatalogConfig.CATALOG_URL, NO_CATALOG_URL);
-		set(config, LLMService.Config.MODEL_CATALOG, catalog);
+		set(config, LLMProviderService.Config.MODEL_CATALOG, catalog);
 		start(config);
 
 		assertNotNull("The model of the second provider must still reach the catalog.",
@@ -315,7 +338,7 @@ public class TestProviderRouting extends TestCase {
 	 * {@code AgentFactory} runs before every agent loop.
 	 */
 	private String endpointFor(String agentName) {
-		AgentModelAssignment assignment = _service.resolveModelAssignment(agentName);
+		AgentModelAssignment assignment = _runtime.resolveModelAssignment(agentName);
 		LLMProvider provider = _service.buildProvider(assignment.model(), assignment.provider());
 		return ((AbstractStreamingProvider) provider)._baseUrl;
 	}
@@ -326,11 +349,18 @@ public class TestProviderRouting extends TestCase {
 	 */
 	private void start(String defaultModel, String defaultProvider, List<AgentOverride> overrides,
 			LLMProviderConfig.Config... providers) {
-		start(serviceConfig(defaultModel, defaultProvider, overrides, providers));
+		start(serviceConfig(providers));
+		AgentRuntimeService.Config<?> runtime = TypedConfiguration.newConfigItem(AgentRuntimeService.Config.class);
+		set(runtime, AgentRuntimeService.Config.DEFAULT_MODEL, defaultModel);
+		set(runtime, AgentRuntimeService.Config.DEFAULT_PROVIDER, defaultProvider);
+		for (AgentOverride override : overrides) {
+			runtime.getAgentOverrides().put(override.getName(), override);
+		}
+		_runtime = AgentRuntimeFixture.start(context(), runtime);
 	}
 
-	private void start(LLMService.Config<?> config) {
-		LLMService service = new LLMService(context(), config);
+	private void start(LLMProviderService.Config<?> config) {
+		LLMProviderService service = new LLMProviderService(context(), config);
 		service.startUp();
 		_service = service;
 	}
@@ -346,20 +376,13 @@ public class TestProviderRouting extends TestCase {
 		}
 	}
 
-	private static LLMService.Config<?> serviceConfig(String defaultModel, String defaultProvider,
-			List<AgentOverride> overrides, LLMProviderConfig.Config... providers) {
+	private static LLMProviderService.Config<?> serviceConfig(LLMProviderConfig.Config... providers) {
 		@SuppressWarnings("unchecked")
-		LLMService.Config<LLMService> result =
-			(LLMService.Config<LLMService>) TypedConfiguration.newConfigItem(LLMService.Config.class);
+		LLMProviderService.Config<LLMProviderService> result =
+			(LLMProviderService.Config<LLMProviderService>) TypedConfiguration.newConfigItem(
+				LLMProviderService.Config.class);
 		for (LLMProviderConfig.Config provider : providers) {
 			result.getProviders().put(provider.getName(), provider);
-		}
-		AgentExecutionConfig execution = TypedConfiguration.newConfigItem(AgentExecutionConfig.class);
-		set(result, LLMService.Config.AGENT_EXECUTION, execution);
-		set(execution, AgentExecutionConfig.DEFAULT_MODEL, defaultModel);
-		set(execution, AgentExecutionConfig.DEFAULT_PROVIDER, defaultProvider);
-		for (AgentOverride override : overrides) {
-			execution.getAgentOverrides().put(override.getName(), override);
 		}
 		return result;
 	}

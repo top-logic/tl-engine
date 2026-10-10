@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.util.List;
 
+import com.top_logic.tl.ai.core.citation.Finding;
+import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
@@ -79,7 +81,7 @@ public final class SubagentResultDelivery {
 		StringBuilder text = new StringBuilder();
 		text.append(heading(job)).append('\n');
 		text.append(report("subagent " + job.subagentId() + " (" + job.targetAgentName() + ")",
-			result.finalText())).append('\n');
+			result.finalText(), job.readingList())).append('\n');
 		text.append("_tokens: ").append(result.tokenUsage().totalTokens())
 			.append(", duration: ").append(result.durationMs())
 			.append("ms, tools: ").append(result.toolCallCount()).append('_');
@@ -103,6 +105,39 @@ public final class SubagentResultDelivery {
 	 */
 	public static String report(String source, String text) {
 		return UntrustedEnvelope.SUBAGENT_REPORT.wrap(source, text);
+	}
+
+	/**
+	 * A subagent's text with the findings it recorded, marked as one
+	 * {@link UntrustedEnvelope#SUBAGENT_REPORT}.
+	 *
+	 * <p>
+	 * A research worker records its findings while it reads, and its report names them by id rather
+	 * than retelling them. So the report is followed by the list of those findings - id, claim and
+	 * source, one line each; the quotes stay on the lead's reading list, where {@code listFindings}
+	 * shows them. The findings are the worker's words about what it read, so they go inside the same
+	 * envelope as its text.
+	 * </p>
+	 *
+	 * @param source
+	 *        Who wrote the report, for the envelope's {@code source} attribute.
+	 * @param text
+	 *        The subagent's text; may be {@code null}.
+	 * @param read
+	 *        The subagent's reading list, holding its findings; <code>null</code> for none.
+	 */
+	public static String report(String source, String text, ReadingList read) {
+		List<Finding> findings = read == null ? List.of() : read.findings();
+		if (findings.isEmpty()) {
+			return report(source, text);
+		}
+		StringBuilder body = new StringBuilder(text == null ? "" : text.strip());
+		body.append("\n\nFindings recorded (").append(findings.size()).append("):");
+		for (Finding finding : findings) {
+			body.append("\n- ").append(finding.id()).append(": ").append(finding.claim())
+				.append(" [").append(finding.sourceTitle()).append(']');
+		}
+		return UntrustedEnvelope.SUBAGENT_REPORT.wrap(source, body.toString());
 	}
 
 	/**

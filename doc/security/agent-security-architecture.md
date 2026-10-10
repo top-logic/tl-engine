@@ -424,7 +424,7 @@ group**; groups are the unit of granting.
 | `model.structure` | `createModule`, `updateModule`, `createClass`, `updateClass`, `createProperty`, `updateProperty`, `createReference`, `createBackwardReference`, `createEnumeration`, `updateEnumeration`, `deleteModelElement`, `addAnnotation`, `removeAnnotation`, `createLayout` | **privileged** |
 | `agent.authoring` | `createAgent`, `updateAgent`, `deleteAgent`, `createSkill`, `updateSkill`, `deleteSkill`, `createScriptTool`, `updateScriptTool`, `deleteScriptTool`, `addToolToAgent`, `removeToolFromAgent`, `addSkillToAgent`, `removeSkillFromAgent`, `addDelegationToAgent`, `removeDelegationFromAgent`, `addToolToSkill`, `removeToolFromSkill` | **privileged** |
 | `agent.meta` | `listAgents`, `getAgent`, `listSkills`, `getSkill`, `listScriptTools`, `getScriptTool`, `listAvailableTools`, `listFrameworkAgents`, `getFrameworkAgent`, `listFrameworkSkills`, `getFrameworkSkill`, `listScriptToolFactories` | grantable |
-| `interaction` | `askUser`, `loadSkill`, delegation and subagent tools | granted to every agent user by the built-in baseline |
+| `interaction` | `askUser`, `loadSkill`, delegation and subagent tools, the research findings tools (`recordFinding`, `listFindings`, `readSource` - they touch only the run tree's reading list) | granted to every agent user by the built-in baseline |
 | `introspection` | `listTools` - what *this* agent carries, filtered for the acting user | granted to every agent user by the built-in baseline |
 | `workspace` | `createTask`, `updateTask`, `listTasks`, `publishPage` | grantable |
 | `egress` | `webFetch`, `webSearch`, `createGiteaIssue`, all `mcp__*` tools | grantable, **never** in the baseline |

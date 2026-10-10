@@ -3078,6 +3078,16 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 							tool-class="com.top_logic.tl.ai.core.tools.web.BrowserTool"
 						/>
 					</factory>
+					<!--
+						recordFinding / listFindings / readSource (Issue #752): the findings of a research
+						run tree, kept on its reading list. An agent lists them as research.recordFinding,
+						research.listFindings and research.readSource.
+					-->
+					<factory name="research">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.research.FindingTools"
+						/>
+					</factory>
 				</tool-factories>
 			</instance>
 		</config>

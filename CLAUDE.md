@@ -311,9 +311,9 @@ Where every old property went: `tl-ai-core/doc/llm-service-migration.md`.
 
 ### Run limits (tl-ai-core `limits/`)
 
-Three ceilings an administrator **may** put on what this installation carries and what one account
+The ceilings an administrator **may** put on what this installation carries and what one account
 may spend, configured in `<capacity>` on `AgentRuntimeService` (the chat pool and the per-account
-cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All three are off by
+cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All of them are off by
 default** - this product runs in applications with a thousand users, and any figure it picked for
 them would refuse work the installation allowed before the upgrade:
 
@@ -327,6 +327,11 @@ them would refuse work the installation allowed before the upgrade:
   **`token-budget` over `budget-window-hours`** (0 = unlimited, per-role overrides possible) are
   enforced by `RunLimits.admit` in `AgentFactory.runAgent` - the choke point every entry point
   arrives at. These two refuse rather than queue: the account is already being served.
+- **Background subagents** queue rather than refuse (#710): a chat's `SubagentJobRegistry` runs at
+  most its cap (4) at once, and **`subagent-workers`** in `<capacity>` (0 = off) bounds them over the
+  whole installation (`SubagentSlots`). A job beyond either stays `QUEUED`, starts in registration
+  order when one ends, and the spawn answer says "queued, position N"; a job cancelled while queued
+  ends `CANCELLED` without running.
 
 A **delegated** run is neither counted nor budgeted separately: it is part of the run that delegated
 it, and shares that run's `TokenAllowance`. The budget is computed from the recorded

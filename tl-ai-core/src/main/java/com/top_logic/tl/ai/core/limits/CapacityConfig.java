@@ -36,6 +36,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 	CapacityConfig.CHAT_WORKERS,
 	CapacityConfig.CHAT_QUEUE,
 	CapacityConfig.CONCURRENT_RUNS_PER_ACCOUNT,
+	CapacityConfig.SUBAGENT_WORKERS,
 })
 public interface CapacityConfig extends ConfigPart {
 
@@ -47,6 +48,9 @@ public interface CapacityConfig extends ConfigPart {
 
 	/** Configuration property name for {@link #getConcurrentRunsPerAccount()}. */
 	String CONCURRENT_RUNS_PER_ACCOUNT = "concurrent-runs-per-account";
+
+	/** Configuration property name for {@link #getSubagentWorkers()}. */
+	String SUBAGENT_WORKERS = "subagent-workers";
 
 	/**
 	 * How many chat runs this installation carries at the same time.
@@ -128,4 +132,25 @@ public interface CapacityConfig extends ConfigPart {
 	@Label("Concurrent runs per account")
 	@IntDefault(0)
 	int getConcurrentRunsPerAccount();
+
+	/**
+	 * How many background subagents this installation runs at the same time, over all chats.
+	 *
+	 * <p>
+	 * {@code 0}, the default, means no installation ceiling. Each chat still runs at most a few
+	 * subagents at once (four) and queues the rest; this bounds them all together, for an installation
+	 * where many users fan out work at the same moment.
+	 * </p>
+	 *
+	 * <p>
+	 * A subagent that finds the ceiling reached <b>waits</b>, queued, and starts when another one ends
+	 * - nothing is refused, because a lead that started a subagent expects its result.
+	 * </p>
+	 *
+	 * @see #SUBAGENT_WORKERS
+	 */
+	@Name(SUBAGENT_WORKERS)
+	@Label("Background subagents at once")
+	@IntDefault(0)
+	int getSubagentWorkers();
 }

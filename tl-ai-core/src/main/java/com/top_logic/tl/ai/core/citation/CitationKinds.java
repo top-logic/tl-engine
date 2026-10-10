@@ -42,7 +42,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * An application whose agents point at sources another way than with a link registers the syntax
- * here, in {@code <marker-syntaxes>} - see {@link CitationMarkerSyntax}.
+ * here, among the marker syntaxes - see {@link CitationMarkerSyntax}.
  * </p>
  *
  * @see CitationValidator

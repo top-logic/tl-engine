@@ -14,7 +14,7 @@ import java.util.List;
  * The framework's own syntax is the link, {@link LinkMarkers}: {@code [Sommerfest](tl:GenericObject:11047)},
  * {@code [laut Tagesschau](https://...)}. An application whose agents cite another way - a record
  * code in parentheses, {@code (FACT-001, DEC-002)} - registers a syntax of its own in
- * {@link CitationKinds}' {@code <marker-syntaxes>}, and the validator treats its markers exactly as
+ * the marker syntaxes of {@link CitationKinds}, and the validator treats its markers exactly as
  * it treats links: a reference that names a source of the run's reading list becomes a footnote, any
  * other reference is dropped.
  * </p>

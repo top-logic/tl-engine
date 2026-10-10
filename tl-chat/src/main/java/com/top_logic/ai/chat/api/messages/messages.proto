@@ -980,7 +980,7 @@ message SubagentStatusEvent {
 
 	/**
 	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
-	 * call; sent on start, empty otherwise.
+	 * call; sent on start and on the end, so that a window which did not see the start finds the card.
 	 */
 	string parentToolCallId;
 
@@ -989,6 +989,9 @@ message SubagentStatusEvent {
 	 * first own step says it has started.
 	 */
 	boolean queued;
+
+	/** The subagent's own run id, its transcript's key; sent on the end, empty if unknown. */
+	string childRunId;
 }
 
 /**

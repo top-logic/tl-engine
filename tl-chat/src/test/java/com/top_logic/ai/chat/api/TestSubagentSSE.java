@@ -33,7 +33,7 @@ public class TestSubagentSSE extends TestCase {
 
 		handler.onEventForTest(new AgentEvent.SubagentCompleted(
 			"run1", 2, Instant.now(), "sa-1",
-			new SubagentResult("done", TokenUsage.EMPTY, 12L, 1, StopReason.COMPLETE)));
+			new SubagentResult("done", TokenUsage.EMPTY, 12L, 1, StopReason.COMPLETE), "call-1", "child-1"));
 		handler.flushForTest();
 		assertTrue("Expected subagent_completed event", emitted.contains("subagent_completed"));
 	}
@@ -44,7 +44,7 @@ public class TestSubagentSSE extends TestCase {
 		ChatSSEHandler handler = ChatSSEHandler.recordingForTest(emitted::add);
 
 		handler.onEventForTest(new AgentEvent.SubagentFailed(
-			"run1", 1, Instant.now(), "sa-2", "timeout"));
+			"run1", 1, Instant.now(), "sa-2", "timeout", "call-2", ""));
 		assertTrue("Expected subagent_failed event", emitted.contains("subagent_failed"));
 	}
 
@@ -54,7 +54,7 @@ public class TestSubagentSSE extends TestCase {
 		ChatSSEHandler handler = ChatSSEHandler.recordingForTest(emitted::add);
 
 		handler.onEventForTest(new AgentEvent.SubagentCancelled(
-			"run1", 1, Instant.now(), "sa-3"));
+			"run1", 1, Instant.now(), "sa-3", "", ""));
 		assertTrue("Expected subagent_cancelled event", emitted.contains("subagent_cancelled"));
 	}
 }

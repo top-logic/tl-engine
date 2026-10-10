@@ -149,7 +149,7 @@ public final class AgentRunner {
 			response = CitationValidator.apply(log, response, context.readingList()).text();
 		}
 		if (recorder != null) {
-			recorder.complete(transcriptOf(log, turnsBefore), response, null);
+			recorder.completeWithLatestTranscript(finalTranscriptOf(log, turnsBefore), response, null);
 		}
 		// The recorder's result carries the provider's own error message (it saw the ProviderError
 		// event); the loop's own result is the fallback for an unrecorded run.
@@ -240,7 +240,7 @@ public final class AgentRunner {
 			CitationValidator.apply(log, lastAssistantText(log), context.readingList());
 		}
 		if (recorder != null) {
-			recorder.complete(transcriptOf(log, turnsBefore), null);
+			recorder.completeWithLatestTranscript(finalTranscriptOf(log, turnsBefore), null, null);
 		}
 		return new RecordedRun(null, null, result,
 			recorder != null ? recorder.execution() : null);
@@ -313,6 +313,36 @@ public final class AgentRunner {
 	}
 
 	/**
+	 * The run's final transcript, serialized when the store writes it rather than now.
+	 *
+	 * <p>
+	 * A background subagent the run started may end in between, and its part has to be written in
+	 * its ended form - see {@link ExecutionRecorder#completeWithLatestTranscript(Supplier, String, Throwable)}.
+	 * The run's turns are fixed now, though: a run the same log starts next must not end up in this
+	 * one's transcript.
+	 * </p>
+	 */
+	private static Supplier<String> finalTranscriptOf(ConversationLog log, int turnsBefore) {
+		if (log == null) {
+			return () -> null;
+		}
+		List<Turn> runTurns = List.copyOf(runTurns(log, turnsBefore));
+		return () -> {
+			try {
+				return ConversationLogSerializer.toJson(runTurns);
+			} catch (RuntimeException ex) {
+				Logger.warn("Failed to serialize run transcript: " + ex.getMessage(), ex, AgentRunner.class);
+				return null;
+			}
+		};
+	}
+
+	private static List<Turn> runTurns(ConversationLog log, int turnsBefore) {
+		List<Turn> turns = log.turns();
+		return turns.subList(Math.min(turnsBefore, turns.size()), turns.size());
+	}
+
+	/**
 	 * Serializes the turns the current run appended to the log, or <code>null</code> if the log
 	 * is unavailable or serialization fails.
 	 */
@@ -321,9 +351,7 @@ public final class AgentRunner {
 			return null;
 		}
 		try {
-			List<Turn> turns = log.turns();
-			List<Turn> runTurns = turns.subList(Math.min(turnsBefore, turns.size()), turns.size());
-			return ConversationLogSerializer.toJson(runTurns);
+			return ConversationLogSerializer.toJson(runTurns(log, turnsBefore));
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to serialize run transcript: " + ex.getMessage(), ex, AgentRunner.class);
 			return null;

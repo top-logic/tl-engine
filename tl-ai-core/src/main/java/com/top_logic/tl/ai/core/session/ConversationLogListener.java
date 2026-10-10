@@ -19,6 +19,8 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -99,7 +101,12 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	private final Map<String, SubagentPlace> _runningSubagents = new ConcurrentHashMap<>();
 
-	private record SubagentPlace(Turn turn, String partId) {
+	/**
+	 * @param leadExecution
+	 *        The lead's recorded run, whose transcript holds the part; <code>null</code> when the
+	 *        run is not recorded.
+	 */
+	private record SubagentPlace(Turn turn, String partId, AgentExecution leadExecution) {
 		// Plain data.
 	}
 
@@ -818,12 +825,26 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
 			String parentToolCallId, boolean queued) {
+		recordSubagentStarted(subagentId, targetAgentName, taskBrief, parentToolCallId, queued, null);
+	}
+
+	/**
+	 * Records that the current turn of a recorded run started a background subagent.
+	 *
+	 * @param leadExecution
+	 *        The recorded run of the current turn, which the subagent's end is written into once the
+	 *        run itself has ended; <code>null</code> when the run is not recorded. Only handed back to
+	 *        the {@link AgentExecutionStore}, never read here.
+	 * @see #recordSubagentStarted(String, String, String, String, boolean)
+	 */
+	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
+			String parentToolCallId, boolean queued, AgentExecution leadExecution) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part.SubagentPart part = new Part.SubagentPart(UUID.randomUUID().toString(), Instant.now(),
 				subagentId, targetAgentName, taskBrief, nullToEmpty(parentToolCallId), null, "RUNNING", null);
 			turn.addAssistantPart(part);
-			_runningSubagents.put(subagentId, new SubagentPlace(turn, part.id()));
+			_runningSubagents.put(subagentId, new SubagentPlace(turn, part.id(), leadExecution));
 		}
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
@@ -842,10 +863,12 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	public void recordSubagentCompleted(String subagentId,
 			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result, String childRunId) {
-		endSubagent(subagentId, "DONE", result == null ? null : result.finalText(), childRunId);
+		String parentToolCallId = endSubagent(subagentId, "DONE", result == null ? null : result.finalText(),
+			childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result));
+			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result,
+				parentToolCallId, nullToEmpty(childRunId)));
 		}
 	}
 
@@ -858,10 +881,11 @@ public class ConversationLogListener implements AgentEventListener {
 	 *        The child's run id; <code>null</code> if unknown.
 	 */
 	public void recordSubagentFailed(String subagentId, String errorSummary, String childRunId) {
-		endSubagent(subagentId, "FAILED", errorSummary, childRunId);
+		String parentToolCallId = endSubagent(subagentId, "FAILED", errorSummary, childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentFailed("", 0, Instant.now(), subagentId, errorSummary));
+			parent.onEvent(new AgentEvent.SubagentFailed("", 0, Instant.now(), subagentId, errorSummary,
+				parentToolCallId, nullToEmpty(childRunId)));
 		}
 	}
 
@@ -874,31 +898,47 @@ public class ConversationLogListener implements AgentEventListener {
 	 *        The child's run id; <code>null</code> if unknown.
 	 */
 	public void recordSubagentCancelled(String subagentId, String childRunId) {
-		endSubagent(subagentId, "CANCELLED", null, childRunId);
+		String parentToolCallId = endSubagent(subagentId, "CANCELLED", null, childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId));
+			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId,
+				parentToolCallId, nullToEmpty(childRunId)));
 		}
 	}
 
 	/**
-	 * Replaces the subagent's part with its ended form, in the turn that started it.
+	 * Replaces the subagent's part with its ended form, in the turn that started it, and in the
+	 * recorded transcript of that turn's run.
 	 *
 	 * <p>
 	 * Only the first {@value #SUBAGENT_SUMMARY_CHARS} characters of the summary are kept: the part is a
 	 * pointer to the child's transcript, not a copy of its report.
 	 * </p>
+	 *
+	 * <p>
+	 * The lead's run has usually written its transcript long before - with the part saying the
+	 * subagent is at work - so the end is written there too, and before the end is announced: a
+	 * window that is told and reads the conversation back must find it.
+	 * </p>
+	 *
+	 * @return The id of the lead's tool call that started the subagent; empty if unknown.
 	 */
-	private void endSubagent(String subagentId, String status, String summary, String childRunId) {
+	private String endSubagent(String subagentId, String status, String summary, String childRunId) {
 		SubagentPlace place = _runningSubagents.remove(subagentId);
 		if (place == null) {
-			return;
+			return "";
 		}
 		if (place.turn().findPart(place.partId()) instanceof Part.SubagentPart part) {
 			String shortSummary = summary == null || summary.length() <= SUBAGENT_SUMMARY_CHARS ? summary
 				: summary.substring(0, SUBAGENT_SUMMARY_CHARS) + "...";
-			place.turn().updatePart(place.partId(), part.ended(status, shortSummary, childRunId));
+			Part.SubagentPart ended = part.ended(status, shortSummary, childRunId);
+			place.turn().updatePart(place.partId(), ended);
+			if (place.leadExecution() != null && AgentExecutionStore.Module.INSTANCE.isActive()) {
+				AgentExecutionStore.getInstance().replaceTranscriptPart(place.leadExecution(), ended);
+			}
+			return nullToEmpty(part.parentToolCallId());
 		}
+		return "";
 	}
 
 	/** How much of a finished subagent's report its part keeps. */

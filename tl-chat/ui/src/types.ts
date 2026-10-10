@@ -321,6 +321,8 @@ export interface SubagentActivity {
   parentToolCallId?: string
   /** The task brief it was given. */
   task?: string
+  /** Its own run id, by which its transcript is found once it has ended; absent while unknown. */
+  childRunId?: string
 }
 
 /** One tool call of a running subagent, as its card lists it. */
@@ -378,6 +380,8 @@ export interface SubagentStatusEvent {
   parentToolCallId?: string
   /** On start: it waits in the queue for a free slot; its first own step says it has started. */
   queued?: boolean
+  /** On the end: its own run id, its transcript's key. */
+  childRunId?: string
 }
 
 export interface ImprovePromptResponse {

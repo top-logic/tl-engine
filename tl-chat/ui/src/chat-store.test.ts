@@ -9,7 +9,8 @@ import {
 } from './chat-store'
 import { bundle } from './i18n'
 import { unseenBadge } from './progress-model'
-import type { ChatMessage } from './types'
+import { cardsForTurn } from './subagent-card'
+import type { ChatMessage, SubagentRef } from './types'
 
 /**
  * The store's world, without a browser.
@@ -572,6 +573,41 @@ describe('the stream', () => {
       status: 'DONE',
       task: 'find X',
     })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * A window that opened the chat while the subagent was at work never saw it start: its card stands
+   * on the recorded part. The end frame says which call started it, so that card ends too, and its
+   * transcript opens by the run the frame names.
+   */
+  it('ends the card of a subagent this window did not see start', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_completed', {
+      subagentId: 'sa-1',
+      targetAgentName: '',
+      detail: 'X is 42.',
+      parentToolCallId: 'call-1',
+      childRunId: 'run-1',
+    })
+
+    const running: SubagentRef = {
+      type: 'subagent_ref', id: 'p1', subagentId: 'sa-1', agentName: 'researcher', task: 'find X',
+      parentToolCallId: 'call-1', childRunId: '', status: 'RUNNING', summary: '', timestamp: 0,
+    }
+    const spawn: ChatMessage = {
+      type: 'tool_call', id: 'c1', toolUseId: 'call-1', name: 'spawn_subagent', input: {}, status: 'done', depth: 0, timestamp: 0,
+    }
+    const cards = cardsForTurn([spawn, running], store.getState().subagents, {}, new Set())
+    expect(cards).toHaveLength(1)
+    expect(cards[0]).toMatchObject({ status: 'DONE', summary: 'X is 42.', task: 'find X', childRunId: 'run-1' })
 
     await settle()
     release()

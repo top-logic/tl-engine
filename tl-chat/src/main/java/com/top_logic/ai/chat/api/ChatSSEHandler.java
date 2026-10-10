@@ -543,14 +543,20 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setSubagentId(e.subagentId())
 				.setDetail(e.result().finalText())
 				.setTotalTokens(e.result().tokenUsage().totalTokens())
-				.setDurationMs(e.result().durationMs())));
+				.setDurationMs(e.result().durationMs())
+				.setParentToolCallId(e.parentToolCallId())
+				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.SubagentFailed e) {
 			sendEvent("subagent_failed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())
-				.setDetail(e.errorSummary())));
+				.setDetail(e.errorSummary())
+				.setParentToolCallId(e.parentToolCallId())
+				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.SubagentCancelled e) {
 			sendEvent("subagent_cancelled", DtoMapper.toJson(SubagentStatusEvent.create()
-				.setSubagentId(e.subagentId())));
+				.setSubagentId(e.subagentId())
+				.setParentToolCallId(e.parentToolCallId())
+				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())

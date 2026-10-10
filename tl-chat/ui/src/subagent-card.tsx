@@ -63,7 +63,7 @@ export function cardsForTurn(
         live: live[job.subagentId],
         totalTokens: job.totalTokens,
         durationMs: job.durationMs,
-        childRunId: ref?.childRunId || undefined,
+        childRunId: ref?.childRunId || job.childRunId || undefined,
         hasTranscript: job.hasTranscript,
       },
     })

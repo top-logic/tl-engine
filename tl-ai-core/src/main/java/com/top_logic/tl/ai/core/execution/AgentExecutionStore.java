@@ -52,6 +52,8 @@ import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -498,6 +500,58 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		} catch (RejectedExecutionException ex) {
 			// The store is shutting down; the run is about to be cut off anyway.
 			return false;
+		}
+	}
+
+	/**
+	 * Writes a part of a run's transcript anew, after that run has written it.
+	 *
+	 * <p>
+	 * A background subagent ends long after the lead's turn that started it, and the lead's run
+	 * writes its transcript when it ends, holding the subagent's part as it was then: running. The
+	 * part's end has to reach the database as well, or every window that reads the conversation from
+	 * there - another window of the account, the same window once it has dropped the chat from its
+	 * cache - shows the subagent at work for ever. Waits for the commit, so that whoever is told
+	 * about the end next reads it from the database.
+	 * </p>
+	 *
+	 * <p>
+	 * A transcript that does not hold the part - a run still going, checkpointed before it recorded
+	 * the part - is left alone: the run's own final transcript, taken when it is written, carries the
+	 * part's current form. Best-effort: a failure is logged.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The run whose transcript holds the part.
+	 * @param part
+	 *        The part's new form; matched by its id.
+	 */
+	public void replaceTranscriptPart(AgentExecution execution, Part part) {
+		try {
+			write(() -> {
+				String transcript = execution.getTranscript();
+				String rewritten;
+				try {
+					rewritten = ConversationLogSerializer.replacePart(transcript, part);
+				} catch (IOException ex) {
+					Logger.warn("Cannot update part " + part.id() + " in the unreadable transcript of run "
+						+ execution.getRunId() + ": " + ex.getMessage(), AgentExecutionStore.class);
+					return null;
+				}
+				if (rewritten == null) {
+					return null;
+				}
+				try (Transaction tx = beginTx("Update transcript of agent execution " + execution.getRunId())) {
+					execution.setTranscript(rewritten);
+					tx.commit();
+				}
+				return null;
+			});
+		} catch (CancelledWriteException ex) {
+			// Interrupted while waiting; the write itself still commits.
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to update part " + part.id() + " in the transcript of run "
+				+ execution.getRunId() + ": " + ex.getMessage(), ex, AgentExecutionStore.class);
 		}
 	}
 
@@ -950,6 +1004,31 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	public void finishExecution(AgentExecution execution, ExecutionStatus status,
 			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript,
 			String response) {
+		finishExecutionWithLatestTranscript(execution, status, stopReason, errorMessage, usage, () -> transcript,
+			response);
+	}
+
+	/**
+	 * Records the terminal state of an agent-loop invocation, with the transcript taken when it is
+	 * written.
+	 *
+	 * <p>
+	 * A part of the run can change after the loop returned - a background subagent the run started
+	 * ends - and {@link #replaceTranscriptPart(AgentExecution, Part)}
+	 * writes that change into the transcript this has written. Taking the transcript only on the
+	 * writer thread closes the gap in between: a change made before this write is in the transcript,
+	 * a change made after it is written on top of it.
+	 * </p>
+	 *
+	 * @param transcript
+	 *        The run's transcript, asked on the writer thread; may answer <code>null</code>.
+	 *
+	 * @see #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage, String,
+	 *      String)
+	 */
+	public void finishExecutionWithLatestTranscript(AgentExecution execution, ExecutionStatus status,
+			StopReason stopReason, String errorMessage, TokenUsage usage, Supplier<String> transcript,
+			String response) {
 		write(() -> {
 		try (Transaction tx = beginTx("Finish agent execution " + execution.getRunId())) {
 			cancelPendingInteractions(execution);
@@ -963,7 +1042,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				execution.setCacheReadTokens((long) usage.cacheReadTokens());
 				execution.setCacheWriteTokens((long) usage.cacheWriteTokens());
 			}
-			execution.setTranscript(transcript);
+			execution.setTranscript(transcript.get());
 			execution.setResponse(response);
 			execution.setEndedAt(new Date());
 			AgentSession session = execution.getSession();

@@ -238,6 +238,7 @@ function mergeSubagent(
     parentToolCallId: event.parentToolCallId || previous?.parentToolCallId,
     // The detail of a start event is the task; later events carry the result there instead.
     task: previous?.task ?? (status === 'RUNNING' || status === 'QUEUED' ? event.detail : undefined),
+    childRunId: event.childRunId || previous?.childRunId,
   }
   if (index < 0) return [...current, next]
   return current.map((item, itemIndex) => (itemIndex === index ? next : item))

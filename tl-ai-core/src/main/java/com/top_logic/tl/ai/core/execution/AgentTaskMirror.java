@@ -34,7 +34,7 @@ import com.top_logic.tl.ai.core.tools.task.TaskStore;
  * dereferences a row.
  * </p>
  *
- * @see TaskStore.Mirror
+ * @see com.top_logic.tl.ai.core.tools.task.TaskStore.Mirror
  */
 public final class AgentTaskMirror implements TaskStore.Mirror, AutoCloseable {
 

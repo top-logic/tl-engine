@@ -48,10 +48,10 @@ import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -3306,10 +3306,11 @@ public class TestAgentLoop extends TestCase {
 	 * <p>
 	 * Issue #549. Cancelling closes the provider's response stream, and the provider reports the
 	 * closed stream as {@code ProviderException(UNKNOWN, "Stream cancelled.")} - which the loop
-	 * passed on as a {@link AgentEvent.ProviderError} ahead of the {@link StopReason#ABORTED}
-	 * completion. The chat drew it as a red "the model reported an error" block with the English
-	 * provider sentence, and the transcript persisted it as an {@link Part.ErrorPart}, so a reload
-	 * or a second window showed it again. Nothing failed: the user asked for the stop.
+	 * passed on as a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ProviderError} ahead of
+	 * the {@link StopReason#ABORTED} completion. The chat drew it as a red "the model reported an
+	 * error" block with the English provider sentence, and the transcript persisted it as an
+	 * {@link com.top_logic.tl.ai.core.session.Part.ErrorPart}, so a reload or a second window
+	 * showed it again. Nothing failed: the user asked for the stop.
 	 * </p>
 	 */
 	public void testCancelledStreamIsNotAProviderError() {

@@ -246,11 +246,12 @@ public class ObjectEditTool {
 	/**
 	 * Creates one object, and the parts given with it.
 	 *
-	 * @param typeName
+	 * @param type
 	 *        The qualified name of a concrete type, {@code "module:Type"}.
 	 * @param values
-	 *        Attribute name to value, in the forms {@link AttributeValues} reads; for a composition,
-	 *        the new parts, see {@link #planPart(TLReference, Object, String, int, ModelSecurity, List)}.
+	 *        Attribute name to value, in the forms {@link AttributeValues} reads; for a
+	 *        composition, the new parts, see
+	 *        {@link #planPart(TLReference, Object, String, int, ModelSecurity, List)}.
 	 * @param container
 	 *        The object to create the new one in, or <code>null</code> for a free-standing object.
 	 * @param containerReference

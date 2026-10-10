@@ -101,8 +101,9 @@ public class ConversationLogListener implements AgentEventListener {
 	 * Tracked explicitly rather than derived from the part order, because the position of the
 	 * {@link Part.TransactionType#BEGAN} part does not delimit the transaction: the loop opens the
 	 * transaction while executing the first write tool, so that tool's
-	 * {@link AgentEvent.ToolCallStarted} arrives <em>before</em>
-	 * {@link AgentEvent.TransactionBegan} - and it is the call that matters most.
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolCallStarted} arrives
+	 * <em>before</em> {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.TransactionBegan} -
+	 * and it is the call that matters most.
 	 * </p>
 	 */
 	private volatile Set<String> _openTransactionCalls;
@@ -1000,8 +1001,8 @@ public class ConversationLogListener implements AgentEventListener {
 	 * How many characters of text this run has streamed so far.
 	 *
 	 * <p>
-	 * Read right after a {@link AgentEvent.TextDelta} has passed this listener, it is the position
-	 * of that delta's last character.
+	 * Read right after a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.TextDelta} has
+	 * passed this listener, it is the position of that delta's last character.
 	 * </p>
 	 */
 	public long streamedChars() {

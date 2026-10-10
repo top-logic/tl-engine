@@ -21,7 +21,6 @@ import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
@@ -31,7 +30,6 @@ import com.top_logic.service.openapi.server.authentication.AuthenticationFailure
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
-import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
 

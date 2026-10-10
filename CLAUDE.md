@@ -243,6 +243,23 @@ nothing in the tool array; it only makes a skill's *instructions* loadable again
 carried them. `AgentEvent.ContextComposition#loadedSkills` names the skills each request paid for.
 See `tl-ai-core/doc/skill-overlays.md`.
 
+`TL_init` (#667) is the counterpart of `/init` in Claude Code: Albert writes the **application
+context** - purpose, users and their tasks, the users' terms, what the calculated values mean, rules.
+It is development material, so it lives in the application's **source**: a `TextPromptContributor`
+with `name="application-context"` among `LLMService`'s prompt contributors, in a file of the app's
+`WEB-INF/autoconf`. `saveApplicationContext` (STRUCTURAL, approval-gated, administrators only) writes it
+there - replacing the entry, adding it to the app's last `LLMService` file, or creating
+`ai-application-context.config.xml` without `config:override` - editing the XML in place and never
+touching `tl_autoconf_dir`. It is offered only in the development environment
+(`DevelopmentWorkspace`: `tl_operation_mode=development` and a source `src/main/webapp`); elsewhere it
+is not offered and Albert hands over the document. The text takes effect when the LLM service is
+restarted; the developer commits the file. The skill reads the model in depth (the calculation rule of
+every derived attribute, and every mismatch between a description and the implementation, which it
+reports and does not fix) and interviews the user; it does not look at the application's objects.
+Albert's own write tools stay offered while it runs - the approval guards them. `TestInitSkill`
+(tl-ai-eval) runs it end to end on a scripted model, including the service restart. See
+`tl-ai-core/doc/init-skill.md`.
+
 ### Prompt caching: three rules
 
 Every provider caches by prefix, over the rendering **tools → system prompt → messages**; Anthropic

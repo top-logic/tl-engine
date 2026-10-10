@@ -49,16 +49,18 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
+import com.top_logic.tl.ai.core.citation.CitationKinds;
+import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
-import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
+import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TokenEstimator;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -80,14 +82,11 @@ import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
-import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
-import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
-import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.citation.CitationKinds;
-import com.top_logic.tl.ai.core.citation.CitationValidator;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -167,14 +166,18 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * Kept for the whole run rather than per switch: each
-	 * {@link AgentEvent.ModelSwitched} names what was skipped on the way to it, and a run that ran
-	 * out of chain names all of them in the error it fails with - which is the whole point of a
-	 * chain that otherwise continues somewhere else without saying so.
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ModelSwitched} names what was skipped
+	 * on the way to it, and a run that ran out of chain names all of them in the error it fails
+	 * with - which is the whole point of a chain that otherwise continues somewhere else without
+	 * saying so.
 	 * </p>
 	 */
 	private final List<String> _skipped = new CopyOnWriteArrayList<>();
 
-	/** How many entries of {@link #_skipped} a {@link AgentEvent.ModelSwitched} has already named. */
+	/**
+	 * How many entries of {@link #_skipped} a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ModelSwitched} has already named.
+	 */
 	private volatile int _announcedSkips;
 
 	private final ToolRegistry _registry;
@@ -228,11 +231,11 @@ public class AgentLoop {
 	private static final int MAX_DUPLICATE_TOOL_CALLS = AgentTuning.MAX_DUPLICATE_TOOL_CALLS;
 
 	/**
-	 * Estimator behind {@link AgentEvent.ContextComposition}.
+	 * Estimator behind {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ContextComposition}.
 	 *
 	 * <p>
-	 * Stateless, and deliberately the same heuristic {@link ConversationMemory} budgets with, so the
-	 * breakdown a UI shows and the number that decides compaction cannot disagree about what a
+	 * Stateless, and deliberately the same heuristic {@link ConversationMemory} budgets with, so
+	 * the breakdown a UI shows and the number that decides compaction cannot disagree about what a
 	 * message costs.
 	 * </p>
 	 */
@@ -327,12 +330,12 @@ public class AgentLoop {
 	}
 
 	/**
-	 * Delivers the results of every completed-but-undelivered subagent of the thread-bound
-	 * registry to the model, as the last message before the next provider request is built.
+	 * Delivers the results of every completed-but-undelivered subagent of the thread-bound registry
+	 * to the model, as the last message before the next provider request is built.
 	 *
 	 * <p>
-	 * The delivery is a {@link UserMessage}, and that is the whole point of #359: this used to be
-	 * a mid-conversation {@link com.top_logic.tl.ai.core.message.SystemMessage}, which <em>no</em>
+	 * The delivery is a {@link UserMessage}, and that is the whole point of #359: this used to be a
+	 * mid-conversation {@link com.top_logic.tl.ai.core.message.SystemMessage}, which <em>no</em>
 	 * provider's request builder transmits, so the parent was never told its subagent had finished
 	 * while the transcript and the token estimate both claimed it had been. A user message is the
 	 * one shape every builder sends, and it is the shape {@code SummarizingStrategy} and the
@@ -351,19 +354,19 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * The same text is recorded on the current turn of the bound {@code ConversationLog} as a
-	 * {@link Part.SystemEventType#SUBAGENT_RESULT} part. That is what makes it visible in the
-	 * transcript, and what lets {@code ConversationLogReplay} put the very same message back into
-	 * a reloaded session - as a log part rather than a user part, so the chat does not draw it as
-	 * a user bubble.
+	 * {@link com.top_logic.tl.ai.core.session.Part.SystemEventType#SUBAGENT_RESULT} part. That is
+	 * what makes it visible in the transcript, and what lets {@code ConversationLogReplay} put the
+	 * very same message back into a reloaded session - as a log part rather than a user part, so
+	 * the chat does not draw it as a user bubble.
 	 * </p>
 	 *
 	 * <p>
 	 * Per-turn context (#438) has since landed, and this delivery stayed a message of its own:
 	 * {@link #ensureTurnContext(Conversation)} prepends its block to the newest {@link UserMessage}
 	 * instead of merging the two, and it runs later in the same turn than this does. On a turn that
-	 * opens with a delivery - a subagent of an earlier run of the session finishing - the newest user
-	 * message is therefore this one, and the block sits in front of the delivery text. Either way
-	 * nothing here touches what the user wrote.
+	 * opens with a delivery - a subagent of an earlier run of the session finishing - the newest
+	 * user message is therefore this one, and the block sits in front of the delivery text. Either
+	 * way nothing here touches what the user wrote.
 	 * </p>
 	 */
 	static void injectSubagentResults(Conversation conversation) {
@@ -704,11 +707,11 @@ public class AgentLoop {
 	 * <p>
 	 * A run the user cancelled is not a failed one, whatever the provider made of it: cancelling
 	 * closes the response stream, and the provider reports the closed stream as an
-	 * {@link ProviderException.Kind#UNKNOWN} "Stream cancelled.". Such a run emits no
-	 * {@link AgentEvent.ProviderError} and carries no error on its result - it ends
-	 * {@link StopReason#ABORTED}, which is how every consumer already tells a cancel apart. Passed
-	 * on, the provider's sentence was drawn in the chat as "the model reported an error" and
-	 * persisted into the transcript as one (#549).
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#UNKNOWN} "Stream cancelled.".
+	 * Such a run emits no {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ProviderError} and
+	 * carries no error on its result - it ends {@link StopReason#ABORTED}, which is how every
+	 * consumer already tells a cancel apart. Passed on, the provider's sentence was drawn in the
+	 * chat as "the model reported an error" and persisted into the transcript as one (#549).
 	 * </p>
 	 */
 	private AgentResult endOnProviderFailure(ProviderException e, ToolContext context,
@@ -1725,13 +1728,14 @@ public class AgentLoop {
 	 * <p>
 	 * A failure costs the same as a success: both stay in the conversation for every later request
 	 * of the run, so both are cut to the budget and both report it with the same
-	 * {@link AgentEvent.ToolCallResultTruncated} event. What a failure does <em>not</em> have is a
-	 * per-tool budget of its own: {@link com.top_logic.tl.ai.tool.api.ToolResult#failure(String)}
-	 * carries no {@code truncationHint}, and the failures that matter most here - a thrown
-	 * exception, a remote MCP error body, an exception out of a TL-Script body - never pass a
-	 * {@code ToolResult} at all. The installation default is therefore the only budget for a
-	 * failure, deliberately: a tool must not be able to exempt its own error path from the ceiling
-	 * the way a browser verb exempts a rendered page.
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolCallResultTruncated} event. What a
+	 * failure does <em>not</em> have is a per-tool budget of its own:
+	 * {@link com.top_logic.tl.ai.tool.api.ToolResult#failure(String)} carries no
+	 * {@code truncationHint}, and the failures that matter most here - a thrown exception, a remote
+	 * MCP error body, an exception out of a TL-Script body - never pass a {@code ToolResult} at
+	 * all. The installation default is therefore the only budget for a failure, deliberately: a
+	 * tool must not be able to exempt its own error path from the ceiling the way a browser verb
+	 * exempts a rendered page.
 	 * </p>
 	 *
 	 * <p>

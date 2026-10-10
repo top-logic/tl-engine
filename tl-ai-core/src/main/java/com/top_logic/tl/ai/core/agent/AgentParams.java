@@ -89,8 +89,15 @@ public record AgentParams(
 			environment, turnContext, responseFormat);
 	}
 
-	/** Default maximum turns. */
-	public static final int DEFAULT_MAX_TURNS = 25;
+	/**
+	 * Default maximum turns.
+	 *
+	 * <p>
+	 * A safety cap against a runaway loop, not a budget: a skill workflow that loads further skills,
+	 * explores the model and asks the user several questions within one run needs well over 25.
+	 * </p>
+	 */
+	public static final int DEFAULT_MAX_TURNS = 60;
 
 	/** Default maximum output tokens per LLM call. */
 	public static final int DEFAULT_MAX_OUTPUT_TOKENS = 8192;

@@ -22,9 +22,9 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
  *
  * <p>
  * Fed from the classification the providers already produce - a
- * {@link ProviderException.Kind} - and read by {@link com.top_logic.tl.ai.core.agent.AgentLoop}
- * before it calls a model and after a call failed. Three strengths, from
- * {@link HealthCause}:
+ * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind} - and read by
+ * {@link com.top_logic.tl.ai.core.agent.AgentLoop} before it calls a model and after a call failed.
+ * Three strengths, from {@link HealthCause}:
  * </p>
  *
  * <ul>
@@ -38,18 +38,17 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
  * </ul>
  *
  * <p>
- * A weaker cause never replaces a stronger mark that still holds: a single unclassified blip
- * during a quota lockout does not turn the lockout into "retry once", and a capacity mark does not
- * shorten it either. Equal causes replace, which refreshes the lifetime of a fault that is still
- * happening.
+ * A weaker cause never replaces a stronger mark that still holds: a single unclassified blip during
+ * a quota lockout does not turn the lockout into "retry once", and a capacity mark does not shorten
+ * it either. Equal causes replace, which refreshes the lifetime of a fault that is still happening.
  * </p>
  *
  * <h2>Why this is not a {@code ManagedClass}</h2>
  *
  * <p>
  * It is a component of {@link com.top_logic.tl.ai.core.provider.LLMService}, reached through
- * {@link com.top_logic.tl.ai.core.provider.LLMService#modelHealth()}, not a service of its own.
- * The state is keyed by exactly the model names that service routes and is configured in the same
+ * {@link com.top_logic.tl.ai.core.provider.LLMService#modelHealth()}, not a service of its own. The
+ * state is keyed by exactly the model names that service routes and is configured in the same
  * {@code <failover>} section, so a second {@link com.top_logic.basic.module.ManagedClass} would add
  * a module to the startup graph and a second place that has to agree about model names, and buy
  * nothing. As a plain object it also takes its {@link Clock} from its caller, which is what lets

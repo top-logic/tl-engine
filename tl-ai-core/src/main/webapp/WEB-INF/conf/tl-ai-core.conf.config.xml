@@ -1429,6 +1429,105 @@ When a subagent finishes, its result is delivered to you automatically at the st
 							<tool name="subagent.wait_for_subagent"/>
 						</tools>
 					</skill>
+					<!--
+						Issue #667. The counterpart of /init in Claude Code: it writes the application
+						context - what the application is for, who works with it, its terms and its rules -
+						and saves it, with the user's approval, into the application's source configuration:
+						the TextPromptContributor named "application-context" among the prompt contributors
+						of LLMService. Writing it is a development task, like setting up the agents, so the
+						save is only offered where the application runs from its source. The only tool it
+						brings that changes anything is that save; it reads the model with
+						TL_modelExploration. Albert's own write tools stay offered during the run, and the
+						approval every one of them needs is what stands between a run and a write.
+					-->
+					<skill name="TL_init"
+						description="Load when the user wants the application context written or revised - the document the agents are given in their system prompt: what this application is for, who works with it, its terms and its rules (like /init writing a CLAUDE.md). A development task: analyzes the model, interviews the developer, and saves the document with their approval into the application's source configuration. Does NOT create or change the model, screens or data. Reads the model with TL_modelExploration; if that skill is not available to you, relay the reason loadSkill gives and stop - a context written without reading the model states guesses as facts."
+					>
+						<content><![CDATA[# Writing the application context
+
+<goal>
+You write ONE Markdown document, the application context, and save it with `saveApplicationContext`. It goes into the application's source configuration, and once the LLM service is restarted the agents are given it in their system prompt - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
+
+This is a development task: the person you work with builds the application, and the document becomes part of its source, like the model. Saving is only possible where the application runs from its source; anywhere else you still write the document, and hand it over at the end.
+
+Saving the context is the ONLY change you make. Do not change any model element, screen or object - not even to correct something you found wrong: you report it, and the user decides. What you learn goes into the document.
+</goal>
+
+<workflow>
+Work through the steps in one go. Do not create tasks for them.
+
+## 1. Read the existing context
+
+Call `readApplicationContext`. If there is one - active, or saved and waiting for a restart - you REVISE it: keep what is still true, correct what the model contradicts, add what is missing. Say at the start that you found one and are revising it.
+
+## 2. Analyze the model
+
+Call `model-browser.outlineModel` once; it lists the application's own modules, which is what the context is about.
+
+The outline shows that an attribute is derived, not how. Load TL_modelExploration and look closer:
+
+- For every derived attribute, read its calculation rule: `getCurrentAnnotations("module:Type#attribute", includeInherited=true)` - the expression is the `expr` of its `storage-algorithm`. Read it to understand what the value MEANS; never describe a rule you have not read.
+- Use `listTypeParts` and `listClassifiers` where the outline leaves out what you need: inherited parts, the values of an enumeration.
+- Compare what each type and attribute SAYS - its label and description - with what it DOES: a rule that computes something else than its description promises, a description naming values its enumeration does not have, an attribute described as required that is not mandatory, two types described as the same concept.
+
+Analyze the MODEL only. Do not query or list the application's objects: the context describes what the application is, not what is in it today.
+
+Report what you found to the user in a few lines: the modules and their main types, then every discrepancy as one item - the element (`module:Type#attribute`), what its description says, what the implementation does, and the expression where there is one. Do not fix them. They are defects of the model, not knowledge for the agents, so they do NOT go into the document; say that each can be corrected as a change of its own. Then go straight on with the interview.
+
+## 3. Interview
+
+Ask with `askUser`, one question per call, at most five calls, in the user's language. Where you offer options, do not add one for an answer in the user's own words - the chat offers that itself. Skip a question the existing context or the user already answered, and put what you learned from the model into the question rather than asking for it ("I see projects with tickets and a status workflow - what is the application used for?").
+
+1. What the application is for.
+2. Who works with it, and on what: the groups of users, their tasks, what each of them typically asks.
+3. The terms the people working with it use: in-house names, abbreviations, words that mean something specific here - and what each one means.
+4. Rules and procedures an agent must respect: who may decide what, what has to happen in which order, what must never be done.
+5. What the agents should take particular care of, or avoid.
+
+## 4. Draft the document and have it reviewed
+
+Write the document in the language of the user you are working with, in these sections - leave out a section you have nothing true for:
+
+```markdown
+# Application context: [application]
+
+## Purpose
+[What the application is for, in two or three sentences.]
+
+## Users
+- **[Group]**: [their tasks; what they typically ask an agent]
+
+## Terms
+- **[Term]**: [meaning] - `module:Type` / `module:Type#attribute` where the model has it
+
+## Core objects
+[The main types in business language with their qualified names, and how they belong together.]
+
+## Calculated values
+- `module:Type#attribute`: [what the value means and what it is used for, in one sentence]
+
+## Rules
+- [A rule or procedure an agent must respect.]
+```
+
+Keep it short - every run of every agent pays for it, and it may not exceed 8000 characters; aim for well under half of that. State what the model does NOT say: purpose, users, meaning, rules. Do not repeat the structure `outlineModel` returns anyway; name a model element only to tie a term or a rule to it. For a calculated value write what it MEANS, not its expression: an agent that needs the expression reads it with `getCurrentAnnotations`. Write statements, not guesses: what neither the model nor the user told you does not go in.
+
+Show the complete document in ONE fenced code block, then ask with `askUser(type="choice")` whether to save it, with two options in the user's language - one meaning "save", one meaning "change something". If the user answers with anything but "save" - the other option, or a change in their own words - make the change and show the whole document again.
+
+## 5. Save it
+
+Call `saveApplicationContext` with the complete document. The user approves the save and sees the text while doing so.
+
+- Saved: tell the user in a few sentences which file it was saved into (the answer names it), that it takes effect when the LLM service is restarted - in the Service Editor, or by restarting the application - and that the file is part of the application's source and is to be committed. Nothing else is needed: there is no screen to fill in.
+- Not offered or refused - outside the development environment, or for an account that may not change the configuration: give the final document in one fenced code block and relay the reason in one sentence.
+- The user declined the approval: ask what to change, and continue with step 4.
+</workflow>
+]]></content>
+						<tools>
+							<tool name="application-context.readApplicationContext"/>
+							<tool name="application-context.saveApplicationContext"/>
+						</tools>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_SingleAgent"
@@ -1626,6 +1725,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<skill name="TL_agenticAuthoring"/>
 							<skill name="TL_webAccess"/>
 							<skill name="TL_spawnSubagents"/>
+							<skill name="TL_init"/>
 						</skills>
 					</agent>
 					<agent name="TL_Orchestrator"
@@ -2557,6 +2657,17 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="user-memory">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.memory.UserMemoryTool"
+						/>
+					</factory>
+					<!--
+						readApplicationContext / saveApplicationContext (Issue #667): the tools of TL_init.
+						They read and write the TextPromptContributor named "application-context" of
+						LLMService; the save writes it into the application's source configuration and is
+						only offered in the development environment.
+					-->
+					<factory name="application-context">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.context.ApplicationContextTool"
 						/>
 					</factory>
 					<factory name="cite">

@@ -243,6 +243,9 @@ An order is 'open' until it is invoiced.</en>
   saved. It is **not** refused at start-up: the engine checks the configuration before the agent
   definitions and the knowledge base can answer, so a name that matches no agent then gets the text
   nowhere.
+- **`name`** is optional and lets a tool find an entry again. `name="application-context"` marks the
+  application context, which Albert's `TL_init` skill writes into the application's source
+  configuration and revises there (#667, see `init-skill.md`). Leave it empty for any other text.
 - **Placeholders**: the text may use every `{{...}}` placeholder of an agent's prompt; the tooltip of
   the field lists them with their meaning. An unknown placeholder is a configuration error, refused
   by a `@Constraint` on the property. The engine asks that constraint at two points: when the

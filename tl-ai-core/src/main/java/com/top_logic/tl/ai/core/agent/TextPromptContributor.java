@@ -64,16 +64,39 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 	 * Configuration of a {@link TextPromptContributor}.
 	 */
 	@DisplayOrder({
+		Config.NAME,
 		Config.AGENTS,
 		Config.TEXT,
 	})
 	public interface Config<I extends TextPromptContributor> extends PolymorphicConfiguration<I> {
+
+		/**
+		 * The {@link #getName() name} of the entry that holds the application context.
+		 */
+		String APPLICATION_CONTEXT = "application-context";
+
+		/** Configuration property name for {@link #getName()}. */
+		String NAME = "name";
 
 		/** Configuration property name for {@link #getAgents()}. */
 		String AGENTS = "agents";
 
 		/** Configuration property name for {@link #getText()}. */
 		String TEXT = "text";
+
+		/**
+		 * A name for this entry, so that a tool can find it again among the others.
+		 *
+		 * <p>
+		 * {@value #APPLICATION_CONTEXT} marks the application context: the text that Albert's
+		 * {@code TL_init} skill writes and revises. Leave it empty for any other text.
+		 * </p>
+		 *
+		 * @see #NAME
+		 */
+		@Name(NAME)
+		@Label("Name")
+		String getName();
 
 		/**
 		 * The agents that get the text.

@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.security.layout;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +25,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -34,7 +32,6 @@ import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ReadOnlyAccessor;
-import com.top_logic.layout.basic.AbstractConstantControl;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.FragmentControl;
 import com.top_logic.layout.basic.fragments.Fragments;

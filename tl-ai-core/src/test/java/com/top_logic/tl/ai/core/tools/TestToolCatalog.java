@@ -438,13 +438,14 @@ public class TestToolCatalog extends TestCase {
 	}
 
 	/**
-	 * An annotated method may return a {@link ToolResult} directly, content and all - and what reaches
-	 * the model is marked as untrusted content on the way out (issue #478).
+	 * An annotated method may return a {@link ToolResult} directly, content and all - and what
+	 * reaches the model is marked as untrusted content on the way out (issue #478).
 	 *
 	 * <p>
 	 * Asserted here, at the dispatcher, and not only at {@code AnnotatedTools}, because this is the
 	 * path an actual tool call takes: the marking has to survive being turned into a
-	 * {@link ToolState.Completed} with its content parts, which is what the request builders read.
+	 * {@link com.top_logic.tl.ai.core.message.ToolState.Completed} with its content parts, which is
+	 * what the request builders read.
 	 * </p>
 	 */
 	public void testAnnotatedMethodReturningToolResult() {

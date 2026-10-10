@@ -185,7 +185,10 @@ public class TestCitationValidator extends TestCase {
 		assertEquals("https://a.example", result.citations().get(0).id());
 	}
 
-	/** {@link CitationValidator#apply} rewrites every assistant {@link Part.TextPart} of the turn. */
+	/**
+	 * {@link CitationValidator#apply} rewrites every assistant
+	 * {@link com.top_logic.tl.ai.core.session.Part.TextPart} of the turn.
+	 */
 	public void testApplyRewritesEveryText() {
 		ConversationLog log = new ConversationLog();
 		Turn turn = log.startTurn();

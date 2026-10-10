@@ -34,11 +34,11 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * A token is {@value #PREFIX} followed by {@value #SECRET_LENGTH} characters drawn uniformly from
  * {@code [0-9A-Za-z]} by a {@link SecureRandom} - {@code 43 * log2(62)}, about 256 bits of
- * randomness. The prefix makes a token recognisable: a secret scanner (GitHub secret scanning, a
- * pre-commit hook) can match a leaked one by pattern, a person can tell it from a password at a
- * glance, and the {@link AccessTokenAuthenticator authenticator} can tell it from another bearer
- * token without a database lookup. Base 62 rather than base 64, so that a double click selects the
- * whole token.
+ * randomness. The prefix makes a token recognisable: a secret scanner (the secret scanning of a
+ * code host, a pre-commit hook) can match a leaked one by pattern, a person can tell it from a
+ * password at a glance, and the {@link AccessTokenAuthenticator authenticator} can tell it from
+ * another bearer token without a database lookup. Base 62 rather than base 64, so that a double
+ * click selects the whole token.
  * </p>
  *
  * <h2>What is stored</h2>

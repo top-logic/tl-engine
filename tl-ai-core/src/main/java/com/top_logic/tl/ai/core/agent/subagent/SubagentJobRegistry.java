@@ -46,6 +46,9 @@ public class SubagentJobRegistry {
 
 	private volatile Listener _listener = Listener.NONE;
 
+	/** Counts the questions asked to the lead, so that a waiting lead notices a new one. */
+	private int _questionsAsked;
+
 	/** */
 	public SubagentJobRegistry() {
 		this(DEFAULT_MAX_CONCURRENT);
@@ -105,6 +108,7 @@ public class SubagentJobRegistry {
 	public SubagentJob register(String targetAgentName, String taskBrief, CancellationToken token) {
 		String id = "sa-" + _counter.incrementAndGet();
 		SubagentJob job = new SubagentJob(id, targetAgentName, taskBrief, token);
+		job.setQuestionSignal(this::questionAsked);
 		_jobs.put(id, job);
 		return job;
 	}
@@ -168,6 +172,29 @@ public class SubagentJobRegistry {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * The questions to the lead no lead turn has been shown yet, in registration order of the asking
+	 * jobs, each marked as shown.
+	 */
+	public List<SubagentJob> takeUndeliveredQuestions() {
+		List<SubagentJob> asking = new ArrayList<>();
+		for (SubagentJob job : ordered()) {
+			LeadQuestion asked = job.leadQuestion();
+			if (asked != null && !asked.answer().isDone() && asked.markDelivered()) {
+				asking.add(job);
+			}
+		}
+		return asking;
+	}
+
+	/** Wakes a lead that waits in {@link #awaitBlocking}, because a subagent asked it something. */
+	private void questionAsked() {
+		synchronized (_completionLock) {
+			_questionsAsked++;
+			_completionLock.notifyAll();
+		}
 	}
 
 	/**
@@ -263,14 +290,21 @@ public class SubagentJobRegistry {
 	}
 
 	/**
-	 * Blocks until every given job is terminal or the timeout elapses, then returns the
-	 * results of those that completed (marking them delivered). Jobs still running at timeout
-	 * are simply omitted.
+	 * Blocks until every given job is terminal, a subagent asks the lead a question, or the timeout
+	 * elapses, then returns the results of those that completed (marking them delivered). Jobs still
+	 * running then are simply omitted.
+	 *
+	 * <p>
+	 * A question ends the wait whichever subagent asks it: a subagent the lead waits for cannot finish
+	 * before it is answered, and another one's question must not wait behind a long wait.
+	 * </p>
 	 */
 	public List<SubagentResult> awaitBlocking(List<String> ids, long timeoutMs) {
 		long deadline = System.currentTimeMillis() + timeoutMs;
 		synchronized (_completionLock) {
-			while (!allTerminal(ids) && System.currentTimeMillis() < deadline) {
+			int questions = _questionsAsked;
+			while (!allTerminal(ids) && _questionsAsked == questions && !hasUndeliveredQuestion()
+					&& System.currentTimeMillis() < deadline) {
 				long wait = deadline - System.currentTimeMillis();
 				if (wait <= 0) {
 					break;
@@ -284,6 +318,16 @@ public class SubagentJobRegistry {
 			}
 		}
 		return await(ids);
+	}
+
+	private boolean hasUndeliveredQuestion() {
+		for (SubagentJob job : _jobs.values()) {
+			LeadQuestion asked = job.leadQuestion();
+			if (asked != null && !asked.isDelivered() && !asked.answer().isDone()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean allTerminal(List<String> ids) {

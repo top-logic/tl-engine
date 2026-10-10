@@ -179,6 +179,7 @@ public class SubagentStatusTool implements Tool {
 
 	private static String waitingText(SubagentJob.Waiting waiting) {
 		return switch (waiting) {
+			case LEAD_ANSWER -> "for your answer to its question (reply_to_subagent)";
 			case USER_ANSWER -> "for the user's answer to its question";
 			case APPROVAL -> "for the user's approval of a tool call";
 		};

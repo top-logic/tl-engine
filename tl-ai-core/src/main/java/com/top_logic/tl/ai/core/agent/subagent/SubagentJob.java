@@ -40,6 +40,12 @@ public class SubagentJob {
 
 	private volatile String _cancelReason;
 
+	private volatile LeadQuestion _leadQuestion;
+
+	private volatile Runnable _questionSignal = () -> {
+		// Nobody listens.
+	};
+
 	private volatile SubagentJobStatus _status = SubagentJobStatus.QUEUED;
 
 	private volatile SubagentResult _result;
@@ -137,6 +143,49 @@ public class SubagentJob {
 		return _cancelReason;
 	}
 
+	/**
+	 * Asks the agent that started this subagent a question, and returns it for the asking thread to
+	 * wait on.
+	 *
+	 * <p>
+	 * One question at a time, because the asking thread waits for the answer; the registry is told, so
+	 * that a lead waiting in {@code wait_for_subagent} returns to answer it.
+	 * </p>
+	 */
+	public LeadQuestion askLead(String question) {
+		LeadQuestion asked = new LeadQuestion(question);
+		_leadQuestion = asked;
+		_questionSignal.run();
+		return asked;
+	}
+
+	/** The question this subagent waits for the lead to answer, or <code>null</code>. */
+	public LeadQuestion leadQuestion() {
+		return _leadQuestion;
+	}
+
+	/**
+	 * Answers the question this subagent is waiting on.
+	 *
+	 * @return Whether a question was waiting; <code>false</code> when there is none to answer.
+	 */
+	public boolean answerLead(String answer) {
+		LeadQuestion asked = _leadQuestion;
+		return asked != null && asked.answer().complete(answer);
+	}
+
+	/** Forgets the question once the asking thread has stopped waiting for it. */
+	public void clearLeadQuestion(LeadQuestion asked) {
+		if (_leadQuestion == asked) {
+			_leadQuestion = null;
+		}
+	}
+
+	/** Sets what is told when this subagent asks its lead; see {@link #askLead(String)}. */
+	void setQuestionSignal(Runnable signal) {
+		_questionSignal = signal;
+	}
+
 	/** What the subagent has done so far; see {@link SubagentProgress}. */
 	public SubagentProgress progress() {
 		return _progress;
@@ -144,6 +193,8 @@ public class SubagentJob {
 
 	/** What a running subagent is parked on, while it waits for somebody. */
 	public enum Waiting {
+		/** A question to the agent that started it. */
+		LEAD_ANSWER,
 		/** A question to the user. */
 		USER_ANSWER,
 		/** An approval of a tool call. */
@@ -162,6 +213,10 @@ public class SubagentJob {
 	public Waiting waitingFor() {
 		if (_status != SubagentJobStatus.RUNNING) {
 			return null;
+		}
+		LeadQuestion asked = _leadQuestion;
+		if (asked != null && !asked.answer().isDone()) {
+			return Waiting.LEAD_ANSWER;
 		}
 		if (_interactionStore.hasPendingApprovals()) {
 			return Waiting.APPROVAL;

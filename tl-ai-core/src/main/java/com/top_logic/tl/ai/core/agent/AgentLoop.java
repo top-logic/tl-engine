@@ -423,10 +423,13 @@ public class AgentLoop {
 			return;
 		}
 		List<SubagentJob> finished = registry.takeUndeliveredResults();
-		if (finished.isEmpty()) {
+		// A subagent's question to this run travels the same way: it is news from a worker, it waits
+		// in the same registry, and it is answered with reply_to_subagent.
+		List<SubagentJob> asking = registry.takeUndeliveredQuestions();
+		if (finished.isEmpty() && asking.isEmpty()) {
 			return;
 		}
-		String text = SubagentResultDelivery.deliveryText(finished);
+		String text = SubagentResultDelivery.deliveryText(finished, asking);
 		conversation.add(new UserMessage(
 			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
 

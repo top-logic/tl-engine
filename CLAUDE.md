@@ -481,6 +481,15 @@ thread records the lead's log) and what replay turns back into the same message.
 the job ends, so a late message is refused rather than left unread; text only, it changes no tool, right
 or model.
 
+A child asks its lead with `ask_lead` (#707), a tool only a background subagent's catalog has
+(`AgentFactory`, the `includeDelegation=false` branch): the question is parked on the job
+(`LeadQuestion`, the job bound by the spawner), the lead is shown it - enveloped - at the start of its
+next turn together with any results (`SubagentResultDelivery.deliveryText(finished, asking)`), or at
+once when it waits in `wait_for_subagent`, which a question ends early; the lead answers with
+`reply_to_subagent`, and the child goes on in the same turn. The question timeout ends the wait with
+"decide yourself and state the assumption"; a cancel ends it too. Waking an idle lead for a question is
+the wake's job (issue 4 of the series).
+
 ## Project Structure
 
 Standard Maven layout. Key package roots:

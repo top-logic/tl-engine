@@ -15,6 +15,7 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.tools.interaction.CancelSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
+import com.top_logic.tl.ai.core.tools.interaction.ReplyToSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SendToSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentStatusTool;
@@ -27,8 +28,9 @@ import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
  * {@link SpawnSubagentTool spawn_subagent} (fire-and-forget spawn), {@link ListAgentsTool
  * list_agents}, {@link SubagentStatusTool subagent_status} (non-blocking status probe),
  * {@link WaitForSubagentTool wait_for_subagent} (opt-in blocking join), {@link SendToSubagentTool
- * send_to_subagent} (a message a running subagent reads at its next turn) and {@link CancelSubagentTool
- * cancel_subagent} (stop one).
+ * send_to_subagent} (a message a running subagent reads at its next turn), {@link CancelSubagentTool
+ * cancel_subagent} (stop one) and {@link ReplyToSubagentTool reply_to_subagent} (answer a question a
+ * subagent asked with {@code ask_lead}).
  *
  * <p>
  * These tools are independent of the pre-wired {@link DelegationTool delegation} flow: any agent
@@ -83,7 +85,8 @@ public class SubagentToolFactory implements ToolFactory {
 			new SubagentStatusTool(),
 			new WaitForSubagentTool(),
 			new SendToSubagentTool(),
-			new CancelSubagentTool());
+			new CancelSubagentTool(),
+			new ReplyToSubagentTool());
 	}
 
 }

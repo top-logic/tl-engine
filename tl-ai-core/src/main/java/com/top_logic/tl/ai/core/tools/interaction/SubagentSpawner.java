@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInboxBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
@@ -165,7 +166,9 @@ public class SubagentSpawner {
 					UserInteractionStoreBinding.Binding ownStore =
 						UserInteractionStoreBinding.bind(j.interactionStore());
 					// What the lead sends it, read at the start of each of its turns.
-					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox())) {
+					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox());
+					// Its own job, which ask_lead parks its question on.
+					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j)) {
 
 					Instant start = Instant.now();
 

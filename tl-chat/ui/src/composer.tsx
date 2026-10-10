@@ -661,7 +661,8 @@ export const Composer = React.memo(
 
   // Subagents whose question or approval is open: said before the working chip, because it is the
   // one thing about them that needs the user.
-  const waitingForYou = subagentsWaitingForUser([...pendingApprovals, ...pendingQuestions]).size
+  const waitingSubagents = subagentsWaitingForUser([...pendingApprovals, ...pendingQuestions])
+  const waitingForYou = waitingSubagents.size
 
   return (
     <footer className={`composer${dropping ? ' is-dropping' : ''}`}>
@@ -682,6 +683,7 @@ export const Composer = React.memo(
           ) : null}
           <SubagentActivityPanel
             subagents={subagents}
+            waiting={waitingSubagents}
             labels={labels}
             onCancel={onCancelSubagent}
             onStopAll={onStopSubagents}

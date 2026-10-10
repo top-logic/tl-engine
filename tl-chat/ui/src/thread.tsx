@@ -1,7 +1,8 @@
 import { React } from 'tl-react-bridge'
 import {
   cardsForTurn,
-  SubagentCard,
+  REVEAL_CARD_EVENT,
+  SubagentCards,
   subagentsWaitingForUser,
   type SendToSubagent,
   type SubagentCardModel,
@@ -1030,6 +1031,8 @@ export function showSubagentCard(from: Element, item: Pick<WokenSubagent, 'subag
     cards.find((el) => el.dataset.subagentId === item.subagentId && el.dataset.parentCall === item.parentToolCallId) ??
     cards.find((el) => el.dataset.subagentId === item.subagentId)
   if (!card) return false
+  // An ended card may be folded behind its turn's summary row; its list unfolds first.
+  card.dispatchEvent(new Event(REVEAL_CARD_EVENT, { bubbles: true }))
   card.scrollIntoView({ block: 'center' })
   card.classList.add('is-highlighted')
   card.ownerDocument.defaultView?.setTimeout(() => card.classList.remove('is-highlighted'), CARD_HIGHLIGHT_MS)
@@ -1211,19 +1214,14 @@ function AgentRun({
       {subagentCards.length > 0 && onLoadSubagentTranscript ? (
         // Under the turn's steps and above its answer: the subagents were started on the way to it,
         // and each card shows only what its own subagent does.
-        <div className="subagent-cards">
-          {subagentCards.map((card) => (
-            <SubagentCard
-              key={`${card.parentToolCallId ?? ''}|${card.subagentId}`}
-              card={card}
-              labels={labels}
-              onLoadTranscript={onLoadSubagentTranscript}
-              onSendMessage={onSendSubagentMessage}
-              onCancel={onCancelSubagent}
-              leadName={leadName}
-            />
-          ))}
-        </div>
+        <SubagentCards
+          cards={subagentCards}
+          labels={labels}
+          onLoadTranscript={onLoadSubagentTranscript}
+          onSendMessage={onSendSubagentMessage}
+          onCancel={onCancelSubagent}
+          leadName={leadName}
+        />
       ) : null}
       {pending ? <PendingAnswer indicator={workingIndicator} /> : null}
       {answer && !pending ? (

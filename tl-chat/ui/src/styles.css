@@ -4960,6 +4960,27 @@
   margin: 0.375rem 0;
 }
 
+/* More than three cards (#778): how they stand, and the ended ones folded behind it. */
+.subagent-cards-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.subagent-cards-folded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.subagent-cards-folded[hidden] {
+  display: none;
+}
+
 .subagent-card {
   background: var(--layer-01);
   border: 1px solid var(--border-subtle);

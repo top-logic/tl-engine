@@ -35,12 +35,15 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   onCancel,
   onStopAll,
   onLoadTranscript,
+  waiting,
 }: {
   subagents: SubagentActivity[]
   labels: Labels
   onCancel: (id: string, parentToolCallId?: string) => Promise<void>
   onStopAll: () => Promise<void>
   onLoadTranscript: (id: string) => Promise<ChatMessage[]>
+  /** The subagents whose question or approval is open; listed first. */
+  waiting?: Set<string>
 }) {
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
@@ -52,15 +55,15 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
     () => subagents.filter((item) => item.status === 'RUNNING' || item.status === 'QUEUED').length,
     [subagents],
   )
-  const ordered = useMemo(
-    () =>
-      [...subagents].sort((left, right) => {
-        const leftActive = left.status === 'RUNNING' || left.status === 'QUEUED'
-        const rightActive = right.status === 'RUNNING' || right.status === 'QUEUED'
-        return Number(rightActive) - Number(leftActive)
-      }),
-    [subagents],
-  )
+  // What needs the user first, then what works, then what has yet to start, then what has ended (#778).
+  const ordered = useMemo(() => {
+    const rank = (item: SubagentActivity) =>
+      item.status === 'RUNNING' && waiting?.has(item.subagentId) ? 0
+        : item.status === 'RUNNING' ? 1
+          : item.status === 'QUEUED' ? 2
+            : 3
+    return [...subagents].sort((left, right) => rank(left) - rank(right))
+  }, [subagents, waiting])
 
   useEffect(() => {
     if (!open) return

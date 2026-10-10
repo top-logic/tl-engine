@@ -15,7 +15,7 @@ import type {
   SubagentStep,
 } from './types'
 
-const { useEffect, useState } = React
+const { useEffect, useRef, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
@@ -504,5 +504,103 @@ export function SubagentCard({
         </div>
       ) : null}
     </section>
+  )
+}
+
+/** From how many cards on a turn on the cards get a summary row and the ended ones are folded. */
+export const FOLD_ABOVE = 3
+
+/** The event a link pointing at a folded card sends it, so that its list unfolds first. */
+export const REVEAL_CARD_EVENT = 'tl-subagent-reveal'
+
+function ended(card: SubagentCardModel): boolean {
+  return card.status === 'DONE' || card.status === 'FAILED' || card.status === 'CANCELLED'
+}
+
+/** "5 Subagenten: 1 wartet, 2 laufen, 2 fertig" - the states of a turn's cards, each counted once. */
+export function cardSummary(cards: SubagentCardModel[], labels: Labels): string {
+  const count = (test: (card: SubagentCardModel) => boolean) => cards.filter(test).length
+  const parts: [number, (count: number) => string][] = [
+    [count((card) => card.status === 'WAITING' || card.status === 'WAITING_LEAD'), labels.subagentsWaitingN],
+    [count((card) => card.status === 'RUNNING'), labels.subagentsRunningN],
+    [count((card) => card.status === 'QUEUED'), labels.subagentsQueuedN],
+    [count((card) => card.status === 'DONE'), labels.subagentsDoneN],
+    [count((card) => card.status === 'FAILED'), labels.subagentsFailedN],
+    [count((card) => card.status === 'CANCELLED'), labels.subagentsCancelledN],
+  ]
+  const states = parts.filter(([n]) => n > 0).map(([n, text]) => text(n))
+  return `${labels.subagentsCount(cards.length)}: ${states.join(', ')}`
+}
+
+/**
+ * The cards of one turn. Up to {@link FOLD_ABOVE} they are all shown; with more, a summary row says
+ * how they stand and the ended ones are folded behind it - never removed (handover 9.5) - so the
+ * ones that still work or wait stand together.
+ */
+export function SubagentCards({
+  cards,
+  labels,
+  onLoadTranscript,
+  onSendMessage,
+  onCancel,
+  leadName,
+}: {
+  cards: SubagentCardModel[]
+  labels: Labels
+  onLoadTranscript: (id: string, runId?: string) => Promise<ChatMessage[]>
+  onSendMessage?: SendToSubagent
+  onCancel?: (id: string, parentToolCallId?: string) => Promise<void>
+  leadName?: string
+}) {
+  const [folded, setFolded] = useState(true)
+  const foldRef = useRef<HTMLDivElement>(null)
+  const many = cards.length > FOLD_ABOVE
+  const endedCards = many ? cards.filter(ended) : []
+  const shown = many ? cards.filter((card) => !ended(card)) : cards
+
+  // A link to a folded card (the woken line names an ended subagent) unfolds the list before it
+  // scrolls: the attribute goes at once, so the card can be scrolled to in the same task.
+  useEffect(() => {
+    const node = foldRef.current
+    if (!node) return
+    const reveal = () => {
+      node.hidden = false
+      setFolded(false)
+    }
+    node.addEventListener(REVEAL_CARD_EVENT, reveal)
+    return () => node.removeEventListener(REVEAL_CARD_EVENT, reveal)
+  }, [many])
+
+  const render = (card: SubagentCardModel) => (
+    <SubagentCard
+      key={`${card.parentToolCallId ?? ''}|${card.subagentId}`}
+      card={card}
+      labels={labels}
+      onLoadTranscript={onLoadTranscript}
+      onSendMessage={onSendMessage}
+      onCancel={onCancel}
+      leadName={leadName}
+    />
+  )
+
+  return (
+    <div className="subagent-cards">
+      {many ? (
+        <div className="subagent-cards-summary">
+          <span>{cardSummary(cards, labels)}</span>
+          {endedCards.length > 0 ? (
+            <button type="button" className="text-button" aria-expanded={!folded} onClick={() => setFolded((value) => !value)}>
+              {folded ? labels.subagentsShowEnded(endedCards.length) : labels.subagentsHideEnded}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {shown.map(render)}
+      {endedCards.length > 0 ? (
+        <div className="subagent-cards-folded" ref={foldRef} hidden={folded}>
+          {endedCards.map(render)}
+        </div>
+      ) : null}
+    </div>
   )
 }

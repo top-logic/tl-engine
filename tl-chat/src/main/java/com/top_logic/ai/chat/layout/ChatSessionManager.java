@@ -17,11 +17,9 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
-import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -55,9 +53,6 @@ public class ChatSessionManager {
 	 * model catalog) before each run.
 	 */
 	private static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
-
-	/** Maximum output tokens for conversation summarization. */
-	private static final int SUMMARIZATION_MAX_OUTPUT_TOKENS = 2048;
 
 	private final Object _lock = new Object();
 
@@ -571,7 +566,7 @@ public class ChatSessionManager {
 	 * </p>
 	 */
 	private static ConversationMemory createDefaultMemory() {
-		CompactionStrategy strategy = createCompactionStrategy();
+		CompactionStrategy strategy = CompactionStrategies.forDefaultModel();
 		int contextWindow = resolveContextWindow();
 		return ConversationMemory.withDefaults(strategy, contextWindow);
 	}
@@ -590,27 +585,5 @@ public class ChatSessionManager {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
 		return info.limits().contextWindow();
-	}
-
-	private static CompactionStrategy createCompactionStrategy() {
-		LLMService registry = LLMService.getInstance();
-		if (registry == null) {
-			Logger.warn("LLMService not available, falling back to truncation.", ChatSessionManager.class);
-			return new TruncatingStrategy();
-		}
-		String defaultModel = registry.getDefaultModel();
-		if (defaultModel == null || defaultModel.isBlank()) {
-			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
-			return new TruncatingStrategy();
-		}
-		LLMProvider provider;
-		try {
-			provider = registry.buildProvider(defaultModel, registry.getDefaultProvider());
-		} catch (IllegalStateException ex) {
-			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
-				ChatSessionManager.class);
-			return new TruncatingStrategy();
-		}
-		return new SummarizingStrategy(provider, defaultModel, SUMMARIZATION_MAX_OUTPUT_TOKENS);
 	}
 }

@@ -5,3 +5,7 @@ tl-ai-demo.conf.xml
 # Uncomment the following line to enable it, comment it out again to disable it.
 # See tl-ai-demo/doc/secdemo/testbed.md - it maps every behaviour to a persona and a thing to type.
 #secdemo.config.xml
+
+# The MCP endpoint /mcp with HTTP basic login and three model-reading tools - for a local demo only.
+# Uncomment the following line to enable it. See the file for how to connect Claude Code.
+#mcp-demo.config.xml

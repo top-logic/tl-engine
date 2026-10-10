@@ -371,7 +371,7 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 
 **Client side** (tl-ai-core `mcp/`): `McpServerRegistry` manages connections to external MCP servers (stdio/HTTP transports). `McpTool` wraps remote tools with sanitized names `mcp__{server}__{tool}`. Agents reference MCP servers by name.
 
-**Server side** (tl-ai-mcp-server): Exposes TopLogic model as MCP resources (`toplogic://instance/{tid}`, `toplogic://model/modules/...`) and adapts all registered tools via `McpToolAdapter`. Supports dynamic TL-Script-based resource templates.
+**Server side** (tl-ai-mcp-server): Exposes TopLogic model as MCP resources (`toplogic://instance/{tid}`, `toplogic://model/modules/...`) and publishes the registry tools its `<exposed-tools>` lists (none by default) via `McpToolAdapter`, with `<instructions>` and an `allowed-origins` check. Supports dynamic TL-Script-based resource templates.
 
 ### Event System (tl-ai-core `agent/`)
 

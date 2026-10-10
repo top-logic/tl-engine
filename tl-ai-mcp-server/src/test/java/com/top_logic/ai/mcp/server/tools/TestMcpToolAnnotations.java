@@ -6,10 +6,12 @@
 package com.top_logic.ai.mcp.server.tools;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.mcp.McpTool;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -141,17 +143,16 @@ public class TestMcpToolAnnotations extends TestCase {
 	 * <p>
 	 * A client's display name for a tool is {@code title}, then {@code annotations.title}, then
 	 * {@code name}. The first field arrived with the 2025-06-18 revision, so an older client finds a
-	 * readable name only in the second - and {@code name} is the qualified, hyphenated one, which is
-	 * not readable.
+	 * readable name only in the second - and {@code name} is the wire name, which is not readable.
 	 * </p>
 	 */
 	public void testTitle() {
 		McpSchema.Tool definition = definition(new StubTool("listModules", ToolMode.READ,
 			ToolGroups.MODEL_READ));
 
-		assertEquals("tl-model-browser-listModules", definition.name());
-		assertEquals("listModules", definition.title());
-		assertEquals("listModules", definition.annotations().title());
+		assertEquals("model-browser__listModules", definition.name());
+		assertEquals("List modules", definition.title());
+		assertEquals("List modules", definition.annotations().title());
 	}
 
 	/**
@@ -215,7 +216,7 @@ public class TestMcpToolAnnotations extends TestCase {
 				mapper.writeValueAsString(received.inputSchema()), null);
 
 			assertEquals("Published as " + mode, ToolMode.EXTERNAL, consumed.mode());
-			assertEquals("mcp__remote-tl__tl-model-browser-doThing", consumed.name());
+			assertEquals("mcp__remote-tl__model-browser__doThing", consumed.name());
 		}
 	}
 
@@ -224,10 +225,14 @@ public class TestMcpToolAnnotations extends TestCase {
 		return definition(new StubTool("aTool", mode, group)).annotations();
 	}
 
-	/** The MCP definition the adapter builds for the given tool. */
+	/** The MCP definition the adapter builds for the given tool, published under its defaults. */
 	private static McpSchema.Tool definition(Tool tool) {
-		McpServerFeatures.SyncToolSpecification specification =
-			McpToolAdapter.adapt(tool, "model-browser." + tool.name());
+		String configName = "model-browser." + tool.name();
+		ExposedTool entry = TypedConfiguration.newConfigItem(ExposedTool.class);
+		entry.setTool(configName);
+		List<McpExposure.Published> published =
+			McpExposure.resolve(List.of(entry), Map.of(configName, tool), name -> null);
+		McpServerFeatures.SyncToolSpecification specification = McpToolAdapter.adapt(published.get(0));
 		return specification.tool();
 	}
 

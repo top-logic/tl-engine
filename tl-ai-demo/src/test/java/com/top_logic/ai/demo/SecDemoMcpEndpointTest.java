@@ -6,6 +6,8 @@
 package com.top_logic.ai.demo;
 
 import java.lang.reflect.Proxy;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,12 +19,20 @@ import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
+import com.top_logic.ai.mcp.server.model.AccessToken;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
+import com.top_logic.ai.mcp.server.token.AccessTokenAuthenticator;
+import com.top_logic.ai.mcp.server.token.AccessTokenFunctions;
+import com.top_logic.ai.mcp.server.token.AccessTokens;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
@@ -32,8 +42,10 @@ import com.top_logic.service.openapi.server.authentication.AuthenticationFailure
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
+import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -436,6 +448,177 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		}
 	}
 
+	// --- Personal access tokens (#671) ---------------------------------------------------------------
+
+	/**
+	 * A request with a personal access token acts as the person who created it.
+	 *
+	 * <p>
+	 * A pair, through the real filter and the real authenticator: the same tool call answers
+	 * differently for Anna's token and Ben's, by their model access rights. The tool runs inside the
+	 * chain, so what is asserted is the whole request - token, account, rights.
+	 * </p>
+	 */
+	public void testAnAccessTokenActsAsItsOwner() {
+		String annasToken = AccessTokens.create(account(ANNA), "Anna's client", null).plain();
+		String bensToken = AccessTokens.create(account(BEN), "Ben's client", null).plain();
+
+		assertHas("Anna partners on exactly one of the two seeded projects.", "\"totalCount\":1",
+			listProjectsWith(annasToken));
+		assertHas("A ticket reader holds no Read grant on pm:Project at all.", "\"totalCount\":0",
+			listProjectsWith(bensToken));
+	}
+
+	/**
+	 * What is stored of a token cannot be presented as one.
+	 *
+	 * <p>
+	 * The hash and the hint are all the database keeps, and neither is the token: a copy of the
+	 * database must yield no credential.
+	 * </p>
+	 */
+	public void testTheTokenItselfIsNotStored() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "stored", null);
+		AccessToken token = created.token();
+
+		assertTrue("A token is recognisable by its prefix.", created.plain().startsWith(AccessTokens.PREFIX));
+		assertFalse("The stored hash must not be the token.", created.plain().equals(token.getSecretHash()));
+		assertFalse("The hint must not be the token.", created.plain().equals(token.getHint()));
+		assertTrue("The hint is the token's beginning, so a person can match it.",
+			created.plain().startsWith(token.getHint().replace("\u2026", "")));
+
+		Recording recording = requestWith(token.getHint());
+		assertEquals("The hint is no credential.", 401, recording.status);
+		recording = requestWith(token.getSecretHash());
+		assertEquals("The hash is no credential.", 401, recording.status);
+	}
+
+	/**
+	 * A revoked token is answered with 401 and a bearer challenge, and never reaches the protocol.
+	 */
+	public void testARevokedTokenIsRefused() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "revoked", null);
+		assertTrue("Precondition: the token works before it is revoked.",
+			requestWith(created.plain()).chainInvoked);
+
+		AccessTokens.revoke(created.token());
+
+		Recording recording = requestWith(created.plain());
+		assertFalse("A revoked token must not reach the protocol.", recording.chainInvoked);
+		assertEquals(401, recording.status);
+		assertHas("The client is told the token is no longer valid.", "error=\"invalid_token\"",
+			recording.responseHeaders.get("WWW-Authenticate"));
+		assertHasNot("The answer must not echo the token.", created.plain(), recording.message);
+	}
+
+	/**
+	 * A token past its expiry is answered with 401.
+	 */
+	public void testAnExpiredTokenIsRefused() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "expiring", Integer.valueOf(1));
+		assertTrue("Precondition: a token valid for a day works today.",
+			requestWith(created.plain()).chainInvoked);
+
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			created.token().setExpiresAt(Date.from(Instant.now().minusSeconds(1)));
+			tx.commit();
+		}
+
+		Recording recording = requestWith(created.plain());
+		assertFalse("An expired token must not reach the protocol.", recording.chainInvoked);
+		assertEquals(401, recording.status);
+	}
+
+	/**
+	 * A request with a token records when the token was last used.
+	 */
+	public void testUsingATokenRecordsIt() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "used", null);
+		assertNull("Precondition: a new token has never been used.", created.token().getLastUsed());
+
+		assertTrue(requestWith(created.plain()).chainInvoked);
+		HistoryUtils.updateSessionRevision();
+
+		assertNotNull("The use must be recorded.", created.token().getLastUsed());
+	}
+
+	/**
+	 * A person reads their own tokens and nobody else's, so that the token list is theirs.
+	 *
+	 * <p>
+	 * Model access is deny-by-default: without the role rule that makes the owner
+	 * {@code McpAccessTokenOwner} of their token, a person holding no role on it could not even list
+	 * it, and the settings tab would stay empty for everybody but an administrator.
+	 * </p>
+	 */
+	public void testOnlyTheOwnerReadsAToken() {
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+
+		assertTrue("Anna reads her own token.", new ModelAccessRightsSecurity(account(ANNA)).canRead(annas));
+		assertFalse("Ben does not read Anna's token.",
+			new ModelAccessRightsSecurity(account(BEN)).canRead(annas));
+	}
+
+	/**
+	 * A person revokes their own token, and not somebody else's; an administrator revokes any.
+	 *
+	 * <p>
+	 * The check is in {@code mcpAccessTokenRevoke} rather than in the view, because a command's input
+	 * is whatever a channel holds.
+	 * </p>
+	 */
+	public void testOnlyTheOwnerOrAnAdministratorRevokes() {
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+
+		actAs(BEN);
+		try {
+			AccessTokenFunctions.accessTokenRevoke(annas);
+			fail("Ben must not revoke Anna's token.");
+		} catch (TopLogicException expected) {
+			// The only acceptable outcome.
+		}
+		assertTrue("Anna's token must still be there.", annas.tValid());
+
+		TLContext.getContext().setCurrentPerson(anyAdministrator());
+		assertTrue(AccessTokenFunctions.accessTokenRevoke(annas));
+		assertFalse("An administrator revokes any token.", annas.tValid());
+	}
+
+	/** Lists the seeded projects through the filter, with the given token, and answers the tool's text. */
+	private String listProjectsWith(String token) {
+		BiFunction<McpSyncServerExchange, McpSchema.CallToolRequest, McpSchema.CallToolResult> handler =
+			toolHandler(LIST_TOOL);
+		Map<String, Object> args = Map.of("moduleName", "pm", "typeName", "Project");
+		String[] answer = new String[1];
+
+		Recording recording = requestWith(token, () -> answer[0] =
+			text(handler.apply(null, new McpSchema.CallToolRequest(LIST_TOOL, new HashMap<>(args)))));
+
+		assertTrue("A valid token must reach the protocol: " + recording.status, recording.chainInvoked);
+		return answer[0];
+	}
+
+	/** Sends one request with the given bearer token through the filter. */
+	private static Recording requestWith(String token) {
+		return requestWith(token, () -> {
+			// Reaching the chain is all that is asked.
+		});
+	}
+
+	/** Sends one request with the given bearer token through the filter, running {@code inChain} as its body. */
+	private static Recording requestWith(String token, Runnable inChain) {
+		Recording recording = new Recording();
+		recording.requestHeaders.put("Authorization", "Bearer " + token);
+		onARequestThread(() -> McpAuthenticationFilter.guard(new AccessTokenAuthenticator(),
+			new McpSessionPrincipals(), request(recording), response(recording),
+			(req, resp) -> {
+				recording.chainInvoked = true;
+				inChain.run();
+			}));
+		HistoryUtils.updateSessionRevision();
+		return recording;
+	}
+
 	// --- Helpers -----------------------------------------------------------------------------------
 
 	/** Reads {@code toplogic://instance/{tid}} as the given persona, through the registered handler. */
@@ -599,6 +782,8 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 		int status;
 
+		String message;
+
 		boolean chainInvoked;
 
 		Person boundCaller;
@@ -637,6 +822,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 				switch (method.getName()) {
 					case "sendError":
 						recording.status = ((Integer) args[0]).intValue();
+						recording.message = args.length > 1 ? (String) args[1] : null;
 						return null;
 					case "setHeader":
 						recording.responseHeaders.put((String) args[0], (String) args[1]);

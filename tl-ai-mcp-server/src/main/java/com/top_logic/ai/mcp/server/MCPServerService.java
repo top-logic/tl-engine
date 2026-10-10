@@ -236,15 +236,16 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 *
 		 * <p>
 		 * Configure at least one, or the endpoint refuses every request: it serves nothing it cannot
-		 * attribute to an account. HTTP basic authenticates against the account's own password
-		 * database, an API key maps a key to a named account, and a bearer token is validated
-		 * against the authorization server the deployment runs. A caller may present any one of the
-		 * configured schemes.
+		 * attribute to an account. A personal access token is one a person created for their own
+		 * account, HTTP basic authenticates against the account's own password database, an API key
+		 * maps a key to a named account, and a bearer token is validated against the authorization
+		 * server the deployment runs. A caller may present any one of the configured schemes.
 		 * </p>
 		 *
 		 * <p>
-		 * Prefer an API key for a service account over the password of a real person: it is
-		 * revocable on its own, and it keeps a login out of a client configuration file.
+		 * Prefer personal access tokens where people connect their own client, and an API key for a
+		 * service account, over the password of a real person: both are revocable on their own, and
+		 * they keep a login out of a client configuration file.
 		 * </p>
 		 */
 		@Override

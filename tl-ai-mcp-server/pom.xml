@@ -46,6 +46,13 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-service-openapi-server</artifactId>
 		</dependency>
+		<!-- The views that create, list and revoke personal access tokens extend the engine's
+		     settings dialog and administration by same-path overlays, which the ViewLoader merges in
+		     dependency order - so this module has to come after the one that declares them. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
 
 		<!-- MCP SDK -->
 		<dependency>
@@ -79,4 +86,31 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>generate-binding</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-maven-plugin</artifactId>
+						<version>${tl.version}</version>
+						<executions>
+							<execution>
+								<id>generate-binding</id>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>generate-java</goal>
+								</goals>
+								<configuration>
+									<modules>tl.ai.mcp.server</modules>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

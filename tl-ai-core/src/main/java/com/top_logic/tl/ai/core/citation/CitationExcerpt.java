@@ -116,7 +116,8 @@ public final class CitationExcerpt {
 	 *        rather than prose
 	 * @param evidence
 	 *        this turn's tool results
-	 * @return field lines, a prose window, or {@code label} - never a slice of the raw result
+	 * @return field lines, a prose window, or {@code label} - never a slice of the raw result; empty for
+	 *         a structured source no evidence carries as fields
 	 */
 	public static String ofSource(String id, String label, boolean structured, List<String> evidence) {
 		if (id == null || id.isEmpty()) {
@@ -139,6 +140,11 @@ public final class CitationExcerpt {
 				// Valid JSON, but nothing in it carries this id as a value of its own. The id was
 				// evidenced somewhere inside a string; the text window finds it.
 			}
+			if (structured) {
+				// A record has fields or nothing to show. A window of a text result around its id is
+				// the transport - "Event [type:...] [id:...] Next event [type:...]" - not the record.
+				continue;
+			}
 			String text = plain(blob);
 			int at = text.indexOf(plain(id));
 			if (at >= 0) {
@@ -146,7 +152,8 @@ public final class CitationExcerpt {
 			}
 			return cut(text, 0, Math.min(text.length(), MAX));
 		}
-		return plain(label);
+		// The popover's head names the source already; a record without fields adds nothing to it.
+		return structured ? "" : plain(label);
 	}
 
 	/**

@@ -47,6 +47,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.tl.ai.core.agent.ExecutionMode;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
@@ -70,6 +72,7 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
+import com.top_logic.tl.ai.core.security.SecurityContextProxy;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.context.DevelopmentWorkspace;
@@ -93,7 +96,10 @@ import com.top_logic.util.model.ModelService;
  * the test environment, where nothing may be written into a real source, so it says where the source
  * is with {@link DevelopmentWorkspace#setWebappForTests(Path)}. The restart is the one the service
  * editor does - reload the application configuration, restart the service - with the written file
- * read last, where a file of the application's {@code autoconf} folder is read.
+ * read last, where a file of the application's {@code autoconf} folder is read. The runs are told
+ * they are in a development installation, as a developer's would be; the test without a source is the
+ * case the production ban does not cover - a test or maintenance installation, where a structural call
+ * may run but there is no source to write.
  * </p>
  *
  * <p>
@@ -374,9 +380,14 @@ public class TestInitSkill extends BasicTestCase {
 	private static Run run(String prompt, ApprovalCallback approval) {
 		Person root = PersonManager.getManager().getRoot();
 		CancellationToken cancellation = new CancellationToken();
-		ToolContext context = new ToolContext(
-			RunSecurity.contextFor(new RunPrincipal(root, RunEntryPoint.CHAT, false)),
-			approval, new TransactionScope(cancellation), cancellation);
+		SecurityContext security = new SecurityContextProxy(
+			RunSecurity.contextFor(new RunPrincipal(root, RunEntryPoint.CHAT, false))) {
+			@Override
+			public ExecutionMode executionMode() {
+				return ExecutionMode.DEVELOPMENT;
+			}
+		};
+		ToolContext context = new ToolContext(security, approval, new TransactionScope(cancellation), cancellation);
 		Conversation conversation = new Conversation();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),

@@ -247,7 +247,7 @@ See `tl-ai-core/doc/skill-overlays.md`.
 context** - purpose, users and their tasks, the users' terms, what the calculated values mean, rules.
 It is development material, so it lives in the application's **source**: a `TextPromptContributor`
 with `name="application-context"` among `LLMService`'s prompt contributors, in a file of the app's
-`WEB-INF/autoconf`. `saveApplicationContext` (EXTERNAL, approval-gated, administrators only) writes it
+`WEB-INF/autoconf`. `saveApplicationContext` (STRUCTURAL, approval-gated, administrators only) writes it
 there - replacing the entry, adding it to the app's last `LLMService` file, or creating
 `ai-application-context.config.xml` without `config:override` - editing the XML in place and never
 touching `tl_autoconf_dir`. It is offered only in the development environment

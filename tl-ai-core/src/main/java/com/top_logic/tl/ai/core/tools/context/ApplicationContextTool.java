@@ -46,13 +46,14 @@ import com.top_logic.basic.util.ResourcesModule;
  * </p>
  *
  * <p>
- * The save is an {@link ToolMode#EXTERNAL} call: it leaves the running application as it is - the
- * text takes effect when the LLM service is restarted - and changes a file in the developer's working
- * copy, which no transaction of this application covers. Like every such call it needs the person's
- * approval, and the person approves the complete text before it is written - that approval is the
- * review step. It is refused before anybody is asked when the account is not an administrator - the
- * people who may change a service's configuration in the application - or when the text is empty, too long or names a placeholder nobody fills, so an
- * approval prompt is only shown for a save that will go through.
+ * The save is a {@link ToolMode#STRUCTURAL} call: it changes the application's configuration, which
+ * is what the approval card tells the person, and the engine's ban on structural changes in
+ * production is a second guard behind the development check. The person approves the complete text
+ * before it is written - that approval is the review step. The file is written when the call runs; the
+ * turn's transaction does not cover it. It is refused before anybody is asked when the account is not
+ * an administrator - the people who may change a service's configuration in the application - or when
+ * the text is empty, too long or names a placeholder nobody fills, so an approval prompt is only shown
+ * for a save that will go through.
  * </p>
  */
 public class ApplicationContextTool {
@@ -130,7 +131,7 @@ public class ApplicationContextTool {
 		+ " document the user agreed to, not a part of it. The user approves the save and sees the text"
 		+ " while doing so. Call it once, at the end, after the user said the draft is done. It takes effect"
 		+ " when the LLM service is restarted.",
-		mode = ToolMode.EXTERNAL, group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE,
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE,
 		check = "refusal", unavailable = "noSource")
 	public ToolResult saveApplicationContext(
 			@P("The complete application context, in Markdown") String text,

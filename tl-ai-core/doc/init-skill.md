@@ -126,9 +126,10 @@ installation to every other one by hand.
    - The document is shown in one code block, followed by a choice in the user's language, "save"
      or "change". An answer in the user's own words counts as a change request.
 5. **Save**: `saveApplicationContext` with the complete document.
-   - **Approval:** it is an `EXTERNAL` call - it leaves the running application as it is and changes
-     a file in the developer's working copy, which no transaction covers - so the user approves it
-     and sees the text while doing so. That approval is the review step.
+   - **Approval:** it is a `STRUCTURAL` call - it changes the application's configuration, which is
+     what the approval card says, and the engine's ban on structural changes in production is a second
+     guard - so the user approves it and sees the text while doing so. That approval is the review
+     step. The file is written when the call runs; the turn's transaction does not cover it.
    - **Refusals before the prompt:** the save is refused when the account is not an administrator
      (the people who may change a service's configuration), when the text is empty or too long, or
      when it names an unknown placeholder. So nobody is asked to approve a save that cannot go

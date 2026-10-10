@@ -32,6 +32,7 @@ import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
+import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
 import com.top_logic.ai.chat.api.messages.RunStartedEvent;
@@ -542,6 +543,13 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setFromModel(e.fromModel())
 				.setToModel(e.toModel())
 				.setReason(e.reason())));
+		} else if (event instanceof AgentEvent.RetryScheduled e) {
+			// The run waits for a busy model, possibly for minutes (#678). Without this the chat
+			// looks frozen for exactly as long.
+			sendEvent("retry_scheduled", DtoMapper.toJson(RetryScheduledEvent.create()
+				.setKind(e.kind())
+				.setAttempt(e.attempt())
+				.setWaitMs(e.waitMs())));
 		}
 	}
 

@@ -595,6 +595,33 @@ describe('the stream', () => {
   })
 
   /**
+   * A run that waits for a rate-limited model says so while it waits (#678), and stops saying it
+   * once the model answers. Without the line the chat sat frozen for as long as the wait.
+   */
+  it('says that the agent waits for a busy model, until the model answers', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('retry_scheduled', { kind: 'RATE_LIMITED', attempt: 3, waitMs: 20000 })
+
+    expect(store.getState().notice).toContain('20 s')
+    expect(store.getState().noticeTone).toBe('info')
+    expect(store.getState().busy).toBe(true)
+
+    stream.emit('text_delta', { text: 'Here', end: 4 })
+
+    expect(store.getState().notice).toBe('')
+
+    await settle()
+    release()
+  })
+
+  /**
    * A run that lost its model continued somewhere else, and the thread says so where the answer
    * is. A notice, not an error: nothing failed for the user (#344).
    */

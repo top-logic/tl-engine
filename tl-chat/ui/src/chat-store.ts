@@ -235,6 +235,7 @@ const RUN_SCOPED_EVENTS = new Set([
   'message_complete',
   'provider_error',
   'model_switched',
+  'retry_scheduled',
   'tx_rollback',
   'delegation_event',
 ])
@@ -684,6 +685,8 @@ export class ChatStore {
 
   /** Whether the line now on screen must survive the next run start. */
   private noticeSticky = false
+  /** Whether the strip says that the run is waiting for a busy model, see `retry_scheduled`. */
+  private retryNotice = false
 
   /**
    * The chat this window had open before it was reloaded, read before anything can overwrite it.
@@ -1162,6 +1165,7 @@ export class ChatStore {
     let connectTimer = 0
 
     const finish = (error?: string, detail?: string) => {
+      this.clearRetryNotice()
       if (this.assistantId) {
         this.dispatch({ type: 'FINALIZE_TEXT', id: this.assistantId })
         this.assistantId = null
@@ -1273,15 +1277,32 @@ export class ChatStore {
           },
         }))
       })
+      on('retry_scheduled', (e) => {
+        // The model refused the call and the run waits before it asks again - for a busy key that
+        // can be minutes (#678). Said in the strip, not in the transcript: it is a state of the
+        // moment, gone as soon as the model answers, and a line per attempt would bury the turn.
+        const data = parseJson<{ kind?: string; waitMs?: number }>(e.data, {})
+        const seconds = Math.max(1, Math.round((data.waitMs ?? 0) / 1000))
+        const labels = this.labels
+        this.showNotice(
+          data.kind === 'OVERLOADED' ? labels.retryOverloaded(seconds) : labels.retryRateLimited(seconds),
+          '',
+          { tone: 'info' },
+        )
+        this.retryNotice = true
+      })
       on('text_delta', (e) => {
+        this.clearRetryNotice()
         const data = parseJson<{ text?: string; end?: number }>(e.data, {})
         if (data.text) this.appendDelta(data.text, data.end ?? 0)
       })
       on('thinking_delta', (e) => {
+        this.clearRetryNotice()
         const data = parseJson<{ text?: string }>(e.data, {})
         if (data.text) this.dispatch({ type: 'APPEND_THINKING', delta: data.text })
       })
       on('tool_started', (e) => {
+        this.clearRetryNotice()
         const data = parseJson<{ toolCallId?: string; toolName?: string; argsJson?: string }>(e.data, {})
         if (!data.toolCallId) return
         this.dispatch({
@@ -1634,6 +1655,13 @@ export class ChatStore {
   ): void => {
     this.patch({ notice: text, noticeDetail: detail, noticeTone: options.tone ?? 'warn' })
     this.noticeSticky = text !== '' && options.sticky === true
+  }
+
+  /** Takes the waiting line down: the model answered, or the run is over. */
+  private clearRetryNotice(): void {
+    if (!this.retryNotice) return
+    this.retryNotice = false
+    this.showNotice('')
   }
 
   /**

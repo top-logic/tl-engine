@@ -991,6 +991,21 @@ message ModelSwitchedEvent {
 	string reason;
 }
 
+/**
+ * SSE event for a model call that is asked again after a pause, because the model was rate limited
+ * or overloaded.
+ */
+message RetryScheduledEvent {
+	/** Why the call is repeated: RATE_LIMITED or OVERLOADED. */
+	string kind;
+
+	/** Which retry this is, 1 for the first. */
+	int attempt;
+
+	/** How long the run waits before it asks again, in milliseconds. */
+	long waitMs;
+}
+
 /** SSE event for compaction started. */
 message CompactionStartedEvent {
 	/** Token count before compaction. */

@@ -1848,30 +1848,52 @@ public class AgentLoop {
 	 * Call the LLM provider with automatic retry for transient errors.
 	 *
 	 * <p>
-	 * Retries up to {@link AgentParams#maxRetries()} times on
-	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
+	 * Retries on {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
 	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#OVERLOADED} with exponential
-	 * backoff, respecting the {@code retry-after} header when present. The backoff sleeps in
-	 * small slices so a user cancellation ends the wait promptly.
+	 * backoff, never sooner than the provider's {@code Retry-After} - see {@link #retryWait}. The
+	 * backoff sleeps in small slices so a user cancellation ends the wait promptly.
+	 * </p>
+	 *
+	 * <p>
+	 * A rate-limited run on its last model waits for up to {@link #rateLimitWaitMs()} in total: the
+	 * model is usually held by another request of the same key, and giving up after a few seconds
+	 * lost the turn - and with it the answer the user had just given to a question card - to a
+	 * request that would have been served a minute later (#678). Everything else retries
+	 * {@link AgentParams#maxRetries()} times, as it always did: a run with a fallback model ahead in
+	 * its failover chain moves on to it instead of waiting, and an overloaded model is also what a
+	 * plain server error is classified as, which no wait mends. {@link AgentParams#maxRetries()} of
+	 * {@code 0} switches retrying off in every case.
+	 * </p>
+	 *
+	 * <p>
+	 * Every wait is announced as an {@link AgentEvent.RetryScheduled}, which is how the chat tells
+	 * its user that the agent is waiting rather than stuck.
 	 * </p>
 	 */
 	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		int maxRetries = Math.max(0, _config.maxRetries());
-		for (int attempt = 0; attempt <= maxRetries; attempt++) {
+		boolean fallbackAhead = _chainIndex < _failoverChain.size() - 1;
+		long waitedMs = 0;
+		for (int attempt = 0;; attempt++) {
 			try {
 				return callProviderOnce(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
 				boolean retryable = e.kind() == ProviderException.Kind.RATE_LIMITED
 					|| e.kind() == ProviderException.Kind.OVERLOADED;
-				if (!retryable || attempt == maxRetries) {
+				if (!retryable || maxRetries == 0) {
 					throw e;
 				}
-				long waitMs = e.retryAfter() != null
-					? e.retryAfter().toMillis()
-					: BASE_BACKOFF_MS * (1L << attempt);
-				// Cap at 30 seconds.
-				waitMs = Math.min(waitMs, 30_000);
+				boolean waitOut = e.kind() == ProviderException.Kind.RATE_LIMITED && !fallbackAhead;
+				if (!waitOut && attempt >= maxRetries) {
+					throw e;
+				}
+				long windowMs = waitOut ? rateLimitWaitMs() : Long.MAX_VALUE;
+				long waitMs = retryWait(attempt, e.retryAfter(), waitedMs, windowMs);
+				if (waitMs <= 0) {
+					throw e;
+				}
+				waitedMs += waitMs;
 
 				emit(listener, new AgentEvent.RetryScheduled(
 					runId, turn, now(), e.kind().name(), attempt + 1, waitMs));
@@ -1879,7 +1901,54 @@ public class AgentLoop {
 				backoff(waitMs, context, e);
 			}
 		}
-		throw new IllegalStateException("Unreachable");
+	}
+
+	/**
+	 * How long to wait before the given retry, or {@code 0} when the wait is used up.
+	 *
+	 * <p>
+	 * The wait doubles with every attempt, starting at the provider's {@code Retry-After} when it
+	 * sent one and at {@link #BASE_BACKOFF_MS} otherwise, up to {@link AgentTuning#MAX_BACKOFF_MS}.
+	 * It is never shorter than the provider's {@code Retry-After}: asking earlier only earns another
+	 * refusal. The last wait is cut to what is left of the window.
+	 * </p>
+	 *
+	 * @param attempt
+	 *        How many retries were made before this one, {@code 0} for the first.
+	 * @param retryAfter
+	 *        What the provider asked for, or {@code null}.
+	 * @param waitedMs
+	 *        How long the call has waited so far.
+	 * @param windowMs
+	 *        How long the call may wait in total.
+	 */
+	static long retryWait(int attempt, Duration retryAfter, long waitedMs, long windowMs) {
+		long remaining = windowMs - waitedMs;
+		if (remaining <= 0) {
+			return 0;
+		}
+		long asked = retryAfter == null ? 0 : Math.max(0, retryAfter.toMillis());
+		long backoff = asked > 0 ? asked : BASE_BACKOFF_MS;
+		for (int n = 0; n < attempt && backoff < AgentTuning.MAX_BACKOFF_MS; n++) {
+			backoff *= 2;
+		}
+		long waitMs = Math.max(Math.min(backoff, AgentTuning.MAX_BACKOFF_MS), asked);
+		return Math.min(waitMs, remaining);
+	}
+
+	/**
+	 * How long a run on its last model waits in total for a model that is rate limited.
+	 *
+	 * <p>
+	 * The installation's {@code rate-limit-wait-seconds}, or
+	 * {@link AgentTuning#DEFAULT_RATE_LIMIT_WAIT_SECONDS} for a loop that runs without the service.
+	 * </p>
+	 */
+	private static long rateLimitWaitMs() {
+		LLMService service = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
+		int seconds = service != null ? service.rateLimitWaitSeconds()
+			: AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS;
+		return Math.max(0, seconds) * 1000L;
 	}
 
 	// ---- Cross-provider failover (Gitea #344) ----

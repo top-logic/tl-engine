@@ -51,6 +51,21 @@ public final class AgentTuning {
 	/** Base backoff delay in milliseconds for transient provider retries; doubles each attempt. */
 	public static final long BASE_BACKOFF_MS = 1000L;
 
+	/** Longest single wait between two provider retries, unless the provider asks for a longer one. */
+	public static final long MAX_BACKOFF_MS = 30_000L;
+
+	/**
+	 * How long, in seconds, a run waits in total for a model that answers "too many requests", when
+	 * the run has no other model to go to.
+	 *
+	 * <p>
+	 * Of the order of minutes, because what holds the model is usually another request of the same
+	 * key that is still running - on a local model one request can take well over a minute (#678).
+	 * An installation sets its own value in {@code LLMService}'s {@code rate-limit-wait-seconds}.
+	 * </p>
+	 */
+	public static final int DEFAULT_RATE_LIMIT_WAIT_SECONDS = 180;
+
 	/**
 	 * Sleep slice in milliseconds for backoff/retry waits, so cancellation is noticed promptly
 	 * rather than after the full wait.

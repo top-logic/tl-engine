@@ -1089,7 +1089,9 @@ public class ChatProcessor {
 			.setLabel(citation.label())
 			.setUrl(citation.url())
 			.setPassage(citation.passage())
-			.setExcerpt(citation.excerpt());
+			.setExcerpt(citation.excerpt())
+			.setArchiveUrl(citation.archiveUrl())
+			.setArchivedAt(citation.archivedAt());
 	}
 
 	/**

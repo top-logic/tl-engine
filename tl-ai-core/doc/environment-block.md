@@ -205,6 +205,16 @@ That is also the point of putting it here rather than in front of every user mes
 an application without this seam had to do: the text is charged once for the conversation instead of
 once per turn.
 
+### The application context, without the service editor (#667)
+
+Every agent a user talks to is also given the **application context**: the
+`tl.ai.core#APPLICATION_CONTEXT` singleton, which Albert's `TL_init` skill writes and an
+administrator edits in the Agent Editor. `ApplicationContextContributor` adds it **after** the
+configured contributors. It is wired in `AgentFactory` and is not an entry of
+`<prompt-contributors>`, because an application that configures `LLMService` itself overrides that
+list as a whole and would drop a shipped entry. A saved change needs no restart. See
+`init-skill.md`.
+
 ### A fixed text, without Java code (#648)
 
 Most applications only want to give their agents a fixed text: what the application is, its domain

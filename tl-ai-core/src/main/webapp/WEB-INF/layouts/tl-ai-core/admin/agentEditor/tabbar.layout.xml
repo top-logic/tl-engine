@@ -22,6 +22,14 @@
 					</contextMenuFactory>
 				</content-layouting>
 			</layout-reference>
+			<layout-reference resource="tl-ai-core/admin/agentEditor/applicationContext/tabLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
 		</components>
 	</arguments>
 </config:template-call>

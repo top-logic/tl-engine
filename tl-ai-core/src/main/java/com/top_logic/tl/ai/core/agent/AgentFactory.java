@@ -765,8 +765,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
-		systemPrompt = appendContributions(agent, assignment, systemPrompt,
-			LLMService.promptContributors());
+		systemPrompt = appendContributions(agent, assignment, systemPrompt, promptContributors());
 
 		// The environment block is composed last, so that a placeholder written into a skill or a
 		// delegate description is filled too, and so that the block is the last thing the model reads
@@ -812,6 +811,26 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
 			maxRetries, timeoutSeconds, toolChoice, msg -> true, environment.block(), turnContext);
+	}
+
+	/**
+	 * Everything that adds to the system prompt of a run: the contributors the installation
+	 * configured, then the application context.
+	 *
+	 * <p>
+	 * The application context is wired here rather than listed among the configured contributors,
+	 * because applications override the {@code LLMService} configuration as a whole
+	 * ({@code config:override="true"}) - a contributor shipped in that list would be dropped, silently,
+	 * in exactly the applications that have a configuration of their own. It contributes nothing
+	 * until a context is written.
+	 * </p>
+	 */
+	static List<SystemPromptContributor> promptContributors() {
+		List<SystemPromptContributor> configured = LLMService.promptContributors();
+		List<SystemPromptContributor> result = new ArrayList<>(configured.size() + 1);
+		result.addAll(configured);
+		result.add(ApplicationContextContributor.INSTANCE);
+		return result;
 	}
 
 	/**

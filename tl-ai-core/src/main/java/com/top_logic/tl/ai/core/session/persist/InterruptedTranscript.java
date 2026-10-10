@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -43,6 +45,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <li>when the turn's KB transaction was still open, every write it reported as done is marked
  * {@link com.top_logic.tl.ai.core.session.Part.ToolCallStatus#ROLLED_BACK} and the rollback is
  * recorded, exactly as a live rollback is - the transaction never reached its commit;</li>
+ * <li>a background subagent still at work is ended as failed: no subagent survives a restart;</li>
  * <li>the last turn ends with a
  * {@link com.top_logic.tl.ai.core.session.Part.SystemEventType#INTERRUPTED} part.</li>
  * </ul>
@@ -78,6 +81,13 @@ public final class InterruptedTranscript {
 	 */
 	public static final String INTERRUPTED_DETAILS =
 		"The server stopped before this run finished; no agent loop survives a restart.";
+
+	/**
+	 * How a background subagent the process ended in the middle of is recorded in its lead's log: its
+	 * own run is failed by the startup sweep, and no subagent survives a restart.
+	 */
+	public static final String INTERRUPTED_SUBAGENT =
+		"The server stopped while this subagent was working; it did not finish.";
 
 	private InterruptedTranscript() {
 		// Static utility
@@ -137,6 +147,8 @@ public final class InterruptedTranscript {
 			} else if (part instanceof Part.ToolCallPart call
 				&& call.status() == Part.ToolCallStatus.RUNNING) {
 				parts.set(i, call.failed(INTERRUPTED_CALL, Duration.ZERO));
+			} else if (part instanceof Part.SubagentPart subagent && !hasEnded(subagent)) {
+				parts.set(i, interrupted(subagent));
 			}
 		}
 
@@ -163,6 +175,46 @@ public final class InterruptedTranscript {
 			dtos.add(ConversationLogSerializer.toPartDto(part));
 		}
 		turn.setAssistantParts(dtos);
+	}
+
+	/**
+	 * Ends every subagent part of the given log that a run of an earlier process left running.
+	 *
+	 * <p>
+	 * The lead's run has usually ended long before its subagents do - so the startup sweep, which
+	 * closes only the transcripts of runs that were still running, does not reach the part that says
+	 * a subagent is at work, and the reopened chat would show it working for ever. A part recorded
+	 * before this process started cannot belong to a subagent that is still at work; it is ended as
+	 * failed, like the subagent's own run.
+	 * </p>
+	 *
+	 * @param log
+	 *        A conversation read back from the database.
+	 * @param processStart
+	 *        When this process started.
+	 * @return How many parts were ended.
+	 */
+	public static int endInterruptedSubagents(ConversationLog log, Instant processStart) {
+		int ended = 0;
+		for (Turn turn : log.turns()) {
+			for (Part part : turn.assistantParts()) {
+				if (part instanceof Part.SubagentPart subagent && !hasEnded(subagent)
+					&& subagent.timestamp().isBefore(processStart)) {
+					turn.updatePart(subagent.id(), interrupted(subagent));
+					ended++;
+				}
+			}
+		}
+		return ended;
+	}
+
+	private static boolean hasEnded(Part.SubagentPart subagent) {
+		String status = subagent.status();
+		return "DONE".equals(status) || "FAILED".equals(status) || "CANCELLED".equals(status);
+	}
+
+	private static Part.SubagentPart interrupted(Part.SubagentPart subagent) {
+		return subagent.ended("FAILED", INTERRUPTED_SUBAGENT, null);
 	}
 
 	/**

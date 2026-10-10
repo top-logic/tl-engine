@@ -230,6 +230,7 @@ public final class PendingInteractionRegistry {
 		if (responder == null || requestId == null) {
 			return null;
 		}
+		forgetEnded();
 		for (PendingSubagent subagent : SUBAGENTS.values()) {
 			if (!responder.equals(subagent.responder())) {
 				continue;
@@ -240,6 +241,14 @@ public final class PendingInteractionRegistry {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Drops the subagents that have ended without their listener hearing it: the chat window that
+	 * listened let go of the registry while they worked.
+	 */
+	private static void forgetEnded() {
+		SUBAGENTS.keySet().removeIf(job -> job.status().isTerminal());
 	}
 
 	/**
@@ -290,6 +299,7 @@ public final class PendingInteractionRegistry {
 		if (owner == null || sessionId == null) {
 			return stores;
 		}
+		forgetEnded();
 		for (PendingSubagent subagent : SUBAGENTS.values()) {
 			if (owner.equals(subagent.responder()) && sessionId.equals(subagent.sessionId())) {
 				stores.add(subagent.job().interactionStore());

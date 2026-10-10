@@ -68,7 +68,7 @@ public class TestSpawnSubagentTool extends TestCase {
 	}
 
 	/**
-	 * When NO registry is bound, execute() returns an error about requiring an active chat session.
+	 * When NO registry is bound - a run recorded under no conversation - execute() refuses.
 	 */
 	public void testNoRegistryReturnsError() {
 		// No SubagentRegistryBinding.bind(...) — registry is null on this thread.
@@ -79,7 +79,7 @@ public class TestSpawnSubagentTool extends TestCase {
 		SpawnSubagentTool tool = new SpawnSubagentTool(factory);
 		ToolResult result = tool.execute(Map.of("agent", "helper", "task", "do something"), ToolContext.EMPTY);
 
-		assertTrue("returns error about active chat session",
-			result.text().contains("requires an active chat session"));
+		assertTrue(result.text(), result.text().startsWith("ERROR: spawn_subagent needs a run recorded under a"
+			+ " conversation"));
 	}
 }

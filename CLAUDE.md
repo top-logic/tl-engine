@@ -487,7 +487,12 @@ conversation in a `ConversationMemory` sized to its model's window, with
 `DelegationTool` creates isolated sub-agent runs (max depth 3). Parent passes `TransactionScope` and `SecurityContext`. Child events recorded in parent's `ConversationLog`.
 
 `spawn_subagent` is the asynchronous half: fire-and-forget, the turn ends, the child works on in a
-`SubagentJobRegistry` bound to the session. Its result reaches the parent on one of two paths, and
+`SubagentJobRegistry` bound to the session. The registries belong to the process, not to the chat
+(`SubagentRegistries`, one per conversation, and in the chat per window): `AgentRunner` binds the
+conversation's for every top-level run that has none bound, so TL-Script, the eval and scheduled runs
+can spawn too, and a chat window that drops or reloads a conversation leaves its children running;
+only deleting the chat cancels them. After a restart the startup sweep fails the children's runs, and
+a reopened conversation ends their parts as failed (`InterruptedTranscript`). Its result reaches the parent on one of two paths, and
 both render it through `SubagentResultDelivery` so the parent reads the same block either way:
 `wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the
 next turn when it did not.

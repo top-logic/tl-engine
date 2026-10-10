@@ -41,14 +41,16 @@ public @interface ToolMethod {
 	 *
 	 * <p>
 	 * A call with that parameter set to {@code true} changes nothing, so it runs as a read whatever
-	 * {@link #mode()} declares: without an approval prompt and outside the transaction of the turn -
-	 * see {@link Tool#mode(java.util.Map)}. The method has to keep that promise, and it is a promise
-	 * about security: whatever a dry run changed would be changed without the user being asked.
+	 * {@link #mode()} declares: without an approval prompt and outside the transaction of the turn.
+	 * The method has to keep that promise, and it is a promise about security: whatever a dry run
+	 * changed would be changed without the user being asked.
 	 * </p>
 	 *
 	 * <p>
 	 * Empty, the default, means the tool has no dry run.
 	 * </p>
+	 *
+	 * @see Tool#mode(java.util.Map)
 	 */
 	String dryRun() default "";
 
@@ -58,14 +60,15 @@ public @interface ToolMethod {
 	 * <p>
 	 * That method takes exactly the parameters of the tool method, receives the same arguments and
 	 * returns the refusal, phrased for the model, or <code>null</code>. It is asked before anybody is
-	 * asked to approve the call - see {@link Tool#refusal(java.util.Map, ToolExecutionContext)} - so
-	 * it must not change anything. The tool method has to refuse the same calls itself: not every
-	 * caller asks the check first.
+	 * asked to approve the call, so it must not change anything. The tool method has to refuse the
+	 * same calls itself: not every caller asks the check first.
 	 * </p>
 	 *
 	 * <p>
 	 * Empty, the default, means the tool refuses nothing early.
 	 * </p>
+	 *
+	 * @see Tool#refusal(java.util.Map, ToolExecutionContext)
 	 */
 	String check() default "";
 
@@ -76,13 +79,15 @@ public @interface ToolMethod {
 	 * <p>
 	 * That method takes exactly one parameter, the {@link ToolExecutionContext} of the run, and returns
 	 * the reason, phrased for the model, or <code>null</code> when the tool can act. A tool that answers
-	 * is not offered to the model, and a call that names it anyway is answered with the reason - see
-	 * {@link Tool#unavailableReason(ToolExecutionContext)}. The method must not change anything.
+	 * is not offered to the model, and a call that names it anyway is answered with the reason. The
+	 * method must not change anything.
 	 * </p>
 	 *
 	 * <p>
 	 * Empty, the default, means the tool can act in every run.
 	 * </p>
+	 *
+	 * @see Tool#unavailableReason(ToolExecutionContext)
 	 */
 	String unavailable() default "";
 

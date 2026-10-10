@@ -1361,7 +1361,7 @@ public class ChatConversationElement implements UIElement {
 	 * Bound with TL-Script the same way {@code <data-list>} is: {@link #getRows() rows} computes the
 	 * objects {@code @} may offer; {@link #getLabel() label} and {@link #getText() text} compute what is
 	 * shown and what quoted text the mention puts into the message. Each mention carries the object's
-	 * id as the agent's tools read it, so the agent can read the object with getInstance. Candidates are
+	 * id as the agent's tools read it, so the agent can read the object with {@code getInstance}. Candidates are
 	 * pushed to the browser and filtered there as the user types, so keep the set modest via
 	 * {@link #getRows() rows} and {@link #getLimit() limit}.
 	 * </p>

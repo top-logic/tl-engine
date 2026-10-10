@@ -343,6 +343,7 @@ public final class ConversationLogSerializer {
 				data.setTotalUsage(toUsageDto(dp.totalUsage()));
 			}
 			data.setStopReason(dp.stopReason() != null ? dp.stopReason().name() : "");
+			data.setParentToolCallId(nullToEmpty(dp.parentToolCallId()));
 			dto.setDelegationData(data);
 		} else if (part instanceof Part.SubagentPart sap) {
 			dto.setType(TYPE_SUBAGENT);
@@ -472,7 +473,8 @@ public final class ConversationLogSerializer {
 					data.getDurationMs(),
 					data.getTurnsUsed(),
 					delegationUsage,
-					delegationStopReason);
+					delegationStopReason,
+					data.getParentToolCallId());
 			}
 			case TYPE_SUBAGENT: {
 				SubagentPartDto data = dto.getSubagentData();

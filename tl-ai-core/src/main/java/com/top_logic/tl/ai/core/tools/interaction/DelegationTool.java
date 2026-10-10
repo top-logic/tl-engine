@@ -186,9 +186,10 @@ public class DelegationTool implements Tool {
 		Instant startTime = Instant.now();
 
 		if (logListener != null) {
-			delegationId = logListener.recordDelegationStarted(_parentAgentName, _targetAgentName, task);
+			String parentToolCallId = toolContext.toolCallId();
+			delegationId =
+				logListener.recordDelegationStarted(_parentAgentName, _targetAgentName, task, parentToolCallId);
 			if (delegationId != null) {
-				String parentToolCallId = toolContext.toolCallId();
 				childListener = logListener.delegationListener(delegationId, parentToolCallId);
 			} else {
 				Logger.warn("Delegation to " + _targetAgentName

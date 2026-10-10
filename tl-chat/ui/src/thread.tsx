@@ -140,8 +140,8 @@ function traceEvents(events: ChatMessage[]): ChatMessage[] {
     // A notice is not a step the agent took. It has its own line beside the answer, and counted as
     // a step it would make a turn that only switched models claim to have "done" something.
     if (item.type === 'notice') return false
-    // Neither is a recorded subagent: it has its own card.
-    if (item.type === 'subagent_ref') return false
+    // Neither is a recorded subagent or synchronous delegation: each has its own card.
+    if (item.type === 'subagent_ref' || item.type === 'delegation_ref') return false
     if (answer && item === answer) return false
     if (item.type === 'assistant_text' && !item.text.trim()) return false
     return true
@@ -1202,7 +1202,7 @@ function AgentRun({
         <div className="subagent-cards">
           {subagentCards.map((card) => (
             <SubagentCard
-              key={card.subagentId}
+              key={`${card.parentToolCallId ?? ''}|${card.subagentId}`}
               card={card}
               labels={labels}
               onLoadTranscript={onLoadSubagentTranscript}
@@ -1285,6 +1285,7 @@ export const Thread = React.memo(function Thread({
   workingIndicator = DOTS,
   subagents,
   subagentLive,
+  delegationLive,
   onLoadSubagentTranscript,
   onSendSubagentMessage,
 }: {
@@ -1322,6 +1323,8 @@ export const Thread = React.memo(function Thread({
   subagents?: SubagentActivity[]
   /** What each running subagent has done so far, by subagent id. */
   subagentLive?: Record<string, SubagentLive>
+  /** What each synchronous delegation did live, by its `delegate_to_*` call. */
+  delegationLive?: Record<string, SubagentLive>
   onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
   /** Writes to a running subagent from its card; without it the cards offer no field. */
   onSendSubagentMessage?: SendToSubagent
@@ -1435,7 +1438,7 @@ export const Thread = React.memo(function Thread({
                     results={results}
                     subagentCards={
                       subagents && onLoadSubagentTranscript
-                        ? cardsForTurn(turn.events, subagents, subagentLive ?? {}, waitingSubagents)
+                        ? cardsForTurn(turn.events, subagents, subagentLive ?? {}, waitingSubagents, delegationLive ?? {})
                         : undefined
                     }
                     onLoadSubagentTranscript={onLoadSubagentTranscript}

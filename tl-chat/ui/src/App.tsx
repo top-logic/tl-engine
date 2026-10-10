@@ -385,6 +385,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             workingIndicator={workingIndicator}
             subagents={chat.subagents}
             subagentLive={chat.subagentLive}
+            delegationLive={chat.delegationLive}
             onLoadSubagentTranscript={actions.loadSubagentTranscript}
             onSendSubagentMessage={actions.messageSubagent}
           />

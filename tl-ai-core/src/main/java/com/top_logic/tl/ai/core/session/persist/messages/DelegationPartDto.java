@@ -45,6 +45,9 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getStopReason() */
 	public static final String STOP_REASON__PROP = "stopReason";
 
+	/** @see #getParentToolCallId() */
+	public static final String PARENT_TOOL_CALL_ID__PROP = "parentToolCallId";
+
 	private String _fromAgent = "";
 
 	private String _toAgent = "";
@@ -64,6 +67,8 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _totalUsage = null;
 
 	private String _stopReason = "";
+
+	private String _parentToolCallId = "";
 
 	/**
 	 * Creates a {@link DelegationPartDto} instance.
@@ -303,6 +308,27 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		_stopReason = value;
 	}
 
+	/**
+	 * The id of the lead's {@code delegate_to_*} call, where the chat draws the delegation's card;
+	 * empty for a log written before the card was drawn.
+	 */
+	public final String getParentToolCallId() {
+		return _parentToolCallId;
+	}
+
+	/**
+	 * @see #getParentToolCallId()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setParentToolCallId(String value) {
+		internalSetParentToolCallId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getParentToolCallId()} without chain call utility. */
+	protected final void internalSetParentToolCallId(String value) {
+		_parentToolCallId = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return DELEGATION_PART_DTO__TYPE;
@@ -320,7 +346,8 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			CHILD_PARTS__PROP, 
 			TURNS_USED__PROP, 
 			TOTAL_USAGE__PROP, 
-			STOP_REASON__PROP);
+			STOP_REASON__PROP, 
+			PARENT_TOOL_CALL_ID__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -355,6 +382,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case TURNS_USED__PROP: return getTurnsUsed();
 			case TOTAL_USAGE__PROP: return getTotalUsage();
 			case STOP_REASON__PROP: return getStopReason();
+			case PARENT_TOOL_CALL_ID__PROP: return getParentToolCallId();
 			default: return null;
 		}
 	}
@@ -372,6 +400,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case TURNS_USED__PROP: internalSetTurnsUsed((int) value); break;
 			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case STOP_REASON__PROP: internalSetStopReason((String) value); break;
+			case PARENT_TOOL_CALL_ID__PROP: internalSetParentToolCallId((String) value); break;
 		}
 	}
 
@@ -416,6 +445,8 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		}
 		out.name(STOP_REASON__PROP);
 		out.value(getStopReason());
+		out.name(PARENT_TOOL_CALL_ID__PROP);
+		out.value(getParentToolCallId());
 	}
 
 	@Override
@@ -440,6 +471,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case TURNS_USED__PROP: setTurnsUsed(in.nextInt()); break;
 			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case STOP_REASON__PROP: setStopReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case PARENT_TOOL_CALL_ID__PROP: setParentToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

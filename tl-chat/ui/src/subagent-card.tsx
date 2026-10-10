@@ -5,6 +5,7 @@ import type { bundle } from './i18n'
 import { transcriptLine } from './subagents'
 import type {
   ChatMessage,
+  DelegationRef,
   SubagentActivity,
   SubagentLive,
   SubagentNote,
@@ -34,6 +35,11 @@ export interface SubagentCardModel {
   hasTranscript: boolean
   /** The lead's call that started it; with the id, what a line pointing at the card finds it by. */
   parentToolCallId?: string
+  /**
+   * `delegation` for a synchronous `delegate_to_*` call: the lead waits for it, so it has no inbox
+   * to write to and is stopped with the lead.
+   */
+  kind?: 'delegation'
 }
 
 /**
@@ -44,13 +50,18 @@ export interface SubagentCardModel {
  * window has not held since. A part and a job are the same subagent only when both the subagent id
  * and the starting call agree, because subagent ids start again at `sa-1` in a new server life.
  *
+ * A synchronous delegation gets a card too, at its `delegate_to_*` call: from its live events while
+ * this window watches it, from its recorded part after a reload.
+ *
  * @param waiting The ids of the subagents a question or an approval is open for.
+ * @param delegationLive What each synchronous delegation did live, by its `delegate_to_*` call.
  */
 export function cardsForTurn(
   events: ChatMessage[],
   subagents: SubagentActivity[],
   live: Record<string, SubagentLive>,
   waiting: Set<string>,
+  delegationLive: Record<string, SubagentLive> = {},
 ): SubagentCardModel[] {
   const callOrder = new Map<string, number>()
   events.forEach((event, index) => {
@@ -99,7 +110,74 @@ export function cardsForTurn(
       },
     })
   }
+  for (const { order, ...card } of delegationCards(events, delegationLive)) {
+    cards.push({ order: callOrder.get(card.parentToolCallId ?? '') ?? order, card })
+  }
   return cards.sort((left, right) => left.order - right.order).map((item) => item.card)
+}
+
+/** The prefix of the tool a lead delegates to an agent with, synchronously. */
+const DELEGATE_PREFIX = 'delegate_to_'
+
+/**
+ * The synchronous delegations of a turn: the recorded part where there is one, completed by what the
+ * window saw live; a delegation this window watches before its part arrives from its live events
+ * and its call alone.
+ */
+function delegationCards(
+  events: ChatMessage[],
+  delegationLive: Record<string, SubagentLive>,
+): (SubagentCardModel & { order: number })[] {
+  const refs = events.filter((event): event is DelegationRef => event.type === 'delegation_ref')
+  const result: (SubagentCardModel & { order: number })[] = []
+  const drawn = new Set<string>()
+  for (const ref of refs) {
+    const call = ref.parentToolCallId
+    const watched = call ? delegationLive[call] : undefined
+    if (call) drawn.add(call)
+    result.push({
+      order: events.indexOf(ref),
+      subagentId: '',
+      kind: 'delegation',
+      agentName: ref.agentName,
+      task: ref.task,
+      status: ref.status === 'RUNNING' && watched?.ended ? watched.ended : ref.status,
+      summary: ref.summary,
+      // The recorded steps, unless this window saw more of them live.
+      live: watched && watched.steps.length >= ref.steps.length
+        ? watched
+        : { steps: ref.steps, text: '', turns: ref.turns, tokens: ref.totalTokens, startedAt: ref.timestamp },
+      totalTokens: ref.totalTokens,
+      durationMs: ref.durationMs,
+      childRunId: ref.childRunId || undefined,
+      hasTranscript: Boolean(ref.childRunId),
+      parentToolCallId: call,
+    })
+  }
+  events.forEach((event, index) => {
+    if (event.type !== 'tool_call' || drawn.has(event.toolUseId)) return
+    const watched = delegationLive[event.toolUseId]
+    if (!watched && !event.name.startsWith(DELEGATE_PREFIX)) return
+    drawn.add(event.toolUseId)
+    const ended: SubagentStatus | undefined =
+      watched?.ended ?? (event.status === 'done' ? 'DONE' : event.status === 'error' ? 'FAILED' : undefined)
+    const input = event.input as { task?: unknown } | null
+    result.push({
+      order: index,
+      subagentId: '',
+      kind: 'delegation',
+      agentName: event.name.startsWith(DELEGATE_PREFIX) ? event.name.slice(DELEGATE_PREFIX.length) : event.name,
+      task: typeof input?.task === 'string' ? input.task : '',
+      status: ended ?? 'RUNNING',
+      summary: ended ? watched?.text ?? '' : '',
+      live: watched,
+      totalTokens: 0,
+      durationMs: event.durationMs ?? 0,
+      hasTranscript: false,
+      parentToolCallId: event.toolUseId,
+    })
+  })
+  return result
 }
 
 function statusLabel(status: SubagentCardModel['status'], labels: Labels): string {
@@ -281,6 +359,7 @@ export function SubagentCard({
       <button type="button" className="subagent-card-head" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         <span className={`subagent-chip${active ? ' is-active' : ''}`}>{statusLabel(card.status, labels)}</span>
         <strong className="subagent-card-agent">{card.agentName}</strong>
+        {card.kind === 'delegation' ? <span className="subagent-card-kind">{labels.delegationTag}</span> : null}
         <span className="subagent-card-task">{card.task}</span>
         <span className="subagent-card-toggle" aria-hidden="true">{open ? '⌃' : '⌄'}</span>
       </button>
@@ -303,7 +382,13 @@ export function SubagentCard({
             <p className="subagent-card-empty">{active ? labels.subagentNoSteps : labels.noDetails}</p>
           )}
           {live?.text ? <p className="subagent-card-text">{live.text}</p> : null}
-          <CardMessages card={card} notes={live?.notes ?? []} active={active} labels={labels} onSend={onSendMessage} />
+          <CardMessages
+            card={card}
+            notes={live?.notes ?? []}
+            active={active}
+            labels={labels}
+            onSend={card.kind === 'delegation' ? undefined : onSendMessage}
+          />
           {card.hasTranscript ? (
             <button type="button" className="text-button" disabled={loading} onClick={() => void loadTranscript()}>
               {loading ? labels.loading : labels.viewTranscript}

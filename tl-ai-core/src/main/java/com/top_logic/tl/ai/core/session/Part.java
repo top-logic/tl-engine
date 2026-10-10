@@ -381,21 +381,24 @@ public sealed interface Part {
 	 * @param turnsUsed number of LLM iterations the sub-agent executed, or -1 if unknown
 	 * @param totalUsage cumulative token usage of the sub-agent, or {@code null}
 	 * @param stopReason why the sub-agent stopped, or {@code null}
+	 * @param parentToolCallId the id of the lead's {@code delegate_to_*} call, where the chat draws
+	 *        the delegation's card; empty if unknown
 	 */
 	record DelegationPart(
 			String id, Instant timestamp, String fromAgent, String toAgent,
 			String inputSummary, String resultSummary,
 			List<Part> childParts,
 			String childSessionId, long durationMs,
-			int turnsUsed, TokenUsage totalUsage, StopReason stopReason
+			int turnsUsed, TokenUsage totalUsage, StopReason stopReason,
+			String parentToolCallId
 	) implements Part {
 
 		/** Creates a delegation that is in progress. */
 		public static DelegationPart started(String id, Instant timestamp,
-				String fromAgent, String toAgent, String inputSummary) {
+				String fromAgent, String toAgent, String inputSummary, String parentToolCallId) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
 				inputSummary, null, new CopyOnWriteArrayList<>(), null, 0L,
-				-1, null, null);
+				-1, null, null, parentToolCallId == null ? "" : parentToolCallId);
 		}
 
 		/** Records the delegation result after the child agent finishes. */
@@ -404,7 +407,7 @@ public sealed interface Part {
 				StopReason childStopReason) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
 				inputSummary, summary, childParts, sessionId, elapsedMs,
-				childTurnsUsed, childUsage, childStopReason);
+				childTurnsUsed, childUsage, childStopReason, parentToolCallId);
 		}
 	}
 

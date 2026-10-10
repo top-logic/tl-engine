@@ -15,6 +15,7 @@ import type {
   Rating,
   SubagentActivity,
   SubagentStatus,
+  SubagentStep,
   TokenUsage,
   ToolCallStatus,
   WokenSubagent,
@@ -557,6 +558,18 @@ interface PersistedPart {
   errorData?: { kind?: string; errorMessage: string }
   transactionData?: { type?: string; revisionNumber?: number; reason?: string }
   systemData?: { eventType?: string; details?: string }
+  delegationData?: {
+    toAgent?: string
+    inputSummary?: string
+    resultSummary?: string
+    childSessionId?: string
+    durationMs?: number
+    childParts?: PersistedPart[]
+    turnsUsed?: number
+    totalUsage?: { inputTokens?: number; outputTokens?: number }
+    stopReason?: string
+    parentToolCallId?: string
+  }
   subagentData?: {
     subagentId?: string
     agentName?: string
@@ -603,6 +616,44 @@ function mapToolStatus(status: string | undefined): { status: ToolCallStatus; is
     default:
       return { status: 'done', isError: false }
   }
+}
+
+/** How a synchronous delegation ended, from its run's stop reason. */
+export function delegationEnd(reason: string | undefined): SubagentStatus {
+  switch (reason) {
+    case 'COMPLETE':
+    case 'MAX_TURNS':
+      return 'DONE'
+    case 'ABORTED':
+      return 'CANCELLED'
+    default:
+      return 'FAILED'
+  }
+}
+
+/** The recorded state of a synchronous delegation. */
+function delegationStatus(d: NonNullable<PersistedPart['delegationData']>): SubagentStatus {
+  if (d.stopReason) return delegationEnd(d.stopReason)
+  // Ended by an exception, which records no stop reason - only the error as its summary.
+  if (d.resultSummary) return d.resultSummary.startsWith('ERROR') ? 'FAILED' : 'DONE'
+  return 'RUNNING'
+}
+
+/** The steps of a synchronous delegation, from the child parts its recorded part holds. */
+function delegationSteps(parts: PersistedPart[] | undefined): SubagentStep[] {
+  const steps: SubagentStep[] = []
+  for (const part of parts ?? []) {
+    const d = part.toolCallData
+    if (part.type !== 'tool_call' || !d) continue
+    const summary = (d.argsJson ?? '').replace(/\s+/g, ' ').trim()
+    steps.push({
+      toolUseId: part.id,
+      name: d.toolName,
+      summary: summary.length > 80 ? `${summary.slice(0, 80)}…` : summary,
+      status: mapToolStatus(d.status).status,
+    })
+  }
+  return steps.slice(Math.max(0, steps.length - 20))
 }
 
 function subagentStatus(status: string | undefined): SubagentStatus {
@@ -836,6 +887,28 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             childRunId: d.childRunId ?? '',
             status: subagentStatus(d.status),
             summary: d.summary ?? '',
+            timestamp: part.timestamp,
+          })
+          break
+        }
+        case 'delegation': {
+          // A synchronous delegation the turn made: its card is drawn from this after a reload, with
+          // the steps the part recorded - the lead waited for it, so they are all here.
+          const d = part.delegationData
+          if (!d) break
+          msgs.push({
+            type: 'delegation_ref',
+            id: part.id,
+            agentName: d.toAgent ?? '',
+            task: d.inputSummary ?? '',
+            parentToolCallId: d.parentToolCallId ?? '',
+            childRunId: d.childSessionId ?? '',
+            status: delegationStatus(d),
+            summary: d.resultSummary ?? '',
+            steps: delegationSteps(d.childParts),
+            durationMs: d.durationMs ?? 0,
+            totalTokens: (d.totalUsage?.inputTokens ?? 0) + (d.totalUsage?.outputTokens ?? 0),
+            turns: d.turnsUsed && d.turnsUsed > 0 ? d.turnsUsed : 0,
             timestamp: part.timestamp,
           })
           break

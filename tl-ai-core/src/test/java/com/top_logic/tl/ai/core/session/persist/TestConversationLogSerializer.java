@@ -165,6 +165,28 @@ public class TestConversationLogSerializer extends TestCase {
 		assertEquals("too risky", rap.userComment());
 	}
 
+	/**
+	 * A synchronous delegation keeps the lead's call it belongs to, so the chat draws its card there
+	 * after a reload (#703).
+	 */
+	public void testDelegationKeepsItsCall() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		Part.DelegationPart started = Part.DelegationPart.started("d1", Instant.now(), "lead", "researcher",
+			"find X", "call-7");
+		started.childParts().add(Part.ToolCallPart.started("t1", Instant.now(), "webSearch", "{}", ToolMode.READ));
+		turn.addAssistantPart(started.completed("X is 42.", "child-run", 1200L, 2,
+			new TokenUsage(100, 50, 0, 0, 0), com.top_logic.tl.ai.core.agent.StopReason.COMPLETE));
+		log.completeTurn();
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(ConversationLogSerializer.toJson(log.turns()));
+
+		Part.DelegationPart part = (Part.DelegationPart) restored.turns().get(0).assistantParts().get(0);
+		assertEquals("call-7", part.parentToolCallId());
+		assertEquals("X is 42.", part.resultSummary());
+		assertEquals(1, part.childParts().size());
+	}
+
 	/** Empty log round-trips correctly. */
 	public void testEmptyLog() {
 		ConversationLog log = new ConversationLog();

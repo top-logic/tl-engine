@@ -4990,6 +4990,13 @@
   color: var(--text-secondary);
 }
 
+/* A synchronous delegation (#703): the agent waits for it, so it has no field and no stop. */
+.subagent-card-kind {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+}
+
 .subagent-card-toggle {
   flex: 0 0 auto;
   color: var(--text-secondary);

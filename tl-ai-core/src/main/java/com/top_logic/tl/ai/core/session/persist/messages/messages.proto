@@ -647,6 +647,12 @@ message DelegationPartDto {
 
 	/** Why the sub-agent stopped (e.g. COMPLETE, MAX_TURNS, ERROR). */
 	string stopReason;
+
+	/**
+	 * The id of the lead's {@code delegate_to_*} call, where the chat draws the delegation's card;
+	 * empty for a log written before the card was drawn.
+	 */
+	string parentToolCallId;
 }
 
 /** System event part. */

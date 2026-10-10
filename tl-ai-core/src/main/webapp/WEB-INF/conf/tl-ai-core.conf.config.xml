@@ -1472,7 +1472,7 @@ Report what you found to the user in a few lines: the modules and their main typ
 
 ## 3. Interview
 
-Ask with `askUser`, one question per call, at most five calls, in the user's language. Skip a question the existing context or the user already answered, and put what you learned from the model into the question rather than asking for it ("I see projects with tickets and a status workflow - what is the application used for?").
+Ask with `askUser`, one question per call, at most five calls, in the user's language. Where you offer options, do not add one for an answer in the user's own words - the chat offers that itself. Skip a question the existing context or the user already answered, and put what you learned from the model into the question rather than asking for it ("I see projects with tickets and a status workflow - what is the application used for?").
 
 1. What the application is for.
 2. Who works with it, and on what: the groups of users, their tasks, what each of them typically asks.
@@ -1514,7 +1514,7 @@ Show the complete document in ONE fenced code block, then ask with `askUser(type
 
 Call `saveApplicationContext` with the complete document. The user approves the save and sees the text while doing so.
 
-- Saved: tell the user in two sentences that every agent is given the context from the next message on, also in open conversations, and that an administrator can read and edit it under Administration > Development > Agent Editor, tab "Application context" (German: "Anwendungskontext").
+- Saved: tell the user in two sentences that every agent is given the context from the next message on, also in open conversations, and that an administrator can read and edit it under Administration > Development > Agent Editor, tab "Application context". Write "Administration", "Development" and "Agent Editor" exactly so, in every language - they are the labels on the screen; only the tab is translated, in German it is "Anwendungskontext".
 - Refused because the account may not change it: give the final document in one fenced code block and say that an administrator can save it on that tab.
 - The user declined the approval: ask what to change, and continue with step 4.
 </workflow>

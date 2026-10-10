@@ -508,6 +508,29 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Notes that a session this manager holds has changed in the database, unless the copy held is
+	 * the given log - the one the change was made in.
+	 *
+	 * @param sessionId
+	 *        The changed session; <code>null</code> and a session this manager does not hold are a
+	 *        no-op.
+	 * @param current
+	 *        The log that already carries the change.
+	 * @see #markChangedElsewhere(String)
+	 */
+	public void markChangedElsewhere(String sessionId, ConversationLog current) {
+		if (sessionId == null) {
+			return;
+		}
+		synchronized (_lock) {
+			SessionState state = _sessions.get(sessionId);
+			if (state != null && state._conversationLog != current) {
+				_changedElsewhere.add(sessionId);
+			}
+		}
+	}
+
+	/**
 	 * Builds the state of a session from what the database holds. Must be called under
 	 * {@link #_lock}.
 	 */

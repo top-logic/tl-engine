@@ -585,10 +585,15 @@ public sealed interface AgentEvent {
 	 * @param timestamp  when the event occurred
 	 * @param subagentId the job id
 	 * @param result     the structured result envelope
+	 * @param parentToolCallId the id of the lead's tool call that started it, as on
+	 *                   {@link SubagentStarted}, so that a window which did not see the start finds
+	 *                   its card; empty if unknown
+	 * @param childRunId the subagent's own run id, its transcript's key; empty if unknown
 	 */
 	record SubagentCompleted(String runId, int turnNumber, Instant timestamp,
 			String subagentId,
-			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result) implements AgentEvent {}
+			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result, String parentToolCallId,
+			String childRunId) implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job fails.
@@ -598,9 +603,12 @@ public sealed interface AgentEvent {
 	 * @param timestamp    when the event occurred
 	 * @param subagentId   the job id
 	 * @param errorSummary a short human-readable error summary
+	 * @param parentToolCallId see {@link SubagentCompleted#parentToolCallId()}
+	 * @param childRunId   see {@link SubagentCompleted#childRunId()}
 	 */
 	record SubagentFailed(String runId, int turnNumber, Instant timestamp,
-			String subagentId, String errorSummary) implements AgentEvent {}
+			String subagentId, String errorSummary, String parentToolCallId, String childRunId)
+			implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job is cooperatively cancelled.
@@ -609,7 +617,9 @@ public sealed interface AgentEvent {
 	 * @param turnNumber 1-based loop iteration
 	 * @param timestamp  when the event occurred
 	 * @param subagentId the job id
+	 * @param parentToolCallId see {@link SubagentCompleted#parentToolCallId()}
+	 * @param childRunId see {@link SubagentCompleted#childRunId()}
 	 */
 	record SubagentCancelled(String runId, int turnNumber, Instant timestamp,
-			String subagentId) implements AgentEvent {}
+			String subagentId, String parentToolCallId, String childRunId) implements AgentEvent {}
 }

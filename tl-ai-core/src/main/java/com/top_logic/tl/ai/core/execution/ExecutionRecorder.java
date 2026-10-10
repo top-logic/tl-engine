@@ -323,6 +323,20 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 *        The exception the loop threw, or <code>null</code> if it returned normally.
 	 */
 	public void complete(String transcript, String response, Throwable failure) {
+		completeWithLatestTranscript(() -> transcript, response, failure);
+	}
+
+	/**
+	 * Finalizes the execution row with the transcript as it stands when the row is written.
+	 *
+	 * @param transcript
+	 *        The run's transcript, asked on the store's writer thread.
+	 *
+	 * @see #complete(String, String, Throwable)
+	 * @see AgentExecutionStore#finishExecutionWithLatestTranscript(AgentExecution, ExecutionStatus,
+	 *      StopReason, String, TokenUsage, Supplier, String)
+	 */
+	public void completeWithLatestTranscript(Supplier<String> transcript, String response, Throwable failure) {
 		AgentExecution execution = _execution;
 		if (execution == null) {
 			return;
@@ -332,7 +346,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 			StopReason stopReason = result != null ? result.stopReason()
 				: (failure != null ? StopReason.ERROR : null);
 			TokenUsage usage = result != null ? result.totalUsage() : TokenUsage.EMPTY;
-			AgentExecutionStore.getInstance().finishExecution(execution,
+			AgentExecutionStore.getInstance().finishExecutionWithLatestTranscript(execution,
 				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, transcript,
 				response);
 		} catch (CancelledWriteException ex) {

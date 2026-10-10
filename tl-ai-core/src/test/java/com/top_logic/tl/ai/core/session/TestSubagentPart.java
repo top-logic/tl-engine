@@ -54,6 +54,67 @@ public class TestSubagentPart extends TestCase {
 		assertEquals(started.id(), ended.id());
 	}
 
+	/**
+	 * The end is announced with the call that started the subagent and its run, so a window that did
+	 * not see the start finds the card and the transcript.
+	 */
+	public void testTheEndSaysWhereTheSubagentWasStarted() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		List<AgentEvent> forwarded = new ArrayList<>();
+		listener.setParentListener(forwarded::add);
+		log.startTurn();
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1");
+		listener.recordSubagentStarted("sa-2", "researcher", "find Y", "call-2");
+		listener.recordSubagentStarted("sa-3", "researcher", "find Z", "call-3");
+
+		listener.recordSubagentCompleted("sa-1",
+			new SubagentResult("X is 42.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-1");
+		listener.recordSubagentFailed("sa-2", "boom", "run-2");
+		listener.recordSubagentCancelled("sa-3", null);
+
+		AgentEvent.SubagentCompleted completed = (AgentEvent.SubagentCompleted) forwarded.get(3);
+		assertEquals("call-1", completed.parentToolCallId());
+		assertEquals("run-1", completed.childRunId());
+		AgentEvent.SubagentFailed failed = (AgentEvent.SubagentFailed) forwarded.get(4);
+		assertEquals("call-2", failed.parentToolCallId());
+		assertEquals("run-2", failed.childRunId());
+		AgentEvent.SubagentCancelled cancelled = (AgentEvent.SubagentCancelled) forwarded.get(5);
+		assertEquals("call-3", cancelled.parentToolCallId());
+		assertEquals("A subagent that never ran has no run.", "", cancelled.childRunId());
+	}
+
+	/**
+	 * A recorded transcript takes the ended part in place of the running one, and keeps everything
+	 * else as it was written.
+	 */
+	public void testTheEndedPartReplacesTheRecordedOne() throws Exception {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u-1", java.time.Instant.now(), "Bitte zählen")));
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1");
+		turn.addAssistantPart(new Part.TextPart("t-1", java.time.Instant.now(), "Ich habe gestartet."));
+		log.completeTurn();
+		String recorded = ConversationLogSerializer.toJson(log.turns());
+		Part.SubagentPart running = onlySubagentPart(turn);
+
+		String rewritten = ConversationLogSerializer.replacePart(recorded,
+			running.ended("DONE", "X is 42.", "run-1"));
+
+		Turn read = ConversationLogSerializer.fromJson(rewritten).turns().get(0);
+		Part.SubagentPart ended = onlySubagentPart(read);
+		assertEquals("DONE", ended.status());
+		assertEquals("run-1", ended.childRunId());
+		assertEquals(running.id(), ended.id());
+		assertEquals("Bitte zählen", ((Part.TextPart) read.userParts().get(0)).text());
+		assertEquals(2, read.assistantParts().size());
+
+		assertNull("A transcript without the part is left alone.",
+			ConversationLogSerializer.replacePart(recorded,
+				new Part.SubagentPart("other", java.time.Instant.now(), "sa-9", "a", "t", "", null, "DONE", null)));
+	}
+
 	/** A long report is cut: the part points at the transcript, it does not copy the report. */
 	public void testThePartKeepsOnlyTheStartOfTheReport() {
 		ConversationLog log = new ConversationLog();

@@ -26,7 +26,7 @@ public class TestSubagentEvents extends TestCase {
 
 		SubagentResult result = new SubagentResult("r", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE);
 		AgentEvent.SubagentCompleted completed =
-			new AgentEvent.SubagentCompleted("run1", 2, Instant.now(), "sa-1", result);
+			new AgentEvent.SubagentCompleted("run1", 2, Instant.now(), "sa-1", result, "call-1", "child-1");
 		assertSame(result, completed.result());
 	}
 

@@ -1796,6 +1796,7 @@ public class ChatServlet extends TopLogicServlet {
 					.append(",\"hasTranscript\":").append(hasTranscript)
 					.append(",\"parentToolCallId\":\"").append(jsonEscape(job.parentToolCallId())).append('"')
 					.append(",\"task\":\"").append(jsonEscape(job.taskBrief() != null ? job.taskBrief() : "")).append('"')
+					.append(",\"childRunId\":\"").append(jsonEscape(job.childRunId() != null ? job.childRunId() : "")).append('"')
 					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
 					.append("\"}");
 			}

@@ -41,6 +41,9 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #isQueued() */
 	public static final String QUEUED__PROP = "queued";
 
+	/** @see #getChildRunId() */
+	public static final String CHILD_RUN_ID__PROP = "childRunId";
+
 	private String _subagentId = "";
 
 	private String _targetAgentName = "";
@@ -54,6 +57,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	private String _parentToolCallId = "";
 
 	private boolean _queued = false;
+
+	private String _childRunId = "";
 
 	/**
 	 * Creates a {@link SubagentStatusEvent} instance.
@@ -166,7 +171,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 
 	/**
 	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
-	 * call; sent on start, empty otherwise.
+	 * call; sent on start and on the end, so that a window which did not see the start finds the card.
 	 */
 	public final String getParentToolCallId() {
 		return _parentToolCallId;
@@ -206,6 +211,26 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 		_queued = value;
 	}
 
+	/**
+	 * The subagent's own run id, its transcript's key; sent on the end, empty if unknown.
+	 */
+	public final String getChildRunId() {
+		return _childRunId;
+	}
+
+	/**
+	 * @see #getChildRunId()
+	 */
+	public com.top_logic.ai.chat.api.messages.SubagentStatusEvent setChildRunId(String value) {
+		internalSetChildRunId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getChildRunId()} without chain call utility. */
+	protected final void internalSetChildRunId(String value) {
+		_childRunId = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SUBAGENT_STATUS_EVENT__TYPE;
@@ -220,7 +245,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			TOTAL_TOKENS__PROP, 
 			DURATION_MS__PROP, 
 			PARENT_TOOL_CALL_ID__PROP, 
-			QUEUED__PROP);
+			QUEUED__PROP, 
+			CHILD_RUN_ID__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -252,6 +278,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DURATION_MS__PROP: return getDurationMs();
 			case PARENT_TOOL_CALL_ID__PROP: return getParentToolCallId();
 			case QUEUED__PROP: return isQueued();
+			case CHILD_RUN_ID__PROP: return getChildRunId();
 			default: return null;
 		}
 	}
@@ -266,6 +293,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
 			case PARENT_TOOL_CALL_ID__PROP: internalSetParentToolCallId((String) value); break;
 			case QUEUED__PROP: internalSetQueued((boolean) value); break;
+			case CHILD_RUN_ID__PROP: internalSetChildRunId((String) value); break;
 		}
 	}
 
@@ -298,6 +326,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 		out.value(getParentToolCallId());
 		out.name(QUEUED__PROP);
 		out.value(isQueued());
+		out.name(CHILD_RUN_ID__PROP);
+		out.value(getChildRunId());
 	}
 
 	@Override
@@ -310,6 +340,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DURATION_MS__PROP: setDurationMs(in.nextLong()); break;
 			case PARENT_TOOL_CALL_ID__PROP: setParentToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case QUEUED__PROP: setQueued(in.nextBoolean()); break;
+			case CHILD_RUN_ID__PROP: setChildRunId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

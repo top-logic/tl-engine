@@ -146,7 +146,7 @@ public class SubagentSpawner {
 		// Lifecycle: SubagentStarted to the parent's listener (for the UI panel).
 		if (logListener != null) {
 			logListener.recordSubagentStarted(job.subagentId(), targetAgentName, task, toolContext.toolCallId(),
-				registry.wouldQueue());
+				registry.wouldQueue(), parentExecution);
 		}
 
 		registry.spawn(job, j -> {

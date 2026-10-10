@@ -552,6 +552,10 @@ under the steps of the turn that spawned it. The lead's log keeps one `Part.Suba
 id, agent, task, parent call, run id, end state, a short summary - written at start and ended in place,
 never the child's steps (owner decision D5); a reloaded conversation rebuilds the card from it, and
 `GET /chat/subagents/{id}/transcript?runId=` opens the recorded run when the server holds no job.
+The lead's run has usually written its transcript before the child ends, so the end is written into
+that transcript as well (`AgentExecutionStore.replaceTranscriptPart`), before it is announced; the end
+frames carry `parentToolCallId` and `childRunId`, and every other window holding a copy of the chat
+reads it back with its next request (#720). `TestSubagentEndInEveryWindow` pins it.
 
 The lead steers a running child with `send_to_subagent` and stops it with `cancel_subagent` (#705).
 A message goes into the job's `SubagentInbox`, which the spawner binds on the child's thread;

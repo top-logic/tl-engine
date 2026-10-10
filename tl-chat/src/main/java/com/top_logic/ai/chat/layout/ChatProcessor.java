@@ -1006,6 +1006,10 @@ public class ChatProcessor {
 				// Counted here, once, against the window the run belongs to - not by each window
 				// that shows it.
 				startedIn.addTokenUsage(completed.totalUsage());
+			} else if (event instanceof AgentEvent.SubagentCompleted
+				|| event instanceof AgentEvent.SubagentFailed
+				|| event instanceof AgentEvent.SubagentCancelled) {
+				subagentEndRecorded(startedIn, owner, sessionId, log.log());
 			}
 			for (ChatEventHandler handler : ChatEventHandlerRegistry.findStreamTargets(startedIn, owner,
 				sessionId)) {
@@ -1016,6 +1020,38 @@ public class ChatProcessor {
 				}
 			}
 		};
+	}
+
+	/**
+	 * Has every window that holds a copy of the conversation read it back, because a subagent's end
+	 * was written into its recorded transcript.
+	 *
+	 * <p>
+	 * The end is recorded in the log of the run that started the subagent, and the copies other
+	 * windows loaded still show it at work - so does a copy this window loaded anew since. Each reads
+	 * the conversation back with its next request; the end is in the database by then (see
+	 * {@link ConversationLogListener}). A window that holds the very log the end was recorded in is
+	 * up to date already, and a window running a turn in the conversation keeps its copy: the turn is
+	 * being written into it.
+	 * </p>
+	 */
+	private static void subagentEndRecorded(TaskProgressTracker startedIn, Person owner, String sessionId,
+			ConversationLog recordedIn) {
+		if (sessionId == null) {
+			return;
+		}
+		Set<TaskProgressTracker> windows = new LinkedHashSet<>();
+		windows.add(startedIn);
+		for (ChatEventHandler handler : ChatEventHandlerRegistry.findOthers(owner, null)) {
+			if (handler.getTracker() != null) {
+				windows.add(handler.getTracker());
+			}
+		}
+		for (TaskProgressTracker window : windows) {
+			if (!window.hasActiveProcessingStateFor(sessionId)) {
+				window.getSessionManager().markChangedElsewhere(sessionId, recordedIn);
+			}
+		}
 	}
 
 	/**

@@ -5,17 +5,23 @@
  */
 package com.top_logic.ai.mcp.server.authentication;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
+import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
+import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecret;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
+import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentialSecret;
 
 /**
  * Builds the {@link Authenticator} that guards {@code /mcp/*} from the service configuration.
@@ -69,14 +75,15 @@ public final class McpAuthentication {
 	 *         empty. Never <code>null</code>.
 	 */
 	public static Authenticator build(Map<String, ServerAuthentication.Config<?>> authentications,
-			List<? extends SecretConfiguration> secrets) {
+			List<? extends McpSecret> secrets) {
 		if (authentications.isEmpty()) {
 			return refuseEverything();
 		}
 
+		List<SecretConfiguration> serverSecrets = serverSecrets(secrets);
 		Authenticator result = null;
 		for (Map.Entry<String, ServerAuthentication.Config<?>> entry : authentications.entrySet()) {
-			Authenticator next = create(entry.getKey(), entry.getValue(), secrets);
+			Authenticator next = create(entry.getKey(), entry.getValue(), serverSecrets);
 			result = result == null ? next : result.or(next);
 		}
 		return result;
@@ -94,6 +101,42 @@ public final class McpAuthentication {
 	public static Authenticator refuseEverything() {
 		return new NeverAuthenticated(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
 			I18NConstants.ERROR_NO_AUTHENTICATION_CONFIGURED);
+	}
+
+	/**
+	 * The engine's secrets for the given MCP secrets.
+	 *
+	 * <p>
+	 * The engine's authentications look for their own secret types ({@link ServerAPIKeySecret},
+	 * {@link ServerCredentialSecret}), which cannot be configured on the MCP service - see
+	 * {@link McpSecret}. The copies stand in no configuration, so nothing restricts their container.
+	 * </p>
+	 */
+	private static List<SecretConfiguration> serverSecrets(List<? extends McpSecret> secrets) {
+		List<SecretConfiguration> result = new ArrayList<>(secrets.size());
+		for (McpSecret secret : secrets) {
+			result.add(serverSecret(secret));
+		}
+		return result;
+	}
+
+	private static SecretConfiguration serverSecret(McpSecret secret) {
+		if (secret instanceof McpSecret.ApiKey apiKey) {
+			ServerAPIKeySecret result = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
+			TypedConfigUtil.setProperty(result, APIKeySecret.DOMAIN, apiKey.getDomain());
+			TypedConfigUtil.setProperty(result, APIKeySecret.API_KEY, apiKey.getAPIKey());
+			TypedConfigUtil.setProperty(result, ServerAPIKeySecret.USER_ID, apiKey.getUserId());
+			TypedConfigUtil.setProperty(result, APIKeySecret.DESCRIPTION, apiKey.getDescription());
+			return result;
+		}
+		if (secret instanceof McpSecret.ClientCredentials credentials) {
+			ServerCredentialSecret result = TypedConfiguration.newConfigItem(ServerCredentialSecret.class);
+			TypedConfigUtil.setProperty(result, CredentialSecret.DOMAIN, credentials.getDomain());
+			TypedConfigUtil.setProperty(result, CredentialSecret.CLIENT_SECRET,
+				TypedConfiguration.copy(credentials.getClientSecret()));
+			return result;
+		}
+		throw new IllegalArgumentException("Unknown kind of MCP secret: " + secret);
 	}
 
 	private static Authenticator create(String name, ServerAuthentication.Config<?> config,

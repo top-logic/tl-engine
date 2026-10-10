@@ -477,3 +477,29 @@ describe('the time on a running card', () => {
     }
   })
 })
+
+describe('a subagent that waits', () => {
+  /* Asked its lead (ask_lead) and waits for the reply: the card names whom it waits for (#776). */
+  it('waits for its lead while its ask_lead call runs', () => {
+    const asking = applyChildEvent(undefined, 'tool_started', { toolCallId: 't1', toolName: 'ask_lead', argsJson: '{"question":"Welches Jahr?"}' })
+    const cards = cardsForTurn([spawnCall('call-1')], [job()], { 'sa-1': asking }, new Set())
+    expect(cards[0].status).toBe('WAITING_LEAD')
+
+    const answered = applyChildEvent(asking, 'tool_completed', { toolCallId: 't1' })
+    expect(cardsForTurn([spawnCall('call-1')], [job()], { 'sa-1': answered }, new Set())[0].status).toBe('RUNNING')
+    expect(cardsForTurn([spawnCall('call-1')], [job()], { 'sa-1': asking }, new Set(['sa-1']))[0].status).toBe('WAITING')
+  })
+
+  it('names the lead it waits for, and the user in the chat\'s own address', () => {
+    const render = (status: SubagentCardModel['status'], leadName?: string) =>
+      renderToStaticMarkup(React.createElement(SubagentCard, {
+        card: { subagentId: 'sa-1', agentName: 'researcher', task: 'find X', status, summary: '', totalTokens: 0, durationMs: 0, hasTranscript: false },
+        labels: bundle('de'),
+        onLoadTranscript: async () => [],
+        leadName,
+      }))
+    expect(render('WAITING_LEAD', 'Albert')).toContain('wartet auf Albert')
+    expect(render('WAITING_LEAD')).toContain('wartet auf den Hauptagenten')
+    expect(render('WAITING')).toContain('wartet auf dich')
+  })
+})

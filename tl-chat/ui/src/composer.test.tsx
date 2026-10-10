@@ -399,3 +399,22 @@ describe('a row of the "+" menu', () => {
     expect(albert.hasAttribute('aria-describedby')).toBe(false)
   })
 })
+
+describe('the chips above the composer', () => {
+  /* A subagent that waits for the user's answer is said first, before the working chip (#776). */
+  it('says how many subagents wait for the user', async () => {
+    const question = {
+      type: 'interaction_request' as const, id: 'q1', requestId: 'r1', question: 'Welches Jahr?', answered: false,
+      timestamp: 0, askedBy: { subagentId: 'sa-1', agent: 'researcher' },
+    }
+    const leadQuestion = { ...question, id: 'q2', requestId: 'r2', askedBy: undefined }
+    await mount({ pendingQuestions: [question, leadQuestion] })
+    const chip = mounted!.container.querySelector('.overlay-chip.is-waiting')
+    expect(chip?.textContent).toBe('1 waiting for you')
+  })
+
+  it('says nothing while no subagent waits', async () => {
+    await mount()
+    expect(mounted!.container.querySelector('.overlay-chip.is-waiting')).toBeNull()
+  })
+})

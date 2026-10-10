@@ -11,6 +11,7 @@ import type { ComposerApi, ComposerMenuItem, ReferenceCandidate } from './extens
 import { draftIsEmpty, type ReferenceToken } from './reference'
 import { TokenInput, type TokenInputHandle } from './token-input'
 import { PromptStack } from './prompts'
+import { subagentsWaitingForUser } from './subagent-card'
 import { SubagentActivityPanel } from './subagents'
 import type { ChatAction } from './reducer'
 import type {
@@ -658,6 +659,10 @@ export const Composer = React.memo(
   const triggerLabel = effort ? `${modelName} · ${effortLabel(effort, labels)}` : modelName
   const defaultEffort = models.find((item) => item.id === model)?.defaultEffort ?? ''
 
+  // Subagents whose question or approval is open: said before the working chip, because it is the
+  // one thing about them that needs the user.
+  const waitingForYou = subagentsWaitingForUser([...pendingApprovals, ...pendingQuestions]).size
+
   return (
     <footer className={`composer${dropping ? ' is-dropping' : ''}`}>
       <div className="composer-overlays">
@@ -669,6 +674,12 @@ export const Composer = React.memo(
           dispatch={dispatch}
         />
         <div className="composer-chips">
+          {waitingForYou > 0 ? (
+            <span className="overlay-chip is-waiting" role="status">
+              <span className="waiting-dot" aria-hidden="true" />
+              {labels.subagentsWaitingForYou(waitingForYou)}
+            </span>
+          ) : null}
           <SubagentActivityPanel
             subagents={subagents}
             labels={labels}

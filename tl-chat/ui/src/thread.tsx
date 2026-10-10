@@ -1,5 +1,11 @@
 import { React } from 'tl-react-bridge'
-import { cardsForTurn, SubagentCard, type SendToSubagent, type SubagentCardModel } from './subagent-card'
+import {
+  cardsForTurn,
+  SubagentCard,
+  subagentsWaitingForUser,
+  type SendToSubagent,
+  type SubagentCardModel,
+} from './subagent-card'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
 import { AnswerSources, citedSources } from './sources'
@@ -1130,6 +1136,7 @@ function AgentRun({
   onLoadSubagentTranscript,
   onSendSubagentMessage,
   onCancelSubagent,
+  leadName,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -1160,6 +1167,8 @@ function AgentRun({
   onSendSubagentMessage?: SendToSubagent
   /** Stops a subagent from its card; without it the cards offer no stop. */
   onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
+  /** What the agent the user talks to is called, for a card whose subagent waits for it. */
+  leadName?: string
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -1211,6 +1220,7 @@ function AgentRun({
               onLoadTranscript={onLoadSubagentTranscript}
               onSendMessage={onSendSubagentMessage}
               onCancel={onCancelSubagent}
+              leadName={leadName}
             />
           ))}
         </div>
@@ -1293,6 +1303,7 @@ export const Thread = React.memo(function Thread({
   onLoadSubagentTranscript,
   onSendSubagentMessage,
   onCancelSubagent,
+  leadName,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -1335,6 +1346,8 @@ export const Thread = React.memo(function Thread({
   onSendSubagentMessage?: SendToSubagent
   /** Stops a subagent from its card; without it the cards offer no stop. */
   onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
+  /** What the agent the user talks to is called, for a card whose subagent waits for it. */
+  leadName?: string
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -1348,16 +1361,7 @@ export const Thread = React.memo(function Thread({
   }, [messages])
   const turns = useMemo(() => groupTurns(messages), [messages])
   // A subagent is waiting while a question or an approval it asked is open; its card says so.
-  const waitingSubagents = useMemo(() => {
-    const ids = new Set<string>()
-    for (const message of messages) {
-      const open =
-        (message.type === 'interaction_request' && !message.answered) ||
-        (message.type === 'approval_request' && message.outcome === 'pending')
-      if (open && message.askedBy) ids.add(message.askedBy.subagentId)
-    }
-    return ids
-  }, [messages])
+  const waitingSubagents = useMemo(() => subagentsWaitingForUser(messages), [messages])
   const ratings = useMemo(() => {
     const map = new Map<number, MessageFeedback>()
     for (const entry of feedback) map.set(entry.turnIndex, entry)
@@ -1451,6 +1455,7 @@ export const Thread = React.memo(function Thread({
                     onLoadSubagentTranscript={onLoadSubagentTranscript}
                     onSendSubagentMessage={onSendSubagentMessage}
                     onCancelSubagent={onCancelSubagent}
+                    leadName={leadName}
                     traceMode={traceMode}
                     // Only the turn at the bottom can be the running one. Handing `busy` to every
                     // turn made each finished run above it say "Working…" again.

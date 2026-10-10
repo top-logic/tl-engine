@@ -226,6 +226,12 @@ const EN = {
   subagentQueued: 'queued',
   subagentRunning: 'running',
   subagentWaiting: 'waiting for you',
+  /** A subagent that asked its lead (ask_lead) and waits for the reply. */
+  subagentWaitingLead: (lead: string) => `waiting for ${lead}`,
+  /** Who it waits for when the lead agent has no name to show. */
+  subagentLeadFallback: 'the main agent',
+  /** Before the working chip above the composer: how many subagents wait for the user's answer. */
+  subagentsWaitingForYou: (count: number) => `${count} waiting for you`,
   subagentDone: 'done',
   subagentFailed: 'failed',
   subagentCancelled: 'cancelled',
@@ -527,7 +533,10 @@ const DE: Bundle = {
   transcriptFailed: 'Das Protokoll des Subagenten konnte nicht geladen werden.',
   subagentQueued: 'wartet auf Start',
   subagentRunning: 'läuft',
-  subagentWaiting: 'wartet auf Sie',
+  subagentWaiting: 'wartet auf dich',
+  subagentWaitingLead: (lead: string) => `wartet auf ${lead}`,
+  subagentLeadFallback: 'den Hauptagenten',
+  subagentsWaitingForYou: (count: number) => `${count} ${count === 1 ? 'wartet' : 'warten'} auf dich`,
   subagentDone: 'fertig',
   subagentFailed: 'fehlgeschlagen',
   subagentCancelled: 'abgebrochen',

@@ -1194,7 +1194,7 @@ public class TestBrowserTool extends TestCase {
 			assertEquals("still a single live session", 1, service.liveSessionCountForTest());
 
 			// 3) Contrast: the static webFetch cannot render the JS content.
-			String staticFetch = new WebFetchTool().webFetch(JS_PAGE);
+			String staticFetch = new WebFetchTool().webFetch(JS_PAGE, null);
 			assertFalse("static webFetch does NOT see the JS-injected quote",
 				staticFetch.contains("Albert Einstein"));
 

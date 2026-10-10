@@ -189,14 +189,14 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 			WebFetchTool fetch = new WebFetchTool(publicAnswer(), egress);
 			ReadingList first = new ReadingList();
 			try (ReadingListBinding.Binding bound = ReadingListBinding.bind(first)) {
-				assertTrue(fetch.webFetch(PAGE).contains(BEFORE));
+				assertTrue(fetch.webFetch(PAGE, null).contains(BEFORE));
 			}
 			String archived = first.find(PAGE).archiveUrl();
 
 			_live.set(AFTER);
 			ReadingList second = new ReadingList();
 			try (ReadingListBinding.Binding bound = ReadingListBinding.bind(second)) {
-				assertTrue("The live page has changed.", fetch.webFetch(PAGE).contains(AFTER));
+				assertTrue("The live page has changed.", fetch.webFetch(PAGE, null).contains(AFTER));
 			}
 
 			Recording owner = get(handleOf(archived), anna);

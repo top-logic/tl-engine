@@ -3,3 +3,8 @@ tmp/
 /.project
 /env.sh
 /target
+
+# The theme stylesheets the engine compiles at run time (CSSBuffer.save writes them into the webapp
+# source directory of the module that runs: tests, exec:java). One rule for every module, so a new
+# module cannot forget it.
+/*/src/main/webapp/style/_*.css

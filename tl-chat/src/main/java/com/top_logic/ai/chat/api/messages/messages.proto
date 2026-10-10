@@ -977,6 +977,12 @@ message SubagentStatusEvent {
 
 	/** Run duration in milliseconds (0 until completion). */
 	int64 durationMs;
+
+	/**
+	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
+	 * call; sent on start, empty otherwise.
+	 */
+	string parentToolCallId;
 }
 
 /** SSE event for transaction committed. */

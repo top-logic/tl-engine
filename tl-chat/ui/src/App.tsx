@@ -383,6 +383,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             extraActions={extensions?.messageActions}
             onOpenSource={openSource}
             workingIndicator={workingIndicator}
+            subagents={chat.subagents}
+            subagentLive={chat.subagentLive}
+            onLoadSubagentTranscript={actions.loadSubagentTranscript}
           />
           <Composer
             runs={runs}

@@ -54,6 +54,9 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getSystemData() */
 	public static final String SYSTEM_DATA__PROP = "systemData";
 
+	/** @see #getSubagentData() */
+	public static final String SUBAGENT_DATA__PROP = "subagentData";
+
 	private String _id = "";
 
 	private long _timestamp = 0L;
@@ -79,6 +82,8 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto _delegationData = null;
 
 	private com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto _systemData = null;
+
+	private com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto _subagentData = null;
 
 	/**
 	 * Creates a {@link PersistedPart} instance.
@@ -419,6 +424,33 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 		return _systemData != null;
 	}
 
+	/**
+	 * Background subagent data.
+	 */
+	public final com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto getSubagentData() {
+		return _subagentData;
+	}
+
+	/**
+	 * @see #getSubagentData()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setSubagentData(com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto value) {
+		internalSetSubagentData(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSubagentData()} without chain call utility. */
+	protected final void internalSetSubagentData(com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto value) {
+		_subagentData = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getSubagentData()} has a value.
+	 */
+	public final boolean hasSubagentData() {
+		return _subagentData != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return PERSISTED_PART__TYPE;
@@ -439,7 +471,8 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			ERROR_DATA__PROP, 
 			TRANSACTION_DATA__PROP, 
 			DELEGATION_DATA__PROP, 
-			SYSTEM_DATA__PROP);
+			SYSTEM_DATA__PROP, 
+			SUBAGENT_DATA__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -477,6 +510,7 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case TRANSACTION_DATA__PROP: return getTransactionData();
 			case DELEGATION_DATA__PROP: return getDelegationData();
 			case SYSTEM_DATA__PROP: return getSystemData();
+			case SUBAGENT_DATA__PROP: return getSubagentData();
 			default: return null;
 		}
 	}
@@ -497,6 +531,7 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case TRANSACTION_DATA__PROP: internalSetTransactionData((com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto) value); break;
 			case DELEGATION_DATA__PROP: internalSetDelegationData((com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto) value); break;
 			case SYSTEM_DATA__PROP: internalSetSystemData((com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto) value); break;
+			case SUBAGENT_DATA__PROP: internalSetSubagentData((com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto) value); break;
 		}
 	}
 
@@ -561,6 +596,10 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			out.name(SYSTEM_DATA__PROP);
 			getSystemData().writeTo(out);
 		}
+		if (hasSubagentData()) {
+			out.name(SUBAGENT_DATA__PROP);
+			getSubagentData().writeTo(out);
+		}
 	}
 
 	@Override
@@ -579,6 +618,7 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case TRANSACTION_DATA__PROP: setTransactionData(com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto.readTransactionPartDto(in)); break;
 			case DELEGATION_DATA__PROP: setDelegationData(com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto.readDelegationPartDto(in)); break;
 			case SYSTEM_DATA__PROP: setSystemData(com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto.readSystemPartDto(in)); break;
+			case SUBAGENT_DATA__PROP: setSubagentData(com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto.readSubagentPartDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

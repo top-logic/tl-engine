@@ -530,6 +530,53 @@ describe('the stream', () => {
     release()
   })
 
+  /*
+   * Two subagents at work: each one's steps and text go to its own card, none into the lead's
+   * transcript, where they used to be drawn flat and nameless (#702). Its approval still reaches the
+   * prompt stack.
+   */
+  it('keeps each subagent\'s steps and text apart from the transcript', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const child = (subagentId: string, eventType: string, data: unknown) =>
+      stream.emit('delegation_event', { subagentId, eventType, eventData: JSON.stringify(data) })
+
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'writer', detail: 'draft Y', parentToolCallId: 'call-2' })
+    child('sa-1', 'turn_started', { turnNumber: 1 })
+    child('sa-1', 'text_delta', { text: 'Searching first.' })
+    child('sa-1', 'tool_started', { toolCallId: 't1', toolName: 'webSearch', argsJson: '{"q":"X"}' })
+    child('sa-2', 'tool_started', { toolCallId: 't2', toolName: 'query', argsJson: '{}' })
+    child('sa-2', 'tool_completed', { toolCallId: 't2', toolName: 'query' })
+    child('sa-2', 'approval_required', { approvalRequestId: 'ap-1', toolName: 'createObject', argsJson: '{}' })
+
+    const state = store.getState()
+    expect(state.subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({ parentToolCallId: 'call-1', task: 'find X' })
+    expect(state.subagentLive['sa-1'].steps).toEqual([
+      { toolUseId: 't1', name: 'webSearch', summary: '{"q":"X"}', status: 'running' },
+    ])
+    expect(state.subagentLive['sa-1'].turns).toBe(1)
+    expect(state.subagentLive['sa-2'].steps).toEqual([
+      { toolUseId: 't2', name: 'query', summary: '{}', status: 'done' },
+    ])
+    expect(state.messages.some((m) => m.type === 'tool_call')).toBe(false)
+    expect(state.messages.find((m) => m.id === 'ap-1')).toMatchObject({ askedBy: { subagentId: 'sa-2', agent: 'writer' } })
+
+    // The end frame names no agent; the card keeps the name it had.
+    stream.emit('subagent_completed', { subagentId: 'sa-1', targetAgentName: '', detail: 'X is 42.' })
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({
+      targetAgentName: 'researcher',
+      status: 'DONE',
+      task: 'find X',
+    })
+
+    await settle()
+    release()
+  })
+
   it('drives the run state and the transcript', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)

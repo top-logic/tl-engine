@@ -20,7 +20,7 @@ public class TestSubagentEvents extends TestCase {
 
 	public void testSubagentLifecycleEventsCarrySubagentId() {
 		AgentEvent started =
-			new AgentEvent.SubagentStarted("run1", 2, Instant.now(), "sa-1", "TL_ModelExplorer", "find X");
+			new AgentEvent.SubagentStarted("run1", 2, Instant.now(), "sa-1", "TL_ModelExplorer", "find X", "call-1");
 		assertTrue(started instanceof AgentEvent);
 		assertEquals("sa-1", ((AgentEvent.SubagentStarted) started).subagentId());
 

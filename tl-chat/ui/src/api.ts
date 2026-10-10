@@ -14,6 +14,7 @@ import type {
   MessageFeedback,
   Rating,
   SubagentActivity,
+  SubagentStatus,
   TokenUsage,
   ToolCallStatus,
 } from './types'
@@ -440,9 +441,16 @@ export async function cancelSubagent(at: ChatAddress, id: string): Promise<void>
   if (!res.ok) throw new Error(`cancel subagent failed (${res.status})`)
 }
 
-export async function loadSubagentTranscript(at: ChatAddress, id: string): Promise<ChatMessage[]> {
+/**
+ * The transcript of one subagent: its live log while it runs, its recorded run afterwards.
+ *
+ * @param runId The run its recorded part names, for a subagent the server holds no job for any
+ *   more - an earlier server life, a chat this window no longer holds.
+ */
+export async function loadSubagentTranscript(at: ChatAddress, id: string, runId?: string): Promise<ChatMessage[]> {
+  const query = runId ? `?runId=${encodeURIComponent(runId)}` : ''
   const detail = await readJson<SessionDetail>(
-    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript`, at), {
+    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript${query}`, at), {
       credentials: 'include',
     }),
   )
@@ -503,6 +511,15 @@ interface PersistedPart {
   errorData?: { kind?: string; errorMessage: string }
   transactionData?: { type?: string; revisionNumber?: number; reason?: string }
   systemData?: { eventType?: string; details?: string }
+  subagentData?: {
+    subagentId?: string
+    agentName?: string
+    task?: string
+    parentToolCallId?: string
+    childRunId?: string
+    status?: string
+    summary?: string
+  }
 }
 
 interface PersistedTurn {
@@ -539,6 +556,19 @@ function mapToolStatus(status: string | undefined): { status: ToolCallStatus; is
       return { status: 'error', isError: true }
     default:
       return { status: 'done', isError: false }
+  }
+}
+
+function subagentStatus(status: string | undefined): SubagentStatus {
+  switch (status) {
+    case 'QUEUED':
+    case 'RUNNING':
+    case 'DONE':
+    case 'FAILED':
+    case 'CANCELLED':
+      return status
+    default:
+      return 'RUNNING'
   }
 }
 
@@ -697,6 +727,25 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             })
           }
           break
+        case 'subagent': {
+          // A background subagent the turn started: its card is drawn from this after a reload. Its
+          // steps are not here - they are in its own transcript, found by its run id.
+          const d = part.subagentData
+          if (!d?.subagentId) break
+          msgs.push({
+            type: 'subagent_ref',
+            id: part.id,
+            subagentId: d.subagentId,
+            agentName: d.agentName ?? '',
+            task: d.task ?? '',
+            parentToolCallId: d.parentToolCallId ?? '',
+            childRunId: d.childRunId ?? '',
+            status: subagentStatus(d.status),
+            summary: d.summary ?? '',
+            timestamp: part.timestamp,
+          })
+          break
+        }
         case 'system':
           // Only the system events the thread draws. The others - an approval mode change, the text
           // a finished subagent was handed - are not the user's business, and an unknown one is

@@ -27,7 +27,7 @@ public class TestSubagentSSE extends TestCase {
 		ChatSSEHandler handler = ChatSSEHandler.recordingForTest(emitted::add);
 
 		handler.onEventForTest(new AgentEvent.SubagentStarted(
-			"run1", 1, Instant.now(), "sa-1", "TL_ModelExplorer", "find X"));
+			"run1", 1, Instant.now(), "sa-1", "TL_ModelExplorer", "find X", "call-1"));
 		handler.flushForTest();
 		assertTrue("Expected subagent_started event", emitted.contains("subagent_started"));
 

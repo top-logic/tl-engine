@@ -34,6 +34,8 @@ public class SubagentJob {
 
 	private volatile ConversationLog _liveLog;
 
+	private volatile String _parentToolCallId = "";
+
 	private volatile SubagentJobStatus _status = SubagentJobStatus.QUEUED;
 
 	private volatile SubagentResult _result;
@@ -90,6 +92,19 @@ public class SubagentJob {
 	 */
 	public UserInteractionStore interactionStore() {
 		return _interactionStore;
+	}
+
+	/**
+	 * The id of the parent's tool call that started this subagent, so a UI can show it at that call;
+	 * empty if unknown.
+	 */
+	public String parentToolCallId() {
+		return _parentToolCallId;
+	}
+
+	/** Sets the {@link #parentToolCallId() parent's tool call id}. */
+	public void setParentToolCallId(String parentToolCallId) {
+		_parentToolCallId = parentToolCallId == null ? "" : parentToolCallId;
 	}
 
 	/** What the subagent has done so far; see {@link SubagentProgress}. */

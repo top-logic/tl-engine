@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -232,7 +233,10 @@ public class DelegationTool implements Tool {
 
 			AgentResult result;
 			try {
-				result = targetLoop.run(conversation, childContext, effectiveChildListener);
+				// The delegate's conversation is its own and may outgrow its model's window: it
+				// compacts like a chat run instead of ending in an overflow.
+				result = targetLoop.run(conversation, CompactionStrategies.forDefaultModel(), childContext,
+					effectiveChildListener);
 			} catch (RuntimeException e) {
 				if (recorder != null) {
 					recorder.complete(null, e);

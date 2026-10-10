@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
@@ -122,7 +123,8 @@ public class TestSubagentReportEnvelope extends TestCase {
 		AgentLoop child = new AgentLoop(new AgentParams("test-model", "child",
 			AgentParams.DEFAULT_MAX_TURNS, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), neverCalled, noTools) {
 			@Override
-			public AgentResult run(Conversation conversation, ToolContext context, AgentEventListener listener) {
+			public AgentResult run(Conversation conversation, CompactionStrategy compaction, ToolContext context,
+					AgentEventListener listener) {
 				conversation.add(new AssistantMessage(UUID.randomUUID().toString(), Instant.now(),
 					List.of(new TextContent(HOSTILE_REPORT)), TokenUsage.EMPTY, "end_turn"));
 				return new AgentResult(StopReason.COMPLETE, 1, TokenUsage.EMPTY);

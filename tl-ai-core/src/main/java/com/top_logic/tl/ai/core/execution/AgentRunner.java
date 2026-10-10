@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -183,7 +184,8 @@ public final class AgentRunner {
 	 * @param agentName
 	 *        The agent name, recorded on the execution row.
 	 * @param conversation
-	 *        The conversation to operate on.
+	 *        The conversation to operate on. It is compacted when it outgrows the loop's model,
+	 *        with {@link CompactionStrategies#forDefaultModel()}.
 	 * @param context
 	 *        Execution context; its {@link ToolContext#executionHandle() execution handle} receives
 	 *        the created execution, so the caller can read the child run id back from it.
@@ -229,7 +231,9 @@ public final class AgentRunner {
 		context.citationMarkers().resumeFrom(log);
 		AgentResult result;
 		try {
-			result = loop.run(conversation, context, effectiveListener);
+			// A pre-built loop serves a subagent, which brings no session memory: it gets one over its
+			// own conversation, so that it compacts like a chat run instead of overflowing.
+			result = loop.run(conversation, CompactionStrategies.forDefaultModel(), context, effectiveListener);
 		} catch (RuntimeException ex) {
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);

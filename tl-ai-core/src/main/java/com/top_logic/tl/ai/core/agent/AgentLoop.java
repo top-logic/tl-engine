@@ -55,6 +55,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TokenEstimator;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -451,6 +452,38 @@ public class AgentLoop {
 	 * @return the result describing why the loop stopped
 	 */
 	public AgentResult run(Conversation conversation, ToolContext context, AgentEventListener listener) {
+		return run(conversation, (ConversationMemory) null, context, listener);
+	}
+
+	/**
+	 * Run the agent loop on the given conversation, compacting it when it outgrows this loop's
+	 * model.
+	 *
+	 * <p>
+	 * For a run that owns its conversation but has no session memory to bring - a subagent, above
+	 * all. Such a run used to go without any compaction: a worker whose tool results outgrew the
+	 * model's window was refused by the provider and ended {@link StopReason#CONTEXT_OVERFLOW}. Here
+	 * it gets a {@link ConversationMemory} over its conversation, sized to the context window of
+	 * this loop's model, and with it the same checks a chat run has - the proactive one at the start
+	 * of every turn and the reactive retry when a provider reports an overflow anyway.
+	 * </p>
+	 *
+	 * @param conversation the conversation to operate on (messages are added and may be compacted)
+	 * @param compaction   how the conversation is shortened when it no longer fits
+	 * @param context      execution context for the current user (security, transaction)
+	 * @param listener     receives progress events
+	 * @return the result describing why the loop stopped
+	 */
+	public AgentResult run(Conversation conversation, CompactionStrategy compaction, ToolContext context,
+			AgentEventListener listener) {
+		Objects.requireNonNull(compaction, "Compaction must not be null.");
+		ConversationMemory memory = new ConversationMemory(conversation, new ByteBasedTokenEstimator(),
+			compaction, _config.contextWindowTokens(), ConversationMemory.DEFAULT_RESERVED_TOKENS);
+		return run(conversation, memory, context, listener);
+	}
+
+	private AgentResult run(Conversation conversation, ConversationMemory memory, ToolContext context,
+			AgentEventListener listener) {
 		Objects.requireNonNull(conversation, "Conversation must not be null.");
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
@@ -477,7 +510,9 @@ public class AgentLoop {
 
 		try (MemoryConsentBinding.Binding consent =
 			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(conversation))) {
-			return runLoop(conversation, runContext, serialized, runId);
+			return memory == null
+				? runLoop(conversation, runContext, serialized, runId)
+				: runWithMemory(memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.

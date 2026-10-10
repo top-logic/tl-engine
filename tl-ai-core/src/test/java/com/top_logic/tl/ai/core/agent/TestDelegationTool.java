@@ -12,6 +12,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
@@ -116,7 +117,8 @@ public class TestDelegationTool extends TestCase {
 
 		AgentLoop child = new AgentLoop(testAgentParams(), neverCalled, emptyCatalog) {
 			@Override
-			public AgentResult run(Conversation conv, ToolContext ctx, AgentEventListener listener) {
+			public AgentResult run(Conversation conv, CompactionStrategy compaction, ToolContext ctx,
+					AgentEventListener listener) {
 				childScopeCapture.set(ctx.transaction());
 				return new AgentResult(StopReason.COMPLETE, 0, TokenUsage.EMPTY);
 			}

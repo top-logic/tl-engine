@@ -419,6 +419,13 @@ turn, which is the next moment that history is used. Consequences worth knowing:
 
 `TestCompactionOrder` pins all of this.
 
+**A child compacts too (#698).** A subagent or a synchronous delegate brings no session memory, so
+`AgentLoop.run(Conversation, CompactionStrategy, ToolContext, AgentEventListener)` wraps its own
+conversation in a `ConversationMemory` sized to its model's window, with
+`CompactionStrategies.forDefaultModel()` - the strategy the chat's session memory uses. Both
+`DelegationTool.executeSync` and `AgentRunner.run(AgentLoop, ...)` (the spawner's path) run that way;
+`TestChildCompaction` pins it.
+
 ### Multi-Agent Delegation
 
 `DelegationTool` creates isolated sub-agent runs (max depth 3). Parent passes `TransactionScope` and `SecurityContext`. Child events recorded in parent's `ConversationLog`.

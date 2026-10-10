@@ -55,7 +55,8 @@ import com.top_logic.util.model.ModelService;
 /**
  * The user writes to one background subagent from its card: {@code POST /chat/subagents/{id}/message}
  * leaves the message in the subagent's inbox, from any window of the account, and refuses everything
- * else - an ended subagent with a reason, another account's subagent as if there were none.
+ * else - an ended subagent with a reason, another account's subagent as if there were none. The
+ * card's stop, {@code DELETE /chat/subagents/{id}}, reaches the subagent the same way.
  */
 public class TestSubagentMessageEndpoint extends BasicTestCase {
 
@@ -79,6 +80,10 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 	static final class Probe extends ChatServlet {
 		void post(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 			doPost(req, resp);
+		}
+
+		void delete(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+			doDelete(req, resp);
 		}
 	}
 
@@ -168,6 +173,25 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 		assertTrue(_job.inbox().drain().isEmpty());
 	}
 
+	/**
+	 * "Abbrechen" on a card stops the subagent from any window of the account - not only from the one
+	 * whose run started it (#769).
+	 */
+	public void testTheOwnerStopsTheSubagentFromAnyWindow() throws Exception {
+		Recording answer = delete(_job.subagentId(), mia, "call-1");
+
+		assertTrue(answer.text(), answer.text().contains("\"cancelled\":true"));
+		assertTrue(_job.cancellationToken().isCancelled());
+	}
+
+	/** Another account stops nothing, and is answered as if there were nothing to stop. */
+	public void testAnotherAccountCannotStopIt() throws Exception {
+		Recording answer = delete(_job.subagentId(), noah, "call-1");
+
+		assertTrue(answer.text(), answer.text().contains("\"cancelled\":false"));
+		assertFalse(_job.cancellationToken().isCancelled());
+	}
+
 	private String body(String parentToolCallId, String text) {
 		return "{\"sessionId\":\"" + _chat + "\",\"parentToolCallId\":\"" + parentToolCallId
 			+ "\",\"text\":\"" + text + "\"}";
@@ -187,6 +211,23 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 			ThreadContext.popSuperUser();
 		}
 		_servlet.post(request, response.asResponse());
+		return response;
+	}
+
+	private Recording delete(String subagentId, Person caller, String parentToolCallId) throws Exception {
+		Recording response = new Recording();
+		InvocationContext invocation = runner.newClient().newInvocation(new PostMethodWebRequest(
+			"http://localhost/chat/subagents/" + subagentId + "?sessionId=" + _chat + "&parentToolCallId="
+				+ parentToolCallId,
+			new ByteArrayInputStream(new byte[0]), "application/json"));
+		HttpServletRequest request = invocation.getRequest();
+		ThreadContext.pushSuperUser();
+		try {
+			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
+		} finally {
+			ThreadContext.popSuperUser();
+		}
+		_servlet.delete(request, response.asResponse());
 		return response;
 	}
 

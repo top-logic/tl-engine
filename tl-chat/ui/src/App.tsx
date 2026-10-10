@@ -388,6 +388,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             delegationLive={chat.delegationLive}
             onLoadSubagentTranscript={actions.loadSubagentTranscript}
             onSendSubagentMessage={actions.messageSubagent}
+            onCancelSubagent={actions.cancelSubagent}
           />
           <Composer
             runs={runs}

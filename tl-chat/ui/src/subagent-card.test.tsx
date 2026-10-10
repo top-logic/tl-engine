@@ -93,6 +93,15 @@ describe('the cards of a turn', () => {
     expect(cards[0]).toMatchObject({ status: 'DONE', childRunId: 'run-1' })
   })
 
+  /*
+   * A window that did not see the start learns of the subagent from its end frame, which names no
+   * agent: the card keeps the name its recorded part gives (#769).
+   */
+  it('keeps the recorded agent name when the job knows none', () => {
+    const cards = cardsForTurn([spawnCall('call-1'), ref({ status: 'RUNNING' })], [job({ targetAgentName: '', status: 'CANCELLED' })], {}, new Set())
+    expect(cards[0]).toMatchObject({ agentName: 'researcher', status: 'CANCELLED' })
+  })
+
   it('reads the recorded part of a reloaded transcript', () => {
     const messages = turnsJsonToMessages(JSON.stringify([
       {
@@ -367,5 +376,78 @@ describe('a synchronous delegation', () => {
     }))
     expect(html).toContain(labels.delegationTag)
     expect(html).not.toContain('subagent-card-input')
+  })
+})
+
+describe('the card head', () => {
+  let mounted: { root: Root; container: HTMLElement } | null = null
+
+  afterEach(() => {
+    mounted?.root.unmount()
+    mounted?.container.remove()
+    mounted = null
+  })
+
+  function model(over: Partial<SubagentCardModel> = {}): SubagentCardModel {
+    return {
+      subagentId: 'sa-1', agentName: 'researcher', task: 'find X', status: 'RUNNING', summary: '',
+      totalTokens: 0, durationMs: 0, hasTranscript: false, parentToolCallId: 'call-1', ...over,
+    }
+  }
+
+  async function mount(card: SubagentCardModel, onCancel?: (id: string) => Promise<void>) {
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    mounted = { root, container }
+    root.render(React.createElement(SubagentCard, { card, labels, onLoadTranscript: async () => [], onCancel }))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    return container
+  }
+
+  /* One click on a running subagent's card stops it (#769). */
+  it('stops a running subagent from its card', async () => {
+    const stopped: string[] = []
+    const container = await mount(model(), async (id) => {
+      stopped.push(id)
+    })
+    const stop = container.querySelector('.subagent-card-stop') as HTMLButtonElement
+    expect(stop.textContent).toBe(labels.stop)
+    expect(stop.getAttribute('aria-label')).toBe('Stop sa-1 (researcher)')
+    stop.click()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(stopped).toEqual(['sa-1'])
+  })
+
+  it('says so when the stop fails', async () => {
+    const container = await mount(model(), async () => {
+      throw new Error('500')
+    })
+    ;(container.querySelector('.subagent-card-stop') as HTMLButtonElement).click()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(container.querySelector('[role=alert]')?.textContent).toBe(labels.subagentStopFailed)
+  })
+
+  /* Nothing to stop: an ended subagent, a synchronous delegation, a host that gives no stop. */
+  it('offers no stop where there is nothing to stop', () => {
+    const html = (card: SubagentCardModel, onCancel?: (id: string) => Promise<void>) =>
+      renderToStaticMarkup(React.createElement(SubagentCard, { card, labels, onLoadTranscript: async () => [], onCancel }))
+    const cancel = async () => undefined
+    expect(html(model({ status: 'DONE' }), cancel)).not.toContain('subagent-card-stop')
+    expect(html(model({ kind: 'delegation', subagentId: '' }), cancel)).not.toContain('subagent-card-stop')
+    expect(html(model())).not.toContain('subagent-card-stop')
+    expect(html(model({ status: 'QUEUED' }), cancel)).toContain('subagent-card-stop')
+  })
+
+  /* The task has a line of its own, and an ended card's report is prose without Markdown markers. */
+  it('puts the task under the head and shows the report as plain text', () => {
+    const out = renderToStaticMarkup(React.createElement(SubagentCard, {
+      card: model({ status: 'DONE', summary: '**Gesamt:** 4 `Event`s' }),
+      labels,
+      onLoadTranscript: async () => [],
+    }))
+    expect(out).toMatch(/<span class="subagent-card-title">.*<\/span><span class="subagent-card-task">find X<\/span>/)
+    expect(out).toContain('<span class="subagent-card-summary">Gesamt: 4 Events</span>')
+    expect(out).not.toContain('**')
   })
 })

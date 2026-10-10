@@ -636,6 +636,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           delegationLive={chat.delegationLive}
           onLoadSubagentTranscript={actions.loadSubagentTranscript}
           onSendSubagentMessage={actions.messageSubagent}
+          onCancelSubagent={actions.cancelSubagent}
           headerEnd={
             // Derived, not configured: the badge button appears exactly when a `<chat-rail/>` on
             // this `chat-id` is mounted, because with no rail it would toggle nothing visible.

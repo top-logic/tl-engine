@@ -348,7 +348,7 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.startsWith(PATH_SUBAGENTS + "/")) {
 			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length());
-			handleCancelSubagent(id, resp);
+			handleCancelSubagent(req, resp, id);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS + "/")) {
@@ -1933,15 +1933,31 @@ public class ChatServlet extends TopLogicServlet {
 			.setMessageId(messageId)));
 	}
 
-	private void handleCancelSubagent(String id, HttpServletResponse resp) throws IOException {
-		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
-		boolean cancelled = false;
-		if (registry != null) {
-			SubagentJob job = registry.get(id);
-			if (job != null) {
-				job.cancellationToken().cancel();
-				cancelled = true;
-			}
+	/**
+	 * DELETE /chat/subagents/{id}?sessionId=&parentToolCallId= - stops one background subagent, from
+	 * its card or from the panel above the composer.
+	 *
+	 * <p>
+	 * Found like the subagent a message goes to: in the named chat of this account, whichever of the
+	 * account's windows started it - the window that asks need not be the one whose run started the
+	 * subagent. Without a chat named, the chat this window shows. A chat of another account and an
+	 * unknown subagent both answer <code>{"cancelled":false}</code>.
+	 * </p>
+	 */
+	private void handleCancelSubagent(HttpServletRequest req, HttpServletResponse resp, String id)
+			throws IOException {
+		Person person = resolveCurrentPerson(req);
+		String sessionId = blankToNull(req.getParameter("sessionId"));
+		if (sessionId == null) {
+			sessionId = currentTracker().getActiveSessionId();
+		}
+		SubagentJob job = person == null || sessionId == null
+			|| ChatHistoryService.findOwnedSessionById(sessionId, person) == null
+				? null
+				: ChatSessionManager.findSubagent(sessionId, id, req.getParameter("parentToolCallId"));
+		boolean cancelled = job != null && !job.status().isTerminal();
+		if (cancelled) {
+			job.cancellationToken().cancel();
 		}
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());

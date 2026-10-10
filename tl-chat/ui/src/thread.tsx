@@ -1129,6 +1129,7 @@ function AgentRun({
   subagentCards = [],
   onLoadSubagentTranscript,
   onSendSubagentMessage,
+  onCancelSubagent,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -1157,6 +1158,8 @@ function AgentRun({
   onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
   /** Writes to a running subagent from its card; without it the cards offer no field. */
   onSendSubagentMessage?: SendToSubagent
+  /** Stops a subagent from its card; without it the cards offer no stop. */
+  onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -1207,6 +1210,7 @@ function AgentRun({
               labels={labels}
               onLoadTranscript={onLoadSubagentTranscript}
               onSendMessage={onSendSubagentMessage}
+              onCancel={onCancelSubagent}
             />
           ))}
         </div>
@@ -1288,6 +1292,7 @@ export const Thread = React.memo(function Thread({
   delegationLive,
   onLoadSubagentTranscript,
   onSendSubagentMessage,
+  onCancelSubagent,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -1328,6 +1333,8 @@ export const Thread = React.memo(function Thread({
   onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
   /** Writes to a running subagent from its card; without it the cards offer no field. */
   onSendSubagentMessage?: SendToSubagent
+  /** Stops a subagent from its card; without it the cards offer no stop. */
+  onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -1443,6 +1450,7 @@ export const Thread = React.memo(function Thread({
                     }
                     onLoadSubagentTranscript={onLoadSubagentTranscript}
                     onSendSubagentMessage={onSendSubagentMessage}
+                    onCancelSubagent={onCancelSubagent}
                     traceMode={traceMode}
                     // Only the turn at the bottom can be the running one. Handing `busy` to every
                     // turn made each finished run above it say "Working…" again.

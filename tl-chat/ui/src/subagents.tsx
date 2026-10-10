@@ -38,7 +38,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
 }: {
   subagents: SubagentActivity[]
   labels: Labels
-  onCancel: (id: string) => Promise<void>
+  onCancel: (id: string, parentToolCallId?: string) => Promise<void>
   onStopAll: () => Promise<void>
   onLoadTranscript: (id: string) => Promise<ChatMessage[]>
 }) {
@@ -164,7 +164,9 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
                       <button
                         type="button"
                         className="text-button"
-                        onClick={() => void onCancel(item.subagentId).catch(() => setError(labels.subagentStopFailed))}
+                        onClick={() =>
+                          void onCancel(item.subagentId, item.parentToolCallId).catch(() => setError(labels.subagentStopFailed))
+                        }
                       >
                         {labels.stop}
                       </button>

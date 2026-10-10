@@ -261,7 +261,9 @@ function mergeSubagent(
   const next: SubagentActivity = {
     subagentId: event.subagentId,
     // `||`, not `??`: the end frames carry an empty name, which must not replace the known one.
-    targetAgentName: event.targetAgentName || previous?.targetAgentName || 'Subagent',
+    // Empty while unknown - an end frame names no agent - so that what a card knows from the
+    // recorded part is not replaced by a placeholder.
+    targetAgentName: event.targetAgentName || previous?.targetAgentName || '',
     status,
     detail: event.detail ?? previous?.detail ?? '',
     totalTokens: event.totalTokens ?? previous?.totalTokens ?? 0,
@@ -610,7 +612,8 @@ export interface ChatActions {
   selectEffort(level: string): void
   selectTraceMode(mode: TraceMode): void
   toggleAutoApprove(): Promise<void>
-  cancelSubagent(id: string): Promise<void>
+  /** Stops one background subagent; the starting call tells it from a namesake of another window. */
+  cancelSubagent(id: string, parentToolCallId?: string): Promise<void>
   /**
    * Writes to one running background subagent from its card; on `sent` the card shows the message
    * as sent until the subagent reads it.
@@ -2433,8 +2436,8 @@ export class ChatStore {
         }
       },
 
-      cancelSubagent: async (id: string) => {
-        await cancelSubagent(this.at, id)
+      cancelSubagent: async (id: string, parentToolCallId?: string) => {
+        await cancelSubagent(this.at, id, this.state.sessionId, parentToolCallId)
         this.patch({
           subagents: this.state.subagents.map((item) =>
             item.subagentId === id ? { ...item, status: 'CANCELLED' } : item,
@@ -2457,7 +2460,8 @@ export class ChatStore {
         const active = this.state.subagents.filter(
           (item) => item.status === 'RUNNING' || item.status === 'QUEUED',
         )
-        await Promise.all(active.map((item) => cancelSubagent(at, item.subagentId)))
+        const sessionId = this.state.sessionId
+        await Promise.all(active.map((item) => cancelSubagent(at, item.subagentId, sessionId, item.parentToolCallId)))
         this.patch({
           subagents: this.state.subagents.map((item) =>
             item.status === 'RUNNING' || item.status === 'QUEUED' ? { ...item, status: 'CANCELLED' } : item,

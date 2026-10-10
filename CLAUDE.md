@@ -199,8 +199,8 @@ channel="…"/>` states it in one line - label, qualified type and the `label [i
 reads back (#494) - and the environment block's `{{turn_context}}` section tells the model what a
 `<turn-context>` block is, for the runs that get one.
 
-The wording is a shipped, translated resource (`tl.ai.environment.template`) that `LLMService`'s
-`<environment>` section may override, the facts come from the agent
+The wording is a shipped, translated resource (`tl.ai.environment.template`) that
+`AgentApplicationService`'s `<environment>` section may override, the facts come from the agent
 definition and from `<chat-conversation><context>`, the preference text is
 `tl.accounts:Person#aiPreferences`, and the filled block is recorded on
 `tl.ai.execution:AgentExecution#environment`. See `tl-ai-core/doc/environment-block.md`.
@@ -219,7 +219,7 @@ user typed.
 
 The section is read **once per conversation** (`UserMemoryBinding`, bound by `ChatProcessor` from
 the chat session state), because the block has to stay byte-identical across the turns of one.
-`<user-memory enabled="false"/>` on `LLMService` retires tools and section together. The user sees
+`<user-memory enabled="false"/>` on `AgentPolicyService` retires tools and section together. The user sees
 every memory in a `<data-list>` and deletes one with `aiMemoryDelete`. See
 `tl-ai-core/doc/environment-block.md`.
 
@@ -246,19 +246,19 @@ See `tl-ai-core/doc/skill-overlays.md`.
 `TL_init` (#667) is the counterpart of `/init` in Claude Code: Albert writes the **application
 context** - purpose, users and their tasks, the users' terms, what the calculated values mean, rules.
 It is development material, so it lives in the application's **source**: a `TextPromptContributor`
-with `name="application-context"` among `LLMService`'s prompt contributors, in a file of the app's
-`WEB-INF/autoconf`. `saveApplicationContext` (STRUCTURAL, approval-gated, administrators only) writes it
-there - replacing the entry, adding it to the app's last `LLMService` file, or creating
-`ai-application-context.config.xml` without `config:override` - editing the XML in place and never
-touching `tl_autoconf_dir`. It is offered only in the development environment
+with `name="application-context"` among `AgentApplicationService`'s prompt contributors, in a file of
+the app's `WEB-INF/autoconf`. `saveApplicationContext` (STRUCTURAL, approval-gated, administrators only)
+writes it there - replacing the entry where it is, adding it to the app's last `AgentApplicationService`
+file, or creating `ai-application-context.config.xml` without `config:override` - editing the XML in
+place and never touching `tl_autoconf_dir`. It is offered only in the development environment
 (`DevelopmentWorkspace`: `tl_operation_mode=development` and a source `src/main/webapp`); elsewhere it
-is not offered and Albert hands over the document. The text takes effect when the LLM service is
-restarted; the developer commits the file. The skill reads the model in depth (the calculation rule of
-every derived attribute, and every mismatch between a description and the implementation, which it
-reports and does not fix) and interviews the user; it does not look at the application's objects.
-Albert's own write tools stay offered while it runs - the approval guards them. `TestInitSkill`
-(tl-ai-eval) runs it end to end on a scripted model, including the service restart. See
-`tl-ai-core/doc/init-skill.md`.
+is not offered and Albert hands over the document. The text takes effect when
+`AgentApplicationService` ("Agent application knowledge") is restarted; the developer commits the
+file. The skill reads the model in depth (the calculation rule of every derived attribute, and every
+mismatch between a description and the implementation, which it reports and does not fix) and
+interviews the user; it does not look at the application's objects. Albert's own write tools stay
+offered while it runs - the approval guards them. `TestInitSkill` (tl-ai-eval) runs it end to end on
+a scripted model, including the service restart. See `tl-ai-core/doc/init-skill.md`.
 
 ### Prompt caching: three rules
 
@@ -275,13 +275,47 @@ cost regression nothing else reports:
    reordered; `ProviderRequest.stableToolCount` carries that boundary and the Anthropic and Bedrock
    builders put their second breakpoint on it (#346).
 
+### Agent services (tl-ai-core, #691)
+
+What used to be one `LLMService` is four services, cut by who sets them, so that saving one in the
+Service Editor (which writes a snapshot of its whole configuration) and restarting it touches only
+what its owner tunes:
+
+- `LLMProviderService` (`provider/`, "LLM providers" - the renamed `LLMService`): `<providers>`,
+  `<model-catalog>` and `<failover>` (including `rate-limit-wait-seconds`) - which models exist and
+  how to reach them.
+- `AgentRuntimeService` (`agent/`, "Agent runtime"): `default-model` and `default-provider`,
+  `<agent-overrides>`, `max-turns` (the turn limit of an agent whose override names none, 60 when
+  unset), `chat-entry-point`, `<capacity>` and `<security-context>`. It depends on
+  `LLMProviderService`, and its start refuses a default or override model that no provider exposes,
+  that more than one exposes, or that the provider named for it does not.
+- `AgentApplicationService` (`agent/`, "Agent application knowledge"): `<environment>`
+  (`<application>`, `<template>`), `<object-ids>` and `<prompt-contributors>` - development material,
+  kept in the application's source.
+- `AgentPolicyService` (`agent/`, "Agent policy"): `<budget>`, `<user-memory>`, `user-preferences`
+  and `max-preferences-length` - what a run may cost and what an agent may keep about a person, set
+  by administration.
+
+Restarting `LLMProviderService` restarts `AgentRuntimeService`; restarting any of the other three
+touches nothing else. `chat-workers` and `chat-queue` still take effect only at an application
+restart. `AgentFactory.runAgent` refuses a run while any of `AgentRuntimeService`,
+`AgentApplicationService` and `AgentPolicyService` is not running, so no run starts with the default
+security context, no limits, no budget or without the application's standing instructions; a test
+that starts agent runs starts all three modules. An old file is refused, not read: a configuration
+that still names `com.top_logic.tl.ai.core.provider.LLMService` stops the application at the start of
+`LLMProviderService`, with a message naming the file and where each section it sets now belongs.
+Code reaches the providers through `LLMProviderService.getInstance()`; `resolveModelAssignment` and
+`getDefaultModel` are on `AgentRuntimeService`. `TestAgentRuntimeService`,
+`TestAgentApplicationService`, `TestAgentPolicyService` and `TestOldLLMServiceConfiguration` pin it.
+Where every old property went: `tl-ai-core/doc/llm-service-migration.md`.
+
 ### Run limits (tl-ai-core `limits/`)
 
 Three ceilings an administrator **may** put on what this installation carries and what one account
-may spend, configured in one `<run-limits>` section beside `<environment>` and `<user-memory>` on
-`LLMService` (#343). **All three are off by default** - this product runs in applications with a
-thousand users, and any figure it picked for them would refuse work the installation allowed before
-the upgrade:
+may spend, configured in `<capacity>` on `AgentRuntimeService` (the chat pool and the per-account
+cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All three are off by
+default** - this product runs in applications with a thousand users, and any figure it picked for
+them would refuse work the installation allowed before the upgrade:
 
 - **`chat-workers`** (0 = no ceiling) bounds `ChatRunExecutor`. At 0 it is the cached pool the chat
   always had, a worker per send. With a ceiling, a send that finds every worker busy **waits**:
@@ -309,13 +343,13 @@ with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`). See
 
 ### Model health and failover (tl-ai-core `provider/health/`)
 
-A model that could not answer is remembered: `ModelAvailability` (a component of `LLMService`, not a
+A model that could not answer is remembered: `ModelAvailability` (a component of `LLMProviderService`, not a
 service of its own) turns the `ProviderException.Kind` the providers already produce into a mark -
 `QUOTA` sticky, `CAPACITY` for ~30 s, `TRANSIENT` costing one attempt per turn - and a weaker cause
 never replaces a stronger mark that still holds. `INVALID_REQUEST` and `CONTEXT_WINDOW_EXCEEDED`
 mark nothing: they would fail the same way on the next model.
 
-`LLMService`'s `<failover>` section says where a run goes instead, per model name. It is **empty by
+`LLMProviderService`'s `<failover>` section says where a run goes instead, per model name. It is **empty by
 default and an empty section changes nothing**. Where one is configured, `AgentLoop.callRouted`
 moves the run to the next healthy model of the chain **for the rest of the run** - not for the turn,
 because every provider caches by prefix - rebuilding the provider, the limits and the sampling
@@ -331,7 +365,7 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 - Subpackages: `model/` (browser/editor/search), `script/` (TL-Script executor), `interaction/` (delegation, ask-user, skill), `task/` (task store, task binding), `config/` (schema, layouts), `integration/` (Gitea), `registry/` (factories), `util/` (serialization, i18n)
 - `ObjectEditTool` - `object-edit.updateObject` / `createObject` / `deleteObject` (#625), core tools of Albert: one object the agent knows by its id, changed in one call. Values are converted on the server by the attribute's type (`AttributeValues`), the model's constraints are asked before the commit (`ObjectConstraints`), rights are checked per object and per attribute before the first write - for a new object's initial values with the engine's create-time question (`isAllowedInitial`, #29692), as the create dialogs ask it - and a call in a system context is refused - the engine checks no rights there and records no user. `createObject` takes the new object's parts in `values` (a composition's objects, nested up to three levels) and creates the whole tree in one call and one approval, with the constraints asked once it is complete (#630) - which is what makes an object with a mandatory composition creatable at all. A set chosen by a condition stays one TL-Script, through `changeData`. See `doc/security/agent-security-architecture.md` 3.3.5.
 - Reading and changing data with TL-Script are two tools (#630): `query` / `present` (READ, `data.read`) and `script-exec.changeData` (DATA_WRITE, `script`, making the change costs `data.write` on top). `changeData` refuses a script that only reads before any approval prompt; its dry run runs the change in an interaction of its own, in a transaction that is always rolled back, and answers what it would change (`ChangeReport`) - only when every effect is a write to the knowledge base. What is a read is decided on the whole expression (`SideEffects`), not by the engine's `HasSideEffects`, which skips function arguments. The verified cheat sheet of the language is `QueryLanguage`: a query that fails (it does not compile, or fails while it runs) is answered with its reading part, and a skill gets the whole sheet in place of `<<QUERY_LANGUAGE_CHEAT_SHEET>>`.
-- `TidResolver` turns a model-supplied `TypeName:id` into a `TLObject`, and is the only place that does - every call is a read check. An identifier that does not resolve is classified by `TidDiagnostics` rather than answered with one generic sentence: a uuid, a printed object, an unknown or abstract type, an id of the wrong shape, or a code this application speaks (a pattern and a sentence in `<object-ids>` on `LLMService`, which gets first say). Error path only. All of these messages are model-facing English literals, not resources (see the Coding Rules).
+- `TidResolver` turns a model-supplied `TypeName:id` into a `TLObject`, and is the only place that does - every call is a read check. An identifier that does not resolve is classified by `TidDiagnostics` rather than answered with one generic sentence: a uuid, a printed object, an unknown or abstract type, an id of the wrong shape, or a code this application speaks (a pattern and a sentence in `<object-ids>` on `AgentApplicationService`, which gets first say). Error path only. All of these messages are model-facing English literals, not resources (see the Coding Rules).
 
 ### MCP Integration
 
@@ -358,7 +392,7 @@ One front end consumes that API, the React chat (`tl-chat/ui/`): TypeScript + Vi
 
 Multi-layer: `SecurityContext.hasToolPermission()` → `ExecutionMode` gate (GLOBAL tools blocked in PRODUCTION) → `PermissionDecision` (Allowed/Denied/NeedsApproval) → `ApprovalCallback` for human-in-the-loop. Session-level approval caching.
 
-**Which `SecurityContext` a run gets is configurable (#381).** Every entry point - chat, TL-Script, MCP, the prompt improver - builds it through `RunSecurity.contextFor(RunPrincipal)`, which asks the `<security-context>` factory on `LLMService`. The default is `DefaultSecurityContextFactory`, i.e. `TopLogicSecurityContext.forRun`; an application that must answer approval from the *call* rather than from the tool's `ToolMode` extends `SecurityContextProxy` over the default and overrides `checkApproval` alone. Never build `TopLogicSecurityContext` at a new entry point - go through `RunSecurity`, or the installation's factory is skipped. See `doc/security/agent-security-architecture.md` 4.5.
+**Which `SecurityContext` a run gets is configurable (#381).** Every entry point - chat, TL-Script, MCP, the prompt improver - builds it through `RunSecurity.contextFor(RunPrincipal)`, which asks the `<security-context>` factory on `AgentRuntimeService`. The default is `DefaultSecurityContextFactory`, i.e. `TopLogicSecurityContext.forRun`; an application that must answer approval from the *call* rather than from the tool's `ToolMode` extends `SecurityContextProxy` over the default and overrides `checkApproval` alone. Never build `TopLogicSecurityContext` at a new entry point - go through `RunSecurity`, or the installation's factory is skipped. See `doc/security/agent-security-architecture.md` 4.5.
 
 **Rendering an answer is a security boundary (#385).** The text is model output, so it carries whatever
 `webFetch` and the tool results put in front of the model, and it is persisted and re-rendered on every
@@ -398,6 +432,23 @@ here, unlike in #392 - this is a statement about the destination, not about the 
 Markdown image, which both rendering paths keep (`HtmlSanitizer`, `markdown.tsx`). The browse/list
 view over `tl.ai.screenshots:Screenshot` comes with the React admin views (#452). See
 `tl-ai-core/doc/screenshots.md`.
+
+A third route follows the screenshot rule: `/archived-page/{handle}` (`ArchivedPageServlet`, #617)
+shows the copy of a web page an agent run read - login, then the reading account or an administrator,
+404 for unknown and foreign handles alike, rendered through `Converters.markdownToHtmlString` under a
+CSP that loads nothing.
+
+### Citations (tl-ai-core `citation/`)
+
+An answer cites with links in its text, `[Sommerfest](tl:GenericObject:11047)` or
+`[Quelle](https://...)`, and calls no tool for it (#617). The **system writes the reading list**: every read tool puts what
+it read on the run's `ReadingList` (objects where `ReadFilter` discloses an identity, pages in
+`webFetch` and the browser, an application's records through `ToolExecutionContext.readSource`), and
+`CitationValidator` keeps a link as a footnote only when it points at an entry of that list, of a kind
+declared in `CitationKinds`. A sub-agent's sources join the lead's list when its result is delivered.
+Every page that enters a reading list is archived by `PageArchive` (`tl.ai.execution:ArchivedPage`,
+bounded and with retention), and its footnote offers the copy. An application adds its own marker
+syntax with a `CitationMarkerSyntax` in `<marker-syntaxes>`. See `tl-chat/doc/citation-contract.md`.
 
 ### Memory & Compaction (tl-ai-core `memory/`)
 

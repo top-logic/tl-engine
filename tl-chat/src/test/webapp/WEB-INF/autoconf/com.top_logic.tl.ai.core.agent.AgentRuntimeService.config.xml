@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The model the agents of the tl-chat tests run on: "test-assigned-model" of the provider in
+	com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml next to this file.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
+				default-model="test-assigned-model"
+			/>
+		</config>
+	</services>
+</application>

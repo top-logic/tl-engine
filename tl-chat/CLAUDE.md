@@ -143,7 +143,7 @@ run. See `doc/scheduled-agent.md`.
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
-- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<run-limits>` on `LLMService` (tl-ai-core) names a `chat-workers` ceiling, so an installation sets all its ceilings in one place; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
+- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
 - **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
@@ -731,26 +731,26 @@ into the element's text**, or give its agent a tool that accepts that id.
 
 ### What an answer's citations look like
 
-A marker is a small grey number after the sentence. Hovering (or focusing) it shows the source's
-kind icon and label, where it comes from and which one it is (the page's path, or the record's id),
-and what the source says: prose with the cited passage highlighted - `cite`'s `passage` argument,
-kept only when the turn's own tool results really contain it - or, for a kind declared
-`passage="false"`, the record's fields as a field list. Clicking opens the source:
-`messageAnnotations.render` decides that for a host kind (returning nothing leaves the web default,
-which opens the page).
+The answer cites with links in its text - `[Sommerfest](tl:GenericObject:11047)`,
+`[laut Programm](https://...)` - and calls no tool for it (#617). The system writes the reading
+list: every read tool registers what it read on the run's `ReadingList`, and the validator turns a
+link to a source on that list into a footnote and drops the link of anything else. A sub-agent's
+sources join the lead's list when its result is delivered.
 
-**The number the model writes is the conversation's, not the run's.** `CitationMarkers` continues
-the numbering across the sends of one chat (`resumeFrom(log)`), because the model reads its own
-earlier answers back and a counter restarting at 1 handed out a number that already meant another
-source - which the validator then deleted, and with it every citation of every later answer (#495).
-What the reader sees is renumbered per answer regardless.
+A footnote is a small grey number after the link's text. Hovering (or focusing) it shows the
+source's kind icon and label, where it comes from and which one it is (the page's path, or the
+record's id), and what the source says: prose with the cited passage highlighted - the link's title,
+kept only when what the tool read really contains it - or, for a kind declared `passage="false"`,
+the record's fields as a field list. A web page also offers its **archived copy**
+(`/archived-page/{handle}`), kept when the agent read it, so the citation still shows what the page
+said after it changed. Clicking opens the source: `messageAnnotations.render` decides that for a
+host kind (returning nothing leaves the web default, which opens the page).
 
-**Kinds are declared, not invented.** The framework knows `web`; a host declares its own kinds once
-through the `CitationKinds` service (name, one-line description, where the id comes from, whether a
-passage applies). The framework appends the vocabulary to the system prompt of every agent that has
-the cite tool, the validator drops a citation of an undeclared kind at DEBUG, and a kind marked
-`passage="false"` is a structured object whose popover shows the tool result's fields instead of a
-sentence. See `doc/citation-contract.md`.
+**Kinds are declared, not invented.** The framework knows `web` and `object`; a host declares its
+own kinds once through the `CitationKinds` service (name, `types` its objects belong to, label,
+whether a passage applies). The model never names a kind - the reading tool decides it - and the
+validator drops a citation of an undeclared kind at DEBUG. A host that cites another way than with
+links registers a `CitationMarkerSyntax`. See `doc/citation-contract.md`.
 
 Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's sources. The rail's
 `Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers
@@ -1524,12 +1524,12 @@ decided nothing - see "what survives a reload, and who decides it".
 
 Exported types and `App` / `extensions` are the contract. File splits inside `ui/src` are not.
 
-Citations: see `doc/citation-contract.md`. Albert records them by calling `cite`; the server drops
-any id or URL that did not appear in this turn's other tool results, and leaves every other bracketed
-number in the answer alone.
+Citations: see `doc/citation-contract.md`. Albert points at its sources with links; the server keeps a
+link as a footnote only when a tool of the run read that source, and drops the link of any other id
+or address.
 
 ## Notes
 
 - Active chat state lives in session memory; completed sessions persisted to KnowledgeBase
 - SSE connections have no timeout; stay open until client disconnects
-- Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<run-limits chat-workers>` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip
+- Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<capacity chat-workers>` on `AgentRuntimeService` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip

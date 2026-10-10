@@ -5,8 +5,8 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.provider.LLMService;
 
 /**
  * Where every entry point gets the {@link SecurityContext} of the run it is about to start.
@@ -46,19 +46,20 @@ public final class RunSecurity {
 	}
 
 	/**
-	 * The configured factory, or the shipped default when {@link LLMService} is not running.
+	 * The configured factory, or the shipped default when {@link AgentRuntimeService} is not running.
 	 *
 	 * <p>
 	 * The fallback is for the minimal setups that boot no services and still call a tool - not a
 	 * permissive mode: the default factory authorizes against the account's roles exactly as the
-	 * configured one is expected to.
+	 * configured one is expected to. A run is not started while the service restarts - the agent
+	 * factory refuses it - so a run never gets the default in place of a configured factory.
 	 * </p>
 	 */
 	public static SecurityContextFactory factory() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!AgentRuntimeService.Module.INSTANCE.isActive()) {
 			return DefaultSecurityContextFactory.INSTANCE;
 		}
-		return LLMService.getInstance().getSecurityContextFactory();
+		return AgentRuntimeService.getInstance().getSecurityContextFactory();
 	}
 
 }

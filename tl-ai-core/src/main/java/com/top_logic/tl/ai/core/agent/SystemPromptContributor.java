@@ -31,7 +31,7 @@ import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
  * </p>
  *
  * <p>
- * Configured on {@code LLMService}; an installation that configures none is unchanged. Every
+ * Configured on {@code AgentRuntimeService}; an installation that configures none is unchanged. Every
  * contributor is asked once per run, in configuration order, and its text is appended after the
  * generated skill and delegate sections and before the {@code <environment>} block is composed - so a
  * {@code {{...}}} placeholder written into the contributed text is filled like one in the agent's own

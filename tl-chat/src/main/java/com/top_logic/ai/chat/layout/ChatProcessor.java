@@ -590,7 +590,7 @@ public class ChatProcessor {
 	 * <p>
 	 * <b>Usually <code>null</code>.</b> An installation that configured no ceiling has room for
 	 * every send, and one that configured a ceiling queues behind it; this answers a reason only
-	 * where the {@code <run-limits>} section asked for a refusal - a bounded chat queue, or a
+	 * where the {@code <capacity>} section asked for a refusal - a bounded chat queue, or a
 	 * per-account cap.
 	 * </p>
 	 *
@@ -1101,7 +1101,9 @@ public class ChatProcessor {
 			.setLabel(citation.label())
 			.setUrl(citation.url())
 			.setPassage(citation.passage())
-			.setExcerpt(citation.excerpt());
+			.setExcerpt(citation.excerpt())
+			.setArchiveUrl(citation.archiveUrl())
+			.setArchivedAt(citation.archivedAt());
 	}
 
 	/**

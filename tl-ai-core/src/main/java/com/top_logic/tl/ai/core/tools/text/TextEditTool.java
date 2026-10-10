@@ -184,6 +184,7 @@ public class TextEditTool {
 			return attribute + " has " + gutter.totalLines() + " lines; the range you asked for is"
 				+ " outside them.";
 		}
+		ReadFilter.shownWithText(target, value, objectId);
 		// The framing is this application's own sentence and stays outside the envelope; the value is
 		// text some other end user typed and goes inside it.
 		return describe(attribute, gutter) + "\n"

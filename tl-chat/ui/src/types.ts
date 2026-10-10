@@ -39,14 +39,14 @@ export interface AssistantText {
 /**
  * One source a `[n]` marker in an answer points to.
  *
- * Mirrors {@code CitationDto} on the wire. The server drops any citation whose {@link id} or
- * {@link url} did not appear in this turn's tool results.
+ * Mirrors {@code CitationDto} on the wire. The server keeps a citation only when a tool of the run
+ * read the source it points at.
  */
 export interface Citation {
   index: number
   toolName: string
   toolCallId: string
-  /** The model's own vocabulary for what kind of source this is, e.g. `web` or `invoice`. */
+  /** What kind of source this is, as the application declared it, e.g. `web` or `invoice`. */
   kind: string
   /**
    * What to call that kind in front of a reader, in the reader's language.
@@ -61,6 +61,10 @@ export interface Citation {
   passage?: string
   /** A window of the source around {@link passage}, shown in the marker's popover. */
   excerpt?: string
+  /** Where the copy of a web page kept when it was read can be opened; empty without one. */
+  archiveUrl?: string
+  /** When that copy was taken, ISO-8601. */
+  archivedAt?: string
 }
 
 export interface ToolCall {

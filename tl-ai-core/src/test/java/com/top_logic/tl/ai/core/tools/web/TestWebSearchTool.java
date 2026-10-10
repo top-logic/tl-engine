@@ -46,7 +46,7 @@ public class TestWebSearchTool extends TestCase {
 		int envelopeEnd = out.indexOf("</untrusted_search_results>");
 		assertTrue("the envelope is closed: " + out, envelopeEnd >= 0);
 		assertTrue("the citation instruction follows the closed envelope: " + out,
-			out.indexOf("Cite any sources you use") > envelopeEnd);
+			out.indexOf("cite the pages you read as markdown links") > envelopeEnd);
 		assertTrue("and the query line precedes it: " + out,
 			out.indexOf("Web search results for: \"q\"") < out.indexOf("<untrusted_search_results"));
 	}

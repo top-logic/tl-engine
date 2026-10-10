@@ -793,6 +793,12 @@ public class BrowserTool {
 			rendered = renderTerse(view, maxChars);
 		} else {
 			String markdown = WebFetchTool.htmlToMarkdown(limitBytes(view.html(), maxBytes), view.finalUrl());
+			if (view.block() == null || !view.block().detected()) {
+				// The full page is what the model reads, so it is what the answer may cite; a terse
+				// status is not, and neither is a bot wall in place of the page.
+				String title = pageTitle(view.html());
+				WebSources.read(view.finalUrl(), view.finalUrl(), title == null ? "" : title, markdown.strip());
+			}
 			rendered = renderResult(view.finalUrl(), view.ariaSnapshot(), markdown, view.elements(), maxChars);
 		}
 		if (view.block() != null && view.block().detected()) {

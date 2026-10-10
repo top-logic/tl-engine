@@ -21,11 +21,12 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.EffortLevels;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
@@ -64,7 +65,7 @@ final class ChatCapabilities {
 	 */
 	static ChatCapabilitiesResponse build(Person person, String improverAgent) {
 		ChatCapabilitiesResponse response = ChatCapabilitiesResponse.create();
-		LLMService llm = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
+		LLMProviderService llm = LLMProviderService.Module.INSTANCE.isActive() ? LLMProviderService.getInstance() : null;
 		RunAuthorization access = runAccess(person);
 
 		// The models and servers the visible agents use themselves are not a choice, so they stay
@@ -93,7 +94,7 @@ final class ChatCapabilities {
 			response.addAgent(dto);
 		}
 		response.setEntryPointAgent(
-			entryPointOf(response.getAgents(), llm == null ? "" : llm.getEntryPointAgentName()));
+			entryPointOf(response.getAgents(), configuredEntryPoint()));
 
 		if (llm != null) {
 			List<String> configured = llm.getConfiguredModelNames();
@@ -206,10 +207,14 @@ final class ChatCapabilities {
 	 * level the UI invented.
 	 * </p>
 	 */
-	private static String assignedEffort(LLMService llm, String modelId) {
+	private static String assignedEffort(LLMProviderService llm, String modelId) {
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		if (runtime == null) {
+			return null;
+		}
 		try {
 			AgentModelAssignment assignment =
-				llm.resolveModelAssignment(llm.getEntryPointAgentName()).withModel(modelId);
+				runtime.resolveModelAssignment(configuredEntryPoint()).withModel(modelId);
 			return assignment.effectiveEffort();
 		} catch (RuntimeException ex) {
 			Logger.debug("No assignment to read a default effort from for '" + modelId + "'.",
@@ -218,13 +223,20 @@ final class ChatCapabilities {
 		}
 	}
 
+	/** The configured chat entry point, or the empty string while the runtime service is not running. */
+	private static String configuredEntryPoint() {
+		String configured = AgentRuntimeService.chatEntryPoint();
+		return configured == null ? "" : configured;
+	}
+
 	/** The model the named agent is assigned, or <code>null</code> while nothing can say. */
-	private static String assignedModelOf(LLMService llm, String agentName) {
-		if (llm == null) {
+	private static String assignedModelOf(LLMProviderService llm, String agentName) {
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		if (llm == null || runtime == null) {
 			return null;
 		}
 		try {
-			return llm.resolveModel(agentName);
+			return runtime.resolveModel(agentName);
 		} catch (RuntimeException ex) {
 			Logger.debug("No model assignment for '" + agentName + "'.", ChatCapabilities.class);
 			return null;
@@ -291,7 +303,7 @@ final class ChatCapabilities {
 		return summary == null ? "" : Resources.getInstance().getString(summary, "");
 	}
 
-	private static AgentOptionDto toAgentDto(AgentDefinition agent, LLMService llm) {
+	private static AgentOptionDto toAgentDto(AgentDefinition agent, LLMProviderService llm) {
 		AgentOptionDto dto = AgentOptionDto.create()
 			.setName(agent.name())
 			.setLabel(labelOf(agent))
@@ -299,9 +311,10 @@ final class ChatCapabilities {
 		if (agent.mcpServers() != null) {
 			dto.getMcpServers().addAll(agent.mcpServers());
 		}
-		if (llm != null) {
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		if (llm != null && runtime != null) {
 			try {
-				dto.setModel(llm.resolveModel(agent.name()));
+				dto.setModel(runtime.resolveModel(agent.name()));
 			} catch (RuntimeException ignored) {
 				dto.setModel("");
 			}

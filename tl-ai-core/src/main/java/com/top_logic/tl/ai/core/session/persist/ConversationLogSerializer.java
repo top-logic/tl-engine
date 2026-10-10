@@ -22,6 +22,7 @@ import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.CitationDto;
+import com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto;
 import com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto;
 import com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto;
@@ -39,6 +40,7 @@ import com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto;
+import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import de.haumacher.msgbuf.io.StringR;
@@ -143,6 +145,11 @@ public final class ConversationLogSerializer {
 					composition.getToolCount(), composition.getLoadedSkills()));
 			}
 			turn.setTurnContext(emptyToNull(turnDto.getTurnContext()));
+			List<ReadSource> sources = new ArrayList<>();
+			for (ReadSourceDto source : turnDto.getSources()) {
+				sources.add(fromReadSourceDto(source));
+			}
+			turn.setSources(sources);
 			turn.setUserParts(turnDto.getUserParts().stream()
 				.map(ConversationLogSerializer::fromPartDto).toList());
 			for (PersistedPart partDto : turnDto.getAssistantParts()) {
@@ -173,6 +180,9 @@ public final class ConversationLogSerializer {
 				.setLoadedSkills(composition.loadedSkills()));
 		}
 		dto.setTurnContext(nullToEmpty(turn.turnContext()));
+		for (ReadSource source : turn.sources()) {
+			dto.addSource(toReadSourceDto(source));
+		}
 		for (Part part : turn.userParts()) {
 			dto.addUserPart(toPartDto(part));
 		}
@@ -509,13 +519,36 @@ public final class ConversationLogSerializer {
 		dto.setUrl(citation.url());
 		dto.setPassage(citation.passage());
 		dto.setExcerpt(citation.excerpt());
+		dto.setArchiveUrl(citation.archiveUrl());
+		dto.setArchivedAt(citation.archivedAt());
 		return dto;
 	}
 
 	private static Citation fromCitationDto(CitationDto dto) {
 		return new Citation(dto.getIndex(), dto.getToolName(), dto.getToolCallId(), dto.getKind(),
 			dto.getKindLabel(), dto.getId(), dto.getLabel(), dto.getUrl(), dto.getPassage(),
-			dto.getExcerpt());
+			dto.getExcerpt(), dto.getArchiveUrl(), dto.getArchivedAt());
+	}
+
+	private static ReadSourceDto toReadSourceDto(ReadSource source) {
+		return ReadSourceDto.create()
+			.setKind(source.kind())
+			.setId(source.id())
+			.setTitle(source.title())
+			.setUrl(source.url())
+			.setArchiveUrl(source.archiveUrl())
+			.setReadAt(source.readAt().toString());
+	}
+
+	private static ReadSource fromReadSourceDto(ReadSourceDto dto) {
+		Instant readAt;
+		try {
+			readAt = Instant.parse(dto.getReadAt());
+		} catch (RuntimeException ex) {
+			readAt = Instant.EPOCH;
+		}
+		return new ReadSource(dto.getKind(), dto.getId(), dto.getTitle(), dto.getUrl(), "", dto.getArchiveUrl(),
+			readAt);
 	}
 
 	private static String nullToEmpty(String value) {

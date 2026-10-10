@@ -5,12 +5,16 @@
  */
 package com.top_logic.tl.ai.core.citation;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -18,26 +22,38 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 
 /**
  * What an answer may cite in this application, declared once.
  *
  * <p>
- * {@code kind} used to be a free string on the cite tool, which named no kinds: asked to cite an
- * invoice the model invented {@code "model"}, nothing could resolve it, and its popover stayed
- * empty. A kind is a vocabulary the application owns - the framework only knows {@code web} - so
- * hosts declare theirs here, the framework tells the model what they are, and the validator refuses
- * one it was never told about, exactly as it refuses an invented id.
+ * A kind is a vocabulary the application owns. The framework knows two, {@link #WEB} and
+ * {@link #OBJECT}; an application declares its own here. The model never names a kind: the tool that
+ * read a source decides it - a page is {@code web}, an object is the first kind whose
+ * {@link KindConfig#getTypes() types} cover its type, or {@code object} - and the validator keeps a
+ * citation only of a declared kind. What a kind is for is the reader: the {@link KindConfig#getLabel()
+ * label} the sources list and the popover show, and whether a source of it has a sentence to quote.
  * </p>
  *
- * @see #vocabulary()
+ * <p>
+ * An application whose agents point at sources another way than with a link registers the syntax
+ * here, among the marker syntaxes - see {@link CitationMarkerSyntax}.
+ * </p>
+ *
  * @see CitationValidator
  */
 public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> {
 
-	/** The one kind the framework itself knows: a page a browser tool fetched. */
+	/** A web page {@code webFetch} or the browser read. */
 	public static final String WEB = "web";
+
+	/** An object of the application a read tool showed, of a type no declared kind claims. */
+	public static final String OBJECT = "object";
 
 	/** Configuration of {@link CitationKinds}. */
 	public interface Config extends ConfiguredManagedClass.Config<CitationKinds> {
@@ -53,6 +69,21 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 		@Name(KINDS)
 		@Key(KindConfig.NAME_ATTRIBUTE)
 		Map<String, KindConfig> getKinds();
+
+		/** Configuration property name for {@link #getMarkerSyntaxes()}. */
+		String MARKER_SYNTAXES = "marker-syntaxes";
+
+		/**
+		 * Further ways an answer of this application points at its sources, beside the link.
+		 *
+		 * <p>
+		 * The link ({@link LinkMarkers}) is always understood and is not configured here.
+		 * </p>
+		 *
+		 * @see #getMarkerSyntaxes()
+		 */
+		@Name(MARKER_SYNTAXES)
+		List<PolymorphicConfiguration<? extends CitationMarkerSyntax>> getMarkerSyntaxes();
 	}
 
 	/** One declared kind. */
@@ -64,14 +95,14 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 		/** Configuration property name for {@link #getLabel()}. */
 		String LABEL = "label";
 
-		/** Configuration property name for {@link #getIdSource()}. */
-		String ID_SOURCE = "id-source";
+		/** Configuration property name for {@link #getTypes()}. */
+		String TYPES = "types";
 
 		/** Configuration property name for {@link #hasPassage()}. */
 		String PASSAGE = "passage";
 
 		/**
-		 * One line saying what a source of this kind is, addressed to the model.
+		 * One line saying what a source of this kind is, for whoever maintains the configuration.
 		 *
 		 * @see #getDescription()
 		 */
@@ -82,8 +113,9 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 		 * What to call this kind in front of a reader, in the reader's language.
 		 *
 		 * <p>
-		 * The name is the model's vocabulary and stays the same word in every language. This is the
-		 * word the sources rail and the marker popover show instead; without it they show the name.
+		 * The name is the configuration's vocabulary and stays the same word in every language. This
+		 * is the word the sources rail and the marker popover show instead; without it they show the
+		 * name.
 		 * </p>
 		 *
 		 * @see #getLabel()
@@ -93,20 +125,28 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 		ResKey getLabel();
 
 		/**
-		 * Where the id of such a source comes from, e.g. "the id field an invoice tool returned".
+		 * The qualified names of the model types whose objects are sources of this kind, e.g.
+		 * {@code demo.events:Event}. A subtype counts as its type.
 		 *
-		 * @see #getIdSource()
+		 * <p>
+		 * An object a read tool showed the model is put on the reading list with the first declared
+		 * kind that claims its type, and with {@link CitationKinds#OBJECT} when none does. A kind
+		 * without types is one only an application's own tool registers.
+		 * </p>
+		 *
+		 * @see #getTypes()
 		 */
-		@Name(ID_SOURCE)
-		String getIdSource();
+		@Name(TYPES)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getTypes();
 
 		/**
 		 * Whether a source of this kind has a sentence to quote.
 		 *
 		 * <p>
 		 * True for text - a web page, a document. False for a structured object such as an invoice,
-		 * which has fields rather than prose: asking for a verbatim sentence there made the model
-		 * serialise the object as JSON, which no tool result then matched.
+		 * which has fields rather than prose: its popover shows the fields the tool read instead of a
+		 * window of text around a sentence.
 		 * </p>
 		 *
 		 * @see #hasPassage()
@@ -117,6 +157,11 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 	}
 
 	private final Map<String, KindConfig> _kinds = new LinkedHashMap<>();
+
+	private final List<CitationMarkerSyntax> _syntaxes = new ArrayList<>();
+
+	/** Whether any kind claims model types; every object is then an {@link #OBJECT} without asking. */
+	private final boolean _claimsTypes;
 
 	/**
 	 * Creates a {@link CitationKinds} from configuration.
@@ -129,6 +174,11 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 	public CitationKinds(InstantiationContext context, Config config) {
 		super(context, config);
 		_kinds.putAll(config.getKinds());
+		_claimsTypes = _kinds.values().stream().anyMatch(kind -> !kind.getTypes().isEmpty());
+		_syntaxes.add(LinkMarkers.INSTANCE);
+		for (PolymorphicConfiguration<? extends CitationMarkerSyntax> syntax : config.getMarkerSyntaxes()) {
+			_syntaxes.add(context.getInstance(syntax));
+		}
 	}
 
 	/** The declared kinds, in declaration order. */
@@ -165,34 +215,52 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 	}
 
 	/**
-	 * What to tell the model it may cite, appended to the system prompt of a run whose agent has the
-	 * cite tool.
+	 * The ways an answer of this application points at its sources: the link first, then the
+	 * application's own syntaxes in configuration order.
 	 */
-	public String vocabulary() {
-		if (_kinds.isEmpty()) {
-			return "";
-		}
-		StringBuilder text = new StringBuilder("### Kinds you may cite\n\n");
-		for (KindConfig kind : _kinds.values()) {
-			text.append("- `").append(kind.getName()).append("`");
-			if (!isBlank(kind.getDescription())) {
-				text.append(" - ").append(kind.getDescription().trim());
-			}
-			if (!isBlank(kind.getIdSource())) {
-				text.append(". id: ").append(kind.getIdSource().trim());
-			}
-			text.append(kind.hasPassage()
-				? ". Pass the sentence you read as `passage`."
-				: ". A structured object - do NOT pass a `passage`.");
-			text.append("\n");
-		}
-		text.append("\nUse one of these kinds exactly as written. A citation with any other kind is"
-			+ " dropped, because nothing in this application can resolve it.");
-		return text.toString();
+	public List<CitationMarkerSyntax> markerSyntaxes() {
+		return List.copyOf(_syntaxes);
 	}
 
-	private static boolean isBlank(String value) {
-		return value == null || value.isBlank();
+	/**
+	 * The kind an object a read tool showed the model is a source of: the first declared kind whose
+	 * {@link KindConfig#getTypes() types} cover the object's type, else {@link #OBJECT}.
+	 */
+	public String kindOf(TLObject object) {
+		TLStructuredType type = object == null ? null : object.tType();
+		if (type == null || !_claimsTypes) {
+			return OBJECT;
+		}
+		List<String> names = new ArrayList<>();
+		if (type instanceof TLClass clazz) {
+			for (TLClass general : TLModelUtil.getReflexiveTransitiveGeneralizations(clazz)) {
+				names.add(TLModelUtil.qualifiedName(general));
+			}
+		} else {
+			names.add(TLModelUtil.qualifiedName(type));
+		}
+		for (KindConfig kind : _kinds.values()) {
+			for (String claimed : kind.getTypes()) {
+				if (names.contains(claimed.trim())) {
+					return kind.getName();
+				}
+			}
+		}
+		return OBJECT;
+	}
+
+	/**
+	 * {@link #kindOf(TLObject)} of the running instance, or {@link #OBJECT} outside an application.
+	 */
+	public static String objectKind(TLObject object) {
+		return isActive() ? getInstance().kindOf(object) : OBJECT;
+	}
+
+	/**
+	 * {@link #markerSyntaxes()} of the running instance, or the link alone outside an application.
+	 */
+	public static List<CitationMarkerSyntax> syntaxes() {
+		return isActive() ? getInstance().markerSyntaxes() : List.of(LinkMarkers.INSTANCE);
 	}
 
 	/** The running instance. */

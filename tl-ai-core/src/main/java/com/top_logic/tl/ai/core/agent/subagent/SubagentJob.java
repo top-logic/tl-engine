@@ -9,6 +9,7 @@ import java.time.Instant;
 
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
@@ -53,6 +54,8 @@ public class SubagentJob {
 	private volatile boolean _delivered;
 
 	private volatile String _childRunId;
+
+	private volatile ReadingList _readingList = new ReadingList();
 
 	/** */
 	public SubagentJob(String subagentId, String targetAgentName, String taskBrief,
@@ -273,6 +276,23 @@ public class SubagentJob {
 	/** Sets the {@link #childRunId() recorded child run id}. */
 	public void setChildRunId(String childRunId) {
 		_childRunId = childRunId;
+	}
+
+	/**
+	 * What the subagent's run read.
+	 *
+	 * <p>
+	 * Joins the reading list of the run its result is delivered to, so that answer may cite what the
+	 * subagent read - see {@link com.top_logic.tl.ai.core.citation.ReadingList}.
+	 * </p>
+	 */
+	public ReadingList readingList() {
+		return _readingList;
+	}
+
+	/** Sets the {@link #readingList() reading list} of the subagent's run. */
+	public void setReadingList(ReadingList readingList) {
+		_readingList = readingList == null ? new ReadingList() : readingList;
 	}
 
 	/** Transition QUEUED -&gt; RUNNING. */

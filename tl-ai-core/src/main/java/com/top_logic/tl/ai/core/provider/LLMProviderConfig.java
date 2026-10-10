@@ -27,7 +27,7 @@ import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
  * {@link LLMProvider} and discover available models.
  * </p>
  *
- * @see LLMService
+ * @see LLMProviderService
  */
 public interface LLMProviderConfig {
 

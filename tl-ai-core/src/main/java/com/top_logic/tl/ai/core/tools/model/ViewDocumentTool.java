@@ -23,6 +23,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
 import com.top_logic.tl.ai.core.tools.perception.ModelPerception;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
@@ -171,6 +172,8 @@ public class ViewDocumentTool {
 			return ToolResult.of("Error: cannot read the content of " + tid + ": " + ex.getMessage());
 		}
 
+		// The document is the object's: the answer cites it as the object that holds it.
+		ReadFilter.shown(object, tid);
 		String label = describe(tid, part, binary);
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan(label, data, binary.getContentType(), perception(context));

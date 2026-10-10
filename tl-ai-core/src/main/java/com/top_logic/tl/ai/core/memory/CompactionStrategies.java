@@ -6,8 +6,9 @@
 package com.top_logic.tl.ai.core.memory;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 
 /**
  * The compaction strategy a run gets when nobody chose one.
@@ -27,7 +28,7 @@ public final class CompactionStrategies {
 	}
 
 	/**
-	 * A {@link SummarizingStrategy} on the installation's default model, or a
+	 * A {@link SummarizingStrategy} on the runtime's default model ({@link AgentRuntimeService}), or a
 	 * {@link TruncatingStrategy} when there is none to summarize with.
 	 *
 	 * <p>
@@ -36,18 +37,19 @@ public final class CompactionStrategies {
 	 * </p>
 	 */
 	public static CompactionStrategy forDefaultModel() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		LLMProviderService registry = LLMProviderService.getInstance();
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		if (registry == null || runtime == null) {
 			return new TruncatingStrategy();
 		}
-		LLMService registry = LLMService.getInstance();
-		String defaultModel = registry.getDefaultModel();
+		String defaultModel = runtime.getDefaultModel();
 		if (defaultModel == null || defaultModel.isBlank()) {
 			Logger.warn("No default model configured, falling back to truncation.", CompactionStrategies.class);
 			return new TruncatingStrategy();
 		}
 		LLMProvider provider;
 		try {
-			provider = registry.buildProvider(defaultModel, registry.getDefaultProvider());
+			provider = registry.buildProvider(defaultModel, runtime.getDefaultProvider());
 		} catch (IllegalStateException ex) {
 			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
 				CompactionStrategies.class);

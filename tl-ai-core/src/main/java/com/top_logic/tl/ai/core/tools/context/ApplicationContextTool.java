@@ -16,11 +16,11 @@ import java.util.Map;
 import com.top_logic.base.operation.OperationMode;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
 import com.top_logic.tl.ai.core.agent.TextPromptContributor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
-import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -34,7 +34,7 @@ import com.top_logic.basic.util.ResourcesModule;
 /**
  * Reads and saves the application context: the {@link TextPromptContributor} named
  * {@value TextPromptContributor.Config#APPLICATION_CONTEXT} among the prompt contributors of
- * {@link LLMService}, which puts the text into the system prompt of the agents.
+ * {@link AgentApplicationService}, which puts the text into the system prompt of the agents.
  *
  * <p>
  * The tools of {@code TL_init}. The application context is development material: a developer builds
@@ -101,7 +101,7 @@ public class ApplicationContextTool {
 		Map<String, String> active = running == null ? Map.of() : texts(running);
 		if (saved != null && !saved.texts().isEmpty() && !sameTexts(saved.texts(), active)) {
 			return "The application context saved in " + source.display(saved.file())
-				+ ". It is not active yet: it takes effect when the LLM service is restarted.\n\n"
+				+ ". It is not active yet: it takes effect when the agent application service is restarted.\n\n"
 				+ render(saved.texts()) + unreadable;
 		}
 		if (active.isEmpty()) {
@@ -130,7 +130,7 @@ public class ApplicationContextTool {
 		+ " replacing the whole document the agents are given in their system prompt. Pass the complete"
 		+ " document the user agreed to, not a part of it. The user approves the save and sees the text"
 		+ " while doing so. Call it once, at the end, after the user said the draft is done. It takes effect"
-		+ " when the LLM service is restarted.",
+		+ " when the agent application service is restarted.",
 		mode = ToolMode.STRUCTURAL, group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE,
 		check = "refusal", unavailable = "noSource")
 	public ToolResult saveApplicationContext(
@@ -151,16 +151,16 @@ public class ApplicationContextTool {
 		List<String> files = saved.files().stream().map(source::display).toList();
 		String where = String.join(" and ", files);
 		String what = saved.created()
-			? "Created " + where + ", which adds the application context to the configuration of the LLM"
-				+ " service without replacing that configuration."
+			? "Created " + where + ", which adds the application context to the configuration of the agent"
+				+ " application service without replacing that configuration."
 			: saved.added()
-				? "Added the application context to the prompt contributors of the LLM service in " + where + "."
+				? "Added the application context to the prompt contributors in " + where + "."
 				: "Replaced the application context in " + where + ".";
 		return ToolResult.of(what + " It is written in " + String.join(", ", languages)
 			+ ", the same text in each, so the agents of every user are given it. It is not active yet: it takes"
-			+ " effect when the LLM service is restarted - in the Service Editor, select the LLM service in the"
-			+ " list and restart it - or when the application is restarted. The file is part of the"
-			+ " application's source: commit it.");
+			+ " effect when the agent application service is restarted - in the Service Editor, select \"Agent"
+			+ " application knowledge\" in the list and restart it - or when the application is restarted. The"
+			+ " file is part of the application's source: commit it.");
 	}
 
 	/**
@@ -214,7 +214,8 @@ public class ApplicationContextTool {
 			return SYSTEM_CONTEXT;
 		}
 		if (!user.isAdmin()) {
-			return "Permission denied: only an administrator may change the configuration of the LLM service,"
+			return "Permission denied: only an administrator may change the configuration of the agent application"
+				+ " service,"
 				+ " which is where the application context is saved. Nothing was saved. Give the user the final"
 				+ " document in one fenced code block.";
 		}
@@ -230,7 +231,7 @@ public class ApplicationContextTool {
 	 * The application context of the running configuration, or <code>null</code> when it has none.
 	 */
 	static TextPromptContributor running() {
-		for (SystemPromptContributor contributor : LLMService.promptContributors()) {
+		for (SystemPromptContributor contributor : AgentApplicationService.promptContributors()) {
 			if (contributor instanceof TextPromptContributor text
 				&& TextPromptContributor.Config.APPLICATION_CONTEXT.equals(text.getConfig().getName())) {
 				return text;

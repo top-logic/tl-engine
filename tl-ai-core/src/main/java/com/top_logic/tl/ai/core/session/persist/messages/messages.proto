@@ -123,6 +123,15 @@ message PersistedTurn {
 	 */
 	string turnContext;
 
+	/**
+	 * What the run of this turn read - the sources its answer could point at, cited or not.
+	 *
+	 * <p>
+	 * Empty in transcripts written before this field existed.
+	 * </p>
+	 */
+	repeated ReadSourceDto sources;
+
 	/** Parts contributed by the user in this turn. */
 	repeated PersistedPart userParts;
 
@@ -205,6 +214,27 @@ message SubagentPartDto {
 	string summary;
 }
 
+/** One source a run read, as its reading list recorded it. */
+message ReadSourceDto {
+	/** Declared kind, e.g. {@code web}, {@code object} or an application's own. */
+	string kind;
+
+	/** The reference an answer writes to point at it: an object id, a URL, a record code. */
+	string id;
+
+	/** What to call it in front of a reader. */
+	string title;
+
+	/** Address of a web source; empty otherwise. */
+	string url;
+
+	/** Where the copy archived when it was read can be looked at; empty without one. */
+	string archiveUrl;
+
+	/** When it was read, ISO-8601. */
+	string readAt;
+}
+
 /** One source a citation marker in an answer points to. */
 message CitationDto {
 	/** 1-based marker index shown in the answer. */
@@ -216,7 +246,7 @@ message CitationDto {
 	/** Tool call id of that tool, when known. */
 	string toolCallId;
 
-	/** Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary. */
+	/** Host kind, e.g. {@code web} or {@code invoice}, as the application declared it. */
 	string kind;
 
 	/**
@@ -239,6 +269,12 @@ message CitationDto {
 
 	/** A window of the source around {@link #passage}, for the marker's popover. */
 	string excerpt;
+
+	/** Where the copy of a web page archived when it was read can be looked at; empty without one. */
+	string archiveUrl;
+
+	/** When that copy was taken, ISO-8601; empty without one. */
+	string archivedAt;
 }
 
 /** Text content part. */

@@ -21,7 +21,7 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
  * </p>
  *
  * <p>
- * Configured once, on {@code LLMService}, and asked by every entry point that starts a run - the
+ * Configured once, on {@code AgentRuntimeService}, and asked by every entry point that starts a run - the
  * chat, the TL-Script functions, the MCP endpoint, a scheduler. The shipped default is
  * {@link DefaultSecurityContextFactory}, which is what the entry points did by hand before this
  * existed, so an installation that configures nothing is unchanged.

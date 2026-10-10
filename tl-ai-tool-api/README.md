@@ -12,6 +12,7 @@ tools for the agent without depending on the agent engine.
 | `ToolSchema` | Name, description and JSON-Schema parameters as the model sees them |
 | `ToolExecutionContext` | What the framework tells the tool about the call it is serving |
 | `RunInfo` | Which agent run the call belongs to |
+| `ReadSource` | A source a tool read, which the answer may cite - see "How a tool says what it read" |
 | `UntrustedEnvelope` / `AnswerMarking` | The tags that mark a tool answer as data rather than instructions, and who puts them on |
 
 ## How a tool learns which run it is in
@@ -312,9 +313,10 @@ answer are configured beside the implementation:
 
 `truncation-hint` - and `truncationHint` on a Java `ToolResult` - bounds an answer the tool
 **succeeded** with. A failure is bounded too, but only by the installation's ceiling
-(`max-tool-result-chars` on `LLMService`, per agent or as the default): the agent loop cuts a
-`ToolState.Failed` text to the same budget, keeping head and tail and naming the dropped middle, and
-emits the same `ToolCallResultTruncated` event an operator sees for a success. The failed flag the
+(`max-tool-result-chars` on the agent's entry in `AgentRuntimeService`'s `<agent-overrides>`, or the
+default): the agent loop cuts a `ToolState.Failed` text to the same budget, keeping head and tail
+and naming the dropped middle, and emits the same `ToolCallResultTruncated` event an operator sees
+for a success. The failed flag the
 providers send as `is_error` survives the cut, so a truncated failure still arrives as a failure.
 
 There is deliberately no per-tool hint for the error path. `ToolResult.failure(...)` carries none,
@@ -331,3 +333,26 @@ Java tool, as a map with the keys `runId`, `conversationId`, `agentName`, `model
 The one thing a script body still cannot answer with is `ToolContent` - an image or a PDF for the
 model to *perceive* - because TL-Script has no value that says "this is a picture". Everything else
 the two kinds of tool can do is the same, object-typed parameters included.
+
+## How a tool says what it read
+
+An answer cites with links in its text, and the framework keeps a link as a footnote only when a tool
+of the run read the source it points at. The framework's own read tools register what they read. A
+tool of an application that reads something of its own registers it with
+`ToolExecutionContext.readSource`:
+
+```java
+@ToolMethod(description = "Reads one statement by its code.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+public String readStatement(@P("The statement's code, e.g. FACT-001") String code, ToolExecutionContext context) {
+    Statement statement = statements.byCode(code);
+    context.readSource(ReadSource.of("statement", statement.code(), statement.title()));
+    return statement.render();
+}
+```
+
+- `kind` is one the application declared in `CitationKinds`; a source of an undeclared kind is never
+  cited.
+- `id` is the reference the answer will write - an object id for `[text](tl:<id>)`, or whatever the
+  application's own `CitationMarkerSyntax` finds in the text.
+- Outside an agent run `readSource` does nothing, so a tool never fails for calling it.
+

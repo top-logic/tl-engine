@@ -17,7 +17,10 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.view.ChatTurnChannels;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.util.model.ModelService;
 
@@ -64,8 +67,8 @@ public class TestChatTurnChannels extends BasicTestCase {
 		assertTrue("The security service decides here; without it nothing is checked.",
 			AiToolAccessService.Module.INSTANCE.isActive());
 		assertTrue("Two models must be configured for 'the other one' to mean anything: "
-			+ LLMService.getInstance().getConfiguredModelNames(),
-			LLMService.getInstance().getConfiguredModelNames()
+			+ LLMProviderService.getInstance().getConfiguredModelNames(),
+			LLMProviderService.getInstance().getConfiguredModelNames()
 				.containsAll(List.of(ASSIGNED_MODEL, OTHER_MODEL)));
 	}
 
@@ -138,6 +141,9 @@ public class TestChatTurnChannels extends BasicTestCase {
 				new TestSuite(TestChatTurnChannels.class),
 				ModelService.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
-				LLMService.Module.INSTANCE));
+				LLMProviderService.Module.INSTANCE,
+				AgentRuntimeService.Module.INSTANCE,
+				AgentApplicationService.Module.INSTANCE,
+				AgentPolicyService.Module.INSTANCE));
 	}
 }

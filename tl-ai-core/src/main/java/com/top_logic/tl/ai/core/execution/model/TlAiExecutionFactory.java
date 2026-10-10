@@ -142,6 +142,62 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	public static final String PREFERENCE_MEMORY_KIND_CLASSIFIER = "PREFERENCE";
 
 	/**
+	 * Lookup {@link ArchivedPage} type.
+	 */
+	public static com.top_logic.model.TLClass getArchivedPageType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(ArchivedPage.ARCHIVED_PAGE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#CONTENT_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLProperty getContentArchivedPageAttr() {
+		return (com.top_logic.model.TLProperty) getArchivedPageType().getPart(ArchivedPage.CONTENT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#CONTENT_HASH_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLProperty getContentHashArchivedPageAttr() {
+		return (com.top_logic.model.TLProperty) getArchivedPageType().getPart(ArchivedPage.CONTENT_HASH_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#FETCHED_AT_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLProperty getFetchedAtArchivedPageAttr() {
+		return (com.top_logic.model.TLProperty) getArchivedPageType().getPart(ArchivedPage.FETCHED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#HANDLE_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLProperty getHandleArchivedPageAttr() {
+		return (com.top_logic.model.TLProperty) getArchivedPageType().getPart(ArchivedPage.HANDLE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#OWNER_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLReference getOwnerArchivedPageAttr() {
+		return (com.top_logic.model.TLReference) getArchivedPageType().getPart(ArchivedPage.OWNER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#TITLE_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleArchivedPageAttr() {
+		return (com.top_logic.model.TLProperty) getArchivedPageType().getPart(ArchivedPage.TITLE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ArchivedPage#URL_ATTR} of {@link ArchivedPage}.
+	 */
+	public static com.top_logic.model.TLProperty getUrlArchivedPageAttr() {
+		return (com.top_logic.model.TLProperty) getArchivedPageType().getPart(ArchivedPage.URL_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentSession} type.
 	 */
 	public static com.top_logic.model.TLClass getAgentSessionType() {
@@ -737,6 +793,19 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Name of type <code>ArchivedPage</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link ArchivedPage#ARCHIVED_PAGE_TYPE}.
+	 */
+	@Deprecated
+	public static final String ARCHIVED_PAGE_NODE = ArchivedPage.ARCHIVED_PAGE_TYPE;
+
+	/**
+	 * Storage table name of {@link #ARCHIVED_PAGE_NODE} objects.
+	 */
+	public static final String KO_NAME_ARCHIVED_PAGE = "ArchivedPage";
+
+	/**
 	 * Name of type <code>AgentSession</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link AgentSession#AGENT_SESSION_TYPE}.
@@ -801,6 +870,20 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public static final String KO_NAME_USER_MEMORY = "UserMemory";
 
+
+	/**
+	 * Create an instance of {@link ArchivedPage} type.
+	 */
+	public final ArchivedPage createArchivedPage(com.top_logic.model.TLObject context) {
+		return (ArchivedPage) createObject(getArchivedPageType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link ArchivedPage} type.
+	 */
+	public final ArchivedPage createArchivedPage() {
+		return createArchivedPage(null);
+	}
 
 	/**
 	 * Create an instance of {@link AgentSession} type.

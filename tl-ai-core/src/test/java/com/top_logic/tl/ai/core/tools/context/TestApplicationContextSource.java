@@ -31,14 +31,15 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContent;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
 import com.top_logic.tl.ai.core.agent.TextPromptContributor;
-import com.top_logic.tl.ai.core.provider.LLMService;
 
 /**
  * Tests for {@link ApplicationContextSource}: the application context is written into the
- * application's source configuration as an entry of {@code LLMService}'s prompt contributors, the
- * engine reads it from there, and nothing else of the file changes (Gitea #667).
+ * application's source configuration as an entry of {@code AgentApplicationService}'s prompt
+ * contributors, the engine reads it from there, and nothing else of the file changes (Gitea #667,
+ * #691).
  */
 public class TestApplicationContextSource extends TestCase {
 
@@ -55,7 +56,7 @@ public class TestApplicationContextSource extends TestCase {
 		+ "- An order is late when `$due < now()` & it is not shipped.\n"
 		+ "  - Nested: keep the indentation ]]> as written.";
 
-	/** An application's own LLMService file, as the service editor or a developer leaves it. */
+	/** An application's own AgentApplicationService file, as the service editor or a developer leaves it. */
 	private static final String APPLICATION = """
 		<?xml version="1.0" encoding="utf-8" ?>
 
@@ -63,12 +64,16 @@ public class TestApplicationContextSource extends TestCase {
 			xmlns:config="http://www.top-logic.com/ns/config/6.0"
 		>
 			<services>
-				<!-- The application names its own model. -->
-				<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
+				<!-- The application names its own codes. -->
+				<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService"
 					config:override="true"
 				>
-					<instance class="com.top_logic.tl.ai.core.provider.LLMService">
-						<agent-execution default-model="app-model"/>
+					<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+						<object-ids>
+							<hints>
+								<hint pattern="APP-[0-9]+" explanation="is an application code."/>
+							</hints>
+						</object-ids>
 
 						<environment>
 							<application>
@@ -87,9 +92,13 @@ public class TestApplicationContextSource extends TestCase {
 			xmlns:config="http://www.top-logic.com/ns/config/6.0"
 		>
 			<services>
-				<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-					<instance class="com.top_logic.tl.ai.core.provider.LLMService">
-						<agent-execution default-model="shipped-model"/>
+				<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+					<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+						<object-ids>
+							<hints>
+								<hint pattern="SHIPPED-[0-9]+" explanation="is a shipped code."/>
+							</hints>
+						</object-ids>
 						<prompt-contributors>
 							<contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor">
 								<text>
@@ -127,7 +136,7 @@ public class TestApplicationContextSource extends TestCase {
 	 * the text back exactly - in every language.
 	 */
 	public void testTheEntryIsAddedToTheApplicationsFile() throws Exception {
-		Path file = write("com.top_logic.tl.ai.core.provider.LLMService.config.xml", APPLICATION);
+		Path file = write("com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml", APPLICATION);
 
 		ApplicationContextSource.Saved saved = source().save(CONTEXT, LANGUAGES);
 
@@ -136,9 +145,9 @@ public class TestApplicationContextSource extends TestCase {
 		String written = read(file);
 		assertOneInsertion(APPLICATION, written);
 
-		LLMService.Config<?> service = serviceConfig(written);
-		assertEquals("The rest of the configuration is the application's.", "app-model",
-			service.getAgentExecution().getDefaultModel());
+		AgentApplicationService.Config<?> service = serviceConfig(written);
+		assertEquals("The rest of the configuration is the application's.", "APP-[0-9]+",
+			service.getObjectIds().getHints().get(0).getPattern());
 		TextPromptContributor context = applicationContext(service);
 		assertEquals(CONTEXT, context.text(Locale.GERMAN));
 		assertEquals(CONTEXT, context.text(Locale.ENGLISH));
@@ -149,7 +158,7 @@ public class TestApplicationContextSource extends TestCase {
 	 * A second save replaces the text of the one entry, and keeps the agents a developer named for it.
 	 */
 	public void testASecondSaveReplacesTheEntry() throws Exception {
-		Path file = write("com.top_logic.tl.ai.core.provider.LLMService.config.xml", APPLICATION);
+		Path file = write("com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml", APPLICATION);
 		source().save("First version.", LANGUAGES);
 		String afterFirst = read(file);
 		Files.writeString(file, afterFirst.replace("name=\"application-context\"",
@@ -161,7 +170,7 @@ public class TestApplicationContextSource extends TestCase {
 		String written = read(file);
 		assertEquals(1, occurrences(written, "name=\"application-context\""));
 		assertFalse(written.contains("First version."));
-		LLMService.Config<?> service = serviceConfig(written);
+		AgentApplicationService.Config<?> service = serviceConfig(written);
 		assertEquals(1, service.getPromptContributors().size());
 		TextPromptContributor context = applicationContext(service);
 		assertEquals(CONTEXT, context.text(Locale.ENGLISH));
@@ -185,10 +194,10 @@ public class TestApplicationContextSource extends TestCase {
 		assertFalse("The file adds to the service's configuration rather than replacing it.",
 			written.contains("config:override=\""));
 		assertTrue("Read before a snapshot the service editor would write, which then carries the entry.",
-			ApplicationContextSource.NEW_FILE.compareTo("com.top_logic.tl.ai.core.provider.LLMService.config.xml") < 0);
+			ApplicationContextSource.NEW_FILE.compareTo("com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml") < 0);
 
-		LLMService.Config<?> service = serviceConfig(SHIPPED, written);
-		assertEquals("shipped-model", service.getAgentExecution().getDefaultModel());
+		AgentApplicationService.Config<?> service = serviceConfig(SHIPPED, written);
+		assertEquals("SHIPPED-[0-9]+", service.getObjectIds().getHints().get(0).getPattern());
 		List<SystemPromptContributor> contributors = instances(service);
 		assertEquals(2, contributors.size());
 		assertEquals("House rule.", ((TextPromptContributor) contributors.get(0)).text(Locale.ENGLISH));
@@ -204,13 +213,30 @@ public class TestApplicationContextSource extends TestCase {
 	 * configuration, an entry in an earlier file would be dropped.
 	 */
 	public void testTheEntryGoesIntoTheFileReadLast() throws Exception {
-		Path earlier = write("app.llm.config.xml", SHIPPED.replace("shipped-model", "earlier-model"));
-		Path last = write("com.top_logic.tl.ai.core.provider.LLMService.config.xml", APPLICATION);
+		Path earlier = write("app.llm.config.xml", SHIPPED.replace("SHIPPED-", "EARLIER-"));
+		Path last = write("com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml", APPLICATION);
 
 		source().save(CONTEXT, LANGUAGES);
 
-		assertEquals(SHIPPED.replace("shipped-model", "earlier-model"), read(earlier));
+		assertEquals(SHIPPED.replace("SHIPPED-", "EARLIER-"), read(earlier));
 		assertEquals(CONTEXT, applicationContext(serviceConfig(read(earlier), read(last))).text(Locale.ENGLISH));
+	}
+
+	/**
+	 * An application's own file of the LLM providers is not where the context goes, and is not
+	 * touched.
+	 */
+	public void testAFileOfTheProvidersIsLeftAlone() throws Exception {
+		String providers = APPLICATION.replace("com.top_logic.tl.ai.core.agent.AgentApplicationService",
+			"com.top_logic.tl.ai.core.provider.LLMProviderService").replace(APPLICATION.substring(
+				APPLICATION.indexOf("<object-ids>"), APPLICATION.indexOf("</environment>") + "</environment>".length()),
+				"<model-catalog/>");
+		Path llm = write("com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml", providers);
+
+		ApplicationContextSource.Saved saved = source().save(CONTEXT, LANGUAGES);
+
+		assertTrue(saved.created());
+		assertEquals(providers, read(llm));
 	}
 
 	private ApplicationContextSource source() {
@@ -246,7 +272,7 @@ public class TestApplicationContextSource extends TestCase {
 	/**
 	 * The service's configuration as the engine reads it from the given layers, the first one lowest.
 	 */
-	private static LLMService.Config<?> serviceConfig(String... layers) throws ConfigurationException {
+	private static AgentApplicationService.Config<?> serviceConfig(String... layers) throws ConfigurationException {
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class);
 		ConfigurationReader reader = new ConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
 			Collections.singletonMap("application", descriptor));
@@ -256,10 +282,10 @@ public class TestApplicationContextSource extends TestCase {
 		}
 		reader.setSources(sources);
 		ApplicationConfig.Config config = (ApplicationConfig.Config) reader.read();
-		return (LLMService.Config<?>) config.getServices().get(LLMService.class).getInstance();
+		return (AgentApplicationService.Config<?>) config.getServices().get(AgentApplicationService.class).getInstance();
 	}
 
-	private static List<SystemPromptContributor> instances(LLMService.Config<?> service) {
+	private static List<SystemPromptContributor> instances(AgentApplicationService.Config<?> service) {
 		List<SystemPromptContributor> result = new ArrayList<>();
 		for (PolymorphicConfiguration<? extends SystemPromptContributor> contributor : service.getPromptContributors()) {
 			result.add(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(contributor));
@@ -267,7 +293,7 @@ public class TestApplicationContextSource extends TestCase {
 		return result;
 	}
 
-	private static TextPromptContributor applicationContext(LLMService.Config<?> service) {
+	private static TextPromptContributor applicationContext(AgentApplicationService.Config<?> service) {
 		TextPromptContributor result = null;
 		for (SystemPromptContributor contributor : instances(service)) {
 			if (contributor instanceof TextPromptContributor text

@@ -100,7 +100,7 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
@@ -1910,10 +1910,10 @@ public class ChatServlet extends TopLogicServlet {
 
 	/** Context window of a configured model, or zero when the model is unknown to this deployment. */
 	private static int contextWindowOf(String model) {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return 0;
 		}
-		ModelInfo info = LLMService.getInstance().getModel(model);
+		ModelInfo info = LLMProviderService.getInstance().getModel(model);
 		return info == null || info.limits() == null ? 0 : info.limits().contextWindow();
 	}
 

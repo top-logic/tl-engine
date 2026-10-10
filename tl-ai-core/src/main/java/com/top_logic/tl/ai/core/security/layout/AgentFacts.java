@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 
 /**
  * What the application says about an agent that decides whether a role can run it: the model it is
@@ -42,7 +42,7 @@ public interface AgentFacts {
 
 	/**
 	 * The facts of the running application, read from the agent definitions and the model assignment
-	 * of the LLM service.
+	 * of the agent runtime.
 	 */
 	final class Live implements AgentFacts {
 
@@ -54,11 +54,12 @@ public interface AgentFacts {
 
 		@Override
 		public String assignedModel(String agentName) {
-			if (!LLMService.Module.INSTANCE.isActive()) {
+			AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+			if (runtime == null) {
 				return null;
 			}
 			try {
-				return LLMService.getInstance().resolveModelAssignment(agentName).model();
+				return runtime.resolveModelAssignment(agentName).model();
 			} catch (RuntimeException ex) {
 				Logger.debug("No model assignment for '" + agentName + "'.", AgentFacts.class);
 				return null;

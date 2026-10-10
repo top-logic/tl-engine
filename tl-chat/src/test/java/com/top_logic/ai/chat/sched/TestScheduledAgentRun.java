@@ -32,9 +32,12 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.util.sched.task.log.TaskLog;
@@ -408,6 +411,9 @@ public class TestScheduledAgentRun extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
-				LLMService.Module.INSTANCE));
+				LLMProviderService.Module.INSTANCE,
+				AgentRuntimeService.Module.INSTANCE,
+				AgentApplicationService.Module.INSTANCE,
+				AgentPolicyService.Module.INSTANCE));
 	}
 }

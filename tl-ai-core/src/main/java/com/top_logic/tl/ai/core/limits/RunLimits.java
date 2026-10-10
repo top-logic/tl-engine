@@ -41,7 +41,8 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
  * the budget.
  * </p>
  *
- * @see RunLimitsConfig
+ * @see CapacityConfig
+ * @see BudgetConfig
  */
 public class RunLimits {
 

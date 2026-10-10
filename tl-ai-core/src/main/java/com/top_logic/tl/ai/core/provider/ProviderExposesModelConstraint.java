@@ -10,12 +10,13 @@ import java.util.List;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 import com.top_logic.basic.config.constraint.algorithm.ValueDependency;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 
 /**
  * Constraint that reports a provider/model pair the running service cannot route.
  *
  * <p>
- * The editor counterpart of the {@link LLMService#refusals refusals} that stop the service from
+ * The editor counterpart of the {@link LLMProviderService#refusals refusals} that stop the service from
  * starting: a provider that does not exist, one that does not expose the chosen model, and a model
  * two providers expose with no provider chosen. Reported here so that an administrator sees the
  * problem in the form rather than in a failed restart.
@@ -37,7 +38,7 @@ public class ProviderExposesModelConstraint extends ValueDependency<String> {
 
 	@Override
 	protected void checkValue(PropertyModel<String> providerProperty, PropertyModel<String> modelProperty) {
-		LLMService service = LLMService.getInstance();
+		LLMProviderService service = LLMProviderService.getInstance();
 		if (service == null) {
 			return;
 		}
@@ -45,7 +46,8 @@ public class ProviderExposesModelConstraint extends ValueDependency<String> {
 		String model = modelProperty.getValue();
 		if (model == null || model.isBlank()) {
 			// An agent override without a model of its own runs the default model.
-			model = service.getDefaultModel();
+			AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+			model = runtime == null ? null : runtime.getDefaultModel();
 		}
 		if (model == null || model.isBlank()) {
 			return;

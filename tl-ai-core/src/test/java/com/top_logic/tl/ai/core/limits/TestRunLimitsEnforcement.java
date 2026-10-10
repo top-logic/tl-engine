@@ -29,7 +29,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.limits.RunLimitsConfig.RoleBudget;
+import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.tool.api.CancellationToken;

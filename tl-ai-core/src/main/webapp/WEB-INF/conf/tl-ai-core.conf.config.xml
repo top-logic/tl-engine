@@ -1432,19 +1432,23 @@ When a subagent finishes, its result is delivered to you automatically at the st
 					<!--
 						Issue #667. The counterpart of /init in Claude Code: it writes the application
 						context - what the application is for, who works with it, its terms and its rules -
-						and saves it, with the user's approval, as the ApplicationContext singleton that
-						ApplicationContextContributor puts into the system prompt of every agent a user talks
-						to. The only tool it brings that changes anything is that save; it reads the model
-						with TL_modelExploration. Albert's own write tools stay offered during the run, and
-						the approval every one of them needs is what stands between a run and a write.
+						and saves it, with the user's approval, into the application's source configuration:
+						the TextPromptContributor named "application-context" among the prompt contributors
+						of LLMService. Writing it is a development task, like setting up the agents, so the
+						save is only offered where the application runs from its source. The only tool it
+						brings that changes anything is that save; it reads the model with
+						TL_modelExploration. Albert's own write tools stay offered during the run, and the
+						approval every one of them needs is what stands between a run and a write.
 					-->
 					<skill name="TL_init"
-						description="Load when the user wants the application context written or revised - the document every agent is given in its system prompt: what this application is for, who works with it, its terms and its rules (like /init writing a CLAUDE.md). Analyzes the model, interviews the user, and saves the document with the user's approval. Does NOT create or change the model, screens or data. Reads the model with TL_modelExploration; if that skill is not available to you, relay the reason loadSkill gives and stop - a context written without reading the model states guesses as facts."
+						description="Load when the user wants the application context written or revised - the document the agents are given in their system prompt: what this application is for, who works with it, its terms and its rules (like /init writing a CLAUDE.md). A development task: analyzes the model, interviews the developer, and saves the document with their approval into the application's source configuration. Does NOT create or change the model, screens or data. Reads the model with TL_modelExploration; if that skill is not available to you, relay the reason loadSkill gives and stop - a context written without reading the model states guesses as facts."
 					>
 						<content><![CDATA[# Writing the application context
 
 <goal>
-You write ONE Markdown document, the application context, and save it with `saveApplicationContext`. From then on every agent a user talks to is given it in its system prompt - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
+You write ONE Markdown document, the application context, and save it with `saveApplicationContext`. It goes into the application's source configuration, and once the LLM service is restarted the agents are given it in their system prompt - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
+
+This is a development task: the person you work with builds the application, and the document becomes part of its source, like the model. Saving is only possible where the application runs from its source; anywhere else you still write the document, and hand it over at the end.
 
 Saving the context is the ONLY change you make. Do not change any model element, screen or object - not even to correct something you found wrong: you report it, and the user decides. What you learn goes into the document.
 </goal>
@@ -1454,7 +1458,7 @@ Work through the steps in one go. Do not create tasks for them.
 
 ## 1. Read the existing context
 
-Call `readApplicationContext`. If there is one, you REVISE it: keep what is still true, correct what the model contradicts, add what is missing. Say at the start that you found one and are revising it.
+Call `readApplicationContext`. If there is one - active, or saved and waiting for a restart - you REVISE it: keep what is still true, correct what the model contradicts, add what is missing. Say at the start that you found one and are revising it.
 
 ## 2. Analyze the model
 
@@ -1514,8 +1518,8 @@ Show the complete document in ONE fenced code block, then ask with `askUser(type
 
 Call `saveApplicationContext` with the complete document. The user approves the save and sees the text while doing so.
 
-- Saved: tell the user in two sentences that every agent is given the context from the next message on, also in open conversations, and that an administrator can read and edit it under Administration > Development > Agent Editor, tab "Application context". Write "Administration", "Development" and "Agent Editor" exactly so, in every language - they are the labels on the screen; only the tab is translated, in German it is "Anwendungskontext".
-- Refused because the account may not change it: give the final document in one fenced code block and say that an administrator can save it on that tab.
+- Saved: tell the user in a few sentences which file it was saved into (the answer names it), that it takes effect when the LLM service is restarted - in the Service Editor, or by restarting the application - and that the file is part of the application's source and is to be committed. Nothing else is needed: there is no screen to fill in.
+- Not offered or refused - outside the development environment, or for an account that may not change the configuration: give the final document in one fenced code block and relay the reason in one sentence.
 - The user declined the approval: ask what to change, and continue with step 4.
 </workflow>
 ]]></content>
@@ -2657,8 +2661,9 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					</factory>
 					<!--
 						readApplicationContext / saveApplicationContext (Issue #667): the tools of TL_init.
-						The text they read and write is what ApplicationContextContributor puts into the
-						system prompt of every agent a user talks to.
+						They read and write the TextPromptContributor named "application-context" of
+						LLMService; the save writes it into the application's source configuration and is
+						only offered in the development environment.
 					-->
 					<factory name="application-context">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"

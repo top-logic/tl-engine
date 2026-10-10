@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
+import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { turnsJsonToMessages } from './api'
-import { applyChildEvent } from './chat-store'
+import { turnsJsonToMessages, type SubagentMessageStatus } from './api'
+import { addNote, applyChildEvent } from './chat-store'
 import { bundle } from './i18n'
 import { cardsForTurn, SubagentCard, type SubagentCardModel } from './subagent-card'
 import { showSubagentCard } from './thread'
@@ -172,5 +173,129 @@ describe('a line pointing at a card', () => {
     expect(document.activeElement?.textContent).toBe('new')
 
     expect(showSubagentCard(line, { subagentId: 'sa-9', parentToolCallId: 'call-9' })).toBe(false)
+  })
+})
+
+describe('writing to a subagent from its card', () => {
+  let mounted: { root: Root; container: HTMLElement } | null = null
+
+  afterEach(() => {
+    mounted?.root.unmount()
+    mounted?.container.remove()
+    mounted = null
+  })
+
+  function settle(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 20))
+  }
+
+  /** Mounts an open card and answers every message with `answer`. */
+  async function openCard(card: Partial<SubagentCardModel>, answer: SubagentMessageStatus | null) {
+    const sent: [string, string, string][] = []
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    mounted = { root, container }
+    const model: SubagentCardModel = {
+      subagentId: 'sa-1',
+      agentName: 'researcher',
+      task: 'find X',
+      status: 'RUNNING',
+      summary: '',
+      totalTokens: 0,
+      durationMs: 0,
+      hasTranscript: true,
+      parentToolCallId: 'call-1',
+      ...card,
+    }
+    const onSendMessage =
+      answer === null
+        ? undefined
+        : async (id: string, call: string, text: string) => {
+            sent.push([id, call, text])
+            return answer
+          }
+    root.render(React.createElement(SubagentCard, { card: model, labels, onLoadTranscript: async () => [], onSendMessage }))
+    await settle()
+    ;(container.querySelector('.subagent-card-head') as HTMLElement).click()
+    await settle()
+    return { container, sent }
+  }
+
+  async function write(container: HTMLElement, text: string) {
+    const input = container.querySelector('.subagent-card-input') as HTMLInputElement
+    const setValue = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    setValue.call(input, text)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    await settle()
+    ;(container.querySelector('.subagent-card-compose button[type=submit]') as HTMLButtonElement).click()
+    await settle()
+    return input
+  }
+
+  /* The message goes to this subagent - named by its id and the call that started it. */
+  it('sends to the subagent the card shows and empties the field', async () => {
+    const { container, sent } = await openCard({}, 'sent')
+    const input = await write(container, '  Only 2026.  ')
+
+    expect(sent).toEqual([['sa-1', 'call-1', 'Only 2026.']])
+    expect(input.value).toBe('')
+    expect(input.getAttribute('aria-label')).toBe('Message to sa-1 (researcher)')
+    expect(container.textContent).toContain(labels.subagentMessageHint)
+  })
+
+  /* An ended subagent reads nothing more: the user is told, and keeps what they wrote. */
+  it('says so when the subagent has ended meanwhile', async () => {
+    const { container } = await openCard({}, 'ended')
+    const input = await write(container, 'Only 2026.')
+
+    expect(container.querySelector('[role=alert]')?.textContent).toBe(labels.subagentMessageEnded)
+    expect(input.value).toBe('Only 2026.')
+  })
+
+  /* Nothing to write to: an ended subagent, or a host that offers no way to send. */
+  it('offers no field once the subagent has ended, nor without a way to send', async () => {
+    expect((await openCard({ status: 'DONE', summary: 'X is 42.' }, 'sent')).container.querySelector('.subagent-card-input')).toBeNull()
+    mounted?.root.unmount()
+    mounted?.container.remove()
+    expect((await openCard({}, null)).container.querySelector('.subagent-card-input')).toBeNull()
+  })
+
+  /* Each message keeps its receipt: sent until the subagent has read it, then read. */
+  it('shows each message with its receipt', async () => {
+    let live = addNote(undefined, 'm1', 'Only 2026.')
+    live = addNote(live, 'm2', 'And by venue.')
+    live = applyChildEvent(live, 'user_message_read', { messages: [{ id: 'm1', text: 'Only 2026.' }] })
+    const { container } = await openCard({ live }, 'sent')
+
+    const notes = Array.from(container.querySelectorAll('.subagent-card-notes li')).map((li) => li.textContent)
+    expect(notes).toEqual([`Only 2026.${labels.subagentMessageRead}`, `And by venue.${labels.subagentMessageSent}`])
+  })
+})
+
+describe('the receipt of a message', () => {
+  /* Another window of the chat sent it: it reads the message from the frame, already read. */
+  it('adds a message another window sent, as read', () => {
+    const live = applyChildEvent(undefined, 'user_message_read', { messages: [{ id: 'm9', text: 'From the other tab.' }] })
+    expect(live.notes).toEqual([{ id: 'm9', text: 'From the other tab.', read: true }])
+  })
+
+  it('reads the user\'s message in a subagent\'s transcript as the user\'s own words', () => {
+    const messages = turnsJsonToMessages(JSON.stringify([
+      {
+        id: 't1',
+        timestamp: 0,
+        userParts: [],
+        assistantParts: [
+          {
+            type: 'system',
+            id: 'p1',
+            timestamp: 0,
+            systemData: { eventType: 'USER_MESSAGE', details: '[Message from the user] The user ... task:\n\nOnly 2026.\n\nAnd by venue.' },
+          },
+        ],
+      },
+    ]))
+    expect(messages).toContainEqual(expect.objectContaining({ type: 'user', text: 'Only 2026.\n\nAnd by venue.' }))
   })
 })

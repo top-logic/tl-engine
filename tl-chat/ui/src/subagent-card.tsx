@@ -1,8 +1,17 @@
 import { React } from 'tl-react-bridge'
+import type { SubagentMessageStatus } from './api'
 import { formatTokens } from './context-usage'
 import type { bundle } from './i18n'
 import { transcriptLine } from './subagents'
-import type { ChatMessage, SubagentActivity, SubagentLive, SubagentRef, SubagentStatus, SubagentStep } from './types'
+import type {
+  ChatMessage,
+  SubagentActivity,
+  SubagentLive,
+  SubagentNote,
+  SubagentRef,
+  SubagentStatus,
+  SubagentStep,
+} from './types'
 
 const { useState } = React
 
@@ -120,6 +129,102 @@ function stepLine(step: SubagentStep): string {
   return step.summary ? `${step.name} ${step.summary}` : step.name
 }
 
+/** Writes to a running subagent from its card; see `ChatActions.messageSubagent`. */
+export type SendToSubagent = (id: string, parentToolCallId: string, text: string) => Promise<SubagentMessageStatus>
+
+/**
+ * What the user wrote to the subagent, each with its receipt, and - while it works - the field to
+ * write more.
+ *
+ * The subagent reads a message at the start of its next turn, which may be after the tool call it is
+ * busy with: the hint says so, and the receipt turns from "sent" to "read" when it has.
+ */
+function CardMessages({
+  card,
+  notes,
+  active,
+  labels,
+  onSend,
+}: {
+  card: SubagentCardModel
+  notes: SubagentNote[]
+  active: boolean
+  labels: Labels
+  onSend?: SendToSubagent
+}) {
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+  const [refusal, setRefusal] = useState('')
+  const name = card.agentName ? `${card.subagentId} (${card.agentName})` : card.subagentId
+  const canWrite = active && onSend !== undefined
+  const hintId = `subagent-hint-${card.parentToolCallId ?? ''}-${card.subagentId}`
+
+  const submit = async () => {
+    const text = draft.trim()
+    if (!text || !onSend || sending) return
+    setSending(true)
+    setRefusal('')
+    try {
+      const status = await onSend(card.subagentId, card.parentToolCallId ?? '', text)
+      if (status === 'sent') setDraft('')
+      else setRefusal(status === 'empty' ? '' : status === 'ended' || status === 'unknown' ? labels.subagentMessageEnded : labels.subagentMessageFailed)
+    } catch {
+      setRefusal(labels.subagentMessageFailed)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (notes.length === 0 && !canWrite) return null
+  return (
+    <div className="subagent-card-messages">
+      {notes.length > 0 ? (
+        <ul className="subagent-card-notes" aria-label={labels.subagentMessagesLabel}>
+          {notes.map((note) => (
+            <li key={note.id} className={note.read ? 'is-read' : 'is-sent'}>
+              <span className="subagent-note-text">{note.text}</span>
+              <span className="subagent-note-state">{note.read ? labels.subagentMessageRead : labels.subagentMessageSent}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {canWrite ? (
+        <form
+          className="subagent-card-compose"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void submit()
+          }}
+        >
+          <input
+            type="text"
+            className="subagent-card-input"
+            value={draft}
+            maxLength={8000}
+            placeholder={labels.subagentMessagePlaceholder}
+            aria-label={labels.subagentMessageLabel(name)}
+            aria-describedby={hintId}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <button type="submit" className="prompt-continue" disabled={sending || !draft.trim()}>
+            {labels.send}
+          </button>
+        </form>
+      ) : null}
+      {canWrite ? (
+        <p className="subagent-card-hint" id={hintId}>
+          {labels.subagentMessageHint}
+        </p>
+      ) : null}
+      {refusal ? (
+        <p className="subagent-card-refusal" role="alert">
+          {refusal}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 /**
  * One background subagent, at the tool call of the turn that started it.
  *
@@ -131,10 +236,13 @@ export function SubagentCard({
   card,
   labels,
   onLoadTranscript,
+  onSendMessage,
 }: {
   card: SubagentCardModel
   labels: Labels
   onLoadTranscript: (id: string, runId?: string) => Promise<ChatMessage[]>
+  /** Writes to the subagent; without it the card offers no field. */
+  onSendMessage?: SendToSubagent
 }) {
   const [open, setOpen] = useState(false)
   const [transcript, setTranscript] = useState<ChatMessage[] | null>(null)
@@ -195,6 +303,7 @@ export function SubagentCard({
             <p className="subagent-card-empty">{active ? labels.subagentNoSteps : labels.noDetails}</p>
           )}
           {live?.text ? <p className="subagent-card-text">{live.text}</p> : null}
+          <CardMessages card={card} notes={live?.notes ?? []} active={active} labels={labels} onSend={onSendMessage} />
           {card.hasTranscript ? (
             <button type="button" className="text-button" disabled={loading} onClick={() => void loadTranscript()}>
               {loading ? labels.loading : labels.viewTranscript}

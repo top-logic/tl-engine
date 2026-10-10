@@ -332,7 +332,7 @@ public class AgentLoop {
 	private void injectBetweenTurns(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {
 		injectSubagentResults(conversation, context);
-		injectLeadMessages(conversation, listener, runId, turn);
+		injectInboxMessages(conversation, listener, runId, turn);
 		recordGivenAddresses(conversation, context.readingList().seenUrls());
 	}
 
@@ -347,9 +347,10 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * Every message in the user's role is read once, at the start of the turn after it arrived - the
-	 * user's message, a background subagent's task, a message of its lead. What the framework writes
-	 * into that role is not read: a subagent's report repeats what the subagent read, and a summary of
-	 * compacted history is the model's own text, and neither is an address somebody gave this run.
+	 * user's message, a background subagent's task, a message its lead or the user sent it. What the
+	 * framework writes into that role is not read: a subagent's report repeats what the subagent read,
+	 * and a summary of compacted history is the model's own text, and neither is an address somebody
+	 * gave this run.
 	 * </p>
 	 *
 	 * @see SeenUrls
@@ -391,34 +392,65 @@ public class AgentLoop {
 		+ " of your task:";
 
 	/**
-	 * Hands a background subagent what its lead sent it since its last turn, as one user message
-	 * before the next request is built.
+	 * Opening line of what a background subagent's model is shown when the user wrote to it directly.
+	 *
+	 * <p>
+	 * The user role alone would not say it: the run's first message is the lead's task, also in the
+	 * user role. This line says that these words are the user's own.
+	 * </p>
+	 */
+	static final String USER_MESSAGE_NOTICE = "[Message from the user] The user you are working for writes"
+		+ " to you directly while you work. Take it into account for the rest of your task:";
+
+	/**
+	 * Hands a background subagent what its lead and the user sent it since its last turn, before the
+	 * next request is built.
 	 *
 	 * <p>
 	 * Only a run that reads an {@link SubagentInbox} - a background subagent, whose thread the spawner
-	 * binds it on - gets anything here. Several messages become one message, in the order they were
-	 * sent. The text is announced as a
-	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} event, which is
-	 * what records it in the subagent's own log.
+	 * binds it on - gets anything here. The lead's messages become one user message, in the order they
+	 * were sent, announced as a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} event. The user's
+	 * become one user message after it - the user has the last word - announced as a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.UserMessageDelivered} event, which tells
+	 * the chat which of its messages were read. The events are what record the messages in the
+	 * subagent's own log.
 	 * </p>
 	 */
-	static void injectLeadMessages(Conversation conversation, AgentEventListener listener, String runId,
+	static void injectInboxMessages(Conversation conversation, AgentEventListener listener, String runId,
 			int turn) {
 		SubagentInbox inbox = SubagentInboxBinding.getInbox();
 		if (inbox == null) {
 			return;
 		}
-		List<String> messages = inbox.drain();
-		if (messages.isEmpty()) {
-			return;
+		List<SubagentInbox.Message> messages = inbox.drain();
+		List<SubagentInbox.Message> fromLead = new ArrayList<>();
+		List<SubagentInbox.Message> fromUser = new ArrayList<>();
+		for (SubagentInbox.Message message : messages) {
+			(message.sender() == SubagentInbox.Sender.USER ? fromUser : fromLead).add(message);
 		}
-		StringBuilder text = new StringBuilder(LEAD_MESSAGE_NOTICE);
-		for (String message : messages) {
-			text.append("\n\n").append(message);
+		if (!fromLead.isEmpty()) {
+			String text = inboxText(LEAD_MESSAGE_NOTICE, fromLead);
+			conversation.add(userMessage(text));
+			emit(listener, new AgentEvent.LeadMessageDelivered(runId, turn, now(), text));
 		}
-		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text.toString()))));
-		emit(listener, new AgentEvent.LeadMessageDelivered(runId, turn, now(), text.toString()));
+		if (!fromUser.isEmpty()) {
+			String text = inboxText(USER_MESSAGE_NOTICE, fromUser);
+			conversation.add(userMessage(text));
+			emit(listener, new AgentEvent.UserMessageDelivered(runId, turn, now(), text, List.copyOf(fromUser)));
+		}
+	}
+
+	private static String inboxText(String notice, List<SubagentInbox.Message> messages) {
+		StringBuilder text = new StringBuilder(notice);
+		for (SubagentInbox.Message message : messages) {
+			text.append("\n\n").append(message.text());
+		}
+		return text.toString();
+	}
+
+	private static UserMessage userMessage(String text) {
+		return new UserMessage(UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)));
 	}
 
 	/**

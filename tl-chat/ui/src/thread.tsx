@@ -1,5 +1,5 @@
 import { React } from 'tl-react-bridge'
-import { cardsForTurn, SubagentCard, type SubagentCardModel } from './subagent-card'
+import { cardsForTurn, SubagentCard, type SendToSubagent, type SubagentCardModel } from './subagent-card'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
 import { AnswerSources, citedSources } from './sources'
@@ -1128,6 +1128,7 @@ function AgentRun({
   workingIndicator = DOTS,
   subagentCards = [],
   onLoadSubagentTranscript,
+  onSendSubagentMessage,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -1154,6 +1155,8 @@ function AgentRun({
   /** The background subagents this turn started, drawn under its steps. */
   subagentCards?: SubagentCardModel[]
   onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
+  /** Writes to a running subagent from its card; without it the cards offer no field. */
+  onSendSubagentMessage?: SendToSubagent
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -1198,7 +1201,13 @@ function AgentRun({
         // and each card shows only what its own subagent does.
         <div className="subagent-cards">
           {subagentCards.map((card) => (
-            <SubagentCard key={card.subagentId} card={card} labels={labels} onLoadTranscript={onLoadSubagentTranscript} />
+            <SubagentCard
+              key={card.subagentId}
+              card={card}
+              labels={labels}
+              onLoadTranscript={onLoadSubagentTranscript}
+              onSendMessage={onSendSubagentMessage}
+            />
           ))}
         </div>
       ) : null}
@@ -1277,6 +1286,7 @@ export const Thread = React.memo(function Thread({
   subagents,
   subagentLive,
   onLoadSubagentTranscript,
+  onSendSubagentMessage,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -1313,6 +1323,8 @@ export const Thread = React.memo(function Thread({
   /** What each running subagent has done so far, by subagent id. */
   subagentLive?: Record<string, SubagentLive>
   onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
+  /** Writes to a running subagent from its card; without it the cards offer no field. */
+  onSendSubagentMessage?: SendToSubagent
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -1427,6 +1439,7 @@ export const Thread = React.memo(function Thread({
                         : undefined
                     }
                     onLoadSubagentTranscript={onLoadSubagentTranscript}
+                    onSendSubagentMessage={onSendSubagentMessage}
                     traceMode={traceMode}
                     // Only the turn at the bottom can be the running one. Handing `busy` to every
                     // turn made each finished run above it say "Working…" again.

@@ -5018,3 +5018,88 @@
   overflow-wrap: anywhere;
   color: var(--text-secondary);
 }
+
+/*
+ * What the user wrote to the subagent from its card (#735), each message with its receipt, and the
+ * field while the subagent works - the same box as the feedback note: a bordered row, the input
+ * borderless inside it. A message is the user's own text; it wraps rather than widening the card.
+ */
+.subagent-card-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0 0 0.375rem;
+}
+
+.subagent-card-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.subagent-card-notes li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.subagent-note-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+}
+
+.subagent-note-state {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+}
+
+.subagent-card-compose {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+}
+
+.subagent-card-compose:focus-within {
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.subagent-card-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.subagent-card-input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.subagent-card-compose .prompt-continue {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.75rem;
+}
+
+.subagent-card-hint,
+.subagent-card-refusal {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+}
+
+.subagent-card-refusal {
+  color: var(--chat-danger);
+}

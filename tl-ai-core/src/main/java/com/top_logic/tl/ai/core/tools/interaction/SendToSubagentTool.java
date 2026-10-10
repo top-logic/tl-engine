@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.Map;
 
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -108,7 +109,8 @@ public class SendToSubagentTool implements Tool {
 		if (job == null) {
 			return ToolResult.of("ERROR: No such subagent: " + id + ". subagent_status lists the ones you started.");
 		}
-		if (job.status().isTerminal() || !job.inbox().post(message)) {
+		if (job.status().isTerminal()
+			|| !job.inbox().post(SubagentInbox.Message.of(SubagentInbox.Sender.LEAD, message))) {
 			return ToolResult.of("Not sent: subagent " + id + " has already ended (" + job.status()
 				+ ") and reads no more messages. Its result reaches you on its own, or through"
 				+ " wait_for_subagent.");

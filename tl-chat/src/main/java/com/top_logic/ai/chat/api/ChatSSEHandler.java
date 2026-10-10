@@ -49,6 +49,8 @@ import com.top_logic.ai.chat.api.messages.ToolDeniedEvent;
 import com.top_logic.ai.chat.api.messages.ToolFailedEvent;
 import com.top_logic.ai.chat.api.messages.ToolStartedEvent;
 import com.top_logic.ai.chat.api.messages.TransactionCommittedEvent;
+import com.top_logic.ai.chat.api.messages.SubagentMessageDto;
+import com.top_logic.ai.chat.api.messages.SubagentMessagesReadEvent;
 import com.top_logic.ai.chat.api.messages.SubagentStatusEvent;
 import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
@@ -63,6 +65,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.json.JsonEscape;
@@ -659,6 +662,14 @@ public class ChatSSEHandler implements ChatEventHandler {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind()).setErrorMessage(e.message()));
+		} else if (child instanceof AgentEvent.UserMessageDelivered e) {
+			// What the user wrote from the subagent's card has been read: the card says so.
+			innerType = "user_message_read";
+			SubagentMessagesReadEvent read = SubagentMessagesReadEvent.create();
+			for (SubagentInbox.Message message : e.messages()) {
+				read.addMessage(SubagentMessageDto.create().setId(message.id()).setText(message.text()));
+			}
+			innerData = DtoMapper.toJson(read);
 		} else if (child instanceof AgentEvent.ModelSwitched e) {
 			innerType = "model_switched";
 			innerData = DtoMapper.toJson(ModelSwitchedEvent.create()

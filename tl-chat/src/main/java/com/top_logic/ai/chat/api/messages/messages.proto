@@ -995,6 +995,52 @@ message SubagentStatusEvent {
 }
 
 /**
+ * Request body for POST /chat/subagents/{id}/message: the user writes to one running background
+ * subagent from its card.
+ */
+message SubagentMessageRequest {
+	/** The chat whose lead started the subagent; empty means the chat this window shows. */
+	string sessionId;
+
+	/** The id of the lead's tool call that started the subagent, which tells it from a namesake. */
+	string parentToolCallId;
+
+	/** What the user writes. */
+	string text;
+}
+
+/** Answer of POST /chat/subagents/{id}/message. */
+message SubagentMessageResponse {
+	/**
+	 * {@code sent} - the subagent reads it at the start of its next turn; {@code ended} - the
+	 * subagent has ended and reads no more messages; {@code unknown} - no such subagent of this
+	 * account; {@code empty} - there is no text.
+	 */
+	string status;
+
+	/** The id of the message sent; the frame that says it was read names it. */
+	string messageId;
+}
+
+/** One message the user wrote to a subagent. */
+message SubagentMessageDto {
+	/** The message's id, as the answer to the request named it. */
+	string id;
+
+	/** What the user wrote. */
+	string text;
+}
+
+/**
+ * Inner data of the {@code user_message_read} frame of a background subagent: it has read these
+ * messages of the user at the start of a turn.
+ */
+message SubagentMessagesReadEvent {
+	/** The messages read, in the order they were sent. */
+	repeated SubagentMessageDto messages;
+}
+
+/**
  * SSE event for a lead turn that starts without a message of the user, because subagents finished
  * or asked the lead something while no turn of it ran. Precedes the turn's {@code run_started}.
  */

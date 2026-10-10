@@ -40,6 +40,9 @@ let requested: string[] = []
 /** The body of every `POST /chat/cancel`, in order. */
 let cancelBodies: Record<string, unknown>[] = []
 
+/** Every `POST /chat/subagents/{id}/message`, in order: its URL and body. */
+let subagentMessages: { url: string; body: Record<string, unknown> }[] = []
+
 class FakeEventSource {
   static readonly CLOSED = 2
 
@@ -107,6 +110,7 @@ beforeEach(() => {
   sentBodies = []
   requested = []
   cancelBodies = []
+  subagentMessages = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -122,6 +126,10 @@ beforeEach(() => {
     }
     if (url.includes('/chat/capabilities')) {
       return { ok: true, status: 200, json: async () => ({ agents: [], models: [], mcpServers: [] }) }
+    }
+    if (/\/chat\/subagents\/[^/]+\/message/.test(url)) {
+      subagentMessages.push({ url, body: JSON.parse(init?.body ?? '{}') })
+      return { ok: true, status: 200, json: async () => ({ status: 'sent', messageId: 'm1' }) }
     }
     if (url.includes('/chat/cancel')) {
       cancelBodies.push(JSON.parse(init?.body ?? '{}'))
@@ -608,6 +616,36 @@ describe('the stream', () => {
     const cards = cardsForTurn([spawn, running], store.getState().subagents, {}, new Set())
     expect(cards).toHaveLength(1)
     expect(cards[0]).toMatchObject({ status: 'DONE', summary: 'X is 42.', task: 'find X', childRunId: 'run-1' })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * The user writes to a subagent from its card: the message goes to that subagent of this chat, the
+   * card shows it as sent, and as read once the subagent's frame says it read it.
+   */
+  it('sends a message to one subagent and marks it read when the subagent has read it', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+
+    expect(await store.actions.messageSubagent('sa-1', 'call-1', 'Only 2026.')).toBe('sent')
+
+    expect(subagentMessages).toHaveLength(1)
+    expect(subagentMessages[0].url).toContain('/chat/subagents/sa-1/message')
+    expect(subagentMessages[0].body).toMatchObject({ parentToolCallId: 'call-1', text: 'Only 2026.' })
+    expect(store.getState().subagentLive['sa-1'].notes).toEqual([{ id: 'm1', text: 'Only 2026.', read: false }])
+
+    stream.emit('delegation_event', {
+      subagentId: 'sa-1',
+      eventType: 'user_message_read',
+      eventData: JSON.stringify({ messages: [{ id: 'm1', text: 'Only 2026.' }] }),
+    })
+    expect(store.getState().subagentLive['sa-1'].notes).toEqual([{ id: 'm1', text: 'Only 2026.', read: true }])
 
     await settle()
     release()

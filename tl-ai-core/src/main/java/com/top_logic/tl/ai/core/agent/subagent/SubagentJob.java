@@ -120,7 +120,7 @@ public class SubagentJob {
 		_parentToolCallId = parentToolCallId == null ? "" : parentToolCallId;
 	}
 
-	/** What the agent that started this subagent sent it and it has not read yet. */
+	/** What the agent that started this subagent, or the user, sent it and it has not read yet. */
 	public SubagentInbox inbox() {
 		return _inbox;
 	}

@@ -104,13 +104,45 @@ public class TestSubagentSteering extends BasicTestCase {
 			_childRequests.get(1).contains("[Message from the lead agent]")
 				&& _childRequests.get(1).contains("Only look at the year 2026."));
 
-		Part.SystemPart recorded = leadMessagePart(job);
+		Part.SystemPart recorded = inboxPart(job, Part.SystemEventType.LEAD_MESSAGE);
 		assertTrue(recorded.details().contains("Only look at the year 2026."));
 
 		Conversation replayed = new Conversation();
 		ConversationLogReplay.rebuildMemory(job.liveLog(), replayed);
 		List<Message> messages = replayed.messages();
-		int at = indexOfLeadMessage(messages);
+		int at = indexOfMessageStartingWith(messages, "[Message from the lead agent]");
+		assertTrue("The replayed transcript holds the message: " + messages, at > 0);
+		assertTrue("After the tool result it followed: " + messages,
+			messages.get(at - 1) instanceof com.top_logic.tl.ai.core.message.ToolResultMessage);
+	}
+
+	/**
+	 * What the user writes from the card reaches the child's next request as the user's, is recorded
+	 * in its transcript as the user's, and stands at the same place when that transcript is replayed.
+	 */
+	public void testAUserMessageReachesTheChildAsTheUsers() throws Exception {
+		SubagentJob job = spawnChild();
+		assertTrue("The child must reach its tool call.", _inProbe.await(20, TimeUnit.SECONDS));
+
+		assertTrue(job.inbox().post(
+			SubagentInbox.Message.of(SubagentInbox.Sender.USER, "Nur Anmeldungen aus 2026.")));
+		_release.countDown();
+		awaitTerminal(job);
+
+		assertEquals(SubagentJobStatus.DONE, job.status());
+		assertEquals(2, _childRequests.size());
+		String second = _childRequests.get(1);
+		assertTrue("In the request after the tool call, as the user's: " + second,
+			second.contains("[Message from the user]") && second.contains("Nur Anmeldungen aus 2026."));
+		assertFalse("Not passed off as the lead's: " + second, second.contains("[Message from the lead agent]"));
+
+		Part.SystemPart recorded = inboxPart(job, Part.SystemEventType.USER_MESSAGE);
+		assertTrue(recorded.details().contains("Nur Anmeldungen aus 2026."));
+
+		Conversation replayed = new Conversation();
+		ConversationLogReplay.rebuildMemory(job.liveLog(), replayed);
+		List<Message> messages = replayed.messages();
+		int at = indexOfMessageStartingWith(messages, "[Message from the user]");
 		assertTrue("The replayed transcript holds the message: " + messages, at > 0);
 		assertTrue("After the tool result it followed: " + messages,
 			messages.get(at - 1) instanceof com.top_logic.tl.ai.core.message.ToolResultMessage);
@@ -203,12 +235,11 @@ public class TestSubagentSteering extends BasicTestCase {
 		assertTrue("The child must have ended.", job.status().isTerminal());
 	}
 
-	private static Part.SystemPart leadMessagePart(SubagentJob job) {
+	private static Part.SystemPart inboxPart(SubagentJob job, Part.SystemEventType type) {
 		List<Part.SystemPart> found = new ArrayList<>();
 		for (Turn turn : job.liveLog().turns()) {
 			for (Part part : turn.assistantParts()) {
-				if (part instanceof Part.SystemPart system
-					&& system.eventType() == Part.SystemEventType.LEAD_MESSAGE) {
+				if (part instanceof Part.SystemPart system && system.eventType() == type) {
 					found.add(system);
 				}
 			}
@@ -217,10 +248,10 @@ public class TestSubagentSteering extends BasicTestCase {
 		return found.get(0);
 	}
 
-	private static int indexOfLeadMessage(List<Message> messages) {
+	private static int indexOfMessageStartingWith(List<Message> messages, String start) {
 		for (int i = 0; i < messages.size(); i++) {
 			if (messages.get(i) instanceof UserMessage user && user.content().get(0) instanceof TextContent text
-				&& text.text().startsWith("[Message from the lead agent]")) {
+				&& text.text().startsWith(start)) {
 				return i;
 			}
 		}

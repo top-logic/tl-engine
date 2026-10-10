@@ -162,7 +162,9 @@ public class ConversationLogListener implements AgentEventListener {
 		} else if (event instanceof AgentEvent.RunCompleted e) {
 			handleRunCompleted(e);
 		} else if (event instanceof AgentEvent.LeadMessageDelivered e) {
-			recordLeadMessage(e.text());
+			recordInboxMessage(Part.SystemEventType.LEAD_MESSAGE, e.text());
+		} else if (event instanceof AgentEvent.UserMessageDelivered e) {
+			recordInboxMessage(Part.SystemEventType.USER_MESSAGE, e.text());
 		} else if (event instanceof AgentEvent.LeadWoken e) {
 			recordLeadWoken(e);
 		} else if (event instanceof AgentEvent.TurnStarted) {
@@ -690,26 +692,26 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
-	 * Records the message of a subagent's lead that the subagent read at the start of a turn.
+	 * Records a message of a subagent's lead or of the user that the subagent read at the start of a
+	 * turn.
 	 *
 	 * <p>
-	 * A {@link Part.SystemEventType#LEAD_MESSAGE} part, for the reason
-	 * {@link #recordSubagentResultsDelivered(String)} gives. Recorded from the
-	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} event rather than
+	 * A {@link Part.SystemEventType#LEAD_MESSAGE} or {@link Part.SystemEventType#USER_MESSAGE} part,
+	 * for the reason {@link #recordSubagentResultsDelivered(String)} gives. Recorded from the
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} and
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.UserMessageDelivered} events rather than
 	 * through the thread-bound listener: on a subagent's thread that one records the lead's log, and
 	 * the message belongs in the subagent's.
 	 * </p>
 	 */
-	private void recordLeadMessage(String text) {
+	private void recordInboxMessage(Part.SystemEventType type, String text) {
 		Turn turn = _log.currentTurn();
 		if (turn == null) {
 			return;
 		}
 		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
-		turn.addAssistantPart(new Part.SystemPart(
-			UUID.randomUUID().toString(), Instant.now(),
-			Part.SystemEventType.LEAD_MESSAGE, text));
+		turn.addAssistantPart(new Part.SystemPart(UUID.randomUUID().toString(), Instant.now(), type, text));
 	}
 
 	/**

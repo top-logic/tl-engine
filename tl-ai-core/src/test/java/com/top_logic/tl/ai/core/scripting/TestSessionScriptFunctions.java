@@ -185,6 +185,31 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 		assertNull("Its run went with it.", _store.findExecutionByRunId("run-in-deleted-chat"));
 	}
 
+	/**
+	 * Deleting a chat that is already gone is done, not an error.
+	 *
+	 * <p>
+	 * A second window's delete lands on the same object after the first window already deleted it:
+	 * the call wanted the chat gone, and it is gone, so the call answers {@code true} rather than
+	 * throwing over the deleted object.
+	 * </p>
+	 */
+	public void testDeletingAnAlreadyDeletedChatIsDone() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.CHAT, _anna, "Weg");
+		advance();
+		String id = idOf(session);
+		assertNotNull("The chat is there before the delete.", _store.findSessionById(id));
+
+		as(_anna, () -> assertTrue(AIScriptFunctions.sessionDelete(session)));
+		advance();
+		assertNull("The first delete takes the chat.", _store.findSessionById(id));
+		assertFalse("The wrapper is invalid after the delete, so the second call hits the early return.",
+			session.tValid());
+
+		as(_anna, () -> assertTrue("The second delete is done, not an exception.",
+			AIScriptFunctions.sessionDelete(session)));
+	}
+
 	/** Every call runs with {@code person} as the acting account, which is what the guard reads. */
 	private static void as(Person person, Runnable job) {
 		TLContext context = TLContext.getContext();

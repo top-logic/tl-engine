@@ -1,81 +1,107 @@
 # Citation contract
 
-Assistant answers cite sources with markers of the form `[n]`. The markers are **not** parsed out of
-a fence in the answer. The model records each source by calling the `cite` tool, then writes the
-number that tool returned immediately after the sentence it supports.
+An answer points at its sources **in its text, with a link**, and calls no tool for it (#617):
 
-The tool has three names and all three occur: `cite` is what the model calls and what a recorded
-tool call carries, `cite.cite` is what an agent definition and the access policy write, and
-`cite__cite` is the provider-safe registry key. The validator matches all three, because matching
-only the configured one made every declaration invisible.
+```markdown
+[Sommerfest](tl:GenericObject:11047) und [Herbstmarkt](tl:GenericObject:11048) sind geplant;
+das Fest ist [laut Programm](https://www.example.org/sommerfest "Das Sommerfest findet am 4. Juli statt.").
+```
 
-## Wire
+- `tl:<id>` points at an object of the application, by the id a tool printed for it.
+- An `http(s)` address points at a web page.
+- The link text is the part of the sentence the source supports.
+- An optional link title is the sentence of the source the statement rests on, copied verbatim.
 
-`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `kindLabel`, `id`, `label`, `url`,
-`passage`, `excerpt`) travels:
+**The system writes the reading list; the model only points.** Every tool that reads a source puts
+it on the run's reading list - kind, id or address, title. The validator keeps a link as a footnote
+only when it points at an entry of that list. A source no tool read does not count, however
+plausible its id looks. There used to be a `cite` tool, one call per source; it cost a model round
+trip per source, came after the answer text and pushed the answer into the trace. It is gone.
 
-- on `message_complete` (SSE), so the live answer can chip the markers
-- on persist `TextPartDto`, so a reload restores the same chips
+## The reading list
 
-The compact `Part.TextPart` constructor is still `(id, timestamp, text)`.
+`ReadingList` (tl-ai-core `citation/`) holds the `ReadSource`s (tl-ai-tool-api) of **one run**. It
+lives on the run's `ToolContext` and is shared by every copy of it, so the read tools of a concurrent
+batch register into the same list.
 
-## Tool and prompt
+Who registers what:
 
-`cite.cite` (`ToolMode.READ`) records `kind`, `id`, `label`, and optional `url` / `toolCallId` /
-`passage`. It returns the next 1-based marker of this conversation.
+| Source | Registered by | Kind |
+|---|---|---|
+| An object a read tool showed - `query`, `present`, a script tool, `getInstance`, `listInstances` | `ReadFilter`, where an identity is disclosed (`_tid`/`_display`, `label [id:TID]`); `getInstance` / `listInstances` / `readText` / `viewDocument` explicitly | the first declared kind whose `types` cover the object's type, else `object` |
+| A web page | `webFetch`, and the browser's full renders (`browserNavigate`, `browserSnapshot`) - through `WebSources` | `web` |
+| An application's own record | the application's tool, `ToolExecutionContext.readSource(...)` | the application's kind |
 
-`passage` is the sentence of the source the fact rests on, copied verbatim. The validator keeps it
-only when the turn's own tool results really contain it, and cuts the excerpt around it out of that
-same result - so the popover shows the source's wording in its context rather than the model's
-memory of it. A passage shorter than 12 characters is ignored. What the citation then *carries* is
-the rendered form of that sentence, because that is what the popover highlights inside the rendered
-excerpt; verification is against the verbatim text, display is of the rendered one.
+Code below a tool registers through `ReadingListBinding`, which `ToolExecutions.execute` binds around
+every call on the thread the tool runs on, next to `RunInfoBinding`.
 
-The numbering belongs to the **conversation**, and to no smaller thing.
+Not registered: a `webSearch` hit. A search result nobody opened was not read.
 
-Not to the calling thread: the tool is parallel-safe, so two cite calls of one turn run on two pool
-threads, and a per-thread counter gave both of them `1`. The counter is `CitationMarkers` on the
-run's `ToolContext`, shared by every copy of that context.
+A run keeps at most 5 000 sources (a query over ten thousand objects reads each of them). The
+transcript records the first 500 of each turn (`Turn#sources`, `TurnDto.sources`), without the read
+text, so that a later view - a research report's "also read" - can show what was read beside what
+was cited. Nothing shows it yet.
 
-Not to the run either (#495). `AgentRunner` no longer restarts it at 1 when a run begins; it
-*continues* it - `CitationMarkers.resumeFrom(log)` sets the next number above every number the
-conversation has already handed out, read from the cite calls' own recorded results. The model's
-context is the whole conversation: it reads the raw text of its earlier answers back, markers and
-all, because what the validator rewrites is the transcript and not the `Conversation` the request is
-built from. While the counter restarted, the second answer of a chat was told to write `[1]` for a
-source for which the model could see `[1]` already standing - and whichever of the two signals it
-followed, the other one said it was wrong. A marker the turn's cite calls did not claim is deleted,
-so the citation went with it, and because the drift then lived in the model's own context, no later
-answer of that chat cited anything either.
+## The run tree
 
-Continuing the numbering makes both readings the same one. The numbers a long conversation reaches
-never appear in front of a reader: the validator renumbers each answer's surviving markers to `[1]`,
-`[2]`, … in order of first appearance, which is what the message-local citation list of the UI is
-indexed by.
+A sub-agent's run has a reading list of its own. Its sources join the lead's list when its result is
+**delivered** to the lead:
 
-A delegated sub-agent gets its own counter.
+- when `delegate` returns (`DelegationTool`),
+- when `wait_for_subagent` hands the result over,
+- when the result is injected at the start of the lead's next turn (`AgentLoop.injectSubagentResults`).
 
-Albert (`TL_SingleAgent`) has the tool on its catalog and a `<cite>` fragment in the system prompt:
-cite what you read, using the id or URL the producing tool returned; this turn only; one marker per
-fact. That fragment is a product rule, not a host prompt. A host agent that should cite needs the
-same tool on its catalog (and, if it has its own prompt, the same instruction).
+A `SubagentJob` carries the child's list for that. Merging on delivery, rather than writing through
+a pointer to the parent's list, is deliberate: a detached sub-agent outlives the run that spawned it,
+and the answer that uses its result is checked against the list of the run that received it.
 
-## Kinds are declared, not invented
+## Validator
 
-`kind` is a vocabulary the application owns. The framework knows one kind, `web`; every other one is
-a host's, and a host declares it **once**, in configuration:
+`CitationValidator.apply(log, answer, readingList)` runs at the end of an `AgentRunner` run, before
+the transcript is completed. For every marker of every text of the turn, outside code spans and
+fenced blocks:
+
+1. A reference that names a source on the reading list, of a **declared kind**, becomes a footnote
+   `[n]` behind the marker's text. Footnotes are numbered per answer in the order the reader meets
+   them; a source cited twice keeps its number.
+2. A `tl:` reference that names nothing read loses its link; its text stays.
+3. An `http(s)` address that names nothing read, but that the turn's tool results or the user's
+   message contain - a search hit, a page `publishPage` returned - stays the ordinary link it was.
+   Any other address is invented and loses its link.
+4. In an answer that cites, a `[n]` the model wrote itself is written as `&#91;n&#93;`: it renders as
+   the same brackets but cannot be mistaken for a footnote. An answer that cites nothing is not
+   touched.
+
+Images, relative links and links of other schemes are not markers.
+
+## Passage and excerpt
+
+`CitationExcerpt` produces what the popover shows, from what the tool read (`ReadSource.text`) and
+the turn's tool results - never a slice of the raw transport format (#418):
+
+| What the reader gets | When |
+|---|---|
+| a window of the source around the passage, the passage highlighted | the link title is a passage of at least 12 characters that the read text really contains, and the kind has `passage="true"` |
+| the opening sentences of the page | a text source cited without a passage |
+| the object's own prose field, or its `label: value` fields | an object |
+| the source's title | nothing else is known |
+
+## Kinds are declared
+
+`kind` is a vocabulary the application owns, configured in the `CitationKinds` service. The model no
+longer names a kind; the tool that read the source decides it. The framework declares two:
 
 ```xml
 <config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
   <instance>
     <kinds>
       <kind name="invoice"
-        description="a Beleg of this application"
-        id-source="the id an invoice tool or a TL-Script read returned for that object"
+        description="an invoice of this application"
+        types="billing:Invoice"
         passage="false"
       >
         <label>
-          <de>Beleg</de>
+          <de>Rechnung</de>
           <en>Invoice</en>
         </label>
       </kind>
@@ -84,103 +110,86 @@ a host's, and a host declares it **once**, in configuration:
 </config>
 ```
 
-That one declaration feeds four places:
+- `web` - a page `webFetch` or the browser read;
+- `object` - an object of a type no other kind claims.
 
-- **the model** - `AgentLoop` appends the list to the system prompt of every run whose agent has the
-  cite tool, the same way it appends the untrusted-content rule. The tool's own description no longer
-  names any host's kind;
-- **the validator** - a citation whose kind nobody declared is dropped and logged at DEBUG, exactly
-  like an invented id. Outside an application (a unit test) nothing is refused for being undeclared;
-- **the popover** - `passage="false"` says this kind is a structured object rather than prose. The
-  model is told to pass no `passage` for it, and the excerpt is built from the tool result's own
-  fields (`label: value` lines) instead;
-- **the reader** - `name` is the model's vocabulary and stays the same English word in every
-  installation, so the `Quellen` rail and the marker popover showed a German reader `section` and
-  `material` (#417). `label` is what they show instead, resolved in the reader's language and
-  carried on `CitationDto.kindLabel`. A kind without one still shows its name, and a `web` source
-  still shows the host name of its URL.
+What a kind declaration is for:
 
-Without this, `kind` was a free string: asked to cite an invoice the model invented `model`, nothing
-could resolve it, and its popover stayed empty (#409).
+- **`types`** - the qualified names of the model types whose objects are sources of this kind (a
+  subtype counts as its type). An object is registered with the first kind that claims it.
+- **the validator** - a source whose kind nobody declared is not cited (DEBUG log). Outside an
+  application (a unit test) nothing is refused for being undeclared.
+- **`passage`** - `false` says a source of this kind is a structured object: its popover shows the
+  fields the tool read, not a window of text.
+- **`label`** - what the `Quellen` rail and the popover show a reader, in the reader's language
+  (`CitationDto.kindLabel`). A `web` source shows its host name instead.
 
-## Validator
+## Another marker syntax (application hook)
 
-`CitationValidator` runs at the end of an `AgentRunner` run, **before** the transcript is completed:
+An application whose agents cite another way registers a `CitationMarkerSyntax` in
+`<marker-syntaxes>`:
 
-1. Collect this turn's cite declarations. **No declaration means no rewrite**: the answer is passed
-   through untouched, brackets and all.
-2. Allowed set = every `id` or `url` that appears as a **whole token** in this turn's other tool
-   results - `7` is not evidenced by `700`, and `…/page/1/` is not evidenced by `…/page/12/`.
-3. Drop declarations whose `id`/`url` is missing (DEBUG: invented dropped, valid kept, renumbering,
-   none at all). Kept declarations are keyed by tool call id, so two that claim the same number are
-   both seen instead of one overwriting the other.
-4. Parse `[n]` from **every** `TextPart` of the turn, skipping inline code spans and fenced blocks.
-   Markers whose declared citation survived are renumbered in order of first appearance. **Every
-   other `[n]` outside code is deleted**, together with the space in front of it - whether a cite
-   call claimed it and lost or the model wrote it out of nowhere: in a turn that cited, `[n]` is
-   that turn's own numbering, and a citation-shaped thing that resolves to nothing is worse than no
-   marker (#401 §3.2, "no marker survives without a citation").
+```xml
+<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+  <instance>
+    <marker-syntaxes>
+      <syntax class="com.example.RecordCodeMarkers"/>
+    </marker-syntaxes>
+  </instance>
+</config>
+```
 
-   The cost is that a prose bracket in a citing turn goes with it. That is why step 1 matters: a
-   turn that cited **nothing** is not rewritten at all, so `werte[0]`, footnotes and code samples in
-   an ordinary answer are safe. Code spans and fenced blocks are safe in both cases.
-5. Rewrite the turn's `TextPart`s, attach the kept citations to the parts their markers occur in,
-   and put text plus citations on `message_complete`.
+A syntax only **finds** markers: positions, the text to keep, the references named. Whether a
+reference holds is the reading list's answer, exactly as for a link - so an application's tools
+register what they read with `context.readSource(new ReadSource(kind, code, title, ...))`, under the
+same reference its markers name. The link syntax (`LinkMarkers`) is always asked first; a marker of a
+later syntax that overlaps an earlier one is ignored. `RecordCodeMarkers` in the tests is an example
+for codes in parentheses, `(FACT-001, DEC-002)`.
 
-## The excerpt
+## Web pages are archived
 
-`CitationExcerpt` produces everything the popover shows of the source, and it never slices the raw
-tool result. A tool result is a transport format - JSON with Markdown inside it, a page converted to
-Markdown and wrapped in `<untrusted_page_content>` - and a window cut out of it by character count
-put `"body": "Die **Versand**…\n\n"` in front of a consultant (#418).
+When a page enters a reading list, `PageArchive` stores a copy: the extracted text, the title, the
+address and the fetch time, as a `tl.ai.execution:ArchivedPage` (text as a `tl.core:Binary` - the
+attribute kind the engine's blob store, Trac #29715, will take over, so the archive moves with it
+without a model change).
 
-Four cases, decided by the shape of the evidence rather than by luck:
+- **Its own transaction, on its own thread**, so a copy is never rolled back with a turn.
+- **Bounded:** `max-chars` per copy (default 200 000), `retention-days` (default 90, 0 keeps all;
+  purged once a day), `enabled`. The same page with the same text read again by the same account is
+  stored once within the life of the process.
+- **Served at `/archived-page/{handle}`** (`ArchivedPageServlet`): a login is required, then the
+  account whose run read the page or an administrator - the `/screenshot` rule, because a page
+  fetched under somebody's browsing rights can be an intranet page. Unknown and foreign handles both
+  answer 404. The text is rendered through `Converters.markdownToHtmlString` under a content security
+  policy that loads nothing.
 
-| The turn's evidence | What the popover shows |
-|---|---|
-| a passage the evidence carries | the *string value* holding it, rendered, windowed around the passage |
-| JSON, no usable passage | the cited object's own prose field when it has one and the kind is not `passage="false"`; its `label: value` fields otherwise |
-| text, no usable passage | a window of the rendered text around the cited id |
-| the id nowhere | the source's label |
+The citation carries `archiveUrl` and `archivedAt`; the popover and the source's row in the rail offer
+"Archivierte Kopie vom …" beside the live page.
 
-A window is cut on sentence boundaries, never mid-word, and marks where it was cut with `…`. JSON
-escapes are resolved and Markdown is rendered away in every case: a reader never sees `\n`, `\"`,
-`**` or `](`.
+## Wire
+
+`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `kindLabel`, `id`, `label`, `url`,
+`passage`, `excerpt`, `archiveUrl`, `archivedAt`) travels on `message_complete` (SSE) and on the
+persisted `TextPartDto`, so a reload restores the same footnotes. `toolName` and `toolCallId` are
+empty for a citation found through the reading list.
 
 ## Rendering
 
-`[n]` becomes a small grey number after the sentence (`data-citation-id`, keyboard-reachable
-`<button>`) - quiet, so it says where a fact comes from without taking the eye off the text.
-
-Hovering or focusing it opens a popover built like a row of the `Quellen` list - the kind's icon,
-the source's label, and beneath it its origin (the web host, or the kind's declared label) followed
-by *which* one it is: the path of the page, or the id of the record when that is not already the
-label. Two sections of one document and two pages of one site otherwise describe themselves
-identically.
-
-Under that comes what the source says, in the shape the source has:
-
-- **prose** - the excerpt, with the cited passage marked (`<mark class="cite-passage">`), in a quoted
-  block with a rule down its side;
-- **a record** - a kind declared `passage="false"` has fields rather than a sentence, so the
-  server's `label: value` lines are rendered as a field list (`excerptFields` in `citations.tsx`
-  reads them back) rather than as a run of grey lines with nothing to highlight in it. A citation
-  that carries a passage is prose whatever colons it contains, so nothing that *is* a sentence is
-  taken apart this way.
-
-Clicking **opens** the source:
-`messageAnnotations.render` decides what that means for a host kind, and a host that returns nothing
-for a kind leaves the web default, which opens the page. The same action is what the `Quellen` rail
-section and the per-answer `Quellen · n zitiert` pill perform.
+`[n]` becomes a small grey number after the marker's text (`data-citation-id`, keyboard-reachable
+`<button>`). Hovering or focusing it opens a popover: the kind's icon, the source's label, its
+origin (the web host, or the kind's label) and which one it is (the page's path, the record's id),
+then what the source says - an excerpt with the passage marked, or a record's fields. Clicking opens
+the source: `messageAnnotations.render` decides that for a host kind, and a host that returns
+nothing leaves the web default, which opens the page.
 
 ## The rail section, and what its badge counts
 
-The `Quellen` section lists **every** source of the conversation, a source cited three times being
-one row with three marker numbers. Its **badge** counts something else on purpose: the sources of
-the **newest answer** (`latestAnswerSources`). A badge over the list could only grow - it sat on the
-Quellen icon for the rest of the chat, could not be dismissed, and said nothing about the answer the
-reader is looking at (#495). An answer that cited nothing therefore carries no badge, and an answer
-that is still streaming carries none either: its citations arrive with the finished text.
+The `Quellen` section lists every source of the conversation, a source cited three times being one
+row with three marker numbers. Its badge counts the sources of the newest answer
+(`latestAnswerSources`), not the whole list (#495).
 
-A message's own text never carries a `<quote/>`; that element belongs to the composer's reference
-tokens (#407) and travels the other way, from the user to the model.
+## Prompt
+
+Albert's `<cite>` section says how to point: the two link shapes, the link text, link only what a
+tool of this run read, open a search result with `webFetch` first, the optional passage title, no
+source list of its own. A host agent with its own prompt that should cite needs the same section.

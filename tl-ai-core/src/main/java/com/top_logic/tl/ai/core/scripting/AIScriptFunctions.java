@@ -35,6 +35,7 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
@@ -57,7 +58,7 @@ import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
@@ -85,7 +86,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * This class provides functional-style access to chat completions from TL-Script. All functions
- * use the tl-ai-core provider abstraction via {@link LLMService}, {@link AgentFactory},
+ * use the tl-ai-core provider abstraction via {@link LLMProviderService}, {@link AgentFactory},
  * and {@link AgentLoop}.
  * </p>
  *
@@ -114,7 +115,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	};
 
 	/**
-	 * Returns a list of all available model names from the {@link LLMService}.
+	 * Returns a list of all available model names from the {@link LLMProviderService}.
 	 *
 	 * <p>
 	 * Model names can be passed to the {@link #chat(List, String, Object, Collection)} function to
@@ -124,7 +125,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return An immutable list of all configured model names.
 	 */
 	public static List<String> models() {
-		return LLMService.getInstance().getConfiguredModelNames();
+		return LLMProviderService.getInstance().getConfiguredModelNames();
 	}
 
 	/**
@@ -288,7 +289,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        </ul>
 	 * @param model
 	 *        The model name to use, or {@code null} to use the default model configured in
-	 *        {@link LLMService}.
+	 *        {@link AgentRuntimeService}.
 	 * @param responseFormat
 	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
@@ -316,8 +317,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
-		LLMService registry = LLMService.getInstance();
-		String modelName = model != null ? model : registry.getDefaultModel();
+		LLMProviderService registry = LLMProviderService.getInstance();
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		String modelName = model != null ? model : runtime == null ? null : runtime.getDefaultModel();
 
 		// Build system prompt and user messages from the input
 		String systemPrompt = null;
@@ -368,7 +370,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			// A call without tools is one exchange. A call with tools needs the turns to use them:
 			// the answer comes after the tool results, so a one-turn budget would stop the loop
 			// with the tool calls made and nothing said.
-			toolRegistry.tools().isEmpty() ? 1 : AgentParams.DEFAULT_MAX_TURNS,
+			toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
 			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
 			Map.of(),
 			toResponseFormat(responseFormat));
@@ -1065,11 +1067,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return One map per live mark, the newest first; never <code>null</code>.
 	 */
 	public static List<Map<String, Object>> modelHealth() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return List.of();
 		}
 		List<Map<String, Object>> result = new ArrayList<>();
-		for (ModelHealthMark mark : LLMService.getInstance().modelHealth().marks()) {
+		for (ModelHealthMark mark : LLMProviderService.getInstance().modelHealth().marks()) {
 			Map<String, Object> row = new LinkedHashMap<>();
 			row.put("model", mark.model());
 			row.put("cause", mark.cause().name());
@@ -1101,7 +1103,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The model to clear, or <code>null</code>/empty to clear every mark.
 	 * @return How many marks were dropped - {@code 0} when the model was not marked at all.
 	 * @throws TopLogicException
-	 *         If the acting account does not administer the application, or the LLM service is not
+	 *         If the acting account does not administer the application, or the LLM providers are not
 	 *         running.
 	 */
 	public static int modelHealthReset(String model) {
@@ -1109,10 +1111,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		if (actor == null || !actor.isAdmin()) {
 			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_NOT_ADMIN);
 		}
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_UNAVAILABLE);
 		}
-		ModelAvailability health = LLMService.getInstance().modelHealth();
+		ModelAvailability health = LLMProviderService.getInstance().modelHealth();
 		if (model == null || model.isBlank()) {
 			return health.resetAll();
 		}

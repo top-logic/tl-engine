@@ -51,8 +51,6 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
-import com.top_logic.tl.ai.core.citation.CitationKinds;
-import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
@@ -71,7 +69,7 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.MessageHistorySanitizer;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -328,9 +326,9 @@ public class AgentLoop {
 	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
 	 * appended and before the next provider request is built.</p>
 	 */
-	private void injectBetweenTurns(Conversation conversation, AgentEventListener listener, String runId,
-			int turn) {
-		injectSubagentResults(conversation);
+	private void injectBetweenTurns(Conversation conversation, ToolContext context,
+			AgentEventListener listener, String runId, int turn) {
+		injectSubagentResults(conversation, context);
 		injectLeadMessages(conversation, listener, runId, turn);
 	}
 
@@ -417,7 +415,7 @@ public class AgentLoop {
 	 * way nothing here touches what the user wrote.
 	 * </p>
 	 */
-	static void injectSubagentResults(Conversation conversation) {
+	static void injectSubagentResults(Conversation conversation, ToolContext context) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
 			return;
@@ -428,6 +426,12 @@ public class AgentLoop {
 		List<SubagentJob> asking = registry.takeUndeliveredQuestions();
 		if (finished.isEmpty() && asking.isEmpty()) {
 			return;
+		}
+		if (context != null) {
+			// The results are this run's from now on, and so is what they rest on.
+			for (SubagentJob job : finished) {
+				context.readingList().addAll(job.readingList());
+			}
 		}
 		String text = SubagentResultDelivery.deliveryText(finished, asking);
 		conversation.add(new UserMessage(
@@ -595,10 +599,10 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private String providerId() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return null;
 		}
-		return LLMService.getInstance().getProviderId(_config.model(), _activeProviderName);
+		return LLMProviderService.getInstance().getProviderId(_config.model(), _activeProviderName);
 	}
 
 	/**
@@ -657,7 +661,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation, listener, runId, turn);
+			injectBetweenTurns(conversation, context, listener, runId, turn);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -880,7 +884,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation, listener, runId, turn);
+			injectBetweenTurns(conversation, context, listener, runId, turn);
 
 			compactIfOverBudget(memory, listener, runId, turn);
 
@@ -2034,7 +2038,7 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private static long rateLimitWaitMs() {
-		LLMService service = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
+		LLMProviderService service = LLMProviderService.Module.INSTANCE.isActive() ? LLMProviderService.getInstance() : null;
 		int seconds = service != null ? service.rateLimitWaitSeconds()
 			: AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS;
 		return Math.max(0, seconds) * 1000L;
@@ -2079,7 +2083,7 @@ public class AgentLoop {
 		// one whose health state is the installation's, however it was started. Everything else in
 		// this class asks the module, because the answer there is "is this application configured",
 		// not "is there a service".
-		LLMService service = LLMService.getInstance();
+		LLMProviderService service = LLMProviderService.getInstance();
 		List<ModelTarget> chain = service == null ? List.of() : service.failoverChain(_config.model(), null);
 		return chain.isEmpty() ? List.of(new ModelTarget(_config.model(), null)) : chain;
 	}
@@ -2118,7 +2122,7 @@ public class AgentLoop {
 		if (chain.size() <= 1) {
 			return call.call();
 		}
-		ModelAvailability health = LLMService.getInstance().modelHealth();
+		ModelAvailability health = LLMProviderService.getInstance().modelHealth();
 		String turnToken = ModelAvailability.turnToken(runId, turn);
 		ProviderException pending = null;
 		while (_chainIndex < chain.size()) {
@@ -2193,7 +2197,7 @@ public class AgentLoop {
 	 */
 	private boolean activate(ModelTarget target, ToolContext context, AgentEventListener listener,
 			String runId, int turn) {
-		LLMService service = LLMService.getInstance();
+		LLMProviderService service = LLMProviderService.getInstance();
 		LLMProvider provider;
 		try {
 			provider = service.buildProvider(target.model(), target.provider());
@@ -2469,29 +2473,7 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private String systemPrompt() {
-		return withCitationKinds(UntrustedEnvelope.withStandingRule(_config.systemPrompt()));
-	}
-
-	/**
-	 * Appends what this application may cite, for a run whose agent actually has the cite tool.
-	 *
-	 * <p>
-	 * The kinds are the application's vocabulary, not the agent definition's: a host declares them
-	 * once and every agent that cites is told the same list. Without it {@code kind} is a free
-	 * string and the model invents one.
-	 * </p>
-	 */
-	private String withCitationKinds(String prompt) {
-		if (!CitationKinds.isActive() || !hasCiteTool()) {
-			return prompt;
-		}
-		String vocabulary = CitationKinds.getInstance().vocabulary();
-		return vocabulary.isEmpty() ? prompt : prompt + "\n\n---\n\n" + vocabulary;
-	}
-
-	private boolean hasCiteTool() {
-		return _registry.getTool(CitationValidator.CITE_TOOL_NAME) != null
-			|| _registry.getTool(CitationValidator.CITE_TOOL) != null;
+		return UntrustedEnvelope.withStandingRule(_config.systemPrompt());
 	}
 
 	/**

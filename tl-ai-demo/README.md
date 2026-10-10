@@ -18,7 +18,7 @@ tl_anthropic_api_key="unencrypted:$ANTHROPIC_API_KEY" mvn tl:resolve compile exe
 
 Then open <http://localhost:8080/tl-ai-demo/>. Pass `-Dtl.port=…` to use another port.
 
-The `%ANTHROPIC_API_KEY%` placeholder in the LLM service configuration resolves from the environment
+The `%ANTHROPIC_API_KEY%` placeholder in the `LLMProviderService` configuration resolves from the environment
 variable `tl_anthropic_api_key`; the `unencrypted:` prefix is what marks the value as a literal
 rather than an encrypted one.
 
@@ -121,5 +121,5 @@ has and lacks, is in `tl-chat/doc/scheduled-agent.md`.
 | `WEB-INF/model/` | The demo model `demo.events` (labels in `WEB-INF/conf/resources/model.demo.events.messages_*.properties`) and the security testbed's `pm` |
 | `WEB-INF/data/` | The demo data loaded on the first start (`events.objects.xml`) |
 | `WEB-INF/conf/` | Application configuration, including the `ClientResources` declaration that loads the chat bundle |
-| `WEB-INF/autoconf/` | Service overlays: the agent definitions, the LLM service, the MCP server - and the `Scheduler` with the disabled `AgentTask` above |
+| `WEB-INF/autoconf/` | Service overlays: the agent definitions, the LLM providers, the agent runtime (default model) and application knowledge (application name), the MCP server - and the `Scheduler` with the disabled `AgentTask` above |
 | `doc/secdemo/` | A separate security testbed with its own personas; see `doc/secdemo/testbed.md` |

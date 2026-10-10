@@ -4,8 +4,8 @@
 every later session reads, `TL_init` has Albert (`TL_SingleAgent`) write the **application
 context**: one Markdown document saying what the application is for, who works with it and on what,
 what the users' terms mean, what the calculated values mean and which rules hold. Albert saves it
-with the developer's approval into the application's source configuration, and once the LLM service
-is restarted the agents are given it in their system prompt.
+with the developer's approval into the application's source configuration, and once the agent
+application knowledge service is restarted the agents are given it in their system prompt.
 
 The skill is defined in `tl-ai-core.conf.config.xml` next to the other shipped skills. It resolves
 Gitea #667.
@@ -24,11 +24,11 @@ The application context is **development material**, not business content: a dev
 application and sets up its agents, and writing down what the application is for is part of that. So
 it lives where the rest of that work lives - in the application's source, in git, deployed with the
 application. Concretely it is a `TextPromptContributor` (#648) among the prompt contributors of
-`LLMService`, marked by its `name`:
+`AgentApplicationService` (#691), marked by its `name`:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-  <instance class="com.top_logic.tl.ai.core.provider.LLMService">
+<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+  <instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
     <prompt-contributors>
       <contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
         name="application-context"
@@ -55,7 +55,9 @@ application. Concretely it is a `TextPromptContributor` (#648) among the prompt 
   as the prompt improver, which then pay for it on every run. A developer who names agents here keeps
   them: a later save replaces the text and leaves `agents` alone.
 
-A changed text takes effect when the LLM service is restarted, like any `TextPromptContributor`.
+A changed text takes effect when `AgentApplicationService` is restarted (*Agent application
+knowledge* in the service editor), like any `TextPromptContributor`. That restart touches no other
+service.
 
 ## How the save writes the file
 
@@ -64,25 +66,29 @@ configuration: the `WEB-INF/autoconf` folder of the top level project (`Workspac
 not `tl_autoconf_dir` and not the snapshot the service editor saves. Which file
 (`ApplicationContextSource`):
 
-1. **A file that already holds the entry**: its text is replaced. Normally that is one file. A second
-   one appears when the service editor saved `LLMService` after the entry was written, because its
-   snapshot carries the entry too; both are then updated.
-2. **Otherwise the file that configures `LLMService` and is read last**: the entry is added to its
-   `<prompt-contributors>`. Files of the folder are read in the order of their names, and a file with
-   `config:override="true"` drops what the earlier ones said, so the last one is the only safe place.
-3. **Otherwise a new file, `ai-application-context.config.xml`**, that adds the entry **without**
-   `config:override`. The prompt contributors are a list without a key, and the engine appends the
-   entries of a later configuration layer to such a list, so the file adds one entry and everything
-   tl-ai and the application configured stays. Two choices in that name:
-   - It is not `com.top_logic.tl.ai.core.provider.LLMService.config.xml`, the name the service editor
-     uses. An application file of that name hides tl-ai-core's file of the same name, and with it
-     tl-ai's own settings of the service (`default-model` and the rest).
-   - It sorts before that name. If the service editor later saves `LLMService`, its snapshot - which
-     then contains the entry - replaces this file's entry instead of adding it a second time.
+1. **Every file that already holds the entry**: its text is replaced there. Normally that is one
+   file. A second one appears when the service editor saved `AgentApplicationService` after the entry
+   was written, because its snapshot carries the entry too; both are then updated.
+2. **Otherwise the file that configures `AgentApplicationService` and is read last**: the entry is
+   added to its `<prompt-contributors>`. Files of the folder are read in the order of their names, and
+   a file with `config:override="true"` drops what the earlier ones said, so the last one is the only
+   safe place.
+3. **Otherwise a new file, `ai-application-context.config.xml`**, that configures
+   `AgentApplicationService` and adds the entry **without** `config:override`. The prompt contributors
+   are a list without a key, and the engine appends the entries of a later configuration layer to
+   such a list, so the file adds one entry and everything tl-ai and the application configured stays.
+   Two choices in that name:
+   - It is not `com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml`, the name the
+     service editor uses. An application file of that name would collide with the snapshot the service
+     editor writes.
+   - It sorts before that name. If the service editor later saves `AgentApplicationService`, its
+     snapshot - which then contains the entry - replaces this file's entry instead of adding it a
+     second time.
 
 The file is edited in place: only the entry is written anew, every other character - comments,
 attribute layout, blank lines - stays as the developer left it (`XmlSpans`). The answer names the
-file and tells the developer to restart the LLM service and to commit the file.
+file and tells the developer to restart the agent application knowledge service and to commit the
+file.
 
 **Only in the development environment.** The save is offered only when the engine reports the
 development environment (`tl_operation_mode=development`) and the project's `src/main/webapp` folder
@@ -134,8 +140,10 @@ installation to every other one by hand.
      (the people who may change a service's configuration), when the text is empty or too long, or
      when it names an unknown placeholder. So nobody is asked to approve a save that cannot go
      through.
-   - **Hand-over:** "saved into `<file>`; restart the LLM service; commit the file". Where the save
-     is not offered or is refused, the user gets the final document in one code block and the reason.
+   - **Hand-over:** "saved into `<file>`; restart the agent application knowledge service; commit the
+     file". Where
+     the save is not offered or is refused, the user gets the final document in one code block and
+     the reason.
 
 The whole workflow runs in one run, with no task bookkeeping. Its 15-20 turns fit in the default
 turn limit of 60.
@@ -161,22 +169,23 @@ over. Editing by hand is editing the file.
   model, with a temporary folder as the application's source:
   - **The workflow:** Albert loads `TL_init`, reads the empty context, loads `TL_modelExploration`,
     reads a derived attribute's rule (the answer must carry the expression) and saves. The approval
-    is asked exactly once, for the save, with the saved text. The application's `LLMService` file
-    then holds one entry with the text, and a revision diff shows that the run changed none of the
-    application's data.
+    is asked exactly once, for the save, with the saved text. The application's
+    `AgentApplicationService` file then holds one entry with the text, and a revision diff shows that
+    the run changed none of the application's data.
   - **The restart:** the next run's prompt does not carry the text yet; after the configuration is
-    reloaded with the written file and `LLMService` restarted - what the service editor does - it
-    does.
+    reloaded with the written file and `AgentApplicationService` restarted - what the service editor
+    does - it does.
   - **A re-run** reads the context and replaces it: still one entry.
-  - **No file of its own:** the save creates the additive file, and after the restart the eval's own
-    providers and default model are still there.
+  - **No file of its own:** the save creates the additive file, and after the restart the rest of
+    the service's configuration is still there and the eval's agents still reach their models.
   - **Outside the development environment** the save is not among the offered tools, a call is
     answered with the reason, and nobody is asked to approve anything.
   - **A declined approval** writes nothing.
 - `TestApplicationContextSource` (tl-ai-core): the file edits, read back with the engine's
   configuration reader and its layering - the entry added with every other character unchanged, a
   second save replacing it and keeping the named agents, a new file on top of the shipped settings,
-  and the entry going into the file read last.
+  the entry going into the file read last, and a file that configures only `LLMProviderService` left
+  alone.
 
 Whether a real model follows the workflow is not something these tests can say. That takes a run
 against a real model.

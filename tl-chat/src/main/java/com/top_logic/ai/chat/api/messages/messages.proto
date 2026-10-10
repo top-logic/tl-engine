@@ -1067,7 +1067,7 @@ message CitationDto {
 	/** Tool call id of that tool, when known. */
 	string toolCallId;
 
-	/** Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary. */
+	/** Host kind, e.g. {@code web} or {@code invoice}, as the application declared it. */
 	string kind;
 
 	/**
@@ -1090,6 +1090,12 @@ message CitationDto {
 
 	/** A window of the source around {@link #passage}, for the marker's popover. */
 	string excerpt;
+
+	/** Where the copy of a web page archived when it was read can be looked at; empty without one. */
+	string archiveUrl;
+
+	/** When that copy was taken, ISO-8601; empty without one. */
+	string archivedAt;
 }
 
 /** SSE event for completed assistant message with server-rendered HTML. */

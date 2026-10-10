@@ -11,7 +11,7 @@ import java.util.Set;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.citation.CitationMarkers;
+import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.limits.TokenAllowance;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
@@ -22,6 +22,7 @@ import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
+import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolExecutor;
@@ -159,7 +160,7 @@ public class ToolContext implements ToolExecutionContext {
 
 	private final ExecutionHandle _executionHandle;
 
-	private final CitationMarkers _citationMarkers;
+	private final ReadingList _readingList;
 
 	private final String _model;
 
@@ -251,7 +252,7 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
-			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null,
+			cancellationToken, progressReporter, new ExecutionHandle(), new ReadingList(), null,
 			true, TokenAllowance.UNLIMITED);
 	}
 
@@ -259,7 +260,7 @@ public class ToolContext implements ToolExecutionContext {
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter, ExecutionHandle executionHandle,
-			CitationMarkers citationMarkers, String model, boolean attended,
+			ReadingList readingList, String model, boolean attended,
 			TokenAllowance tokenAllowance) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
@@ -270,7 +271,7 @@ public class ToolContext implements ToolExecutionContext {
 		_cancellationToken = Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
 		_progressReporter = Objects.requireNonNull(progressReporter, "Progress reporter must not be null.");
 		_executionHandle = Objects.requireNonNull(executionHandle, "Execution handle must not be null.");
-		_citationMarkers = Objects.requireNonNull(citationMarkers, "Citation markers must not be null.");
+		_readingList = Objects.requireNonNull(readingList, "Reading list must not be null.");
 		_model = model;
 		_attended = attended;
 		_tokenAllowance = Objects.requireNonNull(tokenAllowance, "Token allowance must not be null.");
@@ -420,17 +421,22 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
-	 * The {@code [n]} marker numbers this run hands out to the cite tool.
+	 * What this run read: the sources its answer may point at.
 	 *
 	 * <p>
-	 * One counter per run, shared by every copy of this context, so two cite calls dispatched in
-	 * parallel get two different markers. A
-	 * {@link #forDelegation(TransactionScope) delegation context} gets a fresh one, since a child
-	 * run writes its own answer and numbers from 1 again.
+	 * One list per run, shared by every copy of this context, so the read tools of a concurrent
+	 * batch register into the same list. A {@link #forDelegation(TransactionScope) delegation} and a
+	 * {@link #forDetachedSubagent(TransactionScope, CancellationToken) detached sub-agent} get a list
+	 * of their own; it joins this one when their result is delivered here.
 	 * </p>
 	 */
-	public CitationMarkers citationMarkers() {
-		return _citationMarkers;
+	public ReadingList readingList() {
+		return _readingList;
+	}
+
+	@Override
+	public void readSource(ReadSource source) {
+		_readingList.add(source);
 	}
 
 	/**
@@ -472,7 +478,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext unattended() {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model, false, _tokenAllowance);
+			_readingList, _model, false, _tokenAllowance);
 	}
 
 	/**
@@ -505,7 +511,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withTokenAllowance(TokenAllowance tokenAllowance) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model, _attended, tokenAllowance);
+			_readingList, _model, _attended, tokenAllowance);
 	}
 
 	/**
@@ -514,7 +520,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withModel(String model) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, model, _attended, _tokenAllowance);
+			_readingList, model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -523,7 +529,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model, _attended, _tokenAllowance);
+			_readingList, _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -532,7 +538,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
-			_citationMarkers, _model, _attended, _tokenAllowance);
+			_readingList, _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -557,7 +563,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			waitedForExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
+			waitedForExecutionHandle(), new ReadingList(), _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -614,7 +620,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
+			childExecutionHandle(), new ReadingList(), _model, _attended, _tokenAllowance);
 	}
 
 	/**

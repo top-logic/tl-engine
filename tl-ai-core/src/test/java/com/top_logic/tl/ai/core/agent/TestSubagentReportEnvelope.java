@@ -81,7 +81,7 @@ public class TestSubagentReportEnvelope extends TestCase {
 		finishedJob();
 		Conversation conversation = new Conversation();
 
-		AgentLoop.injectSubagentResults(conversation);
+		AgentLoop.injectSubagentResults(conversation, null);
 
 		List<Message> messages = conversation.messages();
 		assertEquals(1, messages.size());

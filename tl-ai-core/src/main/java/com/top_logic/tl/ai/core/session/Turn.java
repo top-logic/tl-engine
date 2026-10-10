@@ -6,11 +6,13 @@
 package com.top_logic.tl.ai.core.session;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
  * One user-assistant cycle in a conversation.
@@ -59,6 +61,18 @@ public class Turn {
 	private volatile AgentEvent.ContextComposition _contextComposition;
 
 	private volatile String _turnContext;
+
+	private volatile List<ReadSource> _sources = List.of();
+
+	/**
+	 * How many sources of a turn the transcript keeps.
+	 *
+	 * <p>
+	 * A query that showed the model thousands of objects read each of them; the transcript is read
+	 * back on every reopen and must not grow by that much. What was read first is kept.
+	 * </p>
+	 */
+	public static final int MAX_RECORDED_SOURCES = 500;
 
 	/**
 	 * Creates a new turn.
@@ -128,6 +142,36 @@ public class Turn {
 	/** Records what the host stated about this turn. */
 	public void setTurnContext(String turnContext) {
 		_turnContext = turnContext;
+	}
+
+	/**
+	 * What the run of this turn read - its reading list, including what the sub-agents whose
+	 * results it received read - whether the answer cited it or not.
+	 *
+	 * <p>
+	 * Kept with the transcript so that what an answer rested on stays readable after the run, for a
+	 * view that shows what was read as well as what was cited. Without the read text: the reading
+	 * list holds that for the run only.
+	 * </p>
+	 */
+	public List<ReadSource> sources() {
+		return _sources;
+	}
+
+	/**
+	 * Records the reading list of this turn's run, the first {@link #MAX_RECORDED_SOURCES} of it.
+	 */
+	public void setSources(List<ReadSource> sources) {
+		List<ReadSource> stripped = new ArrayList<>();
+		if (sources != null) {
+			for (ReadSource source : sources) {
+				if (stripped.size() >= MAX_RECORDED_SOURCES) {
+					break;
+				}
+				stripped.add(source.withoutText());
+			}
+		}
+		_sources = List.copyOf(stripped);
 	}
 
 	/** Immutable snapshot of the assistant's response parts. */

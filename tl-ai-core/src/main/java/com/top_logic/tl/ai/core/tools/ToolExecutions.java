@@ -8,6 +8,9 @@ package com.top_logic.tl.ai.core.tools;
 import java.util.Map;
 
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.citation.ReadingList;
+import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -38,7 +41,9 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * It also {@link RunInfoBinding binds the run} the call belongs to for the duration of the call, on
  * the thread the tool runs on - which is a worker thread for the tools of a concurrent batch - so
  * that code <em>beneath</em> a tool, which gets no {@link ToolExecutionContext}, can still learn
- * which agent run it is serving. The binding is removed when the call returns.
+ * which agent run it is serving. The binding is removed when the call returns. The run's
+ * {@link ReadingListBinding reading list} is bound the same way, so that the code which renders what
+ * a tool read - the read filter, the page renderer - can register it as a source.
  * </p>
  *
  * @see ThreadContextManager#inSystemInteraction(Class, com.top_logic.basic.util.ComputationEx2)
@@ -64,12 +69,18 @@ public final class ToolExecutions {
 	 */
 	public static ToolResult execute(Tool tool, Map<String, Object> args, ToolExecutionContext context) {
 		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
-		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run)) {
+		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run);
+				ReadingListBinding.Binding reading = ReadingListBinding.bind(readingListOf(context))) {
 			return ThreadContextManager.inSystemInteraction(tool.getClass(),
 				() -> {
 					return tool.execute(args, context);
 				});
 		}
+	}
+
+	/** The reading list the call registers what it read into, or <code>null</code> outside a run. */
+	private static ReadingList readingListOf(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext ? toolContext.readingList() : null;
 	}
 
 	/**

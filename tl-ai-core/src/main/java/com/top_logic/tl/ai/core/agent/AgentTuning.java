@@ -61,7 +61,7 @@ public final class AgentTuning {
 	 * <p>
 	 * Of the order of minutes, because what holds the model is usually another request of the same
 	 * key that is still running - on a local model one request can take well over a minute (#678).
-	 * An installation sets its own value in {@code LLMService}'s
+	 * An installation sets its own value in {@code LLMProviderService}'s
 	 * {@code <failover rate-limit-wait-seconds="..."/>}.
 	 * </p>
 	 */

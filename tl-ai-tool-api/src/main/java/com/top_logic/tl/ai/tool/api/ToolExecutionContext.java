@@ -109,6 +109,30 @@ public interface ToolExecutionContext {
 	}
 
 	/**
+	 * Puts a source this call read on the run's reading list, so that the answer may point at it.
+	 *
+	 * <p>
+	 * An answer cites by writing a link to a source into its text, and the framework keeps the link
+	 * as a footnote only when the source is on the reading list of the run - or of a sub-agent whose
+	 * result the run received. The framework registers what its own tools read: every object a read
+	 * tool shows the model, every page {@code webFetch} or the browser read. A tool of an application
+	 * that reads something of its own - a record found by its code, a document section - registers
+	 * it here, with the kind the application declared for it and the reference its answer will write.
+	 * </p>
+	 *
+	 * <p>
+	 * The default does nothing: a context outside an agent run has no reading list, and a tool must
+	 * not fail for registering what it read.
+	 * </p>
+	 *
+	 * @param source
+	 *        What was read. Must not be <code>null</code>.
+	 */
+	default void readSource(ReadSource source) {
+		// Outside an agent run there is nothing to cite.
+	}
+
+	/**
 	 * Lets this call read what other threads committed since its turn began - the helpers it started
 	 * and waited for, most of all.
 	 *

@@ -747,11 +747,26 @@ export function SourcePopover({
           <Excerpt excerpt={citation.excerpt} passage={passage} />
         </p>
       ) : null}
-      {canOpen ? (
-        // The label carries its own arrow ("Quelle öffnen →"); nothing is added to it here.
-        <button type="button" className="cite-popover-open" onClick={onOpen}>
-          {labels.openSource}
-        </button>
+      {canOpen || citation.archiveUrl ? (
+        <div className="cite-popover-actions">
+          {canOpen ? (
+            // The label carries its own arrow ("Quelle öffnen →"); nothing is added to it here.
+            <button type="button" className="cite-popover-open" onClick={onOpen}>
+              {labels.openSource}
+            </button>
+          ) : null}
+          {citation.archiveUrl ? (
+            // What the page said when the agent read it - the live page may have changed since.
+            <a
+              className="cite-popover-archive"
+              href={citation.archiveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {labels.archivedCopy(citation.archivedAt ?? '')}
+            </a>
+          ) : null}
+        </div>
       ) : null}
     </div>
   )

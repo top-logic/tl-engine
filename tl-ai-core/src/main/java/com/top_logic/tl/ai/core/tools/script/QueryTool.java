@@ -146,6 +146,8 @@ public class QueryTool {
 			if (type == null) {
 				return ReadFilter.labelled(object);
 			}
+			// Rendered here rather than by ReadFilter.labelled, so it is put on the reading list here.
+			ReadFilter.shown(object);
 			return ReadFilter.withId(MetaLabelProvider.INSTANCE.getLabel(object)
 				+ " [type:" + TLModelUtil.qualifiedName(type) + "]", ReadFilter.idOf(object));
 		}

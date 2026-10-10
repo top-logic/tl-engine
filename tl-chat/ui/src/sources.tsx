@@ -191,6 +191,11 @@ export function SourceRow({
           <span className="source-origin">{source.origin}</span>
         </span>
       </button>
+      {source.citation.archiveUrl ? (
+        <a className="source-archive" href={source.citation.archiveUrl} target="_blank" rel="noopener noreferrer">
+          {labels.archivedCopy(source.citation.archivedAt ?? '')}
+        </a>
+      ) : null}
       {onGoTo ? (
         <div className="source-markers">
           {source.markers.map((marker, index) => (

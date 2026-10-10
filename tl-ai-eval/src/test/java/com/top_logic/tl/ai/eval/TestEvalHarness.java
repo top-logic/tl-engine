@@ -16,10 +16,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -60,9 +63,9 @@ public class TestEvalHarness extends BasicTestCase {
 		assertNotNull("The pm model must be declared for any scenario to mean anything.",
 			ModelService.getInstance().getModel().getModule("pm"));
 		assertNotNull("The scripted model must be in the catalogue.",
-			LLMService.getInstance().getModel("eval-scripted"));
+			LLMProviderService.getInstance().getModel("eval-scripted"));
 		assertFalse("The no-tools model must say it cannot call tools.",
-			LLMService.getInstance().getModel("eval-no-tools").capabilities().toolCall());
+			LLMProviderService.getInstance().getModel("eval-no-tools").capabilities().toolCall());
 		assertNotNull("The scripted arm's agent must exist.",
 			TopLogicAgentDefinitions.getInstance().getConfig().getAgents().get("Eval_Scripted"));
 	}
@@ -300,6 +303,9 @@ public class TestEvalHarness extends BasicTestCase {
 				// Every run asks it whether the account may use the tool; there is no unchecked mode
 				// to fall back to, so the eval has to boot the same gate a chat request passes.
 				AiToolAccessService.Module.INSTANCE,
-				LLMService.Module.INSTANCE));
+				LLMProviderService.Module.INSTANCE,
+				AgentRuntimeService.Module.INSTANCE,
+				AgentApplicationService.Module.INSTANCE,
+				AgentPolicyService.Module.INSTANCE));
 	}
 }

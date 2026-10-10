@@ -7,10 +7,10 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import java.util.List;
 
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 
 /**
- * Reads the {@code <object-ids>} section of the {@link LLMService} configuration.
+ * Reads the {@code <object-ids>} section of the {@link AgentApplicationService} configuration.
  *
  * <p>
  * Every accessor answers without the service, the way
@@ -41,7 +41,7 @@ public class ObjectIdSettings {
 	 *
 	 * <p>
 	 * <b>A test seam.</b> Which codes an installation speaks is a property of the
-	 * {@link LLMService} configuration, and a unit test about the hook would otherwise have to boot
+	 * {@link AgentApplicationService} configuration, and a unit test about the hook would otherwise have to boot
 	 * that service. Nothing in production calls this - the administrator's switch is the
 	 * {@code <object-ids>} section, and there is no second way to set it.
 	 * </p>
@@ -77,10 +77,10 @@ public class ObjectIdSettings {
 		if (overridden != null) {
 			return overridden.getHints();
 		}
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!AgentApplicationService.Module.INSTANCE.isActive()) {
 			return List.of();
 		}
-		ObjectIdConfig configured = LLMService.getInstance().getObjectIdConfig();
+		ObjectIdConfig configured = AgentApplicationService.getInstance().getObjectIds();
 		return configured == null ? List.of() : configured.getHints();
 	}
 }

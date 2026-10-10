@@ -135,6 +135,18 @@ public class TestCitationExcerpt extends TestCase {
 			excerpt.contains("statt mitten im Wort. …"));
 	}
 
+	/**
+	 * A record that only a text result named - a query's {@code label [type:...] [id:...]} lines -
+	 * has no fields to show, and a window of those lines is the transport, not the record.
+	 */
+	public void testARecordNamedOnlyInTextShowsNothingRatherThanTheTransport() {
+		String result = "<untrusted_model_data source=\"query\">\n"
+			+ "KI im Mittelstand [type:demo.events:Event] [id:GenericObject:2808]\n"
+			+ "Teamworkshop [type:demo.events:Event] [id:GenericObject:2977]\n</untrusted_model_data>";
+
+		assertEquals("", CitationExcerpt.ofSource("GenericObject:2808", "KI im Mittelstand", true, List.of(result)));
+	}
+
 	/** Found nowhere, the popover still names the source rather than staying blank. */
 	public void testUnknownIdFallsBackToTheLabel() {
 		String excerpt = CitationExcerpt.ofSource("INV-99", "Der **Beleg**", false,

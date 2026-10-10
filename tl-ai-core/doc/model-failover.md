@@ -51,13 +51,14 @@ running at once cannot both take it and the turn whose call just failed cannot t
 
 ### Why this is not a `ManagedClass`
 
-It is a component of `LLMService`, reached through `LLMService.modelHealth()`. The state is keyed by
-exactly the model names that service routes and is configured in the same `<failover>` section, so a
-service of its own would add a module to the startup graph and a second place that has to agree
+It is a component of `LLMProviderService`, reached through `LLMProviderService.modelHealth()`. The
+state is keyed by exactly the model names that service routes and is configured in the same
+`<failover>` section, so a service of its own would add a module to the startup graph and a second place that has to agree
 about model names. As a plain object it also takes its `Clock` from its caller, which is what lets
 `TestModelAvailability` assert every lifetime instead of waiting one out.
 
-Restarting `LLMService` replaces the instance, so it is also the blunt way to clear every mark.
+Restarting `LLMProviderService` replaces the instance, so it is also the blunt way to clear every
+mark.
 
 ## The chain
 
@@ -103,7 +104,7 @@ What is rebuilt for the target, and what is not:
 
 | | |
 |---|---|
-| the provider instance | `LLMService.buildProvider(model, provider)` |
+| the provider instance | `LLMProviderService.buildProvider(model, provider)` |
 | `maxOutputTokens`, `contextWindowTokens` | the **lower** of what the run asked for and what the target allows |
 | the sampling options | `ModelOptions.forTarget` - `thinking_effort` does not reach an OpenAI model, `reasoning_effort` does not reach an Anthropic one, and a model that takes no temperature is sent none |
 | the tool schemas, the response format | nothing. They are provider-neutral; the target's own request builder renders them in its dialect, which is what makes a chain across vendors work |
@@ -148,4 +149,4 @@ nothing.
 |---|---|
 | `TestModelAvailability` | every lifetime against an injected clock, the cause ranking, the one attempt per turn, the two kinds that mark nothing, reset |
 | `TestModelOptions` | that the sampling options are rebuilt for the target and not carried across |
-| `TestModelFailover` | a real `LLMService` on scripted providers with a real `AgentLoop` on top: the switch, the request built for the target, the switch lasting the run, the skipped models and their reasons, the exhausted chain, the request fault that does **not** fail over, the sticky mark routing the next run past, and - the one that matters most - that a configuration without a chain behaves exactly as before |
+| `TestModelFailover` | a real `LLMProviderService` on scripted providers with a real `AgentLoop` on top: the switch, the request built for the target, the switch lasting the run, the skipped models and their reasons, the exhausted chain, the request fault that does **not** fail over, the sticky mark routing the next run past, and - the one that matters most - that a configuration without a chain behaves exactly as before |

@@ -20,7 +20,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  */
 public class TestTokenAllowance extends TestCase {
 
-	/** Reading the configuration asks {@code LLMService} whether it runs, which needs the modules. */
+	/** Reading the configuration asks {@code AgentRuntimeService} whether it runs, which needs the modules. */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(new TestSuite(TestTokenAllowance.class));
 	}

@@ -252,9 +252,11 @@ public class WebFetchTool {
 				String body = new String(bytes, charsetOf(contentType));
 
 				String text;
+				String title = "";
 				if (contentType.contains("html") || contentType.contains("xml")
 						|| (contentType.isEmpty() && looksLikeHtml(body))) {
 					text = htmlToMarkdown(body, currentUrl);
+					title = Jsoup.parse(body).title();
 				} else if (contentType.startsWith("text/") || contentType.contains("json")
 						|| contentType.isEmpty()) {
 					text = body;
@@ -263,7 +265,9 @@ public class WebFetchTool {
 						+ "), but it is not a text or HTML document; cannot extract text.";
 				}
 
-				return renderContent(currentUrl, text.strip(), maxChars);
+				String content = text.strip();
+				WebSources.read(url.trim(), currentUrl, title, content);
+				return renderContent(currentUrl, content, maxChars);
 			}
 			return "Error: too many redirects (more than " + MAX_REDIRECTS + ") starting from " + url;
 		} catch (InterruptedException ex) {

@@ -5,642 +5,217 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
-import java.time.Clock;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Container;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.EntryTag;
-import com.top_logic.basic.config.annotation.Hidden;
-import com.top_logic.basic.config.annotation.Step;
-import com.top_logic.basic.config.container.ConfigPart;
-import com.top_logic.basic.config.constraint.annotation.Bound;
-import com.top_logic.basic.config.constraint.annotation.Comparision;
-import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.annotation.Key;
-import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.ReadOnly;
-import com.top_logic.basic.config.annotation.Ref;
-import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
-import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.func.Function0;
-import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.agent.AgentTuning;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
-import com.top_logic.tl.ai.core.limits.RunLimitSettings;
+import com.top_logic.tl.ai.core.limits.BudgetConfig;
+import com.top_logic.tl.ai.core.limits.CapacityConfig;
 import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
-import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
-import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
-import com.top_logic.tl.ai.core.security.SecurityContextFactory;
-import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
-import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
-import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
-import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
-import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.tl.ai.core.security.SecurityContextFactory;
 import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
-import com.top_logic.tl.ai.core.tools.model.ObjectIdSettings;
 
 /**
- * Central service for LLM provider management, model resolution, and agent execution
- * configuration.
+ * The service tl-ai had before its configuration was split by audience (Gitea #691); it does not run
+ * any more.
  *
  * <p>
- * The service configuration is organized into three sections:
+ * What it held is now configured on four services: {@link LLMProviderService} (the providers, the
+ * model catalog, failover), {@link AgentRuntimeService} (which agent runs on which model and how many
+ * runs at once), {@link AgentApplicationService} (what an agent is told about the application) and
+ * {@link AgentPolicyService} (what a run may cost and what an agent may keep about a person).
  * </p>
- * <ol>
- * <li><b>Providers</b> — connection details for each LLM provider (API keys, base URLs, model
- * allowlists). Each provider entry defines how to reach a specific LLM API endpoint and which
- * models are enabled.</li>
- * <li><b>Agent Execution</b> — configures the chat entry-point agent, the default model used by
- * all agents, and optional per-agent overrides for model selection and execution parameters
- * (temperature, max tokens, timeouts, reasoning effort, etc.).</li>
- * <li><b>Model Catalog</b> — read-only metadata describing each model's capabilities (tool
- * calling, reasoning, temperature support) and limits (context window, max output tokens).
- * Populated automatically from the <a href="https://models.dev">models.dev</a> remote catalog on
- * startup, with optional manual overrides for local or unlisted models.</li>
- * </ol>
  *
- * @see LLMProviderConfig
- * @see AgentFactory
+ * <p>
+ * The class stays only so that an application's configuration of the old service can be read and
+ * refused with a sentence that says where each of its sections now belongs: without it the engine
+ * would fail the boot with "class not found" and name no new place, and it knows no alias for a
+ * renamed service. {@link LLMProviderService} asks for that refusal at its start. It is not a module
+ * and is never started; remove it with the next major release.
+ * </p>
+ *
+ * @see #refuseOldConfiguration(InstantiationContext)
  */
 public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
-	/**
-	 * Per-agent override for model selection and execution parameters.
-	 *
-	 * <p>
-	 * Each entry overrides the {@link AgentExecutionConfig#getDefaultModel() default model} for a
-	 * specific agent and optionally configures execution parameters (max turns, timeouts, tool
-	 * choice) and model-specific settings (temperature, reasoning effort). Parameters left
-	 * {@code null} inherit defaults from the model catalog or system defaults.
-	 * </p>
-	 */
-	@DisplayOrder({
-		NamedConfigMandatory.NAME_ATTRIBUTE,
-		AgentOverride.MODEL,
-		AgentOverride.PROVIDER,
-		AgentOverride.CONTEXT_WINDOW,
-		AgentOverride.MAX_TOKENS,
-		AgentOverride.MAX_TURNS,
-		AgentOverride.MAX_TOOL_RESULT_CHARS,
-		AgentOverride.TOOL_CHOICE,
-		AgentOverride.TIMEOUT_SECONDS,
-		AgentOverride.MAX_RETRIES,
-		AgentOverride.TEMPERATURE,
-		AgentOverride.TOP_P,
-		AgentOverride.THINKING_EFFORT,
-		AgentOverride.TOP_K,
-		AgentOverride.REASONING_EFFORT,
-		AgentOverride.REASONING_SUMMARY,
-	})
-	public interface AgentOverride extends NamedConfigMandatory, ConfigPart {
-		/** @see #getModel() */
-		String MODEL = "model";
-
-		/** @see #getProvider() */
-		String PROVIDER = "provider";
-
-		/** @see #getMaxTokens() */
-		String MAX_TOKENS = "max-tokens";
-
-		/** @see #getContextWindow() */
-		String CONTEXT_WINDOW = "context-window";
-
-		/** @see #getMaxTurns() */
-		String MAX_TURNS = "max-turns";
-
-		/** @see #getTemperature() */
-		String TEMPERATURE = "temperature";
-
-		/** @see #getTopP() */
-		String TOP_P = "top-p";
-
-		/** @see #getThinkingEffort() */
-		String THINKING_EFFORT = "thinking-effort";
-
-		/** @see #getTopK() */
-		String TOP_K = "top-k";
-
-		/** @see #getReasoningEffort() */
-		String REASONING_EFFORT = "reasoning-effort";
-
-		/** @see #getReasoningSummary() */
-		String REASONING_SUMMARY = "reasoning-summary";
-
-		/** @see #getToolChoice() */
-		String TOOL_CHOICE = "tool-choice";
-
-		/** @see #getTimeoutSeconds() */
-		String TIMEOUT_SECONDS = "timeout-seconds";
-
-		/** @see #getMaxRetries() */
-		String MAX_RETRIES = "max-retries";
-
-		/** @see #getMaxToolResultChars() */
-		String MAX_TOOL_RESULT_CHARS = "max-tool-result-chars";
-
-		@Override
-		@Options(fun = AllAgentNameOptions.class)
-		String getName();
-
-		/**
-		 * The model to use for this agent.
-		 *
-		 * @see #MODEL
-		 */
-		@Name(MODEL)
-		@Options(fun = ServiceModelOptions.class)
-		@Constraint(value = ModelToolCallConstraint.class, args = @Ref(NAME_ATTRIBUTE))
-		String getModel();
-
-		/**
-		 * The provider serving this agent's model, or empty when only one provider exposes it.
-		 *
-		 * <p>
-		 * Name a provider when two provider entries expose the same model - separate accounts, or
-		 * an official endpoint next to a gateway. Left empty for a model exposed twice, the
-		 * service refuses to start. An agent inheriting the default model inherits the default
-		 * provider.
-		 * </p>
-		 *
-		 * @see #PROVIDER
-		 */
-		@Name(PROVIDER)
-		@Nullable
-		@Options(fun = ServiceProviderOptions.class)
-		@Constraint(value = ProviderExposesModelConstraint.class, args = @Ref(MODEL))
-		String getProvider();
-
-		/**
-		 * Maximum output tokens per LLM call, or {@code null} for catalog default.
-		 *
-		 * @see #MAX_TOKENS
-		 */
-		@Name(MAX_TOKENS)
-		@Nullable
-		Integer getMaxTokens();
-
-		/**
-		 * Context window size override, or {@code null} for catalog default.
-		 *
-		 * @see #CONTEXT_WINDOW
-		 */
-		@Name(CONTEXT_WINDOW)
-		@Nullable
-		Integer getContextWindow();
-
-		/**
-		 * Maximum agent loop turns, or {@code null} for default.
-		 *
-		 * @see #MAX_TURNS
-		 */
-		@Name(MAX_TURNS)
-		@Nullable
-		Integer getMaxTurns();
-
-		/**
-		 * Sampling temperature, or {@code null} for default.
-		 *
-		 * @see #TEMPERATURE
-		 */
-		@Name(TEMPERATURE)
-		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.TemperatureFieldMode.class, args = @Ref(MODEL))
-		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = 0.0)
-		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = 1.0)
-		Double getTemperature();
-
-		/**
-		 * Top-p sampling parameter, or {@code null} for default.
-		 *
-		 * @see #TOP_P
-		 */
-		@Label("Top-P")
-		@Name(TOP_P)
-		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.TemperatureFieldMode.class, args = @Ref(MODEL))
-		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = 0.0)
-		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = 1.0)
-		Double getTopP();
-
-		/**
-		 * Anthropic thinking effort (low/medium/high/max), or {@code null}.
-		 *
-		 * @see #THINKING_EFFORT
-		 */
-		@Name(THINKING_EFFORT)
-		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
-		String getThinkingEffort();
-
-		/**
-		 * Anthropic top-k parameter, or {@code null}.
-		 *
-		 * @see #TOP_K
-		 */
-		@Label("Top-K")
-		@Name(TOP_K)
-		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
-		Integer getTopK();
-
-		/**
-		 * <code>OpenAI</code>/<code>xAI</code> reasoning effort (low/medium/high), or {@code null}.
-		 *
-		 * @see #REASONING_EFFORT
-		 */
-		@Name(REASONING_EFFORT)
-		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
-		String getReasoningEffort();
-
-		/**
-		 * <code>OpenAI</code>/<code>xAI</code> reasoning summary (auto/detailed), or {@code null}.
-		 *
-		 * @see #REASONING_SUMMARY
-		 */
-		@Name(REASONING_SUMMARY)
-		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
-		String getReasoningSummary();
-
-		/**
-		 * Tool choice (AUTO/REQUIRED/NONE), or {@code null} for provider default.
-		 *
-		 * @see #TOOL_CHOICE
-		 */
-		@Name(TOOL_CHOICE)
-		@Nullable
-		String getToolChoice();
-
-		/**
-		 * Request timeout in seconds, or {@code null} for default.
-		 *
-		 * @see #TIMEOUT_SECONDS
-		 */
-		@Name(TIMEOUT_SECONDS)
-		@Nullable
-		Integer getTimeoutSeconds();
-
-		/**
-		 * How often a rate-limited or overloaded model is asked again before the run fails or
-		 * moves on to its fallback model, or {@code null} for default. {@code 0} switches retrying
-		 * off.
-		 *
-		 * <p>
-		 * A rate-limited run with no fallback model left keeps asking for as long as the
-		 * rate-limit wait of the agent execution section allows.
-		 * </p>
-		 *
-		 * @see #MAX_RETRIES
-		 */
-		@Name(MAX_RETRIES)
-		@Nullable
-		Integer getMaxRetries();
-
-		/**
-		 * Maximum characters per tool result, or {@code null} for default.
-		 *
-		 * @see #MAX_TOOL_RESULT_CHARS
-		 */
-		@Name(MAX_TOOL_RESULT_CHARS)
-		@Nullable
-		Integer getMaxToolResultChars();
-	}
+	/** The migration page every refusal points to. */
+	public static final String MIGRATION_PAGE = "tl-ai-core/doc/llm-service-migration.md";
 
 	/**
-	 * Provides all available agent names for selection in the admin UI.
+	 * The old agent execution section.
 	 */
-	public static class AllAgentNameOptions extends Function0<List<String>> {
-		@Override
-		public List<String> apply() {
-			if (!TopLogicAgentDefinitions.Module.INSTANCE.isActive()) {
-				return List.of();
-			}
-			List<String> names = new ArrayList<>();
-			for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents()) {
-				names.add(ad.name());
-			}
-			return names;
-		}
-	}
-
-	/**
-	 * Provides all configured model names for selection in the admin UI.
-	 *
-	 * <p>
-	 * Derives the options from the {@link Config#getProviders() provider section} of the
-	 * configuration currently being edited, so a model added to a provider becomes selectable
-	 * immediately — without saving and restarting the service first.
-	 * </p>
-	 */
-	public static class ConfiguredModelOptions
-			extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
-		@Override
-		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
-			return modelNamesOf(providers);
-		}
-	}
-
-	/**
-	 * Provides model names from the running {@link LLMService} instance.
-	 *
-	 * <p>
-	 * Unlike {@link ConfiguredModelOptions}, this does not require a {@link Container @Container}
-	 * chain to resolve the provider map. This makes it suitable for contexts where the container
-	 * reference is not yet set, such as during creation of a new {@link AgentOverride} entry in a
-	 * keyed map.
-	 * </p>
-	 */
-	public static class ServiceModelOptions extends Function0<List<String>> {
-		@Override
-		public List<String> apply() {
-			if (!LLMService.Module.INSTANCE.isActive()) {
-				return List.of();
-			}
-			return LLMService.getInstance().getConfiguredModelNames();
-		}
-	}
-
-	/**
-	 * Provides all configured provider names for selection in the admin UI.
-	 *
-	 * <p>
-	 * Derives the options from the {@link Config#getProviders() provider section} of the
-	 * configuration currently being edited, so a newly added provider becomes selectable without
-	 * saving and restarting the service first.
-	 * </p>
-	 */
-	public static class ConfiguredProviderOptions
-			extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
-		@Override
-		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
-			if (providers == null) {
-				return List.of();
-			}
-			return List.copyOf(providers.keySet());
-		}
-	}
-
-	/**
-	 * Provides provider names from the running {@link LLMService} instance.
-	 *
-	 * <p>
-	 * The {@link Container @Container}-free counterpart of {@link ConfiguredProviderOptions}, for
-	 * contexts where the container reference is not yet set - such as creating a new
-	 * {@link AgentOverride} entry in a keyed map.
-	 * </p>
-	 */
-	public static class ServiceProviderOptions extends Function0<List<String>> {
-		@Override
-		public List<String> apply() {
-			if (!LLMService.Module.INSTANCE.isActive()) {
-				return List.of();
-			}
-			return LLMService.getInstance().getConfiguredProviderNames();
-		}
-	}
-
-	/**
-	 * Agent execution configuration: chat entry point, default model, and per-agent overrides.
-	 *
-	 * <p>
-	 * Agent definitions (identity, system prompt, tools, delegations) are managed by
-	 * {@link TopLogicAgentDefinitions} and the knowledge base. This section controls the operational
-	 * side: which agent serves as the chat entry point, which model to use by default, and
-	 * per-agent overrides for model selection and execution parameters.
-	 * </p>
-	 */
-	@DisplayOrder({
-		AgentExecutionConfig.CHAT_ENTRY_POINT,
-		AgentExecutionConfig.DEFAULT_MODEL,
-		AgentExecutionConfig.DEFAULT_PROVIDER,
-		AgentExecutionConfig.AGENT_OVERRIDES,
-	})
 	public interface AgentExecutionConfig extends ConfigPart {
 
-		/** Configuration property name for {@link #getChatEntryPoint()}. */
+		/** @see #getChatEntryPoint() */
 		String CHAT_ENTRY_POINT = "chat-entry-point";
 
-		/** Configuration property name for {@link #getDefaultModel()}. */
+		/** @see #getDefaultModel() */
 		String DEFAULT_MODEL = "default-model";
 
-		/** Configuration property name for {@link #getDefaultProvider()}. */
+		/** @see #getDefaultProvider() */
 		String DEFAULT_PROVIDER = "default-provider";
 
-		/** Configuration property name for {@link #getAgentOverrides()}. */
+		/** @see #getAgentOverrides() */
 		String AGENT_OVERRIDES = "agent-overrides";
 
-		/** @see #getOwner() */
-		String OWNER = "owner";
-
 		/**
-		 * The enclosing service {@link Config}, used to resolve configured models from its
-		 * {@link Config#getProviders() provider section} within the same edit form.
-		 *
-		 * @see #OWNER
-		 */
-		@Name(OWNER)
-		@Hidden
-		@Container
-		Config<?> getOwner();
-
-		/**
-		 * The agent that serves as the main entry point when a user opens a new chat session.
-		 *
-		 * <p>
-		 * This agent receives the initial user message and orchestrates the conversation. It may
-		 * delegate to other agents via its delegations list.
-		 * </p>
+		 * Now {@link AgentRuntimeService.Config#getChatEntryPoint()}.
 		 *
 		 * @see #CHAT_ENTRY_POINT
 		 */
 		@Name(CHAT_ENTRY_POINT)
-		@StringDefault("TL_SingleAgent")
-		@Options(fun = AllAgentNameOptions.class)
+		@Nullable
 		String getChatEntryPoint();
 
 		/**
-		 * The fallback model used by agents that have no explicit override in
-		 * {@link #getAgentOverrides()}.
-		 *
-		 * <p>
-		 * To assign a specific model (and optional tuning parameters) to an individual agent, add
-		 * an entry to the {@link #getAgentOverrides() agent overrides} map instead.
-		 * </p>
+		 * Now {@link AgentRuntimeService.Config#getDefaultModel()}.
 		 *
 		 * @see #DEFAULT_MODEL
 		 */
 		@Name(DEFAULT_MODEL)
-		@Mandatory
-		@Options(fun = ConfiguredModelOptions.class, args = @Ref(steps = {
-			@Step(OWNER),
-			@Step(Config.PROVIDERS),
-		}))
+		@Nullable
 		String getDefaultModel();
 
 		/**
-		 * The provider serving the default model, or empty when only one provider exposes it.
-		 *
-		 * <p>
-		 * Applies to every agent that has no provider of its own. Left empty for a default model
-		 * exposed by two providers, the service refuses to start rather than pick one by
-		 * configuration order.
-		 * </p>
+		 * Now {@link AgentRuntimeService.Config#getDefaultProvider()}.
 		 *
 		 * @see #DEFAULT_PROVIDER
 		 */
 		@Name(DEFAULT_PROVIDER)
 		@Nullable
-		@Options(fun = ConfiguredProviderOptions.class, args = @Ref(steps = {
-			@Step(OWNER),
-			@Step(Config.PROVIDERS),
-		}))
-		@Constraint(value = ProviderExposesModelConstraint.class, args = @Ref(DEFAULT_MODEL))
 		String getDefaultProvider();
 
 		/**
-		 * Per-agent overrides. Agents not listed here use the {@link #getDefaultModel()
-		 * default model}. Applies to all agents regardless of source (config-defined or KB).
+		 * Now {@link AgentRuntimeService.Config#getAgentOverrides()}.
 		 *
 		 * @see #AGENT_OVERRIDES
 		 */
 		@Name(AGENT_OVERRIDES)
 		@EntryTag("agent")
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
-		Map<String, AgentOverride> getAgentOverrides();
+		Map<String, AgentRuntimeService.AgentOverride> getAgentOverrides();
 	}
 
 	/**
-	 * Configuration interface for {@link LLMService}.
-	 *
-	 * <p>
-	 * Organized into three sections: provider connections, agent execution (chat entry point,
-	 * default model, per-agent overrides), and model catalog (read-only model metadata).
-	 * </p>
+	 * The old environment section.
 	 */
-	@DisplayOrder({
-		Config.PROVIDERS,
-		Config.AGENT_EXECUTION,
-		Config.ENVIRONMENT,
-		Config.USER_MEMORY,
-		Config.RUN_LIMITS,
-		Config.OBJECT_IDS,
-		Config.SECURITY_CONTEXT,
-		Config.PROMPT_CONTRIBUTORS,
-		Config.FAILOVER,
-		Config.MODEL_CATALOG,
-	})
+	public interface EnvironmentSection extends ConfigPart {
+
+		/** @see #getTemplate() */
+		String TEMPLATE = "template";
+
+		/** @see #getApplication() */
+		String APPLICATION = "application";
+
+		/** @see #getUserPreferences() */
+		String USER_PREFERENCES = "user-preferences";
+
+		/** @see #getMaxPreferencesLength() */
+		String MAX_PREFERENCES_LENGTH = "max-preferences-length";
+
+		/**
+		 * Now the template of {@link AgentApplicationService.Config#getEnvironment()}.
+		 *
+		 * @see #TEMPLATE
+		 */
+		@Name(TEMPLATE)
+		@Nullable
+		ResKey getTemplate();
+
+		/**
+		 * Now the application name of {@link AgentApplicationService.Config#getEnvironment()}.
+		 *
+		 * @see #APPLICATION
+		 */
+		@Name(APPLICATION)
+		@Nullable
+		ResKey getApplication();
+
+		/**
+		 * Now {@link AgentPolicyService.Config#getUserPreferences()}.
+		 *
+		 * @see #USER_PREFERENCES
+		 */
+		@Name(USER_PREFERENCES)
+		@BooleanDefault(true)
+		boolean getUserPreferences();
+
+		/**
+		 * Now {@link AgentPolicyService.Config#getMaxPreferencesLength()}.
+		 *
+		 * @see #MAX_PREFERENCES_LENGTH
+		 */
+		@Name(MAX_PREFERENCES_LENGTH)
+		@IntDefault(1000)
+		int getMaxPreferencesLength();
+	}
+
+	/**
+	 * Every section the old service had, so that an old file can still be read - and refused.
+	 */
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
 
-		// --- Provider configuration ---
-
-		/**
-		 * Configuration property name for providers.
-		 *
-		 * @see #getProviders()
-		 */
+		/** @see #getProviders() */
 		String PROVIDERS = "providers";
 
-		/**
-		 * Configuration property name for agent execution.
-		 *
-		 * @see #getAgentExecution()
-		 */
+		/** @see #getAgentExecution() */
 		String AGENT_EXECUTION = "agent-execution";
 
-		/**
-		 * Configuration property name for the environment section.
-		 *
-		 * @see #getEnvironment()
-		 */
+		/** @see #getEnvironment() */
 		String ENVIRONMENT = "environment";
 
-		/**
-		 * Configuration property name for the user-memory section.
-		 *
-		 * @see #getUserMemory()
-		 */
+		/** @see #getUserMemory() */
 		String USER_MEMORY = "user-memory";
 
-		/**
-		 * Configuration property name for the run-limits section.
-		 *
-		 * @see #getRunLimits()
-		 */
+		/** @see #getRunLimits() */
 		String RUN_LIMITS = "run-limits";
 
-		/**
-		 * Configuration property name for the object-ids section.
-		 *
-		 * @see #getObjectIds()
-		 */
+		/** @see #getObjectIds() */
 		String OBJECT_IDS = "object-ids";
 
-		/**
-		 * Configuration property name for the security-context factory.
-		 *
-		 * @see #getSecurityContext()
-		 */
+		/** @see #getSecurityContext() */
 		String SECURITY_CONTEXT = "security-context";
 
-		/**
-		 * Configuration property name for the system-prompt contributors.
-		 *
-		 * @see #getPromptContributors()
-		 */
+		/** @see #getPromptContributors() */
 		String PROMPT_CONTRIBUTORS = "prompt-contributors";
 
-		/**
-		 * Configuration property name for the model catalog.
-		 *
-		 * @see #getModelCatalog()
-		 */
+		/** @see #getModelCatalog() */
 		String MODEL_CATALOG = "model-catalog";
 
-		/**
-		 * Configuration property name for the failover section.
-		 *
-		 * @see #getFailover()
-		 */
+		/** @see #getFailover() */
 		String FAILOVER = "failover";
 
 		/**
-		 * The configured LLM providers, keyed by provider name.
+		 * Now {@link LLMProviderService.Config#getProviders()}.
 		 *
-		 * <p>
-		 * Each entry carries provider-specific properties.
-		 * </p>
+		 * @see #PROVIDERS
 		 */
 		@Name(PROVIDERS)
 		@EntryTag("provider")
@@ -648,8 +223,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Map<String, LLMProviderConfig.Config> getProviders();
 
 		/**
-		 * Agent execution configuration: chat entry point, default model, and per-agent overrides
-		 * for model selection and execution parameters.
+		 * Now on {@link AgentRuntimeService}.
 		 *
 		 * @see #AGENT_EXECUTION
 		 */
@@ -657,18 +231,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		AgentExecutionConfig getAgentExecution();
 
 		/**
-		 * What every agent run is told about the situation it runs in: the wording of the environment
-		 * block, the application name the model is given, and whether the accounts' own preference
-		 * texts are part of it.
+		 * Now on {@link AgentApplicationService} and {@link AgentPolicyService}.
 		 *
 		 * @see #ENVIRONMENT
 		 */
 		@Name(ENVIRONMENT)
-		EnvironmentConfig getEnvironment();
+		EnvironmentSection getEnvironment();
 
 		/**
-		 * What an agent may remember about the accounts of this installation: whether it may at
-		 * all, how much of it reaches a model, and the words the agreement check looks for.
+		 * Now {@link AgentPolicyService.Config#getUserMemory()}.
 		 *
 		 * @see #USER_MEMORY
 		 */
@@ -676,8 +247,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		UserMemoryConfig getUserMemory();
 
 		/**
-		 * How many agent runs this installation carries at once, and how much one account may
-		 * spend.
+		 * Now on {@link AgentRuntimeService} (capacity) and {@link AgentPolicyService} (budget).
 		 *
 		 * @see #RUN_LIMITS
 		 */
@@ -685,8 +255,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		RunLimitsConfig getRunLimits();
 
 		/**
-		 * What this application knows about the identifiers a model passes to a tool: the codes its
-		 * own users speak, and what to tell a model that passed one instead of an object id.
+		 * Now {@link AgentApplicationService.Config#getObjectIds()}.
 		 *
 		 * @see #OBJECT_IDS
 		 */
@@ -694,31 +263,16 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		ObjectIdConfig getObjectIds();
 
 		/**
-		 * What decides, for every agent run, which tool calls need a person to confirm them.
-		 *
-		 * <p>
-		 * The shipped default asks the tool's mode: a read runs, everything that changes something is
-		 * confirmed. An application whose answer depends on what is being changed - overwriting an
-		 * empty section is not overwriting what a colleague wrote - names its own implementation
-		 * here.
-		 * </p>
+		 * Now {@link AgentRuntimeService.Config#getSecurityContext()}.
 		 *
 		 * @see #SECURITY_CONTEXT
 		 */
 		@Name(SECURITY_CONTEXT)
-		@ItemDefault
-		@ImplementationClassDefault(DefaultSecurityContextFactory.class)
+		@Nullable
 		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
 
 		/**
-		 * Standing instructions this installation adds to the system prompt of every agent run.
-		 *
-		 * <p>
-		 * For house rules that belong to the application rather than to one agent, so that they do
-		 * not have to be written into every agent and do not have to be repeated on every turn. Each
-		 * entry is asked once per run, in the order they are listed here, and what it answers is part
-		 * of the cached prompt - so it must say the same thing throughout a conversation.
-		 * </p>
+		 * Now {@link AgentApplicationService.Config#getPromptContributors()}.
 		 *
 		 * @see #PROMPT_CONTRIBUTORS
 		 */
@@ -727,930 +281,199 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		List<PolymorphicConfiguration<? extends SystemPromptContributor>> getPromptContributors();
 
 		/**
-		 * Model metadata catalog describing each model's capabilities and limits.
-		 *
-		 * <p>
-		 * Populated automatically from the remote <a href="https://models.dev">models.dev</a>
-		 * catalog on startup. Manual overrides can be added for models not listed in the remote
-		 * catalog (e.g. local or custom-hosted models).
-		 * </p>
+		 * Now {@link LLMProviderService.Config#getModelCatalog()}.
 		 *
 		 * @see #MODEL_CATALOG
 		 */
 		@Name(MODEL_CATALOG)
-		ModelCatalogConfig getModelCatalog();
+		LLMProviderService.ModelCatalogConfig getModelCatalog();
 
 		/**
-		 * Where a run goes when the model it was configured with cannot answer, and how long this
-		 * installation remembers that a model could not.
-		 *
-		 * <p>
-		 * Empty by default, and an empty section changes nothing.
-		 * </p>
+		 * Now {@link LLMProviderService.Config#getFailover()}.
 		 *
 		 * @see #FAILOVER
 		 */
 		@Name(FAILOVER)
 		FailoverConfig getFailover();
-
 	}
 
 	/**
-	 * Configuration for the model metadata catalog.
-	 *
-	 * <p>
-	 * Provides read-only metadata about each model's capabilities (tool calling, reasoning,
-	 * temperature support) and limits (context window, max output tokens). The catalog is fetched
-	 * from <a href="https://models.dev">models.dev</a> on startup for all models configured in
-	 * the provider section. Models not found in the remote catalog (e.g. locally hosted models)
-	 * can be defined manually in the {@link #getModelOverrides() model overrides}.
-	 * </p>
-	 */
-	public interface ModelCatalogConfig extends ConfigurationItem {
-
-		/** Default catalog URL. */
-		String DEFAULT_CATALOG_URL = "https://models.dev/api.json";
-
-		/** @see #getCatalogUrl() */
-		String CATALOG_URL = "catalog-url";
-
-		/** @see #getModelConfiguration() */
-		String MODEL_CONFIGURATION = "llm-configuration";
-
-		/** @see #getModelOverrides() */
-		String MODEL_OVERRIDES = "model-overrides";
-
-		/**
-		 * The URL of the remote model catalog.
-		 *
-		 * @see #CATALOG_URL
-		 */
-		@Name(CATALOG_URL)
-		@StringDefault(DEFAULT_CATALOG_URL)
-		@ReadOnly
-		String getCatalogUrl();
-
-		/**
-		 * Per-model metadata (limits, capabilities).
-		 *
-		 * <p>
-		 * Populated automatically from the remote catalog on startup. Read-only — do not
-		 * modify manually.
-		 * </p>
-		 *
-		 * @see #MODEL_CONFIGURATION
-		 */
-		@Name(MODEL_CONFIGURATION)
-		@Label("Model metadata")
-		@ReadOnly
-		@EntryTag("model")
-		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
-		Map<String, ModelCatalogEntry.Config> getModelConfiguration();
-
-		/**
-		 * Manually defined model metadata for models not in the remote catalog.
-		 *
-		 * <p>
-		 * Use this for local models or <code>OpenAI</code>-compatible endpoints whose models are not listed
-		 * on models.dev. Entries here take precedence over catalog entries with the same name.
-		 * </p>
-		 *
-		 * @see #MODEL_OVERRIDES
-		 */
-		@Name(MODEL_OVERRIDES)
-		@Label("Model overrides")
-		@EntryTag("model")
-		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
-		Map<String, ModelCatalogEntry.OverrideConfig> getModelOverrides();
-	}
-
-	private static volatile LLMService _instance;
-
-	private final InstantiationContext _context;
-
-	/**
-	 * Index mapping each model name to the names of the providers exposing it, in configuration
-	 * order.
-	 *
-	 * <p>
-	 * A model exposed by two provider entries has both of them here - neither is dropped. Which of
-	 * them serves a given agent is decided by that agent's {@link AgentOverride#getProvider()
-	 * provider}, never by iteration order; an unqualified reference to such a model is refused at
-	 * {@link #startUp()}.
-	 * </p>
-	 */
-	private Map<String, List<String>> _modelProviders;
-
-	/**
-	 * Named provider configs, keyed by the provider config name.
-	 */
-	private Map<String, LLMProviderConfig> _providerConfigs;
-
-	/**
-	 * Index mapping model IDs to their resolved {@link ModelInfo} metadata.
-	 */
-	private Map<String, ModelInfo> _models;
-
-	/**
-	 * What builds the security context of every run started while this service is up.
-	 */
-	private SecurityContextFactory _securityContextFactory;
-
-	/**
-	 * What this installation adds to every agent's system prompt, in configuration order.
-	 */
-	private List<SystemPromptContributor> _promptContributors;
-
-	/**
-	 * What every model is currently known to be good for.
-	 *
-	 * <p>
-	 * A component rather than a service of its own - see {@link ModelAvailability} for why. It is
-	 * replaced on every start, so a restart of this service is also the blunt way to clear every
-	 * mark.
-	 * </p>
-	 */
-	private volatile ModelAvailability _health = new ModelAvailability(null, Clock.systemUTC());
-
-	/**
-	 * Creates a new {@link LLMService} from configuration.
+	 * Created by reflection only, never started.
 	 *
 	 * @param context
 	 *        The instantiation context for error reporting.
 	 * @param config
-	 *        The service configuration.
+	 *        The configuration.
 	 */
 	@CalledByReflection
 	public LLMService(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_context = context;
 	}
 
 	/**
-	 * Returns the singleton instance of the {@link LLMService}.
+	 * Refuses the start when the application still configures this service.
 	 *
-	 * @return The service instance, or {@code null} if not yet started.
+	 * @param context
+	 *        Where the refusal is reported, in addition to being thrown.
+	 * @throws ConfigurationError
+	 *         If a configuration of this service sets anything, naming where it is and where each of
+	 *         its sections now belongs.
 	 */
-	public static LLMService getInstance() {
-		return _instance;
+	public static void refuseOldConfiguration(InstantiationContext context) {
+		String refusal = refusal(configured());
+		if (refusal == null) {
+			return;
+		}
+		context.error(refusal);
+		throw new ConfigurationError(ResKey.text(refusal));
 	}
 
 	/**
-	 * What every agent run is told about the situation it runs in.
-	 *
-	 * @see EnvironmentSettings
+	 * The configuration of this service the application has, or <code>null</code> when it has
+	 * none.
 	 */
-	public EnvironmentConfig getEnvironmentConfig() {
-		return getConfig().getEnvironment();
-	}
-
-	/**
-	 * What every model of this installation is currently known to be good for.
-	 *
-	 * <p>
-	 * Never <code>null</code>, and usable before {@link #startUp()} has read the configuration: an
-	 * installation that configured no lifetimes gets the shipped ones.
-	 * </p>
-	 *
-	 * @see ModelAvailability
-	 */
-	public ModelAvailability modelHealth() {
-		return _health;
-	}
-
-	/**
-	 * The models a run configured with the given model reference may use, in order.
-	 *
-	 * <p>
-	 * The first entry is always the reference itself, so a model with no configured chain yields a
-	 * list of one and nothing about that run changes. The rest is the {@code <failover>} section's
-	 * chain for that model name, whichever provider was asked to serve it.
-	 * </p>
-	 *
-	 * @param model
-	 *        The model the run was configured with; may be <code>null</code>, which yields an
-	 *        empty list.
-	 * @param provider
-	 *        The provider qualifying it, or <code>null</code>.
-	 * @return An immutable list, the configured reference first; never <code>null</code>.
-	 */
-	public List<ModelTarget> failoverChain(String model, String provider) {
-		if (model == null || model.isBlank()) {
-			return List.of();
+	private static Config<?> configured() {
+		ApplicationConfig applicationConfig = ApplicationConfig.getInstance();
+		if (applicationConfig == null) {
+			return null;
 		}
-		ModelTarget configured = new ModelTarget(model, blankToNull(provider));
-		FailoverConfig failover = getConfig().getFailover();
-		FailoverConfig.Chain chain = failover == null ? null : failover.getChains().get(model);
-		if (chain == null || chain.getFallbacks().isEmpty()) {
-			return List.of(configured);
-		}
-		List<ModelTarget> result = new ArrayList<>();
-		result.add(configured);
-		for (FailoverConfig.Target fallback : chain.getFallbacks()) {
-			ModelTarget target = new ModelTarget(fallback.getModel(), blankToNull(fallback.getProvider()));
-			// A chain that names the model it is the way out of, or names one twice, would spend a
-			// turn re-trying what just failed. Dropped here rather than refused at start-up: the
-			// duplicate may be the same model served by a second provider, which is legitimate.
-			if (result.stream().noneMatch(target::sameAs)) {
-				result.add(target);
-			}
-		}
-		return List.copyOf(result);
-	}
-
-	/**
-	 * What an agent may remember about the accounts of this installation.
-	 *
-	 * @see UserMemorySettings
-	 */
-	public UserMemoryConfig getUserMemoryConfig() {
-		return getConfig().getUserMemory();
-	}
-
-	/**
-	 * How many agent runs this installation carries at once, and how much one account may spend.
-	 *
-	 * @see RunLimitSettings
-	 */
-	public RunLimitsConfig getRunLimitsConfig() {
-		return getConfig().getRunLimits();
-	}
-
-	/**
-	 * What this application knows about the identifiers a model passes to a tool.
-	 *
-	 * @see ObjectIdSettings
-	 */
-	public ObjectIdConfig getObjectIdConfig() {
-		return getConfig().getObjectIds();
-	}
-
-	/**
-	 * What builds the {@link com.top_logic.tl.ai.core.agent.SecurityContext} of an agent run.
-	 *
-	 * <p>
-	 * Asked by every entry point that starts one, through
-	 * {@link com.top_logic.tl.ai.core.security.RunSecurity#contextFor}.
-	 * </p>
-	 *
-	 * @return The configured factory, never <code>null</code>.
-	 */
-	public SecurityContextFactory getSecurityContextFactory() {
-		return _securityContextFactory;
-	}
-
-	/**
-	 * What this installation adds to the system prompt of every agent run.
-	 *
-	 * @return The configured contributors in configuration order; empty when none are configured.
-	 * @see SystemPromptContributor
-	 */
-	public List<SystemPromptContributor> getPromptContributors() {
-		return _promptContributors;
-	}
-
-	/**
-	 * What the installation adds to every system prompt, also answered when this service is down.
-	 *
-	 * <p>
-	 * Empty for a minimal setup that boots no services, which is the same prompt such a setup built
-	 * before the seam existed.
-	 * </p>
-	 */
-	public static List<SystemPromptContributor> promptContributors() {
-		if (!Module.INSTANCE.isActive()) {
-			return List.of();
-		}
-		return getInstance().getPromptContributors();
-	}
-
-	@Override
-	protected void startUp() {
-		super.startUp();
-		_instance = this;
-		ModelDiscoveryHelper.clearCache();
-
-		// Resolved once: a run must not pay for instantiating it, and an application that configured a
-		// broken one must learn about it when the service starts rather than at the first tool call.
-		SecurityContextFactory securityContextFactory = _context.getInstance(getConfig().getSecurityContext());
-		_securityContextFactory = securityContextFactory == null
-			? DefaultSecurityContextFactory.INSTANCE : securityContextFactory;
-
-		List<SystemPromptContributor> contributors = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends SystemPromptContributor> contributor
-				: getConfig().getPromptContributors()) {
-			SystemPromptContributor instance = _context.getInstance(contributor);
-			if (instance != null) {
-				contributors.add(instance);
-			}
-		}
-		_promptContributors = List.copyOf(contributors);
-
-		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
-		Map<String, List<String>> modelProviders = new LinkedHashMap<>();
-
-		for (Map.Entry<String, LLMProviderConfig.Config> entry : getConfig().getProviders().entrySet()) {
-			String providerName = entry.getKey();
-			LLMProviderConfig providerConfig = _context.getInstance(entry.getValue());
-			providerConfigs.put(providerName, providerConfig);
-
-			for (String model : providerConfig.getConfiguredModels()) {
-				List<String> exposedBy = modelProviders.computeIfAbsent(model, name -> new ArrayList<>());
-				if (!exposedBy.contains(providerName)) {
-					exposedBy.add(providerName);
-				}
-			}
-		}
-
-		_providerConfigs = Map.copyOf(providerConfigs);
-		Map<String, List<String>> index = new LinkedHashMap<>();
-		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
-			index.put(entry.getKey(), List.copyOf(entry.getValue()));
-		}
-		_modelProviders = Map.copyOf(index);
-
-		refuseUnroutableReferences();
-
-		// Built here rather than in the constructor so that a restart of this service - the blunt
-		// way to clear every mark - also picks up changed lifetimes.
-		_health = new ModelAvailability(getConfig().getFailover(), Clock.systemUTC());
-
-		// --- Catalog phase ---
-		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
-		Map<String, Set<String>> catalogRequested = buildCatalogProviderModels();
-
-		Map<String, ModelInfo> fetched;
-		if (catalogConfig == null || catalogRequested.isEmpty()) {
-			fetched = Map.of();
-		} else {
-			fetched = ModelsDevFetcher.fetch(catalogConfig.getCatalogUrl(), catalogRequested);
-		}
-
-		Map<String, ModelCatalogEntry.OverrideConfig> overrides;
-		if (catalogConfig == null) {
-			overrides = Map.of();
-		} else {
-			// Populate read-only config entries for admin UI visibility
-			Map<String, ModelCatalogEntry.Config> catalogEntries = catalogConfig.getModelConfiguration();
-			catalogEntries.clear();
-			for (Map.Entry<String, ModelInfo> entry : fetched.entrySet()) {
-				catalogEntries.put(entry.getKey(), ModelCatalogEntry.toConfig(entry.getKey(), entry.getValue()));
-			}
-			overrides = catalogConfig.getModelOverrides();
-		}
-
-		// Merge manual overrides (take precedence over catalog)
-		Map<String, ModelInfo> merged = new LinkedHashMap<>(fetched);
-		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
-			merged.put(entry.getKey(), ModelCatalogEntry.overrideToModelInfo(entry.getValue()));
-		}
-
-		_models = Map.copyOf(merged);
-
-		int overrideCount = overrides.size();
-		Logger.info("LLMService started with " +
-			getConfig().getProviders().size() + " provider(s), " +
-			fetched.size() + " model(s) from catalog" +
-			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
-			LLMService.class);
-	}
-
-	@Override
-	protected void shutDown() {
+		ServiceConfiguration<?> config;
 		try {
-			_instance = null;
-			_modelProviders = null;
-			_providerConfigs = null;
-			_models = null;
-		} finally {
-			super.shutDown();
+			// Answers a fresh default when nothing configures the service; refusal() then finds
+			// nothing set.
+			config = applicationConfig.getServiceConfiguration(LLMService.class);
+		} catch (ConfigurationException ex) {
+			return null;
 		}
+		return config instanceof Config<?> old ? old : null;
 	}
 
 	/**
-	 * Refuses the start when a configured model reference cannot be routed to exactly one
-	 * provider.
+	 * Why the given configuration of the old service stops the application, or <code>null</code>
+	 * when it sets nothing.
 	 *
-	 * <p>
-	 * Reported to the {@link InstantiationContext} so that a full application boot lists every
-	 * problem at once, and thrown so that this start fails whoever asked for it. The context alone
-	 * is not enough: {@link TypedRuntimeModule} tests it for errors <em>before</em> this method
-	 * runs, so at boot the refusal would only surface as the next service's failure, and an
-	 * in-app restart of this service alone would report nothing and leave an unroutable
-	 * configuration running.
-	 * </p>
+	 * @param old
+	 *        The configuration; may be <code>null</code>.
 	 */
-	private void refuseUnroutableReferences() {
-		List<String> refusals = refusals(getConfig().getAgentExecution(), getConfig().getFailover(),
-			_modelProviders, _providerConfigs.keySet());
-		if (refusals.isEmpty()) {
-			return;
+	static String refusal(Config<?> old) {
+		if (old == null) {
+			return null;
 		}
-		for (String refusal : refusals) {
-			_context.error(refusal);
+		List<String> moves = new ArrayList<>();
+		String providers = LLMProviderService.class.getSimpleName();
+		String runtime = AgentRuntimeService.class.getSimpleName();
+		String application = AgentApplicationService.class.getSimpleName();
+		String policy = AgentPolicyService.class.getSimpleName();
+
+		move(moves, old, Config.PROVIDERS, "<providers>", providers + " <providers>");
+		move(moves, old, Config.MODEL_CATALOG, "<model-catalog>",
+			providers + " <model-catalog> (delete <llm-configuration>: it is generated at every start)");
+		move(moves, old, Config.FAILOVER, "<failover>", providers + " <failover>");
+
+		AgentExecutionConfig execution = old.getAgentExecution();
+		move(moves, execution, AgentExecutionConfig.DEFAULT_MODEL, "<agent-execution default-model>",
+			runtime + " default-model");
+		move(moves, execution, AgentExecutionConfig.DEFAULT_PROVIDER, "<agent-execution default-provider>",
+			runtime + " default-provider");
+		move(moves, execution, AgentExecutionConfig.CHAT_ENTRY_POINT, "<agent-execution chat-entry-point>",
+			runtime + " chat-entry-point");
+		move(moves, execution, AgentExecutionConfig.AGENT_OVERRIDES, "<agent-execution><agent-overrides>",
+			runtime + " <agent-overrides>");
+		move(moves, old, Config.SECURITY_CONTEXT, "<security-context>", runtime + " <security-context>");
+
+		RunLimitsConfig limits = old.getRunLimits();
+		for (String property : List.of(CapacityConfig.CHAT_WORKERS, CapacityConfig.CHAT_QUEUE,
+			CapacityConfig.CONCURRENT_RUNS_PER_ACCOUNT)) {
+			move(moves, limits, property, "<run-limits " + property + ">", runtime + " <capacity " + property + ">");
 		}
-		throw new ConfigurationError(ResKey.text("The agent model configuration cannot be routed to"
-			+ " providers, so this service is not running: " + String.join(" ", refusals)));
+		for (String property : List.of(BudgetConfig.TOKEN_BUDGET, BudgetConfig.BUDGET_WINDOW_HOURS)) {
+			move(moves, limits, property, "<run-limits " + property + ">", policy + " <budget " + property + ">");
+		}
+		move(moves, limits, BudgetConfig.ROLE_BUDGETS, "<run-limits><role-budgets>",
+			policy + " <budget><role-budgets>");
+
+		EnvironmentSection environment = old.getEnvironment();
+		move(moves, environment, EnvironmentSection.TEMPLATE, "<environment><template>",
+			application + " <environment><template>");
+		move(moves, environment, EnvironmentSection.APPLICATION, "<environment><application>",
+			application + " <environment><application>");
+		move(moves, environment, EnvironmentSection.USER_PREFERENCES, "<environment user-preferences>",
+			policy + " user-preferences");
+		move(moves, environment, EnvironmentSection.MAX_PREFERENCES_LENGTH, "<environment max-preferences-length>",
+			policy + " max-preferences-length");
+		move(moves, old, Config.OBJECT_IDS, "<object-ids>", application + " <object-ids>");
+		move(moves, old, Config.PROMPT_CONTRIBUTORS, "<prompt-contributors>", application + " <prompt-contributors>");
+		move(moves, old, Config.USER_MEMORY, "<user-memory>", policy + " <user-memory>");
+
+		if (moves.isEmpty()) {
+			return null;
+		}
+		return "The application still configures " + LLMService.class.getName() + where(old)
+			+ ", which tl-ai no longer reads: its configuration was split in four services (Gitea #691). Move "
+			+ String.join("; ", moves) + ". Then delete the configuration of " + LLMService.class.getSimpleName()
+			+ ". The new services are " + LLMProviderService.class.getName() + ", "
+			+ AgentRuntimeService.class.getName() + ", " + AgentApplicationService.class.getName() + " and "
+			+ AgentPolicyService.class.getName() + "; see " + MIGRATION_PAGE + ".";
+	}
+
+	private static void move(List<String> moves, ConfigurationItem owner, String property, String oldPath,
+			String newPlace) {
+		if (isSet(owner, property)) {
+			moves.add(oldPath + " to " + newPlace);
+		}
+	}
+
+	private static String where(ConfigurationItem item) {
+		Location location = item.location();
+		if (location == null || location.getResource() == null) {
+			return "";
+		}
+		int line = location.getLine();
+		return " (" + location.getResource() + (line > 0 ? ":" + line : "") + ")";
 	}
 
 	/**
-	 * Everything about the given agent execution configuration that must stop the service from
-	 * starting.
+	 * Whether the given property of the given configuration holds a value of its own.
 	 *
 	 * <p>
-	 * Two things do: a reference to a provider that is not configured, and an unqualified
-	 * reference to a model that two providers expose. The second is a refusal rather than a
-	 * warning because there is no answer to give - the operator listed the model twice to keep the
-	 * two endpoints apart, and picking either one by configuration order would be guessing which
-	 * account, key or rate limit the agent was meant to use.
+	 * An empty element - which a Service Editor snapshot may write for a section it shows - holds
+	 * none.
 	 * </p>
-	 *
-	 * <p>
-	 * A model that <em>no</em> provider exposes is deliberately not refused here: that stays the
-	 * runtime error of {@link #buildProvider(String, String)}, because the model catalog can be
-	 * completed after the start and an agent nobody runs should not stop the application.
-	 * </p>
-	 *
-	 * @param execution
-	 *        The agent execution section to inspect.
-	 * @param failover
-	 *        The failover section, whose fallbacks are model references too; may be
-	 *        <code>null</code>.
-	 * @param modelProviders
-	 *        Model name to the names of the providers exposing it.
-	 * @param providerNames
-	 *        The names of all configured providers.
-	 * @return One sentence per problem, in configuration order; empty for a routable
-	 *         configuration.
 	 */
-	static List<String> refusals(AgentExecutionConfig execution, FailoverConfig failover,
-			Map<String, List<String>> modelProviders, Set<String> providerNames) {
-		List<String> result = new ArrayList<>();
-		String defaultModel = execution.getDefaultModel();
-		String defaultProvider = execution.getDefaultProvider();
-
-		addRefusal(result, "The default model", modelRefOf(null, defaultModel, defaultProvider),
-			modelProviders, providerNames);
-		for (Map.Entry<String, AgentOverride> entry : execution.getAgentOverrides().entrySet()) {
-			addRefusal(result, "Agent '" + entry.getKey() + "'",
-				modelRefOf(entry.getValue(), defaultModel, defaultProvider), modelProviders, providerNames);
+	static boolean isSet(ConfigurationItem owner, String property) {
+		if (owner == null) {
+			return false;
 		}
-		// A fallback is a model reference like any other, and one that cannot be routed is worse
-		// than a missing fallback: it is only ever reached on the day the primary model is already
-		// down, which is the worst moment to find out.
-		if (failover != null) {
-			for (Map.Entry<String, FailoverConfig.Chain> entry : failover.getChains().entrySet()) {
-				for (FailoverConfig.Target fallback : entry.getValue().getFallbacks()) {
-					addRefusal(result, "The fallback for model '" + entry.getKey() + "'",
-						new ModelRef(fallback.getModel(), blankToNull(fallback.getProvider())),
-						modelProviders, providerNames);
+		PropertyDescriptor descriptor = owner.descriptor().getProperty(property);
+		return descriptor != null && owner.valueSet(descriptor) && holdsValue(owner.value(descriptor));
+	}
+
+	private static boolean holdsValue(Object value) {
+		if (value == null) {
+			return false;
+		}
+		if (value instanceof Collection<?> collection) {
+			return !collection.isEmpty();
+		}
+		if (value instanceof Map<?, ?> map) {
+			return !map.isEmpty();
+		}
+		if (value instanceof PolymorphicConfiguration<?>) {
+			// A class named is a setting, even with nothing else in the element.
+			return true;
+		}
+		if (value instanceof ConfigurationItem item) {
+			for (PropertyDescriptor property : item.descriptor().getProperties()) {
+				if (property.hasContainerAnnotation() || property.isDerived()) {
+					continue;
+				}
+				if (item.valueSet(property) && holdsValue(item.value(property))) {
+					return true;
 				}
 			}
+			return false;
 		}
-		return result;
+		return true;
 	}
 
-	private static void addRefusal(List<String> refusals, String subject, ModelRef ref,
-			Map<String, List<String>> modelProviders, Set<String> providerNames) {
-		String model = ref.model();
-		if (model == null || model.isBlank()) {
-			// No model to route; reported by the resolution itself when the agent runs.
-			return;
-		}
-		List<String> exposedBy = modelProviders.getOrDefault(model, List.of());
-		String provider = ref.provider();
-		if (provider != null) {
-			if (!providerNames.contains(provider)) {
-				refusals.add(subject + ": the provider '" + provider + "' named for model '" + model
-					+ "' is not configured; configured providers are " + providerNames + ".");
-			} else if (!exposedBy.contains(provider)) {
-				refusals.add(subject + ": the provider '" + provider + "' does not expose model '" + model
-					+ "'; it exposes " + modelsOf(provider, modelProviders) + ".");
-			}
-		} else if (exposedBy.size() > 1) {
-			refusals.add(subject + ": model '" + model + "' is exposed by " + exposedBy
-				+ ", so one of them must be named as the provider.");
-		}
-	}
-
-	/**
-	 * The models the given provider exposes, for a refusal message.
-	 */
-	private static List<String> modelsOf(String providerName, Map<String, List<String>> modelProviders) {
-		List<String> result = new ArrayList<>();
-		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
-			if (entry.getValue().contains(providerName)) {
-				result.add(entry.getKey());
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns only the explicitly configured model names from all providers.
-	 *
-	 * <p>
-	 * Returns only models that an admin has explicitly added to a provider's {@code models}
-	 * allowlist. Models that were merely discovered via provider API are excluded.
-	 * </p>
-	 *
-	 * @return An immutable list of explicitly configured model names.
-	 */
-	public List<String> getConfiguredModelNames() {
-		return modelNamesOf(getConfig().getProviders());
-	}
-
-	/**
-	 * Collects the explicitly configured model names from the given provider map.
-	 *
-	 * @param providers
-	 *        The provider configurations keyed by name, or {@code null}.
-	 * @return An immutable list of the model names listed in each provider's
-	 *         {@link LLMProviderConfig.Config#getModels() allowlist}, de-duplicated in iteration
-	 *         order.
-	 */
-	static List<String> modelNamesOf(Map<String, LLMProviderConfig.Config> providers) {
-		if (providers == null) {
-			return List.of();
-		}
-		Set<String> result = new LinkedHashSet<>();
-		for (LLMProviderConfig.Config config : providers.values()) {
-			List<String> models = config.getModels();
-			if (models != null) {
-				result.addAll(models);
-			}
-		}
-		return List.copyOf(result);
-	}
-
-	/**
-	 * The names of all configured providers, in configuration order.
-	 */
-	public List<String> getConfiguredProviderNames() {
-		return List.copyOf(getConfig().getProviders().keySet());
-	}
-
-	/**
-	 * The names of the providers exposing the given model, in configuration order.
-	 *
-	 * <p>
-	 * More than one entry means the model must be referenced with a provider - see
-	 * {@link AgentOverride#getProvider()}.
-	 * </p>
-	 *
-	 * @param modelName
-	 *        The model to look up.
-	 * @return The provider names; empty if no configured provider exposes the model.
-	 */
-	public List<String> getProvidersOf(String modelName) {
-		if (_modelProviders == null) {
-			return List.of();
-		}
-		return _modelProviders.getOrDefault(modelName, List.of());
-	}
-
-	/**
-	 * Builds an {@link LLMProvider} for an unqualified model reference.
-	 *
-	 * @see #buildProvider(String, String)
-	 */
-	public LLMProvider buildProvider(String modelName) {
-		return buildProvider(modelName, null);
-	}
-
-	/**
-	 * Builds an {@link LLMProvider} for the given model, served by the named provider.
-	 *
-	 * @param modelName
-	 *        The model name to find a provider for.
-	 * @param providerName
-	 *        The configured provider that must serve the model, or {@code null} to let the
-	 *        model's only provider serve it.
-	 * @return A ready-to-use provider.
-	 * @throws IllegalStateException
-	 *         if the model cannot be routed to exactly one configured provider.
-	 */
-	public LLMProvider buildProvider(String modelName, String providerName) {
-		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
-		if (providerConfig == null) {
-			throw new IllegalStateException(unroutable(modelName, providerName));
-		}
-		return providerConfig.createProvider();
-	}
-
-	/**
-	 * The provider configuration serving the given model reference, or {@code null} if the
-	 * reference does not resolve to exactly one provider.
-	 *
-	 * @param modelName
-	 *        The model name.
-	 * @param providerName
-	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
-	 */
-	private LLMProviderConfig lookupProvider(String modelName, String providerName) {
-		if (_providerConfigs == null || modelName == null) {
-			return null;
-		}
-		List<String> exposedBy = getProvidersOf(modelName);
-		if (providerName != null && !providerName.isBlank()) {
-			// An allowlist that is bypassed is not an allowlist: a provider only serves the models
-			// it exposes, however it was named.
-			return exposedBy.contains(providerName) ? _providerConfigs.get(providerName) : null;
-		}
-		if (exposedBy.size() != 1) {
-			return null;
-		}
-		return _providerConfigs.get(exposedBy.get(0));
-	}
-
-	/**
-	 * Why the given model reference does not resolve to exactly one provider.
-	 */
-	private String unroutable(String modelName, String providerName) {
-		List<String> exposedBy = getProvidersOf(modelName);
-		if (providerName != null && !providerName.isBlank()) {
-			if (_providerConfigs == null || !_providerConfigs.containsKey(providerName)) {
-				return "No provider named '" + providerName + "' is configured for model '" + modelName
-					+ "'. Configured providers: " + getConfiguredProviderNames();
-			}
-			return "Provider '" + providerName + "' does not expose model '" + modelName
-				+ "'. It exposes: " + modelsOf(providerName, _modelProviders) + ".";
-		}
-		if (exposedBy.isEmpty()) {
-			return "No provider configured for model: " + modelName
-				+ ". Available models: " + (_modelProviders == null ? List.of() : _modelProviders.keySet());
-		}
-		return "Model '" + modelName + "' is exposed by the providers " + exposedBy
-			+ ". Name one of them to select the provider.";
-	}
-
-	/**
-	 * Returns metadata for the given model, or {@code null} if unknown.
-	 */
-	public ModelInfo getModel(String modelId) {
-		if (_models == null) {
-			return null;
-		}
-		return _models.get(modelId);
-	}
-
-	/**
-	 * Returns the catalog provider ID for an unqualified model reference, or {@code null} if it
-	 * cannot be determined.
-	 *
-	 * <p>
-	 * Two provider entries for the same vendor - the case this exists for, two Anthropic accounts
-	 * exposing the same model - agree on their
-	 * {@link LLMProviderConfig#getCatalogProviderId() catalog provider ID}, so the ID is
-	 * unambiguous even where the provider <em>instance</em> is not. Only providers that disagree
-	 * make the answer {@code null}.
-	 * </p>
-	 *
-	 * @param modelName
-	 *        The model name to look up.
-	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
-	 */
-	public String getProviderId(String modelName) {
-		if (_providerConfigs == null) {
-			return null;
-		}
-		String result = null;
-		boolean first = true;
-		for (String providerName : getProvidersOf(modelName)) {
-			String catalogId = _providerConfigs.get(providerName).getCatalogProviderId();
-			if (first) {
-				result = catalogId;
-				first = false;
-			} else if (!Objects.equals(result, catalogId)) {
-				return null;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns the catalog provider ID of the given model reference, or {@code null} if the
-	 * reference does not resolve to exactly one provider.
-	 *
-	 * @param modelName
-	 *        The model name to look up.
-	 * @param providerName
-	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
-	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
-	 */
-	public String getProviderId(String modelName, String providerName) {
-		if (providerName == null || providerName.isBlank()) {
-			return getProviderId(modelName);
-		}
-		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
-		return providerConfig == null ? null : providerConfig.getCatalogProviderId();
-	}
-
-	/**
-	 * Returns the name of the chat entry-point agent.
-	 */
-	public String getEntryPointAgentName() {
-		return getConfig().getAgentExecution().getChatEntryPoint();
-	}
-
-	/**
-	 * How long, in seconds, a run on its last model waits in total for a model that is rate limited.
-	 *
-	 * @see FailoverConfig#getRateLimitWaitSeconds()
-	 */
-	public int rateLimitWaitSeconds() {
-		FailoverConfig failover = getConfig().getFailover();
-		return failover == null ? AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS : failover.getRateLimitWaitSeconds();
-	}
-
-	/**
-	 * Returns the configured default model name, or {@code null} if not set.
-	 */
-	public String getDefaultModel() {
-		return getConfig().getAgentExecution().getDefaultModel();
-	}
-
-	/**
-	 * Returns the provider serving the {@link #getDefaultModel() default model}, or {@code null}
-	 * if none is named.
-	 */
-	public String getDefaultProvider() {
-		return blankToNull(getConfig().getAgentExecution().getDefaultProvider());
-	}
-
-	/**
-	 * A model together with the provider that serves it.
-	 *
-	 * @param model
-	 *        The model name, or {@code null} if none is configured.
-	 * @param provider
-	 *        The name of the provider serving the model, or {@code null} for an unqualified
-	 *        reference that the model's only provider serves.
-	 */
-	record ModelRef(String model, String provider) {
-		// A pair, nothing more.
-	}
-
-	/**
-	 * The model and provider the given override effectively uses.
-	 *
-	 * <p>
-	 * Both fields fall back to the defaults independently, with one tie: an override that names no
-	 * model of its own inherits the default provider along with the default model, since a
-	 * provider for a model the override does not mention would be meaningless.
-	 * </p>
-	 *
-	 * @param override
-	 *        The agent's override, or {@code null} for an agent that has none.
-	 * @param defaultModel
-	 *        The configured default model.
-	 * @param defaultProvider
-	 *        The configured default provider, or {@code null}.
-	 */
-	static ModelRef modelRefOf(AgentOverride override, String defaultModel, String defaultProvider) {
-		if (override == null) {
-			return new ModelRef(defaultModel, blankToNull(defaultProvider));
-		}
-		String model = blankToNull(override.getModel());
-		String provider = blankToNull(override.getProvider());
-		if (model == null) {
-			return new ModelRef(defaultModel, provider != null ? provider : blankToNull(defaultProvider));
-		}
-		return new ModelRef(model, provider);
-	}
-
-	private static String blankToNull(String value) {
-		return value == null || value.isBlank() ? null : value;
-	}
-
-	/**
-	 * Resolves the model for the given agent.
-	 *
-	 * <p>
-	 * Resolution order: per-agent assignment from the {@link AgentExecutionConfig#getAgentOverrides()
-	 * agent execution config}, then {@link #getDefaultModel() default model}.
-	 * </p>
-	 *
-	 * @param agentName
-	 *        the agent name
-	 * @return the resolved model identifier
-	 * @throws IllegalStateException
-	 *         if no model can be resolved
-	 */
-	public String resolveModel(String agentName) {
-		return resolveModelAssignment(agentName).model();
-	}
-
-	/**
-	 * Resolves the {@link ModelRef} of the given override, without checking that it names a model.
-	 */
-	private ModelRef modelRefOf(AgentOverride override) {
-		AgentExecutionConfig execution = getConfig().getAgentExecution();
-		return modelRefOf(override, execution.getDefaultModel(), execution.getDefaultProvider());
-	}
-
-	private static ModelRef requireModel(String agentName, ModelRef ref) {
-		if (ref.model() == null || ref.model().isBlank()) {
-			throw new IllegalStateException(
-				"No model assigned to agent '" + agentName + "' and no default model configured.");
-		}
-		return ref;
-	}
-
-	/**
-	 * Resolves the full model assignment for the given agent, including all tuning parameters.
-	 *
-	 * <p>
-	 * Resolution order for the model name: per-agent assignment from the
-	 * {@link AgentExecutionConfig#getAgentOverrides() agent execution config}, then
-	 * {@link #getDefaultModel() default model}. Tuning parameters are taken from the per-agent
-	 * assignment if present; otherwise all are {@code null} (meaning "use defaults").
-	 * </p>
-	 *
-	 * @param agentName
-	 *        the agent name
-	 * @return the full assignment including model name and all optional tuning parameters
-	 * @throws IllegalStateException
-	 *         if no model can be resolved
-	 *
-	 * @see AgentModelAssignment
-	 */
-	public AgentModelAssignment resolveModelAssignment(String agentName) {
-		AgentOverride perAgent = getConfig().getAgentExecution().getAgentOverrides().get(agentName);
-		ModelRef ref = requireModel(agentName, modelRefOf(perAgent));
-		if (perAgent != null) {
-			return new AgentModelAssignment(ref.model(), ref.provider(),
-				perAgent.getMaxTokens(), perAgent.getContextWindow(), perAgent.getMaxTurns(),
-				perAgent.getTemperature(), perAgent.getTopP(),
-				perAgent.getThinkingEffort(), perAgent.getTopK(),
-				perAgent.getReasoningEffort(), perAgent.getReasoningSummary(),
-				perAgent.getToolChoice(),
-				perAgent.getTimeoutSeconds(), perAgent.getMaxRetries(),
-				perAgent.getMaxToolResultChars());
-		}
-		return new AgentModelAssignment(ref.model(), ref.provider(),
-			null, null, null, null, null, null, null, null, null, null, null, null, null);
-	}
-
-	/**
-	 * Derives the catalog-provider-ID to model-ID mapping from configured providers.
-	 */
-	private Map<String, Set<String>> buildCatalogProviderModels() {
-		Map<String, Set<String>> result = new LinkedHashMap<>();
-		for (LLMProviderConfig providerConfig : _providerConfigs.values()) {
-			String catalogId = providerConfig.getCatalogProviderId();
-			if (catalogId == null || catalogId.isBlank()) {
-				continue;
-			}
-			// Every provider contributes its own allowlist: a model two providers expose is
-			// requested once per catalog ID, and neither provider's models go unrequested.
-			result.computeIfAbsent(catalogId, id -> new LinkedHashSet<>())
-				.addAll(providerConfig.getConfiguredModels());
-		}
-		return result;
-	}
-
-	/**
-	 * Options provider that collects all model names configured across all provider entries.
-	 *
-	 * <p>
-	 * Used by UI components to display available models for selection.
-	 * </p>
-	 */
-	public static class AllowedModelOptions extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
-		@Override
-		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
-			if (providers == null || providers.isEmpty()) {
-				return List.of();
-			}
-			Set<String> allModels = new LinkedHashSet<>();
-			for (LLMProviderConfig.Config config : providers.values()) {
-				List<String> models = config.getModels();
-				if (models != null) {
-					allModels.addAll(models);
-				}
-			}
-			return new ArrayList<>(allModels);
-		}
-	}
-
-	/**
-	 * Module for {@link LLMService}.
-	 */
-	public static final class Module extends TypedRuntimeModule<LLMService> {
-
-		/**
-		 * Singleton {@link LLMService.Module} instance.
-		 */
-		public static final LLMService.Module INSTANCE = new LLMService.Module();
-
-		private Module() {
-			// Singleton constructor
-		}
-
-		@Override
-		public Class<LLMService> getImplementation() {
-			return LLMService.class;
-		}
-	}
 }

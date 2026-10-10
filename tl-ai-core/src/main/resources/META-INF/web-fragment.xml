@@ -45,4 +45,18 @@
 		<servlet-name>ScreenshotServlet</servlet-name>
 		<url-pattern>/screenshot/*</url-pattern>
 	</servlet-mapping>
+
+	<!--
+		Serves the copy of a web page an agent run read, kept so that a citation of it still shows
+		what the page said (#617). Requires a login, like /screenshot/*: see ArchivedPageServlet.
+	-->
+	<servlet>
+		<servlet-name>ArchivedPageServlet</servlet-name>
+		<servlet-class>com.top_logic.tl.ai.core.citation.ArchivedPageServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ArchivedPageServlet</servlet-name>
+		<url-pattern>/archived-page/*</url-pattern>
+	</servlet-mapping>
 </web-fragment>

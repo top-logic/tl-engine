@@ -23,7 +23,7 @@ import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 
 /**
@@ -87,7 +87,7 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 
 	@Override
 	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode) {
-		LLMService registry = LLMService.getInstance();
+		LLMProviderService registry = LLMProviderService.getInstance();
 		if (registry == null) {
 			return FormVisibility.HIDDEN;
 		}
@@ -95,7 +95,11 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 		String agentName = (String) object.tValueByName("name");
 		AgentModelAssignment assignment;
 		try {
-			assignment = registry.resolveModelAssignment(agentName != null ? agentName : "");
+			AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+			if (runtime == null) {
+				return FormVisibility.HIDDEN;
+			}
+			assignment = runtime.resolveModelAssignment(agentName != null ? agentName : "");
 		} catch (IllegalStateException e) {
 			// No model configured for this agent and no default — hide provider-specific fields.
 			return FormVisibility.HIDDEN;
@@ -124,7 +128,7 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode,
 			Sink<Pointer> trace, OverlayLookup overlays) {
-		// Model is resolved from LLMService, not from the agent object.
+		// Model is resolved from AgentRuntimeService, not from the agent object.
 		// No form field dependency to trace.
 	}
 

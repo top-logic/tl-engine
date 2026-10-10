@@ -46,7 +46,7 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
 /**
  * Tests that a subagent finishing between two turns reaches the model in the next request.
  *
- * @see AgentLoop#injectSubagentResults(Conversation)
+ * @see AgentLoop#injectSubagentResults(Conversation, com.top_logic.tl.ai.core.agent.ToolContext)
  */
 public class TestResultInjection extends TestCase {
 
@@ -172,7 +172,7 @@ public class TestResultInjection extends TestCase {
 		finished("researcher", "The answer is 42.");
 
 		Conversation conversation = new Conversation();
-		AgentLoop.injectSubagentResults(conversation);
+		AgentLoop.injectSubagentResults(conversation, null);
 
 		assertEquals(1, conversation.size());
 		Message injected = conversation.messages().get(0);
@@ -191,7 +191,7 @@ public class TestResultInjection extends TestCase {
 		finished("second", "Result two.");
 
 		Conversation conversation = new Conversation();
-		AgentLoop.injectSubagentResults(conversation);
+		AgentLoop.injectSubagentResults(conversation, null);
 
 		assertEquals("A batch is one delivery, not one message per subagent.",
 			1, conversation.size());
@@ -212,7 +212,7 @@ public class TestResultInjection extends TestCase {
 		}
 
 		Conversation conversation = new Conversation();
-		AgentLoop.injectSubagentResults(conversation);
+		AgentLoop.injectSubagentResults(conversation, null);
 
 		String delivered = text(conversation.messages().get(0));
 		assertTrue("sa-2 started before sa-11 and must be reported before it.",
@@ -224,8 +224,8 @@ public class TestResultInjection extends TestCase {
 		finished("researcher", "The answer is 42.");
 
 		Conversation conversation = new Conversation();
-		AgentLoop.injectSubagentResults(conversation);
-		AgentLoop.injectSubagentResults(conversation);
+		AgentLoop.injectSubagentResults(conversation, null);
+		AgentLoop.injectSubagentResults(conversation, null);
 
 		assertEquals("Second injection must find nothing left to deliver.", 1, conversation.size());
 	}
@@ -235,7 +235,7 @@ public class TestResultInjection extends TestCase {
 		_registry.register("running", "still working", new CancellationToken());
 
 		Conversation conversation = new Conversation();
-		AgentLoop.injectSubagentResults(conversation);
+		AgentLoop.injectSubagentResults(conversation, null);
 
 		assertEquals(0, conversation.size());
 	}
@@ -291,7 +291,7 @@ public class TestResultInjection extends TestCase {
 		Conversation conversation = new Conversation();
 		try (ConversationLogListenerBinding.Binding binding =
 			ConversationLogListenerBinding.bind(new ConversationLogListener(log))) {
-			AgentLoop.injectSubagentResults(conversation);
+			AgentLoop.injectSubagentResults(conversation, null);
 		}
 
 		List<Part> recorded = turn.assistantParts();
@@ -317,7 +317,7 @@ public class TestResultInjection extends TestCase {
 		Conversation live = new Conversation();
 		try (ConversationLogListenerBinding.Binding binding =
 			ConversationLogListenerBinding.bind(new ConversationLogListener(log))) {
-			AgentLoop.injectSubagentResults(live);
+			AgentLoop.injectSubagentResults(live, null);
 		}
 		log.completeTurn();
 

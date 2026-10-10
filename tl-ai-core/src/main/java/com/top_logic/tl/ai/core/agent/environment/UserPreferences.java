@@ -18,8 +18,8 @@ import com.top_logic.knowledge.wrap.person.Person;
  * of the two wins - a preference is a wish, not a statement about the situation.
  * </p>
  *
- * @see EnvironmentConfig#getUserPreferences()
- * @see EnvironmentConfig#getMaxPreferencesLength()
+ * @see com.top_logic.tl.ai.core.agent.AgentPolicyService.Config#getUserPreferences()
+ * @see com.top_logic.tl.ai.core.agent.AgentPolicyService.Config#getMaxPreferencesLength()
  */
 public class UserPreferences {
 

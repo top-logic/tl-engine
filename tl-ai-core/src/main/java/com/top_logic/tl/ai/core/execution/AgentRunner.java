@@ -129,10 +129,6 @@ public final class AgentRunner {
 				AgentRunner.class);
 		}
 
-		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
-		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
-		// meant another source - and the validator then deleted the marker (#495).
-		context.citationMarkers().resumeFrom(log);
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
@@ -147,7 +143,7 @@ public final class AgentRunner {
 
 		String response = runResult.response();
 		if (log != null) {
-			response = CitationValidator.apply(log, response).text();
+			response = CitationValidator.apply(log, response, context.readingList()).text();
 		}
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), response, null);
@@ -225,10 +221,6 @@ public final class AgentRunner {
 				AgentRunner.class);
 		}
 
-		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
-		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
-		// meant another source - and the validator then deleted the marker (#495).
-		context.citationMarkers().resumeFrom(log);
 		AgentResult result;
 		try {
 			// A pre-built loop serves a subagent, which brings no session memory: it gets one over its
@@ -242,7 +234,7 @@ public final class AgentRunner {
 		}
 
 		if (log != null) {
-			CitationValidator.apply(log, lastAssistantText(log));
+			CitationValidator.apply(log, lastAssistantText(log), context.readingList());
 		}
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), null);

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The shipped read policy for the perceivable binaries this module stores (issue #227).
+	The shipped read policy for the perceivable binaries this module stores (issue #227), and for
+	the research runs it keeps (issue #764), which carry their report as a binary.
 
 	A screenshot is a picture of a page somebody drove a browser to while logged in somewhere, and a
 	cookie pool is that login itself. Both are reachable through "viewDocument", which loads a
@@ -88,6 +89,66 @@
 							</path>
 						</rule>
 
+						<!--
+							A research run (Issue #764) is its owner's like a screenshot, and so are its
+							parts: a source or a finding gets the role through the run that holds it,
+							one rule per composition, so that the owner reads the run's tables too.
+						-->
+						<rule id="tl.ai.research.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchRun"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.cited.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchSource"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#citedSources" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.alsoread.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchSource"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#alsoRead" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.findings.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchFinding"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#findings" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.otherfindings.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchFinding"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#otherFindings" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+
 						<rule id="tl.ai.cookiepool.owner"
 							inherit="true"
 							meta-element="tl.ai.cookiepool:CookiePool"
@@ -112,6 +173,27 @@
 			<instance>
 				<security-config>
 					<class name="tl.ai.screenshots:Screenshot">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchRun">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchSource">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchFinding">
 						<grant
 							inherit="true"
 							operation="Read"

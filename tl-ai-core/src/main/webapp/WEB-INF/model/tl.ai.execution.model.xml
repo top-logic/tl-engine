@@ -766,6 +766,183 @@
 				</attributes>
 			</class>
 
+			<!--
+				One research run, kept when its lead has written the report (Issue #764): the
+				question, the report, what the report rests on and what else the run tree read.
+
+				Private to its owner, like an archived page: the role rule in
+				tl-ai-core.binarySecurity.config.xml gives the owner, and only the owner, the right
+				to read the run and its parts; administrators read everything anyway. Written by
+				ResearchRuns on its own thread, never by a user.
+			-->
+			<class name="ResearchRun">
+				<annotations>
+					<id-column value="question"/>
+					<main-properties properties="question,status,finished"/>
+				</annotations>
+				<attributes>
+					<property name="question"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<!-- complete or partial, as the lead reported it. -->
+					<property name="status"
+						type="tl.core:String"
+					/>
+					<!-- quick, standard or deep. -->
+					<property name="effort"
+						type="tl.core:String"
+					/>
+					<!-- When the run tree read its first source. -->
+					<property name="started"
+						type="tl.core:DateTime"
+					/>
+					<property name="finished"
+						type="tl.core:DateTime"
+					/>
+					<!-- What the run tree spent, when it was counted; empty otherwise. -->
+					<property name="tokens"
+						type="tl.core:Long"
+					/>
+					<!--
+						The report as a self-contained HTML document: the text with its footnotes and
+						the sources it cites, linked. What the side pane shows and what is downloaded;
+						what was read and not cited is in alsoRead, which the pane folds away.
+					-->
+					<property name="document"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<property name="plan"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<!-- The report as the lead wrote it, Markdown with links to its sources. -->
+					<property name="report"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+					<reference name="citedSources"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="ResearchSource"
+					/>
+					<reference name="findings"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="ResearchFinding"
+					/>
+					<!-- Sources the run tree read that the report does not cite. -->
+					<reference name="alsoRead"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="ResearchSource"
+					>
+						<annotations>
+							<collapsed/>
+						</annotations>
+					</reference>
+					<!-- Findings whose source the report does not cite. -->
+					<reference name="otherFindings"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="ResearchFinding"
+					>
+						<annotations>
+							<collapsed/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!-- A source a research run read: a web page, or an object of the application. -->
+			<class name="ResearchSource">
+				<annotations>
+					<main-properties properties="title,url,readAt"/>
+				</annotations>
+				<attributes>
+					<property name="title"
+						type="tl.core:String"
+					/>
+					<property name="url"
+						type="tl.core:String"
+					/>
+					<!-- The source kind of the reading list: web, object, or one an application declared. -->
+					<property name="kind"
+						type="tl.core:String"
+					/>
+					<!-- Where the copy the run read is kept, for a web page. -->
+					<property name="archive"
+						type="tl.core:String"
+					/>
+					<property name="readAt"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!-- A finding a research run recorded: a claim and the words of its source. -->
+			<class name="ResearchFinding">
+				<annotations>
+					<main-properties properties="findingId,claim,quote,source"/>
+				</annotations>
+				<attributes>
+					<property name="findingId"
+						type="tl.core:String"
+					/>
+					<property name="claim"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<property name="quote"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<property name="source"
+						type="tl.core:String"
+					/>
+					<property name="recordedBy"
+						type="tl.core:String"
+					/>
+				</attributes>
+			</class>
+
 		</types>
 	</module>
 </model>

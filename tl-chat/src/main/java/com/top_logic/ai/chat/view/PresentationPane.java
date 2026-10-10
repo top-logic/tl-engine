@@ -5,14 +5,21 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -20,6 +27,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.chartjs.ChartElement;
@@ -38,6 +46,9 @@ import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.layout.view.element.FieldElement;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.FormLayoutOptions;
+import com.top_logic.layout.view.element.GroupElement;
+import com.top_logic.layout.view.element.HtmlDisplay;
+import com.top_logic.layout.view.element.HtmlElement;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
@@ -49,8 +60,10 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.display.CollapsedDisplay;
 import com.top_logic.tl.ai.core.tools.present.ChartData;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
@@ -69,6 +82,15 @@ import com.top_logic.util.Resources;
  * {@link PaneCharts}). Data a query computed - a count per group, several series - is a chart over
  * the same configuration, or a table with a column for the labels and one per series. An
  * application no longer wires the pane to its types.
+ * </p>
+ *
+ * <p>
+ * <b>What the model says about a form.</b> Two annotations of the model change a form, and nothing
+ * else does: a composition annotated {@code <collapsed/>} ({@link CollapsedDisplay}) is shown in a
+ * group of its own, closed, and a binary attribute whose value is an HTML document is shown below its
+ * field - read in place, in the pane's typography, and still downloadable from the field. A
+ * research run is shown this way: its report, then its cited sources, and what it read and did not
+ * cite folded away.
  * </p>
  *
  * <p>
@@ -107,6 +129,20 @@ final class PresentationPane {
 
 	/** The step's own channel holding the object a form shows. */
 	private static final String OBJECT = "chatPaneObject";
+
+	/** The prefix of the step's own channels holding an HTML document a form shows. */
+	private static final String DOCUMENT = "chatPaneDocument";
+
+	/** The content type of a binary value the pane shows as a document. */
+	private static final String HTML_TYPE = "text/html";
+
+	/**
+	 * The class of an element of an HTML document that is in the download only, not in the pane.
+	 */
+	public static final String DOWNLOAD_ONLY = "download-only";
+
+	/** The class of a composition's table in a group that already names the composition. */
+	private static final String GROUPED_TABLE = "tl-chat-pane__grouped-table";
 
 	/** The chart handler that opens a clicked point's object. */
 	private static final String OPEN_HANDLER = "open";
@@ -392,6 +428,7 @@ final class PresentationPane {
 		ViewChannel shown = new DefaultViewChannel(OBJECT);
 		shown.set(object);
 		ViewContext context = stepContext(id).withLocalChannel(OBJECT, shown);
+		int documents = 0;
 
 		FormElement.Config form = TypedConfiguration.newConfigItem(FormElement.Config.class);
 		set(form, FormElement.Config.INPUT, new ChannelRef(OBJECT));
@@ -401,8 +438,13 @@ final class PresentationPane {
 		List<PolymorphicConfiguration<? extends UIElement>> compositions = new ArrayList<>();
 		for (TLStructuredTypePart part : PaneLayouts.ordered(object.tType())) {
 			if (PaneLayouts.isComposition(part)) {
+				boolean collapsed = CollapsedDisplay.isCollapsed(part);
 				CompositionTableElement.Config table =
 					TypedConfiguration.newConfigItem(CompositionTableElement.Config.class);
+				if (collapsed) {
+					// The group names the composition; the stylesheet hides the table's own title.
+					set(table, UIElement.Config.CSS_CLASS, GROUPED_TABLE);
+				}
 				set(table, CompositionTableElement.Config.ATTRIBUTE, part.getName());
 				if (part.getType() instanceof TLStructuredType partType) {
 					List<String> columns = PaneLayouts.columns(partType);
@@ -410,11 +452,35 @@ final class PresentationPane {
 						set(table, CompositionTableElement.Config.COLUMNS, columnsConfig(columns));
 					}
 				}
-				compositions.add(table);
+				if (collapsed) {
+					// Parts the reader opens when they want them: in a group of their own, closed.
+					GroupElement.Config group = TypedConfiguration.newConfigItem(GroupElement.Config.class);
+					set(group, GroupElement.Config.LABEL, TLModelI18N.getI18NKey(part));
+					set(group, GroupElement.Config.COLLAPSIBLE, Boolean.TRUE);
+					set(group, GroupElement.Config.COLLAPSED, Boolean.TRUE);
+					set(group, GroupElement.Config.CHILDREN, List.of(table));
+					compositions.add(group);
+				} else {
+					compositions.add(table);
+				}
 			} else {
 				FieldElement.Config field = TypedConfiguration.newConfigItem(FieldElement.Config.class);
 				set(field, FieldElement.Config.ATTRIBUTE, part.getName());
 				fields.add(field);
+				String html = htmlDocument(object, part);
+				if (html != null) {
+					// A document is read, not downloaded first: its content is shown below its
+					// field, which keeps the download, in the pane's own typography - so it
+					// follows the theme and scrolls with the pane rather than in a frame of its own.
+					String channel = DOCUMENT + documents++;
+					ViewChannel document = new DefaultViewChannel(channel);
+					document.set(html);
+					context = context.withLocalChannel(channel, document);
+					HtmlElement.Config view = TypedConfiguration.newConfigItem(HtmlElement.Config.class);
+					set(view, HtmlElement.Config.INPUT, new ChannelRef(channel));
+					set(view, HtmlElement.Config.DISPLAY, HtmlDisplay.INLINE);
+					fields.add(view);
+				}
 			}
 		}
 		// The fields first, the parts below them: a composition is a table of its own.
@@ -423,6 +489,46 @@ final class PresentationPane {
 
 		ReactControl control = control(form, context);
 		return new Step(id, value, PresentAs.FORM, MetaLabelProvider.INSTANCE.getLabel(object), control, null);
+	}
+
+	/**
+	 * The content of a binary attribute's value when it is an HTML document - the inside of its
+	 * {@code <body>}, which the pane shows in place; {@code null} for every other attribute and value.
+	 *
+	 * <p>
+	 * Only the body: the document's own styles would apply to the whole page, and the pane gives the
+	 * content its own typography. What the content may contain is decided where it is shown, by the
+	 * application's HTML safety check.
+	 * </p>
+	 *
+	 * <p>
+	 * An element of class {@value #DOWNLOAD_ONLY} is left out: it is in the document for the reader of
+	 * the download, and the form already shows what it says as fields - the title and the date of a
+	 * report, for example.
+	 * </p>
+	 */
+	static String htmlDocument(TLObject object, TLStructuredTypePart part) {
+		Object value = object.tValue(part);
+		if (!(value instanceof BinaryDataSource binary)) {
+			return null;
+		}
+		String type = binary.getContentType();
+		if (type == null || !type.toLowerCase(Locale.ROOT).startsWith(HTML_TYPE)) {
+			return null;
+		}
+		try (InputStream in = binary.toData().getStream()) {
+			return inPlace(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+		} catch (IOException ex) {
+			Logger.error("Cannot read the HTML document of " + part.getName() + ".", ex, PresentationPane.class);
+			return null;
+		}
+	}
+
+	/** What the pane shows of an HTML document: its body, without what is for the download only. */
+	static String inPlace(String document) {
+		Element body = Jsoup.parse(document).body();
+		body.select("." + DOWNLOAD_ONLY).remove();
+		return body.html();
 	}
 
 	private Step table(Object value, List<TLObject> rows, String title) {

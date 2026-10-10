@@ -198,7 +198,7 @@ public class TestFindingTools extends TestCase {
 		for (Tool tool : AnnotatedTools.from(new FindingTools())) {
 			tools.put(tool.name(), tool);
 		}
-		assertEquals(Set.of("recordFinding", "listFindings", "readSource"), tools.keySet());
+		assertEquals(Set.of("recordFinding", "listFindings", "readSource", "saveReport"), tools.keySet());
 		for (Tool tool : tools.values()) {
 			assertEquals(tool.name(), ToolMode.READ, tool.mode());
 			assertEquals(tool.name(), ToolGroups.INTERACTION, tool.group());

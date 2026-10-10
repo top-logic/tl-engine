@@ -44,8 +44,8 @@ public class TestBudgetAllowance extends TestCase {
 	/** Everything the provider read and wrote counts, cached prompt included. */
 	public void testEveryComponentOfTheUsageCounts() {
 		BudgetAllowance allowance = BudgetAllowance.of(1000);
-		allowance.record(new TokenUsage(10, 20, 30, 40, 50), null);
-		assertEquals("10 input + 20 output + 30 thinking + 40 cache read + 50 cache write.",
+		allowance.record(new TokenUsage(10, 50, 30, 40, 50), null);
+		assertEquals("10 input + 50 output (30 of them thinking) + 40 cache read + 50 cache write.",
 			150, allowance.spentTokens());
 		assertFalse(allowance.exhausted());
 	}

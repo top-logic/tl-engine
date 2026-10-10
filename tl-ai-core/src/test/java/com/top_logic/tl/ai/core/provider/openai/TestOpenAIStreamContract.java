@@ -5,11 +5,15 @@
  */
 package com.top_logic.tl.ai.core.provider.openai;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractProviderStreamTest;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
@@ -36,6 +40,27 @@ public class TestOpenAIStreamContract extends AbstractProviderStreamTest {
 	@Override
 	protected List<StreamEvent> parseStream(InputStream sse) throws Exception {
 		return _provider.parse(sse);
+	}
+
+	/**
+	 * A reasoning model's tokens count once against the budget: the Responses API states
+	 * {@code reasoning_tokens} as a breakdown of {@code output_tokens}, not beside them (#730).
+	 */
+	public void testReasoningTokensCountOnceAgainstTheBudget() throws Exception {
+		TokenUsage usage = null;
+		for (StreamEvent event : parseStream(new ByteArrayInputStream(
+			cannedThinkingSSE().getBytes(StandardCharsets.UTF_8)))) {
+			if (event instanceof StreamEvent.MessageComplete complete) {
+				usage = complete.usage();
+			}
+		}
+		assertNotNull(usage);
+		assertEquals("The reasoning share is reported.", 10, usage.thinkingTokens());
+		assertEquals("12 input + 15 output, of which 10 were reasoning.", 27, usage.totalTokens());
+
+		BudgetAllowance allowance = BudgetAllowance.of(1000);
+		allowance.record(usage, null);
+		assertEquals(27, allowance.spentTokens());
 	}
 
 	@Override

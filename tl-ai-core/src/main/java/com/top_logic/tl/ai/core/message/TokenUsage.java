@@ -16,9 +16,14 @@ package com.top_logic.tl.ai.core.message;
  * (<code>OpenAI</code>-style {@code prompt_tokens}) must subtract the cached share when constructing
  * this record. Use {@link #promptTokens()} for the full prompt size.</p>
  *
+ * <p><b>Convention:</b> {@code thinkingTokens} is the share of {@code outputTokens} the model spent
+ * on reasoning, not a count beside it - which is how every provider that reports it states it
+ * (<code>OpenAI</code>'s {@code output_tokens_details.reasoning_tokens}). A provider that reports
+ * reasoning separately must add it to {@code outputTokens} when constructing this record.</p>
+ *
  * @param inputTokens      non-cached tokens in the request (prompt)
- * @param outputTokens     tokens in the response (completion)
- * @param thinkingTokens   tokens used for extended thinking (0 if not supported)
+ * @param outputTokens     tokens in the response (completion), reasoning included
+ * @param thinkingTokens   the share of {@code outputTokens} spent on reasoning (0 if not reported)
  * @param cacheReadTokens  tokens read from provider cache
  * @param cacheWriteTokens tokens written to provider cache
  */
@@ -44,7 +49,7 @@ public record TokenUsage(
 	 * @param cacheInclusivePromptTokens the provider's raw prompt-token count, including cache
 	 * @param cacheReadTokens            tokens read from cache, out of the total above
 	 * @param outputTokens               tokens in the response
-	 * @param thinkingTokens             tokens used for extended thinking, or 0
+	 * @param thinkingTokens             the share of {@code outputTokens} spent on reasoning, or 0
 	 */
 	public static TokenUsage fromCacheInclusivePrompt(int cacheInclusivePromptTokens,
 			int cacheReadTokens, int outputTokens, int thinkingTokens) {
@@ -64,10 +69,12 @@ public record TokenUsage(
 	}
 
 	/**
-	 * Total tokens consumed (full prompt + output + thinking).
+	 * Total tokens consumed: the full prompt plus the output.
+	 *
+	 * <p>Thinking is not added: it is a part of {@link #outputTokens()} already (#730).</p>
 	 */
 	public int totalTokens() {
-		return promptTokens() + outputTokens + thinkingTokens;
+		return promptTokens() + outputTokens;
 	}
 
 	/**

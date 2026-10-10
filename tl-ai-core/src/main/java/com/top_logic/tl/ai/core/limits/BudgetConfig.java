@@ -79,9 +79,9 @@ public interface BudgetConfig extends ConfigPart {
 	 *
 	 * <p>
 	 * The figure counted is everything the provider was asked to read and write - prompt including
-	 * its cached part, output and thinking - summed over the account's recorded runs. It therefore
-	 * needs run recording to be on; an installation that records nothing has nothing to count and
-	 * this limit does nothing.
+	 * its cached part, and output including reasoning - summed over the account's recorded runs. It
+	 * therefore needs run recording to be on; an installation that records nothing has nothing to
+	 * count and this limit does nothing.
 	 * </p>
 	 *
 	 * <p>

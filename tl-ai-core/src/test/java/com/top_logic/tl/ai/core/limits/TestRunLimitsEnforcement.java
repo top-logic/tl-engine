@@ -210,7 +210,7 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 	public void testTheHeadroomComesFromTheRecordedRuns() {
 		Person mine = freshAccount();
 		Person other = freshAccount();
-		record(mine, new TokenUsage(300, 100, 50, 20, 30));
+		record(mine, new TokenUsage(300, 150, 50, 20, 30));
 		record(other, new TokenUsage(9000, 0, 0, 0, 0));
 
 		try (RunLimitSettings.Overridden config = RunLimitSettings.override(budget(1000))) {

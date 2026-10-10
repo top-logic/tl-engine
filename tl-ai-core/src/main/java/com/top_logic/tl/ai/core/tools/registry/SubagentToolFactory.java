@@ -12,8 +12,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.tools.interaction.CancelSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
+import com.top_logic.tl.ai.core.tools.interaction.SendToSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentStatusTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
@@ -23,8 +25,10 @@ import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 /**
  * A {@link ToolFactory} that provides the generic asynchronous-subagent orchestration tools:
  * {@link SpawnSubagentTool spawn_subagent} (fire-and-forget spawn), {@link ListAgentsTool
- * list_agents}, {@link SubagentStatusTool subagent_status} (non-blocking status probe) and
- * {@link WaitForSubagentTool wait_for_subagent} (opt-in blocking join).
+ * list_agents}, {@link SubagentStatusTool subagent_status} (non-blocking status probe),
+ * {@link WaitForSubagentTool wait_for_subagent} (opt-in blocking join), {@link SendToSubagentTool
+ * send_to_subagent} (a message a running subagent reads at its next turn) and {@link CancelSubagentTool
+ * cancel_subagent} (stop one).
  *
  * <p>
  * These tools are independent of the pre-wired {@link DelegationTool delegation} flow: any agent
@@ -77,7 +81,9 @@ public class SubagentToolFactory implements ToolFactory {
 			new SpawnSubagentTool(LOOP_FACTORY),
 			new ListAgentsTool(),
 			new SubagentStatusTool(),
-			new WaitForSubagentTool());
+			new WaitForSubagentTool(),
+			new SendToSubagentTool(),
+			new CancelSubagentTool());
 	}
 
 }

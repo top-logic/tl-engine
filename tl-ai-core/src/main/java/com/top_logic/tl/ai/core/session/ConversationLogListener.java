@@ -153,6 +153,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleRunStarted(e);
 		} else if (event instanceof AgentEvent.RunCompleted e) {
 			handleRunCompleted(e);
+		} else if (event instanceof AgentEvent.LeadMessageDelivered e) {
+			recordLeadMessage(e.text());
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
 		} else if (event instanceof AgentEvent.ContextComposition e) {
@@ -675,6 +677,29 @@ public class ConversationLogListener implements AgentEventListener {
 		turn.addAssistantPart(new Part.SystemPart(
 			UUID.randomUUID().toString(), Instant.now(),
 			Part.SystemEventType.SUBAGENT_RESULT, text));
+	}
+
+	/**
+	 * Records the message of a subagent's lead that the subagent read at the start of a turn.
+	 *
+	 * <p>
+	 * A {@link Part.SystemEventType#LEAD_MESSAGE} part, for the reason
+	 * {@link #recordSubagentResultsDelivered(String)} gives. Recorded from the
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} event rather than
+	 * through the thread-bound listener: on a subagent's thread that one records the lead's log, and
+	 * the message belongs in the subagent's.
+	 * </p>
+	 */
+	private void recordLeadMessage(String text) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return;
+		}
+		flushTextBuffer(turn);
+		flushThinkingBuffer(turn);
+		turn.addAssistantPart(new Part.SystemPart(
+			UUID.randomUUID().toString(), Instant.now(),
+			Part.SystemEventType.LEAD_MESSAGE, text));
 	}
 
 	/**

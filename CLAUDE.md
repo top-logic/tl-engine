@@ -472,6 +472,15 @@ id, agent, task, parent call, run id, end state, a short summary - written at st
 never the child's steps (owner decision D5); a reloaded conversation rebuilds the card from it, and
 `GET /chat/subagents/{id}/transcript?runId=` opens the recorded run when the server holds no job.
 
+The lead steers a running child with `send_to_subagent` and stops it with `cancel_subagent` (#705).
+A message goes into the job's `SubagentInbox`, which the spawner binds on the child's thread;
+`AgentLoop.injectLeadMessages` drains it at the start of each child turn into one user message opening
+with "[Message from the lead agent]", announced as `AgentEvent.LeadMessageDelivered`, which is what
+records it as a `LEAD_MESSAGE` part in the child's own log (the thread-bound listener on a child's
+thread records the lead's log) and what replay turns back into the same message. The inbox closes when
+the job ends, so a late message is refused rather than left unread; text only, it changes no tool, right
+or model.
+
 ## Project Structure
 
 Standard Maven layout. Key package roots:

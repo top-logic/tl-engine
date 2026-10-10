@@ -541,6 +541,23 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
+	 * Emitted when a background subagent reads what the agent that started it sent it, at the start of
+	 * one of its turns.
+	 *
+	 * <p>
+	 * The text is verbatim what the subagent's model is shown, as a user message; a log recording the
+	 * subagent's run keeps it, so that its replayed transcript holds the message at the same place.
+	 * </p>
+	 *
+	 * @param runId      the subagent's run identifier
+	 * @param turnNumber the turn that read it
+	 * @param timestamp  when it was read
+	 * @param text       the text the model is shown
+	 */
+	record LeadMessageDelivered(String runId, int turnNumber, Instant timestamp, String text)
+			implements AgentEvent {}
+
+	/**
 	 * Emitted when a subagent job finishes successfully.
 	 *
 	 * @param runId      agent run identifier

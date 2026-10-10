@@ -244,11 +244,16 @@ public class SubagentJobRegistry {
 				terminal = SubagentJobStatus.DONE;
 			} catch (java.util.concurrent.CancellationException cancelled) {
 				terminal = SubagentJobStatus.CANCELLED;
-				result = new SubagentResult("Cancelled.", TokenUsage.EMPTY, 0L, 0, StopReason.ABORTED);
+				String reason = job.cancelReason();
+				result = new SubagentResult(
+					reason == null || reason.isBlank() ? "Cancelled." : "Cancelled by the lead agent: " + reason,
+					TokenUsage.EMPTY, 0L, 0, StopReason.ABORTED);
 			} catch (Exception e) {
 				terminal = SubagentJobStatus.FAILED;
 				result = new SubagentResult("ERROR: " + e.getMessage(), TokenUsage.EMPTY, 0L, 0, StopReason.ERROR);
 			}
+			// Before the job reads as ended: a message sent from then on is refused, not left unread.
+			job.inbox().close();
 			job.markTerminal(terminal, result);
 			listener.finished(job);
 			synchronized (_completionLock) {

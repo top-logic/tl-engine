@@ -27,6 +27,7 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInboxBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -162,7 +163,9 @@ public class SubagentSpawner {
 					// that is shown nowhere and answered by nobody. The job's store lives as long as
 					// the job and names the child as the one asking.
 					UserInteractionStoreBinding.Binding ownStore =
-						UserInteractionStoreBinding.bind(j.interactionStore())) {
+						UserInteractionStoreBinding.bind(j.interactionStore());
+					// What the lead sends it, read at the start of each of its turns.
+					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox())) {
 
 					Instant start = Instant.now();
 

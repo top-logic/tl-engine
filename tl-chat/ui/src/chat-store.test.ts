@@ -490,6 +490,144 @@ describe('context facts', () => {
 })
 
 describe('the stream', () => {
+  /*
+   * A background subagent asks while its lead may be resting (#695). The card has to say whose
+   * question it is, so the store keeps who asks - from the question frame, and for an approval from
+   * the subagent id of the delegation frame, named through the subagent list.
+   */
+  it('keeps which subagent asks a question or an approval', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'researcher' })
+    stream.emit('user_interaction', {
+      requestId: 'interaction-x-1',
+      question: 'Which region?',
+      type: 'text',
+      askedBySubagentId: 'sa-2',
+      askedByAgent: 'researcher',
+    })
+    stream.emit('delegation_event', {
+      subagentId: 'sa-2',
+      eventType: 'approval_required',
+      eventData: JSON.stringify({ approvalRequestId: 'ap-1', toolName: 'createObject', argsJson: '{}' }),
+    })
+    stream.emit('user_interaction', { requestId: 'interaction-y-1', question: 'Main agent asks', type: 'text' })
+
+    const messages = store.getState().messages
+    expect(messages.find((m) => m.id === 'interaction-x-1')).toMatchObject({
+      askedBy: { subagentId: 'sa-2', agent: 'researcher' },
+    })
+    expect(messages.find((m) => m.id === 'ap-1')).toMatchObject({
+      askedBy: { subagentId: 'sa-2', agent: 'researcher' },
+    })
+    expect(messages.find((m) => m.id === 'interaction-y-1')).not.toHaveProperty('askedBy.subagentId')
+
+    await settle()
+    release()
+  })
+
+  /*
+   * Two subagents at work: each one's steps and text go to its own card, none into the lead's
+   * transcript, where they used to be drawn flat and nameless (#702). Its approval still reaches the
+   * prompt stack.
+   */
+  it('keeps each subagent\'s steps and text apart from the transcript', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const child = (subagentId: string, eventType: string, data: unknown) =>
+      stream.emit('delegation_event', { subagentId, eventType, eventData: JSON.stringify(data) })
+
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'writer', detail: 'draft Y', parentToolCallId: 'call-2' })
+    child('sa-1', 'turn_started', { turnNumber: 1 })
+    child('sa-1', 'text_delta', { text: 'Searching first.' })
+    child('sa-1', 'tool_started', { toolCallId: 't1', toolName: 'webSearch', argsJson: '{"q":"X"}' })
+    child('sa-2', 'tool_started', { toolCallId: 't2', toolName: 'query', argsJson: '{}' })
+    child('sa-2', 'tool_completed', { toolCallId: 't2', toolName: 'query' })
+    child('sa-2', 'approval_required', { approvalRequestId: 'ap-1', toolName: 'createObject', argsJson: '{}' })
+
+    const state = store.getState()
+    expect(state.subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({ parentToolCallId: 'call-1', task: 'find X' })
+    expect(state.subagentLive['sa-1'].steps).toEqual([
+      { toolUseId: 't1', name: 'webSearch', summary: '{"q":"X"}', status: 'running' },
+    ])
+    expect(state.subagentLive['sa-1'].turns).toBe(1)
+    expect(state.subagentLive['sa-2'].steps).toEqual([
+      { toolUseId: 't2', name: 'query', summary: '{}', status: 'done' },
+    ])
+    expect(state.messages.some((m) => m.type === 'tool_call')).toBe(false)
+    expect(state.messages.find((m) => m.id === 'ap-1')).toMatchObject({ askedBy: { subagentId: 'sa-2', agent: 'writer' } })
+
+    // The end frame names no agent; the card keeps the name it had.
+    stream.emit('subagent_completed', { subagentId: 'sa-1', targetAgentName: '', detail: 'X is 42.' })
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({
+      targetAgentName: 'researcher',
+      status: 'DONE',
+      task: 'find X',
+    })
+
+    await settle()
+    release()
+  })
+
+  /* A subagent beyond the cap waits; its card says so until its first own step arrives. */
+  it('shows a queued subagent as waiting until it starts', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-5', targetAgentName: 'researcher', detail: 'find X', queued: true })
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({ status: 'QUEUED', task: 'find X' })
+
+    stream.emit('delegation_event', { subagentId: 'sa-5', eventType: 'turn_started', eventData: '{"turnNumber":1}' })
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({
+      status: 'RUNNING',
+      targetAgentName: 'researcher',
+      task: 'find X',
+    })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * Subagents reported back while the agent was idle, and the server started a turn for them: the
+   * line opens that turn, ahead of its run; when no more are started, the strip says so.
+   */
+  it('opens a turn started for subagent news with the wake line', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('lead_woken', { finished: 1, asking: 0 })
+    stream.emit('run_started', { runId: 'r9' })
+    stream.emit('turn_started', {})
+    stream.emit('message_complete', { contentText: 'Der Subagent hat X gefunden.' })
+
+    const messages = store.getState().messages
+    const woken = messages.findIndex((m) => m.type === 'notice' && m.kind === 'lead_woken')
+    expect(woken).toBeGreaterThanOrEqual(0)
+    expect(woken).toBeLessThan(messages.findIndex((m) => m.type === 'assistant_text'))
+    expect(store.getState().busy).toBe(false)
+
+    stream.emit('lead_wakes_exhausted', { wakes: 5 })
+    expect(store.getState().notice).toBe(bundle(BOOT.language).leadWakesExhausted)
+
+    await settle()
+    release()
+  })
+
   it('drives the run state and the transcript', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)

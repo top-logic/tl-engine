@@ -24,10 +24,12 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -231,7 +233,10 @@ public class DelegationTool implements Tool {
 
 			AgentResult result;
 			try {
-				result = targetLoop.run(conversation, childContext, effectiveChildListener);
+				// The delegate's conversation is its own and may outgrow its model's window: it
+				// compacts like a chat run instead of ending in an overflow.
+				result = targetLoop.run(conversation, CompactionStrategies.forDefaultModel(), childContext,
+					effectiveChildListener);
 			} catch (RuntimeException e) {
 				if (recorder != null) {
 					recorder.complete(null, e);
@@ -251,7 +256,10 @@ public class DelegationTool implements Tool {
 				logListener.resolveDelegation(delegationId, truncate(finalText, 200), childRunId,
 					durationMs, result);
 			}
-			return ToolResult.of(finalText + formatDelegationMeta(result));
+			// The delegate's text is data for this run, not an instruction to it: the delegate may
+			// repeat what it read.
+			return ToolResult.of(SubagentResultDelivery.report("delegate " + _targetAgentName, finalText)
+				+ formatDelegationMeta(result));
 		} catch (Exception e) {
 			if (logListener != null && delegationId != null) {
 				long durationMs = Duration.between(startTime, Instant.now()).toMillis();

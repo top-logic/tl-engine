@@ -111,7 +111,13 @@ export interface ErrorMessage {
  * `cancelled` - the user stopped the run.
  * `interrupted` - the server restarted before the run finished, and nobody can continue it (#598).
  */
-export type NoticeKind = 'model_switched' | 'transaction_rolled_back' | 'cancelled' | 'interrupted'
+export type NoticeKind =
+  | 'model_switched'
+  | 'transaction_rolled_back'
+  | 'cancelled'
+  | 'interrupted'
+  /** A turn of the agent that no message of the user started: its subagents reported back. */
+  | 'lead_woken'
 
 /**
  * Something that happened around the conversation rather than in it.
@@ -136,6 +142,19 @@ export interface NoticeMessage {
   timestamp: number
 }
 
+/**
+ * The background subagent that asks, when it is not the agent the user talks to.
+ *
+ * A subagent works on after its lead's turn has ended, so its question can arrive while the chat
+ * looks idle; the card names it, or the user answers a worker believing the main agent asked.
+ */
+export interface Asker {
+  /** The subagent's id within the chat, e.g. `sa-2`. */
+  subagentId: string
+  /** The agent the subagent runs; may be empty when only the id is known. */
+  agent: string
+}
+
 export interface ApprovalRequest {
   type: 'approval_request'
   id: string
@@ -158,6 +177,7 @@ export interface ApprovalRequest {
    */
   remainingMs?: number
   receivedAt?: number
+  askedBy?: Asker
 }
 
 export interface InteractionOption {
@@ -179,6 +199,7 @@ export interface InteractionRequest {
   /** @see ApprovalRequest.remainingMs */
   remainingMs?: number
   receivedAt?: number
+  askedBy?: Asker
 }
 
 /**
@@ -207,6 +228,7 @@ export type ChatMessage =
   | ApprovalRequest
   | InteractionRequest
   | RunMeta
+  | SubagentRef
 
 export interface AgentOption {
   /** The identifier: what a request names and what a persisted session holds. */
@@ -295,6 +317,55 @@ export interface SubagentActivity {
   totalTokens: number
   durationMs: number
   hasTranscript: boolean
+  /** The id of the lead's tool call that started it - where its card is drawn. */
+  parentToolCallId?: string
+  /** The task brief it was given. */
+  task?: string
+}
+
+/** One tool call of a running subagent, as its card lists it. */
+export interface SubagentStep {
+  toolUseId: string
+  name: string
+  /** The start of the call's arguments. */
+  summary: string
+  status: ToolCallStatus
+}
+
+/**
+ * What a running subagent has done so far, kept from its live events.
+ *
+ * Kept apart from {@link SubagentActivity}, which the server's list replaces wholesale: a refresh of
+ * the list must not wipe the steps a card is showing.
+ */
+export interface SubagentLive {
+  steps: SubagentStep[]
+  /** The end of the text the child is writing or wrote last. */
+  text: string
+  turns: number
+  /** Tokens of its finished turns. */
+  tokens: number
+  /** Local clock reading when the first event arrived, for the elapsed time. */
+  startedAt: number
+}
+
+/**
+ * A background subagent a turn started, as the lead's recorded log keeps it (`Part.SubagentPart`).
+ *
+ * What rebuilds the subagent's card after a reload, when the server no longer holds the job.
+ */
+export interface SubagentRef {
+  type: 'subagent_ref'
+  id: string
+  subagentId: string
+  agentName: string
+  task: string
+  parentToolCallId: string
+  /** Its run id, by which its recorded transcript is found; empty while unknown. */
+  childRunId: string
+  status: SubagentStatus
+  summary: string
+  timestamp: number
 }
 
 export interface SubagentStatusEvent {
@@ -303,6 +374,10 @@ export interface SubagentStatusEvent {
   detail?: string
   totalTokens?: number
   durationMs?: number
+  /** On start: the id of the lead's tool call that started it. */
+  parentToolCallId?: string
+  /** On start: it waits in the queue for a free slot; its first own step says it has started. */
+  queued?: boolean
 }
 
 export interface ImprovePromptResponse {

@@ -533,9 +533,49 @@ public sealed interface AgentEvent {
 	 * @param subagentId      the job id within the session
 	 * @param targetAgentName the delegated-to agent definition name
 	 * @param taskBrief       the task the subagent was given
+	 * @param parentToolCallId the id of the parent's tool call that started it, so a UI can show the
+	 *                        subagent at that call; empty if unknown
+	 * @param queued          whether it waits in the queue for a free slot rather than starting at
+	 *                        once; its first own event says it has started
 	 */
 	record SubagentStarted(String runId, int turnNumber, Instant timestamp,
-			String subagentId, String targetAgentName, String taskBrief) implements AgentEvent {}
+			String subagentId, String targetAgentName, String taskBrief, String parentToolCallId,
+			boolean queued)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a lead turn starts without a user message, because subagents it started finished or
+	 * asked it something while no turn of it ran.
+	 *
+	 * <p>
+	 * What a chat draws in place of the user's bubble for such a turn.
+	 * </p>
+	 *
+	 * @param runId      the lead's run identifier, empty before the run has one
+	 * @param turnNumber 0: it precedes the run's turns
+	 * @param timestamp  when the lead was woken
+	 * @param finished   how many subagents' results the turn opens with
+	 * @param asking     how many subagents' questions it opens with
+	 */
+	record LeadWoken(String runId, int turnNumber, Instant timestamp, int finished, int asking)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a background subagent reads what the agent that started it sent it, at the start of
+	 * one of its turns.
+	 *
+	 * <p>
+	 * The text is verbatim what the subagent's model is shown, as a user message; a log recording the
+	 * subagent's run keeps it, so that its replayed transcript holds the message at the same place.
+	 * </p>
+	 *
+	 * @param runId      the subagent's run identifier
+	 * @param turnNumber the turn that read it
+	 * @param timestamp  when it was read
+	 * @param text       the text the model is shown
+	 */
+	record LeadMessageDelivered(String runId, int turnNumber, Instant timestamp, String text)
+			implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job finishes successfully.

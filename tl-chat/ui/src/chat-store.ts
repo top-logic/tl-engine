@@ -59,6 +59,7 @@ import {
   promptTokens,
   type AgentOption,
   type ApprovalOutcome,
+  type Asker,
   type Attachment,
   type ContextFact,
   type Capabilities,
@@ -73,9 +74,11 @@ import {
   type RunSnapshot,
   type SessionSummary,
   type SubagentActivity,
+  type SubagentLive,
   type SubagentStatus,
   type SubagentStatusEvent,
   type TokenUsage,
+  type ToolCallStatus,
   type TraceMode,
 } from './types'
 
@@ -131,6 +134,90 @@ function parseTraceMode(value: unknown): TraceMode {
   return 'summary'
 }
 
+/**
+ * Who asks, when a background subagent does: the id the server sent, with the agent's name taken
+ * from the server or, failing that, from the subagent list the chat already holds.
+ */
+export function asker(
+  subagentId: string | undefined,
+  agent: string | undefined,
+  subagents: SubagentActivity[],
+): Asker | undefined {
+  if (!subagentId) return undefined
+  const known = subagents.find((s) => s.subagentId === subagentId)
+  return { subagentId, agent: agent || known?.targetAgentName || '' }
+}
+
+/** How many steps a card keeps of a running subagent; the rest is in its transcript. */
+const MAX_CHILD_STEPS = 20
+
+/** How much of a running subagent's text its card keeps - the end, the newest. */
+const MAX_CHILD_TEXT = 400
+
+/**
+ * One live event of a background subagent, applied to what its card shows.
+ *
+ * Returns the same object when the event changes nothing the card shows, so the caller can skip the
+ * update.
+ */
+export function applyChildEvent(
+  current: SubagentLive | undefined,
+  eventType: string,
+  data: {
+    toolCallId?: string
+    toolName?: string
+    argsJson?: string
+    text?: string
+    turnNumber?: number
+    turnUsage?: { inputTokens?: number; outputTokens?: number }
+  },
+): SubagentLive {
+  const live: SubagentLive = current ?? { steps: [], text: '', turns: 0, tokens: 0, startedAt: Date.now() }
+  const setStatus = (status: ToolCallStatus): SubagentLive =>
+    data.toolCallId
+      ? {
+          ...live,
+          steps: live.steps.map((step) => (step.toolUseId === data.toolCallId ? { ...step, status } : step)),
+        }
+      : live
+  switch (eventType) {
+    case 'turn_started':
+      return { ...live, turns: Math.max(live.turns, data.turnNumber ?? live.turns + 1) }
+    case 'turn_completed':
+      return {
+        ...live,
+        tokens: live.tokens + (data.turnUsage?.inputTokens ?? 0) + (data.turnUsage?.outputTokens ?? 0),
+      }
+    case 'text_delta': {
+      if (!data.text) return live
+      const text = live.text + data.text
+      return { ...live, text: text.length > MAX_CHILD_TEXT ? text.slice(text.length - MAX_CHILD_TEXT) : text }
+    }
+    case 'tool_started': {
+      if (!data.toolCallId) return live
+      const summary = (data.argsJson ?? '').replace(/\s+/g, ' ').trim()
+      const steps = [
+        ...live.steps,
+        {
+          toolUseId: data.toolCallId,
+          name: data.toolName ?? 'tool',
+          summary: summary.length > 80 ? `${summary.slice(0, 80)}…` : summary,
+          status: 'running' as ToolCallStatus,
+        },
+      ]
+      // A new step starts a new thought: the text the card shows is what the child wrote since.
+      return { ...live, text: '', steps: steps.slice(Math.max(0, steps.length - MAX_CHILD_STEPS)) }
+    }
+    case 'tool_completed':
+      return setStatus('done')
+    case 'tool_failed':
+    case 'tool_denied':
+      return setStatus('error')
+    default:
+      return live
+  }
+}
+
 function mergeSubagent(
   current: SubagentActivity[],
   event: SubagentStatusEvent,
@@ -140,12 +227,17 @@ function mergeSubagent(
   const previous = index >= 0 ? current[index] : undefined
   const next: SubagentActivity = {
     subagentId: event.subagentId,
-    targetAgentName: event.targetAgentName ?? previous?.targetAgentName ?? 'Subagent',
+    // `||`, not `??`: the end frames carry an empty name, which must not replace the known one.
+    targetAgentName: event.targetAgentName || previous?.targetAgentName || 'Subagent',
     status,
     detail: event.detail ?? previous?.detail ?? '',
     totalTokens: event.totalTokens ?? previous?.totalTokens ?? 0,
     durationMs: event.durationMs ?? previous?.durationMs ?? 0,
-    hasTranscript: status === 'DONE' || previous?.hasTranscript === true,
+    // A running child's live log answers too, so its transcript opens from the start.
+    hasTranscript: status !== 'CANCELLED' || previous?.hasTranscript === true,
+    parentToolCallId: event.parentToolCallId || previous?.parentToolCallId,
+    // The detail of a start event is the task; later events carry the result there instead.
+    task: previous?.task ?? (status === 'RUNNING' || status === 'QUEUED' ? event.detail : undefined),
   }
   if (index < 0) return [...current, next]
   return current.map((item, itemIndex) => (itemIndex === index ? next : item))
@@ -341,6 +433,8 @@ export interface ChatState {
   busy: boolean
   regenerating: boolean
   subagents: SubagentActivity[]
+  /** What each running subagent has done so far, by subagent id - what its card shows live. */
+  subagentLive: Record<string, SubagentLive>
   tasks: AgentTask[]
   connection: ConnectionState
   notice: string
@@ -479,7 +573,7 @@ export interface ChatActions {
   toggleAutoApprove(): Promise<void>
   cancelSubagent(id: string): Promise<void>
   stopSubagents(): Promise<void>
-  loadSubagentTranscript(id: string): Promise<ChatMessage[]>
+  loadSubagentTranscript(id: string, runId?: string): Promise<ChatMessage[]>
   openPane(content: ReactNode, options: PaneOpenOptions): void
   closePane(): void
   /** Closes whatever the side is showing - what a click beside a sheet means. */
@@ -863,6 +957,7 @@ export class ChatStore {
       busy: false,
       regenerating: false,
       subagents: [],
+      subagentLive: {},
       tasks: [],
       connection: 'connecting',
       notice: '',
@@ -1410,6 +1505,8 @@ export class ChatStore {
           options?: { label: string; description?: string }[]
           multiSelect?: boolean
           remainingMs?: number
+          askedBySubagentId?: string
+          askedByAgent?: string
         }>(e.data, {})
         if (!data.requestId) return
         this.dispatch({
@@ -1421,10 +1518,26 @@ export class ChatStore {
           options: data.options,
           multiSelect: data.multiSelect,
           remainingMs: data.remainingMs,
+          askedBy: asker(data.askedBySubagentId, data.askedByAgent, this.state.subagents),
         })
       })
       on('delegation_event', (e) => {
-        const wrap = parseJson<{ eventType?: string; eventData?: string }>(e.data, {})
+        const wrap = parseJson<{ eventType?: string; eventData?: string; subagentId?: string }>(e.data, {})
+        // A background subagent's own steps go to its card, never into the lead's transcript: mixed
+        // into it they were drawn flat, nameless, and among the steps of every other child.
+        // Its approvals still reach the prompt stack below, where the user answers them.
+        if (wrap.subagentId && wrap.eventType !== 'approval_required' && wrap.eventType !== 'approval_resolved') {
+          const id = wrap.subagentId
+          // A queued subagent's first own step is the news that it has started.
+          if (this.state.subagents.some((item) => item.subagentId === id && item.status === 'QUEUED')) {
+            this.patch({ subagents: mergeSubagent(this.state.subagents, { subagentId: id }, 'RUNNING') })
+          }
+          const live = applyChildEvent(this.state.subagentLive[id], wrap.eventType ?? '', parseJson(wrap.eventData ?? '', {}))
+          if (live !== this.state.subagentLive[id]) {
+            this.patch({ subagentLive: { ...this.state.subagentLive, [id]: live } })
+          }
+          return
+        }
         const data = parseJson<{
           toolCallId?: string
           toolName?: string
@@ -1505,6 +1618,8 @@ export class ChatStore {
               displayReason: data.displayReason ?? '',
               toolMode: data.toolMode,
               remainingMs: data.remainingMs,
+              // A background subagent asks for this approval, not the agent the user talks to.
+              askedBy: asker(wrap.subagentId, undefined, this.state.subagents),
             })
             break
           default:
@@ -1513,7 +1628,16 @@ export class ChatStore {
       })
       on('subagent_started', (e) => {
         const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
-        if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, 'RUNNING') })
+        if (data.subagentId) {
+          this.patch({ subagents: mergeSubagent(this.state.subagents, data, data.queued ? 'QUEUED' : 'RUNNING') })
+        }
+      })
+      on('lead_woken', () => {
+        // Ahead of the turn's run_started: the line opens the turn in place of the user's bubble.
+        this.dispatch({ type: 'ADD_NOTICE', kind: 'lead_woken', detail: '' })
+      })
+      on('lead_wakes_exhausted', () => {
+        this.showNotice(this.labels.leadWakesExhausted, '', { tone: 'info' })
       })
       on('subagent_completed', (e) => {
         const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
@@ -1806,6 +1930,7 @@ export class ChatStore {
           displayReason: item.prompt,
           toolMode: item.toolMode,
           remainingMs: item.remainingMs,
+          askedBy: asker(item.askedBySubagentId, item.askedByAgent, this.state.subagents),
         })
         continue
       }
@@ -1822,6 +1947,7 @@ export class ChatStore {
         options: item.options.length > 0 ? item.options : undefined,
         multiSelect: item.multiSelect,
         remainingMs: item.remainingMs,
+        askedBy: asker(item.askedBySubagentId, item.askedByAgent, this.state.subagents),
       })
     }
   }
@@ -1934,6 +2060,7 @@ export class ChatStore {
         this.patch({
           busy: false,
           subagents: [],
+      subagentLive: {},
           tasks: [],
           feedback: [],
           notice: '',
@@ -1993,6 +2120,7 @@ export class ChatStore {
         this.patch({
           sessionId: null,
           subagents: [],
+      subagentLive: {},
           tasks: [],
           feedback: [],
           notice: '',
@@ -2010,6 +2138,7 @@ export class ChatStore {
           this.patch({
             sessionId: null,
             subagents: [],
+      subagentLive: {},
             tasks: [],
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })
@@ -2303,7 +2432,7 @@ export class ChatStore {
         })
       },
 
-      loadSubagentTranscript: (id: string) => loadSubagentTranscript(this.at, id),
+      loadSubagentTranscript: (id: string, runId?: string) => loadSubagentTranscript(this.at, id, runId),
 
       openPane: (content: ReactNode, options: PaneOpenOptions) => {
         // Opening a pane opens the side, and that is the user opening it: a reload shows what they

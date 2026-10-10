@@ -151,6 +151,50 @@ public class TestInterruptedTranscript extends TestCase {
 	}
 
 	/**
+	 * A swept run's subagent that was still at work is ended as failed: no subagent survives a
+	 * restart, and its card must not say it is working for ever.
+	 */
+	public void testARunningSubagentIsEnded() throws IOException {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(T0);
+		turn.setUserParts(List.of(new Part.TextPart("u1", T0, "Recherchiere im Hintergrund.")));
+		turn.addAssistantPart(subagent("running", "sa-1", "RUNNING"));
+		turn.addAssistantPart(subagent("done", "sa-2", "DONE"));
+
+		Turn closed = ConversationLogSerializer.fromJson(
+			InterruptedTranscript.close(ConversationLogSerializer.toJson(log))).turns().get(0);
+
+		Part.SubagentPart running = (Part.SubagentPart) closed.findPart("running");
+		assertEquals("FAILED", running.status());
+		assertEquals(InterruptedTranscript.INTERRUPTED_SUBAGENT, running.summary());
+		assertEquals("run-sa-1", running.childRunId());
+		assertEquals("DONE", ((Part.SubagentPart) closed.findPart("done")).status());
+	}
+
+	/**
+	 * A conversation read back from the database: a subagent part an earlier process left at work is
+	 * ended, one this process recorded is left to its subagent.
+	 */
+	public void testOnlySubagentsOfAnEarlierProcessAreEnded() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(T0);
+		turn.addAssistantPart(subagent("old", "sa-1", "RUNNING"));
+		turn.addAssistantPart(new Part.SubagentPart("new", T0.plusSeconds(3600), "sa-2", "worker", "task", "",
+			null, "RUNNING", null));
+
+		int ended = InterruptedTranscript.endInterruptedSubagents(log, T0.plusSeconds(60));
+
+		assertEquals(1, ended);
+		assertEquals("FAILED", ((Part.SubagentPart) turn.findPart("old")).status());
+		assertEquals("RUNNING", ((Part.SubagentPart) turn.findPart("new")).status());
+	}
+
+	private static Part.SubagentPart subagent(String id, String subagentId, String status) {
+		return new Part.SubagentPart(id, T0.plusSeconds(1), subagentId, "worker", "task", "call-1",
+			"run-" + subagentId, status, "DONE".equals(status) ? "found it" : null);
+	}
+
+	/**
 	 * Nothing recorded, nothing to close: a row without a checkpoint stays without one.
 	 */
 	public void testNoTranscript() throws IOException {

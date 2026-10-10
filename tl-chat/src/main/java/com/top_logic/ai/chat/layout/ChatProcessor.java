@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.lang.ref.WeakReference;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +36,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
@@ -44,6 +46,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
 import com.top_logic.tl.ai.core.agent.environment.UserMemories;
@@ -129,6 +132,23 @@ public class ChatProcessor {
 		public ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers) {
 			this(agent, model, mcpOverride, mcpServers, null);
 		}
+	}
+
+	/**
+	 * What a lead turn started without a user message runs with: the window, the choices and the
+	 * page's facts of the user's last message in that window.
+	 *
+	 * @param userSession
+	 *        The application-window sub-session the turn's tools act in. Held weakly: a closed
+	 *        window is not kept alive for a turn nobody would see.
+	 * @param options
+	 *        Agent, model and MCP choices.
+	 * @param facts
+	 *        What the page stated.
+	 */
+	record LastSend(WeakReference<TLSubSessionContext> userSession, ChatRunOptions options,
+			List<EnvironmentFact> facts) {
+		// Plain data.
 	}
 
 	/**
@@ -249,28 +269,30 @@ public class ChatProcessor {
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
 
-			boolean hasAttachments = attachments != null && !attachments.isEmpty();
-			boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
-			if (!hasText && !hasAttachments) {
-				state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
-				return;
-			}
-			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
-
 			AgentFactory agentFactory = AgentFactory.getInstance();
-
-			// Build user message with content parts (text + attachments)
-			List<ContentPart> contentParts = new ArrayList<>();
-			contentParts.add(new TextContent(trimmed));
-			if (hasAttachments) {
-				for (AttachmentDto att : attachments) {
-					contentParts.add(toContentPart(att));
-				}
-			}
-
 			Conversation conversation = conversationMemory.conversation();
-			conversation.add(new UserMessage(
-				UUID.randomUUID().toString(), Instant.now(), contentParts));
+
+			if (!state.isWake()) {
+				boolean hasAttachments = attachments != null && !attachments.isEmpty();
+				boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
+				if (!hasText && !hasAttachments) {
+					state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
+					return;
+				}
+				String trimmed = hasText ? userMessage.trim() : "[See attached files]";
+
+				// Build user message with content parts (text + attachments)
+				List<ContentPart> contentParts = new ArrayList<>();
+				contentParts.add(new TextContent(trimmed));
+				if (hasAttachments) {
+					for (AttachmentDto att : attachments) {
+						contentParts.add(toContentPart(att));
+					}
+				}
+
+				conversation.add(new UserMessage(
+					UUID.randomUUID().toString(), Instant.now(), contentParts));
+			}
 
 			// Build ToolContext with real security, approval, and transaction scope
 			ToolContext toolContext =
@@ -333,6 +355,9 @@ public class ChatProcessor {
 			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry);
 					AgentTaskMirror taskMirror =
 						AgentTaskMirror.attach(taskStore, agentSession, toolContext.executionHandle())) {
+				if (state.isWake() && !openWithNews(convLog, conversation, toolContext, listener)) {
+					return;
+				}
 				String result;
 				try {
 					AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
@@ -388,6 +413,28 @@ public class ChatProcessor {
 			taskStore.setListener(null);
 			state.setUserInteractionStore(null);
 		}
+	}
+
+	/**
+	 * Opens a lead turn that was started without a user message with the subagents' news, and tells
+	 * the windows why the turn started.
+	 *
+	 * @return Whether there was news. When there was none - a turn of the user's read it in between -
+	 *         the empty turn is taken out of the log again and nothing runs.
+	 */
+	private static boolean openWithNews(ConversationLog convLog, Conversation conversation,
+			ToolContext toolContext, AgentEventListener listener) {
+		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
+		SubagentJobRegistry.News news = registry == null ? new SubagentJobRegistry.News(0, 0) : registry.news();
+		if (!AgentLoop.injectSubagentResults(conversation, toolContext)) {
+			int index = convLog.turns().indexOf(convLog.currentTurn());
+			if (index >= 0) {
+				convLog.removeFrom(index);
+			}
+			return false;
+		}
+		listener.onEvent(new AgentEvent.LeadWoken("", 0, Instant.now(), news.finished(), news.asking()));
+		return true;
 	}
 
 	/**
@@ -485,43 +532,51 @@ public class ChatProcessor {
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options,
 			List<EnvironmentFact> facts) {
-		// Busy is per chat session: a run in another session must not block this one.
-		if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
-			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
-			return SendResult.busy();
-		}
-
-		String noRoom = noRoomReason(tracker);
-		if (noRoom != null) {
-			return SendResult.rejected(noRoom);
-		}
-
-		List<ChatMessage.AttachmentMetadata> attachmentMeta = Collections.emptyList();
-		if (attachments != null && !attachments.isEmpty()) {
-			attachmentMeta = new ArrayList<>();
-			for (AttachmentDto att : attachments) {
-				attachmentMeta.add(new ChatMessage.AttachmentMetadata(
-					att.getFileName(), att.getMimeType(), att.getSize()));
+		AIProcessingState state;
+		String taskId;
+		// Taken with the lead turn a subagent's news starts, so that the two cannot both find the
+		// chat idle and start a turn each.
+		synchronized (tracker.sendLock()) {
+			// Busy is per chat session: a run in another session must not block this one.
+			if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
+				tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
+				return SendResult.busy();
 			}
+
+			String noRoom = noRoomReason(tracker);
+			if (noRoom != null) {
+				return SendResult.rejected(noRoom);
+			}
+
+			List<ChatMessage.AttachmentMetadata> attachmentMeta = Collections.emptyList();
+			if (attachments != null && !attachments.isEmpty()) {
+				attachmentMeta = new ArrayList<>();
+				for (AttachmentDto att : attachments) {
+					attachmentMeta.add(new ChatMessage.AttachmentMetadata(
+						att.getFileName(), att.getMimeType(), att.getSize()));
+				}
+			}
+			ChatMessage message = new ChatMessage(userName, userMessage, Instant.now(), attachmentMeta);
+			tracker.getChat().addMessage(message);
+
+			// Persist user message before AI processing starts
+			if (tracker.getActiveSessionId() != null) {
+				persistMessages(tracker, tracker.getActiveSessionId());
+			}
+
+			// Evict any dead state left over from a prior run of this session so it cannot shadow the
+			// new run in getProcessingStateForSession (which would swallow the new run's ask-user
+			// questions). Prior runs' final events have already been flushed by this point.
+			tracker.evictCompletedStatesForSession(tracker.getActiveSessionId());
+
+			state = new AIProcessingState();
+			state.startProcessing();
+			taskId = tracker.generateTaskId();
+			state.setCurrentTaskId(taskId);
+			// Before it is registered: that is what the other side of the lock asks for.
+			state.setSessionId(tracker.getActiveSessionId());
+			tracker.addProcessingState(taskId, state);
 		}
-		ChatMessage message = new ChatMessage(userName, userMessage, Instant.now(), attachmentMeta);
-		tracker.getChat().addMessage(message);
-
-		// Persist user message before AI processing starts
-		if (tracker.getActiveSessionId() != null) {
-			persistMessages(tracker, tracker.getActiveSessionId());
-		}
-
-		// Evict any dead state left over from a prior run of this session so it cannot shadow the
-		// new run in getProcessingStateForSession (which would swallow the new run's ask-user
-		// questions). Prior runs' final events have already been flushed by this point.
-		tracker.evictCompletedStatesForSession(tracker.getActiveSessionId());
-
-		AIProcessingState state = new AIProcessingState();
-		state.startProcessing();
-		String taskId = tracker.generateTaskId();
-		state.setCurrentTaskId(taskId);
-		tracker.addProcessingState(taskId, state);
 
 		// Capture session context so background task writes to the correct Chat,
 		// even if the user switches sessions before the task completes.
@@ -567,7 +622,109 @@ public class ChatProcessor {
 		}
 		state._backgroundTask = future;
 
+		tracker.setLastSend(new LastSend(new WeakReference<>(userSession), state.getRunOptions(), state.getFacts()));
+		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(capturedSessionId);
+		if (waker != null) {
+			waker.userSent();
+		}
+
 		return SendResult.ok(taskId);
+	}
+
+	/**
+	 * Starts a turn of the lead in the given chat that opens with its subagents' news rather than with
+	 * a message of the user.
+	 *
+	 * <p>
+	 * The turn runs as the user's last message in this window did: in that window, with the agent,
+	 * model and facts it was sent with. It is recorded as a turn without user text, and the windows
+	 * draw it with a line saying that subagents reported back.
+	 * </p>
+	 *
+	 * @return Whether the turn was started; <code>false</code> when this window shows another chat,
+	 *         no window shows it, a turn of it runs already, or the installation has no room.
+	 */
+	static boolean sendWake(TaskProgressTracker tracker, String sessionId) {
+		LastSend last = tracker.getLastSend();
+		if (last == null || sessionId == null || !sessionId.equals(tracker.getActiveSessionId())) {
+			return false;
+		}
+		TLSubSessionContext userSession = last.userSession().get();
+		if (userSession == null) {
+			return false;
+		}
+		if (ChatEventHandlerRegistry.find(tracker) == null) {
+			// Nobody would see the turn, and the window it would act in is gone or reconnecting.
+			return false;
+		}
+		AIProcessingState state;
+		String taskId;
+		synchronized (tracker.sendLock()) {
+			if (tracker.hasActiveProcessingStateFor(sessionId) || noRoomReason(tracker) != null) {
+				return false;
+			}
+			tracker.evictCompletedStatesForSession(sessionId);
+			state = new AIProcessingState();
+			state.setWake(true);
+			state.startProcessing();
+			taskId = tracker.generateTaskId();
+			state.setCurrentTaskId(taskId);
+			state.setSessionId(sessionId);
+			tracker.addProcessingState(taskId, state);
+		}
+		state.setChat(tracker.getChat());
+		state.setRunOptions(last.options());
+		state.setFacts(last.facts());
+		state.setMemories(tracker.getSessionManager().getActiveMemories(tracker.getSessionOwner()));
+
+		ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
+		convLog.startTurn().setUserParts(List.of());
+		state.setConversationLog(convLog);
+
+		try {
+			state._backgroundTask = ChatRunExecutor.submit(new AIBackgroundTask(tracker, state,
+				tracker.getConversationMemory(), null, null, userSession));
+		} catch (ChatRunExecutor.NoRoom ex) {
+			int index = convLog.turns().indexOf(convLog.currentTurn());
+			if (index >= 0) {
+				convLog.removeFrom(index);
+			}
+			state.completeSuccessfully();
+			tracker.removeProcessingState(taskId);
+			return false;
+		}
+		Logger.info("Started a lead turn for subagent news in chat " + sessionId + ".", ChatProcessor.class);
+		return true;
+	}
+
+	/**
+	 * How the {@link SubagentWaker} of the given chat in the given window starts a turn and tells the
+	 * user.
+	 */
+	static SubagentWaker.Host wakeHost(TaskProgressTracker tracker, Person owner, String sessionId) {
+		return new SubagentWaker.Host() {
+			@Override
+			public boolean leadRuns() {
+				return tracker.hasActiveProcessingStateFor(sessionId);
+			}
+
+			@Override
+			public boolean wake(SubagentJobRegistry.News news) {
+				return sendWake(tracker, sessionId);
+			}
+
+			@Override
+			public void wakesExhausted(int wakes) {
+				for (ChatEventHandler handler : ChatEventHandlerRegistry.findForSession(owner, sessionId)) {
+					try {
+						handler.sendWakesExhausted(wakes);
+					} catch (RuntimeException ex) {
+						Logger.info("Could not tell a window that subagent news waits: " + ex.getMessage(),
+							ChatProcessor.class);
+					}
+				}
+			}
+		};
 	}
 
 	/**
@@ -732,7 +889,12 @@ public class ChatProcessor {
 					+ "' (mode=" + request.mode() + ", approvalRequestId="
 					+ request.approvalRequestId() + "). Blocking until user responds.",
 					ChatProcessor.class);
-				CompletableFuture<String> future = interactionStore.registerApproval(request);
+				// The store bound on the asking thread, not the one this run was started with: a
+				// background subagent inherits this callback, and it asks through its job's own store,
+				// which outlives this run's turn. On the run's own thread both are the same.
+				UserInteractionStore bound = UserInteractionStoreBinding.getStore();
+				UserInteractionStore store = bound != null ? bound : interactionStore;
+				CompletableFuture<String> future = store.registerApproval(request);
 				try {
 					String response = future.get(
 						request.timeout().toMillis(), TimeUnit.MILLISECONDS);
@@ -754,7 +916,7 @@ public class ChatProcessor {
 					// Nobody waits on this future any more. Answering removes the registration
 					// already, this drops it on every other exit so that a timed-out approval
 					// does not linger as a phantom in getPendingApprovals().
-					interactionStore.discardApproval(request.approvalRequestId());
+					store.discardApproval(request.approvalRequestId());
 				}
 			};
 		}
@@ -967,6 +1129,11 @@ public class ChatProcessor {
 				notifyError(state, ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 			} finally {
 				state.setAgentThread(null);
+				// News that arrived too late for this turn to read waits for the next one.
+				SubagentWaker waker = _taskTracker.getSessionManager().getSubagentWaker(state.getSessionId());
+				if (waker != null) {
+					waker.leadRunEnded();
+				}
 			}
 		}
 
@@ -1133,6 +1300,9 @@ public class ChatProcessor {
 		private volatile ChatRunOptions _runOptions = ChatRunOptions.DEFAULT;
 
 		private volatile List<EnvironmentFact> _facts = List.of();
+
+		/** Whether the run opens with subagents' news rather than with a message of the user. */
+		private volatile boolean _wake;
 
 		/**
 		 * The memories the conversation was opened with, captured at send time; never
@@ -1315,6 +1485,16 @@ public class ChatProcessor {
 		/** Captures UI run options before the background task starts. */
 		public void setRunOptions(ChatRunOptions options) {
 			_runOptions = options != null ? options : ChatRunOptions.DEFAULT;
+		}
+
+		/** Whether the run opens with subagents' news rather than with a message of the user. */
+		public boolean isWake() {
+			return _wake;
+		}
+
+		/** @see #isWake() */
+		void setWake(boolean wake) {
+			_wake = wake;
 		}
 
 		/** What the page stated about the situation, captured at send time; never {@code null}. */

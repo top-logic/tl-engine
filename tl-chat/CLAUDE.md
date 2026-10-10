@@ -565,6 +565,7 @@ it rewrites a draft and never answers as a persona.
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
+| `subagent-card.tsx` | One card per background subagent at the tool call that started it, from the live events (`subagentLive`) or, after a reload, from the lead's recorded `SubagentPart`; `cardsForTurn` decides which cards a turn shows |
 | `context-usage.tsx` | The context ring and its popover, plus how each number is derived |
 | `prompts.tsx` | Approval and question cards above the composer, with their countdowns |
 | `markdown.tsx` / `highlight.ts` | Markdown rendering, sanitizing, code blocks |

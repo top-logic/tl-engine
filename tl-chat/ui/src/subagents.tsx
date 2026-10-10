@@ -14,7 +14,7 @@ function formatDuration(ms: number): string {
   return `${Math.floor(ms / 60_000)}m ${Math.round((ms % 60_000) / 1000)}s`
 }
 
-function transcriptLine(message: ChatMessage, labels: Labels): string | null {
+export function transcriptLine(message: ChatMessage, labels: Labels): string | null {
   switch (message.type) {
     case 'user':
       return `${labels.you}: ${message.text}`

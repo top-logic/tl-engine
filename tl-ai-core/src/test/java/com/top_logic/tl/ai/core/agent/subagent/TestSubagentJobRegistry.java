@@ -41,12 +41,20 @@ public class TestSubagentJobRegistry extends TestCase {
 		assertTrue(_registry.canStart());
 	}
 
-	public void testCapBlocksStartWhenFull() {
-		for (int i = 0; i < 3; i++) {
-			_registry.register("a" + i, "t", new CancellationToken()).markRunning();
+	public void testCapBlocksStartWhenFull() throws InterruptedException {
+		java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+		try {
+			for (int i = 0; i < 3; i++) {
+				_registry.spawn(_registry.register("a" + i, "t", new CancellationToken()), j -> {
+					release.await();
+					return new SubagentResult("ok", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE);
+				});
+			}
+			assertFalse("at cap of 3, cannot start a 4th", _registry.canStart());
+		} finally {
+			release.countDown();
+			_registry.shutdown();
 		}
-		assertEquals(3, _registry.runningCount());
-		assertFalse("at cap of 3, cannot start a 4th", _registry.canStart());
 	}
 
 	public void testTakeUndeliveredResultsFlipsDeliveredOnce() {

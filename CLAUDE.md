@@ -311,9 +311,9 @@ Where every old property went: `tl-ai-core/doc/llm-service-migration.md`.
 
 ### Run limits (tl-ai-core `limits/`)
 
-Three ceilings an administrator **may** put on what this installation carries and what one account
+The ceilings an administrator **may** put on what this installation carries and what one account
 may spend, configured in `<capacity>` on `AgentRuntimeService` (the chat pool and the per-account
-cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All three are off by
+cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All of them are off by
 default** - this product runs in applications with a thousand users, and any figure it picked for
 them would refuse work the installation allowed before the upgrade:
 
@@ -327,6 +327,11 @@ them would refuse work the installation allowed before the upgrade:
   **`token-budget` over `budget-window-hours`** (0 = unlimited, per-role overrides possible) are
   enforced by `RunLimits.admit` in `AgentFactory.runAgent` - the choke point every entry point
   arrives at. These two refuse rather than queue: the account is already being served.
+- **Background subagents** queue rather than refuse (#710): a chat's `SubagentJobRegistry` runs at
+  most its cap (4) at once, and **`subagent-workers`** in `<capacity>` (0 = off) bounds them over the
+  whole installation (`SubagentSlots`). A job beyond either stays `QUEUED`, starts in registration
+  order when one ends, and the spawn answer says "queued, position N"; a job cancelled while queued
+  ends `CANCELLED` without running.
 
 A **delegated** run is neither counted nor budgeted separately: it is part of the run that delegated
 it, and shares that run's `TokenAllowance`. The budget is computed from the recorded
@@ -470,26 +475,86 @@ turn, which is the next moment that history is used. Consequences worth knowing:
 
 `TestCompactionOrder` pins all of this.
 
+**A child compacts too (#698).** A subagent or a synchronous delegate brings no session memory, so
+`AgentLoop.run(Conversation, CompactionStrategy, ToolContext, AgentEventListener)` wraps its own
+conversation in a `ConversationMemory` sized to its model's window, with
+`CompactionStrategies.forDefaultModel()` - the strategy the chat's session memory uses. Both
+`DelegationTool.executeSync` and `AgentRunner.run(AgentLoop, ...)` (the spawner's path) run that way;
+`TestChildCompaction` pins it.
+
 ### Multi-Agent Delegation
 
 `DelegationTool` creates isolated sub-agent runs (max depth 3). Parent passes `TransactionScope` and `SecurityContext`. Child events recorded in parent's `ConversationLog`.
 
 `spawn_subagent` is the asynchronous half: fire-and-forget, the turn ends, the child works on in a
-`SubagentJobRegistry` bound to the session. Its result reaches the parent on one of two paths, and
+`SubagentJobRegistry` bound to the session. The registries belong to the process, not to the chat
+(`SubagentRegistries`, one per conversation, and in the chat per window): `AgentRunner` binds the
+conversation's for every top-level run that has none bound, so TL-Script, the eval and scheduled runs
+can spawn too, and a chat window that drops or reloads a conversation leaves its children running;
+only deleting the chat cancels them. After a restart the startup sweep fails the children's runs, and
+a reopened conversation ends their parts as failed (`InterruptedTranscript`). Its result reaches the parent on one of two paths, and
 both render it through `SubagentResultDelivery` so the parent reads the same block either way:
 `wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the
 next turn when it did not.
 
+When the parent has no next turn coming, the chat **wakes** it: `SubagentWaker` (tl-chat) starts a
+lead turn that opens with the news - a finished child or an `ask_lead` question - instead of with a
+user message, drawn as a line in place of the bubble. At most five such turns between two messages of
+the user, none after Stop, none while a lead turn runs (that turn reads the news itself).
+
 The injection is a **`UserMessage`**, not a `SystemMessage`: no provider's request builder transmits
 a mid-conversation system message, so that shape never reached the model (#359). It opens with
 `SubagentResultDelivery.NOTICE`, which says in the text what the role cannot - the user did not write
-this. Everything finishing in one gap becomes one message, in the order the parent started the
-subagents. Being an ordinary user message, it is compacted like any other turn content.
+this. The child's own text sits inside `<untrusted_subagent_report>` on every path - injection, wait,
+status and the synchronous `delegate_to_*` result - because a worker repeats what it read.
+Everything finishing in one gap becomes one message, in the order the parent started the subagents.
+Being an ordinary user message, it is compacted like any other turn content.
 
 The same text is recorded on the turn as a `Part.SystemPart` of type `SUBAGENT_RESULT`: an assistant-side
 part, so the admin transcript shows it while the chat does not draw it as a user bubble.
 `ConversationLogReplay` turns that part back into the identical `UserMessage`, which is the one system
 event replay does not skip. See `tl-ai-core/doc/subagent-results.md`.
+
+A background subagent asks the user - `askUser`, or an approval - through **its job's own store**
+(`SubagentJob.interactionStore()`), not the store of the turn that started it: that turn ends while
+the child works on, and the chat unbinds its store with it. The store names the child
+(`InteractionAsker`), and the chat registers it in `PendingInteractionRegistry` while the job runs,
+so the SSE poll shows the question with the child's name and `/chat/respond` reaches it from any
+window of the account (#695).
+
+What a running child does is kept on its job (#700): the spawner feeds the child's events into a
+bounded `SubagentProgress` (turns, tokens, the last 20 tool calls with an argument summary and their
+outcome, the end of its last text), sets `childRunId` at `RunStarted` and hangs the child's
+`ConversationLog` on the job as its live log. `subagent_status(detail: summary|steps)` reads it, says
+`WAITING` and for what when the job's store holds a question or an approval, and puts what the child
+wrote inside `<untrusted_subagent_report>`; `GET /chat/subagents/{id}/transcript` serves the live log
+until the child ends.
+
+The chat shows each child as a card at the tool call that started it (#702): `SubagentStarted` and
+the job carry `parentToolCallId`, the browser keeps a child's live events per subagent id
+(`subagentLive`, never in the lead's transcript) and `thread.tsx` draws one `SubagentCard` per child
+under the steps of the turn that spawned it. The lead's log keeps one `Part.SubagentPart` per child -
+id, agent, task, parent call, run id, end state, a short summary - written at start and ended in place,
+never the child's steps (owner decision D5); a reloaded conversation rebuilds the card from it, and
+`GET /chat/subagents/{id}/transcript?runId=` opens the recorded run when the server holds no job.
+
+The lead steers a running child with `send_to_subagent` and stops it with `cancel_subagent` (#705).
+A message goes into the job's `SubagentInbox`, which the spawner binds on the child's thread;
+`AgentLoop.injectLeadMessages` drains it at the start of each child turn into one user message opening
+with "[Message from the lead agent]", announced as `AgentEvent.LeadMessageDelivered`, which is what
+records it as a `LEAD_MESSAGE` part in the child's own log (the thread-bound listener on a child's
+thread records the lead's log) and what replay turns back into the same message. The inbox closes when
+the job ends, so a late message is refused rather than left unread; text only, it changes no tool, right
+or model.
+
+A child asks its lead with `ask_lead` (#707), a tool only a background subagent's catalog has
+(`AgentFactory`, the `includeDelegation=false` branch): the question is parked on the job
+(`LeadQuestion`, the job bound by the spawner), the lead is shown it - enveloped - at the start of its
+next turn together with any results (`SubagentResultDelivery.deliveryText(finished, asking)`), or at
+once when it waits in `wait_for_subagent`, which a question ends early; the lead answers with
+`reply_to_subagent`, and the child goes on in the same turn. The question timeout ends the wait with
+"decide yourself and state the assumption"; a cancel ends it too. Waking an idle lead for a question is
+the wake's job (issue 4 of the series).
 
 ## Project Structure
 

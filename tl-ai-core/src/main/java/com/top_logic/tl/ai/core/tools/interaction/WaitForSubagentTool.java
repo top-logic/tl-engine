@@ -60,7 +60,7 @@ public class WaitForSubagentTool implements Tool {
 	@Override
 	public String description() {
 		return "BLOCK the current turn until one or more background subagents finish, then return "
-			+ "their results. Use this ONLY when the user explicitly asks you to wait for a subagent "
+			+ "their results. The wait also ends early when a subagent asks you a question. Use this ONLY when the user explicitly asks you to wait for a subagent "
 			+ "(e.g. \"wait for it and then summarize\"). Do NOT call it right after spawning: a spawn "
 			+ "is fire-and-forget and results arrive on their own in a later turn. For a status "
 			+ "question use subagent_status, which does not block.";
@@ -153,7 +153,13 @@ public class WaitForSubagentTool implements Tool {
 				}
 			}
 		}
-		return ToolResult.of(format(ids, registry));
+		StringBuilder answer = new StringBuilder(format(ids, registry));
+		// The wait also ends when a subagent asks this run something; the question is handed over
+		// here, so that it is not answered only after the next wait or turn.
+		for (SubagentJob asking : registry.takeUndeliveredQuestions()) {
+			answer.append("\n\n").append(SubagentResultDelivery.question(asking));
+		}
+		return ToolResult.of(answer.toString());
 	}
 
 	/**
@@ -173,9 +179,12 @@ public class WaitForSubagentTool implements Tool {
 				sb.append("### Subagent ").append(id).append("\n_unknown_\n\n");
 			} else if (job.status().isTerminal() && job.result() != null) {
 				sb.append(SubagentResultDelivery.describe(job)).append("\n\n");
+			} else if (job.waitingFor() == SubagentJob.Waiting.LEAD_ANSWER) {
+				sb.append(SubagentResultDelivery.heading(job))
+					.append("\n_waits for your answer to its question (below)_\n\n");
 			} else {
 				sb.append(SubagentResultDelivery.heading(job))
-					.append("\n_still running (wait timed out)_\n\n");
+					.append("\n_still running_\n\n");
 			}
 		}
 		return sb.toString().trim();

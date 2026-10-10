@@ -25,6 +25,7 @@ import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -136,6 +137,10 @@ public final class DtoMapper {
 				InteractionTimeoutService.questionTimeout()));
 		for (InteractionOptionDto option : parseInteractionOptions(req.getOptions())) {
 			event.addOption(option);
+		}
+		InteractionAsker asker = req.getAskedBy();
+		if (asker != null) {
+			event.setAskedBySubagentId(asker.subagentId()).setAskedByAgent(asker.agentName());
 		}
 		return event;
 	}

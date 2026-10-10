@@ -24,9 +24,12 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInboxBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
@@ -138,10 +141,12 @@ public class SubagentSpawner {
 
 		CancellationToken childToken = new CancellationToken();
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
+		job.setParentToolCallId(toolContext.toolCallId());
 
 		// Lifecycle: SubagentStarted to the parent's listener (for the UI panel).
 		if (logListener != null) {
-			logListener.recordSubagentStarted(job.subagentId(), targetAgentName, task);
+			logListener.recordSubagentStarted(job.subagentId(), targetAgentName, task, toolContext.toolCallId(),
+				registry.wouldQueue());
 		}
 
 		registry.spawn(job, j -> {
@@ -154,7 +159,17 @@ public class SubagentSpawner {
 					// the parent's undelivered sibling results, and subagents are
 					// structurally depth-1 anyway (buildSubagentLoop omits the
 					// spawn/wait/delegation tools from the child's catalog).
-					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null)) {
+					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null);
+					// Replaces the parent turn's store the snapshot just carried over: that turn ends
+					// while this child works on, and a question or approval parked in its store after
+					// that is shown nowhere and answered by nobody. The job's store lives as long as
+					// the job and names the child as the one asking.
+					UserInteractionStoreBinding.Binding ownStore =
+						UserInteractionStoreBinding.bind(j.interactionStore());
+					// What the lead sends it, read at the start of each of its turns.
+					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox());
+					// Its own job, which ask_lead parks its question on.
+					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j)) {
 
 					Instant start = Instant.now();
 
@@ -182,11 +197,13 @@ public class SubagentSpawner {
 					// on this long-running worker thread, whose stable read revision predates the row
 					// the store's committer writes ("created after access revision N"). The event
 					// carries the id without any KB access, on both the success and failure paths.
-					String[] childRunId = { null };
 					AgentEventListener capturingListener = event -> {
 						if (event instanceof AgentEvent.RunStarted started) {
-							childRunId[0] = started.runId();
+							// At once, not after the run: the transcript of a running child is
+							// what the user wants to open while it works.
+							j.setChildRunId(started.runId());
 						}
+						j.progress().onEvent(event);
 						childListener.onEvent(event);
 					};
 
@@ -199,19 +216,17 @@ public class SubagentSpawner {
 					ConversationLog childLog = new ConversationLog();
 					childLog.startTurn().setUserParts(
 						List.of(new Part.TextPart(UUID.randomUUID().toString(), Instant.now(), userPrompt)));
+					j.setLiveLog(childLog);
 
 					try {
 						AgentRunner.RecordedRun run = AgentRunner.run(targetLoop, targetAgentName,
 							conversation, childContext, capturingListener, childLog, recordingSession,
 							parentExecution);
-						if (childRunId[0] != null) {
-							j.setChildRunId(childRunId[0]);
-						}
 						AgentResult result = run.result();
 
 						if (j.cancellationToken().isCancelled()) {
 							if (logListener != null) {
-								logListener.recordSubagentCancelled(j.subagentId());
+								logListener.recordSubagentCancelled(j.subagentId(), j.childRunId());
 							}
 							throw new java.util.concurrent.CancellationException("Subagent cancelled.");
 						}
@@ -222,19 +237,16 @@ public class SubagentSpawner {
 						SubagentResult sr = new SubagentResult(finalText, result.totalUsage(), durationMs,
 							toolCalls, result.stopReason());
 						if (logListener != null) {
-							logListener.recordSubagentCompleted(j.subagentId(), sr);
+							logListener.recordSubagentCompleted(j.subagentId(), sr, j.childRunId());
 						}
 						return sr;
 					} catch (java.util.concurrent.CancellationException ce) {
 						throw ce;
 					} catch (Exception e) {
-						// AgentRunner already finalized the child execution with the failure; just
-						// surface the run id (captured from the RunStarted event) and the event.
-						if (childRunId[0] != null) {
-							j.setChildRunId(childRunId[0]);
-						}
+						// AgentRunner already finalized the child execution with the failure; the run
+						// id was taken from the RunStarted event already, so only the event is left.
 						if (logListener != null) {
-							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());
+							logListener.recordSubagentFailed(j.subagentId(), e.getMessage(), j.childRunId());
 						}
 						throw e instanceof RuntimeException re ? re : new RuntimeException(e);
 					}
@@ -244,8 +256,20 @@ public class SubagentSpawner {
 				return ThreadContextManager.inContext(userSession, work);
 			}
 			return ThreadContextManager.inSystemInteraction(SubagentSpawner.class, work);
+		}, () -> {
+			// Cancelled while it was still queued: it ends without having run, and is recorded so.
+			if (logListener != null) {
+				logListener.recordSubagentCancelled(job.subagentId(), null);
+			}
 		});
 
+		int position = registry.queuePosition(job);
+		if (position > 0) {
+			return ToolResult.of("Subagent " + targetAgentName + " queued (id=" + job.subagentId()
+				+ ", position " + position + "): as many subagents as may run at once are running, and"
+				+ " it starts when one of them ends. Its result will arrive in a later turn or via"
+				+ " wait_for_subagent.");
+		}
 		return ToolResult.of("Subagent " + targetAgentName + " started (id=" + job.subagentId()
 			+ "). It runs in the background; its result will arrive in a later turn or via "
 			+ "wait_for_subagent.");

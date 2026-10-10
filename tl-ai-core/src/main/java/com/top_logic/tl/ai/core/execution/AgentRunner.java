@@ -15,9 +15,13 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -129,7 +133,7 @@ public final class AgentRunner {
 		}
 
 		AgentFactory.RunResult runResult;
-		try {
+		try (SubagentRegistryBinding.Binding registry = bindConversationRegistry(session, parentExecution)) {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
 				context, effectiveListener, sessionRegistry,
 				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
@@ -179,7 +183,8 @@ public final class AgentRunner {
 	 * @param agentName
 	 *        The agent name, recorded on the execution row.
 	 * @param conversation
-	 *        The conversation to operate on.
+	 *        The conversation to operate on. It is compacted when it outgrows the loop's model,
+	 *        with {@link CompactionStrategies#forDefaultModel()}.
 	 * @param context
 	 *        Execution context; its {@link ToolContext#executionHandle() execution handle} receives
 	 *        the created execution, so the caller can read the child run id back from it.
@@ -221,7 +226,9 @@ public final class AgentRunner {
 
 		AgentResult result;
 		try {
-			result = loop.run(conversation, context, effectiveListener);
+			// A pre-built loop serves a subagent, which brings no session memory: it gets one over its
+			// own conversation, so that it compacts like a chat run instead of overflowing.
+			result = loop.run(conversation, CompactionStrategies.forDefaultModel(), context, effectiveListener);
 		} catch (RuntimeException ex) {
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);
@@ -237,6 +244,31 @@ public final class AgentRunner {
 		}
 		return new RecordedRun(null, null, result,
 			recorder != null ? recorder.execution() : null);
+	}
+
+	/**
+	 * Binds the conversation's {@link SubagentJobRegistry} for a top-level run that has none bound, so
+	 * that {@code spawn_subagent} works wherever a run is recorded under a conversation - a TL-Script
+	 * run, the eval, a scheduled task - and not only in the chat, which binds a registry of its own.
+	 *
+	 * <p>
+	 * A run without a conversation gets none: a subagent's result is delivered to the conversation
+	 * that started it, and such a run has nothing to deliver it to. A delegated run gets none either,
+	 * because it would take its siblings' results from the lead.
+	 * </p>
+	 */
+	private static SubagentRegistryBinding.Binding bindConversationRegistry(AgentSession session,
+			AgentExecution parentExecution) {
+		SubagentJobRegistry bound = SubagentRegistryBinding.getRegistry();
+		if (bound != null || session == null || parentExecution != null) {
+			return SubagentRegistryBinding.bind(bound);
+		}
+		String conversationId = ExecutionRecorder.conversationIdOf(session);
+		if (conversationId == null) {
+			return SubagentRegistryBinding.bind(null);
+		}
+		return SubagentRegistryBinding.bind(
+			SubagentRegistries.forKey(SubagentRegistries.conversationKey(conversationId)));
 	}
 
 	/**

@@ -85,6 +85,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
@@ -1021,7 +1022,7 @@ public class ChatServlet extends TopLogicServlet {
 		}
 
 		Person responder = resolveCurrentPerson(req);
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		PendingInteractionRegistry.Waiting run = PendingInteractionRegistry.findWaiting(responder, requestId);
 		if (run == null) {
 			// Either a late answer to a request whose run already ended (completed, cancelled, or
 			// timed out), or a request this account is not the responder of. Both are a benign
@@ -1035,8 +1036,7 @@ public class ChatServlet extends TopLogicServlet {
 			resp.getWriter().write("{\"status\":\"ignored\"}");
 			return;
 		}
-		ChatProcessor.AIProcessingState state = run.state();
-		UserInteractionStore store = state.getUserInteractionStore();
+		UserInteractionStore store = run.store();
 
 		// Include rejection comment in the response string so the ApprovalCallback receives it
 		String resolvedResponse = response;
@@ -1048,7 +1048,7 @@ public class ChatServlet extends TopLogicServlet {
 		// the future unparks the agent mid-turn, and it may call the next tool before this request
 		// has returned. A tool approved "for this session" that the run learns of only afterwards
 		// would be asked about again.
-		ConversationLogListener logListener = state.getLogListener();
+		ConversationLogListener logListener = run.logListener();
 		if (logListener != null) {
 			if ("APPROVED_FOR_SESSION".equals(response)) {
 				logListener.resolveApproval(requestId,
@@ -1203,6 +1203,9 @@ public class ChatServlet extends TopLogicServlet {
 		SubagentJobRegistry subagentRegistry = holdsRunsChat(runWindow, state)
 			? runWindow.getActiveSubagentRegistry() : null;
 		if (subagentRegistry != null) {
+			// Stopped means stopped: what the cancelled subagents report does not start the lead
+			// again.
+			runWindow.holdSubagentWakes(state.getSessionId());
 			int cancelledSubagents = subagentRegistry.cancelAll();
 			if (cancelledSubagents > 0) {
 				Logger.info("Cancelled " + cancelledSubagents + " running subagent(s) on orchestrator "
@@ -1416,6 +1419,10 @@ public class ChatServlet extends TopLogicServlet {
 				.setToolMode(toolMode(waiting, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
+			InteractionAsker asker = waiting == null ? null : waiting.asker();
+			if (asker != null) {
+				dto.setAskedBySubagentId(asker.subagentId()).setAskedByAgent(asker.agentName());
+			}
 			if (question != null) {
 				dto.setMultiSelect(question.isMultiSelect());
 				for (InteractionOptionDto option : DtoMapper.parseInteractionOptions(question.getOptions())) {
@@ -1451,11 +1458,12 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The interaction store of the run still parked on the given request, or <code>null</code>.
+	 * The interaction store of the run or the background subagent still parked on the given
+	 * request, or <code>null</code>.
 	 *
 	 * <p>
 	 * Everything a persisted {@link InteractionRequest} row does not record - an approval's tool
-	 * mode, a question's shape - lives here, and only for as long as the run is waiting, which is
+	 * mode, a question's shape, the subagent that asks - lives here, and only for as long as the run is waiting, which is
 	 * also the only time a client may still answer.
 	 * </p>
 	 *
@@ -1465,8 +1473,8 @@ public class ChatServlet extends TopLogicServlet {
 	 *        The correlation id of the approval or question.
 	 */
 	private static UserInteractionStore waitingStore(Person responder, String requestId) {
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
-		return run == null ? null : run.state().getUserInteractionStore();
+		PendingInteractionRegistry.Waiting waiting = PendingInteractionRegistry.findWaiting(responder, requestId);
+		return waiting == null ? null : waiting.store();
 	}
 
 	/**
@@ -1700,8 +1708,10 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * GET /chat/subagents/{id}/transcript - the persisted transcript of one background subagent's
-	 * recorded child run, as a {@code turnsJson} array in the same shape a session load returns.
+	 * GET /chat/subagents/{id}/transcript - the transcript of one background subagent's child run, as
+	 * a {@code turnsJson} array in the same shape a session load returns: its live log while it works,
+	 * its recorded execution once it has ended. A subagent this window holds no job for any more is
+	 * found by the {@code runId} parameter its recorded part names.
 	 *
 	 * <p>
 	 * Lets the background-tasks panel open a subagent's full transcript (turns, tool calls). The
@@ -1722,20 +1732,30 @@ public class ChatServlet extends TopLogicServlet {
 
 		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
 		SubagentJob job = registry == null ? null : registry.get(id);
-		String runId = job == null ? null : job.childRunId();
+		// A subagent of an earlier server life, or of a chat this window no longer holds, has no job
+		// any more; the card that asks names the run its part recorded. The run is still checked to
+		// belong to this user below, so naming one gains nothing.
+		String runId = job != null ? job.childRunId() : req.getParameter("runId");
 		if (runId == null || runId.isEmpty()) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
 
-		AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
-		AgentSession session = execution == null ? null : execution.getSession();
-		if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
+		String transcript;
+		ConversationLog liveLog = job == null ? null : job.liveLog();
+		if (job != null && !job.status().isTerminal() && liveLog != null) {
+			// While the child works its execution holds no transcript yet; what it has done so far
+			// is in its live log. The job came from this window's own registry, so it is the user's.
+			transcript = ConversationLogSerializer.toJson(liveLog.turns());
+		} else {
+			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
+			AgentSession session = execution == null ? null : execution.getSession();
+			if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
+			transcript = execution.getTranscript();
 		}
-
-		String transcript = execution.getTranscript();
 		ChatSessionDetailResponse response = ChatSessionDetailResponse.create().setId(id);
 		if (transcript != null && !transcript.isEmpty()) {
 			response.setMessagesJson(transcript);
@@ -1774,6 +1794,8 @@ public class ChatServlet extends TopLogicServlet {
 					.append("\",\"totalTokens\":").append(tokens)
 					.append(",\"durationMs\":").append(durationMs)
 					.append(",\"hasTranscript\":").append(hasTranscript)
+					.append(",\"parentToolCallId\":\"").append(jsonEscape(job.parentToolCallId())).append('"')
+					.append(",\"task\":\"").append(jsonEscape(job.taskBrief() != null ? job.taskBrief() : "")).append('"')
 					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
 					.append("\"}");
 			}

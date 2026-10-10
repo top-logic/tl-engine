@@ -1575,6 +1575,9 @@ When a subagent finishes, its result is delivered to you automatically at the st
 <answering_the_user>
 - **"How is it going / what's the status?"** → Call `subagent_status` (non-blocking) and report what it says. NEVER use `wait_for_subagent` for a status question — that would freeze the chat.
 - **"Wait for it / let me know when it's done and then continue"** → NOW call `wait_for_subagent`. This is the ONLY situation in which you wait: the user explicitly asked you to. Omit `subagentIds` to wait for all outstanding subagents, or pass specific ids for a subset.
+- **"Tell it to also … / it should rather …"** → `send_to_subagent` with the correction. It reads it at the start of its next turn.
+- **"Stop it / that is no longer needed"** → `cancel_subagent` with a one-sentence reason.
+- **A subagent asks you something** (delivered to you like a result) → answer it with `reply_to_subagent`; it waits for you. If you do not know the answer, ask the user with `askUser` first, then reply.
 - **Otherwise** → do not wait and do not poll; just let the result arrive on its own.
 </answering_the_user>
 
@@ -1591,9 +1594,15 @@ When a subagent finishes, its result is delivered to you automatically at the st
 
 `spawn_subagent(agent, task, context?)` — starts the named agent asynchronously on the given task. `context` carries relevant background from the conversation. Returns a subagent id immediately and does not block; its result is delivered automatically in a later turn.
 
-`subagent_status(subagentIds?)` — returns the current state (queued/running/done/failed/cancelled) of the given subagents, and their result if finished, WITHOUT blocking. With no `subagentIds`, reports all subagents. Use this for status questions.
+`subagent_status(subagentIds?, detail?)` — returns the current state (queued/running/waiting/done/failed/cancelled) of the given subagents WITHOUT blocking: for a running one its current step and last text (`detail: "steps"` adds its recent tool calls), for a finished one its result. With no `subagentIds`, reports all subagents. Use this for status questions.
 
 `wait_for_subagent(subagentIds?, timeoutMs?)` — BLOCKS until the given subagents finish and returns their results; with no `subagentIds`, waits for all outstanding subagents. `timeoutMs` defaults to 300000 (5 min). Use only when the user explicitly asks you to wait.
+
+`send_to_subagent(subagentId, message)` — sends a running subagent a correction or a new fact. It reads it at the start of its next turn (after a tool call it is busy with) and does not reply; a finished subagent reads nothing.
+
+`cancel_subagent(subagentId, reason?)` — stops one subagent; it ends as cancelled and does not finish its task.
+
+`reply_to_subagent(subagentId, answer)` — answers the question a subagent asked you; it goes on with the answer in the same turn.
 </tools_ref>
 ]]></content>
 						<tools>
@@ -1601,6 +1610,9 @@ When a subagent finishes, its result is delivered to you automatically at the st
 							<tool name="subagent.list_agents"/>
 							<tool name="subagent.subagent_status"/>
 							<tool name="subagent.wait_for_subagent"/>
+							<tool name="subagent.send_to_subagent"/>
+							<tool name="subagent.cancel_subagent"/>
+							<tool name="subagent.reply_to_subagent"/>
 						</tools>
 					</skill>
 					<!--

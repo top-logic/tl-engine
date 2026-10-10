@@ -52,6 +52,12 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getOptions() */
 	public static final String OPTIONS__PROP = "options";
 
+	/** @see #getAskedBySubagentId() */
+	public static final String ASKED_BY_SUBAGENT_ID__PROP = "askedBySubagentId";
+
+	/** @see #getAskedByAgent() */
+	public static final String ASKED_BY_AGENT__PROP = "askedByAgent";
+
 	private String _requestId = "";
 
 	private String _type = "";
@@ -75,6 +81,10 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	private boolean _multiSelect = false;
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.InteractionOptionDto> _options = new java.util.ArrayList<>();
+
+	private String _askedBySubagentId = "";
+
+	private String _askedByAgent = "";
 
 	/**
 	 * Creates a {@link PendingInteractionDto} instance.
@@ -361,6 +371,47 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		_options.remove(value);
 	}
 
+	/**
+	 * The id of the background subagent that asks, read off the store it is still waiting in;
+	 * empty when the agent the user talks to asks, or when nothing waits any more.
+	 */
+	public final String getAskedBySubagentId() {
+		return _askedBySubagentId;
+	}
+
+	/**
+	 * @see #getAskedBySubagentId()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setAskedBySubagentId(String value) {
+		internalSetAskedBySubagentId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAskedBySubagentId()} without chain call utility. */
+	protected final void internalSetAskedBySubagentId(String value) {
+		_askedBySubagentId = value;
+	}
+
+	/**
+	 * The name of the agent the asking subagent runs; empty when {@link #getAskedBySubagentId()} is.
+	 */
+	public final String getAskedByAgent() {
+		return _askedByAgent;
+	}
+
+	/**
+	 * @see #getAskedByAgent()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setAskedByAgent(String value) {
+		internalSetAskedByAgent(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAskedByAgent()} without chain call utility. */
+	protected final void internalSetAskedByAgent(String value) {
+		_askedByAgent = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return PENDING_INTERACTION_DTO__TYPE;
@@ -380,7 +431,9 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			REMAINING_MS__PROP, 
 			TOOL_MODE__PROP, 
 			MULTI_SELECT__PROP, 
-			OPTIONS__PROP);
+			OPTIONS__PROP, 
+			ASKED_BY_SUBAGENT_ID__PROP, 
+			ASKED_BY_AGENT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -417,6 +470,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case TOOL_MODE__PROP: return getToolMode();
 			case MULTI_SELECT__PROP: return isMultiSelect();
 			case OPTIONS__PROP: return getOptions();
+			case ASKED_BY_SUBAGENT_ID__PROP: return getAskedBySubagentId();
+			case ASKED_BY_AGENT__PROP: return getAskedByAgent();
 			default: return null;
 		}
 	}
@@ -436,6 +491,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case TOOL_MODE__PROP: internalSetToolMode((String) value); break;
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
 			case OPTIONS__PROP: internalSetOptions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.InteractionOptionDto.class, value)); break;
+			case ASKED_BY_SUBAGENT_ID__PROP: internalSetAskedBySubagentId((String) value); break;
+			case ASKED_BY_AGENT__PROP: internalSetAskedByAgent((String) value); break;
 		}
 	}
 
@@ -482,6 +539,10 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(ASKED_BY_SUBAGENT_ID__PROP);
+		out.value(getAskedBySubagentId());
+		out.name(ASKED_BY_AGENT__PROP);
+		out.value(getAskedByAgent());
 	}
 
 	@Override
@@ -508,6 +569,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 				setOptions(newValue);
 			}
 			break;
+			case ASKED_BY_SUBAGENT_ID__PROP: setAskedBySubagentId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ASKED_BY_AGENT__PROP: setAskedByAgent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

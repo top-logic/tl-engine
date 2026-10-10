@@ -182,6 +182,36 @@ message PersistedPart {
 
 	/** System event data. */
 	SystemPartDto systemData;
+
+	/** Background subagent data. */
+	SubagentPartDto subagentData;
+}
+
+/**
+ * A background subagent a turn started; see {@code Part.SubagentPart}. Its steps are in its own
+ * transcript, keyed by {@link #childRunId}.
+ */
+message SubagentPartDto {
+	/** The subagent's id within its chat, e.g. "sa-2". */
+	string subagentId;
+
+	/** The agent the subagent runs. */
+	string agentName;
+
+	/** The task brief it was given. */
+	string task;
+
+	/** The id of the lead's tool call that started it. */
+	string parentToolCallId;
+
+	/** The run id of the child run; empty until known. */
+	string childRunId;
+
+	/** The job's state: RUNNING, DONE, FAILED or CANCELLED. */
+	string status;
+
+	/** A short summary of how it ended; empty while it runs. */
+	string summary;
 }
 
 /** One source a run read, as its reading list recorded it. */

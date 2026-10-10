@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedMessage;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto;
@@ -72,6 +73,8 @@ public final class ConversationLogSerializer {
 	private static final String TYPE_DELEGATION = "delegation";
 
 	private static final String TYPE_SYSTEM = "system";
+
+	private static final String TYPE_SUBAGENT = "subagent";
 
 	private ConversationLogSerializer() {
 		// Static utility
@@ -293,6 +296,16 @@ public final class ConversationLogSerializer {
 			}
 			data.setStopReason(dp.stopReason() != null ? dp.stopReason().name() : "");
 			dto.setDelegationData(data);
+		} else if (part instanceof Part.SubagentPart sap) {
+			dto.setType(TYPE_SUBAGENT);
+			dto.setSubagentData(SubagentPartDto.create()
+				.setSubagentId(nullToEmpty(sap.subagentId()))
+				.setAgentName(nullToEmpty(sap.agentName()))
+				.setTask(nullToEmpty(sap.task()))
+				.setParentToolCallId(nullToEmpty(sap.parentToolCallId()))
+				.setChildRunId(nullToEmpty(sap.childRunId()))
+				.setStatus(nullToEmpty(sap.status()))
+				.setSummary(nullToEmpty(sap.summary())));
 		} else if (part instanceof Part.SystemPart sp) {
 			dto.setType(TYPE_SYSTEM);
 			SystemPartDto data = SystemPartDto.create();
@@ -412,6 +425,17 @@ public final class ConversationLogSerializer {
 					data.getTurnsUsed(),
 					delegationUsage,
 					delegationStopReason);
+			}
+			case TYPE_SUBAGENT: {
+				SubagentPartDto data = dto.getSubagentData();
+				return new Part.SubagentPart(id, timestamp,
+					emptyToNull(data.getSubagentId()),
+					emptyToNull(data.getAgentName()),
+					emptyToNull(data.getTask()),
+					data.getParentToolCallId(),
+					emptyToNull(data.getChildRunId()),
+					emptyToNull(data.getStatus()),
+					emptyToNull(data.getSummary()));
 			}
 			case TYPE_SYSTEM: {
 				SystemPartDto data = dto.getSystemData();

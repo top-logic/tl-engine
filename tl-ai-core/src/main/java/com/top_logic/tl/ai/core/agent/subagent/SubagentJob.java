@@ -7,7 +7,10 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.time.Instant;
 
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.citation.ReadingList;
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
@@ -25,6 +28,24 @@ public class SubagentJob {
 	private final Instant _startedAt;
 
 	private final CancellationToken _cancellationToken;
+
+	private final UserInteractionStore _interactionStore;
+
+	private final SubagentProgress _progress = new SubagentProgress();
+
+	private volatile ConversationLog _liveLog;
+
+	private volatile String _parentToolCallId = "";
+
+	private final SubagentInbox _inbox = new SubagentInbox();
+
+	private volatile String _cancelReason;
+
+	private volatile LeadQuestion _leadQuestion;
+
+	private volatile Runnable _questionSignal = () -> {
+		// Nobody listens.
+	};
 
 	private volatile SubagentJobStatus _status = SubagentJobStatus.QUEUED;
 
@@ -44,6 +65,7 @@ public class SubagentJob {
 		_taskBrief = taskBrief;
 		_cancellationToken = cancellationToken;
 		_startedAt = Instant.now();
+		_interactionStore = new UserInteractionStore(new InteractionAsker(subagentId, targetAgentName));
 	}
 
 	/** Unique identifier of this subagent job within its session. */
@@ -71,6 +93,162 @@ public class SubagentJob {
 		return _cancellationToken;
 	}
 
+	/**
+	 * The store this subagent's questions and approvals wait in.
+	 *
+	 * <p>
+	 * Its own, and not the store of the turn that started it: that turn ends while the subagent works
+	 * on, and its store is unbound with it - a question asked there afterwards was never shown and
+	 * could not be answered. This one lives as long as the job, and names the subagent as the
+	 * {@link UserInteractionStore#asker() asker} of everything in it.
+	 * </p>
+	 */
+	public UserInteractionStore interactionStore() {
+		return _interactionStore;
+	}
+
+	/**
+	 * The id of the parent's tool call that started this subagent, so a UI can show it at that call;
+	 * empty if unknown.
+	 */
+	public String parentToolCallId() {
+		return _parentToolCallId;
+	}
+
+	/** Sets the {@link #parentToolCallId() parent's tool call id}. */
+	public void setParentToolCallId(String parentToolCallId) {
+		_parentToolCallId = parentToolCallId == null ? "" : parentToolCallId;
+	}
+
+	/** What the agent that started this subagent sent it and it has not read yet. */
+	public SubagentInbox inbox() {
+		return _inbox;
+	}
+
+	/**
+	 * Cancels this subagent on behalf of the agent that started it.
+	 *
+	 * <p>
+	 * The same cancellation the user's Stop fires, plus the reason, which the result the lead is
+	 * handed names. A subagent parked on a question ends its wait through the same token.
+	 * </p>
+	 *
+	 * @param reason
+	 *        Why the lead stopped it; may be <code>null</code>.
+	 */
+	public void cancel(String reason) {
+		_cancelReason = reason;
+		_cancellationToken.cancel();
+	}
+
+	/** Why the lead {@link #cancel(String) cancelled} this subagent, or <code>null</code>. */
+	public String cancelReason() {
+		return _cancelReason;
+	}
+
+	/**
+	 * Asks the agent that started this subagent a question, and returns it for the asking thread to
+	 * wait on.
+	 *
+	 * <p>
+	 * One question at a time, because the asking thread waits for the answer; the registry is told, so
+	 * that a lead waiting in {@code wait_for_subagent} returns to answer it.
+	 * </p>
+	 */
+	public LeadQuestion askLead(String question) {
+		LeadQuestion asked = new LeadQuestion(question);
+		_leadQuestion = asked;
+		_questionSignal.run();
+		return asked;
+	}
+
+	/** The question this subagent waits for the lead to answer, or <code>null</code>. */
+	public LeadQuestion leadQuestion() {
+		return _leadQuestion;
+	}
+
+	/**
+	 * Answers the question this subagent is waiting on.
+	 *
+	 * @return Whether a question was waiting; <code>false</code> when there is none to answer.
+	 */
+	public boolean answerLead(String answer) {
+		LeadQuestion asked = _leadQuestion;
+		return asked != null && asked.answer().complete(answer);
+	}
+
+	/** Forgets the question once the asking thread has stopped waiting for it. */
+	public void clearLeadQuestion(LeadQuestion asked) {
+		if (_leadQuestion == asked) {
+			_leadQuestion = null;
+		}
+	}
+
+	/** Sets what is told when this subagent asks its lead; see {@link #askLead(String)}. */
+	void setQuestionSignal(Runnable signal) {
+		_questionSignal = signal;
+	}
+
+	/** What the subagent has done so far; see {@link SubagentProgress}. */
+	public SubagentProgress progress() {
+		return _progress;
+	}
+
+	/** What a running subagent is parked on, while it waits for somebody. */
+	public enum Waiting {
+		/** A question to the agent that started it. */
+		LEAD_ANSWER,
+		/** A question to the user. */
+		USER_ANSWER,
+		/** An approval of a tool call. */
+		APPROVAL;
+	}
+
+	/**
+	 * What this subagent waits for, or <code>null</code> when it is not waiting - it works, has not
+	 * started, or has ended.
+	 *
+	 * <p>
+	 * Read off its {@link #interactionStore() store}, which holds everything it can be parked on, so
+	 * the answer cannot fall behind what the child actually does.
+	 * </p>
+	 */
+	public Waiting waitingFor() {
+		if (_status != SubagentJobStatus.RUNNING) {
+			return null;
+		}
+		LeadQuestion asked = _leadQuestion;
+		if (asked != null && !asked.answer().isDone()) {
+			return Waiting.LEAD_ANSWER;
+		}
+		if (_interactionStore.hasPendingApprovals()) {
+			return Waiting.APPROVAL;
+		}
+		if (_interactionStore.hasPending()) {
+			return Waiting.USER_ANSWER;
+		}
+		return null;
+	}
+
+	/**
+	 * The conversation log the running subagent records into, or <code>null</code> when it has none
+	 * (yet).
+	 *
+	 * <p>
+	 * What its transcript is read from while it works; once it has ended, its recorded execution is.
+	 * Written by the child's thread - a reader takes {@link ConversationLog#turns()}, which is a
+	 * snapshot.
+	 * </p>
+	 */
+	public ConversationLog liveLog() {
+		return _liveLog;
+	}
+
+	/** Sets the {@link #liveLog() live log}. */
+	public void setLiveLog(ConversationLog liveLog) {
+		_liveLog = liveLog;
+	}
+
 	/** Current lifecycle state. */
 	public SubagentJobStatus status() {
 		return _status;
@@ -87,9 +265,9 @@ public class SubagentJob {
 	}
 
 	/**
-	 * Run id of the recorded child {@link com.top_logic.tl.ai.core.execution.model.AgentExecution},
-	 * or {@code null} when the run is not recorded. Lets the UI open the subagent's persisted
-	 * transcript.
+	 * Run id of the child run, set as soon as the run starts; {@code null} before. Lets the UI open
+	 * the subagent's transcript - its {@link #liveLog() live log} while it works, the recorded
+	 * {@link com.top_logic.tl.ai.core.execution.model.AgentExecution} afterwards.
 	 */
 	public String childRunId() {
 		return _childRunId;

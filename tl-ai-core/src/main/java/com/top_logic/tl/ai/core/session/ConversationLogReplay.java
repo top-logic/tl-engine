@@ -152,11 +152,17 @@ public class ConversationLogReplay {
 				// The system events that are conversation content rather than a note about the
 				// run: their details are verbatim the text the run put in front of the model - a
 				// finished subagent's result (#359), the request to continue after a reply that
-				// said nothing (#677). Replaying it as the same user message the live run
+				// said nothing (#677), a message from a subagent's lead. Replaying it as the same user message the live run
 				// injected is what keeps a reloaded session saying what the live one said.
 				flushAssistantMessage(turn);
-				_messages.add(new UserMessage(sp.id(), sp.timestamp(),
-					List.of(new TextContent(sp.details() == null ? "" : sp.details()))));
+				TextContent text = new TextContent(sp.details() == null ? "" : sp.details());
+				// A turn no user message started - one that opens with subagents' news - carried its
+				// context block on that message, the newest user message the live run had.
+				List<ContentPart> content = contextPending
+					? List.of(new TextContent(turnContext), text)
+					: List.of(text);
+				contextPending = false;
+				_messages.add(new UserMessage(sp.id(), sp.timestamp(), content));
 			}
 			// Skip: ApprovalPart, InteractionPart, other SystemParts, TransactionPart,
 			//        ErrorPart, DelegationPart
@@ -168,7 +174,8 @@ public class ConversationLogReplay {
 
 	private static boolean isConversationContent(Part.SystemPart part) {
 		return part.eventType() == Part.SystemEventType.SUBAGENT_RESULT
-			|| part.eventType() == Part.SystemEventType.CONTINUATION_REQUESTED;
+			|| part.eventType() == Part.SystemEventType.CONTINUATION_REQUESTED
+			|| part.eventType() == Part.SystemEventType.LEAD_MESSAGE;
 	}
 
 	/**

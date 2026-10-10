@@ -26,6 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Thread-safe: the agent thread creates requests, the servlet thread resolves them.
  * Generalizes the former {@code ApprovalStore} to support all interaction types.
  * </p>
+ *
+ * <p>
+ * A background subagent asks through a store of its own, which lives as long as the subagent rather
+ * than as long as the turn that started it, and which names it as the {@link #asker()} of everything
+ * it asks.
+ * </p>
  */
 public class UserInteractionStore {
 
@@ -33,6 +39,33 @@ public class UserInteractionStore {
 	private final Map<String, PendingApproval> _approvals = new ConcurrentHashMap<>();
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 	private final String _storeId = UUID.randomUUID().toString().substring(0, 8);
+	private final InteractionAsker _asker;
+
+	/** Creates a store for the run the user started. */
+	public UserInteractionStore() {
+		this(null);
+	}
+
+	/**
+	 * Creates a store whose every request names who asks.
+	 *
+	 * @param asker
+	 *        The background subagent asking through this store, or <code>null</code> for the run the
+	 *        user started.
+	 */
+	public UserInteractionStore(InteractionAsker asker) {
+		_asker = asker;
+	}
+
+	/**
+	 * The background subagent asking through this store, or <code>null</code> when it is the run the
+	 * user started.
+	 *
+	 * @see UserInteractionRequest#getAskedBy()
+	 */
+	public InteractionAsker asker() {
+		return _asker;
+	}
 
 	/**
 	 * Creates a new pending interaction request.
@@ -49,7 +82,7 @@ public class UserInteractionStore {
 		String id = "interaction-" + _storeId + "-" + _nextId.getAndIncrement();
 		CompletableFuture<String> future = new CompletableFuture<>();
 		UserInteractionRequest request = new UserInteractionRequest(
-			id, question, header, type, options, multiSelect, System.currentTimeMillis(), future);
+			id, question, header, type, options, multiSelect, System.currentTimeMillis(), future, _asker);
 		_pending.put(id, request);
 		return request;
 	}

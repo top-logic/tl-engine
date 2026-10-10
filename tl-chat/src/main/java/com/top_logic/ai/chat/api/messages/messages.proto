@@ -500,6 +500,15 @@ message PendingInteractionDto {
 	 * </p>
 	 */
 	repeated InteractionOptionDto options;
+
+	/**
+	 * The id of the background subagent that asks, read off the store it is still waiting in;
+	 * empty when the agent the user talks to asks, or when nothing waits any more.
+	 */
+	string askedBySubagentId;
+
+	/** The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is. */
+	string askedByAgent;
 }
 
 /**
@@ -657,6 +666,18 @@ message UserInteractionEvent {
 	 * carries what is left of its deadline, not the full one.
 	 */
 	long remainingMs;
+
+	/**
+	 * The id of the background subagent that asks (e.g. "sa-2"), or empty when the agent the user
+	 * talks to asks. A subagent asks while its lead may be resting, and the card has to say whose
+	 * question it is.
+	 */
+	string askedBySubagentId;
+
+	/**
+	 * The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is.
+	 */
+	string askedByAgent;
 }
 
 /**
@@ -956,6 +977,39 @@ message SubagentStatusEvent {
 
 	/** Run duration in milliseconds (0 until completion). */
 	int64 durationMs;
+
+	/**
+	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
+	 * call; sent on start, empty otherwise.
+	 */
+	string parentToolCallId;
+
+	/**
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. Its
+	 * first own step says it has started.
+	 */
+	boolean queued;
+}
+
+/**
+ * SSE event for a lead turn that starts without a message of the user, because subagents finished
+ * or asked the lead something while no turn of it ran. Precedes the turn's {@code run_started}.
+ */
+message LeadWokenEvent {
+	/** How many subagents' results the turn opens with. */
+	int32 finished;
+
+	/** How many subagents' questions it opens with. */
+	int32 asking;
+}
+
+/**
+ * SSE event saying that subagents' news waits for the user's next message, because the lead has been
+ * started for such news as often as it may between two messages of the user.
+ */
+message LeadWakesExhaustedEvent {
+	/** How many turns were started for subagents' news since the user's last message. */
+	int32 wakes;
 }
 
 /** SSE event for transaction committed. */

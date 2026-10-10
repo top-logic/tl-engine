@@ -235,9 +235,11 @@ the user to argue with a number they cannot change.
 - **A detached subagent outlives its parent's slot.** `spawn_subagent` returns immediately, the
   parent run ends and frees its slot, and the child keeps working on a pool thread of
   `SubagentJobRegistry`. It is still not counted as a run of its own (it is a delegate) and it still
-  spends the parent's allowance, but the concurrency cap does not see it.
-- **`AgentLoop.TOOL_WORKERS` and `SubagentJobRegistry`'s pool are still unbounded cached pools**,
-  with no setting to bound them. Only the chat's run pool can be given a ceiling here.
+  spends the parent's allowance, but the per-account cap does not see it. What bounds subagents is
+  their own ceiling (#710): at most four per chat at once, and `subagent-workers` in `<capacity>`
+  (0 = off) over the whole installation; a subagent beyond either waits, queued, and starts when one
+  ends.
+- **`AgentLoop.TOOL_WORKERS` is still an unbounded cached pool**, with no setting to bound it.
 - **A queued send holds nothing but a task.** The waiting user sees the composer busy and the run
   has not started, so it has spent no tokens and holds no conversation - which is why the default
   queue needs no length. What it does not do is tell the user *why* the answer is slow; a "waiting

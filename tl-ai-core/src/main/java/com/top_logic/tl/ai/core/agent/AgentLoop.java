@@ -44,6 +44,8 @@ import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInboxBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -53,6 +55,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TokenEstimator;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -323,8 +326,53 @@ public class AgentLoop {
 	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
 	 * appended and before the next provider request is built.</p>
 	 */
-	private void injectBetweenTurns(Conversation conversation, ToolContext context) {
+	private void injectBetweenTurns(Conversation conversation, ToolContext context,
+			AgentEventListener listener, String runId, int turn) {
 		injectSubagentResults(conversation, context);
+		injectLeadMessages(conversation, listener, runId, turn);
+	}
+
+	/**
+	 * Opening line of what a background subagent's model is shown when its lead sent it messages.
+	 *
+	 * <p>
+	 * The messages arrive in the user's role, for the reason {@link #injectSubagentResults} gives, but
+	 * the user did not write them: the agent that started this run did, and the run is its worker.
+	 * </p>
+	 */
+	static final String LEAD_MESSAGE_NOTICE = "[Message from the lead agent] The agent that started you"
+		+ " sends the following while you work. It is not the user. Take it into account for the rest"
+		+ " of your task:";
+
+	/**
+	 * Hands a background subagent what its lead sent it since its last turn, as one user message
+	 * before the next request is built.
+	 *
+	 * <p>
+	 * Only a run that reads an {@link SubagentInbox} - a background subagent, whose thread the spawner
+	 * binds it on - gets anything here. Several messages become one message, in the order they were
+	 * sent. The text is announced as a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} event, which is
+	 * what records it in the subagent's own log.
+	 * </p>
+	 */
+	static void injectLeadMessages(Conversation conversation, AgentEventListener listener, String runId,
+			int turn) {
+		SubagentInbox inbox = SubagentInboxBinding.getInbox();
+		if (inbox == null) {
+			return;
+		}
+		List<String> messages = inbox.drain();
+		if (messages.isEmpty()) {
+			return;
+		}
+		StringBuilder text = new StringBuilder(LEAD_MESSAGE_NOTICE);
+		for (String message : messages) {
+			text.append("\n\n").append(message);
+		}
+		conversation.add(new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text.toString()))));
+		emit(listener, new AgentEvent.LeadMessageDelivered(runId, turn, now(), text.toString()));
 	}
 
 	/**
@@ -366,15 +414,25 @@ public class AgentLoop {
 	 * user message is therefore this one, and the block sits in front of the delivery text. Either
 	 * way nothing here touches what the user wrote.
 	 * </p>
+	 *
+	 * <p>
+	 * Public for the chat's wake: a lead turn started because a subagent finished delivers before its
+	 * run, so that the run does not start without the news it was started for.
+	 * </p>
+	 *
+	 * @return Whether anything was delivered.
 	 */
-	static void injectSubagentResults(Conversation conversation, ToolContext context) {
+	public static boolean injectSubagentResults(Conversation conversation, ToolContext context) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
-			return;
+			return false;
 		}
 		List<SubagentJob> finished = registry.takeUndeliveredResults();
-		if (finished.isEmpty()) {
-			return;
+		// A subagent's question to this run travels the same way: it is news from a worker, it waits
+		// in the same registry, and it is answered with reply_to_subagent.
+		List<SubagentJob> asking = registry.takeUndeliveredQuestions();
+		if (finished.isEmpty() && asking.isEmpty()) {
+			return false;
 		}
 		if (context != null) {
 			// The results are this run's from now on, and so is what they rest on.
@@ -382,7 +440,7 @@ public class AgentLoop {
 				context.readingList().addAll(job.readingList());
 			}
 		}
-		String text = SubagentResultDelivery.deliveryText(finished);
+		String text = SubagentResultDelivery.deliveryText(finished, asking);
 		conversation.add(new UserMessage(
 			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
 
@@ -390,6 +448,7 @@ public class AgentLoop {
 		if (log != null) {
 			log.recordSubagentResultsDelivered(text);
 		}
+		return true;
 	}
 
 	/**
@@ -455,6 +514,38 @@ public class AgentLoop {
 	 * @return the result describing why the loop stopped
 	 */
 	public AgentResult run(Conversation conversation, ToolContext context, AgentEventListener listener) {
+		return run(conversation, (ConversationMemory) null, context, listener);
+	}
+
+	/**
+	 * Run the agent loop on the given conversation, compacting it when it outgrows this loop's
+	 * model.
+	 *
+	 * <p>
+	 * For a run that owns its conversation but has no session memory to bring - a subagent, above
+	 * all. Such a run used to go without any compaction: a worker whose tool results outgrew the
+	 * model's window was refused by the provider and ended {@link StopReason#CONTEXT_OVERFLOW}. Here
+	 * it gets a {@link ConversationMemory} over its conversation, sized to the context window of
+	 * this loop's model, and with it the same checks a chat run has - the proactive one at the start
+	 * of every turn and the reactive retry when a provider reports an overflow anyway.
+	 * </p>
+	 *
+	 * @param conversation the conversation to operate on (messages are added and may be compacted)
+	 * @param compaction   how the conversation is shortened when it no longer fits
+	 * @param context      execution context for the current user (security, transaction)
+	 * @param listener     receives progress events
+	 * @return the result describing why the loop stopped
+	 */
+	public AgentResult run(Conversation conversation, CompactionStrategy compaction, ToolContext context,
+			AgentEventListener listener) {
+		Objects.requireNonNull(compaction, "Compaction must not be null.");
+		ConversationMemory memory = new ConversationMemory(conversation, new ByteBasedTokenEstimator(),
+			compaction, _config.contextWindowTokens(), ConversationMemory.DEFAULT_RESERVED_TOKENS);
+		return run(conversation, memory, context, listener);
+	}
+
+	private AgentResult run(Conversation conversation, ConversationMemory memory, ToolContext context,
+			AgentEventListener listener) {
 		Objects.requireNonNull(conversation, "Conversation must not be null.");
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
@@ -481,7 +572,9 @@ public class AgentLoop {
 
 		try (MemoryConsentBinding.Binding consent =
 			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(conversation))) {
-			return runLoop(conversation, runContext, serialized, runId);
+			return memory == null
+				? runLoop(conversation, runContext, serialized, runId)
+				: runWithMemory(memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
@@ -576,7 +669,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation, context);
+			injectBetweenTurns(conversation, context, listener, runId, turn);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -799,7 +892,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation, context);
+			injectBetweenTurns(conversation, context, listener, runId, turn);
 
 			compactIfOverBudget(memory, listener, runId, turn);
 

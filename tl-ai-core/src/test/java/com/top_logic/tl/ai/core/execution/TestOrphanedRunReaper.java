@@ -20,6 +20,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -58,6 +59,27 @@ public class TestOrphanedRunReaper extends BasicTestCase {
 		assertEquals(AgentExecutionStore.ORPHANED_RUN_ERROR, row.getErrorMessage());
 		assertNotNull("The sweep must end the run, so that its duration stops growing",
 			row.getEndedAt());
+	}
+
+	/**
+	 * A background subagent's run, left running under a lead that had finished long before, is
+	 * failed like any other: no subagent survives a restart.
+	 */
+	public void testOrphanedSubagentRunIsFailed() {
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session = store.createSession(SessionKind.CHAT, null, "reaper-subagent");
+		AgentExecution lead = store.beginExecution(session, "run-lead", "orchestrator", "test-model", null, null);
+		store.finishExecution(lead, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, TokenUsage.EMPTY, null);
+		store.beginExecution(session, "run-child", "worker", "test-model", null, reread("run-lead"));
+
+		AgentExecution child = reread("run-child");
+		store.failOrphanedRunningExecutions(new Date(child.getStartedAt().getTime() + 1));
+
+		child = reread("run-child");
+		assertEquals(ExecutionStatus.ERROR.name(), child.getStatus().getName());
+		assertNotNull(child.getEndedAt());
+		assertEquals("The lead had ended on its own.",
+			ExecutionStatus.COMPLETE.name(), reread("run-lead").getStatus().getName());
 	}
 
 	/**

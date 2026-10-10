@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge'
+import { cardsForTurn, SubagentCard, type SubagentCardModel } from './subagent-card'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
 import { AnswerSources, citedSources } from './sources'
@@ -20,6 +21,8 @@ import type {
   NoticeMessage,
   Rating,
   RunMeta,
+  SubagentActivity,
+  SubagentLive,
   ToolCall,
   ToolResult,
   TraceMode,
@@ -85,6 +88,13 @@ function groupTurns(messages: ChatMessage[]): RunTurn[] {
       current = { id: `run-${message.id}`, user: message, events: [], index }
       continue
     }
+    if (message.type === 'notice' && message.kind === 'lead_woken') {
+      // A turn no message of the user started: the line stands where the bubble would.
+      flush()
+      index += 1
+      current = { id: `run-${message.id}`, events: [message], index }
+      continue
+    }
     if (message.type === 'tool_result') continue
     current.events.push(message)
   }
@@ -129,6 +139,8 @@ function traceEvents(events: ChatMessage[]): ChatMessage[] {
     // A notice is not a step the agent took. It has its own line beside the answer, and counted as
     // a step it would make a turn that only switched models claim to have "done" something.
     if (item.type === 'notice') return false
+    // Neither is a recorded subagent: it has its own card.
+    if (item.type === 'subagent_ref') return false
     if (answer && item === answer) return false
     if (item.type === 'assistant_text' && !item.text.trim()) return false
     return true
@@ -955,6 +967,8 @@ function noticeText(kind: NoticeKind, labels: Labels): string {
       return labels.interrupted
     case 'model_switched':
       return labels.modelSwitched
+    case 'lead_woken':
+      return labels.leadWoken
   }
 }
 
@@ -1037,6 +1051,8 @@ function AgentRun({
   citationMarkers = true,
   showTimestamp = true,
   workingIndicator = DOTS,
+  subagentCards = [],
+  onLoadSubagentTranscript,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -1060,6 +1076,9 @@ function AgentRun({
   citationMarkers?: boolean
   showTimestamp?: boolean
   workingIndicator?: WorkingIndicatorForm
+  /** The background subagents this turn started, drawn under its steps. */
+  subagentCards?: SubagentCardModel[]
+  onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -1076,6 +1095,9 @@ function AgentRun({
 
   return (
     <div className="agent-run">
+      {notices(turn.events, 'lead_woken').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
       {traceMode === 'summary' && steps.length > 0 ? (
         <RunSummary
           events={steps}
@@ -1096,6 +1118,15 @@ function AgentRun({
       {notices(turn.events, 'transaction_rolled_back').map((item) => (
         <NoticeLine key={item.id} item={item} language={language} />
       ))}
+      {subagentCards.length > 0 && onLoadSubagentTranscript ? (
+        // Under the turn's steps and above its answer: the subagents were started on the way to it,
+        // and each card shows only what its own subagent does.
+        <div className="subagent-cards">
+          {subagentCards.map((card) => (
+            <SubagentCard key={card.subagentId} card={card} labels={labels} onLoadTranscript={onLoadSubagentTranscript} />
+          ))}
+        </div>
+      ) : null}
       {pending ? <PendingAnswer indicator={workingIndicator} /> : null}
       {answer && !pending ? (
         <AssistantAnswer
@@ -1168,6 +1199,9 @@ export const Thread = React.memo(function Thread({
   citationMarkers = true,
   showTimestamp = true,
   workingIndicator = DOTS,
+  subagents,
+  subagentLive,
+  onLoadSubagentTranscript,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -1199,6 +1233,11 @@ export const Thread = React.memo(function Thread({
   showTimestamp?: boolean
   /** What stands in the answer's place until its first word; the dots unless configured. */
   workingIndicator?: WorkingIndicatorForm
+  /** The background subagents of the conversation; without them no subagent card is drawn. */
+  subagents?: SubagentActivity[]
+  /** What each running subagent has done so far, by subagent id. */
+  subagentLive?: Record<string, SubagentLive>
+  onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -1211,6 +1250,17 @@ export const Thread = React.memo(function Thread({
     return map
   }, [messages])
   const turns = useMemo(() => groupTurns(messages), [messages])
+  // A subagent is waiting while a question or an approval it asked is open; its card says so.
+  const waitingSubagents = useMemo(() => {
+    const ids = new Set<string>()
+    for (const message of messages) {
+      const open =
+        (message.type === 'interaction_request' && !message.answered) ||
+        (message.type === 'approval_request' && message.outcome === 'pending')
+      if (open && message.askedBy) ids.add(message.askedBy.subagentId)
+    }
+    return ids
+  }, [messages])
   const ratings = useMemo(() => {
     const map = new Map<number, MessageFeedback>()
     for (const entry of feedback) map.set(entry.turnIndex, entry)
@@ -1296,6 +1346,12 @@ export const Thread = React.memo(function Thread({
                   <AgentRun
                     turn={turn}
                     results={results}
+                    subagentCards={
+                      subagents && onLoadSubagentTranscript
+                        ? cardsForTurn(turn.events, subagents, subagentLive ?? {}, waitingSubagents)
+                        : undefined
+                    }
+                    onLoadSubagentTranscript={onLoadSubagentTranscript}
                     traceMode={traceMode}
                     // Only the turn at the bottom can be the running one. Handing `busy` to every
                     // turn made each finished run above it say "Working…" again.

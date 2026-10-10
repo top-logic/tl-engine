@@ -78,21 +78,18 @@ Facts that change go into the [per-turn block](#the-per-turn-block) instead.
 The shipped wording is the resource `tl.ai.environment.template`
 (`WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties`), so it is translated like every
 other text this product ships. It is **not** in the service configuration, and that is deliberate:
-an application that names its own providers overrides `LLMService` wholesale, and a template living
-there would be lost with it - leaving the English constant in front of headings that are still in
-the user's language.
+an application that overrides the service wholesale - which is what a Service Editor save does -
+would lose a template living there, leaving the English constant in front of headings that are still
+in the user's language.
 
-An installation that wants to say something different sets `template` in `LLMService`'s
-`<environment>` section, which wins:
+An installation that wants to say something different sets `template` in `AgentApplicationService`'s
+`<environment>` section, which wins. The two switches for the accounts' preference texts are
+attributes of `AgentPolicyService` (#691):
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-  <instance class="com.top_logic.tl.ai.core.provider.LLMService">
-    <environment
-      application="…"
-      user-preferences="true"
-      max-preferences-length="1000"
-    >
+<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+  <instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+    <environment application="…">
       <template>
         <en><![CDATA[…]]></en>
         <de><![CDATA[…]]></de>
@@ -100,14 +97,21 @@ An installation that wants to say something different sets `template` in `LLMSer
     </environment>
   </instance>
 </config>
+
+<config service-class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+  <instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService"
+    user-preferences="true"
+    max-preferences-length="1000"
+  />
+</config>
 ```
 
 | Property | |
 |--|--|
-| `template` | The block's text, in the language of the account the run acts for. It may use every placeholder but `{{environment}}` - the block cannot contain itself. Unset uses the shipped resource, and if that is unreachable `EnvironmentTemplate.DEFAULT`, which is the same English text; `TestEnvironmentTemplate` holds the two together and checks that every shipped language uses the same placeholders. |
-| `application` | What to call this application in front of the model. Empty uses the application's own name. |
-| `user-preferences` | Whether the accounts' preference texts are sent at all. Off sends none, whatever the accounts wrote; the texts are kept. |
-| `max-preferences-length` | How long one account's text may be, in characters. Default 1000. Cleared (0 or less) means no cap. |
+| `template` | (`AgentApplicationService`) The block's text, in the language of the account the run acts for. It may use every placeholder but `{{environment}}` - the block cannot contain itself. Unset uses the shipped resource, and if that is unreachable `EnvironmentTemplate.DEFAULT`, which is the same English text; `TestEnvironmentTemplate` holds the two together and checks that every shipped language uses the same placeholders. |
+| `application` | (`AgentApplicationService`) What to call this application in front of the model. Empty uses the application's own name. |
+| `user-preferences` | (`AgentPolicyService`) Whether the accounts' preference texts are sent at all. Off sends none, whatever the accounts wrote; the texts are kept. |
+| `max-preferences-length` | (`AgentPolicyService`) How long one account's text may be, in characters. Default 1000. Cleared (0 or less) means no cap. |
 
 `{{context}}`, `{{turn_context}}`, `{{preferences}}` and `{{memories}}` render a **whole section
 each**, heading included, or nothing at all. A template line that is nothing but an emptied placeholder is dropped,
@@ -164,11 +168,11 @@ context, and it cannot reach another account's conversation.
 A fact is a name and a value, rendered as one line under a heading that says the application is
 *stating* something. Some applications have to *instruct* instead - house rules per client, per
 project or per account, in whole sentences. That is a `SystemPromptContributor`, configured on
-`LLMService`:
+`AgentApplicationService`:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-  <instance>
+<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+  <instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
     <prompt-contributors>
       <contributor class="com.acme.agent.ClientHouseRules"/>
     </prompt-contributors>
@@ -211,8 +215,8 @@ Most applications only want to give their agents a fixed text: what the applicat
 terms, its fixed business rules. For that, tl-ai-core ships `TextPromptContributor`:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-  <instance>
+<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+  <instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
     <prompt-contributors>
       <contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
         agents="TL_SingleAgent"
@@ -253,15 +257,17 @@ An order is 'open' until it is invoiced.</en>
   service editor, before the file is written. Only a literal text is inspected; a `text` that
   references a resource key by name is not.
 
-**Changing the text in the running application.** *Administration → Service Editor → LLM-Dienst*
+**Changing the text in the running application.** *Administration → Service Editor → Agent application knowledge*
 shows the contributor under *Prompt contributors*, with the text in a multi-line field per language.
 The sequence is:
 
 1. Change the text and **save**. The service editor checks the constraints, writes
-   `com.top_logic.tl.ai.core.provider.LLMService.config.xml` to the autoconf folder and reloads the
-   application configuration. The running service does not see the change yet.
-2. **Restart** the service (*Neu starten* in the same editor). `LLMService` builds its contributors
-   again from the saved configuration. No application restart is necessary.
+   `com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml` to the autoconf folder and reloads
+   the application configuration. The running service does not see the change yet.
+2. **Restart** the service (*Neu starten* in the same editor). `AgentApplicationService` builds its
+   contributors again from the saved configuration. No application restart is necessary, and no
+   other service is restarted with it: the model list is not fetched again and the model health
+   marks are kept. While the service restarts, a run that starts is refused.
 
 From then on, every run that starts gets the new text: a new conversation, and also the **next
 message of a conversation that is already open**. A run that is in progress keeps the text it started
@@ -275,22 +281,14 @@ comes back exactly as it was entered. Plain element text would not: the editor's
 indents every line of it to the element's depth and strips the indentation the line had, so the text
 would come back with tabs on every line and a nested list would lose its nesting.
 
-> ⚠️ **Saving writes the whole `LLMService` configuration.** As for every service, the written file
-> carries `config:override="true"` and replaces the `LLMService` configuration of all other files -
-> providers, models, failover and contributors. From then on, a change to those files (for example in
-> a new release of the application) has no effect until the written file is deleted. The file also
-> holds the API keys the service runs with, encrypted - not the `%..._API_KEY%` aliases they came
-> from. That is how the engine's service editor behaves for every service.
-
-> ⚠️ **The save fails when the autoconf file it writes already uses a key alias.** Before it writes,
-> the service editor reads the existing
-> `<autoconf>/com.top_logic.tl.ai.core.provider.LLMService.config.xml` without alias resolution. An
-> `api-key="%ANTHROPIC_API_KEY%"` in that file cannot be decoded, and the save ends with *"Service
-> Konfiguration konnte nicht gespeichert werden."* This hits an application that ships its
-> `LLMService` configuration in `WEB-INF/autoconf` and runs without an external `tl_autoconf_dir` -
-> tl-ai-demo in development is one. A deployment with an external `tl_autoconf_dir` is not affected
-> on the first save: the file does not exist there yet. This is an engine gap; until it is fixed,
-> keep the host's `LLMService` configuration in `WEB-INF/conf` or use an external `tl_autoconf_dir`.
+> ⚠️ **Saving writes the whole `AgentApplicationService` configuration.** As for every service, the
+> written file carries `config:override="true"` and replaces the `AgentApplicationService`
+> configuration of all other files - contributors, the environment section and the object-id hints.
+> From then on, a change to those files (for example in a new release of the application) has no
+> effect until the written file is deleted. That is how the engine's service editor behaves for every
+> service. Providers, models, agent overrides, limits, budget and user memory are on the other three
+> services and are not part of this snapshot; that is the reason for the split (#691, see
+> `llm-service-migration.md`).
 
 **Who may change it.** Everybody who may use the service editor's save and restart commands - in a
 standard TopLogic application, the administrators. The text then reaches the system prompt of every
@@ -484,7 +482,7 @@ delete any of them.
 />
 ```
 
-A sibling of `<environment>` in `LLMService`. `enabled="false"` keeps both tools out of every
+A section of `AgentPolicyService` ("Agent policy" in the Service Editor). `enabled="false"` keeps both tools out of every
 agent's catalog, makes a call that reaches them anyway refuse, and renders no section - existing
 memories are kept, so switching it back on restores them.
 

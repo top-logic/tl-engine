@@ -312,9 +312,10 @@ answer are configured beside the implementation:
 
 `truncation-hint` - and `truncationHint` on a Java `ToolResult` - bounds an answer the tool
 **succeeded** with. A failure is bounded too, but only by the installation's ceiling
-(`max-tool-result-chars` on `LLMService`, per agent or as the default): the agent loop cuts a
-`ToolState.Failed` text to the same budget, keeping head and tail and naming the dropped middle, and
-emits the same `ToolCallResultTruncated` event an operator sees for a success. The failed flag the
+(`max-tool-result-chars` on the agent's entry in `AgentRuntimeService`'s `<agent-overrides>`, or the
+default): the agent loop cuts a `ToolState.Failed` text to the same budget, keeping head and tail
+and naming the dropped middle, and emits the same `ToolCallResultTruncated` event an operator sees
+for a success. The failed flag the
 providers send as `is_error` survives the cut, so a truncated failure still arrives as a failure.
 
 There is deliberately no per-tool hint for the error path. `ToolResult.failure(...)` carries none,

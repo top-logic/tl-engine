@@ -143,7 +143,7 @@ run. See `doc/scheduled-agent.md`.
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
-- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<run-limits>` on `LLMService` (tl-ai-core) names a `chat-workers` ceiling, so an installation sets all its ceilings in one place; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
+- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
 - **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
@@ -1531,4 +1531,4 @@ number in the answer alone.
 
 - Active chat state lives in session memory; completed sessions persisted to KnowledgeBase
 - SSE connections have no timeout; stay open until client disconnects
-- Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<run-limits chat-workers>` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip
+- Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<capacity chat-workers>` on `AgentRuntimeService` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip

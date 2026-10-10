@@ -3,5 +3,7 @@
 <!-- Main configuration file -->
 <root>
 	<alias>
+		<!-- The Brave search key of research.config.xml; give it with the prefix "unencrypted:". -->
+		<entry name="%BRAVE_API_KEY%" value="${env:tl_brave_api_key:unencrypted:}"/>
 	</alias>
 </root>

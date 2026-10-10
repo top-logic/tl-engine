@@ -264,6 +264,15 @@ interviews the user; it does not look at the application's objects. Albert's own
 offered while it runs - the approval guards them. `TestInitSkill` (tl-ai-eval) runs it end to end on
 a scripted model, including the service restart. See `tl-ai-core/doc/init-skill.md`.
 
+`TL_deepResearch` (#723) has Albert research a topic on the public web: it plans sub-questions,
+spawns one `TL_ResearchWorker` per sub-question in one turn, waits with `wait_for_subagent` (the one
+route that works with and without a chat) and writes one report that links the pages the workers
+read. The worker carries `webSearch` and `webFetch` only - no application data, no writes - and the
+lead reads no page itself. A spawned worker is unattended, so an application needs a
+`<background-allowlist>` that admits `egress` and a search engine on `WebToolsService`; tl-ai-demo
+has both in `WEB-INF/conf/research.config.xml`. `TestDeepResearchSkill` (tl-ai-eval) runs it on a
+scripted model and a fixture web. See `tl-ai-core/doc/deep-research.md`.
+
 ### Prompt caching: three rules
 
 Every provider caches by prefix, over the rendering **tools → system prompt → messages**; Anthropic

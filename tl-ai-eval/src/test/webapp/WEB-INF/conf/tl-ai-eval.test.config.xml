@@ -42,7 +42,39 @@
 							tool-class="com.top_logic.tl.ai.eval.EvalPresentTool"
 						/>
 					</factory>
+					<!--
+						webFetch reads a page of the fixture web (a host under .test) from FixtureWeb and
+						every other address with the real tool, so a scripted research run reads pages
+						without a network (#723).
+					-->
+					<factory name="web-fetch">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.eval.FixtureWebFetchTool"
+						/>
+					</factory>
 				</tool-factories>
+			</instance>
+		</config>
+
+		<!--
+			What a background subagent may reach. A spawned subagent is an unattended run, and without
+			a declared allowlist it reaches nothing but interaction and introspection - so a research
+			worker, which needs egress for webSearch and webFetch, would not even be started (#723).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance>
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+					<grant group="egress"/>
+				</background-allowlist>
+			</instance>
+		</config>
+
+		<!-- The search results of a scripted research run are written by the test (#723). -->
+		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+			<instance>
+				<search-engine class="com.top_logic.tl.ai.eval.FixtureSearchEngine"/>
 			</instance>
 		</config>
 

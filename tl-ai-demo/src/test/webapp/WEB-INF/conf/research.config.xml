@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Shadows the application's research.config.xml in the tests, which run with the security test bed
+	(secdemo.config.xml) on. The research aspect adds "egress" to the background allowlist, and the
+	test bed keeps egress out of it on purpose: an MCP caller or a scheduled run must not reach a tool
+	that sends data out of the application. Both on together is the combination research.config.xml
+	tells an operator to avoid.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0"/>

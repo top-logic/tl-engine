@@ -228,8 +228,13 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 		}
 
 		@Override
-		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
-			return ModelSecurity.UNCHECKED.canCreate(parent, compositionAttribute);
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
+			return ModelSecurity.UNCHECKED.canCreate(parent, compositionAttribute, type);
+		}
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
+			return ModelSecurity.UNCHECKED.canSetInitial(draft, attribute);
 		}
 
 		@Override

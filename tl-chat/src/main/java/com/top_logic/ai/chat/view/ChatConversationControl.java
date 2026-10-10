@@ -26,7 +26,6 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -210,7 +209,7 @@ public class ChatConversationControl extends ReactControl {
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
 		putState("placeholder", ChatViewBinding.resolveText(config.getPlaceholder()));
-		putState("workingIndicator", workingIndicator(config.getWorkingIndicator(), context.getContextPath()));
+		putState("workingIndicator", ChatIcons.encode(context, config.getWorkingIndicator()));
 		String referenceSource = blankToNull(config.getReferenceSource());
 		putState("referenceSource", referenceSource == null ? "" : referenceSource);
 		// A model-bound <mention> supplies the @ candidates declaratively and wins over the name above.
@@ -825,7 +824,7 @@ public class ChatConversationControl extends ReactControl {
 		}
 		for (Prompt prompt : prompts.getCards()) {
 			_prompts.add(new PromptSpec(ChatViewBinding.resolveText(prompt.getLabel()),
-				icon(prompt.getIcon()), QueryExecutor.compile(prompt.getValue())));
+				ChatIcons.encode(context, prompt.getIcon()), QueryExecutor.compile(prompt.getValue())));
 		}
 		for (ChannelRef ref : prompts.getInputs()) {
 			ViewChannel channel = context.resolveChannel(ref);
@@ -1094,34 +1093,6 @@ public class ChatConversationControl extends ReactControl {
 		}
 		String id = ReadFilter.idOf(object);
 		return id == null ? "" : id;
-	}
-
-	/** A {@link ThemeImage} in the encoded form the browser's {@code ThemeIcon} renders. */
-	private static String icon(ThemeImage image) {
-		return image == null ? "" : image.resolve().toEncodedForm();
-	}
-
-	/**
-	 * The configured working indicator in the form the browser renders: an icon class as its
-	 * encoded {@code css:} form, an image as the URL it is served under.
-	 *
-	 * <p>
-	 * Not {@link #icon(ThemeImage)}: an image's encoded form is its path inside the application,
-	 * which a browser resolves against the server root and so misses every application that is
-	 * not deployed there.
-	 * </p>
-	 *
-	 * @return The empty string for none, which keeps the chat's own dots.
-	 */
-	static String workingIndicator(ThemeImage image, String contextPath) {
-		if (image == null) {
-			return "";
-		}
-		ThemeImage resolved = image.resolve();
-		if (resolved instanceof ThemeImage.Img picture) {
-			return (contextPath == null ? "" : contextPath) + picture.getFileLink();
-		}
-		return resolved == ThemeImage.none() ? "" : resolved.toEncodedForm();
 	}
 
 	/** A display label for an expression result (formats dates, objects and text uniformly). */

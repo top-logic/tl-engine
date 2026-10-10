@@ -49,7 +49,7 @@ public class TestAgentTaskConfig extends TestCase {
 
 	/** The ticket's own example, as an application writes it. */
 	public void testTicketExampleParses() throws Exception {
-		Config config = parse("<task %s name='HourlyHunt' run-on-startup='false'"
+		Config config = parse("<task %s name='HourlyHunt'"
 			+ " agent='Ida' run-as='root' approval-mode='AUTO_APPROVE' record-session='true'>"
 			+ "<prompt>Scheduled hunt. Load hunt-lead. Hunt exactly one new person.</prompt>"
 			+ "<schedules><periodically interval='1h' start-time='00:15'/></schedules>"
@@ -60,7 +60,6 @@ public class TestAgentTaskConfig extends TestCase {
 		assertEquals("root", config.getRunAs());
 		assertEquals(ApprovalMode.AUTO_APPROVE, config.getApprovalMode());
 		assertTrue(config.isRecordSession());
-		assertFalse(config.isRunOnStartup());
 		assertEquals("Scheduled hunt. Load hunt-lead. Hunt exactly one new person.", config.getPrompt());
 		assertEquals("The schedule is the engine's own, untouched.", 1, config.getSchedules().size());
 	}

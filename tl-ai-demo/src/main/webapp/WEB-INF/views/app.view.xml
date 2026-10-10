@@ -3,20 +3,18 @@
 <!--
 	Root view of the tl-ai demo, served under /view/ and resolved through ViewConfig#getDefaultView.
 
-	The shell holds the agent chat, which is what the demo is about and therefore the start item,
-	the event-management domain the agent works on (events, venues, invoices of the demo.events
-	model), the user's settings and the framework's administration.
+	An overlay of the engine's application shell (tl-layout-view, WEB-INF/views/app.view.xml): the
+	engine brings the app bar with its development and user menus (designer, login, logout, theme,
+	language), the system notices and the Administration item; this file adds what the demo is
+	about. That is the agent chat, the start item, the event-management domain the agent works on
+	(events, venues, invoices of the demo.events model), the user's settings for the agent, and the
+	chat dock in the footer.
 
 	Everything here is built from the standard view elements, the chat included, so the demo shows
 	what an application gets for free rather than what this module wrote itself.
 -->
-<view>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<channels>
-		<!-- Feeds the app bar; read-only, recomputed per session. -->
-		<derived-channel name="currentPerson"
-			expr="currentUser()"
-		/>
-
 		<!--
 			The dock's wiring, declared here because the dock lives in the shell's footer.
 
@@ -57,95 +55,35 @@
 
 	<app-shell>
 		<header>
-			<app-bar variant="flat">
+			<app-bar>
 				<title>
 					<en>Albert</en>
 					<de>Albert</de>
 				</title>
-				<children>
-					<text
-						css-class="tlAppBarUser"
-						input="currentPerson"
-						overflow="ellipsis"
-					/>
-				</children>
-				<commands>
-					<!--
-						Two commands, one visible button: a ViewCommand's theme id is static
-						configuration, not a runtime read of the current theme, so each theme needs
-						its own command. The demo's stylesheet (style/tl-ai-demo-shell.css) hides
-						whichever of the two would set the theme already in force - keyed on the
-						icons below - so what the user sees is a single toggle onto the other theme.
-						SetThemeCommand persists the pick as the user's PersonalConfiguration and
-						flips the client's data-theme attribute without a reload; the chat's
-						stylesheet is written entirely in the design tokens those themes define, so
-						it follows along.
-					-->
-					<set-theme theme="default"
-						image="css:bi bi-sun"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Light theme</en>
-							<de>Helles Design</de>
-						</label>
-					</set-theme>
-					<set-theme theme="dark"
-						image="css:bi bi-moon-stars"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Dark theme</en>
-							<de>Dunkles Design</de>
-						</label>
-					</set-theme>
-					<open-designer
-						image="css:bi bi-pencil-square"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Layout designer</en>
-							<de>Layout-Designer</de>
-						</label>
-					</open-designer>
-					<generic-command
-						image="css:bi bi-box-arrow-in-right"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Login</en>
-							<de>Anmeldung</de>
-						</label>
-						<executability>
-							<anonymous-only/>
-						</executability>
-						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
-						<open-dialog
-							bind-input-to="model"
-							close-on-backdrop="false"
-							dialog-view="login.view.xml"
-						/>
-					</generic-command>
-					<logout-command
-						image="css:bi bi-box-arrow-right"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Logout</en>
-							<de>Abmeldung</de>
-						</label>
-						<executability>
-							<authenticated-only/>
-						</executability>
-					</logout-command>
-				</commands>
 			</app-bar>
 		</header>
 		<content>
 			<sidebar active-item="chat">
+				<header config:override="true">
+					<text>
+						<label>
+							<en>Albert</en>
+							<de>Albert</de>
+						</label>
+					</text>
+				</header>
+				<header-collapsed config:override="true">
+					<text>
+						<label>
+							<en>A</en>
+							<de>A</de>
+						</label>
+					</text>
+				</header-collapsed>
 				<!--
 					The chat first and active on entry: this application exists to demonstrate the
-					agent, and the events are the data it works on rather than the point.
+					agent, and the events are the data it works on rather than the point. Every item
+					goes before the separator of the engine's shell, ahead of its Administration.
 
 					It is built from view elements; the one-element form that used to exist is gone -
 					a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
@@ -153,6 +91,8 @@
 					tl-ai-demo/chat-grouped.view.xml.
 				-->
 				<nav-item id="chat"
+					config:position="before"
+					config:reference="system-separator"
 					icon="css:bi bi-chat-dots"
 				>
 					<label>
@@ -179,6 +119,8 @@
 					draft with their "Ask about this" command (Issue #440).
 				-->
 				<nav-item id="events"
+					config:position="before"
+					config:reference="system-separator"
 					icon="css:bi bi-calendar-event"
 				>
 					<label>
@@ -196,6 +138,8 @@
 				</nav-item>
 
 				<nav-item id="venues"
+					config:position="before"
+					config:reference="system-separator"
 					icon="css:bi bi-geo-alt"
 				>
 					<label>
@@ -210,6 +154,8 @@
 				</nav-item>
 
 				<nav-item id="invoices"
+					config:position="before"
+					config:reference="system-separator"
 					icon="css:bi bi-receipt"
 				>
 					<label>
@@ -232,6 +178,8 @@
 					of every run this user triggers.
 				-->
 				<nav-item id="profile"
+					config:position="before"
+					config:reference="system-separator"
 					icon="css:bi bi-person-gear"
 				>
 					<label>
@@ -239,22 +187,6 @@
 						<de>Meine Einstellungen</de>
 					</label>
 					<view-ref view="tl-ai-demo/profile.view.xml"/>
-				</nav-item>
-
-				<!--
-					Administration is the framework's own view (WEB-INF/views/admin/admin.view.xml),
-					extended by depending modules through overlay merge. The scope is declared by
-					tl-layout-view, so with no roles assigned the entry is visible to root only.
-				-->
-				<nav-item id="administration"
-					icon="css:bi bi-sliders"
-				>
-					<label>
-						<en>Administration</en>
-						<de>Administration</de>
-					</label>
-					<access-control scope="administration"/>
-					<view-ref view="admin/admin.view.xml"/>
 				</nav-item>
 			</sidebar>
 		</content>

@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.ai.chat.view.ChatDockElement.Config;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -57,7 +56,7 @@ public class ChatDockControl extends ReactControl {
 		_binding = ChatViewBinding.bind(context, chatId, "chat-dock");
 		_binding.writeSharedState(this::putState);
 		putState("chatId", chatId);
-		putState("icon", icon(config.getIcon()));
+		putState("icon", ChatIcons.encode(context, config.getIcon()));
 		putState("label", label(config.getLabel()));
 		// "dockOpen", not "open": "open" is how <chat-rail/> states its own first-load default, and
 		// the whole bootstrap is read out of one state map, so a dock writing "open" would decide
@@ -94,10 +93,6 @@ public class ChatDockControl extends ReactControl {
 		}
 		String label = Resources.getInstance().getString(key, null);
 		return label == null ? "" : label;
-	}
-
-	private static String icon(ThemeImage image) {
-		return image == null ? "" : image.resolve().toEncodedForm();
 	}
 
 	private static String blankToDefault(String value, String fallback) {

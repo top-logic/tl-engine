@@ -118,8 +118,13 @@ public class ModelAccessRightsSecurity implements ModelSecurity {
 	}
 
 	@Override
-	public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
-		return _rights.isAllowedCreate(_person, parent, compositionAttribute);
+	public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
+		return _rights.isAllowedCreate(_person, parent, compositionAttribute, type);
+	}
+
+	@Override
+	public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
+		return _rights.isAllowedInitial(_person, draft, attribute, SimpleBoundCommandGroup.WRITE);
 	}
 
 	@Override

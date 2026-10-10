@@ -22,6 +22,10 @@
 			that shows a chat element - a React view or the Albert tab of tl-chat-classic - can
 			render it. The list is keyed by name: an application that still declares an entry of
 			the same name overrides this one and does not add a second copy.
+
+			The stylesheet is in the engine's cascade layer "tl", as the stylesheets of the engine's
+			own modules are: it keeps its place after the engine's controls, and an application's
+			own (unlayered) stylesheet overrides it whatever the specificity of its rules.
 		-->
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
@@ -31,6 +35,7 @@
 						resource="/script/tl-chat-ui.js"
 					/>
 					<stylesheet name="tl-react-agent-chat-css"
+						layer="tl"
 						requires="tl-react-controls-css"
 						resource="/script/tl-chat-ui.css"
 					/>

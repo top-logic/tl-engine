@@ -134,7 +134,7 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 				return;
 			}
 			TLStructuredTypePart composition = creation.containerReference();
-			if (composition != null && !_model.canCreate(creation.container(), composition)) {
+			if (composition != null && !_model.canCreate(creation.container(), composition, type)) {
 				record(creation.object(), typeName, SimpleBoundCommandGroup.CREATE, null);
 			}
 		}

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
-		<version>8.0.0-alpha9</version>
+		<version>8.0.0-alpha10</version>
 		<relativePath />
 	</parent>
 	
@@ -18,7 +18,7 @@
 	  </license>
 	</licenses>
 	
-	<version>8.0.0-alpha9</version>
+	<version>8.0.0-alpha10</version>
   	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
@@ -145,12 +145,13 @@
 			<!--
 				This module's parent is tl-parent-app, not tl-ai-parent, so it does not inherit the
 				aggregator's surefire includes and repeats them here. Keep the two in step - see the
-				comment in the aggregator pom for what the regex is for, and TestSuiteReachability
-				for what asserts that it still reaches every test.
+				comment in the aggregator pom for what the regex is for and why the version is
+				pinned, and TestSuiteReachability for what asserts that it still reaches every test.
 			-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.6</version>
 				<configuration>
 					<includes>
 						<include>test/TestAll.java</include>

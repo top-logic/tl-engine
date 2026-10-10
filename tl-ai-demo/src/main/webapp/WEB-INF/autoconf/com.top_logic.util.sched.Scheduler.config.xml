@@ -22,7 +22,6 @@
 						name="DailyEventBriefing"
 						enabled="false"
 						run-as="root"
-						run-on-startup="false"
 						session-title="Tagesbericht Veranstaltungen"
 					>
 						<prompt>Fasse den Stand der Veranstaltungen zusammen: welche in den nächsten 30 Tagen stattfinden, wie viele freie Plätze sie noch haben, wie ihr Saldo steht und welche eingehenden Rechnungen überfällig sind. Wenn nichts davon zutrifft, schreibe genau das. Frage nicht nach - zu diesem Lauf gibt es niemanden, der antworten könnte.</prompt>

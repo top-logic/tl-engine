@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools.model;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -495,6 +496,45 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertEquals(before, instances(FOLDER).size());
 	}
 
+	/**
+	 * A composition is asked for the type actually put into it, not for its declared target type: a
+	 * letter may be refused where a memo of the same folder is not.
+	 */
+	public void testAPartIsAskedForAsItsOwnType() {
+		int before = instances(FOLDER).size();
+
+		ToolResult letter = create(context(new DenyCreateInAs("documents", LETTER)), FOLDER,
+			values("name", "Typed", "documents", List.of(newPart(LETTER, values("title", "Offer")))));
+		ToolResult memo = create(context(new DenyCreateInAs("documents", LETTER)), FOLDER,
+			values("name", "Typed", "documents", List.of(newPart(MEMO, values("title", "Call notes")))));
+
+		assertRefused(letter, "'documents'");
+		assertSucceeded(memo);
+		assertEquals(before + 1, instances(FOLDER).size());
+		delete(only(FOLDER, "name", "Typed"));
+	}
+
+	/**
+	 * An initial value the account may not set refuses the call, whether it is the object's own or a
+	 * part's, and nothing is created. The question is asked once the part stands in its container,
+	 * where an access parent leads.
+	 */
+	public void testAnInitialValueTheAccountMayNotSetCreatesNothing() {
+		int folders = instances(FOLDER).size();
+		DenyInitial denyTitle = new DenyInitial("title", new ArrayList<>());
+
+		ToolResult own = create(context(new DenyInitial("name", new ArrayList<>())), FOLDER,
+			values("name", "Guarded"));
+		ToolResult ofAPart = create(context(denyTitle), FOLDER, values("name", "Guarded",
+			"documents", List.of(newPart(LETTER, values("title", "Offer")))));
+
+		assertRefused(own, "may not set 'name'");
+		assertRefused(ofAPart, "may not set 'title'");
+		assertContains("'documents' object 1", ofAPart.text());
+		assertEquals(folders, instances(FOLDER).size());
+		assertEquals("The part was asked about in its container.", List.of(FOLDER), denyTitle.containers());
+	}
+
 	/** Parts nest three levels below the object created, and not deeper. */
 	public void testPartsNestOnlySoDeep() {
 		int before = instances(FOLDER).size();
@@ -818,7 +858,7 @@ public class TestObjectEditTool extends BasicTestCase {
 	private record DenyCreateIn(String composition) implements GrantAll {
 
 		@Override
-		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
 			return !compositionAttribute.getName().equals(composition);
 		}
 	}
@@ -829,6 +869,35 @@ public class TestObjectEditTool extends BasicTestCase {
 		@Override
 		public boolean canCreate(TLClass created, TLObject context) {
 			return !TLModelUtil.qualifiedName(created).equals(type);
+		}
+	}
+
+	/** Everything except adding an object of the given type to the composition of the given name. */
+	private record DenyCreateInAs(String composition, String type) implements GrantAll {
+
+		@Override
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass created) {
+			return !compositionAttribute.getName().equals(composition)
+				|| created == null || !TLModelUtil.qualifiedName(created).equals(type);
+		}
+	}
+
+	/**
+	 * Everything except setting the attribute of the given name on a new object; records the type of
+	 * the container each refused object stood in when it was asked.
+	 */
+	private record DenyInitial(String attribute, List<String> containers) implements GrantAll {
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart part) {
+			if (!part.getName().equals(attribute)) {
+				return true;
+			}
+			TLObject container = draft.tContainer();
+			if (container != null) {
+				containers.add(TLModelUtil.qualifiedName(container.tType()));
+			}
+			return false;
 		}
 	}
 
@@ -875,7 +944,12 @@ public class TestObjectEditTool extends BasicTestCase {
 		}
 
 		@Override
-		default boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		default boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
+			return true;
+		}
+
+		@Override
+		default boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
 			return true;
 		}
 

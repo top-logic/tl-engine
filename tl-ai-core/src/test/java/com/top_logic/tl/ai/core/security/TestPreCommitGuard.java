@@ -89,8 +89,13 @@ public class TestPreCommitGuard extends TestCase {
 		}
 
 		@Override
-		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
 			return answer("create:" + parent + "/" + compositionAttribute);
+		}
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
+			return answer("initial:" + draft + "." + attribute);
 		}
 
 		@Override

@@ -12,7 +12,7 @@ that works; [browsing-governance.md](browsing-governance.md) is the administrato
 agent that may browse is allowed to go; [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is the runnable fixture that shows it, one persona and one expected
 result per behaviour.
 **Depends on:** engine ticket **#29088** (`ModelAccessRights` / `SecurityConfigurationService`),
-**released** in engine `8.0.0-alpha7` and present in the `8.0.0-alpha9` engine tl-ai now builds
+**released** in engine `8.0.0-alpha7` and present in the `8.0.0-alpha10` engine tl-ai now builds
 against. All API references below are verified against that released artifact.
 **Companion spec:** `specs/model-based-access-rights.md` in tl-engine-7 (the model-security design this
 document builds on).
@@ -1116,10 +1116,19 @@ account's, so it acts - and is recorded - as that account, bounded by the `<back
 
 **Two engine facts the tools inherit rather than decide:**
 
-- **A new object's attributes are not checked one by one.** The engine allows every operation on an
-  object that is not committed yet, attribute grants included, because the roles that decide them are
-  derived at commit time. `createObject` checks the creation; the initial values are checked as the
-  application's own create forms check them. A `<part>` Write grant restricts *changing* an attribute.
+- **A new object's attributes are checked as the create dialogs check them.** `isAllowed` allows every
+  operation on an object that is not committed yet, because the roles that decide it are derived at
+  commit time. Since engine 8.0.0-alpha10 (#29692) the create dialogs of the React UI ask
+  `ModelAccessRights.isAllowedInitial` instead, and so does `createObject`, per attribute it sets,
+  once the object stands in its container (`ModelSecurity.canSetInitial`): a `<part>` Write grant
+  restricts an initial value where the type has an access parent, decided on the committed object
+  that parent leads to; for a type that decides by its own roles the right to create the object
+  covers its initial values, because those roles exist only once the object does. The owner's
+  decision on #627 - the agent never has more rights than the user has in the UI - is what makes
+  this the rule now that the UI applies it.
+- **A part of a specialized type is asked as that type.** The composition check
+  (`ModelSecurity.canCreate(parent, composition, type)`, engine `isAllowedCreate` with a type since
+  #29758) asks CREATE for the type actually created, not for the composition's declared target type.
 - **A part created with its container is checked by the container's creation.** For a part whose
   container is created by the same call, the engine answers the create question with yes: a context
   being built in the current transaction has no computed roles yet, and its own creation was asked
@@ -1988,7 +1997,7 @@ because no human can approve. That is strictly more supervision than `SYSTEM` ga
 
 ## 6. What is built on this branch
 
-tl-ai builds against released engine **`8.0.0-alpha9`**, which contains #29088 (released in
+tl-ai builds against released engine **`8.0.0-alpha10`**, which contains #29088 (released in
 `8.0.0-alpha7`), so the whole design compiles against the real API - nothing here is reference code
 any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/core/security/`.
 

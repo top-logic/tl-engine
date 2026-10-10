@@ -41,7 +41,6 @@ public class TestScheduledAgentDemoConfig extends TestCase {
 
 		assertFalse("Every run of it costs a real model call; a demo must not start one by itself.",
 			config.isEnabled());
-		assertFalse(config.isRunOnStartup());
 	}
 
 	/** What the example says: an entry-point agent, root, auto-approval, a recorded session. */

@@ -15,7 +15,6 @@ that wants it (Gitea #384).
 						name="HourlyHunt"
 						agent="Ida"
 						run-as="sales-robot"
-						run-on-startup="false"
 					>
 						<prompt>Scheduled hunt. Load hunt-lead. Hunt exactly one new person.</prompt>
 						<schedules>
@@ -30,7 +29,7 @@ that wants it (Gitea #384).
 ```
 
 The file belongs in `WEB-INF/autoconf/com.top_logic.util.sched.Scheduler.config.xml` of the
-application. `name`, `enabled`, `run-on-startup`, `schedules` and the rest of the task frame are the
+application. `name`, `enabled`, `schedules` and the rest of the task frame are the
 engine's own; see `com.top_logic.util.sched.task.Task.Config`.
 
 ## What the task offers

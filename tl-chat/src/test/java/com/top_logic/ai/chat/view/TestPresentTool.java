@@ -611,7 +611,12 @@ public class TestPresentTool extends BasicTestCase {
 		}
 
 		@Override
-		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
+			return false;
+		}
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
 			return false;
 		}
 

@@ -1794,7 +1794,8 @@ public class TestAgentLoop extends TestCase {
 			@Override public boolean canWrite(TLObject obj, TLStructuredTypePart attribute) { return false; }
 			@Override public boolean canDelete(TLObject obj) { return false; }
 			@Override public boolean canCreate(TLClass type, TLObject context) { return false; }
-			@Override public boolean canCreate(TLObject parent, TLStructuredTypePart attr) { return false; }
+			@Override public boolean canCreate(TLObject parent, TLStructuredTypePart attr, TLClass type) { return false; }
+			@Override public boolean canSetInitial(TLObject draft, TLStructuredTypePart attr) { return false; }
 			@Override public boolean canPerform(TLObject obj, BoundCommandGroup operation) { return false; }
 			@Override public <T extends TLObject> List<T> filterReadable(Collection<T> objects) {
 				return List.copyOf(objects);

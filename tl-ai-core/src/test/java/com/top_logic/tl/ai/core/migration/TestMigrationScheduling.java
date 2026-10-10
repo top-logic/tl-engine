@@ -127,9 +127,10 @@ public class TestMigrationScheduling extends BasicTestCase {
 	}
 
 	/**
-	 * A database tl-ai 2.0.5 or later left on 8.0.0-alpha8, started on 8.0.0-alpha9: the engine's own
-	 * migrations of alpha9 run, and nothing of {@code tl-ai-core} is left or moved - with or without
-	 * an application migration written on alpha8.
+	 * A database tl-ai 2.0.5 or later left on 8.0.0-alpha8, started on the engine this builds on
+	 * (8.0.0-alpha10): the engine's own migrations of alpha9 and alpha10 run - alpha10 adds one, in
+	 * {@code tl-contact} - and nothing of {@code tl-ai-core} is left or moved, with or without an
+	 * application migration written on alpha8.
 	 */
 	public void testAlpha8DatabaseOnAlpha9() throws Exception {
 		assertEquals(List.of(), pending(ISSUE_594, null));

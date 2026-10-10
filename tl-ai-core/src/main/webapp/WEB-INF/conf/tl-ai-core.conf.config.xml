@@ -149,7 +149,7 @@
 		-->
 		<config service-class="com.top_logic.tl.ai.core.citation.PageArchive">
 			<instance class="com.top_logic.tl.ai.core.citation.PageArchive"
-				max-chars="200000"
+				max-chars="1000000"
 				retention-days="90"
 			/>
 		</config>

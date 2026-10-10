@@ -45,11 +45,13 @@ public final class ReadingList {
 	 * How much of a source's read text is kept for the run.
 	 *
 	 * <p>
-	 * The text is what the popover's excerpt and a quoted passage are checked against. A tool's own
-	 * answer is capped well below this, so nothing the model could have seen is cut off here.
+	 * The text is what the popover's excerpt and a quoted passage are checked against. A long document
+	 * is read in windows, and its text here is every window the run read ({@link #readPart}), so the
+	 * bound is set for a long document read through: about fifty windows of a fetch, a report of some
+	 * three hundred pages. What a run reads beyond it is not citable by passage.
 	 * </p>
 	 */
-	private static final int MAX_TEXT = 200_000;
+	public static final int MAX_TEXT = 1_000_000;
 
 	/**
 	 * How many sources one run keeps.
@@ -68,6 +70,9 @@ public final class ReadingList {
 	private final Map<String, String> _references = new LinkedHashMap<>();
 
 	private final SeenUrls _seenUrls = new SeenUrls();
+
+	/** Normalized address of a document read in windows -> the windows read of it. */
+	private final Map<String, ReadParts> _parts = new LinkedHashMap<>();
 
 	/** Creates an empty reading list. */
 	public ReadingList() {
@@ -123,6 +128,31 @@ public final class ReadingList {
 		String archive = next.archiveUrl().isEmpty() ? known.archiveUrl() : next.archiveUrl();
 		Instant readAt = next.archiveUrl().isEmpty() ? known.readAt() : next.readAt();
 		return new ReadSource(known.kind(), known.id(), title, known.url(), text, archive, readAt);
+	}
+
+	/**
+	 * Records that the run read the part {@code [start, end)} of a document, and answers the text of
+	 * every part it read of that document so far.
+	 *
+	 * <p>
+	 * The answer is what the source's {@link ReadSource#text() text} is to be: the windows read, in
+	 * document order, with {@code [...]} where a part was left out, at most {@link #MAX_TEXT}
+	 * characters. A document read again with another text starts over.
+	 * </p>
+	 *
+	 * @param url
+	 *        The address the document was read from.
+	 * @param document
+	 *        The whole text of the document.
+	 * @param start
+	 *        Where the part read starts.
+	 * @param end
+	 *        Where it ends, exclusive.
+	 * @return The text read of the document.
+	 */
+	public synchronized String readPart(String url, String document, int start, int end) {
+		ReadParts parts = _parts.computeIfAbsent(normalize(url), key -> new ReadParts());
+		return parts.add(document, start, end, MAX_TEXT);
 	}
 
 	/**

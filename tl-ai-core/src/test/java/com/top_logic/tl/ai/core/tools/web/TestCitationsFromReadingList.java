@@ -40,6 +40,7 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.citation.ArchivedPageServlet;
+import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.PageArchive;
 import com.top_logic.tl.ai.core.citation.ReadingList;
@@ -210,6 +211,92 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 			assertEquals("Another account does not get it.", HttpServletResponse.SC_NOT_FOUND,
 				get(handleOf(archived), ben)._status);
 		}
+	}
+
+	/** A long report, read in windows: 60 pages of some 5,000 characters, about 300,000 in all. */
+	private static final String REPORT = "http://fixture.invalid/annual-report.pdf";
+
+	/**
+	 * A run that reads a long report through to its end can quote its last page: the reading list
+	 * holds every window read, and the archived copy shows them - one copy, extended as the run reads
+	 * on. Both used to stop at the first 200,000 characters, so the end of a long report was neither
+	 * checkable nor archived.
+	 */
+	public void testTheLastPageOfALongReportReadThroughIsCitable() throws Exception {
+		try (RecordingServer origin = serveReport(); FilteringProxy egress = egressTo(origin)) {
+			WebFetchTool fetch = new WebFetchTool(publicAnswer(), egress);
+			ReadingList list = new ReadingList();
+			List<String> copies = new ArrayList<>();
+			try (ReadingListBinding.Binding bound = ReadingListBinding.bind(list)) {
+				Integer offset = null;
+				do {
+					String answer = fetch.webFetch(REPORT, offset);
+					copies.add(list.find(REPORT).archiveUrl());
+					offset = nextOffset(answer);
+				} while (offset != null);
+			}
+
+			ReadSource report = list.find(REPORT);
+			assertTrue("more than the old bound was read: " + report.text().length(),
+				report.text().length() > 200_000);
+			assertEquals("one copy, extended window by window", 1, copies.stream().distinct().count());
+			String lastPage = finding(60);
+			CitationValidator.Result cited = CitationValidator.validate(
+				"Es steht [im Bericht](" + REPORT + " \"" + lastPage + "\").", list, List.of());
+			assertEquals("the last page is citable by its words", lastPage, cited.citations().get(0).passage());
+			Recording copy = get(handleOf(report.archiveUrl()), anna);
+			assertEquals(HttpServletResponse.SC_OK, copy._status);
+			assertTrue("and the archived copy shows it", copy.body().contains(lastPage));
+		}
+	}
+
+	/**
+	 * A run that read the first window and the last one has not read the middle: a passage from it
+	 * is not shown as the report's words, and the copy marks the part that was left out.
+	 */
+	public void testAPartThatWasNotReadIsNotCitable() throws Exception {
+		try (RecordingServer origin = serveReport(); FilteringProxy egress = egressTo(origin)) {
+			WebFetchTool fetch = new WebFetchTool(publicAnswer(), egress);
+			ReadingList list = new ReadingList();
+			try (ReadingListBinding.Binding bound = ReadingListBinding.bind(list)) {
+				String first = fetch.webFetch(REPORT, null);
+				int length = totalLength(first);
+				fetch.webFetch(REPORT, length - 8_000);
+			}
+
+			ReadSource report = list.find(REPORT);
+			assertTrue(report.text().contains(finding(1)));
+			assertTrue(report.text().contains(finding(60)));
+			assertFalse(report.text().contains(finding(30)));
+			assertTrue("the gap is marked", report.text().contains("[...]"));
+			CitationValidator.Result cited = CitationValidator.validate(
+				"Es steht [im Bericht](" + REPORT + " \"" + finding(30) + "\").", list, List.of());
+			assertEquals("a page the run did not read is not quoted", "", cited.citations().get(0).passage());
+		}
+	}
+
+	private static RecordingServer serveReport() throws java.io.IOException {
+		String filler = " The committee reviewed the figures of the quarter and found them consistent with the plan.";
+		byte[] pdf = FixturePdf.of(60, page -> finding(page) + filler.repeat(50));
+		return RecordingServer.start(target -> Reply.binary("application/pdf", pdf));
+	}
+
+	/** The one sentence of a report page that is only on that page. */
+	private static String finding(int page) {
+		return "Finding " + page + ": the measured output of plant " + page + " was " + (1000 + page * 7) + " MWh.";
+	}
+
+	/** The offset a {@code webFetch} answer names for reading on, or {@code null} at the end. */
+	private static Integer nextOffset(String answer) {
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("offset=(\\d+)\\.\\]$").matcher(answer);
+		return matcher.find() ? Integer.valueOf(matcher.group(1)) : null;
+	}
+
+	/** The length of the whole document a {@code webFetch} answer names. */
+	private static int totalLength(String answer) {
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(" to \\d+ of (\\d+)").matcher(answer);
+		assertTrue(answer, matcher.find());
+		return Integer.parseInt(matcher.group(1));
 	}
 
 	/** Runs a scripted model over the two read tools, recording into {@code log}. */

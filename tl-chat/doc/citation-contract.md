@@ -154,7 +154,13 @@ attribute kind the engine's blob store, Trac #29715, will take over, so the arch
 without a model change).
 
 - **Its own transaction, on its own thread**, so a copy is never rolled back with a turn.
-- **Bounded:** `max-chars` per copy (default 200 000), `retention-days` (default 90, 0 keeps all;
+- **What the run read, not more.** A long document is read in windows (`webFetch` with `offset`).
+  The copy - and the source's text on the reading list, which a quoted passage is checked against -
+  holds every window the run read, in document order, with `[...]` where a part was left out. Each
+  further window extends the same copy under the same handle, so one citation shows the whole text
+  read; a passage from a part the run never read is not shown as the source's words.
+- **Bounded:** `max-chars` per copy (default 1 000 000, about fifty windows - a long report read
+  through), the same bound on the reading list's text, `retention-days` (default 90, 0 keeps all;
   purged once a day), `enabled`. The same page with the same text read again by the same account is
   stored once within the life of the process.
 - **Served at `/archived-page/{handle}`** (`ArchivedPageServlet`): a login is required, then the

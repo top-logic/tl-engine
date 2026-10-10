@@ -233,12 +233,20 @@ public class WebFetchTool {
 				document = fetch(requestedUrl, browsing, timeoutSeconds, maxBytes);
 				_documents.put(requestedUrl, document);
 			}
-			WebSources.read(requestedUrl, document.url(), document.title(), document.text());
+			String answer = renderWindow(requestedUrl, document, start, maxChars);
+			if (start > 0 && start >= document.text().length()) {
+				// Past the end: nothing was read.
+				return answer;
+			}
+			// The run read this window - not the whole document - so this window is what its
+			// reading list and the archived copy gain.
+			WebSources.read(requestedUrl, document.url(), document.title(), document.text(), start,
+				windowEnd(document.text(), start, maxChars));
 			// Where a redirect led and what the page links to are addresses this run was given.
 			UrlProvenance.record(document.url());
 			document.links().forEach(UrlProvenance::record);
 			UrlProvenance.recordAllIn(document.text());
-			return renderWindow(requestedUrl, document, start, maxChars);
+			return answer;
 		} catch (Refusal ex) {
 			return ex.getMessage();
 		} catch (InterruptedException ex) {

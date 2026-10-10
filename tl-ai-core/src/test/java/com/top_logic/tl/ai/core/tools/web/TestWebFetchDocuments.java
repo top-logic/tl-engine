@@ -5,8 +5,6 @@
  */
 package com.top_logic.tl.ai.core.tools.web;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -15,11 +13,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 import com.top_logic.tl.ai.core.tools.web.RecordingServer.Reply;
@@ -52,7 +45,7 @@ public class TestWebFetchDocuments extends TestCase {
 	 * window.
 	 */
 	public void testA60PagePdfIsReadablePageByPageThroughOffsets() throws Exception {
-		byte[] pdf = pdf(60, page -> "Finding " + page + " of the report. " + FILLER.repeat(12));
+		byte[] pdf = FixturePdf.of(60, page -> "Finding " + page + " of the report. " + FILLER.repeat(12));
 		try (RecordingServer origin = RecordingServer.start(target -> Reply.binary("application/pdf", pdf));
 				FilteringProxy egress = egressTo(origin)) {
 			WebFetchTool tool = new WebFetchTool(publicAnswer(), egress);
@@ -123,7 +116,7 @@ public class TestWebFetchDocuments extends TestCase {
 	 * first bytes decide then.
 	 */
 	public void testAPdfWithoutItsContentTypeIsRecognised() throws Exception {
-		byte[] pdf = pdf(2, page -> "Untyped page " + page + ".");
+		byte[] pdf = FixturePdf.of(2, page -> "Untyped page " + page + ".");
 		try (RecordingServer origin = RecordingServer.start(
 				target -> Reply.binary("application/octet-stream", pdf));
 				FilteringProxy egress = egressTo(origin)) {
@@ -135,7 +128,7 @@ public class TestWebFetchDocuments extends TestCase {
 
 	/** A PDF of scanned images has no text layer; the tool says so instead of answering nothing. */
 	public void testAPdfWithoutTextSaysSo() throws Exception {
-		byte[] pdf = pdf(3, page -> "");
+		byte[] pdf = FixturePdf.of(3, page -> "");
 		try (RecordingServer origin = RecordingServer.start(target -> Reply.binary("application/pdf", pdf));
 				FilteringProxy egress = egressTo(origin)) {
 			String answer = new WebFetchTool(publicAnswer(), egress).webFetch("http://fixture.invalid/s.pdf", null);
@@ -227,58 +220,6 @@ public class TestWebFetchDocuments extends TestCase {
 
 	private static String tail(String answer) {
 		return answer.substring(Math.max(0, answer.length() - 200));
-	}
-
-	/** The text of one page of a generated PDF. */
-	private interface PageText {
-		String of(int page);
-	}
-
-	/** A PDF of {@code pages} pages, each holding the text {@code text} gives for it. */
-	private static byte[] pdf(int pages, PageText text) throws IOException {
-		PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-		try (PDDocument document = new PDDocument()) {
-			for (int page = 1; page <= pages; page++) {
-				PDPage pdPage = new PDPage();
-				document.addPage(pdPage);
-				String content = text.of(page);
-				if (content.isEmpty()) {
-					continue;
-				}
-				try (PDPageContentStream stream = new PDPageContentStream(document, pdPage)) {
-					stream.beginText();
-					stream.setFont(font, 10);
-					stream.setLeading(12);
-					stream.newLineAtOffset(40, 740);
-					for (String line : lines(content, 95)) {
-						stream.showText(line);
-						stream.newLine();
-					}
-					stream.endText();
-				}
-			}
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			document.save(out);
-			return out.toByteArray();
-		}
-	}
-
-	/** Breaks {@code text} into lines of at most {@code width} characters, at spaces. */
-	private static List<String> lines(String text, int width) {
-		List<String> lines = new ArrayList<>();
-		StringBuilder line = new StringBuilder();
-		for (String word : text.split(" ")) {
-			if (line.length() + word.length() + 1 > width) {
-				lines.add(line.toString());
-				line.setLength(0);
-			}
-			if (line.length() > 0) {
-				line.append(' ');
-			}
-			line.append(word);
-		}
-		lines.add(line.toString());
-		return lines;
 	}
 
 	private static UrlSafety.NameLookup publicAnswer() {

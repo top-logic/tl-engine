@@ -20,8 +20,8 @@ import com.top_logic.model.util.Pointer;
  * The text is sent with every single request of that account, so its length is paid for on every
  * turn of every conversation - which is why it is refused where it is entered rather than truncated
  * where it is used. The cap is
- * {@link EnvironmentConfig#getMaxPreferencesLength() configuration}, so this is a constraint class
- * and not a size annotation on the attribute.
+ * {@link com.top_logic.tl.ai.core.agent.AgentPolicyService.Config#getMaxPreferencesLength()
+ * configuration}, so this is a constraint class and not a size annotation on the attribute.
  * </p>
  *
  * @see UserPreferences

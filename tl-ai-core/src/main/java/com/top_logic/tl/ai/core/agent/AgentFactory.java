@@ -36,7 +36,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
@@ -62,7 +62,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
  * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
- * {@link LLMService#buildProvider(String, String)} and tool resolution to the service-level
+ * {@link LLMProviderService#buildProvider(String, String)} and tool resolution to the service-level
  * {@link ToolRegistryService}.
  * </p>
  *
@@ -102,12 +102,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 	/**
 	 * Returns the name of the entry-point agent as configured in
-	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentExecutionConfig#getChatEntryPoint()}.
+	 * {@link AgentRuntimeService.Config#getChatEntryPoint()}.
 	 *
-	 * @return the agent name
+	 * @return the agent name, or {@code null} while {@link AgentRuntimeService} is not running
 	 */
 	public String getEntryPointAgentName() {
-		return LLMService.getInstance().getEntryPointAgentName();
+		return AgentRuntimeService.chatEntryPoint();
 	}
 
 	/**
@@ -184,6 +184,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	public RunResult runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
+		// A run needs the agent services as it needs the providers. While one restarts, what it holds
+		// would silently fall back to a default - no capacity limit and the shipped approval, no
+		// budget, no standing instructions - so a run is refused rather than started without them.
+		refuseWhileServicesRestart();
 		// What this installation carries and what this account may spend, decided before anything of
 		// the run is built. The same choke point as authorizeRun below, and for the same reason: the
 		// chat, AgentRunner, the scheduler and TL-Script all arrive here, so a ceiling put here is a
@@ -191,6 +195,17 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		try (RunLimits.Admission admission = RunLimits.admit(context)) {
 			return runAdmitted(name, conversation, conversationMemory,
 				context.withTokenAllowance(admission.allowance()), listener, sessionRegistry, overrides);
+		}
+	}
+
+	private static void refuseWhileServicesRestart() {
+		String down = !AgentRuntimeService.isRunning() ? AgentRuntimeService.class.getSimpleName()
+			: !AgentApplicationService.isRunning() ? AgentApplicationService.class.getSimpleName()
+			: !AgentPolicyService.isRunning() ? AgentPolicyService.class.getSimpleName()
+			: null;
+		if (down != null) {
+			throw new IllegalStateException(down + " is not running. A run is not started while it is down or"
+				+ " restarting.");
 		}
 	}
 
@@ -209,7 +224,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		AgentModelAssignment assignment =
-			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+			AgentRuntimeService.getInstance().resolveModelAssignment(agentDef.name());
 
 		// Before anything of the request is applied: what a client asked for is not yet what this run
 		// is. The agent's own assignment and its own servers are not a choice and are not checked.
@@ -378,9 +393,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *         refusal of its own and a different sentence from "you may not run this one".
 	 */
 	public static String defaultAgentFor(RunAuthorization authorization) {
-		String configured = LLMService.Module.INSTANCE.isActive()
-			? LLMService.getInstance().getEntryPointAgentName()
-			: null;
+		String configured = AgentRuntimeService.chatEntryPoint();
 		if (canRun(authorization, configured)) {
 			return configured;
 		}
@@ -457,7 +470,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	/** The model the given agent is assigned, or <code>null</code> while that cannot be resolved. */
 	static String assignedModelOf(String agentName) {
 		try {
-			return LLMService.getInstance().resolveModelAssignment(agentName).model();
+			return AgentRuntimeService.getInstance().resolveModelAssignment(agentName).model();
 		} catch (RuntimeException ex) {
 			Logger.debug("No model assignment to check '" + agentName + "' against.", AgentFactory.class);
 			return null;
@@ -559,7 +572,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	private static AgentModelAssignment applyEffort(AgentModelAssignment assignment, String effort) {
 		String model = assignment.model();
-		LLMService llm = LLMService.getInstance();
+		LLMProviderService llm = LLMProviderService.getInstance();
 		String providerId = llm.getProviderId(model, assignment.provider());
 		ModelInfo info = llm.getModel(model);
 		String level = effort.trim().toLowerCase(Locale.ROOT);
@@ -665,7 +678,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		refuse(security.runAuthorization().agentRefusal(name, agentDef.infrastructure()));
 
 		AgentModelAssignment assignment =
-			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+			AgentRuntimeService.getInstance().resolveModelAssignment(agentDef.name());
 		// And what that agent itself uses, for the same reason: a child of an agent whose own model a
 		// role denies must not start either, and the catalog filter in front of this is a filter.
 		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
@@ -705,7 +718,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		refuse(security.runAuthorization().agentRefusal(name, agentDef.infrastructure()));
 
 		AgentModelAssignment assignment =
-			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+			AgentRuntimeService.getInstance().resolveModelAssignment(agentDef.name());
 		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
@@ -749,7 +762,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment,
 			AgentCapabilities capabilities) {
-		LLMService llmRegistry = LLMService.getInstance();
+		LLMProviderService llmRegistry = LLMProviderService.getInstance();
 		String model = assignment.model();
 
 		ModelInfo modelInfo = llmRegistry.getModel(model);
@@ -766,7 +779,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
 		systemPrompt = appendContributions(agent, assignment, systemPrompt,
-			LLMService.promptContributors());
+			AgentApplicationService.promptContributors());
 
 		// The environment block is composed last, so that a placeholder written into a skill or a
 		// delegate description is filled too, and so that the block is the last thing the model reads
@@ -793,7 +806,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		// maxTurns: assignment override > default
 		Integer assignedMaxTurns = assignment.maxTurns();
-		int maxTurns = assignedMaxTurns != null ? assignedMaxTurns : AgentParams.DEFAULT_MAX_TURNS;
+		int maxTurns = assignedMaxTurns != null ? assignedMaxTurns : AgentRuntimeService.maxTurns();
 
 		// maxRetries: assignment override > default
 		Integer assignedMaxRetries = assignment.maxRetries();
@@ -886,7 +899,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (registry.toolSchemas(t -> true).isEmpty()) {
 			return;
 		}
-		LLMService llmRegistry = LLMService.getInstance();
+		LLMProviderService llmRegistry = LLMProviderService.getInstance();
 		if (llmRegistry == null) {
 			return;
 		}
@@ -984,7 +997,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * Creates an {@link LLMProvider} for the given model, served by the named provider.
 	 *
 	 * <p>
-	 * Delegates to {@link LLMService#buildProvider(String, String)}.
+	 * Delegates to {@link LLMProviderService#buildProvider(String, String)}.
 	 * </p>
 	 *
 	 * @param providerName
@@ -992,9 +1005,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *        provider serve it.
 	 */
 	LLMProvider buildProvider(String modelName, String providerName) {
-		LLMService registry = LLMService.getInstance();
+		LLMProviderService registry = LLMProviderService.getInstance();
 		if (registry == null) {
-			throw new IllegalStateException("LLMService is not available.");
+			throw new IllegalStateException("LLMProviderService is not available.");
 		}
 		return registry.buildProvider(modelName, providerName);
 	}

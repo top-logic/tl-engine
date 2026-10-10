@@ -73,7 +73,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 	 *
 	 * <p>
 	 * Contains only identity and capabilities. Tuning parameters belong in
-	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentOverride AgentOverride}.
+	 * {@link AgentRuntimeService.AgentOverride AgentOverride}.
 	 * </p>
 	 *
 	 * <p>

@@ -47,6 +47,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
@@ -67,7 +69,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -85,8 +88,8 @@ import com.top_logic.util.model.ModelService;
 /**
  * Albert's {@code TL_init} skill, run end to end: the shipped {@code TL_SingleAgent} loads the skill,
  * reads the existing context, reads a derived attribute's calculation rule and saves the application
- * context with the user's approval into the application's source configuration - and once the LLM
- * service is restarted, the next run of Albert is given it (Gitea #667).
+ * context with the user's approval into the application's source configuration - and once the agent
+ * application service is restarted, the next run of Albert is given it (Gitea #667, #691).
  *
  * <p>
  * In tl-ai-eval because this module boots the agent stack the way a chat request meets it - the
@@ -113,8 +116,8 @@ public class TestInitSkill extends BasicTestCase {
 
 	private static final String DERIVED = "initfixture:Item#total";
 
-	/** The application's own configuration of the LLM service, which the test application has. */
-	private static final String SERVICE_FILE = "com.top_logic.tl.ai.core.provider.LLMService.config.xml";
+	/** The application's own configuration of the agent application service, which the test application has. */
+	private static final String SERVICE_FILE = "com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml";
 
 	/** What the save writes when the application has no configuration file of the service. */
 	private static final String NEW_FILE = "ai-application-context.config.xml";
@@ -154,7 +157,7 @@ public class TestInitSkill extends BasicTestCase {
 		if (!_layers.isEmpty()) {
 			XMLProperties.Module.INSTANCE.config().getTypedConfigs().removeAll(_layers);
 			_layers.clear();
-			restartLlmService();
+			restartApplicationService();
 		}
 		try (Stream<Path> files = Files.walk(_project)) {
 			for (Path file : files.sorted(Comparator.reverseOrder()).toList()) {
@@ -243,14 +246,15 @@ public class TestInitSkill extends BasicTestCase {
 		String written = read(file);
 		assertEquals(1, occurrences(written, "name=\"application-context\""));
 		assertTrue(written.contains(REVISED));
-		restartLlmService();
+		restartApplicationService();
 		assertTrue(nextPrompt().contains(REVISED));
 	}
 
 	/**
-	 * An application that configures the LLM service in no file of its own gets a file that adds the
-	 * context to the service's configuration - and the rest of that configuration stays, which is
-	 * why the next run of Albert still reaches its model.
+	 * An application that configures the agent application service in no file of its own gets a file that
+	 * adds the context to the service's configuration - and the rest of that configuration stays, which
+	 * is why the eval's agents still run on their models and the next run of Albert still reaches its
+	 * model.
 	 */
 	public void testWithoutAServiceFileTheContextIsAddedToTheConfiguration() throws Exception {
 		saveWithScript(DOCUMENT);
@@ -260,7 +264,8 @@ public class TestInitSkill extends BasicTestCase {
 		assertFalse(read(created).contains("config:override=\""));
 		activate(created);
 
-		assertEquals("eval-scripted", LLMService.getInstance().getConfig().getAgentExecution().getDefaultModel());
+		assertEquals("eval-scripted", AgentRuntimeService.getInstance().getDefaultModel());
+		assertEquals("eval-no-tools", AgentRuntimeService.getInstance().resolveModel("Eval_NoTools"));
 		assertTrue(nextPrompt().contains(DOCUMENT));
 	}
 
@@ -336,18 +341,18 @@ public class TestInitSkill extends BasicTestCase {
 
 	/**
 	 * Reads the given file last, as the application's {@code autoconf} files are read, and restarts
-	 * the LLM service as the service editor does.
+	 * the agent application service as the service editor does.
 	 */
 	private void activate(Path file) throws Exception {
 		BinaryData layer = BinaryDataFactory.createBinaryDataWithName(file.toFile(), file.getFileName().toString());
 		XMLProperties.Module.INSTANCE.config().getTypedConfigs().add(layer);
 		_layers.add(layer);
-		restartLlmService();
+		restartApplicationService();
 	}
 
-	private static void restartLlmService() throws Exception {
+	private static void restartApplicationService() throws Exception {
 		assertTrue("The configuration reloads.", ApplicationConfig.getInstance().reload());
-		ModuleUtil.INSTANCE.restart(LLMService.Module.INSTANCE, null);
+		ModuleUtil.INSTANCE.restart(AgentApplicationService.Module.INSTANCE, null);
 	}
 
 	/**
@@ -503,6 +508,9 @@ public class TestInitSkill extends BasicTestCase {
 				ToolRegistryService.Module.INSTANCE,
 				TopLogicAgentDefinitions.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
-				LLMService.Module.INSTANCE));
+				LLMProviderService.Module.INSTANCE,
+				AgentRuntimeService.Module.INSTANCE,
+				AgentApplicationService.Module.INSTANCE,
+				AgentPolicyService.Module.INSTANCE));
 	}
 }

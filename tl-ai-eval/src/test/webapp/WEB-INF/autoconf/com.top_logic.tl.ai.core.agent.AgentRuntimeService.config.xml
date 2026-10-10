@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Which agent of the eval runs on which model.
+
+	The models themselves are in com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml next
+	to this file. No config:override: the agent overrides are keyed by agent name and merge into what
+	tl-ai-core ships for the service.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
+				default-model="eval-scripted"
+			>
+				<agent-overrides>
+					<agent name="Eval_Scripted" model="eval-scripted" provider="scripted"/>
+					<agent name="Eval_NoTools" model="eval-no-tools" provider="scripted"/>
+					<agent name="Eval_Sonnet" model="claude-sonnet-4-6" provider="anthropic"/>
+					<agent name="Eval_Haiku" model="claude-haiku-4-5-20251001" provider="anthropic"/>
+				</agent-overrides>
+			</instance>
+		</config>
+	</services>
+</application>

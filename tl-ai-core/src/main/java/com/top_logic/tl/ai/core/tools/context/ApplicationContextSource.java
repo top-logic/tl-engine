@@ -16,34 +16,36 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.TextPromptContributor;
-import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.tools.context.XmlSpans.Element;
 
 /**
  * The application context in the application's source configuration: the
  * {@link TextPromptContributor} named {@value TextPromptContributor.Config#APPLICATION_CONTEXT}
- * among the prompt contributors of {@link LLMService}, in a file of the application's
+ * among the prompt contributors of {@link AgentApplicationService}, in a file of the application's
  * {@code WEB-INF/autoconf} folder.
  *
  * <p>
  * Which file it writes:
  * </p>
  * <ol>
- * <li>Every file of the folder that already holds the entry: its text is replaced there. Normally that
- * is one file; a second one appears when the service editor saved {@code LLMService} after the entry
- * was written, because its snapshot carries the entry too.</li>
- * <li>Otherwise the file that configures {@code LLMService} and is read last - files of the folder are
- * read in the order of their names. The entry is added to it: when that file replaces the service's
- * configuration ({@code config:override="true"}), an entry in any earlier file would be dropped.</li>
+ * <li>Every file of the folder that already holds the entry: its text is replaced there. Normally
+ * that is one file; a second one appears when the service editor saved
+ * {@code AgentApplicationService} after the entry was written, because its snapshot carries the
+ * entry too.</li>
+ * <li>Otherwise the file that configures {@code AgentApplicationService} and is read last - files of
+ * the folder are read in the order of their names. The entry is added to it: when that file replaces
+ * the service's configuration ({@code config:override="true"}), an entry in any earlier file would be
+ * dropped.</li>
  * <li>Otherwise a new file, {@value #NEW_FILE}, that adds the entry without {@code config:override}.
  * The prompt contributors are a list without a key, and the engine appends the entries of a later
  * configuration layer to that list, so the file adds one entry and leaves everything else tl-ai and
  * the application configured. It deliberately does not have the name the service editor uses: a file
- * of the same name in the application hides the file tl-ai-core ships with that name, and with it
- * tl-ai's own settings of the service. Its name sorts before that one, so a later snapshot of the
- * service editor - which then contains the entry - replaces this file's entry rather than adding it a
- * second time.</li>
+ * of that name is the editor's snapshot, and one the application already has would be overwritten by
+ * the editor's next save - and a file of a name tl-ai-core ships would hide tl-ai's own. Its name
+ * sorts before the editor's, so a later snapshot of the service editor - which then contains the
+ * entry - replaces this file's entry rather than adding it a second time.</li>
  * </ol>
  *
  * <p>
@@ -57,12 +59,12 @@ final class ApplicationContextSource {
 	/** The folder below the web application that holds the configuration files read automatically. */
 	static final String AUTOCONF = "WEB-INF/autoconf";
 
-	/** The file written when the application configures {@link LLMService} in no file of its own. */
+	/** The file written when the application configures {@link AgentApplicationService} in no file of its own. */
 	static final String NEW_FILE = "ai-application-context.config.xml";
 
 	private static final String FILE_SUFFIX = ".config.xml";
 
-	private static final String SERVICE = LLMService.class.getName();
+	private static final String SERVICE = AgentApplicationService.class.getName();
 
 	private static final String CONTRIBUTOR = TextPromptContributor.class.getName();
 
@@ -126,7 +128,7 @@ final class ApplicationContextSource {
 	 * @param files
 	 *        The files written.
 	 * @param created
-	 *        Whether the one file was created, because the application configured {@link LLMService}
+	 *        Whether the one file was created, because the application configured {@link AgentApplicationService}
 	 *        in no file of the folder.
 	 * @param added
 	 *        Whether the entry was added rather than its text replaced.
@@ -174,7 +176,7 @@ final class ApplicationContextSource {
 	}
 
 	/**
-	 * The files of the folder that configure {@link LLMService}, in the order the engine reads them.
+	 * The files of the folder that configure {@link AgentApplicationService}, in the order the engine reads them.
 	 *
 	 * @throws IOException
 	 *         When a file that names the service cannot be read as XML: writing next to a file nobody
@@ -232,7 +234,7 @@ final class ApplicationContextSource {
 	 * The given configuration file with the text as its application context.
 	 *
 	 * @param xml
-	 *        A configuration file that configures {@link LLMService}.
+	 *        A configuration file that configures {@link AgentApplicationService}.
 	 * @param text
 	 *        The application context.
 	 * @param languages
@@ -264,7 +266,7 @@ final class ApplicationContextSource {
 		if (instance == null) {
 			return layout.append(xml, entry, indent -> layout.instance(indent, text, languages));
 		}
-		Element contributors = instance.child(LLMService.Config.PROMPT_CONTRIBUTORS);
+		Element contributors = instance.child(AgentApplicationService.Config.PROMPT_CONTRIBUTORS);
 		if (contributors == null) {
 			return layout.append(xml, instance, indent -> layout.promptContributors(indent, text, languages));
 		}
@@ -272,7 +274,7 @@ final class ApplicationContextSource {
 	}
 
 	/**
-	 * A configuration file that adds the text as the application context to {@link LLMService}, and
+	 * A configuration file that adds the text as the application context to {@link AgentApplicationService}, and
 	 * nothing else.
 	 */
 	static String newFile(String text, List<String> languages) {
@@ -282,10 +284,11 @@ final class ApplicationContextSource {
 			+ "<!--\n"
 			+ "\tThe application context: what every agent of this application is told about it in its system\n"
 			+ "\tprompt. Written with Albert's TL_init skill; revise it there or here. A change takes effect\n"
-			+ "\twhen the LLM service is restarted.\n"
+			+ "\twhen the agent application service is restarted.\n"
 			+ "\n"
-			+ "\tNo config:override: this file adds one entry to the prompt contributors of LLMService and\n"
-			+ "\tleaves the rest of the service's configuration as tl-ai and this application set it.\n"
+			+ "\tNo config:override: this file adds one entry to the prompt contributors of\n"
+			+ "\tAgentApplicationService and leaves the rest of the service's configuration as tl-ai and this\n"
+			+ "\tapplication set it.\n"
 			+ "-->\n"
 			+ "<application config:interface=\"com.top_logic.basic.config.ApplicationConfig$Config\"\n"
 			+ "\txmlns:config=\"http://www.top-logic.com/ns/config/6.0\"\n"
@@ -319,7 +322,7 @@ final class ApplicationContextSource {
 			return List.of();
 		}
 		Element instance = entry.child("instance");
-		Element list = instance == null ? null : instance.child(LLMService.Config.PROMPT_CONTRIBUTORS);
+		Element list = instance == null ? null : instance.child(AgentApplicationService.Config.PROMPT_CONTRIBUTORS);
 		if (list == null) {
 			return List.of();
 		}
@@ -394,9 +397,9 @@ final class ApplicationContextSource {
 
 		String promptContributors(String indent, String text, List<String> languages) {
 			String inner = indent + unit;
-			return "<" + LLMService.Config.PROMPT_CONTRIBUTORS + ">" + newline
+			return "<" + AgentApplicationService.Config.PROMPT_CONTRIBUTORS + ">" + newline
 				+ inner + contributor(inner, null, text, languages) + newline
-				+ indent + "</" + LLMService.Config.PROMPT_CONTRIBUTORS + ">";
+				+ indent + "</" + AgentApplicationService.Config.PROMPT_CONTRIBUTORS + ">";
 		}
 
 		/**

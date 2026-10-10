@@ -842,8 +842,8 @@ and helps with none of them, so `TidDiagnostics` classifies the string the model
 remedy: a uuid copied out of a read answer, an object pasted in its printed form, a type name no
 table has, an abstract table, an id the engine's parser rejects, or none of those. An application
 adds the one class the framework cannot know - the code its own users speak, `LEAD-014` - as a
-pattern and a sentence in the `<object-ids>` section of `LLMService`; a configured hint is tried
-first. The classification runs **on the error path only**, so a resolution that succeeds costs
+pattern and a sentence in the `<object-ids>` section of `AgentApplicationService`; a configured hint
+is tried first. The classification runs **on the error path only**, so a resolution that succeeds costs
 nothing extra, and it asks the type repository about the type name rather than the database about
 the object. The security property survives it: every refusing branch of `resolve` calls the *same*
 method with the *same* string, so an object the principal may not read and an object that does not
@@ -1793,8 +1793,8 @@ answers a prompt, not *whether* one is raised.
 The seam is the factory that builds the context of a run:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-    <instance>
+<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+    <instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
         <security-context class="com.acme.agent.SectionApproval"/>
     </instance>
 </config>

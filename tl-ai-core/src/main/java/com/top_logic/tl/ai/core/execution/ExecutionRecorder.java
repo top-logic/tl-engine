@@ -18,7 +18,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
@@ -385,11 +385,11 @@ public final class ExecutionRecorder implements AgentEventListener {
 	}
 
 	private static String resolveProviderId(String model) {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
 			return null;
 		}
 		try {
-			return LLMService.getInstance().getProviderId(model);
+			return LLMProviderService.getInstance().getProviderId(model);
 		} catch (RuntimeException ex) {
 			return null;
 		}

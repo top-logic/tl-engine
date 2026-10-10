@@ -115,7 +115,11 @@ the same checks as a chat page's `present`, without the page.
 
 **A new arm** is one block in the scenario file plus one agent definition and one model assignment
 in `src/test/webapp/WEB-INF/conf/tl-ai-eval.test.config.xml` and
-`.../autoconf/com.top_logic.tl.ai.core.provider.LLMService.config.xml`. One agent definition per
+`.../autoconf/com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml`, whose
+`<agent-overrides>` assign each arm its model and which also names the default model. The
+`LLMProviderService` file next to it,
+`.../autoconf/com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml`, keeps the providers
+and the model catalog. One agent definition per
 model is not a style choice: a per-run model override exists in Java, but the shipped policy
 defaults to `model-access default="assigned"` and refuses a model the agent is not assigned. The
 copies of the system prompt that this costs are held equal by `TestEvalArmsAreComparable` - an arm

@@ -12,22 +12,33 @@ upgrades finds exactly the behaviour it had.
 
 ## The configuration
 
-One section, `<run-limits>`, beside `<environment>` and `<user-memory>` on `LLMService`:
+Two sections, cut by who sets them (#691, see `llm-service-migration.md`): what the installation
+carries is `<capacity>` on `AgentRuntimeService` ("Agent runtime" in the Service Editor), what one
+account may spend is `<budget>` on `AgentPolicyService` ("Agent policy"):
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
-    <instance class="com.top_logic.tl.ai.core.provider.LLMService">
-        <run-limits
+<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+    <instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+        <capacity
             chat-workers="0"
             chat-queue="0"
             concurrent-runs-per-account="0"
+        />
+    </instance>
+</config>
+```
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+    <instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+        <budget
             token-budget="0"
             budget-window-hours="24"
         >
             <role-budgets>
                 <role-budget name="tl.admin" tokens="0"/>
             </role-budgets>
-        </run-limits>
+        </budget>
     </instance>
 </config>
 ```
@@ -65,10 +76,12 @@ For a shared installation, `concurrent-runs-per-account="3"` to `"5"` is the set
 first: it is the one that stops a single account from taking every worker, and unlike a global
 ceiling it costs an ordinary user nothing.
 
-The section is read once per question, from the running `LLMService`, through `RunLimitSettings`. As
+The sections are read once per question, from the running `AgentRuntimeService` and
+`AgentPolicyService`, through `RunLimitSettings`, so a changed ceiling takes effect when the runtime
+service is restarted and a changed budget when the policy service is. As
 with `UserMemorySettings`, every accessor answers the shipped default when the service is not up, so
 a unit test or a boot step gets a number rather than an exception. The **pool size and the queue**
-are read once, when the pool is first used: changing them needs a restart.
+are read once, when the pool is first used: changing them needs a restart of the application.
 
 ## Where each limit is enforced
 

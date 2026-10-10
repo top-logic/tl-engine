@@ -6,11 +6,14 @@
 package com.top_logic.tl.ai.core.agent.environment;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.agent.AgentApplicationService;
+import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.util.Resources;
 
 /**
- * Reads the {@code <environment>} section of the {@link LLMService} configuration.
+ * Reads what every run is told about its environment: the wording and the application name from
+ * {@link AgentApplicationService}, the switches about the accounts' preference texts from
+ * {@link AgentPolicyService}.
  *
  * <p>
  * Every accessor answers without the service: a unit test, a migration or a boot step that runs
@@ -25,12 +28,20 @@ public class EnvironmentSettings {
 		// Static utility.
 	}
 
-	/** The configured section, or {@code null} when the service is not running. */
-	private static EnvironmentConfig config() {
-		if (!LLMService.Module.INSTANCE.isActive()) {
+	/** The application service, or {@code null} when it is not running. */
+	private static AgentApplicationService application() {
+		if (!AgentApplicationService.Module.INSTANCE.isActive()) {
 			return null;
 		}
-		return LLMService.getInstance().getEnvironmentConfig();
+		return AgentApplicationService.getInstance();
+	}
+
+	/** The policy service holding the preference switches, or {@code null} when it is not running. */
+	private static AgentPolicyService policy() {
+		if (!AgentPolicyService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return AgentPolicyService.getInstance();
 	}
 
 	/**
@@ -38,10 +49,9 @@ public class EnvironmentSettings {
 	 *
 	 * <p>
 	 * The shipped wording lives in a resource bundle rather than in the service configuration,
-	 * because an application that overrides {@code LLMService} wholesale - which is what an
-	 * application that names its own providers does - would otherwise lose the shipped template and
-	 * fall back to the English constant while the block's own headings stayed in the user's
-	 * language. A bundle survives that.
+	 * because an application that overrides the service wholesale - which is what a save in the
+	 * Service Editor does - would otherwise lose the shipped template and fall back to the English
+	 * constant while the block's own headings stayed in the user's language. A bundle survives that.
 	 * </p>
 	 */
 	public static final String TEMPLATE_RESOURCE = "tl.ai.environment.template";
@@ -59,8 +69,8 @@ public class EnvironmentSettings {
 	 *        Resolves a {@link ResKey} in that account's language.
 	 */
 	public static String template(Resources resources) {
-		EnvironmentConfig config = config();
-		ResKey configured = config == null ? null : config.getTemplate();
+		AgentApplicationService application = application();
+		ResKey configured = application == null ? null : application.getEnvironmentTemplate();
 		String text = configured == null ? null : resources.getString(configured, null);
 		if (text == null || text.isBlank()) {
 			text = resources.getString(ResKey.legacy(TEMPLATE_RESOURCE), null);
@@ -98,26 +108,26 @@ public class EnvironmentSettings {
 
 	/** The configured application name key, or {@code null} to use the application's own name. */
 	public static ResKey applicationName() {
-		EnvironmentConfig config = config();
-		return config == null ? null : config.getApplication();
+		AgentApplicationService application = application();
+		return application == null ? null : application.getApplicationName();
 	}
 
 	/** Whether the accounts' preference texts are sent at all. */
 	public static boolean userPreferencesEnabled() {
-		EnvironmentConfig config = config();
-		return config == null || config.getUserPreferences();
+		AgentPolicyService policy = policy();
+		return policy == null || policy.getUserPreferences();
 	}
 
 	/** How long an account's preference text may be, in characters. */
 	public static int maxPreferencesLength() {
-		EnvironmentConfig config = config();
-		return config == null ? DEFAULT_MAX_PREFERENCES_LENGTH : config.getMaxPreferencesLength();
+		AgentPolicyService policy = policy();
+		return policy == null ? DEFAULT_MAX_PREFERENCES_LENGTH : policy.getMaxPreferencesLength();
 	}
 
 	/**
 	 * The cap that applies when the service is not running.
 	 *
-	 * @see EnvironmentConfig#getMaxPreferencesLength()
+	 * @see AgentPolicyService.Config#getMaxPreferencesLength()
 	 */
 	public static final int DEFAULT_MAX_PREFERENCES_LENGTH = 1000;
 }

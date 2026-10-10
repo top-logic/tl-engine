@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -22,7 +23,7 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
@@ -564,7 +565,7 @@ public class ChatSessionManager {
 	 * Creates a default {@link ConversationMemory} with summarization strategy.
 	 *
 	 * <p>
-	 * Uses the system's default model from {@link LLMService} for summarization.
+	 * Uses the default model of {@link AgentRuntimeService} for summarization.
 	 * Falls back to truncation if no default model is configured or if the registry is not
 	 * available. The initial context window is a placeholder; the effective per-agent window
 	 * is applied by the agent runner before each run.
@@ -577,11 +578,12 @@ public class ChatSessionManager {
 	}
 
 	private static int resolveContextWindow() {
-		LLMService registry = LLMService.getInstance();
-		if (registry == null) {
+		LLMProviderService registry = LLMProviderService.getInstance();
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		if (registry == null || runtime == null) {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
-		String defaultModel = registry.getDefaultModel();
+		String defaultModel = runtime.getDefaultModel();
 		if (defaultModel == null || defaultModel.isBlank()) {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
@@ -593,19 +595,21 @@ public class ChatSessionManager {
 	}
 
 	private static CompactionStrategy createCompactionStrategy() {
-		LLMService registry = LLMService.getInstance();
-		if (registry == null) {
-			Logger.warn("LLMService not available, falling back to truncation.", ChatSessionManager.class);
+		LLMProviderService registry = LLMProviderService.getInstance();
+		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		if (registry == null || runtime == null) {
+			Logger.warn("The LLM providers or the agent runtime are not available, falling back to truncation.",
+				ChatSessionManager.class);
 			return new TruncatingStrategy();
 		}
-		String defaultModel = registry.getDefaultModel();
+		String defaultModel = runtime.getDefaultModel();
 		if (defaultModel == null || defaultModel.isBlank()) {
 			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
 			return new TruncatingStrategy();
 		}
 		LLMProvider provider;
 		try {
-			provider = registry.buildProvider(defaultModel, registry.getDefaultProvider());
+			provider = registry.buildProvider(defaultModel, runtime.getDefaultProvider());
 		} catch (IllegalStateException ex) {
 			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
 				ChatSessionManager.class);

@@ -15,7 +15,6 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
-import com.top_logic.tl.ai.core.provider.LLMService;
 
 /**
  * Tests for the {@link SystemPromptContributor} seam: an installation adds standing instructions to
@@ -100,7 +99,7 @@ public class TestSystemPromptContributor extends TestCase {
 	 * Nothing is configured by default.
 	 */
 	public void testDefaultIsEmpty() {
-		LLMService.Config<?> config = TypedConfiguration.newConfigItem(LLMService.Config.class);
+		AgentApplicationService.Config<?> config = TypedConfiguration.newConfigItem(AgentApplicationService.Config.class);
 
 		assertTrue("No contributor is shipped.", config.getPromptContributors().isEmpty());
 	}

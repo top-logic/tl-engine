@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
@@ -167,13 +167,13 @@ public class EvalRunner {
 	 * </p>
 	 */
 	public static String whyUnusable(EvalConfig.Arm arm) {
-		if (!LLMService.Module.INSTANCE.isActive()) {
-			return "The LLM service is not running.";
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
+			return "The LLM providers are not running.";
 		}
-		ModelInfo model = LLMService.getInstance().getModel(arm.getModel());
+		ModelInfo model = LLMProviderService.getInstance().getModel(arm.getModel());
 		if (model == null) {
 			return "Model '" + arm.getModel() + "' is not in the catalogue of this application."
-				+ " Configured: " + LLMService.getInstance().getConfiguredModelNames();
+				+ " Configured: " + LLMProviderService.getInstance().getConfiguredModelNames();
 		}
 		if (!model.capabilities().toolCall()) {
 			return "Model '" + arm.getModel() + "' cannot call tools, so it cannot run this harness.";

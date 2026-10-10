@@ -15,6 +15,9 @@
 	"eval-no-tools" exists to be a model that cannot call tools, so that the harness's own
 	"could not run" path is exercised by a test rather than only by a model nobody has today.
 
+	Which agent runs on which of them is not here: the default model and the agent overrides are in
+	com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml next to this file.
+
 	Model metadata is in <model-overrides>, not in <llm-configuration>: the latter is cleared at
 	startup and repopulated from the remote models.dev catalogue, so hand-written entries there do
 	not survive. The Anthropic entry carries catalog-provider-id="" for the same reason - a test must
@@ -22,17 +25,16 @@
 	context window) is written here.
 
 	In autoconf rather than in WEB-INF/conf, because that is the layer an application overrides a
-	framework default in: tl-ai-core declares its own default model in autoconf, and a conf file
-	cannot beat it.
+	framework default in.
 -->
 <application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<services>
-		<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService"
 			config:override="true"
 		>
-			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 				<providers>
 					<provider class="com.top_logic.tl.ai.eval.ScriptedProvider"
 						models="eval-scripted, eval-no-tools"
@@ -45,20 +47,6 @@
 						name="anthropic"
 					/>
 				</providers>
-				<agent-execution default-model="eval-scripted">
-					<agent-overrides>
-						<agent name="Eval_Scripted" model="eval-scripted" provider="scripted"/>
-						<agent name="Eval_NoTools" model="eval-no-tools" provider="scripted"/>
-						<agent name="Eval_Sonnet" model="claude-sonnet-4-6" provider="anthropic"/>
-						<agent name="Eval_Haiku" model="claude-haiku-4-5-20251001" provider="anthropic"/>
-					</agent-overrides>
-				</agent-execution>
-				<environment>
-					<application>
-						<en>Project management eval fixture (tl-ai-eval)</en>
-						<de>Projektverwaltung, Eval-Testdaten (tl-ai-eval)</de>
-					</application>
-				</environment>
 				<model-catalog>
 					<model-overrides>
 						<model name="eval-scripted"

@@ -464,7 +464,7 @@ Two containers carry all of it:
 | Container | On | What it decides |
 |--|--|--|
 | `chat-shell` | `.tl-cockpit` - `App`'s root, i.e. a host composing the whole chat | Session rail: column or drawer over the thread (≤ 1100 px). Artefact pane: column or sheet, and the icon strip (≤ 1279.98 px). |
-| `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 26 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
+| `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 35 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
 
 Rules to know when touching this:
 

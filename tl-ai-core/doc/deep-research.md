@@ -17,10 +17,12 @@ Gitea #723.
    the user. It does not wait for an approval: the user can stop the run or correct the plan.
 4. **Fan out.** Albert calls `spawn_subagent` once for each sub-question, all in one turn, with a
    task that stands alone: the sub-question, its purpose, the scope and a budget of tool calls.
-5. **Wait.** Albert calls `wait_for_subagent`. The results arrive in the tool answer.
+5. **Wait and check.** Albert calls `wait_for_subagent`; the results arrive in the tool answer. Then
+   it calls `listFindings` once, which lists the findings of all workers with their sources and
+   quotes. To look at a page a worker read, it calls `readSource`, which fetches nothing.
 6. **Another round.** Only for an important gap, and only as often as the effort level permits.
-7. **Report.** Albert writes the report once, in the user's language, and links each statement to
-   the page a worker read.
+7. **Report.** Albert writes the report once, in the user's language, from the findings. It links
+   each statement to the source of its finding, with the finding's quote as link title.
 
 | Effort | Workers | Tool calls per worker | Further rounds |
 |---|---|---|---|
@@ -42,16 +44,18 @@ The user can stop the run with Stop at any time.
 
 ## The worker
 
-`TL_ResearchWorker` has two tools: `webSearch` and `webFetch`. It has no tool that reads application
-data, and no tool that changes data. It does this:
+`TL_ResearchWorker` has three tools: `webSearch`, `webFetch` and `recordFinding` (#760). It has no
+tool that reads application data, and no tool that changes data. It does this:
 
 - It searches, selects the 2-4 most promising pages, prefers primary sources and reads them with
   `webFetch`.
 - It stops when the sub-question is answered, when it used its budget, or when two searches in
   sequence found no new useful page.
 - It reads only URLs from the task, from a search result or from a link on a page it read.
-- It reports in at most 800 words: an answer, findings (each with the URL of the page and a
-  sentence quoted from it), and conflicts and gaps.
+- For each statement it found, it calls `recordFinding` with the claim, the URL and a quote. The
+  tool refuses a quote that the page text the worker read does not contain.
+- It reports in at most 800 words: an answer, its findings by id with their pages, and conflicts and
+  gaps. The findings travel with the report, so the report does not repeat the quotes.
 
 The worker runs on the installation's default model. To use a cheaper model, assign it in
 `<agent-overrides>` of `AgentRuntimeService`.
@@ -95,5 +99,5 @@ variable `tl_brave_api_key`, and an allowlist with `model.read`, `data.read` and
 `TestDeepResearchSkill` (tl-ai-eval) runs the shipped skill and worker on a scripted model and on a
 fixture web (`FixtureWeb`: search results and pages under the reserved domain `.test`). It checks
 the shape of the run: the lead loads the skill, starts one worker for each sub-question in one turn,
-waits, calls no web tool itself, and writes one report that cites exactly the pages the workers
-read.
+waits, lists the findings every worker recorded, calls no web tool itself, and writes one report
+that cites exactly the pages the workers read.

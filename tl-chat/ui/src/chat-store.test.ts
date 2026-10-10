@@ -565,11 +565,11 @@ describe('the stream', () => {
     const state = store.getState()
     expect(state.subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({ parentToolCallId: 'call-1', task: 'find X' })
     expect(state.subagentLive['sa-1'].steps).toEqual([
-      { toolUseId: 't1', name: 'webSearch', summary: '{"q":"X"}', status: 'running' },
+      { toolUseId: 't1', name: 'webSearch', summary: 'X', status: 'running' },
     ])
     expect(state.subagentLive['sa-1'].turns).toBe(1)
     expect(state.subagentLive['sa-2'].steps).toEqual([
-      { toolUseId: 't2', name: 'query', summary: '{}', status: 'done' },
+      { toolUseId: 't2', name: 'query', summary: '', status: 'done' },
     ])
     expect(state.messages.some((m) => m.type === 'tool_call')).toBe(false)
     expect(state.messages.find((m) => m.id === 'ap-1')).toMatchObject({ askedBy: { subagentId: 'sa-2', agent: 'writer' } })
@@ -671,7 +671,7 @@ describe('the stream', () => {
 
     expect(store.getState().messages).toHaveLength(before)
     const live = store.getState().delegationLive['call-d']
-    expect(live.steps).toEqual([{ toolUseId: 't1', name: 'webSearch', summary: '{"q":"X"}', status: 'done' }])
+    expect(live.steps).toEqual([{ toolUseId: 't1', name: 'webSearch', summary: 'X', status: 'done' }])
     expect(live.ended).toBe('DONE')
 
     await settle()

@@ -5087,13 +5087,13 @@
   white-space: nowrap;
 }
 
+/* A step (#772): the tool's id as code, the values it was called with in the body font. */
 .subagent-card-step {
   flex: 1 1 12rem;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--chat-mono);
 }
 
 .subagent-card-body {
@@ -5105,7 +5105,6 @@
 .subagent-card-steps {
   margin: 0 0 0.375rem;
   padding-left: 1.25rem;
-  font-family: var(--chat-mono);
 }
 
 /* One line per step: the arguments are a summary, the transcript has them whole. */

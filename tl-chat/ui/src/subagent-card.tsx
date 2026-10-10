@@ -15,7 +15,7 @@ import type {
   SubagentStep,
 } from './types'
 
-const { useState } = React
+const { useEffect, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
@@ -204,8 +204,24 @@ function formatSeconds(ms: number): string {
   return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`
 }
 
-function stepLine(step: SubagentStep): string {
-  return step.summary ? `${step.name} ${step.summary}` : step.name
+/** One step: the tool's id as code (#550), then the values it was called with, as plain text. */
+function StepLine({ step }: { step: SubagentStep }) {
+  return (
+    <>
+      <code className="tool-id">{step.name}</code>
+      {step.summary ? <span className="subagent-step-args"> {step.summary}</span> : null}
+    </>
+  )
+}
+
+/** Re-renders every second while `running`, so that an elapsed time computed in render moves. */
+function useSecondTick(running: boolean): void {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (!running) return
+    const timer = window.setInterval(() => setTick((tick) => tick + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [running])
 }
 
 /** Writes to a running subagent from its card; see `ChatActions.messageSubagent`. */
@@ -335,6 +351,8 @@ export function SubagentCard({
   const live = card.live
   const current = live?.steps[live.steps.length - 1]
   const active = card.status === 'RUNNING' || card.status === 'QUEUED' || card.status === 'WAITING'
+  // A tool call can take a minute with no event; the seconds move on regardless.
+  useSecondTick(active && live !== undefined && !card.durationMs)
   const tokens = card.totalTokens || live?.tokens || 0
   const elapsed = card.durationMs || (active && live ? Date.now() - live.startedAt : 0)
   const meta = [
@@ -402,7 +420,11 @@ export function SubagentCard({
       </div>
       {stopFailed ? <p className="subagent-card-refusal" role="alert">{labels.subagentStopFailed}</p> : null}
       <div className="subagent-card-line">
-        {active && current ? <span className="subagent-card-step">{stepLine(current)}</span> : null}
+        {active && current ? (
+          <span className="subagent-card-step">
+            <StepLine step={current} />
+          </span>
+        ) : null}
         {!active && card.summary ? <span className="subagent-card-summary">{plainText(card.summary)}</span> : null}
         {meta.length > 0 ? <span className="subagent-card-meta">{meta.join(' · ')}</span> : null}
       </div>
@@ -412,7 +434,7 @@ export function SubagentCard({
             <ol className="subagent-card-steps">
               {live.steps.map((step) => (
                 <li key={step.toolUseId} className={`is-${step.status}`}>
-                  {stepLine(step)}
+                  <StepLine step={step} />
                 </li>
               ))}
             </ol>

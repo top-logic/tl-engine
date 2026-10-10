@@ -43,6 +43,7 @@ import {
   type ChatPreferences,
 } from './preferences'
 import { parseTasksJson, type AgentTask } from './progress-model'
+import { argsSummary } from './plain-text'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
 import { keepUnsent, StaleWindowError, takeUnsent } from './stale-window'
@@ -201,13 +202,13 @@ export function applyChildEvent(
     }
     case 'tool_started': {
       if (!data.toolCallId) return live
-      const summary = (data.argsJson ?? '').replace(/\s+/g, ' ').trim()
+      const summary = argsSummary(data.argsJson)
       const steps = [
         ...live.steps,
         {
           toolUseId: data.toolCallId,
           name: data.toolName ?? 'tool',
-          summary: summary.length > 80 ? `${summary.slice(0, 80)}…` : summary,
+          summary,
           status: 'running' as ToolCallStatus,
         },
       ]

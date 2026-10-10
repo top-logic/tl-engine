@@ -47,6 +47,7 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
+import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -74,8 +75,8 @@ import com.top_logic.util.model.ModelService;
  * per sub-question, the workers' web tools, the delivery of their results to the waiting lead, the
  * join of their reading lists into the lead's, and the citation check of the report. The shape this
  * pins is the one the skill prescribes: the lead loads the skill, starts its workers in one turn,
- * waits, never reads a page itself, and writes one report whose links point at pages the workers
- * read.
+ * waits, lists the findings the workers recorded, never reads a page itself, and writes one report
+ * whose links point at the pages the findings rest on.
  * </p>
  *
  * <p>
@@ -113,8 +114,8 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		}
 
 		String findings() {
-			return "## Answer\n" + fact + "\n\n## Findings\n- " + fact + " - [" + country + " subsidy page]("
-				+ url + " \"" + fact + "\")\n\n## Conflicts and gaps\n- None.";
+			return "## Answer\n" + fact + "\n\n## Findings\n- F1: " + fact + " - [" + country + " subsidy page]("
+				+ url + ")\n\n## Conflicts and gaps\n- None.";
 		}
 	}
 
@@ -156,9 +157,16 @@ public class TestDeepResearchSkill extends BasicTestCase {
 
 		assertEquals(StopReason.COMPLETE, run.stopReason());
 		List<String> leadCalls = run.toolCalls();
-		assertEquals("The lead loads the skill, starts one worker per sub-question in one turn and waits.",
-			List.of("loadSkill", "spawn_subagent", "spawn_subagent", "spawn_subagent", "wait_for_subagent"),
+		assertEquals("The lead loads the skill, starts one worker per sub-question in one turn, waits, and"
+			+ " lists the findings before it writes.",
+			List.of("loadSkill", "spawn_subagent", "spawn_subagent", "spawn_subagent", "wait_for_subagent",
+				"listFindings"),
 			leadCalls);
+		String findings = run.result("listFindings");
+		assertTrue("The lead sees every worker's finding: " + findings, findings.startsWith("3 findings:"));
+		for (Topic topic : TOPICS) {
+			assertTrue(findings, findings.contains(topic.url()) && findings.contains(topic.fact()));
+		}
 
 		SubagentJobRegistry registry = SubagentRegistries.find(_registryKey);
 		assertNotNull("The conversation's registry ran the workers.", registry);
@@ -167,8 +175,8 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		for (SubagentJob job : jobs) {
 			assertEquals(WORKER, job.targetAgentName());
 			assertEquals("Worker failed: " + job.subagentId(), SubagentJobStatus.DONE, job.status());
-			assertEquals("Every worker searches, then reads the page it found.",
-				List.of("webSearch", "webFetch"), toolNames(job.progress()));
+			assertEquals("Every worker searches, reads the page it found, and records what it found there.",
+				List.of("webSearch", "webFetch", "recordFinding"), toolNames(job.progress()));
 			for (SubagentProgress.Step step : job.progress().steps()) {
 				assertEquals(step.toolName(), SubagentProgress.Outcome.OK, step.outcome());
 			}
@@ -214,11 +222,13 @@ public class TestDeepResearchSkill extends BasicTestCase {
 			}
 			case 2:
 				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
+			case 3:
+				return List.of(call("listFindings", "{}"));
 			default:
 				StringBuilder report = new StringBuilder("# Heat pump subsidies compared\n\n");
 				for (Topic topic : TOPICS) {
 					report.append("## ").append(topic.country()).append("\n[").append(topic.fact())
-						.append("](").append(topic.url()).append(")\n\n");
+						.append("](").append(topic.url()).append(" \"").append(topic.fact()).append("\")\n\n");
 				}
 				report.append("## Open points\n[Sweden pays nothing](").append(INVENTED).append(").\n");
 				return List.of(new TextContent(report.toString()));
@@ -234,6 +244,9 @@ public class TestDeepResearchSkill extends BasicTestCase {
 				return List.of(call("webSearch", "{\"query\": " + json(topic.query()) + "}"));
 			case 1:
 				return List.of(call("webFetch", "{\"url\": " + json(topic.url()) + "}"));
+			case 2:
+				return List.of(call("recordFinding", "{\"claim\": " + json(topic.fact()) + ", \"source\": "
+					+ json(topic.url()) + ", \"quote\": " + json(topic.fact()) + "}"));
 			default:
 				return List.of(new TextContent(topic.findings()));
 		}
@@ -249,6 +262,16 @@ public class TestDeepResearchSkill extends BasicTestCase {
 				}
 			}
 			return result;
+		}
+
+		String result(String tool) {
+			for (Message message : conversation.messages()) {
+				if (message instanceof ToolResultMessage toolResult && tool.equals(toolResult.toolName())
+					&& toolResult.state() instanceof ToolState.Completed completed) {
+					return completed.result();
+				}
+			}
+			return "";
 		}
 
 		List<Citation> citations() {

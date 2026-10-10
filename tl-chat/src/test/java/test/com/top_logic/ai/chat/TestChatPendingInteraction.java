@@ -49,9 +49,14 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
@@ -298,6 +303,79 @@ public class TestChatPendingInteraction extends BasicTestCase {
 		} finally {
 			bens.close();
 		}
+	}
+
+	/**
+	 * A background subagent's question, asked after the turn that started it has ended, is answered
+	 * from any window of the account (issue #695).
+	 *
+	 * <p>
+	 * The run is gone from the register by then, and its store with it; the question waits in the
+	 * job's own store, which {@link PendingInteractionRegistry#subagentListener} registered when the
+	 * job started.
+	 * </p>
+	 */
+	public void testASubagentsQuestionAfterTheTurnEndedIsAnswered() throws Exception {
+		runEnded();
+		SubagentJob job = new SubagentJob("sa-1", "researcher", "find X", new CancellationToken());
+		SubagentJobRegistry.Listener listener =
+			PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+		listener.started(job);
+		try {
+			UserInteractionRequest question =
+				job.interactionStore().createRequest("Which region?", "Clarify", "text", null, false);
+			assertEquals("The question names the subagent that asks.",
+				new InteractionAsker("sa-1", "researcher"), question.getAskedBy());
+			assertEquals("The chat lists the subagent's store for its conversation.",
+				List.of(job.interactionStore()), PendingInteractionRegistry.subagentStores(anna, chatId()));
+
+			inWindow(newWindow());
+			assertEquals(HttpServletResponse.SC_OK,
+				post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", anna));
+
+			assertEquals("The subagent must have been unparked by the answer.", "Nordics",
+				question.getFuture().get(5, TimeUnit.SECONDS));
+		} finally {
+			listener.finished(job);
+		}
+	}
+
+	/** Another account may not answer a subagent's question, and does not see its store. */
+	public void testAnotherAccountMayNotAnswerASubagent() throws Exception {
+		SubagentJob job = new SubagentJob("sa-2", "researcher", "find X", new CancellationToken());
+		SubagentJobRegistry.Listener listener =
+			PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+		listener.started(job);
+		try {
+			UserInteractionRequest question =
+				job.interactionStore().createRequest("Which region?", "Clarify", "text", null, false);
+
+			assertEquals(List.of(), PendingInteractionRegistry.subagentStores(ben, chatId()));
+			inWindow(newWindow());
+			assertEquals(HttpServletResponse.SC_OK,
+				post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", ben));
+
+			assertFalse("Ben's answer must not have unparked Anna's subagent.", question.getFuture().isDone());
+		} finally {
+			listener.finished(job);
+		}
+	}
+
+	/** A subagent that has finished is no longer registered; its leftovers are not answered. */
+	public void testAFinishedSubagentIsForgotten() throws Exception {
+		SubagentJob job = new SubagentJob("sa-3", "researcher", "find X", new CancellationToken());
+		SubagentJobRegistry.Listener listener =
+			PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+		int before = PendingInteractionRegistry.subagentCount();
+		listener.started(job);
+		UserInteractionRequest question =
+			job.interactionStore().createRequest("Which region?", "Clarify", "text", null, false);
+		listener.finished(job);
+
+		assertEquals(before, PendingInteractionRegistry.subagentCount());
+		assertEquals(HttpServletResponse.SC_OK,
+			post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", anna));
+		assertFalse(question.getFuture().isDone());
 	}
 
 	/** Registers a recording chat UI of the given account for the given window. */

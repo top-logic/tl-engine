@@ -324,6 +324,10 @@ export interface PendingInteraction {
   sessionId: string
   /** How long the requester is still waiting; zero or less means nobody is listening any more. */
   remainingMs: number
+  /** The background subagent that asks, read off the store it waits in; absent or empty otherwise. */
+  askedBySubagentId?: string
+  /** The agent the asking subagent runs. */
+  askedByAgent?: string
 }
 
 /**

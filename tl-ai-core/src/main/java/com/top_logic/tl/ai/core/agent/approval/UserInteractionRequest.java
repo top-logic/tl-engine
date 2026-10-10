@@ -25,6 +25,7 @@ public class UserInteractionRequest {
 	private final boolean _multiSelect;
 	private final long _createdAt;
 	private final CompletableFuture<String> _future;
+	private final InteractionAsker _askedBy;
 
 	/**
 	 * What the user typed instead of, or beside, the offered options; see {@link #getOwnWords()}.
@@ -50,6 +51,21 @@ public class UserInteractionRequest {
 	 */
 	public UserInteractionRequest(String id, String question, String header, String type,
 			String options, boolean multiSelect, long createdAt, CompletableFuture<String> future) {
+		this(id, question, header, type, options, multiSelect, createdAt, future, null);
+	}
+
+	/**
+	 * Creates a new {@link UserInteractionRequest} that names who asks.
+	 *
+	 * @param askedBy
+	 *        The background subagent asking, or <code>null</code> for the run the user started.
+	 * @see #UserInteractionRequest(String, String, String, String, String, boolean, long,
+	 *      CompletableFuture)
+	 */
+	public UserInteractionRequest(String id, String question, String header, String type,
+			String options, boolean multiSelect, long createdAt, CompletableFuture<String> future,
+			InteractionAsker askedBy) {
+		_askedBy = askedBy;
 		_id = id;
 		_question = question;
 		_header = header;
@@ -83,6 +99,13 @@ public class UserInteractionRequest {
 
 	/** The future the agent thread blocks on. */
 	public CompletableFuture<String> getFuture() { return _future; }
+
+	/**
+	 * The background subagent that asks, or <code>null</code> when the run the user started asks.
+	 *
+	 * @see UserInteractionStore#asker()
+	 */
+	public InteractionAsker getAskedBy() { return _askedBy; }
 
 	/**
 	 * For "choice": what the user wrote in their own words, instead of picking an option or beside

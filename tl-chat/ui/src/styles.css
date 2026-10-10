@@ -2613,6 +2613,15 @@
   text-decoration: underline;
 }
 
+/* Who asks, when a background subagent does - said before the question, so it is read first. */
+.prompt-card-asker {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 /* What "allow this chat" will cover, said on the card rather than found out afterwards. */
 .prompt-card-note {
   margin: 0;

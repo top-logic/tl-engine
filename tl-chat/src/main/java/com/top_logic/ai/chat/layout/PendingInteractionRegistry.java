@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,6 +14,9 @@ import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
 
 /**
  * The chat runs currently in flight, so that any window of the owning account can reach one - not
@@ -50,6 +55,15 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
  * finished, failed or cancelled run leaves nothing behind. Nothing here keeps a window alive - the
  * run's own background task already holds its tracker while it is working.
  * </p>
+ *
+ * <p>
+ * <b>Background subagents</b> are registered the same way, but for as long as each one works rather
+ * than for the turn that started it: that turn ends while the subagent goes on, and a question or an
+ * approval it raises afterwards waits in the {@link SubagentJob#interactionStore() job's own store}.
+ * {@link #subagentListener} registers a job when its work starts and drops it when it ends.
+ * {@link #findWaiting(Person, String)} finds a request in either kind of store, and
+ * {@link #subagentStores(Person, String)} lists the stores of the subagents working for a chat.
+ * </p>
  */
 public final class PendingInteractionRegistry {
 
@@ -73,7 +87,45 @@ public final class PendingInteractionRegistry {
 		// Plain data.
 	}
 
+	/**
+	 * One background subagent that may be waiting for a human.
+	 *
+	 * @param job
+	 *        The subagent's job, holding the store its questions and approvals wait in.
+	 * @param responder
+	 *        The account whose windows may answer it. Never <code>null</code>.
+	 * @param tracker
+	 *        The tracker of the window whose run started it - where "approve for this session" is
+	 *        recorded, as for the run itself.
+	 * @param sessionId
+	 *        The chat the run that started it belongs to; may be <code>null</code>.
+	 */
+	public record PendingSubagent(SubagentJob job, Person responder, TaskProgressTracker tracker,
+			String sessionId) {
+		// Plain data.
+	}
+
+	/**
+	 * Where a request is waiting, found by {@link PendingInteractionRegistry#findWaiting}.
+	 *
+	 * @param responder
+	 *        The account the request is addressed to.
+	 * @param tracker
+	 *        The window the session-approved tools are recorded against.
+	 * @param store
+	 *        The store the request waits in; resolving it there unparks the asking thread.
+	 * @param logListener
+	 *        The conversation log the decision is recorded in, or <code>null</code> when no run of
+	 *        the chat is recording - a subagent that asks after its lead's turn has ended.
+	 */
+	public record Waiting(Person responder, TaskProgressTracker tracker, UserInteractionStore store,
+			ConversationLogListener logListener) {
+		// Plain data.
+	}
+
 	private static final Map<String, PendingRun> RUNS = new ConcurrentHashMap<>();
+
+	private static final Map<SubagentJob, PendingSubagent> SUBAGENTS = new ConcurrentHashMap<>();
 
 	private PendingInteractionRegistry() {
 		// Static registry.
@@ -154,6 +206,99 @@ public final class PendingInteractionRegistry {
 	}
 
 	/**
+	 * Where the given request is waiting, if it is waiting for this account: in the store of a run,
+	 * or in the store of a background subagent.
+	 *
+	 * <p>
+	 * Does not take the request, like {@link #find(Person, String)}.
+	 * </p>
+	 *
+	 * @param responder
+	 *        The account that wants to answer; may be <code>null</code>, which finds nothing.
+	 * @param requestId
+	 *        The correlation id of the approval or question; may be <code>null</code>, which finds
+	 *        nothing.
+	 * @return Where the request waits, or <code>null</code> when nothing of this account waits for
+	 *         it - including when the request belongs to somebody else.
+	 */
+	public static Waiting findWaiting(Person responder, String requestId) {
+		PendingRun run = find(responder, requestId);
+		if (run != null) {
+			return new Waiting(run.responder(), run.tracker(), run.state().getUserInteractionStore(),
+				run.state().getLogListener());
+		}
+		if (responder == null || requestId == null) {
+			return null;
+		}
+		for (PendingSubagent subagent : SUBAGENTS.values()) {
+			if (!responder.equals(subagent.responder())) {
+				continue;
+			}
+			UserInteractionStore store = subagent.job().interactionStore();
+			if (store.isPending(requestId)) {
+				return new Waiting(subagent.responder(), subagent.tracker(), store, null);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Registers each job of a chat's subagent registry while it works, so that what it asks can be
+	 * shown and answered after the turn that started it has ended.
+	 *
+	 * <p>
+	 * A listener that does nothing when the responder is unknown, for the reason
+	 * {@link #register} gives.
+	 * </p>
+	 *
+	 * @param responder
+	 *        The account the subagents work for; may be <code>null</code>.
+	 * @param tracker
+	 *        The window whose run starts them.
+	 * @param sessionId
+	 *        The chat the run belongs to.
+	 */
+	public static SubagentJobRegistry.Listener subagentListener(Person responder,
+			TaskProgressTracker tracker, String sessionId) {
+		if (responder == null || tracker == null) {
+			return SubagentJobRegistry.Listener.NONE;
+		}
+		return new SubagentJobRegistry.Listener() {
+			@Override
+			public void started(SubagentJob job) {
+				SUBAGENTS.put(job, new PendingSubagent(job, responder, tracker, sessionId));
+			}
+
+			@Override
+			public void finished(SubagentJob job) {
+				SUBAGENTS.remove(job);
+			}
+		};
+	}
+
+	/**
+	 * The stores of the subagents working for the given chat of this account, whichever window
+	 * started them.
+	 *
+	 * @param owner
+	 *        The account; may be <code>null</code>, which finds nothing.
+	 * @param sessionId
+	 *        The chat; may be <code>null</code>, which finds nothing.
+	 */
+	public static List<UserInteractionStore> subagentStores(Person owner, String sessionId) {
+		List<UserInteractionStore> stores = new ArrayList<>();
+		if (owner == null || sessionId == null) {
+			return stores;
+		}
+		for (PendingSubagent subagent : SUBAGENTS.values()) {
+			if (owner.equals(subagent.responder()) && sessionId.equals(subagent.sessionId())) {
+				stores.add(subagent.job().interactionStore());
+			}
+		}
+		return stores;
+	}
+
+	/**
 	 * The run this account has in the given chat, whichever window started it.
 	 *
 	 * <p>
@@ -192,6 +337,11 @@ public final class PendingInteractionRegistry {
 			}
 		}
 		return ending;
+	}
+
+	/** How many subagents are currently registered. For tests and diagnostics. */
+	public static int subagentCount() {
+		return SUBAGENTS.size();
 	}
 
 	/** How many runs are currently registered. For tests and diagnostics. */

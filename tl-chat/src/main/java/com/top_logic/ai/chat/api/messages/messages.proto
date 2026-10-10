@@ -500,6 +500,15 @@ message PendingInteractionDto {
 	 * </p>
 	 */
 	repeated InteractionOptionDto options;
+
+	/**
+	 * The id of the background subagent that asks, read off the store it is still waiting in;
+	 * empty when the agent the user talks to asks, or when nothing waits any more.
+	 */
+	string askedBySubagentId;
+
+	/** The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is. */
+	string askedByAgent;
 }
 
 /**
@@ -657,6 +666,18 @@ message UserInteractionEvent {
 	 * carries what is left of its deadline, not the full one.
 	 */
 	long remainingMs;
+
+	/**
+	 * The id of the background subagent that asks (e.g. "sa-2"), or empty when the agent the user
+	 * talks to asks. A subagent asks while its lead may be resting, and the card has to say whose
+	 * question it is.
+	 */
+	string askedBySubagentId;
+
+	/**
+	 * The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is.
+	 */
+	string askedByAgent;
 }
 
 /**

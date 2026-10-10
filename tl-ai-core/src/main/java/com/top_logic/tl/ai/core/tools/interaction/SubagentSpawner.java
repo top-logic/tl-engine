@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
@@ -154,7 +155,13 @@ public class SubagentSpawner {
 					// the parent's undelivered sibling results, and subagents are
 					// structurally depth-1 anyway (buildSubagentLoop omits the
 					// spawn/wait/delegation tools from the child's catalog).
-					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null)) {
+					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null);
+					// Replaces the parent turn's store the snapshot just carried over: that turn ends
+					// while this child works on, and a question or approval parked in its store after
+					// that is shown nowhere and answered by nobody. The job's store lives as long as
+					// the job and names the child as the one asking.
+					UserInteractionStoreBinding.Binding ownStore =
+						UserInteractionStoreBinding.bind(j.interactionStore())) {
 
 					Instant start = Instant.now();
 

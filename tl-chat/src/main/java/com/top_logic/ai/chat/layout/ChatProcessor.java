@@ -44,6 +44,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
 import com.top_logic.tl.ai.core.agent.environment.UserMemories;
@@ -322,6 +323,12 @@ public class ChatProcessor {
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
 			SubagentJobRegistry subagentRegistry = taskTracker.getActiveSubagentRegistry();
+			if (subagentRegistry != null) {
+				// The subagents this run starts go on after its turn, and what they ask after that
+				// waits in their own stores; this is what lets any window of the account find it.
+				subagentRegistry.setListener(PendingInteractionRegistry.subagentListener(
+					TLContext.currentUser(), taskTracker, state.getSessionId()));
+			}
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
 
 			// Record the run against the session captured at send time (not the currently
@@ -732,7 +739,12 @@ public class ChatProcessor {
 					+ "' (mode=" + request.mode() + ", approvalRequestId="
 					+ request.approvalRequestId() + "). Blocking until user responds.",
 					ChatProcessor.class);
-				CompletableFuture<String> future = interactionStore.registerApproval(request);
+				// The store bound on the asking thread, not the one this run was started with: a
+				// background subagent inherits this callback, and it asks through its job's own store,
+				// which outlives this run's turn. On the run's own thread both are the same.
+				UserInteractionStore bound = UserInteractionStoreBinding.getStore();
+				UserInteractionStore store = bound != null ? bound : interactionStore;
+				CompletableFuture<String> future = store.registerApproval(request);
 				try {
 					String response = future.get(
 						request.timeout().toMillis(), TimeUnit.MILLISECONDS);
@@ -754,7 +766,7 @@ public class ChatProcessor {
 					// Nobody waits on this future any more. Answering removes the registration
 					// already, this drops it on every other exit so that a timed-out approval
 					// does not linger as a phantom in getPendingApprovals().
-					interactionStore.discardApproval(request.approvalRequestId());
+					store.discardApproval(request.approvalRequestId());
 				}
 			};
 		}

@@ -4,7 +4,7 @@ import type { ChatAddress } from './api'
 import type { bundle } from './i18n'
 import type { ChatAction } from './reducer'
 import { ToolId } from './tool-id'
-import type { ApprovalOutcome, ApprovalRequest, InteractionRequest } from './types'
+import type { ApprovalOutcome, ApprovalRequest, Asker, InteractionRequest } from './types'
 
 const { useEffect, useState } = React
 
@@ -339,6 +339,7 @@ function ApprovalCard({
         </>
       }
     >
+      <AskedBy asker={item.askedBy} labels={labels} />
       <p className="prompt-card-body">{approvalReason(item, labels)}</p>
       <ToolArguments args={item.argsJson} labels={labels} />
       {item.toolName ? (
@@ -346,6 +347,15 @@ function ApprovalCard({
       ) : null}
     </OverlayCard>
   )
+}
+
+/**
+ * The line that names the background subagent asking, so that the user does not answer a worker
+ * believing the agent they talk to asked. Nothing when that agent asks itself.
+ */
+function AskedBy({ asker, labels }: { asker?: Asker; labels: Labels }) {
+  if (!asker) return null
+  return <p className="prompt-card-asker">{labels.askedBySubagent(asker.subagentId, asker.agent)}</p>
 }
 
 function QuestionCard({
@@ -409,6 +419,7 @@ function QuestionCard({
         </>
       }
     >
+      <AskedBy asker={item.askedBy} labels={labels} />
       {item.header && item.question !== item.header ? <p className="prompt-card-body">{item.question}</p> : null}
       {choice ? (
         <>

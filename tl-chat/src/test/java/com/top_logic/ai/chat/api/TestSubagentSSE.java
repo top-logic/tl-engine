@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.chat.api;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
@@ -56,5 +59,47 @@ public class TestSubagentSSE extends TestCase {
 		handler.onEventForTest(new AgentEvent.SubagentCancelled(
 			"run1", 1, Instant.now(), "sa-3", "", ""));
 		assertTrue("Expected subagent_cancelled event", emitted.contains("subagent_cancelled"));
+	}
+
+	/** A subagent's end says which call started it and its run, so a window that did not see it start finds the card. */
+	public void testTheEndSaysWhereTheCardIs() {
+		List<String> frames = new ArrayList<>();
+		ChatSSEHandler handler = frames(frames);
+
+		handler.onEventForTest(new AgentEvent.SubagentCompleted("run1", 2, Instant.now(), "sa-1",
+			new SubagentResult("done", TokenUsage.EMPTY, 12L, 1, StopReason.COMPLETE), "call-1", "child-1"));
+
+		assertEquals(1, frames.size());
+		assertTrue(frames.get(0), frames.get(0).startsWith("subagent_completed "));
+		assertTrue(frames.get(0), frames.get(0).contains("\"parentToolCallId\":\"call-1\""));
+		assertTrue(frames.get(0), frames.get(0).contains("\"childRunId\":\"child-1\""));
+	}
+
+	/** A lead turn the subagents started says which ones and why. */
+	public void testTheWakeNamesTheSubagents() {
+		List<String> frames = new ArrayList<>();
+		ChatSSEHandler handler = frames(frames);
+
+		handler.onEventForTest(new AgentEvent.LeadWoken("", 0, Instant.now(), 1, 1, List.of(
+			new SubagentNews("sa-1", "Counter", SubagentNews.Reason.FINISHED, "call-1", ""),
+			new SubagentNews("sa-2", "Writer", SubagentNews.Reason.ASKS, "call-2", "Welche?"))));
+
+		assertEquals(1, frames.size());
+		String frame = frames.get(0);
+		assertTrue(frame, frame.startsWith("lead_woken "));
+		assertTrue(frame, frame.contains("\"subagentId\":\"sa-1\""));
+		assertTrue(frame, frame.contains("\"reason\":\"FINISHED\""));
+		assertTrue(frame, frame.contains("\"reason\":\"ASKS\""));
+		assertTrue(frame, frame.contains("\"question\":\"Welche?\""));
+		assertTrue(frame, frame.contains("\"parentToolCallId\":\"call-2\""));
+	}
+
+	private static ChatSSEHandler frames(List<String> sink) {
+		return new ChatSSEHandler(null, null, new PrintWriter(new StringWriter())) {
+			@Override
+			void sendEvent(String eventType, String data) {
+				sink.add(eventType + " " + data);
+			}
+		};
 	}
 }

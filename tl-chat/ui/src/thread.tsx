@@ -27,6 +27,7 @@ import type {
   ToolResult,
   TraceMode,
   UserMessage,
+  WokenSubagent,
 } from './types'
 
 const { useEffect, useMemo, useRef, useState } = React
@@ -935,6 +936,9 @@ const NOTICE_DETAIL_CHARS = 300
 function NoticeLine({ item, language }: { item: NoticeMessage; language: Language }) {
   const labels = bundle(language)
   const [open, setOpen] = useState(false)
+  if (item.kind === 'lead_woken' && item.woken?.length) {
+    return <WokenLine woken={item.woken} labels={labels} />
+  }
   const warning = item.kind === 'transaction_rolled_back'
   const detail = item.detail.trim()
   const long = detail.length > NOTICE_DETAIL_CHARS
@@ -954,6 +958,77 @@ function NoticeLine({ item, language }: { item: NoticeMessage; language: Languag
       ) : null}
     </div>
   )
+}
+
+/**
+ * The line in place of the user's bubble of a turn subagents started: who reported back, and why.
+ *
+ * Each name is a link to that subagent's card, which may stand turns further up: with three
+ * subagents and three such turns, "subagents reported back" alone does not say which card to look
+ * at. A question is the subagent's own text, so it is shown as plain text, cut where the server cut it.
+ */
+function WokenLine({ woken, labels }: { woken: WokenSubagent[]; labels: Labels }) {
+  return (
+    <div className="notice-line is-woken">
+      <ul className="woken-list">
+        {woken.map((item) => {
+          const name = item.agentName ? `${item.subagentId} (${item.agentName})` : item.subagentId
+          return (
+            <li key={`${item.parentToolCallId}|${item.subagentId}`} className={`woken-${item.reason.toLowerCase()}`}>
+              <button
+                type="button"
+                className="woken-link"
+                aria-label={labels.wokenShowCard(name)}
+                onClick={(event) => showSubagentCard(event.currentTarget, item)}
+              >
+                {name}
+              </button>{' '}
+              {wokenReason(item, labels)}
+              {item.reason === 'ASKS' && item.question ? <span className="woken-question"> {item.question}</span> : null}
+            </li>
+          )
+        })}
+      </ul>
+      <div>{labels.leadWokenContinues}</div>
+    </div>
+  )
+}
+
+function wokenReason(item: WokenSubagent, labels: Labels): string {
+  switch (item.reason) {
+    case 'FAILED':
+      return labels.wokenFailed
+    case 'CANCELLED':
+      return labels.wokenCancelled
+    case 'ASKS':
+      return labels.wokenAsks
+    default:
+      return labels.wokenFinished
+  }
+}
+
+/** How long a card a woken line pointed at stays marked. */
+const CARD_HIGHLIGHT_MS = 2000
+
+/**
+ * Scrolls the card of the given subagent into view and marks it for a moment.
+ *
+ * Looked up within the transcript the link stands in, never in the whole page: a page may show two
+ * chats, and subagent ids start at `sa-1` in each. The card is keyed by its starting call as well,
+ * because ids start again in a new server life.
+ */
+export function showSubagentCard(from: Element, item: Pick<WokenSubagent, 'subagentId' | 'parentToolCallId'>): boolean {
+  const scope = from.closest('.thread') ?? from.ownerDocument
+  const cards = Array.from(scope.querySelectorAll<HTMLElement>('[data-subagent-id]'))
+  const card =
+    cards.find((el) => el.dataset.subagentId === item.subagentId && el.dataset.parentCall === item.parentToolCallId) ??
+    cards.find((el) => el.dataset.subagentId === item.subagentId)
+  if (!card) return false
+  card.scrollIntoView({ block: 'center' })
+  card.classList.add('is-highlighted')
+  card.ownerDocument.defaultView?.setTimeout(() => card.classList.remove('is-highlighted'), CARD_HIGHLIGHT_MS)
+  card.querySelector<HTMLElement>('.subagent-card-head')?.focus({ preventScroll: true })
+  return true
 }
 
 /** The sentence a notice of the given kind reads, in the reader's language. */

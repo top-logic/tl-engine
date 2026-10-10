@@ -6,6 +6,7 @@ import { turnsJsonToMessages } from './api'
 import { applyChildEvent } from './chat-store'
 import { bundle } from './i18n'
 import { cardsForTurn, SubagentCard, type SubagentCardModel } from './subagent-card'
+import { showSubagentCard } from './thread'
 import type { ChatMessage, SubagentActivity, SubagentRef } from './types'
 
 const labels = bundle('en')
@@ -145,5 +146,31 @@ describe('the card', () => {
     const out = html({ status: 'DONE', summary: '<img src=x onerror=alert(1)>' })
     expect(out).toContain('&lt;img src=x onerror=alert(1)&gt;')
     expect(out).not.toContain('<img')
+  })
+})
+
+describe('a line pointing at a card', () => {
+  /* The woken line names a subagent; its name scrolls to that card, in this transcript only. */
+  it('finds the card by its id and starting call, scrolls to it and marks it', () => {
+    document.body.innerHTML = `
+      <div class="thread">
+        <section data-subagent-id="sa-1" data-parent-call="call-old"><button class="subagent-card-head">old</button></section>
+        <section data-subagent-id="sa-1" data-parent-call="call-1"><button class="subagent-card-head">new</button></section>
+        <p id="line"></p>
+      </div>
+      <div class="thread"><section data-subagent-id="sa-9" data-parent-call="call-9"></section></div>`
+    const scrolled: Element[] = []
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this)
+    }
+    const line = document.getElementById('line')!
+
+    expect(showSubagentCard(line, { subagentId: 'sa-1', parentToolCallId: 'call-1' })).toBe(true)
+    const target = document.querySelector('[data-parent-call="call-1"]')!
+    expect(scrolled).toEqual([target])
+    expect(target.classList.contains('is-highlighted')).toBe(true)
+    expect(document.activeElement?.textContent).toBe('new')
+
+    expect(showSubagentCard(line, { subagentId: 'sa-9', parentToolCallId: 'call-9' })).toBe(false)
   })
 })

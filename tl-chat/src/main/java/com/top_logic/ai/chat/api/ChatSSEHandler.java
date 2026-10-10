@@ -35,6 +35,7 @@ import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.LeadWakesExhaustedEvent;
 import com.top_logic.ai.chat.api.messages.LeadWokenEvent;
+import com.top_logic.ai.chat.api.messages.WokenSubagent;
 import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
 import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -62,6 +63,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
@@ -535,9 +537,18 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setParentToolCallId(e.parentToolCallId())
 				.setQueued(e.queued())));
 		} else if (event instanceof AgentEvent.LeadWoken e) {
-			sendEvent("lead_woken", DtoMapper.toJson(LeadWokenEvent.create()
+			LeadWokenEvent woken = LeadWokenEvent.create()
 				.setFinished(e.finished())
-				.setAsking(e.asking())));
+				.setAsking(e.asking());
+			for (SubagentNews news : e.news()) {
+				woken.addSubagent(WokenSubagent.create()
+					.setSubagentId(news.subagentId())
+					.setAgentName(news.agentName())
+					.setReason(news.reason().name())
+					.setParentToolCallId(news.parentToolCallId())
+					.setQuestion(news.question()));
+			}
+			sendEvent("lead_woken", DtoMapper.toJson(woken));
 		} else if (event instanceof AgentEvent.SubagentCompleted e) {
 			sendEvent("subagent_completed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())

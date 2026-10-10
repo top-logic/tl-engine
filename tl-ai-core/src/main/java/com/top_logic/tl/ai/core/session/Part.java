@@ -329,7 +329,19 @@ public sealed interface Part {
 		 * user message from it.
 		 * </p>
 		 */
-		LEAD_MESSAGE
+		LEAD_MESSAGE,
+		/**
+		 * The turn was started without a message of the user, because subagents reported back.
+		 *
+		 * <p>
+		 * Its details say which ones and why, as a JSON array; the chat draws them in place of the
+		 * user's bubble. Not conversation content: what the model was told is the
+		 * {@link #SUBAGENT_RESULT} part before it.
+		 * </p>
+		 *
+		 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentNews#toJson(java.util.List)
+		 */
+		LEAD_WOKEN
 	}
 
 	/**

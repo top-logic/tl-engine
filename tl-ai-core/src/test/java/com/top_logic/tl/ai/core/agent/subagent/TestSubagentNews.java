@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -18,10 +20,15 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
@@ -95,6 +102,67 @@ public class TestSubagentNews extends TestCase {
 		String text = ((TextContent) delivery.content().get(0)).text();
 		assertTrue(text, text.startsWith(SubagentResultDelivery.NOTICE));
 		assertTrue(text, text.contains("found it"));
+	}
+
+	/**
+	 * The delivery says who reported back and why - the ended ones in start order, then the asking
+	 * ones - so that a chat can name them and point at their cards.
+	 */
+	public void testTheDeliverySaysWhoReportedBackAndWhy() {
+		SubagentJob done = _registry.register("Counter", "a", new CancellationToken());
+		done.setParentToolCallId("call-1");
+		done.markTerminal(SubagentJobStatus.DONE, result("12"));
+		SubagentJob failed = _registry.register("Lister", "b", new CancellationToken());
+		failed.setParentToolCallId("call-2");
+		failed.markTerminal(SubagentJobStatus.FAILED, result("ERROR: broke"));
+		SubagentJob asking = _registry.register("Writer", "c", new CancellationToken());
+		asking.setParentToolCallId("call-3");
+		asking.markRunning();
+		asking.askLead("Für welche Veranstaltung? " + "x".repeat(500));
+
+		List<SubagentNews> news;
+		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(_registry)) {
+			news = AgentLoop.injectSubagentNews(new Conversation(), null);
+		}
+
+		assertEquals(List.of(
+			new SubagentNews(done.subagentId(), "Counter", SubagentNews.Reason.FINISHED, "call-1", ""),
+			new SubagentNews(failed.subagentId(), "Lister", SubagentNews.Reason.FAILED, "call-2", "")),
+			news.subList(0, 2));
+		SubagentNews question = news.get(2);
+		assertEquals(SubagentNews.Reason.ASKS, question.reason());
+		assertEquals("call-3", question.parentToolCallId());
+		assertTrue(question.question(), question.question().startsWith("Für welche Veranstaltung?"));
+		assertTrue("A line, not the whole question.",
+			question.question().length() <= SubagentNews.QUESTION_CHARS + 3);
+	}
+
+	/** What a lead turn's log keeps of the news reads back as the same news. */
+	public void testTheNewsReadsBackFromItsJson() {
+		List<SubagentNews> news = List.of(
+			new SubagentNews("sa-1", "Counter", SubagentNews.Reason.CANCELLED, "call-1", ""),
+			new SubagentNews("sa-2", "Writer", SubagentNews.Reason.ASKS, "", "Welche \"Veranstaltung\"?"));
+
+		assertEquals(news, SubagentNews.fromJson(SubagentNews.toJson(news)));
+		assertEquals("A text that is not such news reads as none.", List.of(), SubagentNews.fromJson("[Subagent results]"));
+	}
+
+	/** The lead's log keeps the news on the turn, as a part the model is never shown again. */
+	public void testTheNewsIsRecordedOnTheTurn() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		log.startTurn();
+		List<SubagentNews> news = List.of(new SubagentNews("sa-1", "Counter", SubagentNews.Reason.FINISHED, "call-1", ""));
+
+		listener.onEvent(new AgentEvent.LeadWoken("", 0, Instant.now(), 1, 0, news));
+
+		Part.SystemPart part = (Part.SystemPart) log.currentTurn().assistantParts().get(0);
+		assertEquals(Part.SystemEventType.LEAD_WOKEN, part.eventType());
+		assertEquals(news, SubagentNews.fromJson(part.details()));
+
+		Conversation replayed = new Conversation();
+		ConversationLogReplay.rebuildMemory(log, replayed);
+		assertTrue("Not conversation content.", replayed.messages().isEmpty());
 	}
 
 	/** A spawn while the registry is at its cap is predicted to wait in the queue. */

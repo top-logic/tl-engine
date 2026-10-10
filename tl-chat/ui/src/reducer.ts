@@ -16,6 +16,7 @@ import type {
   ToolCallStatus,
   ToolResult,
   UserMessage,
+  WokenSubagent,
 } from './types'
 
 function genId(): string {
@@ -36,7 +37,7 @@ export type ChatAction =
   | { type: 'ADD_TOOL_RESULT'; toolUseId: string; output: string; isError?: boolean }
   | { type: 'APPEND_THINKING'; delta: string }
   | { type: 'ADD_ERROR'; message: string; code?: string }
-  | { type: 'ADD_NOTICE'; kind: NoticeKind; detail: string }
+  | { type: 'ADD_NOTICE'; kind: NoticeKind; detail: string; woken?: WokenSubagent[] }
   | {
       type: 'ADD_APPROVAL'
       approvalRequestId: string
@@ -183,6 +184,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         kind: action.kind,
         detail: action.detail,
         timestamp: Date.now(),
+        ...(action.woken?.length ? { woken: action.woken } : {}),
       }
       return [...messages, msg]
     }

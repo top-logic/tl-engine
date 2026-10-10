@@ -646,7 +646,11 @@ describe('the stream', () => {
     await settle()
     const stream = streams[0]
 
-    stream.emit('lead_woken', { finished: 1, asking: 0 })
+    stream.emit('lead_woken', {
+      finished: 1,
+      asking: 0,
+      subagents: [{ subagentId: 'sa-1', agentName: 'researcher', reason: 'FINISHED', parentToolCallId: 'call-1', question: '' }],
+    })
     stream.emit('run_started', { runId: 'r9' })
     stream.emit('turn_started', {})
     stream.emit('message_complete', { contentText: 'Der Subagent hat X gefunden.' })
@@ -655,6 +659,7 @@ describe('the stream', () => {
     const woken = messages.findIndex((m) => m.type === 'notice' && m.kind === 'lead_woken')
     expect(woken).toBeGreaterThanOrEqual(0)
     expect(woken).toBeLessThan(messages.findIndex((m) => m.type === 'assistant_text'))
+    expect(messages[woken]).toMatchObject({ woken: [{ subagentId: 'sa-1', reason: 'FINISHED', parentToolCallId: 'call-1' }] })
     expect(store.getState().busy).toBe(false)
 
     stream.emit('lead_wakes_exhausted', { wakes: 5 })

@@ -1004,6 +1004,27 @@ message LeadWokenEvent {
 
 	/** How many subagents' questions it opens with. */
 	int32 asking;
+
+	/** Which subagents reported back, and why, in the order the lead is told. */
+	repeated WokenSubagent subagents;
+}
+
+/** One subagent whose news a lead turn opens with. */
+message WokenSubagent {
+	/** The subagent's id within its chat, e.g. {@code sa-2}. */
+	string subagentId;
+
+	/** The agent it runs. */
+	string agentName;
+
+	/** Why it reported back: {@code FINISHED}, {@code FAILED}, {@code CANCELLED} or {@code ASKS}. */
+	string reason;
+
+	/** The id of the lead's tool call that started it, where its card stands; empty if unknown. */
+	string parentToolCallId;
+
+	/** For {@code ASKS}, the start of what it asks; empty otherwise. */
+	string question;
 }
 
 /**

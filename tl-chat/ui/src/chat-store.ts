@@ -23,6 +23,7 @@ import {
   setApprovalMode,
   truncate,
   turnsJsonToMessages,
+  wokenList,
   type ChatAddress,
   type SessionDetail,
 } from './api'
@@ -80,6 +81,7 @@ import {
   type TokenUsage,
   type ToolCallStatus,
   type TraceMode,
+  type WokenSubagent,
 } from './types'
 
 const { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } = React
@@ -1633,9 +1635,10 @@ export class ChatStore {
           this.patch({ subagents: mergeSubagent(this.state.subagents, data, data.queued ? 'QUEUED' : 'RUNNING') })
         }
       })
-      on('lead_woken', () => {
+      on('lead_woken', (e) => {
         // Ahead of the turn's run_started: the line opens the turn in place of the user's bubble.
-        this.dispatch({ type: 'ADD_NOTICE', kind: 'lead_woken', detail: '' })
+        const data = parseJson<{ subagents?: WokenSubagent[] }>(e.data, {})
+        this.dispatch({ type: 'ADD_NOTICE', kind: 'lead_woken', detail: '', woken: wokenList(data.subagents) })
       })
       on('lead_wakes_exhausted', () => {
         this.showNotice(this.labels.leadWakesExhausted, '', { tone: 'info' })

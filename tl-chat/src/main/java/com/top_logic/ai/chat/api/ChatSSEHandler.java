@@ -7,7 +7,9 @@ package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
@@ -668,11 +670,21 @@ public class ChatSSEHandler implements ChatEventHandler {
 				PendingInteractionRegistry.findBySession(_account, sessionId);
 			procState = run == null ? null : run.state();
 		}
-		if (procState == null) {
-			return;
+		List<UserInteractionStore> stores = new ArrayList<>();
+		UserInteractionStore runStore = procState == null ? null : procState.getUserInteractionStore();
+		if (runStore != null) {
+			stores.add(runStore);
 		}
-		UserInteractionStore interactionStore = procState.getUserInteractionStore();
-		if (interactionStore == null || !interactionStore.hasPending()) {
+		// The background subagents of this conversation ask through their own stores, which outlive
+		// the turn that started them: a question asked after that turn ended is found only here.
+		stores.addAll(PendingInteractionRegistry.subagentStores(_account, sessionId));
+		for (UserInteractionStore interactionStore : stores) {
+			emitPending(interactionStore);
+		}
+	}
+
+	private void emitPending(UserInteractionStore interactionStore) {
+		if (!interactionStore.hasPending()) {
 			return;
 		}
 		for (UserInteractionRequest req : interactionStore.getPendingRequests()) {

@@ -39,6 +39,12 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #getRemainingMs() */
 	public static final String REMAINING_MS__PROP = "remainingMs";
 
+	/** @see #getAskedBySubagentId() */
+	public static final String ASKED_BY_SUBAGENT_ID__PROP = "askedBySubagentId";
+
+	/** @see #getAskedByAgent() */
+	public static final String ASKED_BY_AGENT__PROP = "askedByAgent";
+
 	private String _requestId = "";
 
 	private String _question = "";
@@ -54,6 +60,10 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 	private boolean _multiSelect = false;
 
 	private long _remainingMs = 0L;
+
+	private String _askedBySubagentId = "";
+
+	private String _askedByAgent = "";
 
 	/**
 	 * Creates a {@link UserInteractionEvent} instance.
@@ -248,6 +258,48 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		_remainingMs = value;
 	}
 
+	/**
+	 * The id of the background subagent that asks (e.g. "sa-2"), or empty when the agent the user
+	 * talks to asks. A subagent asks while its lead may be resting, and the card has to say whose
+	 * question it is.
+	 */
+	public final String getAskedBySubagentId() {
+		return _askedBySubagentId;
+	}
+
+	/**
+	 * @see #getAskedBySubagentId()
+	 */
+	public com.top_logic.ai.chat.api.messages.UserInteractionEvent setAskedBySubagentId(String value) {
+		internalSetAskedBySubagentId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAskedBySubagentId()} without chain call utility. */
+	protected final void internalSetAskedBySubagentId(String value) {
+		_askedBySubagentId = value;
+	}
+
+	/**
+	 * The name of the agent the asking subagent runs; empty when {@link #getAskedBySubagentId()} is.
+	 */
+	public final String getAskedByAgent() {
+		return _askedByAgent;
+	}
+
+	/**
+	 * @see #getAskedByAgent()
+	 */
+	public com.top_logic.ai.chat.api.messages.UserInteractionEvent setAskedByAgent(String value) {
+		internalSetAskedByAgent(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAskedByAgent()} without chain call utility. */
+	protected final void internalSetAskedByAgent(String value) {
+		_askedByAgent = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return USER_INTERACTION_EVENT__TYPE;
@@ -263,7 +315,9 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			TYPE__PROP, 
 			OPTIONS__PROP, 
 			MULTI_SELECT__PROP, 
-			REMAINING_MS__PROP);
+			REMAINING_MS__PROP, 
+			ASKED_BY_SUBAGENT_ID__PROP, 
+			ASKED_BY_AGENT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -296,6 +350,8 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			case OPTIONS__PROP: return getOptions();
 			case MULTI_SELECT__PROP: return isMultiSelect();
 			case REMAINING_MS__PROP: return getRemainingMs();
+			case ASKED_BY_SUBAGENT_ID__PROP: return getAskedBySubagentId();
+			case ASKED_BY_AGENT__PROP: return getAskedByAgent();
 			default: return null;
 		}
 	}
@@ -311,6 +367,8 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			case OPTIONS__PROP: internalSetOptions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.InteractionOptionDto.class, value)); break;
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
 			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
+			case ASKED_BY_SUBAGENT_ID__PROP: internalSetAskedBySubagentId((String) value); break;
+			case ASKED_BY_AGENT__PROP: internalSetAskedByAgent((String) value); break;
 		}
 	}
 
@@ -349,6 +407,10 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		out.value(isMultiSelect());
 		out.name(REMAINING_MS__PROP);
 		out.value(getRemainingMs());
+		out.name(ASKED_BY_SUBAGENT_ID__PROP);
+		out.value(getAskedBySubagentId());
+		out.name(ASKED_BY_AGENT__PROP);
+		out.value(getAskedByAgent());
 	}
 
 	@Override
@@ -371,6 +433,8 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			break;
 			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
 			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
+			case ASKED_BY_SUBAGENT_ID__PROP: setAskedBySubagentId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ASKED_BY_AGENT__PROP: setAskedByAgent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

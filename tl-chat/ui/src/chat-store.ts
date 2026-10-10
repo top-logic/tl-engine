@@ -59,6 +59,7 @@ import {
   promptTokens,
   type AgentOption,
   type ApprovalOutcome,
+  type Asker,
   type Attachment,
   type ContextFact,
   type Capabilities,
@@ -129,6 +130,20 @@ function parseTraceMode(value: unknown): TraceMode {
   // "overview" is the legacy name a stored preference may still carry - it maps to summary.
   if (value === 'overview') return 'summary'
   return 'summary'
+}
+
+/**
+ * Who asks, when a background subagent does: the id the server sent, with the agent's name taken
+ * from the server or, failing that, from the subagent list the chat already holds.
+ */
+export function asker(
+  subagentId: string | undefined,
+  agent: string | undefined,
+  subagents: SubagentActivity[],
+): Asker | undefined {
+  if (!subagentId) return undefined
+  const known = subagents.find((s) => s.subagentId === subagentId)
+  return { subagentId, agent: agent || known?.targetAgentName || '' }
 }
 
 function mergeSubagent(
@@ -1410,6 +1425,8 @@ export class ChatStore {
           options?: { label: string; description?: string }[]
           multiSelect?: boolean
           remainingMs?: number
+          askedBySubagentId?: string
+          askedByAgent?: string
         }>(e.data, {})
         if (!data.requestId) return
         this.dispatch({
@@ -1421,10 +1438,11 @@ export class ChatStore {
           options: data.options,
           multiSelect: data.multiSelect,
           remainingMs: data.remainingMs,
+          askedBy: asker(data.askedBySubagentId, data.askedByAgent, this.state.subagents),
         })
       })
       on('delegation_event', (e) => {
-        const wrap = parseJson<{ eventType?: string; eventData?: string }>(e.data, {})
+        const wrap = parseJson<{ eventType?: string; eventData?: string; subagentId?: string }>(e.data, {})
         const data = parseJson<{
           toolCallId?: string
           toolName?: string
@@ -1505,6 +1523,8 @@ export class ChatStore {
               displayReason: data.displayReason ?? '',
               toolMode: data.toolMode,
               remainingMs: data.remainingMs,
+              // A background subagent asks for this approval, not the agent the user talks to.
+              askedBy: asker(wrap.subagentId, undefined, this.state.subagents),
             })
             break
           default:
@@ -1806,6 +1826,7 @@ export class ChatStore {
           displayReason: item.prompt,
           toolMode: item.toolMode,
           remainingMs: item.remainingMs,
+          askedBy: asker(item.askedBySubagentId, item.askedByAgent, this.state.subagents),
         })
         continue
       }
@@ -1822,6 +1843,7 @@ export class ChatStore {
         options: item.options.length > 0 ? item.options : undefined,
         multiSelect: item.multiSelect,
         remainingMs: item.remainingMs,
+        askedBy: asker(item.askedBySubagentId, item.askedByAgent, this.state.subagents),
       })
     }
   }

@@ -490,6 +490,46 @@ describe('context facts', () => {
 })
 
 describe('the stream', () => {
+  /*
+   * A background subagent asks while its lead may be resting (#695). The card has to say whose
+   * question it is, so the store keeps who asks - from the question frame, and for an approval from
+   * the subagent id of the delegation frame, named through the subagent list.
+   */
+  it('keeps which subagent asks a question or an approval', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'researcher' })
+    stream.emit('user_interaction', {
+      requestId: 'interaction-x-1',
+      question: 'Which region?',
+      type: 'text',
+      askedBySubagentId: 'sa-2',
+      askedByAgent: 'researcher',
+    })
+    stream.emit('delegation_event', {
+      subagentId: 'sa-2',
+      eventType: 'approval_required',
+      eventData: JSON.stringify({ approvalRequestId: 'ap-1', toolName: 'createObject', argsJson: '{}' }),
+    })
+    stream.emit('user_interaction', { requestId: 'interaction-y-1', question: 'Main agent asks', type: 'text' })
+
+    const messages = store.getState().messages
+    expect(messages.find((m) => m.id === 'interaction-x-1')).toMatchObject({
+      askedBy: { subagentId: 'sa-2', agent: 'researcher' },
+    })
+    expect(messages.find((m) => m.id === 'ap-1')).toMatchObject({
+      askedBy: { subagentId: 'sa-2', agent: 'researcher' },
+    })
+    expect(messages.find((m) => m.id === 'interaction-y-1')).not.toHaveProperty('askedBy.subagentId')
+
+    await settle()
+    release()
+  })
+
   it('drives the run state and the transcript', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)

@@ -85,6 +85,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
@@ -1021,7 +1022,7 @@ public class ChatServlet extends TopLogicServlet {
 		}
 
 		Person responder = resolveCurrentPerson(req);
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		PendingInteractionRegistry.Waiting run = PendingInteractionRegistry.findWaiting(responder, requestId);
 		if (run == null) {
 			// Either a late answer to a request whose run already ended (completed, cancelled, or
 			// timed out), or a request this account is not the responder of. Both are a benign
@@ -1035,8 +1036,7 @@ public class ChatServlet extends TopLogicServlet {
 			resp.getWriter().write("{\"status\":\"ignored\"}");
 			return;
 		}
-		ChatProcessor.AIProcessingState state = run.state();
-		UserInteractionStore store = state.getUserInteractionStore();
+		UserInteractionStore store = run.store();
 
 		// Include rejection comment in the response string so the ApprovalCallback receives it
 		String resolvedResponse = response;
@@ -1048,7 +1048,7 @@ public class ChatServlet extends TopLogicServlet {
 		// the future unparks the agent mid-turn, and it may call the next tool before this request
 		// has returned. A tool approved "for this session" that the run learns of only afterwards
 		// would be asked about again.
-		ConversationLogListener logListener = state.getLogListener();
+		ConversationLogListener logListener = run.logListener();
 		if (logListener != null) {
 			if ("APPROVED_FOR_SESSION".equals(response)) {
 				logListener.resolveApproval(requestId,
@@ -1416,6 +1416,10 @@ public class ChatServlet extends TopLogicServlet {
 				.setToolMode(toolMode(waiting, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
+			InteractionAsker asker = waiting == null ? null : waiting.asker();
+			if (asker != null) {
+				dto.setAskedBySubagentId(asker.subagentId()).setAskedByAgent(asker.agentName());
+			}
 			if (question != null) {
 				dto.setMultiSelect(question.isMultiSelect());
 				for (InteractionOptionDto option : DtoMapper.parseInteractionOptions(question.getOptions())) {
@@ -1451,11 +1455,12 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The interaction store of the run still parked on the given request, or <code>null</code>.
+	 * The interaction store of the run or the background subagent still parked on the given
+	 * request, or <code>null</code>.
 	 *
 	 * <p>
 	 * Everything a persisted {@link InteractionRequest} row does not record - an approval's tool
-	 * mode, a question's shape - lives here, and only for as long as the run is waiting, which is
+	 * mode, a question's shape, the subagent that asks - lives here, and only for as long as the run is waiting, which is
 	 * also the only time a client may still answer.
 	 * </p>
 	 *
@@ -1465,8 +1470,8 @@ public class ChatServlet extends TopLogicServlet {
 	 *        The correlation id of the approval or question.
 	 */
 	private static UserInteractionStore waitingStore(Person responder, String requestId) {
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
-		return run == null ? null : run.state().getUserInteractionStore();
+		PendingInteractionRegistry.Waiting waiting = PendingInteractionRegistry.findWaiting(responder, requestId);
+		return waiting == null ? null : waiting.store();
 	}
 
 	/**

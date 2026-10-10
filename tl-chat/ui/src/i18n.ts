@@ -183,6 +183,9 @@ const EN = {
   yourAnswer: 'Your answer',
   /** The row under a choice question's options that lets the user answer in their own words (#679). */
   ownAnswer: 'Own answer…',
+  /** Names the background subagent behind a question or approval card. */
+  askedBySubagent: (id: string, agent: string) =>
+    agent ? `Asked by subagent ${id} (${agent}), not by the main agent` : `Asked by subagent ${id}, not by the main agent`,
   timeIsUp: 'Time is up',
   leftToAnswer: ' left to answer',
   collapse: (kind: string) => `Collapse ${kind}`,
@@ -436,6 +439,10 @@ const DE: Bundle = {
   continueLabel: 'Weiter',
   yourAnswer: 'Deine Antwort',
   ownAnswer: 'Eigene Antwort…',
+  askedBySubagent: (id: string, agent: string) =>
+    agent
+      ? `Gefragt von Subagent ${id} (${agent}), nicht vom Hauptagenten`
+      : `Gefragt von Subagent ${id}, nicht vom Hauptagenten`,
   timeIsUp: 'Zeit abgelaufen',
   leftToAnswer: ' verbleiben zum Antworten',
   collapse: (kind: string) => `${kind} einklappen`,

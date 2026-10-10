@@ -319,3 +319,35 @@ describe('the question card', () => {
     expect(body).toEqual({ requestId: 'interaction-1', response: 'Quarterly' })
   })
 })
+
+/**
+ * A card raised by a background subagent says so (#695): the subagent works on after its lead's turn
+ * ended, and a user who believes the main agent asks answers a different question.
+ */
+describe('a card a subagent raised', () => {
+  function html(approvals: ApprovalRequest[], questions: InteractionRequest[]): string {
+    return renderToStaticMarkup(
+      React.createElement(PromptStack, {
+        approvals,
+        questions,
+        at: 'w1',
+        labels: bundle('en'),
+        dispatch: () => undefined,
+      }),
+    )
+  }
+
+  it('names the subagent on a question', () => {
+    const out = html([], [question({ askedBy: { subagentId: 'sa-2', agent: 'researcher' } })])
+    expect(out).toContain('Asked by subagent sa-2 (researcher), not by the main agent')
+  })
+
+  it('names the subagent on an approval', () => {
+    const out = html([approval({ askedBy: { subagentId: 'sa-3', agent: '' } })], [])
+    expect(out).toContain('Asked by subagent sa-3, not by the main agent')
+  })
+
+  it('says nothing about an asker when the main agent asks', () => {
+    expect(html([approval()], [question()])).not.toContain('prompt-card-asker')
+  })
+})

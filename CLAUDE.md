@@ -442,6 +442,13 @@ part, so the admin transcript shows it while the chat does not draw it as a user
 `ConversationLogReplay` turns that part back into the identical `UserMessage`, which is the one system
 event replay does not skip. See `tl-ai-core/doc/subagent-results.md`.
 
+A background subagent asks the user - `askUser`, or an approval - through **its job's own store**
+(`SubagentJob.interactionStore()`), not the store of the turn that started it: that turn ends while
+the child works on, and the chat unbinds its store with it. The store names the child
+(`InteractionAsker`), and the chat registers it in `PendingInteractionRegistry` while the job runs,
+so the SSE poll shows the question with the child's name and `/chat/respond` reaches it from any
+window of the account (#695).
+
 ## Project Structure
 
 Standard Maven layout. Key package roots:

@@ -132,6 +132,19 @@ export interface NoticeMessage {
   timestamp: number
 }
 
+/**
+ * The background subagent that asks, when it is not the agent the user talks to.
+ *
+ * A subagent works on after its lead's turn has ended, so its question can arrive while the chat
+ * looks idle; the card names it, or the user answers a worker believing the main agent asked.
+ */
+export interface Asker {
+  /** The subagent's id within the chat, e.g. `sa-2`. */
+  subagentId: string
+  /** The agent the subagent runs; may be empty when only the id is known. */
+  agent: string
+}
+
 export interface ApprovalRequest {
   type: 'approval_request'
   id: string
@@ -154,6 +167,7 @@ export interface ApprovalRequest {
    */
   remainingMs?: number
   receivedAt?: number
+  askedBy?: Asker
 }
 
 export interface InteractionOption {
@@ -175,6 +189,7 @@ export interface InteractionRequest {
   /** @see ApprovalRequest.remainingMs */
   remainingMs?: number
   receivedAt?: number
+  askedBy?: Asker
 }
 
 /**

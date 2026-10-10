@@ -47,8 +47,9 @@ public class ConversationLogReplay {
 	 * <p>User text parts become {@link UserMessage}s. Assistant text, thinking,
 	 * and tool call parts are accumulated and flushed as {@link AssistantMessage}s.
 	 * Completed, failed, denied and rolled-back tool calls produce
-	 * {@link ToolResultMessage}s. A {@link Part.SystemEventType#SUBAGENT_RESULT} system part
-	 * becomes the {@link UserMessage} the turn-start injection put in front of the model. Parts
+	 * {@link ToolResultMessage}s. A {@link Part.SystemEventType#SUBAGENT_RESULT} or
+	 * {@link Part.SystemEventType#CONTINUATION_REQUESTED} system part becomes the
+	 * {@link UserMessage} the run put in front of the model. Parts
 	 * that are not relevant to LLM context (approvals, other system events, transactions, etc.)
 	 * are skipped.</p>
 	 *
@@ -147,11 +148,11 @@ public class ConversationLogReplay {
 				// in replayedHistoryBefore, which is what makes the two projections equal.
 				flushAssistantMessage(turn);
 				applySidecar(cp);
-			} else if (part instanceof Part.SystemPart sp
-					&& sp.eventType() == Part.SystemEventType.SUBAGENT_RESULT) {
-				// The one system event that is conversation content rather than a note about
-				// the run: its details are verbatim the text a finished subagent put in front
-				// of the model (#359). Replaying it as the same user message the live run
+			} else if (part instanceof Part.SystemPart sp && isConversationContent(sp)) {
+				// The system events that are conversation content rather than a note about the
+				// run: their details are verbatim the text the run put in front of the model - a
+				// finished subagent's result (#359), the request to continue after a reply that
+				// said nothing (#677). Replaying it as the same user message the live run
 				// injected is what keeps a reloaded session saying what the live one said.
 				flushAssistantMessage(turn);
 				_messages.add(new UserMessage(sp.id(), sp.timestamp(),
@@ -163,6 +164,11 @@ public class ConversationLogReplay {
 
 		// 3. Flush remaining content as final assistant message.
 		flushAssistantMessage(turn);
+	}
+
+	private static boolean isConversationContent(Part.SystemPart part) {
+		return part.eventType() == Part.SystemEventType.SUBAGENT_RESULT
+			|| part.eventType() == Part.SystemEventType.CONTINUATION_REQUESTED;
 	}
 
 	/**

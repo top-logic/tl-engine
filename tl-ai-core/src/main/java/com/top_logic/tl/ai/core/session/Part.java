@@ -308,7 +308,17 @@ public sealed interface Part {
 		 *
 		 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery
 		 */
-		SUBAGENT_RESULT
+		SUBAGENT_RESULT,
+		/**
+		 * The model's reply held no text and no tool call, and the run asked it to continue.
+		 *
+		 * <p>
+		 * Conversation content like {@link #SUBAGENT_RESULT}: its {@code details} are verbatim the
+		 * text the model was shown, and {@code ConversationLogReplay} rebuilds the same user message
+		 * from it, so that a reloaded session does not merge the empty reply and the one after it.
+		 * </p>
+		 */
+		CONTINUATION_REQUESTED
 	}
 
 	/**

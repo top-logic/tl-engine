@@ -666,6 +666,30 @@ public class ConversationLogListener implements AgentEventListener {
 			Part.SystemEventType.SUBAGENT_RESULT, text));
 	}
 
+	/**
+	 * Records that the run asked the model to continue after a reply that said nothing.
+	 *
+	 * <p>
+	 * A {@link Part.SystemEventType#CONTINUATION_REQUESTED} part, for the reason
+	 * {@link #recordSubagentResultsDelivered(String)} gives: it is not the user's text, but it is
+	 * conversation content.
+	 * </p>
+	 *
+	 * @param text
+	 *        Verbatim the text the model was shown.
+	 */
+	public void recordContinuationRequested(String text) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return;
+		}
+		flushTextBuffer(turn);
+		flushThinkingBuffer(turn);
+		turn.addAssistantPart(new Part.SystemPart(
+			UUID.randomUUID().toString(), Instant.now(),
+			Part.SystemEventType.CONTINUATION_REQUESTED, text));
+	}
+
 	// ---- Delegation lifecycle ----
 
 	/**

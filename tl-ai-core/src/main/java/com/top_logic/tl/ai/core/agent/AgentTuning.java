@@ -37,6 +37,17 @@ public final class AgentTuning {
 	/** Maximum reactive compaction retries on {@code context_window_exceeded} before giving up. */
 	public static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
 
+	/**
+	 * How often in a row a run asks the model to continue after a reply that held no text and called
+	 * no tool, before it ends the run with {@link StopReason#NO_ANSWER}.
+	 *
+	 * <p>
+	 * In a row: a reply that calls a tool is progress and starts the count again, so a long run can
+	 * be helped more than once. The run's turn limit still bounds the whole.
+	 * </p>
+	 */
+	public static final int MAX_EMPTY_REPLY_CONTINUATIONS = 1;
+
 	/** Base backoff delay in milliseconds for transient provider retries; doubles each attempt. */
 	public static final long BASE_BACKOFF_MS = 1000L;
 

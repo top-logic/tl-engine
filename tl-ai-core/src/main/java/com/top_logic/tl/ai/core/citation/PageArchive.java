@@ -18,6 +18,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -134,10 +135,15 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		/**
 		 * How many characters of a page's text are kept; the rest is cut off.
 		 *
+		 * <p>
+		 * What is kept of a page is what the run read of it. A long document is read in windows, and
+		 * the copy holds every window read, so the default holds a long report read through.
+		 * </p>
+		 *
 		 * @see #getMaxChars()
 		 */
 		@Name(MAX_CHARS)
-		@IntDefault(200_000)
+		@IntDefault(1_000_000)
 		int getMaxChars();
 
 		/**
@@ -231,6 +237,34 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	 *         the live page only; the read itself is never refused for it.
 	 */
 	public Copy archive(String url, String title, String text, Person owner) {
+		return archive(url, title, text, owner, null);
+	}
+
+	/**
+	 * Stores what a run read of a page, extending the copy it already has of that page.
+	 *
+	 * <p>
+	 * A long document is read in windows, and each window adds to what the run read of it. Storing a
+	 * new copy per window would store the beginning of the document once per window; the copy the
+	 * run already has is given the longer text instead, under the same handle, so a citation that
+	 * points at it shows the whole text read. The copy is extended only when it is a copy of the same
+	 * address and belongs to the same account; otherwise a new copy is stored.
+	 * </p>
+	 *
+	 * @param url
+	 *        The address the page was read from.
+	 * @param title
+	 *        Its title, or empty.
+	 * @param text
+	 *        What the run read of it.
+	 * @param owner
+	 *        The account whose run read it; <code>null</code> for a run without one.
+	 * @param previousHandle
+	 *        The handle of the copy the run has of this page, or <code>null</code> for the first read.
+	 * @return The copy, or <code>null</code> when nothing was stored.
+	 * @see #archive(String, String, String, Person)
+	 */
+	public Copy archive(String url, String title, String text, Person owner, String previousHandle) {
 		if (!getConfig().isEnabled() || _worker == null || url == null || url.isBlank()
 			|| url.length() > MAX_URL || text == null || text.isBlank()) {
 			return null;
@@ -246,15 +280,36 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 				return known;
 			}
 		}
-		String handle = newHandle();
-		Copy copy = new Copy(handle, viewUrl(handle), Instant.now());
-		Future<?> write = _worker.submit(() -> ThreadContextManager.inSystemInteraction(PageArchive.class,
-			() -> {
-				store(copy, url, title, kept, hash, owner);
-				return null;
-			}));
+		Copy copy = null;
+		if (previousHandle != null && !previousHandle.isEmpty()) {
+			copy = write(url, () -> replace(previousHandle, url, title, kept, hash, owner));
+		}
+		if (copy == null) {
+			String handle = newHandle();
+			Copy created = new Copy(handle, viewUrl(handle), Instant.now());
+			copy = write(url, () -> {
+				store(created, url, title, kept, hash, owner);
+				return created;
+			});
+		}
+		if (copy != null) {
+			synchronized (_recent) {
+				_recent.put(key, copy);
+			}
+		}
+		return copy;
+	}
+
+	/**
+	 * Runs {@code write} on this service's worker in a system interaction and waits for it.
+	 *
+	 * @return What the write answered, or <code>null</code> when it failed or took too long.
+	 */
+	private Copy write(String url, Computation<Copy> write) {
+		Future<Copy> result = _worker.submit(() -> ThreadContextManager.inSystemInteraction(PageArchive.class,
+			() -> write.run()));
 		try {
-			write.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+			return result.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			return null;
@@ -263,10 +318,43 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 				PageArchive.class);
 			return null;
 		}
-		synchronized (_recent) {
-			_recent.put(key, copy);
+	}
+
+	/** A write of the archive, run on its worker. */
+	private interface Computation<T> {
+
+		/** Performs the write. */
+		T run();
+	}
+
+	/**
+	 * Gives the copy under {@code handle} the new text, when it is a copy of {@code url} owned by
+	 * {@code owner}.
+	 *
+	 * @return The copy with its handle and first read time, or <code>null</code> when there is no
+	 *         such copy.
+	 */
+	private Copy replace(String handle, String url, String title, String text, String hash, Person owner) {
+		Optional<ArchivedPage> found = findByHandle(handle);
+		if (found.isEmpty()) {
+			return null;
 		}
-		return copy;
+		ArchivedPage page = found.get();
+		if (!url.equals(page.getUrl()) || !Objects.equals(owner, page.getOwner())) {
+			return null;
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Extend archived web page " + url))) {
+			if (title != null && !title.isEmpty()) {
+				page.setTitle(title.length() > MAX_TITLE ? title.substring(0, MAX_TITLE) : title);
+			}
+			page.setContentHash(hash);
+			page.setContent(BinaryDataFactory.createBinaryData(text.getBytes(StandardCharsets.UTF_8),
+				CONTENT_TYPE, "page.md"));
+			tx.commit();
+		}
+		Date fetchedAt = page.getFetchedAt();
+		return new Copy(handle, viewUrl(handle), fetchedAt == null ? Instant.now() : fetchedAt.toInstant());
 	}
 
 	private void store(Copy copy, String url, String title, String text, String hash, Person owner) {

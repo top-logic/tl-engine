@@ -218,6 +218,7 @@ export type ChatMessage =
   | ApprovalRequest
   | InteractionRequest
   | RunMeta
+  | SubagentRef
 
 export interface AgentOption {
   /** The identifier: what a request names and what a persisted session holds. */
@@ -306,6 +307,55 @@ export interface SubagentActivity {
   totalTokens: number
   durationMs: number
   hasTranscript: boolean
+  /** The id of the lead's tool call that started it - where its card is drawn. */
+  parentToolCallId?: string
+  /** The task brief it was given. */
+  task?: string
+}
+
+/** One tool call of a running subagent, as its card lists it. */
+export interface SubagentStep {
+  toolUseId: string
+  name: string
+  /** The start of the call's arguments. */
+  summary: string
+  status: ToolCallStatus
+}
+
+/**
+ * What a running subagent has done so far, kept from its live events.
+ *
+ * Kept apart from {@link SubagentActivity}, which the server's list replaces wholesale: a refresh of
+ * the list must not wipe the steps a card is showing.
+ */
+export interface SubagentLive {
+  steps: SubagentStep[]
+  /** The end of the text the child is writing or wrote last. */
+  text: string
+  turns: number
+  /** Tokens of its finished turns. */
+  tokens: number
+  /** Local clock reading when the first event arrived, for the elapsed time. */
+  startedAt: number
+}
+
+/**
+ * A background subagent a turn started, as the lead's recorded log keeps it (`Part.SubagentPart`).
+ *
+ * What rebuilds the subagent's card after a reload, when the server no longer holds the job.
+ */
+export interface SubagentRef {
+  type: 'subagent_ref'
+  id: string
+  subagentId: string
+  agentName: string
+  task: string
+  parentToolCallId: string
+  /** Its run id, by which its recorded transcript is found; empty while unknown. */
+  childRunId: string
+  status: SubagentStatus
+  summary: string
+  timestamp: number
 }
 
 export interface SubagentStatusEvent {
@@ -314,6 +364,8 @@ export interface SubagentStatusEvent {
   detail?: string
   totalTokens?: number
   durationMs?: number
+  /** On start: the id of the lead's tool call that started it. */
+  parentToolCallId?: string
 }
 
 export interface ImprovePromptResponse {

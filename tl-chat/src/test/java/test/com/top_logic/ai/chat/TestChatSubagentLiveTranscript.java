@@ -35,11 +35,16 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
@@ -59,6 +64,10 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 	private static Person lena;
 
 	private static TLObject lenasChat;
+
+	private static Person other;
+
+	private static TLObject othersChat;
 
 	private static ServletRunner runner;
 
@@ -113,7 +122,53 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 		assertTrue(transcript, transcript.contains("find X"));
 	}
 
+	/**
+	 * A subagent this window holds no job for any more - an earlier server life - is found by the run
+	 * its recorded part names, so its card can still open its transcript (issue #702).
+	 */
+	public void testARecordedRunIsFoundByTheRunIdItsPartNames() throws Exception {
+		String runId = recordedRun(lenasChat, "The recorded report.");
+
+		String transcript = get("/chat/subagents/sa-77/transcript?runId=" + runId);
+
+		assertTrue(transcript, transcript.contains("The recorded report."));
+	}
+
+	/** Naming the run of another account's chat finds nothing. */
+	public void testARunOfAnotherAccountIsNotFound() throws Exception {
+		if (other == null) {
+			other = TestPerson.createPerson("someone-else-with-a-worker");
+			othersChat = ChatHistoryService.createSession("Other Chat", other);
+		}
+		String runId = recordedRun(othersChat, "Not Lena's.");
+
+		Recording response = request("/chat/subagents/sa-77/transcript?runId=" + runId);
+
+		assertEquals(404, response._status);
+		assertFalse(response._body.toString().contains("Not Lena's."));
+	}
+
+	/** A finished child run in the given chat, with a transcript holding the given answer. */
+	private static String recordedRun(TLObject chat, String answer) {
+		String runId = UUID.randomUUID().toString();
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentExecution execution = store.beginExecution((AgentSession) chat, runId, "researcher", null, null, null);
+		ConversationLog log = new ConversationLog();
+		log.startTurn().addAssistantPart(new Part.TextPart(UUID.randomUUID().toString(), Instant.now(), answer));
+		log.completeTurn();
+		store.finishExecution(execution, AgentExecutionStore.ExecutionStatus.COMPLETE, StopReason.COMPLETE, null,
+			TokenUsage.EMPTY, ConversationLogSerializer.toJson(log));
+		HistoryUtils.updateSessionRevision();
+		return runId;
+	}
+
 	private String get(String path) throws Exception {
+		Recording response = request(path);
+		assertEquals(response._body.toString(), 200, response._status);
+		return response._body.toString();
+	}
+
+	private Recording request(String path) throws Exception {
 		Recording response = new Recording();
 		InvocationContext invocation = runner.newClient().newInvocation(
 			new GetMethodWebRequest("http://localhost" + path));
@@ -125,8 +180,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 			ThreadContext.popSuperUser();
 		}
 		_servlet.get(request, response.asResponse());
-		assertEquals(response._body.toString(), 200, response._status);
-		return response._body.toString();
+		return response;
 	}
 
 	private static String chatId() {

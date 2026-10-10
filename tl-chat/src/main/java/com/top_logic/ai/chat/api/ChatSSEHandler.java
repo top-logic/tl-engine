@@ -522,7 +522,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 			sendEvent("subagent_started", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())
 				.setTargetAgentName(e.targetAgentName())
-				.setDetail(e.taskBrief())));
+				.setDetail(e.taskBrief())
+				.setParentToolCallId(e.parentToolCallId())));
 		} else if (event instanceof AgentEvent.SubagentCompleted e) {
 			sendEvent("subagent_completed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())

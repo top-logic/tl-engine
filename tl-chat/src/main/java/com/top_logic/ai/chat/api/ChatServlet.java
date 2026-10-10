@@ -1707,7 +1707,8 @@ public class ChatServlet extends TopLogicServlet {
 	/**
 	 * GET /chat/subagents/{id}/transcript - the transcript of one background subagent's child run, as
 	 * a {@code turnsJson} array in the same shape a session load returns: its live log while it works,
-	 * its recorded execution once it has ended.
+	 * its recorded execution once it has ended. A subagent this window holds no job for any more is
+	 * found by the {@code runId} parameter its recorded part names.
 	 *
 	 * <p>
 	 * Lets the background-tasks panel open a subagent's full transcript (turns, tool calls). The
@@ -1728,15 +1729,18 @@ public class ChatServlet extends TopLogicServlet {
 
 		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
 		SubagentJob job = registry == null ? null : registry.get(id);
-		String runId = job == null ? null : job.childRunId();
+		// A subagent of an earlier server life, or of a chat this window no longer holds, has no job
+		// any more; the card that asks names the run its part recorded. The run is still checked to
+		// belong to this user below, so naming one gains nothing.
+		String runId = job != null ? job.childRunId() : req.getParameter("runId");
 		if (runId == null || runId.isEmpty()) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
 
 		String transcript;
-		ConversationLog liveLog = job.liveLog();
-		if (!job.status().isTerminal() && liveLog != null) {
+		ConversationLog liveLog = job == null ? null : job.liveLog();
+		if (job != null && !job.status().isTerminal() && liveLog != null) {
 			// While the child works its execution holds no transcript yet; what it has done so far
 			// is in its live log. The job came from this window's own registry, so it is the user's.
 			transcript = ConversationLogSerializer.toJson(liveLog.turns());
@@ -1787,6 +1791,8 @@ public class ChatServlet extends TopLogicServlet {
 					.append("\",\"totalTokens\":").append(tokens)
 					.append(",\"durationMs\":").append(durationMs)
 					.append(",\"hasTranscript\":").append(hasTranscript)
+					.append(",\"parentToolCallId\":\"").append(jsonEscape(job.parentToolCallId())).append('"')
+					.append(",\"task\":\"").append(jsonEscape(job.taskBrief() != null ? job.taskBrief() : "")).append('"')
 					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
 					.append("\"}");
 			}

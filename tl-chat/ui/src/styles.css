@@ -3641,8 +3641,13 @@
  * The widths are where the German wording stops fitting, that being the longest the product ships.
  */
 
-/* The long hint and the auto-approve label no longer fit on one line together. */
-@container chat-stage (max-width: 26rem) {
+/*
+ * The long hint and the auto-approve label no longer fit on one line together. Measured in German:
+ * switch 163 px + gap 8 px + long hint 334 px, inside the composer foot, which is 2 rem narrower
+ * than the stage plus its own 0.5 rem padding - about 34 rem of stage. Below that the row wrapped,
+ * hint right-aligned under the switch, e.g. beside an open rail at 1440 px (#761).
+ */
+@container chat-stage (max-width: 35rem) {
   .composer-hint-long {
     display: none;
   }

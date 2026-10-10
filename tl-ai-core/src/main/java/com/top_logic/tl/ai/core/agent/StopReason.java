@@ -31,7 +31,7 @@ public enum StopReason {
 	CONTEXT_OVERFLOW,
 
 	/**
-	 * The principal's token budget ran out while the run was working.
+	 * The principal's token or money budget ran out while the run was working.
 	 *
 	 * <p>
 	 * An orderly stop, not a failure: the run keeps everything it had answered up to the turn that
@@ -40,7 +40,7 @@ public enum StopReason {
 	 * all - it is refused where every run enters, with the same sentence.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.core.limits.TokenAllowance
+	 * @see com.top_logic.tl.ai.core.limits.BudgetAllowance
 	 */
 	BUDGET_EXHAUSTED,
 

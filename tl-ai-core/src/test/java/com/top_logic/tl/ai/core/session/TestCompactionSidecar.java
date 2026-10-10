@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -230,7 +231,7 @@ public class TestCompactionSidecar extends TestCase {
 
 	private void finishRun() {
 		_listener.onEvent(new AgentEvent.RunCompleted(RUN, 1, T0, StopReason.COMPLETE,
-			new TokenUsage(1200, 40, 0, 0, 0)));
+			new TokenUsage(1200, 40, 0, 0, 0), Money.zero(Money.USD)));
 	}
 
 	private static List<Message> replay(ConversationLog log) {

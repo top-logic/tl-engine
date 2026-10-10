@@ -327,8 +327,9 @@ them would refuse work the installation allowed before the upgrade:
   answer late rather than not at all. An installation that would rather refuse bounds the queue
   (`chat-queue="10"`) or keeps none (`chat-queue="-1"`); only then is a send refused, *before*
   anything is written down, as HTTP 429 with a sentence the client shows.
-- **`concurrent-runs-per-account`** (0 = off, 3-5 recommended for a shared installation) and
-  **`token-budget` over `budget-window-hours`** (0 = unlimited, per-role overrides possible) are
+- **`concurrent-runs-per-account`** (0 = off, 3-5 recommended for a shared installation),
+  **`token-budget`** and **`money-budget`** over `budget-window-hours` (0 = unlimited, per-role
+  overrides possible) are
   enforced by `RunLimits.admit` in `AgentFactory.runAgent` - the choke point every entry point
   arrives at. These two refuse rather than queue: the account is already being served.
 - **Background subagents** queue rather than refuse (#710): a chat's `SubagentJobRegistry` runs at
@@ -338,11 +339,18 @@ them would refuse work the installation allowed before the upgrade:
   ends `CANCELLED` without running.
 
 A **delegated** run is neither counted nor budgeted separately: it is part of the run that delegated
-it, and shares that run's `TokenAllowance`. The budget is computed from the recorded
-`AgentExecution` rows by `AgentExecutionStore.tokensSpentSince`, on the store's writer thread; the
-headroom rides on `ToolContext.tokenAllowance()`, and a run that spends it stops **between turns**
-with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`). See
-`tl-ai-core/doc/run-limits.md`.
+it, and shares that run's `BudgetAllowance`. The budget is computed from the recorded
+`AgentExecution` rows by `AgentExecutionStore.spentSince`, on the store's writer thread; the
+headroom rides on `ToolContext.budgetAllowance()`, and a run that spends it stops **between turns**
+with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`).
+
+**Money (#722).** `AgentLoop` prices every request with the model that answered it (`RunCosts`,
+`CostCalculator`: input, output, reasoning, cache read and cache write each at its own price, the
+over-200k tier per request), converts the dollar price into the one `currency` of `<budget>` at its
+fixed `exchange-rate`, and the run records `cost` and `currency` on its `AgentExecution`. Prices are
+the models.dev catalog's, or the `*-price` attributes of a `<model-overrides>` entry on
+`LLMProviderService`; a model without a price costs 0. The refusal names the amounts in the user's
+number format. See `tl-ai-core/doc/run-limits.md`.
 
 ### Provider System (tl-ai-core `provider/`)
 

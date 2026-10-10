@@ -13,7 +13,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
-import com.top_logic.tl.ai.core.limits.TokenAllowance;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -166,7 +166,7 @@ public class ToolContext implements ToolExecutionContext {
 
 	private final boolean _attended;
 
-	private final TokenAllowance _tokenAllowance;
+	private final BudgetAllowance _budgetAllowance;
 
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
@@ -253,7 +253,7 @@ public class ToolContext implements ToolExecutionContext {
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
 			cancellationToken, progressReporter, new ExecutionHandle(), new ReadingList(), null,
-			true, TokenAllowance.UNLIMITED);
+			true, BudgetAllowance.UNLIMITED);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
@@ -261,7 +261,7 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter, ExecutionHandle executionHandle,
 			ReadingList readingList, String model, boolean attended,
-			TokenAllowance tokenAllowance) {
+			BudgetAllowance budgetAllowance) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -274,7 +274,7 @@ public class ToolContext implements ToolExecutionContext {
 		_readingList = Objects.requireNonNull(readingList, "Reading list must not be null.");
 		_model = model;
 		_attended = attended;
-		_tokenAllowance = Objects.requireNonNull(tokenAllowance, "Token allowance must not be null.");
+		_budgetAllowance = Objects.requireNonNull(budgetAllowance, "Budget allowance must not be null.");
 	}
 
 	/**
@@ -478,14 +478,15 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext unattended() {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_readingList, _model, false, _tokenAllowance);
+			_readingList, _model, false, _budgetAllowance);
 	}
 
 	/**
-	 * What is left of the principal's token budget for this run, and what the run has spent of it.
+	 * What is left of the principal's token and money budget for this run, and what the run has
+	 * spent of it.
 	 *
 	 * <p>
-	 * {@link TokenAllowance#UNLIMITED} unless the installation configured a budget and the run's
+	 * {@link BudgetAllowance#UNLIMITED} unless the installation configured a budget and the run's
 	 * entry point resolved one - which is what {@code RunLimits.admit} does at every run start. The
 	 * loop records each assistant turn into it and stops with
 	 * {@link StopReason#BUDGET_EXHAUSTED} when it runs out.
@@ -496,22 +497,22 @@ public class ToolContext implements ToolExecutionContext {
 	 * getting one of its own: a delegate spends the budget of the run that delegated it.
 	 * </p>
 	 */
-	public TokenAllowance tokenAllowance() {
-		return _tokenAllowance;
+	public BudgetAllowance budgetAllowance() {
+		return _budgetAllowance;
 	}
 
 	/**
-	 * Returns a copy of this context carrying the given token allowance.
+	 * Returns a copy of this context carrying the given budget allowance.
 	 *
 	 * <p>
 	 * Called once per run, where the run is admitted. The copy is what the loop runs with, so
 	 * everything the run delegates carries the same allowance.
 	 * </p>
 	 */
-	public ToolContext withTokenAllowance(TokenAllowance tokenAllowance) {
+	public ToolContext withBudgetAllowance(BudgetAllowance budgetAllowance) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_readingList, _model, _attended, tokenAllowance);
+			_readingList, _model, _attended, budgetAllowance);
 	}
 
 	/**
@@ -520,7 +521,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withModel(String model) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_readingList, model, _attended, _tokenAllowance);
+			_readingList, model, _attended, _budgetAllowance);
 	}
 
 	/**
@@ -529,7 +530,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_readingList, _model, _attended, _tokenAllowance);
+			_readingList, _model, _attended, _budgetAllowance);
 	}
 
 	/**
@@ -538,7 +539,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
-			_readingList, _model, _attended, _tokenAllowance);
+			_readingList, _model, _attended, _budgetAllowance);
 	}
 
 	/**
@@ -563,7 +564,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			waitedForExecutionHandle(), new ReadingList(), _model, _attended, _tokenAllowance);
+			waitedForExecutionHandle(), new ReadingList(), _model, _attended, _budgetAllowance);
 	}
 
 	/**
@@ -620,7 +621,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new ReadingList(), _model, _attended, _tokenAllowance);
+			childExecutionHandle(), new ReadingList(), _model, _attended, _budgetAllowance);
 	}
 
 	/**

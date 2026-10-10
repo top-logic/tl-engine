@@ -47,6 +47,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -424,7 +425,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		long before = _windowA.getCumulativeUsage().outputTokens();
 		try (Watcher a = watch(_windowA, nina); Watcher b = watch(windowB, nina)) {
 			stream(new AgentEvent.RunCompleted("run-1", 2, Instant.now(), StopReason.COMPLETE,
-				new TokenUsage(100, 40, 0, 0, 0)));
+				new TokenUsage(100, 40, 0, 0, 0), Money.zero(Money.USD)));
 
 			assertEquals(before + 40, _windowA.getCumulativeUsage().outputTokens());
 			assertEquals(0, windowB.getCumulativeUsage().outputTokens());

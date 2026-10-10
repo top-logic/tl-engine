@@ -195,7 +195,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// ceiling on every run rather than on one surface. Released when the loop returns.
 		try (RunLimits.Admission admission = RunLimits.admit(context)) {
 			return runAdmitted(name, conversation, conversationMemory,
-				context.withTokenAllowance(admission.allowance()), listener, sessionRegistry, overrides);
+				context.withBudgetAllowance(admission.allowance()), listener, sessionRegistry, overrides);
 		}
 	}
 

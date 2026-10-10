@@ -6,10 +6,14 @@
 package com.top_logic.tl.ai.core.limits;
 
 import java.util.Collection;
+import java.util.Locale;
+import java.util.function.Function;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.cost.CostCurrency;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 
 /**
@@ -168,7 +172,7 @@ public class RunLimitSettings {
 	}
 
 	/**
-	 * How far back the token budget counts, in hours.
+	 * How far back the token and the money budget count, in hours.
 	 *
 	 * @see BudgetConfig#getBudgetWindowHours()
 	 */
@@ -178,14 +182,28 @@ public class RunLimitSettings {
 	}
 
 	/**
+	 * Whether any budget is configured at all: a token or money budget of the section, or a role
+	 * budget.
+	 *
+	 * <p>
+	 * Answers without reading a role or a recorded run, for a caller that wants to skip the whole
+	 * budget question while nothing is configured - which is the shipped state.
+	 * </p>
+	 */
+	public static boolean anyBudget() {
+		BudgetConfig config = budget();
+		return config.getTokenBudget() > 0 || config.getMoneyBudget() > 0 || !config.getRoleBudgets().isEmpty();
+	}
+
+	/**
 	 * How many tokens an account holding the given roles may spend in the window; {@code 0} for
 	 * unlimited.
 	 *
 	 * <p>
 	 * The largest of the {@link BudgetConfig#getRoleBudgets() role budgets} the account's roles
-	 * name, and the section's own {@link BudgetConfig#getTokenBudget() budget} when they name
-	 * none. A role grants headroom and never takes it away, so a {@code 0} on a role - which reads
-	 * as "unlimited" there too - lifts the limit for its holders.
+	 * name a token figure for, and the section's own {@link BudgetConfig#getTokenBudget() budget}
+	 * when they name none. A role grants headroom and never takes it away, so a {@code 0} on a role -
+	 * which reads as "unlimited" there too - lifts the limit for its holders.
 	 * </p>
 	 *
 	 * @param heldRoleNames
@@ -193,25 +211,94 @@ public class RunLimitSettings {
 	 */
 	public static long tokenBudget(Collection<String> heldRoleNames) {
 		BudgetConfig config = budget();
-		long fallback = Math.max(0, config.getTokenBudget());
-		if (heldRoleNames == null || heldRoleNames.isEmpty() || config.getRoleBudgets().isEmpty()) {
-			return fallback;
+		Double granted = roleBudget(config, heldRoleNames, budget -> {
+			Long tokens = budget.getTokens();
+			return tokens == null ? null : Double.valueOf(tokens.longValue());
+		});
+		return granted != null ? granted.longValue() : Math.max(0, config.getTokenBudget());
+	}
+
+	/**
+	 * How much money an account holding the given roles may spend in the window, in
+	 * {@link #costCurrency() the installation's currency}; {@code 0} for unlimited.
+	 *
+	 * <p>
+	 * Decided exactly like {@link #tokenBudget(Collection)}, over the money figures of the role
+	 * budgets and the section's own {@link BudgetConfig#getMoneyBudget() money budget}.
+	 * </p>
+	 *
+	 * @param heldRoleNames
+	 *        The roles the account holds on the security root; may be {@code null} or empty.
+	 */
+	public static double moneyBudget(Collection<String> heldRoleNames) {
+		BudgetConfig config = budget();
+		Double granted = roleBudget(config, heldRoleNames, RoleBudget::getMoney);
+		double budget = granted != null ? granted.doubleValue() : config.getMoneyBudget();
+		return budget > 0 ? budget : 0;
+	}
+
+	/**
+	 * The currency this installation states and records costs in, with its rate to the US dollar.
+	 *
+	 * <p>
+	 * US dollars at the rate of one when the configured currency or rate cannot be used. The
+	 * service refuses to start with such a value, so this only covers a configuration handed in
+	 * through {@link #override(RunLimitsConfig)}.
+	 * </p>
+	 *
+	 * @see BudgetConfig#getCurrency()
+	 * @see BudgetConfig#getExchangeRate()
+	 */
+	public static CostCurrency costCurrency() {
+		BudgetConfig config = budget();
+		try {
+			return currencyOf(config);
+		} catch (IllegalArgumentException ex) {
+			return CostCurrency.USD;
 		}
-		boolean matched = false;
-		long granted = 0;
+	}
+
+	/**
+	 * The currency the given section configures.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the section names no ISO 4217 currency, or no positive exchange rate.
+	 */
+	public static CostCurrency currencyOf(BudgetConfig config) {
+		String code = config.getCurrency();
+		if (code == null || code.isBlank()) {
+			code = Money.USD;
+		}
+		return new CostCurrency(code.trim().toUpperCase(Locale.ROOT), config.getExchangeRate());
+	}
+
+	/**
+	 * The largest figure the role budgets of the given roles name, or {@code null} when none of them
+	 * names one.
+	 *
+	 * <p>
+	 * {@code 0} - unlimited - beats every finite figure and is answered at once.
+	 * </p>
+	 */
+	private static Double roleBudget(BudgetConfig config, Collection<String> heldRoleNames,
+			Function<RoleBudget, ? extends Number> figure) {
+		if (heldRoleNames == null || heldRoleNames.isEmpty() || config.getRoleBudgets().isEmpty()) {
+			return null;
+		}
+		Double granted = null;
 		for (String role : heldRoleNames) {
 			RoleBudget budget = config.getRoleBudgets().get(role);
-			if (budget == null) {
+			Number value = budget == null ? null : figure.apply(budget);
+			if (value == null) {
 				continue;
 			}
-			matched = true;
-			long tokens = Math.max(0, budget.getTokens());
-			if (tokens == 0) {
+			double amount = Math.max(0, value.doubleValue());
+			if (amount == 0) {
 				// Unlimited beats every finite grant, and beats the section's own budget.
-				return 0;
+				return Double.valueOf(0);
 			}
-			granted = Math.max(granted, tokens);
+			granted = Double.valueOf(granted == null ? amount : Math.max(granted.doubleValue(), amount));
 		}
-		return matched ? granted : fallback;
+		return granted;
 	}
 }

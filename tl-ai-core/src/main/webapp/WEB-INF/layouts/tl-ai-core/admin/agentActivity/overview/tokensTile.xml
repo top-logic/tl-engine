@@ -14,7 +14,10 @@
 	so the label states the selected period and follows it. The table title behind the tile cannot,
 	and no longer tries to name a window.
 	
-	Deliberately not a euro figure: see the note in overviewView.xml.
+	The cost of the period is the second line under the number (#722): what the runs recorded, summed
+	per currency, so that a period in which the installation changed its currency shows two amounts
+	rather than one wrong one. A token count stays the headline, because it is what every provider
+	reports, while a cost is only as good as the price list behind it.
 -->
 <securityLayout name="aiOverviewTokensTile"
 	titleKey="admin.ai.agentActivity.overview.tokens.label"
@@ -68,6 +71,12 @@
 						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
 							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
 						cached = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#cacheReadTokens`)($e)).sum();
+						priced = $recent.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#cost`)));
+						byCurrency = $priced.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#currency`));
+						cost = $byCurrency.keySet().toList().sort()
+							.map(c -> numberFormat('#,##0.00').format($byCurrency[$c]
+								.map(e -> $e.get(`tl.ai.execution:AgentExecution#cost`)).sum()) + ' ' + $c)
+							.join(' + ');
 						// A seven-digit number is not a number a reader takes in at a glance; the exact value is one
 						// click away in the table behind this tile.
 						short = v -> $v >= 1000000
@@ -78,6 +87,9 @@
 								<div class="aiKpiValue">{$short($billable)}</div>
 								<div class="aiKpiNote">
 									{#('billable, {0} from the cache'@en, 'abrechenbar, {0} aus dem Cache'@de).fill($short($cached))}
+								</div>
+								<div class="aiKpiNote">
+									{#('Cost: {0}'@en, 'Kosten: {0}'@de).fill(ifElse(isEmpty($cost), '-', $cost))}
 								</div>
 							</div>
 						}}};
@@ -115,7 +127,7 @@
 				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>
 			<table
-				defaultColumns="displayName,agentName,model,startedAt,inputTokens,outputTokens,thinkingTokens,cacheReadTokens,cacheWriteTokens"
+				defaultColumns="displayName,agentName,model,startedAt,inputTokens,outputTokens,thinkingTokens,cacheReadTokens,cacheWriteTokens,cost,currency"
 				defaultSortOrder="startedAt:descending"
 				fixedColumns="1"
 			>
@@ -147,6 +159,12 @@
 					/>
 					<column name="cacheWriteTokens"
 						columnWidth="145px"
+					/>
+					<column name="cost"
+						columnWidth="90px"
+					/>
+					<column name="currency"
+						columnWidth="80px"
 					/>
 					<column name="transcript"
 						visibility="excluded"

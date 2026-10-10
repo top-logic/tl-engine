@@ -308,7 +308,7 @@ public class RunEnvironment {
 	}
 
 	/** The acting account's UI language, the session's or English when it states none. */
-	static Locale localeOf(Person account) {
+	public static Locale localeOf(Person account) {
 		if (account != null) {
 			try {
 				Locale locale = account.getLocale();

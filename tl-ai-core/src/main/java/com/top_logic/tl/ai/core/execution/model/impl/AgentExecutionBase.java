@@ -189,6 +189,24 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String THINKING_TOKENS_ATTR = "thinkingTokens";
 
 	/**
+	 * Part <code>cost</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String COST_ATTR = "cost";
+
+	/**
+	 * Part <code>currency</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String CURRENCY_ATTR = "currency";
+
+	/**
 	 * Part <code>environment</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
@@ -463,6 +481,34 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setThinkingTokens(Long newValue) {
 		tUpdateByName(THINKING_TOKENS_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #COST_ATTR}.
+	 */
+	default Double getCost() {
+		return (Double) tValueByName(COST_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #COST_ATTR}.
+	 */
+	default void setCost(Double newValue) {
+		tUpdateByName(COST_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CURRENCY_ATTR}.
+	 */
+	default String getCurrency() {
+		return (String) tValueByName(CURRENCY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CURRENCY_ATTR}.
+	 */
+	default void setCurrency(String newValue) {
+		tUpdateByName(CURRENCY_ATTR, newValue);
 	}
 
 	/**

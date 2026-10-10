@@ -41,6 +41,7 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -243,9 +244,20 @@ public class DataListControl extends ReactControl {
 		addDetachListener(observer::detach);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Runs before the attach listeners, so the channels are emptied of a deleted object before the
+	 * commands begin to follow them again: a command rule evaluated over a deleted object fails, and
+	 * the deletion may have happened while this list was not displayed, with nobody to see it.
+	 * </p>
+	 */
 	@Override
 	protected void onAttach() {
 		super.onAttach();
+		releaseDeleted(_rowChannel);
+		releaseDeleted(_selectionChannel);
 		if (_selectionChannel != null) {
 			applyFromChannel(_selectionChannel.get());
 		}
@@ -364,9 +376,55 @@ public class DataListControl extends ReactControl {
 			out.add(entry);
 		}
 		_rowsById = byId;
+		releaseVanishedRow();
+		releaseDeleted(_selectionChannel);
 		putState("rows", out);
 		if (_countChannel != null) {
 			_countChannel.set(Integer.valueOf(out.size()));
+		}
+	}
+
+	/**
+	 * Empties the {@link #_rowChannel row channel} when the row it holds is no longer one of this
+	 * list's rows.
+	 *
+	 * <p>
+	 * The channel holds the row a menu was last opened on, and nothing else writes it. A row that
+	 * left the list - deleted by its own "Delete" command, say - would otherwise stay on it, and the
+	 * row commands' rules would go on deciding over an object the list no longer shows (#676).
+	 * </p>
+	 */
+	private void releaseVanishedRow() {
+		if (_rowChannel == null) {
+			return;
+		}
+		TLObject row = firstObject(_rowChannel.get());
+		if (row != null && (!row.tValid() || !row.equals(_rowsById.get(idOf(row))))) {
+			_rowChannel.set(null);
+		}
+	}
+
+	/**
+	 * Empties the given channel when it holds a deleted object.
+	 *
+	 * <p>
+	 * A deleted object cannot be asked anything - not even who refers to it - so every expression
+	 * over it fails. Only a command that writes the channel after its deletion empties it; a
+	 * deletion from elsewhere - another window, another view - leaves the object on the channel.
+	 * </p>
+	 *
+	 * @param channel
+	 *        The channel to check; {@code null} where this list has no such channel.
+	 */
+	private static void releaseDeleted(ViewChannel channel) {
+		if (channel == null) {
+			return;
+		}
+		for (TLObject object : ChannelObjectObserver.objects(channel.get())) {
+			if (!object.tValid()) {
+				channel.set(null);
+				return;
+			}
 		}
 	}
 

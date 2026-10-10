@@ -4,10 +4,9 @@
 	One event, on tabs: an overview with the figures the model computes and the master data, then
 	its four compositions - the programme, the registrations, the sponsors and the invoices.
 
-	Every tab holds a <form> of its own on the same event, so each is edited and saved on its own.
-	One form around the whole <tab-bar> would be simpler, but a <composition-table> inside a tab of
-	it adds no row in this engine version. A <composition-table> adds, edits and removes rows of a
-	composite reference, saved with its form. A session and an invoice have parts of their own
+	One form around the whole <tab-bar>: the event is edited and saved as one, whichever tab the
+	user changes it on. A <composition-table> adds, edits and removes rows of a composite reference,
+	saved with that form. A session and an invoice have parts of their own
 	(speakers, invoice lines), so their rows open a detail dialog that edits those in turn.
 -->
 <view>
@@ -20,15 +19,15 @@
 			<en>Event</en>
 			<de>Veranstaltung</de>
 		</title>
-		<tab-bar active-tab="overview">
-			<tab id="overview">
-				<label>
-					<en>Overview</en>
-					<de>Übersicht</de>
-				</label>
-				<form input="event"
-					with-inset="true"
-				>
+		<form input="event"
+			with-inset="true"
+		>
+			<tab-bar active-tab="overview">
+				<tab id="overview">
+					<label>
+						<en>Overview</en>
+						<de>Übersicht</de>
+					</label>
 					<!--
 						The figures the model computes (storage-algorithm "query"), first and side by
 						side, because they are what a reader of an event wants to know. Never editable.
@@ -52,16 +51,12 @@
 					<field attribute="manager"/>
 					<field attribute="themeColor"/>
 					<field attribute="description"/>
-				</form>
-			</tab>
-			<tab id="sessions">
-				<label>
-					<en>Programme</en>
-					<de>Programm</de>
-				</label>
-				<form input="event"
-					with-inset="true"
-				>
+				</tab>
+				<tab id="sessions">
+					<label>
+						<en>Programme</en>
+						<de>Programm</de>
+					</label>
 					<composition-table attribute="sessions">
 						<columns>
 							<column attribute="name"/>
@@ -77,16 +72,12 @@
 							width="720"
 						/>
 					</composition-table>
-				</form>
-			</tab>
-			<tab id="registrations">
-				<label>
-					<en>Registrations</en>
-					<de>Anmeldungen</de>
-				</label>
-				<form input="event"
-					with-inset="true"
-				>
+				</tab>
+				<tab id="registrations">
+					<label>
+						<en>Registrations</en>
+						<de>Anmeldungen</de>
+					</label>
 					<composition-table attribute="registrations">
 						<columns>
 							<column attribute="participant"/>
@@ -96,16 +87,12 @@
 							<column attribute="notes"/>
 						</columns>
 					</composition-table>
-				</form>
-			</tab>
-			<tab id="sponsorships">
-				<label>
-					<en>Sponsors</en>
-					<de>Sponsoren</de>
-				</label>
-				<form input="event"
-					with-inset="true"
-				>
+				</tab>
+				<tab id="sponsorships">
+					<label>
+						<en>Sponsors</en>
+						<de>Sponsoren</de>
+					</label>
 					<composition-table attribute="sponsorships">
 						<columns>
 							<column attribute="sponsor"/>
@@ -115,16 +102,12 @@
 							<column attribute="invoice"/>
 						</columns>
 					</composition-table>
-				</form>
-			</tab>
-			<tab id="invoices">
-				<label>
-					<en>Invoices</en>
-					<de>Rechnungen</de>
-				</label>
-				<form input="event"
-					with-inset="true"
-				>
+				</tab>
+				<tab id="invoices">
+					<label>
+						<en>Invoices</en>
+						<de>Rechnungen</de>
+					</label>
 					<composition-table attribute="invoices">
 						<columns>
 							<column attribute="invoiceNumber"/>
@@ -142,8 +125,8 @@
 							width="760"
 						/>
 					</composition-table>
-				</form>
-			</tab>
-		</tab-bar>
+				</tab>
+			</tab-bar>
+		</form>
 	</panel>
 </view>

@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -128,9 +129,11 @@ public sealed interface AgentEvent {
 	 * @param timestamp when the event occurred
 	 * @param reason why the run stopped
 	 * @param totalUsage cumulative token usage for the run
+	 * @param totalCost what the run cost, in the currency the installation states costs in; each
+	 *        request priced with the model that answered it
 	 */
 	record RunCompleted(String runId, int turnNumber, Instant timestamp,
-			StopReason reason, TokenUsage totalUsage) implements AgentEvent {}
+			StopReason reason, TokenUsage totalUsage, Money totalCost) implements AgentEvent {}
 
 	// ---------- Turn lifecycle ----------
 

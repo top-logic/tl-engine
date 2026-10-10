@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.limits;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -24,6 +25,8 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
@@ -43,7 +46,7 @@ import com.top_logic.util.model.ModelService;
  * Against a real {@link com.top_logic.knowledge.service.KnowledgeBase} with a booted
  * {@link AgentExecutionStore}, because half of this is about rows: the token budget is computed from
  * the account's recorded runs, and the store writes those on its own writer thread at a revision
- * this thread cannot see - which is the whole reason {@code tokensSpentSince} runs there too.
+ * this thread cannot see - which is the whole reason {@code spentSince} runs there too.
  * </p>
  *
  * <p>
@@ -214,7 +217,7 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 			try (RunLimits.Admission admission = RunLimits.admit(runOf(mine))) {
 				assertTrue(admission.allowance().isLimited());
 				assertEquals("1000 budget minus this account's own 500; the other's spend is not its.",
-					500, admission.allowance().headroom());
+					500, admission.allowance().tokenHeadroom());
 			}
 		}
 	}
@@ -245,7 +248,7 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 		try (RunLimitSettings.Overridden config = RunLimitSettings.override(budget(1000))) {
 			try (RunLimits.Admission admission = RunLimits.admit(runOf(account))) {
 				assertEquals("Two days ago is outside a 24h window.",
-					1000, admission.allowance().headroom());
+					1000, admission.allowance().tokenHeadroom());
 			}
 		}
 	}
@@ -271,7 +274,7 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 			}
 			try (RunLimits.Admission admission = RunLimits.admit(runOf(account, Set.of("power")))) {
 				assertEquals("4000 for the role, minus the 1500 already spent.",
-					2500, admission.allowance().headroom());
+					2500, admission.allowance().tokenHeadroom());
 			}
 		}
 	}
@@ -287,8 +290,142 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 		try (RunLimitSettings.Overridden config = RunLimitSettings.override(budget(1000))) {
 			try (RunLimits.Admission admission = RunLimits.admit(runOf(account))) {
 				assertEquals("Parent and child are two rows and count once each.",
-					500, admission.allowance().headroom());
+					500, admission.allowance().tokenHeadroom());
 			}
+		}
+	}
+
+	/** The money headroom is the money budget minus what the account's recorded runs cost. */
+	public void testTheMoneyHeadroomComesFromTheRecordedCost() {
+		Person mine = freshAccount();
+		record(mine, TokenUsage.EMPTY, new Money(4.25, "EUR"));
+		record(mine, TokenUsage.EMPTY, new Money(1.75, "EUR"));
+		record(freshAccount(), TokenUsage.EMPTY, new Money(100, "EUR"));
+
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(money(15, "EUR"))) {
+			try (RunLimits.Admission admission = RunLimits.admit(runOf(mine))) {
+				BudgetAllowance allowance = admission.allowance();
+				assertTrue(allowance.isMoneyLimited());
+				assertFalse("No token budget is configured.", allowance.isTokenLimited());
+				assertEquals("EUR", allowance.moneyBudget().currency());
+				assertEquals("15 minus this account's own 4.25 + 1.75.", 9.0,
+					allowance.moneyBudget().headroom(), 1e-9);
+			}
+		}
+	}
+
+	/**
+	 * An account whose runs cost its money budget is refused, and the refusal names what it spent and
+	 * what it may spend, as amounts of money in the account's own language.
+	 */
+	public void testASpentMoneyBudgetRefusesTheRunWithTheAmounts() {
+		Person spent = freshAccount();
+		record(spent, TokenUsage.EMPTY, new Money(12.40, "EUR"));
+		record(spent, TokenUsage.EMPTY, new Money(3, "EUR"));
+
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(money(15, "EUR"))) {
+			try {
+				RunLimits.admit(runOf(spent));
+				fail("A run of an account whose runs cost 15.40 of 15 must be refused.");
+			} catch (RunLimitExceededException expected) {
+				assertFalse(expected.isTemporary());
+				assertEquals(I18NConstants.MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS.fill("", "", 0).getKey(),
+					expected.reason().getKey());
+				Locale locale = RunEnvironment.localeOf(spent);
+				Object[] arguments = expected.reason().arguments();
+				assertEquals(new Money(15.40, "EUR").format(locale), arguments[0]);
+				assertEquals(new Money(15, "EUR").format(locale), arguments[1]);
+				assertEquals(Integer.valueOf(24), arguments[2]);
+			}
+			assertEquals("A refused run holds no slot.", 0, RunLimits.runningFor(spent));
+		}
+	}
+
+	/** Runs recorded in another currency do not count against the money budget. */
+	public void testOnlyTheBudgetsCurrencyCounts() {
+		Person account = freshAccount();
+		record(account, TokenUsage.EMPTY, new Money(50, "USD"));
+		record(account, TokenUsage.EMPTY, new Money(2, "EUR"));
+
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(money(15, "EUR"))) {
+			try (RunLimits.Admission admission = RunLimits.admit(runOf(account))) {
+				assertEquals("Only the 2 EUR count; the dollar run predates the change of currency.", 13.0,
+					admission.allowance().moneyBudget().headroom(), 1e-9);
+			}
+		}
+	}
+
+	/** A role names a money figure of its own, and a role that names none leaves the section's. */
+	public void testARoleMoneyBudgetApplies() {
+		Person account = freshAccount();
+		record(account, TokenUsage.EMPTY, new Money(20, "EUR"));
+
+		RunLimitsConfig config = money(15, "EUR");
+		config.getRoleBudgets().put("power", roleBudget("power", null, Double.valueOf(50)));
+		config.getRoleBudgets().put("tokens-only", roleBudget("tokens-only", Long.valueOf(1_000_000), null));
+
+		try (RunLimitSettings.Overridden overridden = RunLimitSettings.override(config)) {
+			try {
+				RunLimits.admit(runOf(account, Set.of("tokens-only")));
+				fail("A role that names only tokens says nothing about money: 20 is over the 15 budget.");
+			} catch (RunLimitExceededException expected) {
+				// Expected.
+			}
+			try (RunLimits.Admission admission = RunLimits.admit(runOf(account, Set.of("power")))) {
+				assertEquals("50 for the role, minus the 20 already spent.", 30.0,
+					admission.allowance().moneyBudget().headroom(), 1e-9);
+			}
+		}
+	}
+
+	/**
+	 * The chat's pre-check names the spent money budget before anything is written down, and says
+	 * nothing while there is headroom or no budget at all.
+	 */
+	public void testThePreCheckNamesASpentMoneyBudget() {
+		Person account = freshAccount();
+		record(account, TokenUsage.EMPTY, new Money(16, "EUR"));
+
+		assertNull("No budget configured, nothing to refuse.", RunLimits.budgetRefusal(account, Set.of()));
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(money(15, "EUR"))) {
+			assertEquals(I18NConstants.MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS.fill("", "", 0).getKey(),
+				RunLimits.budgetRefusal(account, Set.of()).getKey());
+			assertEquals("The pre-check takes no slot.", 0, RunLimits.runningFor(account));
+		}
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(money(20, "EUR"))) {
+			assertNull("4 EUR are left.", RunLimits.budgetRefusal(account, Set.of()));
+		}
+	}
+
+	/** The token and the money budget apply together: either one refuses. */
+	public void testTokenAndMoneyBudgetsApplyTogether() {
+		Person account = freshAccount();
+		record(account, new TokenUsage(2000, 0, 0, 0, 0), new Money(1, "EUR"));
+
+		RunLimitsConfig config = money(15, "EUR");
+		config.update(config.descriptor().getProperty(RunLimitsConfig.TOKEN_BUDGET), Long.valueOf(1000));
+		try (RunLimitSettings.Overridden overridden = RunLimitSettings.override(config)) {
+			try {
+				RunLimits.admit(runOf(account));
+				fail("The token budget is spent, whatever money is left.");
+			} catch (RunLimitExceededException expected) {
+				assertEquals(I18NConstants.TOKEN_BUDGET_SPENT__HOURS.fill(0).getKey(), expected.reason().getKey());
+			}
+		}
+	}
+
+	/** After a run stopped on the money budget, the notice names the amounts; otherwise the token notice. */
+	public void testTheStopNoticeNamesTheBudgetThatRanOut() {
+		Person account = freshAccount();
+		record(account, TokenUsage.EMPTY, new Money(16, "EUR"));
+
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(money(15, "EUR"))) {
+			assertEquals(I18NConstants.RUN_STOPPED_MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS.fill("", "", 0).getKey(),
+				RunLimits.budgetStopNotice(actingAs(account, Set.of())).getKey());
+		}
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(budget(10))) {
+			assertEquals(I18NConstants.RUN_STOPPED_BUDGET_SPENT__HOURS.fill(0).getKey(),
+				RunLimits.budgetStopNotice(actingAs(account, Set.of())).getKey());
 		}
 	}
 
@@ -300,18 +437,28 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 	}
 
 	private AgentExecution record(Person owner, TokenUsage usage) {
+		return record(owner, usage, null);
+	}
+
+	private AgentExecution record(Person owner, TokenUsage usage, Money cost) {
 		AgentSession session = _store.createSession(SessionKind.CHAT, owner, "budget-test");
-		AgentExecution execution = finished(session, "test-agent", null, usage);
+		AgentExecution execution = finished(session, "test-agent", null, usage, cost);
 		advance();
 		return execution;
 	}
 
 	private AgentExecution finished(AgentSession session, String agent, AgentExecution parent,
 			TokenUsage usage) {
+		return finished(session, agent, parent, usage, null);
+	}
+
+	private AgentExecution finished(AgentSession session, String agent, AgentExecution parent,
+			TokenUsage usage, Money cost) {
 		AgentExecution execution = _store.beginExecution(session,
 			"run-" + agent + "-" + usage.totalTokens() + "-" + (++_runs),
 			agent, "test-model", "test-provider", parent);
-		_store.finishExecution(execution, ExecutionStatus.COMPLETE, null, null, usage, null, null);
+		_store.finishExecutionWithLatestTranscript(execution, ExecutionStatus.COMPLETE, null, null, usage, cost,
+			() -> null, null);
 		return execution;
 	}
 
@@ -380,6 +527,21 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 		config.update(config.descriptor().getProperty(RunLimitsConfig.CONCURRENT_RUNS_PER_ACCOUNT),
 			Integer.valueOf(runs));
 		return config;
+	}
+
+	private static RunLimitsConfig money(double amount, String currency) {
+		RunLimitsConfig config = RunLimitSettings.newConfig();
+		config.update(config.descriptor().getProperty(RunLimitsConfig.MONEY_BUDGET), Double.valueOf(amount));
+		config.update(config.descriptor().getProperty(RunLimitsConfig.CURRENCY), currency);
+		return config;
+	}
+
+	private static RoleBudget roleBudget(String role, Long tokens, Double money) {
+		RoleBudget budget = com.top_logic.basic.config.TypedConfiguration.newConfigItem(RoleBudget.class);
+		budget.update(budget.descriptor().getProperty(RoleBudget.NAME_ATTRIBUTE), role);
+		budget.update(budget.descriptor().getProperty(RoleBudget.TOKENS), tokens);
+		budget.update(budget.descriptor().getProperty(RoleBudget.MONEY), money);
+		return budget;
 	}
 
 	private static RunLimitsConfig budget(long tokens) {

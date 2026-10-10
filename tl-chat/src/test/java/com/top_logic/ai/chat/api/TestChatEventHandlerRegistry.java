@@ -21,6 +21,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -116,7 +117,7 @@ public class TestChatEventHandlerRegistry extends TestCase {
 			new AgentEvent.ApprovalResolved("run1", 5, Instant.now(), "tc-2", "ar-1",
 				ApprovalOutcome.APPROVED),
 			new AgentEvent.RunCompleted("run1", 6, Instant.now(), StopReason.COMPLETE,
-				TokenUsage.EMPTY));
+				TokenUsage.EMPTY, Money.zero(Money.USD)));
 
 		for (AgentEvent event : sent) {
 			ChatEventHandlerRegistry.find(_tracker).onEvent(event);

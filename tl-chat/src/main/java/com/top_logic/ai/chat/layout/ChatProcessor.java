@@ -63,7 +63,6 @@ import com.top_logic.tl.ai.core.execution.AgentTaskMirror;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.limits.I18NConstants;
 import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
-import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -376,7 +375,7 @@ public class ChatProcessor {
 					// catalog evicted has to disappear from the session too, or the next run restores
 					// tools that are no longer loaded.
 					taskTracker.loadLoadedSkills(loadedSkills);
-					result = withStopNotice(runResult.response(), runResult.result());
+					result = withStopNotice(runResult.response(), runResult.result(), toolContext);
 				} catch (RunLimitExceededException ex) {
 					// A ceiling of this installation, not a failure: the account's budget was already
 					// spent when the run wanted to start, or the last free slot went to another request
@@ -742,7 +741,7 @@ public class ChatProcessor {
 	 * <b>Usually <code>null</code>.</b> An installation that configured no ceiling has room for
 	 * every send, and one that configured a ceiling queues behind it; this answers a reason only
 	 * where the {@code <capacity>} section asked for a refusal - a bounded chat queue, or a
-	 * per-account cap.
+	 * per-account cap - or where the account has spent a budget of the {@code <budget>} section.
 	 * </p>
 	 *
 	 * <p>
@@ -757,6 +756,11 @@ public class ChatProcessor {
 			return Resources.getInstance().getString(I18NConstants.TOO_MANY_RUNS_IN_PROGRESS);
 		}
 		ResKey capRefusal = RunLimits.concurrencyRefusal(tracker.getSessionOwner());
+		if (capRefusal == null) {
+			// A budget that is spent refuses the run where it starts too, but there no answer is
+			// written under which the chat could show the sentence (#722).
+			capRefusal = RunLimits.budgetRefusal(tracker.getSessionOwner());
+		}
 		return capRefusal == null ? null : Resources.getInstance().getString(capRefusal);
 	}
 
@@ -1227,13 +1231,12 @@ public class ChatProcessor {
 	 * it is persisted with it and is still there when the conversation is reopened.
 	 * </p>
 	 */
-	private static String withStopNotice(String response, AgentResult result) {
+	private static String withStopNotice(String response, AgentResult result, ToolContext context) {
 		if (result == null) {
 			return response;
 		}
 		ResKey notice = switch (result.stopReason()) {
-			case BUDGET_EXHAUSTED -> I18NConstants.RUN_STOPPED_BUDGET_SPENT__HOURS.fill(
-				Integer.valueOf(RunLimitSettings.budgetWindowHours()));
+			case BUDGET_EXHAUSTED -> RunLimits.budgetStopNotice(context.security());
 			case NO_ANSWER -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_NO_ANSWER;
 			case OUTPUT_LIMIT -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_OUTPUT_LIMIT;
 			default -> null;

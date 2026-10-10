@@ -91,7 +91,7 @@
 						/>
 					</group>
 					<!--
-						Token counts and the result are written when the run finishes
+						Token counts, the cost and the result are written when the run finishes
 						(AgentExecutionStore.finishExecution), so for a run that is still going both
 						groups would be a column of empty labels - which reads as a defect rather
 						than as "not finished yet". They appear once the run has an end date; until
@@ -126,6 +126,16 @@
 							attribute="cacheWriteTokens"
 							fullQualifiedName="tl.ai.execution:AgentExecution#cacheWriteTokens"
 							type="tl.core:Long"
+						/>
+						<field
+							attribute="cost"
+							fullQualifiedName="tl.ai.execution:AgentExecution#cost"
+							type="tl.core:Double"
+						/>
+						<field
+							attribute="currency"
+							fullQualifiedName="tl.ai.execution:AgentExecution#currency"
+							type="tl.core:String"
 						/>
 					</group>
 					<group

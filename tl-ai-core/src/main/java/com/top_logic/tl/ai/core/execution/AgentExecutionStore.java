@@ -45,6 +45,7 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.AgentTask;
@@ -1004,8 +1005,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	public void finishExecution(AgentExecution execution, ExecutionStatus status,
 			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript,
 			String response) {
-		finishExecutionWithLatestTranscript(execution, status, stopReason, errorMessage, usage, () -> transcript,
-			response);
+		finishExecutionWithLatestTranscript(execution, status, stopReason, errorMessage, usage, null,
+			() -> transcript, response);
 	}
 
 	/**
@@ -1020,6 +1021,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * a change made after it is written on top of it.
 	 * </p>
 	 *
+	 * @param cost
+	 *        What this run cost (excluding child executions), in the currency it was recorded in;
+	 *        may be <code>null</code> when nobody computed a cost, which leaves the row's cost
+	 *        empty.
 	 * @param transcript
 	 *        The run's transcript, asked on the writer thread; may answer <code>null</code>.
 	 *
@@ -1027,8 +1032,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *      String)
 	 */
 	public void finishExecutionWithLatestTranscript(AgentExecution execution, ExecutionStatus status,
-			StopReason stopReason, String errorMessage, TokenUsage usage, Supplier<String> transcript,
-			String response) {
+			StopReason stopReason, String errorMessage, TokenUsage usage, Money cost,
+			Supplier<String> transcript, String response) {
 		write(() -> {
 		try (Transaction tx = beginTx("Finish agent execution " + execution.getRunId())) {
 			cancelPendingInteractions(execution);
@@ -1041,6 +1046,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				execution.setThinkingTokens((long) usage.thinkingTokens());
 				execution.setCacheReadTokens((long) usage.cacheReadTokens());
 				execution.setCacheWriteTokens((long) usage.cacheWriteTokens());
+			}
+			if (cost != null) {
+				execution.setCost(Double.valueOf(cost.amount()));
+				execution.setCurrency(cost.currency());
 			}
 			execution.setTranscript(transcript.get());
 			execution.setResponse(response);
@@ -1145,12 +1154,15 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
-	 * How many tokens the given account's runs consumed since the given point in time.
+	 * What the given account's runs consumed since the given point in time: tokens, and what they
+	 * cost in the given currency.
 	 *
 	 * <p>
-	 * The figure a token budget is enforced against: everything the provider was asked to read and
-	 * write - prompt including its cached part, output and thinking - summed over every recorded run
-	 * of that account which <em>started</em> within the window.
+	 * The figures the budgets are enforced against: everything the provider was asked to read and
+	 * write - prompt including its cached part, output and thinking - and the recorded cost of it,
+	 * summed over every recorded run of that account which <em>started</em> within the window. A
+	 * run whose cost was recorded in another currency adds its tokens and not its cost: amounts in
+	 * two currencies do not add up, and this product converts an amount only where it is made.
 	 * </p>
 	 *
 	 * <p>
@@ -1168,17 +1180,20 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 *
 	 * @param owner
-	 *        The account whose runs are counted; <code>null</code> yields {@code 0}.
+	 *        The account whose runs are counted; <code>null</code> yields nothing spent.
 	 * @param since
 	 *        The start of the window; <code>null</code> counts every recorded run.
-	 * @return The token count, never negative.
+	 * @param currency
+	 *        The ISO 4217 code of the currency whose costs are summed.
+	 * @return What was spent; never <code>null</code>.
 	 */
-	public long tokensSpentSince(Person owner, Date since) {
+	public AccountSpend spentSince(Person owner, Date since, String currency) {
 		if (owner == null) {
-			return 0;
+			return new AccountSpend(0, 0);
 		}
 		return onWriterThread(() -> {
-			long sum = 0;
+			long tokens = 0;
+			double cost = 0;
 			for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
 				AgentExecution execution = (AgentExecution) obj;
 				Date started = execution.getStartedAt();
@@ -1189,10 +1204,28 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				if (session == null || !owner.equals(session.getOwner())) {
 					continue;
 				}
-				sum += usageOf(execution).totalTokens();
+				tokens += usageOf(execution).totalTokens();
+				Double runCost = execution.getCost();
+				if (runCost != null && currency.equals(execution.getCurrency())) {
+					cost += runCost.doubleValue();
+				}
 			}
-			return Long.valueOf(sum);
-		}).longValue();
+			return new AccountSpend(tokens, cost);
+		});
+	}
+
+	/**
+	 * What an account's runs consumed in a window.
+	 *
+	 * @param tokens
+	 *        The tokens, never negative.
+	 * @param cost
+	 *        What they cost, in the currency that was asked for; never negative.
+	 *
+	 * @see AgentExecutionStore#spentSince(Person, Date, String)
+	 */
+	public record AccountSpend(long tokens, double cost) {
+		// A pair, nothing more.
 	}
 
 	/**

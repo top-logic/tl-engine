@@ -408,6 +408,20 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link AgentExecution#COST_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getCostAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.COST_ATTR);
+	}
+
+	/**
+	 * Lookup {@link AgentExecution#CURRENCY_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getCurrencyAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.CURRENCY_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentExecution#TRANSCRIPT_ATTR} of {@link AgentExecution}.
 	 */
 	public static com.top_logic.model.TLProperty getTranscriptAgentExecutionAttr() {

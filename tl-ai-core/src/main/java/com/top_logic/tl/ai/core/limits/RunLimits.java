@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.limits;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,11 +16,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
+import com.top_logic.tl.ai.core.cost.CostCurrency;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.AccountSpend;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance.MoneyBudget;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
 
 /**
  * The ceiling on what one account may have running, and on what it may spend.
@@ -37,7 +45,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
  * take the framework's own runs down with the users'. A <em>delegated</em> run is admitted
  * unconditionally too, for the opposite reason - it is part of the run that delegated it, which was
  * already counted, and counting it again would let one user's ceiling depend on how an agent happens
- * to be built. It does share the parent's {@link TokenAllowance}, so delegating is not a way around
+ * to be built. It does share the parent's {@link BudgetAllowance}, so delegating is not a way around
  * the budget.
  * </p>
  *
@@ -78,23 +86,23 @@ public class RunLimits {
 	public static final class Admission implements AutoCloseable {
 
 		/** An admission that holds nothing, for a run that is not counted and not budgeted. */
-		public static final Admission NONE = new Admission(TokenAllowance.UNLIMITED, null);
+		public static final Admission NONE = new Admission(BudgetAllowance.UNLIMITED, null);
 
-		private final TokenAllowance _allowance;
+		private final BudgetAllowance _allowance;
 
 		private String _key;
 
-		private Admission(TokenAllowance allowance, String key) {
+		private Admission(BudgetAllowance allowance, String key) {
 			_allowance = allowance;
 			_key = key;
 		}
 
 		/**
-		 * What is left of the principal's token budget, to be carried by the run's context.
+		 * What is left of the principal's budgets, to be carried by the run's context.
 		 *
-		 * @see TokenAllowance
+		 * @see BudgetAllowance
 		 */
-		public TokenAllowance allowance() {
+		public BudgetAllowance allowance() {
 			return _allowance;
 		}
 
@@ -148,9 +156,8 @@ public class RunLimits {
 	 * </p>
 	 *
 	 * <p>
-	 * The token budget is deliberately <em>not</em> asked here. Reading it costs a pass over the
-	 * recorded runs, and the answer is wanted once per run rather than once per request; a run whose
-	 * budget is spent is refused at its start and the chat shows the same sentence there.
+	 * The budgets are not asked here, because reading them costs a pass over the recorded runs; see
+	 * {@link #budgetRefusal(Person)}, which an entry point asks separately.
 	 * </p>
 	 *
 	 * @param principal
@@ -169,6 +176,55 @@ public class RunLimits {
 		Logger.info("Agent run refused for '" + principal.getName() + "': " + running
 			+ " runs already in progress, the cap is " + cap + ".", RunLimits.class);
 		return I18NConstants.TOO_MANY_RUNS_FOR_ACCOUNT__COUNT.fill(Integer.valueOf(cap));
+	}
+
+	/**
+	 * Why this account may not start another run because it has spent a budget, without taking a
+	 * slot.
+	 *
+	 * <p>
+	 * The friendly half of the budget check in {@link #admit(ToolContext)}, for an entry point that
+	 * can answer the user before it has done anything - the chat's {@code /chat/send}. A run refused
+	 * where it starts has no answer under which the chat can show the refusal, so the sentence is
+	 * given here, before the user's message is written down. It is a courtesy and not the gate: a run
+	 * that finishes in between can spend the rest, and the next run is then refused where it starts.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>What it costs.</b> Nothing while no budget is configured. With one, a pass over the recorded
+	 * runs - the same pass the run start makes.
+	 * </p>
+	 *
+	 * @param principal
+	 *        The acting account, or {@code null} if the request has none.
+	 * @return The refusal in the user's language, or {@code null} if nothing refuses.
+	 */
+	public static ResKey budgetRefusal(Person principal) {
+		if (principal == null || !RunLimitSettings.anyBudget()) {
+			return null;
+		}
+		return budgetRefusal(principal, AiToolAccessService.heldRoleNames(principal));
+	}
+
+	/**
+	 * {@link #budgetRefusal(Person)} for an account whose roles the caller already knows.
+	 *
+	 * @param principal
+	 *        The acting account, or {@code null} if the request has none.
+	 * @param heldRoles
+	 *        The roles the account holds on the security root.
+	 * @return The refusal in the user's language, or {@code null} if nothing refuses.
+	 */
+	public static ResKey budgetRefusal(Person principal, Collection<String> heldRoles) {
+		if (principal == null) {
+			return null;
+		}
+		try {
+			allowanceFor(principal, heldRoles);
+			return null;
+		} catch (RunLimitExceededException ex) {
+			return ex.reason();
+		}
 	}
 
 	/** How many runs the given account currently has going on this node. */
@@ -215,51 +271,119 @@ public class RunLimits {
 	}
 
 	/**
-	 * What is left of this account's token budget, as the allowance the run's loop will check.
+	 * What is left of this account's budgets, as the allowance the run's loop will check.
 	 *
 	 * @throws RunLimitExceededException
-	 *         If nothing is left.
+	 *         If nothing is left of either.
 	 */
-	private static TokenAllowance allowanceFor(Person principal, Collection<String> heldRoles) {
-		long budget = RunLimitSettings.tokenBudget(heldRoles);
-		if (budget <= 0) {
-			return TokenAllowance.UNLIMITED;
+	private static BudgetAllowance allowanceFor(Person principal, Collection<String> heldRoles) {
+		long tokenBudget = RunLimitSettings.tokenBudget(heldRoles);
+		double moneyBudget = RunLimitSettings.moneyBudget(heldRoles);
+		if (tokenBudget <= 0 && moneyBudget <= 0) {
+			return BudgetAllowance.UNLIMITED;
 		}
 		int hours = RunLimitSettings.budgetWindowHours();
-		long spent = spentSince(principal, hours);
-		long headroom = budget - spent;
-		if (headroom <= 0) {
-			String message = "Permission to run denied: account '" + principal.getName() + "' spent "
-				+ spent + " tokens in the last " + hours + "h, which is its budget of " + budget + ".";
-			Logger.info(message, RunLimits.class);
-			throw new RunLimitExceededException(
-				I18NConstants.TOKEN_BUDGET_SPENT__HOURS.fill(Integer.valueOf(hours)), message, false);
+		CostCurrency currency = RunLimitSettings.costCurrency();
+		AccountSpend spent = spentSince(principal, hours, currency);
+
+		long tokenHeadroom = BudgetAllowance.UNLIMITED_TOKENS;
+		if (tokenBudget > 0) {
+			tokenHeadroom = tokenBudget - spent.tokens();
+			if (tokenHeadroom <= 0) {
+				String message = "Permission to run denied: account '" + principal.getName() + "' spent "
+					+ spent.tokens() + " tokens in the last " + hours + "h, which is its budget of " + tokenBudget
+					+ ".";
+				Logger.info(message, RunLimits.class);
+				throw new RunLimitExceededException(
+					I18NConstants.TOKEN_BUDGET_SPENT__HOURS.fill(Integer.valueOf(hours)), message, false);
+			}
 		}
-		return TokenAllowance.of(headroom);
+
+		MoneyBudget money = null;
+		if (moneyBudget > 0) {
+			money = new MoneyBudget(moneyBudget, spent.cost(), currency.code());
+			if (money.headroom() <= 0) {
+				String message = "Permission to run denied: account '" + principal.getName() + "' spent "
+					+ spent.cost() + " " + currency.code() + " in the last " + hours
+					+ "h, which is its budget of " + moneyBudget + " " + currency.code() + ".";
+				Logger.info(message, RunLimits.class);
+				throw new RunLimitExceededException(moneySpent(principal, money, spent.cost(), hours,
+					I18NConstants.MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS), message, false);
+			}
+		}
+		return BudgetAllowance.of(tokenHeadroom, money);
+	}
+
+	/**
+	 * What to tell the user whose run stopped because a budget ran out while it was working.
+	 *
+	 * <p>
+	 * Names the amounts when it was the money budget: money is a figure the user can relate to their
+	 * own work, unlike a token count. The figures are read again from the recorded runs, so the run
+	 * that just stopped is part of them - which is why this is asked once, after the run ended,
+	 * rather than carried out of the loop.
+	 * </p>
+	 *
+	 * @param security
+	 *        The security context of the run that stopped; names the account and its roles.
+	 * @return The notice in the user's language; never {@code null}.
+	 */
+	public static ResKey budgetStopNotice(SecurityContext security) {
+		int hours = RunLimitSettings.budgetWindowHours();
+		ResKey tokenNotice = I18NConstants.RUN_STOPPED_BUDGET_SPENT__HOURS.fill(Integer.valueOf(hours));
+		Person principal = principalOf(security);
+		if (principal == null) {
+			return tokenNotice;
+		}
+		double moneyBudget = RunLimitSettings.moneyBudget(heldRoles(security));
+		if (moneyBudget <= 0) {
+			return tokenNotice;
+		}
+		CostCurrency currency = RunLimitSettings.costCurrency();
+		AccountSpend spent = spentSince(principal, hours, currency);
+		if (spent.cost() < moneyBudget) {
+			return tokenNotice;
+		}
+		MoneyBudget money = new MoneyBudget(moneyBudget, spent.cost(), currency.code());
+		return moneySpent(principal, money, spent.cost(), hours,
+			I18NConstants.RUN_STOPPED_MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS);
+	}
+
+	/**
+	 * Fills a refusal that names the spent amount and the budget, written the way the account's own
+	 * language writes amounts of money.
+	 */
+	private static ResKey moneySpent(Person principal, MoneyBudget money, double spent, int hours,
+			ResKey3 template) {
+		Locale locale = RunEnvironment.localeOf(principal);
+		return template.fill(
+			new Money(spent, money.currency()).format(locale),
+			new Money(money.budget(), money.currency()).format(locale),
+			Integer.valueOf(hours));
 	}
 
 	/**
 	 * What the account spent in the window, read from the recorded runs.
 	 *
 	 * <p>
-	 * Zero when nothing records runs: an installation without an {@link AgentExecutionStore} has no
-	 * figure to enforce against, and inventing one would refuse runs for a spend nobody measured.
+	 * Nothing when nothing records runs: an installation without an {@link AgentExecutionStore} has
+	 * no figure to enforce against, and inventing one would refuse runs for a spend nobody measured.
 	 * </p>
 	 */
-	private static long spentSince(Person principal, int hours) {
+	private static AccountSpend spentSince(Person principal, int hours, CostCurrency currency) {
 		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
-			return 0;
+			return new AccountSpend(0, 0);
 		}
 		Date since = new Date(System.currentTimeMillis() - Duration.ofHours(hours).toMillis());
 		try {
-			return AgentExecutionStore.getInstance().tokensSpentSince(principal, since);
+			return AgentExecutionStore.getInstance().spentSince(principal, since, currency.code());
 		} catch (RuntimeException ex) {
 			// A budget that cannot be read must not stop the installation from working. Admitting the
 			// run is the direction that keeps the product usable; the failure is reported so that an
 			// administrator sees a budget which is not being enforced.
-			Logger.error("Could not read the agent token budget of '" + principal.getName()
+			Logger.error("Could not read the agent budget of '" + principal.getName()
 				+ "'; the run is admitted without it.", ex, RunLimits.class);
-			return 0;
+			return new AccountSpend(0, 0);
 		}
 	}
 

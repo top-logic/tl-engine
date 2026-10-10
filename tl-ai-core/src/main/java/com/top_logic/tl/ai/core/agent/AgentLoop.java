@@ -53,6 +53,8 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.citation.SeenUrls;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.cost.RunCosts;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
@@ -675,7 +677,8 @@ public class AgentLoop {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
 			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
-			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY));
+			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
+				RunCosts.zero()));
 			throw e;
 		}
 	}
@@ -751,6 +754,7 @@ public class AgentLoop {
 	private AgentResult runLoop(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId) {
 		TokenUsage totalUsage = TokenUsage.EMPTY;
+		Money totalCost = RunCosts.zero();
 		int maxTurns = _config.maxTurns();
 		List<Message> before = conversation.messages();
 		Message resumePoint = before.isEmpty() ? null : before.get(before.size() - 1);
@@ -759,7 +763,7 @@ public class AgentLoop {
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
 				StopReason stopReason = StopReason.ABORTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}
 
@@ -775,17 +779,21 @@ public class AgentLoop {
 					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				rollbackFailedRun(conversation, resumePoint);
-				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage);
+				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage, totalCost);
 			}
 
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
-			context.tokenAllowance().record(assistantMsg.usage());
+			// Priced per request and with the model that answered it: a failover moves the run to
+			// another price list, and a tiered price depends on this request's prompt alone.
+			Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
+			totalCost = addCost(totalCost, turnCost, runId);
+			context.budgetAllowance().record(assistantMsg.usage(), turnCost);
 
 			if (!_config.responseValidator().test(assistantMsg)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.REJECTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
@@ -809,7 +817,7 @@ public class AgentLoop {
 						+ "): the last reply had finish reason '" + assistantMsg.finishReason() + "'.",
 						AgentLoop.class);
 				}
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 			continuations = 0;
@@ -817,7 +825,7 @@ public class AgentLoop {
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
@@ -826,15 +834,15 @@ public class AgentLoop {
 			// Between turns, never inside one: a turn that has begun is finished and its tool results
 			// are written, so the history the next run continues from is whole. The run was admitted,
 			// so it always gets at least this one turn.
-			if (context.tokenAllowance().exhausted()) {
+			if (context.budgetAllowance().exhausted()) {
 				StopReason stopReason = StopReason.BUDGET_EXHAUSTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
-		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage));
+		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage, totalCost));
 		return new AgentResult(stopReason, maxTurns, totalUsage);
 	}
 
@@ -889,7 +897,8 @@ public class AgentLoop {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
 			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
-			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY));
+			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
+				RunCosts.zero()));
 			throw e;
 		}
 	}
@@ -908,20 +917,39 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private AgentResult endOnProviderFailure(ProviderException e, ToolContext context,
-			AgentEventListener listener, String runId, int turn, TokenUsage totalUsage) {
+			AgentEventListener listener, String runId, int turn, TokenUsage totalUsage, Money totalCost) {
 		StopReason stopReason = stopReasonFor(e, context);
 		boolean cancelled = stopReason == StopReason.ABORTED;
 		if (!cancelled) {
 			emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 		}
 		emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
-		emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+		emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 		// The kind and the message travel on the result, not only in the event stream: an entry
 		// point without a listener of its own (the TL-Script functions) must still be able to tell
 		// a failed run from an empty answer, and say why it failed.
 		return cancelled
 			? new AgentResult(stopReason, turn, totalUsage)
 			: new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
+	}
+
+	/**
+	 * The run's cost so far plus what one more request cost.
+	 *
+	 * <p>
+	 * Both are in the installation's currency, unless an administrator changed it while the run was
+	 * going. Amounts in two currencies do not add up, so the run then goes on counting in the new
+	 * one, and the log says what was dropped.
+	 * </p>
+	 */
+	private static Money addCost(Money total, Money turn, String runId) {
+		if (total.amount() == 0 || turn.amount() == 0 || total.currency().equals(turn.currency())) {
+			return total.plus(turn);
+		}
+		Logger.warn("Run " + runId + " counts its cost in " + turn.currency() + " from now on: the currency was"
+			+ " changed while it was going. Its cost of " + total.amount() + " " + total.currency()
+			+ " so far is not recorded.", AgentLoop.class);
+		return turn;
 	}
 
 	/**
@@ -976,13 +1004,14 @@ public class AgentLoop {
 			AgentEventListener listener, String runId) {
 		Conversation conversation = memory.conversation();
 		TokenUsage totalUsage = TokenUsage.EMPTY;
+		Money totalCost = RunCosts.zero();
 		int maxTurns = _config.maxTurns();
 		int continuations = 0;
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
 				StopReason stopReason = StopReason.ABORTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}
 
@@ -1000,18 +1029,22 @@ public class AgentLoop {
 						conversation, context, memory, listener, runId, currentTurn),
 					context, listener, runId, turn);
 			} catch (ProviderException e) {
-				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage);
+				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage, totalCost);
 			}
 
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
-			context.tokenAllowance().record(assistantMsg.usage());
+			// Priced per request and with the model that answered it: a failover moves the run to
+			// another price list, and a tiered price depends on this request's prompt alone.
+			Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
+			totalCost = addCost(totalCost, turnCost, runId);
+			context.budgetAllowance().record(assistantMsg.usage(), turnCost);
 			memory.updateTokenBaseline(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.REJECTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
@@ -1035,7 +1068,7 @@ public class AgentLoop {
 						+ "): the last reply had finish reason '" + assistantMsg.finishReason() + "'.",
 						AgentLoop.class);
 				}
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 			continuations = 0;
@@ -1043,7 +1076,7 @@ public class AgentLoop {
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
@@ -1052,15 +1085,15 @@ public class AgentLoop {
 			// Between turns, never inside one: a turn that has begun is finished and its tool results
 			// are written, so the history the next run continues from is whole. The run was admitted,
 			// so it always gets at least this one turn.
-			if (context.tokenAllowance().exhausted()) {
+			if (context.budgetAllowance().exhausted()) {
 				StopReason stopReason = StopReason.BUDGET_EXHAUSTED;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
-		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage));
+		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage, totalCost));
 		return new AgentResult(stopReason, maxTurns, totalUsage);
 	}
 

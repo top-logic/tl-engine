@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
@@ -37,7 +38,8 @@ public class TestExecutionRecorder extends TestCase {
 		TokenUsage usage = new TokenUsage(100, 50, 10, 0, 0);
 		recorder.onEvent(new AgentEvent.RunStarted("run-1", 0, now, "test-model"));
 		recorder.onEvent(new AgentEvent.TurnStarted("run-1", 1, now));
-		recorder.onEvent(new AgentEvent.RunCompleted("run-1", 1, now, StopReason.COMPLETE, usage));
+		recorder.onEvent(new AgentEvent.RunCompleted("run-1", 1, now, StopReason.COMPLETE, usage,
+			Money.zero(Money.USD)));
 
 		assertEquals(3, forwarded.size());
 		assertEquals("run-1", recorder.runId());
@@ -84,7 +86,8 @@ public class TestExecutionRecorder extends TestCase {
 		Instant now = Instant.now();
 		recorder.onEvent(new AgentEvent.RunStarted("run-3", 0, now, "test-model"));
 		recorder.onEvent(new AgentEvent.ProviderError("run-3", 1, now, "RATE_LIMITED", "too many requests"));
-		recorder.onEvent(new AgentEvent.RunCompleted("run-3", 1, now, StopReason.ERROR, TokenUsage.EMPTY));
+		recorder.onEvent(new AgentEvent.RunCompleted("run-3", 1, now, StopReason.ERROR, TokenUsage.EMPTY,
+			Money.zero(Money.USD)));
 
 		assertEquals(StopReason.ERROR, recorder.result().stopReason());
 	}

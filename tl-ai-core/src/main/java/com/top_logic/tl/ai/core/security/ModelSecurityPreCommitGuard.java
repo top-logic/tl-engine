@@ -6,8 +6,11 @@
 package com.top_logic.tl.ai.core.security;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
@@ -17,8 +20,11 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.security.ToolChangeSet.Creation;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -47,6 +53,15 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * precisely the check the engine itself performs.</li>
  * </ul>
  *
+ * <p>
+ * <b>The initial values of a new object are the exception</b> (#683). They are asked with
+ * {@link ModelSecurity#canSetInitial}, the question the application's create dialogs ask, and that
+ * question is about the object being created - so it is asked in the transaction's own view, where
+ * that object and its container exist, after the committed-view checks passed for its creation. An
+ * attribute counts as given an initial value when its value is not empty and is not the default the
+ * model gives it ({@link #givenValues}).
+ * </p>
+ *
  * @see PreCommitGuard#forRun()
  */
 public class ModelSecurityPreCommitGuard implements PreCommitGuard {
@@ -60,10 +75,74 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 		if (!PersistencyLayer.Module.INSTANCE.isActive()) {
 			// No knowledge base whose modifications could be hidden - a unit test against a stubbed
 			// ModelSecurity. The checks are the same; only the view they run in is not.
-			return check.run();
+			check.run();
+		} else {
+			ComputationEx2<List<Violation>, RuntimeException, RuntimeException> job = check::run;
+			PersistencyLayer.getKnowledgeBase().withoutModifications(job);
 		}
-		ComputationEx2<List<Violation>, RuntimeException, RuntimeException> job = check::run;
-		return PersistencyLayer.getKnowledgeBase().withoutModifications(job);
+		// In the transaction's own view: a new object exists only there.
+		return check.runInitialValues();
+	}
+
+	/**
+	 * The attributes of the given new object that the turn gave a value.
+	 *
+	 * <p>
+	 * An attribute whose value is empty is left out, and so is one whose value is the default the
+	 * model gives it: the engine sets that default when it creates the object, and a create dialog
+	 * creates it as well for a user who may not edit the attribute. A default the engine computes in
+	 * the transaction (a sequence number) cannot be asked for again without drawing the next one, and
+	 * a default that is different every time it is computed (a UUID, the current time) cannot be told
+	 * from a given value; for both the attribute is left out. Derived and backwards references are
+	 * left out too: a derived attribute stores nothing, and a backwards reference is stored on the
+	 * object it points to, where the guard checks it as a write of that object.
+	 * </p>
+	 */
+	static List<TLStructuredTypePart> givenValues(TLObject object, TLStructuredType type) {
+		List<TLStructuredTypePart> result = new ArrayList<>();
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (part.isDerived() || (part instanceof TLReference reference && reference.isBackwards())) {
+				continue;
+			}
+			Object value = object.tValue(part);
+			if (isEmpty(value) || isDefault(object, part, value)) {
+				continue;
+			}
+			result.add(part);
+		}
+		return result;
+	}
+
+	private static boolean isEmpty(Object value) {
+		return value == null
+			|| Boolean.FALSE.equals(value)
+			|| (value instanceof CharSequence text && text.length() == 0)
+			|| (value instanceof Collection<?> collection && collection.isEmpty());
+	}
+
+	private static boolean isDefault(TLObject object, TLStructuredTypePart part, Object value) {
+		DefaultProvider provider = DisplayAnnotations.getDefaultProvider(part);
+		if (provider == null) {
+			return false;
+		}
+		if (provider.isComputedInTransaction()) {
+			return true;
+		}
+		Object context = object.tContainer();
+		Object first = provider.createDefault(context, part);
+		Object second = provider.createDefault(context, part);
+		if (!sameValue(first, second)) {
+			// A default that differs every time: the value cannot be told from it.
+			return true;
+		}
+		return sameValue(first, value);
+	}
+
+	private static boolean sameValue(Object a, Object b) {
+		if (a instanceof Collection<?> left && b instanceof Collection<?> right) {
+			return new HashSet<>(left).equals(new HashSet<>(right));
+		}
+		return Objects.equals(a, b);
 	}
 
 	/**
@@ -85,6 +164,9 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 		private final String _accountName;
 
 		private final List<Violation> _violations = new ArrayList<>();
+
+		/** The creations whose type and container passed, whose initial values are asked next. */
+		private final List<Creation> _permittedCreations = new ArrayList<>();
 
 		Check(ModelSecurity model, ToolChangeSet changes) {
 			_model = model;
@@ -136,7 +218,33 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 			TLStructuredTypePart composition = creation.containerReference();
 			if (composition != null && !_model.canCreate(creation.container(), composition, type)) {
 				record(creation.object(), typeName, SimpleBoundCommandGroup.CREATE, null);
+				return;
 			}
+			_permittedCreations.add(creation);
+		}
+
+		/**
+		 * The initial values of every new object whose creation passed: the right to set each
+		 * attribute the turn gave a value, as the create dialogs ask it.
+		 *
+		 * <p>
+		 * Only the first refused attribute per object is recorded, as for an update.
+		 * </p>
+		 *
+		 * @return All violations found, those of {@link #run()} included.
+		 */
+		List<Violation> runInitialValues() {
+			for (Creation creation : _permittedCreations) {
+				TLObject object = creation.object();
+				for (TLStructuredTypePart attribute : givenValues(object, creation.type())) {
+					if (!_model.canSetInitial(object, attribute)) {
+						record(object, String.valueOf(creation.type()), SimpleBoundCommandGroup.WRITE, attribute,
+							true);
+						break;
+					}
+				}
+			}
+			return _violations;
 		}
 
 		/**
@@ -188,12 +296,19 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 		 */
 		private void record(TLObject object, String typeName, BoundCommandGroup operation,
 				TLStructuredTypePart attribute) {
-			String reason = "the account holds no '" + operation.getID() + "' right on this type";
+			record(object, typeName, operation, attribute, false);
+		}
+
+		private void record(TLObject object, String typeName, BoundCommandGroup operation,
+				TLStructuredTypePart attribute, boolean initialValue) {
+			String reason = initialValue
+				? "the account may not set '" + attribute.getName() + "' of a new object of this type"
+				: "the account holds no '" + operation.getID() + "' right on this type";
 			Logger.error("Pre-commit check failed: operation='" + operation.getID()
 				+ "' type='" + (typeName == null ? "(none)" : typeName) + "'"
 				+ " user=" + _accountName
 				+ " reason=" + reason, ModelSecurityPreCommitGuard.class);
-			_violations.add(new Violation(object, typeName, operation, attribute, reason));
+			_violations.add(new Violation(object, typeName, operation, attribute, reason, initialValue));
 		}
 
 		private static String typeName(TLObject object) {

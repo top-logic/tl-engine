@@ -36,10 +36,12 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * object created in the current, uncommitted transaction, because rule-derived roles are computed at
  * commit time. So the guard cannot validate a fresh object's own rights; what it validates for a
  * creation is the CREATE right on the type in the committed parent context plus the WRITE right on
- * the parent's composition attribute - exactly the check the engine performs. Updates and deletes of
- * pre-existing objects are checked in full. A parent that was itself created in the same turn is
- * equally unvalidatable, and is covered by its own creation being checked against <em>its</em>
- * container, up to the first committed ancestor.
+ * the parent's composition attribute - exactly the check the engine performs - and, for every
+ * attribute the turn gave a value, the question the application's create dialogs ask about an initial
+ * value ({@link ModelSecurity#canSetInitial}, #683). Updates and deletes of pre-existing objects are
+ * checked in full. A parent that was itself created in the same turn is equally unvalidatable, and is
+ * covered by its own creation being checked against <em>its</em> container, up to the first committed
+ * ancestor.
  * </p>
  *
  * @see ToolChangeSet
@@ -133,7 +135,10 @@ public interface PreCommitGuard {
 		Map<String, Integer> counts = new LinkedHashMap<>();
 		for (Violation violation : violations) {
 			String type = violation.typeName() == null ? "an unnamed type" : "'" + violation.typeName() + "'";
-			counts.merge(violation.operation().getID() + " on objects of type " + type, 1, Integer::sum);
+			String what = violation.initialValue()
+				? "setting '" + violation.attribute().getName() + "' of new objects of type " + type
+				: violation.operation().getID() + " on objects of type " + type;
+			counts.merge(what, 1, Integer::sum);
 		}
 		StringBuilder result = new StringBuilder();
 		for (Map.Entry<String, Integer> entry : counts.entrySet()) {
@@ -161,14 +166,16 @@ public interface PreCommitGuard {
 	 *        The operation that is not permitted.
 	 * @param attribute
 	 *        The attribute the operation is not permitted on, or <code>null</code> if it is the
-	 *        object as a whole. Neither {@link #describe(List) what the model is told} nor
-	 *        {@code reason} names it.
+	 *        object as a whole. Named to the model only for an {@code initialValue}: that is a value
+	 *        the turn itself gave, so naming it discloses nothing.
 	 * @param reason
 	 *        A message safe for the audit log and for the model: names the operation and type, never
 	 *        the value.
+	 * @param initialValue
+	 *        Whether the violation is the initial value of {@code attribute} of a new object.
 	 */
 	record Violation(TLObject object, String typeName, BoundCommandGroup operation, TLStructuredTypePart attribute,
-			String reason) {
+			String reason, boolean initialValue) {
 		// Intentionally empty.
 	}
 }

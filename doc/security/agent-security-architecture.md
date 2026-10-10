@@ -1336,7 +1336,7 @@ object with a translated attribute needs no right beyond the deletion.
 
 | Change | Check |
 |---|---|
-| created | `canCreate(type, container)`, and `canCreate(parent, compositionAttr)` when created into a composition |
+| created | `canCreate(type, container)`, and `canCreate(parent, compositionAttr)` when created into a composition; then `canSetInitial(obj, attr)` for every attribute the turn gave a value (#683) |
 | updated | `canWrite(obj)` and `canWrite(obj, attr)` for every touched attribute - an attribute kept outside the object's row included, on the object holding it |
 | deleted | `canDelete(obj)` |
 
@@ -1344,7 +1344,8 @@ object with a translated attribute needs no right beyond the deletion.
 failed tool call takes, so all-or-nothing means the same thing in both cases - one audit record per
 violation is written by the guard, and the model is given a framework notice naming the operation and
 the type but **not** the values. The `Violation` itself names the attribute an attribute-level refusal
-was for; neither the notice nor the audit line does:
+was for; the notice and the audit line name it only for the initial value of a new object, which is a
+value the turn gave itself:
 
 > `[Framework notice] The data changes of this turn were rolled back and NOT persisted, because your
 > account is not permitted to make all of them: you attempted 'Create on objects of type
@@ -1356,6 +1357,16 @@ in two ways. An object deleted in the current transaction refuses attribute acce
 `ModelAccessRights` has to read its type and its security parent to decide - in the committed view the
 object is visible again, which is where its DELETE right is meaningful anyway. And an object created in
 the current transaction is allowed everything by construction, so asking about it would answer nothing.
+
+**The initial values of a new object are asked in the transaction's own view** (#683), after its
+creation passed: `canSetInitial` (engine `isAllowedInitial`) is the question the create dialogs ask
+about the object being created, and that object exists only there. An attribute counts as given a value
+when its value is not empty and is not the default the model gives it - the engine sets that default
+when it creates the object, and a create dialog creates it too for a user who may not edit the field. A
+default the engine computes in the transaction (a sequence number) or that differs every time it is
+computed (a UUID, the current time) cannot be told from a given value, so such an attribute is not
+asked. Before #683 `changeData` could set a value the create dialog would refuse, while `createObject`
+refused it.
 
 **Ordering caveat, verified against the engine.** `ModelAccessRights.isAllowed` returns `true` for
 objects that are not yet committed (`SecurityConfigurationService.isCommitted`), because rule-derived
@@ -1370,8 +1381,9 @@ papered over.
 
 **What the layer does not cover.**
 
-- Attribute writes to an object created in the same turn. Booked by the engine as part of the creation,
-  and unvalidatable per the caveat above. The creation itself is checked.
+- The object-level rights of an object created in the same turn, per the caveat above. The creation
+  and the initial values of its attributes are checked; an attribute whose default the engine computes
+  in the transaction or differently each time is not.
 - Change-set items that carry no application type and store no value of an attribute, in the
   engine's description of its storages: the engine's own bookkeeping items. A storage-level attribute
   that maps to no model attribute costs attribute granularity, not the check - the object-level right

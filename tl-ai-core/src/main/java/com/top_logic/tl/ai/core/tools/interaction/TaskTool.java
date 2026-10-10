@@ -34,6 +34,17 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * Provides CRUD operations on an in-memory {@link TaskStore} that is bound to the current thread
  * via {@link TaskStoreBinding}. Tasks are used to track progress and organize multi-step agent work.
  * </p>
+ *
+ * <p>
+ * <b>Why the plan needs no approval.</b> The tasks are the conversation's own plan: only the agents of
+ * the conversation write them, they are no data of the user or of the application, and no transaction
+ * of the turn covers them - the store is memory, and its copy in the {@code AgentTask} rows is written
+ * by the execution store on its own thread, like the transcript. So {@code createTask} and
+ * {@code updateTask} are {@link ToolMode#READ} calls for this application: a research lead that keeps
+ * its plan as tasks updates it without asking the user at every step, and a rolled-back turn does not
+ * claim to have undone plan changes that stand. They are not concurrency-safe, so that tasks created in
+ * one turn are numbered in the order the model wrote them.
+ * </p>
  */
 public class TaskTool {
 
@@ -79,8 +90,8 @@ public class TaskTool {
 		+ " IMPORTANT: Call listTasks first to avoid creating duplicate tasks."
 		+ " Create your task list once per conversation — on subsequent turns,"
 		+ " update existing tasks rather than recreating."
-		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
-		marking = AnswerMarking.NONE)
+		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.READ,
+		concurrencySafe = false, group = ToolGroups.WORKSPACE, marking = AnswerMarking.NONE)
 	public String createTask(
 			@P("Brief title for the task") String subject,
 			@P("Detailed description of what needs to be done") String description,
@@ -143,8 +154,8 @@ public class TaskTool {
 		+ " If blocked or encountering errors, keep status as 'in_progress'."
 		+ " Use 'deleted' to remove a task that is no longer needed."
 		+ " After completing a task, call listTasks to find the next one."
-		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
-		marking = AnswerMarking.NONE)
+		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.READ,
+		concurrencySafe = false, group = ToolGroups.WORKSPACE, marking = AnswerMarking.NONE)
 	public String updateTask(
 			@P("The ID of the task to update") String taskId,
 			@P("New status (pending, in_progress, completed, deleted)") String status,

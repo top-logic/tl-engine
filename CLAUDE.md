@@ -456,6 +456,14 @@ the child works on, and the chat unbinds its store with it. The store names the 
 so the SSE poll shows the question with the child's name and `/chat/respond` reaches it from any
 window of the account (#695).
 
+What a running child does is kept on its job (#700): the spawner feeds the child's events into a
+bounded `SubagentProgress` (turns, tokens, the last 20 tool calls with an argument summary and their
+outcome, the end of its last text), sets `childRunId` at `RunStarted` and hangs the child's
+`ConversationLog` on the job as its live log. `subagent_status(detail: summary|steps)` reads it, says
+`WAITING` and for what when the job's store holds a question or an approval, and puts what the child
+wrote inside `<untrusted_subagent_report>`; `GET /chat/subagents/{id}/transcript` serves the live log
+until the child ends.
+
 ## Project Structure
 
 Standard Maven layout. Key package roots:

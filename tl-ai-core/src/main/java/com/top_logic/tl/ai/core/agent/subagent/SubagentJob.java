@@ -9,6 +9,7 @@ import java.time.Instant;
 
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
@@ -28,6 +29,10 @@ public class SubagentJob {
 	private final CancellationToken _cancellationToken;
 
 	private final UserInteractionStore _interactionStore;
+
+	private final SubagentProgress _progress = new SubagentProgress();
+
+	private volatile ConversationLog _liveLog;
 
 	private volatile SubagentJobStatus _status = SubagentJobStatus.QUEUED;
 
@@ -87,6 +92,60 @@ public class SubagentJob {
 		return _interactionStore;
 	}
 
+	/** What the subagent has done so far; see {@link SubagentProgress}. */
+	public SubagentProgress progress() {
+		return _progress;
+	}
+
+	/** What a running subagent is parked on, while it waits for somebody. */
+	public enum Waiting {
+		/** A question to the user. */
+		USER_ANSWER,
+		/** An approval of a tool call. */
+		APPROVAL;
+	}
+
+	/**
+	 * What this subagent waits for, or <code>null</code> when it is not waiting - it works, has not
+	 * started, or has ended.
+	 *
+	 * <p>
+	 * Read off its {@link #interactionStore() store}, which holds everything it can be parked on, so
+	 * the answer cannot fall behind what the child actually does.
+	 * </p>
+	 */
+	public Waiting waitingFor() {
+		if (_status != SubagentJobStatus.RUNNING) {
+			return null;
+		}
+		if (_interactionStore.hasPendingApprovals()) {
+			return Waiting.APPROVAL;
+		}
+		if (_interactionStore.hasPending()) {
+			return Waiting.USER_ANSWER;
+		}
+		return null;
+	}
+
+	/**
+	 * The conversation log the running subagent records into, or <code>null</code> when it has none
+	 * (yet).
+	 *
+	 * <p>
+	 * What its transcript is read from while it works; once it has ended, its recorded execution is.
+	 * Written by the child's thread - a reader takes {@link ConversationLog#turns()}, which is a
+	 * snapshot.
+	 * </p>
+	 */
+	public ConversationLog liveLog() {
+		return _liveLog;
+	}
+
+	/** Sets the {@link #liveLog() live log}. */
+	public void setLiveLog(ConversationLog liveLog) {
+		_liveLog = liveLog;
+	}
+
 	/** Current lifecycle state. */
 	public SubagentJobStatus status() {
 		return _status;
@@ -103,9 +162,9 @@ public class SubagentJob {
 	}
 
 	/**
-	 * Run id of the recorded child {@link com.top_logic.tl.ai.core.execution.model.AgentExecution},
-	 * or {@code null} when the run is not recorded. Lets the UI open the subagent's persisted
-	 * transcript.
+	 * Run id of the child run, set as soon as the run starts; {@code null} before. Lets the UI open
+	 * the subagent's transcript - its {@link #liveLog() live log} while it works, the recorded
+	 * {@link com.top_logic.tl.ai.core.execution.model.AgentExecution} afterwards.
 	 */
 	public String childRunId() {
 		return _childRunId;

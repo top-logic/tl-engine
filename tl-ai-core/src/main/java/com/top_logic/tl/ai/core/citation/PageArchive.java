@@ -57,9 +57,8 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * A web source is archived when it enters a run's reading list: {@code webFetch} and the browser
- * hand the text they extracted to {@link #archive(String, String, String, Person)}, and the citation
- * of the page carries the {@link #viewUrl(String) address of the copy}. A quoted passage is checked
- * against the same text. The copy is stored as a {@code tl.ai.execution:ArchivedPage}, its text as a
+ * hand the text they extracted to this service, and the citation of the page carries the address of
+ * the copy. A quoted passage is checked against the same text. The copy is stored as a {@code tl.ai.execution:ArchivedPage}, its text as a
  * {@code tl.core:Binary} - the attribute type the engine's blob store will take over, so that moving
  * the archive there is a change of storage, not of this class.
  * </p>
@@ -77,6 +76,7 @@ import com.top_logic.util.model.ModelService;
  * process), and copies older than {@link Config#getRetentionDays()} are deleted once a day.
  * </p>
  *
+ * @see #archive(String, String, String, Person)
  * @see ArchivedPageServlet
  */
 @ServiceDependencies({

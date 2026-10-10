@@ -26,12 +26,15 @@ import java.util.List;
  * @param pageStarts
  *        For a PDF, the offset in {@code text} at which each page starts, in page order; empty for
  *        every other document.
+ * @param links
+ *        For an HTML page, the absolute address of every link its text keeps; empty for every other
+ *        document.
  */
-record FetchedDocument(String url, String title, String text, List<Integer> pageStarts) {
+record FetchedDocument(String url, String title, String text, List<Integer> pageStarts, List<String> links) {
 
-	/** A document without pages. */
+	/** A document without pages and links. */
 	FetchedDocument(String url, String title, String text) {
-		this(url, title, text, List.of());
+		this(url, title, text, List.of(), List.of());
 	}
 
 	/**

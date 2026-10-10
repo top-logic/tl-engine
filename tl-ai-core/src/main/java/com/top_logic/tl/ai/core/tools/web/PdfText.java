@@ -96,7 +96,7 @@ final class PdfText {
 				throw new PdfException("the PDF has " + pageCount
 					+ " pages but no text layer (probably scanned images); cannot extract text.");
 			}
-			return new FetchedDocument(url, titleOf(document), text.toString(), List.copyOf(pageStarts));
+			return new FetchedDocument(url, titleOf(document), text.toString(), List.copyOf(pageStarts), List.of());
 		} catch (InvalidPasswordException ex) {
 			throw new PdfException("the PDF is password-protected; cannot extract text.");
 		} catch (IOException ex) {

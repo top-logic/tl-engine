@@ -67,6 +67,8 @@ public final class ReadingList {
 	/** Reference -> key of the entry it names: the entry's own key, or an alias of it. */
 	private final Map<String, String> _references = new LinkedHashMap<>();
 
+	private final SeenUrls _seenUrls = new SeenUrls();
+
 	/** Creates an empty reading list. */
 	public ReadingList() {
 		// Empty.
@@ -124,6 +126,19 @@ public final class ReadingList {
 	}
 
 	/**
+	 * The web addresses this run was given - the ledger of the URL provenance rule.
+	 *
+	 * <p>
+	 * Kept with the reading list because it has the same scope: one per run, shared by every copy of
+	 * the run's context, a fresh one for a delegation, and taken over with the sources when a
+	 * sub-agent's result is delivered.
+	 * </p>
+	 */
+	public SeenUrls seenUrls() {
+		return _seenUrls;
+	}
+
+	/**
 	 * Takes over every source of another run's list - a sub-agent whose result this run received.
 	 *
 	 * @param other
@@ -139,6 +154,7 @@ public final class ReadingList {
 			sources = new LinkedHashMap<>(other._sources);
 			references = new LinkedHashMap<>(other._references);
 		}
+		_seenUrls.addAll(other._seenUrls);
 		synchronized (this) {
 			for (Map.Entry<String, ReadSource> entry : sources.entrySet()) {
 				ReadSource known = _sources.get(entry.getKey());

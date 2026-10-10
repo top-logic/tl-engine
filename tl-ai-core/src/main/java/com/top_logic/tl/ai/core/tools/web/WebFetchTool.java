@@ -19,6 +19,8 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.jsoup.Jsoup;
@@ -211,6 +213,12 @@ public class WebFetchTool {
 		BrowsingPolicy browsing = WebToolsService.currentPolicy();
 
 		String requestedUrl = url.trim();
+		// Before anything else, and before the kept text is asked: an address this run was not given
+		// is not opened, whether or not somebody else's run read it.
+		String unseen = UrlProvenance.refusal(requestedUrl);
+		if (unseen != null) {
+			return unseen;
+		}
 		try {
 			// Reading on uses the text the earlier call read; a call from the start reads anew.
 			FetchedDocument document = start > 0 ? _documents.get(requestedUrl) : null;
@@ -226,6 +234,10 @@ public class WebFetchTool {
 				_documents.put(requestedUrl, document);
 			}
 			WebSources.read(requestedUrl, document.url(), document.title(), document.text());
+			// Where a redirect led and what the page links to are addresses this run was given.
+			UrlProvenance.record(document.url());
+			document.links().forEach(UrlProvenance::record);
+			UrlProvenance.recordAllIn(document.text());
 			return renderWindow(requestedUrl, document, start, maxChars);
 		} catch (Refusal ex) {
 			return ex.getMessage();
@@ -350,7 +362,9 @@ public class WebFetchTool {
 		String text = new String(body.bytes(), charsetOf(contentType));
 		if (contentType.contains("html") || contentType.contains("xml")
 				|| (contentType.isEmpty() && looksLikeHtml(text))) {
-			return new FetchedDocument(url, Jsoup.parse(text).title(), htmlToMarkdown(text, url).strip());
+			List<String> links = new ArrayList<>();
+			String markdown = htmlToMarkdown(text, url, links).strip();
+			return new FetchedDocument(url, Jsoup.parse(text).title(), markdown, List.of(), List.copyOf(links));
 		}
 		if (contentType.startsWith("text/") || contentType.contains("json") || contentType.isEmpty()) {
 			return new FetchedDocument(url, "", text.strip());
@@ -477,6 +491,14 @@ public class WebFetchTool {
 	 * the resulting Markdown contains usable absolute URLs. Package-visible for testing.
 	 */
 	static String htmlToMarkdown(String html, String baseUrl) {
+		return htmlToMarkdown(html, baseUrl, new ArrayList<>());
+	}
+
+	/**
+	 * {@link #htmlToMarkdown(String, String)}, also collecting the absolute address of every link the
+	 * Markdown keeps into {@code links}.
+	 */
+	static String htmlToMarkdown(String html, String baseUrl, List<String> links) {
 		Document document = Jsoup.parse(html, baseUrl);
 		document.select(JUNK_SELECTOR).remove();
 		Element root = document.body() != null ? document.body() : document;
@@ -486,6 +508,7 @@ public class WebFetchTool {
 			String absolute = link.absUrl("href");
 			if (!absolute.isEmpty()) {
 				link.attr("href", absolute);
+				links.add(absolute);
 			}
 		}
 		for (Element image : root.select("img[src]")) {

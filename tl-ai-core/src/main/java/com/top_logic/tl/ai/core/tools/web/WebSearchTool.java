@@ -190,7 +190,12 @@ public class WebSearchTool {
 			: Math.max(1, Math.min(defaultCount, WebSearchQuery.MAX_COUNT));
 		WebSearchQuery search = new WebSearchQuery(query, scope.include(), scope.exclude(), wanted, age, lang);
 		try {
-			String answer = format(query, onPolicyOnly(browsing, engine.search(search)));
+			WebSearchResults results = onPolicyOnly(browsing, engine.search(search));
+			// The result addresses are addresses this run was given; the query it wrote is not.
+			for (WebSearchHit hit : results.hits()) {
+				UrlProvenance.record(hit.url());
+			}
+			String answer = format(query, results);
 			return notes.isEmpty() ? answer : answer + "\n\n" + String.join("\n", notes);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();

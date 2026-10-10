@@ -579,7 +579,12 @@ public class TestTextEditTool extends BasicTestCase {
 		}
 
 		@Override
-		default boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		default boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, com.top_logic.model.TLClass type) {
+			return true;
+		}
+
+		@Override
+		default boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
 			return true;
 		}
 

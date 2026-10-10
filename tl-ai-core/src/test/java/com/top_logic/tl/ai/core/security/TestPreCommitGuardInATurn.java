@@ -385,8 +385,13 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 		}
 
 		@Override
-		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
 			return answer(new Question(SimpleBoundCommandGroup.CREATE, parent, compositionAttribute));
+		}
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
+			return answer(new Question(SimpleBoundCommandGroup.WRITE, draft, attribute));
 		}
 
 		@Override

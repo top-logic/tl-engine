@@ -56,8 +56,20 @@ public class TestModelAccessRightsSecurity extends TestCase {
 		}
 
 		@Override
-		public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
-			return _grantedCreate.contains(parent + "/" + compositionAttribute);
+		public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
+				TLClass type) {
+			return _grantedCreate.contains(parent + "/" + compositionAttribute + (type == null ? "" : ":" + type));
+		}
+
+		@Override
+		public boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
+				BoundCommandGroup commandGroup) {
+			return _granted.contains("initial:" + key(draft, attribute, commandGroup));
+		}
+
+		@Override
+		public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -139,13 +151,28 @@ public class TestModelAccessRightsSecurity extends TestCase {
 	public void testCreateIsDelegated() {
 		TLClass type = named(TLClass.class, "Contract");
 		TLObject context = named(TLObject.class, "module");
+		TLClass special = named(TLClass.class, "FrameContract");
 		ModelSecurity security = new ModelAccessRightsSecurity(null,
-			new StubRights(Set.of(), Set.of(type + "@" + context, VISIBLE + "/" + SALARY)));
+			new StubRights(Set.of(), Set.of(type + "@" + context, VISIBLE + "/" + SALARY,
+				HIDDEN + "/" + SALARY + ":" + special)));
 
 		assertTrue(security.canCreate(type, context));
 		assertFalse(security.canCreate(type, HIDDEN));
-		assertTrue(security.canCreate(VISIBLE, SALARY));
-		assertFalse(security.canCreate(HIDDEN, SALARY));
+		assertTrue(security.canCreate(VISIBLE, SALARY, null));
+		assertFalse(security.canCreate(HIDDEN, SALARY, null));
+		assertTrue("The type of the new child is passed on, not replaced by the composition's target type.",
+			security.canCreate(HIDDEN, SALARY, special));
+	}
+
+	/** A new object's initial values are asked as the engine's create-time {@code WRITE} question. */
+	public void testInitialValueIsDelegated() {
+		ModelSecurity security = security(Set.of(
+			"initial:" + StubRights.key(VISIBLE, SALARY, SimpleBoundCommandGroup.WRITE),
+			StubRights.key(HIDDEN, SALARY, SimpleBoundCommandGroup.WRITE)));
+
+		assertTrue(security.canSetInitial(VISIBLE, SALARY));
+		assertFalse("The write right on a committed object must not stand in for the create-time question.",
+			security.canSetInitial(HIDDEN, SALARY));
 	}
 
 	/** Filtering keeps only readable objects, in input order. */
@@ -180,7 +207,8 @@ public class TestModelAccessRightsSecurity extends TestCase {
 		assertTrue(security.canWrite(HIDDEN));
 		assertTrue(security.canWrite(HIDDEN, SALARY));
 		assertTrue(security.canDelete(HIDDEN));
-		assertTrue(security.canCreate(HIDDEN, SALARY));
+		assertTrue(security.canCreate(HIDDEN, SALARY, null));
+		assertTrue(security.canSetInitial(HIDDEN, SALARY));
 		assertTrue(security.canPerform(HIDDEN, SimpleBoundCommandGroup.WRITE));
 		assertEquals(List.of(HIDDEN, VISIBLE), security.filterReadable(List.of(HIDDEN, VISIBLE)));
 		security.requireRead(HIDDEN);

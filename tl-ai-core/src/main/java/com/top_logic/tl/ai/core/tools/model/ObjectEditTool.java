@@ -99,9 +99,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  *
  * <p>
  * <b>A new object's attributes.</b> The engine allows every operation on an object that is not yet
- * committed, attribute grants included, because the roles that would decide them are derived at
- * commit time. A new object's initial values are therefore checked the way the application's own
- * create forms check them: the creation is, the attributes are not.
+ * committed, because the roles that would decide them are derived at commit time. A new object's
+ * initial values are therefore checked the way the application's own create dialogs check them: by
+ * {@link ModelSecurity#canSetInitial(TLObject, TLStructuredTypePart)}, which applies an attribute
+ * grant where it can be decided before the object exists - on the object its access parent leads
+ * to - and lets the right to create the object cover the rest.
  * </p>
  *
  * @see #updateObject(String, Map, ToolContext)
@@ -300,7 +302,7 @@ public class ObjectEditTool {
 				+ " of type '" + qualified(type) + "'" + (container == null ? "" : " in " + nameOf(container))
 				+ ". Nothing was created. Tell the user; do not try another way to create it.");
 		}
-		if (place != null && !security.canCreate(container, place)) {
+		if (place != null && !security.canCreate(container, place, type)) {
 			throw new Denied("Permission denied: your account may not add to '"
 				+ place.getName() + "' of " + nameOf(container) + ". Nothing was created.");
 		}
@@ -390,7 +392,6 @@ public class ObjectEditTool {
 			TLObject object = ModelService.getInstance().getFactory().createObject(planned.type(), container);
 			_objects.put(planned, object);
 			_order.add(planned);
-			planned.values().forEach(object::tUpdate);
 			if (place != null) {
 				if (place.isMultiple()) {
 					container.tAdd(place, object);
@@ -398,6 +399,17 @@ public class ObjectEditTool {
 					container.tUpdate(place, object);
 				}
 			}
+			// Asked once the object is in its container: an attribute grant of a type with an access
+			// parent is decided on the object that parent leads to.
+			for (TLStructuredTypePart attribute : planned.values().keySet()) {
+				if (!security.canSetInitial(object, attribute)) {
+					throw new Denied("Permission denied: your account may not set '" + attribute.getName()
+						+ "' of a new '" + qualified(planned.type()) + "'"
+						+ (planned.place().isEmpty() ? "" : " (" + planned.place() + ")")
+						+ ". Nothing was created. Leave it out, or tell the user.");
+				}
+			}
+			planned.values().forEach(object::tUpdate);
 			for (Map.Entry<TLReference, List<NewObject>> parts : planned.parts().entrySet()) {
 				TLReference composition = parts.getKey();
 				for (NewObject part : parts.getValue()) {
@@ -406,7 +418,7 @@ public class ObjectEditTool {
 							+ qualified(part.type()) + "' (" + part.place() + "). Nothing was created. Tell the"
 							+ " user; do not try another way to create it.");
 					}
-					if (!security.canCreate(object, composition)) {
+					if (!security.canCreate(object, composition, part.type())) {
 						throw new Denied("Permission denied: your account may not add to '" + composition.getName()
 							+ "' of the new '" + qualified(planned.type()) + "'. Nothing was created.");
 					}

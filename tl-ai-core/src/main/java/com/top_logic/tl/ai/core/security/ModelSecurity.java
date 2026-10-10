@@ -89,7 +89,12 @@ public interface ModelSecurity {
 		}
 
 		@Override
-		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
+			return true;
+		}
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
 			return true;
 		}
 
@@ -148,10 +153,31 @@ public interface ModelSecurity {
 	boolean canCreate(TLClass type, TLObject context);
 
 	/**
-	 * Whether the run's principal may create a new child in the given composition of the given
-	 * parent.
+	 * Whether the run's principal may create a new child of the given type in the given composition
+	 * of the given parent.
+	 *
+	 * @param type
+	 *        The type of the new child, which may be a specialization of the composition's target
+	 *        type; <code>null</code> for the target type itself.
 	 */
-	boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute);
+	boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type);
+
+	/**
+	 * Whether the run's principal may set the initial value of the given attribute of an object
+	 * that is being created.
+	 *
+	 * <p>
+	 * {@link #canWrite(TLObject, TLStructuredTypePart)} answers <code>true</code> for every object
+	 * not yet committed, because the roles that decide it are derived at commit time. This is the
+	 * question the application's create dialogs ask instead: an attribute grant restricts an initial
+	 * value where it can be decided before the object exists, i.e. on the object its access parent
+	 * leads to.
+	 * </p>
+	 *
+	 * @param draft
+	 *        The object being created, in the current transaction.
+	 */
+	boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute);
 
 	/**
 	 * Whether the run's principal may perform a custom business operation on the given object.

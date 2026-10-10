@@ -307,6 +307,9 @@ public final class DtoMapper {
 		if (effort != null) {
 			meta.setLastEffort(effort);
 		}
+		// Written for the chat a window shows - when it leaves it, or after a turn in it - so the
+		// window has shown it until now.
+		meta.setLastSeen(System.currentTimeMillis());
 		return toJson(meta);
 	}
 

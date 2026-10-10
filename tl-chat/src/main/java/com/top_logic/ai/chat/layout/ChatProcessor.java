@@ -1057,6 +1057,11 @@ public class ChatProcessor {
 				window.getSessionManager().markChangedElsewhere(sessionId, recordedIn);
 			}
 		}
+		// A window shows the chat as the subagent ends: the user sees the end there, so the chat
+		// list must not report it as news.
+		if (!ChatEventHandlerRegistry.findForSession(owner, sessionId).isEmpty()) {
+			ChatHistoryService.markSeen(ChatHistoryService.findOwnedSessionById(sessionId, owner));
+		}
 	}
 
 	/**

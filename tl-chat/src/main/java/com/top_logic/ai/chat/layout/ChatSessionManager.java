@@ -459,7 +459,8 @@ public class ChatSessionManager {
 			&& !_changedElsewhere.contains(sessionId)) {
 			return true;
 		}
-		if (ChatHistoryService.findOwnedSessionById(sessionId, owner) == null) {
+		TLObject incoming = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+		if (incoming == null) {
 			Logger.warn("Refused to activate chat session " + sessionId + ": not "
 				+ (owner == null ? "anybody's" : "this user's") + ".", ChatSessionManager.class);
 			return false;
@@ -499,15 +500,16 @@ public class ChatSessionManager {
 			if (cached != null) {
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
-				return true;
+			} else {
+				SessionState newState = loadFromDatabase(sessionId, owner);
+				_sessions.put(sessionId, newState);
+				_activeSessionId = sessionId;
+				_activeOwner = owner;
 			}
-
-			SessionState newState = loadFromDatabase(sessionId, owner);
-			_sessions.put(sessionId, newState);
-			_activeSessionId = sessionId;
-			_activeOwner = owner;
 		}
 		persistOutsideLock(outgoing);
+		// The window shows the chat from now on: a subagent's result that ended before is no news.
+		ChatHistoryService.markSeen(incoming);
 		return true;
 	}
 

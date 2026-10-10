@@ -234,7 +234,7 @@
 					<data-list
 						collapsed="true"
 						collapsible="true"
-						observed-types="tl.ai.execution:AgentSession"
+						observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
 						search="true"
 						selection="dockSession"
 					>
@@ -253,7 +253,32 @@
 						</empty-text>
 						<lines>
 							<line attribute="title"/>
+							<!--
+								What goes on in the chat while the user looks elsewhere (#744): something waits for
+								them, a subagent finished since they last had the chat open, or an agent works there.
+								The list observes executions and interaction requests so that the line follows.
+							-->
+							<line emphasis="secondary">
+								<value><![CDATA[s -> {
+									activity = chatActivity($s);
+									switch {
+										$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
+										$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
+										$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+										default: null;
+									}
+								}]]></value>
+							</line>
 						</lines>
+						<row-css-class><![CDATA[s -> {
+							activity = chatActivity($s);
+							switch {
+								$activity == "waiting": "is-waiting";
+								$activity == "news": "has-news";
+								$activity == "running": "is-working";
+								default: null;
+							}
+						}]]></row-css-class>
 						<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
 							.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
 							.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)

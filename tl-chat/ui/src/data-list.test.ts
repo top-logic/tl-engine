@@ -49,6 +49,23 @@ describe('the rendered data list', () => {
     expect(html).toContain('class="rail-item"')
   })
 
+  /*
+   * A line whose value is empty for a row - the chat list's activity line of a chat where nothing
+   * goes on (#744) - leaves no empty line behind; the first line stays, whatever it says.
+   */
+  it('draws no secondary line that is empty for the row', () => {
+    const html = render(listState({
+      rows: [
+        { id: 'r1', lines: [{ text: 'Quiet chat' }, { text: '', emphasis: 'secondary' }] },
+        { id: 'r2', lines: [{ text: 'Busy chat' }, { text: 'Working …', emphasis: 'secondary' }], cssClass: 'is-working' },
+        { id: 'r3', lines: [{ text: '' }] },
+      ],
+    }))
+    expect(html.split('rail-line-secondary').length - 1).toBe(1)
+    expect(html).toContain('rail-line rail-line-secondary">Working …')
+    expect(html.split('rail-line-primary').length - 1).toBe(3)
+  })
+
   it('keeps the selection class beside the computed ones', () => {
     const html = render(listState({ selectedId: 'r2' }))
     expect(html).toContain('class="rail-item is-active is-running"')

@@ -5,7 +5,10 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,10 +22,10 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Per-session registry of asynchronous subagent jobs. Tracks each {@link SubagentJob}
- * by id, enforces a concurrency cap, and hands undelivered results back to the parent.
+ * by id, enforces a concurrency cap - its own and the installation's - and hands undelivered results
+ * back to the parent.
  *
- * <p>The background spawn machinery is added in a later step; this class is the single
- * source of truth for subagent state within one chat session.</p>
+ * <p>This class is the single source of truth for subagent state within one chat session.</p>
  */
 public class SubagentJobRegistry {
 
@@ -43,6 +46,16 @@ public class SubagentJobRegistry {
 		});
 
 	private final Object _completionLock = new Object();
+
+	/** Jobs registered for a start and not started yet, oldest first; guarded by {@code this}. */
+	private final Deque<Pending> _queue = new ArrayDeque<>();
+
+	/** Jobs started and not ended; guarded by {@code this}. */
+	private int _started;
+
+	private record Pending(SubagentJob job, SubagentRun run, Runnable notStarted) {
+		// Plain data.
+	}
 
 	private volatile Listener _listener = Listener.NONE;
 
@@ -137,9 +150,24 @@ public class SubagentJobRegistry {
 		return byStatus(SubagentJobStatus.RUNNING).size();
 	}
 
-	/** Whether a new job may start now without exceeding the cap. */
-	public boolean canStart() {
-		return runningCount() < _maxConcurrent;
+	/** Whether a new job may start now without exceeding this registry's cap. */
+	public synchronized boolean canStart() {
+		return _started < _maxConcurrent;
+	}
+
+	/**
+	 * Where the given job stands in this registry's queue: {@code 1} for the next to start,
+	 * {@code 0} when it is not waiting.
+	 */
+	public synchronized int queuePosition(SubagentJob job) {
+		int position = 1;
+		for (Pending pending : _queue) {
+			if (pending.job() == job) {
+				return position;
+			}
+			position++;
+		}
+		return 0;
 	}
 
 	/**
@@ -256,25 +284,98 @@ public class SubagentJobRegistry {
 	}
 
 	/**
-	 * Submits the given job's work to the background executor. The job is marked RUNNING,
-	 * then DONE/FAILED/CANCELLED on completion; waiters in {@link #awaitBlocking} are signaled.
+	 * Queues the given job's work for the background executor.
+	 *
+	 * @see #spawn(SubagentJob, SubagentRun, Runnable)
 	 */
 	public void spawn(SubagentJob job, SubagentRun run) {
-		_executor.submit(() -> {
+		spawn(job, run, () -> {
+			// Nobody to tell.
+		});
+	}
+
+	/**
+	 * Queues the given job's work, and starts it as soon as this registry and the installation have
+	 * room for it.
+	 *
+	 * <p>
+	 * At most {@link #maxConcurrent()} jobs of this registry run at once, and at most
+	 * {@link com.top_logic.tl.ai.core.limits.RunLimitSettings#subagentWorkers()} over the whole
+	 * installation, when that is set. A job beyond either stays {@link SubagentJobStatus#QUEUED} and
+	 * starts, in registration order, when one ends - it waits rather than being refused, because the
+	 * lead that started it expects its result. Started, it is marked RUNNING, then DONE, FAILED or
+	 * CANCELLED; waiters in {@link #awaitBlocking} are signalled.
+	 * </p>
+	 *
+	 * <p>
+	 * A job cancelled while it is still queued never runs its work: it ends CANCELLED at once, and
+	 * {@code notStarted} is told, for whatever the spawner has to record about a job that ended
+	 * without running.
+	 * </p>
+	 *
+	 * @param notStarted
+	 *        Told when the job is cancelled before it started.
+	 */
+	public void spawn(SubagentJob job, SubagentRun run, Runnable notStarted) {
+		synchronized (this) {
+			_queue.addLast(new Pending(job, run, notStarted));
+		}
+		job.cancellationToken().onCancel(this::dispatch);
+		dispatch();
+	}
+
+	/**
+	 * Starts what may start now and ends what was cancelled while queued.
+	 *
+	 * <p>
+	 * Called when a job is queued, when one ends, when a queued one is cancelled, and when the
+	 * installation frees a slot this registry asked for.
+	 * </p>
+	 */
+	void dispatch() {
+		List<Pending> starting = new ArrayList<>();
+		List<Pending> dropped = new ArrayList<>();
+		synchronized (this) {
+			for (Iterator<Pending> it = _queue.iterator(); it.hasNext();) {
+				Pending pending = it.next();
+				if (pending.job().cancellationToken().isCancelled()) {
+					it.remove();
+					dropped.add(pending);
+				}
+			}
+			while (!_queue.isEmpty() && _started < _maxConcurrent && !_executor.isShutdown()
+				&& SubagentSlots.tryAcquire(this)) {
+				starting.add(_queue.removeFirst());
+				_started++;
+			}
+		}
+		for (Pending pending : dropped) {
+			endNotStarted(pending);
+		}
+		for (Pending pending : starting) {
+			try {
+				_executor.submit(() -> run(pending));
+			} catch (java.util.concurrent.RejectedExecutionException ex) {
+				// Shut down meanwhile: the job will not run; give its slots back.
+				ended();
+			}
+		}
+	}
+
+	private void run(Pending pending) {
+		SubagentJob job = pending.job();
+		try {
 			job.markRunning();
 			Listener listener = _listener;
 			listener.started(job);
 			SubagentJobStatus terminal;
 			SubagentResult result;
 			try {
-				result = run.run(job);
+				result = pending.run().run(job);
 				terminal = SubagentJobStatus.DONE;
 			} catch (java.util.concurrent.CancellationException cancelled) {
 				terminal = SubagentJobStatus.CANCELLED;
-				String reason = job.cancelReason();
-				result = new SubagentResult(
-					reason == null || reason.isBlank() ? "Cancelled." : "Cancelled by the lead agent: " + reason,
-					TokenUsage.EMPTY, 0L, 0, StopReason.ABORTED);
+				result = cancelledResult(job);
 			} catch (Exception e) {
 				terminal = SubagentJobStatus.FAILED;
 				result = new SubagentResult("ERROR: " + e.getMessage(), TokenUsage.EMPTY, 0L, 0, StopReason.ERROR);
@@ -283,10 +384,40 @@ public class SubagentJobRegistry {
 			job.inbox().close();
 			job.markTerminal(terminal, result);
 			listener.finished(job);
-			synchronized (_completionLock) {
-				_completionLock.notifyAll();
-			}
-		});
+			signalCompletion();
+		} finally {
+			ended();
+		}
+	}
+
+	/** A slot of this registry and of the installation is free again; start what waits. */
+	private void ended() {
+		synchronized (this) {
+			_started--;
+		}
+		SubagentSlots.release();
+		dispatch();
+	}
+
+	private void endNotStarted(Pending pending) {
+		SubagentJob job = pending.job();
+		job.inbox().close();
+		job.markTerminal(SubagentJobStatus.CANCELLED, cancelledResult(job));
+		pending.notStarted().run();
+		signalCompletion();
+	}
+
+	private static SubagentResult cancelledResult(SubagentJob job) {
+		String reason = job.cancelReason();
+		return new SubagentResult(
+			reason == null || reason.isBlank() ? "Cancelled." : "Cancelled by the lead agent: " + reason,
+			TokenUsage.EMPTY, 0L, 0, StopReason.ABORTED);
+	}
+
+	private void signalCompletion() {
+		synchronized (_completionLock) {
+			_completionLock.notifyAll();
+		}
 	}
 
 	/**
@@ -340,8 +471,9 @@ public class SubagentJobRegistry {
 		return true;
 	}
 
-	/** Shuts down the background executor (call on session teardown). */
+	/** Shuts down the background executor (call on session teardown); queued jobs never start. */
 	public void shutdown() {
+		SubagentSlots.forget(this);
 		_executor.shutdownNow();
 	}
 }

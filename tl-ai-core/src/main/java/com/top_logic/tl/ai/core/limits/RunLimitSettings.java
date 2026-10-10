@@ -158,6 +158,16 @@ public class RunLimitSettings {
 	}
 
 	/**
+	 * How many background subagents this installation runs at the same time; {@code 0}, the default,
+	 * for no installation ceiling.
+	 *
+	 * @see CapacityConfig#getSubagentWorkers()
+	 */
+	public static int subagentWorkers() {
+		return Math.max(0, capacity().getSubagentWorkers());
+	}
+
+	/**
 	 * How far back the token budget counts, in hours.
 	 *
 	 * @see BudgetConfig#getBudgetWindowHours()

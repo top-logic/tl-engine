@@ -255,8 +255,20 @@ public class SubagentSpawner {
 				return ThreadContextManager.inContext(userSession, work);
 			}
 			return ThreadContextManager.inSystemInteraction(SubagentSpawner.class, work);
+		}, () -> {
+			// Cancelled while it was still queued: it ends without having run, and is recorded so.
+			if (logListener != null) {
+				logListener.recordSubagentCancelled(job.subagentId(), null);
+			}
 		});
 
+		int position = registry.queuePosition(job);
+		if (position > 0) {
+			return ToolResult.of("Subagent " + targetAgentName + " queued (id=" + job.subagentId()
+				+ ", position " + position + "): as many subagents as may run at once are running, and"
+				+ " it starts when one of them ends. Its result will arrive in a later turn or via"
+				+ " wait_for_subagent.");
+		}
 		return ToolResult.of("Subagent " + targetAgentName + " started (id=" + job.subagentId()
 			+ "). It runs in the background; its result will arrive in a later turn or via "
 			+ "wait_for_subagent.");

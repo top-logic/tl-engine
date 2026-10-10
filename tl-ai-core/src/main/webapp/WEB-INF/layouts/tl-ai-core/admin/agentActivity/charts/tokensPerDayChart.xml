@@ -83,6 +83,15 @@
 				'data': $totals($attr),
 				'backgroundColor': $color
 			};
+			// Thinking tokens are a share of the output tokens (#730). Stacked on the whole output they
+			// would count twice, so the output bar shows the output without them.
+			count = e -> attr -> ifElse(isEmpty($e.get($attr)), 0, $e.get($attr));
+			outputWithoutThinking = $buckets.map(b -> {
+				runs = $byBucket[$b];
+				ifElse(isEmpty($runs), 0,
+					$runs.map(e -> $count($e)(`tl.ai.execution:AgentExecution#outputTokens`)
+						- $count($e)(`tl.ai.execution:AgentExecution#thinkingTokens`)).sum());
+			});
 			{
 				'type': 'bar',
 				'data': {
@@ -91,7 +100,11 @@
 						dateFormat('dd.MM.').format($b))),
 					'datasets': list(
 						$bar(`tl.ai.execution:AgentExecution#inputTokens`)('#2968c8'),
-						$bar(`tl.ai.execution:AgentExecution#outputTokens`)('#d3a118'),
+						{
+							'label': #('Output tokens without thinking'@en, 'Ausgabe-Tokens ohne Denken'@de).localize(),
+							'data': $outputWithoutThinking,
+							'backgroundColor': '#d3a118'
+						},
 						$bar(`tl.ai.execution:AgentExecution#thinkingTokens`)('#04a38d'),
 						$bar(`tl.ai.execution:AgentExecution#cacheReadTokens`)('#c82968'),
 						$bar(`tl.ai.execution:AgentExecution#cacheWriteTokens`)('#6829c8')

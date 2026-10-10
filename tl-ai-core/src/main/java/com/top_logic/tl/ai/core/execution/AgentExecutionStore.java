@@ -1186,10 +1186,11 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *
 	 * <p>
 	 * The figures the budgets are enforced against: everything the provider was asked to read and
-	 * write - prompt including its cached part, output and thinking - and the recorded cost of it,
-	 * summed over every recorded run of that account which <em>started</em> within the window. A
-	 * run whose cost was recorded in another currency adds its tokens and not its cost: amounts in
-	 * two currencies do not add up, and this product converts an amount only where it is made.
+	 * write - prompt including its cached part, and output including reasoning - and the recorded
+	 * cost of it, summed over every recorded run of that account which <em>started</em> within the
+	 * window. A run whose cost was recorded in another currency adds its tokens and not its cost:
+	 * amounts in two currencies do not add up, and this product converts an amount only where it is
+	 * made.
 	 * </p>
 	 *
 	 * <p>

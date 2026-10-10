@@ -18,9 +18,9 @@ public class TestTokenUsage extends TestCase {
 		assertEquals(150, usage.totalTokens());
 	}
 
-	/** Total tokens includes thinking tokens. */
-	public void testTotalWithThinking() {
-		TokenUsage usage = new TokenUsage(100, 50, 200, 0, 0);
+	/** Thinking tokens are a share of the output and are not counted a second time. */
+	public void testThinkingIsPartOfTheOutput() {
+		TokenUsage usage = new TokenUsage(100, 250, 200, 0, 0);
 		assertEquals(350, usage.totalTokens());
 	}
 
@@ -32,7 +32,7 @@ public class TestTokenUsage extends TestCase {
 
 	/** Total tokens counts the full prompt including cached parts. */
 	public void testTotalIncludesCachedPrompt() {
-		TokenUsage usage = new TokenUsage(100, 50, 200, 4000, 900);
+		TokenUsage usage = new TokenUsage(100, 250, 200, 4000, 900);
 		assertEquals(5250, usage.totalTokens());
 	}
 

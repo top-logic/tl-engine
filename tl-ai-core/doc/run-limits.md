@@ -165,8 +165,8 @@ is a 429 with a sentence rather than a turn that fails.
 Also decided in `RunLimits.admit`, and in two halves:
 
 **At run start.** `AgentExecutionStore.spentSince(owner, since, currency)` sums every recorded run of
-that account which *started* within the window - prompt including its cached part, output and
-thinking. Every execution row counts once, delegated children included: they carry their own usage
+that account which *started* within the window - prompt including its cached part, and output
+including reasoning (#730: a reasoning token is a part of the output and counts once). Every execution row counts once, delegated children included: they carry their own usage
 and belong to the same session, so summing rows is the account's true spend; a sum that added each
 parent's children to the parent would count them twice here. The read happens **on the
 store's writer thread**, in a fresh interaction at the current revision, for the reason #405

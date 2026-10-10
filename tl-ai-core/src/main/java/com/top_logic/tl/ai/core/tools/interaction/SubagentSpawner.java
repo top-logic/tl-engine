@@ -188,11 +188,13 @@ public class SubagentSpawner {
 					// on this long-running worker thread, whose stable read revision predates the row
 					// the store's committer writes ("created after access revision N"). The event
 					// carries the id without any KB access, on both the success and failure paths.
-					String[] childRunId = { null };
 					AgentEventListener capturingListener = event -> {
 						if (event instanceof AgentEvent.RunStarted started) {
-							childRunId[0] = started.runId();
+							// At once, not after the run: the transcript of a running child is
+							// what the user wants to open while it works.
+							j.setChildRunId(started.runId());
 						}
+						j.progress().onEvent(event);
 						childListener.onEvent(event);
 					};
 
@@ -205,14 +207,12 @@ public class SubagentSpawner {
 					ConversationLog childLog = new ConversationLog();
 					childLog.startTurn().setUserParts(
 						List.of(new Part.TextPart(UUID.randomUUID().toString(), Instant.now(), userPrompt)));
+					j.setLiveLog(childLog);
 
 					try {
 						AgentRunner.RecordedRun run = AgentRunner.run(targetLoop, targetAgentName,
 							conversation, childContext, capturingListener, childLog, recordingSession,
 							parentExecution);
-						if (childRunId[0] != null) {
-							j.setChildRunId(childRunId[0]);
-						}
 						AgentResult result = run.result();
 
 						if (j.cancellationToken().isCancelled()) {
@@ -234,11 +234,8 @@ public class SubagentSpawner {
 					} catch (java.util.concurrent.CancellationException ce) {
 						throw ce;
 					} catch (Exception e) {
-						// AgentRunner already finalized the child execution with the failure; just
-						// surface the run id (captured from the RunStarted event) and the event.
-						if (childRunId[0] != null) {
-							j.setChildRunId(childRunId[0]);
-						}
+						// AgentRunner already finalized the child execution with the failure; the run
+						// id was taken from the RunStarted event already, so only the event is left.
 						if (logListener != null) {
 							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());
 						}

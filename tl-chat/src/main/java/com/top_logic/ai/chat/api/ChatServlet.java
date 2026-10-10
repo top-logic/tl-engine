@@ -1705,8 +1705,9 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * GET /chat/subagents/{id}/transcript - the persisted transcript of one background subagent's
-	 * recorded child run, as a {@code turnsJson} array in the same shape a session load returns.
+	 * GET /chat/subagents/{id}/transcript - the transcript of one background subagent's child run, as
+	 * a {@code turnsJson} array in the same shape a session load returns: its live log while it works,
+	 * its recorded execution once it has ended.
 	 *
 	 * <p>
 	 * Lets the background-tasks panel open a subagent's full transcript (turns, tool calls). The
@@ -1733,14 +1734,21 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
-		AgentSession session = execution == null ? null : execution.getSession();
-		if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
+		String transcript;
+		ConversationLog liveLog = job.liveLog();
+		if (!job.status().isTerminal() && liveLog != null) {
+			// While the child works its execution holds no transcript yet; what it has done so far
+			// is in its live log. The job came from this window's own registry, so it is the user's.
+			transcript = ConversationLogSerializer.toJson(liveLog.turns());
+		} else {
+			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
+			AgentSession session = execution == null ? null : execution.getSession();
+			if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
+			transcript = execution.getTranscript();
 		}
-
-		String transcript = execution.getTranscript();
 		ChatSessionDetailResponse response = ChatSessionDetailResponse.create().setId(id);
 		if (transcript != null && !transcript.isEmpty()) {
 			response.setMessagesJson(transcript);

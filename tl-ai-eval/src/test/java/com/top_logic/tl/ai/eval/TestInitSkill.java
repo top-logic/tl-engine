@@ -5,12 +5,19 @@
  */
 package com.top_logic.tl.ai.eval;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -19,7 +26,13 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.basic.TLID;
+import com.top_logic.basic.FileManager;
+import com.top_logic.basic.XMLProperties;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
@@ -30,13 +43,10 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.ReaderConfigBuilder;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.util.TLAnnotations;
-import com.top_logic.tl.ai.core.agent.ApplicationContextContributor;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
@@ -62,6 +72,9 @@ import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
+import com.top_logic.tl.ai.core.tools.context.DevelopmentWorkspace;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -69,15 +82,18 @@ import com.top_logic.util.model.ModelService;
 /**
  * Albert's {@code TL_init} skill, run end to end: the shipped {@code TL_SingleAgent} loads the skill,
  * reads the existing context, reads a derived attribute's calculation rule and saves the application
- * context with the user's approval - and the next run of Albert is given it (Gitea #667).
+ * context with the user's approval into the application's source configuration - and once the LLM
+ * service is restarted, the next run of Albert is given it (Gitea #667).
  *
  * <p>
  * In tl-ai-eval because this module boots the agent stack the way a chat request meets it - the
  * shipped agent definitions, the tool registry, the tool-access gate, a knowledge base - with a model
  * whose answers a test writes. What the model answers is scripted; everything the answers set in
- * motion is the real thing. Its {@code LLMService} configuration replaces the shipped one as a whole
- * and lists no prompt contributor, as every application that has a configuration of its own does,
- * so the context reaching the next run is also the proof that it needs none.
+ * motion is the real thing. The application's source is a folder of the test's own: the test runs in
+ * the test environment, where nothing may be written into a real source, so it says where the source
+ * is with {@link DevelopmentWorkspace#setWebappForTests(Path)}. The restart is the one the service
+ * editor does - reload the application configuration, restart the service - with the written file
+ * read last, where a file of the application's {@code autoconf} folder is read.
  * </p>
  *
  * <p>
@@ -91,6 +107,12 @@ public class TestInitSkill extends BasicTestCase {
 
 	private static final String DERIVED = "initfixture:Item#total";
 
+	/** The application's own configuration of the LLM service, which the test application has. */
+	private static final String SERVICE_FILE = "com.top_logic.tl.ai.core.provider.LLMService.config.xml";
+
+	/** What the save writes when the application has no configuration file of the service. */
+	private static final String NEW_FILE = "ai-application-context.config.xml";
+
 	/** A fragment of the calculation rule in {@code initfixture.model.xml}. */
 	private static final String RULE = "$item.get(`initfixture:Item#price`) * $item.get(`initfixture:Item#quantity`)";
 
@@ -98,30 +120,51 @@ public class TestInitSkill extends BasicTestCase {
 		+ "## Purpose\nPrices items.\n\n"
 		+ "## Calculated values\n- `initfixture:Item#total`: what all units of an item cost together.";
 
+	private static final String REVISED = DOCUMENT + "\n\n## Rules\n- An item is never sold below its price.";
+
 	/** The tools that run in the order the script calls them. */
 	private static final List<String> CALLS = List.of("loadSkill", "readApplicationContext", "loadSkill",
 		"getCurrentAnnotations", "saveApplicationContext");
+
+	private Path _project;
+
+	private Path _autoconf;
+
+	private final List<BinaryContent> _layers = new ArrayList<>();
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
+		_project = Files.createTempDirectory("init-source");
+		Path webapp = _project.resolve("src/main/webapp");
+		_autoconf = Files.createDirectories(webapp.resolve("WEB-INF/autoconf"));
+		DevelopmentWorkspace.setWebappForTests(webapp);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			ApplicationContextContributor.current().setText(null);
-			tx.commit();
+		DevelopmentWorkspace.setWebappForTests(null);
+		if (!_layers.isEmpty()) {
+			XMLProperties.Module.INSTANCE.config().getTypedConfigs().removeAll(_layers);
+			_layers.clear();
+			restartLlmService();
+		}
+		try (Stream<Path> files = Files.walk(_project)) {
+			for (Path file : files.sorted(Comparator.reverseOrder()).toList()) {
+				Files.delete(file);
+			}
 		}
 		super.tearDown();
 	}
 
 	/**
 	 * The whole workflow: every step runs, the rule is read, the save is the one call that needs an
-	 * approval and the one change the run makes, and the next run is given the saved context.
+	 * approval, it writes the application's configuration file and nothing of the application's data,
+	 * and after the restart the next run is given the context.
 	 */
-	public void testInitWritesTheContextAndChangesNothingElse() {
+	public void testInitWritesTheContextIntoTheSourceConfiguration() throws Exception {
+		Path file = copyServiceFile();
 		ScriptedProvider.install((request, turn) -> switch (turn) {
 			case 0 -> List.of(new TextContent("I will write the application context."),
 				call("loadSkill", "{\"skillId\": \"TL_init\"}"));
@@ -156,24 +199,103 @@ public class TestInitSkill extends BasicTestCase {
 			List.of("saveApplicationContext"), approvals.stream().map(ApprovalRequest::toolName).toList());
 		assertEquals("The person approves the text that is saved.",
 			DOCUMENT, approvals.get(0).arguments().get("text"));
-		assertEquals(DOCUMENT, ApplicationContextContributor.current().getText());
-		assertEquals("The run changed the application context and nothing else of the application.",
-			List.of(), applicationChangesSince(before));
+		String saved = text(results.get(4));
+		assertTrue("The developer is told where it went, to restart and to commit: " + saved,
+			saved.contains("src/main/webapp/WEB-INF/autoconf/" + SERVICE_FILE) && saved.contains("restarted")
+				&& saved.contains("commit"));
+		String written = read(file);
+		assertEquals(1, occurrences(written, "name=\"application-context\""));
+		assertTrue(written.contains(DOCUMENT));
+		assertEquals("The run changed nothing of the application's data.", List.of(),
+			applicationChangesSince(before));
 
-		List<String> prompts = new ArrayList<>();
-		ScriptedProvider.install((request, turn) -> {
-			prompts.add(request.systemPrompt());
-			return List.of(new TextContent("Hello."));
-		});
-		run("Hello.", ApprovalCallback.AUTO_APPROVE);
-		assertEquals(1, prompts.size());
-		assertTrue("The next run of Albert is given the context.", prompts.get(0).contains(DOCUMENT));
+		assertFalse("Saved is not active: the running service still has its old configuration.",
+			nextPrompt().contains(DOCUMENT));
+		activate(file);
+		assertTrue("After the restart, the next run of Albert is given the context.",
+			nextPrompt().contains(DOCUMENT));
 	}
 
 	/**
-	 * A person who declines the save keeps the application as it was.
+	 * A second run reads the context it wrote and replaces it: still one entry, with the new text.
 	 */
-	public void testDeclinedSaveWritesNothing() {
+	public void testASecondRunRevisesTheContext() throws Exception {
+		Path file = copyServiceFile();
+		saveWithScript(DOCUMENT);
+		activate(file);
+
+		ScriptedProvider.install((request, turn) -> switch (turn) {
+			case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+			case 1 -> List.of(call("readApplicationContext", "{}"));
+			case 2 -> List.of(call("saveApplicationContext", "{\"text\": " + json(REVISED) + "}"));
+			default -> List.of(new TextContent("Saved."));
+		});
+		Run run = run("Revise the application context.", ApprovalCallback.AUTO_APPROVE);
+
+		assertTrue("The re-run reads what is there: " + text(run.results().get(1)),
+			text(run.results().get(1)).contains(DOCUMENT));
+		String written = read(file);
+		assertEquals(1, occurrences(written, "name=\"application-context\""));
+		assertTrue(written.contains(REVISED));
+		restartLlmService();
+		assertTrue(nextPrompt().contains(REVISED));
+	}
+
+	/**
+	 * An application that configures the LLM service in no file of its own gets a file that adds the
+	 * context to the service's configuration - and the rest of that configuration stays, which is
+	 * why the next run of Albert still reaches its model.
+	 */
+	public void testWithoutAServiceFileTheContextIsAddedToTheConfiguration() throws Exception {
+		saveWithScript(DOCUMENT);
+
+		Path created = _autoconf.resolve(NEW_FILE);
+		assertTrue(Files.exists(created));
+		assertFalse(read(created).contains("config:override=\""));
+		activate(created);
+
+		assertEquals("eval-scripted", LLMService.getInstance().getConfig().getAgentExecution().getDefaultModel());
+		assertTrue(nextPrompt().contains(DOCUMENT));
+	}
+
+	/**
+	 * Outside the development environment there is no source to write to: the save is not offered,
+	 * a call to it is answered with the reason, and nobody is asked to approve anything.
+	 */
+	public void testOutsideTheDevelopmentEnvironmentTheSaveIsNotOffered() throws Exception {
+		Path file = copyServiceFile();
+		String before = read(file);
+		DevelopmentWorkspace.setWebappForTests(null);
+		List<List<String>> offered = new ArrayList<>();
+		ScriptedProvider.install((request, turn) -> {
+			offered.add(request.tools().stream().map(ToolSchema::name).toList());
+			return switch (turn) {
+				case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+				case 1 -> List.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
+				default -> List.of(new TextContent("Here is the document."));
+			};
+		});
+		List<ApprovalRequest> approvals = new ArrayList<>();
+
+		Run run = run("Write the application context.", request -> {
+			approvals.add(request);
+			return new ApprovalResult.Approved();
+		});
+
+		assertTrue(offered.get(1).contains("readApplicationContext"));
+		assertFalse(offered.get(1).contains("saveApplicationContext"));
+		String answer = text(run.results().get(1));
+		assertTrue(answer, answer.contains("only offered in the development environment"));
+		assertEquals(List.of(), approvals);
+		assertEquals(before, read(file));
+	}
+
+	/**
+	 * A person who declines the save keeps the configuration as it was.
+	 */
+	public void testDeclinedSaveWritesNothing() throws Exception {
+		Path file = copyServiceFile();
+		String before = read(file);
 		ScriptedProvider.install((request, turn) -> switch (turn) {
 			case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
 			case 1 -> List.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
@@ -182,7 +304,58 @@ public class TestInitSkill extends BasicTestCase {
 
 		run("Write the application context.", request -> new ApprovalResult.Rejected("Not yet."));
 
-		assertNull(ApplicationContextContributor.current().getText());
+		assertEquals(before, read(file));
+	}
+
+	private void saveWithScript(String document) {
+		ScriptedProvider.install((request, turn) -> switch (turn) {
+			case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+			case 1 -> List.of(call("saveApplicationContext", "{\"text\": " + json(document) + "}"));
+			default -> List.of(new TextContent("Saved."));
+		});
+		Run run = run("Write the application context.", ApprovalCallback.AUTO_APPROVE);
+		assertTrue(run.results().get(1).state() instanceof ToolState.Completed);
+	}
+
+	/**
+	 * The application's file of the service, in the test's source folder.
+	 */
+	private Path copyServiceFile() throws IOException {
+		Path file = _autoconf.resolve(SERVICE_FILE);
+		try (InputStream in = FileManager.getInstance().getStream("/WEB-INF/autoconf/" + SERVICE_FILE)) {
+			Files.copy(in, file);
+		}
+		return file;
+	}
+
+	/**
+	 * Reads the given file last, as the application's {@code autoconf} files are read, and restarts
+	 * the LLM service as the service editor does.
+	 */
+	private void activate(Path file) throws Exception {
+		BinaryData layer = BinaryDataFactory.createBinaryDataWithName(file.toFile(), file.getFileName().toString());
+		XMLProperties.Module.INSTANCE.config().getTypedConfigs().add(layer);
+		_layers.add(layer);
+		restartLlmService();
+	}
+
+	private static void restartLlmService() throws Exception {
+		assertTrue("The configuration reloads.", ApplicationConfig.getInstance().reload());
+		ModuleUtil.INSTANCE.restart(LLMService.Module.INSTANCE, null);
+	}
+
+	/**
+	 * The system prompt of the next run of Albert.
+	 */
+	private static String nextPrompt() {
+		List<String> prompts = new ArrayList<>();
+		ScriptedProvider.install((request, turn) -> {
+			prompts.add(request.systemPrompt());
+			return List.of(new TextContent("Hello."));
+		});
+		run("Hello.", ApprovalCallback.AUTO_APPROVE);
+		assertEquals(1, prompts.size());
+		return prompts.get(0);
 	}
 
 	private record Run(StopReason stopReason, Conversation conversation) {
@@ -222,9 +395,9 @@ public class TestInitSkill extends BasicTestCase {
 	}
 
 	/**
-	 * Everything committed since the given revision that is neither the application context nor the
-	 * record of the run itself - which the execution store keeps in the tables of {@code tl.ai.execution},
-	 * on its own thread. A reference row counts as part of the object it belongs to.
+	 * Everything committed since the given revision that is not the record of the run itself - which
+	 * the execution store keeps in the tables of {@code tl.ai.execution}, on its own thread. A
+	 * reference row counts as part of the object it belongs to.
 	 */
 	private static List<String> applicationChangesSince(long before) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -242,8 +415,7 @@ public class TestInitSkill extends BasicTestCase {
 			reader.close();
 		}
 
-		Set<TLID> allowed = new HashSet<>();
-		allowed.add(ApplicationContextContributor.current().tId().getObjectName());
+		Set<Object> allowed = new HashSet<>();
 		for (ItemEvent event : events) {
 			if (runTables.contains(event.getObjectType().getName())) {
 				allowed.add(event.getObjectName());
@@ -251,7 +423,7 @@ public class TestInitSkill extends BasicTestCase {
 		}
 		List<String> result = new ArrayList<>();
 		for (ItemEvent event : events) {
-			TLID owner = event.getObjectName();
+			Object owner = event.getObjectName();
 			if (event instanceof ItemChange change && change.getValues().get("source") instanceof ObjectKey source) {
 				owner = source.getObjectName();
 			}
@@ -278,8 +450,26 @@ public class TestInitSkill extends BasicTestCase {
 		return HistoryUtils.getLastRevision().getCommitNumber();
 	}
 
+	private static String read(Path file) throws IOException {
+		return Files.readString(file, StandardCharsets.UTF_8);
+	}
+
 	private static String text(ToolResultMessage result) {
-		return result.state() instanceof ToolState.Completed completed ? completed.result() : "";
+		if (result.state() instanceof ToolState.Completed completed) {
+			return completed.result();
+		}
+		if (result.state() instanceof ToolState.Failed failed) {
+			return failed.error();
+		}
+		return "";
+	}
+
+	private static int occurrences(String text, String part) {
+		int count = 0;
+		for (int index = text.indexOf(part); index >= 0; index = text.indexOf(part, index + 1)) {
+			count++;
+		}
+		return count;
 	}
 
 	private static ToolCall call(String tool, String arguments) {

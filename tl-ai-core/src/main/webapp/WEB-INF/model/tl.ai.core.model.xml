@@ -7,11 +7,6 @@
 				implementation-package="com.top_logic.tl.ai.core.model.impl"
 				interface-package="com.top_logic.tl.ai.core.model"
 			/>
-			<singletons>
-				<singleton name="APPLICATION_CONTEXT"
-					type="ApplicationContext"
-				/>
-			</singletons>
 		</annotations>
 		<class name="Agent">
 			<generalizations>
@@ -264,67 +259,6 @@
 					<annotations>
 						<options>
 							<all-tool-names/>
-						</options>
-					</annotations>
-				</property>
-			</attributes>
-		</class>
-		<!--
-			What the agents are told about this application in every run - its purpose, its users, their
-			terms, its rules (Issue #667). One per application, hence the singleton above: TL_init writes
-			it with Albert's saveApplicationContext, an administrator edits it in the Agent Editor, and
-			ApplicationContextContributor puts it into the system prompt. Generic flex storage, like
-			every type here without a table of its own.
-		-->
-		<class name="ApplicationContext">
-			<generalizations>
-				<generalization type="tl.model:TLObject"/>
-			</generalizations>
-			<annotations>
-				<form-definition>
-					<form>
-						<field
-							attribute="text"
-							fullQualifiedName="tl.ai.core:ApplicationContext#text"
-							type="tl.core:Text"
-						>
-							<annotations>
-								<render-whole-line/>
-								<label-position value="above-value"/>
-							</annotations>
-						</field>
-						<field
-							attribute="agents"
-							fullQualifiedName="tl.ai.core:ApplicationContext#agents"
-							type="tl.core:String"
-						/>
-					</form>
-				</form-definition>
-			</annotations>
-			<attributes>
-				<!--
-					The bound is the one cost guard the context has: every run of every agent that gets
-					it pays for the text. Also asked by saveApplicationContext before anybody is asked
-					to approve, see ApplicationContexts.MAX_LENGTH.
-				-->
-				<property name="text"
-					type="tl.core:Text"
-				>
-					<annotations>
-						<multi-line/>
-						<size-constraint upper-bound="8000"/>
-						<constraints>
-							<constraint class="com.top_logic.tl.ai.core.agent.environment.PlaceholderConstraint"/>
-						</constraints>
-					</annotations>
-				</property>
-				<property name="agents"
-					multiple="true"
-					type="tl.core:String"
-				>
-					<annotations>
-						<options>
-							<all-agent-names/>
 						</options>
 					</annotations>
 				</property>

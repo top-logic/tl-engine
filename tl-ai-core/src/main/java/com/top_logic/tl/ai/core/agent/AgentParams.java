@@ -23,8 +23,11 @@ import com.top_logic.tl.ai.core.provider.ToolChoice;
  * @param modelOptions        provider-specific options (temperature, {@code topP},
  *                            {@code thinking_effort}, etc.)
  * @param contextWindowTokens total context window size in tokens (used for memory/compaction)
- * @param maxRetries          maximum automatic retry attempts on transient provider errors
- *                            (rate limited, overloaded); {@code 0} disables retries
+ * @param maxRetries          automatic retry attempts on transient provider errors (rate
+ *                            limited, overloaded) before the run fails or moves on to a fallback
+ *                            model of its failover chain; a rate-limited run with no fallback left
+ *                            retries for up to {@link AgentTuning#DEFAULT_RATE_LIMIT_WAIT_SECONDS
+ *                            the rate-limit wait} instead; {@code 0} disables retries
  * @param timeoutSeconds      HTTP request timeout per LLM call in seconds
  * @param toolChoice          tool selection behaviour, or {@code null} for provider default
  * @param responseValidator   predicate tested after each LLM response; returning {@code false}

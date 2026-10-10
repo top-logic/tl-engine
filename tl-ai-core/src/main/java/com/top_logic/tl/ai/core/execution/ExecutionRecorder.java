@@ -377,7 +377,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 			// A run cut off by the account's budget did not deliver its answer, and it is not an
 			// error either: the same family as a response the validator refused, which is what
 			// REJECTED names. Which of the two it was is on the stop reason beside it.
-			case REJECTED, BUDGET_EXHAUSTED -> ExecutionStatus.REJECTED;
+			// A run whose model stopped without an answer, or was cut off in the middle of one, did
+			// not deliver either - which is also why the synchronous script functions fail on it.
+			case REJECTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT -> ExecutionStatus.REJECTED;
 			case ABORTED -> ExecutionStatus.CANCELLED;
 		};
 	}

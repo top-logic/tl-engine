@@ -101,6 +101,27 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 UNKNOWN_AGENTS__NAMES;
 
+	/**
+	 * Notice shown in place of an answer when the model ended its turn without one, see
+	 * {@link StopReason#NO_ANSWER}.
+	 *
+	 * @en The agent stopped without an answer. Write "Please continue" to let it carry on.
+	 * @de Der Agent hat ohne Antwort aufgehört. Schreiben Sie „Bitte weitermachen“, damit er
+	 *     fortfährt.
+	 */
+	public static ResKey RUN_STOPPED_NO_ANSWER;
+
+	/**
+	 * Notice appended to an answer that was cut off at the model's output limit, see
+	 * {@link StopReason#OUTPUT_LIMIT}.
+	 *
+	 * @en The answer is incomplete: it was cut off at the model's output limit. Write "Please
+	 *     continue" to get the rest.
+	 * @de Die Antwort ist unvollständig: Sie wurde an der Ausgabegrenze des Modells abgeschnitten.
+	 *     Schreiben Sie „Bitte weitermachen“, um den Rest zu erhalten.
+	 */
+	public static ResKey RUN_STOPPED_OUTPUT_LIMIT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

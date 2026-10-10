@@ -1000,6 +1000,7 @@ public class ChatServlet extends TopLogicServlet {
 		String response = null;
 		String toolName = null;
 		String comment = null;
+		String ownWords = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
@@ -1007,6 +1008,8 @@ public class ChatServlet extends TopLogicServlet {
 			response = (String) parsed.get("response");
 			toolName = (String) parsed.get("toolName");
 			comment = (String) parsed.get("comment");
+			// What the user typed for a choice question, beside the labels in "response" (#679).
+			ownWords = (String) parsed.get("ownWords");
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
 			return;
@@ -1065,7 +1068,7 @@ public class ChatServlet extends TopLogicServlet {
 			run.tracker().addSessionApprovedTool(toolName);
 		}
 
-		store.resolve(requestId, resolvedResponse);
+		store.resolve(requestId, resolvedResponse, ownWords);
 
 		// The run's own window learns the outcome from the run (approval_resolved). Every other
 		// window of this account that listed the request has no run to hear it from.

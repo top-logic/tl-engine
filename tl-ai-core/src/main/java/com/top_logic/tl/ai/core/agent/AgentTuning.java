@@ -37,8 +37,34 @@ public final class AgentTuning {
 	/** Maximum reactive compaction retries on {@code context_window_exceeded} before giving up. */
 	public static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
 
+	/**
+	 * How often in a row a run asks the model to continue after a reply that held no text and called
+	 * no tool, before it ends the run with {@link StopReason#NO_ANSWER}.
+	 *
+	 * <p>
+	 * In a row: a reply that calls a tool is progress and starts the count again, so a long run can
+	 * be helped more than once. The run's turn limit still bounds the whole.
+	 * </p>
+	 */
+	public static final int MAX_EMPTY_REPLY_CONTINUATIONS = 1;
+
 	/** Base backoff delay in milliseconds for transient provider retries; doubles each attempt. */
 	public static final long BASE_BACKOFF_MS = 1000L;
+
+	/** Longest single wait between two provider retries, unless the provider asks for a longer one. */
+	public static final long MAX_BACKOFF_MS = 30_000L;
+
+	/**
+	 * How long, in seconds, a run waits in total for a model that answers "too many requests", when
+	 * the run has no other model to go to.
+	 *
+	 * <p>
+	 * Of the order of minutes, because what holds the model is usually another request of the same
+	 * key that is still running - on a local model one request can take well over a minute (#678).
+	 * An installation sets its own value in {@code LLMService}'s {@code rate-limit-wait-seconds}.
+	 * </p>
+	 */
+	public static final int DEFAULT_RATE_LIMIT_WAIT_SECONDS = 180;
 
 	/**
 	 * Sleep slice in milliseconds for backoff/retry waits, so cancellation is noticed promptly

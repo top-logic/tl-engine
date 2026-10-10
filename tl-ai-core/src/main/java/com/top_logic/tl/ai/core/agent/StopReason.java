@@ -12,7 +12,7 @@ package com.top_logic.tl.ai.core.agent;
  */
 public enum StopReason {
 
-	/** LLM finished without requesting tools. */
+	/** LLM finished without requesting tools, and its reply is an answer. */
 	COMPLETE,
 
 	/** Hit the configured maximum turns limit. */
@@ -42,5 +42,32 @@ public enum StopReason {
 	 *
 	 * @see com.top_logic.tl.ai.core.limits.TokenAllowance
 	 */
-	BUDGET_EXHAUSTED
+	BUDGET_EXHAUSTED,
+
+	/**
+	 * The model ended its turn without saying anything: its last reply held no text and called no
+	 * tool, and asking it to continue did not change that (#677).
+	 *
+	 * <p>
+	 * A reply of that shape - typically nothing but a thinking block - used to end the run as
+	 * {@link #COMPLETE}, and the chat showed a finished turn with no answer in it. The loop now asks
+	 * the model once to go on; a run that still gets nothing ends with this reason, which the
+	 * surface that started it tells the user.
+	 * </p>
+	 *
+	 * @see AgentTuning#MAX_EMPTY_REPLY_CONTINUATIONS
+	 */
+	NO_ANSWER,
+
+	/**
+	 * The model's last reply was cut off at the output limit while it was writing its answer
+	 * (#677).
+	 *
+	 * <p>
+	 * The text it wrote is kept, but it is not the whole answer, and a reply that ends there must
+	 * not read as one the model chose to end. The loop does not ask for the rest by itself: the
+	 * rest would be a second answer, and only the last one of a run is the one a surface shows.
+	 * </p>
+	 */
+	OUTPUT_LIMIT
 }

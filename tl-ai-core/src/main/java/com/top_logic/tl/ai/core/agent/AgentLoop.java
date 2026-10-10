@@ -386,6 +386,57 @@ public class AgentLoop {
 	}
 
 	/**
+	 * Why a reply that called no tool is not the answer of the run, or <code>null</code> if it is.
+	 *
+	 * <p>
+	 * A reply without a tool call used to end every run as {@link StopReason#COMPLETE}, whatever it
+	 * held. A model that thinks and then stops - a local model, most of all - left the user a
+	 * finished turn with nothing in it (#677). Text that was cut off at the output limit is not an
+	 * answer the model chose to end either.
+	 * </p>
+	 *
+	 * @return {@link StopReason#NO_ANSWER} for a reply without any text (only thinking, or nothing),
+	 *         {@link StopReason#OUTPUT_LIMIT} for text cut off at the output limit.
+	 */
+	static StopReason unfinished(AssistantMessage reply) {
+		boolean saysSomething = reply.content().stream()
+			.anyMatch(part -> part instanceof TextContent text && !text.text().isBlank());
+		if (!saysSomething) {
+			return StopReason.NO_ANSWER;
+		}
+		if (FINISH_MAX_TOKENS.equals(reply.finishReason())) {
+			return StopReason.OUTPUT_LIMIT;
+		}
+		return null;
+	}
+
+	/**
+	 * Asks the model to go on after a reply that held no text and called no tool.
+	 *
+	 * <p>
+	 * Recorded on the current turn of the bound {@code ConversationLog} like a subagent delivery, as
+	 * a {@link Part.SystemEventType#CONTINUATION_REQUESTED} part, so that a reloaded session puts the
+	 * same message back between the two replies instead of merging them into one.
+	 * </p>
+	 */
+	private static void askToContinue(Conversation conversation, AssistantMessage reply, String runId,
+			int turn) {
+		String text = FINISH_MAX_TOKENS.equals(reply.finishReason())
+			? CONTINUE_NOTICE_OUTPUT_LIMIT
+			: CONTINUE_NOTICE;
+		Logger.info("Run " + runId + " turn " + turn + ": the reply held no text and no tool call"
+			+ " (finish reason '" + reply.finishReason() + "'); asking the model to continue.",
+			AgentLoop.class);
+		conversation.add(new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
+
+		ConversationLogListener log = ConversationLogListenerBinding.getListener();
+		if (log != null) {
+			log.recordContinuationRequested(text);
+		}
+	}
+
+	/**
 	 * Run the agent loop.
 	 *
 	 * <p>Blocks until the LLM completes without tool calls, the turn limit is reached,
@@ -507,6 +558,7 @@ public class AgentLoop {
 		int maxTurns = _config.maxTurns();
 		List<Message> before = conversation.messages();
 		Message resumePoint = before.isEmpty() ? null : before.get(before.size() - 1);
+		int continuations = 0;
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
@@ -548,10 +600,23 @@ public class AgentLoop {
 
 			if (toolCalls.isEmpty()) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
-				StopReason stopReason = StopReason.COMPLETE;
+				StopReason unfinished = unfinished(assistantMsg);
+				if (unfinished == StopReason.NO_ANSWER && continuations < MAX_EMPTY_REPLY_CONTINUATIONS
+					&& turn < maxTurns) {
+					continuations++;
+					askToContinue(conversation, assistantMsg, runId, turn);
+					continue;
+				}
+				StopReason stopReason = unfinished != null ? unfinished : StopReason.COMPLETE;
+				if (unfinished != null) {
+					Logger.info("Run " + runId + " ends without a complete answer (" + stopReason
+						+ "): the last reply had finish reason '" + assistantMsg.finishReason() + "'.",
+						AgentLoop.class);
+				}
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
+			continuations = 0;
 
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
@@ -680,6 +745,31 @@ public class AgentLoop {
 	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
 	private static final int MAX_REACTIVE_COMPACT_RETRIES = AgentTuning.MAX_REACTIVE_COMPACT_RETRIES;
 
+	/** How often in a row the model is asked to go on after a reply that said nothing. */
+	private static final int MAX_EMPTY_REPLY_CONTINUATIONS = AgentTuning.MAX_EMPTY_REPLY_CONTINUATIONS;
+
+	/** The finish reason every provider reports for a reply cut off at the output limit. */
+	private static final String FINISH_MAX_TOKENS = "max_tokens";
+
+	/**
+	 * What the model is told after a reply that held no text and called no tool.
+	 *
+	 * <p>
+	 * A user message, for the reason {@link #injectSubagentResults} gives: no provider transmits a
+	 * system message in the middle of a conversation. The prefix says in the text what the role
+	 * cannot - the user did not write this.
+	 * </p>
+	 */
+	static final String CONTINUE_NOTICE = "[Framework notice] Your last reply contained no text for"
+		+ " the user and no tool call, so the user has received no answer yet. Continue the task now:"
+		+ " call the tool you need next, or write your answer to the user.";
+
+	/** {@link #CONTINUE_NOTICE} for a reply that was cut off at the output limit before it said anything. */
+	static final String CONTINUE_NOTICE_OUTPUT_LIMIT = "[Framework notice] Your last reply reached the"
+		+ " output limit before it contained any text for the user or a tool call, so the user has"
+		+ " received no answer yet. Keep your reasoning short and continue the task now: call the tool"
+		+ " you need next, or write your answer to the user.";
+
 	/** Base backoff delay in milliseconds for transient retries. Doubles each attempt. */
 	private static final long BASE_BACKOFF_MS = AgentTuning.BASE_BACKOFF_MS;
 
@@ -691,6 +781,7 @@ public class AgentLoop {
 		Conversation conversation = memory.conversation();
 		TokenUsage totalUsage = TokenUsage.EMPTY;
 		int maxTurns = _config.maxTurns();
+		int continuations = 0;
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
@@ -735,10 +826,23 @@ public class AgentLoop {
 
 			if (toolCalls.isEmpty()) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
-				StopReason stopReason = StopReason.COMPLETE;
+				StopReason unfinished = unfinished(assistantMsg);
+				if (unfinished == StopReason.NO_ANSWER && continuations < MAX_EMPTY_REPLY_CONTINUATIONS
+					&& turn < maxTurns) {
+					continuations++;
+					askToContinue(conversation, assistantMsg, runId, turn);
+					continue;
+				}
+				StopReason stopReason = unfinished != null ? unfinished : StopReason.COMPLETE;
+				if (unfinished != null) {
+					Logger.info("Run " + runId + " ends without a complete answer (" + stopReason
+						+ "): the last reply had finish reason '" + assistantMsg.finishReason() + "'.",
+						AgentLoop.class);
+				}
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
+			continuations = 0;
 
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
@@ -1744,30 +1848,52 @@ public class AgentLoop {
 	 * Call the LLM provider with automatic retry for transient errors.
 	 *
 	 * <p>
-	 * Retries up to {@link AgentParams#maxRetries()} times on
-	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
+	 * Retries on {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
 	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#OVERLOADED} with exponential
-	 * backoff, respecting the {@code retry-after} header when present. The backoff sleeps in
-	 * small slices so a user cancellation ends the wait promptly.
+	 * backoff, never sooner than the provider's {@code Retry-After} - see {@link #retryWait}. The
+	 * backoff sleeps in small slices so a user cancellation ends the wait promptly.
+	 * </p>
+	 *
+	 * <p>
+	 * A rate-limited run on its last model waits for up to {@link #rateLimitWaitMs()} in total: the
+	 * model is usually held by another request of the same key, and giving up after a few seconds
+	 * lost the turn - and with it the answer the user had just given to a question card - to a
+	 * request that would have been served a minute later (#678). Everything else retries
+	 * {@link AgentParams#maxRetries()} times, as it always did: a run with a fallback model ahead in
+	 * its failover chain moves on to it instead of waiting, and an overloaded model is also what a
+	 * plain server error is classified as, which no wait mends. {@link AgentParams#maxRetries()} of
+	 * {@code 0} switches retrying off in every case.
+	 * </p>
+	 *
+	 * <p>
+	 * Every wait is announced as an {@link AgentEvent.RetryScheduled}, which is how the chat tells
+	 * its user that the agent is waiting rather than stuck.
 	 * </p>
 	 */
 	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		int maxRetries = Math.max(0, _config.maxRetries());
-		for (int attempt = 0; attempt <= maxRetries; attempt++) {
+		boolean fallbackAhead = _chainIndex < _failoverChain.size() - 1;
+		long waitedMs = 0;
+		for (int attempt = 0;; attempt++) {
 			try {
 				return callProviderOnce(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
 				boolean retryable = e.kind() == ProviderException.Kind.RATE_LIMITED
 					|| e.kind() == ProviderException.Kind.OVERLOADED;
-				if (!retryable || attempt == maxRetries) {
+				if (!retryable || maxRetries == 0) {
 					throw e;
 				}
-				long waitMs = e.retryAfter() != null
-					? e.retryAfter().toMillis()
-					: BASE_BACKOFF_MS * (1L << attempt);
-				// Cap at 30 seconds.
-				waitMs = Math.min(waitMs, 30_000);
+				boolean waitOut = e.kind() == ProviderException.Kind.RATE_LIMITED && !fallbackAhead;
+				if (!waitOut && attempt >= maxRetries) {
+					throw e;
+				}
+				long windowMs = waitOut ? rateLimitWaitMs() : Long.MAX_VALUE;
+				long waitMs = retryWait(attempt, e.retryAfter(), waitedMs, windowMs);
+				if (waitMs <= 0) {
+					throw e;
+				}
+				waitedMs += waitMs;
 
 				emit(listener, new AgentEvent.RetryScheduled(
 					runId, turn, now(), e.kind().name(), attempt + 1, waitMs));
@@ -1775,7 +1901,54 @@ public class AgentLoop {
 				backoff(waitMs, context, e);
 			}
 		}
-		throw new IllegalStateException("Unreachable");
+	}
+
+	/**
+	 * How long to wait before the given retry, or {@code 0} when the wait is used up.
+	 *
+	 * <p>
+	 * The wait doubles with every attempt, starting at the provider's {@code Retry-After} when it
+	 * sent one and at {@link #BASE_BACKOFF_MS} otherwise, up to {@link AgentTuning#MAX_BACKOFF_MS}.
+	 * It is never shorter than the provider's {@code Retry-After}: asking earlier only earns another
+	 * refusal. The last wait is cut to what is left of the window.
+	 * </p>
+	 *
+	 * @param attempt
+	 *        How many retries were made before this one, {@code 0} for the first.
+	 * @param retryAfter
+	 *        What the provider asked for, or {@code null}.
+	 * @param waitedMs
+	 *        How long the call has waited so far.
+	 * @param windowMs
+	 *        How long the call may wait in total.
+	 */
+	static long retryWait(int attempt, Duration retryAfter, long waitedMs, long windowMs) {
+		long remaining = windowMs - waitedMs;
+		if (remaining <= 0) {
+			return 0;
+		}
+		long asked = retryAfter == null ? 0 : Math.max(0, retryAfter.toMillis());
+		long backoff = asked > 0 ? asked : BASE_BACKOFF_MS;
+		for (int n = 0; n < attempt && backoff < AgentTuning.MAX_BACKOFF_MS; n++) {
+			backoff *= 2;
+		}
+		long waitMs = Math.max(Math.min(backoff, AgentTuning.MAX_BACKOFF_MS), asked);
+		return Math.min(waitMs, remaining);
+	}
+
+	/**
+	 * How long a run on its last model waits in total for a model that is rate limited.
+	 *
+	 * <p>
+	 * The installation's {@code rate-limit-wait-seconds}, or
+	 * {@link AgentTuning#DEFAULT_RATE_LIMIT_WAIT_SECONDS} for a loop that runs without the service.
+	 * </p>
+	 */
+	private static long rateLimitWaitMs() {
+		LLMService service = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
+		int seconds = service != null ? service.rateLimitWaitSeconds()
+			: AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS;
+		return Math.max(0, seconds) * 1000L;
 	}
 
 	// ---- Cross-provider failover (Gitea #344) ----

@@ -15,6 +15,13 @@ A run whose model has no configured chain behaves exactly as it did before: one 
 own retries, then failure. Marks are still written, because they cost nothing and the monitor reads
 them, but with a chain of one there is nowhere to route to.
 
+The loop's own retries ask a rate-limited or overloaded model `max-retries` times, with doubling
+pauses and never sooner than the provider's `Retry-After`. One case waits longer (#678): a
+**rate-limited** run with no fallback ahead - which is every rate-limited run without a chain - keeps
+asking for up to `rate-limit-wait-seconds` (default 180) of `<agent-execution>`, because what holds
+the model is usually another request of the same key. An overloaded model is not waited out that
+long: a plain server error (500, 503) is classified as one.
+
 ## What marks a model, and for how long
 
 `ModelAvailability.causeOf` is the whole classification, and it is over the

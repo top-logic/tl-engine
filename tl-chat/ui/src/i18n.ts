@@ -181,6 +181,8 @@ const EN = {
   skip: 'Skip',
   continueLabel: 'Continue',
   yourAnswer: 'Your answer',
+  /** The row under a choice question's options that lets the user answer in their own words (#679). */
+  ownAnswer: 'Own answer…',
   timeIsUp: 'Time is up',
   leftToAnswer: ' left to answer',
   collapse: (kind: string) => `Collapse ${kind}`,
@@ -226,6 +228,12 @@ const EN = {
   transactionRolledBack:
     'The data changes of this reply were discarded. Nothing of what the agent wrote in this step was saved.',
   providerErrorRateLimited: 'The model is being asked too often just now. Try again in a moment.',
+  /** The run waits for a model that refused the call as rate limited, and asks again by itself (#678). */
+  retryRateLimited: (seconds: number) =>
+    `The model is busy with other requests. The agent waits and asks again in ${seconds} s.`,
+  /** The run waits for a model that refused the call as overloaded, and asks again by itself. */
+  retryOverloaded: (seconds: number) =>
+    `The model is overloaded. The agent waits and asks again in ${seconds} s.`,
   providerErrorBilling: 'The model account cannot be billed. Please tell your administrator.',
   providerErrorOverloaded: 'The model is overloaded just now. Try again in a moment.',
   providerErrorContext: 'The conversation has grown past what this model can read. Start a new chat, or switch to a model with a larger context.',
@@ -427,6 +435,7 @@ const DE: Bundle = {
   skip: 'Überspringen',
   continueLabel: 'Weiter',
   yourAnswer: 'Deine Antwort',
+  ownAnswer: 'Eigene Antwort…',
   timeIsUp: 'Zeit abgelaufen',
   leftToAnswer: ' verbleiben zum Antworten',
   collapse: (kind: string) => `${kind} einklappen`,
@@ -471,6 +480,10 @@ const DE: Bundle = {
   transactionRolledBack:
     'Die Datenänderungen dieser Antwort wurden verworfen. Nichts von dem, was der Agent in diesem Schritt geschrieben hat, wurde gespeichert.',
   providerErrorRateLimited: 'Das Modell wird gerade zu oft angefragt. Versuche es gleich noch einmal.',
+  retryRateLimited: (seconds: number) =>
+    `Das Modell ist mit anderen Anfragen beschäftigt. Der Agent wartet und fragt in ${seconds} s erneut.`,
+  retryOverloaded: (seconds: number) =>
+    `Das Modell ist überlastet. Der Agent wartet und fragt in ${seconds} s erneut.`,
   providerErrorBilling: 'Das Modellkonto kann nicht abgerechnet werden. Bitte wende dich an deine Administration.',
   providerErrorOverloaded: 'Das Modell ist gerade überlastet. Versuche es gleich noch einmal.',
   providerErrorContext: 'Das Gespräch ist länger, als dieses Modell lesen kann. Beginne einen neuen Chat oder wechsle zu einem Modell mit größerem Kontext.',

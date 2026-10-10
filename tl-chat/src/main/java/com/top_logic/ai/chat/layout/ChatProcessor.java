@@ -350,7 +350,7 @@ public class ChatProcessor {
 					// catalog evicted has to disappear from the session too, or the next run restores
 					// tools that are no longer loaded.
 					taskTracker.loadLoadedSkills(loadedSkills);
-					result = withBudgetNotice(runResult.response(), runResult.result());
+					result = withStopNotice(runResult.response(), runResult.result());
 				} catch (RunLimitExceededException ex) {
 					// A ceiling of this installation, not a failure: the account's budget was already
 					// spent when the run wanted to start, or the last free slot went to another request
@@ -1012,23 +1012,33 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * The answer, with a line saying why it stops there when the account's budget ran out mid-run.
+	 * The answer, with a line saying why it stops there when the run did not end with a whole one:
+	 * the account's budget ran out mid-run, the model stopped without an answer, or its answer was
+	 * cut off at the output limit (#677).
 	 *
 	 * <p>
 	 * The run itself is orderly - it kept every turn it finished - but an answer that simply ends is
-	 * indistinguishable from one the model chose to end. The notice is part of the answer text rather
-	 * than a separate system message so that it is persisted with it and is still there when the
-	 * conversation is reopened.
+	 * indistinguishable from one the model chose to end, and a turn with no answer at all reads as
+	 * finished. The notice is part of the answer text rather than a separate system message so that
+	 * it is persisted with it and is still there when the conversation is reopened.
 	 * </p>
 	 */
-	private static String withBudgetNotice(String response, AgentResult result) {
-		if (result == null || result.stopReason() != StopReason.BUDGET_EXHAUSTED) {
+	private static String withStopNotice(String response, AgentResult result) {
+		if (result == null) {
 			return response;
 		}
-		String notice = Resources.getInstance().getString(
-			I18NConstants.RUN_STOPPED_BUDGET_SPENT__HOURS.fill(
-				Integer.valueOf(RunLimitSettings.budgetWindowHours())));
-		return response == null || response.isBlank() ? notice : response + "\n\n" + notice;
+		ResKey notice = switch (result.stopReason()) {
+			case BUDGET_EXHAUSTED -> I18NConstants.RUN_STOPPED_BUDGET_SPENT__HOURS.fill(
+				Integer.valueOf(RunLimitSettings.budgetWindowHours()));
+			case NO_ANSWER -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_NO_ANSWER;
+			case OUTPUT_LIMIT -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_OUTPUT_LIMIT;
+			default -> null;
+		};
+		if (notice == null) {
+			return response;
+		}
+		String text = Resources.getInstance().getString(notice);
+		return response == null || response.isBlank() ? text : response + "\n\n" + text;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
@@ -177,9 +177,9 @@ describe('SidePane in a rail', () => {
     pointer('pointerdown')
     pointer('pointermove', HOST - 380.0333251953125)
     pointer('pointermove', HOST - 401.36669921875)
-    // A pointer move is a continuous event, which React renders after the event, not inside it.
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(shape.paneOf()!.style.width).toBe('401.36669921875px')
+    // A pointer move is a continuous event, which React renders in a task of its own after the
+    // event, not inside it - and on a loaded machine not always within the next one (#751).
+    await vi.waitFor(() => expect(shape.paneOf()!.style.width).toBe('401.36669921875px'))
     pointer('pointermove', HOST - 422.70001220703125)
     expect(widths).toEqual([])
 

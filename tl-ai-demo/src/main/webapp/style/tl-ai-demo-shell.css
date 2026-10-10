@@ -2,7 +2,7 @@
  * The application shell of the tl-ai demo: what the React view layer draws around the chat.
  *
  * Everything here is written in the TopLogic design tokens, so the shell follows whichever theme
- * the app bar's theme button selects - which is the point of the file. The shipped themes leave
+ * the user menu selects - which is the point of the file. The shipped themes leave
  * --layer-accent undefined in dark mode, so the framework's accent app bar stays the same grey
  * whatever theme is active, and the bar ends up looking like a different product from the chat
  * below it. These rules are the demo's own skin on the framework's markup; the framework is
@@ -24,11 +24,6 @@
 	font-weight: 600;
 	letter-spacing: -0.01em;
 	color: var(--text-primary);
-}
-
-.tlAppBar--primary .tlAppBarUser {
-	color: var(--text-secondary);
-	font-size: var(--body-01-font-size, 0.75rem);
 }
 
 /*
@@ -60,41 +55,4 @@
 
 .tlAppBar--primary .tl-button--link {
 	color: var(--icon-primary);
-}
-
-/* --- One theme button, not two --------------------------------------------- */
-
-/*
- * A ViewCommand's theme id is static configuration, so each theme needs its own command; but the
- * user needs one control that switches to the other theme. The command that would set the theme
- * already in force is hidden, which leaves exactly one visible button - a toggle. The two are told
- * apart by the icon each declares in app.view.xml (bi-sun sets the light theme, bi-moon-stars the
- * dark one); a ViewCommand's css-classes never reaches the rendered button, so the icon is the
- * hook. SetThemeCommand flips data-theme on the document element without a reload, so the pair
- * swaps in the same instant the theme changes.
- */
-html[data-theme="dark"] .tlAppBar__actions button:has(.bi-moon-stars),
-html:not([data-theme="dark"]) .tlAppBar__actions button:has(.bi-sun) {
-	display: none;
-}
-
-/*
- * What is left is a toggle, and a toggle wears its icon: sun or moon says at a glance what a click
- * does. The label stays in the accessible tree - hidden, not removed - so the button keeps its name
- * for screen readers and for tests.
- */
-.tlAppBar__actions button:has(.bi-sun) > .tl-button__icon,
-.tlAppBar__actions button:has(.bi-moon-stars) > .tl-button__icon {
-	display: inline-block;
-}
-
-.tlAppBar__actions button:has(.bi-sun) > .tl-button__label,
-.tlAppBar__actions button:has(.bi-moon-stars) > .tl-button__label {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	margin: -1px;
-	overflow: hidden;
-	clip-path: inset(50%);
-	white-space: nowrap;
 }

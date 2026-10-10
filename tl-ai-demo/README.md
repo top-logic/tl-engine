@@ -31,7 +31,7 @@ account to the console:
 
 ## What you see
 
-The start page is `/view/` - the React view layer, declared in `WEB-INF/views/app.view.xml`:
+The start page is `/view/` - the React view layer. `WEB-INF/views/app.view.xml` is an overlay of the engine's application shell, which brings the app bar with the development and user menus (login, logout, theme, language) and the Administration item; the demo adds its title, its pages and the chat dock:
 
 | | |
 |--|--|

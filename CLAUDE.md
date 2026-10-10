@@ -433,6 +433,23 @@ Markdown image, which both rendering paths keep (`HtmlSanitizer`, `markdown.tsx`
 view over `tl.ai.screenshots:Screenshot` comes with the React admin views (#452). See
 `tl-ai-core/doc/screenshots.md`.
 
+A third route follows the screenshot rule: `/archived-page/{handle}` (`ArchivedPageServlet`, #617)
+shows the copy of a web page an agent run read - login, then the reading account or an administrator,
+404 for unknown and foreign handles alike, rendered through `Converters.markdownToHtmlString` under a
+CSP that loads nothing.
+
+### Citations (tl-ai-core `citation/`)
+
+An answer cites with links in its text, `[Sommerfest](tl:GenericObject:11047)` or
+`[Quelle](https://...)`, and calls no tool for it (#617). The **system writes the reading list**: every read tool puts what
+it read on the run's `ReadingList` (objects where `ReadFilter` discloses an identity, pages in
+`webFetch` and the browser, an application's records through `ToolExecutionContext.readSource`), and
+`CitationValidator` keeps a link as a footnote only when it points at an entry of that list, of a kind
+declared in `CitationKinds`. A sub-agent's sources join the lead's list when its result is delivered.
+Every page that enters a reading list is archived by `PageArchive` (`tl.ai.execution:ArchivedPage`,
+bounded and with retention), and its footnote offers the copy. An application adds its own marker
+syntax with a `CitationMarkerSyntax` in `<marker-syntaxes>`. See `tl-chat/doc/citation-contract.md`.
+
 ### Memory & Compaction (tl-ai-core `memory/`)
 
 `ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.

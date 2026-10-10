@@ -6,7 +6,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { turnsJsonToMessages, type SubagentMessageStatus } from './api'
 import { addNote, applyChildEvent } from './chat-store'
 import { bundle } from './i18n'
-import { cardsForTurn, SubagentCard, type SubagentCardModel } from './subagent-card'
+import { cardsForTurn, cardSummary, SubagentCard, SubagentCards, type SubagentCardModel } from './subagent-card'
+import { SubagentActivityPanel } from './subagents'
 import { showSubagentCard } from './thread'
 import type { ChatMessage, SubagentActivity, SubagentRef } from './types'
 
@@ -501,5 +502,94 @@ describe('a subagent that waits', () => {
     expect(render('WAITING_LEAD', 'Albert')).toContain('wartet auf Albert')
     expect(render('WAITING_LEAD')).toContain('wartet auf den Hauptagenten')
     expect(render('WAITING')).toContain('wartet auf dich')
+  })
+})
+
+describe('many cards on one turn', () => {
+  function card(id: string, status: SubagentCardModel['status']): SubagentCardModel {
+    return { subagentId: id, agentName: 'researcher', task: `task ${id}`, status, summary: '', totalTokens: 0, durationMs: 0, hasTranscript: false, parentToolCallId: `call-${id}` }
+  }
+  const five = [card('sa-1', 'DONE'), card('sa-2', 'RUNNING'), card('sa-3', 'WAITING'), card('sa-4', 'RUNNING'), card('sa-5', 'FAILED')]
+
+  /* How they stand, in one line (#778). */
+  it('sums up the states of the cards', () => {
+    expect(cardSummary(five, bundle('de'))).toBe('5 Subagenten: 1 wartet, 2 laufen, 1 fertig, 1 fehlgeschlagen')
+    expect(cardSummary(five, labels)).toBe('5 subagents: 1 waiting, 2 running, 1 done, 1 failed')
+  })
+
+  let mounted: { root: Root; container: HTMLElement } | null = null
+  afterEach(() => {
+    mounted?.root.unmount()
+    mounted?.container.remove()
+    mounted = null
+  })
+
+  async function mountCards(cards: SubagentCardModel[]) {
+    const container = document.createElement('div')
+    container.className = 'thread'
+    document.body.append(container)
+    const root = createRoot(container)
+    mounted = { root, container }
+    root.render(React.createElement(SubagentCards, { cards, labels, onLoadTranscript: async () => [] }))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    return container
+  }
+
+  const visibleIds = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll<HTMLElement>('.subagent-card'))
+      .filter((el) => !el.closest('[hidden]'))
+      .map((el) => el.dataset.subagentId)
+
+  /* Up to three: no summary, nothing folded. */
+  it('shows three cards as they are', async () => {
+    const container = await mountCards(five.slice(0, 3))
+    expect(container.querySelector('.subagent-cards-summary')).toBeNull()
+    expect(visibleIds(container)).toEqual(['sa-1', 'sa-2', 'sa-3'])
+  })
+
+  /* More: the ended ones are folded behind the summary row, never removed, and come back on a click. */
+  it('folds the ended cards of a turn with more than three', async () => {
+    const container = await mountCards(five)
+    expect(container.querySelector('.subagent-cards-summary')?.textContent).toContain('5 subagents')
+    expect(visibleIds(container)).toEqual(['sa-2', 'sa-3', 'sa-4'])
+    expect(container.querySelectorAll('.subagent-card')).toHaveLength(5)
+
+    ;(container.querySelector('.subagent-cards-summary button') as HTMLButtonElement).click()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(visibleIds(container)).toEqual(['sa-2', 'sa-3', 'sa-4', 'sa-1', 'sa-5'])
+  })
+
+  /* The woken line names an ended subagent: its link unfolds the list before it scrolls there. */
+  it('unfolds when a line points at a folded card', async () => {
+    const container = await mountCards(five)
+    Element.prototype.scrollIntoView = () => undefined
+    const line = document.createElement('p')
+    container.append(line)
+
+    expect(showSubagentCard(line, { subagentId: 'sa-1', parentToolCallId: 'call-sa-1' })).toBe(true)
+    expect(visibleIds(container)).toContain('sa-1')
+  })
+
+  /* The panel lists what needs the user first, then what works, what waits to start, what has ended. */
+  it('sorts the panel by what needs the user', async () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    mounted = { root, container }
+    const jobs = [
+      job({ subagentId: 'sa-1', status: 'DONE', detail: 'one' }),
+      job({ subagentId: 'sa-2', status: 'QUEUED', detail: 'two' }),
+      job({ subagentId: 'sa-3', status: 'RUNNING', detail: 'three' }),
+      job({ subagentId: 'sa-4', status: 'RUNNING', detail: 'four' }),
+    ]
+    root.render(React.createElement(SubagentActivityPanel, {
+      subagents: jobs, labels, waiting: new Set(['sa-4']),
+      onCancel: async () => undefined, onStopAll: async () => undefined, onLoadTranscript: async () => [],
+    }))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    ;(container.querySelector('.working-chip') as HTMLButtonElement).click()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    const rows = Array.from(container.querySelectorAll('.activity-item strong')).map((el) => el.textContent)
+    expect(rows).toEqual(['four', 'three', 'two', 'one'])
   })
 })

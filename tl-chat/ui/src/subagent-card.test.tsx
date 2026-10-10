@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -142,13 +142,13 @@ describe('the card', () => {
 
   it('names the subagent, its task, its state and its current step', () => {
     const out = html({
-      live: { steps: [{ toolUseId: 't1', name: 'webSearch', summary: '{"q":"X"}', status: 'running' }], text: '', turns: 2, tokens: 1500, startedAt: Date.now() },
+      live: { steps: [{ toolUseId: 't1', name: 'webSearch', summary: 'X', status: 'running' }], text: '', turns: 2, tokens: 1500, startedAt: Date.now() },
     })
 
     expect(out).toContain('researcher')
     expect(out).toContain('find X')
     expect(out).toContain('running')
-    expect(out).toContain('webSearch {&quot;q&quot;:&quot;X&quot;}')
+    expect(out).toContain('<code class="tool-id">webSearch</code><span class="subagent-step-args"> X</span>')
     expect(out).toContain('2 turns')
   })
 
@@ -360,7 +360,7 @@ describe('a synchronous delegation', () => {
     expect(cards[0]).toMatchObject({
       kind: 'delegation', agentName: 'researcher', status: 'DONE', summary: 'X is 42.', childRunId: 'run-9', hasTranscript: true, totalTokens: 150,
     })
-    expect(cards[0].live?.steps).toEqual([{ toolUseId: 'c1', name: 'webSearch', summary: '{"q":"X"}', status: 'done' }])
+    expect(cards[0].live?.steps).toEqual([{ toolUseId: 'c1', name: 'webSearch', summary: 'X', status: 'done' }])
   })
 
   /* The lead waits for it: nothing to write to it, and its card says it is a delegation. */
@@ -449,5 +449,31 @@ describe('the card head', () => {
     expect(out).toMatch(/<span class="subagent-card-title">.*<\/span><span class="subagent-card-task">find X<\/span>/)
     expect(out).toContain('<span class="subagent-card-summary">Gesamt: 4 Events</span>')
     expect(out).not.toContain('**')
+  })
+})
+
+describe('the time on a running card', () => {
+  /* A tool call can take a minute with no event: the seconds move on regardless (#772). */
+  it('ticks every second while the subagent works', async () => {
+    vi.useFakeTimers()
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    try {
+      const card: SubagentCardModel = {
+        subagentId: 'sa-1', agentName: 'researcher', task: 'find X', status: 'RUNNING', summary: '',
+        totalTokens: 0, durationMs: 0, hasTranscript: false, parentToolCallId: 'call-1',
+        live: { steps: [], text: '', turns: 1, tokens: 0, startedAt: Date.now() - 5000 },
+      }
+      root.render(React.createElement(SubagentCard, { card, labels, onLoadTranscript: async () => [] }))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(container.querySelector('.subagent-card-meta')?.textContent).toContain('5s')
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(container.querySelector('.subagent-card-meta')?.textContent).toContain('7s')
+    } finally {
+      root.unmount()
+      container.remove()
+      vi.useRealTimers()
+    }
   })
 })

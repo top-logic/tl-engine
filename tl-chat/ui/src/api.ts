@@ -1,3 +1,4 @@
+import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
 import { chatFetch } from './stale-window'
 import type {
@@ -656,11 +657,10 @@ function delegationSteps(parts: PersistedPart[] | undefined): SubagentStep[] {
   for (const part of parts ?? []) {
     const d = part.toolCallData
     if (part.type !== 'tool_call' || !d) continue
-    const summary = (d.argsJson ?? '').replace(/\s+/g, ' ').trim()
     steps.push({
       toolUseId: part.id,
       name: d.toolName,
-      summary: summary.length > 80 ? `${summary.slice(0, 80)}…` : summary,
+      summary: argsSummary(d.argsJson),
       status: mapToolStatus(d.status).status,
     })
   }

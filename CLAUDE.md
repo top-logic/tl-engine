@@ -464,6 +464,14 @@ outcome, the end of its last text), sets `childRunId` at `RunStarted` and hangs 
 wrote inside `<untrusted_subagent_report>`; `GET /chat/subagents/{id}/transcript` serves the live log
 until the child ends.
 
+The chat shows each child as a card at the tool call that started it (#702): `SubagentStarted` and
+the job carry `parentToolCallId`, the browser keeps a child's live events per subagent id
+(`subagentLive`, never in the lead's transcript) and `thread.tsx` draws one `SubagentCard` per child
+under the steps of the turn that spawned it. The lead's log keeps one `Part.SubagentPart` per child -
+id, agent, task, parent call, run id, end state, a short summary - written at start and ended in place,
+never the child's steps (owner decision D5); a reloaded conversation rebuilds the card from it, and
+`GET /chat/subagents/{id}/transcript?runId=` opens the recorded run when the server holds no job.
+
 ## Project Structure
 
 Standard Maven layout. Key package roots:

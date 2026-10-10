@@ -374,6 +374,39 @@ public sealed interface Part {
 		}
 	}
 
+	/**
+	 * A background subagent the turn started, as the lead's log keeps it: who it is, what it was asked,
+	 * where in the turn it was started, and how it ended - never its steps.
+	 *
+	 * <p>
+	 * The child's steps live in its own transcript, reached through {@link #childRunId()}; the lead's
+	 * log keeps this one part per child, so it does not grow with the child's work. What it is for is
+	 * the chat: the card that shows the child at the tool call that started it is rebuilt from this
+	 * part when the conversation is reloaded. The part is written when the child starts and replaced
+	 * when it ends; the conversation the model reads is not affected by it.
+	 * </p>
+	 *
+	 * @param id part identifier
+	 * @param timestamp when the subagent was started
+	 * @param subagentId the subagent's id within its chat, e.g. {@code "sa-2"}
+	 * @param agentName the agent the subagent runs
+	 * @param task the task brief it was given
+	 * @param parentToolCallId the id of the lead's tool call that started it; empty if unknown
+	 * @param childRunId the run id of the child run, its transcript's key; {@code null} until known
+	 * @param status the job's state as a {@code SubagentJobStatus} name ({@code RUNNING}, {@code DONE},
+	 *        {@code FAILED}, {@code CANCELLED})
+	 * @param summary a short summary of how it ended; {@code null} while it runs
+	 */
+	record SubagentPart(String id, Instant timestamp, String subagentId, String agentName, String task,
+			String parentToolCallId, String childRunId, String status, String summary) implements Part {
+
+		/** The same part, ended with the given status. */
+		public SubagentPart ended(String endStatus, String endSummary, String endChildRunId) {
+			return new SubagentPart(id, timestamp, subagentId, agentName, task, parentToolCallId,
+				endChildRunId != null ? endChildRunId : childRunId, endStatus, endSummary);
+		}
+	}
+
 	// ---- Observability parts ----
 
 	/**

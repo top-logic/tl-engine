@@ -533,9 +533,12 @@ public sealed interface AgentEvent {
 	 * @param subagentId      the job id within the session
 	 * @param targetAgentName the delegated-to agent definition name
 	 * @param taskBrief       the task the subagent was given
+	 * @param parentToolCallId the id of the parent's tool call that started it, so a UI can show the
+	 *                        subagent at that call; empty if unknown
 	 */
 	record SubagentStarted(String runId, int turnNumber, Instant timestamp,
-			String subagentId, String targetAgentName, String taskBrief) implements AgentEvent {}
+			String subagentId, String targetAgentName, String taskBrief, String parentToolCallId)
+			implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job finishes successfully.

@@ -139,10 +139,11 @@ public class SubagentSpawner {
 
 		CancellationToken childToken = new CancellationToken();
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
+		job.setParentToolCallId(toolContext.toolCallId());
 
 		// Lifecycle: SubagentStarted to the parent's listener (for the UI panel).
 		if (logListener != null) {
-			logListener.recordSubagentStarted(job.subagentId(), targetAgentName, task);
+			logListener.recordSubagentStarted(job.subagentId(), targetAgentName, task, toolContext.toolCallId());
 		}
 
 		registry.spawn(job, j -> {
@@ -217,7 +218,7 @@ public class SubagentSpawner {
 
 						if (j.cancellationToken().isCancelled()) {
 							if (logListener != null) {
-								logListener.recordSubagentCancelled(j.subagentId());
+								logListener.recordSubagentCancelled(j.subagentId(), j.childRunId());
 							}
 							throw new java.util.concurrent.CancellationException("Subagent cancelled.");
 						}
@@ -228,7 +229,7 @@ public class SubagentSpawner {
 						SubagentResult sr = new SubagentResult(finalText, result.totalUsage(), durationMs,
 							toolCalls, result.stopReason());
 						if (logListener != null) {
-							logListener.recordSubagentCompleted(j.subagentId(), sr);
+							logListener.recordSubagentCompleted(j.subagentId(), sr, j.childRunId());
 						}
 						return sr;
 					} catch (java.util.concurrent.CancellationException ce) {
@@ -237,7 +238,7 @@ public class SubagentSpawner {
 						// AgentRunner already finalized the child execution with the failure; the run
 						// id was taken from the RunStarted event already, so only the event is left.
 						if (logListener != null) {
-							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());
+							logListener.recordSubagentFailed(j.subagentId(), e.getMessage(), j.childRunId());
 						}
 						throw e instanceof RuntimeException re ? re : new RuntimeException(e);
 					}

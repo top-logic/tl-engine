@@ -64,6 +64,7 @@ import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.tl.ai.core.tools.script.QueryTool;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 import com.top_logic.tl.ai.core.tools.web.RecordingServer.Reply;
 import com.top_logic.tl.ai.tool.api.ReadSource;
@@ -159,6 +160,27 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 	}
 
 	/**
+	 * An object a {@code query} answered with is a source as well: the query renders its result
+	 * itself - {@code label [type:...] [id:...]} - and that rendering puts it on the reading list.
+	 * Found in the live check, where a model linked the events a query had listed and every link was
+	 * dropped.
+	 */
+	public void testAnObjectAQueryListedIsCitable() throws Exception {
+		String id = ReadFilter.idOf(anna);
+		try (RecordingServer origin = startOrigin(); FilteringProxy egress = egressTo(origin)) {
+			ConversationLog log = new ConversationLog();
+			Conversation conversation = run(egress, log, (request, turn) -> turn == 0
+				? List.of(new ToolCall("q1", "query",
+					"{\"expression\": \"all(`tl.accounts:Person`)\"}"))
+				: List.of(new TextContent("Es kommt [Anna](tl:" + id + ").")));
+
+			Part.TextPart text = lastText(log.turns().get(log.turns().size() - 1));
+			assertEquals("The query answered: " + toolResults(conversation), "Es kommt Anna[1].", text.text());
+			assertEquals(id, text.citations().get(0).id());
+		}
+	}
+
+	/**
 	 * The page changed after the agent read it: its citation's archived copy still shows what the
 	 * agent read, to the account whose run read it and to nobody else.
 	 */
@@ -194,6 +216,7 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 	private Conversation run(FilteringProxy egress, ConversationLog log, Script script) {
 		ToolCatalog catalog = new ToolCatalog();
 		catalog.register(new InstanceBrowserTool());
+		catalog.register(new QueryTool());
 		catalog.register(new WebFetchTool(publicAnswer(), egress));
 		catalog.freeze();
 		AgentLoop loop = new AgentLoop(new AgentParams("test-model", "You cite with links.", 5,
@@ -231,6 +254,16 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 			}
 		}
 		return result;
+	}
+
+	private static String toolResults(Conversation conversation) {
+		StringBuilder result = new StringBuilder();
+		for (Message message : conversation.messages()) {
+			if (message instanceof ToolResultMessage toolResult) {
+				result.append(toolResult.toolName()).append(": ").append(toolResult.state()).append('\n');
+			}
+		}
+		return result.toString();
 	}
 
 	private static Part.TextPart lastText(Turn turn) {

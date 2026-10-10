@@ -18,7 +18,7 @@ them, but with a chain of one there is nowhere to route to.
 The loop's own retries ask a rate-limited or overloaded model `max-retries` times, with doubling
 pauses and never sooner than the provider's `Retry-After`. One case waits longer (#678): a
 **rate-limited** run with no fallback ahead - which is every rate-limited run without a chain - keeps
-asking for up to `rate-limit-wait-seconds` (default 180) of `<agent-execution>`, because what holds
+asking for up to `rate-limit-wait-seconds` (default 180) of `<failover>`, because what holds
 the model is usually another request of the same key. An overloaded model is not waited out that
 long: a plain server error (500, 503) is classified as one.
 
@@ -64,7 +64,8 @@ Restarting `LLMService` replaces the instance, so it is also the blunt way to cl
 ```xml
 <failover quota-ttl-seconds="86400"
           capacity-ttl-seconds="30"
-          transient-ttl-seconds="300">
+          transient-ttl-seconds="300"
+          rate-limit-wait-seconds="180">
   <model name="claude-sonnet-5">
     <fallback model="gpt-5"/>
     <fallback model="claude-sonnet-5" provider="bedrock"/>

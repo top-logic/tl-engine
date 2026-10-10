@@ -37,7 +37,6 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -447,7 +446,6 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		AgentExecutionConfig.DEFAULT_MODEL,
 		AgentExecutionConfig.DEFAULT_PROVIDER,
 		AgentExecutionConfig.AGENT_OVERRIDES,
-		AgentExecutionConfig.RATE_LIMIT_WAIT_SECONDS,
 	})
 	public interface AgentExecutionConfig extends ConfigPart {
 
@@ -462,9 +460,6 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 		/** Configuration property name for {@link #getAgentOverrides()}. */
 		String AGENT_OVERRIDES = "agent-overrides";
-
-		/** Configuration property name for {@link #getRateLimitWaitSeconds()}. */
-		String RATE_LIMIT_WAIT_SECONDS = "rate-limit-wait-seconds";
 
 		/** @see #getOwner() */
 		String OWNER = "owner";
@@ -544,24 +539,6 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		@EntryTag("agent")
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		Map<String, AgentOverride> getAgentOverrides();
-
-		/**
-		 * How long, in seconds, an agent waits in total for a model that answers "too many
-		 * requests" (HTTP 429) before its turn fails.
-		 *
-		 * <p>
-		 * The agent asks again with growing pauses, never sooner than the model's service asks
-		 * for, and the chat shows the user that it is waiting. Set it to at least the time one
-		 * request of the slowest model takes: what holds the model is usually another request of
-		 * the same key. A run that has a fallback model in the failover section does not wait this
-		 * long - it moves on to the fallback after its retries.
-		 * </p>
-		 *
-		 * @see #RATE_LIMIT_WAIT_SECONDS
-		 */
-		@Name(RATE_LIMIT_WAIT_SECONDS)
-		@IntDefault(AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS)
-		int getRateLimitWaitSeconds();
 	}
 
 	/**
@@ -578,8 +555,10 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Config.ENVIRONMENT,
 		Config.USER_MEMORY,
 		Config.RUN_LIMITS,
+		Config.OBJECT_IDS,
 		Config.SECURITY_CONTEXT,
 		Config.PROMPT_CONTRIBUTORS,
+		Config.FAILOVER,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
@@ -1477,10 +1456,11 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	/**
 	 * How long, in seconds, a run on its last model waits in total for a model that is rate limited.
 	 *
-	 * @see AgentExecutionConfig#getRateLimitWaitSeconds()
+	 * @see FailoverConfig#getRateLimitWaitSeconds()
 	 */
 	public int rateLimitWaitSeconds() {
-		return getConfig().getAgentExecution().getRateLimitWaitSeconds();
+		FailoverConfig failover = getConfig().getFailover();
+		return failover == null ? AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS : failover.getRateLimitWaitSeconds();
 	}
 
 	/**

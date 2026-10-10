@@ -161,6 +161,26 @@
 				/>
 			</attributes>
 		</class>
+		<!--
+			An object with a value the model gives it, for the initial values the pre-commit guard asks
+			about (#683): a status that starts as "open", and a subject nothing presets.
+		-->
+		<class name="Note">
+			<attributes>
+				<property name="subject"
+					type="tl.core:String"
+				/>
+				<property name="status"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="open"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
 		<class name="Pamphlet">
 			<annotations>
 				<table name="TestObjectEditBook"/>

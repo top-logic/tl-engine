@@ -5035,10 +5035,18 @@
   display: none;
 }
 
-/* A narrow chat keeps the agent's name: the stop shrinks to its icon, and keeps its name for a reader. */
+/*
+ * A narrow chat keeps the agent's name: the stop shrinks to its icon (and keeps its name for a
+ * reader), and the name moves under a long chip ("wartet auf dich") rather than shrinking to a letter.
+ */
 @container chat-stage (max-width: 26rem) {
   .subagent-card-stop-icon {
     display: inline;
+  }
+
+  .subagent-card-title {
+    flex-wrap: wrap;
+    row-gap: 0.125rem;
   }
 
   .subagent-card-stop-label {
@@ -5058,6 +5066,18 @@
 .subagent-chip.is-active {
   color: var(--button-primary);
   border-color: var(--button-primary);
+}
+
+/* "1 wartet auf dich" before the working chip (#776): what about the subagents needs the user. */
+.overlay-chip.is-waiting {
+  font-weight: 600;
+}
+
+.waiting-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--chat-warn);
 }
 
 .subagent-card.status-waiting .subagent-chip {

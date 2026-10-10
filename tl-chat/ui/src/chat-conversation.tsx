@@ -6,6 +6,7 @@ import { Composer, plusMenuVisible } from './composer'
 import { createDraftReporter } from './draft'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
 import { bundle } from './i18n'
+import { agentLabel } from './models'
 import type { ReferenceToken } from './reference'
 import { RailToggle } from './rail'
 import { unseenBadge } from './progress-model'
@@ -636,6 +637,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           delegationLive={chat.delegationLive}
           onLoadSubagentTranscript={actions.loadSubagentTranscript}
           onSendSubagentMessage={actions.messageSubagent}
+          leadName={agentLabel(chat.agent, chat.caps.agents)}
           onCancelSubagent={actions.cancelSubagent}
           headerEnd={
             // Derived, not configured: the badge button appears exactly when a `<chat-rail/>` on

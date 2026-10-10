@@ -24,8 +24,11 @@ export interface SubagentCardModel {
   subagentId: string
   agentName: string
   task: string
-  /** `WAITING` while the subagent waits for the user's answer or approval. */
-  status: SubagentStatus | 'WAITING'
+  /**
+   * `WAITING` while the subagent waits for the user's answer or approval, `WAITING_LEAD` while it
+   * waits for its lead's reply (`ask_lead`).
+   */
+  status: SubagentStatus | 'WAITING' | 'WAITING_LEAD'
   /** How it ended - its report or its error - once it has. */
   summary: string
   live?: SubagentLive
@@ -81,7 +84,7 @@ export function cardsForTurn(
         subagentId: job.subagentId,
         agentName: job.targetAgentName || ref?.agentName || '',
         task: job.task || ref?.task || '',
-        status: job.status === 'RUNNING' && waiting.has(job.subagentId) ? 'WAITING' : job.status,
+        status: runningState(job.status, waiting.has(job.subagentId), live[job.subagentId]),
         summary: ended ? job.detail : '',
         live: live[job.subagentId],
         totalTokens: job.totalTokens,
@@ -115,6 +118,33 @@ export function cardsForTurn(
     cards.push({ order: callOrder.get(card.parentToolCallId ?? '') ?? order, card })
   }
   return cards.sort((left, right) => left.order - right.order).map((item) => item.card)
+}
+
+/** The tool a subagent asks its lead with; while its call runs, the subagent waits for the reply. */
+const ASK_LEAD = 'ask_lead'
+
+/** What a running subagent does: work, or wait - for the user, or for its lead. */
+function runningState(status: SubagentStatus, waitsForUser: boolean, live: SubagentLive | undefined): SubagentCardModel['status'] {
+  if (status !== 'RUNNING') return status
+  if (waitsForUser) return 'WAITING'
+  const current = live?.steps[live.steps.length - 1]
+  return current?.name === ASK_LEAD && current.status === 'running' ? 'WAITING_LEAD' : status
+}
+
+/**
+ * The subagents a question or an approval is open for - what they wait for the user to answer.
+ *
+ * @param messages The open requests, or a transcript holding them.
+ */
+export function subagentsWaitingForUser(messages: ChatMessage[]): Set<string> {
+  const ids = new Set<string>()
+  for (const message of messages) {
+    const open =
+      (message.type === 'interaction_request' && !message.answered) ||
+      (message.type === 'approval_request' && message.outcome === 'pending')
+    if (open && message.askedBy) ids.add(message.askedBy.subagentId)
+  }
+  return ids
 }
 
 /** The prefix of the tool a lead delegates to an agent with, synchronously. */
@@ -181,8 +211,10 @@ function delegationCards(
   return result
 }
 
-function statusLabel(status: SubagentCardModel['status'], labels: Labels): string {
+function statusLabel(status: SubagentCardModel['status'], labels: Labels, leadName: string): string {
   switch (status) {
+    case 'WAITING_LEAD':
+      return labels.subagentWaitingLead(leadName || labels.subagentLeadFallback)
     case 'QUEUED':
       return labels.subagentQueued
     case 'RUNNING':
@@ -333,9 +365,12 @@ export function SubagentCard({
   onLoadTranscript,
   onSendMessage,
   onCancel,
+  leadName,
 }: {
   card: SubagentCardModel
   labels: Labels
+  /** What the agent the user talks to is called - who a subagent in `ask_lead` waits for. */
+  leadName?: string
   onLoadTranscript: (id: string, runId?: string) => Promise<ChatMessage[]>
   /** Writes to the subagent; without it the card offers no field. */
   onSendMessage?: SendToSubagent
@@ -350,7 +385,8 @@ export function SubagentCard({
   const [failed, setFailed] = useState(false)
   const live = card.live
   const current = live?.steps[live.steps.length - 1]
-  const active = card.status === 'RUNNING' || card.status === 'QUEUED' || card.status === 'WAITING'
+  const active =
+    card.status === 'RUNNING' || card.status === 'QUEUED' || card.status === 'WAITING' || card.status === 'WAITING_LEAD'
   // A tool call can take a minute with no event; the seconds move on regardless.
   useSecondTick(active && live !== undefined && !card.durationMs)
   const tokens = card.totalTokens || live?.tokens || 0
@@ -398,7 +434,7 @@ export function SubagentCard({
       <div className="subagent-card-top">
         <button type="button" className="subagent-card-head" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
           <span className="subagent-card-title">
-            <span className={`subagent-chip${active ? ' is-active' : ''}`}>{statusLabel(card.status, labels)}</span>
+            <span className={`subagent-chip${active ? ' is-active' : ''}`}>{statusLabel(card.status, labels, leadName ?? '')}</span>
             <strong className="subagent-card-agent">{card.agentName}</strong>
             {card.kind === 'delegation' ? <span className="subagent-card-kind">{labels.delegationTag}</span> : null}
             <span className="subagent-card-toggle" aria-hidden="true">{open ? '⌃' : '⌄'}</span>

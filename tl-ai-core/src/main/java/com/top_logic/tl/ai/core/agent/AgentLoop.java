@@ -49,8 +49,6 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
-import com.top_logic.tl.ai.core.citation.CitationKinds;
-import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
@@ -325,8 +323,8 @@ public class AgentLoop {
 	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
 	 * appended and before the next provider request is built.</p>
 	 */
-	private void injectBetweenTurns(Conversation conversation) {
-		injectSubagentResults(conversation);
+	private void injectBetweenTurns(Conversation conversation, ToolContext context) {
+		injectSubagentResults(conversation, context);
 	}
 
 	/**
@@ -369,7 +367,7 @@ public class AgentLoop {
 	 * way nothing here touches what the user wrote.
 	 * </p>
 	 */
-	static void injectSubagentResults(Conversation conversation) {
+	static void injectSubagentResults(Conversation conversation, ToolContext context) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
 			return;
@@ -377,6 +375,12 @@ public class AgentLoop {
 		List<SubagentJob> finished = registry.takeUndeliveredResults();
 		if (finished.isEmpty()) {
 			return;
+		}
+		if (context != null) {
+			// The results are this run's from now on, and so is what they rest on.
+			for (SubagentJob job : finished) {
+				context.readingList().addAll(job.readingList());
+			}
 		}
 		String text = SubagentResultDelivery.deliveryText(finished);
 		conversation.add(new UserMessage(
@@ -572,7 +576,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation);
+			injectBetweenTurns(conversation, context);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -795,7 +799,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation);
+			injectBetweenTurns(conversation, context);
 
 			compactIfOverBudget(memory, listener, runId, turn);
 
@@ -2384,29 +2388,7 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private String systemPrompt() {
-		return withCitationKinds(UntrustedEnvelope.withStandingRule(_config.systemPrompt()));
-	}
-
-	/**
-	 * Appends what this application may cite, for a run whose agent actually has the cite tool.
-	 *
-	 * <p>
-	 * The kinds are the application's vocabulary, not the agent definition's: a host declares them
-	 * once and every agent that cites is told the same list. Without it {@code kind} is a free
-	 * string and the model invents one.
-	 * </p>
-	 */
-	private String withCitationKinds(String prompt) {
-		if (!CitationKinds.isActive() || !hasCiteTool()) {
-			return prompt;
-		}
-		String vocabulary = CitationKinds.getInstance().vocabulary();
-		return vocabulary.isEmpty() ? prompt : prompt + "\n\n---\n\n" + vocabulary;
-	}
-
-	private boolean hasCiteTool() {
-		return _registry.getTool(CitationValidator.CITE_TOOL_NAME) != null
-			|| _registry.getTool(CitationValidator.CITE_TOOL) != null;
+		return UntrustedEnvelope.withStandingRule(_config.systemPrompt());
 	}
 
 	/**

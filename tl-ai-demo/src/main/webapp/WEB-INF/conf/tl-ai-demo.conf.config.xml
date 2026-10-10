@@ -3,21 +3,22 @@
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 		<!--
-			What this application may cite, on top of the framework's `web`. Declared once: the
-			framework tells the model about it and refuses a citation of any other kind, which is
-			what kept an agent from inventing one (#409).
+			What this application may cite, on top of the framework's `web` and `object`. An event or
+			an invoice a read tool showed the model is put on the run's reading list as one of these
+			kinds, by its type; the reader is shown the label.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
 			<instance>
 				<kinds>
 					<kind name="event"
-						description="an event of this application (demo.events:Event)"
-						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
+						description="an event of this application"
+						types="demo.events:Event"
 						passage="false"
 					>
 						<!--
-							`name` is the model's vocabulary and stays English in every installation;
-							this is the word the Quellen rail and the marker popover show a reader.
+							`name` is the configuration's vocabulary and stays English in every
+							installation; this is the word the Quellen rail and the marker popover show
+							a reader.
 						-->
 						<label>
 							<de>Veranstaltung</de>
@@ -25,8 +26,8 @@
 						</label>
 					</kind>
 					<kind name="invoice"
-						description="an invoice of an event in this application (demo.events:Invoice)"
-						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
+						description="an invoice of an event in this application"
+						types="demo.events:Invoice"
 						passage="false"
 					>
 						<label>

@@ -232,6 +232,7 @@ public class InstanceBrowserTool {
 		// because the filter above already said this instance may be seen.
 		Set<String> wanted = attributeNames(attributes);
 		for (TLObject instance : pageInstances) {
+			ReadFilter.shown(instance);
 			InstanceEntry entry = InstanceEntry.create()
 				.setId(ReadFilter.idOf(instance))
 				.setLabel(MetaLabelProvider.INSTANCE.getLabel(instance));
@@ -393,6 +394,7 @@ public class InstanceBrowserTool {
 	private InstanceResponse doGetInstance(String tid, ReadFilter readFilter) throws IOException {
 		// Refuses an object this run may not read, with the message of one that does not exist.
 		TLObject tlObject = TidResolver.resolve(tid, readFilter.security());
+		ReadFilter.shown(tlObject, tid);
 
 		// Build response using data class
 		InstanceResponse result = InstanceResponse.create();

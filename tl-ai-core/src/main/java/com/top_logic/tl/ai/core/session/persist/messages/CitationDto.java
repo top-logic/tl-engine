@@ -45,6 +45,12 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/** @see #getExcerpt() */
 	public static final String EXCERPT__PROP = "excerpt";
 
+	/** @see #getArchiveUrl() */
+	public static final String ARCHIVE_URL__PROP = "archiveUrl";
+
+	/** @see #getArchivedAt() */
+	public static final String ARCHIVED_AT__PROP = "archivedAt";
+
 	private int _index = 0;
 
 	private String _toolName = "";
@@ -64,6 +70,10 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	private String _passage = "";
 
 	private String _excerpt = "";
+
+	private String _archiveUrl = "";
+
+	private String _archivedAt = "";
 
 	/**
 	 * Creates a {@link CitationDto} instance.
@@ -135,7 +145,7 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	}
 
 	/**
-	 * Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary.
+	 * Host kind, e.g. {@code web} or {@code invoice}, as the application declared it.
 	 */
 	public final String getKind() {
 		return _kind;
@@ -276,6 +286,46 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		_excerpt = value;
 	}
 
+	/**
+	 * Where the copy of a web page archived when it was read can be looked at; empty without one.
+	 */
+	public final String getArchiveUrl() {
+		return _archiveUrl;
+	}
+
+	/**
+	 * @see #getArchiveUrl()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.CitationDto setArchiveUrl(String value) {
+		internalSetArchiveUrl(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getArchiveUrl()} without chain call utility. */
+	protected final void internalSetArchiveUrl(String value) {
+		_archiveUrl = value;
+	}
+
+	/**
+	 * When that copy was taken, ISO-8601; empty without one.
+	 */
+	public final String getArchivedAt() {
+		return _archivedAt;
+	}
+
+	/**
+	 * @see #getArchivedAt()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.CitationDto setArchivedAt(String value) {
+		internalSetArchivedAt(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getArchivedAt()} without chain call utility. */
+	protected final void internalSetArchivedAt(String value) {
+		_archivedAt = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CITATION_DTO__TYPE;
@@ -293,7 +343,9 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			LABEL__PROP, 
 			URL__PROP, 
 			PASSAGE__PROP, 
-			EXCERPT__PROP);
+			EXCERPT__PROP, 
+			ARCHIVE_URL__PROP, 
+			ARCHIVED_AT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -328,6 +380,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case URL__PROP: return getUrl();
 			case PASSAGE__PROP: return getPassage();
 			case EXCERPT__PROP: return getExcerpt();
+			case ARCHIVE_URL__PROP: return getArchiveUrl();
+			case ARCHIVED_AT__PROP: return getArchivedAt();
 			default: return null;
 		}
 	}
@@ -345,6 +399,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case URL__PROP: internalSetUrl((String) value); break;
 			case PASSAGE__PROP: internalSetPassage((String) value); break;
 			case EXCERPT__PROP: internalSetExcerpt((String) value); break;
+			case ARCHIVE_URL__PROP: internalSetArchiveUrl((String) value); break;
+			case ARCHIVED_AT__PROP: internalSetArchivedAt((String) value); break;
 		}
 	}
 
@@ -383,6 +439,10 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		out.value(getPassage());
 		out.name(EXCERPT__PROP);
 		out.value(getExcerpt());
+		out.name(ARCHIVE_URL__PROP);
+		out.value(getArchiveUrl());
+		out.name(ARCHIVED_AT__PROP);
+		out.value(getArchivedAt());
 	}
 
 	@Override
@@ -398,6 +458,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case URL__PROP: setUrl(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case PASSAGE__PROP: setPassage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case EXCERPT__PROP: setExcerpt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ARCHIVE_URL__PROP: setArchiveUrl(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ARCHIVED_AT__PROP: setArchivedAt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

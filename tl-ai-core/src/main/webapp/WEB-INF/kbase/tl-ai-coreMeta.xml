@@ -309,4 +309,31 @@
 		/>
 	</metaobject>
 
+	<!-- Archived web pages (tl.ai.execution:ArchivedPage, #617). The handle and the address get
+	     dedicated columns; the text (content, Binary), the fetch time, the hash and the owner
+	     reference use generic flex/association storage, as Screenshot does. -->
+	<metaobject
+		object_name="ArchivedPage"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="handle"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="url"
+			att_type="String"
+			db_size="2048"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="title"
+			att_type="String"
+			db_size="500"
+			mandatory="false"
+		/>
+	</metaobject>
+
 </objectlist>

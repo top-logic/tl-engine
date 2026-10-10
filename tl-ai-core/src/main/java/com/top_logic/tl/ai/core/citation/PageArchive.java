@@ -1,0 +1,425 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.citation;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.dob.DataObject;
+import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.ApplicationUrl;
+import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
+import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.util.model.ModelService;
+
+/**
+ * Keeps a copy of every web page an agent run read, so that a citation of it still shows what the
+ * page said after it changed or disappeared.
+ *
+ * <p>
+ * A web source is archived when it enters a run's reading list: {@code webFetch} and the browser
+ * hand the text they extracted to {@link #archive(String, String, String, Person)}, and the citation
+ * of the page carries the {@link #viewUrl(String) address of the copy}. A quoted passage is checked
+ * against the same text. The copy is stored as a {@code tl.ai.execution:ArchivedPage}, its text as a
+ * {@code tl.core:Binary} - the attribute type the engine's blob store will take over, so that moving
+ * the archive there is a change of storage, not of this class.
+ * </p>
+ *
+ * <p>
+ * <b>Its own transaction, on its own thread.</b> A read tool runs while the turn may hold an open
+ * transaction for the writes of an earlier call; a copy written into it would be rolled back with
+ * that turn and the citation would point at nothing. The copy is therefore written by this service's
+ * own worker in a system interaction, and the tool waits for it.
+ * </p>
+ *
+ * <p>
+ * <b>Bounded.</b> At most {@link Config#getMaxChars()} characters of a page are kept, the same page
+ * read twice with the same text by the same account is stored once (within the life of the
+ * process), and copies older than {@link Config#getRetentionDays()} are deleted once a day.
+ * </p>
+ *
+ * @see ArchivedPageServlet
+ */
+@ServiceDependencies({
+	ModelService.Module.class,
+	PersistencyLayer.Module.class,
+})
+public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
+
+	/** Path prefix of the route an archived copy is opened at. */
+	public static final String URL_PREFIX = "/archived-page/";
+
+	/** What the stored text is. */
+	public static final String CONTENT_TYPE = "text/markdown; charset=utf-8";
+
+	/** Length of the random handle in bytes, before base64url encoding. */
+	private static final int HANDLE_BYTES = 16;
+
+	/** The longest title the table column holds. */
+	private static final int MAX_TITLE = 500;
+
+	/** The longest address the table column holds; a longer one is not archived. */
+	private static final int MAX_URL = 2048;
+
+	/** How many recent copies are remembered for de-duplication. */
+	private static final int DEDUP_ENTRIES = 1_000;
+
+	/** How long a tool waits for its copy to be written before it reads on without one. */
+	private static final Duration WRITE_TIMEOUT = Duration.ofSeconds(20);
+
+	/** Configuration of {@link PageArchive}. */
+	public interface Config<I extends PageArchive> extends ConfiguredManagedClass.Config<I> {
+
+		/** Configuration property name for {@link #isEnabled()}. */
+		String ENABLED = "enabled";
+
+		/** Configuration property name for {@link #getMaxChars()}. */
+		String MAX_CHARS = "max-chars";
+
+		/** Configuration property name for {@link #getRetentionDays()}. */
+		String RETENTION_DAYS = "retention-days";
+
+		/**
+		 * Whether web pages an agent read are archived at all.
+		 *
+		 * <p>
+		 * Without it a web citation links to the live page only.
+		 * </p>
+		 *
+		 * @see #isEnabled()
+		 */
+		@Name(ENABLED)
+		@BooleanDefault(true)
+		boolean isEnabled();
+
+		/**
+		 * How many characters of a page's text are kept; the rest is cut off.
+		 *
+		 * @see #getMaxChars()
+		 */
+		@Name(MAX_CHARS)
+		@IntDefault(200_000)
+		int getMaxChars();
+
+		/**
+		 * After how many days an archived copy is deleted; 0 keeps every copy.
+		 *
+		 * <p>
+		 * A citation of a deleted copy still links to the live page.
+		 * </p>
+		 *
+		 * @see #getRetentionDays()
+		 */
+		@Name(RETENTION_DAYS)
+		@IntDefault(90)
+		int getRetentionDays();
+	}
+
+	/**
+	 * A stored copy, as a citation refers to it.
+	 *
+	 * @param handle
+	 *        The unguessable key the copy is opened by.
+	 * @param viewUrl
+	 *        Where it can be looked at.
+	 * @param fetchedAt
+	 *        When the page was read.
+	 */
+	public record Copy(String handle, String viewUrl, Instant fetchedAt) {
+		// Value type only.
+	}
+
+	private final SecureRandom _random = new SecureRandom();
+
+	/** Recently stored copies by owner, address and text hash. */
+	private final Map<String, Copy> _recent = new LinkedHashMap<>(16, 0.75f, true) {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<String, Copy> eldest) {
+			return size() > DEDUP_ENTRIES;
+		}
+	};
+
+	private ScheduledExecutorService _worker;
+
+	/**
+	 * Creates a {@link PageArchive} from configuration.
+	 *
+	 * @param context
+	 *        For instantiation of dependent configured objects.
+	 * @param config
+	 *        The configuration.
+	 */
+	public PageArchive(InstantiationContext context, Config<?> config) {
+		super(context, config);
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		_worker = Executors.newSingleThreadScheduledExecutor(task -> {
+			Thread thread = new Thread(task, "tl-ai-page-archive");
+			thread.setDaemon(true);
+			return thread;
+		});
+		if (getConfig().getRetentionDays() > 0) {
+			_worker.scheduleWithFixedDelay(this::purgeQuietly, 1, 24 * 60, TimeUnit.MINUTES);
+		}
+	}
+
+	@Override
+	protected void shutDown() {
+		if (_worker != null) {
+			_worker.shutdownNow();
+			_worker = null;
+		}
+		super.shutDown();
+	}
+
+	/**
+	 * Stores a copy of a page an agent run read.
+	 *
+	 * @param url
+	 *        The address the page was read from.
+	 * @param title
+	 *        Its title, or empty.
+	 * @param text
+	 *        What was extracted of it.
+	 * @param owner
+	 *        The account whose run read it; <code>null</code> for a run without one, whose copy only
+	 *        administrators can open.
+	 * @return The copy, or <code>null</code> when nothing was stored - archiving is switched off, the
+	 *         text is empty, the address too long, or the write failed. A citation then links to
+	 *         the live page only; the read itself is never refused for it.
+	 */
+	public Copy archive(String url, String title, String text, Person owner) {
+		if (!getConfig().isEnabled() || _worker == null || url == null || url.isBlank()
+			|| url.length() > MAX_URL || text == null || text.isBlank()) {
+			return null;
+		}
+		String kept = text.length() > getConfig().getMaxChars()
+			? text.substring(0, Math.max(0, getConfig().getMaxChars()))
+			: text;
+		String hash = sha256(kept);
+		String key = ownerKey(owner) + "|" + url + "|" + hash;
+		synchronized (_recent) {
+			Copy known = _recent.get(key);
+			if (known != null) {
+				return known;
+			}
+		}
+		String handle = newHandle();
+		Copy copy = new Copy(handle, viewUrl(handle), Instant.now());
+		Future<?> write = _worker.submit(() -> ThreadContextManager.inSystemInteraction(PageArchive.class,
+			() -> {
+				store(copy, url, title, kept, hash, owner);
+				return null;
+			}));
+		try {
+			write.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			return null;
+		} catch (ExecutionException | TimeoutException ex) {
+			Logger.error("Archiving " + url + " failed; its citation links to the live page only.", ex,
+				PageArchive.class);
+			return null;
+		}
+		synchronized (_recent) {
+			_recent.put(key, copy);
+		}
+		return copy;
+	}
+
+	private void store(Copy copy, String url, String title, String text, String hash, Person owner) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Archive web page " + url))) {
+			ArchivedPage page = TlAiExecutionFactory.getInstance().createArchivedPage();
+			page.setHandle(copy.handle());
+			page.setUrl(url);
+			page.setTitle(title == null ? "" : title.length() > MAX_TITLE ? title.substring(0, MAX_TITLE) : title);
+			page.setFetchedAt(Date.from(copy.fetchedAt()));
+			page.setContentHash(hash);
+			page.setContent(BinaryDataFactory.createBinaryData(text.getBytes(StandardCharsets.UTF_8),
+				CONTENT_TYPE, "page.md"));
+			if (owner != null) {
+				page.setOwner(owner);
+			}
+			tx.commit();
+		}
+	}
+
+	/**
+	 * The copy stored under {@code handle}.
+	 *
+	 * @param handle
+	 *        The handle a {@link #viewUrl(String) view address} names.
+	 * @return The copy, or empty for an unknown handle.
+	 */
+	public Optional<ArchivedPage> findByHandle(String handle) {
+		if (handle == null || handle.isEmpty()) {
+			return Optional.empty();
+		}
+		DataObject found = PersistencyLayer.getKnowledgeBase()
+			.getObjectByAttribute(TlAiExecutionFactory.KO_NAME_ARCHIVED_PAGE, ArchivedPage.HANDLE_ATTR, handle);
+		if (found instanceof KnowledgeItem item && item.getWrapper() instanceof ArchivedPage page) {
+			return Optional.of(page);
+		}
+		return Optional.empty();
+	}
+
+	/** The text of a stored copy, or empty when it has none. */
+	public static String text(ArchivedPage page) {
+		BinaryDataSource content = page == null ? null : page.getContent();
+		if (content == null) {
+			return "";
+		}
+		try (var in = content.toData().getStream()) {
+			return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		} catch (java.io.IOException ex) {
+			Logger.error("Cannot read the archived copy of " + page.getUrl() + ".", ex, PageArchive.class);
+			return "";
+		}
+	}
+
+	/**
+	 * Whether {@code account} may open the copy: the account whose run read the page, or an
+	 * administrator. A copy without an owner is an administrator's alone.
+	 */
+	public static boolean mayRead(ArchivedPage page, Person account) {
+		if (page == null || account == null) {
+			return false;
+		}
+		if (Person.isAdmin(account)) {
+			return true;
+		}
+		return account.equals(page.getOwner());
+	}
+
+	/** Where the copy under {@code handle} can be looked at. */
+	public static String viewUrl(String handle) {
+		return ApplicationUrl.of(URL_PREFIX + handle);
+	}
+
+	/**
+	 * Deletes every copy read before {@code cutoff}.
+	 *
+	 * @return How many copies were deleted.
+	 */
+	public int purgeOlderThan(Instant cutoff) {
+		List<ArchivedPage> expired = new ArrayList<>();
+		for (TLObject object : MetaElementUtil.getAllInstancesOf(TlAiExecutionFactory.getArchivedPageType(),
+			TLObject.class)) {
+			ArchivedPage page = (ArchivedPage) object;
+			Date fetchedAt = page.getFetchedAt();
+			if (fetchedAt != null && fetchedAt.toInstant().isBefore(cutoff)) {
+				expired.add(page);
+			}
+		}
+		if (expired.isEmpty()) {
+			return 0;
+		}
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(ResKey.text("Delete " + expired.size() + " expired archived web pages"))) {
+			for (ArchivedPage page : expired) {
+				page.tDelete();
+			}
+			tx.commit();
+		}
+		synchronized (_recent) {
+			_recent.clear();
+		}
+		return expired.size();
+	}
+
+	private void purgeQuietly() {
+		try {
+			Instant cutoff = Instant.now().minus(Duration.ofDays(getConfig().getRetentionDays()));
+			int deleted = ThreadContextManager.inSystemInteraction(PageArchive.class, () -> purgeOlderThan(cutoff));
+			if (deleted > 0) {
+				Logger.info("Deleted " + deleted + " archived web pages read before " + cutoff + ".",
+					PageArchive.class);
+			}
+		} catch (RuntimeException ex) {
+			Logger.error("Purging expired archived web pages failed.", ex, PageArchive.class);
+		}
+	}
+
+	private String newHandle() {
+		byte[] bytes = new byte[HANDLE_BYTES];
+		_random.nextBytes(bytes);
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+	}
+
+	private static String ownerKey(Person owner) {
+		return owner == null ? "" : String.valueOf(owner.tId());
+	}
+
+	private static String sha256(String text) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			return HexFormat.of().formatHex(digest.digest(text.getBytes(StandardCharsets.UTF_8)));
+		} catch (NoSuchAlgorithmException ex) {
+			throw new IllegalStateException("SHA-256 is part of every Java runtime.", ex);
+		}
+	}
+
+	/** The running instance. */
+	public static PageArchive getInstance() {
+		return Module.INSTANCE.getImplementationInstance();
+	}
+
+	/** Module of {@link PageArchive}. */
+	public static final class Module extends TypedRuntimeModule<PageArchive> {
+
+		/** Singleton {@link Module} instance. */
+		public static final Module INSTANCE = new Module();
+
+		private Module() {
+			// Singleton
+		}
+
+		@Override
+		public Class<PageArchive> getImplementation() {
+			return PageArchive.class;
+		}
+	}
+}

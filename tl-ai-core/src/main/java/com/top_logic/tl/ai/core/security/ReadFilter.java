@@ -26,6 +26,9 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.citation.CitationKinds;
+import com.top_logic.tl.ai.core.citation.ReadingListBinding;
+import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
@@ -323,11 +326,72 @@ public final class ReadFilter {
 	 */
 	private static Map<String, Object> identity(TLObject obj) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put(TID, idOf(obj));
+		String id = idOf(obj);
+		result.put(TID, id);
 		TLStructuredType type = obj.tType();
 		result.put(TYPE, type == null ? null : TLModelUtil.qualifiedName(type));
-		result.put(DISPLAY, MetaLabelProvider.INSTANCE.getLabel(obj));
+		String label = MetaLabelProvider.INSTANCE.getLabel(obj);
+		result.put(DISPLAY, label);
+		read(obj, id, label);
 		return result;
+	}
+
+	/**
+	 * Puts an object whose identity the model is shown on the run's reading list.
+	 *
+	 * <p>
+	 * Here, because this is where an object becomes something the model sees: every rendering that
+	 * discloses an identifier goes through {@link #identity(TLObject)} or {@link #labelled(TLObject)},
+	 * so every read tool registers what it showed without a line of its own, and the answer may point
+	 * at it with {@code [label](tl:id)}. Outside a tool call nothing is bound and nothing is recorded.
+	 * </p>
+	 */
+	private static void read(TLObject obj, String id, String label, String... aliases) {
+		if (id == null || ReadingListBinding.current() == null) {
+			return;
+		}
+		ReadingListBinding.read(ReadSource.of(CitationKinds.objectKind(obj), id, label), aliases);
+	}
+
+	/**
+	 * Records that a tool showed the model this object in a rendering of its own - a DTO that writes
+	 * the identifier itself, the text of one of its attributes - so that the answer may cite it.
+	 *
+	 * <p>
+	 * A rendering through this class records it already; this is for the tools that only ask this
+	 * class whether they may show the object.
+	 * </p>
+	 *
+	 * @param obj
+	 *        The object shown; must be one the principal may read.
+	 * @param aliases
+	 *        Further identifiers the model was shown for it, e.g. the one it asked by.
+	 */
+	public static void shown(TLObject obj, String... aliases) {
+		if (obj == null) {
+			return;
+		}
+		read(obj, idOf(obj), MetaLabelProvider.INSTANCE.getLabel(obj), aliases);
+	}
+
+	/**
+	 * {@link #shown(TLObject, String...)} for a tool that showed the model a text of the object - a
+	 * document body, a stored note - against which a passage the answer quotes can be checked.
+	 *
+	 * @param obj
+	 *        The object shown; must be one the principal may read.
+	 * @param text
+	 *        What of it the model read.
+	 * @param aliases
+	 *        Further identifiers the model was shown for it.
+	 */
+	public static void shownWithText(TLObject obj, String text, String... aliases) {
+		String id = idOf(obj);
+		if (id == null || ReadingListBinding.current() == null) {
+			return;
+		}
+		ReadingListBinding.read(ReadSource.of(CitationKinds.objectKind(obj), id,
+			MetaLabelProvider.INSTANCE.getLabel(obj)).withText(text), aliases);
 	}
 
 	/**
@@ -398,8 +462,8 @@ public final class ReadFilter {
 	 *
 	 * <p>
 	 * One form, in one place, because the identifier is what makes a tool result actionable: the
-	 * model reads an object here and names it again in the next call - {@code getInstance},
-	 * {@code cite}, a host's {@code present}. A label alone cannot be fed back, and the model would
+	 * model reads an object here and names it again in the next call - {@code getInstance}, a
+	 * host's {@code present}, a citation in its answer. A label alone cannot be fed back, and the model would
 	 * have to search for the object it was just shown.
 	 * </p>
 	 *
@@ -425,7 +489,10 @@ public final class ReadFilter {
 		if (obj == null) {
 			return "";
 		}
-		return withId(MetaLabelProvider.INSTANCE.getLabel(obj), idOf(obj));
+		String id = idOf(obj);
+		String label = MetaLabelProvider.INSTANCE.getLabel(obj);
+		read(obj, id, label);
+		return withId(label, id);
 	}
 
 	/**

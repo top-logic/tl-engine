@@ -692,6 +692,55 @@
 				</attributes>
 			</class>
 
+			<!--
+				A web page as a tool of an agent run read it (#617): the text webFetch or the browser
+				extracted, its title, address and fetch time. Stored when the page enters a run's
+				reading list, so that a citation of it still shows what it said after the page changed
+				or disappeared, and a quote can be checked against it. Readable by the account whose
+				run fetched it, and by administrators - a fetched page can be an intranet page.
+
+				The text is a Binary on purpose: it is the attribute kind the engine's blob store will
+				take over, so moving the archive there is a storage change, not a model change.
+			-->
+			<class name="ArchivedPage">
+				<annotations>
+					<table name="ArchivedPage"/>
+					<main-properties properties="title,url,fetchedAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						The unguessable handle the /archived-page/{handle} route addresses this copy
+						by.
+					-->
+					<property name="handle"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="url"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="title"
+						type="tl.core:String"
+					/>
+					<property name="fetchedAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<!-- SHA-256 of the text, so the same page read twice is stored once. -->
+					<property name="contentHash"
+						type="tl.core:String"
+					/>
+					<property name="content"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+
 		</types>
 	</module>
 </model>

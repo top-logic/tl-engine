@@ -150,6 +150,22 @@ public final class CitationExcerpt {
 	}
 
 	/**
+	 * The beginning of what a tool read of a source, for a citation that named no passage.
+	 *
+	 * @param text
+	 *        what the tool read, e.g. a page converted to Markdown
+	 * @return the first sentences of {@code text}, {@link #plain(String) plain}, cut on a sentence
+	 *         boundary; empty for an empty text
+	 */
+	public static String opening(String text) {
+		String plain = plain(text);
+		if (plain.isEmpty()) {
+			return "";
+		}
+		return cut(plain, 0, sentenceEnd(plain, Math.min(plain.length(), MAX), 0));
+	}
+
+	/**
 	 * Text as a reader sees it rather than as a tool wrote it: JSON escapes resolved, Markdown
 	 * rendered away, whitespace collapsed.
 	 */

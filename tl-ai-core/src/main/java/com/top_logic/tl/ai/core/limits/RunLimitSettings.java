@@ -47,8 +47,16 @@ public class RunLimitSettings {
 	 * running service is exactly the answer with an unconfigured one - there is no second copy of
 	 * the defaults in this class to drift away from the first.
 	 * </p>
+	 *
+	 * <p>
+	 * Built on first use, not when this class is loaded: building a configuration item needs the
+	 * {@code TypeIndex}, and a class whose initialisation fails stays unusable for the rest of the
+	 * JVM - every later caller gets a {@link NoClassDefFoundError} (#713).
+	 * </p>
 	 */
-	private static final RunLimitsConfig DEFAULTS = TypedConfiguration.newConfigItem(RunLimitsConfig.class);
+	private static final class Defaults {
+		static final RunLimitsConfig INSTANCE = TypedConfiguration.newConfigItem(RunLimitsConfig.class);
+	}
 
 	private RunLimitSettings() {
 		// Static utility.
@@ -68,10 +76,10 @@ public class RunLimitSettings {
 			return overridden;
 		}
 		if (!AgentRuntimeService.Module.INSTANCE.isActive()) {
-			return DEFAULTS;
+			return Defaults.INSTANCE;
 		}
 		CapacityConfig configured = AgentRuntimeService.getInstance().getCapacity();
-		return configured == null ? DEFAULTS : configured;
+		return configured == null ? Defaults.INSTANCE : configured;
 	}
 
 	/** The configured budget, or the shipped defaults when the service is not running. */
@@ -81,10 +89,23 @@ public class RunLimitSettings {
 			return overridden;
 		}
 		if (!AgentPolicyService.Module.INSTANCE.isActive()) {
-			return DEFAULTS;
+			return Defaults.INSTANCE;
 		}
 		BudgetConfig configured = AgentPolicyService.getInstance().getBudget();
-		return configured == null ? DEFAULTS : configured;
+		return configured == null ? Defaults.INSTANCE : configured;
+	}
+
+	/**
+	 * Whether the capacity in effect is one somebody set: the configuration of a running
+	 * {@link AgentRuntimeService}, or a test's {@link #override(RunLimitsConfig) override}.
+	 *
+	 * <p>
+	 * Otherwise every capacity question is answered by the shipped defaults, which are reached only
+	 * through the {@code TypeIndex}.
+	 * </p>
+	 */
+	public static boolean capacityConfigured() {
+		return _override != null || AgentRuntimeService.Module.INSTANCE.isActive();
 	}
 
 	/**

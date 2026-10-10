@@ -6,7 +6,6 @@
 package com.top_logic.tl.ai.core.tools.web;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Pluggable backend for {@link WebSearchTool}.
@@ -22,20 +21,29 @@ public interface WebSearchEngine {
 	/**
 	 * Performs a web search.
 	 *
+	 * <p>
+	 * A rate limit of the provider is waited out within bounds before this fails - see
+	 * {@link SearchHttp}.
+	 * </p>
+	 *
 	 * @param query
-	 *        The search query; never {@code null} or blank.
-	 * @param includeDomains
-	 *        Restrict results to these domains. May be {@code null} or empty.
-	 * @param excludeDomains
-	 *        Exclude results from these domains. May be {@code null} or empty.
-	 * @param maxResults
-	 *        Maximum number of results to return.
+	 *        What to search for, and how; never {@code null}. A filter the engine does not
+	 *        {@link #supportsFreshness() support} is ignored.
 	 * @return The provider-neutral results; never {@code null}.
 	 * @throws IOException
 	 *         On network or protocol errors, or a non-success response.
 	 * @throws InterruptedException
 	 *         If the calling thread is interrupted while waiting for the response.
 	 */
-	WebSearchResults search(String query, List<String> includeDomains, List<String> excludeDomains, int maxResults)
-			throws IOException, InterruptedException;
+	WebSearchResults search(WebSearchQuery query) throws IOException, InterruptedException;
+
+	/**
+	 * Whether this engine can restrict results by {@link WebSearchQuery#freshness() age}.
+	 */
+	boolean supportsFreshness();
+
+	/**
+	 * Whether this engine can restrict results by {@link WebSearchQuery#language() language}.
+	 */
+	boolean supportsLanguage();
 }

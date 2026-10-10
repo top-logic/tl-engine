@@ -160,7 +160,11 @@
 
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
 			<instance class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
-				<!-- Configure exactly one search engine to enable webSearch. Examples:
+				<!-- No search engine is configured by default: a search engine is a paid third-party
+				     service, and the query leaves the application. Without one, webSearch is not
+				     offered to any agent. Configure exactly one search engine to enable webSearch.
+				     Both engines wait out a rate limit (HTTP 429) for at most 20 seconds per retry.
+				     Examples:
 
 				Tavily:
 				<search-engine class="com.top_logic.tl.ai.core.tools.web.TavilySearchEngine">

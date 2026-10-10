@@ -30,6 +30,10 @@ message TavilySearchRequest {
 
 	/** Exclude results from these domains. */
 	repeated string exclude_domains [Name = "exclude_domains"];
+
+	/** Only results published within this range: {@code day}, {@code week}, {@code month} or {@code year}; absent for any time. */
+	@Nullable
+	string time_range [Name = "time_range"];
 }
 
 /**

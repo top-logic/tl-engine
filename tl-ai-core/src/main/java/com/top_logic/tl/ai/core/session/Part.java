@@ -318,7 +318,18 @@ public sealed interface Part {
 		 * from it, so that a reloaded session does not merge the empty reply and the one after it.
 		 * </p>
 		 */
-		CONTINUATION_REQUESTED
+		CONTINUATION_REQUESTED,
+		/**
+		 * The agent that started this background subagent sent it a message, read at the start of a
+		 * turn.
+		 *
+		 * <p>
+		 * Conversation content like {@link #SUBAGENT_RESULT}: its {@code details} are verbatim the
+		 * text the subagent's model was shown, and {@code ConversationLogReplay} rebuilds the same
+		 * user message from it.
+		 * </p>
+		 */
+		LEAD_MESSAGE
 	}
 
 	/**

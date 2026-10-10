@@ -44,6 +44,8 @@ import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInboxBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -326,8 +328,53 @@ public class AgentLoop {
 	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
 	 * appended and before the next provider request is built.</p>
 	 */
-	private void injectBetweenTurns(Conversation conversation) {
+	private void injectBetweenTurns(Conversation conversation, AgentEventListener listener, String runId,
+			int turn) {
 		injectSubagentResults(conversation);
+		injectLeadMessages(conversation, listener, runId, turn);
+	}
+
+	/**
+	 * Opening line of what a background subagent's model is shown when its lead sent it messages.
+	 *
+	 * <p>
+	 * The messages arrive in the user's role, for the reason {@link #injectSubagentResults} gives, but
+	 * the user did not write them: the agent that started this run did, and the run is its worker.
+	 * </p>
+	 */
+	static final String LEAD_MESSAGE_NOTICE = "[Message from the lead agent] The agent that started you"
+		+ " sends the following while you work. It is not the user. Take it into account for the rest"
+		+ " of your task:";
+
+	/**
+	 * Hands a background subagent what its lead sent it since its last turn, as one user message
+	 * before the next request is built.
+	 *
+	 * <p>
+	 * Only a run that reads an {@link SubagentInbox} - a background subagent, whose thread the spawner
+	 * binds it on - gets anything here. Several messages become one message, in the order they were
+	 * sent. The text is announced as a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} event, which is
+	 * what records it in the subagent's own log.
+	 * </p>
+	 */
+	static void injectLeadMessages(Conversation conversation, AgentEventListener listener, String runId,
+			int turn) {
+		SubagentInbox inbox = SubagentInboxBinding.getInbox();
+		if (inbox == null) {
+			return;
+		}
+		List<String> messages = inbox.drain();
+		if (messages.isEmpty()) {
+			return;
+		}
+		StringBuilder text = new StringBuilder(LEAD_MESSAGE_NOTICE);
+		for (String message : messages) {
+			text.append("\n\n").append(message);
+		}
+		conversation.add(new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text.toString()))));
+		emit(listener, new AgentEvent.LeadMessageDelivered(runId, turn, now(), text.toString()));
 	}
 
 	/**
@@ -607,7 +654,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation);
+			injectBetweenTurns(conversation, listener, runId, turn);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -830,7 +877,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectBetweenTurns(conversation);
+			injectBetweenTurns(conversation, listener, runId, turn);
 
 			compactIfOverBudget(memory, listener, runId, turn);
 

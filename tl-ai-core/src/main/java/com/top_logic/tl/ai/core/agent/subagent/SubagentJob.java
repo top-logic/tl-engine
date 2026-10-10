@@ -36,6 +36,10 @@ public class SubagentJob {
 
 	private volatile String _parentToolCallId = "";
 
+	private final SubagentInbox _inbox = new SubagentInbox();
+
+	private volatile String _cancelReason;
+
 	private volatile SubagentJobStatus _status = SubagentJobStatus.QUEUED;
 
 	private volatile SubagentResult _result;
@@ -105,6 +109,32 @@ public class SubagentJob {
 	/** Sets the {@link #parentToolCallId() parent's tool call id}. */
 	public void setParentToolCallId(String parentToolCallId) {
 		_parentToolCallId = parentToolCallId == null ? "" : parentToolCallId;
+	}
+
+	/** What the agent that started this subagent sent it and it has not read yet. */
+	public SubagentInbox inbox() {
+		return _inbox;
+	}
+
+	/**
+	 * Cancels this subagent on behalf of the agent that started it.
+	 *
+	 * <p>
+	 * The same cancellation the user's Stop fires, plus the reason, which the result the lead is
+	 * handed names. A subagent parked on a question ends its wait through the same token.
+	 * </p>
+	 *
+	 * @param reason
+	 *        Why the lead stopped it; may be <code>null</code>.
+	 */
+	public void cancel(String reason) {
+		_cancelReason = reason;
+		_cancellationToken.cancel();
+	}
+
+	/** Why the lead {@link #cancel(String) cancelled} this subagent, or <code>null</code>. */
+	public String cancelReason() {
+		return _cancelReason;
 	}
 
 	/** What the subagent has done so far; see {@link SubagentProgress}. */

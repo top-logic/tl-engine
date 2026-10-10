@@ -135,6 +135,8 @@ public interface EvalScenario extends ConfigurationItem {
 		@Subtype(tag = KbQuery.TAG_NAME, type = KbQuery.class),
 		@Subtype(tag = ToolSequence.TAG_NAME, type = ToolSequence.class),
 		@Subtype(tag = Presented.TAG_NAME, type = Presented.class),
+		@Subtype(tag = CitationExpectation.TAG_NAME, type = CitationExpectation.class),
+		@Subtype(tag = JudgeExpectation.TAG_NAME, type = JudgeExpectation.class),
 	})
 	List<Expectation> getExpectations();
 }

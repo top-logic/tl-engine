@@ -12,6 +12,9 @@
 	    -Dtl.ai.eval=true, and only when a key is in the environment; without one the arms report as
 	    "could not run" rather than failing.
 
+	"gpt-5.6-luna" is the model the research questions (research-scenarios.config.xml) run on, behind
+	-Dtl.ai.research.e2e=true and with tl_openai_api_key in the environment.
+
 	"eval-no-tools" exists to be a model that cannot call tools, so that the harness's own
 	"could not run" path is exercised by a test rather than only by a model nobody has today.
 
@@ -46,6 +49,12 @@
 						models="claude-sonnet-4-6, claude-haiku-4-5-20251001"
 						name="anthropic"
 					/>
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+						api-key="%OPENAI_API_KEY%"
+						catalog-provider-id=""
+						models="gpt-5.6-luna"
+						name="openai"
+					/>
 				</providers>
 				<model-catalog>
 					<model-overrides>
@@ -75,6 +84,13 @@
 							max-output="64000"
 							reasoning="true"
 							temperature="true"
+							tool-call="true"
+						/>
+						<model name="gpt-5.6-luna"
+							context-window="400000"
+							max-output="64000"
+							reasoning="true"
+							temperature="false"
 							tool-call="true"
 						/>
 					</model-overrides>

@@ -71,10 +71,17 @@
 			</instance>
 		</config>
 
-		<!-- The search results of a scripted research run are written by the test (#723). -->
+		<!--
+			The search results of a scripted research run are written by the test (#723); every other
+			query - a real model's - goes to Brave, with the key in tl_brave_api_key (#755).
+		-->
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
 			<instance>
-				<search-engine class="com.top_logic.tl.ai.eval.FixtureSearchEngine"/>
+				<search-engine class="com.top_logic.tl.ai.eval.FixtureSearchEngine">
+					<delegate class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine"
+						api-key="%BRAVE_API_KEY%"
+					/>
+				</search-engine>
 			</instance>
 		</config>
 

@@ -143,6 +143,20 @@ importantly - what the numbers may not be used for is in `tl-ai-eval/README.md`.
 with a handful of scenarios this shows that a model is unusable with our harness, never that one
 good model is three points better than another.
 
+### The research questions
+
+`research-scenarios.config.xml` in `tl-ai-eval` puts 25 research questions to Albert with
+`TL_deepResearch` and grades the answer (#755): `<citations>` deterministically (read sources cited,
+hosts, links to unread pages), `<judge>` by a pinned judge model of another family against a rubric.
+Real models and the real web, so behind `-Dtl.ai.research.e2e=true` - see `ResearchE2e`; the
+graders run in every build against a scripted model and judge (`TestResearchPlumbing`).
+
+```bash
+export tl_openai_api_key=... tl_anthropic_api_key=... tl_brave_api_key=...   # each "unencrypted:<key>"
+mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.research.e2e=true -Dtest=TestResearchEval \
+  -Dtl.ai.research.scenarios=fact-nobel-phd -Dtl.ai.research.repeats=1
+```
+
 ## Architecture
 
 ### Tool API (tl-ai-tool-api)

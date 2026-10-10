@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 
@@ -55,6 +56,12 @@ public interface EvalConfig extends ConfigurationItem {
 
 	/** @see #getRepeats() */
 	String REPEATS = "repeats";
+
+	/** @see #getJudgeModel() */
+	String JUDGE_MODEL = "judge-model";
+
+	/** @see #getJudgeProvider() */
+	String JUDGE_PROVIDER = "judge-provider";
 
 	/**
 	 * One side of the comparison: an agent definition running on a model.
@@ -132,4 +139,29 @@ public interface EvalConfig extends ConfigurationItem {
 	@Name(REPEATS)
 	@IntDefault(3)
 	int getRepeats();
+
+	/**
+	 * The model that decides every {@link JudgeExpectation} of this file; empty when no scenario has
+	 * one.
+	 *
+	 * <p>
+	 * Pinned here so that runs on different days are graded by the same judge - a comparison between
+	 * runs with different judges measures the judges. Choose a model of another family than the arms,
+	 * which would otherwise grade their own habits.
+	 * </p>
+	 *
+	 * @see #JUDGE_MODEL
+	 */
+	@Name(JUDGE_MODEL)
+	@Nullable
+	String getJudgeModel();
+
+	/**
+	 * The provider serving {@link #getJudgeModel()}, or empty when only one provider exposes it.
+	 *
+	 * @see #JUDGE_PROVIDER
+	 */
+	@Name(JUDGE_PROVIDER)
+	@Nullable
+	String getJudgeProvider();
 }

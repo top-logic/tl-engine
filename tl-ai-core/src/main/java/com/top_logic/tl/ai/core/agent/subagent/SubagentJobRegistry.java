@@ -269,6 +269,28 @@ public class SubagentJobRegistry {
 		}
 	}
 
+	/**
+	 * Whether nobody needs this registry any more: no job is queued or running, and nothing waits for a
+	 * lead turn - not even a cancelled job's result.
+	 */
+	public boolean isIdle() {
+		synchronized (this) {
+			if (!_queue.isEmpty() || _started > 0) {
+				return false;
+			}
+		}
+		for (SubagentJob job : _jobs.values()) {
+			if (!job.status().isTerminal() || !job.isDelivered()) {
+				return false;
+			}
+			LeadQuestion asked = job.leadQuestion();
+			if (asked != null && !asked.answer().isDone()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/** What waits for a lead turn now; see {@link News}. */
 	public News news() {
 		int finished = 0;

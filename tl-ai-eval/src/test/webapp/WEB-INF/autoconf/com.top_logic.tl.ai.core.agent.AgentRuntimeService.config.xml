@@ -17,6 +17,7 @@
 			>
 				<agent-overrides>
 					<agent name="Eval_Scripted" model="eval-scripted" provider="scripted"/>
+					<agent name="Eval_Lead" model="eval-scripted" provider="scripted"/>
 					<agent name="Eval_NoTools" model="eval-no-tools" provider="scripted"/>
 					<agent name="Eval_Sonnet" model="claude-sonnet-4-6" provider="anthropic"/>
 					<agent name="Eval_Haiku" model="claude-haiku-4-5-20251001" provider="anthropic"/>

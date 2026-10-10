@@ -77,6 +77,15 @@ Answer in one short sentence when you are done.]]></system-prompt>
 							<tool name="present.present"/>
 						</tools>
 					</agent>
+					<agent name="Eval_Lead"
+						description="Starts a background subagent outside any chat, for TestSubagentOutsideChat."
+					>
+						<system-prompt><![CDATA[Hand the task to a subagent with spawn_subagent, wait for it with wait_for_subagent, and report what it found.]]></system-prompt>
+						<tools>
+							<tool name="subagent.spawn_subagent"/>
+							<tool name="subagent.wait_for_subagent"/>
+						</tools>
+					</agent>
 					<agent name="Eval_NoTools"
 						description="Assigned a model that cannot call tools, so that the harness's 'could not run' path has something to report."
 					>

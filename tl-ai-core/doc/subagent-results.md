@@ -94,8 +94,15 @@ recorded without user text, its first part being the `SUBAGENT_RESULT` delivery 
 reload recognises it and draws the same line. If a turn of the user took the news in between, the
 wake records nothing and runs nothing.
 
-Outside the chat - a run started from TL-Script or MCP - no one wakes the lead: the job stays
-undelivered and the next run's first turn picks it up.
+Outside the chat - a run started from TL-Script, the eval or a scheduled task - no one wakes the lead.
+Such a run can still spawn: `AgentRunner` binds the registry of the conversation it is recorded under
+(`SubagentRegistries`). It hears back through `wait_for_subagent`; a result that arrives after its run
+ended stays undelivered, and a later run of the same conversation picks it up.
+
+The registries are the process's, not the chat's: a chat window that drops a conversation from its
+cache, or reloads it because another window wrote to it, only stops listening, and coming back finds
+the children and what they finished. Deleting the chat cancels them. A restart ends them all: the
+startup sweep fails their runs, and a conversation read back ends their parts as failed.
 
 ## Transcript, chat, reload
 

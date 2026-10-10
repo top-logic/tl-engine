@@ -4968,25 +4968,54 @@
   font-size: var(--chat-small);
 }
 
-.subagent-card-head {
+/*
+ * The head (#769): chip, agent and the stop on one line, the task under it on at most two lines - a
+ * narrow card keeps what the subagent was asked instead of cutting it to a letter.
+ */
+.subagent-card-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
-  width: 100%;
+}
+
+.subagent-card-head {
+  flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.125rem;
   text-align: left;
 }
 
-.subagent-card-agent {
-  flex: 0 0 auto;
+.subagent-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-.subagent-card-task {
-  flex: 1 1 auto;
+.subagent-card-agent {
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.subagent-card-task {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+}
+
+.subagent-card-toggle {
+  flex: 0 0 auto;
+  margin-left: auto;
   color: var(--text-secondary);
 }
 
@@ -4997,9 +5026,24 @@
   font-size: 0.6875rem;
 }
 
-.subagent-card-toggle {
+.subagent-card-stop {
   flex: 0 0 auto;
-  color: var(--text-secondary);
+  padding: 0.125rem 0.5rem;
+}
+
+.subagent-card-stop-icon {
+  display: none;
+}
+
+/* A narrow chat keeps the agent's name: the stop shrinks to its icon, and keeps its name for a reader. */
+@container chat-stage (max-width: 26rem) {
+  .subagent-card-stop-icon {
+    display: inline;
+  }
+
+  .subagent-card-stop-label {
+    display: none;
+  }
 }
 
 .subagent-chip {
@@ -5032,6 +5076,15 @@
   gap: 0 0.75rem;
   margin-top: 0.1875rem;
   color: var(--text-secondary);
+}
+
+/* What an ended subagent reported, as plain text in the body font - it is prose, not a step. */
+.subagent-card-summary {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .subagent-card-step {

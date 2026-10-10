@@ -443,8 +443,19 @@ export async function listSubagents(at: ChatAddress): Promise<SubagentActivity[]
   return data.subagents ?? []
 }
 
-export async function cancelSubagent(at: ChatAddress, id: string): Promise<void> {
-  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, at), {
+/**
+ * Stops one background subagent of the given chat, whichever window of the account started it.
+ *
+ * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ */
+export async function cancelSubagent(
+  at: ChatAddress,
+  id: string,
+  sessionId: string | null,
+  parentToolCallId?: string,
+): Promise<void> {
+  const query = `?sessionId=${encodeURIComponent(sessionId ?? '')}&parentToolCallId=${encodeURIComponent(parentToolCallId ?? '')}`
+  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}${query}`, at), {
     method: 'DELETE',
     credentials: 'include',
   })

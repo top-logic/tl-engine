@@ -323,7 +323,7 @@ export const Composer = React.memo(
   dispatch: React.Dispatch<ChatAction>
   promptImprovementEnabled: boolean
   subagents: SubagentActivity[]
-  onCancelSubagent: (id: string) => Promise<void>
+  onCancelSubagent: (id: string, parentToolCallId?: string) => Promise<void>
   onStopSubagents: () => Promise<void>
   onLoadSubagentTranscript: (id: string) => Promise<ChatMessage[]>
   busy: boolean

@@ -1,6 +1,7 @@
 import { React } from 'tl-react-bridge'
 import type { SubagentMessageStatus } from './api'
 import { formatTokens } from './context-usage'
+import { plainText } from './plain-text'
 import type { bundle } from './i18n'
 import { transcriptLine } from './subagents'
 import type {
@@ -78,7 +79,7 @@ export function cardsForTurn(
       order: callOrder.get(parent) ?? 0,
       card: {
         subagentId: job.subagentId,
-        agentName: job.targetAgentName,
+        agentName: job.targetAgentName || ref?.agentName || '',
         task: job.task || ref?.task || '',
         status: job.status === 'RUNNING' && waiting.has(job.subagentId) ? 'WAITING' : job.status,
         summary: ended ? job.detail : '',
@@ -315,14 +316,19 @@ export function SubagentCard({
   labels,
   onLoadTranscript,
   onSendMessage,
+  onCancel,
 }: {
   card: SubagentCardModel
   labels: Labels
   onLoadTranscript: (id: string, runId?: string) => Promise<ChatMessage[]>
   /** Writes to the subagent; without it the card offers no field. */
   onSendMessage?: SendToSubagent
+  /** Stops the subagent; without it the card offers no stop. */
+  onCancel?: (id: string, parentToolCallId?: string) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
+  const [stopping, setStopping] = useState(false)
+  const [stopFailed, setStopFailed] = useState(false)
   const [transcript, setTranscript] = useState<ChatMessage[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -336,6 +342,21 @@ export function SubagentCard({
     tokens ? `${formatTokens(tokens)} ${labels.tokens}` : '',
     formatSeconds(elapsed),
   ].filter(Boolean)
+
+  // A synchronous delegation ends with the lead's turn; the main Stop is its stop.
+  const canStop = active && card.kind !== 'delegation' && onCancel !== undefined && card.subagentId !== ''
+  const stop = async () => {
+    if (!onCancel) return
+    setStopping(true)
+    setStopFailed(false)
+    try {
+      await onCancel(card.subagentId, card.parentToolCallId)
+    } catch {
+      setStopFailed(true)
+    } finally {
+      setStopping(false)
+    }
+  }
 
   const loadTranscript = async () => {
     setLoading(true)
@@ -356,16 +377,33 @@ export function SubagentCard({
       data-subagent-id={card.subagentId}
       data-parent-call={card.parentToolCallId ?? ''}
     >
-      <button type="button" className="subagent-card-head" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        <span className={`subagent-chip${active ? ' is-active' : ''}`}>{statusLabel(card.status, labels)}</span>
-        <strong className="subagent-card-agent">{card.agentName}</strong>
-        {card.kind === 'delegation' ? <span className="subagent-card-kind">{labels.delegationTag}</span> : null}
-        <span className="subagent-card-task">{card.task}</span>
-        <span className="subagent-card-toggle" aria-hidden="true">{open ? '⌃' : '⌄'}</span>
-      </button>
+      <div className="subagent-card-top">
+        <button type="button" className="subagent-card-head" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+          <span className="subagent-card-title">
+            <span className={`subagent-chip${active ? ' is-active' : ''}`}>{statusLabel(card.status, labels)}</span>
+            <strong className="subagent-card-agent">{card.agentName}</strong>
+            {card.kind === 'delegation' ? <span className="subagent-card-kind">{labels.delegationTag}</span> : null}
+            <span className="subagent-card-toggle" aria-hidden="true">{open ? '⌃' : '⌄'}</span>
+          </span>
+          {card.task ? <span className="subagent-card-task">{card.task}</span> : null}
+        </button>
+        {canStop ? (
+          <button
+            type="button"
+            className="text-button is-danger subagent-card-stop"
+            disabled={stopping}
+            aria-label={labels.subagentStopOne(card.agentName ? `${card.subagentId} (${card.agentName})` : card.subagentId)}
+            onClick={() => void stop()}
+          >
+            <i className="bi bi-stop-circle subagent-card-stop-icon" aria-hidden="true" />
+            <span className="subagent-card-stop-label">{labels.stop}</span>
+          </button>
+        ) : null}
+      </div>
+      {stopFailed ? <p className="subagent-card-refusal" role="alert">{labels.subagentStopFailed}</p> : null}
       <div className="subagent-card-line">
         {active && current ? <span className="subagent-card-step">{stepLine(current)}</span> : null}
-        {!active && card.summary ? <span className="subagent-card-step">{card.summary}</span> : null}
+        {!active && card.summary ? <span className="subagent-card-summary">{plainText(card.summary)}</span> : null}
         {meta.length > 0 ? <span className="subagent-card-meta">{meta.join(' · ')}</span> : null}
       </div>
       {open ? (
@@ -381,7 +419,7 @@ export function SubagentCard({
           ) : (
             <p className="subagent-card-empty">{active ? labels.subagentNoSteps : labels.noDetails}</p>
           )}
-          {live?.text ? <p className="subagent-card-text">{live.text}</p> : null}
+          {live?.text ? <p className="subagent-card-text">{plainText(live.text)}</p> : null}
           <CardMessages
             card={card}
             notes={live?.notes ?? []}

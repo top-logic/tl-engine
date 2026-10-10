@@ -232,6 +232,8 @@ const EN = {
   subagentNoSteps: 'No steps yet.',
   subagentTurns: (count: number) => `${count} turn${count === 1 ? '' : 's'}`,
   subagentStopFailed: 'The subagent could not be stopped.',
+  /** The accessible name of the stop on one subagent's card. */
+  subagentStopOne: (name: string) => `Stop ${name}`,
   /** Beside the agent's name on the card of a synchronous delegation: the agent waits for it. */
   delegationTag: 'delegated',
   /** The field in a running subagent's open card, to write to it directly. */
@@ -532,6 +534,7 @@ const DE: Bundle = {
   subagentNoSteps: 'Noch keine Schritte.',
   subagentTurns: (count: number) => `${count} ${count === 1 ? 'Runde' : 'Runden'}`,
   subagentStopFailed: 'Der Subagent konnte nicht abgebrochen werden.',
+  subagentStopOne: (name: string) => `${name} abbrechen`,
   delegationTag: 'delegiert',
   subagentMessagePlaceholder: 'Nachricht …',
   subagentMessageLabel: (name: string) => `Nachricht an ${name}`,

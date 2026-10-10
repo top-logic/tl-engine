@@ -38,6 +38,9 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getParentToolCallId() */
 	public static final String PARENT_TOOL_CALL_ID__PROP = "parentToolCallId";
 
+	/** @see #isQueued() */
+	public static final String QUEUED__PROP = "queued";
+
 	private String _subagentId = "";
 
 	private String _targetAgentName = "";
@@ -49,6 +52,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	private long _durationMs = 0L;
 
 	private String _parentToolCallId = "";
+
+	private boolean _queued = false;
 
 	/**
 	 * Creates a {@link SubagentStatusEvent} instance.
@@ -180,6 +185,27 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 		_parentToolCallId = value;
 	}
 
+	/**
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. Its
+	 * first own step says it has started.
+	 */
+	public final boolean isQueued() {
+		return _queued;
+	}
+
+	/**
+	 * @see #isQueued()
+	 */
+	public com.top_logic.ai.chat.api.messages.SubagentStatusEvent setQueued(boolean value) {
+		internalSetQueued(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isQueued()} without chain call utility. */
+	protected final void internalSetQueued(boolean value) {
+		_queued = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SUBAGENT_STATUS_EVENT__TYPE;
@@ -193,7 +219,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			DETAIL__PROP, 
 			TOTAL_TOKENS__PROP, 
 			DURATION_MS__PROP, 
-			PARENT_TOOL_CALL_ID__PROP);
+			PARENT_TOOL_CALL_ID__PROP, 
+			QUEUED__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -224,6 +251,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case TOTAL_TOKENS__PROP: return getTotalTokens();
 			case DURATION_MS__PROP: return getDurationMs();
 			case PARENT_TOOL_CALL_ID__PROP: return getParentToolCallId();
+			case QUEUED__PROP: return isQueued();
 			default: return null;
 		}
 	}
@@ -237,6 +265,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case TOTAL_TOKENS__PROP: internalSetTotalTokens((int) value); break;
 			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
 			case PARENT_TOOL_CALL_ID__PROP: internalSetParentToolCallId((String) value); break;
+			case QUEUED__PROP: internalSetQueued((boolean) value); break;
 		}
 	}
 
@@ -267,6 +296,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 		out.value(getDurationMs());
 		out.name(PARENT_TOOL_CALL_ID__PROP);
 		out.value(getParentToolCallId());
+		out.name(QUEUED__PROP);
+		out.value(isQueued());
 	}
 
 	@Override
@@ -278,6 +309,7 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case TOTAL_TOKENS__PROP: setTotalTokens(in.nextInt()); break;
 			case DURATION_MS__PROP: setDurationMs(in.nextLong()); break;
 			case PARENT_TOOL_CALL_ID__PROP: setParentToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case QUEUED__PROP: setQueued(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}
 	}

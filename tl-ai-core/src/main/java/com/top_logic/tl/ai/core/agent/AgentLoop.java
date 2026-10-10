@@ -414,18 +414,25 @@ public class AgentLoop {
 	 * user message is therefore this one, and the block sits in front of the delivery text. Either
 	 * way nothing here touches what the user wrote.
 	 * </p>
+	 *
+	 * <p>
+	 * Public for the chat's wake: a lead turn started because a subagent finished delivers before its
+	 * run, so that the run does not start without the news it was started for.
+	 * </p>
+	 *
+	 * @return Whether anything was delivered.
 	 */
-	static void injectSubagentResults(Conversation conversation, ToolContext context) {
+	public static boolean injectSubagentResults(Conversation conversation, ToolContext context) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
-			return;
+			return false;
 		}
 		List<SubagentJob> finished = registry.takeUndeliveredResults();
 		// A subagent's question to this run travels the same way: it is news from a worker, it waits
 		// in the same registry, and it is answered with reply_to_subagent.
 		List<SubagentJob> asking = registry.takeUndeliveredQuestions();
 		if (finished.isEmpty() && asking.isEmpty()) {
-			return;
+			return false;
 		}
 		if (context != null) {
 			// The results are this run's from now on, and so is what they rest on.
@@ -441,6 +448,7 @@ public class AgentLoop {
 		if (log != null) {
 			log.recordSubagentResultsDelivered(text);
 		}
+		return true;
 	}
 
 	/**

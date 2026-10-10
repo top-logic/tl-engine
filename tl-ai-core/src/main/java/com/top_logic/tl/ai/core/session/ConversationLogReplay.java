@@ -155,8 +155,14 @@ public class ConversationLogReplay {
 				// said nothing (#677), a message from a subagent's lead. Replaying it as the same user message the live run
 				// injected is what keeps a reloaded session saying what the live one said.
 				flushAssistantMessage(turn);
-				_messages.add(new UserMessage(sp.id(), sp.timestamp(),
-					List.of(new TextContent(sp.details() == null ? "" : sp.details()))));
+				TextContent text = new TextContent(sp.details() == null ? "" : sp.details());
+				// A turn no user message started - one that opens with subagents' news - carried its
+				// context block on that message, the newest user message the live run had.
+				List<ContentPart> content = contextPending
+					? List.of(new TextContent(turnContext), text)
+					: List.of(text);
+				contextPending = false;
+				_messages.add(new UserMessage(sp.id(), sp.timestamp(), content));
 			}
 			// Skip: ApprovalPart, InteractionPart, other SystemParts, TransactionPart,
 			//        ErrorPart, DelegationPart

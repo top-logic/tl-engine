@@ -115,6 +115,9 @@ public class ChatSessionManager {
 		/** */
 		SubagentJobRegistry _subagentRegistry;
 
+		/** Starts a lead turn for the news of {@link #_subagentRegistry}; created with it. */
+		SubagentWaker _subagentWaker;
+
 		/**
 		 * The memories the agent was opened with, read once when this conversation's first message
 		 * is sent.
@@ -240,8 +243,34 @@ public class ChatSessionManager {
 			}
 			if (state._subagentRegistry == null) {
 				state._subagentRegistry = new SubagentJobRegistry();
+				Person owner = _activeOwner;
+				TaskProgressTracker tracker = _tracker;
+				if (owner != null && tracker != null) {
+					// The subagents go on after the turn that started them, and what they ask after
+					// that waits in their own stores; this is what lets any window of the account
+					// find it.
+					state._subagentRegistry.addListener(
+						PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
+					state._subagentWaker = new SubagentWaker(state._subagentRegistry,
+						ChatProcessor.wakeHost(tracker, owner, _activeSessionId));
+					state._subagentRegistry.addListener(state._subagentWaker);
+				}
 			}
 			return state._subagentRegistry;
+		}
+	}
+
+	/**
+	 * The waker of the given chat's subagents, or <code>null</code> when that chat has started none in
+	 * this window.
+	 */
+	SubagentWaker getSubagentWaker(String sessionId) {
+		if (sessionId == null) {
+			return null;
+		}
+		synchronized (_lock) {
+			SessionState state = _sessions.get(sessionId);
+			return state == null ? null : state._subagentWaker;
 		}
 	}
 
@@ -285,6 +314,9 @@ public class ChatSessionManager {
 	}
 
 	private static void disposeSessionState(SessionState state) {
+		if (state != null && state._subagentWaker != null) {
+			state._subagentWaker.close();
+		}
 		if (state != null && state._subagentRegistry != null) {
 			state._subagentRegistry.shutdown();
 		}

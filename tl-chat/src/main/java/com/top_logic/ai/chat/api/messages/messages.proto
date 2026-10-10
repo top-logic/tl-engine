@@ -983,6 +983,33 @@ message SubagentStatusEvent {
 	 * call; sent on start, empty otherwise.
 	 */
 	string parentToolCallId;
+
+	/**
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. Its
+	 * first own step says it has started.
+	 */
+	boolean queued;
+}
+
+/**
+ * SSE event for a lead turn that starts without a message of the user, because subagents finished
+ * or asked the lead something while no turn of it ran. Precedes the turn's {@code run_started}.
+ */
+message LeadWokenEvent {
+	/** How many subagents' results the turn opens with. */
+	int32 finished;
+
+	/** How many subagents' questions it opens with. */
+	int32 asking;
+}
+
+/**
+ * SSE event saying that subagents' news waits for the user's next message, because the lead has been
+ * started for such news as often as it may between two messages of the user.
+ */
+message LeadWakesExhaustedEvent {
+	/** How many turns were started for subagents' news since the user's last message. */
+	int32 wakes;
 }
 
 /** SSE event for transaction committed. */

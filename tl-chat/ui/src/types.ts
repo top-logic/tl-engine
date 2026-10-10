@@ -111,7 +111,13 @@ export interface ErrorMessage {
  * `cancelled` - the user stopped the run.
  * `interrupted` - the server restarted before the run finished, and nobody can continue it (#598).
  */
-export type NoticeKind = 'model_switched' | 'transaction_rolled_back' | 'cancelled' | 'interrupted'
+export type NoticeKind =
+  | 'model_switched'
+  | 'transaction_rolled_back'
+  | 'cancelled'
+  | 'interrupted'
+  /** A turn of the agent that no message of the user started: its subagents reported back. */
+  | 'lead_woken'
 
 /**
  * Something that happened around the conversation rather than in it.
@@ -370,6 +376,8 @@ export interface SubagentStatusEvent {
   durationMs?: number
   /** On start: the id of the lead's tool call that started it. */
   parentToolCallId?: string
+  /** On start: it waits in the queue for a free slot; its first own step says it has started. */
+  queued?: boolean
 }
 
 export interface ImprovePromptResponse {

@@ -1203,6 +1203,9 @@ public class ChatServlet extends TopLogicServlet {
 		SubagentJobRegistry subagentRegistry = holdsRunsChat(runWindow, state)
 			? runWindow.getActiveSubagentRegistry() : null;
 		if (subagentRegistry != null) {
+			// Stopped means stopped: what the cancelled subagents report does not start the lead
+			// again.
+			runWindow.holdSubagentWakes(state.getSessionId());
 			int cancelledSubagents = subagentRegistry.cancelAll();
 			if (cancelledSubagents > 0) {
 				Logger.info("Cancelled " + cancelledSubagents + " running subagent(s) on orchestrator "

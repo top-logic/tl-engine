@@ -88,6 +88,13 @@ function groupTurns(messages: ChatMessage[]): RunTurn[] {
       current = { id: `run-${message.id}`, user: message, events: [], index }
       continue
     }
+    if (message.type === 'notice' && message.kind === 'lead_woken') {
+      // A turn no message of the user started: the line stands where the bubble would.
+      flush()
+      index += 1
+      current = { id: `run-${message.id}`, events: [message], index }
+      continue
+    }
     if (message.type === 'tool_result') continue
     current.events.push(message)
   }
@@ -960,6 +967,8 @@ function noticeText(kind: NoticeKind, labels: Labels): string {
       return labels.interrupted
     case 'model_switched':
       return labels.modelSwitched
+    case 'lead_woken':
+      return labels.leadWoken
   }
 }
 
@@ -1086,6 +1095,9 @@ function AgentRun({
 
   return (
     <div className="agent-run">
+      {notices(turn.events, 'lead_woken').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
       {traceMode === 'summary' && steps.length > 0 ? (
         <RunSummary
           events={steps}

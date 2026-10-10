@@ -428,3 +428,63 @@ describe('readableToolOutput', () => {
     expect(readableToolOutput('Done.\n<b>bold</b>')).toBe('Done.\n<b>bold</b>')
   })
 })
+
+/*
+ * A turn that no message of the user started: subagents reported back while the agent was idle, and
+ * the agent went on by itself. It stands as its own turn, opened by a line in place of the bubble -
+ * live and after a reload alike.
+ */
+describe('a turn started for subagent news', () => {
+  const turns = [
+    {
+      id: 't1',
+      turnNumber: 1,
+      timestamp: 1000,
+      userParts: [{ id: 'u', type: 'text', timestamp: 1000, textData: { text: 'Recherchiere X im Hintergrund.' } }],
+      assistantParts: [{ id: 'a', type: 'text', timestamp: 2000, textData: { text: 'Ein Subagent arbeitet daran.' } }],
+    },
+    {
+      id: 't2',
+      turnNumber: 2,
+      timestamp: 5000,
+      userParts: [],
+      assistantParts: [
+        {
+          id: 's',
+          type: 'system',
+          timestamp: 5000,
+          systemData: { eventType: 'SUBAGENT_RESULT', details: '[Subagent results] sa-1: X is 42.' },
+        },
+        { id: 'b', type: 'text', timestamp: 6000, textData: { text: 'Der Subagent hat X gefunden: 42.' } },
+      ],
+    },
+  ]
+
+  it('reads back as its own turn, opened by the wake line', () => {
+    const messages = turnsJsonToMessages(JSON.stringify(turns))
+    expect(messages.filter((m) => m.type === 'user')).toHaveLength(1)
+    expect(messages.find((m) => m.type === 'notice')).toMatchObject({ kind: 'lead_woken' })
+
+    const de = bundle('de')
+    const html = render(messages, false, 'summary', 'de')
+    expect(html).toContain(de.leadWoken)
+    expect(html.indexOf(de.leadWoken)).toBeGreaterThan(html.indexOf('Ein Subagent arbeitet daran.'))
+    expect(html.indexOf(de.leadWoken)).toBeLessThan(html.indexOf('Der Subagent hat X gefunden: 42.'))
+    // The delivery itself is for the model, not for the reader.
+    expect(html).not.toContain('X is 42.')
+    expect(html.match(/class="run-block"/g)).toHaveLength(2)
+  })
+
+  it('opens a turn of its own live as well', () => {
+    const messages = build([
+      { type: 'ADD_USER', id: 'u1', text: 'Recherchiere X im Hintergrund.' },
+      { type: 'ADD_ASSISTANT', id: 'a1', text: 'Ein Subagent arbeitet daran.', isStreaming: false },
+      { type: 'ADD_NOTICE', kind: 'lead_woken', detail: '' },
+      { type: 'ADD_ASSISTANT', id: 'a2', text: 'Der Subagent hat X gefunden: 42.', isStreaming: false },
+    ])
+    const html = render(messages, false)
+    expect(html.match(/class="run-block"/g)).toHaveLength(2)
+    expect(html.indexOf(labels.leadWoken)).toBeGreaterThan(html.indexOf('Ein Subagent arbeitet daran.'))
+    expect(html.indexOf(labels.leadWoken)).toBeLessThan(html.indexOf('Der Subagent hat X gefunden: 42.'))
+  })
+})

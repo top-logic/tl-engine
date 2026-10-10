@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +58,7 @@ public class SubagentJobRegistry {
 		// Plain data.
 	}
 
-	private volatile Listener _listener = Listener.NONE;
+	private final List<Listener> _listeners = new CopyOnWriteArrayList<>();
 
 	/** Counts the questions asked to the lead, so that a waiting lead notices a new one. */
 	private int _questionsAsked;
@@ -73,12 +74,13 @@ public class SubagentJobRegistry {
 	}
 
 	/**
-	 * Told when a job's work starts and when it ends.
+	 * Told when a job's work starts, when it ends, and when it asks the lead a question.
 	 *
 	 * <p>
 	 * For what has to know about a job while it runs and outlive the turn that started it - in the
-	 * chat, the register that lets any window of the account find and answer what a subagent asks.
-	 * Called on the job's own thread, so an implementation must be quick and must not throw.
+	 * chat, the register that lets any window of the account find and answer what a subagent asks, and
+	 * the waker that starts a lead turn when there is news. Called on the job's own thread, so an
+	 * implementation must be quick and must not throw.
 	 * </p>
 	 */
 	public interface Listener {
@@ -100,16 +102,24 @@ public class SubagentJobRegistry {
 		default void finished(SubagentJob job) {
 			// Nothing by default.
 		}
+
+		/** The job asked the lead a question with {@code ask_lead} and waits for the answer. */
+		default void questionAsked(SubagentJob job) {
+			// Nothing by default.
+		}
 	}
 
 	/**
-	 * Sets what is told about the jobs that start from now on.
-	 *
-	 * @param listener
-	 *        The listener; <code>null</code> for none.
+	 * Adds a listener that is told about the jobs that start from now on and about questions to the
+	 * lead.
 	 */
-	public void setListener(Listener listener) {
-		_listener = listener == null ? Listener.NONE : listener;
+	public void addListener(Listener listener) {
+		_listeners.add(listener);
+	}
+
+	/** Removes a listener added before; a no-op if it was not. */
+	public void removeListener(Listener listener) {
+		_listeners.remove(listener);
 	}
 
 	/** Maximum concurrently-running subagents. */
@@ -121,7 +131,7 @@ public class SubagentJobRegistry {
 	public SubagentJob register(String targetAgentName, String taskBrief, CancellationToken token) {
 		String id = "sa-" + _counter.incrementAndGet();
 		SubagentJob job = new SubagentJob(id, targetAgentName, taskBrief, token);
-		job.setQuestionSignal(this::questionAsked);
+		job.setQuestionSignal(() -> questionAsked(job));
 		_jobs.put(id, job);
 		return job;
 	}
@@ -218,11 +228,62 @@ public class SubagentJobRegistry {
 	}
 
 	/** Wakes a lead that waits in {@link #awaitBlocking}, because a subagent asked it something. */
-	private void questionAsked() {
+	private void questionAsked(SubagentJob job) {
 		synchronized (_completionLock) {
 			_questionsAsked++;
 			_completionLock.notifyAll();
 		}
+		for (Listener listener : _listeners) {
+			listener.questionAsked(job);
+		}
+	}
+
+	/**
+	 * Whether a job spawned now would wait in the queue rather than start: this registry or the
+	 * installation is at its cap, or others wait already. A prediction for what to tell the user at
+	 * the spawn; the job starts when it starts.
+	 */
+	public synchronized boolean wouldQueue() {
+		return !_queue.isEmpty() || _started >= _maxConcurrent || SubagentSlots.isFull();
+	}
+
+	/**
+	 * What waits for a lead turn: the finished jobs whose result no lead turn has been shown, and
+	 * the questions to the lead no lead turn has been shown and nobody has answered.
+	 *
+	 * <p>
+	 * A cancelled job is not counted: somebody stopped it, so it brings no news anybody waits for.
+	 * Its result is still delivered with the next lead turn.
+	 * </p>
+	 *
+	 * @param finished
+	 *        Number of results waiting, of jobs that ended done or failed.
+	 * @param asking
+	 *        Number of questions waiting.
+	 */
+	public record News(int finished, int asking) {
+
+		/** Whether nothing waits. */
+		public boolean isEmpty() {
+			return finished == 0 && asking == 0;
+		}
+	}
+
+	/** What waits for a lead turn now; see {@link News}. */
+	public News news() {
+		int finished = 0;
+		int asking = 0;
+		for (SubagentJob job : _jobs.values()) {
+			if (job.status().isTerminal() && job.status() != SubagentJobStatus.CANCELLED
+				&& !job.isDelivered()) {
+				finished++;
+			}
+			LeadQuestion asked = job.leadQuestion();
+			if (asked != null && !asked.isDelivered() && !asked.answer().isDone()) {
+				asking++;
+			}
+		}
+		return new News(finished, asking);
 	}
 
 	/**
@@ -366,8 +427,10 @@ public class SubagentJobRegistry {
 		SubagentJob job = pending.job();
 		try {
 			job.markRunning();
-			Listener listener = _listener;
-			listener.started(job);
+			List<Listener> listeners = List.copyOf(_listeners);
+			for (Listener listener : listeners) {
+				listener.started(job);
+			}
 			SubagentJobStatus terminal;
 			SubagentResult result;
 			try {
@@ -383,7 +446,9 @@ public class SubagentJobRegistry {
 			// Before the job reads as ended: a message sent from then on is refused, not left unread.
 			job.inbox().close();
 			job.markTerminal(terminal, result);
-			listener.finished(job);
+			for (Listener listener : listeners) {
+				listener.finished(job);
+			}
 			signalCompletion();
 		} finally {
 			ended();

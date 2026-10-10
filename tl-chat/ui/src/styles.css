@@ -4488,12 +4488,45 @@
   padding: 0 0.1rem;
 }
 
+/* The copy of a web source kept when the agent read it, under the source's row (#617). */
+.source-archive {
+  display: block;
+  margin-left: 1.75rem;
+  color: var(--chat-link);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.source-archive:hover,
+.source-archive:focus-visible {
+  text-decoration: underline;
+}
+
+/* "Open source" and, for a web page, the copy kept when the agent read it (#617). */
+.cite-popover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.cite-popover-archive {
+  color: var(--chat-link);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.cite-popover-archive:hover,
+.cite-popover-archive:focus-visible {
+  text-decoration: underline;
+}
+
 .cite-popover-open {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   align-self: start;
-  margin-top: 0.5rem;
   padding: 0;
   border: 0;
   background: transparent;

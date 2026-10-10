@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -143,6 +144,15 @@ public class WaitForSubagentTool implements Tool {
 		// The returned results are not read: what matters here is the wait and the delivery flag
 		// it sets, and the jobs themselves carry everything the answer needs.
 		registry.awaitBlocking(ids, timeoutMs);
+		if (context instanceof ToolContext toolContext) {
+			// What a finished subagent read is now this run's to cite, like the result built on it.
+			for (String id : ids) {
+				SubagentJob job = registry.get(id);
+				if (job.status().isTerminal()) {
+					toolContext.readingList().addAll(job.readingList());
+				}
+			}
+		}
 		return ToolResult.of(format(ids, registry));
 	}
 

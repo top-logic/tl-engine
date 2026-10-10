@@ -242,6 +242,8 @@ public class DelegationTool implements Tool {
 				recorder.complete(null, null);
 			}
 			String childRunId = recorder != null ? recorder.runId() : null;
+			// The child's answer is now the parent's to use, and so is what that answer rested on.
+			toolContext.readingList().addAll(childContext.readingList());
 
 			String finalText = extractFinalText(conversation, result);
 			if (logListener != null && delegationId != null) {

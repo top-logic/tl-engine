@@ -272,6 +272,13 @@ const EN = {
   sourcesFilter: 'Filter sources',
   sourcesPill: (count: number) => `Sources · ${count === 1 ? '1 cited' : `${count} cited`}`,
   openSource: 'Open source →',
+  /** The copy of a web page kept when the agent read it (#617); `at` is ISO-8601. */
+  archivedCopy: (at: string) => {
+    const date = at ? new Date(at) : null
+    return date && !Number.isNaN(date.getTime())
+      ? `Archived copy of ${date.toLocaleDateString('en-GB')}`
+      : 'Archived copy'
+  },
   goToAnswer: (marker: number) => `Go to marker ${marker}`,
   citationMarker: (n: number) => `Source ${n}`,
   runSteps: (count: number) => (count === 1 ? 'Done in 1 step' : `Done in ${count} steps`),
@@ -518,6 +525,12 @@ const DE: Bundle = {
   sourcesFilter: 'Quellen filtern',
   sourcesPill: (count: number) => `Quellen · ${count === 1 ? '1 zitiert' : `${count} zitiert`}`,
   openSource: 'Quelle öffnen →',
+  archivedCopy: (at: string) => {
+    const date = at ? new Date(at) : null
+    return date && !Number.isNaN(date.getTime())
+      ? `Archivierte Kopie vom ${date.toLocaleDateString('de-DE')}`
+      : 'Archivierte Kopie'
+  },
   goToAnswer: (marker: number) => `Zu Markierung ${marker} springen`,
   citationMarker: (n: number) => `Quelle ${n}`,
   runSteps: (count: number) => (count === 1 ? 'In 1 Schritt erledigt' : `In ${count} Schritten erledigt`),

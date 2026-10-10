@@ -42,6 +42,9 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getTurnContext() */
 	public static final String TURN_CONTEXT__PROP = "turnContext";
 
+	/** @see #getSources() */
+	public static final String SOURCES__PROP = "sources";
+
 	/** @see #getUserParts() */
 	public static final String USER_PARTS__PROP = "userParts";
 
@@ -68,6 +71,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto _contextComposition = null;
 
 	private String _turnContext = "";
+
+	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto> _sources = new java.util.ArrayList<>();
 
 	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> _userParts = new java.util.ArrayList<>();
 
@@ -305,6 +310,52 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
+	 * What the run of this turn read - the sources its answer could point at, cited or not.
+	 *
+	 * <p>
+	 * Empty in transcripts written before this field existed.
+	 * </p>
+	 */
+	public final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto> getSources() {
+		return _sources;
+	}
+
+	/**
+	 * @see #getSources()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn setSources(java.util.List<? extends com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto> value) {
+		internalSetSources(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSources()} without chain call utility. */
+	protected final void internalSetSources(java.util.List<? extends com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'sources' cannot be null.");
+		_sources.clear();
+		_sources.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getSources()} list.
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn addSource(com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto value) {
+		internalAddSource(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addSource(com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto)} without chain call utility. */
+	protected final void internalAddSource(com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto value) {
+		_sources.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getSources()} list.
+	 */
+	public final void removeSource(com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto value) {
+		_sources.remove(value);
+	}
+
+	/**
 	 * Parts contributed by the user in this turn.
 	 */
 	public final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> getUserParts() {
@@ -425,6 +476,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			LAST_ITERATION_USAGE__PROP, 
 			CONTEXT_COMPOSITION__PROP, 
 			TURN_CONTEXT__PROP, 
+			SOURCES__PROP, 
 			USER_PARTS__PROP, 
 			ASSISTANT_PARTS__PROP, 
 			CONTENT_HTML__PROP);
@@ -461,6 +513,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case LAST_ITERATION_USAGE__PROP: return getLastIterationUsage();
 			case CONTEXT_COMPOSITION__PROP: return getContextComposition();
 			case TURN_CONTEXT__PROP: return getTurnContext();
+			case SOURCES__PROP: return getSources();
 			case USER_PARTS__PROP: return getUserParts();
 			case ASSISTANT_PARTS__PROP: return getAssistantParts();
 			case CONTENT_HTML__PROP: return getContentHtml();
@@ -480,6 +533,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case LAST_ITERATION_USAGE__PROP: internalSetLastIterationUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case CONTEXT_COMPOSITION__PROP: internalSetContextComposition((com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto) value); break;
 			case TURN_CONTEXT__PROP: internalSetTurnContext((String) value); break;
+			case SOURCES__PROP: internalSetSources(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto.class, value)); break;
 			case USER_PARTS__PROP: internalSetUserParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case ASSISTANT_PARTS__PROP: internalSetAssistantParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
@@ -525,6 +579,12 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 		}
 		out.name(TURN_CONTEXT__PROP);
 		out.value(getTurnContext());
+		out.name(SOURCES__PROP);
+		out.beginArray();
+		for (com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto x : getSources()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 		out.name(USER_PARTS__PROP);
 		out.beginArray();
 		for (com.top_logic.tl.ai.core.session.persist.messages.PersistedPart x : getUserParts()) {
@@ -553,6 +613,16 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case LAST_ITERATION_USAGE__PROP: setLastIterationUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case CONTEXT_COMPOSITION__PROP: setContextComposition(com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto.readContextCompositionDto(in)); break;
 			case TURN_CONTEXT__PROP: setTurnContext(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SOURCES__PROP: {
+				java.util.List<com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.tl.ai.core.session.persist.messages.ReadSourceDto.readReadSourceDto(in));
+				}
+				in.endArray();
+				setSources(newValue);
+			}
+			break;
 			case USER_PARTS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> newValue = new java.util.ArrayList<>();
 				in.beginArray();

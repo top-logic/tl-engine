@@ -52,6 +52,8 @@
 					<!-- Interaction Timeouts: how long an approval / an askUser question waits for the user -->
 					<module key="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService$Module" value="true"/>
 					<module key="com.top_logic.tl.ai.core.citation.CitationKinds$Module" value="true"/>
+					<!-- Page Archive: a copy of every web page an agent run read, for its citations -->
+					<module key="com.top_logic.tl.ai.core.citation.PageArchive$Module" value="true"/>
 					<!--
 						Role-based tool access, applied to every agent run. Active by default and not
 						switchable: a policy present while the module was off would be silently
@@ -96,21 +98,52 @@
 			call, an expired question tells the agent to answer without it).
 		-->
 		<!--
-			What an answer may cite. The framework knows only the web; an application declares its
-			own kinds here (its configuration is merged over this one), the framework appends the
-			list to the system prompt of every agent that has the cite tool, and the validator drops
-			a citation whose kind is not in it.
+			What an answer may cite. The answer points at a source with a link - [Sommerfest](tl:id),
+			[laut Tagesschau](https://...) - and keeps it as a footnote only when a tool of the run
+			read that source and its kind is declared here. The framework knows `web` (a page
+			webFetch or the browser read) and `object` (an object a read tool showed, of a type no
+			other kind claims). An application declares its own kinds here (its configuration is
+			merged over this one): `types` says which objects are sources of the kind, `label` what
+			a reader is shown, `passage` whether it has a sentence to quote. An application that
+			points at sources another way than with a link adds a <marker-syntaxes> entry - see
+			CitationMarkerSyntax.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
 			<instance class="com.top_logic.tl.ai.core.citation.CitationKinds">
 				<kinds>
 					<kind name="web"
-						description="a web page you fetched"
-						id-source="the URL you passed to the browser tool"
+						description="a web page webFetch or the browser read"
 						passage="true"
-					/>
+					>
+						<label>
+							<de>Webseite</de>
+							<en>Web page</en>
+						</label>
+					</kind>
+					<kind name="object"
+						description="an object of the application a read tool showed"
+						passage="false"
+					>
+						<label>
+							<de>Objekt</de>
+							<en>Object</en>
+						</label>
+					</kind>
 				</kinds>
 			</instance>
+		</config>
+
+		<!--
+			The copy of every web page an agent run read, so that a citation of it still shows what
+			the page said after it changed or disappeared. `max-chars` bounds one copy, copies older
+			than `retention-days` are deleted once a day (0 keeps them), `enabled="false"` stores
+			none - a web citation then links to the live page only.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.citation.PageArchive">
+			<instance class="com.top_logic.tl.ai.core.citation.PageArchive"
+				max-chars="200000"
+				retention-days="90"
+			/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
@@ -1789,13 +1822,13 @@ writing from nothing, not for editing one that exists.
 </reference>
 
 <cite>
-- Cite what you read with the cite tool, using the id or URL the producing tool returned
-- Use one of the declared kinds (see "Kinds you may cite"); never invent a kind
-- Cite only sources from this turn; never invent an id or URL
-- One marker per fact: write [n] immediately after the sentence, using the number cite returned
-- Write [n] only for a citation; leave array indices, footnotes and code samples alone
-- For a text source pass the sentence you read as 'passage', copied verbatim; a structured object has
-  no sentence, so pass none and the reader is shown its fields instead
+- Point at the source of a fact with a Markdown link in your answer. No tool call is needed:
+  - an object a tool showed you: [Sommerfest](tl:GenericObject:11047), the id exactly as the tool printed it
+  - a web page you read with webFetch or the browser: [laut Tagesschau](https://www.tagesschau.de/...)
+- The link text is the words of your sentence that the source supports: the object's name, the claim. Never "source" or "here"
+- Link only what a tool of this run read. A search result you did not open is not read: open it with webFetch first. An id or URL nobody read loses its link
+- To show the sentence of a page a fact rests on, put it verbatim in the link title: [laut Tagesschau](https://... "the sentence from the page")
+- The reader sees a footnote and the list of sources under the answer. Do not write your own source list
 </cite>
 
 <error_handling>
@@ -1829,7 +1862,6 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<tool name="model-instances.getInstance"/>
 							<tool name="model-query.query"/>
 							<tool name="view-document.viewDocument"/>
-							<tool name="cite.cite"/>
 							<!--
 								Always on the agent, never on a skill: the rule about when they may be
 								called has to be in front of the model before it decides to call one,
@@ -2809,11 +2841,6 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="application-context">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.context.ApplicationContextTool"
-						/>
-					</factory>
-					<factory name="cite">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.tl.ai.core.tools.interaction.CiteTool"
 						/>
 					</factory>
 					<factory name="gitea">

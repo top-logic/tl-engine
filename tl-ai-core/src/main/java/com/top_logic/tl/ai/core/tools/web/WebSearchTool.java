@@ -74,7 +74,8 @@ public class WebSearchTool {
 	@ToolMethod(
 		description = "Search the web and return ranked results (title, URL, snippet). "
 			+ "Use this to find current information or sources on the public internet. "
-			+ "Cite any sources you rely on as markdown links.",
+			+ "A result is not read until you open it with webFetch; "
+			+ "cite the pages you read as markdown links.",
 		mode = ToolMode.READ, group = ToolGroups.EGRESS,
 		marking = AnswerMarking.TOOL)
 	public String webSearch(
@@ -292,7 +293,8 @@ public class WebSearchTool {
 		StringBuilder out = new StringBuilder();
 		out.append("Web search results for: \"").append(query).append("\"\n\n");
 		out.append(UntrustedEnvelope.SEARCH_RESULTS.wrap(query, body.toString().strip()));
-		out.append("\n\nCite any sources you use as markdown links.");
+		out.append("\n\nOpen a result with webFetch before you rely on it, and cite the pages you read"
+			+ " as markdown links.");
 		return out.toString();
 	}
 

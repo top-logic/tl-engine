@@ -167,6 +167,7 @@ public class SubagentSpawner {
 					ToolContext childContext =
 						toolContext.forDetachedSubagent(new TransactionScope(), j.cancellationToken());
 					reportBackgroundCeiling(targetAgentName, j.subagentId(), childContext);
+					j.setReadingList(childContext.readingList());
 
 					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName, childContext.security());
 					Conversation conversation = new Conversation();

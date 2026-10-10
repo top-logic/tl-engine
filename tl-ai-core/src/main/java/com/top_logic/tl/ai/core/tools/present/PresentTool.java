@@ -311,6 +311,7 @@ public abstract class PresentTool {
 				rows.append(ReadFilter.labelled(objects.get(n)));
 			} else {
 				Presentation.Point point = points.get(n);
+				ReadFilter.shown(point.object());
 				rows.append(ReadFilter.withId(point.label() + ": " + ChartData.number(point.value()),
 					ReadFilter.idOf(point.object())));
 			}

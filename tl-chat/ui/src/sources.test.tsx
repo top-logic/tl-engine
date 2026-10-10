@@ -104,6 +104,25 @@ describe('the marker popover', () => {
   it('offers the way to the source', () => {
     expect(popover(citation())).toContain('cite-popover-open')
   })
+
+  it('offers the copy of a web page kept when the agent read it (#617)', () => {
+    const html = popover(
+      citation({
+        kind: 'web',
+        kindLabel: '',
+        id: 'https://example.org/fest',
+        url: 'https://example.org/fest',
+        archiveUrl: '/archived-page/abc',
+        archivedAt: '2026-10-10T08:00:00Z',
+      }),
+    )
+    expect(html).toContain('href="/archived-page/abc"')
+    expect(html).toContain('Archivierte Kopie vom 10.10.2026')
+  })
+
+  it('offers no copy for a source that has none', () => {
+    expect(popover(citation())).not.toContain('cite-popover-archive')
+  })
 })
 
 describe('what a structured excerpt is made of', () => {

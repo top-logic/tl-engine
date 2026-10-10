@@ -572,6 +572,12 @@ function subagentStatus(status: string | undefined): SubagentStatus {
   }
 }
 
+/** Whether a recorded turn was started for subagents' news: its first part is their delivery. */
+function opensWithSubagentNews(turn: PersistedTurn): boolean {
+  const first = (turn.assistantParts ?? [])[0]
+  return first?.type === 'system' && first.systemData?.eventType === 'SUBAGENT_RESULT'
+}
+
 export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[] {
   if (!turnsJson) return []
   let turns: PersistedTurn[]
@@ -588,6 +594,9 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
       .join('\n')
     if (userText) {
       msgs.push({ type: 'user', id: `${turn.id}-u`, text: userText, timestamp: turn.timestamp })
+    } else if (opensWithSubagentNews(turn)) {
+      // Started by subagents reporting back, not by the user: drawn as the live wake line is.
+      msgs.push({ type: 'notice', id: `${turn.id}-w`, kind: 'lead_woken', detail: '', timestamp: turn.timestamp })
     }
     // "Worked for" on a restored turn is measured the same way as on a live one: from when the turn
     // started to its last recorded part. Turns whose parts carry no later stamp show no duration

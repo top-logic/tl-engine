@@ -77,6 +77,32 @@ public class TestConversationLogReplay extends TestCase {
 		assertEquals("Is the payment term okay?", ((TextContent) um.content().get(1)).text());
 	}
 
+	/**
+	 * A turn no user message started - it opens with subagents' news - replays its context block on
+	 * that delivery, the newest user message the live run had.
+	 */
+	public void testTheTurnContextOfATurnWithoutUserTextIsReplayedOnTheDelivery() {
+		String block = "<turn-context>\nTurn: 2\n</turn-context>";
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setTurnContext(block);
+		turn.setUserParts(List.of());
+		turn.addAssistantPart(new Part.SystemPart("s1", Instant.now(), Part.SystemEventType.SUBAGENT_RESULT,
+			"[Subagent results] sa-1 found it"));
+		turn.addAssistantPart(new Part.TextPart("p1", Instant.now(), "The subagent found it."));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		Conversation conv = new Conversation();
+		ConversationLogReplay.rebuildMemory(log, conv);
+
+		assertEquals(2, conv.messages().size());
+		UserMessage delivery = (UserMessage) conv.messages().get(0);
+		assertEquals(2, delivery.content().size());
+		assertEquals(block, ((TextContent) delivery.content().get(0)).text());
+		assertEquals("[Subagent results] sa-1 found it", ((TextContent) delivery.content().get(1)).text());
+	}
+
 	/** Tool calls produce assistant(tool_use) + tool_result pairs. */
 	public void testToolCallReplay() {
 		ConversationLog log = new ConversationLog();

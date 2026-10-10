@@ -102,7 +102,7 @@ public class TestSubagentQuestionStore extends BasicTestCase {
 	public void testTheListenerHearsStartAndEnd() throws Exception {
 		AtomicInteger started = new AtomicInteger();
 		AtomicInteger finished = new AtomicInteger();
-		_registry.setListener(new SubagentJobRegistry.Listener() {
+		_registry.addListener(new SubagentJobRegistry.Listener() {
 			@Override
 			public void started(SubagentJob job) {
 				started.incrementAndGet();

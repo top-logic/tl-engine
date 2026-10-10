@@ -132,4 +132,15 @@ public interface ChatEventHandler extends AgentEventListener {
 		// Nothing to take back.
 	}
 
+	/**
+	 * Says that subagents' news waits for the user's next message, because the lead has been started
+	 * for such news as often as it may between two messages of the user.
+	 *
+	 * @param wakes
+	 *        How many turns were started since the user's last message.
+	 */
+	default void sendWakesExhausted(int wakes) {
+		// A window that draws no subagents has nothing to say.
+	}
+
 }

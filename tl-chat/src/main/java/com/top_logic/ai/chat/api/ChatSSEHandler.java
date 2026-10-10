@@ -33,6 +33,8 @@ import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
+import com.top_logic.ai.chat.api.messages.LeadWakesExhaustedEvent;
+import com.top_logic.ai.chat.api.messages.LeadWokenEvent;
 import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
 import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -86,6 +88,8 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * <li>{@code lock_acquired}, {@code lock_failed} - Edit lock</li>
  * <li>{@code tx_began}, {@code tx_committed}, {@code tx_rollback} - Transactions</li>
  * <li>{@code compaction_started} - Context compaction</li>
+ * <li>{@code subagent_started}, {@code subagent_completed}, {@code subagent_failed}, {@code subagent_cancelled} - Background subagents</li>
+ * <li>{@code lead_woken}, {@code lead_wakes_exhausted} - A lead turn started for subagents' news, or not started any more</li>
  * <li>{@code provider_error} - Unrecoverable provider errors</li>
  * <li>{@code message_complete} - Final assistant message with HTML</li>
  * <li>{@code user_interaction} - Polled from UserInteractionStore</li>
@@ -302,6 +306,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 	@Override
 	public void sendInteractionResolved(InteractionResolvedEvent event) {
 		enqueue("interaction_resolved", DtoMapper.toJson(event));
+	}
+
+	@Override
+	public void sendWakesExhausted(int wakes) {
+		enqueue("lead_wakes_exhausted", DtoMapper.toJson(LeadWakesExhaustedEvent.create().setWakes(wakes)));
 	}
 
 	/**
@@ -523,7 +532,12 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setSubagentId(e.subagentId())
 				.setTargetAgentName(e.targetAgentName())
 				.setDetail(e.taskBrief())
-				.setParentToolCallId(e.parentToolCallId())));
+				.setParentToolCallId(e.parentToolCallId())
+				.setQueued(e.queued())));
+		} else if (event instanceof AgentEvent.LeadWoken e) {
+			sendEvent("lead_woken", DtoMapper.toJson(LeadWokenEvent.create()
+				.setFinished(e.finished())
+				.setAsking(e.asking())));
 		} else if (event instanceof AgentEvent.SubagentCompleted e) {
 			sendEvent("subagent_completed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())

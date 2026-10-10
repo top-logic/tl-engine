@@ -109,11 +109,49 @@ public class TaskProgressTracker {
 	/** Cumulative token usage across all runs in this session. */
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
+	/** What the user's last message in this window was sent with; see {@link #getLastSend()}. */
+	private volatile ChatProcessor.LastSend _lastSend;
+
+	/** Guards the decision that a chat of this window is idle and a turn may start. */
+	private final Object _sendLock = new Object();
+
 	/**
 	 * Returns the chat for this window. Same instance for add and render so messages persist.
 	 */
 	public Chat getChat() {
 		return _sessionManager.getActiveChat();
+	}
+
+	/**
+	 * What the user's last message in this window was sent with, or <code>null</code> if they have
+	 * sent none. A lead turn started for subagents' news runs with it.
+	 */
+	ChatProcessor.LastSend getLastSend() {
+		return _lastSend;
+	}
+
+	/** @see #getLastSend() */
+	void setLastSend(ChatProcessor.LastSend lastSend) {
+		_lastSend = lastSend;
+	}
+
+	/**
+	 * The user stopped the run of the given chat: no turn of the lead is started for its subagents'
+	 * news until their next message.
+	 */
+	public void holdSubagentWakes(String sessionId) {
+		SubagentWaker waker = _sessionManager.getSubagentWaker(sessionId);
+		if (waker != null) {
+			waker.userStopped();
+		}
+	}
+
+	/**
+	 * The lock under which a send decides that the chat is idle and registers its run, so that a send
+	 * of the user and a lead turn started for subagents' news cannot both start.
+	 */
+	Object sendLock() {
+		return _sendLock;
 	}
 
 	/**

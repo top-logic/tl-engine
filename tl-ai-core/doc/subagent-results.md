@@ -12,6 +12,9 @@ reads the same block whether it asked or not:
 | `wait_for_subagent` | the parent asked and blocked its turn | a tool result |
 | `AgentLoop.injectSubagentResults` | the parent did not ask; the child finished on its own | a `UserMessage` at the start of the next turn |
 
+When the parent has no next turn coming - its last turn ended before the child did - the chat starts
+one for it (see below).
+
 ## The injected form
 
 At the start of every turn - after the previous turn's tool results were appended, before the next
@@ -68,9 +71,31 @@ A turn with nothing to deliver is untouched: no empty notice, no message.
 
 ### A result that arrives while nobody is listening
 
-Nothing special happens - the job simply stays undelivered in the session's registry. The next run's
-first turn picks it up, which is the turn that follows the user's next message. The delivery then
-sits after that message, so the newest information is last.
+In the chat, the lead is **woken**: `SubagentWaker` (tl-chat), a listener on the chat's registry,
+starts a lead turn that opens with the news instead of with a message of the user. The same goes for
+a question a child asks with `ask_lead` - otherwise it would wait unanswered until it timed out.
+
+- News is collected for two seconds, so children finishing close together are read in one turn.
+- While a lead turn runs nothing is started; that turn reads the news at its next step, and when it
+  ends the waker looks again for what arrived too late for it.
+- A cancelled child brings no news (`SubagentJobRegistry.News`); its result rides along with whatever
+  turn comes next.
+- At most five turns are started between two messages of the user. Then the windows are told once
+  (`lead_wakes_exhausted`), and the news waits for the user's next message - a lead that spawns again
+  on every result cannot go on spending on its own.
+- After the user pressed Stop, nothing is started until their next message.
+- The turn runs as the user's last message in that window did: in that window, with the same agent,
+  model and page facts. It needs that window to be open and showing the chat; otherwise the news
+  waits for the next message, as it did before.
+
+`ChatProcessor.sendWake` starts the run; it opens with `injectSubagentResults` and announces itself
+with `AgentEvent.LeadWoken`, which the chat draws as a line in place of the user's bubble. The turn is
+recorded without user text, its first part being the `SUBAGENT_RESULT` delivery - which is how a
+reload recognises it and draws the same line. If a turn of the user took the news in between, the
+wake records nothing and runs nothing.
+
+Outside the chat - a run started from TL-Script or MCP - no one wakes the lead: the job stays
+undelivered and the next run's first turn picks it up.
 
 ## Transcript, chat, reload
 
@@ -93,7 +118,9 @@ and could not be evicted.
 ## Relation to the per-turn context block (#438)
 
 Per-turn context attaches its block to the turn's *user* message. The two do not overlap today:
-nothing here modifies the user's message, it only appends one of its own. Should #438 land, this
+nothing here modifies the user's message, it only appends one of its own. A woken turn has no user
+message, so its block goes onto the delivery - the newest user message of the run - and replay puts
+it back there. Should #438 land, this
 delivery is a natural block of that mechanism rather than a message of its own; the formatting in
 `SubagentResultDelivery` is where that change would be made, and nothing else about the contract
 above would move.
@@ -105,6 +132,7 @@ above would move.
 | Wording of a result, shared by both paths | `agent/subagent/SubagentResultDelivery` |
 | Taking undelivered jobs, in registration order | `agent/subagent/SubagentJobRegistry#takeUndeliveredResults` |
 | The injection point | `agent/AgentLoop#injectSubagentResults` |
+| Waking an idle lead in the chat | `tl-chat` `layout/SubagentWaker`, `ChatProcessor#sendWake` |
 | Transcript part | `session/ConversationLogListener#recordSubagentResultsDelivered` |
 | Reload | `session/ConversationLogReplay` |
-| Tests | `agent/TestResultInjection` |
+| Tests | `agent/TestResultInjection`, `agent/subagent/TestSubagentNews`, tl-chat `layout/TestSubagentWaker` |

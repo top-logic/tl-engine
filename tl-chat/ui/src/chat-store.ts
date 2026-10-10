@@ -237,7 +237,7 @@ function mergeSubagent(
     hasTranscript: status !== 'CANCELLED' || previous?.hasTranscript === true,
     parentToolCallId: event.parentToolCallId || previous?.parentToolCallId,
     // The detail of a start event is the task; later events carry the result there instead.
-    task: previous?.task ?? (status === 'RUNNING' ? event.detail : undefined),
+    task: previous?.task ?? (status === 'RUNNING' || status === 'QUEUED' ? event.detail : undefined),
   }
   if (index < 0) return [...current, next]
   return current.map((item, itemIndex) => (itemIndex === index ? next : item))
@@ -1528,6 +1528,10 @@ export class ChatStore {
         // Its approvals still reach the prompt stack below, where the user answers them.
         if (wrap.subagentId && wrap.eventType !== 'approval_required' && wrap.eventType !== 'approval_resolved') {
           const id = wrap.subagentId
+          // A queued subagent's first own step is the news that it has started.
+          if (this.state.subagents.some((item) => item.subagentId === id && item.status === 'QUEUED')) {
+            this.patch({ subagents: mergeSubagent(this.state.subagents, { subagentId: id }, 'RUNNING') })
+          }
           const live = applyChildEvent(this.state.subagentLive[id], wrap.eventType ?? '', parseJson(wrap.eventData ?? '', {}))
           if (live !== this.state.subagentLive[id]) {
             this.patch({ subagentLive: { ...this.state.subagentLive, [id]: live } })
@@ -1624,7 +1628,16 @@ export class ChatStore {
       })
       on('subagent_started', (e) => {
         const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
-        if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, 'RUNNING') })
+        if (data.subagentId) {
+          this.patch({ subagents: mergeSubagent(this.state.subagents, data, data.queued ? 'QUEUED' : 'RUNNING') })
+        }
+      })
+      on('lead_woken', () => {
+        // Ahead of the turn's run_started: the line opens the turn in place of the user's bubble.
+        this.dispatch({ type: 'ADD_NOTICE', kind: 'lead_woken', detail: '' })
+      })
+      on('lead_wakes_exhausted', () => {
+        this.showNotice(this.labels.leadWakesExhausted, '', { tone: 'info' })
       })
       on('subagent_completed', (e) => {
         const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })

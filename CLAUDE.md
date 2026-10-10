@@ -492,6 +492,11 @@ both render it through `SubagentResultDelivery` so the parent reads the same blo
 `wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the
 next turn when it did not.
 
+When the parent has no next turn coming, the chat **wakes** it: `SubagentWaker` (tl-chat) starts a
+lead turn that opens with the news - a finished child or an `ask_lead` question - instead of with a
+user message, drawn as a line in place of the bubble. At most five such turns between two messages of
+the user, none after Stop, none while a lead turn runs (that turn reads the news itself).
+
 The injection is a **`UserMessage`**, not a `SystemMessage`: no provider's request builder transmits
 a mid-conversation system message, so that shape never reached the model (#359). It opens with
 `SubagentResultDelivery.NOTICE`, which says in the text what the role cannot - the user did not write

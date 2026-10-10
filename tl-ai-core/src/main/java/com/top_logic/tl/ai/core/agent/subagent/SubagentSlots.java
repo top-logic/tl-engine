@@ -67,6 +67,12 @@ final class SubagentSlots {
 		WAITING.remove(registry);
 	}
 
+	/** Whether the installation's ceiling is reached. */
+	static synchronized boolean isFull() {
+		int limit = RunLimitSettings.subagentWorkers();
+		return limit > 0 && _running >= limit;
+	}
+
 	/** How many slots are taken. For tests. */
 	static synchronized int running() {
 		return _running;

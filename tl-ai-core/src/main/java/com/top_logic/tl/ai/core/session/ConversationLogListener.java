@@ -806,6 +806,18 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
 			String parentToolCallId) {
+		recordSubagentStarted(subagentId, targetAgentName, taskBrief, parentToolCallId, false);
+	}
+
+	/**
+	 * Records that the current turn started a background subagent that may wait in the queue first.
+	 *
+	 * @param queued
+	 *        Whether it waits for a free slot rather than starting at once.
+	 * @see #recordSubagentStarted(String, String, String, String)
+	 */
+	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
+			String parentToolCallId, boolean queued) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part.SubagentPart part = new Part.SubagentPart(UUID.randomUUID().toString(), Instant.now(),
@@ -816,7 +828,7 @@ public class ConversationLogListener implements AgentEventListener {
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentStarted("", 0, Instant.now(), subagentId, targetAgentName,
-				taskBrief, nullToEmpty(parentToolCallId)));
+				taskBrief, nullToEmpty(parentToolCallId), queued));
 		}
 	}
 

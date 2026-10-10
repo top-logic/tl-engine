@@ -256,6 +256,10 @@ const EN = {
   cancelled: 'Stopped.',
   /** A run the server restart cut off (#598): it ended without anybody stopping it. */
   interrupted: 'The server was restarted before this reply was finished. Send your message again to continue.',
+  /** A turn no message of the user started: subagents finished or asked the agent something. */
+  leadWoken: 'Subagents reported back. The agent continues on its own.',
+  /** The agent has been started for subagents' news as often as it may without the user. */
+  leadWakesExhausted: 'More subagent results are waiting. The agent reads them with your next message.',
 
   sideRail: 'Rail',
   sideRailBadge: (count: number) => `${count} new`,
@@ -524,6 +528,8 @@ const DE: Bundle = {
   errorDetails: 'Technische Details',
   cancelled: 'Abgebrochen.',
   interrupted: 'Der Server wurde neu gestartet, bevor diese Antwort fertig war. Sende deine Nachricht noch einmal, um weiterzumachen.',
+  leadWoken: 'Subagenten haben sich gemeldet. Der Agent macht von sich aus weiter.',
+  leadWakesExhausted: 'Weitere Ergebnisse von Subagenten warten. Der Agent liest sie mit deiner nächsten Nachricht.',
 
   sideRail: 'Leiste',
   sideRailBadge: (count: number) => `${count} neu`,

@@ -535,9 +535,29 @@ public sealed interface AgentEvent {
 	 * @param taskBrief       the task the subagent was given
 	 * @param parentToolCallId the id of the parent's tool call that started it, so a UI can show the
 	 *                        subagent at that call; empty if unknown
+	 * @param queued          whether it waits in the queue for a free slot rather than starting at
+	 *                        once; its first own event says it has started
 	 */
 	record SubagentStarted(String runId, int turnNumber, Instant timestamp,
-			String subagentId, String targetAgentName, String taskBrief, String parentToolCallId)
+			String subagentId, String targetAgentName, String taskBrief, String parentToolCallId,
+			boolean queued)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a lead turn starts without a user message, because subagents it started finished or
+	 * asked it something while no turn of it ran.
+	 *
+	 * <p>
+	 * What a chat draws in place of the user's bubble for such a turn.
+	 * </p>
+	 *
+	 * @param runId      the lead's run identifier, empty before the run has one
+	 * @param turnNumber 0: it precedes the run's turns
+	 * @param timestamp  when the lead was woken
+	 * @param finished   how many subagents' results the turn opens with
+	 * @param asking     how many subagents' questions it opens with
+	 */
+	record LeadWoken(String runId, int turnNumber, Instant timestamp, int finished, int asking)
 			implements AgentEvent {}
 
 	/**

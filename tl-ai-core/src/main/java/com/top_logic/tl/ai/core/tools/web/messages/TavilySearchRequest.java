@@ -36,6 +36,9 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getExcludeDomains() */
 	public static final String EXCLUDE_DOMAINS__PROP = "exclude_domains";
 
+	/** @see #getTimeRange() */
+	public static final String TIME_RANGE__PROP = "time_range";
+
 	private String _query = "";
 
 	private int _maxResults = 0;
@@ -49,6 +52,8 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 	private final java.util.List<String> _includeDomains = new java.util.ArrayList<>();
 
 	private final java.util.List<String> _excludeDomains = new java.util.ArrayList<>();
+
+	private String _timeRange = null;
 
 	/**
 	 * Creates a {@link TavilySearchRequest} instance.
@@ -241,6 +246,33 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 		_excludeDomains.remove(value);
 	}
 
+	/**
+	 * Only results published within this range: {@code day}, {@code week}, {@code month} or {@code year}; absent for any time.
+	 */
+	public final String getTimeRange() {
+		return _timeRange;
+	}
+
+	/**
+	 * @see #getTimeRange()
+	 */
+	public com.top_logic.tl.ai.core.tools.web.messages.TavilySearchRequest setTimeRange(String value) {
+		internalSetTimeRange(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTimeRange()} without chain call utility. */
+	protected final void internalSetTimeRange(String value) {
+		_timeRange = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getTimeRange()} has a value.
+	 */
+	public final boolean hasTimeRange() {
+		return _timeRange != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return TAVILY_SEARCH_REQUEST__TYPE;
@@ -255,7 +287,8 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 			INCLUDE_ANSWER__PROP, 
 			INCLUDE_RAW_CONTENT__PROP, 
 			INCLUDE_DOMAINS__PROP, 
-			EXCLUDE_DOMAINS__PROP);
+			EXCLUDE_DOMAINS__PROP, 
+			TIME_RANGE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -287,6 +320,7 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 			case INCLUDE_RAW_CONTENT__PROP: return isIncludeRawContent();
 			case INCLUDE_DOMAINS__PROP: return getIncludeDomains();
 			case EXCLUDE_DOMAINS__PROP: return getExcludeDomains();
+			case TIME_RANGE__PROP: return getTimeRange();
 			default: return null;
 		}
 	}
@@ -301,6 +335,7 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 			case INCLUDE_RAW_CONTENT__PROP: internalSetIncludeRawContent((boolean) value); break;
 			case INCLUDE_DOMAINS__PROP: internalSetIncludeDomains(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case EXCLUDE_DOMAINS__PROP: internalSetExcludeDomains(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case TIME_RANGE__PROP: internalSetTimeRange((String) value); break;
 		}
 	}
 
@@ -341,6 +376,10 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 			out.value(x);
 		}
 		out.endArray();
+		if (hasTimeRange()) {
+			out.name(TIME_RANGE__PROP);
+			out.value(getTimeRange());
+		}
 	}
 
 	@Override
@@ -371,6 +410,7 @@ public class TavilySearchRequest extends de.haumacher.msgbuf.data.AbstractDataOb
 				setExcludeDomains(newValue);
 			}
 			break;
+			case TIME_RANGE__PROP: setTimeRange(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -11,11 +11,12 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -39,7 +40,8 @@ import com.top_logic.tl.ai.core.tools.web.messages.BraveWebResults;
  *
  * <p>
  * Brave has no native include/exclude-domain request parameters, so domain filters are realised by
- * appending {@code site:}/{@code -site:} search operators to the query.
+ * appending {@code site:}/{@code -site:} search operators to the query. The age of the results is
+ * Brave's {@code freshness}, their language its {@code search_lang}.
  * </p>
  */
 @InApp
@@ -85,9 +87,6 @@ public final class BraveSearchEngine implements WebSearchEngine {
 		String getBaseUrl();
 	}
 
-	/** Brave caps {@code count} at 20 results per page. */
-	private static final int MAX_COUNT = 20;
-
 	private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -98,35 +97,61 @@ public final class BraveSearchEngine implements WebSearchEngine {
 
 	private final String _baseUrl;
 
+	private final SearchHttp _http;
+
 	/**
 	 * Creates a {@link BraveSearchEngine} from configuration.
 	 */
 	@SuppressWarnings("unused")
 	@CalledByReflection
 	public BraveSearchEngine(InstantiationContext context, Config config) {
+		this(config, SearchHttp.Sleeper.SYSTEM);
+	}
+
+	/**
+	 * Creates a {@link BraveSearchEngine} that waits with {@code sleeper}. Package-visible for
+	 * testing.
+	 */
+	BraveSearchEngine(Config config, SearchHttp.Sleeper sleeper) {
 		_apiKey = config.getApiKey();
 		_baseUrl = config.getBaseUrl();
+		_http = new SearchHttp("Brave", HTTP_CLIENT, sleeper, Clock.systemUTC());
 	}
 
 	@Override
-	public WebSearchResults search(String query, List<String> includeDomains, List<String> excludeDomains,
-			int maxResults) throws IOException, InterruptedException {
-		String effectiveQuery = applyDomainFilters(query, includeDomains, excludeDomains);
-		int count = Math.max(1, Math.min(maxResults, MAX_COUNT));
+	public boolean supportsFreshness() {
+		return true;
+	}
 
-		String url = _baseUrl
-			+ (_baseUrl.indexOf('?') < 0 ? '?' : '&')
-			+ "q=" + encode(effectiveQuery)
-			+ "&count=" + count;
+	@Override
+	public boolean supportsLanguage() {
+		return true;
+	}
 
-		HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(url))
+	@Override
+	public WebSearchResults search(WebSearchQuery query) throws IOException, InterruptedException {
+		String effectiveQuery = applyDomainFilters(query.query(), query.includeDomains(), query.excludeDomains());
+		int count = Math.max(1, Math.min(query.count(), WebSearchQuery.MAX_COUNT));
+
+		StringBuilder url = new StringBuilder(_baseUrl)
+			.append(_baseUrl.indexOf('?') < 0 ? '?' : '&')
+			.append("q=").append(encode(effectiveQuery))
+			.append("&count=").append(count);
+		if (query.freshness() != null) {
+			url.append("&freshness=").append(freshness(query.freshness()));
+		}
+		if (query.language() != null) {
+			url.append("&search_lang=").append(encode(searchLang(query.language())));
+		}
+
+		HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(url.toString()))
 			.header("Accept", "application/json")
 			.header("X-Subscription-Token", _apiKey)
 			.timeout(TIMEOUT)
 			.GET()
 			.build();
 
-		HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, BodyHandlers.ofString());
+		HttpResponse<String> response = _http.send(httpRequest);
 		if (response.statusCode() / 100 != 2) {
 			throw new IOException("Brave search failed (HTTP " + response.statusCode() + "): " + response.body());
 		}
@@ -160,6 +185,44 @@ public final class BraveSearchEngine implements WebSearchEngine {
 			}
 		}
 		return result.toString();
+	}
+
+	/** Brave's {@code freshness} value: past day, week, month or year. */
+	private static String freshness(Freshness freshness) {
+		switch (freshness) {
+			case DAY:
+				return "pd";
+			case WEEK:
+				return "pw";
+			case MONTH:
+				return "pm";
+			case YEAR:
+				return "py";
+		}
+		throw new IllegalArgumentException("No such freshness: " + freshness);
+	}
+
+	/**
+	 * Brave's {@code search_lang} value for an ISO 639-1 code.
+	 *
+	 * <p>
+	 * Brave uses ISO 639-1 codes except for a few languages, which it names by a code of its own.
+	 * </p>
+	 */
+	private static String searchLang(String language) {
+		String code = language.strip().toLowerCase(Locale.ROOT);
+		switch (code) {
+			case "ja":
+				return "jp";
+			case "zh":
+				return "zh-hans";
+			case "pt":
+				return "pt-pt";
+			case "no":
+				return "nb";
+			default:
+				return code;
+		}
 	}
 
 	private static String encode(String value) {

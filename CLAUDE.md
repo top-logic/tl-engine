@@ -487,6 +487,13 @@ Every page that enters a reading list is archived by `PageArchive` (`tl.ai.execu
 bounded and with retention), and its footnote offers the copy. An application adds its own marker
 syntax with a `CitationMarkerSyntax` in `<marker-syntaxes>`. See `tl-chat/doc/citation-contract.md`.
 
+A research run also records **findings** on the same list (#752): `research.recordFinding(claim,
+source, quote)` refuses a quote that does not occur in the text the run read of that source
+(`Finding.occursIn`, white space and Markdown escapes aside), the findings join the lead's list with the
+sources on every delivery path, and a delivered report is followed by the worker's findings, one line
+each. The lead works from them with `research.listFindings` and reads a source's stored text with
+`research.readSource` - it never fetches. All three are READ tools of the `interaction` group.
+
 ### Memory & Compaction (tl-ai-core `memory/`)
 
 `ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.

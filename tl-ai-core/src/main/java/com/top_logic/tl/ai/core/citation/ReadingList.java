@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.top_logic.tl.ai.tool.api.ReadSource;
 
@@ -33,6 +34,12 @@ import com.top_logic.tl.ai.tool.api.ReadSource;
  * later turn. Not by a pointer to the parent's list: a detached sub-agent outlives the run that
  * spawned it, and the answer that uses its result is checked against the list of the run that
  * received it.
+ * </p>
+ *
+ * <p>
+ * <b>And what the run found in them.</b> A research run records {@link Finding findings} - a claim
+ * with the words of the source it rests on - on the same list, and they travel with the sources: a
+ * sub-agent's findings join its lead's list on delivery, under the ids its report names.
  * </p>
  *
  * <p>
@@ -73,6 +80,24 @@ public final class ReadingList {
 
 	/** Normalized address of a document read in windows -> the windows read of it. */
 	private final Map<String, ReadParts> _parts = new LinkedHashMap<>();
+
+	/**
+	 * How many findings one run tree keeps. A research run records a handful per source; past this
+	 * many the list stops growing, as the sources do.
+	 */
+	private static final int MAX_FINDINGS = 1_000;
+
+	/** Finding id -> finding, in the order they were recorded or received. */
+	private final Map<String, Finding> _findings = new LinkedHashMap<>();
+
+	/**
+	 * What makes the ids of this list's own findings differ from those of every other run's list, so
+	 * that a lead receiving the findings of several subagents keeps all of them under the ids their
+	 * reports name.
+	 */
+	private final String _findingTag = findingTag();
+
+	private int _findingCount;
 
 	/** Creates an empty reading list. */
 	public ReadingList() {
@@ -156,6 +181,56 @@ public final class ReadingList {
 	}
 
 	/**
+	 * Records a finding of this run.
+	 *
+	 * @param claim
+	 *        What was found.
+	 * @param source
+	 *        The source on this list the claim rests on.
+	 * @param quote
+	 *        The words of the source; the caller has checked that they {@link Finding#occursIn occur}
+	 *        in the source's text.
+	 * @param recordedBy
+	 *        The agent recording it, or empty.
+	 * @return The finding with its new id, or <code>null</code> when the list holds as many as it
+	 *         keeps.
+	 */
+	public synchronized Finding recordFinding(String claim, ReadSource source, String quote, String recordedBy) {
+		if (_findings.size() >= MAX_FINDINGS) {
+			return null;
+		}
+		String reference = source.url().isEmpty() ? source.id() : source.url();
+		String title = source.title().isEmpty() ? reference : source.title();
+		Finding finding = new Finding("F" + (++_findingCount) + "-" + _findingTag, claim, reference, title, quote,
+			recordedBy == null ? "" : recordedBy);
+		_findings.put(finding.id(), finding);
+		return finding;
+	}
+
+	/**
+	 * The findings of this run and of every sub-agent whose result it received, in the order they
+	 * arrived.
+	 */
+	public synchronized List<Finding> findings() {
+		return List.copyOf(_findings.values());
+	}
+
+	/** The finding with the given id, or <code>null</code>. */
+	public synchronized Finding finding(String id) {
+		return id == null ? null : _findings.get(id.strip());
+	}
+
+	private static String findingTag() {
+		String letters = "abcdefghijkmnpqrstuvwxyz";
+		StringBuilder tag = new StringBuilder(4);
+		ThreadLocalRandom random = ThreadLocalRandom.current();
+		for (int i = 0; i < 4; i++) {
+			tag.append(letters.charAt(random.nextInt(letters.length())));
+		}
+		return tag.toString();
+	}
+
+	/**
 	 * The web addresses this run was given - the ledger of the URL provenance rule.
 	 *
 	 * <p>
@@ -185,7 +260,14 @@ public final class ReadingList {
 			references = new LinkedHashMap<>(other._references);
 		}
 		_seenUrls.addAll(other._seenUrls);
+		List<Finding> theirFindings = other.findings();
 		synchronized (this) {
+			for (Finding finding : theirFindings) {
+				if (_findings.size() >= MAX_FINDINGS) {
+					break;
+				}
+				_findings.putIfAbsent(finding.id(), finding);
+			}
 			for (Map.Entry<String, ReadSource> entry : sources.entrySet()) {
 				ReadSource known = _sources.get(entry.getKey());
 				if (known == null && _sources.size() >= MAX_SOURCES) {

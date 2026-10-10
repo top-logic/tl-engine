@@ -258,7 +258,8 @@ public class DelegationTool implements Tool {
 			}
 			// The delegate's text is data for this run, not an instruction to it: the delegate may
 			// repeat what it read.
-			return ToolResult.of(SubagentResultDelivery.report("delegate " + _targetAgentName, finalText)
+			return ToolResult.of(SubagentResultDelivery.report("delegate " + _targetAgentName, finalText,
+				childContext.readingList())
 				+ formatDelegationMeta(result));
 		} catch (Exception e) {
 			if (logListener != null && delegationId != null) {

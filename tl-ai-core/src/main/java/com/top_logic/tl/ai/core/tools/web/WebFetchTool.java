@@ -87,7 +87,7 @@ public class WebFetchTool {
 	 * model would have seen of any other answer.
 	 * </p>
 	 */
-	static final int DEFAULT_MAX_CHARS = 20_000;
+	public static final int DEFAULT_MAX_CHARS = 20_000;
 
 	/** The documents fetched in the last minutes, shared by every call of the production tool. */
 	private static final FetchedDocuments DOCUMENTS = new FetchedDocuments();
@@ -208,7 +208,7 @@ public class WebFetchTool {
 		// Clamp to safe minimums so a misconfigured (zero/negative) limit cannot break the fetch.
 		int timeoutSeconds = Math.max(1, service != null ? service.getFetchTimeoutSeconds() : 30);
 		int maxBytes = Math.max(1024, service != null ? service.getFetchMaxBytes() : DEFAULT_MAX_BYTES);
-		int maxChars = Math.max(256, service != null ? service.getFetchMaxChars() : DEFAULT_MAX_CHARS);
+		int maxChars = windowChars();
 
 		BrowsingPolicy browsing = WebToolsService.currentPolicy();
 
@@ -458,10 +458,20 @@ public class WebFetchTool {
 	}
 
 	/**
+	 * How many characters one window of a document shows: the configured {@code fetch-max-chars}, or
+	 * {@link #DEFAULT_MAX_CHARS} while the web tools service is not running.
+	 */
+	public static int windowChars() {
+		WebToolsService service = WebToolsService.getInstance();
+		// Clamped to a safe minimum so a misconfigured (zero/negative) limit cannot break the windows.
+		return Math.max(256, service != null ? service.getFetchMaxChars() : DEFAULT_MAX_CHARS);
+	}
+
+	/**
 	 * Where a window that starts at {@code offset} ends: at most {@code maxChars} characters on, and
 	 * moved back to the end of a paragraph, a line or a word in the last fifth of the window.
 	 */
-	static int windowEnd(String text, int offset, int maxChars) {
+	public static int windowEnd(String text, int offset, int maxChars) {
 		int hardEnd = (int) Math.min(text.length(), (long) offset + maxChars);
 		if (hardEnd == text.length()) {
 			return hardEnd;

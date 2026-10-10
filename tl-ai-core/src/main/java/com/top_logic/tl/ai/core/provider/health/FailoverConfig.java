@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.tl.ai.core.agent.AgentTuning;
 
 /**
  * Where a run goes when the model it was configured with cannot answer.
@@ -43,6 +44,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 	FailoverConfig.QUOTA_TTL_SECONDS,
 	FailoverConfig.CAPACITY_TTL_SECONDS,
 	FailoverConfig.TRANSIENT_TTL_SECONDS,
+	FailoverConfig.RATE_LIMIT_WAIT_SECONDS,
 	FailoverConfig.CHAINS,
 })
 public interface FailoverConfig extends ConfigPart {
@@ -55,6 +57,9 @@ public interface FailoverConfig extends ConfigPart {
 
 	/** Configuration property name for {@link #getTransientTtlSeconds()}. */
 	String TRANSIENT_TTL_SECONDS = "transient-ttl-seconds";
+
+	/** Configuration property name for {@link #getRateLimitWaitSeconds()}. */
+	String RATE_LIMIT_WAIT_SECONDS = "rate-limit-wait-seconds";
 
 	/** Configuration property name for {@link #getChains()}. */
 	String CHAINS = "chains";
@@ -105,6 +110,25 @@ public interface FailoverConfig extends ConfigPart {
 	@Label("Transient mark lifetime (s)")
 	@IntDefault(300)
 	int getTransientTtlSeconds();
+
+	/**
+	 * How long, in seconds, an agent waits in total for a model that answers "too many requests"
+	 * (HTTP 429) before its turn fails.
+	 *
+	 * <p>
+	 * The agent asks again with growing pauses, never sooner than the model's service asks for,
+	 * and the chat shows the user that it is waiting. Set it to at least the time one request of
+	 * the slowest model takes: what holds the model is usually another request of the same key. A
+	 * run whose model has a fallback chain does not wait this long - it moves on to the fallback
+	 * after its retries.
+	 * </p>
+	 *
+	 * @see #RATE_LIMIT_WAIT_SECONDS
+	 */
+	@Name(RATE_LIMIT_WAIT_SECONDS)
+	@Label("Rate-limit wait (s)")
+	@IntDefault(AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS)
+	int getRateLimitWaitSeconds();
 
 	/**
 	 * The fallback chains, keyed by the model they are the way out of.

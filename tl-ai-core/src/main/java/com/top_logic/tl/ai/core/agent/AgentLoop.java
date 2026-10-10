@@ -1940,7 +1940,7 @@ public class AgentLoop {
 	 * How long a run on its last model waits in total for a model that is rate limited.
 	 *
 	 * <p>
-	 * The installation's {@code rate-limit-wait-seconds}, or
+	 * The installation's {@code rate-limit-wait-seconds} of {@code <failover>}, or
 	 * {@link AgentTuning#DEFAULT_RATE_LIMIT_WAIT_SECONDS} for a loop that runs without the service.
 	 * </p>
 	 */

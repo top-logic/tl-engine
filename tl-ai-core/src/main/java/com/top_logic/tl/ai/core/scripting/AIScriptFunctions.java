@@ -1156,17 +1156,6 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The given value as an {@link AgentSession} the acting account may change.
-	 *
-	 * <p>
-	 * An administrator may change any session. That mirrors {@code ToolAuthorization} and
-	 * {@code RunAuthorization}, where an administrator already bypasses the layer, and it is what
-	 * makes a {@code <data-list>} over all sessions usable as an administration view. It does not
-	 * loosen {@code ChatServlet}, which stays strictly owner-only: there the guard also defends
-	 * against a guessed id arriving from a browser, and no administration surface asks for it.
-	 * </p>
-	 */
-	/**
 	 * The given value as an {@link AgentSession}, or <code>null</code> when it is not one.
 	 *
 	 * <p>
@@ -1184,6 +1173,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		return resolved;
 	}
 
+	/**
+	 * The given value as an {@link AgentSession} the acting account may change.
+	 *
+	 * <p>
+	 * An administrator may change any session. That mirrors {@code ToolAuthorization} and
+	 * {@code RunAuthorization}, where an administrator already bypasses the layer, and it is what
+	 * makes a {@code <data-list>} over all sessions usable as an administration view. It does not
+	 * loosen {@code ChatServlet}, which stays strictly owner-only: there the guard also defends
+	 * against a guessed id arriving from a browser, and no administration surface asks for it.
+	 * </p>
+	 */
 	private static AgentSession ownedSession(Object session) {
 		AgentSession resolved = unwrapSession(session);
 		if (resolved == null) {

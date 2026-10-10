@@ -3,12 +3,14 @@
 <!--
 	Main configuration file.
 
-	The alias is the one tl-ai-core declares for the same purpose: the eval's real-model arms read
-	their key out of the environment, so that a key never reaches a configuration file and a build
+	The aliases are the ones tl-ai-core and tl-ai-demo declare for the same purpose: the eval's
+	real-model arms and the research questions' web search read their key out of the environment, so that a key never reaches a configuration file and a build
 	without one simply reports those arms as unable to run.
 -->
 <root>
 	<alias>
 		<entry name="%ANTHROPIC_API_KEY%" value="${env:tl_anthropic_api_key:unencrypted:}"/>
+		<entry name="%OPENAI_API_KEY%" value="${env:tl_openai_api_key:unencrypted:}"/>
+		<entry name="%BRAVE_API_KEY%" value="${env:tl_brave_api_key:unencrypted:}"/>
 	</alias>
 </root>

@@ -80,6 +80,20 @@ public class EvalConfigs {
 					+ " task should leave behind, or name a required tool.");
 			}
 			for (Expectation expectation : scenario.getExpectations()) {
+				if (expectation instanceof JudgeExpectation judge) {
+					if (config.getJudgeModel() == null || config.getJudgeModel().isBlank()) {
+						problems.add("Scenario '" + id + "' has a <" + JudgeExpectation.TAG_NAME
+							+ ">, but the eval names no judge-model to decide it.");
+					}
+					if (Judge.criteria(judge.getRubric()).isEmpty()) {
+						problems.add("Scenario '" + id + "': a <" + JudgeExpectation.TAG_NAME
+							+ "> whose rubric names no criterion asserts nothing.");
+					}
+					if (judge.getPassRatio() <= 0 || judge.getPassRatio() > 1) {
+						problems.add("Scenario '" + id + "': pass-ratio=" + judge.getPassRatio()
+							+ " is not between 0 (exclusive) and 1.");
+					}
+				}
 				if (expectation instanceof ToolSequence tools
 					&& tools.getRequired().isEmpty() && tools.getForbidden().isEmpty()) {
 					problems.add("Scenario '" + id + "': a <" + ToolSequence.TAG_NAME
@@ -117,6 +131,13 @@ public class EvalConfigs {
 		if (expectation instanceof KbQuery || expectation instanceof Presented) {
 			// A presentation fails for a run that presented nothing.
 			return true;
+		}
+		if (expectation instanceof JudgeExpectation) {
+			// A run that wrote no answer has nothing to judge, and fails.
+			return true;
+		}
+		if (expectation instanceof CitationExpectation citations) {
+			return citations.getMinSources() > 0;
 		}
 		return expectation instanceof ToolSequence tools && !tools.getRequired().isEmpty();
 	}

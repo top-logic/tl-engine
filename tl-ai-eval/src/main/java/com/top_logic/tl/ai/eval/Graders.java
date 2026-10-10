@@ -6,13 +6,22 @@
 package com.top_logic.tl.ai.eval;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.tl.ai.core.tools.present.ChartKind;
@@ -36,6 +45,9 @@ public class Graders {
 
 	/** The bare name of the tool whose presentation {@link Presented} grades. */
 	private static final String PRESENT = "present";
+
+	/** A web link in Markdown: {@code [text](url)} or {@code [text](url "title")}. */
+	private static final Pattern WEB_LINK = Pattern.compile("\\[[^\\]]*\\]\\((https?://[^\\s)]+)(?:\\s+\"[^\"]*\")?\\)");
 
 	private Graders() {
 		// Static utility.
@@ -61,9 +73,23 @@ public class Graders {
 	 */
 	public static List<Verdict> grade(EvalScenario scenario, List<String> toolCalls,
 			List<RunObservation.Call> calls) {
+		return grade(scenario, toolCalls, calls, RunAnswer.none(scenario.getPrompt()), Judge.NONE);
+	}
+
+	/**
+	 * Grades every expectation of the scenario, in configuration order, including those on the
+	 * answer.
+	 *
+	 * @param answer
+	 *        What the run answered.
+	 * @param judge
+	 *        The model that decides the {@link JudgeExpectation}s.
+	 */
+	public static List<Verdict> grade(EvalScenario scenario, List<String> toolCalls,
+			List<RunObservation.Call> calls, RunAnswer answer, Judge judge) {
 		List<Verdict> result = new ArrayList<>();
 		for (Expectation expectation : scenario.getExpectations()) {
-			result.add(grade(expectation, toolCalls, calls));
+			result.add(grade(expectation, toolCalls, calls, answer, judge));
 		}
 		return result;
 	}
@@ -73,8 +99,20 @@ public class Graders {
 		return grade(expectation, toolCalls, List.of());
 	}
 
-	/** Grades one expectation. */
+	/** Grades one expectation of a run whose answer is not at hand. */
 	public static Verdict grade(Expectation expectation, List<String> toolCalls, List<RunObservation.Call> calls) {
+		return grade(expectation, toolCalls, calls, RunAnswer.none(""), Judge.NONE);
+	}
+
+	/** Grades one expectation. */
+	public static Verdict grade(Expectation expectation, List<String> toolCalls, List<RunObservation.Call> calls,
+			RunAnswer answer, Judge judge) {
+		if (expectation instanceof CitationExpectation citations) {
+			return gradeCitations(citations, answer);
+		}
+		if (expectation instanceof JudgeExpectation rubric) {
+			return judge.grade(rubric, answer);
+		}
 		if (expectation instanceof KbQuery query) {
 			return gradeKbQuery(query);
 		}
@@ -314,6 +352,82 @@ public class Graders {
 		int underscores = name.lastIndexOf("__");
 		int cut = Math.max(dot + 1, underscores < 0 ? 0 : underscores + 2);
 		return name.substring(cut);
+	}
+
+	/**
+	 * Counts the distinct sources the answer cites, their hosts, and the web links of the model's text
+	 * that point at no source.
+	 */
+	static Verdict gradeCitations(CitationExpectation expectation, RunAnswer answer) {
+		String label = label(expectation, CitationExpectation.TAG_NAME);
+		Set<String> sources = new LinkedHashSet<>();
+		Set<String> hosts = new TreeSet<>();
+		Set<String> cited = new HashSet<>();
+		for (Citation citation : answer.citations()) {
+			String address = citation.url().isEmpty() ? citation.id() : citation.url();
+			sources.add(address);
+			cited.add(normalized(citation.url()));
+			cited.add(normalized(citation.id()));
+			String host = host(address);
+			if (host != null) {
+				hosts.add(host);
+			}
+		}
+		List<String> unread = new ArrayList<>();
+		Matcher links = WEB_LINK.matcher(answer.rawAnswer());
+		while (links.find()) {
+			String address = links.group(1);
+			if (!cited.contains(normalized(address))) {
+				unread.add(address);
+			}
+		}
+
+		List<String> problems = new ArrayList<>();
+		if (sources.size() < expectation.getMinSources()) {
+			problems.add("cites " + sources.size() + " sources, at least " + expectation.getMinSources()
+				+ " required");
+		}
+		if (hosts.size() < expectation.getMinDomains()) {
+			problems.add("cites " + hosts.size() + " hosts " + hosts + ", at least " + expectation.getMinDomains()
+				+ " required");
+		}
+		if (unread.size() > expectation.getMaxUnreadLinks()) {
+			problems.add("links " + unread.size() + " pages no run read, at most " + expectation.getMaxUnreadLinks()
+				+ " allowed: " + unread);
+		}
+		String counts = sources.size() + " sources from " + hosts.size() + " hosts, " + unread.size()
+			+ " unread links";
+		if (problems.isEmpty()) {
+			return Verdict.pass(label, counts);
+		}
+		return Verdict.fail(label, String.join("; ", problems) + " -- " + counts);
+	}
+
+	/** An address as compared: without a fragment and without a trailing slash. */
+	private static String normalized(String address) {
+		String result = address == null ? "" : address.strip();
+		int hash = result.indexOf('#');
+		if (hash >= 0) {
+			result = result.substring(0, hash);
+		}
+		while (result.endsWith("/")) {
+			result = result.substring(0, result.length() - 1);
+		}
+		return result;
+	}
+
+	/** The host of a web address without {@code www.}, or {@code null} for anything else. */
+	private static String host(String address) {
+		try {
+			String host = URI.create(address.strip()).getHost();
+			if (host == null) {
+				return null;
+			}
+			host = host.toLowerCase(Locale.ROOT);
+			return host.startsWith("www.") ? host.substring(4) : host;
+		} catch (IllegalArgumentException ex) {
+			return null;
+		}
 	}
 
 	private static String label(Expectation expectation, String fallback) {

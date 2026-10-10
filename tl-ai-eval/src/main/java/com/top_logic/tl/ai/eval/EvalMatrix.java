@@ -41,6 +41,17 @@ public class EvalMatrix {
 	 *        Reseeds the data before every single run.
 	 */
 	public static List<RunRecord> run(EvalConfig config, Person actor, EvalFixture fixture) {
+		return run(config, actor, fixture, Judge.of(config));
+	}
+
+	/**
+	 * Runs the whole matrix with the given judge in place of the one the file names - for a run that
+	 * has no access to the pinned judge, or a plumbing test with a scripted one. Rows graded by
+	 * another judge are not comparable with rows graded by the pinned one.
+	 *
+	 * @see #run(EvalConfig, Person, EvalFixture)
+	 */
+	public static List<RunRecord> run(EvalConfig config, Person actor, EvalFixture fixture, Judge judge) {
 		EvalConfigs.check(config);
 		List<RunRecord> rows = new ArrayList<>();
 		for (EvalScenario scenario : config.getScenarios()) {
@@ -57,7 +68,7 @@ public class EvalMatrix {
 				}
 				for (int repeat = 1; repeat <= repeats; repeat++) {
 					fixture.reset();
-					rows.add(EvalRunner.run(scenario, arm, repeat, actor));
+					rows.add(EvalRunner.run(scenario, arm, repeat, actor, judge));
 				}
 			}
 		}

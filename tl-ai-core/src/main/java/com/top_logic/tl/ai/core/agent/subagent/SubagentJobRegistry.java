@@ -44,6 +44,8 @@ public class SubagentJobRegistry {
 
 	private final Object _completionLock = new Object();
 
+	private volatile Listener _listener = Listener.NONE;
+
 	/** */
 	public SubagentJobRegistry() {
 		this(DEFAULT_MAX_CONCURRENT);
@@ -52,6 +54,46 @@ public class SubagentJobRegistry {
 	/** */
 	public SubagentJobRegistry(int maxConcurrent) {
 		_maxConcurrent = maxConcurrent;
+	}
+
+	/**
+	 * Told when a job's work starts and when it ends.
+	 *
+	 * <p>
+	 * For what has to know about a job while it runs and outlive the turn that started it - in the
+	 * chat, the register that lets any window of the account find and answer what a subagent asks.
+	 * Called on the job's own thread, so an implementation must be quick and must not throw.
+	 * </p>
+	 */
+	public interface Listener {
+
+		/** Hears nothing. */
+		Listener NONE = new Listener() {
+			// Default methods only.
+		};
+
+		/** The job's work is about to run; its status is {@link SubagentJobStatus#RUNNING}. */
+		default void started(SubagentJob job) {
+			// Nothing by default.
+		}
+
+		/**
+		 * The job's work has ended, whichever way; its status is terminal. Called exactly once for
+		 * every {@link #started(SubagentJob)}.
+		 */
+		default void finished(SubagentJob job) {
+			// Nothing by default.
+		}
+	}
+
+	/**
+	 * Sets what is told about the jobs that start from now on.
+	 *
+	 * @param listener
+	 *        The listener; <code>null</code> for none.
+	 */
+	public void setListener(Listener listener) {
+		_listener = listener == null ? Listener.NONE : listener;
 	}
 
 	/** Maximum concurrently-running subagents. */
@@ -193,6 +235,8 @@ public class SubagentJobRegistry {
 	public void spawn(SubagentJob job, SubagentRun run) {
 		_executor.submit(() -> {
 			job.markRunning();
+			Listener listener = _listener;
+			listener.started(job);
 			SubagentJobStatus terminal;
 			SubagentResult result;
 			try {
@@ -206,6 +250,7 @@ public class SubagentJobRegistry {
 				result = new SubagentResult("ERROR: " + e.getMessage(), TokenUsage.EMPTY, 0L, 0, StopReason.ERROR);
 			}
 			job.markTerminal(terminal, result);
+			listener.finished(job);
 			synchronized (_completionLock) {
 				_completionLock.notifyAll();
 			}

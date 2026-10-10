@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.time.Instant;
 
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
@@ -25,6 +27,8 @@ public class SubagentJob {
 
 	private final CancellationToken _cancellationToken;
 
+	private final UserInteractionStore _interactionStore;
+
 	private volatile SubagentJobStatus _status = SubagentJobStatus.QUEUED;
 
 	private volatile SubagentResult _result;
@@ -41,6 +45,7 @@ public class SubagentJob {
 		_taskBrief = taskBrief;
 		_cancellationToken = cancellationToken;
 		_startedAt = Instant.now();
+		_interactionStore = new UserInteractionStore(new InteractionAsker(subagentId, targetAgentName));
 	}
 
 	/** Unique identifier of this subagent job within its session. */
@@ -66,6 +71,20 @@ public class SubagentJob {
 	/** Token observed cooperatively by the child loop to support cancellation. */
 	public CancellationToken cancellationToken() {
 		return _cancellationToken;
+	}
+
+	/**
+	 * The store this subagent's questions and approvals wait in.
+	 *
+	 * <p>
+	 * Its own, and not the store of the turn that started it: that turn ends while the subagent works
+	 * on, and its store is unbound with it - a question asked there afterwards was never shown and
+	 * could not be answered. This one lives as long as the job, and names the subagent as the
+	 * {@link UserInteractionStore#asker() asker} of everything in it.
+	 * </p>
+	 */
+	public UserInteractionStore interactionStore() {
+		return _interactionStore;
 	}
 
 	/** Current lifecycle state. */

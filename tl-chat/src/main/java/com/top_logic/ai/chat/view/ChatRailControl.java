@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import com.top_logic.ai.chat.view.ChatRailElement.Config;
 import com.top_logic.ai.chat.view.ChatRailElement.Section;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ViewContext;
@@ -145,7 +144,7 @@ public class ChatRailControl extends ReactControl {
 			Map<String, Object> row = new LinkedHashMap<>();
 			row.put("name", name);
 			row.put("label", label(resources, section.label(), name));
-			row.put("icon", icon(section.icon()));
+			row.put("icon", ChatIcons.encode(context, section.icon()));
 			row.put("open", Boolean.valueOf(section.open()));
 			// One child context per section, so two sections routing `<slot-content>` of the same
 			// name reach independent positions.
@@ -204,10 +203,6 @@ public class ChatRailControl extends ReactControl {
 		}
 		String label = resources.getString(key, null);
 		return label == null || label.isEmpty() ? fallback : label;
-	}
-
-	private static String icon(ThemeImage image) {
-		return image == null ? "" : image.resolve().toEncodedForm();
 	}
 
 	private static String blankToDefault(String value, String fallback) {

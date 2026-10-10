@@ -46,12 +46,13 @@ import com.top_logic.util.TLContextManager;
  * </p>
  *
  * <p>
- * The layout preference is the one thing here that is <em>not</em> bound once: it is read whenever
- * {@link #writeLayoutState(BiConsumer)} is asked for it. A browser reload re-renders the control
- * tree the window already holds instead of rebuilding it, so a value captured in a constructor
- * would replay the first render's layout for as long as the window lives (Gitea #423). Reading it
- * again costs a lookup in the sub-session's personal configuration, which is already in memory,
- * plus a small JSON parse.
+ * The layout preference and the session's language are the things here that are <em>not</em> bound
+ * once: they are read whenever {@link #writeLayoutState(BiConsumer)} is asked for them. A browser
+ * reload re-renders the control tree the window already holds instead of rebuilding it, so a value
+ * captured in a constructor would replay the first render's layout for as long as the window lives
+ * (Gitea #423) - and the first render's language, until the next login (Gitea #662). Reading the
+ * layout again costs a lookup in the sub-session's personal configuration, which is already in
+ * memory, plus a small JSON parse; the language is the session's locale, read in place.
  * </p>
  */
 public final class ChatViewBinding {
@@ -88,8 +89,6 @@ public final class ChatViewBinding {
 
 	private final String _welcomeName;
 
-	private final String _language;
-
 	private final boolean _authenticated;
 
 	/**
@@ -113,7 +112,6 @@ public final class ChatViewBinding {
 		_contextPath = contextPath == null ? "" : contextPath;
 		_userName = valueOr(_tracker.getUserName(), "User");
 		_welcomeName = valueOr(_tracker.getWelcomeName(), "");
-		_language = currentLanguage();
 		_authenticated = !TLContext.isAnonymous();
 	}
 
@@ -242,9 +240,9 @@ public final class ChatViewBinding {
 		return _welcomeName;
 	}
 
-	/** Language tag of the current user's locale, e.g. {@code "de"}. */
+	/** The language tag of the session's locale now, e.g. {@code "de"}; read per render, not at bind time. */
 	public String language() {
-		return _language;
+		return currentLanguage();
 	}
 
 	/** Registry key of the sub-session this chat was rendered in. */
@@ -385,9 +383,10 @@ public final class ChatViewBinding {
 	 * </p>
 	 *
 	 * <p>
-	 * Everything written here is fixed for the lifetime of the window. The layout preference is
-	 * not, so it has {@link #writeLayoutState(BiConsumer)} of its own; this method writes it too,
-	 * so that a caller which only ever renders once needs the one call.
+	 * Everything written here is fixed for the lifetime of the window. The layout preference and
+	 * the session's language are not, so they have {@link #writeLayoutState(BiConsumer)} of their
+	 * own; this method writes them too, so that a caller which only ever renders once needs the
+	 * one call.
 	 * </p>
 	 */
 	public void writeSharedState(BiConsumer<String, Object> put) {
@@ -396,22 +395,26 @@ public final class ChatViewBinding {
 		put.accept("contextPath", _contextPath);
 		put.accept("userName", _userName);
 		put.accept("welcomeName", _welcomeName);
-		put.accept("language", _language);
 		writeLayoutState(put);
 	}
 
 	/**
-	 * Writes the user's stored layout into the control's state.
+	 * Writes the user's stored layout, and the session's language, into the control's state.
 	 *
 	 * <p>
 	 * Every chat control calls this from its {@code onBeforeWrite} hook, because that is the one
 	 * moment that happens again when the browser is reloaded. The constructor does not: the engine
 	 * re-renders the control tree the window already holds, deliberately, so that a table keeps its
-	 * selection - which means a layout captured at construction time is the layout of the first
-	 * render forever (Gitea #423).
+	 * selection - which means a value captured at construction time is the value of the first
+	 * render forever (Gitea #423). The language is written here for the same reason (Gitea #662):
+	 * a user who switches it in the account menu is answered in the new language from the next
+	 * render on, without a new login.
 	 * </p>
 	 */
 	public void writeLayoutState(BiConsumer<String, Object> put) {
+		// Not a layout preference, but written here because this is the hook that runs on every
+		// render: the session's language now, not the one of the first render (Gitea #662).
+		put.accept("language", currentLanguage());
 		ChatPreferencesDto preferences = preferences();
 		// The key the browser puts the layout back under. Not the same as the store's own chat key,
 		// which falls back to the control id so that two elements of one chat-id stay one chat.

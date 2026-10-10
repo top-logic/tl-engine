@@ -4,6 +4,8 @@ import {
   autoTitle,
   cancelRun,
   cancelSubagent,
+  sendSubagentMessage,
+  type SubagentMessageStatus,
   createSession,
   deleteSession,
   fetchCapabilities,
@@ -172,6 +174,7 @@ export function applyChildEvent(
     text?: string
     turnNumber?: number
     turnUsage?: { inputTokens?: number; outputTokens?: number }
+    messages?: { id?: string; text?: string }[]
   },
 ): SubagentLive {
   const live: SubagentLive = current ?? { steps: [], text: '', turns: 0, tokens: 0, startedAt: Date.now() }
@@ -210,6 +213,8 @@ export function applyChildEvent(
       // A new step starts a new thought: the text the card shows is what the child wrote since.
       return { ...live, text: '', steps: steps.slice(Math.max(0, steps.length - MAX_CHILD_STEPS)) }
     }
+    case 'user_message_read':
+      return readNotes(live, data.messages ?? [])
     case 'tool_completed':
       return setStatus('done')
     case 'tool_failed':
@@ -218,6 +223,31 @@ export function applyChildEvent(
     default:
       return live
   }
+}
+
+/** The most messages to one subagent a card keeps. */
+const MAX_NOTES = 20
+
+/** A message the user wrote to a subagent, added to what its card shows as sent and not yet read. */
+export function addNote(current: SubagentLive | undefined, id: string, text: string): SubagentLive {
+  const live: SubagentLive = current ?? { steps: [], text: '', turns: 0, tokens: 0, startedAt: Date.now() }
+  const notes = [...(live.notes ?? []).filter((note) => note.id !== id), { id, text, read: false }]
+  return { ...live, notes: notes.slice(Math.max(0, notes.length - MAX_NOTES)) }
+}
+
+/**
+ * The subagent has read these messages. One another window of the chat sent is added as read, so
+ * every window shows what the user wrote to it.
+ */
+function readNotes(live: SubagentLive, read: { id?: string; text?: string }[]): SubagentLive {
+  const notes = [...(live.notes ?? [])]
+  for (const message of read) {
+    if (!message.id) continue
+    const index = notes.findIndex((note) => note.id === message.id)
+    if (index >= 0) notes[index] = { ...notes[index], read: true }
+    else notes.push({ id: message.id, text: message.text ?? '', read: true })
+  }
+  return { ...live, notes: notes.slice(Math.max(0, notes.length - MAX_NOTES)) }
 }
 
 function mergeSubagent(
@@ -575,6 +605,11 @@ export interface ChatActions {
   selectTraceMode(mode: TraceMode): void
   toggleAutoApprove(): Promise<void>
   cancelSubagent(id: string): Promise<void>
+  /**
+   * Writes to one running background subagent from its card; on `sent` the card shows the message
+   * as sent until the subagent reads it.
+   */
+  messageSubagent(id: string, parentToolCallId: string, text: string): Promise<SubagentMessageStatus>
   stopSubagents(): Promise<void>
   loadSubagentTranscript(id: string, runId?: string): Promise<ChatMessage[]>
   openPane(content: ReactNode, options: PaneOpenOptions): void
@@ -2421,6 +2456,16 @@ export class ChatStore {
             item.subagentId === id ? { ...item, status: 'CANCELLED' } : item,
           ),
         })
+      },
+
+      messageSubagent: async (id: string, parentToolCallId: string, text: string) => {
+        const answer = await sendSubagentMessage(this.at, id, this.state.sessionId, parentToolCallId, text)
+        if (answer.status === 'sent') {
+          this.patch({
+            subagentLive: { ...this.state.subagentLive, [id]: addNote(this.state.subagentLive[id], answer.messageId, text) },
+          })
+        }
+        return answer.status
       },
 
       stopSubagents: async () => {

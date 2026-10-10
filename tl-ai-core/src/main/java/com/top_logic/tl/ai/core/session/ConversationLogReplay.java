@@ -175,7 +175,8 @@ public class ConversationLogReplay {
 	private static boolean isConversationContent(Part.SystemPart part) {
 		return part.eventType() == Part.SystemEventType.SUBAGENT_RESULT
 			|| part.eventType() == Part.SystemEventType.CONTINUATION_REQUESTED
-			|| part.eventType() == Part.SystemEventType.LEAD_MESSAGE;
+			|| part.eventType() == Part.SystemEventType.LEAD_MESSAGE
+			|| part.eventType() == Part.SystemEventType.USER_MESSAGE;
 	}
 
 	/**

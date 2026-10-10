@@ -50,16 +50,20 @@ import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
+import com.top_logic.ai.chat.api.messages.SubagentMessageRequest;
+import com.top_logic.ai.chat.api.messages.SubagentMessageResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
+import com.top_logic.ai.chat.layout.ChatSessionManager;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -156,6 +160,10 @@ public class ChatServlet extends TopLogicServlet {
 
 	private static final String PATH_PREFERENCES = "/preferences";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
+	private static final String MESSAGE_SUFFIX = "/message";
+
+	/** The longest message the user may write to a subagent, in characters. */
+	static final int MAX_SUBAGENT_MESSAGE_CHARS = 8000;
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 
 	/**
@@ -258,6 +266,12 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
 			handleCreateSession(req, resp);
+			return;
+		}
+		if (pathInfo.startsWith(PATH_SUBAGENTS + "/") && pathInfo.endsWith(MESSAGE_SUFFIX)) {
+			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length(),
+				pathInfo.length() - MESSAGE_SUFFIX.length());
+			handleSubagentMessage(req, resp, id);
 			return;
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -1805,6 +1819,69 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(json.toString());
+	}
+
+	/**
+	 * POST /chat/subagents/{id}/message - the user writes to one running background subagent from its
+	 * card.
+	 *
+	 * <p>
+	 * The message goes into the subagent's inbox, which {@code send_to_subagent} fills too, and the
+	 * subagent reads it at the start of its next turn. Any window of the account reaches the subagent,
+	 * whichever window's run started it - but only in a chat of this account: another account's chat
+	 * and a subagent that does not exist are answered alike, so the answer says nothing about which
+	 * exist. A subagent that has ended reads no more messages, and is answered so.
+	 * </p>
+	 */
+	private void handleSubagentMessage(HttpServletRequest req, HttpServletResponse resp, String id)
+			throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+		SubagentMessageRequest body;
+		try {
+			String json = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = SubagentMessageRequest.readSubagentMessageRequest(new JsonReader(new StringR(json)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		String text = body.getText() == null ? "" : body.getText().strip();
+		if (text.isEmpty()) {
+			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_BAD_REQUEST, "empty", "");
+			return;
+		}
+		if (text.length() > MAX_SUBAGENT_MESSAGE_CHARS) {
+			text = text.substring(0, MAX_SUBAGENT_MESSAGE_CHARS);
+		}
+		String sessionId = blankToNull(body.getSessionId());
+		if (sessionId == null) {
+			sessionId = currentTracker().getActiveSessionId();
+		}
+		SubagentJob job = sessionId == null || ChatHistoryService.findOwnedSessionById(sessionId, person) == null
+			? null : ChatSessionManager.findSubagent(sessionId, id, body.getParentToolCallId());
+		if (job == null) {
+			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_NOT_FOUND, "unknown", "");
+			return;
+		}
+		SubagentInbox.Message message = SubagentInbox.Message.of(SubagentInbox.Sender.USER, text);
+		if (job.status().isTerminal() || !job.inbox().post(message)) {
+			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_CONFLICT, "ended", "");
+			return;
+		}
+		writeSubagentMessageAnswer(resp, HttpServletResponse.SC_OK, "sent", message.id());
+	}
+
+	private static void writeSubagentMessageAnswer(HttpServletResponse resp, int code, String status,
+			String messageId) throws IOException {
+		resp.setStatus(code);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(SubagentMessageResponse.create()
+			.setStatus(status)
+			.setMessageId(messageId)));
 	}
 
 	private void handleCancelSubagent(String id, HttpServletResponse resp) throws IOException {

@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.agent.environment.UserMemories;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
@@ -315,7 +316,43 @@ public class ChatSessionManager {
 
 	/** The key of the given chat's registry in this window; see {@link SubagentRegistries}. */
 	private String subagentRegistryKey(String sessionId) {
-		return "chat:" + sessionId + "@" + _windowKey;
+		return subagentRegistryPrefix(sessionId) + _windowKey;
+	}
+
+	/** What the keys of the given chat's registries start with, in every window. */
+	private static String subagentRegistryPrefix(String sessionId) {
+		return "chat:" + sessionId + "@";
+	}
+
+	/**
+	 * The background subagent of the given chat with the given id, whichever window's run started it.
+	 *
+	 * <p>
+	 * Subagent ids start at {@code sa-1} in every window, so the id of the lead's tool call that
+	 * started it tells two namesakes apart. Does not check who asks: the caller makes sure the chat is
+	 * theirs.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat; <code>null</code> finds nothing.
+	 * @param subagentId
+	 *        The subagent's id within its window, e.g. {@code sa-2}.
+	 * @param parentToolCallId
+	 *        The id of the call that started it; empty takes the first subagent with that id.
+	 * @return The subagent's job, or <code>null</code> if no window holds one.
+	 */
+	public static SubagentJob findSubagent(String sessionId, String subagentId, String parentToolCallId) {
+		if (sessionId == null || subagentId == null) {
+			return null;
+		}
+		boolean anyCall = parentToolCallId == null || parentToolCallId.isEmpty();
+		for (SubagentJobRegistry registry : SubagentRegistries.withKeyPrefix(subagentRegistryPrefix(sessionId))) {
+			SubagentJob job = registry.get(subagentId);
+			if (job != null && (anyCall || parentToolCallId.equals(job.parentToolCallId()))) {
+				return job;
+			}
+		}
+		return null;
 	}
 
 	/**

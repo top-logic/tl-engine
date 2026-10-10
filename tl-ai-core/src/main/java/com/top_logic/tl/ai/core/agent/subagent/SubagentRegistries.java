@@ -5,8 +5,10 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,6 +61,22 @@ public final class SubagentRegistries {
 		synchronized (REGISTRIES) {
 			return REGISTRIES.get(key);
 		}
+	}
+
+	/**
+	 * The registries whose key starts with the given prefix - in the chat, the registries one
+	 * conversation has in its windows.
+	 */
+	public static List<SubagentJobRegistry> withKeyPrefix(String prefix) {
+		List<SubagentJobRegistry> result = new ArrayList<>();
+		synchronized (REGISTRIES) {
+			for (Map.Entry<String, SubagentJobRegistry> entry : REGISTRIES.entrySet()) {
+				if (entry.getKey().startsWith(prefix)) {
+					result.add(entry.getValue());
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

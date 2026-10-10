@@ -232,6 +232,19 @@ const EN = {
   subagentNoSteps: 'No steps yet.',
   subagentTurns: (count: number) => `${count} turn${count === 1 ? '' : 's'}`,
   subagentStopFailed: 'The subagent could not be stopped.',
+  /** The field in a running subagent's open card, to write to it directly. */
+  subagentMessagePlaceholder: 'Message …',
+  subagentMessageLabel: (name: string) => `Message to ${name}`,
+  /** Under the field: when the subagent reads what is written. */
+  subagentMessageHint: 'It reads your message before its next step.',
+  /** The list of what the user wrote to the subagent. */
+  subagentMessagesLabel: 'Your messages to this subagent',
+  /** The receipt of a message: written, and not yet read. */
+  subagentMessageSent: 'sent',
+  /** The receipt of a message the subagent has read. */
+  subagentMessageRead: 'read',
+  subagentMessageEnded: 'The subagent has ended and reads no more messages.',
+  subagentMessageFailed: 'The message could not be sent.',
   subagentsStopFailed: 'The subagents could not be stopped.',
   you: 'You',
   agentLabel: 'Agent',
@@ -517,6 +530,14 @@ const DE: Bundle = {
   subagentNoSteps: 'Noch keine Schritte.',
   subagentTurns: (count: number) => `${count} ${count === 1 ? 'Runde' : 'Runden'}`,
   subagentStopFailed: 'Der Subagent konnte nicht abgebrochen werden.',
+  subagentMessagePlaceholder: 'Nachricht …',
+  subagentMessageLabel: (name: string) => `Nachricht an ${name}`,
+  subagentMessageHint: 'Er liest deine Nachricht vor seinem nächsten Schritt.',
+  subagentMessagesLabel: 'Deine Nachrichten an diesen Subagenten',
+  subagentMessageSent: 'gesendet',
+  subagentMessageRead: 'gelesen',
+  subagentMessageEnded: 'Der Subagent ist beendet und liest keine Nachrichten mehr.',
+  subagentMessageFailed: 'Die Nachricht konnte nicht gesendet werden.',
   subagentsStopFailed: 'Die Subagenten konnten nicht abgebrochen werden.',
   you: 'Du',
   agentLabel: 'Agent',

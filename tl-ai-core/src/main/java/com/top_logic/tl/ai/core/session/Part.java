@@ -341,7 +341,18 @@ public sealed interface Part {
 		 *
 		 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentNews#toJson(java.util.List)
 		 */
-		LEAD_WOKEN
+		LEAD_WOKEN,
+		/**
+		 * The user wrote to this background subagent from its card in the chat, and the subagent read
+		 * it at the start of a turn.
+		 *
+		 * <p>
+		 * Conversation content like {@link #LEAD_MESSAGE}: its details are verbatim the text the
+		 * subagent's model was shown, and the replay of the log rebuilds the same user message from it.
+		 * The transcript shows it as the user's.
+		 * </p>
+		 */
+		USER_MESSAGE
 	}
 
 	/**

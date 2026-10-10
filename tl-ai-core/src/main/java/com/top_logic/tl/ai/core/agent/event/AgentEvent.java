@@ -580,6 +580,26 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
+	 * Emitted when a background subagent reads what the user wrote to it from its card, at the start
+	 * of one of its turns.
+	 *
+	 * <p>
+	 * The text is verbatim what the subagent's model is shown, as a user message; a log recording the
+	 * subagent's run keeps it, as {@link #LeadMessageDelivered} does. The ids tell the chat which of
+	 * the user's messages have been read.
+	 * </p>
+	 *
+	 * @param runId      the subagent's run identifier
+	 * @param turnNumber the turn that read it
+	 * @param timestamp  when it was read
+	 * @param text       the text the model is shown
+	 * @param messages   the user's messages it holds, in the order they were sent
+	 */
+	record UserMessageDelivered(String runId, int turnNumber, Instant timestamp, String text,
+			java.util.List<com.top_logic.tl.ai.core.agent.subagent.SubagentInbox.Message> messages)
+			implements AgentEvent {}
+
+	/**
 	 * Emitted when a subagent job finishes successfully.
 	 *
 	 * @param runId      agent run identifier

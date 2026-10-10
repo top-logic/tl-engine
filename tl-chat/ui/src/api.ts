@@ -443,6 +443,43 @@ export async function cancelSubagent(at: ChatAddress, id: string): Promise<void>
 }
 
 /**
+ * What the server answered a message the user wrote to a subagent: `sent` - it reads it at the start
+ * of its next turn; `ended` - it has ended and reads no more; `unknown` - no such subagent in this
+ * account's chat; `empty` - there was no text.
+ */
+export type SubagentMessageStatus = 'sent' | 'ended' | 'unknown' | 'empty'
+
+/**
+ * Writes to one running background subagent, from its card.
+ *
+ * @param sessionId The chat whose lead started it.
+ * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ */
+export async function sendSubagentMessage(
+  at: ChatAddress,
+  id: string,
+  sessionId: string | null,
+  parentToolCallId: string,
+  text: string,
+): Promise<{ status: SubagentMessageStatus; messageId: string }> {
+  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/message`, at), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ sessionId: sessionId ?? '', parentToolCallId, text }),
+  })
+  // The refusals carry their reason in the same shape as the success.
+  if (!res.ok && res.status !== 400 && res.status !== 404 && res.status !== 409) {
+    throw new Error(`message to subagent failed (${res.status})`)
+  }
+  const data = (await res.json()) as { status?: string; messageId?: string }
+  const known: SubagentMessageStatus[] = ['sent', 'ended', 'unknown', 'empty']
+  const status = known.find((item) => item === data.status)
+  if (!status) throw new Error(`message to subagent failed (${res.status})`)
+  return { status, messageId: data.messageId ?? '' }
+}
+
+/**
  * The transcript of one subagent: its live log while it runs, its recorded run afterwards.
  *
  * @param runId The run its recorded part names, for a subagent the server holds no job for any
@@ -811,6 +848,11 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             // The server's details are an English line for the operator; the reader gets the
             // renderer's sentence in their language, exactly as the live cancel draws it (#549).
             msgs.push({ type: 'notice', id: part.id, kind: 'cancelled', detail: '', timestamp: part.timestamp })
+          } else if (part.systemData?.eventType === 'USER_MESSAGE' && part.systemData.details) {
+            // In a subagent's own transcript: what the user wrote to it from its card. The details are
+            // what its model was shown - an opening line, then the messages - and the user wrote the
+            // messages only.
+            msgs.push({ type: 'user', id: part.id, text: userMessageText(part.systemData.details), timestamp: part.timestamp })
           } else if (part.systemData?.eventType === 'INTERRUPTED') {
             // Written by the server's startup sweep onto a run the restart cut off (#598). There is
             // no live counterpart: the window that watched the run lost its stream with the server.
@@ -821,6 +863,12 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
     }
   }
   return msgs
+}
+
+/** The user's own words of a `USER_MESSAGE` part: everything after the opening line. */
+export function userMessageText(details: string): string {
+  const start = details.indexOf('\n\n')
+  return start < 0 ? details : details.slice(start + 2)
 }
 
 /**

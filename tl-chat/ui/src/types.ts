@@ -362,6 +362,17 @@ export interface SubagentLive {
   tokens: number
   /** Local clock reading when the first event arrived, for the elapsed time. */
   startedAt: number
+  /** What the user wrote to it from its card, oldest first; absent while nothing. */
+  notes?: SubagentNote[]
+}
+
+/** One message the user wrote to a subagent from its card, with its receipt. */
+export interface SubagentNote {
+  /** The server's id of the message, by which the read receipt names it. */
+  id: string
+  text: string
+  /** Whether the subagent has read it: it reads its messages at the start of a turn. */
+  read: boolean
 }
 
 /**

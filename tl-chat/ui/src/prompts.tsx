@@ -361,8 +361,12 @@ function QuestionCard({
 }) {
   const [text, setText] = useState('')
   const [picked, setPicked] = useState<string[]>([])
-  const submit = async (answer: string) => {
-    await respond(at, { requestId: item.requestId, response: answer })
+  // Whether the "own answer" row is chosen. Every choice has one (#679): options that do not fit
+  // used to leave the user nothing but "skip", and the agent with nothing to go on.
+  const [own, setOwn] = useState(false)
+  const choice = item.interactionType === 'choice' && item.options ? item.options : null
+  const submit = async (answer: string, ownWords?: string) => {
+    await respond(at, { requestId: item.requestId, response: answer, ...(ownWords ? { ownWords } : {}) })
     dispatch({ type: 'RESOLVE_INTERACTION', requestId: item.requestId })
   }
   const toggle = (label: string) => {
@@ -372,8 +376,22 @@ function QuestionCard({
       }
       return [label]
     })
+    // One answer in a single select: picking an option takes the own answer back.
+    if (!item.multiSelect) setOwn(false)
   }
-  const canContinue = item.interactionType === 'choice' ? picked.length > 0 : Boolean(text.trim())
+  const toggleOwn = () => {
+    if (item.multiSelect) {
+      setOwn((value) => !value)
+    } else {
+      setOwn(true)
+      setPicked([])
+    }
+  }
+  const ownWords = own ? text.trim() : ''
+  const canContinue = choice ? picked.length > 0 || Boolean(ownWords) : Boolean(text.trim())
+  // The typed text travels beside the labels, never joined into them, so the server can tell the
+  // agent which part the user wrote.
+  const send = () => void (choice ? submit(picked.join(', '), ownWords) : submit(text.trim()))
   return (
     <OverlayCard
       kind={labels.question}
@@ -385,39 +403,60 @@ function QuestionCard({
           <button type="button" className="text-button" onClick={() => void submit('skipped')}>
             {labels.skip}
           </button>
-          <button
-            type="button"
-            className="prompt-continue"
-            disabled={!canContinue}
-            onClick={() => void submit(item.interactionType === 'choice' ? picked.join(', ') : text.trim())}
-          >
+          <button type="button" className="prompt-continue" disabled={!canContinue} onClick={send}>
             {labels.continueLabel}
           </button>
         </>
       }
     >
       {item.header && item.question !== item.header ? <p className="prompt-card-body">{item.question}</p> : null}
-      {item.interactionType === 'choice' && item.options ? (
-        <div className="prompt-options" role={item.multiSelect ? 'group' : 'radiogroup'}>
-          {item.options.map((option, index) => {
-            const letter = LETTERS[index] || String(index + 1)
-            const selected = picked.includes(option.label)
-            return (
-              <button
-                key={option.label}
-                type="button"
-                className={`prompt-option${selected ? ' is-on' : ''}`}
-                onClick={() => toggle(option.label)}
-              >
-                <span className="prompt-letter">{letter}</span>
-                <span>
-                  {option.label}
-                  {option.description ? <em>{option.description}</em> : null}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+      {choice ? (
+        <>
+          <div className="prompt-options" role={item.multiSelect ? 'group' : 'radiogroup'}>
+            {choice.map((option, index) => {
+              const letter = LETTERS[index] || String(index + 1)
+              const selected = picked.includes(option.label)
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  className={`prompt-option${selected ? ' is-on' : ''}`}
+                  onClick={() => toggle(option.label)}
+                >
+                  <span className="prompt-letter">{letter}</span>
+                  <span>
+                    {option.label}
+                    {option.description ? <em>{option.description}</em> : null}
+                  </span>
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              className={`prompt-option${own ? ' is-on' : ''}`}
+              onClick={toggleOwn}
+            >
+              <span className="prompt-letter">{LETTERS[choice.length] || String(choice.length + 1)}</span>
+              <span>{labels.ownAnswer}</span>
+            </button>
+          </div>
+          {own ? (
+            <input
+              className="prompt-input"
+              value={text}
+              aria-label={labels.ownAnswer}
+              onChange={(event) => setText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && canContinue) {
+                  event.preventDefault()
+                  send()
+                }
+              }}
+              placeholder={labels.yourAnswer}
+              autoFocus
+            />
+          ) : null}
+        </>
       ) : (
         <input
           className="prompt-input"

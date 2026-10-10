@@ -34,7 +34,9 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * </p>
  * <ul>
  * <li>{@code "text"} — Free text input. Returns the user's text.</li>
- * <li>{@code "choice"} — Option selection. Returns the selected option label(s).</li>
+ * <li>{@code "choice"} — Option selection. Returns the selected option label(s). The user can
+ * always answer in their own words as well, instead of an option or beside the options they
+ * picked; that text comes back marked as theirs, see {@link #answer(String, String)}.</li>
  * </ul>
  *
  * <p>
@@ -82,7 +84,11 @@ public class AskUserTool {
 	 * @return The user's response as a string.
 	 */
 	@ToolMethod(description = "Ask the user a question and wait for their response. "
-		+ "Use for clarifying ambiguous requests, presenting choices, or getting feedback on plans.",
+		+ "Use for clarifying ambiguous requests, presenting choices, or getting feedback on plans. "
+		+ "For a 'choice' question the user can always answer in their own words instead of picking "
+		+ "an option, or in addition to the options they picked; such an answer is marked as written "
+		+ "in the user's own words. Act on what the user wrote, even if it matches none of your "
+		+ "options.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		// The answer comes from the principal this run serves, and is meant to be acted on.
 		marking = AnswerMarking.NONE)
@@ -155,14 +161,17 @@ public class AskUserTool {
 					+ "Instead, write your final answer acknowledging the cancellation and ask "
 					+ "the user how they would like to proceed (without using the askUser tool).";
 			}
+			String ownWords = request.getOwnWords();
+			String answer = answer(response, ownWords);
 			InteractionRecorder.resolve(interactionId,
-				AgentExecutionStore.InteractionState.RESOLVED, response);
+				AgentExecutionStore.InteractionState.RESOLVED, answer);
 			// What the user answered is also the only thing that can agree to a memory being kept
 			// in this turn. Recorded here, where the question and the answer are both known, so
 			// that the remember tool asks a record built from what the user said rather than from
 			// what the model reports the user said. See MemoryConsent.
-			MemoryConsentBinding.recordAnswer(question, response);
-			return response;
+			MemoryConsentBinding.recordAnswer(question, isBlank(ownWords) ? response
+				: isBlank(response) ? ownWords : response + "\n" + ownWords);
+			return answer;
 		} catch (TimeoutException e) {
 			Logger.warn("User interaction timed out (id: " + request.getId() + ")", AskUserTool.class);
 			store.resolve(request.getId(), "timeout");
@@ -188,6 +197,38 @@ public class AskUserTool {
 		} finally {
 			cancelHook.close();
 		}
+	}
+
+	/**
+	 * What the model is told the user answered.
+	 *
+	 * <p>
+	 * The picked options as they are, which is what this tool always answered. Text the user wrote in
+	 * their own words is marked as such, so that the model cannot take it for one of the labels it
+	 * offered - and does not drop it for matching none of them.
+	 * </p>
+	 *
+	 * @param picked
+	 *        The response the user sent: the picked labels of a choice, or the text of a text
+	 *        question; may be empty when the user only wrote in their own words.
+	 * @param ownWords
+	 *        What the user wrote in their own words for a choice question, or <code>null</code>.
+	 */
+	static String answer(String picked, String ownWords) {
+		if (isBlank(ownWords)) {
+			return picked;
+		}
+		String written = ownWords.strip();
+		if (isBlank(picked)) {
+			return "The user picked none of the offered options and answered in their own words:\n"
+				+ written;
+		}
+		return "The user picked: " + picked + "\nIn addition, the user wrote in their own words:\n"
+			+ written;
+	}
+
+	private static boolean isBlank(String text) {
+		return text == null || text.isBlank();
 	}
 
 	/**

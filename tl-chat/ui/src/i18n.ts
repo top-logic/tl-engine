@@ -181,6 +181,8 @@ const EN = {
   skip: 'Skip',
   continueLabel: 'Continue',
   yourAnswer: 'Your answer',
+  /** The row under a choice question's options that lets the user answer in their own words (#679). */
+  ownAnswer: 'Own answer…',
   timeIsUp: 'Time is up',
   leftToAnswer: ' left to answer',
   collapse: (kind: string) => `Collapse ${kind}`,
@@ -433,6 +435,7 @@ const DE: Bundle = {
   skip: 'Überspringen',
   continueLabel: 'Weiter',
   yourAnswer: 'Deine Antwort',
+  ownAnswer: 'Eigene Antwort…',
   timeIsUp: 'Zeit abgelaufen',
   leftToAnswer: ' verbleiben zum Antworten',
   collapse: (kind: string) => `${kind} einklappen`,

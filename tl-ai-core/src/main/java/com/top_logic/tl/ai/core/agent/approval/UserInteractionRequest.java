@@ -27,6 +27,16 @@ public class UserInteractionRequest {
 	private final CompletableFuture<String> _future;
 
 	/**
+	 * What the user typed instead of, or beside, the offered options; see {@link #getOwnWords()}.
+	 *
+	 * <p>
+	 * Written by {@link UserInteractionStore#resolve(String, String, String)} before the future is
+	 * completed, so the thread that wakes up on the future reads it.
+	 * </p>
+	 */
+	private volatile String _ownWords;
+
+	/**
 	 * Creates a new {@link UserInteractionRequest}.
 	 *
 	 * @param id        Unique request identifier (e.g. {@code "interaction-1"}).
@@ -73,4 +83,18 @@ public class UserInteractionRequest {
 
 	/** The future the agent thread blocks on. */
 	public CompletableFuture<String> getFuture() { return _future; }
+
+	/**
+	 * For "choice": what the user wrote in their own words, instead of picking an option or beside
+	 * the options they picked; <code>null</code> if they wrote nothing.
+	 *
+	 * <p>
+	 * Kept apart from the response string the future completes with, so that the answer can say which
+	 * part the user picked and which part the user wrote - a typed text is not one of the labels.
+	 * </p>
+	 */
+	public String getOwnWords() { return _ownWords; }
+
+	/** @see #getOwnWords() */
+	void setOwnWords(String ownWords) { _ownWords = ownWords; }
 }

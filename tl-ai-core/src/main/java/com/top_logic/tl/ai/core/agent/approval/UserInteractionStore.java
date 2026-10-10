@@ -107,8 +107,30 @@ public class UserInteractionStore {
 	 * @param response  The user's response string.
 	 */
 	public void resolve(String requestId, String response) {
+		resolve(requestId, response, null);
+	}
+
+	/**
+	 * Resolves a pending interaction request with the options the user picked and what the user
+	 * wrote in their own words.
+	 *
+	 * <p>
+	 * For a choice question that the user answered outside its options, or beside them. An approval
+	 * has no own words, and they are ignored for one.
+	 * </p>
+	 *
+	 * @param requestId The ID of the {@link UserInteractionRequest} or {@link PendingApproval} to
+	 *                  resolve.
+	 * @param response  The user's response string: for a choice, the picked labels; may be empty
+	 *                  when the user only wrote in their own words.
+	 * @param ownWords  What the user typed, or <code>null</code>.
+	 *
+	 * @see UserInteractionRequest#getOwnWords()
+	 */
+	public void resolve(String requestId, String response, String ownWords) {
 		UserInteractionRequest request = _pending.remove(requestId);
 		if (request != null) {
+			request.setOwnWords(ownWords);
 			request.getFuture().complete(response);
 			return;
 		}

@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
 import { approvalOutcomeText, PromptStack } from './prompts'
 import { bundle, type Language } from './i18n'
-import type { ApprovalRequest } from './types'
+import type { ApprovalRequest, InteractionRequest } from './types'
 
 /** An approval request as the store builds one, with whatever the test is about overwritten. */
 function approval(over: Partial<ApprovalRequest> = {}): ApprovalRequest {
@@ -203,5 +203,119 @@ describe('a recorded approval', () => {
       expect(approvalOutcomeText('INTERRUPTED', labels)).toBe(labels.approvalOutcomeInterrupted)
       expect(approvalOutcomeText('INTERRUPTED', labels)).not.toBe(labels.waiting)
     }
+  })
+})
+
+/** A choice question as the store builds one. */
+function question(over: Partial<InteractionRequest> = {}): InteractionRequest {
+  return {
+    type: 'interaction_request',
+    id: 'q1',
+    requestId: 'interaction-1',
+    question: 'How often should the report run?',
+    header: 'Schedule',
+    answered: false,
+    timestamp: 0,
+    interactionType: 'choice',
+    options: [{ label: 'Monthly' }, { label: 'Quarterly' }],
+    ...over,
+  }
+}
+
+/**
+ * A choice question also takes an answer in the user's own words (#679).
+ *
+ * Options that do not fit used to leave only "skip". The typed text is sent beside the picked labels,
+ * never joined into them, so that the agent is told which part the user wrote.
+ */
+describe('the question card', () => {
+  const originalFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  /** Renders the card, answers it the way the test says, and returns what was sent to the server. */
+  async function answer(item: InteractionRequest, steps: (container: HTMLElement) => Promise<void>) {
+    const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response('{"status":"ok"}', { status: 200 }))
+    globalThis.fetch = fetch as unknown as typeof globalThis.fetch
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    root.render(
+      React.createElement(PromptStack, {
+        approvals: [],
+        questions: [item],
+        at: 'w1',
+        labels: bundle('de'),
+        dispatch: () => undefined,
+      }),
+    )
+    try {
+      await settle()
+      await steps(container)
+      const sent = fetch.mock.calls.find(([url]) => String(url).includes('/chat/respond'))
+      return sent ? JSON.parse(String(sent[1]?.body)) : null
+    } finally {
+      root.unmount()
+      container.remove()
+    }
+  }
+
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
+
+  function button(container: HTMLElement, text: string): HTMLButtonElement {
+    const found = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes(text))
+    if (!found) throw new Error(`No button "${text}".`)
+    return found
+  }
+
+  async function type(container: HTMLElement, text: string) {
+    const input = container.querySelector<HTMLInputElement>('.prompt-input')
+    if (!input) throw new Error('No text field.')
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    await settle()
+  }
+
+  it('offers an own answer and sends it apart from the options', async () => {
+    const body = await answer(question(), async (container) => {
+      expect(container.querySelector('.prompt-input')).toBeNull()
+      button(container, 'Eigene Antwort…').click()
+      await settle()
+      expect(button(container, 'Weiter').disabled).toBe(true)
+      await type(container, 'Alle zwei Wochen')
+      button(container, 'Weiter').click()
+      await settle()
+    })
+
+    expect(body).toEqual({ requestId: 'interaction-1', response: '', ownWords: 'Alle zwei Wochen' })
+  })
+
+  it('sends the own answer beside the options picked in a multi select', async () => {
+    const body = await answer(question({ multiSelect: true }), async (container) => {
+      button(container, 'Monthly').click()
+      button(container, 'Eigene Antwort…').click()
+      await settle()
+      await type(container, 'und im Dezember')
+      button(container, 'Weiter').click()
+      await settle()
+    })
+
+    expect(body).toEqual({ requestId: 'interaction-1', response: 'Monthly', ownWords: 'und im Dezember' })
+  })
+
+  it('drops the own answer when an option is picked in a single select', async () => {
+    const body = await answer(question(), async (container) => {
+      button(container, 'Eigene Antwort…').click()
+      await settle()
+      await type(container, 'verworfen')
+      button(container, 'Quarterly').click()
+      await settle()
+      expect(container.querySelector('.prompt-input')).toBeNull()
+      button(container, 'Weiter').click()
+      await settle()
+    })
+
+    expect(body).toEqual({ requestId: 'interaction-1', response: 'Quarterly' })
   })
 })

@@ -1431,53 +1431,52 @@ When a subagent finishes, its result is delivered to you automatically at the st
 					</skill>
 					<!--
 						Issue #667. The counterpart of /init in Claude Code: it writes the application
-						context - what the application is for, who works with it, its terms and rules -
-						as a Markdown document an administrator puts into a TextPromptContributor, so
-						every run of the chosen agents starts with it. It changes nothing in the
-						application: it carries no tool of its own, and the skills it loads only read
-						(TL_modelExploration) or keep Albert's own task list (TL_taskManagement).
+						context - what the application is for, who works with it, its terms and its rules -
+						and saves it, with the user's approval, as the ApplicationContext singleton that
+						ApplicationContextContributor puts into the system prompt of every agent a user talks
+						to. The only tool it brings that changes anything is that save; it reads the model
+						with TL_modelExploration. Albert's own write tools stay offered during the run, and
+						the approval every one of them needs is what stands between a run and a write.
 					-->
 					<skill name="TL_init"
-						description="Load when the user wants the application context written or revised - the document that tells the agents in their system prompt what this application is for, who works with it, its terms and its rules (like /init writing a CLAUDE.md). Analyzes the model, interviews the user, and returns the document for an administrator to install. Does NOT create or change the model, screens or data. Reads the model with TL_modelExploration; if that skill is not available to you, relay the reason loadSkill gives and stop - a context written without reading the model states guesses as facts."
+						description="Load when the user wants the application context written or revised - the document every agent is given in its system prompt: what this application is for, who works with it, its terms and its rules (like /init writing a CLAUDE.md). Analyzes the model, interviews the user, and saves the document with the user's approval. Does NOT create or change the model, screens or data. Reads the model with TL_modelExploration; if that skill is not available to you, relay the reason loadSkill gives and stop - a context written without reading the model states guesses as facts."
 					>
 						<content><![CDATA[# Writing the application context
 
 <goal>
-You write ONE Markdown document: the application context. An administrator installs it in a text prompt contributor, and from then on it is part of the system prompt of the agents they choose - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
+You write ONE Markdown document, the application context, and save it with `saveApplicationContext`. From then on every agent a user talks to is given it in its system prompt - in every run, for every user. It gives those agents what the model alone does not tell them: what the application is for, who works with it and on what, what the users' terms mean, and which rules hold.
 
-You change NOTHING in the application: no model element, no screen, no object. What you find wrong, you report; what you learn, goes into the document.
+Saving the context is the ONLY change you make. Do not change any model element, screen or object - not even to correct something you found wrong: you report it, and the user decides. What you learn goes into the document.
 </goal>
 
 <workflow>
-## 0. Organize yourself
+Work through the steps in one go. Do not create tasks for them.
 
-Load TL_taskManagement and create one task per phase below (1 to 5) before you start. This workflow is the exception to that skill's rule about two delegations: it is long, it waits for the user several times, and the user follows it in the progress panel. Work through the tasks as that skill says.
+## 1. Read the existing context
 
-## 1. Look for an existing context
-
-Your own system prompt may already contain an application context - a section describing this application that an administrator installed. If it does, you REVISE it: keep what is still true, correct what the model contradicts, add what is missing. Say at the start that you found one and are revising it.
+Call `readApplicationContext`. If there is one, you REVISE it: keep what is still true, correct what the model contradicts, add what is missing. Say at the start that you found one and are revising it.
 
 ## 2. Analyze the model
 
-Call `model-browser.outlineModel` once. Tell framework modules (`tl.*` and the engine's own) apart from the application's; the context is about the application's.
+Call `model-browser.outlineModel` once; it lists the application's own modules, which is what the context is about.
 
-The outline shows that an attribute is derived, not how. Load TL_modelExploration and look closer at the application's modules:
+The outline shows that an attribute is derived, not how. Load TL_modelExploration and look closer:
 
-- For every derived attribute, read its calculation rule: `getCurrentAnnotations("module:Type#attribute", includeInherited=true)` - the expression is the `expr` of its `storage-algorithm`. Quote it verbatim; never paraphrase a rule you have not read.
+- For every derived attribute, read its calculation rule: `getCurrentAnnotations("module:Type#attribute", includeInherited=true)` - the expression is the `expr` of its `storage-algorithm`. Read it to understand what the value MEANS; never describe a rule you have not read.
 - Use `listTypeParts` and `listClassifiers` where the outline leaves out what you need: inherited parts, the values of an enumeration.
 - Compare what each type and attribute SAYS - its label and description - with what it DOES: a rule that computes something else than its description promises, a description naming values its enumeration does not have, an attribute described as required that is not mandatory, two types described as the same concept.
 
 Analyze the MODEL only. Do not query or list the application's objects: the context describes what the application is, not what is in it today.
 
-Report what you found to the user: the modules and their main types in a few lines, then every discrepancy as one item - the element (`module:Type#attribute`), what its description says, what the implementation does, and the quoted expression where there is one. Do not fix them. They are defects of the model, not knowledge for the agents, so they do NOT go into the document; say that each can be corrected as a change of its own.
+Report what you found to the user in a few lines: the modules and their main types, then every discrepancy as one item - the element (`module:Type#attribute`), what its description says, what the implementation does, and the expression where there is one. Do not fix them. They are defects of the model, not knowledge for the agents, so they do NOT go into the document; say that each can be corrected as a change of its own. Then go straight on with the interview.
 
 ## 3. Interview
 
-Ask with `askUser`, one question per call, at most five calls. Skip a question the existing context or the user already answered, and put what you learned from the model into the question rather than asking for it ("I see projects with tickets and a status workflow - what is the application used for?").
+Ask with `askUser`, one question per call, at most five calls, in the user's language. Skip a question the existing context or the user already answered, and put what you learned from the model into the question rather than asking for it ("I see projects with tickets and a status workflow - what is the application used for?").
 
 1. What the application is for.
 2. Who works with it, and on what: the groups of users, their tasks, what each of them typically asks.
-3. The terms the people working with it use: in-house names, abbreviations, words that mean something specific here - and what each one means (`type="text"`).
+3. The terms the people working with it use: in-house names, abbreviations, words that mean something specific here - and what each one means.
 4. Rules and procedures an agent must respect: who may decide what, what has to happen in which order, what must never be done.
 5. What the agents should take particular care of, or avoid.
 
@@ -1501,39 +1500,29 @@ Write the document in the language of the user you are working with, in these se
 [The main types in business language with their qualified names, and how they belong together.]
 
 ## Calculated values
-- `module:Type#attribute`: [what it means], computed as `[the expression, verbatim]`
+- `module:Type#attribute`: [what the value means and what it is used for, in one sentence]
 
 ## Rules
 - [A rule or procedure an agent must respect.]
 ```
 
-Keep it short - every run of every chosen agent pays for it. State what the model does NOT say: purpose, users, meaning, rules. Do not repeat the structure `outlineModel` returns anyway; name a model element only to tie a term or a rule to it. Write statements, not guesses: what neither the model nor the user told you does not go in.
+Keep it short - every run of every agent pays for it, and it may not exceed 8000 characters; aim for well under half of that. State what the model does NOT say: purpose, users, meaning, rules. Do not repeat the structure `outlineModel` returns anyway; name a model element only to tie a term or a rule to it. For a calculated value write what it MEANS, not its expression: an agent that needs the expression reads it with `getCurrentAnnotations`. Write statements, not guesses: what neither the model nor the user told you does not go in.
 
-Show the complete document in ONE fenced code block, then ask with `askUser(type="choice", options=["Done", "Revise"])`. On "Revise", ask what to change, change it, and show the whole document again.
+Show the complete document in ONE fenced code block, then ask with `askUser(type="choice")` whether to save it, with two options in the user's language - one meaning "save", one meaning "change something". If the user answers with anything but "save" - the other option, or a change in their own words - make the change and show the whole document again.
 
-## 5. Hand it over
+## 5. Save it
 
-You cannot install the document yourself. End with the final document in one fenced code block and these steps for an administrator. Name every screen element by the label the administrator SEES, in the language you answer in - the labels below, German where you answer in German, English otherwise - and add the English label in brackets after a German one, so the step can also be followed in an English session:
+Call `saveApplicationContext` with the complete document. The user approves the save and sees the text while doing so.
 
-| Element | English | German |
-|---|---|---|
-| main tab | Administration | Administration |
-| sub tab | Development | Development |
-| editor | Service Editor | Service Editor |
-| service | LLM service | LLM-Dienst |
-| list on the service | Prompt contributors | Prompt-Beiträge |
-| entry type | Text prompt contributor | Text für den System-Prompt |
-| field | Text | Text |
-| field | Agents | Agenten |
-| commands | Save, Restart | Speichern, Neu starten |
-
-1. Open Administration > Development > Service Editor and choose the LLM service.
-2. Under Prompt contributors, add a Text prompt contributor - or, when revising, open the one that holds the current context.
-3. Paste the document into Text, in the field for the language it is written in.
-4. Choose under Agents the agents that get it. Agents that work with the application's data need it; one that only rewrites a draft does not, and would pay for it in every run.
-5. Save, then Restart the service. The context applies from the next message on, also in conversations that are already open.
+- Saved: tell the user in two sentences that every agent is given the context from the next message on, also in open conversations, and that an administrator can read and edit it under Administration > Development > Agent Editor, tab "Application context" (German: "Anwendungskontext").
+- Refused because the account may not change it: give the final document in one fenced code block and say that an administrator can save it on that tab.
+- The user declined the approval: ask what to change, and continue with step 4.
 </workflow>
 ]]></content>
+						<tools>
+							<tool name="application-context.readApplicationContext"/>
+							<tool name="application-context.saveApplicationContext"/>
+						</tools>
 					</skill>
 				</skills>
 				<agents>
@@ -2664,6 +2653,16 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="user-memory">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.memory.UserMemoryTool"
+						/>
+					</factory>
+					<!--
+						readApplicationContext / saveApplicationContext (Issue #667): the tools of TL_init.
+						The text they read and write is what ApplicationContextContributor puts into the
+						system prompt of every agent a user talks to.
+					-->
+					<factory name="application-context">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.context.ApplicationContextTool"
 						/>
 					</factory>
 					<factory name="cite">

@@ -24,6 +24,7 @@
 			<instance>
 				<declarations>
 					<declaration file="/WEB-INF/model/pm.model.xml"/>
+					<declaration file="/WEB-INF/model/initfixture.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

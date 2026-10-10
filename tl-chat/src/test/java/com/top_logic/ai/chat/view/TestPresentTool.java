@@ -94,6 +94,13 @@ public class TestPresentTool extends BasicTestCase {
 
 	private List<Object> _written;
 
+	/**
+	 * The window of this test, kept strongly: {@link AgentViewRefreshService} holds a registered
+	 * registry through a {@code WeakReference} only, so a garbage collection during a test would
+	 * drop it and a later call would be answered with "no page is attached".
+	 */
+	private ReactWindowRegistry _window;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -115,6 +122,7 @@ public class TestPresentTool extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
+		_window = null;
 		super.tearDown();
 	}
 
@@ -504,7 +512,8 @@ public class TestPresentTool extends BasicTestCase {
 
 	/** Registers the window the run belongs to, as a rendering chat element does. */
 	private void withWindow() {
-		AgentViewRefreshService.registerWindow(subSession(), windowName(), new ReactWindowRegistry("test-session"));
+		_window = new ReactWindowRegistry("test-session");
+		AgentViewRefreshService.registerWindow(subSession(), windowName(), _window);
 	}
 
 	/** Opens the fixture's channel to the agent, as {@code <chat-conversation present="…">} does. */

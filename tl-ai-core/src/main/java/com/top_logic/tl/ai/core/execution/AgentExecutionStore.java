@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -754,9 +755,35 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {
+		updateMetadata(session, stored -> metadataJson);
+	}
+
+	/**
+	 * Changes the session metadata bag in one step: reads the stored bag and stores what
+	 * {@code change} makes of it, in one transaction on the writer thread.
+	 *
+	 * <p>
+	 * For a caller that keeps part of the stored bag - a value that only one action may change, while
+	 * every window writes the rest of the bag whole. A read on the caller's thread and a later
+	 * {@link #saveMetadata(AgentSession, String) save} could lose a change committed in between; this
+	 * cannot, because the writer thread commits one write after the other.
+	 * </p>
+	 *
+	 * <p>
+	 * Leaves {@link AgentSession#getLastUpdated()} alone, as {@link #saveMetadata(AgentSession, String)}
+	 * does.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session whose bag changes.
+	 * @param change
+	 *        Receives the stored bag ({@code null} when none was stored yet) and returns the bag to
+	 *        store. Runs on the writer thread and must not wait for anything.
+	 */
+	public void updateMetadata(AgentSession session, UnaryOperator<String> change) {
 		notifyChanged(write(() -> {
 			try (Transaction tx = beginTx("Save agent session metadata")) {
-				session.setMetadata(metadataJson);
+				session.setMetadata(change.apply(session.getMetadata()));
 				tx.commit();
 			}
 			return session.getOwner();

@@ -2718,3 +2718,70 @@ describe('choosing a chat while another one loads', () => {
     release()
   })
 })
+
+/**
+ * The auto-approve switch is a setting of the chat (#658): the server stores it with the chat the
+ * switch names, and the switch shows what the server runs the opened chat with.
+ */
+describe('the auto-approve switch', () => {
+  /** The body of every `POST /chat/approval-mode`, in order. */
+  let modeBodies: Record<string, unknown>[]
+  /** What `GET /chat/sessions/{id}` says about the chat's mode. */
+  let storedMode: string
+
+  beforeEach(() => {
+    modeBodies = []
+    storedMode = 'AUTO_APPROVE'
+    const globals = globalThis as unknown as Record<string, unknown>
+    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      if (url.includes('/chat/approval-mode')) {
+        modeBodies.push(JSON.parse(init?.body ?? '{}'))
+        return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
+      }
+      if (/\/chat\/sessions\/[^/?]/.test(url)) {
+        return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '', approvalMode: storedMode }) }
+      }
+      return inner(url, init)
+    })
+  })
+
+  it('shows the mode the opened chat is run with, not the one the page loaded with', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    expect(store.getState().autoApprove).toBe(false)
+
+    await store.actions.selectSession('s1')
+
+    expect(store.getState().autoApprove).toBe(true)
+    release()
+  })
+
+  it('names the open chat, so the server stores the mode with it', async () => {
+    storedMode = 'MANUAL'
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+
+    await store.actions.toggleAutoApprove()
+
+    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE', sessionId: 's1' }])
+    release()
+  })
+
+  it('names no chat for a conversation that has none yet', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.toggleAutoApprove()
+
+    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE' }])
+    release()
+  })
+})

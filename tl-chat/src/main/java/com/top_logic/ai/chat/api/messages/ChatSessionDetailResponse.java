@@ -42,6 +42,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getLastEffort() */
 	public static final String LAST_EFFORT__PROP = "lastEffort";
 
+	/** @see #getApprovalMode() */
+	public static final String APPROVAL_MODE__PROP = "approvalMode";
+
 	/** @see #getLastComposition() */
 	public static final String LAST_COMPOSITION__PROP = "lastComposition";
 
@@ -65,6 +68,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> _feedback = new java.util.ArrayList<>();
 
 	private String _lastEffort = "";
+
+	private String _approvalMode = "";
 
 	private com.top_logic.ai.chat.api.messages.ContextCompositionEvent _lastComposition = null;
 
@@ -299,6 +304,28 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	}
 
 	/**
+	 * Whether this chat approves tools by itself: <code>AUTO_APPROVE</code> or <code>MANUAL</code>,
+	 * as the server now holds it for the window that loaded the chat. The chat's switch shows
+	 * this, so it never claims a mode the runs of this chat do not have (#658).
+	 */
+	public final String getApprovalMode() {
+		return _approvalMode;
+	}
+
+	/**
+	 * @see #getApprovalMode()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setApprovalMode(String value) {
+		internalSetApprovalMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getApprovalMode()} without chain call utility. */
+	protected final void internalSetApprovalMode(String value) {
+		_approvalMode = value;
+	}
+
+	/**
 	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
 	 * breakdown a live one does. Absent for a session whose transcript predates the field.
 	 */
@@ -371,6 +398,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			LAST_MODEL__PROP, 
 			FEEDBACK__PROP, 
 			LAST_EFFORT__PROP, 
+			APPROVAL_MODE__PROP, 
 			LAST_COMPOSITION__PROP, 
 			IN_FLIGHT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -406,6 +434,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_MODEL__PROP: return getLastModel();
 			case FEEDBACK__PROP: return getFeedback();
 			case LAST_EFFORT__PROP: return getLastEffort();
+			case APPROVAL_MODE__PROP: return getApprovalMode();
 			case LAST_COMPOSITION__PROP: return getLastComposition();
 			case IN_FLIGHT__PROP: return getInFlight();
 			default: return null;
@@ -424,6 +453,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
 			case FEEDBACK__PROP: internalSetFeedback(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.class, value)); break;
 			case LAST_EFFORT__PROP: internalSetLastEffort((String) value); break;
+			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 			case LAST_COMPOSITION__PROP: internalSetLastComposition((com.top_logic.ai.chat.api.messages.ContextCompositionEvent) value); break;
 			case IN_FLIGHT__PROP: internalSetInFlight((com.top_logic.ai.chat.api.messages.InFlightRunDto) value); break;
 		}
@@ -468,6 +498,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		out.endArray();
 		out.name(LAST_EFFORT__PROP);
 		out.value(getLastEffort());
+		out.name(APPROVAL_MODE__PROP);
+		out.value(getApprovalMode());
 		if (hasLastComposition()) {
 			out.name(LAST_COMPOSITION__PROP);
 			getLastComposition().writeTo(out);
@@ -499,6 +531,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			}
 			break;
 			case LAST_EFFORT__PROP: setLastEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LAST_COMPOSITION__PROP: setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent.readContextCompositionEvent(in)); break;
 			case IN_FLIGHT__PROP: setInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto.readInFlightRunDto(in)); break;
 			default: super.readField(in, field);

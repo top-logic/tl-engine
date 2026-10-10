@@ -162,6 +162,8 @@ export interface SessionDetail {
   /** Answer ratings recorded in this session, so a reopened chat shows them again. */
   feedback?: MessageFeedback[]
   lastEffort?: string
+  /** The chat's approval mode as the server holds it; the auto-approve switch shows this. */
+  approvalMode?: 'AUTO_APPROVE' | 'MANUAL' | ''
   /** What the last request's prompt was made of, so the popover keeps its breakdown after a reload. */
   lastComposition?: ContextComposition
   /**
@@ -405,15 +407,21 @@ export async function improvePrompt(
   )
 }
 
+/**
+ * Turns "auto-approve" on or off. The mode is a setting of the chat: with a `sessionId` the server
+ * stores it with that chat at once and tells the account's other windows showing it (#658). A
+ * conversation that has no chat yet sends none, and its first send stores the mode with the chat.
+ */
 export async function setApprovalMode(
   at: ChatAddress,
   mode: 'AUTO_APPROVE' | 'MANUAL',
+  sessionId: string | null,
 ): Promise<void> {
   const res = await chatFetch(withWindow('/chat/approval-mode', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ mode }),
+    body: JSON.stringify(sessionId ? { mode, sessionId } : { mode }),
   })
   if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
 }

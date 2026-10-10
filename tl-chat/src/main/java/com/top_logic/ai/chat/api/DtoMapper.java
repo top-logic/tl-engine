@@ -311,6 +311,74 @@ public final class DtoMapper {
 	}
 
 	/**
+	 * The metadata a window stores for its tracker: its own bag, but with the approval mode the
+	 * stored bag holds.
+	 *
+	 * <p>
+	 * Every window writes the whole bag from its tracker - when a turn ends, when it moves to
+	 * another chat, when an answer is rated. The approval mode is the one value only the switch may
+	 * change: a window that opened the chat before the switch was turned off still holds the old
+	 * mode, and writing its bag must not turn auto-approve back on (#658). Only a chat that has no
+	 * stored mode yet - one whose first turn is being saved - takes the tracker's.
+	 * </p>
+	 *
+	 * @param stored
+	 *        The stored metadata JSON; {@code null} or empty when nothing was stored yet.
+	 * @param fresh
+	 *        The JSON {@link #serializeMetadata(TaskProgressTracker)} made of the tracker.
+	 * @return The JSON to store.
+	 */
+	public static String keepStoredApprovalMode(String stored, String fresh) {
+		String mode = storedApprovalMode(stored);
+		if (mode == null || fresh == null) {
+			return fresh;
+		}
+		try {
+			SessionMetadata meta = SessionMetadata.readSessionMetadata(new JsonReader(new StringR(fresh)));
+			return toJson(meta.setApprovalMode(mode));
+		} catch (IOException | RuntimeException ex) {
+			return fresh;
+		}
+	}
+
+	/**
+	 * The stored metadata with the given approval mode, everything else left as stored.
+	 *
+	 * @param stored
+	 *        The stored metadata JSON; {@code null} or empty when nothing was stored yet.
+	 * @param mode
+	 *        The mode the user switched the chat to.
+	 * @return The JSON to store.
+	 */
+	public static String withApprovalMode(String stored, ApprovalMode mode) {
+		SessionMetadata meta = null;
+		if (stored != null && !stored.isEmpty()) {
+			try {
+				meta = SessionMetadata.readSessionMetadata(new JsonReader(new StringR(stored)));
+			} catch (IOException | RuntimeException ex) {
+				// Corrupted metadata: the mode is still stored, in a bag of its own.
+			}
+		}
+		if (meta == null) {
+			meta = SessionMetadata.create();
+		}
+		return toJson(meta.setApprovalMode(mode.name()));
+	}
+
+	/** The approval mode the given metadata JSON stores, or {@code null} when it stores none. */
+	private static String storedApprovalMode(String json) {
+		if (json == null || json.isEmpty()) {
+			return null;
+		}
+		try {
+			String mode = SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json))).getApprovalMode();
+			return mode == null || mode.isEmpty() ? null : mode;
+		} catch (IOException | RuntimeException ex) {
+			return null;
+		}
+	}
+
+	/**
 	 * Loads session metadata from JSON into the tracker, restoring approved tools and cumulative
 	 * token usage.
 	 *

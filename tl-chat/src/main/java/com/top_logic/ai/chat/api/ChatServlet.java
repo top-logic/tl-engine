@@ -89,6 +89,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
@@ -1118,14 +1119,34 @@ public class ChatServlet extends TopLogicServlet {
 		}
 	}
 
+	/**
+	 * POST /chat/approval-mode - turns "auto-approve" on or off for one conversation.
+	 *
+	 * <p>
+	 * The switch is a setting of the conversation, and turning it off is how a user has every write
+	 * confirmed again. So the body names the chat ({@code sessionId}), and the mode is stored in that
+	 * chat's metadata at once - not only on this window's tracker, from where it reached the
+	 * database only with the next turn and was read back as the mode of the last turn by every
+	 * window that opened the chat in the meantime (#658). The account's other windows showing the
+	 * chat are told the new mode and read the chat's metadata afresh with their next request, so
+	 * none of them writes its older mode back.
+	 * </p>
+	 *
+	 * <p>
+	 * A body without {@code sessionId} sets the mode of a conversation that has no chat yet; the
+	 * first send stores it with the chat it creates.
+	 * </p>
+	 */
 	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
 		String mode = null;
+		String requestedSession = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
 			mode = (String) parsed.get("mode");
+			requestedSession = blankToNull((String) parsed.get("sessionId"));
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
 			return;
@@ -1136,16 +1157,43 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		com.top_logic.tl.ai.core.agent.approval.ApprovalMode approvalMode;
+		ApprovalMode approvalMode;
 		try {
-			approvalMode = com.top_logic.tl.ai.core.agent.approval.ApprovalMode.valueOf(mode);
+			approvalMode = ApprovalMode.valueOf(mode);
 		} catch (IllegalArgumentException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode: " + mode);
 			return;
 		}
 
 		TaskProgressTracker tracker = currentTracker();
-		tracker.setApprovalMode(approvalMode);
+		if (requestedSession == null) {
+			tracker.setApprovalMode(approvalMode);
+		} else {
+			String sessionId = ownedSessionId(req, resp, requestedSession);
+			if (sessionId == null) {
+				return;
+			}
+			Person person = resolveCurrentPerson(req);
+			tracker.setActiveSessionId(sessionId, person);
+			tracker.setApprovalMode(approvalMode);
+			// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
+			// stored mode, so that no window writes back the one it opened the chat with.
+			ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
+				stored -> DtoMapper.withApprovalMode(stored, approvalMode));
+			for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
+				TaskProgressTracker window = other.getTracker();
+				if (window == tracker) {
+					continue;
+				}
+				window.getSessionManager().markChangedElsewhere(sessionId);
+				try {
+					other.sendApprovalMode(approvalMode);
+				} catch (RuntimeException ex) {
+					Logger.info("Could not tell a window that the approval mode of chat " + sessionId
+						+ " changed: " + ex.getMessage(), ChatServlet.class);
+				}
+			}
+		}
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -1628,8 +1676,8 @@ public class ChatServlet extends TopLogicServlet {
 				describeLastPrompt(response, conv.getTurns());
 			}
 
-			// The ratings and the effort come from the session's metadata bag, which the switch
-			// above has just loaded onto the tracker.
+			// The ratings, the effort and the approval mode come from the session's metadata bag,
+			// which the switch above has just loaded onto the tracker.
 			if (tracker != null) {
 				for (MessageFeedbackDto entry : tracker.getFeedback()) {
 					response.addFeedback(entry);
@@ -1638,6 +1686,7 @@ public class ChatServlet extends TopLogicServlet {
 				if (effort != null) {
 					response.setLastEffort(effort);
 				}
+				response.setApprovalMode(tracker.getApprovalMode().name());
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));

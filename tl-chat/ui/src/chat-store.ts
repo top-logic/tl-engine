@@ -2126,6 +2126,9 @@ export class ChatStore {
           messages: turnsJsonToMessages(detail.turnsJson),
           feedback: detail.feedback ?? [],
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
+          // The switch shows the mode the server now runs this chat with, not the one the
+          // previous chat or the page load left behind (#658).
+          ...(detail.approvalMode ? { autoApprove: detail.approvalMode === 'AUTO_APPROVE' } : {}),
         })
         this.joinRun(detail.inFlight)
         // A re-opened session shows what its last request really cost, not a fresh estimate.
@@ -2427,7 +2430,7 @@ export class ChatStore {
         const next = !this.state.autoApprove
         this.patch({ autoApprove: next })
         try {
-          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL')
+          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
         } catch {
           this.patch({ autoApprove: !next })
           return

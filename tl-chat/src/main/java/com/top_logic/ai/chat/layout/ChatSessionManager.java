@@ -701,8 +701,10 @@ public class ChatSessionManager {
 		}
 		try {
 			TLObject session = ChatHistoryService.findOwnedSessionById(job.sessionId(), job.owner());
-			if (session != null) {
-				ChatHistoryService.saveMetadata(session, job.metadataJson());
+			if (session != null && job.metadataJson() != null) {
+				// The approval mode is the one value the switch alone writes (#658).
+				ChatHistoryService.updateMetadata(session,
+					stored -> DtoMapper.keepStoredApprovalMode(stored, job.metadataJson()));
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + job.sessionId() + ": " + ex.getMessage(), ex,

@@ -651,6 +651,33 @@ describe('the stream', () => {
     release()
   })
 
+  /*
+   * A synchronous delegation's steps go to its card at the lead's delegate_to_* call; the lead's
+   * transcript keeps only the lead's own steps (#703).
+   */
+  it('keeps a synchronous delegation\'s steps out of the lead\'s transcript', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const before = store.getState().messages.length
+
+    const frame = (eventType: string, data: unknown) =>
+      stream.emit('delegation_event', { subagentId: '', delegationToolCallId: 'call-d', eventType, eventData: JSON.stringify(data) })
+    frame('tool_started', { toolCallId: 't1', toolName: 'webSearch', argsJson: '{"q":"X"}' })
+    frame('tool_completed', { toolCallId: 't1', toolName: 'webSearch', result: 'r', durationMs: 5 })
+    frame('run_completed', { runId: 'child', reason: 'COMPLETE' })
+
+    expect(store.getState().messages).toHaveLength(before)
+    const live = store.getState().delegationLive['call-d']
+    expect(live.steps).toEqual([{ toolUseId: 't1', name: 'webSearch', summary: '{"q":"X"}', status: 'done' }])
+    expect(live.ended).toBe('DONE')
+
+    await settle()
+    release()
+  })
+
   /* A subagent beyond the cap waits; its card says so until its first own step arrives. */
   it('shows a queued subagent as waiting until it starts', async () => {
     const store = chatStore('alpha', BOOT)

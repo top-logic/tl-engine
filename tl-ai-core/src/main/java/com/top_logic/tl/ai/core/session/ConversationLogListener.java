@@ -756,8 +756,13 @@ public class ConversationLogListener implements AgentEventListener {
 
 	/**
 	 * Record the start of a delegation. Returns the delegation part ID.
+	 *
+	 * @param parentToolCallId
+	 *        The id of the lead's {@code delegate_to_*} call, where the chat draws the delegation's
+	 *        card; may be <code>null</code>.
 	 */
-	public String recordDelegationStarted(String fromAgent, String toAgent, String inputSummary) {
+	public String recordDelegationStarted(String fromAgent, String toAgent, String inputSummary,
+			String parentToolCallId) {
 		Turn turn = _log.currentTurn();
 		if (turn == null) {
 			return null;
@@ -765,7 +770,8 @@ public class ConversationLogListener implements AgentEventListener {
 		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
 		String id = "delegation-" + UUID.randomUUID().toString().substring(0, 8);
-		Part.DelegationPart part = Part.DelegationPart.started(id, Instant.now(), fromAgent, toAgent, inputSummary);
+		Part.DelegationPart part =
+			Part.DelegationPart.started(id, Instant.now(), fromAgent, toAgent, inputSummary, parentToolCallId);
 		turn.addAssistantPart(part);
 		_activeDelegations.put(id, part);
 		return id;

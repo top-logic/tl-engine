@@ -242,6 +242,7 @@ export type ChatMessage =
   | InteractionRequest
   | RunMeta
   | SubagentRef
+  | DelegationRef
 
 export interface AgentOption {
   /** The identifier: what a request names and what a persisted session holds. */
@@ -364,6 +365,8 @@ export interface SubagentLive {
   startedAt: number
   /** What the user wrote to it from its card, oldest first; absent while nothing. */
   notes?: SubagentNote[]
+  /** For a synchronous delegation: how its run ended, once it has; its own end frame says so. */
+  ended?: SubagentStatus
 }
 
 /** One message the user wrote to a subagent from its card, with its receipt. */
@@ -391,6 +394,30 @@ export interface SubagentRef {
   childRunId: string
   status: SubagentStatus
   summary: string
+  timestamp: number
+}
+
+/**
+ * A synchronous delegation a turn made (`delegate_to_*`), as the lead's recorded log keeps it
+ * (`Part.DelegationPart`): the lead waited for it, so its steps are in the part itself.
+ *
+ * What draws the delegation's card at its call after a reload.
+ */
+export interface DelegationRef {
+  type: 'delegation_ref'
+  id: string
+  agentName: string
+  task: string
+  /** The lead's `delegate_to_*` call; empty for a log written before the card was drawn. */
+  parentToolCallId: string
+  /** Its run id, by which its recorded transcript is found; empty while unknown. */
+  childRunId: string
+  status: SubagentStatus
+  summary: string
+  steps: SubagentStep[]
+  durationMs: number
+  totalTokens: number
+  turns: number
   timestamp: number
 }
 

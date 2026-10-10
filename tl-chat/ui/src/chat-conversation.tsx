@@ -633,6 +633,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           openInPane={actions.openPane}
           subagents={chat.subagents}
           subagentLive={chat.subagentLive}
+          delegationLive={chat.delegationLive}
           onLoadSubagentTranscript={actions.loadSubagentTranscript}
           onSendSubagentMessage={actions.messageSubagent}
           headerEnd={

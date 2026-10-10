@@ -4,6 +4,7 @@ import {
   autoTitle,
   cancelRun,
   cancelSubagent,
+  delegationEnd,
   sendSubagentMessage,
   type SubagentMessageStatus,
   createSession,
@@ -468,6 +469,11 @@ export interface ChatState {
   subagents: SubagentActivity[]
   /** What each running subagent has done so far, by subagent id - what its card shows live. */
   subagentLive: Record<string, SubagentLive>
+  /**
+   * What each synchronous delegation has done so far, by the lead's `delegate_to_*` call - what its
+   * card shows live.
+   */
+  delegationLive: Record<string, SubagentLive>
   tasks: AgentTask[]
   connection: ConnectionState
   notice: string
@@ -996,6 +1002,7 @@ export class ChatStore {
       regenerating: false,
       subagents: [],
       subagentLive: {},
+      delegationLive: {},
       tasks: [],
       connection: 'connecting',
       notice: '',
@@ -1560,7 +1567,12 @@ export class ChatStore {
         })
       })
       on('delegation_event', (e) => {
-        const wrap = parseJson<{ eventType?: string; eventData?: string; subagentId?: string }>(e.data, {})
+        const wrap = parseJson<{
+          eventType?: string
+          eventData?: string
+          subagentId?: string
+          delegationToolCallId?: string
+        }>(e.data, {})
         // A background subagent's own steps go to its card, never into the lead's transcript: mixed
         // into it they were drawn flat, nameless, and among the steps of every other child.
         // Its approvals still reach the prompt stack below, where the user answers them.
@@ -1576,66 +1588,32 @@ export class ChatStore {
           }
           return
         }
+        // A synchronous delegation's steps go to its card at the lead's delegate_to_* call, never into
+        // the lead's transcript: drawn there they were counted as the lead's own steps (#703).
+        const prompt = wrap.eventType === 'approval_required' || wrap.eventType === 'approval_resolved'
+        if (!wrap.subagentId && wrap.delegationToolCallId && !prompt) {
+          const call = wrap.delegationToolCallId
+          const eventData = parseJson<Parameters<typeof applyChildEvent>[2] & { reason?: string }>(
+            wrap.eventData ?? '',
+            {},
+          )
+          let live = applyChildEvent(this.state.delegationLive[call], wrap.eventType ?? '', eventData)
+          if (wrap.eventType === 'run_completed') live = { ...live, ended: delegationEnd(eventData.reason) }
+          if (live !== this.state.delegationLive[call]) {
+            this.patch({ delegationLive: { ...this.state.delegationLive, [call]: live } })
+          }
+          return
+        }
         const data = parseJson<{
           toolCallId?: string
           toolName?: string
           argsJson?: string
-          result?: string
-          errorMessage?: string
-          durationMs?: number
-          reason?: string
           approvalRequestId?: string
           displayReason?: string
           toolMode?: string
           remainingMs?: number
         }>(wrap.eventData ?? '', {})
         switch (wrap.eventType) {
-          case 'tool_started': {
-            if (!data.toolCallId) break
-            this.dispatch({
-              type: 'ADD_TOOL',
-              toolUseId: data.toolCallId,
-              name: data.toolName ?? 'tool',
-              input: parseToolInput(data.argsJson),
-              depth: 1,
-            })
-            break
-          }
-          case 'tool_completed':
-            if (!data.toolCallId) break
-            this.dispatch({
-              type: 'UPDATE_TOOL',
-              toolUseId: data.toolCallId,
-              status: 'done',
-              durationMs: data.durationMs,
-            })
-            this.dispatch({ type: 'ADD_TOOL_RESULT', toolUseId: data.toolCallId, output: data.result ?? '' })
-            break
-          case 'tool_failed':
-            if (!data.toolCallId) break
-            this.dispatch({
-              type: 'UPDATE_TOOL',
-              toolUseId: data.toolCallId,
-              status: 'error',
-              durationMs: data.durationMs,
-            })
-            this.dispatch({
-              type: 'ADD_TOOL_RESULT',
-              toolUseId: data.toolCallId,
-              output: data.errorMessage ?? 'failed',
-              isError: true,
-            })
-            break
-          case 'tool_denied':
-            if (!data.toolCallId) break
-            this.dispatch({ type: 'UPDATE_TOOL', toolUseId: data.toolCallId, status: 'error' })
-            this.dispatch({
-              type: 'ADD_TOOL_RESULT',
-              toolUseId: data.toolCallId,
-              output: data.reason ?? 'denied',
-              isError: true,
-            })
-            break
           case 'approval_required':
             if (!data.approvalRequestId) break
             if (this.state.autoApprove) {
@@ -2100,6 +2078,7 @@ export class ChatStore {
           busy: false,
           subagents: [],
       subagentLive: {},
+      delegationLive: {},
           tasks: [],
           feedback: [],
           notice: '',
@@ -2163,6 +2142,7 @@ export class ChatStore {
           sessionId: null,
           subagents: [],
       subagentLive: {},
+      delegationLive: {},
           tasks: [],
           feedback: [],
           notice: '',
@@ -2181,6 +2161,7 @@ export class ChatStore {
             sessionId: null,
             subagents: [],
       subagentLive: {},
+      delegationLive: {},
             tasks: [],
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })

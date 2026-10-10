@@ -299,3 +299,73 @@ describe('the receipt of a message', () => {
     expect(messages).toContainEqual(expect.objectContaining({ type: 'user', text: 'Only 2026.\n\nAnd by venue.' }))
   })
 })
+
+describe('a synchronous delegation', () => {
+  function delegateCall(status: 'running' | 'done' = 'running'): ChatMessage {
+    return {
+      type: 'tool_call', id: 'd-call', toolUseId: 'call-d', name: 'delegate_to_researcher',
+      input: { task: 'find X' }, status, depth: 0, timestamp: 0,
+    }
+  }
+
+  /* Live: its steps stand on its own card at the delegate_to_* call, not among the lead's steps. */
+  it('gets a card at its call from what the window saw live', () => {
+    let live = applyChildEvent(undefined, 'tool_started', { toolCallId: 't1', toolName: 'webSearch', argsJson: '{"q":"X"}' })
+    live = applyChildEvent(live, 'text_delta', { text: 'X is 42.' })
+
+    const running = cardsForTurn([delegateCall()], [], {}, new Set(), { 'call-d': live })
+    expect(running).toHaveLength(1)
+    expect(running[0]).toMatchObject({ kind: 'delegation', agentName: 'researcher', task: 'find X', status: 'RUNNING', parentToolCallId: 'call-d' })
+    expect(running[0].live?.steps.map((step) => step.name)).toEqual(['webSearch'])
+
+    const ended = cardsForTurn([delegateCall('done')], [], {}, new Set(), { 'call-d': { ...live, ended: 'DONE' } })
+    expect(ended[0]).toMatchObject({ status: 'DONE', summary: 'X is 42.' })
+  })
+
+  /* After a reload: the recorded part gives the card, its steps and how it ended. */
+  it('is rebuilt from its recorded part, with its steps', () => {
+    const messages = turnsJsonToMessages(JSON.stringify([
+      {
+        id: 't1',
+        timestamp: 0,
+        userParts: [],
+        assistantParts: [
+          { type: 'tool_call', id: 'call-d', timestamp: 0, toolCallData: { toolName: 'delegate_to_researcher', argsJson: '{"task":"find X"}', status: 'DONE', result: 'X is 42.' } },
+          {
+            type: 'delegation',
+            id: 'delegation-1',
+            timestamp: 0,
+            delegationData: {
+              toAgent: 'researcher', inputSummary: 'find X', resultSummary: 'X is 42.', childSessionId: 'run-9',
+              durationMs: 1200, turnsUsed: 2, stopReason: 'COMPLETE', parentToolCallId: 'call-d',
+              totalUsage: { inputTokens: 100, outputTokens: 50 },
+              childParts: [{ type: 'tool_call', id: 'c1', timestamp: 0, toolCallData: { toolName: 'webSearch', argsJson: '{"q":"X"}', status: 'DONE' } }],
+            },
+          },
+        ],
+      },
+    ]))
+
+    const cards = cardsForTurn(messages, [], {}, new Set())
+    expect(cards).toHaveLength(1)
+    expect(cards[0]).toMatchObject({
+      kind: 'delegation', agentName: 'researcher', status: 'DONE', summary: 'X is 42.', childRunId: 'run-9', hasTranscript: true, totalTokens: 150,
+    })
+    expect(cards[0].live?.steps).toEqual([{ toolUseId: 'c1', name: 'webSearch', summary: '{"q":"X"}', status: 'done' }])
+  })
+
+  /* The lead waits for it: nothing to write to it, and its card says it is a delegation. */
+  it('offers no field and names itself a delegation', () => {
+    const html = renderToStaticMarkup(React.createElement(SubagentCard, {
+      card: {
+        subagentId: '', kind: 'delegation', agentName: 'researcher', task: 'find X', status: 'RUNNING', summary: '',
+        totalTokens: 0, durationMs: 0, hasTranscript: false, parentToolCallId: 'call-d',
+      },
+      labels,
+      onLoadTranscript: async () => [],
+      onSendMessage: async () => 'sent' as const,
+    }))
+    expect(html).toContain(labels.delegationTag)
+    expect(html).not.toContain('subagent-card-input')
+  })
+})

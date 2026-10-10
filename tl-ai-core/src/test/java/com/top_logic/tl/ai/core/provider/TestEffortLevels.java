@@ -20,7 +20,8 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelLimits;
 public class TestEffortLevels extends TestCase {
 
 	private static final AgentModelAssignment ASSIGNMENT = new AgentModelAssignment(
-		"some-model", "some-provider", null, null, null, null, null, null, null, null, null, null, null, null, null);
+		"some-model", "some-provider", null, null, null, null, null, null, null, null, null, null, null, null, null,
+		null);
 
 	/** Anthropic reasoning models take a thinking effort, with a fourth level the others lack. */
 	public void testAnthropic() {

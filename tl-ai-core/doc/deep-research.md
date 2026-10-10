@@ -16,7 +16,8 @@ Gitea #723.
 3. **Plan.** Albert splits the question into sub-questions, one for each worker, and shows them to
    the user. It does not wait for an approval: the user can stop the run or correct the plan.
 4. **Fan out.** Albert calls `spawn_subagent` once for each sub-question, all in one turn, with a
-   task that stands alone: the sub-question, its purpose, the scope and a budget of tool calls.
+   task that stands alone: the sub-question, its purpose and the scope. It gives each worker the
+   tool-call budget of the effort level as `toolCallBudget`.
 5. **Wait and check.** Albert calls `wait_for_subagent`; the results arrive in the tool answer. Then
    it calls `listFindings` once, which lists the findings of all workers with their sources and
    quotes. To look at a page a worker read, it calls `readSource`, which fetches nothing.
@@ -29,6 +30,22 @@ Gitea #723.
 | quick | 1 | 10 | 0 |
 | standard | 3 | 15 | 1 |
 | deep | 5-8 | 25 | 2 |
+
+### The budget is enforced
+
+The tool-call budget is not a request in the prompt; the agent loop enforces it (#775):
+
+- `spawn_subagent(..., toolCallBudget)` limits the worker's run. It narrows the worker's own
+  `max-tool-calls` (an agent override, 25 for `TL_ResearchWorker`) and never raises it.
+- A call beyond the budget is answered "Not run" and is not run. Calls of interaction tools
+  (`recordFinding`, `ask_lead`) do not count.
+- The worker then gets one last turn: the tools stay in the request, but the model may call none,
+  and a notice tells it to write its report from what it has. The run ends as `MAX_TOOL_CALLS`.
+- The lead receives the report with the line "Stopped at its limit", and names that worker under
+  Open points.
+
+A run at its `max-turns` limit ends the same way, as `MAX_TURNS`: its last turn is an answer, not a
+tool call. This is true for every agent, not only for the worker.
 
 ### Why the lead waits
 
@@ -58,7 +75,7 @@ tool that reads application data, and no tool that changes data. It does this:
   gaps. The findings travel with the report, so the report does not repeat the quotes.
 
 The worker runs on the installation's default model. To use a cheaper model, assign it in
-`<agent-overrides>` of `AgentRuntimeService`.
+`<agent-overrides>` of `AgentRuntimeService`, where its `max-tool-calls="25"` also stands.
 
 ## Security
 

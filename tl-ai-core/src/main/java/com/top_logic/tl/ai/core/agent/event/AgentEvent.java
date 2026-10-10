@@ -583,6 +583,26 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
+	 * Emitted when a run reached its turn limit or used up its tool calls, before its last turn:
+	 * the model is told, in a user message, that it can call no tool any more and has to answer with
+	 * what it has (#775).
+	 *
+	 * <p>
+	 * The text is verbatim what the model is shown; a log recording the run keeps it, so that its
+	 * replayed transcript holds the message at the same place. An event rather than a write to the
+	 * thread's log, because on a subagent's thread that log is the lead's.
+	 * </p>
+	 *
+	 * @param runId      the run identifier
+	 * @param turnNumber the turn that is the run's last
+	 * @param timestamp  when the run reached the limit
+	 * @param limit      the limit it reached: {@code MAX_TURNS} or {@code MAX_TOOL_CALLS}
+	 * @param text       the text the model is shown
+	 */
+	record FinalTurnRequested(String runId, int turnNumber, Instant timestamp, StopReason limit, String text)
+			implements AgentEvent {}
+
+	/**
 	 * Emitted when a background subagent reads what the user wrote to it from its card, at the start
 	 * of one of its turns.
 	 *

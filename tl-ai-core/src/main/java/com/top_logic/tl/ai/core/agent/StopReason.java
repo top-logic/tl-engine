@@ -15,8 +15,26 @@ public enum StopReason {
 	/** LLM finished without requesting tools, and its reply is an answer. */
 	COMPLETE,
 
-	/** Hit the configured maximum turns limit. */
+	/**
+	 * Hit the configured maximum turns limit.
+	 *
+	 * <p>
+	 * The last turn of such a run offers no tool: the model is told that the limit is reached and
+	 * answers with what it has, so the run ends with an answer rather than with a call nobody runs.
+	 * </p>
+	 */
 	MAX_TURNS,
+
+	/**
+	 * Used up its budget of tool calls - the agent's {@code max-tool-calls}, or the budget the
+	 * agent that started it gave it.
+	 *
+	 * <p>
+	 * An orderly stop like {@link #MAX_TURNS}: calls beyond the budget are answered without being
+	 * run, and one last turn without tools lets the model answer with what it has.
+	 * </p>
+	 */
+	MAX_TOOL_CALLS,
 
 	/** Unrecoverable provider error. */
 	ERROR,

@@ -108,6 +108,7 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		AgentOverride.MAX_TOKENS,
 		AgentOverride.MAX_TURNS,
 		AgentOverride.MAX_TOOL_RESULT_CHARS,
+		AgentOverride.MAX_TOOL_CALLS,
 		AgentOverride.TOOL_CHOICE,
 		AgentOverride.TIMEOUT_SECONDS,
 		AgentOverride.MAX_RETRIES,
@@ -163,6 +164,9 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 
 		/** @see #getMaxToolResultChars() */
 		String MAX_TOOL_RESULT_CHARS = "max-tool-result-chars";
+
+		/** @see #getMaxToolCalls() */
+		String MAX_TOOL_CALLS = "max-tool-calls";
 
 		@Override
 		@Options(fun = AllAgentNameOptions.class)
@@ -331,6 +335,22 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		@Name(MAX_TOOL_RESULT_CHARS)
 		@Nullable
 		Integer getMaxToolResultChars();
+
+		/**
+		 * The most tool calls one run of this agent may make, or {@code null} for no limit.
+		 *
+		 * <p>
+		 * A call beyond it is answered without being run, and the run gets one last turn without
+		 * tools in which the agent answers with what it has - a subagent's report to its lead. Calls
+		 * of interaction tools (asking, loading a skill, recording a finding) do not count. An agent
+		 * that starts this one may give it a smaller budget, never a larger one.
+		 * </p>
+		 *
+		 * @see #MAX_TOOL_CALLS
+		 */
+		@Name(MAX_TOOL_CALLS)
+		@Nullable
+		Integer getMaxToolCalls();
 	}
 
 	/**
@@ -691,10 +711,10 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 				perAgent.getReasoningEffort(), perAgent.getReasoningSummary(),
 				perAgent.getToolChoice(),
 				perAgent.getTimeoutSeconds(), perAgent.getMaxRetries(),
-				perAgent.getMaxToolResultChars());
+				perAgent.getMaxToolResultChars(), perAgent.getMaxToolCalls());
 		}
 		return new AgentModelAssignment(ref.model(), ref.provider(),
-			null, null, null, null, null, null, null, null, null, null, null, null, null);
+			null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 	}
 
 	/**

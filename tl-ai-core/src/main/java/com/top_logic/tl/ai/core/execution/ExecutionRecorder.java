@@ -392,7 +392,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 			return failure != null ? ExecutionStatus.ERROR : ExecutionStatus.COMPLETE;
 		}
 		return switch (stopReason) {
-			case COMPLETE, MAX_TURNS -> ExecutionStatus.COMPLETE;
+			case COMPLETE, MAX_TURNS, MAX_TOOL_CALLS -> ExecutionStatus.COMPLETE;
 			case ERROR, CONTEXT_OVERFLOW -> ExecutionStatus.ERROR;
 			// A run cut off by the account's budget did not deliver its answer, and it is not an
 			// error either: the same family as a response the validator refused, which is what

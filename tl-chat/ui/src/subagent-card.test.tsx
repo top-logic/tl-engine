@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { React } from 'tl-react-bridge'
+import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { delegationEnd, turnsJsonToMessages, type SubagentMessageStatus } from './api'
@@ -10,6 +11,14 @@ import { cardsForTurn, cardSummary, SubagentCard, SubagentCards, type SubagentCa
 import { SubagentActivityPanel, subagentCosts } from './subagents'
 import { showSubagentCard } from './thread'
 import type { ChatMessage, SubagentActivity, SubagentRef } from './types'
+
+/**
+ * Runs `work` and commits what it caused, effects included. A test that waited a fixed time for the
+ * commit instead failed on a loaded machine, where React's scheduled render had not run yet.
+ */
+function commit(work: () => void): void {
+  flushSync(work)
+}
 
 const labels = bundle('en')
 
@@ -225,10 +234,8 @@ describe('writing to a subagent from its card', () => {
             sent.push([id, call, text])
             return answer
           }
-    root.render(React.createElement(SubagentCard, { card: model, labels, onLoadTranscript: async () => [], onSendMessage }))
-    await settle()
-    ;(container.querySelector('.subagent-card-head') as HTMLElement).click()
-    await settle()
+    commit(() => root.render(React.createElement(SubagentCard, { card: model, labels, onLoadTranscript: async () => [], onSendMessage })))
+    commit(() => (container.querySelector('.subagent-card-head') as HTMLElement).click())
     return { container, sent }
   }
 
@@ -401,8 +408,7 @@ describe('the card head', () => {
     document.body.append(container)
     const root = createRoot(container)
     mounted = { root, container }
-    root.render(React.createElement(SubagentCard, { card, labels, onLoadTranscript: async () => [], onCancel }))
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    commit(() => root.render(React.createElement(SubagentCard, { card, labels, onLoadTranscript: async () => [], onCancel })))
     return container
   }
 
@@ -416,8 +422,7 @@ describe('the card head', () => {
     expect(stop.textContent).toBe(labels.stop)
     expect(stop.getAttribute('aria-label')).toBe('Stop sa-1 (researcher)')
     stop.click()
-    await new Promise((resolve) => setTimeout(resolve, 20))
-    expect(stopped).toEqual(['sa-1'])
+    await vi.waitFor(() => expect(stopped).toEqual(['sa-1']))
   })
 
   it('says so when the stop fails', async () => {
@@ -425,8 +430,8 @@ describe('the card head', () => {
       throw new Error('500')
     })
     ;(container.querySelector('.subagent-card-stop') as HTMLButtonElement).click()
-    await new Promise((resolve) => setTimeout(resolve, 20))
-    expect(container.querySelector('[role=alert]')?.textContent).toBe(labels.subagentStopFailed)
+    await vi.waitFor(() =>
+      expect(container.querySelector('[role=alert]')?.textContent).toBe(labels.subagentStopFailed))
   })
 
   /* Nothing to stop: an ended subagent, a synchronous delegation, a host that gives no stop. */
@@ -530,8 +535,7 @@ describe('many cards on one turn', () => {
     document.body.append(container)
     const root = createRoot(container)
     mounted = { root, container }
-    root.render(React.createElement(SubagentCards, { cards, labels, onLoadTranscript: async () => [] }))
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    commit(() => root.render(React.createElement(SubagentCards, { cards, labels, onLoadTranscript: async () => [] })))
     return container
   }
 
@@ -554,8 +558,7 @@ describe('many cards on one turn', () => {
     expect(visibleIds(container)).toEqual(['sa-2', 'sa-3', 'sa-4'])
     expect(container.querySelectorAll('.subagent-card')).toHaveLength(5)
 
-    ;(container.querySelector('.subagent-cards-summary button') as HTMLButtonElement).click()
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    commit(() => (container.querySelector('.subagent-cards-summary button') as HTMLButtonElement).click())
     expect(visibleIds(container)).toEqual(['sa-2', 'sa-3', 'sa-4', 'sa-1', 'sa-5'])
   })
 
@@ -566,7 +569,11 @@ describe('many cards on one turn', () => {
     const line = document.createElement('p')
     container.append(line)
 
-    expect(showSubagentCard(line, { subagentId: 'sa-1', parentToolCallId: 'call-sa-1' })).toBe(true)
+    let shown = false
+    commit(() => {
+      shown = showSubagentCard(line, { subagentId: 'sa-1', parentToolCallId: 'call-sa-1' })
+    })
+    expect(shown).toBe(true)
     expect(visibleIds(container)).toContain('sa-1')
   })
 
@@ -582,13 +589,11 @@ describe('many cards on one turn', () => {
       job({ subagentId: 'sa-3', status: 'RUNNING', detail: 'three' }),
       job({ subagentId: 'sa-4', status: 'RUNNING', detail: 'four' }),
     ]
-    root.render(React.createElement(SubagentActivityPanel, {
+    commit(() => root.render(React.createElement(SubagentActivityPanel, {
       subagents: jobs, labels, waiting: new Set(['sa-4']),
       onCancel: async () => undefined, onStopAll: async () => undefined, onLoadTranscript: async () => [],
-    }))
-    await new Promise((resolve) => setTimeout(resolve, 20))
-    ;(container.querySelector('.working-chip') as HTMLButtonElement).click()
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    })))
+    commit(() => (container.querySelector('.working-chip') as HTMLButtonElement).click())
     const rows = Array.from(container.querySelectorAll('.activity-item strong')).map((el) => el.textContent)
     expect(rows).toEqual(['four', 'three', 'two', 'one'])
   })
@@ -620,13 +625,11 @@ describe('what the subagents spent', () => {
     document.body.append(container)
     const root = createRoot(container)
     try {
-      root.render(React.createElement(SubagentActivityPanel, {
+      commit(() => root.render(React.createElement(SubagentActivityPanel, {
         subagents: [job({ status: 'DONE', detail: '**Evidenz** - `listInstances`' })], labels,
         onCancel: async () => undefined, onStopAll: async () => undefined, onLoadTranscript: async () => [],
-      }))
-      await new Promise((resolve) => setTimeout(resolve, 20))
-      ;(container.querySelector('.working-chip') as HTMLButtonElement).click()
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      })))
+      commit(() => (container.querySelector('.working-chip') as HTMLButtonElement).click())
       const row = container.querySelector('.activity-item strong')
       expect(row?.textContent).toBe('Evidenz - listInstances')
     } finally {

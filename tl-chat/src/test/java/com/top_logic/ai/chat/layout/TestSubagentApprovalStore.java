@@ -72,7 +72,7 @@ public class TestSubagentApprovalStore extends BasicTestCase {
 		TaskProgressTracker tracker = new TaskProgressTracker();
 		tracker.setApprovalMode(ApprovalMode.MANUAL);
 		ToolContext context =
-			ChatProcessor.buildToolContext(runStore, tracker, new CancellationToken(), "test-session");
+			ChatProcessor.buildToolContext(runStore, tracker, tracker.activeChat(), new CancellationToken());
 		SubagentJob job = new SubagentJob("sa-1", "worker", "do x", new CancellationToken());
 
 		CompletableFuture<ApprovalResult> decided = CompletableFuture.supplyAsync(() -> {
@@ -103,7 +103,7 @@ public class TestSubagentApprovalStore extends BasicTestCase {
 		TaskProgressTracker tracker = new TaskProgressTracker();
 		tracker.setApprovalMode(ApprovalMode.MANUAL);
 		ToolContext context =
-			ChatProcessor.buildToolContext(runStore, tracker, new CancellationToken(), "test-session");
+			ChatProcessor.buildToolContext(runStore, tracker, tracker.activeChat(), new CancellationToken());
 
 		CompletableFuture<ApprovalResult> decided = CompletableFuture.supplyAsync(() -> {
 			try (UserInteractionStoreBinding.Binding bound = UserInteractionStoreBinding.bind(runStore)) {

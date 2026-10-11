@@ -435,7 +435,7 @@ correction to apply again. A memory is put on one line, because the block is rea
 **The list is read once per conversation, not once per run.** The block has to stay byte-identical
 across the turns of a conversation (see above), so a memory written in turn 3 must not appear in
 turn 4's block - it appears in the next conversation, which is also the only place it is needed,
-the agent having just written it. `ChatSessionManager.getActiveMemories` reads it when the first
+the agent having just written it. `ChatSessionManager.getMemories` reads it when the first
 message of a conversation is sent and keeps it on the session state; `ChatProcessor` binds it for
 every run of that conversation through `UserMemoryBinding`. A run that binds none - headless,
 scheduled, TL-Script - is a conversation of its own and reads the store directly.

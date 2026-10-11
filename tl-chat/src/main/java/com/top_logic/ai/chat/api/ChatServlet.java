@@ -1083,11 +1083,12 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
-		// Against the run's own window, not the answering one: that is the tracker holding the set
-		// the agent loop consults. A subagent whose window has ended has no such set any more.
+		// Into the run's own chat, not the answering window's nor the one its own window shows by
+		// now: that chat's next runs are given the set. A subagent whose window has ended has no
+		// such set any more.
 		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()
-			&& run.tracker() != null) {
-			run.tracker().addSessionApprovedTool(toolName);
+			&& run.chat() != null) {
+			run.chat().addApprovedTool(toolName);
 		}
 
 		store.resolve(requestId, resolvedResponse, ownWords);

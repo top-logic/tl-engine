@@ -153,11 +153,15 @@ public class WaitForSubagentTool implements Tool {
 				}
 			}
 		}
-		StringBuilder answer = new StringBuilder(format(ids, registry));
 		// The wait also ends when a subagent asks this run something; the question is handed over
-		// here, so that it is not answered only after the next wait or turn.
-		for (SubagentJob asking : registry.takeUndeliveredQuestions()) {
-			answer.append("\n\n").append(SubagentResultDelivery.question(asking));
+		// here, so that it is not answered only after the next wait or turn. A waited-for subagent's
+		// question stands at that subagent, whether this run was shown it before or not.
+		List<SubagentJob> asking = registry.takeUndeliveredQuestions();
+		StringBuilder answer = new StringBuilder(format(ids, registry));
+		for (SubagentJob job : asking) {
+			if (!ids.contains(job.subagentId())) {
+				answer.append("\n\n").append(SubagentResultDelivery.question(job));
+			}
 		}
 		return ToolResult.of(answer.toString());
 	}
@@ -180,8 +184,7 @@ public class WaitForSubagentTool implements Tool {
 			} else if (job.status().isTerminal() && job.result() != null) {
 				sb.append(SubagentResultDelivery.describe(job)).append("\n\n");
 			} else if (job.waitingFor() == SubagentJob.Waiting.LEAD_ANSWER) {
-				sb.append(SubagentResultDelivery.heading(job))
-					.append("\n_waits for your answer to its question (below)_\n\n");
+				sb.append(SubagentResultDelivery.question(job)).append("\n\n");
 			} else {
 				sb.append(SubagentResultDelivery.heading(job))
 					.append("\n_still running_\n\n");

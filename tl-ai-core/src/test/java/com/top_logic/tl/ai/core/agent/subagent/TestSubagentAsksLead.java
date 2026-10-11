@@ -145,6 +145,29 @@ public class TestSubagentAsksLead extends BasicTestCase {
 			_registry.takeUndeliveredQuestions().isEmpty());
 	}
 
+	/**
+	 * A lead that waits for a subagent whose question it was already shown, and did not answer, is
+	 * handed the question again at once instead of waiting until the timeout while the subagent waits
+	 * for it (#811).
+	 */
+	public void testWaitOnASubagentThatWaitsForTheLeadReturnsAtOnce() throws Exception {
+		SubagentJob child = spawn(new AskLeadTool(), new CopyOnWriteArrayList<>(),
+			() -> List.of(new ToolCall("q1", "ask_lead", "{\"question\":\"" + QUESTION + "\"}")),
+			() -> List.of(new TextContent("done")));
+		awaitWaiting(child);
+		assertEquals("The lead's turn was shown the question.", 1, _registry.takeUndeliveredQuestions().size());
+
+		long start = System.currentTimeMillis();
+		String answer = lead(new WaitForSubagentTool(),
+			Map.of("subagentIds", List.of(child.subagentId()), "timeoutMs", 20_000));
+		long waited = System.currentTimeMillis() - start;
+
+		assertTrue("The wait does not block on a subagent that waits for the lead: " + waited + " ms", waited < 5_000);
+		assertTrue("The open question is named: " + answer,
+			answer.contains("Subagent " + child.subagentId() + " (worker) asks you") && answer.contains(QUESTION));
+		assertTrue(answer, answer.contains("reply_to_subagent(\"" + child.subagentId() + "\""));
+	}
+
 	/** No answer in time: the child is told to decide, and a late reply is refused. */
 	public void testAQuestionWithoutAnswerTimesOut() throws Exception {
 		List<String> childRequests = new CopyOnWriteArrayList<>();

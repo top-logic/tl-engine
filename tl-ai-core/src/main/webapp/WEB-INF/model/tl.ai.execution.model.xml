@@ -1045,11 +1045,15 @@
 				</attributes>
 			</class>
 
-			<!-- A finding a research run recorded: a claim and the words of its source. -->
+			<!--
+				A finding a research run recorded: a claim and the words of its source. A table of
+				findings shows the claim and its source - what a reader scans; the id is the model's and
+				the quote is offered in the column selection.
+			-->
 			<class name="ResearchFinding">
 				<annotations>
 					<id-column value="findingId"/>
-					<main-properties properties="findingId,claim,quote,source"/>
+					<main-properties properties="claim,source"/>
 				</annotations>
 				<attributes>
 					<property name="findingId"

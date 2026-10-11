@@ -707,6 +707,21 @@
   display: none;
 }
 
+/*
+ * A composition's table in a folded group of the side pane (`PresentationPane`, #764).
+ *
+ * The group names the composition, and the engine's table writes the same name as its own title,
+ * so the reader saw it twice. The table's header goes while it holds no command; its title goes in
+ * any case.
+ */
+.tlPanel.tl-chat-pane__grouped-table > .tlPanel__header:not(:has(button)) {
+  display: none;
+}
+
+.tlPanel.tl-chat-pane__grouped-table > .tlPanel__header .tlPanel__title {
+  display: none;
+}
+
 .tl-chat-dock__launcher {
   position: relative;
   display: inline-grid;

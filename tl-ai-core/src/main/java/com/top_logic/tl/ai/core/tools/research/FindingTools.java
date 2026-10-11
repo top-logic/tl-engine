@@ -5,17 +5,28 @@
  */
 package com.top_logic.tl.ai.core.tools.research;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
+import com.top_logic.tl.ai.core.research.ResearchReport;
+import com.top_logic.tl.ai.core.research.ResearchReportHtml;
+import com.top_logic.tl.ai.core.research.ResearchRuns;
+import com.top_logic.tl.ai.core.tools.web.BrowsingPolicies;
 import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ReadSource;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -23,7 +34,7 @@ import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * The research tools that work on what a run tree read: record a finding, list the findings, read a
- * source again.
+ * source again, and keep the run with its report.
  *
  * <p>
  * A research worker reads pages and records what it found as {@link Finding findings} - a claim with
@@ -118,6 +129,76 @@ public class FindingTools {
 		}
 		return "Recorded finding " + finding.id() + " (source: " + finding.sourceTitle() + ").";
 	}
+
+	/**
+	 * Keeps the research run when its report is written.
+	 *
+	 * @param question
+	 *        The question the run answered.
+	 * @param report
+	 *        The report, Markdown with links to the sources it rests on.
+	 * @param effort
+	 *        quick, standard or deep; {@code null} when not given.
+	 * @param plan
+	 *        The sub-questions; {@code null} when not given.
+	 * @param status
+	 *        complete or partial; {@code null} for complete.
+	 * @param context
+	 *        The run, for what it spent.
+	 * @return The id of the kept run, or why it was not kept.
+	 */
+	@ToolMethod(
+		description = "Keep this research run, once, after you have written the report: the question, the"
+			+ " report exactly as you give it to the user (Markdown, citing each statement with a link to"
+			+ " the source it rests on), and optionally the effort, the plan and the status. The report's"
+			+ " links are checked against what the research read; the sources it cites, the sources read"
+			+ " and not cited, and all findings are kept with it, as a document the user can open and"
+			+ " download. The answer gives the run's id; to open the report for the user, call present"
+			+ " with that id, where the page offers it.",
+		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
+		marking = AnswerMarking.NONE)
+	public String saveReport(
+			@P("The research question, as the user asked it.") String question,
+			@P("The report, Markdown, citing its sources with links.") String report,
+			@P(value = "Optional: the effort level: quick, standard or deep.", required = false) String effort,
+			@P(value = "Optional: the sub-questions the research was split into, one per line.",
+				required = false) String plan,
+			@P(value = "Optional: complete (the default), or partial when the research stopped before it"
+				+ " had answered everything.", required = false) String status,
+			ToolExecutionContext context) {
+		ReadingList list = ReadingListBinding.current();
+		if (list == null) {
+			return "Error: a research run is kept only within an agent run.";
+		}
+		if (!ResearchRuns.Module.INSTANCE.isActive()) {
+			return "Error: this application keeps no research runs. Give the user the report as your answer.";
+		}
+		if (question == null || question.isBlank() || report == null || report.isBlank()) {
+			return "Error: question and report are required.";
+		}
+		if (status != null && !status.isBlank() && !STATUSES.contains(status.strip().toLowerCase(Locale.ROOT))) {
+			return "Error: status must be complete or partial.";
+		}
+		Long tokens = null;
+		if (context instanceof ToolContext toolContext && toolContext.budgetAllowance().isTokenLimited()) {
+			tokens = Long.valueOf(toolContext.budgetAllowance().spentTokens());
+		}
+		ResearchReport kept = ResearchReport.compose(question, report, effort, plan, status, list, tokens, Instant.now());
+		String document = ResearchReportHtml.render(kept, RunEnvironment.runLocale(), RunEnvironment.runZone());
+		String id;
+		try {
+			id = ResearchRuns.getInstance().save(kept, document, BrowsingPolicies.currentAccountQuietly());
+		} catch (IllegalStateException ex) {
+			Logger.error("Keeping a research run failed.", ex, FindingTools.class);
+			return "Error: the research run could not be kept: " + ex.getMessage();
+		}
+		return "Kept research run " + id + ": " + kept.cited().size() + " cited sources, " + kept.alsoRead().size()
+			+ " sources read and not cited, " + (kept.findings().size() + kept.otherFindings().size())
+			+ " findings. To open the report for the user, call present with ids [\"" + id + "\"].";
+	}
+
+	/** The statuses a research run may be kept with. */
+	private static final Set<String> STATUSES = Set.of(ResearchReport.COMPLETE, ResearchReport.PARTIAL);
 
 	/**
 	 * Lists the findings of this run and of the subagents whose results it received.

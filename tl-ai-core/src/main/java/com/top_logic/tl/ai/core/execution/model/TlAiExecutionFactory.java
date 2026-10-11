@@ -198,6 +198,195 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link ResearchRun} type.
+	 */
+	public static com.top_logic.model.TLClass getResearchRunType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(ResearchRun.RESEARCH_RUN_TYPE);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#ALSO_READ_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getAlsoReadResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.ALSO_READ_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#CITED_SOURCES_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getCitedSourcesResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.CITED_SOURCES_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#DOCUMENT_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getDocumentResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.DOCUMENT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#EFFORT_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getEffortResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.EFFORT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#FINDINGS_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getFindingsResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.FINDINGS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#FINISHED_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getFinishedResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.FINISHED_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#OTHER_FINDINGS_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getOtherFindingsResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.OTHER_FINDINGS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#OWNER_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getOwnerResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.OWNER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#PLAN_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getPlanResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.PLAN_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#QUESTION_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getQuestionResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.QUESTION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#REPORT_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getReportResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.REPORT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#STARTED_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getStartedResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.STARTED_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#STATUS_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getStatusResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.STATUS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#TOKENS_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLProperty getTokensResearchRunAttr() {
+		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.TOKENS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource} type.
+	 */
+	public static com.top_logic.model.TLClass getResearchSourceType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(ResearchSource.RESEARCH_SOURCE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#ARCHIVE_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getArchiveResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.ARCHIVE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#KIND_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getKindResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.KIND_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#READ_AT_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getReadAtResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.READ_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#TITLE_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.TITLE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#URL_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getUrlResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.URL_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchFinding} type.
+	 */
+	public static com.top_logic.model.TLClass getResearchFindingType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(ResearchFinding.RESEARCH_FINDING_TYPE);
+	}
+
+	/**
+	 * Lookup {@link ResearchFinding#CLAIM_ATTR} of {@link ResearchFinding}.
+	 */
+	public static com.top_logic.model.TLProperty getClaimResearchFindingAttr() {
+		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.CLAIM_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchFinding#FINDING_ID_ATTR} of {@link ResearchFinding}.
+	 */
+	public static com.top_logic.model.TLProperty getFindingIdResearchFindingAttr() {
+		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.FINDING_ID_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchFinding#QUOTE_ATTR} of {@link ResearchFinding}.
+	 */
+	public static com.top_logic.model.TLProperty getQuoteResearchFindingAttr() {
+		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.QUOTE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchFinding#RECORDED_BY_ATTR} of {@link ResearchFinding}.
+	 */
+	public static com.top_logic.model.TLProperty getRecordedByResearchFindingAttr() {
+		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.RECORDED_BY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchFinding#SOURCE_ATTR} of {@link ResearchFinding}.
+	 */
+	public static com.top_logic.model.TLProperty getSourceResearchFindingAttr() {
+		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.SOURCE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentSession} type.
 	 */
 	public static com.top_logic.model.TLClass getAgentSessionType() {
@@ -820,6 +1009,45 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	public static final String KO_NAME_ARCHIVED_PAGE = "ArchivedPage";
 
 	/**
+	 * Name of type <code>ResearchRun</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link ResearchRun#RESEARCH_RUN_TYPE}.
+	 */
+	@Deprecated
+	public static final String RESEARCH_RUN_NODE = ResearchRun.RESEARCH_RUN_TYPE;
+
+	/**
+	 * Storage table name of {@link #RESEARCH_RUN_NODE} objects.
+	 */
+	public static final String KO_NAME_RESEARCH_RUN = "GenericObject";
+
+	/**
+	 * Name of type <code>ResearchSource</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link ResearchSource#RESEARCH_SOURCE_TYPE}.
+	 */
+	@Deprecated
+	public static final String RESEARCH_SOURCE_NODE = ResearchSource.RESEARCH_SOURCE_TYPE;
+
+	/**
+	 * Storage table name of {@link #RESEARCH_SOURCE_NODE} objects.
+	 */
+	public static final String KO_NAME_RESEARCH_SOURCE = "GenericObject";
+
+	/**
+	 * Name of type <code>ResearchFinding</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link ResearchFinding#RESEARCH_FINDING_TYPE}.
+	 */
+	@Deprecated
+	public static final String RESEARCH_FINDING_NODE = ResearchFinding.RESEARCH_FINDING_TYPE;
+
+	/**
+	 * Storage table name of {@link #RESEARCH_FINDING_NODE} objects.
+	 */
+	public static final String KO_NAME_RESEARCH_FINDING = "GenericObject";
+
+	/**
 	 * Name of type <code>AgentSession</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link AgentSession#AGENT_SESSION_TYPE}.
@@ -897,6 +1125,48 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public final ArchivedPage createArchivedPage() {
 		return createArchivedPage(null);
+	}
+
+	/**
+	 * Create an instance of {@link ResearchRun} type.
+	 */
+	public final ResearchRun createResearchRun(com.top_logic.model.TLObject context) {
+		return (ResearchRun) createObject(getResearchRunType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link ResearchRun} type.
+	 */
+	public final ResearchRun createResearchRun() {
+		return createResearchRun(null);
+	}
+
+	/**
+	 * Create an instance of {@link ResearchSource} type.
+	 */
+	public final ResearchSource createResearchSource(com.top_logic.model.TLObject context) {
+		return (ResearchSource) createObject(getResearchSourceType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link ResearchSource} type.
+	 */
+	public final ResearchSource createResearchSource() {
+		return createResearchSource(null);
+	}
+
+	/**
+	 * Create an instance of {@link ResearchFinding} type.
+	 */
+	public final ResearchFinding createResearchFinding(com.top_logic.model.TLObject context) {
+		return (ResearchFinding) createObject(getResearchFindingType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link ResearchFinding} type.
+	 */
+	public final ResearchFinding createResearchFinding() {
+		return createResearchFinding(null);
 	}
 
 	/**

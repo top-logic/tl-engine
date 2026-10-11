@@ -54,6 +54,7 @@
 					<module key="com.top_logic.tl.ai.core.citation.CitationKinds$Module" value="true"/>
 					<!-- Page Archive: a copy of every web page an agent run read, for its citations -->
 					<module key="com.top_logic.tl.ai.core.citation.PageArchive$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.research.ResearchRuns$Module" value="true"/>
 					<!--
 						Role-based tool access, applied to every agent run. Active by default and not
 						switchable: a policy present while the module was off would be silently
@@ -152,6 +153,14 @@
 				max-chars="1000000"
 				retention-days="90"
 			/>
+		</config>
+
+		<!--
+			Keeps research runs as tl.ai.execution:ResearchRun objects when the research skill calls
+			research.saveReport (Issue #764), in a transaction of its own on its own thread.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.research.ResearchRuns">
+			<instance class="com.top_logic.tl.ai.core.research.ResearchRuns"/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
@@ -3094,8 +3103,9 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					</factory>
 					<!--
 						recordFinding / listFindings / readSource (Issue #752): the findings of a research
-						run tree, kept on its reading list. An agent lists them as research.recordFinding,
-						research.listFindings and research.readSource.
+						run tree, kept on its reading list. saveReport (Issue #764) keeps the run with its
+						report as a ResearchRun. An agent lists them as research.recordFinding,
+						research.listFindings, research.readSource and research.saveReport.
 					-->
 					<factory name="research">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"

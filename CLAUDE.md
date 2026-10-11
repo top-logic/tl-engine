@@ -521,6 +521,17 @@ sources on every delivery path, and a delivered report is followed by the worker
 each. The lead works from them with `research.listFindings` and reads a source's stored text with
 `research.readSource` - it never fetches. All three are READ tools of the `interaction` group.
 
+When the lead has written its report it calls **`research.saveReport`** (#764): the report's links are
+validated against the run tree's reading list, and `ResearchRuns` keeps a `tl.ai.execution:ResearchRun`
+on its own thread - question, effort, plan, status, the Markdown, one self-contained HTML document
+(`ResearchReportHtml`: the text with footnotes linked to the cited sources, only tags the HTML safety
+check allows), the cited sources, the sources read and not cited (`alsoRead`, `<collapsed/>`), and the
+findings split the same way. Owner and administrators read it (role rules in
+`tl-ai-core.binarySecurity.config.xml`, as for screenshots). The tool answers the run's id, and `present`
+opens it in the chat's side pane, which shows the document's body in place and folds the collapsed
+parts. The owner is the account the run works for, so a headless `aiResearch()` run (#767) keeps its
+run for the account it runs as, the same way - as soon as the `TL_deepResearch` skill calls the tool.
+
 ### Memory & Compaction (tl-ai-core `memory/`)
 
 `ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.

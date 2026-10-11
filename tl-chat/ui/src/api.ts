@@ -701,7 +701,7 @@ function subagentStatus(status: string | undefined): SubagentStatus {
  */
 export function wokenList(value: unknown): WokenSubagent[] {
   if (!Array.isArray(value)) return []
-  const reasons = ['FINISHED', 'FAILED', 'CANCELLED', 'ASKS']
+  const reasons = ['FINISHED', 'LIMIT', 'FAILED', 'CANCELLED', 'ASKS']
   return value
     .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
     .filter((item) => typeof item.subagentId === 'string' && item.subagentId !== '')

@@ -44,6 +44,8 @@ public record SubagentNews(String subagentId, String agentName, Reason reason, S
 	public enum Reason {
 		/** It finished its task. */
 		FINISHED,
+		/** It stopped in order at a limit - turns, tool calls, budget or output; its answer may be incomplete. */
+		LIMIT,
 		/** It ended with an error. */
 		FAILED,
 		/** It was stopped; its result is handed over with the other news. */
@@ -57,10 +59,15 @@ public record SubagentNews(String subagentId, String agentName, Reason reason, S
 		Reason reason = switch (job.status()) {
 			case FAILED -> Reason.FAILED;
 			case CANCELLED -> Reason.CANCELLED;
-			default -> Reason.FINISHED;
+			default -> stoppedAtALimit(job) ? Reason.LIMIT : Reason.FINISHED;
 		};
 		return new SubagentNews(job.subagentId(), nullToEmpty(job.targetAgentName()), reason,
 			nullToEmpty(job.parentToolCallId()), "");
+	}
+
+	private static boolean stoppedAtALimit(SubagentJob job) {
+		SubagentResult result = job.result();
+		return result != null && result.stopReason() != null && result.stopReason().isLimit();
 	}
 
 	/** The news of a job that asks its lead something. */

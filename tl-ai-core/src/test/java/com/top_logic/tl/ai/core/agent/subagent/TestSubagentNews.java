@@ -137,6 +137,26 @@ public class TestSubagentNews extends TestCase {
 			question.question().length() <= SubagentNews.QUESTION_CHARS + 3);
 	}
 
+	/**
+	 * A subagent that stopped at a limit did not finish its task: the news says so, rather than that it
+	 * is done (#790).
+	 */
+	public void testASubagentStoppedAtItsLimitIsNotFinished() {
+		SubagentJob limited = _registry.register("Counter", "a", new CancellationToken());
+		limited.setParentToolCallId("call-1");
+		limited.markTerminal(SubagentJobStatus.DONE,
+			new SubagentResult("3 of 40 read", TokenUsage.EMPTY, 1L, 2, StopReason.MAX_TOOL_CALLS));
+
+		List<SubagentNews> news;
+		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(_registry)) {
+			news = AgentLoop.injectSubagentNews(new Conversation(), null);
+		}
+
+		assertEquals(List.of(
+			new SubagentNews(limited.subagentId(), "Counter", SubagentNews.Reason.LIMIT, "call-1", "")), news);
+		assertEquals(news, SubagentNews.fromJson(SubagentNews.toJson(news)));
+	}
+
 	/** What a lead turn's log keeps of the news reads back as the same news. */
 	public void testTheNewsReadsBackFromItsJson() {
 		List<SubagentNews> news = List.of(

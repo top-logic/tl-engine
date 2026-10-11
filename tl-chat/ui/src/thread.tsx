@@ -1003,6 +1003,8 @@ function WokenLine({ woken, labels }: { woken: WokenSubagent[]; labels: Labels }
 
 function wokenReason(item: WokenSubagent, labels: Labels): string {
   switch (item.reason) {
+    case 'LIMIT':
+      return labels.wokenLimit
     case 'FAILED':
       return labels.wokenFailed
     case 'CANCELLED':

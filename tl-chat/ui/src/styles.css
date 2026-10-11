@@ -876,6 +876,20 @@
   height: clamp(16rem, 60%, 26rem);
 }
 
+/*
+ * A document a form shows in place - a research run's report (#764). The pane is a narrow column,
+ * and in a drawer about 280 px of text: a German compound such as "Photovoltaikanlagen" in a heading
+ * is wider than that, and the engine's `overflow-wrap: break-word` split it at the column's edge,
+ * with no hyphen (#862). So a long word is hyphenated, in the language the document declares or else
+ * the page's. Only a word of ten letters or more, and never with fewer than four letters on a line,
+ * so that ordinary words keep their shape. `break-word` stays the fallback for what has no syllables,
+ * such as an address.
+ */
+.tl-chat-rail .pane-step .tlHtml {
+  hyphens: auto;
+  hyphenate-limit-chars: 10 4 4;
+}
+
 /* The folded pane's way back: the strip's first icon, set apart from the sections below it. */
 .tl-chat-rail .side-strip-item.is-pane {
   color: var(--button-primary);

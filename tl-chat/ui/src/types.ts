@@ -148,7 +148,7 @@ export interface NoticeMessage {
 export interface WokenSubagent {
   subagentId: string
   agentName: string
-  reason: 'FINISHED' | 'FAILED' | 'CANCELLED' | 'ASKS'
+  reason: 'FINISHED' | 'LIMIT' | 'FAILED' | 'CANCELLED' | 'ASKS'
   /** The lead's call that started it, where its card stands; empty if unknown. */
   parentToolCallId: string
   /** For `ASKS`, the start of the question; plain text. */

@@ -506,6 +506,29 @@ describe('a turn started for subagent news', () => {
     expect(text).not.toContain(de.leadWoken)
   })
 
+  /* A subagent stopped at its limit did not finish; the line must not say it is done (#790). */
+  it('says a subagent reached its limit rather than that it is done', () => {
+    const named = structuredClone(turns)
+    named[1].assistantParts.splice(1, 0, {
+      id: 'w',
+      type: 'system',
+      timestamp: 5000,
+      systemData: {
+        eventType: 'LEAD_WOKEN',
+        details: JSON.stringify([
+          { subagentId: 'sa-2', agentName: 'Agent', reason: 'LIMIT', parentToolCallId: 'call-2', question: '' },
+        ]),
+      },
+    })
+    const messages = turnsJsonToMessages(JSON.stringify(named))
+    expect(messages.find((m) => m.type === 'notice')).toMatchObject({ woken: [{ subagentId: 'sa-2', reason: 'LIMIT' }] })
+
+    const german = render(messages, false, 'summary', 'de').replace(/<[^>]+>/g, '')
+    expect(german).toContain('sa-2 (Agent) hat sein Limit erreicht')
+    expect(german).not.toContain(bundle('de').wokenFinished)
+    expect(render(messages, false).replace(/<[^>]+>/g, '')).toContain('sa-2 (Agent) reached its limit')
+  })
+
   it('names them live as well, and says the old sentence for a log without names', () => {
     const live = build([
       { type: 'ADD_USER', id: 'u1', text: 'Recherchiere X im Hintergrund.' },

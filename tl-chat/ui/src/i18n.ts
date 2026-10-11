@@ -299,6 +299,7 @@ const EN = {
   leadWoken: 'Subagents reported back. The agent continues on its own.',
   /** What one subagent of such a turn did, after its name: "sa-2 (Counter) is done". */
   wokenFinished: 'is done',
+  wokenLimit: 'reached its limit',
   wokenFailed: 'failed',
   wokenCancelled: 'was cancelled',
   /** Followed by the start of the question. */
@@ -604,6 +605,7 @@ const DE: Bundle = {
   interrupted: 'Der Server wurde neu gestartet, bevor diese Antwort fertig war. Sende deine Nachricht noch einmal, um weiterzumachen.',
   leadWoken: 'Subagenten haben sich gemeldet. Der Agent macht von sich aus weiter.',
   wokenFinished: 'ist fertig',
+  wokenLimit: 'hat sein Limit erreicht',
   wokenFailed: 'ist fehlgeschlagen',
   wokenCancelled: 'wurde abgebrochen',
   wokenAsks: 'fragt:',

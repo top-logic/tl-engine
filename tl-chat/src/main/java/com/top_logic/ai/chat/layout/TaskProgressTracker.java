@@ -604,8 +604,17 @@ public class TaskProgressTracker {
 		return _cumulativeUsage;
 	}
 
-	/** Resets session-specific state (approvals, loaded skills, and tokens). */
+	/**
+	 * Resets session-specific state (approvals, loaded skills, tokens and the approval mode).
+	 *
+	 * <p>
+	 * The approval mode goes back to {@link ApprovalMode#MANUAL}: auto-approve is a setting of one
+	 * chat, and a chat that stores no mode - a new one - starts with it off (#808). The chat the
+	 * tracker switches to brings its own mode back when it stores one.
+	 * </p>
+	 */
 	public void resetSessionState() {
+		_approvalMode = ApprovalMode.MANUAL;
 		_sessionApprovedTools.clear();
 		_loadedSkills.clear();
 		_feedback.clear();

@@ -21,6 +21,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.CancelledWriteException;
@@ -96,6 +97,25 @@ public class ChatHistoryService {
 			Logger.error("Failed to create chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
 		}
+	}
+
+	/**
+	 * Creates a new chat session with the given owner, which runs with the given approval mode.
+	 *
+	 * <p>
+	 * A chat that stores no approval mode runs with {@link ApprovalMode#MANUAL} (#808), so a mode
+	 * chosen before the chat exists - by the user before the first send, or by a scheduled task - is
+	 * stored with the chat when it is created.
+	 * </p>
+	 *
+	 * @return the created session object, or null on failure.
+	 */
+	public static TLObject createSession(String title, Person owner, ApprovalMode mode) {
+		TLObject session = createSession(title, owner);
+		if (session != null && mode != ApprovalMode.MANUAL) {
+			updateMetadata(session, stored -> DtoMapper.withApprovalMode(stored, mode));
+		}
+		return session;
 	}
 
 	/**

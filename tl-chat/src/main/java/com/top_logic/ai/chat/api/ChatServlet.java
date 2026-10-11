@@ -1135,8 +1135,9 @@ public class ChatServlet extends TopLogicServlet {
 	 * </p>
 	 *
 	 * <p>
-	 * A body without {@code sessionId} sets the mode of a conversation that has no chat yet; the
-	 * first send stores it with the chat it creates.
+	 * A body without {@code sessionId} is refused. A conversation that has no chat yet keeps the
+	 * mode in the browser and names it when it creates the chat (POST /chat/sessions), because a
+	 * chat that stores no mode runs with {@link ApprovalMode#MANUAL} (#808).
 	 * </p>
 	 */
 	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -1168,32 +1169,28 @@ public class ChatServlet extends TopLogicServlet {
 		}
 
 		TaskProgressTracker tracker = currentTracker();
-		if (requestedSession == null) {
-			tracker.setApprovalMode(approvalMode);
-		} else {
-			String sessionId = ownedSessionId(req, resp, requestedSession);
-			if (sessionId == null) {
-				return;
+		String sessionId = ownedSessionId(req, resp, requestedSession);
+		if (sessionId == null) {
+			return;
+		}
+		Person person = resolveCurrentPerson(req);
+		tracker.setActiveSessionId(sessionId, person);
+		tracker.setApprovalMode(approvalMode);
+		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
+		// stored mode, so that no window writes back the one it opened the chat with.
+		ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
+			stored -> DtoMapper.withApprovalMode(stored, approvalMode));
+		for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
+			TaskProgressTracker window = other.getTracker();
+			if (window == tracker) {
+				continue;
 			}
-			Person person = resolveCurrentPerson(req);
-			tracker.setActiveSessionId(sessionId, person);
-			tracker.setApprovalMode(approvalMode);
-			// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
-			// stored mode, so that no window writes back the one it opened the chat with.
-			ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
-				stored -> DtoMapper.withApprovalMode(stored, approvalMode));
-			for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
-				TaskProgressTracker window = other.getTracker();
-				if (window == tracker) {
-					continue;
-				}
-				window.getSessionManager().markChangedElsewhere(sessionId);
-				try {
-					other.sendApprovalMode(approvalMode);
-				} catch (RuntimeException ex) {
-					Logger.info("Could not tell a window that the approval mode of chat " + sessionId
-						+ " changed: " + ex.getMessage(), ChatServlet.class);
-				}
+			window.getSessionManager().markChangedElsewhere(sessionId);
+			try {
+				other.sendApprovalMode(approvalMode);
+			} catch (RuntimeException ex) {
+				Logger.info("Could not tell a window that the approval mode of chat " + sessionId
+					+ " changed: " + ex.getMessage(), ChatServlet.class);
 			}
 		}
 
@@ -1718,8 +1715,18 @@ public class ChatServlet extends TopLogicServlet {
 			title = "New Chat";
 		}
 		final String sessionTitle = title.trim();
+		ApprovalMode approvalMode = ApprovalMode.MANUAL;
+		String requestedMode = blankToNull(body.getApprovalMode());
+		if (requestedMode != null) {
+			try {
+				approvalMode = ApprovalMode.valueOf(requestedMode);
+			} catch (IllegalArgumentException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid approvalMode: " + requestedMode);
+				return;
+			}
+		}
 
-		TLObject session = ChatHistoryService.createSession(sessionTitle, person);
+		TLObject session = ChatHistoryService.createSession(sessionTitle, person, approvalMode);
 		if (session == null) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create session");
 			return;

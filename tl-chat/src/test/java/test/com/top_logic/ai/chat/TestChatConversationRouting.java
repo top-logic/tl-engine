@@ -32,6 +32,7 @@ import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.Login;
@@ -39,7 +40,9 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
@@ -166,7 +169,7 @@ public class TestChatConversationRouting extends BasicTestCase {
 	 *
 	 * <p>
 	 * {@code POST /chat/approval-mode} is the probe because it writes one field of the addressed
-	 * tracker and reads nothing else. With one tracker per window, switching the dock to
+	 * tracker, besides the chat it names. With one tracker per window, switching the dock to
 	 * auto-approve switched the page's chat with it - which is the same collision that let the two
 	 * take each other's runs.
 	 * </p>
@@ -176,9 +179,12 @@ public class TestChatConversationRouting extends BasicTestCase {
 		TaskProgressTracker dock = register(DOCK);
 		page.setApprovalMode(ApprovalMode.MANUAL);
 		dock.setApprovalMode(ApprovalMode.MANUAL);
+		TLObject chat = ChatHistoryService.createSession("Im Dock", user);
+		HistoryUtils.updateSessionRevision();
+		String chatId = chat.tHandle().getObjectName().toExternalForm();
 
-		assertEquals(HttpServletResponse.SC_OK,
-			post("/approval-mode", DOCK, "{\"mode\":\"AUTO_APPROVE\"}")._status);
+		assertEquals(HttpServletResponse.SC_OK, signedInPost("/approval-mode", DOCK,
+			"{\"mode\":\"AUTO_APPROVE\",\"sessionId\":\"" + chatId + "\"}")._status);
 
 		assertEquals("The dock's conversation was the one addressed.",
 			ApprovalMode.AUTO_APPROVE, dock.getApprovalMode());
@@ -212,6 +218,29 @@ public class TestChatConversationRouting extends BasicTestCase {
 		HttpServletRequest request = _client.newInvocation(new PostMethodWebRequest(url(path, conversation),
 			new ByteArrayInputStream(body.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
 			"application/json")).getRequest();
+		_servlet.dispatch(request, response.asResponse());
+		return response;
+	}
+
+	/**
+	 * A POST of a signed-in account, for a request that names a chat: the servlet asks the HTTP
+	 * session whose chat it is. The login opens a session of its own, so this test's window is
+	 * registered in it as well.
+	 */
+	private Recording signedInPost(String path, String conversation, String body) throws Exception {
+		Recording response = new Recording();
+		HttpServletRequest request = _client.newInvocation(new PostMethodWebRequest(url(path, conversation),
+			new ByteArrayInputStream(body.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+			"application/json")).getRequest();
+		ThreadContext.pushSuperUser();
+		try {
+			SessionService.getInstance().loginUser(request, response.asResponse(), user);
+		} finally {
+			ThreadContext.popSuperUser();
+		}
+		SessionService.getInstance().getSession(SessionService.getInstance().getSession(request))
+			.setIfAbsent(_windowId, _subSession);
+		_subSession.setPerson(user);
 		_servlet.dispatch(request, response.asResponse());
 		return response;
 	}

@@ -382,8 +382,8 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Loads session metadata from JSON into the tracker, restoring approved tools and cumulative
-	 * token usage.
+	 * Loads session metadata from JSON into the tracker, restoring approved tools, cumulative
+	 * token usage and the approval mode - {@link ApprovalMode#MANUAL} when the metadata stores none.
 	 *
 	 * @param json
 	 *        The JSON string from persistence. May be null or empty.
@@ -391,6 +391,8 @@ public final class DtoMapper {
 	 *        The task progress tracker to populate.
 	 */
 	public static void loadMetadata(String json, TaskProgressTracker tracker) {
+		// A chat that stores no mode runs with auto-approve off, whatever the previous one did (#808).
+		tracker.setApprovalMode(ApprovalMode.MANUAL);
 		if (json == null || json.isEmpty()) {
 			return;
 		}

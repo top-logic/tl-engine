@@ -179,7 +179,7 @@ run. See `doc/scheduled-agent.md`.
 
 - **Module**: `tl.ai.execution` (tl-ai-core), **Types**: `AgentSession` (kind CHAT) + `AgentExecution` per run
 - Session: `title`, `kind`, `owner`, `metadata` (approved tools, approval mode, tasks, skills), timestamps
-- The approval mode in `metadata` is the chat's "auto-approve" switch, and only the switch writes it: `POST /chat/approval-mode` names the chat and stores the mode at once, and every other save of the bag keeps the stored mode, so no window writes back the mode it opened the chat with (#658). `GET /chat/sessions/{id}` answers it as `approvalMode`, which the switch shows.
+- The approval mode in `metadata` is the chat's "auto-approve" switch, and only the switch writes it: `POST /chat/approval-mode` names the chat and stores the mode at once, and every other save of the bag keeps the stored mode, so no window writes back the mode it opened the chat with (#658). `GET /chat/sessions/{id}` answers it as `approvalMode`, which the switch shows. A chat that stores no mode runs `MANUAL`, so auto-approve starts off in every new chat; a mode set before the first send travels with `POST /chat/sessions` (`approvalMode`) and is stored with the chat it creates, as a scheduled task's mode is (#808).
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)

@@ -2123,8 +2123,9 @@ export class ChatStore {
           feedback: detail.feedback ?? [],
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
           // The switch shows the mode the server now runs this chat with, not the one the
-          // previous chat or the page load left behind (#658).
-          ...(detail.approvalMode ? { autoApprove: detail.approvalMode === 'AUTO_APPROVE' } : {}),
+          // previous chat or the page load left behind (#658); a chat that stores none is
+          // manual (#808).
+          autoApprove: detail.approvalMode === 'AUTO_APPROVE',
         })
         this.joinRun(detail.inFlight)
         // A re-opened session shows what its last request really cost, not a fresh estimate.
@@ -2157,6 +2158,8 @@ export class ChatStore {
         this.noticeSticky = false
         this.patch({
           sessionId: null,
+          // Auto-approve is a setting of one chat, and a new chat starts with it off (#808).
+          autoApprove: false,
           subagents: [],
       subagentLive: {},
       delegationLive: {},
@@ -2176,6 +2179,7 @@ export class ChatStore {
         if (this.state.sessionId === id) {
           this.patch({
             sessionId: null,
+            autoApprove: false,
             subagents: [],
       subagentLive: {},
       delegationLive: {},
@@ -2207,7 +2211,12 @@ export class ChatStore {
           // The first send is what brings a chat into being, titled after what was said.
           let created: SessionSummary
           try {
-            created = await createSession(at, autoTitle(text || labels.attachmentOnly))
+            // The mode the user set on this new chat before it existed is stored with it.
+            created = await createSession(
+              at,
+              autoTitle(text || labels.attachmentOnly),
+              this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
+            )
             await loadSession(at, created.id)
           } catch (err) {
             if (this.staleWindow(err, text)) return false
@@ -2427,11 +2436,16 @@ export class ChatStore {
         const at = this.at
         const next = !this.state.autoApprove
         this.patch({ autoApprove: next })
-        try {
-          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
-        } catch {
-          this.patch({ autoApprove: !next })
-          return
+        const sessionId = this.state.sessionId
+        // A conversation that has no chat yet keeps the mode here; the send that creates the chat
+        // names it.
+        if (sessionId) {
+          try {
+            await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', sessionId)
+          } catch {
+            this.patch({ autoApprove: !next })
+            return
+          }
         }
         if (!next) return
         for (const message of this.state.messages) {

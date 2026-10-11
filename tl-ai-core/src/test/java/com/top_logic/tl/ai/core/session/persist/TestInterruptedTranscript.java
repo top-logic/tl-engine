@@ -189,6 +189,24 @@ public class TestInterruptedTranscript extends TestCase {
 		assertEquals("RUNNING", ((Part.SubagentPart) turn.findPart("new")).status());
 	}
 
+	/**
+	 * A subagent that stopped at its limit has ended; a restart leaves its card as it was instead of
+	 * calling it failed (#849).
+	 */
+	public void testASubagentStoppedAtItsLimitStaysAsItEnded() throws IOException {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(T0);
+		turn.setUserParts(List.of(new Part.TextPart("u1", T0, "Recherchiere im Hintergrund.")));
+		turn.addAssistantPart(subagent("limit", "sa-1", "LIMIT"));
+
+		Turn closed = ConversationLogSerializer.fromJson(
+			InterruptedTranscript.close(ConversationLogSerializer.toJson(log))).turns().get(0);
+		assertEquals("LIMIT", ((Part.SubagentPart) closed.findPart("limit")).status());
+
+		assertEquals(0, InterruptedTranscript.endInterruptedSubagents(log, T0.plusSeconds(60)));
+		assertEquals("LIMIT", ((Part.SubagentPart) turn.findPart("limit")).status());
+	}
+
 	private static Part.SubagentPart subagent(String id, String subagentId, String status) {
 		return new Part.SubagentPart(id, T0.plusSeconds(1), subagentId, "worker", "task", "call-1",
 			"run-" + subagentId, status, "DONE".equals(status) ? "found it" : null);

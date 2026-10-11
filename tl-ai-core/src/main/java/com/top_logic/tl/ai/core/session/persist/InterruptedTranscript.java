@@ -208,9 +208,11 @@ public final class InterruptedTranscript {
 		return ended;
 	}
 
+	/** Whether the part says how its subagent ended: done, stopped at a limit, failed or cancelled. */
 	private static boolean hasEnded(Part.SubagentPart subagent) {
 		String status = subagent.status();
-		return "DONE".equals(status) || "FAILED".equals(status) || "CANCELLED".equals(status);
+		return "DONE".equals(status) || "LIMIT".equals(status) || "FAILED".equals(status)
+			|| "CANCELLED".equals(status);
 	}
 
 	private static Part.SubagentPart interrupted(Part.SubagentPart subagent) {

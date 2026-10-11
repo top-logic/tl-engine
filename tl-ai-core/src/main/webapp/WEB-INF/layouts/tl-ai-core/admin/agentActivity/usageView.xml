@@ -12,8 +12,8 @@
 	own control rather than a shared one: a control that stays visible on the Sitzungen, Läufe and
 	Rückfragen tabs, where it changes nothing, would be a control that lies about its reach.
 	
-	"Kosten nach Konto" is the one money figure here (#722): what each account's runs recorded, in the
-	currency and at the rate configured when they ran. Per account because that is what a money
+	"Kosten nach Konto" is the one money figure here (#722): what each account's runs cost, in the
+	system currency at the rate of USD valid on the day each ran. Per account because that is what a money
 	budget is set for; the token charts beside it answer the per-model and per-agent questions.
 -->
 <securityLayout name="aiAgentUsageView"

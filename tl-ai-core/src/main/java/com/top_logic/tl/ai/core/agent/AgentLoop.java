@@ -832,7 +832,7 @@ public class AgentLoop {
 				// Priced per request and with the model that answered it: a failover moves the run to
 				// another price list, and a tiered price depends on this request's prompt alone.
 				Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
-				totalCost = addCost(totalCost, turnCost, runId);
+				totalCost = totalCost.plus(turnCost);
 				context.budgetAllowance().record(assistantMsg.usage(), turnCost);
 
 				if (limit == null || askedForAnswer || unfinished(assistantMsg) != StopReason.NO_ANSWER) {
@@ -997,24 +997,6 @@ public class AgentLoop {
 			: new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
 	}
 
-	/**
-	 * The run's cost so far plus what one more request cost.
-	 *
-	 * <p>
-	 * Both are in the installation's currency, unless an administrator changed it while the run was
-	 * going. Amounts in two currencies do not add up, so the run then goes on counting in the new
-	 * one, and the log says what was dropped.
-	 * </p>
-	 */
-	private static Money addCost(Money total, Money turn, String runId) {
-		if (total.amount() == 0 || turn.amount() == 0 || total.currency().equals(turn.currency())) {
-			return total.plus(turn);
-		}
-		Logger.warn("Run " + runId + " counts its cost in " + turn.currency() + " from now on: the currency was"
-			+ " changed while it was going. Its cost of " + total.amount() + " " + total.currency()
-			+ " so far is not recorded.", AgentLoop.class);
-		return turn;
-	}
 
 	/**
 	 * Classify a provider failure: a run cancelled by the user is {@link StopReason#ABORTED}
@@ -1124,7 +1106,7 @@ public class AgentLoop {
 				// Priced per request and with the model that answered it: a failover moves the run to
 				// another price list, and a tiered price depends on this request's prompt alone.
 				Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
-				totalCost = addCost(totalCost, turnCost, runId);
+				totalCost = totalCost.plus(turnCost);
 				context.budgetAllowance().record(assistantMsg.usage(), turnCost);
 				memory.updateTokenBaseline(assistantMsg.usage());
 

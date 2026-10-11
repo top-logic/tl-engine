@@ -43,9 +43,9 @@ public record Money(double amount, String currency) {
 	 * This amount plus the given one.
 	 *
 	 * <p>
-	 * The sum is in this amount's currency. Two amounts in different currencies are not added: an
-	 * amount is converted where it is made (see {@link CostCurrency#fromUsd(double)}), and a sum of
-	 * a dollar figure and a euro figure would be a third figure in neither.
+	 * The sum is in this amount's currency. Two amounts in different currencies are not added: a
+	 * sum of a dollar figure and a euro figure would be a third figure in neither. Costs are added
+	 * in US dollars and converted afterwards (see {@link CostConversion}).
 	 * </p>
 	 *
 	 * @throws IllegalArgumentException

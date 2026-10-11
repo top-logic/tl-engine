@@ -66,6 +66,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
@@ -602,8 +603,16 @@ public class ChatSSEHandler implements ChatEventHandler {
 		}
 	}
 
+	/**
+	 * The run's cost on its completion frame, in the currency the chat shows costs in: the run
+	 * reports US dollars, which are converted at today's rate ({@link CostConversion}).
+	 */
 	private static RunCompletedEvent withCost(RunCompletedEvent event, Money cost) {
-		return cost == null ? event : event.setTotalCost(cost.amount()).setCurrency(cost.currency());
+		if (cost == null) {
+			return event;
+		}
+		Money shown = CostConversion.shown(cost, null);
+		return event.setTotalCost(shown.amount()).setCurrency(shown.currency());
 	}
 
 	private void emitDelegatedEvent(AgentEvent.DelegatedEvent delegated) {

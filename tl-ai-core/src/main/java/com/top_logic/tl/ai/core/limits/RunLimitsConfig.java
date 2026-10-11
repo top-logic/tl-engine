@@ -28,8 +28,6 @@ import com.top_logic.basic.config.order.DisplayOrder;
 	CapacityConfig.CONCURRENT_RUNS_PER_ACCOUNT,
 	BudgetConfig.TOKEN_BUDGET,
 	BudgetConfig.MONEY_BUDGET,
-	BudgetConfig.CURRENCY,
-	BudgetConfig.EXCHANGE_RATE,
 	BudgetConfig.BUDGET_WINDOW_HOURS,
 	BudgetConfig.ROLE_BUDGETS,
 })

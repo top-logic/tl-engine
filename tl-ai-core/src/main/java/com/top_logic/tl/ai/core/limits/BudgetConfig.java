@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 
@@ -42,8 +41,6 @@ import com.top_logic.basic.config.order.DisplayOrder;
 @DisplayOrder({
 	BudgetConfig.TOKEN_BUDGET,
 	BudgetConfig.MONEY_BUDGET,
-	BudgetConfig.CURRENCY,
-	BudgetConfig.EXCHANGE_RATE,
 	BudgetConfig.BUDGET_WINDOW_HOURS,
 	BudgetConfig.ROLE_BUDGETS,
 })
@@ -54,12 +51,6 @@ public interface BudgetConfig extends ConfigPart {
 
 	/** Configuration property name for {@link #getMoneyBudget()}. */
 	String MONEY_BUDGET = "money-budget";
-
-	/** Configuration property name for {@link #getCurrency()}. */
-	String CURRENCY = "currency";
-
-	/** Configuration property name for {@link #getExchangeRate()}. */
-	String EXCHANGE_RATE = "exchange-rate";
 
 	/** Configuration property name for {@link #getBudgetWindowHours()}. */
 	String BUDGET_WINDOW_HOURS = "budget-window-hours";
@@ -99,7 +90,7 @@ public interface BudgetConfig extends ConfigPart {
 
 	/**
 	 * How much money one account may spend within {@link #getBudgetWindowHours() the window}, in
-	 * {@link #getCurrency() the currency}.
+	 * the application's system currency (euro unless the application configures another).
 	 *
 	 * <p>
 	 * {@code 0}, the default, means unlimited. It is enforced exactly like
@@ -116,8 +107,13 @@ public interface BudgetConfig extends ConfigPart {
 	 * </p>
 	 *
 	 * <p>
-	 * Only runs recorded in the current {@link #getCurrency() currency} count. After a change of the
-	 * currency the account starts with nothing spent.
+	 * A run records its cost in US dollars, the currency of the prices. It is converted into the
+	 * system currency at the exchange rate of the currency "USD" for the day the run started: a dated
+	 * rate valid on that day, else the conversion factor of the currency "USD" under Administration
+	 * &gt; Basisadministration &gt; Currencies, unless it is the 1 every currency is created with.
+	 * While there is no rate for today this budget is not enforced, and the log and the agent
+	 * activity monitor say so; the token budget still is. A system currency that is US dollars needs
+	 * no rate.
 	 * </p>
 	 *
 	 * @see #MONEY_BUDGET
@@ -126,39 +122,6 @@ public interface BudgetConfig extends ConfigPart {
 	@Label("Money budget per account")
 	@DoubleDefault(0)
 	double getMoneyBudget();
-
-	/**
-	 * The currency in which this installation states and records what a run cost, and in which
-	 * {@link #getMoneyBudget()} is given.
-	 *
-	 * <p>
-	 * An ISO 4217 code, for example {@code EUR}. {@code USD} by default, which is the currency of
-	 * the model prices.
-	 * </p>
-	 *
-	 * @see #CURRENCY
-	 */
-	@Name(CURRENCY)
-	@Label("Currency")
-	@StringDefault("USD")
-	String getCurrency();
-
-	/**
-	 * How many units of {@link #getCurrency() the currency} one US dollar is worth.
-	 *
-	 * <p>
-	 * The model prices are in US dollars. A cost is converted at this rate when the run records it,
-	 * so a change applies to the runs that follow and leaves the recorded ones as they are. A fixed
-	 * number on purpose: nothing fetches a current rate, because a budget must not change while
-	 * nobody changes it. Leave it at {@code 1} for US dollars.
-	 * </p>
-	 *
-	 * @see #EXCHANGE_RATE
-	 */
-	@Name(EXCHANGE_RATE)
-	@Label("Exchange rate (units per US dollar)")
-	@DoubleDefault(1)
-	double getExchangeRate();
 
 	/**
 	 * How far back {@link #getTokenBudget()} and {@link #getMoneyBudget()} count, in hours.
@@ -245,8 +208,8 @@ public interface BudgetConfig extends ConfigPart {
 		Long getTokens();
 
 		/**
-		 * How much money the holders of this role may spend in the window, in the currency of the
-		 * budget.
+		 * How much money the holders of this role may spend in the window, in the system currency,
+		 * like {@link BudgetConfig#getMoneyBudget()}.
 		 *
 		 * <p>
 		 * {@code 0} means unlimited, exactly as it does for

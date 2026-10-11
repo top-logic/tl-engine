@@ -198,13 +198,22 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String COST_ATTR = "cost";
 
 	/**
-	 * Part <code>currency</code> of <code>AgentExecution</code>
+	 * Part <code>displayCost</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_COST_ATTR = "displayCost";
+
+	/**
+	 * Part <code>displayCurrency</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.core:String</code> in configuration.
 	 * </p>
 	 */
-	String CURRENCY_ATTR = "currency";
+	String DISPLAY_CURRENCY_ATTR = "displayCurrency";
 
 	/**
 	 * Part <code>environment</code> of <code>AgentExecution</code>
@@ -498,17 +507,17 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	}
 
 	/**
-	 * Getter for part {@link #CURRENCY_ATTR}.
+	 * Getter for part {@link #DISPLAY_COST_ATTR}.
 	 */
-	default String getCurrency() {
-		return (String) tValueByName(CURRENCY_ATTR);
+	default Double getDisplayCost() {
+		return (Double) tValueByName(DISPLAY_COST_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #CURRENCY_ATTR}.
+	 * Getter for part {@link #DISPLAY_CURRENCY_ATTR}.
 	 */
-	default void setCurrency(String newValue) {
-		tUpdateByName(CURRENCY_ATTR, newValue);
+	default String getDisplayCurrency() {
+		return (String) tValueByName(DISPLAY_CURRENCY_ATTR);
 	}
 
 	/**

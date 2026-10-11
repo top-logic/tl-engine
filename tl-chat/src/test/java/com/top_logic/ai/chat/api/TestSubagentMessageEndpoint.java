@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.OptionalDouble;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,6 +43,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
@@ -200,14 +202,35 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 
 	/**
 	 * The list of the window's subagents says what each run cost and the budget they spend from, so
-	 * the panel can sum them up (#783).
+	 * the panel can sum them up (#783). A run reports US dollars; the list converts them into the
+	 * system currency at today's rate (#858).
 	 */
 	public void testTheListSaysWhatTheSubagentsSpentAndFromWhat() throws Exception {
-		_job.setCost(new Money(0.0125, "EUR"));
+		_job.setCost(new Money(0.025, Money.USD));
 		_job.setBudget(BudgetAllowance.of(200_000,
-			new BudgetAllowance.MoneyBudget(5.0, 1.0, "EUR")));
-		ChatSessionRegistry.register(TLContextManager.getSubSession(), null, _leadWindow);
+			new BudgetAllowance.MoneyBudget(5.0, 1.0, "EUR", 0.5)));
 
+		String json;
+		try (var rates = CostConversion.override("EUR", day -> OptionalDouble.of(0.5))) {
+			json = listSubagents();
+		}
+		assertTrue(json, json.contains("\"cost\":0.0125,\"currency\":\"EUR\""));
+		assertTrue(json, json.contains("\"budget\":{\"tokens\":200000,\"money\":4.0,\"currency\":\"EUR\"}"));
+	}
+
+	/** Without a rate the list shows what the run cost in US dollars, as it recorded it. */
+	public void testWithoutARateTheListShowsDollars() throws Exception {
+		_job.setCost(new Money(0.025, Money.USD));
+
+		String json;
+		try (var rates = CostConversion.override("EUR", day -> OptionalDouble.empty())) {
+			json = listSubagents();
+		}
+		assertTrue(json, json.contains("\"cost\":0.025,\"currency\":\"USD\""));
+	}
+
+	private String listSubagents() throws Exception {
+		ChatSessionRegistry.register(TLContextManager.getSubSession(), null, _leadWindow);
 		Recording answer = new Recording();
 		InvocationContext invocation = runner.newClient().newInvocation(
 			new com.meterware.httpunit.GetMethodWebRequest("http://localhost/chat/subagents"));
@@ -219,10 +242,7 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 			ThreadContext.popSuperUser();
 		}
 		_servlet.get(request, answer.asResponse());
-
-		String json = answer.text();
-		assertTrue(json, json.contains("\"cost\":0.0125,\"currency\":\"EUR\""));
-		assertTrue(json, json.contains("\"budget\":{\"tokens\":200000,\"money\":4.0,\"currency\":\"EUR\"}"));
+		return answer.text();
 	}
 
 	private String body(String parentToolCallId, String text) {

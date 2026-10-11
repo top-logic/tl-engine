@@ -76,7 +76,7 @@ public class TestBudgetAllowance extends TestCase {
 	/** The money headroom is the budget minus what was spent before the run; a turn's cost uses it up. */
 	public void testMoneyIsExhaustedAtTheHeadroom() {
 		BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
-			new MoneyBudget(15, 12.40, "EUR"));
+			new MoneyBudget(15, 12.40, "EUR", 0.9));
 		assertTrue(allowance.isMoneyLimited());
 		assertFalse("No token budget was configured.", allowance.isTokenLimited());
 
@@ -90,18 +90,29 @@ public class TestBudgetAllowance extends TestCase {
 
 	/** Tokens and money are bounded together: whichever runs out first ends the run. */
 	public void testEitherBudgetExhaustsTheAllowance() {
-		BudgetAllowance allowance = BudgetAllowance.of(100, new MoneyBudget(1, 0, "USD"));
+		BudgetAllowance allowance = BudgetAllowance.of(100, new MoneyBudget(1, 0, "USD", 1));
 		allowance.record(new TokenUsage(100, 0, 0, 0, 0), new Money(0.01, "USD"));
 		assertTrue(allowance.tokensExhausted());
 		assertFalse(allowance.moneyExhausted());
 		assertTrue(allowance.exhausted());
 	}
 
-	/** A cost in another currency than the budget's is not counted against it. */
-	public void testACostInAnotherCurrencyIsNotCounted() {
+	/**
+	 * A run records its cost in US dollars; the budget counts it at the rate it carries, the rate of
+	 * the day the run started.
+	 */
+	public void testACostInUsdCountsAtTheBudgetsRate() {
 		BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
-			new MoneyBudget(1, 0, "EUR"));
+			new MoneyBudget(10, 0, "EUR", 0.9));
 		allowance.record(TokenUsage.EMPTY, new Money(5, "USD"));
+		assertEquals(4.5, allowance.spentMoney(), 1e-9);
+	}
+
+	/** A cost in a third currency, neither the budget's nor US dollars, is not counted. */
+	public void testACostInAThirdCurrencyIsNotCounted() {
+		BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
+			new MoneyBudget(1, 0, "EUR", 0.9));
+		allowance.record(TokenUsage.EMPTY, new Money(5, "CHF"));
 		assertEquals(0.0, allowance.spentMoney());
 	}
 

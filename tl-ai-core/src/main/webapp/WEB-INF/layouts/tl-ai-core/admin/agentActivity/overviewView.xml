@@ -29,8 +29,8 @@
 	the period re-evaluates the tiles and both charts.
 	
 	No cost tile of its own: the cost of the period is a line of the token tile (#722). It is what the
-	runs recorded - their tokens times the catalog's or the administrator's prices, in the currency
-	and at the rate the <budget> of AgentPolicyService names - and never a rate guessed here.
+	runs cost - their tokens times the catalog's or the administrator's prices, recorded in US dollars
+	and converted at the engine's rate of USD valid on each run's day - and never a rate guessed here.
 -->
 <securityLayout name="aiAgentOverviewView"
 	titleKey="admin.ai.agentActivity.overview.tabber"

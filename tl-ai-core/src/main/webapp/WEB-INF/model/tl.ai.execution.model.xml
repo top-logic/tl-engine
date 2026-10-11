@@ -234,12 +234,11 @@
 						type="tl.core:Long"
 					/>
 					<!--
-						What the run cost: its tokens times the prices of the model that answered each
-						request, in the currency the installation states costs in (currency), at the
-						exchange rate configured at that time. Written with the token counts, when
-						the run finishes. Empty for a run recorded before costs were. A model without a
-						price costs 0. Four decimals, because a single short run often costs less than
-						a cent.
+						What the run cost, in US dollars: its tokens times the prices of the model that
+						answered each request, which models.dev and the model overrides state in US
+						dollars. Written with the token counts, when the run finishes. Empty for a run
+						recorded before costs were. A model without a price costs 0. Four decimals,
+						because a single short run often costs less than a cent.
 					-->
 					<property name="cost"
 						type="tl.core:Double"
@@ -251,13 +250,40 @@
 						</annotations>
 					</property>
 					<!--
-						The ISO 4217 code of the currency cost is in. Stored on every run because the
-						installation's currency can change, and a sum over runs adds only amounts in
-						the same currency.
+						What the run cost in the currency the agent activity monitor shows: cost
+						converted into the application's system currency at the exchange rate of the
+						currency USD for the day the run started - a dated rate, else the currency's
+						conversion factor (Administration > Basisadministration > Währungen) unless it
+						is 1 - or cost itself, in US dollars, while there is no such rate. Computed,
+						not stored, so a run is shown in the system currency as soon as a rate is
+						entered. See CostConversion.
 					-->
-					<property name="currency"
+					<property name="displayCost"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<format>
+								<decimal pattern="#,##0.00##"/>
+							</format>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[e -> aiCost($e)]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<!-- The ISO 4217 code of displayCost: the system currency, or USD without a rate. -->
+					<property name="displayCurrency"
 						type="tl.core:String"
-					/>
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[e -> aiCostCurrency($e)]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<property name="transcript"
 						type="tl.core:Text"
 					/>

@@ -17,17 +17,19 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCost;
 
 /**
- * What a model request cost, in the currency this installation states its costs in.
+ * What a model request cost, in US dollars.
  *
  * <p>
  * The prices come from {@link LLMProviderService}: the models.dev catalog, or a price an
- * administrator put on a model override. A model with no price - a local model nobody priced, a
+ * administrator put on a model override, both in US dollars, which is also the currency a run
+ * records its cost in; {@link CostConversion} converts it where it is shown or compared with a
+ * budget. A model with no price - a local model nobody priced, a
  * model the catalog does not list - costs nothing. That is logged once per model, so that an
  * administrator who expected a figure finds out why there is none.
  * </p>
  *
  * @see CostCalculator
- * @see CostCurrency
+ * @see CostConversion
  */
 public final class RunCosts {
 
@@ -46,7 +48,7 @@ public final class RunCosts {
 	}
 
 	/**
-	 * What one request to the given model cost, converted into this installation's currency.
+	 * What one request to the given model cost, in US dollars.
 	 *
 	 * @param model
 	 *        The model that answered the request; {@code null} costs nothing.
@@ -54,16 +56,15 @@ public final class RunCosts {
 	 *        What the request used; {@code null} counts as nothing.
 	 */
 	public static Money costOf(String model, TokenUsage usage) {
-		CostCurrency currency = RunLimitSettings.costCurrency();
 		if (usage == null || usage.totalTokens() == 0) {
-			return currency.zero();
+			return zero();
 		}
-		return currency.fromUsd(CostCalculator.costOf(priceOf(model), usage).total());
+		return new Money(CostCalculator.costOf(priceOf(model), usage).total(), Money.USD);
 	}
 
-	/** Nothing, in this installation's currency. */
+	/** Nothing, in US dollars. */
 	public static Money zero() {
-		return RunLimitSettings.costCurrency().zero();
+		return Money.zero(Money.USD);
 	}
 
 	/**

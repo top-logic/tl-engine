@@ -152,6 +152,24 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 RESEARCH_SESSION_TITLE__QUESTION;
 
+	/**
+	 * Warning of the agent activity monitor while no exchange rate converts the cost of today's runs
+	 * into the system currency {0}, and no money budget is configured.
+	 *
+	 * @en No exchange rate USD -> {0}: costs are shown in USD.
+	 * @de Kein Wechselkurs USD -> {0}: Kosten werden in USD angezeigt.
+	 */
+	public static ResKey1 COST_NO_RATE__CURRENCY;
+
+	/**
+	 * Warning of the agent activity monitor while no exchange rate converts the cost of today's runs
+	 * into the system currency {0}, so the configured money budget is not checked.
+	 *
+	 * @en No exchange rate USD -> {0}: the money budget is not checked, costs are shown in USD.
+	 * @de Kein Wechselkurs USD -> {0}: Geldbudget wird nicht geprüft, Kosten werden in USD angezeigt.
+	 */
+	public static ResKey1 COST_NO_RATE_BUDGET_UNCHECKED__CURRENCY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

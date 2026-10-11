@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +23,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
-import com.top_logic.tl.ai.core.cost.CostCurrency;
+import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.AccountSpend;
@@ -102,18 +103,15 @@ public class RunLimits {
 
 		private int _hours;
 
-		private String _currency;
-
 		private SpendReading(Person principal) {
 			_principal = principal;
 		}
 
 		/** What the account spent in the given window, read on the first call for it. */
-		synchronized AccountSpend spent(int hours, CostCurrency currency) {
-			if (_spent == null || _hours != hours || !currency.code().equals(_currency)) {
-				_spent = spentSince(_principal, hours, currency);
+		synchronized AccountSpend spent(int hours) {
+			if (_spent == null || _hours != hours) {
+				_spent = spentSince(_principal, hours);
 				_hours = hours;
-				_currency = currency.code();
 			}
 			return _spent;
 		}
@@ -405,8 +403,7 @@ public class RunLimits {
 			return BudgetAllowance.UNLIMITED;
 		}
 		int hours = RunLimitSettings.budgetWindowHours();
-		CostCurrency currency = RunLimitSettings.costCurrency();
-		AccountSpend spent = reading.spent(hours, currency);
+		AccountSpend spent = reading.spent(hours);
 
 		long tokenHeadroom = BudgetAllowance.UNLIMITED_TOKENS;
 		if (tokenBudget > 0) {
@@ -423,17 +420,40 @@ public class RunLimits {
 
 		MoneyBudget money = null;
 		if (moneyBudget > 0) {
-			money = new MoneyBudget(moneyBudget, spent.cost(), currency.code());
+			money = moneyBudget(principal, moneyBudget, spent);
+		}
+		if (money != null) {
 			if (money.headroom() <= 0) {
 				String message = "Permission to run denied: account '" + principal.getName() + "' spent "
-					+ spent.cost() + " " + currency.code() + " in the last " + hours
-					+ "h, which is its budget of " + moneyBudget + " " + currency.code() + ".";
+					+ spent.cost() + " " + money.currency() + " in the last " + hours
+					+ "h, which is its budget of " + moneyBudget + " " + money.currency() + ".";
 				Logger.info(message, RunLimits.class);
 				throw new RunLimitExceededException(moneySpent(principal, money, spent.cost(), hours,
 					I18NConstants.MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS), message, false);
 			}
 		}
 		return BudgetAllowance.of(tokenHeadroom, money);
+	}
+
+	/**
+	 * The account's money budget against what it spent, in the system currency; {@code null} when
+	 * it cannot be checked.
+	 *
+	 * <p>
+	 * The money budget is stated in the system currency and the runs record US dollars, so it is
+	 * checked only while a rate of today converts the run that starts, and the rates of their days
+	 * converted every run of the window. Without them nobody is refused for a sum nobody could
+	 * convert: the budget is not checked, and {@link CostConversion#warnNoRate(String)} tells the
+	 * log. The token budget is checked either way.
+	 * </p>
+	 */
+	private static MoneyBudget moneyBudget(Person principal, double budget, AccountSpend spent) {
+		OptionalDouble rate = CostConversion.usdRate(null);
+		if (rate.isEmpty() || !spent.complete()) {
+			CostConversion.warnNoRate("the money budget is not checked (account '" + principal.getName() + "')");
+			return null;
+		}
+		return new MoneyBudget(budget, spent.cost(), CostConversion.systemCurrency(), rate.getAsDouble());
 	}
 
 	/**
@@ -461,12 +481,11 @@ public class RunLimits {
 		if (moneyBudget <= 0) {
 			return tokenNotice;
 		}
-		CostCurrency currency = RunLimitSettings.costCurrency();
-		AccountSpend spent = spentSince(principal, hours, currency);
-		if (spent.cost() < moneyBudget) {
+		AccountSpend spent = spentSince(principal, hours);
+		MoneyBudget money = moneyBudget(principal, moneyBudget, spent);
+		if (money == null || spent.cost() < moneyBudget) {
 			return tokenNotice;
 		}
-		MoneyBudget money = new MoneyBudget(moneyBudget, spent.cost(), currency.code());
 		return moneySpent(principal, money, spent.cost(), hours,
 			I18NConstants.RUN_STOPPED_MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS);
 	}
@@ -479,8 +498,8 @@ public class RunLimits {
 			ResKey3 template) {
 		Locale locale = RunEnvironment.localeOf(principal);
 		return template.fill(
-			new Money(spent, money.currency()).format(locale),
-			new Money(money.budget(), money.currency()).format(locale),
+			CostConversion.format(new Money(spent, money.currency()), locale),
+			CostConversion.format(new Money(money.budget(), money.currency()), locale),
 			Integer.valueOf(hours));
 	}
 
@@ -492,20 +511,20 @@ public class RunLimits {
 	 * no figure to enforce against, and inventing one would refuse runs for a spend nobody measured.
 	 * </p>
 	 */
-	private static AccountSpend spentSince(Person principal, int hours, CostCurrency currency) {
+	private static AccountSpend spentSince(Person principal, int hours) {
 		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
-			return new AccountSpend(0, 0);
+			return new AccountSpend(0, 0, true);
 		}
 		Date since = new Date(System.currentTimeMillis() - Duration.ofHours(hours).toMillis());
 		try {
-			return AgentExecutionStore.getInstance().spentSince(principal, since, currency.code());
+			return AgentExecutionStore.getInstance().spentSince(principal, since);
 		} catch (RuntimeException ex) {
 			// A budget that cannot be read must not stop the installation from working. Admitting the
 			// run is the direction that keeps the product usable; the failure is reported so that an
 			// administrator sees a budget which is not being enforced.
 			Logger.error("Could not read the agent budget of '" + principal.getName()
 				+ "'; the run is admitted without it.", ex, RunLimits.class);
-			return new AccountSpend(0, 0);
+			return new AccountSpend(0, 0, true);
 		}
 	}
 

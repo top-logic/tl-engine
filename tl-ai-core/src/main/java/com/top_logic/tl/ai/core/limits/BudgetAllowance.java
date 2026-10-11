@@ -131,16 +131,21 @@ public final class BudgetAllowance {
 	 * @param usage
 	 *        The turn's usage; {@code null} counts as nothing.
 	 * @param cost
-	 *        What the turn cost, in the currency the run records costs in; {@code null} counts as
-	 *        nothing. An amount in another currency than the money budget's is not counted: it
-	 *        can only come from a configuration that changed while the run was going.
+	 *        What the turn cost; {@code null} counts as nothing. An amount in US dollars, as a run
+	 *        records it, is converted at the {@link MoneyBudget#usdRate() rate} of the money budget;
+	 *        an amount in the budget's own currency counts as it is, and one in a third currency is
+	 *        not counted.
 	 */
 	public void record(TokenUsage usage, Money cost) {
 		if (usage != null && isTokenLimited()) {
 			_spentTokens.addAndGet(usage.totalTokens());
 		}
-		if (cost != null && isMoneyLimited() && _money.currency().equals(cost.currency())) {
-			_spentMoney.add(cost.amount());
+		if (cost != null && isMoneyLimited()) {
+			if (_money.currency().equals(cost.currency())) {
+				_spentMoney.add(cost.amount());
+			} else if (Money.USD.equals(cost.currency())) {
+				_spentMoney.add(cost.amount() * _money.usdRate());
+			}
 		}
 	}
 
@@ -180,9 +185,12 @@ public final class BudgetAllowance {
 	 * @param spentBefore
 	 *        What the principal's recorded runs in the window had cost when this run started.
 	 * @param currency
-	 *        The ISO 4217 code both amounts are in.
+	 *        The ISO 4217 code both amounts are in: the system currency.
+	 * @param usdRate
+	 *        How many units of {@code currency} one US dollar is worth on the day the run started;
+	 *        what the run's own costs, recorded in US dollars, are converted with.
 	 */
-	public record MoneyBudget(double budget, double spentBefore, String currency) {
+	public record MoneyBudget(double budget, double spentBefore, String currency, double usdRate) {
 
 		/** What was left of the budget when the run started; {@code 0} or more. */
 		public double headroom() {

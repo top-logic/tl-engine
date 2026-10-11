@@ -70,8 +70,8 @@ its properties and an example from this application.
    change, or the one you name.
 
 ## Writing view XML
-- Write TL-Script directly into its element, without CDATA, with `<` as `&lt;` and `&` as `&amp;`
-  (`->` and `>` need no escaping).
+- Give the script of an `<execute-script>` as its attribute `function="..."`, never as a `<function>`
+  element: your tool call would end at the text `</function>`.
 - Root `<view>` with `<channels>` and one content element. Channels connect elements: a table writes
   `selection="selectedX"`, a form reads `input="selectedX"`. Declare every channel you name.
 - `rows` is TL-Script: `all(`module:Type`)`, filtered with `.filter(x -> $x.get(`module:Type#attr`) == ...)`.

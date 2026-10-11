@@ -46,6 +46,15 @@ import com.top_logic.util.TLContext;
  */
 public class ViewTools {
 
+	private static final String FUNCTION_ELEMENT = "<function>";
+
+	/**
+	 * Some models' tool-call formats end a call at the text {@code </function>}, which closes the
+	 * function element of a script action; written as an attribute, the same script travels intact.
+	 */
+	private static final String NO_FUNCTION_ELEMENT = "In the XML you pass, never write a <function> element, not even"
+		+ " where a view has one: give the script as the attribute function=\"...\" (with \" as &quot;).";
+
 	/**
 	 * What {@link #editView} does to one element.
 	 */
@@ -154,7 +163,8 @@ public class ViewTools {
 			if (text == null) {
 				return ToolResult.failure("There is no view " + path + ". listViews names them.");
 			}
-			return ToolResult.of("Outline:\n" + ViewSource.parse(text).outline() + "\nXML:\n" + text);
+			return ToolResult.of("Outline:\n" + ViewSource.parse(text).outline() + "\nXML:\n" + text
+				+ (text.contains(FUNCTION_ELEMENT) ? "\n\n" + NO_FUNCTION_ELEMENT : ""));
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.failure(ex.getMessage());
 		}
@@ -166,7 +176,7 @@ public class ViewTools {
 	@ToolMethod(description = "Save a view from XML: create it, or replace an existing one (for a small change of"
 		+ " an existing view, editView keeps the rest of the file as written). It is checked first; with an"
 		+ " error nothing is saved and every error names its line - fix those and call again. The user's open page"
-		+ " shows the change.",
+		+ " shows the change. " + NO_FUNCTION_ELEMENT,
 		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public ToolResult writeView(
 			@P("View path relative to /WEB-INF/views/") String path,
@@ -182,7 +192,7 @@ public class ViewTools {
 		+ " The edits apply in order, each to the text the previous one left, and are saved together after the"
 		+ " check: {op:SET, at, attribute, value} (empty value removes it), {op:REPLACE, at, xml},"
 		+ " {op:INSERT_INTO|INSERT_BEFORE|INSERT_AFTER, at, xml}, {op:REMOVE, at}. 'at' is an address from"
-		+ " readView, e.g. /view/split-panel/panes/pane[2]/form; tag[id=x] selects by an attribute.",
+		+ " readView, e.g. /view/split-panel/panes/pane[2]/form; tag[id=x] selects by an attribute. " + NO_FUNCTION_ELEMENT,
 		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public ToolResult editView(
 			@P("View path relative to /WEB-INF/views/") String path,

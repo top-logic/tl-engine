@@ -67,6 +67,20 @@
 			<artifactId>tl-model-search</artifactId>
 		</dependency>
 
+		<!-- The authentication of the agent endpoints (EndpointAuthentication, personal access
+		     tokens): the engine's pluggable, Person-resolving HTTP authentication framework. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-server</artifactId>
+		</dependency>
+		<!-- The views that create, list and revoke personal access tokens extend the engine's
+		     settings dialog and administration by same-path overlays, which the ViewLoader merges in
+		     dependency order - so this module has to come after the one that declares them. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-element</artifactId>
@@ -180,7 +194,7 @@
 									<goal>generate-java</goal>
 								</goals>
 								<configuration>
-									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.cookiepool</modules>
+									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.cookiepool,tl.ai.access</modules>
 								</configuration>
 							</execution>
 						</executions>

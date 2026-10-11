@@ -10,106 +10,25 @@
 		</annotations>
 		<types>
 
-			<!--
-				A personal access token for the MCP endpoint (Issue #671): a credential a person
-				creates for their own account and hands to an MCP client, which sends it as
-				"Authorization: Bearer <token>".
-
-				The token itself is never stored. What is kept is the SHA-256 of its secret, which
-				is what a request is looked up by, and the token's first characters as a hint, so
-				that a person can tell which row belongs to which client configuration. A token is
-				shown exactly once, when it is created - see AccessTokens.
-
-				Revoking a token deletes it; deleting the account deletes its tokens.
-			-->
-			<class name="AccessToken">
-				<annotations>
-					<table name="McpAccessToken"/>
-					<main-properties properties="name,owner,hint,createdAt,expiresAt,lastUsed"/>
-				</annotations>
+			<!-- Put your application types here, for example: -->
+			<!-- 
+			<class name="A">
 				<attributes>
-					<property name="name"
-						mandatory="true"
-						type="tl.core:String"
-					/>
-					<reference name="owner"
-						deletion-policy="delete-referer"
-						mandatory="true"
-						type="tl.accounts:Person"
-					>
-						<annotations>
-							<visibility value="read-only"/>
-						</annotations>
-					</reference>
-					<property name="hint"
-						mandatory="true"
-						type="tl.core:String"
-					>
-						<annotations>
-							<visibility value="read-only"/>
-						</annotations>
-					</property>
-					<!-- Lower-case hex SHA-256 of the whole token. Never shown. -->
-					<property name="secretHash"
-						mandatory="true"
-						type="tl.core:String"
-					>
-						<annotations>
-							<visibility value="hidden"/>
-						</annotations>
-					</property>
-					<property name="createdAt"
-						mandatory="true"
-						type="tl.core:DateTime"
-					>
-						<annotations>
-							<visibility value="read-only"/>
-						</annotations>
-					</property>
-					<!-- From this moment on the token is refused. Empty: it does not expire. -->
-					<property name="expiresAt"
-						type="tl.core:DateTime"
-					>
-						<annotations>
-							<visibility value="read-only"/>
-						</annotations>
-					</property>
-					<!-- Written at most once a minute per token, see AccessTokens.LAST_USED_GRANULARITY. -->
-					<property name="lastUsed"
-						type="tl.core:DateTime"
-					>
-						<annotations>
-							<visibility value="read-only"/>
-						</annotations>
-					</property>
+					<property name="name" type="tl.core:String" mandatory="true"/>
 				</attributes>
 			</class>
-
-			<!--
-				What the "New token" dialog asks for, and where it shows the token it created. Created
-				with new(`tl.ai.mcp.server:AccessTokenRequest`, transient: true) and never persisted,
-				so no table is declared. The token lives in this object only for as long as the dialog
-				that shows it once.
-			-->
-			<class name="AccessTokenRequest">
+			
+			<class name="B">
+				<generalizations>
+					<generalization type="A"/>
+				</generalizations>
+				
 				<attributes>
-					<property name="name"
-						mandatory="true"
-						type="tl.core:String"
-					/>
-					<!-- Empty: the token does not expire. -->
-					<property name="validForDays"
-						type="tl.core:Integer"
-					/>
-					<property name="token"
-						type="tl.core:String"
-					>
-						<annotations>
-							<visibility value="read-only"/>
-						</annotations>
-					</property>
+					<property name="x" type="tl.core:Integer"/>
+					<reference name="others" type="A" multiple="true"/>
 				</attributes>
 			</class>
+		 -->
 
 		</types>
 	</module>

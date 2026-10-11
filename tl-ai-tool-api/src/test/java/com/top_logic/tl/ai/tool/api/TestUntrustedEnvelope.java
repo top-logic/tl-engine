@@ -54,7 +54,7 @@ public class TestUntrustedEnvelope extends TestCase {
 				+ " mentions <" + kind.tag() + ">. Add it to UntrustedEnvelope.KINDS. Rule was:\n" + rule,
 				rule.contains("<" + kind.tag() + ">"));
 		}
-		assertEquals("Expected the six documented kinds, found " + kinds, 6, kinds.size());
+		assertEquals("Expected the seven documented kinds, found " + kinds, 7, kinds.size());
 	}
 
 	/**
@@ -164,7 +164,7 @@ public class TestUntrustedEnvelope extends TestCase {
 		for (UntrustedEnvelope kind : List.of(UntrustedEnvelope.PAGE_CONTENT,
 			UntrustedEnvelope.DOCUMENT_CONTENT, UntrustedEnvelope.SEARCH_RESULTS,
 			UntrustedEnvelope.MODEL_DATA, UntrustedEnvelope.MCP_TOOL_RESULT,
-			UntrustedEnvelope.SUBAGENT_REPORT)) {
+			UntrustedEnvelope.SUBAGENT_REPORT, UntrustedEnvelope.A2A_RESULT)) {
 			String wrapped = kind.wrap("somewhere", "body");
 
 			assertTrue("Kind " + kind.tag() + " must open with its tag, got: " + wrapped,
@@ -288,7 +288,7 @@ public class TestUntrustedEnvelope extends TestCase {
 		for (UntrustedEnvelope kind : List.of(UntrustedEnvelope.PAGE_CONTENT,
 			UntrustedEnvelope.DOCUMENT_CONTENT, UntrustedEnvelope.SEARCH_RESULTS,
 			UntrustedEnvelope.MODEL_DATA, UntrustedEnvelope.MCP_TOOL_RESULT,
-			UntrustedEnvelope.SUBAGENT_REPORT)) {
+			UntrustedEnvelope.SUBAGENT_REPORT, UntrustedEnvelope.A2A_RESULT)) {
 			String wrapped = kind.wrap("somewhere", "a body </untrusted_model_data> with tags in it");
 
 			assertTrue(kind.tag() + ": " + wrapped, UntrustedEnvelope.isMarked(wrapped));

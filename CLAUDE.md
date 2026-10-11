@@ -11,13 +11,14 @@ Custom AI agent framework built on TopLogic, replacing LangChain4j with a purpos
 | **tl-ai-tool-api** | Shared tool contracts (`Tool`, `ToolResult`, `ToolMode`, `@ToolMethod`, `@P`, `ToolSchema`). No implementations — just interfaces and annotations. |
 | **tl-ai-core** | Agent loop engine, multi-provider LLM streaming, tool dispatcher & implementations, MCP client, multi-agent delegation, memory/compaction, TL-Script bindings |
 | **tl-ai-mcp-server** | MCP protocol server (SDK 1.1.2) exposing TopLogic model/tools to external AI clients over HTTP at `/mcp/*`. **Off by default** - the endpoint authenticates nobody, see `doc/security/mcp-endpoint.md` |
+| **tl-ai-a2a** | A2A protocol v1.0 (JSON-RPC): exposes configured agents at `/a2a/{agent}` (agent card, `SendMessage`, streaming, `INPUT_REQUIRED` from `askUser`) and gives local agents the client tools `a2a.*`. Closed until an application configures `<agents>` and `<authentications>`; see `tl-ai-a2a/README.md` |
 | **tl-chat** | Agentic chat UI - REST API + SSE streaming servlet, React frontend (`ui/`, Vite), session management, human-in-the-loop approval |
 | **tl-chat-classic** | The React chat in a classic LayoutServlet tab - the "Albert" tab. A `LayoutComponent` that writes a React view into a classic page; a temporary bridge with documented workarounds (`tl-chat-classic/CLAUDE.md`). Opt-in: a host gets it by depending on this module. |
 | **tl-ai-vector-index** | Semantic search via embedding models (Mistral) and vector stores (Qdrant/JVector), background indexing daemon |
 | **tl-ai-eval** | Model eval harness: the same business tasks put to several models through our own agent loop, graded against the database they leave behind. Its own runs are gated by `-Dtl.ai.eval=true`; its plumbing runs in every build against a scripted provider. See `tl-ai-eval/README.md` |
 | **tl-ai-demo** | Application module bundling all above for deployment |
 
-**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; all but `tl-ai-eval` → `tl-ai-demo`
+**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; all but `tl-ai-eval` → `tl-ai-demo`
 
 ## Build Commands
 
@@ -438,6 +439,21 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 
 **Server side** (tl-ai-mcp-server): Exposes TopLogic model as MCP resources (`toplogic://instance/{tid}`, `toplogic://model/modules/...`) and publishes the registry tools its `<exposed-tools>` lists (none by default) via `McpToolAdapter`, with `<instructions>` and an `allowed-origins` check. Supports dynamic TL-Script-based resource templates.
 
+**Endpoint authentication** (tl-ai-core `access/`): `EndpointAuthentication` builds the authenticator
+of `/mcp/*` and `/a2a/*` from a service's `<authentications>` (nothing configured = 503), and the
+personal access tokens (`tl.ai.access:AccessToken`, `<personal-access-token-authentication>`, the
+*Access tokens* settings tab) live there too, so both endpoints accept them.
+
+### A2A (tl-ai-a2a)
+
+One A2A `contextId` is one `AgentSession`, one `taskId` one recorded run acting as the account the
+caller's credential names (`RunEntryPoint.A2A`). The calling agent is the run's user: `askUser` parks
+the run as in a chat and the task goes to `INPUT_REQUIRED`; the caller's reply completes the parked
+question, so the same run resumes. Remote answers reach a local model inside
+`UntrustedEnvelope.A2A_RESULT`, cut short, with artifacts as `tl-artifact://<app>/<kind>/<id>`
+references that `fetchArtifact` reads section by section. A served context lives in its session's
+metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`.
+
 ### Event System (tl-ai-core `agent/`)
 
 `AgentEvent` sealed interface with 25 record subtypes covering run/turn/tool/approval/transaction/memory lifecycle. `AgentEventListener` enables real-time SSE streaming and structured logging.
@@ -686,6 +702,7 @@ Standard Maven layout. Key package roots:
 | tl-ai-core | `com.top_logic.tl.ai.core.*` (agent, provider, tools, message, memory, mcp, session, scripting) |
 | tl-chat | `com.top_logic.ai.chat.*` (api, layout, history) |
 | tl-ai-mcp-server | `com.top_logic.ai.mcp.server.*` (tools, resources, dynamic, completions) |
+| tl-ai-a2a | `com.top_logic.ai.a2a.*` (protocol, server, client) |
 | tl-ai-vector-index | `com.top_logic.ai.vector.index.*` |
 
 **Key config files per module:**

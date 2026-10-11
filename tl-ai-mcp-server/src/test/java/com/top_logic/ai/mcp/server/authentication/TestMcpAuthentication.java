@@ -25,9 +25,10 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 
 /**
- * Tests what {@link McpAuthentication} builds from a configuration, and what it refuses.
+ * Tests what {@link EndpointAuthentication} builds from a configuration, and what it refuses.
  *
  * <p>
  * The decision under test is the one the design turns on: <b>an application that configured no
@@ -63,7 +64,7 @@ public class TestMcpAuthentication extends TestCase {
 	 * </p>
 	 */
 	public void testNothingConfiguredServesNobody() throws IOException {
-		Authenticator authenticator = McpAuthentication.build(Map.of(), List.of());
+		Authenticator authenticator = EndpointAuthentication.build("/mcp/*", Map.of(), List.of());
 
 		Recorded recorded = refusalOf(authenticator);
 
@@ -83,7 +84,7 @@ public class TestMcpAuthentication extends TestCase {
 	 * </p>
 	 */
 	public void testNothingConfiguredNeverReturnsAnAccount() {
-		Authenticator authenticator = McpAuthentication.build(Map.of(), List.of());
+		Authenticator authenticator = EndpointAuthentication.build("/mcp/*", Map.of(), List.of());
 		Recorded recorded = new Recorded();
 
 		try {
@@ -105,7 +106,7 @@ public class TestMcpAuthentication extends TestCase {
 	 * </p>
 	 */
 	public void testMissingCredentialIsChallenged() throws IOException {
-		Authenticator authenticator = McpAuthentication.build(Map.of("basic", basicAuthentication()), List.of());
+		Authenticator authenticator = EndpointAuthentication.build("/mcp/*", Map.of("basic", basicAuthentication()), List.of());
 
 		Recorded recorded = refusalOf(authenticator);
 
@@ -120,7 +121,7 @@ public class TestMcpAuthentication extends TestCase {
 	 */
 	public void testUnknownApiKeyIsRefused() throws IOException {
 		Authenticator authenticator =
-			McpAuthentication.build(Map.of("keys", apiKeyAuthentication()), List.of());
+			EndpointAuthentication.build("/mcp/*", Map.of("keys", apiKeyAuthentication()), List.of());
 
 		Recorded recorded = new Recorded();
 		recorded.requestHeaders.put("X-Api-Key", "not-a-configured-key");
@@ -135,7 +136,7 @@ public class TestMcpAuthentication extends TestCase {
 	 */
 	public void testMissingApiKeyHeaderIsRefused() throws IOException {
 		Authenticator authenticator =
-			McpAuthentication.build(Map.of("keys", apiKeyAuthentication()), List.of());
+			EndpointAuthentication.build("/mcp/*", Map.of("keys", apiKeyAuthentication()), List.of());
 
 		Recorded recorded = refusalOf(authenticator);
 
@@ -152,7 +153,7 @@ public class TestMcpAuthentication extends TestCase {
 	 * </p>
 	 */
 	public void testSchemesAreAlternatives() throws IOException {
-		Authenticator authenticator = McpAuthentication.build(
+		Authenticator authenticator = EndpointAuthentication.build("/mcp/*", 
 			Map.of("basic", basicAuthentication(), "keys", apiKeyAuthentication()), List.of());
 
 		Recorded recorded = refusalOf(authenticator);

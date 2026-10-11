@@ -15,9 +15,7 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 
 
-import com.top_logic.ai.mcp.server.authentication.McpAuthentication;
 import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
-import com.top_logic.ai.mcp.server.authentication.McpSecret;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
@@ -32,7 +30,6 @@ import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -57,7 +54,10 @@ import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
@@ -263,7 +263,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 */
 		@Name(SECRETS)
 		@DisplayMinimized
-		List<McpSecret> getSecrets();
+		List<EndpointSecret> getSecrets();
 
 		/**
 		 * The tools of the application an MCP client sees and may call.
@@ -371,7 +371,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * <p>
 	 * Built once at start-up from {@link Config#getAuthentications()} and
 	 * {@link Config#getSecrets()}. Refuses everything when the application configured no
-	 * authentication - see {@link McpAuthentication}.
+	 * authentication - see {@link EndpointAuthentication}.
 	 * </p>
 	 *
 	 * @return The authenticator, never <code>null</code> while the service is started.
@@ -399,7 +399,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 			Config<?> config = getConfig();
 
-			_authenticator = McpAuthentication.build(config.getAuthentications(), config.getSecrets());
+			_authenticator =
+				EndpointAuthentication.build(MCP_ENDPOINT + "/*", config.getAuthentications(), config.getSecrets());
 
 			// Create HTTP transport provider
 			// Note: A statically registered servlet (MCPTransportServlet) delegates requests

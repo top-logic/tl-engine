@@ -409,9 +409,15 @@
 					and page reads), the budget of the deep effort level; the lead gives each worker the
 					smaller budget of its effort level when it spawns it. At the limit the worker gets one
 					last turn without tools and writes its report from what it has.
+
+					One answer of the worker is at most 16384 tokens: a tool call or a sub-question's
+					report needs a few thousand. Without the limit, a model that loops in a tool call's
+					arguments - spaces after a quote it closed too early - writes until the model's own
+					limit, 128000 tokens and 15 minutes for gpt-5.6-luna, while the lead waits (#798).
+					An installation that assigns the worker a model with a smaller output limit lowers it.
 				-->
 				<agent-overrides>
-					<agent name="TL_ResearchWorker" max-tool-calls="25"/>
+					<agent name="TL_ResearchWorker" max-tool-calls="25" max-tokens="16384"/>
 				</agent-overrides>
 			</instance>
 		</config>

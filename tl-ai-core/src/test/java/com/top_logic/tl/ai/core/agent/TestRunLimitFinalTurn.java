@@ -172,6 +172,52 @@ public class TestRunLimitFinalTurn extends TestCase {
 		assertEquals(FINAL, lastText(conversation));
 	}
 
+	/**
+	 * A provider that ignores the request not to call tools and answers the last turn with tool calls
+	 * only: the run asks once more for the answer in text, instead of ending with nothing (#819).
+	 */
+	public void testALastReplyOfToolCallsOnlyIsAskedOnceMore() {
+		Conversation conversation = question();
+		AtomicInteger finalRequests = new AtomicInteger();
+		AgentLoop loop = new AgentLoop(config(20), (request, handler) -> {
+			_requests.add(request);
+			if (request.toolChoice() == ToolChoice.NONE && finalRequests.incrementAndGet() > 1) {
+				emit(handler, List.of(new TextContent(FINAL)));
+			} else {
+				emit(handler, List.of(call("fetch")));
+			}
+		}, registry());
+		loop.limitToolCalls(2);
+
+		AgentResult result = loop.run(conversation, silent());
+
+		assertEquals(StopReason.MAX_TOOL_CALLS, result.stopReason());
+		assertEquals("Asked once more, with no tool callable again.", 2, finalRequests.get());
+		assertEquals(2, _runs.get("fetch").get());
+		ProviderRequest retry = _requests.get(_requests.size() - 1);
+		assertEquals(ToolChoice.NONE, retry.toolChoice());
+		assertTrue(lastUserText(retry), lastUserText(retry).contains("contained no text"));
+		assertEquals(FINAL, lastText(conversation));
+		assertTrue("No call without a result stays in the conversation.", conversation.messages().stream()
+			.filter(AssistantMessage.class::isInstance).skip(2)
+			.allMatch(m -> ((AssistantMessage) m).content().stream().noneMatch(ToolCall.class::isInstance)));
+	}
+
+	/** A model that answers the retry with tool calls only again: the run ends, it does not loop. */
+	public void testTheLastReplyIsAskedForOnlyOnce() {
+		Conversation conversation = question();
+		AgentLoop loop = new AgentLoop(config(3), (request, handler) -> {
+			_requests.add(request);
+			emit(handler, List.of(call("fetch")));
+		}, registry());
+
+		AgentResult result = loop.run(conversation, new TruncatingStrategy(), ToolContext.unrestricted(), silent());
+
+		assertEquals(StopReason.MAX_TURNS, result.stopReason());
+		assertEquals("Two working turns, the last turn, and one retry.", 4, _requests.size());
+		assertEquals(2, _runs.get("fetch").get());
+	}
+
 	/** A limit can be narrowed, never widened, and a run of one turn keeps it. */
 	public void testALimitOnlyNarrows() {
 		AgentLoop loop = new AgentLoop(config(5), provider(request -> List.of(call("fetch"))), registry());

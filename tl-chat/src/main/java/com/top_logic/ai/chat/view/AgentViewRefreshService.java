@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -26,8 +27,13 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
+import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 
 /**
@@ -236,10 +242,12 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		_interaction = new WindowInteraction();
 		_instance = this;
 		AgentExecutionStore.getInstance().addChangeListener(this);
+		RunWindow.install(this::inWindowNow);
 	}
 
 	@Override
 	protected void shutDown() {
+		RunWindow.install(null);
 		if (AgentExecutionStore.Module.INSTANCE.isActive()) {
 			AgentExecutionStore.getInstance().removeChangeListener(this);
 		}
@@ -306,6 +314,31 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		}
 		WindowRef window = service._windows.get(subSession);
 		return window != null && window.registry().get() != null;
+	}
+
+	/**
+	 * The {@link RunWindow} of a run: enters the window on the calling thread, through the engine's
+	 * {@link ReactWindowReplay#inWindow(ReactWindowRegistry, String, Runnable) way into a window}.
+	 *
+	 * <p>
+	 * Unlike {@link #inWindow(TLSubSessionContext, Runnable)}, which hands the action to a thread of
+	 * its own, this keeps the run's security context: a tool reading the page sees what the user may
+	 * see, not what a scheduler thread may. It waits for a browser command in progress to finish.
+	 * </p>
+	 */
+	private boolean inWindowNow(TLSubSessionContext subSession, Consumer<Object> action) {
+		WindowRef window = subSession == null ? null : _windows.get(subSession);
+		ReactWindowRegistry registry = window == null ? null : window.registry().get();
+		if (registry == null) {
+			return false;
+		}
+		String windowName = window.windowName();
+		return ThreadContextManager.inContext(subSession,
+			(ComputationEx2<Boolean, RuntimeException, RuntimeException>) () -> ReactWindowReplay
+				.inWindow(registry, windowName, () -> {
+					WindowEntry entry = registry.getWindow(windowName);
+					action.accept(entry == null ? null : entry.getRootControl());
+				}));
 	}
 
 	/**

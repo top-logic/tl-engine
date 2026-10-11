@@ -55,7 +55,7 @@ Also rename the module key if the application lists it in `ModuleSystem`:
 | `<prompt-contributors>` | `AgentApplicationService` `<prompt-contributors>` |
 | `<run-limits token-budget>` | `AgentPolicyService` `<budget token-budget>` |
 | `<run-limits budget-window-hours>` | `AgentPolicyService` `<budget budget-window-hours>` |
-| `<run-limits><role-budgets>` | `AgentPolicyService` `<budget><role-budgets>` |
+| `<run-limits><role-budgets>` | `AgentPolicyService` `<budget><role-budgets>`. An entry with neither `tokens` nor `money` is refused at the start: `<role-budget name="tl.admin"/>` meant an unlimited token budget before, write `tokens="0"` for that (#825) |
 | `<user-memory>` (all of it) | `AgentPolicyService` `<user-memory>` |
 | `<environment user-preferences>` | `AgentPolicyService` `user-preferences` |
 | `<environment max-preferences-length>` | `AgentPolicyService` `max-preferences-length` |

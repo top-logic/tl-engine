@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -75,6 +76,20 @@ public class TestCompactionSidecar extends TestCase {
 		assertTrue("Reloading must not restore the token cost the compaction freed: "
 			+ compactedTokens + " vs. " + fullTokens + " without the sidecar.",
 			compactedTokens * 4 < fullTokens);
+	}
+
+	/**
+	 * A summary the framework wrote comes back from storage as the framework's, not as something the
+	 * user typed.
+	 */
+	public void testTheSummaryStaysTheFrameworks() {
+		recordTurnEndingInCompaction();
+		finishRun();
+
+		List<Message> reloaded = replay(roundTrip(_log));
+
+		UserMessage summary = (UserMessage) reloaded.get(1);
+		assertEquals(UserMessage.Origin.FRAMEWORK, summary.origin());
 	}
 
 	/**
@@ -218,7 +233,8 @@ public class TestCompactionSidecar extends TestCase {
 
 		List<Message> replacement = List.of(
 			new CompactionMarker("m1", T0, 4, 1200, "proactive"),
-			new UserMessage("s1", T0, List.of(new TextContent("The report was read."))),
+			new UserMessage("s1", T0, List.of(new TextContent("The report was read.")),
+				UserMessage.Origin.FRAMEWORK),
 			new AssistantMessage("a1", T0, List.of(new TextContent("Ready.")),
 				TokenUsage.EMPTY, "stop"));
 		compact(1, 1200, 150, replacement);
@@ -230,7 +246,7 @@ public class TestCompactionSidecar extends TestCase {
 
 	private void finishRun() {
 		_listener.onEvent(new AgentEvent.RunCompleted(RUN, 1, T0, StopReason.COMPLETE,
-			new TokenUsage(1200, 40, 0, 0, 0)));
+			new TokenUsage(1200, 40, 0, 0, 0), Money.zero(Money.USD)));
 	}
 
 	private static List<Message> replay(ConversationLog log) {

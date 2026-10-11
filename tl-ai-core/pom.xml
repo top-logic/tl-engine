@@ -95,6 +95,17 @@
 			<artifactId>jsoup</artifactId>
 		</dependency>
 
+		<!-- PDF text extraction for webFetch (Apache-2.0, version managed by parent). The parent
+		     excludes commons-logging from pdfbox, so its logging goes through jcl-over-slf4j. -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</dependency>
+
 		<!-- MCP SDK (client for connecting to external MCP servers) -->
 		<dependency>
 			<groupId>io.modelcontextprotocol.sdk</groupId>

@@ -127,9 +127,11 @@ public class SpawnSubagentTool implements Tool {
 
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
-			return ToolResult.of("ERROR: spawn_subagent requires an active chat session.");
+			return ToolResult.of("ERROR: spawn_subagent needs a run recorded under a conversation, and this run has"
+				+ " none. Do the task yourself, or with a delegate_to_* tool.");
 		}
 
-		return SubagentSpawner.spawnAsync(agentName, task, contextStr, toolContext, _loopFactory, registry);
+		return SubagentSpawner.spawnAsync(agentName, task, contextStr, toolContext, _loopFactory,
+			registry);
 	}
 }

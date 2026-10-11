@@ -80,7 +80,13 @@ Four schemes are available, and a caller may present any one of the configured o
 | **Personal access token** | `<personal-access-token-authentication>` | A `tlpat_` token a person created for their own account, see [below](#personal-access-tokens) | **When people connect their own MCP client.** Each person creates, sees and revokes their own tokens; no configuration per person |
 | **API key** | `<api-key-authentication>` + `<api-key-server-secret>` | A key in a header, query parameter or cookie, mapped to one account | **The default for a service account.** Revocable on its own, attributable to one account, and keeps a person's login out of a client configuration file. Every mainstream MCP client can send a static header |
 | **HTTP basic** | `<basic-authentication in-user-context="true"/>` | The account's own password, against its `AuthenticationDevice` | A one-line `curl` smoke test, or a deployment with no key management. Puts a real password in a client config, so not the default |
-| **OAuth bearer** | `<token-based-authentication>` + `<server-credentials>` | A bearer token, validated by RFC 7662 introspection against your authorization server | A deployment that already runs an OIDC provider. TopLogic issues no tokens of its own, so this needs one |
+| **OAuth bearer** | `<client-credentials-authentication>` + `<client-credentials-server-secret>` | A bearer token, validated by RFC 7662 introspection against your authorization server | A deployment that already runs an OIDC provider. TopLogic issues no tokens of its own, so this needs one |
+
+The secret elements have the same names and attributes as on the OpenAPI server, so a secret can be
+copied from there unchanged. They are the MCP service's own types, because the engine accepts its
+OpenAPI secret types only in the OpenAPI server's configuration. There is no
+`<basic-auth-server-secret>`: HTTP basic with a technical login processes a request in system
+context, which `/mcp/*` refuses.
 
 **Two rules about the secret:**
 

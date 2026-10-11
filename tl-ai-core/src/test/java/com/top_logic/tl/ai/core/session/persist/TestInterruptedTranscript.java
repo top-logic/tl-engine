@@ -151,6 +151,68 @@ public class TestInterruptedTranscript extends TestCase {
 	}
 
 	/**
+	 * A swept run's subagent that was still at work is ended as failed: no subagent survives a
+	 * restart, and its card must not say it is working for ever.
+	 */
+	public void testARunningSubagentIsEnded() throws IOException {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(T0);
+		turn.setUserParts(List.of(new Part.TextPart("u1", T0, "Recherchiere im Hintergrund.")));
+		turn.addAssistantPart(subagent("running", "sa-1", Part.SubagentStatus.RUNNING));
+		turn.addAssistantPart(subagent("done", "sa-2", Part.SubagentStatus.DONE));
+
+		Turn closed = ConversationLogSerializer.fromJson(
+			InterruptedTranscript.close(ConversationLogSerializer.toJson(log))).turns().get(0);
+
+		Part.SubagentPart running = (Part.SubagentPart) closed.findPart("running");
+		assertEquals(Part.SubagentStatus.FAILED, running.status());
+		assertEquals(InterruptedTranscript.INTERRUPTED_SUBAGENT, running.summary());
+		assertEquals("run-sa-1", running.childRunId());
+		assertEquals(Part.SubagentStatus.DONE, ((Part.SubagentPart) closed.findPart("done")).status());
+	}
+
+	/**
+	 * A conversation read back from the database: a subagent part an earlier process left at work is
+	 * ended, one this process recorded is left to its subagent.
+	 */
+	public void testOnlySubagentsOfAnEarlierProcessAreEnded() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(T0);
+		turn.addAssistantPart(subagent("old", "sa-1", Part.SubagentStatus.RUNNING));
+		turn.addAssistantPart(new Part.SubagentPart("new", T0.plusSeconds(3600), "sa-2", "worker", "task", "",
+			null, Part.SubagentStatus.RUNNING, null));
+
+		int ended = InterruptedTranscript.endInterruptedSubagents(log, T0.plusSeconds(60));
+
+		assertEquals(1, ended);
+		assertEquals(Part.SubagentStatus.FAILED, ((Part.SubagentPart) turn.findPart("old")).status());
+		assertEquals(Part.SubagentStatus.RUNNING, ((Part.SubagentPart) turn.findPart("new")).status());
+	}
+
+	/**
+	 * A subagent that stopped at its limit has ended; a restart leaves its card as it was instead of
+	 * calling it failed (#849).
+	 */
+	public void testASubagentStoppedAtItsLimitStaysAsItEnded() throws IOException {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(T0);
+		turn.setUserParts(List.of(new Part.TextPart("u1", T0, "Recherchiere im Hintergrund.")));
+		turn.addAssistantPart(subagent("limit", "sa-1", Part.SubagentStatus.LIMIT));
+
+		Turn closed = ConversationLogSerializer.fromJson(
+			InterruptedTranscript.close(ConversationLogSerializer.toJson(log))).turns().get(0);
+		assertEquals(Part.SubagentStatus.LIMIT, ((Part.SubagentPart) closed.findPart("limit")).status());
+
+		assertEquals(0, InterruptedTranscript.endInterruptedSubagents(log, T0.plusSeconds(60)));
+		assertEquals(Part.SubagentStatus.LIMIT, ((Part.SubagentPart) turn.findPart("limit")).status());
+	}
+
+	private static Part.SubagentPart subagent(String id, String subagentId, Part.SubagentStatus status) {
+		return new Part.SubagentPart(id, T0.plusSeconds(1), subagentId, "worker", "task", "call-1",
+			"run-" + subagentId, status, status == Part.SubagentStatus.DONE ? "found it" : null);
+	}
+
+	/**
 	 * Nothing recorded, nothing to close: a row without a checkpoint stays without one.
 	 */
 	public void testNoTranscript() throws IOException {

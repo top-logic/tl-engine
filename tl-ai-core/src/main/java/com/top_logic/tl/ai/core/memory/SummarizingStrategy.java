@@ -243,7 +243,7 @@ public class SummarizingStrategy implements CompactionStrategy {
 			summarizeZone.size(), tokensBefore, "auto"));
 		replacement.add(new UserMessage(
 			UUID.randomUUID().toString(), now,
-			List.of(new TextContent(SUMMARY_PREFIX + summaryText))));
+			List.of(new TextContent(SUMMARY_PREFIX + summaryText)), UserMessage.Origin.FRAMEWORK));
 		replacement.addAll(preserveZone);
 
 		// Unlike tokensBefore, this is always the raw estimator heuristic over just the
@@ -350,6 +350,14 @@ public class SummarizingStrategy implements CompactionStrategy {
 		return true;
 	}
 
+	/**
+	 * Whether {@code message} is a summary this strategy wrote in place of compacted history, rather
+	 * than a message of the user.
+	 */
+	public static boolean isSummary(UserMessage message) {
+		return startsWithSummaryPrefix(message);
+	}
+
 	private static boolean startsWithSummaryPrefix(UserMessage msg) {
 		for (ContentPart part : msg.content()) {
 			if (part instanceof TextContent text) {
@@ -415,7 +423,7 @@ public class SummarizingStrategy implements CompactionStrategy {
 				stripped.add(part);
 			}
 		}
-		return new UserMessage(msg.id(), msg.timestamp(), stripped);
+		return new UserMessage(msg.id(), msg.timestamp(), stripped, msg.origin());
 	}
 
 	/**

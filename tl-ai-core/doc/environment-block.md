@@ -435,7 +435,7 @@ correction to apply again. A memory is put on one line, because the block is rea
 **The list is read once per conversation, not once per run.** The block has to stay byte-identical
 across the turns of a conversation (see above), so a memory written in turn 3 must not appear in
 turn 4's block - it appears in the next conversation, which is also the only place it is needed,
-the agent having just written it. `ChatSessionManager.getActiveMemories` reads it when the first
+the agent having just written it. `ChatSessionManager.getMemories` reads it when the first
 message of a conversation is sent and keeps it on the session state; `ChatProcessor` binds it for
 every run of that conversation through `UserMemoryBinding`. A run that binds none - headless,
 scheduled, TL-Script - is a conversation of its own and reads the store directly.
@@ -461,8 +461,16 @@ is fine" is a refusal). The words are configurable, because they are matched aga
 
 A nested run inherits the record rather than building one (`MemoryConsentBinding.bindIfAbsent`): a
 delegate's "user message" is the instruction its parent wrote, so a run allowed to build its own
-could agree with itself by delegating with the words "remember that ...". A detached subagent binds
-none and can keep nothing.
+could agree with itself by delegating with the words "remember that ...". A detached subagent builds
+its record from its task, which its lead wrote, so it can keep nothing.
+
+**Only a message the user wrote counts** (#807). The framework also puts text into the user's role:
+a delivered subagent report or question, a notice, a compaction summary, and the task or message a
+lead writes for its subagent. Each such `UserMessage` carries its `origin` (`AGENT` or
+`FRAMEWORK`, not `USER`), and the replay and the compaction sidecar keep it. When the newest message
+in the user's role is not the user's, the record grants nothing. This is the case in a lead turn that
+the chat starts for a subagent's news: a subagent's report repeats what it read, and a web page can
+ask to be remembered.
 
 **What the check establishes**: memory was the subject of this turn and the user was in favour. It
 cannot establish that the stored sentence is the sentence the user meant - no server-side check can

@@ -61,6 +61,26 @@ public final class ReadingListBinding {
 		}
 	}
 
+	/**
+	 * Records the web addresses in a text that the run's user or lead wrote to it, on the bound list,
+	 * if there is one: the answer to a question the run asked.
+	 *
+	 * <p>
+	 * Such a text gives addresses the way a message of the user or the lead does (see
+	 * {@link SeenUrls}). Never pass a text the model wrote, also not when a person sent it back - an
+	 * option the model offered and the user picked.
+	 * </p>
+	 *
+	 * @param text
+	 *        The text; may be {@code null}.
+	 */
+	public static void givenAddressesIn(String text) {
+		ReadingList list = LIST.get();
+		if (list != null) {
+			list.seenUrls().addAllIn(text);
+		}
+	}
+
 	/** Handle returned by {@link ReadingListBinding#bind(ReadingList)}. */
 	public static final class Binding implements AutoCloseable {
 

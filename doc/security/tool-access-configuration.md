@@ -378,6 +378,10 @@ else. That is what lets you restrict one role in a running application without t
 - `none` refuses the same requests as `assigned` and `agent` do. What it changes is what a client is
   *offered*: under `none` the menu is empty, so the choice is not shown at all.
 - Administrators bypass all three.
+- A name that the application does not have stops the start, as an unknown role does. An agent can be
+  configured or a record in the knowledge base. The initial data import creates records (for example
+  `WEB-INF/data/agents.objects.xml`, which the agent editor's "Apply to development environment"
+  writes), so the agent names are checked after that import, by the service `AgentNameCheck`.
 
 ### Recipe: one role, one agent, one model, no MCP server
 

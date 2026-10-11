@@ -1,6 +1,10 @@
 db-default.xml
 tl-ai-demo.conf.xml
 
+# Web research: Brave search (key in tl_brave_api_key) and the background allowlist that lets a
+# spawned research worker reach webSearch and webFetch. Comment it out when secdemo.config.xml is on.
+research.config.xml
+
 # Agent security test bed (pm model, declarative role rules, accounts, tool policy, seed data).
 # Uncomment the following line to enable it, comment it out again to disable it.
 # See tl-ai-demo/doc/secdemo/testbed.md - it maps every behaviour to a persona and a thing to type.

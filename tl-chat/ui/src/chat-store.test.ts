@@ -9,20 +9,22 @@ import {
 } from './chat-store'
 import { bundle } from './i18n'
 import { unseenBadge } from './progress-model'
-import type { ChatMessage } from './types'
+import { cardsForTurn } from './subagent-card'
+import type { ChatMessage, SubagentRef } from './types'
+import { emitPatch, isSubscribed, resetTLBridge } from '../test/tl-react-bridge'
 
 /**
  * The store's world, without a browser.
  *
  * `chat-store.ts` is deliberately free of the DOM apart from timers and the stream, so the whole
- * surface a test has to stand in for is `window.setTimeout`, `window.location`, `fetch` and
- * `EventSource`. Rendering is not what these tests are about - what a chat element does with the
+ * surface a test has to stand in for is `window.setTimeout`, `window.location`, `fetch` and the
+ * window's event stream, which the bridge stub delivers. Rendering is not what these tests are about - what a chat element does with the
  * state is `App`'s business, and the regression gate for that is the untouched suites beside this
  * one.
  */
 
-/** Every `EventSource` the store opened, in the order it opened them. */
-let streams: FakeEventSource[] = []
+/** Every stream the store attached, in the order it attached them. */
+let streams: FakeStream[] = []
 
 /** The `PUT /chat/preferences` bodies the store wrote, in order. */
 let preferenceWrites: unknown[] = []
@@ -39,40 +41,32 @@ let requested: string[] = []
 /** The body of every `POST /chat/cancel`, in order. */
 let cancelBodies: Record<string, unknown>[] = []
 
-class FakeEventSource {
-  static readonly CLOSED = 2
+/** Every `POST /chat/subagents/{id}/message`, in order: its URL and body. */
+let subagentMessages: { url: string; body: Record<string, unknown> }[] = []
 
+/**
+ * One stream the store attached: its `POST /chat/stream`, and the patches the window's event stream
+ * delivers to the listener id that request named - the server's `ChatSSEHandler` on the other end.
+ */
+class FakeStream {
   readonly url: string
 
-  closed = false
-
-  private readonly handlers = new Map<string, ((event: MessageEvent) => void)[]>()
-
-  onerror: (() => void) | null = null
-
-  readyState = 1
+  private readonly listenerId: string
 
   constructor(url: string) {
     this.url = url
+    this.listenerId = 'tl-chat-stream:' + new URL(url, 'http://host').searchParams.get('stream')
     streams.push(this)
   }
 
-  addEventListener(name: string, handler: EventListener): void {
-    const list = this.handlers.get(name) ?? []
-    list.push(handler as (event: MessageEvent) => void)
-    this.handlers.set(name, list)
+  /** Whether the store stopped listening. */
+  get closed(): boolean {
+    return !isSubscribed(this.listenerId)
   }
 
-  close(): void {
-    this.closed = true
-    this.readyState = FakeEventSource.CLOSED
-  }
-
-  /** Delivers one SSE frame, as the servlet would. */
+  /** Delivers one frame, as the server's flush would. */
   emit(name: string, data: unknown = {}): void {
-    for (const handler of this.handlers.get(name) ?? []) {
-      handler({ data: JSON.stringify(data) } as MessageEvent)
-    }
+    emitPatch(this.listenerId, { frames: [{ event: name, data }] })
   }
 }
 
@@ -106,21 +100,30 @@ beforeEach(() => {
   sentBodies = []
   requested = []
   cancelBodies = []
+  subagentMessages = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
     setTimeout: (fn: () => void, ms?: number) => setTimeout(fn, ms) as unknown as number,
     clearTimeout: (id: number) => clearTimeout(id),
   }
-  globals.EventSource = FakeEventSource
+  resetTLBridge()
   globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
     requested.push(url)
+    if (url.includes('/chat/stream')) {
+      if (init?.method === 'POST') new FakeStream(url)
+      return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
+    }
     if (init?.method === 'PUT' && url.includes('/chat/preferences')) {
       preferenceWrites.push(JSON.parse(init.body ?? '{}'))
       return { ok: true, status: 200, json: async () => ({}) }
     }
     if (url.includes('/chat/capabilities')) {
       return { ok: true, status: 200, json: async () => ({ agents: [], models: [], mcpServers: [] }) }
+    }
+    if (/\/chat\/subagents\/[^/]+\/message/.test(url)) {
+      subagentMessages.push({ url, body: JSON.parse(init?.body ?? '{}') })
+      return { ok: true, status: 200, json: async () => ({ status: 'sent', messageId: 'm1' }) }
     }
     if (url.includes('/chat/cancel')) {
       cancelBodies.push(JSON.parse(init?.body ?? '{}'))
@@ -146,6 +149,38 @@ beforeEach(() => {
 
 afterEach(() => {
   expect(liveChatCount()).toBe(0)
+})
+
+describe('the connections a chat holds', () => {
+  afterEach(() => {
+    delete (globalThis as unknown as Record<string, unknown>).EventSource
+  })
+
+  it('opens none of its own: its frames come on the event stream the window already holds', async () => {
+    // A browser opens at most six connections to one server over HTTP/1.1, for all its tabs, and
+    // the window's own stream holds one per page. A chat stream of its own made it two per page:
+    // three tabs held all six, and no click of any tab reached the server any more (#867).
+    const opened: string[] = []
+    ;(globalThis as unknown as Record<string, unknown>).EventSource = class {
+      constructor(url: string) {
+        opened.push(url)
+      }
+      addEventListener(): void {}
+      close(): void {}
+    }
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    expect(opened).toEqual([])
+    expect(requested.filter((url) => url.includes('/chat/events'))).toEqual([])
+    expect(streams).toHaveLength(1)
+    streams[0].emit('run_started', { runId: 'r1' })
+    expect(store.getState().busy).toBe(true)
+
+    release()
+  })
 })
 
 describe('one store per chat id', () => {
@@ -490,6 +525,330 @@ describe('context facts', () => {
 })
 
 describe('the stream', () => {
+  /*
+   * A background subagent asks while its lead may be resting (#695). The card has to say whose
+   * question it is, so the store keeps who asks - from the question frame, and for an approval from
+   * the subagent id of the delegation frame, named through the subagent list.
+   */
+  it('keeps which subagent asks a question or an approval', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'researcher' })
+    stream.emit('user_interaction', {
+      requestId: 'interaction-x-1',
+      question: 'Which region?',
+      type: 'text',
+      askedBySubagentId: 'sa-2',
+      askedByAgent: 'researcher',
+    })
+    stream.emit('delegation_event', {
+      subagentId: 'sa-2',
+      eventType: 'approval_required',
+      eventData: JSON.stringify({ approvalRequestId: 'ap-1', toolName: 'createObject', argsJson: '{}' }),
+    })
+    stream.emit('user_interaction', { requestId: 'interaction-y-1', question: 'Main agent asks', type: 'text' })
+
+    const messages = store.getState().messages
+    expect(messages.find((m) => m.id === 'interaction-x-1')).toMatchObject({
+      askedBy: { subagentId: 'sa-2', agent: 'researcher' },
+    })
+    expect(messages.find((m) => m.id === 'ap-1')).toMatchObject({
+      askedBy: { subagentId: 'sa-2', agent: 'researcher' },
+    })
+    expect(messages.find((m) => m.id === 'interaction-y-1')).not.toHaveProperty('askedBy.subagentId')
+
+    await settle()
+    release()
+  })
+
+  /*
+   * Two subagents at work: each one's steps and text go to its own card, none into the lead's
+   * transcript, where they used to be drawn flat and nameless (#702). Its approval still reaches the
+   * prompt stack.
+   */
+  it('keeps each subagent\'s steps and text apart from the transcript', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const child = (subagentId: string, eventType: string, data: unknown) =>
+      stream.emit('delegation_event', { subagentId, eventType, eventData: JSON.stringify(data) })
+
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'writer', detail: 'draft Y', parentToolCallId: 'call-2' })
+    child('sa-1', 'turn_started', { turnNumber: 1 })
+    child('sa-1', 'text_delta', { text: 'Searching first.' })
+    child('sa-1', 'tool_started', { toolCallId: 't1', toolName: 'webSearch', argsJson: '{"q":"X"}' })
+    child('sa-2', 'tool_started', { toolCallId: 't2', toolName: 'query', argsJson: '{}' })
+    child('sa-2', 'tool_completed', { toolCallId: 't2', toolName: 'query' })
+    child('sa-2', 'approval_required', { approvalRequestId: 'ap-1', toolName: 'createObject', argsJson: '{}' })
+
+    const state = store.getState()
+    expect(state.subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({ parentToolCallId: 'call-1', task: 'find X' })
+    expect(state.subagentLive['sa-1'].steps).toEqual([
+      { toolUseId: 't1', name: 'webSearch', summary: 'X', status: 'running' },
+    ])
+    expect(state.subagentLive['sa-1'].turns).toBe(1)
+    expect(state.subagentLive['sa-2'].steps).toEqual([
+      { toolUseId: 't2', name: 'query', summary: '', status: 'done' },
+    ])
+    expect(state.messages.some((m) => m.type === 'tool_call')).toBe(false)
+    expect(state.messages.find((m) => m.id === 'ap-1')).toMatchObject({ askedBy: { subagentId: 'sa-2', agent: 'writer' } })
+
+    // The end frame names no agent; the card keeps the name it had.
+    stream.emit('subagent_completed', { subagentId: 'sa-1', targetAgentName: '', detail: 'X is 42.' })
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-1')).toMatchObject({
+      targetAgentName: 'researcher',
+      status: 'DONE',
+      task: 'find X',
+    })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * A window that opened the chat while the subagent was at work never saw it start: its card stands
+   * on the recorded part. The end frame says which call started it, so that card ends too, and its
+   * transcript opens by the run the frame names.
+   */
+  it('ends the card of a subagent this window did not see start', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_completed', {
+      subagentId: 'sa-1',
+      targetAgentName: '',
+      detail: 'X is 42.',
+      parentToolCallId: 'call-1',
+      childRunId: 'run-1',
+    })
+
+    const running: SubagentRef = {
+      type: 'subagent_ref', id: 'p1', subagentId: 'sa-1', agentName: 'researcher', task: 'find X',
+      parentToolCallId: 'call-1', childRunId: '', status: 'RUNNING', summary: '', timestamp: 0,
+    }
+    const spawn: ChatMessage = {
+      type: 'tool_call', id: 'c1', toolUseId: 'call-1', name: 'spawn_subagent', input: {}, status: 'done', depth: 0, timestamp: 0,
+    }
+    const cards = cardsForTurn([spawn, running], store.getState().subagents, {}, new Set())
+    expect(cards).toHaveLength(1)
+    expect(cards[0]).toMatchObject({ status: 'DONE', summary: 'X is 42.', task: 'find X', childRunId: 'run-1' })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * The user writes to a subagent from its card: the message goes to that subagent of this chat, the
+   * card shows it as sent, and as read once the subagent's frame says it read it.
+   */
+  it('sends a message to one subagent and marks it read when the subagent has read it', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+
+    expect(await store.actions.messageSubagent('sa-1', 'call-1', 'Only 2026.')).toBe('sent')
+
+    expect(subagentMessages).toHaveLength(1)
+    expect(subagentMessages[0].url).toContain('/chat/subagents/sa-1/message')
+    expect(subagentMessages[0].body).toMatchObject({ parentToolCallId: 'call-1', text: 'Only 2026.' })
+    expect(store.getState().subagentLive['sa-1'].notes).toEqual([{ id: 'm1', text: 'Only 2026.', read: false }])
+
+    stream.emit('delegation_event', {
+      subagentId: 'sa-1',
+      eventType: 'user_message_read',
+      eventData: JSON.stringify({ messages: [{ id: 'm1', text: 'Only 2026.' }] }),
+    })
+    expect(store.getState().subagentLive['sa-1'].notes).toEqual([{ id: 'm1', text: 'Only 2026.', read: true }])
+
+    await settle()
+    release()
+  })
+
+  /*
+   * A synchronous delegation's steps go to its card at the lead's delegate_to_* call; the lead's
+   * transcript keeps only the lead's own steps (#703).
+   */
+  it('keeps a synchronous delegation\'s steps out of the lead\'s transcript', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const before = store.getState().messages.length
+
+    const frame = (eventType: string, data: unknown) =>
+      stream.emit('delegation_event', { subagentId: '', delegationToolCallId: 'call-d', eventType, eventData: JSON.stringify(data) })
+    frame('tool_started', { toolCallId: 't1', toolName: 'webSearch', argsJson: '{"q":"X"}' })
+    frame('tool_completed', { toolCallId: 't1', toolName: 'webSearch', result: 'r', durationMs: 5 })
+    frame('run_completed', { runId: 'child', reason: 'COMPLETE' })
+
+    expect(store.getState().messages).toHaveLength(before)
+    const live = store.getState().delegationLive['call-d']
+    expect(live.steps).toEqual([{ toolUseId: 't1', name: 'webSearch', summary: 'X', status: 'done' }])
+    expect(live.ended).toBe('DONE')
+
+    await settle()
+    release()
+  })
+
+  /* The end frame names the stop reason: a stop at a limit reads as such, not as done (#786). */
+  it('ends a subagent stopped at its limit as such', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'researcher', detail: 'find Y', parentToolCallId: 'call-2' })
+
+    stream.emit('subagent_completed', { subagentId: 'sa-1', detail: 'X is 4..', stopReason: 'MAX_TURNS' })
+    stream.emit('subagent_completed', { subagentId: 'sa-2', detail: 'Y is 7.', stopReason: 'COMPLETE' })
+
+    expect(store.getState().subagents.map((item) => item.status)).toEqual(['LIMIT', 'DONE'])
+    await settle()
+    release()
+  })
+
+  /*
+   * A subagent beyond the cap waits; its card says so until the server says it has started - its
+   * own steps say nothing about that.
+   */
+  it('shows a queued subagent as waiting until the server says it started', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const sa5 = () => store.getState().subagents.find((s) => s.subagentId === 'sa-5')
+
+    stream.emit('subagent_started', { subagentId: 'sa-5', targetAgentName: 'researcher', detail: 'find X', queued: true })
+    // Not started, so no run yet whose transcript could be opened (#834).
+    expect(sa5()).toMatchObject({ status: 'QUEUED', task: 'find X', hasTranscript: false })
+
+    stream.emit('subagent_running', { subagentId: 'sa-5', parentToolCallId: 'call-5' })
+    expect(sa5()).toMatchObject({
+      status: 'RUNNING',
+      targetAgentName: 'researcher',
+      task: 'find X',
+      hasTranscript: true,
+      parentToolCallId: 'call-5',
+    })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * A queued subagent whose first act is a request for approval: the request goes to the prompt
+   * stack, never to the card, and the card still says the subagent works - it used to stay "queued".
+   */
+  it('shows a queued subagent whose first act is an approval as running', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const sa6 = () => store.getState().subagents.find((s) => s.subagentId === 'sa-6')
+
+    stream.emit('subagent_started', { subagentId: 'sa-6', targetAgentName: 'writer', detail: 'draft Y', queued: true })
+    stream.emit('subagent_running', { subagentId: 'sa-6' })
+    stream.emit('delegation_event', {
+      subagentId: 'sa-6',
+      eventType: 'approval_required',
+      eventData: JSON.stringify({ approvalRequestId: 'ap-6', toolName: 'createObject', argsJson: '{}' }),
+    })
+
+    expect(sa6()).toMatchObject({ status: 'RUNNING' })
+    expect(store.getState().messages.find((m) => m.id === 'ap-6')).toMatchObject({
+      askedBy: { subagentId: 'sa-6', agent: 'writer' },
+    })
+
+    await settle()
+    release()
+  })
+
+  /* A step of a queued subagent is no evidence that it started; only the server's frame is. */
+  it('leaves a queued subagent queued on a step of its own', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-7', targetAgentName: 'researcher', detail: 'find Z', queued: true })
+    stream.emit('delegation_event', { subagentId: 'sa-7', eventType: 'turn_started', eventData: '{"turnNumber":1}' })
+
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-7')).toMatchObject({ status: 'QUEUED' })
+
+    await settle()
+    release()
+  })
+
+  /* A start frame that arrives after the subagent's end does not bring it back to life. */
+  it('keeps an ended subagent ended on a late start frame', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-8', targetAgentName: 'researcher', detail: 'find W', queued: true })
+    stream.emit('subagent_cancelled', { subagentId: 'sa-8' })
+    stream.emit('subagent_running', { subagentId: 'sa-8' })
+
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-8')).toMatchObject({ status: 'CANCELLED' })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * Subagents reported back while the agent was idle, and the server started a turn for them: the
+   * line opens that turn, ahead of its run; when no more are started, the strip says so.
+   */
+  it('opens a turn started for subagent news with the wake line', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('lead_woken', {
+      finished: 1,
+      asking: 0,
+      subagents: [{ subagentId: 'sa-1', agentName: 'researcher', reason: 'FINISHED', parentToolCallId: 'call-1', question: '' }],
+    })
+    stream.emit('run_started', { runId: 'r9' })
+    stream.emit('turn_started', {})
+    stream.emit('message_complete', { contentText: 'Der Subagent hat X gefunden.' })
+
+    const messages = store.getState().messages
+    const woken = messages.findIndex((m) => m.type === 'notice' && m.kind === 'lead_woken')
+    expect(woken).toBeGreaterThanOrEqual(0)
+    expect(woken).toBeLessThan(messages.findIndex((m) => m.type === 'assistant_text'))
+    expect(messages[woken]).toMatchObject({ woken: [{ subagentId: 'sa-1', reason: 'FINISHED', parentToolCallId: 'call-1' }] })
+    expect(store.getState().busy).toBe(false)
+
+    stream.emit('lead_wakes_exhausted', { wakes: 5 })
+    expect(store.getState().notice).toBe(bundle(BOOT.language).leadWakesExhausted)
+
+    await settle()
+    release()
+  })
+
   it('drives the run state and the transcript', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
@@ -800,7 +1159,8 @@ describe('the layout preferences', () => {
     await settle()
 
     expect(preferenceWrites).toHaveLength(0)
-    // Nor does such a session open a stream: an EventSource against a 401 reconnects forever.
+    // Nor does such a session open a stream: one the server refuses is asked for again for as long
+    // as the page is open.
     expect(streams).toHaveLength(0)
 
     release()
@@ -1625,9 +1985,9 @@ describe('the turn settings', () => {
  */
 describe('eventBelongsToChat', () => {
   it('drops a run-scoped frame that names another session', () => {
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77', text: 'x' }), '42')).toBe(false)
-    expect(eventBelongsToChat('run_started', JSON.stringify({ sessionId: '77' }), '42')).toBe(false)
-    expect(eventBelongsToChat('message_complete', JSON.stringify({ sessionId: '42' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', { sessionId: '77', text: 'x' }, '42')).toBe(false)
+    expect(eventBelongsToChat('run_started', { sessionId: '77' }, '42')).toBe(false)
+    expect(eventBelongsToChat('message_complete', { sessionId: '42' }, '42')).toBe(true)
   })
 
   /**
@@ -1635,22 +1995,22 @@ describe('eventBelongsToChat', () => {
    * dropped those would leave every transcript empty. It tightens by itself once they do.
    */
   it('delivers a frame that names no session, and anything unparsable', () => {
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', { text: 'x' }, '42')).toBe(true)
     expect(eventBelongsToChat('text_delta', 'not json', '42')).toBe(true)
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', { sessionId: '' }, '42')).toBe(true)
   })
 
   /** What is addressed to the window rather than to a turn is never filtered. */
   it('always delivers the frames that belong to the window', () => {
     for (const name of ['connected', 'heartbeat', 'approval_required', 'user_interaction']) {
-      expect(eventBelongsToChat(name, JSON.stringify({ sessionId: '77' }), '42')).toBe(true)
+      expect(eventBelongsToChat(name, { sessionId: '77' }, '42')).toBe(true)
     }
   })
 
   /** A store with no session open yet must not swallow the run that is creating one. */
   it('drops a named frame while no session is open, and keeps an unnamed one', () => {
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77' }), null)).toBe(false)
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), null)).toBe(true)
+    expect(eventBelongsToChat('text_delta', { sessionId: '77' }, null)).toBe(false)
+    expect(eventBelongsToChat('text_delta', { text: 'x' }, null)).toBe(true)
   })
 })
 
@@ -2360,35 +2720,42 @@ describe('a window the server no longer knows', () => {
     release()
   })
 
-  it('stops re-opening a stream the server refuses for an unknown window', async () => {
+  it('stops asking for a stream the server refuses for an unknown window', async () => {
+    staleOn('/chat/stream')
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
     await settle()
-    expect(streams).toHaveLength(1)
-
-    staleOn('/chat/updates')
-    streams[0].readyState = FakeEventSource.CLOSED
-    streams[0].onerror?.()
     await new Promise((resolve) => setTimeout(resolve, 1_200))
 
-    expect(streams).toHaveLength(1)
+    expect(requested.filter((url) => url.includes('/chat/stream'))).toHaveLength(1)
+    expect(streams).toHaveLength(0)
     expect(reloads).toBe(1)
 
     release()
   })
 
-  it('re-opens a stream that closed for any other reason, as before', async () => {
+  it('asks again for a stream the server failed to start for any other reason', async () => {
+    const globals = globalThis as unknown as Record<string, unknown>
+    const before = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    let failures = 1
+    globals.fetch = vi.fn(async (url: string, init?: unknown) => {
+      if (url.includes('/chat/stream') && failures > 0) {
+        failures--
+        requested.push(url)
+        return { ok: false, status: 503, json: async () => ({}), clone: () => ({ json: async () => ({}) }) }
+      }
+      return before(url, init)
+    })
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
     await settle()
-
-    streams[0].readyState = FakeEventSource.CLOSED
-    streams[0].onerror?.()
     await new Promise((resolve) => setTimeout(resolve, 1_200))
 
-    expect(streams).toHaveLength(2)
+    expect(requested.filter((url) => url.includes('/chat/stream'))).toHaveLength(2)
+    expect(streams).toHaveLength(1)
+    expect(streams[0].closed).toBe(false)
     expect(reloads).toBe(0)
 
     release()
@@ -2498,6 +2865,124 @@ describe('choosing a chat while another one loads', () => {
     expect(pending.has('previous')).toBe(false)
     expect(store.getState().sessionId).toBe('current')
 
+    release()
+  })
+})
+
+/**
+ * The auto-approve switch is a setting of the chat (#658): the server stores it with the chat the
+ * switch names, and the switch shows what the server runs the opened chat with. A new chat starts
+ * with it off (#808).
+ */
+describe('the auto-approve switch', () => {
+  /** The body of every `POST /chat/approval-mode`, in order. */
+  let modeBodies: Record<string, unknown>[]
+  /** The body of every `POST /chat/sessions`, in order. */
+  let createBodies: Record<string, unknown>[]
+  /** What `GET /chat/sessions/{id}` says about the chat's mode. */
+  let storedMode: string
+
+  beforeEach(() => {
+    modeBodies = []
+    createBodies = []
+    storedMode = 'AUTO_APPROVE'
+    const globals = globalThis as unknown as Record<string, unknown>
+    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      if (url.includes('/chat/approval-mode')) {
+        modeBodies.push(JSON.parse(init?.body ?? '{}'))
+        return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
+      }
+      if (init?.method === 'POST' && /\/chat\/sessions(\?|$)/.test(url)) {
+        createBodies.push(JSON.parse(init.body ?? '{}'))
+      }
+      if (/\/chat\/sessions\/[^/?]/.test(url)) {
+        return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '', approvalMode: storedMode }) }
+      }
+      return inner(url, init)
+    })
+  })
+
+  it('shows the mode the opened chat is run with, not the one the page loaded with', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    expect(store.getState().autoApprove).toBe(false)
+
+    await store.actions.selectSession('s1')
+
+    expect(store.getState().autoApprove).toBe(true)
+    release()
+  })
+
+  it('names the open chat, so the server stores the mode with it', async () => {
+    storedMode = 'MANUAL'
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+
+    await store.actions.toggleAutoApprove()
+
+    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE', sessionId: 's1' }])
+    release()
+  })
+
+  /** Auto-approve in one chat does not carry over into the next new chat (#808). */
+  it('starts a new chat with auto-approve off', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    expect(store.getState().autoApprove).toBe(true)
+
+    store.actions.newChat()
+    expect(store.getState().autoApprove).toBe(false)
+
+    await store.actions.send('Erste Frage', [])
+    expect(createBodies).toHaveLength(1)
+    expect(createBodies[0].approvalMode).toBe('MANUAL')
+    await settle()
+    release()
+  })
+
+  it('shows a chat that stores no mode as manual', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    expect(store.getState().autoApprove).toBe(true)
+
+    storedMode = ''
+    await store.actions.selectSession('s2')
+
+    expect(store.getState().autoApprove).toBe(false)
+    release()
+  })
+
+  /**
+   * A conversation that has no chat yet has nothing to store the mode with, so it keeps it and the
+   * send that creates the chat names it.
+   */
+  it('stores a mode set before the first send with the chat that send creates', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.toggleAutoApprove()
+    expect(modeBodies).toEqual([])
+    expect(store.getState().autoApprove).toBe(true)
+
+    await store.actions.send('Erste Frage', [])
+
+    expect(createBodies).toHaveLength(1)
+    expect(createBodies[0].approvalMode).toBe('AUTO_APPROVE')
+    await settle()
     release()
   })
 })

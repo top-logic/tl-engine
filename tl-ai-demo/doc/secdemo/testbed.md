@@ -179,7 +179,9 @@ AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction+introsp
 
 - `checked the roles of 4 personas` with **no warning above it**. A warning names a persona and a role a
   rule failed to produce, and every scenario for that persona is then wrong in a way that looks like a
-  policy problem.
+  policy problem. On the first boot of a fresh database this line comes at the end of the start-up:
+  every service starts inside one start-up transaction, and the fixture it created is checked once that
+  transaction has committed (#626).
 - `roles=2 baseline=0(+interaction+introspection) backgroundAllowlist=3` - two `<role>` entries, an empty
   `<baseline/>`, three `<grant>`s. The two in brackets are the implicitly granted capabilities
   (`RoleToolAccess.IMPLICIT_BASELINE`): asking a question, and `listTools` saying what the agent carries.

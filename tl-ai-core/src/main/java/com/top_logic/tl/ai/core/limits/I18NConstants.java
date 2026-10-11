@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.limits;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey3;
 
 /**
  * I18N constants for the run limits.
@@ -15,8 +16,10 @@ import com.top_logic.basic.util.ResKey1;
  * <p>
  * What a user is told when their run does not start, or stops early, because a ceiling this
  * installation set was reached. Written for the person in front of the chat: they say what happened
- * and what to do next, and never name the configured figure - it is an administrator's setting, and
- * quoting it invites the user to argue with a number they cannot change.
+ * and what to do next. A token or run count is never named - it is an administrator's setting in a
+ * unit the user cannot relate to, and quoting it invites an argument about a number they cannot
+ * change. The money budget is the exception: an amount of money is a figure every user reads, and
+ * "12,40 € of 15,00 €" says at once how far over it they are.
  * </p>
  *
  * @see RunLimits
@@ -60,6 +63,36 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     während dieses Laufs aufgebraucht.
 	 */
 	public static ResKey1 RUN_STOPPED_BUDGET_SPENT__HOURS;
+
+	/**
+	 * Refusal shown when the acting account has spent its money budget for the window.
+	 *
+	 * <p>
+	 * {0} is the spent amount, {1} the budget, both already formatted in the user's language;
+	 * {2} is the window in hours.
+	 * </p>
+	 *
+	 * @en Budget used up: {0} of {1} in the last {2} hours. It frees up again as those hours pass;
+	 *     an administrator can raise it.
+	 * @de Budget aufgebraucht: {0} von {1} in den letzten {2} Stunden. Es wird wieder frei, sobald
+	 *     diese Stunden vergangen sind; ein Administrator kann es erhöhen.
+	 */
+	public static ResKey3 MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS;
+
+	/**
+	 * Notice appended to the answer of a run that stopped because the money budget ran out while it
+	 * was working.
+	 *
+	 * <p>
+	 * {0} is the spent amount, {1} the budget, both already formatted in the user's language;
+	 * {2} is the window in hours.
+	 * </p>
+	 *
+	 * @en The answer is incomplete. Budget used up: {0} of {1} in the last {2} hours.
+	 * @de Die Antwort ist unvollständig. Budget aufgebraucht: {0} von {1} in den letzten {2}
+	 *     Stunden.
+	 */
+	public static ResKey3 RUN_STOPPED_MONEY_BUDGET_SPENT__SPENT_BUDGET_HOURS;
 
 	static {
 		initConstants(I18NConstants.class);

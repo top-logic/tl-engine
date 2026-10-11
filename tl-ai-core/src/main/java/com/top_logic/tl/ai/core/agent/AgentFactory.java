@@ -46,6 +46,7 @@ import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.interaction.AskLeadTool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
@@ -194,7 +195,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// ceiling on every run rather than on one surface. Released when the loop returns.
 		try (RunLimits.Admission admission = RunLimits.admit(context)) {
 			return runAdmitted(name, conversation, conversationMemory,
-				context.withTokenAllowance(admission.allowance()), listener, sessionRegistry, overrides);
+				context.withBudgetAllowance(admission.allowance()), listener, sessionRegistry, overrides);
 		}
 	}
 
@@ -697,7 +698,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * Builds an {@link AgentLoop} for an asynchronous subagent: a faithful clone of the named
 	 * agent — same provider/config and the same full tool catalog (skills, {@code loadSkill}, and
 	 * the agent's complete read <em>and</em> write tool set) — with the single exception that the
-	 * subagent may not spawn further subagents.
+	 * subagent may not spawn further subagents, and one tool more: {@code ask_lead}, which asks the
+	 * agent that started it.
 	 *
 	 * <p>
 	 * Concretely this builds the same catalog as {@link #buildAgentLoop} but with
@@ -1084,6 +1086,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// Inject delegation tools from the agent's delegations list
 		if (includeDelegation) {
 			registerDelegationTools(registry, agent, capabilities);
+		} else {
+			// A background subagent's loop: it may ask the agent that started it.
+			registry.register(new AskLeadTool());
 		}
 
 		// Last, so that it sees every tool the agent ended up with - delegation tools included.
@@ -1141,6 +1146,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// Delegation tools go in the base (architectural)
 		if (includeDelegation) {
 			registerDelegationTools(baseCatalog, agent, capabilities);
+		} else {
+			// A background subagent's loop: it may ask the agent that started it. In the base, so the
+			// tool array of the subagent's requests does not change while it runs.
+			baseCatalog.register(new AskLeadTool());
 		}
 
 		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());

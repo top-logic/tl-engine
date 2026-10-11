@@ -28,6 +28,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -62,6 +63,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.security.PreCommitGuard.Violation;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.model.ObjectEditTool;
+import com.top_logic.tl.ai.core.tools.script.ChangeDataTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -296,6 +298,196 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 	}
 
 	/** One question the guard or a tool asked the account's rights. */
+	// --- The initial values of a new object (#683) -------------------------------------------------
+
+	/**
+	 * A tool that checks nothing creates an object and gives it a value the account may not set on a
+	 * new object: the guard asks what the create dialogs ask, and the turn is rolled back. The notice
+	 * names the attribute, because the model wrote that value itself.
+	 */
+	public void testAnUncheckedInitialValueIsRolledBack() {
+		StandIn rights = StandIn.withholding(writeOf("subject"));
+
+		Turn turn = runTurn(rights, unchecked(() -> note("Unchecked initial value", null)), "{}");
+
+		assertFalse("The turn must not commit: the account may not set the subject of a new note.",
+			turn.committed());
+		assertEquals("Pre-commit security check failed", turn.rollbackReason());
+		assertContains("setting 'subject' of new objects of type 'test.objectedit:Note'", turn.notice());
+		assertEquals(0, notesWithSubject("Unchecked initial value"));
+	}
+
+	/**
+	 * The case of the issue: a {@code changeData} script creates the object and sets the value. The
+	 * tool asks for the right to change data, not for this attribute of a new object, so the guard is
+	 * what refuses it.
+	 */
+	public void testAChangeDataScriptCannotSetARestrictedInitialValue() {
+		StandIn rights = StandIn.withholding(writeOf("subject"));
+
+		Turn turn = runTurn(rights, changeData(), "{\"script\": \"new(`test.objectedit:Note`)"
+			+ ".set(`test.objectedit:Note#subject`, 'Set by a script')\"}");
+
+		assertFalse("The turn must not commit: the script set a value the account may not set.",
+			turn.committed());
+		assertContains("setting 'subject' of new objects of type 'test.objectedit:Note'", turn.notice());
+		assertEquals(0, notesWithSubject("Set by a script"));
+	}
+
+	/**
+	 * The value the model gives a new object needs no right: the engine sets it, as it does for an
+	 * object a user creates in a dialog without being allowed to edit that field.
+	 */
+	public void testTheDefaultValueNeedsNoRight() {
+		StandIn rights = StandIn.withholding(writeOf("status"));
+
+		Turn turn = runTurn(rights, unchecked(() -> note("Default status", null)), "{}");
+
+		assertTrue("A default the account did not set must not refuse the turn: " + turn.notice(),
+			turn.committed());
+		assertEquals(1, notesWithSubject("Default status"));
+	}
+
+	/** A value other than the default is given by the turn, and needs the right. */
+	public void testAnotherValueThanTheDefaultNeedsTheRight() {
+		StandIn rights = StandIn.withholding(writeOf("status"));
+
+		Turn turn = runTurn(rights, unchecked(() -> note("Closed status", "closed")), "{}");
+
+		assertFalse("The account may not set the status of a new note.", turn.committed());
+		assertContains("setting 'status'", turn.notice());
+	}
+
+	/** A permitted initial value commits, and the guard asked about it. */
+	public void testAPermittedInitialValueCommits() {
+		StandIn rights = StandIn.withholding(question -> false);
+
+		Turn turn = runTurn(rights, unchecked(() -> note("Permitted subject", null)), "{}");
+
+		assertTrue(turn.notice(), turn.committed());
+		assertTrue("The guard must ask about the subject of the new note: " + rights.asked(),
+			rights.asked().stream().anyMatch(writeOf("subject")));
+	}
+
+	/**
+	 * {@code false} is not empty where the default is {@code true}: the turn gave the value, and needs
+	 * the right to give it.
+	 */
+	public void testFalseAgainstADefaultOfTrueNeedsTheRight() {
+		StandIn rights = StandIn.withholding(writeOf("active"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Inactive", "active", Boolean.FALSE)), "{}");
+
+		assertFalse("The account may not set a new permit inactive.", turn.committed());
+		assertContains("setting 'active' of new objects of type 'test.objectedit:Permit'", turn.notice());
+	}
+
+	/** The default {@code true} the engine sets needs no right. */
+	public void testADefaultOfTrueNeedsNoRight() {
+		StandIn rights = StandIn.withholding(writeOf("active"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Active by default", null, null)), "{}");
+
+		assertTrue("A default the account did not set must not refuse the turn: " + turn.notice(),
+			turn.committed());
+	}
+
+	/** {@code false} where the model gives no default is as empty as no value. */
+	public void testFalseWithoutADefaultNeedsNoRight() {
+		StandIn rights = StandIn.withholding(writeOf("archived"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Not archived", "archived", Boolean.FALSE)), "{}");
+
+		assertTrue("False without a default is no value: " + turn.notice(), turn.committed());
+	}
+
+	/**
+	 * A default that is the current time cannot be told from a value a tool wrote: a back-dated value
+	 * is asked about, and refused.
+	 */
+	public void testAValueInPlaceOfTheCurrentTimeNeedsTheRight() {
+		StandIn rights = StandIn.withholding(writeOf("validFrom"));
+
+		Turn turn = runTurn(rights,
+			unchecked(() -> permit("Back-dated", "validFrom", Date.from(T0.minusSeconds(86400 * 365)))), "{}");
+
+		assertFalse("The account may not back-date a new permit.", turn.committed());
+		assertContains("setting 'validFrom' of new objects of type 'test.objectedit:Permit'", turn.notice());
+	}
+
+	/**
+	 * A default that differs every time it is computed is asked about even when the turn left it
+	 * alone: it cannot be told from a value a tool wrote, and a refusal is safer than a skip.
+	 */
+	public void testAVolatileDefaultIsAsked() {
+		StandIn rights = StandIn.withholding(writeOf("code"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("UUID by default", null, null)), "{}");
+
+		assertFalse("A UUID default cannot be told from a given value, so it is asked.", turn.committed());
+		assertContains("setting 'code'", turn.notice());
+	}
+
+	/** A sequence number drawn in the transaction cannot be drawn again to compare, so it is asked. */
+	public void testASequenceNumberIsAsked() {
+		StandIn rights = StandIn.withholding(writeOf("number"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Numbered by default", null, null)), "{}");
+
+		assertFalse("A sequence number cannot be told from a given value, so it is asked.", turn.committed());
+		assertContains("setting 'number'", turn.notice());
+	}
+
+	/**
+	 * Creates a permit with the given subject and, unless the attribute is <code>null</code>, the
+	 * given value of that attribute.
+	 */
+	private static void permit(String subject, String attribute, Object value) {
+		TLClass type = (TLClass) TLModelUtil.findType("test.objectedit:Permit");
+		TLObject permit = ModelService.getInstance().getFactory().createObject(type, null);
+		permit.tUpdate(type.getPart("subject"), subject);
+		if (attribute != null) {
+			permit.tUpdate(type.getPart(attribute), value);
+		}
+	}
+
+	/** Every question about writing the attribute of the given name. */
+	private static Predicate<Question> writeOf(String attribute) {
+		return question -> question.operation() == SimpleBoundCommandGroup.WRITE && question.attribute() != null
+			&& attribute.equals(question.attribute().getName());
+	}
+
+	/** Creates a note with the given subject and, unless <code>null</code>, the given status. */
+	private static void note(String subject, String status) {
+		TLClass type = (TLClass) TLModelUtil.findType("test.objectedit:Note");
+		TLObject note = ModelService.getInstance().getFactory().createObject(type, null);
+		note.tUpdate(type.getPart("subject"), subject);
+		if (status != null) {
+			note.tUpdate(type.getPart("status"), status);
+		}
+	}
+
+	private static int notesWithSubject(String subject) {
+		TLClass type = (TLClass) TLModelUtil.findType("test.objectedit:Note");
+		int count = 0;
+		for (TLObject note : MetaElementUtil.getAllInstancesOf(type, TLObject.class)) {
+			if (subject.equals(note.tValue(type.getPart("subject")))) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/** The tool that changes data with a TL-Script. */
+	private static Tool changeData() {
+		for (Tool tool : AnnotatedTools.from(new ChangeDataTool())) {
+			if ("changeData".equals(tool.name())) {
+				return tool;
+			}
+		}
+		throw new AssertionError("ChangeDataTool has no changeData.");
+	}
+
 	private record Question(BoundCommandGroup operation, TLObject object, TLStructuredTypePart attribute) {
 
 		static Question write(TLObject object, TLStructuredTypePart attribute) {

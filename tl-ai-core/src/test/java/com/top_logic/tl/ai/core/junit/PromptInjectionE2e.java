@@ -35,7 +35,9 @@ import org.junit.Assume;
  * </pre>
  *
  * <p>
- * Without {@code ANTHROPIC_API_KEY} in the environment the tests skip for that reason instead.
+ * Without {@code ANTHROPIC_API_KEY} in the environment the tests skip for that reason instead. The
+ * research tests ({@code TestResearchInjection}) run against an OpenAI model and need
+ * {@code OPENAI_API_KEY} instead; {@code -Dtl.ai.injection.openai.model=...} chooses the model.
  * </p>
  */
 public class PromptInjectionE2e {
@@ -72,8 +74,39 @@ public class PromptInjectionE2e {
 
 	/** The key the model calls are made with, or {@code null} if there is none. */
 	public static String apiKey() {
-		String key = System.getenv("ANTHROPIC_API_KEY");
-		return key == null || key.isEmpty() ? null : key;
+		return env("ANTHROPIC_API_KEY");
+	}
+
+	/**
+	 * System property that names the OpenAI model of the tests that run against OpenAI.
+	 *
+	 * @see #openAiModel()
+	 */
+	public static final String OPENAI_MODEL_PROPERTY = "tl.ai.injection.openai.model";
+
+	/**
+	 * Skips the calling test unless {@link #ENABLED_PROPERTY} is set, and unless there is an OpenAI
+	 * key to spend.
+	 */
+	public static void assumeEnabledForOpenAi() {
+		Assume.assumeTrue("prompt-injection end-to-end tests are off, enable with -D"
+			+ ENABLED_PROPERTY + "=true", enabled());
+		Assume.assumeTrue("no OPENAI_API_KEY in the environment", openAiKey() != null);
+	}
+
+	/** The OpenAI key the model calls are made with, or {@code null} if there is none. */
+	public static String openAiKey() {
+		return env("OPENAI_API_KEY");
+	}
+
+	/** The OpenAI model of the tests that run against OpenAI. */
+	public static String openAiModel() {
+		return System.getProperty(OPENAI_MODEL_PROPERTY, "gpt-5.6-luna");
+	}
+
+	private static String env(String name) {
+		String value = System.getenv(name);
+		return value == null || value.isEmpty() ? null : value;
 	}
 
 }

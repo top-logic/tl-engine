@@ -35,6 +35,32 @@ export function tlCommands(): { name: string; args?: Record<string, unknown> }[]
 export function resetTLBridge(): void {
   controlState = {}
   dispatched = []
+  patchListeners.clear()
+}
+
+/** The listeners `subscribe` added, by the id the window's stream addresses its patches to. */
+const patchListeners = new Map<string, Set<(patch: Record<string, unknown>) => void>>()
+
+export function subscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void {
+  const set = patchListeners.get(controlId) ?? new Set()
+  set.add(listener)
+  patchListeners.set(controlId, set)
+}
+
+export function unsubscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void {
+  const set = patchListeners.get(controlId)
+  set?.delete(listener)
+  if (set?.size === 0) patchListeners.delete(controlId)
+}
+
+/** Whether anybody listens to `controlId` now. */
+export function isSubscribed(controlId: string): boolean {
+  return (patchListeners.get(controlId)?.size ?? 0) > 0
+}
+
+/** Delivers one patch of the window's event stream, as the bridge does. */
+export function emitPatch(controlId: string, patch: Record<string, unknown>): void {
+  for (const listener of [...(patchListeners.get(controlId) ?? [])]) listener(patch)
 }
 
 export function register(): void {

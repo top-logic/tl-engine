@@ -161,6 +161,79 @@
 				/>
 			</attributes>
 		</class>
+		<!--
+			An object with a value the model gives it, for the initial values the pre-commit guard asks
+			about (#683): a status that starts as "open", and a subject nothing presets.
+		-->
+		<class name="Note">
+			<attributes>
+				<property name="subject"
+					type="tl.core:String"
+				/>
+				<property name="status"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="open"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<!--
+			An object whose defaults the pre-commit guard cannot take for "not given" by emptiness alone:
+			a flag that starts as true, a flag with no default, and three defaults that differ every time
+			they are computed - the current time, a UUID and a sequence number drawn in the transaction.
+		-->
+		<class name="Permit">
+			<attributes>
+				<property name="subject"
+					type="tl.core:String"
+				/>
+				<property name="active"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="archived"
+					type="tl.core:Boolean"
+				/>
+				<property name="validFrom"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression value="context -> now()"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="code"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.model.provider.UuidDefaultProvider"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="number"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+								sequence-name="test_objectedit_permit_number"
+							/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
 		<class name="Pamphlet">
 			<annotations>
 				<table name="TestObjectEditBook"/>

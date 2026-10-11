@@ -17,7 +17,10 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.limits.TokenAllowance;
+import com.top_logic.tl.ai.core.cost.RunCosts;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance.MoneyBudget;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
@@ -28,6 +31,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCost;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -65,7 +69,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	/** Three turns' worth of budget ends the run after the third turn. */
 	public void testTheRunStopsWhenTheBudgetIsSpent() {
-		List<AgentEvent> events = run(TokenAllowance.of(3 * TOKENS_PER_TURN), 10);
+		List<AgentEvent> events = run(BudgetAllowance.of(3 * TOKENS_PER_TURN), 10);
 
 		AgentEvent.RunCompleted completed = completion(events);
 		assertEquals(StopReason.BUDGET_EXHAUSTED, completed.reason());
@@ -76,7 +80,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	/** Every turn it did run is a whole turn, reported as completed. */
 	public void testTheLastTurnIsFinished() {
-		List<AgentEvent> events = run(TokenAllowance.of(2 * TOKENS_PER_TURN), 10);
+		List<AgentEvent> events = run(BudgetAllowance.of(2 * TOKENS_PER_TURN), 10);
 
 		assertEquals(2, turnsStarted(events));
 		assertEquals("A turn that started is a turn that completed; the budget is checked between.",
@@ -86,7 +90,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	/** An admitted run always gets one turn, however little is left. */
 	public void testAnAdmittedRunAlwaysGetsOneTurn() {
-		List<AgentEvent> events = run(TokenAllowance.of(1), 10);
+		List<AgentEvent> events = run(BudgetAllowance.of(1), 10);
 
 		assertEquals("Refusing before the first turn is the entry point's job, not the loop's.",
 			1, turnsStarted(events));
@@ -96,7 +100,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	/** Without a budget the run ends the way it always did. */
 	public void testAnUnlimitedRunIsUnaffected() {
-		List<AgentEvent> events = run(TokenAllowance.UNLIMITED, 3);
+		List<AgentEvent> events = run(BudgetAllowance.UNLIMITED, 3);
 
 		assertEquals(StopReason.MAX_TURNS, completion(events).reason());
 		assertEquals(3, turnsStarted(events));
@@ -108,7 +112,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 			new TruncatingStrategy(4), 1_000_000, 900_000);
 		List<AgentEvent> events = new ArrayList<>();
 		new AgentLoop(params(10), provider(), catalog(), memory)
-			.run(context(TokenAllowance.of(2 * TOKENS_PER_TURN)), events::add);
+			.run(context(BudgetAllowance.of(2 * TOKENS_PER_TURN)), events::add);
 
 		assertEquals(StopReason.BUDGET_EXHAUSTED, completion(events).reason());
 		assertEquals(2, turnsStarted(events));
@@ -116,10 +120,10 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	/** What a delegate spends counts against the same budget, because it shares the allowance. */
 	public void testADelegatesSpendCountsAgainstTheParent() {
-		TokenAllowance allowance = TokenAllowance.of(3 * TOKENS_PER_TURN);
+		BudgetAllowance allowance = BudgetAllowance.of(3 * TOKENS_PER_TURN);
 		// Stand in for a child run: it holds the parent's allowance and records into it.
-		ToolContext.unrestricted().withTokenAllowance(allowance).forDelegation(TransactionScope.NOOP)
-			.tokenAllowance().record(new TokenUsage(2 * TOKENS_PER_TURN, 0, 0, 0, 0));
+		ToolContext.unrestricted().withBudgetAllowance(allowance).forDelegation(TransactionScope.NOOP)
+			.budgetAllowance().record(new TokenUsage(2 * TOKENS_PER_TURN, 0, 0, 0, 0), null);
 
 		List<AgentEvent> events = run(allowance, 10);
 
@@ -127,7 +131,45 @@ public class TestBudgetStopsTheRun extends TestCase {
 		assertEquals("Only one turn was left after the delegate's spend.", 1, turnsStarted(events));
 	}
 
-	private static List<AgentEvent> run(TokenAllowance allowance, int maxTurns) {
+	/**
+	 * A money budget stops the run the same way, and each turn costs its tokens times the model's
+	 * price.
+	 *
+	 * <p>
+	 * One turn is 100 input tokens at 10 000 USD per million, i.e. 1 USD, which is 0.90 EUR at the
+	 * rate the money budget carries. With 4.00 EUR of a 6.00 EUR budget spent before the run, the
+	 * third turn reaches it. The run reports its cost in US dollars, as the prices state it.
+	 * </p>
+	 */
+	public void testTheRunStopsWhenTheMoneyIsSpent() {
+		try (RunLimitSettings.Overridden prices = RunCosts.overridePrices(
+			model -> MODEL.equals(model) ? new ModelCost(10_000, 0, null, null, null, null, null, null) : null)) {
+			BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
+				new MoneyBudget(6, 4, "EUR", 0.9));
+			List<AgentEvent> events = run(allowance, 10);
+
+			AgentEvent.RunCompleted completed = completion(events);
+			assertEquals(StopReason.BUDGET_EXHAUSTED, completed.reason());
+			assertEquals("0.90 EUR per turn: after three turns 2.70 EUR exceed the 2.00 EUR left.",
+				3, completed.turnNumber());
+			assertEquals("USD", completed.totalCost().currency());
+			assertEquals("The run reports what it cost in US dollars.", 3.0, completed.totalCost().amount(), 1e-9);
+		}
+	}
+
+	/** A model without a price costs nothing, so a money budget never stops its runs. */
+	public void testAnUnpricedModelCostsNothing() {
+		try (RunLimitSettings.Overridden prices = RunCosts.overridePrices(model -> null)) {
+			BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
+				new MoneyBudget(1, 0, "USD", 1));
+			List<AgentEvent> events = run(allowance, 3);
+
+			assertEquals(StopReason.MAX_TURNS, completion(events).reason());
+			assertEquals(0.0, completion(events).totalCost().amount());
+		}
+	}
+
+	private static List<AgentEvent> run(BudgetAllowance allowance, int maxTurns) {
 		List<AgentEvent> events = new ArrayList<>();
 		AgentEventListener capture = events::add;
 		new AgentLoop(params(maxTurns), provider(), catalog())
@@ -135,8 +177,8 @@ public class TestBudgetStopsTheRun extends TestCase {
 		return events;
 	}
 
-	private static ToolContext context(TokenAllowance allowance) {
-		return ToolContext.unrestricted().withTokenAllowance(allowance);
+	private static ToolContext context(BudgetAllowance allowance) {
+		return ToolContext.unrestricted().withBudgetAllowance(allowance);
 	}
 
 	private static Conversation seeded() {

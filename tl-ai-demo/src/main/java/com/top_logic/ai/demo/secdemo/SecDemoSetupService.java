@@ -7,6 +7,7 @@ package com.top_logic.ai.demo.secdemo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,10 +36,13 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.UpdateEvent;
+import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -403,6 +407,22 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		super(context, config);
 	}
 
+	/**
+	 * What the last check of the persona matrix found, <code>null</code> before the first check.
+	 */
+	private volatile List<String> _lastProblems;
+
+	/**
+	 * What the last check of the persona matrix found and logged.
+	 *
+	 * @return One sentence per problem; empty when the rules produced the whole matrix;
+	 *         <code>null</code> if this service has not checked yet - on the first boot of a fresh
+	 *         database it checks only once the application's start-up transaction has committed.
+	 */
+	public List<String> lastProblems() {
+		return _lastProblems;
+	}
+
 	@Override
 	protected void startUp() {
 		super.startUp();
@@ -412,24 +432,70 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 
 	private void setup() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		boolean enclosed;
+		Set<ObjectKey> written = new HashSet<>();
 		try (Transaction tx = kb.beginTransaction(ResKey.text("Setting up the security demo fixtures."))) {
-			setupAccounts();
+			enclosed = tx.isNested();
+			setupAccounts(written);
 			grantComponentAccess();
-			seedProjects();
+			seedProjects(written);
 			tx.commit();
 		} catch (RuntimeException ex) {
 			throw new RuntimeException("Failed to set up the security demo fixtures: " + ex.getMessage(), ex);
 		}
 
-		// Checked after the commit on purpose: the roles the rules produce are computed from committed
-		// data, so asking before it lands would report every rule as broken.
-		checkRulesProducedTheMatrix();
+		if (enclosed && !written.isEmpty()) {
+			// The application starts every service inside one start-up transaction, so on the first
+			// boot of a fresh database the commit above is nested and persists nothing yet: checked
+			// now, every persona and project would be reported missing (#626). Checked instead once a
+			// commit has persisted what this setup wrote.
+			kb.addUpdateListener(new UpdateListener() {
+				@Override
+				public void notifyUpdate(KnowledgeBase sender, UpdateEvent event) {
+					if (event.isRemote() || !persists(event, written)) {
+						return;
+					}
+					sender.removeUpdateListener(this);
+					checkMatrix();
+				}
+			});
+		} else {
+			checkMatrix();
+		}
+	}
+
+	/**
+	 * Whether the given commit created or changed one of the given objects.
+	 */
+	private static boolean persists(UpdateEvent event, Set<ObjectKey> written) {
+		for (ObjectKey key : written) {
+			if (event.getCreatedObjectKeys().contains(key) || event.getUpdatedObjectKeys().contains(key)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Logs every problem {@link #matrixProblems()} finds, and how many personas it checked.
+	 */
+	private void checkMatrix() {
+		List<String> problems = matrixProblems();
+		_lastProblems = problems;
+		for (String problem : problems) {
+			Logger.warn(problem, SecDemoSetupService.class);
+		}
+		Logger.info("Security demo: checked the roles of " + getConfig().getPersonas().size()
+			+ " personas against the aspect's role rules.", SecDemoSetupService.class);
 	}
 
 	/**
 	 * Ensures every persona's account exists, can log in and is a member of its groups.
+	 *
+	 * @param written
+	 *        Gets the accounts this method created and the groups it added a member to.
 	 */
-	private void setupAccounts() {
+	private void setupAccounts(Set<ObjectKey> written) {
 		for (PersonaConfig persona : getConfig().getPersonas()) {
 			String login = persona.getLogin();
 			Person account = Person.byName(login);
@@ -440,16 +506,21 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 				Logger.info("Created security demo persona '" + login + "' (expects role(s) "
 					+ persona.getRoles() + " from the tier rules): " + purposeOf(persona),
 					SecDemoSetupService.class);
+				written.add(account.tId());
 			}
 
 			for (String groupName : persona.getGroups()) {
-				group(groupName).addMember(account);
+				Group group = group(groupName);
+				if (!group.getMembers().contains(account)) {
+					group.addMember(account);
+					written.add(group.tId());
+				}
 			}
 		}
 	}
 
 	/**
-	 * Reports every persona whose roles the aspect's rules did not produce.
+	 * Every persona whose roles the aspect's rules did not produce.
 	 *
 	 * <p>
 	 * The check the previous fixture could not have: it assigned the roles itself, so they were there
@@ -460,56 +531,57 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	 * </p>
 	 *
 	 * <p>
-	 * A warning rather than a failure to boot. The fixture is a demo, and an application that fails to
-	 * start says less about what went wrong than a log line naming the persona and the role does. The
-	 * deterministic form is {@code SecDemoRoleRuleTest}.
+	 * Logged as warnings at start-up rather than failing the boot. The fixture is a demo, and an
+	 * application that fails to start says less about what went wrong than a log line naming the
+	 * persona and the role does. The deterministic form is {@code SecDemoRoleRuleTest}.
 	 * </p>
+	 *
+	 * @return One sentence per problem, in persona order; empty when the rules produced the whole
+	 *         matrix.
 	 */
-	private void checkRulesProducedTheMatrix() {
+	public List<String> matrixProblems() {
+		List<String> problems = new ArrayList<>();
 		BoundObject securityRoot = BoundHelper.getInstance().getDefaultObject();
 		if (securityRoot == null) {
-			Logger.warn("No security root available; cannot check the persona roles.",
-				SecDemoSetupService.class);
-			return;
+			problems.add("No security root available; cannot check the persona roles.");
+			return problems;
 		}
 
 		for (PersonaConfig persona : getConfig().getPersonas()) {
 			Person account = Person.byName(persona.getLogin());
 			if (account == null) {
+				problems.add("Persona '" + persona.getLogin() + "' has no account.");
 				continue;
 			}
 
 			Set<String> onRoot = roleNames(account, securityRoot);
 			for (String expected : persona.getRoles()) {
 				if (!onRoot.contains(expected)) {
-					Logger.warn("The role rules did not give '" + persona.getLogin() + "' the role '"
+					problems.add("The role rules did not give '" + persona.getLogin() + "' the role '"
 						+ expected + "' on the security root, which is where <tool-access> reads roles."
 						+ " It holds " + onRoot + " there instead, so its tool grants reach nothing."
 						+ " Check the <singleton-rule target=\"SecurityStructure#ROOT\"> entries and the"
-						+ " group membership " + persona.getGroups() + " in 'secdemo.config.xml'.",
-						SecDemoSetupService.class);
+						+ " group membership " + persona.getGroups() + " in 'secdemo.config.xml'.");
 				}
 			}
 
 			for (String projectName : persona.getPartnerOf()) {
 				TLObject project = projectByName(projectName);
 				if (project == null) {
-					Logger.warn("Persona '" + persona.getLogin() + "' is declared a partner of project '"
-						+ projectName + "', which does not exist.", SecDemoSetupService.class);
+					problems.add("Persona '" + persona.getLogin() + "' is declared a partner of project '"
+						+ projectName + "', which does not exist.");
 					continue;
 				}
 				Set<String> onProject = roleNames(account, (BoundObject) project);
 				if (onProject.isEmpty()) {
-					Logger.warn("The scope rule gave '" + persona.getLogin() + "' no role on project '"
+					problems.add("The scope rule gave '" + persona.getLogin() + "' no role on project '"
 						+ projectName + "', although the project lists it as a partner. Per-object"
 						+ " scoping is not working; check the <rule type=\"reference\"> over '"
-						+ PARTNERS_ATTRIBUTE + "' in 'secdemo.config.xml'.", SecDemoSetupService.class);
+						+ PARTNERS_ATTRIBUTE + "' in 'secdemo.config.xml'.");
 				}
 			}
 		}
-
-		Logger.info("Security demo: checked the roles of " + getConfig().getPersonas().size()
-			+ " personas against the aspect's role rules.", SecDemoSetupService.class);
+		return problems;
 	}
 
 	private static Set<String> roleNames(Person account, BoundObject object) {
@@ -628,8 +700,11 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	 * the security-relevant line of this method even though it looks like ordinary seed data. That is
 	 * the property the fixture exists to show.
 	 * </p>
+	 *
+	 * @param written
+	 *        Gets the projects this method created.
 	 */
-	private void seedProjects() {
+	private void seedProjects(Set<ObjectKey> written) {
 		TLClass projectType = type(PROJECT_TYPE);
 		if (!MetaElementUtil.getAllInstancesOf(projectType, TLObject.class).isEmpty()) {
 			return;
@@ -639,6 +714,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		int ticketCount = 0;
 		for (ProjectConfig projectConfig : getConfig().getProjects()) {
 			TLObject project = ModelService.getInstance().getFactory().createObject(projectType);
+			written.add(project.tId());
 			project.tUpdateByName("name", projectConfig.getName());
 
 			List<Person> partners = new ArrayList<>();

@@ -35,7 +35,7 @@ const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = R
  * store.
  *
  * Everything the conversation *is* - the transcript, the run, the session list, the capabilities,
- * the layout preferences and the one `EventSource` - lives in that store, keyed by `chat-id`, so
+ * the layout preferences and the one stream - lives in that store, keyed by `chat-id`, so
  * further view elements can show the same chat beside this one. What stays here is what only this
  * element has: its own geometry (the session drawer, the collapsed rail, the sheet breakpoint, the
  * published composer height) and the host's {@link ChatExtensions}.
@@ -383,6 +383,13 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             extraActions={extensions?.messageActions}
             onOpenSource={openSource}
             workingIndicator={workingIndicator}
+            subagents={chat.subagents}
+            subagentLive={chat.subagentLive}
+            delegationLive={chat.delegationLive}
+            onLoadSubagentTranscript={actions.loadSubagentTranscript}
+            onSendSubagentMessage={actions.messageSubagent}
+            leadName={agentLabel(chat.agent, chat.caps.agents)}
+            onCancelSubagent={actions.cancelSubagent}
           />
           <Composer
             runs={runs}
@@ -412,6 +419,10 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             }
             subagents={chat.subagents}
             onCancelSubagent={actions.cancelSubagent}
+            subagentLive={chat.subagentLive}
+            subagentBudget={chat.subagentBudget}
+            onRefreshSubagents={actions.refreshSubagents}
+            language={chat.language}
             onStopSubagents={actions.stopSubagents}
             onLoadSubagentTranscript={actions.loadSubagentTranscript}
             busy={chat.busy}

@@ -7,6 +7,8 @@ package com.top_logic.ai.demo;
 
 import java.lang.reflect.Proxy;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.function.BiFunction;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.mcp.server.MCPServerService;
+import com.top_logic.ai.mcp.server.authentication.McpAuthentication;
 import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
@@ -27,21 +31,20 @@ import com.top_logic.ai.mcp.server.token.AccessTokens;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
-import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
@@ -424,7 +427,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * tl-ai-mcp-server's own tests do not have.
 	 * </p>
 	 */
-	public void testAValidApiKeyResolvesToTheConfiguredAccount() throws AuthenticationFailure {
+	public void testAValidApiKeyResolvesToTheConfiguredAccount() throws Exception {
 		Authenticator authenticator = apiKeyAuthenticatorFor(ANNA);
 
 		Person resolved = authenticator.authenticate(
@@ -436,7 +439,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	/**
 	 * A wrong API key resolves to nobody at all.
 	 */
-	public void testAWrongApiKeyIsRefused() {
+	public void testAWrongApiKeyIsRefused() throws ConfigurationException {
 		Authenticator authenticator = apiKeyAuthenticatorFor(ANNA);
 
 		try {
@@ -685,29 +688,43 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * An API key authentication whose single secret maps {@link #API_KEY} to the given persona.
+	 * The authenticator {@code MCPServerService} builds from the API-key configuration of
+	 * {@code doc/security/mcp-endpoint.md}, with a secret that maps {@link #API_KEY} to the given
+	 * persona.
+	 *
+	 * <p>
+	 * Read from the XML of an application configuration file, as the application reads it: the
+	 * engine's own secret types cannot stand in the MCP service's configuration (issue #672), and a
+	 * secret built in code would not see that.
+	 * </p>
 	 */
-	private static Authenticator apiKeyAuthenticatorFor(String login) {
-		APIKeyAuthentication.Config<?> authentication =
-			TypedConfiguration.newConfigItem(APIKeyAuthentication.Config.class);
-		authentication.setDomain("mcp");
-		authentication.setPosition(APIKeyPosition.HEADER);
-		authentication.setParameterName(API_KEY_HEADER);
-
-		return TypedConfigUtil.createInstance(authentication)
-			.createAuthenticator(List.of(secret(login)));
-	}
-
-	/** A secret naming {@link #API_KEY} and the account a request with it acts as. */
-	private static SecretConfiguration secret(String login) {
-		ServerAPIKeySecret secret = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
-		TypedConfigUtil.setProperty(secret,
-			APIKeySecret.DOMAIN, "mcp");
-		TypedConfigUtil.setProperty(secret,
-			APIKeySecret.API_KEY, API_KEY);
-		TypedConfigUtil.setProperty(secret,
-			ServerAPIKeySecret.USER_ID, login);
-		return secret;
+	private static Authenticator apiKeyAuthenticatorFor(String login) throws ConfigurationException {
+		String file = "<application config:interface=\"com.top_logic.basic.config.ApplicationConfig$Config\"\n"
+			+ "  xmlns:config=\"http://www.top-logic.com/ns/config/6.0\">\n"
+			+ "  <services>\n"
+			+ "    <config service-class=\"" + MCPServerService.class.getName() + "\">\n"
+			+ "      <instance class=\"" + MCPServerService.class.getName() + "\">\n"
+			+ "        <authentications>\n"
+			+ "          <api-key-authentication domain=\"mcp\" position=\"header\" parameter-name=\""
+			+ API_KEY_HEADER + "\"/>\n"
+			+ "        </authentications>\n"
+			+ "        <secrets>\n"
+			+ "          <api-key-server-secret domain=\"mcp\" api-key=\"unencrypted:" + API_KEY + "\""
+			+ " user-id=\"" + login + "\"/>\n"
+			+ "        </secrets>\n"
+			+ "      </instance>\n"
+			+ "    </config>\n"
+			+ "  </services>\n"
+			+ "</application>\n";
+		ConfigurationReader reader = new ConfigurationReader(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			Collections.singletonMap("application",
+				TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class)));
+		reader.setSources(new ArrayList<>(List.of(CharacterContents.newContent(file))));
+		ApplicationConfig.Config application = (ApplicationConfig.Config) reader.read();
+		MCPServerService.Config<?> config =
+			(MCPServerService.Config<?>) application.getServices().get(MCPServerService.class).getInstance();
+		return McpAuthentication.build(config.getAuthentications(), config.getSecrets());
 	}
 
 	/**

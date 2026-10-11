@@ -14,6 +14,7 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -85,6 +86,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 	private volatile String _lastErrorMessage;
 
 	private volatile AgentResult _result;
+
+	/** What the run cost, as its completion event reported it; <code>null</code> before that. */
+	private volatile Money _cost;
 
 	/**
 	 * Creates an {@link ExecutionRecorder}.
@@ -191,6 +195,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 			boolean failed = e.reason() != StopReason.COMPLETE;
 			_result = new AgentResult(e.reason(), e.turnNumber(), e.totalUsage(),
 				failed ? _lastErrorKind : null, failed ? _lastErrorMessage : null);
+			_cost = e.totalCost();
 		}
 		_delegate.onEvent(event);
 		if (event instanceof AgentEvent.RunStarted) {
@@ -323,6 +328,20 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 *        The exception the loop threw, or <code>null</code> if it returned normally.
 	 */
 	public void complete(String transcript, String response, Throwable failure) {
+		completeWithLatestTranscript(() -> transcript, response, failure);
+	}
+
+	/**
+	 * Finalizes the execution row with the transcript as it stands when the row is written.
+	 *
+	 * @param transcript
+	 *        The run's transcript, asked on the store's writer thread.
+	 *
+	 * @see #complete(String, String, Throwable)
+	 * @see AgentExecutionStore#finishExecutionWithLatestTranscript(AgentExecution, ExecutionStatus,
+	 *      StopReason, String, TokenUsage, Money, Supplier, String)
+	 */
+	public void completeWithLatestTranscript(Supplier<String> transcript, String response, Throwable failure) {
 		AgentExecution execution = _execution;
 		if (execution == null) {
 			return;
@@ -332,8 +351,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 			StopReason stopReason = result != null ? result.stopReason()
 				: (failure != null ? StopReason.ERROR : null);
 			TokenUsage usage = result != null ? result.totalUsage() : TokenUsage.EMPTY;
-			AgentExecutionStore.getInstance().finishExecution(execution,
-				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, transcript,
+			Money cost = result != null ? _cost : null;
+			AgentExecutionStore.getInstance().finishExecutionWithLatestTranscript(execution,
+				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, cost, transcript,
 				response);
 		} catch (CancelledWriteException ex) {
 			// Expected on cancellation: the interrupt ends the wait, the write still commits.

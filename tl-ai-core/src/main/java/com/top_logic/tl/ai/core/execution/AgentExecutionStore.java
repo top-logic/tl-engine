@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.execution;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -23,6 +25,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -45,6 +48,9 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.AgentTask;
@@ -52,6 +58,8 @@ import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -501,6 +509,66 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		}
 	}
 
+	/**
+	 * Writes a part of a run's transcript anew, after that run has written it.
+	 *
+	 * <p>
+	 * A background subagent ends long after the lead's turn that started it, and the lead's run
+	 * writes its transcript when it ends, holding the subagent's part as it was then: running. The
+	 * part's end has to reach the database as well, or every window that reads the conversation from
+	 * there - another window of the account, the same window once it has dropped the chat from its
+	 * cache - shows the subagent at work for ever. Waits for the commit, so that whoever is told
+	 * about the end next reads it from the database.
+	 * </p>
+	 *
+	 * <p>
+	 * A run that has not ended yet is left alone, without reading its transcript: its final
+	 * transcript is taken from the conversation when it is written, behind this on the writer thread,
+	 * so it carries the part's current form anyway. Rewriting its checkpoint would parse and store
+	 * the lead's whole transcript once per status change of every subagent it waits for - the lead of
+	 * a research run waits for all of them. Should the process end before the run does, the startup
+	 * sweep closes the checkpoint as interrupted, and a subagent part still at work in it with it
+	 * ({@link InterruptedTranscript}). A transcript that does not hold the part is left alone too.
+	 * Best-effort: a failure is logged.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The run whose transcript holds the part.
+	 * @param part
+	 *        The part's new form; matched by its id.
+	 */
+	public void replaceTranscriptPart(AgentExecution execution, Part part) {
+		try {
+			write(() -> {
+				if (execution.getEndedAt() == null) {
+					return null;
+				}
+				String transcript = execution.getTranscript();
+				String rewritten;
+				try {
+					rewritten = ConversationLogSerializer.replacePart(transcript, part);
+				} catch (IOException ex) {
+					Logger.warn("Cannot update part " + part.id() + " in the unreadable transcript of run "
+						+ execution.getRunId() + ": " + ex.getMessage(), AgentExecutionStore.class);
+					return null;
+				}
+				if (rewritten == null) {
+					return null;
+				}
+				try (Transaction tx = beginTx("Update transcript of agent execution " + execution.getRunId())) {
+					execution.setTranscript(rewritten);
+					tx.commit();
+				}
+				return null;
+			});
+		} catch (CancelledWriteException ex) {
+			// Interrupted while waiting; the write itself still commits.
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to update part " + part.id() + " in the transcript of run "
+				+ execution.getRunId() + ": " + ex.getMessage(), ex, AgentExecutionStore.class);
+		}
+	}
+
 	@Override
 	protected void shutDown() {
 		if (_writer != null) {
@@ -699,9 +767,35 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {
+		updateMetadata(session, stored -> metadataJson);
+	}
+
+	/**
+	 * Changes the session metadata bag in one step: reads the stored bag and stores what
+	 * {@code change} makes of it, in one transaction on the writer thread.
+	 *
+	 * <p>
+	 * For a caller that keeps part of the stored bag - a value that only one action may change, while
+	 * every window writes the rest of the bag whole. A read on the caller's thread and a later
+	 * {@link #saveMetadata(AgentSession, String) save} could lose a change committed in between; this
+	 * cannot, because the writer thread commits one write after the other.
+	 * </p>
+	 *
+	 * <p>
+	 * Leaves {@link AgentSession#getLastUpdated()} alone, as {@link #saveMetadata(AgentSession, String)}
+	 * does.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session whose bag changes.
+	 * @param change
+	 *        Receives the stored bag ({@code null} when none was stored yet) and returns the bag to
+	 *        store. Runs on the writer thread and must not wait for anything.
+	 */
+	public void updateMetadata(AgentSession session, UnaryOperator<String> change) {
 		notifyChanged(write(() -> {
 			try (Transaction tx = beginTx("Save agent session metadata")) {
-				session.setMetadata(metadataJson);
+				session.setMetadata(change.apply(session.getMetadata()));
 				tx.commit();
 			}
 			return session.getOwner();
@@ -950,6 +1044,35 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	public void finishExecution(AgentExecution execution, ExecutionStatus status,
 			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript,
 			String response) {
+		finishExecutionWithLatestTranscript(execution, status, stopReason, errorMessage, usage, null,
+			() -> transcript, response);
+	}
+
+	/**
+	 * Records the terminal state of an agent-loop invocation, with the transcript taken when it is
+	 * written.
+	 *
+	 * <p>
+	 * A part of the run can change after the loop returned - a background subagent the run started
+	 * ends - and {@link #replaceTranscriptPart(AgentExecution, Part)}
+	 * writes that change into the transcript this has written. Taking the transcript only on the
+	 * writer thread closes the gap in between: a change made before this write is in the transcript,
+	 * a change made after it is written on top of it.
+	 * </p>
+	 *
+	 * @param cost
+	 *        What this run cost (excluding child executions), in the currency it was recorded in;
+	 *        may be <code>null</code> when nobody computed a cost, which leaves the row's cost
+	 *        empty.
+	 * @param transcript
+	 *        The run's transcript, asked on the writer thread; may answer <code>null</code>.
+	 *
+	 * @see #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage, String,
+	 *      String)
+	 */
+	public void finishExecutionWithLatestTranscript(AgentExecution execution, ExecutionStatus status,
+			StopReason stopReason, String errorMessage, TokenUsage usage, Money cost,
+			Supplier<String> transcript, String response) {
 		write(() -> {
 		try (Transaction tx = beginTx("Finish agent execution " + execution.getRunId())) {
 			cancelPendingInteractions(execution);
@@ -963,7 +1086,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				execution.setCacheReadTokens((long) usage.cacheReadTokens());
 				execution.setCacheWriteTokens((long) usage.cacheWriteTokens());
 			}
-			execution.setTranscript(transcript);
+			if (cost != null) {
+				execution.setCost(Double.valueOf(usd(cost, execution.getRunId())));
+			}
+			execution.setTranscript(transcript.get());
 			execution.setResponse(response);
 			execution.setEndedAt(new Date());
 			AgentSession session = execution.getSession();
@@ -1066,12 +1192,34 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
-	 * How many tokens the given account's runs consumed since the given point in time.
+	 * The given cost as the US dollars a run records.
 	 *
 	 * <p>
-	 * The figure a token budget is enforced against: everything the provider was asked to read and
-	 * write - prompt including its cached part, output and thinking - summed over every recorded run
-	 * of that account which <em>started</em> within the window.
+	 * A run prices every request in US dollars ({@code RunCosts}), so another currency here is a
+	 * caller's mistake; it is recorded as nothing rather than as a wrong amount.
+	 * </p>
+	 */
+	private static double usd(Money cost, String runId) {
+		if (Money.USD.equals(cost.currency())) {
+			return cost.amount();
+		}
+		Logger.error("Run " + runId + " reported its cost in " + cost.currency() + ", not in USD; it is recorded as"
+			+ " costing nothing.", AgentExecutionStore.class);
+		return 0;
+	}
+
+	/**
+	 * What the given account's runs consumed since the given point in time: tokens, and what they
+	 * cost in the engine's system currency.
+	 *
+	 * <p>
+	 * The figures the budgets are enforced against: everything the provider was asked to read and
+	 * write - prompt including its cached part, and output including reasoning - and the recorded
+	 * cost of it, summed over every recorded run of that account which <em>started</em> within the
+	 * window. A run records its cost in US dollars; it is converted at the rate that was valid on
+	 * the day the run started ({@link CostConversion#usdRate(Date)}). A run with a cost and no rate
+	 * for its day adds its tokens and not its cost, and makes the sum {@link AccountSpend#complete()
+	 * incomplete}.
 	 * </p>
 	 *
 	 * <p>
@@ -1082,6 +1230,15 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 *
 	 * <p>
+	 * Only the account's own rows are read: its sessions through their owner reference, and their
+	 * runs through the session reference - lookups the knowledge base answers from the association
+	 * index, so the cost grows with what this account recorded and not with every run of the
+	 * installation (#835). A session that was last updated before the window cannot hold a run that
+	 * started within it, so its runs are not read at all; and the currencies the cost is converted
+	 * with are {@link CostConversion#usdRates() looked up once} for the whole sum.
+	 * </p>
+	 *
+	 * <p>
 	 * Read {@link #onWriterThread(Supplier) on the writer thread}, in a fresh interaction at the
 	 * current revision: the caller is a run that is about to start, whose own thread reads at the
 	 * revision its interaction was opened with, and the rows that matter are the newest ones
@@ -1089,31 +1246,78 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 *
 	 * @param owner
-	 *        The account whose runs are counted; <code>null</code> yields {@code 0}.
+	 *        The account whose runs are counted; <code>null</code> yields nothing spent.
 	 * @param since
 	 *        The start of the window; <code>null</code> counts every recorded run.
-	 * @return The token count, never negative.
+	 * @return What was spent; never <code>null</code>.
 	 */
-	public long tokensSpentSince(Person owner, Date since) {
+	public AccountSpend spentSince(Person owner, Date since) {
 		if (owner == null) {
-			return 0;
+			return new AccountSpend(0, 0, true);
 		}
 		return onWriterThread(() -> {
-			long sum = 0;
-			for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
-				AgentExecution execution = (AgentExecution) obj;
-				Date started = execution.getStartedAt();
-				if (since != null && (started == null || started.before(since))) {
+			long tokens = 0;
+			double cost = 0;
+			boolean complete = true;
+			CostConversion.Rates rates = CostConversion.usdRates();
+			for (TLObject obj : owner.tReferers(TlAiExecutionFactory.getOwnerAgentSessionAttr())) {
+				AgentSession session = (AgentSession) obj;
+				if (since != null && quietSince(session, since)) {
 					continue;
 				}
-				AgentSession session = execution.getSession();
-				if (session == null || !owner.equals(session.getOwner())) {
-					continue;
+				for (TLObject run : session.tReferers(TlAiExecutionFactory.getSessionAgentExecutionAttr())) {
+					AgentExecution execution = (AgentExecution) run;
+					Date started = execution.getStartedAt();
+					if (since != null && (started == null || started.before(since))) {
+						continue;
+					}
+					tokens += usageOf(execution).totalTokens();
+					Double runCost = execution.getCost();
+					if (runCost != null && runCost.doubleValue() > 0) {
+						OptionalDouble rate = rates.usdRate(started);
+						if (rate.isPresent()) {
+							cost += runCost.doubleValue() * rate.getAsDouble();
+						} else {
+							complete = false;
+						}
+					}
 				}
-				sum += usageOf(execution).totalTokens();
 			}
-			return Long.valueOf(sum);
-		}).longValue();
+			return new AccountSpend(tokens, cost, complete);
+		});
+	}
+
+	/**
+	 * Whether no run of the given session can have started at or after the given point in time.
+	 *
+	 * <p>
+	 * {@link #beginExecution} stamps the session's {@link AgentSession#getLastUpdated() last update}
+	 * after the run's start, and nothing moves that stamp back, so a session last updated before
+	 * {@code since} started all its runs before it too. Skipping it spares the budget check the
+	 * runs of every conversation the account has not touched in the window - which, for an account
+	 * with a long history, is nearly all of them. A session without the stamp is not skipped.
+	 * </p>
+	 */
+	private static boolean quietSince(AgentSession session, Date since) {
+		Date lastUpdated = session.getLastUpdated();
+		return lastUpdated != null && lastUpdated.before(since);
+	}
+
+	/**
+	 * What an account's runs consumed in a window.
+	 *
+	 * @param tokens
+	 *        The tokens, never negative.
+	 * @param cost
+	 *        What they cost, in the system currency; never negative.
+	 * @param complete
+	 *        Whether {@code cost} counts every run: {@code false} when a run that cost something had
+	 *        no exchange rate for its day.
+	 *
+	 * @see AgentExecutionStore#spentSince(Person, Date)
+	 */
+	public record AccountSpend(long tokens, double cost, boolean complete) {
+		// Pure data.
 	}
 
 	/**
@@ -1294,6 +1498,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		// listener that still holds this session needs to hear which one it was. The external form
 		// is the id the browser and /chat/* use, which is what such a listener keys its state on.
 		String deletedId = session.tHandle().getObjectName().toExternalForm();
+		stopSubagents(deletedId, ExecutionRecorder.conversationIdOf(session));
 		Person deletedOwner = write(() -> {
 		try (Transaction tx = beginTx("Delete agent session")) {
 			// Read before the delete: afterwards the wrapper has no owner to report any more.
@@ -1321,6 +1526,28 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		});
 		notifySessionDeleted(deletedOwner, deletedId);
 		notifyChanged(deletedOwner);
+	}
+
+	/**
+	 * Stops the background subagents of a conversation that is being deleted: those of every window
+	 * that showed it - also one that dropped it from its cache or was closed - and those of a run
+	 * without a window. There is no conversation left to report to.
+	 *
+	 * @param ids
+	 *        The ids the conversation's registries may be keyed with: the chat uses the external form
+	 *        of the session's id, a run without a window the one its recorder derives.
+	 */
+	private static void stopSubagents(String... ids) {
+		int cancelled = 0;
+		for (String id : new LinkedHashSet<>(Arrays.asList(ids))) {
+			if (id != null) {
+				cancelled += SubagentRegistries.removeConversation(id);
+			}
+		}
+		if (cancelled > 0) {
+			Logger.info("Cancelled " + cancelled + " subagent(s) of deleted conversation " + ids[0] + ".",
+				AgentExecutionStore.class);
+		}
 	}
 
 	// ---- InteractionRequest ----
@@ -1771,7 +1998,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		return MetaElementUtil.getAllInstancesOf(type, TLObject.class);
 	}
 
-	private static TokenUsage usageOf(AgentExecution execution) {
+	/**
+	 * What one recorded run consumed, as its execution row says; 0 for a count not recorded.
+	 */
+	public static TokenUsage usageOf(AgentExecution execution) {
 		return new TokenUsage(
 			intValue(execution.getInputTokens()),
 			intValue(execution.getOutputTokens()),

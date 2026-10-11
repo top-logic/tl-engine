@@ -20,6 +20,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
@@ -304,7 +305,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 				awaitCancelled(token, 15_000));
 		} finally {
 			observer.onEvent(new AgentEvent.RunCompleted("run-long-turn", 1, now, StopReason.ABORTED,
-				com.top_logic.tl.ai.core.message.TokenUsage.EMPTY));
+				com.top_logic.tl.ai.core.message.TokenUsage.EMPTY, Money.zero(Money.USD)));
 		}
 	}
 

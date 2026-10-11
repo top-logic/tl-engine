@@ -41,12 +41,61 @@ public class TestSubagentJobRegistry extends TestCase {
 		assertTrue(_registry.canStart());
 	}
 
-	public void testCapBlocksStartWhenFull() {
-		for (int i = 0; i < 3; i++) {
-			_registry.register("a" + i, "t", new CancellationToken()).markRunning();
+	public void testCapBlocksStartWhenFull() throws InterruptedException {
+		java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+		try {
+			for (int i = 0; i < 3; i++) {
+				_registry.spawn(_registry.register("a" + i, "t", new CancellationToken()), j -> {
+					release.await();
+					return new SubagentResult("ok", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE);
+				});
+			}
+			assertFalse("at cap of 3, cannot start a 4th", _registry.canStart());
+		} finally {
+			release.countDown();
+			_registry.shutdown();
 		}
-		assertEquals(3, _registry.runningCount());
-		assertFalse("at cap of 3, cannot start a 4th", _registry.canStart());
+	}
+
+	/**
+	 * Shutting a registry down ends the jobs still waiting in its queue, and a job spawned afterwards,
+	 * as cancelled: nothing would ever start them, and a lead waiting for them would wait for good
+	 * (#814).
+	 */
+	public void testShutdownEndsTheQueuedJobs() throws InterruptedException {
+		SubagentJobRegistry registry = new SubagentJobRegistry(1);
+		java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+		try {
+			SubagentJob running = registry.register("running", "t", new CancellationToken());
+			registry.spawn(running, j -> {
+				release.await();
+				return new SubagentResult("ok", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE);
+			});
+			SubagentJob queued = registry.register("queued", "t", new CancellationToken());
+			java.util.concurrent.atomic.AtomicInteger notStarted = new java.util.concurrent.atomic.AtomicInteger();
+			registry.spawn(queued, j -> {
+				throw new AssertionError("A queued job must not start after the shutdown.");
+			}, notStarted::incrementAndGet);
+			assertEquals(SubagentJobStatus.QUEUED, queued.status());
+
+			registry.shutdown();
+
+			assertEquals(SubagentJobStatus.CANCELLED, queued.status());
+			assertEquals("The spawner records the end of a job that never ran.", 1, notStarted.get());
+
+			SubagentJob late = registry.register("late", "t", new CancellationToken());
+			registry.spawn(late, j -> {
+				throw new AssertionError("Nothing starts after the shutdown.");
+			}, notStarted::incrementAndGet);
+			assertEquals(SubagentJobStatus.CANCELLED, late.status());
+			assertEquals(2, notStarted.get());
+
+			long start = System.currentTimeMillis();
+			registry.awaitBlocking(List.of(queued.subagentId(), late.subagentId()), 10_000);
+			assertTrue("A lead waiting for them returns at once.", System.currentTimeMillis() - start < 5_000);
+		} finally {
+			release.countDown();
+		}
 	}
 
 	public void testTakeUndeliveredResultsFlipsDeliveredOnce() {

@@ -1,6 +1,16 @@
 import { React } from 'tl-react-bridge'
+import {
+  cardsForTurn,
+  REVEAL_CARD_EVENT,
+  subagentDisplayName,
+  SubagentCards,
+  subagentsWaitingForUser,
+  type SendToSubagent,
+  type SubagentCardModel,
+} from './subagent-card'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
+import { sameFields, sameItems, sameMembers, useStable } from './use-stable'
 import { AnswerSources, citedSources } from './sources'
 import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken } from './reference'
 import { TokenInput, type TokenInputHandle } from './token-input'
@@ -20,10 +30,13 @@ import type {
   NoticeMessage,
   Rating,
   RunMeta,
+  SubagentActivity,
+  SubagentLive,
   ToolCall,
   ToolResult,
   TraceMode,
   UserMessage,
+  WokenSubagent,
 } from './types'
 
 const { useEffect, useMemo, useRef, useState } = React
@@ -85,11 +98,34 @@ function groupTurns(messages: ChatMessage[]): RunTurn[] {
       current = { id: `run-${message.id}`, user: message, events: [], index }
       continue
     }
+    if (message.type === 'notice' && message.kind === 'lead_woken') {
+      // A turn no message of the user started: the line stands where the bubble would.
+      flush()
+      index += 1
+      current = { id: `run-${message.id}`, events: [message], index }
+      continue
+    }
     if (message.type === 'tool_result') continue
     current.events.push(message)
   }
   flush()
   return turns
+}
+
+/**
+ * The turns of `messages`, each the very object of the previous render while its messages are the
+ * same - a streamed word changes the last turn, and a memoised turn above it must not see a change.
+ */
+function useStableTurns(messages: ChatMessage[]): RunTurn[] {
+  const kept = useRef(new Map<string, RunTurn>())
+  return useMemo(() => {
+    const turns = groupTurns(messages).map((turn) => {
+      const before = kept.current.get(turn.id)
+      return before && sameTurn(before, turn) ? before : turn
+    })
+    kept.current = new Map(turns.map((turn) => [turn.id, turn]))
+    return turns
+  }, [messages])
 }
 
 function lastAnswer(events: ChatMessage[]): AssistantText | null {
@@ -129,6 +165,8 @@ function traceEvents(events: ChatMessage[]): ChatMessage[] {
     // A notice is not a step the agent took. It has its own line beside the answer, and counted as
     // a step it would make a turn that only switched models claim to have "done" something.
     if (item.type === 'notice') return false
+    // Neither is a recorded subagent or synchronous delegation: each has its own card.
+    if (item.type === 'subagent_ref' || item.type === 'delegation_ref') return false
     if (answer && item === answer) return false
     if (item.type === 'assistant_text' && !item.text.trim()) return false
     return true
@@ -923,6 +961,9 @@ const NOTICE_DETAIL_CHARS = 300
 function NoticeLine({ item, language }: { item: NoticeMessage; language: Language }) {
   const labels = bundle(language)
   const [open, setOpen] = useState(false)
+  if (item.kind === 'lead_woken' && item.woken?.length) {
+    return <WokenLine woken={item.woken} labels={labels} />
+  }
   const warning = item.kind === 'transaction_rolled_back'
   const detail = item.detail.trim()
   const long = detail.length > NOTICE_DETAIL_CHARS
@@ -944,6 +985,81 @@ function NoticeLine({ item, language }: { item: NoticeMessage; language: Languag
   )
 }
 
+/**
+ * The line in place of the user's bubble of a turn subagents started: who reported back, and why.
+ *
+ * Each name is a link to that subagent's card, which may stand turns further up: with three
+ * subagents and three such turns, "subagents reported back" alone does not say which card to look
+ * at. A question is the subagent's own text, so it is shown as plain text, cut where the server cut it.
+ */
+function WokenLine({ woken, labels }: { woken: WokenSubagent[]; labels: Labels }) {
+  return (
+    <div className="notice-line is-woken">
+      <ul className="woken-list">
+        {woken.map((item) => {
+          const name = subagentDisplayName(item)
+          return (
+            <li key={`${item.parentToolCallId}|${item.subagentId}`} className={`woken-${item.reason.toLowerCase()}`}>
+              <button
+                type="button"
+                className="woken-link"
+                aria-label={labels.wokenShowCard(name)}
+                onClick={(event) => showSubagentCard(event.currentTarget, item)}
+              >
+                {name}
+              </button>{' '}
+              {wokenReason(item, labels)}
+              {item.reason === 'ASKS' && item.question ? <span className="woken-question"> {item.question}</span> : null}
+            </li>
+          )
+        })}
+      </ul>
+      <div>{labels.leadWokenContinues}</div>
+    </div>
+  )
+}
+
+function wokenReason(item: WokenSubagent, labels: Labels): string {
+  switch (item.reason) {
+    case 'LIMIT':
+      return labels.wokenLimit
+    case 'FAILED':
+      return labels.wokenFailed
+    case 'CANCELLED':
+      return labels.wokenCancelled
+    case 'ASKS':
+      return labels.wokenAsks
+    default:
+      return labels.wokenFinished
+  }
+}
+
+/** How long a card a woken line pointed at stays marked. */
+const CARD_HIGHLIGHT_MS = 2000
+
+/**
+ * Scrolls the card of the given subagent into view and marks it for a moment.
+ *
+ * Looked up within the transcript the link stands in, never in the whole page: a page may show two
+ * chats, and subagent ids are unique only within a chat. The card is keyed by its starting call as
+ * well, so that a link finds the card of exactly the subagent it names.
+ */
+export function showSubagentCard(from: Element, item: Pick<WokenSubagent, 'subagentId' | 'parentToolCallId'>): boolean {
+  const scope = from.closest('.thread') ?? from.ownerDocument
+  const cards = Array.from(scope.querySelectorAll<HTMLElement>('[data-subagent-id]'))
+  const card =
+    cards.find((el) => el.dataset.subagentId === item.subagentId && el.dataset.parentCall === item.parentToolCallId) ??
+    cards.find((el) => el.dataset.subagentId === item.subagentId)
+  if (!card) return false
+  // An ended card may be folded behind its turn's summary row; its list unfolds first.
+  card.dispatchEvent(new Event(REVEAL_CARD_EVENT, { bubbles: true }))
+  card.scrollIntoView({ block: 'center' })
+  card.classList.add('is-highlighted')
+  card.ownerDocument.defaultView?.setTimeout(() => card.classList.remove('is-highlighted'), CARD_HIGHLIGHT_MS)
+  card.querySelector<HTMLElement>('.subagent-card-head')?.focus({ preventScroll: true })
+  return true
+}
+
 /** The sentence a notice of the given kind reads, in the reader's language. */
 function noticeText(kind: NoticeKind, labels: Labels): string {
   switch (kind) {
@@ -955,6 +1071,8 @@ function noticeText(kind: NoticeKind, labels: Labels): string {
       return labels.interrupted
     case 'model_switched':
       return labels.modelSwitched
+    case 'lead_woken':
+      return labels.leadWoken
   }
 }
 
@@ -1015,29 +1133,7 @@ function RunMetaLine({
   )
 }
 
-function AgentRun({
-  turn,
-  results,
-  traceMode,
-  busy,
-  labels,
-  language,
-  effort,
-  rating,
-  note,
-  regenerating,
-  onRate,
-  onRegenerate,
-  renderAnnotation,
-  openInPane,
-  extraActions,
-  onOpenSource,
-  canCopy = true,
-  canRate = true,
-  citationMarkers = true,
-  showTimestamp = true,
-  workingIndicator = DOTS,
-}: {
+interface AgentRunProps {
   turn: RunTurn
   results: Map<string, ToolResult>
   traceMode: TraceMode
@@ -1060,7 +1156,45 @@ function AgentRun({
   citationMarkers?: boolean
   showTimestamp?: boolean
   workingIndicator?: WorkingIndicatorForm
-}) {
+  /** The background subagents this turn started, drawn under its steps. */
+  subagentCards?: SubagentCardModel[]
+  onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
+  /** Writes to a running subagent from its card; without it the cards offer no field. */
+  onSendSubagentMessage?: SendToSubagent
+  /** Stops a subagent from its card; without it the cards offer no stop. */
+  onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
+  /** What the agent the user talks to is called, for a card whose subagent waits for it. */
+  leadName?: string
+}
+
+const AgentRun = React.memo(function AgentRun({
+  turn,
+  results,
+  traceMode,
+  busy,
+  labels,
+  language,
+  effort,
+  rating,
+  note,
+  regenerating,
+  onRate,
+  onRegenerate,
+  renderAnnotation,
+  openInPane,
+  extraActions,
+  onOpenSource,
+  canCopy = true,
+  canRate = true,
+  citationMarkers = true,
+  showTimestamp = true,
+  workingIndicator = DOTS,
+  subagentCards = [],
+  onLoadSubagentTranscript,
+  onSendSubagentMessage,
+  onCancelSubagent,
+  leadName,
+}: AgentRunProps) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
   const tools = toolsOf(turn.events)
@@ -1076,6 +1210,9 @@ function AgentRun({
 
   return (
     <div className="agent-run">
+      {notices(turn.events, 'lead_woken').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
       {traceMode === 'summary' && steps.length > 0 ? (
         <RunSummary
           events={steps}
@@ -1096,6 +1233,18 @@ function AgentRun({
       {notices(turn.events, 'transaction_rolled_back').map((item) => (
         <NoticeLine key={item.id} item={item} language={language} />
       ))}
+      {subagentCards.length > 0 && onLoadSubagentTranscript ? (
+        // Under the turn's steps and above its answer: the subagents were started on the way to it,
+        // and each card shows only what its own subagent does.
+        <SubagentCards
+          cards={subagentCards}
+          labels={labels}
+          onLoadTranscript={onLoadSubagentTranscript}
+          onSendMessage={onSendSubagentMessage}
+          onCancel={onCancelSubagent}
+          leadName={leadName}
+        />
+      ) : null}
       {pending ? <PendingAnswer indicator={workingIndicator} /> : null}
       {answer && !pending ? (
         <AssistantAnswer
@@ -1136,6 +1285,66 @@ function AgentRun({
         : null}
     </div>
   )
+})
+
+/**
+ * One turn's answer, with what only this turn needs worked out here rather than in the thread.
+ *
+ * The thread re-renders on every streamed word. Handed fresh closures and a fresh card list, every
+ * finished turn above the running one re-rendered with it and worked out its subagent cards again;
+ * here each turn keeps them, so `AgentRun`'s memo holds for every turn the word did not land in.
+ */
+const TurnRun = React.memo(function TurnRun({
+  turn,
+  subagents,
+  subagentLive,
+  delegationLive,
+  waitingSubagents,
+  rateTurn,
+  regenerateTurn,
+  ...run
+}: Omit<AgentRunProps, 'subagentCards' | 'onRate' | 'onRegenerate'> & {
+  subagents?: SubagentActivity[]
+  subagentLive?: Record<string, SubagentLive>
+  delegationLive?: Record<string, SubagentLive>
+  waitingSubagents: Set<string>
+  /** Rates a turn; absent where this turn cannot be rated. */
+  rateTurn?: (turnIndex: number, rating: Rating, note?: string) => void
+  /** Produces a turn's answer again; absent where this turn's cannot be. */
+  regenerateTurn?: (messageId: string, turnIndex: number) => void
+}) {
+  const { onLoadSubagentTranscript } = run
+  const computed = useMemo(
+    () =>
+      subagents && onLoadSubagentTranscript
+        ? cardsForTurn(turn.events, subagents, subagentLive ?? {}, waitingSubagents, delegationLive ?? {})
+        : undefined,
+    [turn.events, subagents, subagentLive, waitingSubagents, delegationLive, onLoadSubagentTranscript],
+  )
+  // Any subagent's step changes the live state every turn reads; only the turn whose cards it
+  // changes has to draw them again.
+  const subagentCards = useStable(computed, sameCards)
+  const index = turn.index
+  const onRate = useMemo(
+    () => (rateTurn ? (rating: Rating, note?: string) => rateTurn(index, rating, note) : undefined),
+    [rateTurn, index],
+  )
+  const userId = turn.user?.id
+  const onRegenerate = useMemo(
+    () => (regenerateTurn && userId ? () => regenerateTurn(userId, index) : undefined),
+    [regenerateTurn, userId, index],
+  )
+  return <AgentRun {...run} turn={turn} subagentCards={subagentCards} onRate={onRate} onRegenerate={onRegenerate} />
+})
+
+function sameCards(a: SubagentCardModel[] | undefined, b: SubagentCardModel[] | undefined): boolean {
+  if (!a || !b) return a === b
+  return a.length === b.length && a.every((card, index) => sameFields(card, b[index]))
+}
+
+/** A turn the messages still group into as before, so that its memo holds. */
+function sameTurn(a: RunTurn, b: RunTurn): boolean {
+  return a.id === b.id && a.index === b.index && a.user === b.user && sameItems(a.events, b.events)
 }
 
 export const Thread = React.memo(function Thread({
@@ -1168,6 +1377,13 @@ export const Thread = React.memo(function Thread({
   citationMarkers = true,
   showTimestamp = true,
   workingIndicator = DOTS,
+  subagents,
+  subagentLive,
+  delegationLive,
+  onLoadSubagentTranscript,
+  onSendSubagentMessage,
+  onCancelSubagent,
+  leadName,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -1199,18 +1415,39 @@ export const Thread = React.memo(function Thread({
   showTimestamp?: boolean
   /** What stands in the answer's place until its first word; the dots unless configured. */
   workingIndicator?: WorkingIndicatorForm
+  /** The background subagents of the conversation; without them no subagent card is drawn. */
+  subagents?: SubagentActivity[]
+  /** What each running subagent has done so far, by subagent id. */
+  subagentLive?: Record<string, SubagentLive>
+  /** What each synchronous delegation did live, by its `delegate_to_*` call. */
+  delegationLive?: Record<string, SubagentLive>
+  onLoadSubagentTranscript?: (id: string, runId?: string) => Promise<ChatMessage[]>
+  /** Writes to a running subagent from its card; without it the cards offer no field. */
+  onSendSubagentMessage?: SendToSubagent
+  /** Stops a subagent from its card; without it the cards offer no stop. */
+  onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
+  /** What the agent the user talks to is called, for a card whose subagent waits for it. */
+  leadName?: string
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
   const [showJump, setShowJump] = useState(false)
+  // Kept while no result changed, so a streamed word does not hand every turn a new map.
+  const toolResults = useStable(
+    useMemo(() => messages.filter((message): message is ToolResult => message.type === 'tool_result'), [messages]),
+    sameItems,
+  )
   const results = useMemo(() => {
     const map = new Map<string, ToolResult>()
-    for (const message of messages) {
-      if (message.type === 'tool_result') map.set(message.toolUseId, message)
-    }
+    for (const result of toolResults) map.set(result.toolUseId, result)
     return map
-  }, [messages])
-  const turns = useMemo(() => groupTurns(messages), [messages])
+  }, [toolResults])
+  const turns = useStableTurns(messages)
+  // A subagent is waiting while a question or an approval it asked is open; its card says so.
+  const waitingSubagents = useStable(
+    useMemo(() => subagentsWaitingForUser(messages), [messages]),
+    sameMembers,
+  )
   const ratings = useMemo(() => {
     const map = new Map<number, MessageFeedback>()
     for (const entry of feedback) map.set(entry.turnIndex, entry)
@@ -1293,9 +1530,17 @@ export const Thread = React.memo(function Thread({
                       }}
                     />
                   ) : null}
-                  <AgentRun
+                  <TurnRun
                     turn={turn}
                     results={results}
+                    subagents={subagents}
+                    subagentLive={subagentLive}
+                    delegationLive={delegationLive}
+                    waitingSubagents={waitingSubagents}
+                    onLoadSubagentTranscript={onLoadSubagentTranscript}
+                    onSendSubagentMessage={onSendSubagentMessage}
+                    onCancelSubagent={onCancelSubagent}
+                    leadName={leadName}
                     traceMode={traceMode}
                     // Only the turn at the bottom can be the running one. Handing `busy` to every
                     // turn made each finished run above it say "Working…" again.
@@ -1307,15 +1552,11 @@ export const Thread = React.memo(function Thread({
                     rating={entry?.rating ?? null}
                     note={entry?.note}
                     regenerating={regenerating}
-                    onRate={
-                      canRate && turn.index >= 0 ? (value, note) => onRate(turn.index, value, note) : undefined
-                    }
+                    rateTurn={canRate && turn.index >= 0 ? onRate : undefined}
                     // Only the last answer can be produced again: regenerating an earlier one would
                     // silently discard everything said after it, which is what editing is for.
-                    onRegenerate={
-                      canRegenerate && user && position === lastIndex && !busy
-                        ? () => onRegenerate(user.id, turn.index)
-                        : undefined
+                    regenerateTurn={
+                      canRegenerate && user && position === lastIndex && !busy ? onRegenerate : undefined
                     }
                     renderAnnotation={renderAnnotation}
                     openInPane={openInPane}

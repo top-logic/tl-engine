@@ -47,6 +47,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -143,6 +144,8 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		_run.startProcessing();
 
 		_windowA = new TaskProgressTracker();
+		// The run's window showed the chat when the message was sent.
+		assertTrue(_windowA.getSessionManager().switchSession(chatId(), nina));
 		_windowA.addProcessingState(_taskId, _run);
 		PendingInteractionRegistry.register(_taskId, nina, _windowA, _run);
 
@@ -424,7 +427,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		long before = _windowA.getCumulativeUsage().outputTokens();
 		try (Watcher a = watch(_windowA, nina); Watcher b = watch(windowB, nina)) {
 			stream(new AgentEvent.RunCompleted("run-1", 2, Instant.now(), StopReason.COMPLETE,
-				new TokenUsage(100, 40, 0, 0, 0)));
+				new TokenUsage(100, 40, 0, 0, 0), Money.zero(Money.USD)));
 
 			assertEquals(before + 40, _windowA.getCumulativeUsage().outputTokens());
 			assertEquals(0, windowB.getCumulativeUsage().outputTokens());
@@ -462,7 +465,8 @@ public class TestChatInFlightWindow extends BasicTestCase {
 	/** Passes an event through the run's listeners in the order {@code ChatProcessor} chains them. */
 	private void stream(AgentEvent event) {
 		_listener.onEvent(event);
-		ChatProcessor.streamForwarder(_windowA, nina, chatId(), _listener).onEvent(event);
+		ChatProcessor.streamForwarder(_windowA, _windowA.getSessionManager().getChatState(chatId()), nina,
+			_listener).onEvent(event);
 	}
 
 	/** The finished turn of the conversation, as a previous run left it behind. */

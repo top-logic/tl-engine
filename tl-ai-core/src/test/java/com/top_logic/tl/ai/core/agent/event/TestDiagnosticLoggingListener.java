@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -68,7 +69,7 @@ public class TestDiagnosticLoggingListener extends TestCase {
 			new AgentEvent.ProviderError(RUN, 1, T0, "UNKNOWN", "connection reset"),
 			new AgentEvent.DelegatedEvent(RUN, 1, T0, "", "tc6", child),
 			new AgentEvent.TurnCompleted(RUN, 1, T0, usage, List.of(new TextContent("done"))),
-			new AgentEvent.RunCompleted(RUN, 1, T0, StopReason.COMPLETE, usage));
+			new AgentEvent.RunCompleted(RUN, 1, T0, StopReason.COMPLETE, usage, Money.zero(Money.USD)));
 	}
 
 	/**

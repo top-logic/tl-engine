@@ -6,6 +6,7 @@ import { Composer, plusMenuVisible } from './composer'
 import { createDraftReporter } from './draft'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
 import { bundle } from './i18n'
+import { agentLabel } from './models'
 import type { ReferenceToken } from './reference'
 import { RailToggle } from './rail'
 import { unseenBadge } from './progress-model'
@@ -20,6 +21,9 @@ import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 
 const { useCallback, useEffect, useMemo, useRef } = React
+
+/** A conversation opens no source pane of its own; one function, so the transcript's memo holds. */
+const OPEN_NO_SOURCE = (): void => undefined
 
 export interface ThreadConfig {
   citationMarkers: boolean
@@ -347,6 +351,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     () => resolveMenuItems(Array.isArray(state.menuItems) ? state.menuItems.map(String) : []),
     [state.menuItems],
   )
+  // Memoised like the menu items: a fresh list on every render re-rendered every turn of the
+  // memoised transcript.
+  const extraActions = useMemo(
+    () => resolveMessageActions(Array.isArray(state.hostActions) ? state.hostActions.map(String) : []),
+    [state.hostActions],
+  )
   const referenceCandidates = useMemo(
     () =>
       modelBoundSource(state.referenceCandidates) ??
@@ -624,13 +634,18 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           citationMarkers={config.citationMarkers}
           showTimestamp={config.timestamp}
           workingIndicator={workingIndicator}
-          extraActions={resolveMessageActions(
-            Array.isArray(state.hostActions) ? state.hostActions.map(String) : [],
-          )}
+          extraActions={extraActions}
           renderAnnotation={registeredAnnotationRenderer(
             typeof state.citationRenderer === 'string' ? state.citationRenderer : '',
           )}
           openInPane={actions.openPane}
+          subagents={chat.subagents}
+          subagentLive={chat.subagentLive}
+          delegationLive={chat.delegationLive}
+          onLoadSubagentTranscript={actions.loadSubagentTranscript}
+          onSendSubagentMessage={actions.messageSubagent}
+          leadName={agentLabel(chat.agent, chat.caps.agents)}
+          onCancelSubagent={actions.cancelSubagent}
           headerEnd={
             // Derived, not configured: the badge button appears exactly when a `<chat-rail/>` on
             // this `chat-id` is mounted, because with no rail it would toggle nothing visible.
@@ -643,7 +658,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
               />
             ) : null
           }
-          onOpenSource={() => undefined}
+          onOpenSource={OPEN_NO_SOURCE}
         />
         {promptCards.length > 0 && promptCardsVisible(chat.sessionId, chat.messages.length) ? (
           <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
@@ -673,6 +688,10 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           promptImprovementEnabled={promptImprovementEnabled && chat.caps.promptImproverAvailable !== false}
           subagents={chat.subagents}
           onCancelSubagent={actions.cancelSubagent}
+          subagentLive={chat.subagentLive}
+          subagentBudget={chat.subagentBudget}
+          onRefreshSubagents={actions.refreshSubagents}
+          language={chat.language}
           onStopSubagents={actions.stopSubagents}
           onLoadSubagentTranscript={actions.loadSubagentTranscript}
           busy={chat.busy}

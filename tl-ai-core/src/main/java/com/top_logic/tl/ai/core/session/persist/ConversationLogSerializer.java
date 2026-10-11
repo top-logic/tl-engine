@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedMessage;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.tl.ai.core.session.persist.messages.SubagentPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto;
@@ -73,6 +74,8 @@ public final class ConversationLogSerializer {
 
 	private static final String TYPE_SYSTEM = "system";
 
+	private static final String TYPE_SUBAGENT = "subagent";
+
 	private ConversationLogSerializer() {
 		// Static utility
 	}
@@ -100,6 +103,54 @@ public final class ConversationLogSerializer {
 			dto.writeTo(json);
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to serialize conversation log", ex);
+		}
+		return buffer.toString();
+	}
+
+	/**
+	 * The given transcript with one assistant part replaced by a newer form of it.
+	 *
+	 * <p>
+	 * For a part that changes after the run that recorded it has written its transcript - a
+	 * background subagent ends long after the lead's turn did. The part is found by its
+	 * {@link Part#id() id}; everything else is written back as it was read.
+	 * </p>
+	 *
+	 * @param transcript
+	 *        A run's serialized turns, as {@link #toJson(List)} writes them.
+	 * @param part
+	 *        The part's new form.
+	 * @return The rewritten transcript, or <code>null</code> when the transcript holds no part with
+	 *         that id - a checkpoint written before the part was recorded.
+	 * @throws IOException
+	 *         When the transcript cannot be read.
+	 */
+	public static String replacePart(String transcript, Part part) throws IOException {
+		if (transcript == null || transcript.isEmpty()) {
+			return null;
+		}
+		PersistedConversationV2 conversation =
+			PersistedConversationV2.readPersistedConversationV2(new JsonReader(new StringR(transcript)));
+		boolean replaced = false;
+		for (PersistedTurn turn : conversation.getTurns()) {
+			List<PersistedPart> parts = new ArrayList<>(turn.getAssistantParts());
+			for (int i = 0; i < parts.size(); i++) {
+				if (part.id().equals(fromPartDto(parts.get(i)).id())) {
+					parts.set(i, toPartDto(part));
+					replaced = true;
+				}
+			}
+			if (replaced) {
+				turn.setAssistantParts(parts);
+				break;
+			}
+		}
+		if (!replaced) {
+			return null;
+		}
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			conversation.writeTo(json);
 		}
 		return buffer.toString();
 	}
@@ -292,7 +343,18 @@ public final class ConversationLogSerializer {
 				data.setTotalUsage(toUsageDto(dp.totalUsage()));
 			}
 			data.setStopReason(dp.stopReason() != null ? dp.stopReason().name() : "");
+			data.setParentToolCallId(nullToEmpty(dp.parentToolCallId()));
 			dto.setDelegationData(data);
+		} else if (part instanceof Part.SubagentPart sap) {
+			dto.setType(TYPE_SUBAGENT);
+			dto.setSubagentData(SubagentPartDto.create()
+				.setSubagentId(nullToEmpty(sap.subagentId()))
+				.setAgentName(nullToEmpty(sap.agentName()))
+				.setTask(nullToEmpty(sap.task()))
+				.setParentToolCallId(nullToEmpty(sap.parentToolCallId()))
+				.setChildRunId(nullToEmpty(sap.childRunId()))
+				.setStatus(sap.status() == null ? "" : sap.status().name())
+				.setSummary(nullToEmpty(sap.summary())));
 		} else if (part instanceof Part.SystemPart sp) {
 			dto.setType(TYPE_SYSTEM);
 			SystemPartDto data = SystemPartDto.create();
@@ -411,7 +473,19 @@ public final class ConversationLogSerializer {
 					data.getDurationMs(),
 					data.getTurnsUsed(),
 					delegationUsage,
-					delegationStopReason);
+					delegationStopReason,
+					data.getParentToolCallId());
+			}
+			case TYPE_SUBAGENT: {
+				SubagentPartDto data = dto.getSubagentData();
+				return new Part.SubagentPart(id, timestamp,
+					emptyToNull(data.getSubagentId()),
+					emptyToNull(data.getAgentName()),
+					emptyToNull(data.getTask()),
+					data.getParentToolCallId(),
+					emptyToNull(data.getChildRunId()),
+					Part.SubagentStatus.fromName(data.getStatus()),
+					emptyToNull(data.getSummary()));
 			}
 			case TYPE_SYSTEM: {
 				SystemPartDto data = dto.getSystemData();

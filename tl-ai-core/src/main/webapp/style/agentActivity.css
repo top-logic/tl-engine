@@ -43,7 +43,7 @@
  * TL-Script expression - the content slot below it takes a TilePreviewPartProvider.Content, of
  * which the framework ships no by-expression implementation.
  *
- * The two rules below are scoped with :has() to cards that actually carry a KPI, so a tile of some
+ * The rules below are scoped with :has() to cards that actually carry a KPI, so a tile of some
  * other application keeps the standard chrome. Without them the framework's own layout works
  * against the design: the content slot reserves a fixed 240px box for the icon this view does not
  * use, and the tile grid centres its single row vertically, which leaves a third of the tab empty
@@ -56,14 +56,36 @@
 
 .tileContainer:has(.aiKpi) {
 	align-items: start;
+	padding: var(--spacing-03);
 }
 
 /*
- * A row of KPIs is read across, so the numbers have to sit on one line. Two of the five titles are
- * long enough to wrap, which would otherwise push their number half a line below the others.
+ * The five KPIs are one row, and a row of KPIs is read across. The framework gives every card a
+ * fixed 16rem and wraps what does not fit, which at 1440 px with the navigation open put the fifth
+ * card into a second row below the band's edge (#860). Here the cards share the row instead, in
+ * equal columns, and wrap - still in equal columns - only where a card would get narrower than
+ * 11rem.
+ */
+.tileContainer:has(.aiKpi) .tileRow {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+	gap: var(--spacing-03);
+}
+
+.tileContainer .tileRow .card:has(.aiKpi) {
+	width: auto;
+	margin: 0;
+}
+
+/*
+ * The title names the number, so it is set smaller than the number. The numbers have to sit on one
+ * line across the row, so every title keeps the height of two lines: "Wartet auf einen Menschen"
+ * wraps once even at the narrowest column.
  */
 .card:has(.aiKpi) .card-title {
-	min-height: 2.7em;
+	font-size: 1rem;
+	line-height: 1.25;
+	min-height: 2.5em;
 }
 
 .aiKpi {
@@ -71,11 +93,22 @@
 	text-align: center;
 }
 
+/*
+ * The number scales with its card. A card is a fifth of the row, 192px at 1280px with the
+ * navigation open, and a fixed 2.6rem cut a six-digit count off at its right edge (#874). 15% of
+ * the card's width is the size at which "123,4 Mio." still fits there; on a wide row the number
+ * stops at 2.6rem. Should a longer one ever come, it wraps at its space rather than being cut.
+ */
+.card:has(.aiKpi) {
+	container-type: inline-size;
+}
+
 .aiKpiValue {
-	font-size: 2.6rem;
+	font-size: min(2.6rem, 15cqi);
 	font-weight: 600;
 	line-height: 1.15;
 	color: #1a1a1a;
+	white-space: normal;
 }
 
 .aiKpiNote {
@@ -85,6 +118,12 @@
 
 .aiKpiNote.aiKpiAlert {
 	color: #8b1113;
+}
+
+/* A sentence in a tile wraps: the tile is a fifth of the row wide, and a warning is longer than that. */
+.aiKpiNote {
+	white-space: normal;
+	overflow-wrap: anywhere;
 }
 
 /* --- turn ---------------------------------------------------------------- */

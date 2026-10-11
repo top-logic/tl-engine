@@ -60,6 +60,11 @@
 			<artifactId>tl-ai-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<!-- The side pane reads the body of an HTML document it shows (version managed by parent). -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+		</dependency>
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>

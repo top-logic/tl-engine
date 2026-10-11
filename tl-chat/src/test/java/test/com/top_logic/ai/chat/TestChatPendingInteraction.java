@@ -46,12 +46,18 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
@@ -236,15 +242,19 @@ public class TestChatPendingInteraction extends BasicTestCase {
 	}
 
 	/**
-	 * "Approve for this session" is remembered by the run's window, not by the answering one.
+	 * "Approve for this session" is remembered in the run's own chat, not in the answering window.
 	 *
 	 * <p>
-	 * The set the agent loop consults is the one of the tracker the run was started in. Recording
-	 * the decision against the window that happened to answer would leave the run asking about the
+	 * The set the chat's next runs are given is the one of the chat the run was sent in. Recording
+	 * the decision against the window that happened to answer would leave the chat asking about the
 	 * same tool again.
 	 * </p>
 	 */
-	public void testSessionApprovalIsRememberedByTheRunsWindow() throws Exception {
+	public void testSessionApprovalIsRememberedInTheRunsChat() throws Exception {
+		// What a send gives its run: the state of the chat the window showed.
+		HistoryUtils.updateSessionRevision();
+		assertTrue(_windowA.setActiveSessionId(chatId(), anna));
+		_run.setChatState(_windowA.activeChat());
 		TaskProgressTracker windowB = newWindow();
 		inWindow(windowB);
 
@@ -252,10 +262,10 @@ public class TestChatPendingInteraction extends BasicTestCase {
 			post("{\"requestId\":\"" + _requestId + "\",\"response\":\"APPROVED_FOR_SESSION\","
 				+ "\"toolName\":\"createObject\"}", anna));
 
-		assertTrue("The run's own window holds the set the agent loop asks.",
-			_windowA.getSessionApprovedTools().contains("createObject"));
+		assertTrue("The run's own chat holds the set its next runs are given.",
+			_windowA.activeChat().approvedTools().contains("createObject"));
 		assertFalse("The answering window's set is not what the run consults.",
-			windowB.getSessionApprovedTools().contains("createObject"));
+			windowB.activeChat().approvedTools().contains("createObject"));
 	}
 
 	/**
@@ -298,6 +308,122 @@ public class TestChatPendingInteraction extends BasicTestCase {
 		} finally {
 			bens.close();
 		}
+	}
+
+	/**
+	 * A background subagent's question, asked after the turn that started it has ended, is answered
+	 * from any window of the account (issue #695).
+	 *
+	 * <p>
+	 * The run is gone from the register by then, and its store with it; the question waits in the
+	 * job's own store, which {@link PendingInteractionRegistry#subagentListener} registered when the
+	 * job started.
+	 * </p>
+	 */
+	public void testASubagentsQuestionAfterTheTurnEndedIsAnswered() throws Exception {
+		runEnded();
+		SubagentJob job = new SubagentJob("sa-1", "researcher", "find X", new CancellationToken());
+		SubagentJobRegistry.Listener listener =
+			PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+		listener.started(job);
+		try {
+			UserInteractionRequest question =
+				job.interactionStore().createRequest("Which region?", "Clarify", "text", null, false);
+			assertEquals("The question names the subagent that asks.",
+				new InteractionAsker("sa-1", "researcher"), question.getAskedBy());
+			assertEquals("The chat lists the subagent's store for its conversation.",
+				List.of(job.interactionStore()), PendingInteractionRegistry.subagentStores(anna, chatId()));
+
+			inWindow(newWindow());
+			assertEquals(HttpServletResponse.SC_OK,
+				post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", anna));
+
+			assertEquals("The subagent must have been unparked by the answer.", "Nordics",
+				question.getFuture().get(5, TimeUnit.SECONDS));
+		} finally {
+			listener.finished(job);
+		}
+	}
+
+	/** Another account may not answer a subagent's question, and does not see its store. */
+	public void testAnotherAccountMayNotAnswerASubagent() throws Exception {
+		SubagentJob job = new SubagentJob("sa-2", "researcher", "find X", new CancellationToken());
+		SubagentJobRegistry.Listener listener =
+			PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+		listener.started(job);
+		try {
+			UserInteractionRequest question =
+				job.interactionStore().createRequest("Which region?", "Clarify", "text", null, false);
+
+			assertEquals(List.of(), PendingInteractionRegistry.subagentStores(ben, chatId()));
+			inWindow(newWindow());
+			assertEquals(HttpServletResponse.SC_OK,
+				post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", ben));
+
+			assertFalse("Ben's answer must not have unparked Anna's subagent.", question.getFuture().isDone());
+		} finally {
+			listener.finished(job);
+		}
+	}
+
+	/** A subagent that has finished is no longer registered; its leftovers are not answered. */
+	public void testAFinishedSubagentIsForgotten() throws Exception {
+		SubagentJob job = new SubagentJob("sa-3", "researcher", "find X", new CancellationToken());
+		SubagentJobRegistry.Listener listener =
+			PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+		int before = PendingInteractionRegistry.subagentCount();
+		listener.started(job);
+		UserInteractionRequest question =
+			job.interactionStore().createRequest("Which region?", "Clarify", "text", null, false);
+		listener.finished(job);
+
+		assertEquals(before, PendingInteractionRegistry.subagentCount());
+		assertEquals(HttpServletResponse.SC_OK,
+			post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", anna));
+		assertFalse(question.getFuture().isDone());
+	}
+
+	/**
+	 * A subagent that ends after the window that registered it stopped listening is dropped all the
+	 * same: the window's listener is gone by then, and nothing sweeps the register on a poll any more.
+	 */
+	public void testASubagentEndingAfterItsWindowLeftIsForgotten() throws Exception {
+		SubagentJobRegistry registry = new SubagentJobRegistry(1);
+		try {
+			PendingInteractionRegistry.forgetEndedOf(registry);
+			SubagentJobRegistry.Listener window =
+				PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+			registry.addListener(window);
+			int before = PendingInteractionRegistry.subagentCount();
+
+			CompletableFuture<Void> release = new CompletableFuture<>();
+			SubagentJob job = registry.register("researcher", "find X", new CancellationToken());
+			registry.spawn(job, j -> {
+				release.get(5, TimeUnit.SECONDS);
+				return null;
+			});
+			awaitCount(before + 1);
+			assertEquals(List.of(job.interactionStore()),
+				PendingInteractionRegistry.subagentStores(anna, chatId()));
+
+			// The window leaves while the subagent works on.
+			registry.removeListener(window);
+			release.complete(null);
+
+			awaitCount(before);
+			assertEquals(List.of(), PendingInteractionRegistry.subagentStores(anna, chatId()));
+		} finally {
+			registry.cancelAll();
+			registry.shutdown();
+		}
+	}
+
+	private static void awaitCount(int expected) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + 5_000;
+		while (PendingInteractionRegistry.subagentCount() != expected && System.currentTimeMillis() < deadline) {
+			Thread.sleep(10);
+		}
+		assertEquals(expected, PendingInteractionRegistry.subagentCount());
 	}
 
 	/** Registers a recording chat UI of the given account for the given window. */

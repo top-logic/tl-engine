@@ -13,7 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +39,11 @@ import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchResult;
 
 /**
  * {@link WebSearchEngine} backed by the Tavily Search API ({@code POST /search}).
+ *
+ * <p>
+ * The age of the results is Tavily's {@code time_range}. Tavily cannot restrict results by
+ * language.
+ * </p>
  */
 @InApp
 @Label("Tavily")
@@ -148,33 +153,56 @@ public final class TavilySearchEngine implements WebSearchEngine {
 
 	private final boolean _includeRawContent;
 
+	private final SearchHttp _http;
+
 	/**
 	 * Creates a {@link TavilySearchEngine} from configuration.
 	 */
 	@SuppressWarnings("unused")
 	@CalledByReflection
 	public TavilySearchEngine(InstantiationContext context, Config config) {
+		this(config, SearchHttp.Sleeper.SYSTEM);
+	}
+
+	/**
+	 * Creates a {@link TavilySearchEngine} that waits with {@code sleeper}. Package-visible for
+	 * testing.
+	 */
+	TavilySearchEngine(Config config, SearchHttp.Sleeper sleeper) {
 		_apiKey = config.getApiKey();
 		_baseUrl = config.getBaseUrl();
 		_searchDepth = config.getSearchDepth();
 		_includeAnswer = config.getIncludeAnswer();
 		_includeRawContent = config.getIncludeRawContent();
+		_http = new SearchHttp("Tavily", HTTP_CLIENT, sleeper, Clock.systemUTC());
 	}
 
 	@Override
-	public WebSearchResults search(String query, List<String> includeDomains, List<String> excludeDomains,
-			int maxResults) throws IOException, InterruptedException {
+	public boolean supportsFreshness() {
+		return true;
+	}
+
+	@Override
+	public boolean supportsLanguage() {
+		return false;
+	}
+
+	@Override
+	public WebSearchResults search(WebSearchQuery query) throws IOException, InterruptedException {
 		TavilySearchRequest request = TavilySearchRequest.create();
-		request.setQuery(query);
-		request.setMaxResults(maxResults);
+		request.setQuery(query.query());
+		request.setMaxResults(Math.max(1, Math.min(query.count(), WebSearchQuery.MAX_COUNT)));
 		request.setSearchDepth(_searchDepth.apiValue());
 		request.setIncludeAnswer(_includeAnswer);
 		request.setIncludeRawContent(_includeRawContent);
-		if (includeDomains != null && !includeDomains.isEmpty()) {
-			request.setIncludeDomains(includeDomains);
+		if (!query.includeDomains().isEmpty()) {
+			request.setIncludeDomains(query.includeDomains());
 		}
-		if (excludeDomains != null && !excludeDomains.isEmpty()) {
-			request.setExcludeDomains(excludeDomains);
+		if (!query.excludeDomains().isEmpty()) {
+			request.setExcludeDomains(query.excludeDomains());
+		}
+		if (query.freshness() != null) {
+			request.setTimeRange(query.freshness().externalName());
 		}
 
 		String payload = DataClassSerializer.toJson(request, TavilySearchEngine.class, "search()");
@@ -187,7 +215,7 @@ public final class TavilySearchEngine implements WebSearchEngine {
 			.POST(BodyPublishers.ofString(payload, UTF_8))
 			.build();
 
-		HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, BodyHandlers.ofString());
+		HttpResponse<String> response = _http.send(httpRequest);
 		if (response.statusCode() / 100 != 2) {
 			throw new IOException("Tavily search failed (HTTP " + response.statusCode() + "): " + response.body());
 		}

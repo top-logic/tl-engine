@@ -12,7 +12,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
@@ -36,6 +39,12 @@ import com.top_logic.tl.ai.tool.api.ReadSource;
  * </p>
  *
  * <p>
+ * <b>And what the run found in them.</b> A research run records {@link Finding findings} - a claim
+ * with the words of the source it rests on - on the same list, and they travel with the sources: a
+ * sub-agent's findings join its lead's list on delivery, under the ids its report names.
+ * </p>
+ *
+ * <p>
  * Thread-safe: the read tools of one turn run in parallel and register into the same list.
  * </p>
  */
@@ -45,11 +54,13 @@ public final class ReadingList {
 	 * How much of a source's read text is kept for the run.
 	 *
 	 * <p>
-	 * The text is what the popover's excerpt and a quoted passage are checked against. A tool's own
-	 * answer is capped well below this, so nothing the model could have seen is cut off here.
+	 * The text is what the popover's excerpt and a quoted passage are checked against. A long document
+	 * is read in windows, and its text here is every window the run read ({@link #readPart}), so the
+	 * bound is set for a long document read through: about fifty windows of a fetch, a report of some
+	 * three hundred pages. What a run reads beyond it is not citable by passage.
 	 * </p>
 	 */
-	private static final int MAX_TEXT = 200_000;
+	public static final int MAX_TEXT = 1_000_000;
 
 	/**
 	 * How many sources one run keeps.
@@ -66,6 +77,50 @@ public final class ReadingList {
 
 	/** Reference -> key of the entry it names: the entry's own key, or an alias of it. */
 	private final Map<String, String> _references = new LinkedHashMap<>();
+
+	private final SeenUrls _seenUrls = new SeenUrls();
+
+	/** Normalized address of a document read in windows -> the windows read of it. */
+	private final Map<String, ReadParts> _parts = new LinkedHashMap<>();
+
+	/**
+	 * How many findings one run tree keeps. A research run records a handful per source; past this
+	 * many the list stops growing, as the sources do.
+	 */
+	private static final int MAX_FINDINGS = 1_000;
+
+	/** Finding id -> finding, in the order they were recorded or received. */
+	private final Map<String, Finding> _findings = new LinkedHashMap<>();
+
+	/** The letters of a {@link #_findingTag}: no letter a reader confuses with a digit. */
+	private static final String TAG_LETTERS = "abcdefghijkmnpqrstuvwxyz";
+
+	/** The length of a {@link #_findingTag}. */
+	private static final int TAG_LENGTH = 5;
+
+	/** How many different tags there are. */
+	private static final long TAGS = pow(TAG_LETTERS.length(), TAG_LENGTH);
+
+	/**
+	 * The number of the next list's tag. It starts at a random number, so the ids of a run after a
+	 * restart are unlikely to be those of a run before it, which a conversation may still name.
+	 */
+	private static final AtomicLong NEXT_TAG = new AtomicLong(ThreadLocalRandom.current().nextLong(TAGS));
+
+	/**
+	 * What makes the ids of this list's own findings differ from those of every other run's list, so
+	 * that a lead receiving the findings of several subagents keeps all of them under the ids their
+	 * reports name.
+	 *
+	 * <p>
+	 * Counted, not drawn at random: the lists of one process have different tags until
+	 * {@link #TAGS} lists were made, which is no run tree's concern. A random tag of a few letters is
+	 * shared by two of a few hundred lists already.
+	 * </p>
+	 */
+	private final String _findingTag = findingTag();
+
+	private int _findingCount;
 
 	/** Creates an empty reading list. */
 	public ReadingList() {
@@ -91,7 +146,7 @@ public final class ReadingList {
 		if (source == null) {
 			return;
 		}
-		String key = normalize(source.url().isEmpty() ? source.id() : source.url());
+		String key = normalize(source.reference());
 		if (key.isEmpty()) {
 			return;
 		}
@@ -124,6 +179,105 @@ public final class ReadingList {
 	}
 
 	/**
+	 * Records that the run read the part {@code [start, end)} of a document, and answers the text of
+	 * every part it read of that document so far.
+	 *
+	 * <p>
+	 * The answer is what the source's {@link ReadSource#text() text} is to be: the windows read, in
+	 * document order, with {@code [...]} where a part was left out, at most {@link #MAX_TEXT}
+	 * characters. A document read again with another text starts over.
+	 * </p>
+	 *
+	 * @param url
+	 *        The address the document was read from.
+	 * @param document
+	 *        The whole text of the document.
+	 * @param start
+	 *        Where the part read starts.
+	 * @param end
+	 *        Where it ends, exclusive.
+	 * @return The text read of the document.
+	 */
+	public synchronized String readPart(String url, String document, int start, int end) {
+		ReadParts parts = _parts.computeIfAbsent(normalize(url), key -> new ReadParts());
+		return parts.add(document, start, end, MAX_TEXT);
+	}
+
+	/**
+	 * Records a finding of this run.
+	 *
+	 * @param claim
+	 *        What was found.
+	 * @param source
+	 *        The source on this list the claim rests on.
+	 * @param quote
+	 *        The words of the source; the caller has checked that they {@link Finding#occursIn occur}
+	 *        in the source's text.
+	 * @param recordedBy
+	 *        The agent recording it, or empty.
+	 * @param runId
+	 *        The id of the run recording it, or {@code null} outside a run.
+	 * @return The finding with its new id, or <code>null</code> when the list holds as many as it
+	 *         keeps.
+	 */
+	public synchronized Finding recordFinding(String claim, ReadSource source, String quote, String recordedBy,
+			String runId) {
+		if (_findings.size() >= MAX_FINDINGS) {
+			return null;
+		}
+		String reference = source.reference();
+		String title = source.title().isEmpty() ? reference : source.title();
+		Finding finding = new Finding("F" + (++_findingCount) + "-" + _findingTag, claim, reference, title, quote,
+			recordedBy == null ? "" : recordedBy, runId == null ? "" : runId);
+		_findings.put(finding.id(), finding);
+		return finding;
+	}
+
+	/**
+	 * The findings of this run and of every sub-agent whose result it received, in the order they
+	 * arrived.
+	 */
+	public synchronized List<Finding> findings() {
+		return List.copyOf(_findings.values());
+	}
+
+	/** The finding with the given id, or <code>null</code>. */
+	public synchronized Finding finding(String id) {
+		return id == null ? null : _findings.get(id.strip());
+	}
+
+	private static long pow(int base, int exponent) {
+		long result = 1;
+		for (int i = 0; i < exponent; i++) {
+			result *= base;
+		}
+		return result;
+	}
+
+	private static String findingTag() {
+		long number = Math.floorMod(NEXT_TAG.getAndIncrement(), TAGS);
+		char[] tag = new char[TAG_LENGTH];
+		for (int i = TAG_LENGTH - 1; i >= 0; i--) {
+			tag[i] = TAG_LETTERS.charAt((int) (number % TAG_LETTERS.length()));
+			number /= TAG_LETTERS.length();
+		}
+		return new String(tag);
+	}
+
+	/**
+	 * The web addresses this run was given - the ledger of the URL provenance rule.
+	 *
+	 * <p>
+	 * Kept with the reading list because it has the same scope: one per run, shared by every copy of
+	 * the run's context, a fresh one for a delegation, and taken over with the sources when a
+	 * sub-agent's result is delivered.
+	 * </p>
+	 */
+	public SeenUrls seenUrls() {
+		return _seenUrls;
+	}
+
+	/**
 	 * Takes over every source of another run's list - a sub-agent whose result this run received.
 	 *
 	 * @param other
@@ -139,7 +293,19 @@ public final class ReadingList {
 			sources = new LinkedHashMap<>(other._sources);
 			references = new LinkedHashMap<>(other._references);
 		}
+		_seenUrls.addAll(other._seenUrls);
+		List<Finding> theirFindings = other.findings();
 		synchronized (this) {
+			for (Finding finding : theirFindings) {
+				if (_findings.size() >= MAX_FINDINGS) {
+					break;
+				}
+				Finding known = _findings.putIfAbsent(finding.id(), finding);
+				if (known != null && !known.equals(finding)) {
+					Logger.warn("Two findings have the id " + finding.id() + "; the one received later is dropped: "
+						+ finding.claim(), ReadingList.class);
+				}
+			}
 			for (Map.Entry<String, ReadSource> entry : sources.entrySet()) {
 				ReadSource known = _sources.get(entry.getKey());
 				if (known == null && _sources.size() >= MAX_SOURCES) {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
+import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
 import { Thread } from './thread'
 import { chatReducer, type ChatAction } from './reducer'
@@ -26,8 +27,12 @@ afterEach(() => {
   mounted = null
 })
 
-function settle(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 20))
+/**
+ * Runs `work` and commits what it caused, effects included. Waiting a fixed time for the commit
+ * instead failed on a loaded machine, where React's scheduled render had not run yet.
+ */
+function commit(work: () => void): void {
+  flushSync(work)
 }
 
 /** The transcript in the document, with every collapsed trace panel opened. */
@@ -39,7 +44,7 @@ async function openTrace(actions: ChatAction[], language: Language): Promise<str
   document.body.append(container)
   const root = createRoot(container)
   mounted = { root, container }
-  root.render(
+  commit(() => root.render(
     React.createElement(Thread, {
       messages,
       traceMode: 'detailed',
@@ -58,13 +63,11 @@ async function openTrace(actions: ChatAction[], language: Language): Promise<str
       onToggleRail: () => undefined,
       title: 'Titel',
     } as never),
-  )
-  await settle()
+  ))
   /* The panel renders its entries only once it is open, so the entry heads are clicked afterwards. */
   for (const selector of ['.trace-panel-head', '.trace-entry-head']) {
     for (const head of container.querySelectorAll(selector)) {
-      ;(head as HTMLElement).click()
-      await settle()
+      commit(() => (head as HTMLElement).click())
     }
   }
   return container.innerHTML

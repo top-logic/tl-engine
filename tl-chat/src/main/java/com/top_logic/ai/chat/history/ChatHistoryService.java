@@ -10,7 +10,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.SessionMetadata;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -18,6 +21,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.CancelledWriteException;
@@ -92,6 +96,50 @@ public class ChatHistoryService {
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to create chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
+		}
+	}
+
+	/**
+	 * Creates a new chat session with the given owner, which runs with the given approval mode.
+	 *
+	 * <p>
+	 * A chat that stores no approval mode runs with {@link ApprovalMode#MANUAL} (#808), so a mode
+	 * chosen before the chat exists - by the user before the first send, or by a scheduled task - is
+	 * stored with the chat when it is created.
+	 * </p>
+	 *
+	 * @return the created session object, or null on failure.
+	 */
+	public static TLObject createSession(String title, Person owner, ApprovalMode mode) {
+		TLObject session = createSession(title, owner);
+		if (session != null && mode != ApprovalMode.MANUAL) {
+			updateMetadata(session, stored -> DtoMapper.withApprovalMode(stored, mode));
+		}
+		return session;
+	}
+
+	/**
+	 * Changes the session metadata in one step, see
+	 * {@link AgentExecutionStore#updateMetadata(AgentSession, UnaryOperator)}.
+	 *
+	 * @param session
+	 *        The chat whose metadata changes.
+	 * @param change
+	 *        Receives the stored metadata JSON ({@code null} when none was stored yet) and returns
+	 *        the JSON to store.
+	 */
+	public static void updateMetadata(TLObject session, UnaryOperator<String> change) {
+		try {
+			store().updateMetadata((AgentSession) session, change);
+		} catch (CancelledWriteException ex) {
+			// Expected: cancelling a run interrupts its thread, which ends the wait for the
+			// agent-data writer. The metadata write is queued and still commits - this is not a
+			// failure and must not be logged as one.
+			Logger.info("Chat run cancelled; session metadata is saved without waiting for it.",
+				ChatHistoryService.class);
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to save chat session metadata: " + ex.getMessage(), ex,
+				ChatHistoryService.class);
 		}
 	}
 
@@ -213,6 +261,54 @@ public class ChatHistoryService {
 			return (String) session.tValueByName(ATTR_TITLE);
 		} catch (Exception ex) {
 			Logger.error("Failed to get session title: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return null;
+		}
+	}
+
+	/**
+	 * Notes that a window of the owner shows the given chat now.
+	 *
+	 * <p>
+	 * Only the {@link SessionMetadata#getLastSeen() last seen} entry of the metadata bag changes, and
+	 * it changes in the bag as the database holds it when the write happens, not in a copy this
+	 * thread read earlier - the approval mode stored there stays (#658). Best-effort: a failure is
+	 * logged.
+	 * </p>
+	 *
+	 * @see #lastSeen(TLObject)
+	 */
+	public static void markSeen(TLObject session) {
+		if (!(session instanceof AgentSession)) {
+			return;
+		}
+		long now = System.currentTimeMillis();
+		updateMetadata(session, json -> {
+			SessionMetadata metadata = readMetadata(json);
+			// An unreadable bag is left as it is: this is only a note that the chat was shown.
+			return metadata == null ? json : DtoMapper.toJson(metadata.setLastSeen(now));
+		});
+	}
+
+	/**
+	 * When a window of the owner last showed the given chat, in milliseconds since the epoch; 0 if
+	 * never.
+	 *
+	 * @see #markSeen(TLObject)
+	 */
+	public static long lastSeen(TLObject session) {
+		SessionMetadata metadata = readMetadata(getMetadataJson(session));
+		return metadata == null ? 0 : metadata.getLastSeen();
+	}
+
+	/** The metadata bag of the given JSON; empty for none, <code>null</code> for one unreadable. */
+	private static SessionMetadata readMetadata(String json) {
+		if (json == null || json.isEmpty()) {
+			return SessionMetadata.create();
+		}
+		try {
+			return SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
+		} catch (IOException | RuntimeException ex) {
+			Logger.warn("Unreadable chat session metadata: " + ex.getMessage(), ChatHistoryService.class);
 			return null;
 		}
 	}

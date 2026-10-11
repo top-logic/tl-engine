@@ -4,8 +4,8 @@ package com.top_logic.ai.chat.api.messages;
  * SSE event carrying subagent lifecycle status.
  *
  * <p>
- * Emitted for {@code subagent_started}, {@code subagent_completed}, {@code subagent_failed},
- * and {@code subagent_cancelled} events.
+ * Emitted for {@code subagent_started}, {@code subagent_running}, {@code subagent_completed},
+ * {@code subagent_failed}, and {@code subagent_cancelled} events.
  * </p>
  */
 public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
@@ -35,6 +35,18 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getDurationMs() */
 	public static final String DURATION_MS__PROP = "durationMs";
 
+	/** @see #getParentToolCallId() */
+	public static final String PARENT_TOOL_CALL_ID__PROP = "parentToolCallId";
+
+	/** @see #isQueued() */
+	public static final String QUEUED__PROP = "queued";
+
+	/** @see #getChildRunId() */
+	public static final String CHILD_RUN_ID__PROP = "childRunId";
+
+	/** @see #getStopReason() */
+	public static final String STOP_REASON__PROP = "stopReason";
+
 	private String _subagentId = "";
 
 	private String _targetAgentName = "";
@@ -44,6 +56,14 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	private int _totalTokens = 0;
 
 	private long _durationMs = 0L;
+
+	private String _parentToolCallId = "";
+
+	private boolean _queued = false;
+
+	private String _childRunId = "";
+
+	private String _stopReason = "";
 
 	/**
 	 * Creates a {@link SubagentStatusEvent} instance.
@@ -154,6 +174,89 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 		_durationMs = value;
 	}
 
+	/**
+	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
+	 * call; sent on start, on leaving the queue and on the end, so that a window which did not see the
+	 * start finds the card.
+	 */
+	public final String getParentToolCallId() {
+		return _parentToolCallId;
+	}
+
+	/**
+	 * @see #getParentToolCallId()
+	 */
+	public com.top_logic.ai.chat.api.messages.SubagentStatusEvent setParentToolCallId(String value) {
+		internalSetParentToolCallId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getParentToolCallId()} without chain call utility. */
+	protected final void internalSetParentToolCallId(String value) {
+		_parentToolCallId = value;
+	}
+
+	/**
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. A
+	 * {@code subagent_running} event says when it has started.
+	 */
+	public final boolean isQueued() {
+		return _queued;
+	}
+
+	/**
+	 * @see #isQueued()
+	 */
+	public com.top_logic.ai.chat.api.messages.SubagentStatusEvent setQueued(boolean value) {
+		internalSetQueued(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isQueued()} without chain call utility. */
+	protected final void internalSetQueued(boolean value) {
+		_queued = value;
+	}
+
+	/**
+	 * The subagent's own run id, its transcript's key; sent on the end, empty if unknown.
+	 */
+	public final String getChildRunId() {
+		return _childRunId;
+	}
+
+	/**
+	 * @see #getChildRunId()
+	 */
+	public com.top_logic.ai.chat.api.messages.SubagentStatusEvent setChildRunId(String value) {
+		internalSetChildRunId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getChildRunId()} without chain call utility. */
+	protected final void internalSetChildRunId(String value) {
+		_childRunId = value;
+	}
+
+	/**
+	 * On completion: why the subagent's run stopped, a {@code StopReason} name; empty otherwise.
+	 */
+	public final String getStopReason() {
+		return _stopReason;
+	}
+
+	/**
+	 * @see #getStopReason()
+	 */
+	public com.top_logic.ai.chat.api.messages.SubagentStatusEvent setStopReason(String value) {
+		internalSetStopReason(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStopReason()} without chain call utility. */
+	protected final void internalSetStopReason(String value) {
+		_stopReason = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SUBAGENT_STATUS_EVENT__TYPE;
@@ -166,7 +269,11 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			TARGET_AGENT_NAME__PROP, 
 			DETAIL__PROP, 
 			TOTAL_TOKENS__PROP, 
-			DURATION_MS__PROP);
+			DURATION_MS__PROP, 
+			PARENT_TOOL_CALL_ID__PROP, 
+			QUEUED__PROP, 
+			CHILD_RUN_ID__PROP, 
+			STOP_REASON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -196,6 +303,10 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DETAIL__PROP: return getDetail();
 			case TOTAL_TOKENS__PROP: return getTotalTokens();
 			case DURATION_MS__PROP: return getDurationMs();
+			case PARENT_TOOL_CALL_ID__PROP: return getParentToolCallId();
+			case QUEUED__PROP: return isQueued();
+			case CHILD_RUN_ID__PROP: return getChildRunId();
+			case STOP_REASON__PROP: return getStopReason();
 			default: return null;
 		}
 	}
@@ -208,6 +319,10 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DETAIL__PROP: internalSetDetail((String) value); break;
 			case TOTAL_TOKENS__PROP: internalSetTotalTokens((int) value); break;
 			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
+			case PARENT_TOOL_CALL_ID__PROP: internalSetParentToolCallId((String) value); break;
+			case QUEUED__PROP: internalSetQueued((boolean) value); break;
+			case CHILD_RUN_ID__PROP: internalSetChildRunId((String) value); break;
+			case STOP_REASON__PROP: internalSetStopReason((String) value); break;
 		}
 	}
 
@@ -236,6 +351,14 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 		out.value(getTotalTokens());
 		out.name(DURATION_MS__PROP);
 		out.value(getDurationMs());
+		out.name(PARENT_TOOL_CALL_ID__PROP);
+		out.value(getParentToolCallId());
+		out.name(QUEUED__PROP);
+		out.value(isQueued());
+		out.name(CHILD_RUN_ID__PROP);
+		out.value(getChildRunId());
+		out.name(STOP_REASON__PROP);
+		out.value(getStopReason());
 	}
 
 	@Override
@@ -246,6 +369,10 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DETAIL__PROP: setDetail(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOTAL_TOKENS__PROP: setTotalTokens(in.nextInt()); break;
 			case DURATION_MS__PROP: setDurationMs(in.nextLong()); break;
+			case PARENT_TOOL_CALL_ID__PROP: setParentToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case QUEUED__PROP: setQueued(in.nextBoolean()); break;
+			case CHILD_RUN_ID__PROP: setChildRunId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case STOP_REASON__PROP: setStopReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

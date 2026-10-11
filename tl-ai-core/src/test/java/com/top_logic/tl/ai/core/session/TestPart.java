@@ -95,7 +95,7 @@ public class TestPart extends TestCase {
 	/** Verify DelegationPart references child session and sub-agent metadata. */
 	public void testDelegationPart() {
 		Part.DelegationPart p = Part.DelegationPart.started("d1", Instant.now(),
-			"orchestrator", "researcher", "Find info about X");
+			"orchestrator", "researcher", "Find info about X", "call-7");
 		assertNull(p.resultSummary());
 		assertEquals(-1, p.turnsUsed());
 		assertNull(p.totalUsage());
@@ -108,6 +108,7 @@ public class TestPart extends TestCase {
 		assertEquals("child-session-123", done.childSessionId());
 		assertEquals(5000L, done.durationMs());
 		assertEquals(3, done.turnsUsed());
+		assertEquals("The card stays at its call.", "call-7", done.parentToolCallId());
 		assertEquals(usage, done.totalUsage());
 		assertEquals(StopReason.COMPLETE, done.stopReason());
 	}

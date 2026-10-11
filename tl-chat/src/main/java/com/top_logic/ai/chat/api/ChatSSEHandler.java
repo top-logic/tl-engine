@@ -5,9 +5,9 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
@@ -17,10 +17,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.AsyncEvent;
-import jakarta.servlet.AsyncListener;
+import java.util.regex.Pattern;
 
 import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
 import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
@@ -31,6 +28,9 @@ import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
+import com.top_logic.ai.chat.api.messages.LeadWakesExhaustedEvent;
+import com.top_logic.ai.chat.api.messages.LeadWokenEvent;
+import com.top_logic.ai.chat.api.messages.WokenSubagent;
 import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
 import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -44,6 +44,8 @@ import com.top_logic.ai.chat.api.messages.ToolDeniedEvent;
 import com.top_logic.ai.chat.api.messages.ToolFailedEvent;
 import com.top_logic.ai.chat.api.messages.ToolStartedEvent;
 import com.top_logic.ai.chat.api.messages.TransactionCommittedEvent;
+import com.top_logic.ai.chat.api.messages.SubagentMessageDto;
+import com.top_logic.ai.chat.api.messages.SubagentMessagesReadEvent;
 import com.top_logic.ai.chat.api.messages.SubagentStatusEvent;
 import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
@@ -54,21 +56,51 @@ import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
- * Push-based SSE implementation of {@link ChatEventHandler}.
+ * Push-based implementation of {@link ChatEventHandler} that writes the chat's frames onto the
+ * event stream the browser window already holds for the React layer.
  *
  * <p>
  * Receives agent events directly via {@link #onEvent(AgentEvent)}, buffers them in a
- * {@link ConcurrentLinkedQueue}, and flushes to the SSE stream every 50ms. User interaction
- * events from {@link UserInteractionStore} are still polled during the flush cycle because
- * they originate outside the agent event system.
+ * {@link ConcurrentLinkedQueue}, and flushes them every 50ms. User interaction events from
+ * {@link UserInteractionStore} are still polled during the flush cycle because they originate
+ * outside the agent event system.
+ * </p>
+ *
+ * <p>
+ * <b>One connection per page (#867).</b> A browser opens at most six connections to one host over
+ * HTTP/1.1, for all its tabs together, and every page of the React layer holds one of them for its
+ * event stream ({@code /react-api/events}). The chat used to open a second stream of its own: three
+ * tabs then held all six, and no request of any tab reached the server any more - no click, no
+ * navigation, no message. The frames of one flush therefore travel as one {@link PatchEvent} on the
+ * window's {@link SSEUpdateQueue}, as <code>{"frames":[{"event":"text_delta","data":{...}}, ...]}</code>,
+ * addressed to a listener id the browser chose when it attached ({@code subscribe} of the React
+ * bridge). The id belongs to no control, so no control state is touched and the window's
+ * interaction is not needed; the queue is thread-safe and keeps what it could not write until the
+ * window's stream reconnects.
+ * </p>
+ *
+ * <p>
+ * The handler lives while its window is displayed: known to the registry, served by the same queue,
+ * its page not unloaded. A tab that is closed or reloaded stops it, and with it the window's
+ * presence in {@link ChatEventHandlerRegistry} - what waking a lead for subagent news and marking a
+ * result seen go by.
  * </p>
  *
  * <p>
@@ -84,6 +116,8 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * <li>{@code lock_acquired}, {@code lock_failed} - Edit lock</li>
  * <li>{@code tx_began}, {@code tx_committed}, {@code tx_rollback} - Transactions</li>
  * <li>{@code compaction_started} - Context compaction</li>
+ * <li>{@code subagent_started}, {@code subagent_running}, {@code subagent_completed}, {@code subagent_failed}, {@code subagent_cancelled} - Background subagents</li>
+ * <li>{@code lead_woken}, {@code lead_wakes_exhausted} - A lead turn started for subagents' news, or not started any more</li>
  * <li>{@code provider_error} - Unrecoverable provider errors</li>
  * <li>{@code message_complete} - Final assistant message with HTML</li>
  * <li>{@code user_interaction} - Polled from UserInteractionStore</li>
@@ -112,8 +146,29 @@ public class ChatSSEHandler implements ChatEventHandler {
 	/** The signed-in account this stream was opened for; may be <code>null</code>. */
 	private final Person _account;
 
-	private final AsyncContext _asyncContext;
-	private final PrintWriter _writer;
+	/** Prefix of every listener id, so a chat's id cannot name a control of the window. */
+	static final String LISTENER_PREFIX = "tl-chat-stream:";
+
+	/** What the browser may choose as its part of the listener id. */
+	private static final Pattern TOKEN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
+
+	private final ReactWindowRegistry _registry;
+
+	private final String _window;
+
+	private final SSEUpdateQueue _queue;
+
+	private final String _listener;
+
+	/**
+	 * The frames of the current flush cycle, each written by {@link #frame(String, String)}.
+	 *
+	 * <p>
+	 * Written by the flush task only, and by {@link #start()} before that task is scheduled.
+	 * </p>
+	 */
+	private final List<String> _frames = new ArrayList<>();
+
 	private final AtomicBoolean _closed = new AtomicBoolean(false);
 
 	/** Thread-safe event buffer between agent thread and SSE flush thread. */
@@ -142,32 +197,59 @@ public class ChatSSEHandler implements ChatEventHandler {
 	private ScheduledFuture<?> _flushTask;
 
 	/**
-	 * Creates a new SSE handler.
+	 * Creates a {@link ChatSSEHandler} for one conversation of a browser window.
 	 *
 	 * @param tracker
 	 *        Session-scoped task progress tracker.
-	 * @param asyncContext
-	 *        Async context from the servlet.
-	 * @param writer
-	 *        Response writer for SSE output.
-	 */
-	public ChatSSEHandler(TaskProgressTracker tracker, AsyncContext asyncContext, PrintWriter writer) {
-		this(tracker, null, asyncContext, writer);
-	}
-
-	/**
-	 * Creates a {@link ChatSSEHandler} for the window of a known account.
-	 *
 	 * @param account
 	 *        The signed-in account this stream was opened for; what makes this window one of the
 	 *        account's when another of them answers a request. May be <code>null</code>.
+	 * @param registry
+	 *        The window registry of the session the window belongs to.
+	 * @param window
+	 *        The window's name, the {@code windowId} the chat sends with every request.
+	 * @param queue
+	 *        The window's event queue, as the registry hands it out now.
+	 * @param token
+	 *        The browser's part of the listener id, see {@link #isToken(String)}.
 	 */
-	public ChatSSEHandler(TaskProgressTracker tracker, Person account, AsyncContext asyncContext,
-			PrintWriter writer) {
+	public ChatSSEHandler(TaskProgressTracker tracker, Person account, ReactWindowRegistry registry,
+			String window, SSEUpdateQueue queue, String token) {
 		_tracker = tracker;
 		_account = account;
-		_asyncContext = asyncContext;
-		_writer = writer;
+		_registry = registry;
+		_window = window;
+		_queue = queue;
+		_listener = listenerId(token);
+	}
+
+	/**
+	 * Whether the browser's part of a listener id is acceptable: letters, digits, {@code -} and
+	 * {@code _}, at most 64 of them.
+	 */
+	public static boolean isToken(String token) {
+		return token != null && TOKEN.matcher(token).matches();
+	}
+
+	/**
+	 * The listener id the browser subscribes to for the given token.
+	 */
+	static String listenerId(String token) {
+		return LISTENER_PREFIX + token;
+	}
+
+	/**
+	 * One frame as the patch carries it: an object of the frame's name and its payload.
+	 */
+	static String frame(String event, String data) {
+		return "{\"event\":\"" + JsonEscape.escape(event) + "\",\"data\":" + data + "}";
+	}
+
+	/**
+	 * The patch that carries the given frames, each written by {@link #frame(String, String)}.
+	 */
+	static String patch(List<String> frames) {
+		return "{\"frames\":[" + String.join(",", frames) + "]}";
 	}
 
 	@Override
@@ -186,36 +268,30 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	/**
-	 * Starts the SSE event stream.
+	 * Whether this handler writes to the given listener id.
+	 */
+	boolean writesTo(String listener) {
+		return _listener.equals(listener);
+	}
+
+	/**
+	 * Whether the window this handler writes to is still displayed: known to the registry, served
+	 * by the same queue, and its page not unloaded.
+	 */
+	boolean isWindowShown() {
+		WindowEntry window = _registry.getWindow(_window);
+		return window != null && window.getQueue() == _queue && window.getUnloadedAt() == 0;
+	}
+
+	/**
+	 * Starts sending this conversation's frames.
 	 */
 	public void start() {
-		// Registering also drops stale handlers of the same tracker (e.g. on SSE reconnection).
+		// Registering also drops the handler of an earlier attach of the same tracker.
 		ChatEventHandlerRegistry.register(this);
 
-		_asyncContext.addListener(new AsyncListener() {
-			@Override
-			public void onComplete(AsyncEvent event) {
-				stop();
-			}
-
-			@Override
-			public void onTimeout(AsyncEvent event) {
-				stop();
-			}
-
-			@Override
-			public void onError(AsyncEvent event) {
-				stop();
-			}
-
-			@Override
-			public void onStartAsync(AsyncEvent event) {
-				// Nothing
-			}
-		});
-
-		sendProxyBustPadding();
 		sendConnectedEvent();
+		flushFrames();
 
 		_flushTask = SSE_EXECUTOR.scheduleWithFixedDelay(
 			this::flushAndPoll,
@@ -233,24 +309,19 @@ public class ChatSSEHandler implements ChatEventHandler {
 			if (_flushTask != null) {
 				_flushTask.cancel(false);
 			}
-			try {
-				_asyncContext.complete();
-			} catch (Exception ignored) {
-				// Already completed or invalid state
-			}
 		}
 	}
 
 	@Override
 	public void onEvent(AgentEvent event) {
 		if (_closed.get()) {
-			// This handler's SSE connection is gone (browser reconnected).
+			// This handler was replaced by a newer attach of the window, or its window is gone.
 			// Forward to the current active handler for the same tracker.
 			ChatEventHandler current = ChatEventHandlerRegistry.find(_tracker);
 			if (current != null && current != this) {
 				current.onEvent(event);
 			} else {
-				Logger.warn("SSE handler closed, no replacement found — dropping event: "
+				Logger.warn("SSE handler closed, no replacement found - dropping event: "
 					+ event.getClass().getSimpleName(), ChatSSEHandler.class);
 			}
 			return;
@@ -302,6 +373,21 @@ public class ChatSSEHandler implements ChatEventHandler {
 		enqueue("interaction_resolved", DtoMapper.toJson(event));
 	}
 
+	@Override
+	public void sendApprovalMode(ApprovalMode mode) {
+		enqueue("approval_mode", approvalModeFrame(mode));
+	}
+
+	/** The data of an {@code approval_mode} frame. */
+	private static String approvalModeFrame(ApprovalMode mode) {
+		return "{\"mode\":\"" + mode.name() + "\"}";
+	}
+
+	@Override
+	public void sendWakesExhausted(int wakes) {
+		enqueue("lead_wakes_exhausted", DtoMapper.toJson(LeadWakesExhaustedEvent.create().setWakes(wakes)));
+	}
+
 	/**
 	 * Adds an already-rendered frame to the queue, or hands it to the handler that replaced this
 	 * one when the browser has reconnected in the meantime.
@@ -318,37 +404,6 @@ public class ChatSSEHandler implements ChatEventHandler {
 			return;
 		}
 		_eventQueue.add(new Frame(type, data));
-	}
-
-	/**
-	 * Sends an SSE comment block large enough to flush corporate proxy buffers.
-	 *
-	 * <p>
-	 * Many corporate proxies (Zscaler, BlueCoat, F5) buffer the response until they've
-	 * accumulated enough data (typically 4-8 KB). This padding forces the proxy to flush,
-	 * ensuring SSE events reach the browser immediately.
-	 * </p>
-	 */
-	private void sendProxyBustPadding() {
-		if (_closed.get()) {
-			return;
-		}
-		try {
-			synchronized (_writer) {
-				// SSE comments (lines starting with ':') are ignored by EventSource.
-				// Send 4 KB of padding to push through proxy buffers.
-				StringBuilder padding = new StringBuilder(4096);
-				padding.append(": proxy-bust-padding\n");
-				while (padding.length() < 4096) {
-					padding.append(": " + " ".repeat(253) + "\n");
-				}
-				padding.append('\n');
-				_writer.write(padding.toString());
-				_writer.flush();
-			}
-		} catch (Exception e) {
-			Logger.error("Failed to send proxy-bust padding", e, ChatSSEHandler.class);
-		}
 	}
 
 	private void sendConnectedEvent() {
@@ -377,8 +432,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
 		}
 
-		String mode = _tracker.getApprovalMode().name();
-		sendEvent("approval_mode", "{\"mode\":\"" + mode + "\"}");
+		sendEvent("approval_mode", approvalModeFrame(_tracker.getApprovalMode()));
 	}
 
 	/**
@@ -412,6 +466,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		if (now - _lastActivityTime > HEARTBEAT_INTERVAL_MS) {
 			sendHeartbeat();
 		}
+
+		flushFrames();
 	}
 
 	private void emitAgentEvent(AgentEvent event) {
@@ -426,10 +482,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setUsedTokens(usedTokens())
 				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.RunCompleted e) {
-			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
+			sendEvent("run_completed", DtoMapper.toJson(withCost(RunCompletedEvent.create()
 				.setRunId(e.runId())
 				.setReason(e.reason().name())
-				.setTotalUsage(mapTokenUsage(e.totalUsage()))));
+				.setTotalUsage(mapTokenUsage(e.totalUsage())), e.totalCost())));
 		} else if (event instanceof AgentEvent.TurnStarted e) {
 			sendEvent("turn_started", DtoMapper.toJson(TurnStartedEvent.create()
 				.setTurnNumber(e.turnNumber())
@@ -520,20 +576,46 @@ public class ChatSSEHandler implements ChatEventHandler {
 			sendEvent("subagent_started", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())
 				.setTargetAgentName(e.targetAgentName())
-				.setDetail(e.taskBrief())));
+				.setDetail(e.taskBrief())
+				.setParentToolCallId(e.parentToolCallId())
+				.setQueued(e.queued())));
+		} else if (event instanceof AgentEvent.SubagentRunning e) {
+			sendEvent("subagent_running", DtoMapper.toJson(SubagentStatusEvent.create()
+				.setSubagentId(e.subagentId())
+				.setParentToolCallId(e.parentToolCallId())));
+		} else if (event instanceof AgentEvent.LeadWoken e) {
+			LeadWokenEvent woken = LeadWokenEvent.create()
+				.setFinished(e.finished())
+				.setAsking(e.asking());
+			for (SubagentNews news : e.news()) {
+				woken.addSubagent(WokenSubagent.create()
+					.setSubagentId(news.subagentId())
+					.setAgentName(news.agentName())
+					.setReason(news.reason().name())
+					.setParentToolCallId(news.parentToolCallId())
+					.setQuestion(news.question()));
+			}
+			sendEvent("lead_woken", DtoMapper.toJson(woken));
 		} else if (event instanceof AgentEvent.SubagentCompleted e) {
 			sendEvent("subagent_completed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())
 				.setDetail(e.result().finalText())
 				.setTotalTokens(e.result().tokenUsage().totalTokens())
-				.setDurationMs(e.result().durationMs())));
+				.setDurationMs(e.result().durationMs())
+				.setParentToolCallId(e.parentToolCallId())
+				.setChildRunId(e.childRunId())
+				.setStopReason(e.result().stopReason() == null ? "" : e.result().stopReason().name())));
 		} else if (event instanceof AgentEvent.SubagentFailed e) {
 			sendEvent("subagent_failed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())
-				.setDetail(e.errorSummary())));
+				.setDetail(e.errorSummary())
+				.setParentToolCallId(e.parentToolCallId())
+				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.SubagentCancelled e) {
 			sendEvent("subagent_cancelled", DtoMapper.toJson(SubagentStatusEvent.create()
-				.setSubagentId(e.subagentId())));
+				.setSubagentId(e.subagentId())
+				.setParentToolCallId(e.parentToolCallId())
+				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
@@ -551,6 +633,18 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setAttempt(e.attempt())
 				.setWaitMs(e.waitMs())));
 		}
+	}
+
+	/**
+	 * The run's cost on its completion frame, in the currency the chat shows costs in: the run
+	 * reports US dollars, which are converted at today's rate ({@link CostConversion}).
+	 */
+	private static RunCompletedEvent withCost(RunCompletedEvent event, Money cost) {
+		if (cost == null) {
+			return event;
+		}
+		Money shown = CostConversion.shown(cost, null);
+		return event.setTotalCost(shown.amount()).setCurrency(shown.currency());
 	}
 
 	private void emitDelegatedEvent(AgentEvent.DelegatedEvent delegated) {
@@ -603,9 +697,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setUsedTokens(usedTokens()).setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.RunCompleted e) {
 			innerType = "run_completed";
-			innerData = DtoMapper.toJson(RunCompletedEvent.create()
+			// A subagent's cost reaches its card and the panel's sum (#783).
+			innerData = DtoMapper.toJson(withCost(RunCompletedEvent.create()
 				.setRunId(e.runId()).setReason(e.reason().name())
-				.setTotalUsage(mapTokenUsage(e.totalUsage())));
+				.setTotalUsage(mapTokenUsage(e.totalUsage())), e.totalCost()));
 		} else if (child instanceof AgentEvent.TurnStarted e) {
 			innerType = "turn_started";
 			innerData = DtoMapper.toJson(TurnStartedEvent.create()
@@ -625,6 +720,14 @@ public class ChatSSEHandler implements ChatEventHandler {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind()).setErrorMessage(e.message()));
+		} else if (child instanceof AgentEvent.UserMessageDelivered e) {
+			// What the user wrote from the subagent's card has been read: the card says so.
+			innerType = "user_message_read";
+			SubagentMessagesReadEvent read = SubagentMessagesReadEvent.create();
+			for (SubagentInbox.Message message : e.messages()) {
+				read.addMessage(SubagentMessageDto.create().setId(message.id()).setText(message.text()));
+			}
+			innerData = DtoMapper.toJson(read);
 		} else if (child instanceof AgentEvent.ModelSwitched e) {
 			innerType = "model_switched";
 			innerData = DtoMapper.toJson(ModelSwitchedEvent.create()
@@ -668,11 +771,21 @@ public class ChatSSEHandler implements ChatEventHandler {
 				PendingInteractionRegistry.findBySession(_account, sessionId);
 			procState = run == null ? null : run.state();
 		}
-		if (procState == null) {
-			return;
+		List<UserInteractionStore> stores = new ArrayList<>();
+		UserInteractionStore runStore = procState == null ? null : procState.getUserInteractionStore();
+		if (runStore != null) {
+			stores.add(runStore);
 		}
-		UserInteractionStore interactionStore = procState.getUserInteractionStore();
-		if (interactionStore == null || !interactionStore.hasPending()) {
+		// The background subagents of this conversation ask through their own stores, which outlive
+		// the turn that started them: a question asked after that turn ended is found only here.
+		stores.addAll(PendingInteractionRegistry.subagentStores(_account, sessionId));
+		for (UserInteractionStore interactionStore : stores) {
+			emitPending(interactionStore);
+		}
+	}
+
+	private void emitPending(UserInteractionStore interactionStore) {
+		if (!interactionStore.hasPending()) {
 			return;
 		}
 		for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
@@ -707,23 +820,37 @@ public class ChatSSEHandler implements ChatEventHandler {
 			return;
 		}
 
+		_frames.add(frame(eventType, data));
+		_lastActivityTime = System.currentTimeMillis();
+	}
+
+	/**
+	 * Writes what the cycle produced as one patch, and stops once the window is no longer shown.
+	 */
+	private void flushFrames() {
+		if (_closed.get()) {
+			return;
+		}
 		try {
-			synchronized (_writer) {
-				_writer.write("event: " + eventType + "\n");
-				_writer.write("data: " + data + "\n\n");
-				_writer.flush();
+			if (!_frames.isEmpty()) {
+				String patch = patch(_frames);
+				_frames.clear();
+				deliver(patch);
 			}
-
-			if (_writer.checkError()) {
+			if (!isWindowShown()) {
 				stop();
-				return;
 			}
-
-			_lastActivityTime = System.currentTimeMillis();
 		} catch (Exception e) {
-			Logger.error("Failed to write SSE event", e, ChatSSEHandler.class);
+			Logger.error("Failed to write chat frames", e, ChatSSEHandler.class);
 			stop();
 		}
+	}
+
+	/**
+	 * Puts one patch on the window's event stream, to this handler's listener id.
+	 */
+	void deliver(String patch) {
+		_queue.enqueue(PatchEvent.create().setControlId(_listener).setPatch(patch));
 	}
 
 	private int usedTokens() {
@@ -752,11 +879,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 
 	/**
 	 * Creates a handler whose {@link #sendEvent(String, String)} forwards event names to the given
-	 * consumer instead of writing to a real HTTP connection. The tracker and asyncContext are
-	 * unused by the code paths exercised via {@link #onEventForTest(AgentEvent)}.
+	 * consumer instead of writing to a window. The tracker and the window are unused by the code
+	 * paths exercised via {@link #onEventForTest(AgentEvent)}.
 	 */
 	static ChatSSEHandler recordingForTest(Consumer<String> eventNameSink) {
-		return new ChatSSEHandler(null, null, new PrintWriter(new StringWriter())) {
+		return new ChatSSEHandler(null, null, null, null, null, "test") {
 			@Override
 			void sendEvent(String eventType, String data) {
 				eventNameSink.accept(eventType);

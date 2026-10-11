@@ -283,9 +283,12 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			TLSubSessionContext subSession = TLContextManager.getSubSession();
 			Person previous = subSession.getPerson();
 			subSession.setPerson(account);
+			TaskProgressTracker tracker = newTracker(account);
 			try {
-				runSitting(account, subSession, newTracker(account));
+				runSitting(account, subSession, tracker);
 			} finally {
+				// The sitting is this run's window, and it ends here.
+				tracker.close();
 				subSession.setPerson(previous);
 			}
 		} finally {
@@ -373,7 +376,9 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	 *         the job that was asked for.
 	 */
 	private boolean openSession(TaskProgressTracker tracker, Person account) {
-		TLObject session = ChatHistoryService.createSession(sessionTitle(), account);
+		// With the task's mode: activating a chat that stores none would set the tracker to MANUAL.
+		TLObject session =
+			ChatHistoryService.createSession(sessionTitle(), account, getConfig().getApprovalMode());
 		if (session == null) {
 			getLog().taskEnded(ResultType.ERROR, I18NConstants.SESSION_NOT_CREATED);
 			return false;

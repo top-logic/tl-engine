@@ -22,7 +22,8 @@ public class TestEvalCsv extends TestCase {
 	/** The header names every column the report is computed from, in order. */
 	public void testHeaderIsTheColumnContract() {
 		assertEquals("scenario,arm,model,agent,repeat,outcome,turns,inputTokens,cacheReadTokens,"
-			+ "outputTokens,durationMs,stopReason,toolCalls,failedGraders,error", EvalCsv.HEADER);
+			+ "outputTokens,durationMs,stopReason,toolCalls,failedGraders,error,subagents,subagentInputTokens,"
+			+ "subagentCacheReadTokens,subagentOutputTokens,subagentToolCalls", EvalCsv.HEADER);
 	}
 
 	/** One run is one line, with its values where the header says they are. */
@@ -33,7 +34,7 @@ public class TestEvalCsv extends TestCase {
 		assertEquals(2, lines.length);
 		assertEquals(EvalCsv.HEADER, lines[0]);
 		assertEquals("\"s1\",\"a\",\"model-a\",\"Agent_a\",2,PASS,2,1000,0,100,250,\"COMPLETE\","
-			+ "\"read\",\"\",\"\"", lines[1]);
+			+ "\"read\",\"\",\"\",0,0,0,0,0", lines[1]);
 	}
 
 	/** A failed run names the expectations that did not hold, so the CSV explains itself. */

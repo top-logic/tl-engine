@@ -5,8 +5,6 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,6 +19,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -116,7 +115,7 @@ public class TestChatEventHandlerRegistry extends TestCase {
 			new AgentEvent.ApprovalResolved("run1", 5, Instant.now(), "tc-2", "ar-1",
 				ApprovalOutcome.APPROVED),
 			new AgentEvent.RunCompleted("run1", 6, Instant.now(), StopReason.COMPLETE,
-				TokenUsage.EMPTY));
+				TokenUsage.EMPTY, Money.zero(Money.USD)));
 
 		for (AgentEvent event : sent) {
 			ChatEventHandlerRegistry.find(_tracker).onEvent(event);
@@ -173,12 +172,12 @@ public class TestChatEventHandlerRegistry extends TestCase {
 
 	/**
 	 * The SSE handler resolves through the same registry with the same semantics it had when the
-	 * lookup lived on {@link ChatSSEHandler} itself: it is found while its connection is open and
+	 * lookup lived on {@link ChatSSEHandler} itself: it is found while it is started and
 	 * gone once it is stopped.
 	 */
 	public void testSseHandlerUsesTheSameRegistry() {
 		TaskProgressTracker sseTracker = new TaskProgressTracker();
-		ChatSSEHandler sse = new ChatSSEHandler(sseTracker, null, new PrintWriter(new StringWriter()));
+		ChatSSEHandler sse = new ChatSSEHandler(sseTracker, null, null, null, null, "test");
 		try {
 			ChatEventHandlerRegistry.register(sse);
 

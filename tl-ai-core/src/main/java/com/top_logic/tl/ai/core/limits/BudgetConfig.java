@@ -12,14 +12,16 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
- * How many tokens one account may spend in a rolling window.
+ * How many tokens, and how much money, one account may spend in a rolling window.
  *
  * <p>
  * The agent runs against metered provider APIs. With nothing configured here, no run is ever told to
@@ -38,6 +40,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 @TagName("budget")
 @DisplayOrder({
 	BudgetConfig.TOKEN_BUDGET,
+	BudgetConfig.MONEY_BUDGET,
 	BudgetConfig.BUDGET_WINDOW_HOURS,
 	BudgetConfig.ROLE_BUDGETS,
 })
@@ -45,6 +48,9 @@ public interface BudgetConfig extends ConfigPart {
 
 	/** Configuration property name for {@link #getTokenBudget()}. */
 	String TOKEN_BUDGET = "token-budget";
+
+	/** Configuration property name for {@link #getMoneyBudget()}. */
+	String MONEY_BUDGET = "money-budget";
 
 	/** Configuration property name for {@link #getBudgetWindowHours()}. */
 	String BUDGET_WINDOW_HOURS = "budget-window-hours";
@@ -64,14 +70,15 @@ public interface BudgetConfig extends ConfigPart {
 	 *
 	 * <p>
 	 * The figure counted is everything the provider was asked to read and write - prompt including
-	 * its cached part, output and thinking - summed over the account's recorded runs. It therefore
-	 * needs run recording to be on; an installation that records nothing has nothing to count and
-	 * this limit does nothing.
+	 * its cached part, and output including reasoning - summed over the account's recorded runs. It
+	 * therefore needs run recording to be on; an installation that records nothing has nothing to
+	 * count and this limit does nothing.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>What it costs.</b> The figure is read from the recorded runs at every run start, which is
-	 * one pass over the execution rows. That is why it is off unless an administrator asks for it.
+	 * <b>What it costs.</b> The figure is read from the account's recorded runs once for every
+	 * message sent, which is one pass over that account's execution rows. That is why it is off
+	 * unless an administrator asks for it.
 	 * </p>
 	 *
 	 * @see #TOKEN_BUDGET
@@ -82,7 +89,42 @@ public interface BudgetConfig extends ConfigPart {
 	long getTokenBudget();
 
 	/**
-	 * How far back {@link #getTokenBudget()} counts, in hours.
+	 * How much money one account may spend within {@link #getBudgetWindowHours() the window}, in
+	 * the application's system currency (euro unless the application configures another).
+	 *
+	 * <p>
+	 * {@code 0}, the default, means unlimited. It is enforced exactly like
+	 * {@link #getTokenBudget()} - refused at run start, stopped between turns - and the two apply
+	 * together: whichever is reached first stops the account.
+	 * </p>
+	 *
+	 * <p>
+	 * The money a run cost is computed per model request, as its tokens times the prices of the
+	 * model that answered - input, output, reasoning, cache read and cache write each at its own
+	 * price - and is recorded on the run. The prices come from the model catalog; a model without a
+	 * price there, a local model for example, costs nothing unless its model override in the LLM
+	 * providers names one. Like the token budget, it needs run recording to be on.
+	 * </p>
+	 *
+	 * <p>
+	 * A run records its cost in US dollars, the currency of the prices. It is converted into the
+	 * system currency at the exchange rate of the currency "USD" for the day the run started: a dated
+	 * rate valid on that day, else the conversion factor of the currency "USD" under Administration
+	 * &gt; Basisadministration &gt; Currencies, unless it is the 1 every currency is created with.
+	 * While there is no rate for today this budget is not enforced, and the log and the agent
+	 * activity monitor say so; the token budget still is. A system currency that is US dollars needs
+	 * no rate.
+	 * </p>
+	 *
+	 * @see #MONEY_BUDGET
+	 */
+	@Name(MONEY_BUDGET)
+	@Label("Money budget per account")
+	@DoubleDefault(0)
+	double getMoneyBudget();
+
+	/**
+	 * How far back {@link #getTokenBudget()} and {@link #getMoneyBudget()} count, in hours.
 	 *
 	 * <p>
 	 * A rolling window, not a calendar day: a run started now is measured against everything the
@@ -97,13 +139,15 @@ public interface BudgetConfig extends ConfigPart {
 	int getBudgetWindowHours();
 
 	/**
-	 * Token budgets that differ from {@link #getTokenBudget()} for the holders of a role.
+	 * Budgets that differ from {@link #getTokenBudget()} and {@link #getMoneyBudget()} for the
+	 * holders of a role.
 	 *
 	 * <p>
 	 * An account that holds one of these roles gets the <em>largest</em> budget among them, and an
 	 * account that holds none gets {@link #getTokenBudget()}. A role therefore grants headroom and
 	 * never takes it away, which is the only reading under which holding one more role cannot make an
-	 * account worse off.
+	 * account worse off. Tokens and money are decided separately: a role that names only one of the
+	 * two figures says nothing about the other.
 	 * </p>
 	 *
 	 * <p>
@@ -114,13 +158,18 @@ public interface BudgetConfig extends ConfigPart {
 	 * @see #ROLE_BUDGETS
 	 */
 	@Name(ROLE_BUDGETS)
-	@Label("Token budgets by role")
+	@Label("Budgets by role")
 	@EntryTag("role-budget")
 	@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 	Map<String, RoleBudget> getRoleBudgets();
 
 	/**
 	 * What the holders of one role may spend.
+	 *
+	 * <p>
+	 * An entry names at least one of the two figures. One that names neither says nothing about the
+	 * role, and the service that holds the budget does not start with it.
+	 * </p>
 	 *
 	 * @see BudgetConfig#getRoleBudgets()
 	 */
@@ -129,6 +178,9 @@ public interface BudgetConfig extends ConfigPart {
 
 		/** Configuration property name for {@link #getTokens()}. */
 		String TOKENS = "tokens";
+
+		/** Configuration property name for {@link #getMoney()}. */
+		String MONEY = "money";
 
 		/**
 		 * The name of the role, as it is held on the security root.
@@ -145,14 +197,31 @@ public interface BudgetConfig extends ConfigPart {
 		 * <p>
 		 * {@code 0} means unlimited, exactly as it does for
 		 * {@link BudgetConfig#getTokenBudget()} - which is how a role is exempted from a budget
-		 * the installation otherwise has.
+		 * the installation otherwise has. Empty means that this role says nothing about tokens.
 		 * </p>
 		 *
 		 * @see #TOKENS
 		 */
 		@Name(TOKENS)
 		@Label("Tokens")
-		@LongDefault(0)
-		long getTokens();
+		@Nullable
+		Long getTokens();
+
+		/**
+		 * How much money the holders of this role may spend in the window, in the system currency,
+		 * like {@link BudgetConfig#getMoneyBudget()}.
+		 *
+		 * <p>
+		 * {@code 0} means unlimited, exactly as it does for
+		 * {@link BudgetConfig#getMoneyBudget()}. Empty means that this role says nothing about
+		 * money.
+		 * </p>
+		 *
+		 * @see #MONEY
+		 */
+		@Name(MONEY)
+		@Label("Money")
+		@Nullable
+		Double getMoney();
 	}
 }

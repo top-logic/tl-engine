@@ -6,8 +6,9 @@ for one: the chat gave every send a thread of its own out of an unbounded pool, 
 stopped because the account it acted for had spent enough. One user's long analysis was
 indistinguishable from a hundred.
 
-This document is the configuration reference for the three ceilings an administrator may now set,
-and the description of where each one is enforced. **It sets none of them.** An installation that
+This document is the configuration reference for the ceilings an administrator may now set - the
+pool, the per-account cap, the token budget and the money budget (#722) - and the description of
+where each one is enforced. **It sets none of them.** An installation that
 upgrades finds exactly the behaviour it had.
 
 ## The configuration
@@ -33,10 +34,11 @@ account may spend is `<budget>` on `AgentPolicyService` ("Agent policy"):
     <instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
         <budget
             token-budget="0"
+            money-budget="0"
             budget-window-hours="24"
         >
             <role-budgets>
-                <role-budget name="tl.admin" tokens="0"/>
+                <role-budget name="tl.admin" tokens="0" money="0"/>
             </role-budgets>
         </budget>
     </instance>
@@ -49,8 +51,9 @@ account may spend is `<budget>` on `AgentPolicyService` ("Agent policy"):
 | `chat-queue` | `0` = **queue of no fixed length** | How many sends may wait for a free worker, once there is a ceiling. `-1` keeps no queue and refuses instead. |
 | `concurrent-runs-per-account` | `0` = off | How many runs one account may have going, over every entry point. |
 | `token-budget` | `0` = unlimited | How many tokens one account may spend in the window. |
-| `budget-window-hours` | `24` | How far back the budget counts. A rolling window, not a calendar day. |
-| `<role-budget name tokens>` | none | A budget for the holders of one role. `tokens="0"` is unlimited. |
+| `money-budget` | `0` = unlimited | How much money one account may spend in the window, in the application's system currency (euro by default). Checked only while a rate of USD is valid today, see "The currency" below. |
+| `budget-window-hours` | `24` | How far back both budgets count. A rolling window, not a calendar day. |
+| `<role-budget name tokens money>` | none | A budget for the holders of one role. `0` is unlimited. An attribute that is not set says nothing about that budget. An entry that sets neither stops the start of `AgentPolicyService` (#825). |
 
 ### Nothing is limited until it is configured
 
@@ -144,7 +147,7 @@ Today a delegation does not reach `runAgent` at all: `DelegationTool` builds its
 `AgentRunner.run(loop, …)`. The depth check in `admit` is therefore not what makes delegation free
 today - it is what keeps it free if a future path does route a child through `runAgent`. What makes
 a delegate spend its parent's budget rather than its own is that its `ToolContext` carries the
-parent's `TokenAllowance` (`ToolContext.forDelegation`, `forDetachedSubagent`).
+parent's `BudgetAllowance` (`ToolContext.forDelegation`, `forDetachedSubagent`).
 
 The count is in memory, per node, keyed by the account's object name. That is the same scope the
 thread pool it shares has; a cluster-wide count would need a store, and the ticket's point - that one
@@ -153,51 +156,154 @@ account cannot take a node down - is answered per node.
 `ChatProcessor.sendMessage` pre-checks it the same way it pre-checks the pool, so the ordinary case
 is a 429 with a sentence rather than a turn that fails.
 
-### 3. The token budget - `TokenAllowance`
+### 3. The token budget - `BudgetAllowance`
 
 Also decided in `RunLimits.admit`, and in two halves:
 
-**At run start.** `AgentExecutionStore.tokensSpentSince(owner, since)` sums every recorded run of
-that account which *started* within the window - prompt including its cached part, output and
-thinking. Every execution row counts once, delegated children included: they carry their own usage
+**At run start.** `AgentExecutionStore.spentSince(owner, since)` sums every recorded run of
+that account which *started* within the window - prompt including its cached part, and output
+including reasoning (#730: a reasoning token is a part of the output and counts once). Every execution row counts once, delegated children included: they carry their own usage
 and belong to the same session, so summing rows is the account's true spend; a sum that added each
 parent's children to the parent would count them twice here. The read happens **on the
 store's writer thread**, in a fresh interaction at the current revision, for the reason #405
 established: the calling thread's view is pinned to an older one.
 
 `budget - spent` is the run's headroom. Nothing left means the run does not start:
-`RunLimitExceededException`, which `ChatProcessor` turns into the agent's own answer - the user is
-looking at the transcript, and `notifyError` would report a ceiling as a broken application.
+`RunLimitExceededException`.
 
-**Between turns.** The headroom travels as a `TokenAllowance` on the run's `ToolContext`.
-`AgentLoop` records every assistant turn's usage into it and, at the end of each turn body, stops
+The chat asks the same question before it writes the user's message down
+(`RunLimits.budgetRefusal`, from `ChatProcessor.noRoomReason`). An account with a spent budget gets
+HTTP 429 with the sentence, and the composer shows it in the notice strip, like the per-account cap.
+This pre-check is necessary: a run refused at its start writes no answer, so the React chat has no
+place to show the refusal (#722). The refusal at run start stays as the gate for the other entry
+points and for a run that a parallel run made too expensive.
+
+**Between turns.** The headroom travels as a `BudgetAllowance` on the run's `ToolContext`.
+`AgentLoop` records every assistant turn's usage and cost into it and, at the end of each turn body, stops
 with `StopReason.BUDGET_EXHAUSTED` when it is spent. Between turns and never inside one: the turn
 that has begun is finished and its tool results are written, so the history the next run continues
 from is whole. An admitted run therefore always gets at least one turn.
 
-A **delegated** run shares its parent's `TokenAllowance` instance rather than getting one of its
+A **delegated** run shares its parent's `BudgetAllowance` instance rather than getting one of its
 own - which is what stops delegation from multiplying the budget.
 
 The budget needs run recording. An installation without an `AgentExecutionStore` has nothing to
 count, and a budget that cannot be read admits the run and logs an error: refusing runs for a spend
 nobody measured is the wrong direction.
 
-**What it costs.** One pass over the execution rows per run start, on the writer thread. That is the
-reason the budget is off unless an administrator asks for it, and the reason the chat's pre-check
-does not ask it a second time.
+**What it costs.** One pass over the account's own execution rows per message, on the writer
+thread. The rows are found through the session's owner and the run's session, which the knowledge base
+answers from its association index, so the pass does not grow with the other accounts' runs. The chat's
+pre-checks and the run start share one reading (`RunLimits.SpendReading`, #835): the pre-check takes
+it, and the run start takes it over through `RunLimits.reuse`. That is the reason the budget is off
+unless an administrator asks for it. While no budget is configured, no pass happens.
+
+### 4. The money budget - cost per run
+
+The money budget works like the token budget: `RunLimits.admit` refuses a run at its start, and
+`AgentLoop` stops a run between turns. The two budgets apply together. The first budget that an
+account reaches stops it. The difference is the figure that is counted.
+
+**What a request costs.** `AgentLoop` calculates the cost of each model request when the request
+ends. It uses the model that answered, because a failover moves the run to a different price list.
+`CostCalculator` multiplies each kind of token by its own price:
+
+| Tokens (`TokenUsage`) | Price | Price that applies when the list has none |
+|---|---|---|
+| `inputTokens` - the prompt without its cached part | input | - |
+| `cacheReadTokens` | cache read | input |
+| `cacheWriteTokens` | cache write | input |
+| `thinkingTokens` - a share of `outputTokens` | reasoning | output |
+| the rest of `outputTokens` | output | - |
+
+Some models have a second price list for a prompt of more than 200 000 tokens (`context_over_200k`
+in the catalog). That list applies to all tokens of the request. This is why the cost is calculated
+per request and not from the sum of a run.
+
+**Where the prices come from.** All prices are US dollars per million tokens.
+
+1. The models.dev catalog. `ModelsDevFetcher` reads the `cost` block of each configured model.
+   `LLMProviderService` shows the prices in the read-only model metadata.
+2. An entry in `<model-overrides>` of `LLMProviderService`, with `input-price`, `output-price`,
+   `cache-read-price`, `cache-write-price` and `reasoning-price`. An entry that sets an input or an
+   output price replaces the catalog prices of that model. An entry that sets neither keeps them.
+
+A model without a price costs 0. A local model therefore costs nothing until an administrator gives
+it a price in `<model-overrides>`. `RunCosts` writes one INFO line for each model without a price.
+
+```xml
+<model-overrides>
+    <model name="qwen3.8-27b" input-price="0.20" output-price="0.60"/>
+</model-overrides>
+```
+
+**The currency.** A run records its cost in US dollars, the currency of the prices, on its
+`AgentExecution` row (`cost`), together with the token counts. Nothing is converted when it is
+recorded. The cost is converted where it is shown or compared with a budget, into the engine's
+system currency (`CurrencySystem`, euro unless the application configures another), at the rate of
+the engine's currency USD for the day the run started (`CostConversion`):
+
+1. A dated exchange rate of USD that is valid on that day (`Currency.getConversionFactor(Date)`). A
+   dated rate entered later changes nothing for an earlier run. The engine's screens cannot enter
+   dated rates; they come from a data import or a script (`Currency.saveExchangeRatio`).
+2. Otherwise the conversion factor of USD - the "Umrechnungsfaktor" an administrator edits under
+   Administration > Basisadministration > Währungen. It is not dated, so changing it changes the
+   amounts of every run that has no dated rate. A factor of exactly 1 counts as no rate:
+   `CurrencySystem` creates every currency with the factor 1, so that value says nothing.
+
+`<budget>` has no `currency` and no `exchange-rate` any more (they came with #722 and were never
+released). A configuration that still sets them is refused when it is read: delete the two
+attributes, set the conversion factor of USD under Administration > Basisadministration > Währungen,
+and state `money-budget` in the
+system currency.
+
+The direction of a rate is the engine's: an amount is converted as amount x factor(own) /
+factor(target), so the rate of USD says how many units of the system currency one US dollar is
+worth. With the system currency EUR, a factor of 0.92 makes one dollar 0.92 euro. A system currency
+that is US dollars needs no rate.
+
+**Without a rate nobody is blocked.** When the application has no currency USD, or no rate of it is
+valid today, costs are shown in US dollars and the money budget is **not** checked; the token budget
+still is. The log says so with a WARN at the start of `AgentPolicyService` (when the currency system
+is already running) and when a budget check is skipped, at most once an hour. The token tile of the
+agent activity monitor shows the same sentence, for example "Kein Wechselkurs USD -> EUR:
+Geldbudget wird nicht geprüft, Kosten werden in USD angezeigt." (`aiCostWarning()`).
+
+**What is counted.** `AgentExecutionStore.spentSince(owner, since)` reads the tokens and the cost of
+the account's runs in one pass and converts each cost at the rate of its run's day. A run with a cost
+and no rate for its day makes the sum incomplete, and the money budget is then not checked either.
+The run that starts counts its own costs at today's rate, which `RunLimits` hands to the run's
+`BudgetAllowance` (`MoneyBudget.usdRate`).
 
 ### Role budgets
 
 `RunLimitSettings.tokenBudget(heldRoleNames)` takes the **largest** figure among the roles the
 account holds, falls back to `token-budget` when it holds none of them, and treats a role's `0` as
-unlimited. A role therefore grants headroom and never takes it away, which is the only reading under
+unlimited. `RunLimitSettings.moneyBudget(heldRoleNames)` does the same with the `money` figures and
+`money-budget`. A role that sets only `tokens` does not change the money budget of its holders, and
+the opposite. A role therefore grants headroom and never takes it away, which is the only reading under
 which holding one more role cannot make an account worse off.
+
+An entry that sets neither `tokens` nor `money` says nothing, so `AgentPolicyService` does not start
+with one (#825). Before #747 `<role-budget name="tl.admin"/>` gave the role an unlimited token budget;
+write `tokens="0"` (and `money="0"`) for that now. The refusal names the role.
 
 It is deliberately this small: a table of numbers, not a place to express *when* a budget applies.
 
 ## What an administrator sees
 
-There is no new view. A run that was cut off by the budget is an ordinary row in the run monitor:
+The run monitor (Agentenaktivität) shows the cost next to the tokens:
+
+- **Läufe** and the run detail: `Kosten` and `Währung` of each run (`displayCost`,
+  `displayCurrency`: converted at the rate of the run's day, or US dollars without one), and
+  `Kosten (USD)` as the run recorded it.
+- **Sitzungen**: `Kosten` of all runs of a session, for each currency.
+- **Überblick**: the token tile shows the cost of the selected period - and, while no rate of USD is
+  valid today, a warning line - and its table shows the cost of each run.
+- **Verbrauch**: the chart "Kosten nach Konto" shows the ten accounts with the highest cost in the
+  period, one bar for each currency.
+
+A run that was cut off by a budget is an ordinary row in the run monitor:
 `stopReason` is `BUDGET_EXHAUSTED` and `status` is `REJECTED` - the same family as a response the
 validator refused, which keeps the error tile honest about what actually broke.
 
@@ -209,6 +315,8 @@ Permission to run denied: account 'jdoe' already has 3 agent runs in progress, w
   installation's limit.
 Permission to run denied: account 'jdoe' spent 2145300 tokens in the last 24h, which is its budget
   of 2000000.
+Permission to run denied: account 'jdoe' spent 15.4 EUR in the last 24h, which is its budget of
+  15.0 EUR.
 Chat run refused: all 32 chat workers are busy and the queue of 10 is full.
 ```
 
@@ -217,7 +325,7 @@ queue; the shipped one has neither.
 
 ## What the user sees
 
-Four sentences, shipped in English and German (`com.top_logic.tl.ai.core.limits.I18NConstants`):
+Six sentences, shipped in English and German (`com.top_logic.tl.ai.core.limits.I18NConstants`):
 
 | When | Text |
 |---|---|
@@ -225,9 +333,15 @@ Four sentences, shipped in English and German (`com.top_logic.tl.ai.core.limits.
 | The account is at its cap | You already have {0} agent runs in progress. Please wait for one of them to finish. |
 | The budget is spent at run start | Your agent budget for the last {0} hours is used up. It frees up again as those hours pass; an administrator can raise it. |
 | The budget ran out mid-run | The answer is incomplete: your agent budget for the last {0} hours ran out while this run was working. |
+| The money budget is spent at run start | Budget used up: {0} of {1} in the last {2} hours. It frees up again as those hours pass; an administrator can raise it. |
+| The money budget ran out mid-run | The answer is incomplete. Budget used up: {0} of {1} in the last {2} hours. |
 
-None of them names the configured figure. It is an administrator's setting, and quoting it invites
-the user to argue with a number they cannot change.
+The token and run sentences do not name the configured figure. It is an administrator's setting in
+a unit that the user cannot relate to. The money sentences name the spent amount and the budget,
+because every user can read an amount of money. `RunLimits` writes the amounts in the account's
+language: "Budget aufgebraucht: 12,40 € von 15,00 € in den letzten 24 Stunden." in German, "Budget
+used up: €12.40 of €15.00 in the last 24 hours." in English. After a run that stopped, the chat asks
+`RunLimits.budgetStopNotice`, which reads the spend again and says which budget ran out.
 
 ## Known limits of this implementation
 
@@ -235,11 +349,17 @@ the user to argue with a number they cannot change.
 - **A detached subagent outlives its parent's slot.** `spawn_subagent` returns immediately, the
   parent run ends and frees its slot, and the child keeps working on a pool thread of
   `SubagentJobRegistry`. It is still not counted as a run of its own (it is a delegate) and it still
-  spends the parent's allowance, but the concurrency cap does not see it.
-- **`AgentLoop.TOOL_WORKERS` and `SubagentJobRegistry`'s pool are still unbounded cached pools**,
-  with no setting to bound them. Only the chat's run pool can be given a ceiling here.
+  spends the parent's allowance, but the per-account cap does not see it. What bounds subagents is
+  their own ceiling (#710): at most four per chat at once, and `subagent-workers` in `<capacity>`
+  (0 = off) over the whole installation; a subagent beyond either waits, queued, and starts when one
+  ends.
+- **`AgentLoop.TOOL_WORKERS` is still an unbounded cached pool**, with no setting to bound it.
 - **A queued send holds nothing but a task.** The waiting user sees the composer busy and the run
   has not started, so it has spent no tokens and holds no conversation - which is why the default
   queue needs no length. What it does not do is tell the user *why* the answer is slow; a "waiting
   for a free worker" notice is a follow-up, not part of this.
 - **The budget is a scan.** See "What it costs" above.
+- **A cost is an estimate.** It is the reported tokens times a public price list. A provider
+  discount, a batch price or a price change after the catalog snapshot does not show in it.
+- **Audio tokens are not priced.** The catalog has audio prices, but no provider of this product
+  reports audio tokens.

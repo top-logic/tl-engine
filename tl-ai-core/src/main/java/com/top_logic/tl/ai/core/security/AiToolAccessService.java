@@ -30,6 +30,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.security.AccessRevoke;
@@ -103,6 +104,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	// that "is this agent name known" has the same answer on every start; without the ordering the
 	// check would silently be skipped on some of them. None of the three is switched on by this -
 	// all three are active by default and none depends on this service, so there is no cycle.
+	// The agent records of the initial data import are the exception: AgentNameCheck judges those
+	// names after the import (#663).
 	TopLogicAgentDefinitions.Module.class,
 	LLMProviderService.Module.class,
 	McpServerRegistry.Module.class,
@@ -155,7 +158,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 		List<String> refusals = refusals(policy, name -> BoundedRole
 			.getRoleByName(PersistencyLayer.getKnowledgeBase(), name) != null,
-			AiToolAccessService::knownNames);
+			AiToolAccessService::namesKnownAtStart);
 		for (String refusal : refusals) {
 			_context.error(refusal);
 		}
@@ -233,14 +236,18 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		}
 		for (Dimension dimension : Dimension.values()) {
 			for (String name : unknownNames(policy, dimension, knownNames.apply(dimension))) {
-				result.add("The " + dimension.label() + " " + name
-					+ " in the agent tool access configuration does not exist.");
+				result.add(unknownNameRefusal(dimension, name));
 			}
 		}
 		if (needsBackgroundAllowlist(policy)) {
 			result.add(MISSING_BACKGROUND_ALLOWLIST);
 		}
 		return result;
+	}
+
+	private static String unknownNameRefusal(Dimension dimension, String name) {
+		return "The " + dimension.label() + " " + name
+			+ " in the agent tool access configuration does not exist.";
 	}
 
 	/**
@@ -311,6 +318,50 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			default:
 				return knownAgentNames();
 		}
+	}
+
+	/**
+	 * The names {@link #startUp()} judges the policy against.
+	 *
+	 * <p>
+	 * The agents of an application are its configured ones and its {@code tl.ai.core:Agent}
+	 * records, and the initial data import creates records ({@code WEB-INF/data/agents.objects.xml},
+	 * which the agent editor's "Apply to development environment" writes). Nothing orders this
+	 * service after that import, and it must not depend on it: every test that starts this service
+	 * would then import every seed file of the application. So until the import has run, the agent
+	 * names are not judged here - {@link AgentNameCheck} judges them once it has (#663).
+	 * </p>
+	 */
+	private static Set<String> namesKnownAtStart(Dimension dimension) {
+		if (dimension == Dimension.AGENT && !InitialDataSetupService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return knownNames(dimension);
+	}
+
+	/**
+	 * Refuses the agent names of this policy that the application does not have.
+	 *
+	 * <p>
+	 * The check {@link #startUp()} leaves out while the initial data import has not run yet. Called
+	 * by {@link AgentNameCheck}, which starts after the import.
+	 * </p>
+	 *
+	 * @throws ConfigurationError
+	 *         If the policy names an agent that is neither configured nor a record.
+	 */
+	void refuseUnknownAgents() {
+		Set<String> unknown = unknownNames(getConfig(), Dimension.AGENT, knownNames(Dimension.AGENT));
+		if (unknown.isEmpty()) {
+			return;
+		}
+		List<String> refusals = new ArrayList<>();
+		for (String name : unknown) {
+			refusals.add(unknownNameRefusal(Dimension.AGENT, name));
+		}
+		throw new ConfigurationError(ResKey.text("The agent tool access policy names agents this"
+			+ " application does not have, also after the initial data import: "
+			+ String.join(" ", refusals)));
 	}
 
 	/** The agents this application knows, or <code>null</code> if nothing can answer. */

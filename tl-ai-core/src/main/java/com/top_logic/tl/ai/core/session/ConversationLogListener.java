@@ -14,11 +14,15 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -94,6 +98,31 @@ public class ConversationLogListener implements AgentEventListener {
 	private final Map<String, Part.DelegationPart> _activeDelegations = new ConcurrentHashMap<>();
 
 	/**
+	 * Where the {@link Part.SubagentPart} of each running background subagent was recorded, by
+	 * subagent id: the turn that started it, which is no longer the current one once the child ends.
+	 */
+	private final Map<String, SubagentPlace> _runningSubagents = new ConcurrentHashMap<>();
+
+	/**
+	 * The ids of the background subagents that were started into the queue and have not left it yet.
+	 *
+	 * <p>
+	 * Kept apart from {@link #_runningSubagents}: a subagent started while no turn was current has no
+	 * part, but the chat was still told it waits, and must be told when it starts.
+	 * </p>
+	 */
+	private final Set<String> _queuedSubagents = ConcurrentHashMap.newKeySet();
+
+	/**
+	 * @param leadExecution
+	 *        The lead's recorded run, whose transcript holds the part; <code>null</code> when the
+	 *        run is not recorded.
+	 */
+	private record SubagentPlace(Turn turn, String partId, AgentExecution leadExecution) {
+		// Plain data.
+	}
+
+	/**
 	 * The tool calls inside the currently open KB transaction, or <code>null</code> when none is
 	 * open.
 	 *
@@ -143,6 +172,14 @@ public class ConversationLogListener implements AgentEventListener {
 			handleRunStarted(e);
 		} else if (event instanceof AgentEvent.RunCompleted e) {
 			handleRunCompleted(e);
+		} else if (event instanceof AgentEvent.LeadMessageDelivered e) {
+			recordInboxMessage(Part.SystemEventType.LEAD_MESSAGE, e.text());
+		} else if (event instanceof AgentEvent.FinalTurnRequested e) {
+			recordContinuationRequested(e.text());
+		} else if (event instanceof AgentEvent.UserMessageDelivered e) {
+			recordInboxMessage(Part.SystemEventType.USER_MESSAGE, e.text());
+		} else if (event instanceof AgentEvent.LeadWoken e) {
+			recordLeadWoken(e);
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
 		} else if (event instanceof AgentEvent.ContextComposition e) {
@@ -668,6 +705,43 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
+	 * Records a message of a subagent's lead or of the user that the subagent read at the start of a
+	 * turn.
+	 *
+	 * <p>
+	 * A {@link Part.SystemEventType#LEAD_MESSAGE} or {@link Part.SystemEventType#USER_MESSAGE} part,
+	 * for the reason {@link #recordSubagentResultsDelivered(String)} gives. Recorded from the
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.LeadMessageDelivered} and
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.UserMessageDelivered} events rather than
+	 * through the thread-bound listener: on a subagent's thread that one records the lead's log, and
+	 * the message belongs in the subagent's.
+	 * </p>
+	 */
+	private void recordInboxMessage(Part.SystemEventType type, String text) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return;
+		}
+		flushTextBuffer(turn);
+		flushThinkingBuffer(turn);
+		turn.addAssistantPart(new Part.SystemPart(UUID.randomUUID().toString(), Instant.now(), type, text));
+	}
+
+	/**
+	 * Records which subagents' news a lead turn no message of the user started opens with, so that a
+	 * reloaded chat says who reported back and why, as the live one did.
+	 */
+	private void recordLeadWoken(AgentEvent.LeadWoken e) {
+		Turn turn = _log.currentTurn();
+		if (turn == null || e.news().isEmpty()) {
+			return;
+		}
+		turn.addAssistantPart(new Part.SystemPart(
+			UUID.randomUUID().toString(), Instant.now(),
+			Part.SystemEventType.LEAD_WOKEN, SubagentNews.toJson(e.news())));
+	}
+
+	/**
 	 * Records that the run asked the model to continue after a reply that said nothing.
 	 *
 	 * <p>
@@ -695,8 +769,13 @@ public class ConversationLogListener implements AgentEventListener {
 
 	/**
 	 * Record the start of a delegation. Returns the delegation part ID.
+	 *
+	 * @param parentToolCallId
+	 *        The id of the lead's {@code delegate_to_*} call, where the chat draws the delegation's
+	 *        card; may be <code>null</code>.
 	 */
-	public String recordDelegationStarted(String fromAgent, String toAgent, String inputSummary) {
+	public String recordDelegationStarted(String fromAgent, String toAgent, String inputSummary,
+			String parentToolCallId) {
 		Turn turn = _log.currentTurn();
 		if (turn == null) {
 			return null;
@@ -704,7 +783,8 @@ public class ConversationLogListener implements AgentEventListener {
 		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
 		String id = "delegation-" + UUID.randomUUID().toString().substring(0, 8);
-		Part.DelegationPart part = Part.DelegationPart.started(id, Instant.now(), fromAgent, toAgent, inputSummary);
+		Part.DelegationPart part =
+			Part.DelegationPart.started(id, Instant.now(), fromAgent, toAgent, inputSummary, parentToolCallId);
 		turn.addAssistantPart(part);
 		_activeDelegations.put(id, part);
 		return id;
@@ -757,57 +837,227 @@ public class ConversationLogListener implements AgentEventListener {
 	// ---- Subagent lifecycle ----
 
 	/**
-	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentStarted} lifecycle
-	 * event to the parent listener for the UI panel.
+	 * Records that the current turn started a background subagent, and forwards a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentStarted} lifecycle event to the
+	 * parent listener.
+	 *
+	 * <p>
+	 * The turn gets a {@link Part.SubagentPart}, which the chat rebuilds the subagent's card from when
+	 * the conversation is reloaded; it is updated in place when the subagent ends.
+	 * </p>
+	 *
+	 * @param parentToolCallId
+	 *        The id of the tool call that started the subagent; empty if unknown.
 	 */
-	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief) {
+	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
+			String parentToolCallId) {
+		recordSubagentStarted(subagentId, targetAgentName, taskBrief, parentToolCallId, false);
+	}
+
+	/**
+	 * Records that the current turn started a background subagent that may wait in the queue first.
+	 *
+	 * @param queued
+	 *        Whether it waits for a free slot rather than starting at once.
+	 * @see #recordSubagentStarted(String, String, String, String)
+	 */
+	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
+			String parentToolCallId, boolean queued) {
+		recordSubagentStarted(subagentId, targetAgentName, taskBrief, parentToolCallId, queued, null);
+	}
+
+	/**
+	 * Records that the current turn of a recorded run started a background subagent.
+	 *
+	 * @param leadExecution
+	 *        The recorded run of the current turn, which the subagent's end is written into once the
+	 *        run itself has ended; <code>null</code> when the run is not recorded. Only handed back to
+	 *        the {@link AgentExecutionStore}, never read here.
+	 * @see #recordSubagentStarted(String, String, String, String, boolean)
+	 */
+	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief,
+			String parentToolCallId, boolean queued, AgentExecution leadExecution) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part.SubagentPart part = new Part.SubagentPart(UUID.randomUUID().toString(), Instant.now(),
+				subagentId, targetAgentName, taskBrief, StringServices.nonNull(parentToolCallId), null,
+				queued ? Part.SubagentStatus.QUEUED : Part.SubagentStatus.RUNNING, null);
+			turn.addAssistantPart(part);
+			_runningSubagents.put(subagentId, new SubagentPlace(turn, part.id(), leadExecution));
+		}
+		if (queued) {
+			_queuedSubagents.add(subagentId);
+		}
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentStarted("", 0, Instant.now(), subagentId, targetAgentName, taskBrief));
+			parent.onEvent(new AgentEvent.SubagentStarted("", 0, Instant.now(), subagentId, targetAgentName,
+				taskBrief, StringServices.nonNull(parentToolCallId), queued));
 		}
 	}
 
 	/**
-	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCompleted}
-	 * lifecycle event to the parent listener.
+	 * Records that a background subagent that waited in the queue has started, and forwards a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentRunning} lifecycle event to the
+	 * parent listener.
+	 *
+	 * <p>
+	 * Its part says {@code RUNNING} from now on, in the turn that started it and in the recorded
+	 * transcript of that turn's run - once that run has written it, see
+	 * {@link AgentExecutionStore#replaceTranscriptPart(AgentExecution, Part)} - so that a reloaded card
+	 * shows it at work rather than waiting. The part is written before the event is sent, so a window
+	 * that is told and reads the conversation back finds it. A subagent that started at once is left
+	 * as it is and announced no second time: its start already said it runs.
+	 * </p>
+	 */
+	public void recordSubagentRunning(String subagentId) {
+		if (!_queuedSubagents.remove(subagentId)) {
+			return;
+		}
+		String parentToolCallId = "";
+		SubagentPlace place = _runningSubagents.get(subagentId);
+		if (place != null && place.turn().findPart(place.partId()) instanceof Part.SubagentPart part) {
+			parentToolCallId = StringServices.nonNull(part.parentToolCallId());
+			if (part.status() == Part.SubagentStatus.QUEUED) {
+				replaceSubagentPart(place, part.running());
+			}
+		}
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentRunning("", 0, Instant.now(), subagentId, parentToolCallId));
+		}
+	}
+
+	/**
+	 * The highest number of a subagent id this log names, 0 if it names none.
+	 *
+	 * <p>
+	 * The log of a conversation outlives the registries that numbered its subagents, so a new subagent
+	 * counts on from here - see
+	 * {@link com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry#countOnFrom(int)}.
+	 * </p>
+	 */
+	public int highestSubagentNumber() {
+		int highest = 0;
+		for (Turn turn : _log.turns()) {
+			for (Part part : turn.assistantParts()) {
+				if (part instanceof Part.SubagentPart subagent) {
+					highest = Math.max(highest,
+						com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry.numberOf(subagent.subagentId()));
+				}
+			}
+		}
+		return highest;
+	}
+
+	/**
+	 * Records that a background subagent finished, and forwards a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCompleted} lifecycle event to the
+	 * parent listener.
+	 *
+	 * @param childRunId
+	 *        The child's run id, its transcript's key; <code>null</code> if unknown.
 	 */
 	public void recordSubagentCompleted(String subagentId,
-			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result) {
+			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result, String childRunId) {
+		// An orderly stop at a limit has an answer, but maybe not the whole one; the card says so (#786).
+		boolean atLimit = result != null && result.stoppedAtLimit();
+		String parentToolCallId = endSubagent(subagentId,
+			atLimit ? Part.SubagentStatus.LIMIT : Part.SubagentStatus.DONE,
+			result == null ? null : result.finalText(), childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result));
+			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result,
+				parentToolCallId, StringServices.nonNull(childRunId)));
 		}
 	}
 
 	/**
-	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentFailed} lifecycle
-	 * event to the parent listener.
+	 * Records that a background subagent failed, and forwards a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentFailed} lifecycle event to the
+	 * parent listener.
+	 *
+	 * @param childRunId
+	 *        The child's run id; <code>null</code> if unknown.
 	 */
-	public void recordSubagentFailed(String subagentId, String errorSummary) {
+	public void recordSubagentFailed(String subagentId, String errorSummary, String childRunId) {
+		String parentToolCallId = endSubagent(subagentId, Part.SubagentStatus.FAILED, errorSummary, childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentFailed("", 0, Instant.now(), subagentId, errorSummary));
+			parent.onEvent(new AgentEvent.SubagentFailed("", 0, Instant.now(), subagentId, errorSummary,
+				parentToolCallId, StringServices.nonNull(childRunId)));
 		}
 	}
 
 	/**
-	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCancelled}
-	 * lifecycle event to the parent listener.
+	 * Records that a background subagent was cancelled, and forwards a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCancelled} lifecycle event to the
+	 * parent listener.
+	 *
+	 * @param childRunId
+	 *        The child's run id; <code>null</code> if unknown.
 	 */
-	public void recordSubagentCancelled(String subagentId) {
+	public void recordSubagentCancelled(String subagentId, String childRunId) {
+		String parentToolCallId = endSubagent(subagentId, Part.SubagentStatus.CANCELLED, null, childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
-			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId));
+			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId,
+				parentToolCallId, StringServices.nonNull(childRunId)));
 		}
 	}
+
+	/**
+	 * Replaces the subagent's part with its ended form, in the turn that started it, and in the
+	 * recorded transcript of that turn's run.
+	 *
+	 * <p>
+	 * Only the first {@value #SUBAGENT_SUMMARY_CHARS} characters of the summary are kept: the part is a
+	 * pointer to the child's transcript, not a copy of its report.
+	 * </p>
+	 *
+	 * <p>
+	 * The lead's run has usually written its transcript long before - with the part saying the
+	 * subagent is at work - so the end is written there too, and before the end is announced: a
+	 * window that is told and reads the conversation back must find it.
+	 * </p>
+	 *
+	 * @return The id of the lead's tool call that started the subagent; empty if unknown.
+	 */
+	private String endSubagent(String subagentId, Part.SubagentStatus status, String summary,
+			String childRunId) {
+		// Cancelled while it was queued: it never leaves the queue.
+		_queuedSubagents.remove(subagentId);
+		SubagentPlace place = _runningSubagents.remove(subagentId);
+		if (place == null) {
+			return "";
+		}
+		if (place.turn().findPart(place.partId()) instanceof Part.SubagentPart part) {
+			String shortSummary = summary == null || summary.length() <= SUBAGENT_SUMMARY_CHARS ? summary
+				: summary.substring(0, SUBAGENT_SUMMARY_CHARS) + "...";
+			replaceSubagentPart(place, part.ended(status, shortSummary, childRunId));
+			return StringServices.nonNull(part.parentToolCallId());
+		}
+		return "";
+	}
+
+	/** Puts the given form of a subagent's part in place of the old one, in its turn and its run. */
+	private static void replaceSubagentPart(SubagentPlace place, Part.SubagentPart replacement) {
+		place.turn().updatePart(place.partId(), replacement);
+		if (place.leadExecution() != null && AgentExecutionStore.Module.INSTANCE.isActive()) {
+			AgentExecutionStore.getInstance().replaceTranscriptPart(place.leadExecution(), replacement);
+		}
+	}
+
+	/** How much of a finished subagent's report its part keeps. */
+	private static final int SUBAGENT_SUMMARY_CHARS = 200;
 
 	/**
 	 * Returns a lightweight forwarding listener that wraps every child event as a
 	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.DelegatedEvent} carrying the
 	 * {@code subagentId} and forwards it to the parent listener.
 	 *
-	 * <p>V1 simplification: child events are NOT recorded as {@link Part}s in the
-	 * {@link ConversationLog}; the UI panel and result injection are the surfaces for v1.</p>
+	 * <p>The child's steps are not recorded in this log: they are in the child's own transcript. What
+	 * this log keeps of the child is one {@link Part.SubagentPart}, written by
+	 * {@link #recordSubagentStarted(String, String, String, String)}.</p>
 	 */
 	public AgentEventListener subagentListener(String subagentId) {
 		return childEvent -> {

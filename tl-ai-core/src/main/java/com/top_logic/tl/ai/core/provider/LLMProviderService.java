@@ -244,6 +244,11 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		 * on models.dev. Entries here take precedence over catalog entries with the same name.
 		 * </p>
 		 *
+		 * <p>
+		 * An entry may also give a model its prices, in US dollars per million tokens. A model
+		 * without a price costs nothing in a money budget.
+		 * </p>
+		 *
 		 * @see #MODEL_OVERRIDES
 		 */
 		@Name(MODEL_OVERRIDES)
@@ -434,7 +439,8 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		// Merge manual overrides (take precedence over catalog)
 		Map<String, ModelInfo> merged = new LinkedHashMap<>(fetched);
 		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
-			merged.put(entry.getKey(), ModelCatalogEntry.overrideToModelInfo(entry.getValue()));
+			merged.put(entry.getKey(),
+				ModelCatalogEntry.overrideToModelInfo(entry.getValue(), fetched.get(entry.getKey())));
 		}
 
 		_models = Map.copyOf(merged);

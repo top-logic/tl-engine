@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 
-import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,16 +49,28 @@ import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
+import com.top_logic.ai.chat.api.messages.SubagentBudgetDto;
+import com.top_logic.ai.chat.api.messages.SubagentJobDto;
+import com.top_logic.ai.chat.api.messages.SubagentListResponse;
+import com.top_logic.ai.chat.api.messages.SubagentMessageRequest;
+import com.top_logic.ai.chat.api.messages.SubagentMessageResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
+import com.top_logic.ai.chat.layout.ChatSessionManager;
+import com.top_logic.ai.chat.layout.ChatState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
+import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -83,8 +94,12 @@ import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
@@ -118,7 +133,8 @@ import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).
+ * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, POST /chat/stream (the chat's
+ * frames on the window's event stream).
  *
  * <p>
  * Uses {@link SessionService} to resolve the authenticated user from the HTTP session. All
@@ -141,7 +157,7 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_CANCEL_PROMPT_IMPROVEMENT = "/improve-prompt/cancel";
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
-	private static final String PATH_EVENTS = "/events";
+	private static final String PATH_STREAM = "/stream";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String PATH_SUBAGENTS = "/subagents";
@@ -155,6 +171,10 @@ public class ChatServlet extends TopLogicServlet {
 
 	private static final String PATH_PREFERENCES = "/preferences";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
+	private static final String MESSAGE_SUFFIX = "/message";
+
+	/** The longest message the user may write to a subagent, in characters. */
+	static final int MAX_SUBAGENT_MESSAGE_CHARS = 8000;
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 
 	/**
@@ -197,8 +217,6 @@ public class ChatServlet extends TopLogicServlet {
 	 */
 	private static final int SC_TOO_MANY_REQUESTS = 429;
 
-	private static final String CONTENT_TYPE_SSE = "text/event-stream";
-
 	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
 	private static final String TYPE_APPROVAL = "approval";
 
@@ -220,6 +238,10 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_SEND) || pathInfo.equals(PATH_SEND + "/")) {
 			handleSend(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_STREAM) || pathInfo.equals(PATH_STREAM + "/")) {
+			handleAttachStream(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_RESPOND) || pathInfo.equals(PATH_RESPOND + "/")) {
@@ -259,6 +281,12 @@ public class ChatServlet extends TopLogicServlet {
 			handleCreateSession(req, resp);
 			return;
 		}
+		if (pathInfo.startsWith(PATH_SUBAGENTS + "/") && pathInfo.endsWith(MESSAGE_SUFFIX)) {
+			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length(),
+				pathInfo.length() - MESSAGE_SUFFIX.length());
+			handleSubagentMessage(req, resp, id);
+			return;
+		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
 	}
 
@@ -267,11 +295,7 @@ public class ChatServlet extends TopLogicServlet {
 		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path: /chat/updates or /chat/events");
-			return;
-		}
-		if (pathInfo.equals(PATH_EVENTS) || pathInfo.equals(PATH_EVENTS + "/")) {
-			handleSSE(req, resp);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path");
 			return;
 		}
 		if (pathInfo.equals(PATH_UPDATES) || pathInfo.equals(PATH_UPDATES + "/")) {
@@ -330,9 +354,13 @@ public class ChatServlet extends TopLogicServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
+		if (pathInfo.equals(PATH_STREAM) || pathInfo.equals(PATH_STREAM + "/")) {
+			handleDetachStream(req, resp);
+			return;
+		}
 		if (pathInfo.startsWith(PATH_SUBAGENTS + "/")) {
 			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length());
-			handleCancelSubagent(id, resp);
+			handleCancelSubagent(req, resp, id);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS + "/")) {
@@ -494,6 +522,10 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
+		// Unlike the other endpoints that name a chat, this one switches the window to it, as a send
+		// does: it starts a run, and a run is sent into the chat the window shows and streams there.
+		// The regenerate button sits under an answer of the chat on screen, so this is the chat the
+		// window shows already.
 		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
 		if (tracker.hasActiveProcessingState()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
@@ -514,20 +546,22 @@ public class ChatServlet extends TopLogicServlet {
 
 		// Before the turns are dropped: a regenerate refused afterwards would have removed the
 		// answer the user still has and given them nothing in its place.
-		String noRoom = ChatProcessor.noRoomReason(tracker);
+		// One reading of the account's spend for the pre-check here, the send's and the run's (#835).
+		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
+		String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
 		if (noRoom != null) {
 			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, noRoom),
 				TruncateResponse.create().setStatus(REJECTED).setReason(noRoom));
 			return;
 		}
 
-		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
-		int turnCount = log.turnCount();
+		ChatState chat = tracker.getSessionManager().getActiveChatState();
+		int turnCount = chat.log().turnCount();
 		if (turnCount == 0) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
 			return;
 		}
-		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, turnCount - 1);
+		Removed removed = removeTurnsFrom(tracker, chat, resolveCurrentPerson(req), turnCount - 1);
 		if (removed.text().isEmpty()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
 			return;
@@ -537,7 +571,7 @@ public class ChatServlet extends TopLogicServlet {
 		String userName = resolveUserName(req, tracker);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
 			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options,
-			facts(body.getFacts()));
+			facts(body.getFacts()), spendReading);
 
 		TruncateResponse response = TruncateResponse.create()
 			.setRemovedTurns(removed.turns())
@@ -576,12 +610,16 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
-		if (tracker.hasActiveProcessingState()) {
+		// Acts on the chat it names without switching the window to it: dropping turns starts no run,
+		// and which chat the window shows is not this request's business. Busy means a run of that
+		// chat is writing into the turns that would go; a run of another chat does not touch them.
+		if (tracker.hasActiveProcessingStateFor(sessionId)) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
 			return;
 		}
-		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, body.getFromTurn());
+		Person person = resolveCurrentPerson(req);
+		ChatState chat = tracker.getSessionManager().chatStateFor(sessionId, person);
+		Removed removed = removeTurnsFrom(tracker, chat, person, body.getFromTurn());
 		writeTruncateResponse(resp, TruncateResponse.create()
 			.setStatus("ok")
 			.setRemovedTurns(removed.turns())
@@ -636,11 +674,13 @@ public class ChatServlet extends TopLogicServlet {
 	 * that no longer exist.
 	 * </p>
 	 *
+	 * @param chat
+	 *        The chat to remove the turns from, whether or not the window shows it.
 	 * @return how many turns went, and the user text of the first of them
 	 */
-	private static Removed removeTurnsFrom(TaskProgressTracker tracker, Person person, String sessionId,
+	private static Removed removeTurnsFrom(TaskProgressTracker tracker, ChatState chat, Person person,
 			int fromTurn) {
-		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
+		ConversationLog log = chat.log();
 		List<Turn> turns = log.turns();
 		if (fromTurn < 0 || fromTurn >= turns.size()) {
 			return new Removed(0, "");
@@ -648,12 +688,13 @@ public class ChatServlet extends TopLogicServlet {
 		String text = userTextOf(turns.get(fromTurn));
 		int removed = log.removeFrom(fromTurn);
 
-		ConversationMemory memory = tracker.getConversationMemory();
+		ConversationMemory memory = chat.memory();
 		if (memory != null) {
 			ConversationLogReplay.rebuildMemory(log, memory.conversation());
 		}
-		tracker.dropFeedbackFrom(fromTurn);
+		chat.dropFeedbackFrom(fromTurn);
 
+		String sessionId = chat.sessionId();
 		if (sessionId != null) {
 			// Guarded again here, not only in the handler: this is the call that deletes, and it must
 			// be impossible to reach it through a path that forgot to ask whose session it is.
@@ -662,7 +703,7 @@ public class ChatServlet extends TopLogicServlet {
 				ChatHistoryService.truncateConversation(session, fromTurn);
 			}
 		}
-		tracker.getSessionManager().persistActiveSession();
+		tracker.getSessionManager().persist(chat);
 		return new Removed(removed, text);
 	}
 
@@ -704,9 +745,10 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
-		tracker.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
-		tracker.getSessionManager().persistActiveSession();
+		// The rated chat, not the one the window shows: a rating is no reason to switch it.
+		ChatState chat = tracker.getSessionManager().chatStateFor(sessionId, resolveCurrentPerson(req));
+		chat.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
+		tracker.getSessionManager().persist(chat);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -1021,7 +1063,7 @@ public class ChatServlet extends TopLogicServlet {
 		}
 
 		Person responder = resolveCurrentPerson(req);
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		PendingInteractionRegistry.Waiting run = PendingInteractionRegistry.findWaiting(responder, requestId);
 		if (run == null) {
 			// Either a late answer to a request whose run already ended (completed, cancelled, or
 			// timed out), or a request this account is not the responder of. Both are a benign
@@ -1035,8 +1077,7 @@ public class ChatServlet extends TopLogicServlet {
 			resp.getWriter().write("{\"status\":\"ignored\"}");
 			return;
 		}
-		ChatProcessor.AIProcessingState state = run.state();
-		UserInteractionStore store = state.getUserInteractionStore();
+		UserInteractionStore store = run.store();
 
 		// Include rejection comment in the response string so the ApprovalCallback receives it
 		String resolvedResponse = response;
@@ -1048,7 +1089,7 @@ public class ChatServlet extends TopLogicServlet {
 		// the future unparks the agent mid-turn, and it may call the next tool before this request
 		// has returned. A tool approved "for this session" that the run learns of only afterwards
 		// would be asked about again.
-		ConversationLogListener logListener = state.getLogListener();
+		ConversationLogListener logListener = run.logListener();
 		if (logListener != null) {
 			if ("APPROVED_FOR_SESSION".equals(response)) {
 				logListener.resolveApproval(requestId,
@@ -1062,10 +1103,12 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
-		// Against the run's own window, not the answering one: that is the tracker holding the set
-		// the agent loop consults.
-		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
-			run.tracker().addSessionApprovedTool(toolName);
+		// Into the run's own chat, not the answering window's nor the one its own window shows by
+		// now: that chat's next runs are given the set. A subagent whose window has ended has no
+		// such set any more.
+		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()
+			&& run.chat() != null) {
+			run.chat().addApprovedTool(toolName);
 		}
 
 		store.resolve(requestId, resolvedResponse, ownWords);
@@ -1104,14 +1147,35 @@ public class ChatServlet extends TopLogicServlet {
 		}
 	}
 
+	/**
+	 * POST /chat/approval-mode - turns "auto-approve" on or off for one conversation.
+	 *
+	 * <p>
+	 * The switch is a setting of the conversation, and turning it off is how a user has every write
+	 * confirmed again. So the body names the chat ({@code sessionId}), and the mode is stored in that
+	 * chat's metadata at once - not only on this window's tracker, from where it reached the
+	 * database only with the next turn and was read back as the mode of the last turn by every
+	 * window that opened the chat in the meantime (#658). The account's other windows showing the
+	 * chat are told the new mode and read the chat's metadata afresh with their next request, so
+	 * none of them writes its older mode back.
+	 * </p>
+	 *
+	 * <p>
+	 * A body without {@code sessionId} is refused. A conversation that has no chat yet keeps the
+	 * mode in the browser and names it when it creates the chat (POST /chat/sessions), because a
+	 * chat that stores no mode runs with {@link ApprovalMode#MANUAL} (#808).
+	 * </p>
+	 */
 	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
 		String mode = null;
+		String requestedSession = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
 			mode = (String) parsed.get("mode");
+			requestedSession = blankToNull((String) parsed.get("sessionId"));
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
 			return;
@@ -1122,16 +1186,44 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		com.top_logic.tl.ai.core.agent.approval.ApprovalMode approvalMode;
+		ApprovalMode approvalMode;
 		try {
-			approvalMode = com.top_logic.tl.ai.core.agent.approval.ApprovalMode.valueOf(mode);
+			approvalMode = ApprovalMode.valueOf(mode);
 		} catch (IllegalArgumentException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode: " + mode);
 			return;
 		}
 
 		TaskProgressTracker tracker = currentTracker();
-		tracker.setApprovalMode(approvalMode);
+		String sessionId = ownedSessionId(req, resp, requestedSession);
+		if (sessionId == null) {
+			return;
+		}
+		Person person = resolveCurrentPerson(req);
+		// The chat named, not the one the window shows, and without switching to it. The mode is
+		// stored below; a copy of the chat this window holds is brought in line here, and one it does
+		// not hold reads the stored mode when it is loaded.
+		ChatState held = tracker.getSessionManager().getChatState(sessionId);
+		if (held != null) {
+			held.setApprovalMode(approvalMode);
+		}
+		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
+		// stored mode, so that no window writes back the one it opened the chat with.
+		ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
+			stored -> DtoMapper.withApprovalMode(stored, approvalMode));
+		for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
+			TaskProgressTracker window = other.getTracker();
+			if (window == tracker) {
+				continue;
+			}
+			window.getSessionManager().markChangedElsewhere(sessionId);
+			try {
+				other.sendApprovalMode(approvalMode);
+			} catch (RuntimeException ex) {
+				Logger.info("Could not tell a window that the approval mode of chat " + sessionId
+					+ " changed: " + ex.getMessage(), ChatServlet.class);
+			}
+		}
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -1203,6 +1295,9 @@ public class ChatServlet extends TopLogicServlet {
 		SubagentJobRegistry subagentRegistry = holdsRunsChat(runWindow, state)
 			? runWindow.getActiveSubagentRegistry() : null;
 		if (subagentRegistry != null) {
+			// Stopped means stopped: what the cancelled subagents report does not start the lead
+			// again.
+			runWindow.holdSubagentWakes(state.getSessionId());
 			int cancelledSubagents = subagentRegistry.cancelAll();
 			if (cancelledSubagents > 0) {
 				Logger.info("Cancelled " + cancelledSubagents + " running subagent(s) on orchestrator "
@@ -1416,6 +1511,10 @@ public class ChatServlet extends TopLogicServlet {
 				.setToolMode(toolMode(waiting, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
+			InteractionAsker asker = waiting == null ? null : waiting.asker();
+			if (asker != null) {
+				dto.setAskedBySubagentId(asker.subagentId()).setAskedByAgent(asker.agentName());
+			}
 			if (question != null) {
 				dto.setMultiSelect(question.isMultiSelect());
 				for (InteractionOptionDto option : DtoMapper.parseInteractionOptions(question.getOptions())) {
@@ -1451,11 +1550,12 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The interaction store of the run still parked on the given request, or <code>null</code>.
+	 * The interaction store of the run or the background subagent still parked on the given
+	 * request, or <code>null</code>.
 	 *
 	 * <p>
 	 * Everything a persisted {@link InteractionRequest} row does not record - an approval's tool
-	 * mode, a question's shape - lives here, and only for as long as the run is waiting, which is
+	 * mode, a question's shape, the subagent that asks - lives here, and only for as long as the run is waiting, which is
 	 * also the only time a client may still answer.
 	 * </p>
 	 *
@@ -1465,8 +1565,8 @@ public class ChatServlet extends TopLogicServlet {
 	 *        The correlation id of the approval or question.
 	 */
 	private static UserInteractionStore waitingStore(Person responder, String requestId) {
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
-		return run == null ? null : run.state().getUserInteractionStore();
+		PendingInteractionRegistry.Waiting waiting = PendingInteractionRegistry.findWaiting(responder, requestId);
+		return waiting == null ? null : waiting.store();
 	}
 
 	/**
@@ -1497,22 +1597,65 @@ public class ChatServlet extends TopLogicServlet {
 		return type == null ? null : type.getName().toLowerCase(java.util.Locale.ROOT);
 	}
 
-	private void handleSSE(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		TaskProgressTracker tracker = currentTracker();
-
-		resp.setContentType(CONTENT_TYPE_SSE);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
-		resp.setHeader("X-Accel-Buffering", "no");
-		resp.setHeader("Connection", "keep-alive");
-		resp.setBufferSize(0);
-
-		AsyncContext asyncContext = req.startAsync();
-		asyncContext.setTimeout(0); // No timeout - connection stays open until client disconnects
-
+	/**
+	 * Starts sending this conversation's frames over the event stream the browser window already
+	 * holds, to the listener id the request names ({@code stream}).
+	 *
+	 * <p>
+	 * The chat has no event stream of its own: a page then holds one connection to the server, not
+	 * two - see {@link ChatSSEHandler}. The browser subscribes to the listener id before it asks, so
+	 * it misses nothing, and it chooses a new id for each attach, so the frames of a handler this one
+	 * replaces reach no listener.
+	 * </p>
+	 *
+	 * <p>
+	 * A window the React layer does not know is answered as stale, like every request of a window
+	 * this servlet does not know.
+	 * </p>
+	 */
+	private void handleAttachStream(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String token = req.getParameter("stream");
+		if (!ChatSSEHandler.isToken(token)) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing or invalid stream id.");
+			return;
+		}
+		String window = windowId(req);
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(req.getSession());
+		SSEUpdateQueue queue = window == null ? null : registry.getQueue(window);
+		if (queue == null) {
+			sendStaleWindow(resp);
+			return;
+		}
 		ChatSSEHandler handler =
-			new ChatSSEHandler(tracker, resolveCurrentPerson(req), asyncContext, resp.getWriter());
+			new ChatSSEHandler(currentTracker(), resolveCurrentPerson(req), registry, window, queue, token);
 		handler.start();
+
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\"}");
+	}
+
+	/**
+	 * Stops the frames a {@code POST /chat/stream} with the same {@code stream} id started.
+	 *
+	 * <p>
+	 * Sent when the last chat element of the conversation leaves the page. A handler started by a
+	 * later attach of the same window is left alone. A tab that closes sends nothing; its handler
+	 * stops when the window's page is unloaded.
+	 * </p>
+	 */
+	private void handleDetachStream(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String token = req.getParameter("stream");
+		if (ChatSSEHandler.isToken(token)
+			&& ChatEventHandlerRegistry.find(currentTracker()) instanceof ChatSSEHandler handler
+			&& handler.writesTo(ChatSSEHandler.listenerId(token))) {
+			handler.stop();
+		}
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\"}");
 	}
 
 	private void handleSessionGet(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
@@ -1606,8 +1749,8 @@ public class ChatServlet extends TopLogicServlet {
 				describeLastPrompt(response, conv.getTurns());
 			}
 
-			// The ratings and the effort come from the session's metadata bag, which the switch
-			// above has just loaded onto the tracker.
+			// The ratings, the effort and the approval mode come from the session's metadata bag,
+			// which the switch above has just loaded onto the tracker.
 			if (tracker != null) {
 				for (MessageFeedbackDto entry : tracker.getFeedback()) {
 					response.addFeedback(entry);
@@ -1616,6 +1759,7 @@ public class ChatServlet extends TopLogicServlet {
 				if (effort != null) {
 					response.setLastEffort(effort);
 				}
+				response.setApprovalMode(tracker.getApprovalMode().name());
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));
@@ -1645,8 +1789,18 @@ public class ChatServlet extends TopLogicServlet {
 			title = "New Chat";
 		}
 		final String sessionTitle = title.trim();
+		ApprovalMode approvalMode = ApprovalMode.MANUAL;
+		String requestedMode = blankToNull(body.getApprovalMode());
+		if (requestedMode != null) {
+			try {
+				approvalMode = ApprovalMode.valueOf(requestedMode);
+			} catch (IllegalArgumentException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid approvalMode: " + requestedMode);
+				return;
+			}
+		}
 
-		TLObject session = ChatHistoryService.createSession(sessionTitle, person);
+		TLObject session = ChatHistoryService.createSession(sessionTitle, person, approvalMode);
 		if (session == null) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create session");
 			return;
@@ -1700,8 +1854,10 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * GET /chat/subagents/{id}/transcript - the persisted transcript of one background subagent's
-	 * recorded child run, as a {@code turnsJson} array in the same shape a session load returns.
+	 * GET /chat/subagents/{id}/transcript - the transcript of one background subagent's child run, as
+	 * a {@code turnsJson} array in the same shape a session load returns: its live log while it works,
+	 * its recorded execution once it has ended. A subagent this window holds no job for any more is
+	 * found by the {@code runId} parameter its recorded part names.
 	 *
 	 * <p>
 	 * Lets the background-tasks panel open a subagent's full transcript (turns, tool calls). The
@@ -1722,20 +1878,30 @@ public class ChatServlet extends TopLogicServlet {
 
 		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
 		SubagentJob job = registry == null ? null : registry.get(id);
-		String runId = job == null ? null : job.childRunId();
+		// A subagent of an earlier server life, or of a chat this window no longer holds, has no job
+		// any more; the card that asks names the run its part recorded. The run is still checked to
+		// belong to this user below, so naming one gains nothing.
+		String runId = job != null ? job.childRunId() : req.getParameter("runId");
 		if (runId == null || runId.isEmpty()) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
 
-		AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
-		AgentSession session = execution == null ? null : execution.getSession();
-		if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
+		String transcript;
+		ConversationLog liveLog = job == null ? null : job.liveLog();
+		if (job != null && !job.status().isTerminal() && liveLog != null) {
+			// While the child works its execution holds no transcript yet; what it has done so far
+			// is in its live log. The job came from this window's own registry, so it is the user's.
+			transcript = ConversationLogSerializer.toJson(liveLog.turns());
+		} else {
+			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
+			AgentSession session = execution == null ? null : execution.getSession();
+			if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
+			transcript = execution.getTranscript();
 		}
-
-		String transcript = execution.getTranscript();
 		ChatSessionDetailResponse response = ChatSessionDetailResponse.create().setId(id);
 		if (transcript != null && !transcript.isEmpty()) {
 			response.setMessagesJson(transcript);
@@ -1751,14 +1917,9 @@ public class ChatServlet extends TopLogicServlet {
 
 	private void handleListSubagents(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
-		StringBuilder json = new StringBuilder("{\"subagents\":[");
+		SubagentListResponse response = SubagentListResponse.create();
 		if (registry != null) {
-			boolean first = true;
 			for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
-				if (!first) {
-					json.append(",");
-				}
-				first = false;
 				long tokens = job.result() != null ? job.result().tokenUsage().totalTokens() : 0;
 				long durationMs = job.result() != null ? job.result().durationMs() : 0;
 				// finalText doubles as the error summary for failed jobs; sending it lets the
@@ -1768,31 +1929,160 @@ public class ChatServlet extends TopLogicServlet {
 				// hasTranscript lets the client show a "view transcript" affordance only when the
 				// recorded child run is available (GET /chat/subagents/{id}/transcript).
 				boolean hasTranscript = job.childRunId() != null && !job.childRunId().isEmpty();
-				json.append("{\"subagentId\":\"").append(jsonEscape(job.subagentId()))
-					.append("\",\"targetAgentName\":\"").append(jsonEscape(job.targetAgentName()))
-					.append("\",\"status\":\"").append(job.status().name())
-					.append("\",\"totalTokens\":").append(tokens)
-					.append(",\"durationMs\":").append(durationMs)
-					.append(",\"hasTranscript\":").append(hasTranscript)
-					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
-					.append("\"}");
+				response.addSubagent(withCost(SubagentJobDto.create()
+					.setSubagentId(Objects.toString(job.subagentId(), ""))
+					.setTargetAgentName(Objects.toString(job.targetAgentName(), ""))
+					.setStatus(job.status().name())
+					.setTotalTokens(tokens)
+					.setDurationMs(durationMs)
+					.setHasTranscript(hasTranscript)
+					.setParentToolCallId(Objects.toString(job.parentToolCallId(), ""))
+					.setTask(Objects.toString(job.taskBrief(), ""))
+					.setChildRunId(Objects.toString(job.childRunId(), ""))
+					.setStopReason(job.result() != null && job.result().stopReason() != null
+						? job.result().stopReason().name() : "")
+					.setDetail(Objects.toString(detail, "")), job.cost()));
 			}
+			response.setBudget(budgetOf(registry));
 		}
-		json.append("]}");
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(json.toString());
+		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
-	private void handleCancelSubagent(String id, HttpServletResponse resp) throws IOException {
-		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
-		boolean cancelled = false;
-		if (registry != null) {
-			SubagentJob job = registry.get(id);
-			if (job != null) {
-				job.cancellationToken().cancel();
-				cancelled = true;
+	/**
+	 * POST /chat/subagents/{id}/message - the user writes to one running background subagent from its
+	 * card.
+	 *
+	 * <p>
+	 * The message goes into the subagent's inbox, which {@code send_to_subagent} fills too, and the
+	 * subagent reads it at the start of its next turn. Any window of the account reaches the subagent,
+	 * whichever window's run started it - but only in a chat of this account: another account's chat
+	 * and a subagent that does not exist are answered alike, so the answer says nothing about which
+	 * exist. A subagent that has ended reads no more messages, and is answered so.
+	 * </p>
+	 */
+	private void handleSubagentMessage(HttpServletRequest req, HttpServletResponse resp, String id)
+			throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+		SubagentMessageRequest body;
+		try {
+			String json = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = SubagentMessageRequest.readSubagentMessageRequest(new JsonReader(new StringR(json)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		String text = body.getText() == null ? "" : body.getText().strip();
+		if (text.isEmpty()) {
+			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_BAD_REQUEST, "empty", "");
+			return;
+		}
+		if (text.length() > MAX_SUBAGENT_MESSAGE_CHARS) {
+			text = text.substring(0, MAX_SUBAGENT_MESSAGE_CHARS);
+		}
+		SubagentJob job = findOwnedSubagent(person, body.getSessionId(), id, body.getParentToolCallId());
+		if (job == null) {
+			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_NOT_FOUND, "unknown", "");
+			return;
+		}
+		SubagentInbox.Message message = SubagentInbox.Message.of(SubagentInbox.Sender.USER, text);
+		if (job.status().isTerminal() || !job.inbox().post(message)) {
+			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_CONFLICT, "ended", "");
+			return;
+		}
+		writeSubagentMessageAnswer(resp, HttpServletResponse.SC_OK, "sent", message.id());
+	}
+
+	/**
+	 * The subagent a request to one subagent names, found in the named chat of this account,
+	 * whichever of the account's windows started it; without a chat named, in the chat this window
+	 * shows.
+	 *
+	 * @return The subagent, or <code>null</code> when there is no account, no such chat of this
+	 *         account, or no such subagent in it - which callers answer alike, so that the answer says
+	 *         nothing about which exist.
+	 */
+	private static SubagentJob findOwnedSubagent(Person person, String sessionId, String subagentId,
+			String parentToolCallId) {
+		if (person == null) {
+			return null;
+		}
+		String chat = blankToNull(sessionId);
+		if (chat == null) {
+			chat = currentTracker().getActiveSessionId();
+		}
+		if (chat == null || ChatHistoryService.findOwnedSessionById(chat, person) == null) {
+			return null;
+		}
+		return ChatSessionManager.findSubagent(chat, subagentId, parentToolCallId);
+	}
+
+	private static void writeSubagentMessageAnswer(HttpServletResponse resp, int code, String status,
+			String messageId) throws IOException {
+		resp.setStatus(code);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(SubagentMessageResponse.create()
+			.setStatus(status)
+			.setMessageId(messageId)));
+	}
+
+	/**
+	 * The job with its cost, in the currency the chat shows costs in - the system currency at
+	 * today's rate, or US dollars without one ({@link CostConversion}); without one while its run has
+	 * not reported one.
+	 */
+	private static SubagentJobDto withCost(SubagentJobDto job, Money cost) {
+		if (cost == null) {
+			return job;
+		}
+		Money shown = CostConversion.shown(cost, null);
+		return job.setCost(shown.amount()).setCurrency(shown.currency());
+	}
+
+	/**
+	 * The budget the subagents of this list spend from: the allowance of the run that started them,
+	 * which they share (#783). Its headroom when that run started, per kind; -1 for a kind it does
+	 * not bound. <code>null</code> when no subagent's run is bounded.
+	 */
+	private static SubagentBudgetDto budgetOf(SubagentJobRegistry registry) {
+		for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
+			BudgetAllowance budget = job.budget();
+			if (!budget.isLimited()) {
+				continue;
 			}
+			BudgetAllowance.MoneyBudget money = budget.moneyBudget();
+			return SubagentBudgetDto.create()
+				.setTokens(budget.isTokenLimited() ? budget.tokenHeadroom() : -1)
+				.setMoney(money != null ? money.headroom() : -1)
+				.setCurrency(money != null ? money.currency() : "");
+		}
+		return null;
+	}
+
+	/**
+	 * DELETE /chat/subagents/{id}?sessionId=&parentToolCallId= - stops one background subagent, from
+	 * its card or from the panel above the composer.
+	 *
+	 * <p>
+	 * Found like the subagent a message goes to: in the named chat of this account, whichever of the
+	 * account's windows started it - the window that asks need not be the one whose run started the
+	 * subagent. Without a chat named, the chat this window shows. A chat of another account and an
+	 * unknown subagent both answer <code>{"cancelled":false}</code>.
+	 * </p>
+	 */
+	private void handleCancelSubagent(HttpServletRequest req, HttpServletResponse resp, String id)
+			throws IOException {
+		SubagentJob job = findOwnedSubagent(resolveCurrentPerson(req), req.getParameter("sessionId"), id,
+			req.getParameter("parentToolCallId"));
+		boolean cancelled = job != null && !job.status().isTerminal();
+		if (cancelled) {
+			job.cancellationToken().cancel();
 		}
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -2040,35 +2330,6 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"error\",\"error\":\"stale_window\"}");
-	}
-
-	/**
-	 * Minimal JSON string escaping for inline JSON values.
-	 */
-	private static String jsonEscape(String s) {
-		if (s == null) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder(s.length() + 8);
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			switch (c) {
-				case '"': sb.append("\\\""); break;
-				case '\\': sb.append("\\\\"); break;
-				case '\n': sb.append("\\n"); break;
-				case '\r': sb.append("\\r"); break;
-				case '\t': sb.append("\\t"); break;
-				case '\b': sb.append("\\b"); break;
-				case '\f': sb.append("\\f"); break;
-				default:
-					if (c < 0x20) {
-						sb.append(String.format("\\u%04x", (int) c));
-					} else {
-						sb.append(c);
-					}
-			}
-		}
-		return sb.toString();
 	}
 
 	/** Extracts session ID from path like "/sessions/123". */

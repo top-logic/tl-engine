@@ -1,5 +1,7 @@
+import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
 import { chatFetch } from './stale-window'
+import { keepLast, MAX_CHILD_STEPS, subagentStatus } from './types'
 import type {
   ApprovalOutcome,
   Attachment,
@@ -14,8 +16,12 @@ import type {
   MessageFeedback,
   Rating,
   SubagentActivity,
+  SubagentBudget,
+  SubagentStatus,
+  SubagentStep,
   TokenUsage,
   ToolCallStatus,
+  WokenSubagent,
 } from './types'
 
 export function apiBase(): string {
@@ -133,13 +139,21 @@ export async function listSessions(at: ChatAddress): Promise<SessionSummary[]> {
   return data.sessions ?? []
 }
 
-export async function createSession(at: ChatAddress, title: string): Promise<SessionSummary> {
+/**
+ * Creates a chat. `approvalMode` is the mode the user set before the chat existed; the chat stores
+ * it at once, because a chat that stores no mode runs with auto-approve off (#808).
+ */
+export async function createSession(
+  at: ChatAddress,
+  title: string,
+  approvalMode: 'AUTO_APPROVE' | 'MANUAL' = 'MANUAL',
+): Promise<SessionSummary> {
   return readJson<SessionSummary>(
     await chatFetch(withWindow('/chat/sessions', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ title }),
+      body: JSON.stringify({ title, approvalMode }),
     }),
   )
 }
@@ -160,6 +174,8 @@ export interface SessionDetail {
   /** Answer ratings recorded in this session, so a reopened chat shows them again. */
   feedback?: MessageFeedback[]
   lastEffort?: string
+  /** The chat's approval mode as the server holds it; the auto-approve switch shows this. */
+  approvalMode?: 'AUTO_APPROVE' | 'MANUAL' | ''
   /** What the last request's prompt was made of, so the popover keeps its breakdown after a reload. */
   lastComposition?: ContextComposition
   /**
@@ -324,6 +340,10 @@ export interface PendingInteraction {
   sessionId: string
   /** How long the requester is still waiting; zero or less means nobody is listening any more. */
   remainingMs: number
+  /** The background subagent that asks, read off the store it waits in; absent or empty otherwise. */
+  askedBySubagentId?: string
+  /** The agent the asking subagent runs. */
+  askedByAgent?: string
 }
 
 /**
@@ -378,8 +398,28 @@ export async function respond(at: ChatAddress, body: Record<string, unknown>): P
   if (!res.ok) throw new Error(`respond failed (${res.status})`)
 }
 
-export function openEventStream(at: ChatAddress): EventSource {
-  return new EventSource(withWindow('/chat/events', at), { withCredentials: true })
+/**
+ * Asks the server to send this conversation's frames over the window's own event stream, as
+ * patches to the listener `tl-chat-stream:<token>` - see `openChatStream`.
+ */
+export async function attachChatStream(at: ChatAddress, token: string): Promise<void> {
+  const res = await chatFetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error(`attach failed (${res.status})`)
+}
+
+/**
+ * Stops the frames `attachChatStream` started for the same token. Best effort, and sent with
+ * `keepalive` so that it still goes out while the page is being left.
+ */
+export function detachChatStream(at: ChatAddress, token: string): void {
+  void fetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
+    method: 'DELETE',
+    credentials: 'include',
+    keepalive: true,
+  }).catch(() => undefined)
 }
 
 export async function improvePrompt(
@@ -399,15 +439,21 @@ export async function improvePrompt(
   )
 }
 
+/**
+ * Turns "auto-approve" on or off for one chat. The mode is a setting of the chat: the server stores
+ * it with that chat at once and tells the account's other windows showing it (#658). A conversation
+ * that has no chat yet does not call this; it names the mode in `createSession`.
+ */
 export async function setApprovalMode(
   at: ChatAddress,
   mode: 'AUTO_APPROVE' | 'MANUAL',
+  sessionId: string,
 ): Promise<void> {
   const res = await chatFetch(withWindow('/chat/approval-mode', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ mode }),
+    body: JSON.stringify({ mode, sessionId }),
   })
   if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
 }
@@ -421,24 +467,84 @@ export async function cancelPromptImprovement(at: ChatAddress, requestId: string
   })
 }
 
-export async function listSubagents(at: ChatAddress): Promise<SubagentActivity[]> {
-  const data = await readJson<{ subagents?: SubagentActivity[] }>(
+/** The subagents of this window's chat, and the budget they spend from when the run has one. */
+export async function listSubagents(at: ChatAddress): Promise<{ subagents: SubagentActivity[]; budget?: SubagentBudget }> {
+  const data = await readJson<{ subagents?: SubagentActivity[]; budget?: SubagentBudget }>(
     await chatFetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
   )
-  return data.subagents ?? []
+  // The job ends DONE whatever stopped its run; a stop at a limit reads as such (#786).
+  const subagents = (data.subagents ?? []).map((item) =>
+    item.status === 'DONE' ? { ...item, status: completedStatus(item.stopReason) } : item,
+  )
+  return { subagents, budget: data.budget }
 }
 
-export async function cancelSubagent(at: ChatAddress, id: string): Promise<void> {
-  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, at), {
+/**
+ * Stops one background subagent of the given chat, whichever window of the account started it.
+ *
+ * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ */
+export async function cancelSubagent(
+  at: ChatAddress,
+  id: string,
+  sessionId: string | null,
+  parentToolCallId?: string,
+): Promise<void> {
+  const query = `?sessionId=${encodeURIComponent(sessionId ?? '')}&parentToolCallId=${encodeURIComponent(parentToolCallId ?? '')}`
+  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}${query}`, at), {
     method: 'DELETE',
     credentials: 'include',
   })
   if (!res.ok) throw new Error(`cancel subagent failed (${res.status})`)
 }
 
-export async function loadSubagentTranscript(at: ChatAddress, id: string): Promise<ChatMessage[]> {
+/**
+ * What the server answered a message the user wrote to a subagent: `sent` - it reads it at the start
+ * of its next turn; `ended` - it has ended and reads no more; `unknown` - no such subagent in this
+ * account's chat; `empty` - there was no text.
+ */
+export type SubagentMessageStatus = 'sent' | 'ended' | 'unknown' | 'empty'
+
+/**
+ * Writes to one running background subagent, from its card.
+ *
+ * @param sessionId The chat whose lead started it.
+ * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ */
+export async function sendSubagentMessage(
+  at: ChatAddress,
+  id: string,
+  sessionId: string | null,
+  parentToolCallId: string,
+  text: string,
+): Promise<{ status: SubagentMessageStatus; messageId: string }> {
+  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/message`, at), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ sessionId: sessionId ?? '', parentToolCallId, text }),
+  })
+  // The refusals carry their reason in the same shape as the success.
+  if (!res.ok && res.status !== 400 && res.status !== 404 && res.status !== 409) {
+    throw new Error(`message to subagent failed (${res.status})`)
+  }
+  const data = (await res.json()) as { status?: string; messageId?: string }
+  const known: SubagentMessageStatus[] = ['sent', 'ended', 'unknown', 'empty']
+  const status = known.find((item) => item === data.status)
+  if (!status) throw new Error(`message to subagent failed (${res.status})`)
+  return { status, messageId: data.messageId ?? '' }
+}
+
+/**
+ * The transcript of one subagent: its live log while it runs, its recorded run afterwards.
+ *
+ * @param runId The run its recorded part names, for a subagent the server holds no job for any
+ *   more - an earlier server life, a chat this window no longer holds.
+ */
+export async function loadSubagentTranscript(at: ChatAddress, id: string, runId?: string): Promise<ChatMessage[]> {
+  const query = runId ? `?runId=${encodeURIComponent(runId)}` : ''
   const detail = await readJson<SessionDetail>(
-    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript`, at), {
+    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript${query}`, at), {
       credentials: 'include',
     }),
   )
@@ -499,6 +605,27 @@ interface PersistedPart {
   errorData?: { kind?: string; errorMessage: string }
   transactionData?: { type?: string; revisionNumber?: number; reason?: string }
   systemData?: { eventType?: string; details?: string }
+  delegationData?: {
+    toAgent?: string
+    inputSummary?: string
+    resultSummary?: string
+    childSessionId?: string
+    durationMs?: number
+    childParts?: PersistedPart[]
+    turnsUsed?: number
+    totalUsage?: { inputTokens?: number; outputTokens?: number }
+    stopReason?: string
+    parentToolCallId?: string
+  }
+  subagentData?: {
+    subagentId?: string
+    agentName?: string
+    task?: string
+    parentToolCallId?: string
+    childRunId?: string
+    status?: string
+    summary?: string
+  }
 }
 
 interface PersistedTurn {
@@ -538,6 +665,90 @@ function mapToolStatus(status: string | undefined): { status: ToolCallStatus; is
   }
 }
 
+/**
+ * Whether a run with the given stop reason stopped in order at one of its limits (`StopReason.isLimit`
+ * on the server): it has an answer, but maybe not the whole one (#786).
+ */
+export function isLimitStop(reason: string | undefined): boolean {
+  return reason === 'MAX_TURNS' || reason === 'BUDGET_EXHAUSTED' || reason === 'OUTPUT_LIMIT'
+}
+
+/** How a subagent whose job completed ended, from its run's stop reason: with its answer, or at a limit. */
+export function completedStatus(reason: string | undefined): SubagentStatus {
+  return isLimitStop(reason) ? 'LIMIT' : 'DONE'
+}
+
+/** How a synchronous delegation ended, from its run's stop reason. */
+export function delegationEnd(reason: string | undefined): SubagentStatus {
+  if (isLimitStop(reason)) return 'LIMIT'
+  switch (reason) {
+    case 'COMPLETE':
+      return 'DONE'
+    case 'ABORTED':
+      return 'CANCELLED'
+    default:
+      return 'FAILED'
+  }
+}
+
+/** The recorded state of a synchronous delegation. */
+function delegationStatus(d: NonNullable<PersistedPart['delegationData']>): SubagentStatus {
+  if (d.stopReason) return delegationEnd(d.stopReason)
+  // Ended by an exception, which records no stop reason - only the error as its summary.
+  if (d.resultSummary) return d.resultSummary.startsWith('ERROR') ? 'FAILED' : 'DONE'
+  return 'RUNNING'
+}
+
+/** The steps of a synchronous delegation, from the child parts its recorded part holds. */
+function delegationSteps(parts: PersistedPart[] | undefined): SubagentStep[] {
+  const steps: SubagentStep[] = []
+  for (const part of parts ?? []) {
+    const d = part.toolCallData
+    if (part.type !== 'tool_call' || !d) continue
+    steps.push({
+      toolUseId: part.id,
+      name: d.toolName,
+      summary: argsSummary(d.argsJson),
+      status: mapToolStatus(d.status).status,
+    })
+  }
+  return keepLast(steps, MAX_CHILD_STEPS)
+}
+
+/**
+ * The subagents a wake names, from the server's frame or the recorded part, keeping only well-formed
+ * entries: the text is the server's, but a log of another version must not break the transcript.
+ */
+export function wokenList(value: unknown): WokenSubagent[] {
+  if (!Array.isArray(value)) return []
+  const reasons = ['FINISHED', 'LIMIT', 'FAILED', 'CANCELLED', 'ASKS']
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .filter((item) => typeof item.subagentId === 'string' && item.subagentId !== '')
+    .map((item) => ({
+      subagentId: String(item.subagentId),
+      agentName: typeof item.agentName === 'string' ? item.agentName : '',
+      reason: (reasons.includes(String(item.reason)) ? item.reason : 'FINISHED') as WokenSubagent['reason'],
+      parentToolCallId: typeof item.parentToolCallId === 'string' ? item.parentToolCallId : '',
+      question: typeof item.question === 'string' ? item.question : '',
+    }))
+}
+
+function parseJsonArray(text: string | undefined): unknown {
+  if (!text) return []
+  try {
+    return JSON.parse(text)
+  } catch {
+    return []
+  }
+}
+
+/** Whether a recorded turn was started for subagents' news: its first part is their delivery. */
+function opensWithSubagentNews(turn: PersistedTurn): boolean {
+  const first = (turn.assistantParts ?? [])[0]
+  return first?.type === 'system' && first.systemData?.eventType === 'SUBAGENT_RESULT'
+}
+
 export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[] {
   if (!turnsJson) return []
   let turns: PersistedTurn[]
@@ -554,6 +765,20 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
       .join('\n')
     if (userText) {
       msgs.push({ type: 'user', id: `${turn.id}-u`, text: userText, timestamp: turn.timestamp })
+    } else if (opensWithSubagentNews(turn)) {
+      // Started by subagents reporting back, not by the user: drawn as the live wake line is.
+      const recorded = (turn.assistantParts ?? []).find(
+        (part) => part.type === 'system' && part.systemData?.eventType === 'LEAD_WOKEN',
+      )
+      const woken = wokenList(parseJsonArray(recorded?.systemData?.details))
+      msgs.push({
+        type: 'notice',
+        id: `${turn.id}-w`,
+        kind: 'lead_woken',
+        detail: '',
+        timestamp: turn.timestamp,
+        ...(woken.length ? { woken } : {}),
+      })
     }
     // "Worked for" on a restored turn is measured the same way as on a live one: from when the turn
     // started to its last recorded part. Turns whose parts carry no later stamp show no duration
@@ -693,6 +918,47 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             })
           }
           break
+        case 'subagent': {
+          // A background subagent the turn started: its card is drawn from this after a reload. Its
+          // steps are not here - they are in its own transcript, found by its run id.
+          const d = part.subagentData
+          if (!d?.subagentId) break
+          msgs.push({
+            type: 'subagent_ref',
+            id: part.id,
+            subagentId: d.subagentId,
+            agentName: d.agentName ?? '',
+            task: d.task ?? '',
+            parentToolCallId: d.parentToolCallId ?? '',
+            childRunId: d.childRunId ?? '',
+            status: subagentStatus(d.status),
+            summary: d.summary ?? '',
+            timestamp: part.timestamp,
+          })
+          break
+        }
+        case 'delegation': {
+          // A synchronous delegation the turn made: its card is drawn from this after a reload, with
+          // the steps the part recorded - the lead waited for it, so they are all here.
+          const d = part.delegationData
+          if (!d) break
+          msgs.push({
+            type: 'delegation_ref',
+            id: part.id,
+            agentName: d.toAgent ?? '',
+            task: d.inputSummary ?? '',
+            parentToolCallId: d.parentToolCallId ?? '',
+            childRunId: d.childSessionId ?? '',
+            status: delegationStatus(d),
+            summary: d.resultSummary ?? '',
+            steps: delegationSteps(d.childParts),
+            durationMs: d.durationMs ?? 0,
+            totalTokens: (d.totalUsage?.inputTokens ?? 0) + (d.totalUsage?.outputTokens ?? 0),
+            turns: d.turnsUsed && d.turnsUsed > 0 ? d.turnsUsed : 0,
+            timestamp: part.timestamp,
+          })
+          break
+        }
         case 'system':
           // Only the system events the thread draws. The others - an approval mode change, the text
           // a finished subagent was handed - are not the user's business, and an unknown one is
@@ -709,6 +975,11 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             // The server's details are an English line for the operator; the reader gets the
             // renderer's sentence in their language, exactly as the live cancel draws it (#549).
             msgs.push({ type: 'notice', id: part.id, kind: 'cancelled', detail: '', timestamp: part.timestamp })
+          } else if (part.systemData?.eventType === 'USER_MESSAGE' && part.systemData.details) {
+            // In a subagent's own transcript: what the user wrote to it from its card. The details are
+            // what its model was shown - an opening line, then the messages - and the user wrote the
+            // messages only.
+            msgs.push({ type: 'user', id: part.id, text: userMessageText(part.systemData.details), timestamp: part.timestamp })
           } else if (part.systemData?.eventType === 'INTERRUPTED') {
             // Written by the server's startup sweep onto a run the restart cut off (#598). There is
             // no live counterpart: the window that watched the run lost its stream with the server.
@@ -719,6 +990,12 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
     }
   }
   return msgs
+}
+
+/** The user's own words of a `USER_MESSAGE` part: everything after the opening line. */
+export function userMessageText(details: string): string {
+  const start = details.indexOf('\n\n')
+  return start < 0 ? details : details.slice(start + 2)
 }
 
 /**

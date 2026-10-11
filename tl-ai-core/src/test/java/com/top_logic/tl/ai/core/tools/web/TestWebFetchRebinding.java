@@ -43,7 +43,8 @@ public class TestWebFetchRebinding extends TestCase {
 		UrlSafety.NameLookup rebinding = rebinding();
 		try (RecordingServer victim = RecordingServer.serving("<html>internal secret</html>");
 				FilteringProxy egress = FilteringProxy.start(host -> null, FilteringProxy.ssrfResolver(rebinding))) {
-			String answer = new WebFetchTool(rebinding, egress).webFetch("http://localhost:" + victim.port() + "/");
+			String answer =
+				new WebFetchTool(rebinding, egress).webFetch("http://localhost:" + victim.port() + "/", null);
 
 			assertEquals("the loopback server was never contacted; the answer was: " + answer, 0,
 				victim.contactCount());
@@ -61,7 +62,8 @@ public class TestWebFetchRebinding extends TestCase {
 		UrlSafety.NameLookup rebinding = rebinding();
 		try (RecordingServer victim = RecordingServer.serving("<html>internal secret</html>");
 				FilteringProxy egress = FilteringProxy.start(host -> null, FilteringProxy.ssrfResolver(rebinding))) {
-			String answer = new WebFetchTool(rebinding, egress).webFetch("https://localhost:" + victim.port() + "/");
+			String answer =
+				new WebFetchTool(rebinding, egress).webFetch("https://localhost:" + victim.port() + "/", null);
 
 			assertEquals("no tunnel to the loopback server; the answer was: " + answer, 0, victim.contactCount());
 			assertTrue("the refusal names the SSRF check: " + answer,
@@ -78,7 +80,7 @@ public class TestWebFetchRebinding extends TestCase {
 		UrlSafety.NameLookup publicAnswer = name -> new InetAddress[] { InetAddress.getByAddress(name, PUBLIC) };
 		try (RecordingServer origin = RecordingServer.serving("<html><body><p>fixture page</p></body></html>");
 				FilteringProxy egress = FilteringProxy.start(host -> null, pinnedTo(origin))) {
-			String answer = new WebFetchTool(publicAnswer, egress).webFetch("http://fixture.invalid/page");
+			String answer = new WebFetchTool(publicAnswer, egress).webFetch("http://fixture.invalid/page", null);
 
 			assertTrue("the page came back: " + answer, answer.contains("fixture page"));
 			assertEquals(1, origin.contactCount());
@@ -97,7 +99,7 @@ public class TestWebFetchRebinding extends TestCase {
 		try (RecordingServer origin = RecordingServer.start(target -> new Reply(403, "Forbidden",
 				List.of(FilteringProxy.REFUSAL_HEADER + ": " + injected), "no"));
 				FilteringProxy egress = FilteringProxy.start(host -> null, pinnedTo(origin))) {
-			String answer = new WebFetchTool(publicAnswer, egress).webFetch("http://fixture.invalid/");
+			String answer = new WebFetchTool(publicAnswer, egress).webFetch("http://fixture.invalid/", null);
 
 			assertFalse("the origin's header text is not the answer: " + answer, answer.contains(injected));
 			assertTrue("reported as the origin's own 403: " + answer, answer.contains("HTTP 403"));

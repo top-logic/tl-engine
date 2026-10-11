@@ -189,6 +189,33 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String THINKING_TOKENS_ATTR = "thinkingTokens";
 
 	/**
+	 * Part <code>cost</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String COST_ATTR = "cost";
+
+	/**
+	 * Part <code>displayCost</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_COST_ATTR = "displayCost";
+
+	/**
+	 * Part <code>displayCurrency</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_CURRENCY_ATTR = "displayCurrency";
+
+	/**
 	 * Part <code>environment</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
@@ -463,6 +490,34 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setThinkingTokens(Long newValue) {
 		tUpdateByName(THINKING_TOKENS_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #COST_ATTR}.
+	 */
+	default Double getCost() {
+		return (Double) tValueByName(COST_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #COST_ATTR}.
+	 */
+	default void setCost(Double newValue) {
+		tUpdateByName(COST_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_COST_ATTR}.
+	 */
+	default Double getDisplayCost() {
+		return (Double) tValueByName(DISPLAY_COST_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_CURRENCY_ATTR}.
+	 */
+	default String getDisplayCurrency() {
+		return (String) tValueByName(DISPLAY_CURRENCY_ATTR);
 	}
 
 	/**

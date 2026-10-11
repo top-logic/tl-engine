@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -128,9 +129,11 @@ public sealed interface AgentEvent {
 	 * @param timestamp when the event occurred
 	 * @param reason why the run stopped
 	 * @param totalUsage cumulative token usage for the run
+	 * @param totalCost what the run cost, in US dollars like the prices; each request priced with
+	 *        the model that answered it. {@code CostConversion} converts it for display
 	 */
 	record RunCompleted(String runId, int turnNumber, Instant timestamp,
-			StopReason reason, TokenUsage totalUsage) implements AgentEvent {}
+			StopReason reason, TokenUsage totalUsage, Money totalCost) implements AgentEvent {}
 
 	// ---------- Turn lifecycle ----------
 
@@ -533,9 +536,109 @@ public sealed interface AgentEvent {
 	 * @param subagentId      the job id within the session
 	 * @param targetAgentName the delegated-to agent definition name
 	 * @param taskBrief       the task the subagent was given
+	 * @param parentToolCallId the id of the parent's tool call that started it, so a UI can show the
+	 *                        subagent at that call; empty if unknown
+	 * @param queued          whether it waits in the queue for a free slot rather than starting at
+	 *                        once; a {@link SubagentRunning} says when it has started
 	 */
 	record SubagentStarted(String runId, int turnNumber, Instant timestamp,
-			String subagentId, String targetAgentName, String taskBrief) implements AgentEvent {}
+			String subagentId, String targetAgentName, String taskBrief, String parentToolCallId,
+			boolean queued)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a subagent that {@link SubagentStarted#queued() waited in the queue} gets a slot
+	 * and starts its run.
+	 *
+	 * <p>
+	 * Its own steps are no evidence of that: the first may be a request for approval, which a chat
+	 * shows elsewhere than on the subagent's card, and a window that shows the chat but receives none
+	 * of its steps would never learn of it. A subagent that started at once has no such event.
+	 * </p>
+	 *
+	 * @param runId            agent run identifier
+	 * @param turnNumber       1-based loop iteration
+	 * @param timestamp        when the event occurred
+	 * @param subagentId       the job id
+	 * @param parentToolCallId see {@link SubagentCompleted#parentToolCallId()}
+	 */
+	record SubagentRunning(String runId, int turnNumber, Instant timestamp,
+			String subagentId, String parentToolCallId) implements AgentEvent {}
+
+	/**
+	 * Emitted when a lead turn starts without a user message, because subagents it started finished or
+	 * asked it something while no turn of it ran.
+	 *
+	 * <p>
+	 * What a chat draws in place of the user's bubble for such a turn.
+	 * </p>
+	 *
+	 * @param runId      the lead's run identifier, empty before the run has one
+	 * @param turnNumber 0: it precedes the run's turns
+	 * @param timestamp  when the lead was woken
+	 * @param finished   how many subagents' results the turn opens with
+	 * @param asking     how many subagents' questions it opens with
+	 * @param news       which subagents reported back, and why
+	 */
+	record LeadWoken(String runId, int turnNumber, Instant timestamp, int finished, int asking,
+			java.util.List<com.top_logic.tl.ai.core.agent.subagent.SubagentNews> news)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a background subagent reads what the agent that started it sent it, at the start of
+	 * one of its turns.
+	 *
+	 * <p>
+	 * The text is verbatim what the subagent's model is shown, as a user message; a log recording the
+	 * subagent's run keeps it, so that its replayed transcript holds the message at the same place.
+	 * </p>
+	 *
+	 * @param runId      the subagent's run identifier
+	 * @param turnNumber the turn that read it
+	 * @param timestamp  when it was read
+	 * @param text       the text the model is shown
+	 */
+	record LeadMessageDelivered(String runId, int turnNumber, Instant timestamp, String text)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a run reached its turn limit, before its last turn:
+	 * the model is told, in a user message, that it can call no tool any more and has to answer with
+	 * what it has (#775).
+	 *
+	 * <p>
+	 * The text is verbatim what the model is shown; a log recording the run keeps it, so that its
+	 * replayed transcript holds the message at the same place. An event rather than a write to the
+	 * thread's log, because on a subagent's thread that log is the lead's.
+	 * </p>
+	 *
+	 * @param runId      the run identifier
+	 * @param turnNumber the turn that is the run's last
+	 * @param timestamp  when the run reached the limit
+	 * @param text       the text the model is shown
+	 */
+	record FinalTurnRequested(String runId, int turnNumber, Instant timestamp, String text)
+			implements AgentEvent {}
+
+	/**
+	 * Emitted when a background subagent reads what the user wrote to it from its card, at the start
+	 * of one of its turns.
+	 *
+	 * <p>
+	 * The text is verbatim what the subagent's model is shown, as a user message; a log recording the
+	 * subagent's run keeps it, as {@link #LeadMessageDelivered} does. The ids tell the chat which of
+	 * the user's messages have been read.
+	 * </p>
+	 *
+	 * @param runId      the subagent's run identifier
+	 * @param turnNumber the turn that read it
+	 * @param timestamp  when it was read
+	 * @param text       the text the model is shown
+	 * @param messages   the user's messages it holds, in the order they were sent
+	 */
+	record UserMessageDelivered(String runId, int turnNumber, Instant timestamp, String text,
+			java.util.List<com.top_logic.tl.ai.core.agent.subagent.SubagentInbox.Message> messages)
+			implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job finishes successfully.
@@ -545,10 +648,15 @@ public sealed interface AgentEvent {
 	 * @param timestamp  when the event occurred
 	 * @param subagentId the job id
 	 * @param result     the structured result envelope
+	 * @param parentToolCallId the id of the lead's tool call that started it, as on
+	 *                   {@link SubagentStarted}, so that a window which did not see the start finds
+	 *                   its card; empty if unknown
+	 * @param childRunId the subagent's own run id, its transcript's key; empty if unknown
 	 */
 	record SubagentCompleted(String runId, int turnNumber, Instant timestamp,
 			String subagentId,
-			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result) implements AgentEvent {}
+			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result, String parentToolCallId,
+			String childRunId) implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job fails.
@@ -558,9 +666,12 @@ public sealed interface AgentEvent {
 	 * @param timestamp    when the event occurred
 	 * @param subagentId   the job id
 	 * @param errorSummary a short human-readable error summary
+	 * @param parentToolCallId see {@link SubagentCompleted#parentToolCallId()}
+	 * @param childRunId   see {@link SubagentCompleted#childRunId()}
 	 */
 	record SubagentFailed(String runId, int turnNumber, Instant timestamp,
-			String subagentId, String errorSummary) implements AgentEvent {}
+			String subagentId, String errorSummary, String parentToolCallId, String childRunId)
+			implements AgentEvent {}
 
 	/**
 	 * Emitted when a subagent job is cooperatively cancelled.
@@ -569,7 +680,9 @@ public sealed interface AgentEvent {
 	 * @param turnNumber 1-based loop iteration
 	 * @param timestamp  when the event occurred
 	 * @param subagentId the job id
+	 * @param parentToolCallId see {@link SubagentCompleted#parentToolCallId()}
+	 * @param childRunId see {@link SubagentCompleted#childRunId()}
 	 */
 	record SubagentCancelled(String runId, int turnNumber, Instant timestamp,
-			String subagentId) implements AgentEvent {}
+			String subagentId, String parentToolCallId, String childRunId) implements AgentEvent {}
 }

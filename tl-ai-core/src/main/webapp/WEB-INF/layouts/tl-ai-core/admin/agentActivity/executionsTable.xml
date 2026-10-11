@@ -9,6 +9,12 @@
 	do anyway, because a column value is fetched per rendered cell and only the current page is
 	rendered. Which runs a reader wants is a question for the column filters.
 	
+	"Kosten" and "Währung" are what the run cost: its tokens priced with the model that answered each
+	request, which the run records in US dollars ("Kosten (USD)", in the column chooser), converted
+	into the system currency at the rate of USD valid on the day the run started - or left in US
+	dollars while there is no such rate. They stand next to each other because a sum is only a sum
+	within one currency.
+	
 	"Dauer", "Token", "Teilagenten" and "Offene Rückfragen" are computed. A running run has no
 	endedAt, so its duration is measured against now - that is what an operator wants to read there,
 	and the value is a snapshot, not a ticking clock; pressing Aktualisieren re-reads it. The last
@@ -28,7 +34,7 @@
 		<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 	</modelBuilder>
 	<table
-		defaultColumns="displayName,status,session,model,startedAt,durationSeconds,tokenCount"
+		defaultColumns="displayName,status,session,model,startedAt,durationSeconds,tokenCount,displayCost,displayCurrency"
 		defaultSortOrder="startedAt:descending"
 		fixedColumns="1"
 	>
@@ -81,6 +87,15 @@
 			/>
 			<column name="cacheWriteTokens"
 				columnWidth="115px"
+			/>
+			<column name="displayCost"
+				columnWidth="90px"
+			/>
+			<column name="displayCurrency"
+				columnWidth="100px"
+			/>
+			<column name="cost"
+				columnWidth="100px"
 			/>
 			<column name="runId"
 				columnWidth="250px"

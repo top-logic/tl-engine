@@ -9,11 +9,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -53,6 +56,9 @@ import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
  */
 public class WebSearchTool {
 
+	/** An ISO 639-1 code, optionally with a region or script, e.g. {@code de} or {@code zh-hant}. */
+	private static final Pattern LANGUAGE = Pattern.compile("[a-z]{2}(-[a-z]{2,4})?");
+
 	/**
 	 * Creates a {@link WebSearchTool}.
 	 */
@@ -69,6 +75,13 @@ public class WebSearchTool {
 	 *        Optional domain allow-list. May be {@code null}.
 	 * @param blockedDomains
 	 *        Optional domain block-list. May be {@code null}.
+	 * @param count
+	 *        How many results to return; {@code null} for the configured default.
+	 * @param freshness
+	 *        How recent the results must be ({@code day}, {@code week}, {@code month}, {@code year});
+	 *        {@code null} for any time.
+	 * @param language
+	 *        The language of the results as an ISO 639-1 code; {@code null} for any language.
 	 * @return Formatted results, or an error string.
 	 */
 	@ToolMethod(
@@ -77,7 +90,7 @@ public class WebSearchTool {
 			+ "A result is not read until you open it with webFetch; "
 			+ "cite the pages you read as markdown links.",
 		mode = ToolMode.READ, group = ToolGroups.EGRESS,
-		marking = AnswerMarking.TOOL)
+		marking = AnswerMarking.TOOL, unavailable = "noEngine")
 	public String webSearch(
 			@P("The search query.") String query,
 			@P(value = "Optional: restrict results to these domains, e.g. [\"docs.oracle.com\"]. "
@@ -85,8 +98,51 @@ public class WebSearchTool {
 				+ "naming a domain that policy forbids does not make it reachable.",
 				required = false) List<String> allowedDomains,
 			@P(value = "Optional: exclude results from these domains. Do not combine with allowedDomains.",
-				required = false) List<String> blockedDomains) {
+				required = false) List<String> blockedDomains,
+			@P(value = "Optional: how many results to return, 1 to " + WebSearchQuery.MAX_COUNT
+				+ ". Leave it out for the default.", required = false) Integer count,
+			@P(value = "Optional: only results published in the last day, week, month or year. "
+				+ "One of: day, week, month, year. Leave it out for any time.",
+				required = false) String freshness,
+			@P(value = "Optional: only results in this language, as a two-letter ISO 639-1 code, "
+				+ "e.g. \"de\" or \"en\". Leave it out for any language.",
+				required = false) String language) {
+		String unavailable = noEngine(null);
+		if (unavailable != null) {
+			return "Error: " + unavailable;
+		}
+		WebToolsService service = WebToolsService.getInstance();
+		return search(service.getSearchEngine(), service.getMaxResults(), WebToolsService.currentPolicy(), query,
+			allowedDomains, blockedDomains, count, freshness, language);
+	}
 
+	/**
+	 * Runs one search on {@code engine}, after checking the arguments the model wrote. Package-visible
+	 * for testing.
+	 *
+	 * @param engine
+	 *        The configured engine.
+	 * @param defaultCount
+	 *        The number of results when the model gave none.
+	 * @param browsing
+	 *        The policy of the acting role.
+	 * @param query
+	 *        See {@link #webSearch(String, List, List, Integer, String, String)}.
+	 * @param allowedDomains
+	 *        See {@link #webSearch(String, List, List, Integer, String, String)}.
+	 * @param blockedDomains
+	 *        See {@link #webSearch(String, List, List, Integer, String, String)}.
+	 * @param count
+	 *        See {@link #webSearch(String, List, List, Integer, String, String)}.
+	 * @param freshness
+	 *        See {@link #webSearch(String, List, List, Integer, String, String)}.
+	 * @param language
+	 *        See {@link #webSearch(String, List, List, Integer, String, String)}.
+	 * @return The tool's answer.
+	 */
+	static String search(WebSearchEngine engine, int defaultCount, BrowsingPolicy browsing, String query,
+			List<String> allowedDomains, List<String> blockedDomains, Integer count, String freshness,
+			String language) {
 		if (query == null || query.isBlank()) {
 			return "Error: query is required.";
 		}
@@ -95,28 +151,52 @@ public class WebSearchTool {
 		if (hasAllow && hasBlock) {
 			return "Error: provide either allowedDomains or blockedDomains, not both.";
 		}
-
-		WebToolsService service = WebToolsService.getInstance();
-		if (service == null) {
-			return "Error: web tools service is not running.";
+		if (count != null && (count.intValue() < 1 || count.intValue() > WebSearchQuery.MAX_COUNT)) {
+			return "Error: count must be between 1 and " + WebSearchQuery.MAX_COUNT + ".";
 		}
-		WebSearchEngine engine = service.getSearchEngine();
-		if (engine == null) {
-			return "Error: web search is not configured. Configure a search engine on the WebToolsService "
-				+ "(e.g. a TavilySearchEngine with an api-key).";
+		Freshness age = null;
+		if (freshness != null && !freshness.isBlank()) {
+			age = Freshness.of(freshness);
+			if (age == null) {
+				return "Error: freshness must be one of day, week, month, year.";
+			}
+		}
+		String lang = null;
+		if (language != null && !language.isBlank()) {
+			lang = language.strip().toLowerCase(Locale.ROOT);
+			if (!LANGUAGE.matcher(lang).matches()) {
+				return "Error: language must be a two-letter ISO 639-1 code, e.g. \"de\".";
+			}
 		}
 
-		BrowsingPolicy browsing = WebToolsService.currentPolicy();
 		SearchScope scope = narrow(browsing, allowedDomains, blockedDomains);
 		if (scope.refusal() != null) {
 			return "Error: " + BrowsingPolicies.audit(browsing, String.join(", ", allowedDomains),
 				scope.refusal());
 		}
 
+		List<String> notes = new ArrayList<>();
+		if (age != null && !engine.supportsFreshness()) {
+			notes.add("The configured search engine cannot restrict results by age; "
+				+ "the results are of any age.");
+			age = null;
+		}
+		if (lang != null && !engine.supportsLanguage()) {
+			notes.add("The configured search engine cannot restrict results by language; "
+				+ "the results are in any language.");
+			lang = null;
+		}
+		int wanted = count != null ? count.intValue()
+			: Math.max(1, Math.min(defaultCount, WebSearchQuery.MAX_COUNT));
+		WebSearchQuery search = new WebSearchQuery(query, scope.include(), scope.exclude(), wanted, age, lang);
 		try {
-			WebSearchResults results =
-				engine.search(query, scope.include(), scope.exclude(), service.getMaxResults());
-			return format(query, onPolicyOnly(browsing, results));
+			WebSearchResults results = onPolicyOnly(browsing, engine.search(search));
+			// The result addresses are addresses this run was given; the query it wrote is not.
+			for (WebSearchHit hit : results.hits()) {
+				UrlProvenance.record(hit.url());
+			}
+			String answer = format(query, results);
+			return notes.isEmpty() ? answer : answer + "\n\n" + String.join("\n", notes);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			return "Error: web search was interrupted.";
@@ -124,6 +204,29 @@ public class WebSearchTool {
 			Logger.error("Web search failed: " + ex.getMessage(), ex, WebSearchTool.class);
 			return "Error: web search failed: " + ex.getMessage();
 		}
+	}
+
+	/**
+	 * Why {@code webSearch} can do nothing in this application: no search engine is configured.
+	 *
+	 * <p>
+	 * Nothing is configured by default, because a search engine is a paid third-party service that
+	 * an administrator chooses. The tool is then not offered at all, and a call that names it anyway
+	 * is answered with this sentence.
+	 * </p>
+	 *
+	 * @param context
+	 *        The run; not used, because the answer is the same for every run.
+	 * @return The reason, or {@code null} when an engine is configured.
+	 */
+	String noEngine(ToolExecutionContext context) {
+		WebToolsService service = WebToolsService.getInstance();
+		if (service != null && service.getSearchEngine() != null) {
+			return null;
+		}
+		return "web search is not configured in this application: no search engine is set on the web "
+			+ "tools service. Work without web search, and tell the user that an administrator can "
+			+ "configure a search engine (Brave or Tavily) on the web tools service.";
 	}
 
 	/**

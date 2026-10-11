@@ -66,6 +66,11 @@ public record ReadSource(String kind, String id, String title, String url, Strin
 		return new ReadSource(kind, id, title, "", "", "", null);
 	}
 
+	/** What a reading list knows this source by: its {@link #url()}, or its {@link #id()} when it has none. */
+	public String reference() {
+		return url.isEmpty() ? id : url;
+	}
+
 	/** A copy of this source carrying the given read text. */
 	public ReadSource withText(String newText) {
 		return new ReadSource(kind, id, title, url, newText, archiveUrl, readAt);

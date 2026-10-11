@@ -122,6 +122,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey RUN_STOPPED_OUTPUT_LIMIT;
 
+	/**
+	 * Notice appended to the answer of a run that reached its turn limit, see
+	 * {@link StopReason#MAX_TURNS}.
+	 *
+	 * @en The agent reached its limit of steps and answered with what it had by then. Write "Please
+	 *     continue" to let it go on.
+	 * @de Der Agent hat seine Höchstzahl an Schritten erreicht und mit dem bisherigen Stand geantwortet.
+	 *     Schreiben Sie „Bitte weitermachen“, damit er weiterarbeitet.
+	 */
+	public static ResKey RUN_STOPPED_TURN_LIMIT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

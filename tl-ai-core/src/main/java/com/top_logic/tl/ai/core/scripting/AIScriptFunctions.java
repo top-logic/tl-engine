@@ -25,6 +25,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.KBUtils;
@@ -41,6 +42,8 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
@@ -50,6 +53,7 @@ import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -77,6 +81,7 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
@@ -764,6 +769,68 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Starts a web research on a background thread and returns at once with a handle (#767).
+	 *
+	 * <p>
+	 * The research is Albert's {@code TL_deepResearch} skill: Albert plans sub-questions, research
+	 * workers read the web in parallel, and Albert writes one report that links the pages the workers
+	 * read. This function starts it without a chat window - from a script, or from a scheduled
+	 * {@code ScriptTask}. See {@code tl-ai-core/doc/deep-research.md}.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Where the report goes.</b> The run is recorded as a chat of the owner, titled "Research:" and
+	 * the start of the question. The chat appears in the owner's chat list, and the owner reads the
+	 * report there, with its footnotes. {@link #agentRunResult(Object)} returns the same report for the
+	 * handle; {@link #agentRunStatus(Object)} and {@link #agentRunCancel(Object)} work as for
+	 * {@link #agentChatAsync(String, Object)}. As there, read the handle in a later request than the
+	 * one that started the run.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Nobody is there.</b> The run cannot ask a question, and it confirms its own tool calls. The
+	 * background allowlist of the tool access policy bounds its tools, as for every unattended run;
+	 * the workers need {@code egress} in it. The owner's token and money budget bound
+	 * the run like a chat run. A run that the budget refuses calls no model and records the refusal as
+	 * its answer.
+	 * </p>
+	 *
+	 * <p>
+	 * Example usage in TL-Script:
+	 * </p>
+	 *
+	 * <pre>
+	 * aiResearch("What did our three main competitors announce this month?", "deep")
+	 * </pre>
+	 *
+	 * <p>
+	 * From a scheduled {@code ScriptTask}, which runs without an account, name the owner:
+	 * </p>
+	 *
+	 * <pre>
+	 * aiResearch("Which new funding programmes for SMEs were announced this week?", "standard", "jdoe")
+	 * </pre>
+	 *
+	 * @param question
+	 *        What to research.
+	 * @param effort
+	 *        How thoroughly: {@code "quick"} (one worker), {@code "standard"} (three workers, the
+	 *        default) or {@code "deep"} (five to eight workers, two further rounds).
+	 * @param owner
+	 *        The account the research acts as, whose budget it spends and whose chat list shows the
+	 *        report: an account or its login name. Empty means the calling account. Only a call
+	 *        without an account, such as a scheduled task, may name another account.
+	 * @return The handle of the run: the persistent id of its chat, as a string.
+	 * @throws TopLogicException
+	 *         If the question is empty, the effort is unknown, no owner can be determined, or a user
+	 *         names another account.
+	 * @see #agentRunResult(Object)
+	 */
+	public static String research(String question, String effort, Object owner) {
+		return HeadlessResearch.start(question, effort, owner);
+	}
+
+	/**
 	 * Returns the status of an async agent run started with
 	 * {@link #agentChatAsync(String, Object)}.
 	 *
@@ -998,7 +1065,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * A run still going on in the session is asked to stop first; the deletion then cascades over
 	 * the session's tasks, its interaction requests and its executions. It also tells the open
 	 * windows, which is what drops the deleted chat out of a list and out of the window's
-	 * in-memory chat state. Deletion cannot be undone.
+	 * in-memory chat state. Deletion cannot be undone. A session that is already gone answers
+	 * {@code true} at once: the call wanted it deleted, and it is deleted, so there is nothing
+	 * left to delete.
 	 * </p>
 	 *
 	 * <p>
@@ -1015,6 +1084,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @see #sessionRename(Object, String) The same ownership check.
 	 */
 	public static boolean sessionDelete(Object session) {
+		AgentSession resolved = unwrapSession(session);
+		if (resolved != null && !resolved.tValid()) {
+			// The session is already gone, which is what the call wanted; deleting it again would
+			// only throw.
+			return true;
+		}
 		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
 		return true;
 	}
@@ -1086,6 +1161,72 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * What the given run cost, in the currency the agent activity monitor shows costs in.
+	 *
+	 * <p>
+	 * A run records its cost in US dollars, the currency of the prices. This converts it into the
+	 * application's system currency at the exchange rate of the currency "USD" that was valid on the
+	 * day the run started, and leaves it in US dollars while there is no such rate; see
+	 * {@link CostConversion}. {@link #costCurrency(Object)} names the currency. The derived attribute
+	 * {@code tl.ai.execution:AgentExecution#displayCost} is this function.
+	 * </p>
+	 *
+	 * @param execution
+	 *        An agent run ({@code tl.ai.execution:AgentExecution}).
+	 * @return The amount; {@code null} for a run that recorded no cost, and for anything else than a
+	 *         run.
+	 */
+	public static Double cost(Object execution) {
+		Money shown = shownCost(execution);
+		return shown == null ? null : Double.valueOf(shown.amount());
+	}
+
+	/**
+	 * The ISO 4217 code of the currency {@link #cost(Object)} answers in for the given run: the
+	 * system currency, or {@code USD} while no rate of the run's day converts it.
+	 *
+	 * @param execution
+	 *        An agent run ({@code tl.ai.execution:AgentExecution}).
+	 * @return The code; {@code null} for a run that recorded no cost.
+	 */
+	public static String costCurrency(Object execution) {
+		Money shown = shownCost(execution);
+		return shown == null ? null : shown.currency();
+	}
+
+	private static Money shownCost(Object execution) {
+		if (!(execution instanceof AgentExecution run)) {
+			return null;
+		}
+		Double usd = run.getCost();
+		if (usd == null) {
+			return null;
+		}
+		return CostConversion.shown(new Money(usd.doubleValue(), Money.USD), run.getStartedAt());
+	}
+
+	/**
+	 * What the agent activity monitor warns about costs today, in the user's language.
+	 *
+	 * <p>
+	 * While no exchange rate converts US dollars into the system currency today, costs are shown in
+	 * US dollars and a money budget is not checked; this says which of the two applies. Nothing
+	 * while there is such a rate, or the system currency is US dollars.
+	 * </p>
+	 *
+	 * @return The warning, or {@code null} when there is nothing to warn about.
+	 */
+	public static String costWarning() {
+		if (CostConversion.usdRate(null).isPresent()) {
+			return null;
+		}
+		ResKey1 template = RunLimitSettings.anyMoneyBudget()
+			? I18NConstants.COST_NO_RATE_BUDGET_UNCHECKED__CURRENCY
+			: I18NConstants.COST_NO_RATE__CURRENCY;
+		return Resources.getInstance().getString(template.fill(CostConversion.systemCurrency()));
+	}
+
+	/**
 	 * Clears what is held against a model, so the next run tries it again.
 	 *
 	 * <p>
@@ -1148,6 +1289,24 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The given value as an {@link AgentSession}, or <code>null</code> when it is not one.
+	 *
+	 * <p>
+	 * A one-element collection unwraps to its single element, so that a channel that hands over a
+	 * list of one still names the session. No ownership check here: the callers decide what to do
+	 * with the result.
+	 * </p>
+	 */
+	private static AgentSession unwrapSession(Object session) {
+		AgentSession resolved = session instanceof AgentSession found ? found : null;
+		if (resolved == null && session instanceof Collection<?> many && many.size() == 1) {
+			Object only = many.iterator().next();
+			resolved = only instanceof AgentSession found ? found : null;
+		}
+		return resolved;
+	}
+
+	/**
 	 * The given value as an {@link AgentSession} the acting account may change.
 	 *
 	 * <p>
@@ -1159,11 +1318,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 */
 	private static AgentSession ownedSession(Object session) {
-		AgentSession resolved = session instanceof AgentSession found ? found : null;
-		if (resolved == null && session instanceof Collection<?> many && many.size() == 1) {
-			Object only = many.iterator().next();
-			resolved = only instanceof AgentSession found ? found : null;
-		}
+		AgentSession resolved = unwrapSession(session);
 		if (resolved == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_SESSION);
 		}

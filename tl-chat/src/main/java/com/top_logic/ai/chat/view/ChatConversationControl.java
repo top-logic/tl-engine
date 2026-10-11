@@ -359,7 +359,7 @@ public class ChatConversationControl extends ReactControl {
 	@Override
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
-		_binding.writeLayoutState(this::putState);
+		_binding.writeRenderState(this::putState);
 	}
 
 	@Override

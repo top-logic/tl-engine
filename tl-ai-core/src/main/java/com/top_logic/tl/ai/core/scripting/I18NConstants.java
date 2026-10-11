@@ -104,6 +104,72 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_MODEL_HEALTH_UNAVAILABLE;
 
+	/**
+	 * Error when {@code aiResearch} is called without a question.
+	 *
+	 * @en A research needs a question.
+	 * @de Eine Recherche braucht eine Frage.
+	 */
+	public static ResKey ERROR_RESEARCH_QUESTION_EMPTY;
+
+	/**
+	 * Error when {@code aiResearch} is given an effort level the research skill does not know.
+	 *
+	 * @en Unknown research effort: {0}. Use "quick", "standard" or "deep".
+	 * @de Unbekannter Rechercheumfang: {0}. Erlaubt sind "quick", "standard" und "deep".
+	 */
+	public static ResKey1 ERROR_RESEARCH_EFFORT__VALUE;
+
+	/**
+	 * Error when {@code aiResearch} names an account that does not exist.
+	 *
+	 * @en There is no account {0}.
+	 * @de Es gibt kein Konto {0}.
+	 */
+	public static ResKey1 ERROR_RESEARCH_UNKNOWN_OWNER__NAME;
+
+	/**
+	 * Error when {@code aiResearch} is called without an account and names none.
+	 *
+	 * @en A research needs an owner. Without a logged-in account, name the owner.
+	 * @de Eine Recherche braucht einen Eigentümer. Ohne angemeldetes Konto geben Sie den Eigentümer an.
+	 */
+	public static ResKey ERROR_RESEARCH_NO_OWNER;
+
+	/**
+	 * Error when a logged-in account starts a research for another account.
+	 *
+	 * @en You can start a research only for yourself.
+	 * @de Sie können eine Recherche nur für sich selbst starten.
+	 */
+	public static ResKey ERROR_RESEARCH_OTHER_OWNER;
+
+	/**
+	 * Title of the chat that records a research started without a chat window.
+	 *
+	 * @en Research: {0}
+	 * @de Recherche: {0}
+	 */
+	public static ResKey1 RESEARCH_SESSION_TITLE__QUESTION;
+
+	/**
+	 * Warning of the agent activity monitor while no exchange rate converts the cost of today's runs
+	 * into the system currency {0}, and no money budget is configured.
+	 *
+	 * @en No exchange rate USD -> {0}: costs are shown in USD.
+	 * @de Kein Wechselkurs USD -> {0}: Kosten werden in USD angezeigt.
+	 */
+	public static ResKey1 COST_NO_RATE__CURRENCY;
+
+	/**
+	 * Warning of the agent activity monitor while no exchange rate converts the cost of today's runs
+	 * into the system currency {0}, so the configured money budget is not checked.
+	 *
+	 * @en No exchange rate USD -> {0}: the money budget is not checked, costs are shown in USD.
+	 * @de Kein Wechselkurs USD -> {0}: Geldbudget wird nicht geprüft, Kosten werden in USD angezeigt.
+	 */
+	public static ResKey1 COST_NO_RATE_BUDGET_UNCHECKED__CURRENCY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -18,7 +18,12 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getContent() */
 	public static final String CONTENT__PROP = "content";
 
+	/** @see #getOrigin() */
+	public static final String ORIGIN__PROP = "origin";
+
 	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedContent> _content = new java.util.ArrayList<>();
+
+	private String _origin = "";
 
 	/**
 	 * Creates a {@link UserMessageDto} instance.
@@ -71,6 +76,27 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_content.remove(value);
 	}
 
+	/**
+	 * Who wrote the message, when it was not the user: the name of the message's origin, for
+	 * example "FRAMEWORK". Empty for a message of the user.
+	 */
+	public final String getOrigin() {
+		return _origin;
+	}
+
+	/**
+	 * @see #getOrigin()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.UserMessageDto setOrigin(String value) {
+		internalSetOrigin(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOrigin()} without chain call utility. */
+	protected final void internalSetOrigin(String value) {
+		_origin = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return USER_MESSAGE_DTO__TYPE;
@@ -79,7 +105,8 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			CONTENT__PROP);
+			CONTENT__PROP, 
+			ORIGIN__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -105,6 +132,7 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public Object get(String field) {
 		switch (field) {
 			case CONTENT__PROP: return getContent();
+			case ORIGIN__PROP: return getOrigin();
 			default: return null;
 		}
 	}
@@ -113,6 +141,7 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public void set(String field, Object value) {
 		switch (field) {
 			case CONTENT__PROP: internalSetContent(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedContent.class, value)); break;
+			case ORIGIN__PROP: internalSetOrigin((String) value); break;
 		}
 	}
 
@@ -137,6 +166,8 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(ORIGIN__PROP);
+		out.value(getOrigin());
 	}
 
 	@Override
@@ -152,6 +183,7 @@ public class UserMessageDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 				setContent(newValue);
 			}
 			break;
+			case ORIGIN__PROP: setOrigin(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -23,8 +23,10 @@ import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatMessage;
+import com.top_logic.ai.chat.layout.ChatState;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -136,6 +138,10 @@ public final class DtoMapper {
 				InteractionTimeoutService.questionTimeout()));
 		for (InteractionOptionDto option : parseInteractionOptions(req.getOptions())) {
 			event.addOption(option);
+		}
+		InteractionAsker asker = req.getAskedBy();
+		if (asker != null) {
+			event.setAskedBySubagentId(asker.subagentId()).setAskedByAgent(asker.agentName());
 		}
 		return event;
 	}
@@ -269,78 +275,157 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Serializes session metadata (approved tools, cumulative token usage) to JSON.
+	 * Serializes a chat's metadata - approved tools, token usage, approval mode, plan, skills,
+	 * ratings and effort - to JSON.
 	 *
-	 * @param tracker
-	 *        The task progress tracker holding session state.
+	 * @param chat
+	 *        The chat's state.
 	 * @return JSON string for persistence.
 	 */
-	public static String serializeMetadata(TaskProgressTracker tracker) {
+	public static String serializeMetadata(ChatState chat) {
 		SessionMetadata meta = SessionMetadata.create();
-		for (String tool : tracker.getSessionApprovedTools()) {
+		for (String tool : chat.approvedTools()) {
 			meta.addApprovedTool(tool);
 		}
-		TokenUsage usage = tracker.getCumulativeUsage();
+		TokenUsage usage = chat.cumulativeUsage();
 		meta.setCumulativeUsage(TokenUsageDto.create()
 			.setInputTokens(usage.inputTokens())
 			.setOutputTokens(usage.outputTokens())
 			.setThinkingTokens(usage.thinkingTokens())
 			.setCacheReadTokens(usage.cacheReadTokens())
 			.setCacheWriteTokens(usage.cacheWriteTokens()));
-		meta.setApprovalMode(tracker.getApprovalMode().name());
-		TaskStore taskStore = tracker.getActiveTaskStore();
-		if (taskStore != null) {
-			meta.setTasksJson(taskStore.toJson());
-		}
-		for (String skill : tracker.getLoadedSkills()) {
+		meta.setApprovalMode(chat.approvalMode().name());
+		meta.setTasksJson(chat.taskStore().toJson());
+		for (String skill : chat.loadedSkills()) {
 			meta.addLoadedSkill(skill);
 		}
-		for (MessageFeedbackDto entry : tracker.getFeedback()) {
+		for (MessageFeedbackDto entry : chat.feedback()) {
 			meta.addFeedback(entry);
 		}
-		String effort = tracker.getEffort();
+		String effort = chat.effort();
 		if (effort != null) {
 			meta.setLastEffort(effort);
 		}
+		// Written for the chat a window shows - when it leaves it, or after a turn in it - so the
+		// window has shown it until now.
+		meta.setLastSeen(System.currentTimeMillis());
 		return toJson(meta);
 	}
 
 	/**
-	 * Loads session metadata from JSON into the tracker, restoring approved tools and cumulative
-	 * token usage.
+	 * The metadata a window stores for its tracker: its own bag, but with the approval mode the
+	 * stored bag holds.
+	 *
+	 * <p>
+	 * Every window writes the whole bag from its tracker - when a turn ends, when it moves to
+	 * another chat, when an answer is rated. The approval mode is the one value only the switch may
+	 * change: a window that opened the chat before the switch was turned off still holds the old
+	 * mode, and writing its bag must not turn auto-approve back on (#658). Only a chat that has no
+	 * stored mode yet - one whose first turn is being saved - takes the tracker's.
+	 * </p>
+	 *
+	 * @param stored
+	 *        The stored metadata JSON; {@code null} or empty when nothing was stored yet.
+	 * @param fresh
+	 *        The JSON {@link #serializeMetadata(ChatState)} made of the chat's state.
+	 * @return The JSON to store.
+	 */
+	public static String keepStoredApprovalMode(String stored, String fresh) {
+		String mode = storedApprovalMode(stored);
+		if (mode == null || fresh == null) {
+			return fresh;
+		}
+		SessionMetadata meta = parseOrNull(fresh);
+		return meta == null ? fresh : toJson(meta.setApprovalMode(mode));
+	}
+
+	/**
+	 * The stored metadata with the given approval mode, everything else left as stored.
+	 *
+	 * @param stored
+	 *        The stored metadata JSON; {@code null} or empty when nothing was stored yet.
+	 * @param mode
+	 *        The mode the user switched the chat to.
+	 * @return The JSON to store.
+	 */
+	public static String withApprovalMode(String stored, ApprovalMode mode) {
+		SessionMetadata meta = parseOrNull(stored);
+		if (meta == null) {
+			// Nothing stored yet, or corrupted metadata: the mode is still stored, in a bag of its own.
+			meta = SessionMetadata.create();
+		}
+		return toJson(meta.setApprovalMode(mode.name()));
+	}
+
+	/** The approval mode the given metadata JSON stores, or {@code null} when it stores none. */
+	private static String storedApprovalMode(String json) {
+		SessionMetadata meta = parseOrNull(json);
+		if (meta == null) {
+			return null;
+		}
+		String mode = meta.getApprovalMode();
+		return mode == null || mode.isEmpty() ? null : mode;
+	}
+
+	/**
+	 * The metadata the given JSON stores, or {@code null} when it is {@code null}, empty or
+	 * unreadable.
+	 *
+	 * <p>
+	 * Forgiving on purpose: a chat whose stored bag is corrupted must still open and still be saved,
+	 * so every reader falls back to a fresh bag rather than failing.
+	 * </p>
+	 */
+	private static SessionMetadata parseOrNull(String json) {
+		if (json == null || json.isEmpty()) {
+			return null;
+		}
+		try {
+			return SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
+		} catch (IOException | RuntimeException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Loads a chat's metadata from JSON into its state, restoring approved tools, cumulative token
+	 * usage, ratings, effort, loaded skills and the approval mode - {@link ApprovalMode#MANUAL} when
+	 * the metadata stores none. The plan is read by {@link #loadTaskStore(String)}.
 	 *
 	 * @param json
 	 *        The JSON string from persistence. May be null or empty.
-	 * @param tracker
-	 *        The task progress tracker to populate.
+	 * @param chat
+	 *        The chat's state to populate.
 	 */
-	public static void loadMetadata(String json, TaskProgressTracker tracker) {
-		if (json == null || json.isEmpty()) {
+	public static void loadMetadata(String json, ChatState chat) {
+		// A chat that stores no mode runs with auto-approve off (#808).
+		chat.setApprovalMode(ApprovalMode.MANUAL);
+		SessionMetadata meta = parseOrNull(json);
+		if (meta == null) {
+			// Missing or corrupted metadata — start fresh.
 			return;
 		}
 		try {
-			SessionMetadata meta =
-				SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
-			tracker.loadSessionApprovedTools(new HashSet<>(meta.getApprovedTools()));
+			chat.loadApprovedTools(new HashSet<>(meta.getApprovedTools()));
 			TokenUsageDto usage = meta.getCumulativeUsage();
 			if (usage != null) {
-				tracker.addTokenUsage(new TokenUsage(
+				chat.addTokenUsage(new TokenUsage(
 					usage.getInputTokens(), usage.getOutputTokens(),
 					usage.getThinkingTokens(), usage.getCacheReadTokens(),
 					usage.getCacheWriteTokens()));
 			}
 			String mode = meta.getApprovalMode();
 			if (mode != null && !mode.isEmpty()) {
-				tracker.setApprovalMode(ApprovalMode.valueOf(mode));
+				chat.setApprovalMode(ApprovalMode.valueOf(mode));
 			}
-			tracker.loadFeedback(meta.getFeedback());
-			tracker.setEffort(meta.getLastEffort());
+			chat.loadFeedback(meta.getFeedback());
+			chat.setEffort(meta.getLastEffort());
 			List<String> loadedSkills = meta.getLoadedSkills();
 			if (loadedSkills != null && !loadedSkills.isEmpty()) {
-				tracker.loadLoadedSkills(new LinkedHashSet<>(loadedSkills));
+				chat.loadLoadedSkills(new LinkedHashSet<>(loadedSkills));
 			}
-		} catch (Exception e) {
-			// Corrupted metadata — ignore and start fresh.
+		} catch (RuntimeException e) {
+			// Corrupted metadata (an unknown approval mode, say) — ignore and start fresh.
 		}
 	}
 
@@ -352,15 +437,13 @@ public final class DtoMapper {
 	 * @return A {@code TaskStore} populated from the metadata, or an empty store.
 	 */
 	public static TaskStore loadTaskStore(String json) {
-		if (json == null || json.isEmpty()) {
+		SessionMetadata meta = parseOrNull(json);
+		if (meta == null) {
 			return new TaskStore();
 		}
 		try {
-			SessionMetadata meta =
-				SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
-			String tasksJson = meta.getTasksJson();
-			return TaskStore.fromJson(tasksJson);
-		} catch (Exception e) {
+			return TaskStore.fromJson(meta.getTasksJson());
+		} catch (RuntimeException e) {
 			return new TaskStore();
 		}
 	}

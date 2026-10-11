@@ -40,7 +40,17 @@ import java.util.function.Function;
 final class RecordingServer implements AutoCloseable {
 
 	/** A response: the status line phrase, extra headers and the body. */
-	record Reply(int status, String phrase, List<String> headers, String body) {
+	record Reply(int status, String phrase, List<String> headers, byte[] content) {
+
+		/** A response with a text body, sent as UTF-8. */
+		Reply(int status, String phrase, List<String> headers, String body) {
+			this(status, phrase, headers, body.getBytes(StandardCharsets.UTF_8));
+		}
+
+		/** A {@code 200} reply with a binary body of the given type. */
+		static Reply binary(String contentType, byte[] content) {
+			return new Reply(200, "OK", List.of("Content-Type: " + contentType), content);
+		}
 
 		/** A {@code 200} HTML reply. */
 		static Reply html(String body) {
@@ -218,7 +228,7 @@ final class RecordingServer implements AutoCloseable {
 		}
 		String[] parts = requestLine.split(" ");
 		Reply reply = _replies.apply(parts.length > 1 ? parts[1] : "/");
-		byte[] body = reply.body().getBytes(StandardCharsets.UTF_8);
+		byte[] body = reply.content();
 		StringBuilder head = new StringBuilder();
 		head.append("HTTP/1.1 ").append(reply.status()).append(' ').append(reply.phrase()).append("\r\n");
 		for (String header : reply.headers()) {

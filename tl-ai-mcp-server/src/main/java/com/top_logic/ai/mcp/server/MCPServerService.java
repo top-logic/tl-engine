@@ -17,6 +17,7 @@ import jakarta.servlet.ServletException;
 
 import com.top_logic.ai.mcp.server.authentication.McpAuthentication;
 import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
+import com.top_logic.ai.mcp.server.authentication.McpSecret;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
@@ -56,7 +57,6 @@ import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
-import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -263,7 +263,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 */
 		@Name(SECRETS)
 		@DisplayMinimized
-		List<ServerSecret> getSecrets();
+		List<McpSecret> getSecrets();
 
 		/**
 		 * The tools of the application an MCP client sees and may call.

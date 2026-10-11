@@ -90,6 +90,7 @@ final class HttpDoubles {
 						case "getPathInfo":
 							return recorded.path;
 						case "getParameter":
+						case "getQueryString":
 							return null;
 						case "getCookies":
 							return null;

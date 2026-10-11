@@ -18,6 +18,18 @@
 					>
 						<system-prompt>You are a test agent.</system-prompt>
 					</agent>
+					<!--
+						Loads a skill and writes a plan, on the scripted model: what a chat run keeps
+						for its chat beyond the transcript. For TestRunStaysInItsChat.
+					-->
+					<agent name="TestChatPlanner"
+						description="Delegate here to test which chat a run keeps its skills and its plan in."
+					>
+						<system-prompt>You are a test agent.</system-prompt>
+						<skills>
+							<skill name="TL_taskManagement"/>
+						</skills>
+					</agent>
 				</agents>
 			</instance>
 		</config>

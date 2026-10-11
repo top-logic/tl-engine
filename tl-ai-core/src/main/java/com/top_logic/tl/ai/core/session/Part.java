@@ -318,7 +318,41 @@ public sealed interface Part {
 		 * from it, so that a reloaded session does not merge the empty reply and the one after it.
 		 * </p>
 		 */
-		CONTINUATION_REQUESTED
+		CONTINUATION_REQUESTED,
+		/**
+		 * The agent that started this background subagent sent it a message, read at the start of a
+		 * turn.
+		 *
+		 * <p>
+		 * Conversation content like {@link #SUBAGENT_RESULT}: its {@code details} are verbatim the
+		 * text the subagent's model was shown, and {@code ConversationLogReplay} rebuilds the same
+		 * user message from it.
+		 * </p>
+		 */
+		LEAD_MESSAGE,
+		/**
+		 * The turn was started without a message of the user, because subagents reported back.
+		 *
+		 * <p>
+		 * Its details say which ones and why, as a JSON array; the chat draws them in place of the
+		 * user's bubble. Not conversation content: what the model was told is the
+		 * {@link #SUBAGENT_RESULT} part before it.
+		 * </p>
+		 *
+		 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentNews#toJson(java.util.List)
+		 */
+		LEAD_WOKEN,
+		/**
+		 * The user wrote to this background subagent from its card in the chat, and the subagent read
+		 * it at the start of a turn.
+		 *
+		 * <p>
+		 * Conversation content like {@link #LEAD_MESSAGE}: its details are verbatim the text the
+		 * subagent's model was shown, and the replay of the log rebuilds the same user message from it.
+		 * The transcript shows it as the user's.
+		 * </p>
+		 */
+		USER_MESSAGE
 	}
 
 	/**
@@ -347,21 +381,24 @@ public sealed interface Part {
 	 * @param turnsUsed number of LLM iterations the sub-agent executed, or -1 if unknown
 	 * @param totalUsage cumulative token usage of the sub-agent, or {@code null}
 	 * @param stopReason why the sub-agent stopped, or {@code null}
+	 * @param parentToolCallId the id of the lead's {@code delegate_to_*} call, where the chat draws
+	 *        the delegation's card; empty if unknown
 	 */
 	record DelegationPart(
 			String id, Instant timestamp, String fromAgent, String toAgent,
 			String inputSummary, String resultSummary,
 			List<Part> childParts,
 			String childSessionId, long durationMs,
-			int turnsUsed, TokenUsage totalUsage, StopReason stopReason
+			int turnsUsed, TokenUsage totalUsage, StopReason stopReason,
+			String parentToolCallId
 	) implements Part {
 
 		/** Creates a delegation that is in progress. */
 		public static DelegationPart started(String id, Instant timestamp,
-				String fromAgent, String toAgent, String inputSummary) {
+				String fromAgent, String toAgent, String inputSummary, String parentToolCallId) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
 				inputSummary, null, new CopyOnWriteArrayList<>(), null, 0L,
-				-1, null, null);
+				-1, null, null, parentToolCallId == null ? "" : parentToolCallId);
 		}
 
 		/** Records the delegation result after the child agent finishes. */
@@ -370,7 +407,95 @@ public sealed interface Part {
 				StopReason childStopReason) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
 				inputSummary, summary, childParts, sessionId, elapsedMs,
-				childTurnsUsed, childUsage, childStopReason);
+				childTurnsUsed, childUsage, childStopReason, parentToolCallId);
+		}
+	}
+
+	/**
+	 * The state a {@link SubagentPart} records of its subagent.
+	 *
+	 * <p>
+	 * The states of a subagent job, and {@link #LIMIT} besides: the job of a subagent that stopped
+	 * in order at a limit is done, but its card says the answer may be incomplete. The names are
+	 * what a recorded transcript holds and what the browser reads, so a constant is never renamed.
+	 * </p>
+	 */
+	enum SubagentStatus {
+		/** Waits in the queue for a free slot. */
+		QUEUED,
+		/** At work. */
+		RUNNING,
+		/** Finished with its answer. */
+		DONE,
+		/** Stopped in order at a limit - turns, budget, output - with an answer that may be incomplete. */
+		LIMIT,
+		/** Ended with an error, or was interrupted by the end of the process it ran in. */
+		FAILED,
+		/** Cancelled, while it ran or while it was still queued. */
+		CANCELLED;
+
+		/** Whether the subagent has stopped for good: no other state follows this one. */
+		public boolean hasEnded() {
+			return this == DONE || this == LIMIT || this == FAILED || this == CANCELLED;
+		}
+
+		/**
+		 * The state of the given recorded name.
+		 *
+		 * <p>
+		 * A name this version does not know - written by another one - or none at all is read as
+		 * {@link #RUNNING}, as the browser reads it: a part that is not known to have ended is closed
+		 * by {@code InterruptedTranscript#endInterruptedSubagents} once its process is gone, whereas
+		 * a part read as ended would hide a subagent that is still at work.
+		 * </p>
+		 */
+		public static SubagentStatus fromName(String name) {
+			if (name != null) {
+				for (SubagentStatus status : values()) {
+					if (status.name().equals(name)) {
+						return status;
+					}
+				}
+			}
+			return RUNNING;
+		}
+	}
+
+	/**
+	 * A background subagent the turn started, as the lead's log keeps it: who it is, what it was asked,
+	 * where in the turn it was started, and how it ended - never its steps.
+	 *
+	 * <p>
+	 * The child's steps live in its own transcript, reached through {@link #childRunId()}; the lead's
+	 * log keeps this one part per child, so it does not grow with the child's work. What it is for is
+	 * the chat: the card that shows the child at the tool call that started it is rebuilt from this
+	 * part when the conversation is reloaded. The part is written when the child starts and replaced
+	 * when it ends; the conversation the model reads is not affected by it.
+	 * </p>
+	 *
+	 * @param id part identifier
+	 * @param timestamp when the subagent was started
+	 * @param subagentId the subagent's id within its chat, e.g. {@code "sa-2"}
+	 * @param agentName the agent the subagent runs
+	 * @param task the task brief it was given
+	 * @param parentToolCallId the id of the lead's tool call that started it; empty if unknown
+	 * @param childRunId the run id of the child run, its transcript's key; {@code null} until known
+	 * @param status the subagent's state
+	 * @param summary a short summary of how it ended; {@code null} while it runs
+	 */
+	record SubagentPart(String id, Instant timestamp, String subagentId, String agentName, String task,
+			String parentToolCallId, String childRunId, SubagentStatus status, String summary) implements Part {
+
+		/** The same part of a subagent that has left the queue and works. */
+		public SubagentPart running() {
+			return new SubagentPart(id, timestamp, subagentId, agentName, task, parentToolCallId, childRunId,
+				SubagentStatus.RUNNING, summary);
+		}
+
+		/** The same part, ended with the given status. */
+		public SubagentPart ended(SubagentStatus endStatus, String endSummary, String endChildRunId) {
+			return new SubagentPart(id, timestamp, subagentId, agentName, task, parentToolCallId,
+				endChildRunId != null ? endChildRunId : childRunId, endStatus, endSummary);
 		}
 	}
 

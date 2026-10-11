@@ -500,6 +500,15 @@ message PendingInteractionDto {
 	 * </p>
 	 */
 	repeated InteractionOptionDto options;
+
+	/**
+	 * The id of the background subagent that asks, read off the store it is still waiting in;
+	 * empty when the agent the user talks to asks, or when nothing waits any more.
+	 */
+	string askedBySubagentId;
+
+	/** The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is. */
+	string askedByAgent;
 }
 
 /**
@@ -521,6 +530,12 @@ message CreateSessionRequest {
 	 * Title for the new session.
 	 */
 	string title;
+
+	/**
+	 * The approval mode the new session starts with, as the user set it before the session existed:
+	 * AUTO_APPROVE or MANUAL. Empty starts the session with MANUAL.
+	 */
+	string approvalMode;
 }
 
 /**
@@ -587,6 +602,13 @@ message ChatSessionDetailResponse {
 
 	/** Effort level last used in this session; empty when none was chosen. */
 	string lastEffort;
+
+	/**
+	 * Whether this chat approves tools by itself: <code>AUTO_APPROVE</code> or <code>MANUAL</code>,
+	 * as the server now holds it for the window that loaded the chat. The chat's switch shows
+	 * this, so it never claims a mode the runs of this chat do not have (#658).
+	 */
+	string approvalMode;
 
 	/**
 	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
@@ -657,6 +679,18 @@ message UserInteractionEvent {
 	 * carries what is left of its deadline, not the full one.
 	 */
 	long remainingMs;
+
+	/**
+	 * The id of the background subagent that asks (e.g. "sa-2"), or empty when the agent the user
+	 * talks to asks. A subagent asks while its lead may be resting, and the card has to say whose
+	 * question it is.
+	 */
+	string askedBySubagentId;
+
+	/**
+	 * The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is.
+	 */
+	string askedByAgent;
 }
 
 /**
@@ -723,6 +757,12 @@ message RunCompletedEvent {
 
 	/** Total token usage for the run. */
 	TokenUsageDto totalUsage;
+
+	/** What the run cost, in {@link #getCurrency()}; 0 when no price was known. */
+	double totalCost;
+
+	/** The ISO 4217 code of {@link #getTotalCost()}; empty when the run reported no cost. */
+	string currency;
 }
 
 /** SSE event for turn started. */
@@ -937,8 +977,8 @@ message DelegationEventWrapper {
  * SSE event carrying subagent lifecycle status.
  *
  * <p>
- * Emitted for {@code subagent_started}, {@code subagent_completed}, {@code subagent_failed},
- * and {@code subagent_cancelled} events.
+ * Emitted for {@code subagent_started}, {@code subagent_running}, {@code subagent_completed},
+ * {@code subagent_failed}, and {@code subagent_cancelled} events.
  * </p>
  */
 message SubagentStatusEvent {
@@ -956,6 +996,187 @@ message SubagentStatusEvent {
 
 	/** Run duration in milliseconds (0 until completion). */
 	int64 durationMs;
+
+	/**
+	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
+	 * call; sent on start, on leaving the queue and on the end, so that a window which did not see the
+	 * start finds the card.
+	 */
+	string parentToolCallId;
+
+	/**
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. A
+	 * {@code subagent_running} event says when it has started.
+	 */
+	boolean queued;
+
+	/** The subagent's own run id, its transcript's key; sent on the end, empty if unknown. */
+	string childRunId;
+
+	/** On completion: why the subagent's run stopped, a {@code StopReason} name; empty otherwise. */
+	string stopReason;
+}
+
+/**
+ * Request body for POST /chat/subagents/{id}/message: the user writes to one running background
+ * subagent from its card.
+ */
+message SubagentMessageRequest {
+	/** The chat whose lead started the subagent; empty means the chat this window shows. */
+	string sessionId;
+
+	/** The id of the lead's tool call that started the subagent, which tells it from a namesake. */
+	string parentToolCallId;
+
+	/** What the user writes. */
+	string text;
+}
+
+/** Answer of GET /chat/subagents: the subagents of this window's chat, and what they spend from. */
+message SubagentListResponse {
+	/** Every subagent the chat's registry knows, whatever its status. */
+	repeated SubagentJobDto subagents;
+
+	/** The budget the subagents share; absent when no subagent's run is bounded. */
+	SubagentBudgetDto budget;
+}
+
+/** One background subagent, as GET /chat/subagents lists it. */
+message SubagentJobDto {
+	/** The subagent's id. */
+	string subagentId;
+
+	/** The name of the agent it runs. */
+	string targetAgentName;
+
+	/** The name of its {@code SubagentJobStatus}. */
+	string status;
+
+	/** Tokens its run used; 0 until it has ended. */
+	long totalTokens;
+
+	/** How long its run took; 0 until it has ended. */
+	long durationMs;
+
+	/**
+	 * Whether its recorded run is available, so that the client offers a "view transcript"
+	 * affordance only where GET /chat/subagents/{id}/transcript has something to answer.
+	 */
+	bool hasTranscript;
+
+	/** The id of the lead's tool call that started it. */
+	string parentToolCallId;
+
+	/** The task brief it was given. */
+	string task;
+
+	/** Its own run id; empty while unknown. */
+	string childRunId;
+
+	/** What its run cost, in {@link #getCurrency()}; absent while its run has not reported one. */
+	@Nullable
+	double cost;
+
+	/** The ISO 4217 code of {@link #getCost()}; absent with it. */
+	@Nullable
+	string currency;
+
+	/** Why its run stopped, a {@code StopReason} name; empty until it has ended. */
+	string stopReason;
+
+	/**
+	 * Its final text once it has ended - the error summary for a failed one - and its task while it
+	 * runs, so that the client can rebuild a finished row after a reload.
+	 */
+	string detail;
+}
+
+/**
+ * The budget a turn's subagents spend from: the allowance of the run that started them, which they
+ * share, as its headroom when that run started.
+ */
+message SubagentBudgetDto {
+	/** Token headroom; -1 when the run bounds no tokens. */
+	long tokens;
+
+	/** Money headroom, in {@link #getCurrency()}; -1 when the run bounds no money. */
+	double money;
+
+	/** The ISO 4217 code of {@link #getMoney()}; empty when the run bounds no money. */
+	string currency;
+}
+
+/** Answer of POST /chat/subagents/{id}/message. */
+message SubagentMessageResponse {
+	/**
+	 * {@code sent} - the subagent reads it at the start of its next turn; {@code ended} - the
+	 * subagent has ended and reads no more messages; {@code unknown} - no such subagent of this
+	 * account; {@code empty} - there is no text.
+	 */
+	string status;
+
+	/** The id of the message sent; the frame that says it was read names it. */
+	string messageId;
+}
+
+/** One message the user wrote to a subagent. */
+message SubagentMessageDto {
+	/** The message's id, as the answer to the request named it. */
+	string id;
+
+	/** What the user wrote. */
+	string text;
+}
+
+/**
+ * Inner data of the {@code user_message_read} frame of a background subagent: it has read these
+ * messages of the user at the start of a turn.
+ */
+message SubagentMessagesReadEvent {
+	/** The messages read, in the order they were sent. */
+	repeated SubagentMessageDto messages;
+}
+
+/**
+ * SSE event for a lead turn that starts without a message of the user, because subagents finished
+ * or asked the lead something while no turn of it ran. Precedes the turn's {@code run_started}.
+ */
+message LeadWokenEvent {
+	/** How many subagents' results the turn opens with. */
+	int32 finished;
+
+	/** How many subagents' questions it opens with. */
+	int32 asking;
+
+	/** Which subagents reported back, and why, in the order the lead is told. */
+	repeated WokenSubagent subagents;
+}
+
+/** One subagent whose news a lead turn opens with. */
+message WokenSubagent {
+	/** The subagent's id within its chat, e.g. {@code sa-2}. */
+	string subagentId;
+
+	/** The agent it runs. */
+	string agentName;
+
+	/** Why it reported back: {@code FINISHED}, {@code FAILED}, {@code CANCELLED} or {@code ASKS}. */
+	string reason;
+
+	/** The id of the lead's tool call that started it, where its card stands; empty if unknown. */
+	string parentToolCallId;
+
+	/** For {@code ASKS}, the start of what it asks; empty otherwise. */
+	string question;
+}
+
+/**
+ * SSE event saying that subagents' news waits for the user's next message, because the lead has been
+ * started for such news as often as it may between two messages of the user.
+ */
+message LeadWakesExhaustedEvent {
+	/** How many turns were started for subagents' news since the user's last message. */
+	int32 wakes;
 }
 
 /** SSE event for transaction committed. */
@@ -1165,6 +1386,16 @@ message SessionMetadata {
 
 	/** Effort level last chosen in this session. */
 	string lastEffort;
+
+	/**
+	 * When a window of the owner last showed this chat, in milliseconds since the epoch; 0 if never.
+	 *
+	 * <p>
+	 * What tells a subagent's result the user has not looked at yet from one they have: the chat
+	 * list marks a chat whose subagent ended after this.
+	 * </p>
+	 */
+	int64 lastSeen;
 }
 
 /** Catalog of agents, models and MCP servers the chat UI can offer. */

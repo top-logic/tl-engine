@@ -5,32 +5,36 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.lang.management.ManagementFactory;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
-import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.agent.environment.UserMemories;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
@@ -49,6 +53,10 @@ public class ChatSessionManager {
 	/** Maximum number of sessions to keep in the in-memory LRU cache. */
 	private static final int MAX_CACHED_SESSIONS = 5;
 
+	/** Before this, no subagent of this process can have started; see {@link InterruptedTranscript}. */
+	private static final Instant PROCESS_START =
+		Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime());
+
 	/**
 	 * Fallback context window budget for chat session memory, used only when no default model
 	 * is configured. The budget is a placeholder until the first agent run: the agent runner
@@ -57,12 +65,15 @@ public class ChatSessionManager {
 	 */
 	private static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
 
-	/** Maximum output tokens for conversation summarization. */
-	private static final int SUMMARIZATION_MAX_OUTPUT_TOKENS = 2048;
-
 	private final Object _lock = new Object();
 
-	/** Back-reference to the owning tracker for metadata serialization. */
+	/**
+	 * Tells this window's subagent registries apart from another window's for the same chat: each
+	 * window keeps its own conversation, and a lead turn reads the results of its own subagents.
+	 */
+	private final String _windowKey = UUID.randomUUID().toString();
+
+	/** Back-reference to the owning tracker, the window a chat's subagents report to. */
 	private volatile TaskProgressTracker _tracker;
 
 	/** LRU cache of per-session state, bounded to {@link #MAX_CACHED_SESSIONS}. */
@@ -84,6 +95,9 @@ public class ChatSessionManager {
 		}
 	};
 
+	/** Whether the window this manager belongs to has ended; see {@link #close()}. */
+	private boolean _closed;
+
 	/** The currently active session ID, or null if none. */
 	private volatile String _activeSessionId;
 
@@ -100,25 +114,31 @@ public class ChatSessionManager {
 	private volatile Person _activeOwner;
 
 	/**
-	 * Per-session in-memory state: the chat messages and the AI's conversation memory.
+	 * The state of the window when it shows no chat; created on first use.
+	 *
+	 * <p>
+	 * What a run without a chat - a scheduled task that records none - is sent with, and where a
+	 * setting made before any chat was opened is kept.
+	 * </p>
 	 */
-	static class SessionState {
-		final Chat _chat;
+	private ChatState _noChat;
 
-		ConversationMemory _conversationMemory;
+	/**
+	 * The state of one chat this manager holds, with what its window listens to for it.
+	 */
+	static class SessionState extends ChatState {
 
-		ConversationLog _conversationLog;
-
-		TaskStore _taskStore;
-
-		/**
-		 * Session-scoped tool registry (typically a {@link DynamicToolCatalog}).
-		 * Persists across agent runs so dynamically loaded tools survive between messages.
-		 */
-		ToolRegistry _toolRegistry;
-
-		/** */
+		/** Borrowed from {@link SubagentRegistries}; see {@link #getActiveSubagentRegistry()}. */
 		SubagentJobRegistry _subagentRegistry;
+
+		/** What {@link #_subagentRegistry} is borrowed under while this state listens to it. */
+		SubagentRegistries.Lease _subagentLease;
+
+		/** What listens to {@link #_subagentRegistry} for this state. */
+		final List<SubagentJobRegistry.Listener> _subagentListeners = new ArrayList<>();
+
+		/** Starts a lead turn for the news of {@link #_subagentRegistry}; created with it. */
+		SubagentWaker _subagentWaker;
 
 		/**
 		 * The memories the agent was opened with, read once when this conversation's first message
@@ -132,110 +152,143 @@ public class ChatSessionManager {
 		List<UserMemories.Entry> _memories;
 
 		/** */
-		SessionState(Chat chat, ConversationMemory conversationMemory) {
-			_chat = chat;
-			_conversationMemory = conversationMemory;
-			_taskStore = new TaskStore();
+		SessionState(String sessionId, Person owner, ConversationMemory memory, ConversationLog log,
+				TaskStore taskStore) {
+			super(sessionId, owner, new Chat(), memory, log, taskStore);
 		}
 	}
 
 	/**
-	 * Sets the owning {@link TaskProgressTracker} for metadata persistence during session switches.
+	 * Sets the owning {@link TaskProgressTracker}.
 	 */
 	void setTracker(TaskProgressTracker tracker) {
 		_tracker = tracker;
 	}
 
 	/**
-	 * Returns the active session's {@link Chat}, or a default empty chat if no session is active.
+	 * The state of the chat this window shows, or the window's own state when it shows none.
+	 *
+	 * <p>
+	 * One object, read in one step: a run captures it when it is sent, and reads and writes it to its
+	 * end, whatever chat the window shows by then (#844).
+	 * </p>
+	 */
+	public ChatState getActiveChatState() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null) {
+				return state;
+			}
+			if (_noChat == null) {
+				_noChat = new ChatState(null, null, new Chat(), createDefaultMemory(), new ConversationLog(),
+					new TaskStore());
+			}
+			return _noChat;
+		}
+	}
+
+	/**
+	 * The state this window holds of the given chat, or <code>null</code> if it holds none.
+	 *
+	 * <p>
+	 * Unlike {@link #getActiveChatState()}, also for a chat the window does not show any more.
+	 * </p>
+	 */
+	public ChatState getChatState(String sessionId) {
+		if (sessionId == null) {
+			return null;
+		}
+		synchronized (_lock) {
+			return _sessions.get(sessionId);
+		}
+	}
+
+	/**
+	 * The state of the given chat of the given account, to act on without showing it.
+	 *
+	 * <p>
+	 * What a request that names a chat works on - rating an answer, dropping turns - when it has no
+	 * reason to switch the chat this window shows. The state this window holds of the chat, when it
+	 * holds one that is current; otherwise one read from the database, which this manager does not
+	 * keep: putting it in the cache could push out a chat the window holds, and a chat that a run of
+	 * another window has written to is read afresh by the next switch to it anyway.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat; the caller has established that it is the given account's.
+	 * @param owner
+	 *        The account acting.
+	 * @return The chat's state, or <code>null</code> when no chat is named.
+	 */
+	public ChatState chatStateFor(String sessionId, Person owner) {
+		if (sessionId == null) {
+			return null;
+		}
+		synchronized (_lock) {
+			SessionState held = _sessions.get(sessionId);
+			if (held != null && owner != null && owner.equals(held.owner())
+				&& !_changedElsewhere.contains(sessionId)) {
+				return held;
+			}
+			return loadFromDatabase(sessionId, owner);
+		}
+	}
+
+	/**
+	 * Returns the active session's {@link Chat}.
+	 *
+	 * @see #getActiveChatState()
 	 */
 	public Chat getActiveChat() {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			if (state != null) {
-				return state._chat;
-			}
-			// No active session — return a transient chat (will be replaced on session activation)
-			return new Chat();
-		}
+		return getActiveChatState().chat();
 	}
 
 	/**
-	 * Returns the active session's {@link ConversationMemory}, or creates a transient one if no
-	 * session is active.
+	 * Returns the active session's {@link ConversationMemory}.
+	 *
+	 * @see #getActiveChatState()
 	 */
 	public ConversationMemory getActiveConversationMemory() {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			if (state != null) {
-				if (state._conversationMemory == null) {
-					state._conversationMemory = createDefaultMemory();
-				}
-				return state._conversationMemory;
-			}
-			return createDefaultMemory();
-		}
+		return getActiveChatState().memory();
 	}
 
 	/**
-	 * Returns the active session's {@link ConversationLog}, creating one if it does not exist.
-	 * Returns a transient log if no session is active.
+	 * Returns the active session's {@link ConversationLog}.
+	 *
+	 * @see #getActiveChatState()
 	 */
 	public ConversationLog getOrCreateConversationLog() {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			if (state != null) {
-				if (state._conversationLog == null) {
-					state._conversationLog = new ConversationLog();
-				}
-				return state._conversationLog;
-			}
-			return new ConversationLog();
-		}
+		return getActiveChatState().log();
 	}
 
 	/**
-	 * Returns the active session's {@link TaskStore}. Returns a transient empty store if no
-	 * session is active.
+	 * Returns the active session's {@link TaskStore}.
+	 *
+	 * @see #getActiveChatState()
 	 */
 	public TaskStore getActiveTaskStore() {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			if (state != null) {
-				if (state._taskStore == null) {
-					state._taskStore = new TaskStore();
-				}
-				return state._taskStore;
-			}
-			return new TaskStore();
-		}
+		return getActiveChatState().taskStore();
 	}
 
 	/**
 	 * Returns the active session's {@link ToolRegistry}, or {@code null} if none has been set.
+	 *
+	 * @see #getActiveChatState()
 	 */
 	public ToolRegistry getActiveToolRegistry() {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			return state != null ? state._toolRegistry : null;
-		}
-	}
-
-	/**
-	 * Sets the active session's {@link ToolRegistry}.
-	 */
-	public void setActiveToolRegistry(ToolRegistry registry) {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			if (state != null) {
-				state._toolRegistry = registry;
-			}
-		}
+		return getActiveChatState().toolRegistry();
 	}
 
 	/**
 	 * Returns the active session's {@link SubagentJobRegistry}, creating one on first use.
 	 * Returns {@code null} if no session is active.
+	 *
+	 * <p>
+	 * The registry is borrowed from {@link SubagentRegistries}, under a key of this chat in this
+	 * window, rather than owned by the session's state: the state is dropped from the cache, or
+	 * reloaded when another window wrote to the chat, and that must not stop the subagents at work.
+	 * Coming back to the chat finds them again, and what they finished meanwhile.
+	 * </p>
 	 */
 	public SubagentJobRegistry getActiveSubagentRegistry() {
 		synchronized (_lock) {
@@ -243,16 +296,198 @@ public class ChatSessionManager {
 			if (state == null) {
 				return null;
 			}
-			if (state._subagentRegistry == null) {
-				state._subagentRegistry = new SubagentJobRegistry();
+			SubagentJobRegistry registry = SubagentRegistries.forKey(subagentRegistryKey(_activeSessionId));
+			if (state._subagentRegistry != registry) {
+				detachSubagents(state);
+				attachSubagents(state);
 			}
-			return state._subagentRegistry;
+			return registry;
 		}
 	}
 
 	/**
-	 * The memories this conversation was opened with, read from the store on first use and kept for
-	 * the rest of the conversation.
+	 * The {@link SubagentJobRegistry} of the given chat in this window, creating one on first use.
+	 *
+	 * <p>
+	 * What a run of that chat spawns into and reads its subagents' news from - also when the window
+	 * has switched to another chat since the run was started. For the active chat this is
+	 * {@link #getActiveSubagentRegistry()}; another chat's registry is listened to again when the
+	 * window shows that chat again.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat; <code>null</code> means the active one.
+	 */
+	public SubagentJobRegistry getSubagentRegistry(String sessionId) {
+		synchronized (_lock) {
+			if (sessionId == null || sessionId.equals(_activeSessionId)) {
+				return getActiveSubagentRegistry();
+			}
+			return SubagentRegistries.forKey(subagentRegistryKey(sessionId));
+		}
+	}
+
+	/**
+	 * What a run of the given chat writes into, if that chat is the one this window shows.
+	 *
+	 * <p>
+	 * The check and the capture are one step under the lock that a session switch takes, so a switch
+	 * in between cannot hand over the state of the chat the window switched to.
+	 * </p>
+	 *
+	 * @return The chat's state, or <code>null</code> if the window does not show it.
+	 */
+	ChatState openChat(String sessionId) {
+		synchronized (_lock) {
+			if (sessionId == null || !sessionId.equals(_activeSessionId)) {
+				return null;
+			}
+			return _sessions.get(sessionId);
+		}
+	}
+
+	/**
+	 * Listens to the given registry for the session's state: the register that lets any window of the
+	 * account find and answer what a subagent asks, and the waker that starts a lead turn when there is
+	 * news - which, for a registry that worked on while nobody listened, may already be there.
+	 */
+	private void attachSubagents(SessionState state) {
+		Person owner = _activeOwner;
+		TaskProgressTracker tracker = _tracker;
+		if (owner == null || tracker == null || _closed) {
+			// Not marked as attached: the next call tries again, rather than never. A closed window
+			// is not attached again by a run of it that ends afterwards: nothing would detach it.
+			return;
+		}
+		// Attached rather than merely asked for: a registry nobody listens to any more is forgotten
+		// after a while, and this window is listening.
+		state._subagentLease = SubagentRegistries.attach(subagentRegistryKey(_activeSessionId));
+		SubagentJobRegistry registry = state._subagentLease.registry();
+		state._subagentRegistry = registry;
+		// Before the window's own listener: that one is removed with the window, while a subagent it
+		// registered works on and must still be dropped when it ends.
+		PendingInteractionRegistry.forgetEndedOf(registry);
+		state._subagentListeners.add(
+			PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
+		state._subagentWaker = new SubagentWaker(registry, ChatProcessor.wakeHost(tracker, owner, _activeSessionId));
+		state._subagentListeners.add(state._subagentWaker);
+		for (SubagentJobRegistry.Listener listener : state._subagentListeners) {
+			registry.addListener(listener);
+		}
+		state._subagentWaker.leadRunEnded();
+	}
+
+	/**
+	 * Listens again to the subagents the active chat started in this window before its state was
+	 * dropped or reloaded. Must be called under {@link #_lock}, after the chat became the active one.
+	 *
+	 * <p>
+	 * At once, not on the next use of {@link #getActiveSubagentRegistry()}: a subagent that finishes
+	 * or asks its lead before the window sends anything would otherwise wake nobody. A chat that never
+	 * started a subagent in this window gets no registry here.
+	 * </p>
+	 */
+	private void reattachSubagents(SessionState state) {
+		if (state._subagentRegistry != null) {
+			return;
+		}
+		if (SubagentRegistries.find(subagentRegistryKey(_activeSessionId)) != null) {
+			attachSubagents(state);
+		}
+	}
+
+	/** Stops listening to the session's registry; its subagents work on. */
+	private static void detachSubagents(SessionState state) {
+		if (state._subagentWaker != null) {
+			state._subagentWaker.close();
+			state._subagentWaker = null;
+		}
+		if (state._subagentRegistry != null) {
+			for (SubagentJobRegistry.Listener listener : state._subagentListeners) {
+				state._subagentRegistry.removeListener(listener);
+			}
+		}
+		state._subagentListeners.clear();
+		state._subagentRegistry = null;
+		if (state._subagentLease != null) {
+			state._subagentLease.close();
+			state._subagentLease = null;
+		}
+	}
+
+	/**
+	 * Stops listening to the subagents of every chat this manager holds, because the window it
+	 * belongs to has ended.
+	 *
+	 * <p>
+	 * The registries are the process's and outlive the window; what this window hung on them - its
+	 * waker, the register of its questions - holds the window's whole state, and would keep it in
+	 * memory for as long as the registry lives. The subagents work on; a registry nobody listens to is
+	 * forgotten after a while (see {@link SubagentRegistries}).
+	 * </p>
+	 */
+	public void close() {
+		synchronized (_lock) {
+			_closed = true;
+			for (SessionState state : _sessions.values()) {
+				detachSubagents(state);
+			}
+		}
+	}
+
+	/** The key of the given chat's registry in this window; see {@link SubagentRegistries}. */
+	private String subagentRegistryKey(String sessionId) {
+		return SubagentRegistries.windowKey(sessionId, _windowKey);
+	}
+
+	/**
+	 * The background subagent of the given chat with the given id, whichever window's run started it.
+	 *
+	 * <p>
+	 * Subagent ids are unique within a chat, over all its windows; the id of the lead's tool call that
+	 * started it, when given, makes sure a card finds the subagent it shows and no other. Does not check
+	 * who asks: the caller makes sure the chat is theirs.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat; <code>null</code> finds nothing.
+	 * @param subagentId
+	 *        The subagent's id within its chat, e.g. {@code sa-2}.
+	 * @param parentToolCallId
+	 *        The id of the call that started it; empty takes the first subagent with that id.
+	 * @return The subagent's job, or <code>null</code> if no window holds one.
+	 */
+	public static SubagentJob findSubagent(String sessionId, String subagentId, String parentToolCallId) {
+		if (sessionId == null || subagentId == null) {
+			return null;
+		}
+		boolean anyCall = parentToolCallId == null || parentToolCallId.isEmpty();
+		for (SubagentJobRegistry registry : SubagentRegistries.ofConversation(sessionId)) {
+			SubagentJob job = registry.get(subagentId);
+			if (job != null && (anyCall || parentToolCallId.equals(job.parentToolCallId()))) {
+				return job;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The waker of the given chat's subagents, or <code>null</code> when that chat has started none in
+	 * this window.
+	 */
+	SubagentWaker getSubagentWaker(String sessionId) {
+		if (sessionId == null) {
+			return null;
+		}
+		synchronized (_lock) {
+			SessionState state = _sessions.get(sessionId);
+			return state == null ? null : state._subagentWaker;
+		}
+	}
+
+	/**
+	 * The memories the given conversation was opened with, read from the store on first use and
+	 * kept for the rest of the conversation.
 	 *
 	 * <p>
 	 * Read once and not once per turn, because they go into the environment block of the system
@@ -267,13 +502,15 @@ public class ChatSessionManager {
 	 * reads afresh. The prompt cache is cold by then anyway.
 	 * </p>
 	 *
+	 * @param sessionId
+	 *        The conversation; one this window does not hold reads afresh and keeps nothing.
 	 * @param owner
 	 *        The account to read for; {@code null} yields an empty list.
 	 */
-	public List<UserMemories.Entry> getActiveMemories(Person owner) {
+	public List<UserMemories.Entry> getMemories(String sessionId, Person owner) {
 		SessionState state;
 		synchronized (_lock) {
-			state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			state = sessionId != null ? _sessions.get(sessionId) : null;
 			if (state != null && state._memories != null) {
 				return state._memories;
 			}
@@ -290,8 +527,8 @@ public class ChatSessionManager {
 	}
 
 	private static void disposeSessionState(SessionState state) {
-		if (state != null && state._subagentRegistry != null) {
-			state._subagentRegistry.shutdown();
+		if (state != null) {
+			detachSubagents(state);
 		}
 	}
 
@@ -340,7 +577,8 @@ public class ChatSessionManager {
 			&& !_changedElsewhere.contains(sessionId)) {
 			return true;
 		}
-		if (ChatHistoryService.findOwnedSessionById(sessionId, owner) == null) {
+		TLObject incoming = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+		if (incoming == null) {
 			Logger.warn("Refused to activate chat session " + sessionId + ": not "
 				+ (owner == null ? "anybody's" : "this user's") + ".", ChatSessionManager.class);
 			return false;
@@ -350,13 +588,11 @@ public class ChatSessionManager {
 			if (sessionId.equals(_activeSessionId)) {
 				_activeOwner = owner;
 				if (_changedElsewhere.remove(sessionId)) {
-					// What the session's metadata says is read afresh as well, so the tracker's
-					// state is reset first, as a switch does.
-					if (_tracker != null) {
-						_tracker.resetSessionState();
-					}
+					// What the session's metadata says is read afresh with it.
 					disposeSessionState(_sessions.remove(sessionId));
-					_sessions.put(sessionId, loadFromDatabase(sessionId, owner));
+					SessionState reloaded = loadFromDatabase(sessionId, owner);
+					_sessions.put(sessionId, reloaded);
+					reattachSubagents(reloaded);
 				}
 				return true;
 			}
@@ -365,13 +601,8 @@ public class ChatSessionManager {
 			// happens after the lock is released (see persistOutsideLock).
 			outgoing = preparePersist();
 
-			// Reset tracker state immediately so it is never retained from the previous session,
-			// regardless of whether the new session is found in the LRU cache or loaded from DB.
-			if (_tracker != null) {
-				_tracker.resetSessionState();
-			}
-
-			// Check LRU cache first
+			// Check LRU cache first. A cached chat brings its settings back with it: they are its
+			// own, not the window's.
 			SessionState cached = _sessions.get(sessionId);
 			if (cached != null && _changedElsewhere.remove(sessionId)) {
 				disposeSessionState(_sessions.remove(sessionId));
@@ -380,15 +611,17 @@ public class ChatSessionManager {
 			if (cached != null) {
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
-				return true;
+			} else {
+				SessionState newState = loadFromDatabase(sessionId, owner);
+				_sessions.put(sessionId, newState);
+				_activeSessionId = sessionId;
+				_activeOwner = owner;
+				reattachSubagents(newState);
 			}
-
-			SessionState newState = loadFromDatabase(sessionId, owner);
-			_sessions.put(sessionId, newState);
-			_activeSessionId = sessionId;
-			_activeOwner = owner;
 		}
 		persistOutsideLock(outgoing);
+		// The window shows the chat from now on: a subagent's result that ended before is no news.
+		ChatHistoryService.markSeen(incoming);
 		return true;
 	}
 
@@ -426,14 +659,36 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Notes that a session this manager holds has changed in the database, unless the copy held is
+	 * the given log - the one the change was made in.
+	 *
+	 * @param sessionId
+	 *        The changed session; <code>null</code> and a session this manager does not hold are a
+	 *        no-op.
+	 * @param current
+	 *        The log that already carries the change.
+	 * @see #markChangedElsewhere(String)
+	 */
+	public void markChangedElsewhere(String sessionId, ConversationLog current) {
+		if (sessionId == null) {
+			return;
+		}
+		synchronized (_lock) {
+			SessionState state = _sessions.get(sessionId);
+			if (state != null && state.log() != current) {
+				_changedElsewhere.add(sessionId);
+			}
+		}
+	}
+
+	/**
 	 * Builds the state of a session from what the database holds. Must be called under
 	 * {@link #_lock}.
 	 */
 	private SessionState loadFromDatabase(String sessionId, Person owner) {
-		Chat chat = new Chat();
 		ConversationMemory memory = createDefaultMemory();
 		ConversationLog convLog = new ConversationLog();
-		TaskStore loadedTaskStore = new TaskStore();
+		String metadataJson = null;
 
 		try {
 			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
@@ -441,23 +696,19 @@ public class ChatSessionManager {
 				String json = ChatHistoryService.loadConversationJson(session);
 				if (json != null && !json.isEmpty()) {
 					convLog = ConversationLogSerializer.fromJson(json);
+					InterruptedTranscript.endInterruptedSubagents(convLog, PROCESS_START);
 					ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
 				}
-
-				if (_tracker != null) {
-					String metadataJson = ChatHistoryService.getMetadataJson(session);
-					DtoMapper.loadMetadata(metadataJson, _tracker);
-					loadedTaskStore = DtoMapper.loadTaskStore(metadataJson);
-				}
+				metadataJson = ChatHistoryService.getMetadataJson(session);
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to load session " + sessionId + ": " + ex.getMessage(), ex,
 				ChatSessionManager.class);
 		}
 
-		SessionState newState = new SessionState(chat, memory);
-		newState._conversationLog = convLog;
-		newState._taskStore = loadedTaskStore;
+		SessionState newState =
+			new SessionState(sessionId, owner, memory, convLog, DtoMapper.loadTaskStore(metadataJson));
+		DtoMapper.loadMetadata(metadataJson, newState);
 		return newState;
 	}
 
@@ -485,13 +736,14 @@ public class ChatSessionManager {
 			if (state == null && !wasActive) {
 				return false;
 			}
+			// Its subagents were stopped by the deletion itself, in every window - see
+			// AgentExecutionStore.deleteSession. This window only stops listening to them.
 			disposeSessionState(state);
 			if (wasActive) {
 				_activeSessionId = null;
 				_activeOwner = null;
-				if (_tracker != null) {
-					_tracker.resetSessionState();
-				}
+				// Nothing of the deleted chat carries over to what the window shows next.
+				_noChat = null;
 			}
 			return true;
 		}
@@ -515,6 +767,24 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Persists the metadata of the given chat, whether or not this window still shows it.
+	 *
+	 * <p>
+	 * What a run writes when it ends: the state of its own chat, never the one the window has
+	 * switched to meanwhile (#844).
+	 * </p>
+	 *
+	 * @param chat
+	 *        The chat's state; one without a chat is a no-op.
+	 */
+	public void persist(ChatState chat) {
+		if (chat == null || chat.sessionId() == null) {
+			return;
+		}
+		persistOutsideLock(new PersistJob(chat.sessionId(), DtoMapper.serializeMetadata(chat), chat.owner()));
+	}
+
+	/**
 	 * Snapshot of what to persist, taken under {@link #_lock}.
 	 *
 	 * <p>
@@ -533,11 +803,11 @@ public class ChatSessionManager {
 		if (sessionId == null) {
 			return null;
 		}
-		if (_sessions.get(sessionId) == null) {
+		SessionState state = _sessions.get(sessionId);
+		if (state == null) {
 			return null;
 		}
-		String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
-		return new PersistJob(sessionId, metadataJson, _activeOwner);
+		return new PersistJob(sessionId, DtoMapper.serializeMetadata(state), _activeOwner);
 	}
 
 	/**
@@ -552,8 +822,10 @@ public class ChatSessionManager {
 		}
 		try {
 			TLObject session = ChatHistoryService.findOwnedSessionById(job.sessionId(), job.owner());
-			if (session != null) {
-				ChatHistoryService.saveMetadata(session, job.metadataJson());
+			if (session != null && job.metadataJson() != null) {
+				// The approval mode is the one value the switch alone writes (#658).
+				ChatHistoryService.updateMetadata(session,
+					stored -> DtoMapper.keepStoredApprovalMode(stored, job.metadataJson()));
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + job.sessionId() + ": " + ex.getMessage(), ex,
@@ -572,7 +844,7 @@ public class ChatSessionManager {
 	 * </p>
 	 */
 	private static ConversationMemory createDefaultMemory() {
-		CompactionStrategy strategy = createCompactionStrategy();
+		CompactionStrategy strategy = CompactionStrategies.forDefaultModel();
 		int contextWindow = resolveContextWindow();
 		return ConversationMemory.withDefaults(strategy, contextWindow);
 	}
@@ -592,29 +864,5 @@ public class ChatSessionManager {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
 		return info.limits().contextWindow();
-	}
-
-	private static CompactionStrategy createCompactionStrategy() {
-		LLMProviderService registry = LLMProviderService.getInstance();
-		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
-		if (registry == null || runtime == null) {
-			Logger.warn("The LLM providers or the agent runtime are not available, falling back to truncation.",
-				ChatSessionManager.class);
-			return new TruncatingStrategy();
-		}
-		String defaultModel = runtime.getDefaultModel();
-		if (defaultModel == null || defaultModel.isBlank()) {
-			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
-			return new TruncatingStrategy();
-		}
-		LLMProvider provider;
-		try {
-			provider = registry.buildProvider(defaultModel, runtime.getDefaultProvider());
-		} catch (IllegalStateException ex) {
-			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
-				ChatSessionManager.class);
-			return new TruncatingStrategy();
-		}
-		return new SummarizingStrategy(provider, defaultModel, SUMMARIZATION_MAX_OUTPUT_TOKENS);
 	}
 }

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The shipped read policy for the perceivable binaries this module stores (issue #227).
+	The shipped read policy for the perceivable binaries this module stores (issue #227): screenshots,
+	cookie pools, the web pages agent runs read, and the research runs it keeps (issues #764, #827),
+	whose report is rendered as a binary.
 
 	A screenshot is a picture of a page somebody drove a browser to while logged in somewhere, and a
 	cookie pool is that login itself. Both are reachable through "viewDocument", which loads a
@@ -88,6 +90,73 @@
 							</path>
 						</rule>
 
+						<!--
+							A research run (Issue #764, #827) is its owner's like a screenshot, and so
+							are its parts: a source or a finding gets the role through the run that
+							holds it, so that the owner reads the run's tables too.
+						-->
+						<rule id="tl.ai.research.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchRun"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.sources.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchSource"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#sources" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.findings.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchFinding"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#findings" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+
+						<!--
+							An archived web page is the account's whose run read it, and the
+							/archived-page/ route asks the same (PageArchive.mayRead). A page a research
+							run's source references is also the run owner's, so that the owner reads
+							every part of the run its sources lead to.
+						-->
+						<rule id="tl.ai.archivedpage.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ArchivedPage"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ArchivedPage#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.archivedpage.research.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ArchivedPage"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchSource#page" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#sources" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+
 						<rule id="tl.ai.cookiepool.owner"
 							inherit="true"
 							meta-element="tl.ai.cookiepool:CookiePool"
@@ -112,6 +181,34 @@
 			<instance>
 				<security-config>
 					<class name="tl.ai.screenshots:Screenshot">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchRun">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchSource">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchFinding">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ArchivedPage">
 						<grant
 							inherit="true"
 							operation="Read"

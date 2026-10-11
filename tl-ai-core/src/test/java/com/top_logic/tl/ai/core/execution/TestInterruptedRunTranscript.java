@@ -23,9 +23,11 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -40,6 +42,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
@@ -142,6 +145,68 @@ public class TestInterruptedRunTranscript extends BasicTestCase {
 		assertTrue("The turn ends saying it was interrupted: " + last,
 			last instanceof Part.SystemPart system
 				&& system.eventType() == Part.SystemEventType.INTERRUPTED);
+	}
+
+	/**
+	 * A subagent's part changes in the transcript of a run still going only through that run's own
+	 * final transcript: its checkpoint is not parsed and rewritten per change. Once the run has ended,
+	 * the change is written into its transcript.
+	 */
+	public void testTheSubagentPartOfAnOpenRunIsLeftToItsFinalTranscript() {
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session = store.createSession(SessionKind.CHAT, null, "subagent-part-open-lead");
+		AgentExecution lead = store.beginExecution(session, "lead-open-" + System.nanoTime(), "lead", MODEL,
+			null, null);
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		log.startTurn();
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true, lead);
+		String queued = ConversationLogSerializer.toJson(log.turns());
+		store.checkpointTranscript(lead, () -> queued);
+
+		listener.recordSubagentRunning("sa-1");
+		assertEquals("The checkpoint of the open run is not rewritten.", Part.SubagentStatus.QUEUED,
+			subagentIn(reread(lead.getRunId()).getTranscript()).status());
+
+		store.finishExecutionWithLatestTranscript(lead, ExecutionStatus.COMPLETE, null, null, TokenUsage.EMPTY,
+			null, () -> ConversationLogSerializer.toJson(log.turns()), null);
+		assertEquals("The run's final transcript carries the part as it is now.", Part.SubagentStatus.RUNNING,
+			subagentIn(reread(lead.getRunId()).getTranscript()).status());
+
+		listener.recordSubagentCompleted("sa-1",
+			new SubagentResult("X is 42.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-1");
+		Part.SubagentPart ended = subagentIn(reread(lead.getRunId()).getTranscript());
+		assertEquals("A subagent that outlives the run is written into its transcript.", Part.SubagentStatus.DONE, ended.status());
+		assertEquals("run-1", ended.childRunId());
+	}
+
+	/**
+	 * The process ends while the lead still runs and its subagent has moved on: the checkpoint that
+	 * was not rewritten is closed by the next boot's sweep, and the part does not show the subagent
+	 * waiting or at work for ever.
+	 */
+	public void testTheSubagentPartOfAnOpenRunIsClosedAfterARestart() {
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session = store.createSession(SessionKind.CHAT, null, "subagent-part-restart");
+		AgentExecution lead = store.beginExecution(session, "lead-cut-off-" + System.nanoTime(), "lead", MODEL,
+			null, null);
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		log.startTurn();
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true, lead);
+		String queued = ConversationLogSerializer.toJson(log.turns());
+		store.checkpointTranscript(lead, () -> queued);
+		listener.recordSubagentRunning("sa-1");
+
+		// What the next boot does. A cut-off in the future: every run of "this process" is old.
+		store.failOrphanedRunningExecutions(new Date(System.currentTimeMillis() + 60_000));
+
+		Part.SubagentPart closed = subagentIn(reread(lead.getRunId()).getTranscript());
+		assertEquals(Part.SubagentStatus.FAILED, closed.status());
+	}
+
+	private static Part.SubagentPart subagentIn(String transcript) {
+		return only(onlyTurn(transcript), Part.SubagentPart.class);
 	}
 
 	private static String runIdOf(AgentSession session) {

@@ -1,6 +1,7 @@
 import type {
   ApprovalOutcome,
   ApprovalRequest,
+  Asker,
   AssistantText,
   ChatMessage,
   Citation,
@@ -15,6 +16,7 @@ import type {
   ToolCallStatus,
   ToolResult,
   UserMessage,
+  WokenSubagent,
 } from './types'
 
 function genId(): string {
@@ -35,7 +37,7 @@ export type ChatAction =
   | { type: 'ADD_TOOL_RESULT'; toolUseId: string; output: string; isError?: boolean }
   | { type: 'APPEND_THINKING'; delta: string }
   | { type: 'ADD_ERROR'; message: string; code?: string }
-  | { type: 'ADD_NOTICE'; kind: NoticeKind; detail: string }
+  | { type: 'ADD_NOTICE'; kind: NoticeKind; detail: string; woken?: WokenSubagent[] }
   | {
       type: 'ADD_APPROVAL'
       approvalRequestId: string
@@ -45,6 +47,7 @@ export type ChatAction =
       displayReason: string
       toolMode?: string
       remainingMs?: number
+      askedBy?: Asker
     }
   | { type: 'RESOLVE_APPROVAL'; approvalRequestId: string; outcome: ApprovalOutcome }
   | {
@@ -56,6 +59,7 @@ export type ChatAction =
       options?: InteractionOption[]
       multiSelect?: boolean
       remainingMs?: number
+      askedBy?: Asker
     }
   | { type: 'RESOLVE_INTERACTION'; requestId: string }
   | { type: 'START_RUN'; runId: string }
@@ -180,6 +184,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         kind: action.kind,
         detail: action.detail,
         timestamp: Date.now(),
+        ...(action.woken?.length ? { woken: action.woken } : {}),
       }
       return [...messages, msg]
     }
@@ -203,6 +208,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           toolMode: shown.toolMode ?? action.toolMode,
           remainingMs: action.remainingMs,
           receivedAt: Date.now(),
+          askedBy: shown.askedBy ?? action.askedBy,
         }
         return messages.map((m) => (m === shown ? completed : m))
       }
@@ -221,6 +227,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           timestamp: Date.now(),
           remainingMs: action.remainingMs,
           receivedAt: Date.now(),
+          askedBy: action.askedBy,
         },
       ]
     }
@@ -245,6 +252,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           multiSelect: action.multiSelect ?? asked.multiSelect,
           remainingMs: action.remainingMs,
           receivedAt: Date.now(),
+          askedBy: asked.askedBy ?? action.askedBy,
         }
         return messages.map((m) => (m === asked ? completed : m))
       }
@@ -261,6 +269,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         multiSelect: action.multiSelect,
         remainingMs: action.remainingMs,
         receivedAt: Date.now(),
+        askedBy: action.askedBy,
       }
       return [...messages, msg]
     }

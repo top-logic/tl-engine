@@ -183,6 +183,9 @@ const EN = {
   yourAnswer: 'Your answer',
   /** The row under a choice question's options that lets the user answer in their own words (#679). */
   ownAnswer: 'Own answer…',
+  /** Names the background subagent behind a question or approval card. */
+  askedBySubagent: (id: string, agent: string) =>
+    agent ? `Asked by subagent ${id} (${agent}), not by the main agent` : `Asked by subagent ${id}, not by the main agent`,
   timeIsUp: 'Time is up',
   leftToAnswer: ' left to answer',
   collapse: (kind: string) => `Collapse ${kind}`,
@@ -219,7 +222,55 @@ const EN = {
   loading: 'Loading…',
   noDetails: 'No details available.',
   transcriptFailed: 'The subagent transcript could not be loaded.',
+  /** The status chip of a subagent's card. */
+  subagentQueued: 'queued',
+  subagentRunning: 'running',
+  subagentWaiting: 'waiting for you',
+  /** A subagent that asked its lead (ask_lead) and waits for the reply. */
+  subagentWaitingLead: (lead: string) => `waiting for ${lead}`,
+  /** Who it waits for when the lead agent has no name to show. */
+  subagentLeadFallback: 'the main agent',
+  /** Before the working chip above the composer: how many subagents wait for the user's answer. */
+  subagentsWaitingForYou: (count: number) => `${count} waiting for you`,
+  /** The summary row of a turn with many subagents: "5 subagents: 1 waiting, 2 running, 2 done". */
+  subagentsCount: (count: number) => `${count} subagent${count === 1 ? '' : 's'}`,
+  subagentsWaitingN: (count: number) => `${count} waiting`,
+  subagentsRunningN: (count: number) => `${count} running`,
+  subagentsQueuedN: (count: number) => `${count} queued`,
+  subagentsDoneN: (count: number) => `${count} done`,
+  subagentsLimitN: (count: number) => `${count} at the limit`,
+  subagentsFailedN: (count: number) => `${count} failed`,
+  subagentsCancelledN: (count: number) => `${count} cancelled`,
+  /** Unfolds the ended cards of such a turn. */
+  subagentsShowEnded: (count: number) => `Show ended (${count})`,
+  subagentsHideEnded: 'Hide ended',
+  /** In the panel header: the share of the run's budget the subagents spent ("4", "< 1"). */
+  subagentsBudgetShare: (percent: string) => `${percent} % of the budget`,
+  subagentDone: 'done',
+  /** Stopped in order at a limit (turns, budget, output): its answer may be incomplete. */
+  subagentLimit: 'limit reached',
+  subagentFailed: 'failed',
+  subagentCancelled: 'cancelled',
+  subagentNoSteps: 'No steps yet.',
+  subagentTurns: (count: number) => `${count} turn${count === 1 ? '' : 's'}`,
   subagentStopFailed: 'The subagent could not be stopped.',
+  /** The accessible name of the stop on one subagent's card. */
+  subagentStopOne: (name: string) => `Stop ${name}`,
+  /** Beside the agent's name on the card of a synchronous delegation: the agent waits for it. */
+  delegationTag: 'delegated',
+  /** The field in a running subagent's open card, to write to it directly. */
+  subagentMessagePlaceholder: 'Message …',
+  subagentMessageLabel: (name: string) => `Message to ${name}`,
+  /** Under the field: when the subagent reads what is written. */
+  subagentMessageHint: 'It reads your message before its next step.',
+  /** The list of what the user wrote to the subagent. */
+  subagentMessagesLabel: 'Your messages to this subagent',
+  /** The receipt of a message: written, and not yet read. */
+  subagentMessageSent: 'sent',
+  /** The receipt of a message the subagent has read. */
+  subagentMessageRead: 'read',
+  subagentMessageEnded: 'The subagent has ended and reads no more messages.',
+  subagentMessageFailed: 'The message could not be sent.',
   subagentsStopFailed: 'The subagents could not be stopped.',
   you: 'You',
   agentLabel: 'Agent',
@@ -244,6 +295,21 @@ const EN = {
   cancelled: 'Stopped.',
   /** A run the server restart cut off (#598): it ended without anybody stopping it. */
   interrupted: 'The server was restarted before this reply was finished. Send your message again to continue.',
+  /** A turn no message of the user started: subagents finished or asked the agent something. */
+  leadWoken: 'Subagents reported back. The agent continues on its own.',
+  /** What one subagent of such a turn did, after its name: "sa-2 (Counter) is done". */
+  wokenFinished: 'is done',
+  wokenLimit: 'reached its limit',
+  wokenFailed: 'failed',
+  wokenCancelled: 'was cancelled',
+  /** Followed by the start of the question. */
+  wokenAsks: 'asks:',
+  /** Ends the line that names the subagents. */
+  leadWokenContinues: 'The agent continues on its own.',
+  /** The accessible name of a subagent's name in that line, which scrolls to its card. */
+  wokenShowCard: (name: string) => `Show the card of ${name}`,
+  /** The agent has been started for subagents' news as often as it may without the user. */
+  leadWakesExhausted: 'More subagent results are waiting. The agent reads them with your next message.',
 
   sideRail: 'Rail',
   sideRailBadge: (count: number) => `${count} new`,
@@ -443,6 +509,10 @@ const DE: Bundle = {
   continueLabel: 'Weiter',
   yourAnswer: 'Deine Antwort',
   ownAnswer: 'Eigene Antwort…',
+  askedBySubagent: (id: string, agent: string) =>
+    agent
+      ? `Gefragt von Subagent ${id} (${agent}), nicht vom Hauptagenten`
+      : `Gefragt von Subagent ${id}, nicht vom Hauptagenten`,
   timeIsUp: 'Zeit abgelaufen',
   leftToAnswer: ' verbleiben zum Antworten',
   collapse: (kind: string) => `${kind} einklappen`,
@@ -478,7 +548,40 @@ const DE: Bundle = {
   loading: 'Wird geladen …',
   noDetails: 'Keine Details vorhanden.',
   transcriptFailed: 'Das Protokoll des Subagenten konnte nicht geladen werden.',
+  subagentQueued: 'wartet auf Start',
+  subagentRunning: 'läuft',
+  subagentWaiting: 'wartet auf dich',
+  subagentWaitingLead: (lead: string) => `wartet auf ${lead}`,
+  subagentLeadFallback: 'den Hauptagenten',
+  subagentsWaitingForYou: (count: number) => `${count} ${count === 1 ? 'wartet' : 'warten'} auf dich`,
+  subagentsCount: (count: number) => `${count} ${count === 1 ? 'Subagent' : 'Subagenten'}`,
+  subagentsWaitingN: (count: number) => `${count} ${count === 1 ? 'wartet' : 'warten'}`,
+  subagentsRunningN: (count: number) => `${count} ${count === 1 ? 'läuft' : 'laufen'}`,
+  subagentsQueuedN: (count: number) => `${count} ${count === 1 ? 'wartet' : 'warten'} auf Start`,
+  subagentsDoneN: (count: number) => `${count} fertig`,
+  subagentsLimitN: (count: number) => `${count} am Limit`,
+  subagentsFailedN: (count: number) => `${count} fehlgeschlagen`,
+  subagentsCancelledN: (count: number) => `${count} abgebrochen`,
+  subagentsShowEnded: (count: number) => `Beendete zeigen (${count})`,
+  subagentsHideEnded: 'Beendete ausblenden',
+  subagentsBudgetShare: (percent: string) => `${percent} % des Budgets`,
+  subagentDone: 'fertig',
+  subagentLimit: 'Limit erreicht',
+  subagentFailed: 'fehlgeschlagen',
+  subagentCancelled: 'abgebrochen',
+  subagentNoSteps: 'Noch keine Schritte.',
+  subagentTurns: (count: number) => `${count} ${count === 1 ? 'Runde' : 'Runden'}`,
   subagentStopFailed: 'Der Subagent konnte nicht abgebrochen werden.',
+  subagentStopOne: (name: string) => `${name} abbrechen`,
+  delegationTag: 'delegiert',
+  subagentMessagePlaceholder: 'Nachricht …',
+  subagentMessageLabel: (name: string) => `Nachricht an ${name}`,
+  subagentMessageHint: 'Er liest deine Nachricht vor seinem nächsten Schritt.',
+  subagentMessagesLabel: 'Deine Nachrichten an diesen Subagenten',
+  subagentMessageSent: 'gesendet',
+  subagentMessageRead: 'gelesen',
+  subagentMessageEnded: 'Der Subagent ist beendet und liest keine Nachrichten mehr.',
+  subagentMessageFailed: 'Die Nachricht konnte nicht gesendet werden.',
   subagentsStopFailed: 'Die Subagenten konnten nicht abgebrochen werden.',
   you: 'Du',
   agentLabel: 'Agent',
@@ -500,6 +603,15 @@ const DE: Bundle = {
   errorDetails: 'Technische Details',
   cancelled: 'Abgebrochen.',
   interrupted: 'Der Server wurde neu gestartet, bevor diese Antwort fertig war. Sende deine Nachricht noch einmal, um weiterzumachen.',
+  leadWoken: 'Subagenten haben sich gemeldet. Der Agent macht von sich aus weiter.',
+  wokenFinished: 'ist fertig',
+  wokenLimit: 'hat sein Limit erreicht',
+  wokenFailed: 'ist fehlgeschlagen',
+  wokenCancelled: 'wurde abgebrochen',
+  wokenAsks: 'fragt:',
+  leadWokenContinues: 'Der Agent macht von sich aus weiter.',
+  wokenShowCard: (name: string) => `Karte von ${name} zeigen`,
+  leadWakesExhausted: 'Weitere Ergebnisse von Subagenten warten. Der Agent liest sie mit deiner nächsten Nachricht.',
 
   sideRail: 'Leiste',
   sideRailBadge: (count: number) => `${count} neu`,

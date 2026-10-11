@@ -49,7 +49,7 @@
 		horizontal="true"
 		resizable="false"
 	>
-		<layoutInfo size="86px"/>
+		<layoutInfo size="98px"/>
 		<components>
 			<selector name="${selectorName}"
 				alphabeticalOrder="false"
@@ -154,7 +154,38 @@
 						}
 					]]></function>
 				</model>
-				<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder"/>
+				<!--
+					The two days stand side by side at every width. The type's own form has two
+					columns too, but the framework stacks them below a width it decides, and this row
+					is one line high: at 1440 px with the navigation open, "Bis" was in a second line
+					nobody could see (#866). A columns layout without line break keeps both fields in
+					the row; where the row is narrower than the two, it scrolls sideways rather than
+					hiding the second one. That layout sets its fields 8px lower than a stacked one,
+					which is why the row is 98px high and not 86px.
+				-->
+				<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder">
+					<forms>
+						<form type="tl.ai.monitor:Period">
+							<formDefinition>
+								<columnsLayout
+									columns="TWO"
+									lineBreak="false"
+								>
+									<field
+										attribute="fromDay"
+										fullQualifiedName="tl.ai.monitor:Period#fromDay"
+										type="tl.core:Date"
+									/>
+									<field
+										attribute="toDay"
+										fullQualifiedName="tl.ai.monitor:Period#toDay"
+										type="tl.core:Date"
+									/>
+								</columnsLayout>
+							</formDefinition>
+						</form>
+					</forms>
+				</modelBuilder>
 				<buttons>
 					<!--
 						Applying is a copy, for the same reason the transform above builds a new

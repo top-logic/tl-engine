@@ -14,17 +14,27 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
+import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -69,6 +79,16 @@ public class EvalRunner {
 	 *        tools authorize against the thread's user.
 	 */
 	public static RunRecord run(EvalScenario scenario, EvalConfig.Arm arm, int repeat, Person actor) {
+		return run(scenario, arm, repeat, actor, Judge.NONE);
+	}
+
+	/**
+	 * Runs the scenario on the arm and returns the graded row, its {@link JudgeExpectation}s decided
+	 * by the given judge.
+	 *
+	 * @see #run(EvalScenario, EvalConfig.Arm, int, Person)
+	 */
+	public static RunRecord run(EvalScenario scenario, EvalConfig.Arm arm, int repeat, Person actor, Judge judge) {
 		String unusable = whyUnusable(arm);
 		if (unusable != null) {
 			return RunRecord.couldNotRun(scenario.getId(), arm, repeat, unusable);
@@ -76,6 +96,10 @@ public class EvalRunner {
 
 		RunObservation observation = new RunObservation();
 		String response = "";
+		RunAnswer answer = RunAnswer.none(scenario.getPrompt());
+		SubagentTotals subagents = SubagentTotals.NONE;
+		String registryKey = null;
+		SubagentRegistries.Lease registry = null;
 		String error = null;
 		long startedAt = System.currentTimeMillis();
 
@@ -89,13 +113,27 @@ public class EvalRunner {
 			AgentSession session = AgentExecutionStore.getInstance()
 				.createSession(SessionKind.SCRIPT, actor, sessionTitle(scenario, arm, repeat));
 
+			registryKey = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session));
+			// Borrowed for the whole run, so that what the subagents spent can still be read after the
+			// lead finished: the run's own lease lets an idle registry go when the run ends.
+			registry = SubagentRegistries.borrow(registryKey);
 			AgentRunner.RecordedRun run = AgentRunner.run(arm.getAgent(), conversation, null,
 				context, observation, null, env.logListener().log(), session, null);
 			response = run.response() == null ? "" : run.response();
+			answer = new RunAnswer(scenario.getPrompt(), lastText(conversation), response,
+				citations(env.logListener().log()));
 		} catch (RuntimeException ex) {
 			error = ex.getClass().getSimpleName() + ": " + ex.getMessage();
 		} finally {
 			context.transaction().close();
+			if (registry != null) {
+				subagents = subagentTotals(registry.registry());
+				// The registries belong to the process. A subagent still running when the lead
+				// finished must not go on into the next run, and a later suite's fresh database hands
+				// out the same session ids.
+				SubagentRegistries.remove(registryKey);
+				registry.close();
+			}
 		}
 		long durationMs = System.currentTimeMillis() - startedAt;
 
@@ -119,7 +157,7 @@ public class EvalRunner {
 		List<String> toolCalls = observation.toolCalls();
 		List<Verdict> verdicts = new ArrayList<>();
 		verdicts.add(completionVerdict(stopReason, error));
-		verdicts.addAll(Graders.grade(scenario, toolCalls, observation.calls()));
+		verdicts.addAll(Graders.grade(scenario, toolCalls, observation.calls(), answer, judge));
 		TokenUsage usage = observation.usage();
 		boolean passed = verdicts.stream().allMatch(Verdict::passed);
 		RunOutcome outcome = passed ? RunOutcome.PASS : (error != null ? RunOutcome.ERROR : RunOutcome.FAIL);
@@ -128,7 +166,7 @@ public class EvalRunner {
 			outcome, observation.turns(), usage.promptTokens(), usage.cacheReadTokens(),
 			usage.outputTokens(), durationMs,
 			stopReason != null ? stopReason.name() : (error != null ? "ERROR" : "UNKNOWN"),
-			toolCalls, verdicts, response, error);
+			toolCalls, verdicts, response, error, subagents);
 	}
 
 	/**
@@ -178,7 +216,87 @@ public class EvalRunner {
 		if (!model.capabilities().toolCall()) {
 			return "Model '" + arm.getModel() + "' cannot call tools, so it cannot run this harness.";
 		}
+		for (EvalConfig.AgentModel agentModel : arm.getAgentModels()) {
+			ModelInfo info = LLMProviderService.getInstance().getModel(agentModel.getModel());
+			if (info == null) {
+				return "Model '" + agentModel.getModel() + "' of agent '" + agentModel.getAgent()
+					+ "' is not in the catalogue of this application.";
+			}
+			if (!info.capabilities().toolCall()) {
+				return "Model '" + agentModel.getModel() + "' of agent '" + agentModel.getAgent()
+					+ "' cannot call tools.";
+			}
+		}
 		return null;
+	}
+
+	/**
+	 * What the subagents of the run spent, from the jobs of its registry; none when it has none.
+	 *
+	 * <p>
+	 * A subagent still running when the lead finished counts with nothing: it has no result yet, and
+	 * removing the registry cancels it.
+	 * </p>
+	 */
+	static SubagentTotals subagentTotals(SubagentJobRegistry registry) {
+		if (registry == null) {
+			return SubagentTotals.NONE;
+		}
+		int runs = 0;
+		int input = 0;
+		int cached = 0;
+		int output = 0;
+		int calls = 0;
+		for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
+			runs++;
+			SubagentResult result = job.result();
+			if (result == null) {
+				continue;
+			}
+			if (result.tokenUsage() != null) {
+				input += result.tokenUsage().promptTokens();
+				cached += result.tokenUsage().cacheReadTokens();
+				output += result.tokenUsage().outputTokens();
+			}
+			calls += result.toolCallCount();
+		}
+		return new SubagentTotals(runs, input, cached, output, calls);
+	}
+
+	/**
+	 * The text of the last assistant message that has text, as the model wrote it.
+	 */
+	static String lastText(Conversation conversation) {
+		List<Message> messages = conversation.messages();
+		for (int n = messages.size() - 1; n >= 0; n--) {
+			if (messages.get(n) instanceof AssistantMessage assistant) {
+				StringBuilder text = new StringBuilder();
+				for (ContentPart part : assistant.content()) {
+					if (part instanceof TextContent content) {
+						text.append(content.text());
+					}
+				}
+				if (text.length() > 0) {
+					return text.toString();
+				}
+			}
+		}
+		return "";
+	}
+
+	/** The footnotes the citation check kept on the run's last turn. */
+	private static List<Citation> citations(ConversationLog log) {
+		List<Turn> turns = log.turns();
+		if (turns.isEmpty()) {
+			return List.of();
+		}
+		List<Citation> result = new ArrayList<>();
+		for (Part part : turns.get(turns.size() - 1).assistantParts()) {
+			if (part instanceof Part.TextPart text) {
+				result.addAll(text.citations());
+			}
+		}
+		return result;
 	}
 
 	/** The title the run's session is recorded under, so a row can be found again. */

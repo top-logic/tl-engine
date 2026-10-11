@@ -390,6 +390,9 @@ export function TLDataList({ controlId }: TLCellProps) {
                     <span className="rail-item-mark" aria-hidden="true" />
                     <span className="rail-open-text">
                       {row.lines.map((line, index) => {
+                        // A line whose value is empty for this row - a state the row is not in - is
+                        // not drawn, so it leaves no gap.
+                        if (index > 0 && !line.text) return null
                         const emphasis = line.emphasis ?? (index === 0 ? 'primary' : 'secondary')
                         return (
                           <span key={index} className={`rail-line rail-line-${emphasis}`}>

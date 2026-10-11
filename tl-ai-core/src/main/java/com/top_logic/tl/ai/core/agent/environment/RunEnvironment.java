@@ -307,8 +307,16 @@ public class RunEnvironment {
 		return localeOf(currentAccount());
 	}
 
+	/**
+	 * The time zone of the account the current run acts for - the zone the environment block states
+	 * the date in, for a tool that writes a date for that account.
+	 */
+	public static ZoneId runZone() {
+		return zoneOf(currentAccount());
+	}
+
 	/** The acting account's UI language, the session's or English when it states none. */
-	static Locale localeOf(Person account) {
+	public static Locale localeOf(Person account) {
 		if (account != null) {
 			try {
 				Locale locale = account.getLocale();

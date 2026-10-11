@@ -16,7 +16,8 @@ Issue: [#433](https://git.top-logic.com/TopLogic/tl-ai/issues/433).
 
 | Piece | Where |
 |---|---|
-| Scenario model (`<eval>`, `<arm>`, `<scenario>`, `<kb-query>`, `<tool-sequence>`, `<presented>`) | `EvalConfig`, `EvalScenario`, `Expectation` and its three kinds |
+| Scenario model (`<eval>`, `<arm>`, `<scenario>`, `<kb-query>`, `<tool-sequence>`, `<presented>`, `<citations>`, `<judge>`) | `EvalConfig`, `EvalScenario`, `Expectation` and its five kinds |
+| The judge model of a `<judge>`, and what a run answered | `Judge`, `RunAnswer` |
 | Loading and checking a scenario file | `EvalConfigs` |
 | One run of one scenario on one arm | `EvalRunner`, `RunObservation` |
 | The whole matrix | `EvalMatrix`, `EvalFixture` |
@@ -147,6 +148,9 @@ One line per run, in the order the matrix ran them.
 | `toolCalls` | every tool the model asked for, in order, separated by `\|` |
 | `failedGraders` | labels of the expectations that did not hold, separated by `\|` |
 | `error` | the exception, or why the arm was not started |
+| `subagents` | how many background subagents the run started |
+| `subagentInputTokens`, `subagentCacheReadTokens`, `subagentOutputTokens` | their tokens, summed |
+| `subagentToolCalls` | their tool calls, summed |
 
 Three things about those columns are worth knowing before anybody averages them.
 
@@ -176,6 +180,61 @@ four times the price is not better.
 
 ---
 
+## Research questions
+
+`research-scenarios.config.xml` (#755) puts 25 research questions to Albert with `TL_deepResearch` and
+its research workers, on the real web: 8 facts with a reference answer, 8 reports, 6 tasks of the kind
+tl-ai applications ask (3 in German) and 3 adversarial questions on fixture pages - an injected
+instruction, an SEO page against a primary source, two sources that contradict each other.
+`ResearchFixture` writes those pages; they live under `.test` and `FixtureWebFetchTool` serves them to
+real runs too.
+
+A research run changes no data, so two expectations grade its **answer**:
+
+| Expectation | Decides | How |
+|---|---|---|
+| `<citations min-sources min-domains max-unread-links>` | the answer cites enough read pages, from enough hosts, and links nothing nobody read | deterministic: the footnotes the citation check kept, and the web links of the model's own text that did not become one |
+| `<judge>` with `<rubric>` and an optional `<reference>` | the answer meets the rubric | the judge model named by `judge-model` on `<eval>` decides each criterion; the expectation holds when the share met reaches `pass-ratio` (default: all) |
+
+The judge is **pinned**: `claude-sonnet-4-6`, of another family than the arm (`gpt-5.6-luna`). Rows
+graded by another judge compare with nothing graded by the pinned one. A judge that cannot be asked
+or answers something unreadable fails the expectation; it never passes it.
+
+```bash
+export tl_openai_api_key="unencrypted:..."     # the arm
+export tl_anthropic_api_key="unencrypted:..."  # the pinned judge
+export tl_brave_api_key="unencrypted:..."      # the workers' web search
+mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.research.e2e=true -Dtest=TestResearchEval
+```
+
+`-Dtl.ai.research.scenarios=id,id` runs a sample, `-Dtl.ai.research.repeats=1` one run per question,
+`-Dtl.ai.research.judge=<model>` (and `-Dtl.ai.research.judge-provider=<provider>`) another judge. The
+CSV lands in `target/eval/research-<timestamp>.csv`, and every verdict is printed with its detail.
+Without `-Dtl.ai.research.e2e=true` the test reports as skipped. `TestResearchPlumbing` runs one of
+the questions in every build, on a scripted model and a scripted judge, with the near-misses each
+expectation exists for.
+
+An arm can put the agents its agent starts on other models (#784) - the research lead on one model,
+its workers on another - and cap the subagents that run at once, for a server that answers one
+request at a time:
+
+```xml
+<arm name="albert-gpt-worker-qwen" agent="TL_SingleAgent" model="gpt-5.6-luna" subagent-workers="1">
+    <agent-models>
+        <agent-model agent="TL_ResearchWorker" model="qwen3.8-27b" provider="qwen"/>
+    </agent-models>
+</arm>
+```
+
+`TestResearchEval` assigns them before the arm's runs and removes them afterwards.
+`-Dtl.ai.research.arms=name,name` runs some of the arms. The local arm needs `tl_qwen_api_key` and
+the company network.
+
+The token columns count the lead's run; the `subagent*` columns at the end of each line count what
+its subagents spent - how many there were, their tokens and their tool calls.
+
+---
+
 ## What these numbers may not be used for
 
 **Ranking two arms that both mostly work.** With a handful of scenarios this eval can show that an
@@ -201,11 +260,6 @@ Follow-ups, each of which changes what the report can say:
 - **Cost in currency.** The price catalogue is already fetched and parsed (`ModelInfo.cost()`), and
   nothing in the codebase reads it. Tokens × price, including the cache tiers and the ">200k" tier,
   with "no price known" as a first-class outcome rather than zero.
-- **An answer grader.** There is deliberately no scenario here whose whole answer is a sentence,
-  because the two graders are both about the database. A read-only question needs an answer matcher
-  or a judge model - and a judge has to be pinned, kept off the primary metric and never allowed to
-  judge its own family, because self-enhancement bias is documented and would contaminate exactly the
-  cross-vendor comparison this exists for.
 - **An `askUser` responder.** An unattended run that reaches `askUser` blocks until the interaction
   timeout. No scenario here triggers it; one that did would need a watcher answering from a script.
 - **Resetting a live application.** The fixture here is a fresh H2 knowledge base per suite, reseeded

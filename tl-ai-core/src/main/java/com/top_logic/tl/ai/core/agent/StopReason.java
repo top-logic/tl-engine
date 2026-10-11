@@ -15,7 +15,14 @@ public enum StopReason {
 	/** LLM finished without requesting tools, and its reply is an answer. */
 	COMPLETE,
 
-	/** Hit the configured maximum turns limit. */
+	/**
+	 * Hit the configured maximum turns limit.
+	 *
+	 * <p>
+	 * The last turn of such a run offers no tool: the model is told that the limit is reached and
+	 * answers with what it has, so the run ends with an answer rather than with a call nobody runs.
+	 * </p>
+	 */
 	MAX_TURNS,
 
 	/** Unrecoverable provider error. */
@@ -31,7 +38,7 @@ public enum StopReason {
 	CONTEXT_OVERFLOW,
 
 	/**
-	 * The principal's token budget ran out while the run was working.
+	 * The principal's token or money budget ran out while the run was working.
 	 *
 	 * <p>
 	 * An orderly stop, not a failure: the run keeps everything it had answered up to the turn that
@@ -40,7 +47,7 @@ public enum StopReason {
 	 * all - it is refused where every run enters, with the same sentence.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.core.limits.TokenAllowance
+	 * @see com.top_logic.tl.ai.core.limits.BudgetAllowance
 	 */
 	BUDGET_EXHAUSTED,
 
@@ -69,5 +76,18 @@ public enum StopReason {
 	 * rest would be a second answer, and only the last one of a run is the one a surface shows.
 	 * </p>
 	 */
-	OUTPUT_LIMIT
+	OUTPUT_LIMIT;
+
+	/**
+	 * Whether the run stopped in order at one of its limits - turns, budget, output -
+	 * rather than because it was done or failed.
+	 *
+	 * <p>
+	 * Such a run has an answer, but maybe not the whole one; the chat says "limit reached" for it
+	 * (#786).
+	 * </p>
+	 */
+	public boolean isLimit() {
+		return this == MAX_TURNS || this == BUDGET_EXHAUSTED || this == OUTPUT_LIMIT;
+	}
 }

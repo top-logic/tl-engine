@@ -11,6 +11,7 @@ import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
@@ -130,6 +131,38 @@ public interface ChatEventHandler extends AgentEventListener {
 	 */
 	default void sendInteractionResolved(InteractionResolvedEvent event) {
 		// Nothing to take back.
+	}
+
+	/**
+	 * Tells this chat UI that the approval mode of the chat it shows was changed in another window
+	 * of the account.
+	 *
+	 * <p>
+	 * The mode is a setting of the conversation, stored with it the moment it is switched (#658).
+	 * A window that keeps showing the old mode would let its user believe every write is still
+	 * confirmed - or switch it back without meaning to.
+	 * </p>
+	 *
+	 * <p>
+	 * Default: nothing. A chat UI that shows no approval switch has nothing to update.
+	 * </p>
+	 *
+	 * @param mode
+	 *        The chat's approval mode now.
+	 */
+	default void sendApprovalMode(ApprovalMode mode) {
+		// No switch to update.
+	}
+
+	/**
+	 * Says that subagents' news waits for the user's next message, because the lead has been started
+	 * for such news as often as it may between two messages of the user.
+	 *
+	 * @param wakes
+	 *        How many turns were started since the user's last message.
+	 */
+	default void sendWakesExhausted(int wakes) {
+		// A window that draws no subagents has nothing to say.
 	}
 
 }

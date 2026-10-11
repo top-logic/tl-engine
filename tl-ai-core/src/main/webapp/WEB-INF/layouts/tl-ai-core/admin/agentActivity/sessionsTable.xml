@@ -6,7 +6,7 @@
 	
 	An earlier revision of this file pre-filtered to the last 30 days, on the theory that the four
 	computed columns - how many runs a session had, how many failed, how many tokens they billed,
-	how many questions still wait for a human - each walk AgentExecution#session backwards with
+	how many questions still wait for a human (and, since #722, what the runs cost) - each walk AgentExecution#session backwards with
 	referers() and so cost one indexed association query per row and column, which the table's own
 	filters could not save because they run after the rows are built.
 	
@@ -30,7 +30,7 @@
 		<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentSession`)</supportsElement>
 	</modelBuilder>
 	<table
-		defaultColumns="displayName,kind,owner,runCount,errorCount,pendingCount,tokenCount,lastUpdated"
+		defaultColumns="displayName,kind,owner,runCount,errorCount,pendingCount,tokenCount,costTotal,lastUpdated"
 		defaultSortOrder="lastUpdated:descending"
 		fixedColumns="1"
 	>
@@ -76,6 +76,9 @@
 			<column name="tokenCount"
 				columnWidth="90px"
 			/>
+			<column name="costTotal"
+				columnWidth="110px"
+			/>
 		</columns>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
@@ -120,6 +123,29 @@
 						.map(e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
 							+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`)))
 						.sum()
+				]]></accessor>
+			</configurationProvider>
+			<!--
+				Text rather than a number: the runs of one session are shown in the system currency at
+				the rate of their day, or in US dollars where no rate converts them, and two amounts in
+				two currencies are written side by side, never added. In the common case it is one
+				amount.
+			-->
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="costTotal"
+				columnLabel="admin.ai.agentActivity.sessions.costTotal"
+				columnType="tl.core:String"
+			>
+				<accessor><![CDATA[
+					s -> {
+						priced = $s.referers(`tl.ai.execution:AgentExecution#session`)
+							.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#displayCost`)));
+						byCurrency = $priced.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`));
+						$byCurrency.keySet().toList().sort()
+							.map(c -> numberFormat('#,##0.00##').format($byCurrency[$c]
+								.map(e -> $e.get(`tl.ai.execution:AgentExecution#displayCost`)).sum()) + ' ' + $c)
+							.join(' + ');
+					}
 				]]></accessor>
 			</configurationProvider>
 		</configurationProviders>

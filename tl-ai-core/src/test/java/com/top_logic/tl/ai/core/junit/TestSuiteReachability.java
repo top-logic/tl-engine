@@ -74,10 +74,10 @@ public class TestSuiteReachability extends TestCase {
 	 */
 	private static final List<String> SUITE_FILE_NAMES = List.of("TestAll.java", "TestAllLive.java");
 
-	/** The include that stands for the engine's generic suite. */
-	private static final String ENGINE_SUITE_INCLUDE = "test/TestAll.java";
+	/** The engine's generic suite, as a source path below {@code src/test/java}. */
+	private static final String ENGINE_SUITE_SOURCE = "test/TestAll.java";
 
-	/** Marks an include as a regular expression over the path, rather than an Ant path pattern. */
+	/** Marks an include as a regular expression, rather than an Ant path pattern. */
 	private static final String REGEX_PREFIX = "%regex[";
 
 	/** Source root every module keeps its tests in. */
@@ -376,19 +376,34 @@ public class TestSuiteReachability extends TestCase {
 		}
 
 		private boolean reaches(String include, String sourcePath) {
-			if (ENGINE_SUITE_INCLUDE.equals(include)) {
+			if (!include.startsWith(REGEX_PREFIX) || !include.endsWith("]")) {
+				throw new AssertionError("Unsupported surefire include in " + name() + ": '" + include
+					+ "'. This test knows %regex[...] includes only: surefire 3.6.0 runs no class at all when"
+					+ " Ant and %regex[...] includes are mixed. See the comment in the aggregator pom,"
+					+ " and teach this test the new form if surefire changed.");
+			}
+			Pattern regex = Pattern.compile(include.substring(REGEX_PREFIX.length(), include.length() - 1));
+			if (runs(regex, ENGINE_SUITE_SOURCE) && sourcePath.startsWith("test/")) {
 				// The engine's suite collects, recursively, what lies below the "test" package.
-				return sourcePath.startsWith("test/");
+				return true;
 			}
-			if (include.startsWith(REGEX_PREFIX) && include.endsWith("]")) {
-				// Surefire matches a regex include against the compiled class, not the source.
-				String classPath = sourcePath.replaceAll("\\.java$", ".class");
-				String regex = include.substring(REGEX_PREFIX.length(), include.length() - 1);
-				return Pattern.compile(regex).matcher(classPath).matches();
-			}
-			throw new AssertionError("Unsupported surefire include in " + name() + ": '" + include
-				+ "'. This test knows '" + ENGINE_SUITE_INCLUDE + "' and %regex[...] includes."
-				+ " Teach it the new form, otherwise it cannot tell what the build runs.");
+			return runs(regex, sourcePath);
+		}
+
+		/**
+		 * Whether surefire runs the class compiled from the given source under the given
+		 * {@code %regex[...]} include.
+		 *
+		 * <p>
+		 * The plugin selects a class by its class file path. Surefire 3.6.0 then matches the
+		 * selected class by its class name in the test JVM and drops it when that fails. A class
+		 * therefore runs only if the include matches both spellings.
+		 * </p>
+		 */
+		private static boolean runs(Pattern regex, String sourcePath) {
+			String path = sourcePath.replaceAll("\\.java$", "");
+			return regex.matcher(path + ".class").matches()
+				&& regex.matcher(path.replace('/', '.')).matches();
 		}
 	}
 

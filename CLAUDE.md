@@ -43,8 +43,13 @@ Two includes decide what that runs, configured once in the aggregator `pom.xml` 
 
 | Include | Runs |
 |---|---|
-| `test/TestAll.java` | the engine's generic suite (file names, layout normalization, JSP content, I18N constants, migration-script consistency) **plus** everything below `src/test/java/test/`, recursively |
-| `%regex[com/top_logic/(ai\|tl/ai)/...]` | this repository's own tests, which live in packages mirroring the production code |
+| `%regex[test[/.]TestAll(\.class)?]` | the engine's generic suite `test/TestAll.java` (file names, layout normalization, JSP content, I18N constants, migration-script consistency) **plus** everything below `src/test/java/test/`, recursively |
+| `%regex[com[/.]top_logic[/.](ai\|tl[/.]ai)[/.]...]` | this repository's own tests, which live in packages mirroring the production code |
+
+Both are regular expressions that accept a class as its class file path and as its class name: the
+surefire 3.6.0 that the parent brings checks the class name a second time, and there an include
+that knows only the path, or an Ant include next to a regex, runs no test. The comment in the
+aggregator `pom.xml` says why.
 
 **Adding a test.** Put it next to the code it tests, in the mirrored package
 (`com.top_logic.tl.ai.core.agent` for something in `com.top_logic.tl.ai.core.agent`), and name it
@@ -102,6 +107,10 @@ source env.sh
 mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.injection.e2e=true -Dtest='TestPromptInjection*'
 ```
 
+`TestResearchInjection` uses the same gate for a research worker in front of a hostile page and search
+result, but against an OpenAI model: it needs `OPENAI_API_KEY`, and `-Dtl.ai.injection.openai.model=...`
+chooses the model (default `gpt-5.6-luna`).
+
 ### Vector-index end-to-end test
 
 `VectorIndexIntegrationTest` embeds text with a real Mistral model and stores the vectors in a real
@@ -139,6 +148,24 @@ importantly - what the numbers may not be used for is in `tl-ai-eval/README.md`.
 with a handful of scenarios this shows that a model is unusable with our harness, never that one
 good model is three points better than another.
 
+### The research questions
+
+`research-scenarios.config.xml` in `tl-ai-eval` puts 25 research questions to Albert with
+`TL_deepResearch` and grades the answer (#755): `<citations>` deterministically (read sources cited,
+hosts, links to unread pages), `<judge>` by a pinned judge model of another family against a rubric.
+Real models and the real web, so behind `-Dtl.ai.research.e2e=true` - see `ResearchE2e`; the
+graders run in every build against a scripted model and judge (`TestResearchPlumbing`).
+An arm can put the workers on another model than the lead (`<agent-models>`, `subagent-workers`
+for a server with one request at a time, #784); the CSV's `subagent*` columns count what the workers
+spent. `-Dtl.ai.research.arms=` selects arms; `albert-gpt-worker-qwen` needs `tl_qwen_api_key` and
+the company network.
+
+```bash
+export tl_openai_api_key=... tl_anthropic_api_key=... tl_brave_api_key=...   # each "unencrypted:<key>"
+mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.research.e2e=true -Dtest=TestResearchEval \
+  -Dtl.ai.research.scenarios=fact-nobel-phd -Dtl.ai.research.repeats=1
+```
+
 ## Architecture
 
 ### Tool API (tl-ai-tool-api)
@@ -165,7 +192,15 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 
 Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` → `StreamHandler` → `ToolCatalog.execute()` → repeat.
 
-Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED.
+Stop conditions: `StopReason` - COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT.
+
+**A limit ends with an answer (#775).** A run at its `max-turns` gets one last turn that keeps the
+tool list - the cached prefix stays the same - but sends `ToolChoice.NONE` and a framework notice to
+answer with what it has; calls a provider still returns there are dropped, and a last reply left
+without text is asked for once more, the same way (#819). The run ends as `MAX_TURNS`, the chat
+appends a notice, and a delivered subagent result says "Stopped at its limit". A run limited to one
+turn has no turn to spare and works in it. `TestRunLimitFinalTurn` pins it. There is no budget of
+tool calls (removed, #850): how much a research worker reads is guidance in its prompt.
 
 **What a turn reads (#647).** A run holds one interaction for all its turns, and an interaction reads
 at the revision it read first, so `AgentLoop` moves the run's view to the newest commit before a
@@ -214,8 +249,10 @@ The agent keeps things about the user across conversations: `tl.ai.execution:Use
 **`remember` refuses a memory the user did not agree to in that turn**, as a Java check on the call
 path rather than a line in a prompt: `MemoryConsent` is built from the user's own message at the
 start of the run and from what `AskUserTool` recorded, and a nested run inherits it rather than
-building its own. The words it matches are configurable, because they are matched against what the
-user typed.
+building its own. Only a `UserMessage` whose `origin` is `USER` counts: a delivered subagent report,
+a framework notice and a lead's task are marked `FRAMEWORK` or `AGENT`, so a lead turn the chat
+wakes for a subagent's news has no consent (#807). The words it matches are configurable, because
+they are matched against what the user typed.
 
 The section is read **once per conversation** (`UserMemoryBinding`, bound by `ChatProcessor` from
 the chat session state), because the block has to stay byte-identical across the turns of one.
@@ -259,6 +296,16 @@ mismatch between a description and the implementation, which it reports and does
 interviews the user; it does not look at the application's objects. Albert's own write tools stay
 offered while it runs - the approval guards them. `TestInitSkill` (tl-ai-eval) runs it end to end on
 a scripted model, including the service restart. See `tl-ai-core/doc/init-skill.md`.
+
+`TL_deepResearch` (#723) has Albert research a topic on the public web: it plans sub-questions,
+spawns one `TL_ResearchWorker` per sub-question in one turn, waits with `wait_for_subagent` (the one
+route that works with and without a chat) and writes one report that links the pages the workers
+read. It keeps the run with `research.saveReport`, opens it with `present` where the page has a
+place, and then answers with the same report, so a headless `aiResearch()` run keeps one too (#794). The worker carries `webSearch` and `webFetch` only - no application data, no writes - and the
+lead reads no page itself. A spawned worker is unattended, so an application needs a
+`<background-allowlist>` that admits `egress` and a search engine on `WebToolsService`; tl-ai-demo
+has both in `WEB-INF/conf/research.config.xml`. `TestDeepResearchSkill` (tl-ai-eval) runs it on a
+scripted model and a fixture web. See `tl-ai-core/doc/deep-research.md`.
 
 ### Prompt caching: three rules
 
@@ -311,9 +358,9 @@ Where every old property went: `tl-ai-core/doc/llm-service-migration.md`.
 
 ### Run limits (tl-ai-core `limits/`)
 
-Three ceilings an administrator **may** put on what this installation carries and what one account
+The ceilings an administrator **may** put on what this installation carries and what one account
 may spend, configured in `<capacity>` on `AgentRuntimeService` (the chat pool and the per-account
-cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All three are off by
+cap) and `<budget>` on `AgentPolicyService` (the token budget) (#343, #691). **All of them are off by
 default** - this product runs in applications with a thousand users, and any figure it picked for
 them would refuse work the installation allowed before the upgrade:
 
@@ -323,17 +370,35 @@ them would refuse work the installation allowed before the upgrade:
   answer late rather than not at all. An installation that would rather refuse bounds the queue
   (`chat-queue="10"`) or keeps none (`chat-queue="-1"`); only then is a send refused, *before*
   anything is written down, as HTTP 429 with a sentence the client shows.
-- **`concurrent-runs-per-account`** (0 = off, 3-5 recommended for a shared installation) and
-  **`token-budget` over `budget-window-hours`** (0 = unlimited, per-role overrides possible) are
+- **`concurrent-runs-per-account`** (0 = off, 3-5 recommended for a shared installation),
+  **`token-budget`** and **`money-budget`** over `budget-window-hours` (0 = unlimited, per-role
+  overrides possible) are
   enforced by `RunLimits.admit` in `AgentFactory.runAgent` - the choke point every entry point
   arrives at. These two refuse rather than queue: the account is already being served.
+- **Background subagents** queue rather than refuse (#710): a chat's `SubagentJobRegistry` runs at
+  most its cap (4) at once, and **`subagent-workers`** in `<capacity>` (0 = off) bounds them over the
+  whole installation (`SubagentSlots`). A job beyond either stays `QUEUED`, starts in registration
+  order when one ends, and the spawn answer says "queued, position N"; a job cancelled while queued
+  ends `CANCELLED` without running.
 
 A **delegated** run is neither counted nor budgeted separately: it is part of the run that delegated
-it, and shares that run's `TokenAllowance`. The budget is computed from the recorded
-`AgentExecution` rows by `AgentExecutionStore.tokensSpentSince`, on the store's writer thread; the
-headroom rides on `ToolContext.tokenAllowance()`, and a run that spends it stops **between turns**
-with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`). See
-`tl-ai-core/doc/run-limits.md`.
+it, and shares that run's `BudgetAllowance`. The budget is computed from the recorded
+`AgentExecution` rows by `AgentExecutionStore.spentSince`, on the store's writer thread; the
+headroom rides on `ToolContext.budgetAllowance()`, and a run that spends it stops **between turns**
+with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`).
+
+**Money (#722, #858).** `AgentLoop` prices every request with the model that answered it (`RunCosts`,
+`CostCalculator`: input, output, reasoning, cache read and cache write each at its own price, the
+over-200k tier per request), and the run records `cost` on its `AgentExecution` **in US dollars**,
+the currency of the prices. Prices are the models.dev catalog's, or the `*-price` attributes of a
+`<model-overrides>` entry on `LLMProviderService`; a model without a price costs 0. A cost is
+converted only where it is shown or compared with `money-budget`: into the engine's system currency
+(`CurrencySystem`), at the dated rate of the engine's currency USD valid on the run's day, else at
+that currency's conversion factor unless it is the 1 every currency is created with (`CostConversion`;
+Administration > Basisadministration > Währungen). Without such a rate costs are shown in USD and the
+money budget is **not** checked, with a rate-limited WARN and a line on the monitor's token tile; the
+token budget still is. The monitor reads `AgentExecution#displayCost`/`#displayCurrency`. The refusal
+names the amounts in the user's number format. See `tl-ai-core/doc/run-limits.md`.
 
 ### Provider System (tl-ai-core `provider/`)
 
@@ -379,7 +444,7 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 
 ### Chat UI (tl-chat)
 
-`ChatServlet` at `/chat/*` handles REST + SSE. `ChatProcessor` orchestrates background agent execution. `ChatSSEHandler` implements `AgentEventListener` for real-time push (50ms flush batching, 30+ event types).
+`ChatServlet` at `/chat/*` handles REST + SSE. `ChatProcessor` orchestrates background agent execution. `ChatSSEHandler` implements `AgentEventListener` for real-time push (50ms flush batching, 30+ event types). The chat has no event stream of its own: the frames travel on the window's React event stream (`/react-api/events`), attached with `POST /chat/stream`. A second long-lived connection per page let three tabs exhaust the browser's six connections to the server (#867). See `tl-chat/CLAUDE.md`.
 
 One front end consumes that API, the React chat (`tl-chat/ui/`): TypeScript + Vite, mounted into the React view layer by the composed view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop. It is shown in two kinds of page:
 
@@ -416,6 +481,22 @@ the unconditional SSRF check. Configure nothing and nothing changes. Administrat
 here, unlike in #392 - this is a statement about the destination, not about the account. See
 `doc/security/browsing-governance.md`.
 
+**A worker opens only addresses it was given (#736).** Under `url-provenance` on `WebToolsService`
+(default `SUBAGENTS`: every run another run started) `webFetch` and `browserNavigate` refuse an address
+that the run's user or lead did not write, that no search returned and that no page it read links to -
+so an injected page cannot make a research worker write its task or findings into an address. The
+ledger is `SeenUrls` on the run's `ReadingList`: `AgentLoop` adds the addresses of the user's and the
+lead's messages at each turn start (not framework notices, subagent reports or summaries), `askUser`
+and `ask_lead` add what the user or lead wrote in answer (not a picked option), the web tools
+add search result addresses and page links (`UrlProvenance.record*`). Never add addresses from a tool
+answer that echoes its arguments - the model could launder a composed address through it.
+The browser session asks the same ledger for every navigation it makes for such a run (#813): a link or
+form must lead to a given address, and after `browserType` no navigation sends a body and no frame loads
+from an unseen address; an address in a text the run typed is never taken from a page.
+`TestUrlProvenance` pins the rule, `TestBrowserUrlProvenance` (behind `-Dtl.ai.browser.e2e=true`) the
+browser's half, `TestResearchInjection` (behind `-Dtl.ai.injection.e2e=true`, OpenAI)
+puts a real model in front of it.
+
 ### Served binaries: two routes, two rules
 
 `tl-ai-core` serves content on two routes, and they are deliberately not alike:
@@ -450,6 +531,35 @@ Every page that enters a reading list is archived by `PageArchive` (`tl.ai.execu
 bounded and with retention), and its footnote offers the copy. An application adds its own marker
 syntax with a `CitationMarkerSyntax` in `<marker-syntaxes>`. See `tl-chat/doc/citation-contract.md`.
 
+A research run also records **findings** on the same list (#752): `research.recordFinding(claim,
+source, quote)` refuses a quote that does not occur in the text the run read of that source
+(`Finding.occursIn`, white space, Markdown escapes and link addresses aside), the findings join the lead's list with the
+sources on every delivery path, and a delivered report is followed by the worker's findings, one line
+each. The lead works from them with `research.listFindings` and reads a source's stored text with
+`research.readSource` - it never fetches. All three are READ tools of the `interaction` group.
+
+When the lead has written its report it calls **`research.saveReport`** (#764, #827): the report's
+links are validated against the run tree's reading list, and `ResearchRuns` keeps a
+`tl.ai.execution:ResearchRun` on its own thread, **once per lead run** - a second call replaces what
+the first kept, and a write that takes longer than the tool waits is answered "still being written,
+do not call again". The run holds question, effort and status (enums), plan, the report Markdown -
+the one source of truth - and **references, not copies**: `execution` (the lead's
+`AgentExecution`, the chat through its session), one ordered composition of `sources` (cited first,
+by footnote) whose web sources reference their `ArchivedPage` and whose object sources reference
+the object (a generic reference: when the object is deleted, the source shows the label it was read
+with, marked as deleted, and keeps its footnote), and `findings` that reference their source and the
+worker run that recorded them. `citedSources` and `alsoRead` (`<collapsed/>`) are TL-Script
+selections of `sources`; `document` (`ResearchDocument`) and `tokens` (the execution tree) are
+computed on every read, never stored - the document links archived copies below the request's
+context path, never with a host, and links only the footnotes the citation check wrote. Owner and
+administrators read the run, its parts and the pages they reference (role rules in
+`tl-ai-core.binarySecurity.config.xml`); the computed lists apply the reader's rights. The archive's
+retention keeps a page a run references; deleting the run keeps its pages. The tool answers the run's
+id, and `present` opens it in the chat's side pane, which shows the document's body in place and the
+two lists and the findings as tables. The owner is the account the run works for, so a headless
+`aiResearch()` run (#767) keeps its run for the account it runs as, the same way - as soon as the
+`TL_deepResearch` skill calls the tool.
+
 ### Memory & Compaction (tl-ai-core `memory/`)
 
 `ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.
@@ -470,26 +580,101 @@ turn, which is the next moment that history is used. Consequences worth knowing:
 
 `TestCompactionOrder` pins all of this.
 
+**A child compacts too (#698).** A subagent or a synchronous delegate brings no session memory, so
+`AgentLoop.run(Conversation, CompactionStrategy, ToolContext, AgentEventListener)` wraps its own
+conversation in a `ConversationMemory` sized to its model's window, with
+`CompactionStrategies.forDefaultModel()` - the strategy the chat's session memory uses. Both
+`DelegationTool.executeSync` and `AgentRunner.run(AgentLoop, ...)` (the spawner's path) run that way;
+`TestChildCompaction` pins it.
+
 ### Multi-Agent Delegation
 
 `DelegationTool` creates isolated sub-agent runs (max depth 3). Parent passes `TransactionScope` and `SecurityContext`. Child events recorded in parent's `ConversationLog`.
 
 `spawn_subagent` is the asynchronous half: fire-and-forget, the turn ends, the child works on in a
-`SubagentJobRegistry` bound to the session. Its result reaches the parent on one of two paths, and
+`SubagentJobRegistry` bound to the session. The registries belong to the process, not to the chat
+(`SubagentRegistries`, one per conversation, and in the chat per window): `AgentRunner` binds the
+conversation's for every top-level run that has none bound, so TL-Script, the eval and scheduled runs
+can spawn too, and a chat window that drops or reloads a conversation leaves its children running;
+only deleting the chat cancels them - `AgentExecutionStore.deleteSession` stops every registry of the
+conversation (`SubagentRegistries.removeConversation`: each window's and the one of a run without a
+window), whichever path deleted it (#818). Such a run borrows its registry, which is forgotten when
+the run ends with no work left in it. A chat window attaches to its registry while it listens and
+lets go when the window ends (the sub-session's unbound listener, #856); a registry nobody has
+borrowed for 24 hours is cancelled and forgotten, so a closed window's results no lead reads do not
+stay for the life of the process. After a restart the startup sweep fails the children's runs, and
+a reopened conversation ends their parts as failed (`InterruptedTranscript`). Its result reaches the parent on one of two paths, and
 both render it through `SubagentResultDelivery` so the parent reads the same block either way:
 `wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the
 next turn when it did not.
 
+When the parent has no next turn coming, the chat **wakes** it: `SubagentWaker` (tl-chat) starts a
+lead turn that opens with the news - a finished child or an `ask_lead` question - instead of with a
+user message, drawn as a line in place of the bubble. At most five such turns between two messages of
+the user, none after Stop, none while a lead turn runs (that turn reads the news itself). The line
+names each subagent and why it reported back - finished, failed, cancelled, or asks and what - and
+each name scrolls to that subagent's card: `AgentLoop.injectSubagentNews` says who was delivered,
+`AgentEvent.LeadWoken` carries it as `SubagentNews`, and the turn records it as a `LEAD_WOKEN` system
+part, which replay skips (#721).
+
 The injection is a **`UserMessage`**, not a `SystemMessage`: no provider's request builder transmits
 a mid-conversation system message, so that shape never reached the model (#359). It opens with
 `SubagentResultDelivery.NOTICE`, which says in the text what the role cannot - the user did not write
-this. Everything finishing in one gap becomes one message, in the order the parent started the
-subagents. Being an ordinary user message, it is compacted like any other turn content.
+this. The child's own text sits inside `<untrusted_subagent_report>` on every path - injection, wait,
+status and the synchronous `delegate_to_*` result - because a worker repeats what it read.
+Everything finishing in one gap becomes one message, in the order the parent started the subagents.
+Being an ordinary user message, it is compacted like any other turn content.
 
 The same text is recorded on the turn as a `Part.SystemPart` of type `SUBAGENT_RESULT`: an assistant-side
 part, so the admin transcript shows it while the chat does not draw it as a user bubble.
 `ConversationLogReplay` turns that part back into the identical `UserMessage`, which is the one system
 event replay does not skip. See `tl-ai-core/doc/subagent-results.md`.
+
+A background subagent asks the user - `askUser`, or an approval - through **its job's own store**
+(`SubagentJob.interactionStore()`), not the store of the turn that started it: that turn ends while
+the child works on, and the chat unbinds its store with it. The store names the child
+(`InteractionAsker`), and the chat registers it in `PendingInteractionRegistry` while the job runs,
+so the SSE poll shows the question with the child's name and `/chat/respond` reaches it from any
+window of the account (#695).
+
+What a running child does is kept on its job (#700): the spawner feeds the child's events into a
+bounded `SubagentProgress` (turns, tokens, the last 20 tool calls with an argument summary and their
+outcome, the end of its last text), sets `childRunId` at `RunStarted` and hangs the child's
+`ConversationLog` on the job as its live log. `subagent_status(detail: summary|steps)` reads it, says
+`WAITING` and for what when the job's store holds a question or an approval, and puts what the child
+wrote inside `<untrusted_subagent_report>`; `GET /chat/subagents/{id}/transcript` serves the live log
+until the child ends.
+
+The chat shows each child as a card at the tool call that started it (#702): `SubagentStarted` and
+the job carry `parentToolCallId`, the browser keeps a child's live events per subagent id
+(`subagentLive`, never in the lead's transcript) and `thread.tsx` draws one `SubagentCard` per child
+under the steps of the turn that spawned it. The lead's log keeps one `Part.SubagentPart` per child -
+id, agent, task, parent call, run id, end state, a short summary - written at start and ended in place,
+never the child's steps (owner decision D5); a reloaded conversation rebuilds the card from it, and
+`GET /chat/subagents/{id}/transcript?runId=` opens the recorded run when the server holds no job.
+The lead's run has usually written its transcript before the child ends, so the end is written into
+that transcript as well (`AgentExecutionStore.replaceTranscriptPart`), before it is announced; the end
+frames carry `parentToolCallId` and `childRunId`, and every other window holding a copy of the chat
+reads it back with its next request (#720). `TestSubagentEndInEveryWindow` pins it.
+
+The lead steers a running child with `send_to_subagent` and stops it with `cancel_subagent` (#705).
+A message goes into the job's `SubagentInbox`, which the spawner binds on the child's thread;
+`AgentLoop.injectLeadMessages` drains it at the start of each child turn into one user message opening
+with "[Message from the lead agent]", announced as `AgentEvent.LeadMessageDelivered`, which is what
+records it as a `LEAD_MESSAGE` part in the child's own log (the thread-bound listener on a child's
+thread records the lead's log) and what replay turns back into the same message. A message that arrives
+while the child writes its answer gets it one more turn; the inbox closes in the same step as the check
+for that, so a later message is refused, and one that found no turn left (limit, failure, cancel) is named
+in the result the lead reads (#804). Text only, it changes no tool, right or model.
+
+A child asks its lead with `ask_lead` (#707), a tool only a background subagent's catalog has
+(`AgentFactory`, the `includeDelegation=false` branch): the question is parked on the job
+(`LeadQuestion`, the job bound by the spawner), the lead is shown it - enveloped - at the start of its
+next turn together with any results (`SubagentResultDelivery.deliveryText(finished, asking)`), or at
+once when it waits in `wait_for_subagent`, which a question ends early; the lead answers with
+`reply_to_subagent`, and the child goes on in the same turn. The question timeout ends the wait with
+"decide yourself and state the assumption"; a cancel ends it too. Waking an idle lead for a question is
+the wake's job (issue 4 of the series).
 
 ## Project Structure
 

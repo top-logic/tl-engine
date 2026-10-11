@@ -112,6 +112,19 @@ in this run" instead of waiting, and what its tools may do is bounded by the too
 `<background-allowlist>` rather than by an approval prompt. How to configure one, and what such a run
 has and lacks, is in `tl-chat/doc/scheduled-agent.md`.
 
+## Web research
+
+Ask Albert to research a topic on the web ("Vergleiche die Wärmepumpen-Förderung in Deutschland,
+Österreich und Dänemark"). It loads `TL_deepResearch`, shows a plan, starts research workers that
+search and read the web, and answers with one report whose statements link to the pages the
+workers read (`tl-ai-core/doc/deep-research.md`).
+
+`WEB-INF/conf/research.config.xml`, on in `metaConf.txt`, supplies what that needs: Brave as search
+engine, with the key in the environment variable `tl_brave_api_key` (prefix `unencrypted:`), and a
+`<background-allowlist>` with `model.read`, `data.read` and `egress` - without it a spawned subagent
+reaches no tool at all. The allowlist also bounds the scheduled task above. Turn the aspect off when
+you turn on the security test bed, whose allowlist keeps `egress` out on purpose.
+
 ## Layout of the module
 
 | Path | Contents |

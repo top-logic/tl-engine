@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.limits;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
@@ -43,8 +44,16 @@ public class RunLimitSettings {
 	 * running service is exactly the answer with an unconfigured one - there is no second copy of
 	 * the defaults in this class to drift away from the first.
 	 * </p>
+	 *
+	 * <p>
+	 * Built on first use, not when this class is loaded: building a configuration item needs the
+	 * {@code TypeIndex}, and a class whose initialisation fails stays unusable for the rest of the
+	 * JVM - every later caller gets a {@link NoClassDefFoundError} (#713).
+	 * </p>
 	 */
-	private static final RunLimitsConfig DEFAULTS = TypedConfiguration.newConfigItem(RunLimitsConfig.class);
+	private static final class Defaults {
+		static final RunLimitsConfig INSTANCE = TypedConfiguration.newConfigItem(RunLimitsConfig.class);
+	}
 
 	private RunLimitSettings() {
 		// Static utility.
@@ -64,10 +73,10 @@ public class RunLimitSettings {
 			return overridden;
 		}
 		if (!AgentRuntimeService.Module.INSTANCE.isActive()) {
-			return DEFAULTS;
+			return Defaults.INSTANCE;
 		}
 		CapacityConfig configured = AgentRuntimeService.getInstance().getCapacity();
-		return configured == null ? DEFAULTS : configured;
+		return configured == null ? Defaults.INSTANCE : configured;
 	}
 
 	/** The configured budget, or the shipped defaults when the service is not running. */
@@ -77,10 +86,23 @@ public class RunLimitSettings {
 			return overridden;
 		}
 		if (!AgentPolicyService.Module.INSTANCE.isActive()) {
-			return DEFAULTS;
+			return Defaults.INSTANCE;
 		}
 		BudgetConfig configured = AgentPolicyService.getInstance().getBudget();
-		return configured == null ? DEFAULTS : configured;
+		return configured == null ? Defaults.INSTANCE : configured;
+	}
+
+	/**
+	 * Whether the capacity in effect is one somebody set: the configuration of a running
+	 * {@link AgentRuntimeService}, or a test's {@link #override(RunLimitsConfig) override}.
+	 *
+	 * <p>
+	 * Otherwise every capacity question is answered by the shipped defaults, which are reached only
+	 * through the {@code TypeIndex}.
+	 * </p>
+	 */
+	public static boolean capacityConfigured() {
+		return _override != null || AgentRuntimeService.Module.INSTANCE.isActive();
 	}
 
 	/**
@@ -158,7 +180,17 @@ public class RunLimitSettings {
 	}
 
 	/**
-	 * How far back the token budget counts, in hours.
+	 * How many background subagents this installation runs at the same time; {@code 0}, the default,
+	 * for no installation ceiling.
+	 *
+	 * @see CapacityConfig#getSubagentWorkers()
+	 */
+	public static int subagentWorkers() {
+		return Math.max(0, capacity().getSubagentWorkers());
+	}
+
+	/**
+	 * How far back the token and the money budget count, in hours.
 	 *
 	 * @see BudgetConfig#getBudgetWindowHours()
 	 */
@@ -168,14 +200,50 @@ public class RunLimitSettings {
 	}
 
 	/**
+	 * Whether any budget is configured at all: a token or money budget of the section, or a role
+	 * budget.
+	 *
+	 * <p>
+	 * Answers without reading a role or a recorded run, for a caller that wants to skip the whole
+	 * budget question while nothing is configured - which is the shipped state.
+	 * </p>
+	 */
+	public static boolean anyBudget() {
+		BudgetConfig config = budget();
+		return config.getTokenBudget() > 0 || config.getMoneyBudget() > 0 || !config.getRoleBudgets().isEmpty();
+	}
+
+	/** Whether the configured budget limits money for anybody. */
+	public static boolean anyMoneyBudget() {
+		return namesMoney(budget());
+	}
+
+	/**
+	 * Whether the given budget section limits money for anybody: its own money budget, or the money
+	 * figure of a role.
+	 */
+	public static boolean namesMoney(BudgetConfig config) {
+		if (config.getMoneyBudget() > 0) {
+			return true;
+		}
+		for (RoleBudget role : config.getRoleBudgets().values()) {
+			Double money = role.getMoney();
+			if (money != null && money.doubleValue() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * How many tokens an account holding the given roles may spend in the window; {@code 0} for
 	 * unlimited.
 	 *
 	 * <p>
 	 * The largest of the {@link BudgetConfig#getRoleBudgets() role budgets} the account's roles
-	 * name, and the section's own {@link BudgetConfig#getTokenBudget() budget} when they name
-	 * none. A role grants headroom and never takes it away, so a {@code 0} on a role - which reads
-	 * as "unlimited" there too - lifts the limit for its holders.
+	 * name a token figure for, and the section's own {@link BudgetConfig#getTokenBudget() budget}
+	 * when they name none. A role grants headroom and never takes it away, so a {@code 0} on a role -
+	 * which reads as "unlimited" there too - lifts the limit for its holders.
 	 * </p>
 	 *
 	 * @param heldRoleNames
@@ -183,25 +251,60 @@ public class RunLimitSettings {
 	 */
 	public static long tokenBudget(Collection<String> heldRoleNames) {
 		BudgetConfig config = budget();
-		long fallback = Math.max(0, config.getTokenBudget());
+		Double granted = roleBudget(config, heldRoleNames, budget -> {
+			Long tokens = budget.getTokens();
+			return tokens == null ? null : Double.valueOf(tokens.longValue());
+		});
+		return granted != null ? granted.longValue() : Math.max(0, config.getTokenBudget());
+	}
+
+	/**
+	 * How much money an account holding the given roles may spend in the window, in the engine's
+	 * system currency ({@link com.top_logic.tl.ai.core.cost.CostConversion}); {@code 0} for
+	 * unlimited.
+	 *
+	 * <p>
+	 * Decided exactly like {@link #tokenBudget(Collection)}, over the money figures of the role
+	 * budgets and the section's own {@link BudgetConfig#getMoneyBudget() money budget}.
+	 * </p>
+	 *
+	 * @param heldRoleNames
+	 *        The roles the account holds on the security root; may be {@code null} or empty.
+	 */
+	public static double moneyBudget(Collection<String> heldRoleNames) {
+		BudgetConfig config = budget();
+		Double granted = roleBudget(config, heldRoleNames, RoleBudget::getMoney);
+		double budget = granted != null ? granted.doubleValue() : config.getMoneyBudget();
+		return budget > 0 ? budget : 0;
+	}
+
+	/**
+	 * The largest figure the role budgets of the given roles name, or {@code null} when none of them
+	 * names one.
+	 *
+	 * <p>
+	 * {@code 0} - unlimited - beats every finite figure and is answered at once.
+	 * </p>
+	 */
+	private static Double roleBudget(BudgetConfig config, Collection<String> heldRoleNames,
+			Function<RoleBudget, ? extends Number> figure) {
 		if (heldRoleNames == null || heldRoleNames.isEmpty() || config.getRoleBudgets().isEmpty()) {
-			return fallback;
+			return null;
 		}
-		boolean matched = false;
-		long granted = 0;
+		Double granted = null;
 		for (String role : heldRoleNames) {
 			RoleBudget budget = config.getRoleBudgets().get(role);
-			if (budget == null) {
+			Number value = budget == null ? null : figure.apply(budget);
+			if (value == null) {
 				continue;
 			}
-			matched = true;
-			long tokens = Math.max(0, budget.getTokens());
-			if (tokens == 0) {
+			double amount = Math.max(0, value.doubleValue());
+			if (amount == 0) {
 				// Unlimited beats every finite grant, and beats the section's own budget.
-				return 0;
+				return Double.valueOf(0);
 			}
-			granted = Math.max(granted, tokens);
+			granted = Double.valueOf(granted == null ? amount : Math.max(granted.doubleValue(), amount));
 		}
-		return matched ? granted : fallback;
+		return granted;
 	}
 }

@@ -366,6 +366,11 @@ public class TestPreCommitGuard extends TestCase {
 
 	/**
 	 * A stand-in for a model element that is only ever passed through and identified by name.
+	 *
+	 * <p>
+	 * A type has no parts: the initial values of a new object are asked in
+	 * {@link TestPreCommitGuardInATurn}, against real objects.
+	 * </p>
 	 */
 	private static <T> T named(Class<T> type, String name) {
 		return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type },
@@ -373,7 +378,7 @@ public class TestPreCommitGuard extends TestCase {
 				case "toString" -> name;
 				case "hashCode" -> name.hashCode();
 				case "equals" -> proxy == args[0];
-				default -> null;
+				default -> method.getReturnType() == List.class ? List.of() : null;
 			}));
 	}
 }

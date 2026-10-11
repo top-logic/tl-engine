@@ -117,7 +117,7 @@ public class ChatRailControl extends ReactControl {
 	@Override
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
-		_binding.writeLayoutState(this::putState);
+		_binding.writeRenderState(this::putState);
 	}
 
 	/** Closes the pane, which is writing {@code null} back to the channel that opened it. */

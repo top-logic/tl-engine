@@ -18,10 +18,15 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
-   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. Its `chatId` is the key the layout is *stored* under, not the conversation the request comes from; the conversation travels beside it as `conversation=…`, like on every other call. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
+   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. Its `chatId` is the key the layout is *stored* under, not the conversation the request comes from; the conversation travels beside it as `conversation=…`, like on every other call. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeRenderState`, re-read on every render), so a second round trip would only repeat it.
 
-2. **SSE API** (real-time push):
-   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
+2. **Push** (real-time frames, on the window's event stream): `ChatSSEHandler` receives `AgentEvent`s and emits structured frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
+   - `POST /chat/stream?stream=<token>` – attaches. The frames travel on the event stream the browser window already holds for the React layer (`/react-api/events`), as one `PatchEvent` per 50 ms flush to the listener id `tl-chat-stream:<token>`, which the browser subscribes with the bridge's `subscribe` before it asks (`chat-stream.ts`). The token is new for every attach, so the frames of a replaced handler reach nobody.
+   - `DELETE /chat/stream?stream=<token>` – detaches, when the last chat element of the conversation leaves the page. A page that is left (closed, reloaded) stops its handler too: the handler lives while its window is displayed, and that is what "a window shows this chat" means for waking a lead and marking a result seen.
+
+   The chat therefore works only in a window of the React layer - a React page or a classic tab through `tl-chat-classic`; there is no stand-alone event stream.
+
+   **Why no `EventSource` of its own (#867).** A browser opens at most six connections to one host over HTTP/1.1, for all its tabs together, and every React page holds one for `/react-api/events`. A chat stream of its own made it two per page: three tabs held all six, the browser queued every other request of every tab, and no click, navigation or message reached the server any more. A page now holds one connection. Six tabs still exhaust the pool with the engine's stream alone; HTTP/2 (which needs TLS in browsers) lifts the limit.
 
 `ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
 additionally refuses anonymous ones with 401, because an application may hand a visitor a session
@@ -144,7 +149,7 @@ run. See `doc/scheduled-agent.md`.
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
 - **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
-- **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
+- **`TaskProgressTracker`** – One window's chat: its processing states, and accessors that read and write the `ChatState` of the chat the window shows
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
 - **`ChatEventHandlerRegistry`** – Interface-typed lookup of the chat UI observing a `TaskProgressTracker`;
@@ -157,12 +162,13 @@ run. See `doc/scheduled-agent.md`.
   "stopping a run belongs to the account too"
 - **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
-- **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
+- **`ChatSessionManager`** – Holds a `ChatState` per chat with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
+- **`ChatState`** – Everything one chat holds in a window's memory: Chat, ConversationMemory, ConversationLog, the agent's plan (`TaskStore`) and tool catalog, and the settings of its metadata bag (approval mode, approved tools, loaded skills, ratings, effort, token usage). They belong to the chat, not to the window: a window that comes back to a chat it holds finds them as it left them. A send captures the state of its chat under the send lock, and the run reads and writes only that state, also when the window has switched to another chat by the time the run starts or ends (#844)
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one. Published API: `tl-chat-classic` reads a classic window's id here, and `Consulting`'s own control registers here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeRenderState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **within the window's `Interaction`** (a `ReactControl`'s state map is a plain `HashMap`; the engine's SSE heartbeat synthesizes without it, and this deliberately does not copy that). The engine offers only a blocking `ReactWindowRegistry.beginInteraction()`, so `WindowInteraction` enters it on a thread of its own while the caller waits with a time limit, and calls the work off when the limit passes first - an agent thread must not wait for a browser command that may itself be waiting for the agent. **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its interaction, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same interaction serve the write direction: `inWindow` runs a caller's action in the window's sub-session within its interaction (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the interaction than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
 - **`ChatPresentTool`** – The `present` tool of a chat page (`com.top_logic.ai.chat.tools`), over the base `PresentTool` in tl-ai-core: the agent shows objects - found by a TL-Script query or named by id - as a table, a chart or a form on a channel of the page it is on. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default), and a run whose page displays no such channel is not offered the tool at all (#649). See "the agent writes a channel" below.
 - **`PresentationPane`** – The pane of a `<chat-rail input="…">`: renders what stands on that channel for any type, and keeps the history "Zurück" walks. See "the rail's pane" below.
@@ -173,12 +179,13 @@ run. See `doc/scheduled-agent.md`.
 
 - `Chat` uses `CopyOnWriteArrayList` for thread-safe message access
 - `AIProcessingState` uses `synchronized` blocks and `volatile` fields
-- `ChatSSEHandler` uses `AtomicBoolean` for close detection and synchronized writer access
+- `ChatSSEHandler` uses `AtomicBoolean` for close detection; its frame buffer is written only by its flush task (and by `start()` before that task runs). `SSEUpdateQueue.enqueue` is thread-safe, so writing a patch needs no window interaction
 
 ## Persistence Model
 
 - **Module**: `tl.ai.execution` (tl-ai-core), **Types**: `AgentSession` (kind CHAT) + `AgentExecution` per run
 - Session: `title`, `kind`, `owner`, `metadata` (approved tools, approval mode, tasks, skills), timestamps
+- The approval mode in `metadata` is the chat's "auto-approve" switch, and only the switch writes it: `POST /chat/approval-mode` names the chat and stores the mode at once, and every other save of the bag keeps the stored mode, so no window writes back the mode it opened the chat with (#658). `GET /chat/sessions/{id}` answers it as `approvalMode`, which the switch shows. A chat that stores no mode runs `MANUAL`, so auto-approve starts off in every new chat; a mode set before the first send travels with `POST /chat/sessions` (`approvalMode`) and is stored with the chat it creates, as a scheduled task's mode is (#808).
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
@@ -463,7 +470,7 @@ Two containers carry all of it:
 | Container | On | What it decides |
 |--|--|--|
 | `chat-shell` | `.tl-cockpit` - `App`'s root, i.e. a host composing the whole chat | Session rail: column or drawer over the thread (≤ 1100 px). Artefact pane: column or sheet, and the icon strip (≤ 1279.98 px). |
-| `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 26 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
+| `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 35 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
 
 Rules to know when touching this:
 
@@ -562,9 +569,10 @@ it rewrites a draft and never answers as a persona.
 | `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
 | `chat-sources.tsx` | `<chat-sources/>`: the one rail section the chat still contributes as an element of its own |
 | `data-list.tsx` | `<data-list>` as `TLDataList`: the generic list - rows, lines, groups, search, selection, per-row state class |
-| `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
+| `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the attach to the window's event stream |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
+| `subagent-card.tsx` | One card per background subagent at the tool call that started it, from the live events (`subagentLive`) or, after a reload, from the lead's recorded `SubagentPart`; `cardsForTurn` decides which cards a turn shows |
 | `context-usage.tsx` | The context ring and its popover, plus how each number is derived |
 | `prompts.tsx` | Approval and question cards above the composer, with their countdowns |
 | `markdown.tsx` / `highlight.ts` | Markdown rendering, sanitizing, code blocks |
@@ -761,7 +769,7 @@ Its **badge** is not the length of that list: it counts what the *newest answer*
 the conversation and could not be dismissed (#495); an answer that cited nothing now carries none.
 
 Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`, the per-section collapse) are bootstrapped
-from PersonalConfiguration via `ChatViewBinding.writeLayoutState` and written through
+from PersonalConfiguration via `ChatViewBinding.writeRenderState` and written through
 `PUT /chat/preferences`.
 
 The Leiste badge is the sum of each section's badge minus the total last stored when the rail was
@@ -781,7 +789,7 @@ conversation.
 
 | | |
 |--|--|
-| What the store owns | The bootstrap, the capabilities, the session list and the open session, the turn settings, the transcript (through `chatReducer`), the run, the layout preferences, and the chat's one `EventSource` |
+| What the store owns | The bootstrap, the capabilities, the session list and the open session, the turn settings, the transcript (through `chatReducer`), the run, the layout preferences, and the chat's one attach to the window's event stream |
 | What a chat element keeps | Its own geometry and its host composition: for `App` the session drawer, the collapsed rail, the sheet breakpoint, the published `--composer-height`, and `ChatExtensions` |
 | Lifetime | The first element to subscribe opens the stream, the last to leave closes it and drops the chat - a fresh mount starts as fresh as it did when `App` owned the state |
 | `PUT /chat/preferences` | Written by the store and by nothing else, so several elements on one chat cannot race on the `tl-chat.layout` key |
@@ -792,7 +800,7 @@ A browser reload does **not** rebuild the control tree: `ViewServlet` re-renders
 already holds, deliberately, so that a table keeps its selection. A control constructor therefore
 runs once per window, not once per page load. Everything the chat wants a reload to restore has to
 be read at **render** time, and every chat control reads the layout in `onBeforeWrite`
-(`ChatViewBinding.writeLayoutState`).
+(`ChatViewBinding.writeRenderState`).
 
 | | |
 |--|--|
@@ -810,7 +818,7 @@ render's control state and then persisted that stale value.
 are idempotent - they only touch what the user has not decided - so a remount, or a second rail,
 re-states the same defaults and changes nothing.
 
-Run state is recovered the same way, but over REST rather than the control state: the SSE stream
+Run state is recovered the same way, but over REST rather than the control state: the chat's stream
 replays nothing, so on restoring or selecting a session the store also reads `GET /chat/updates`
 (the tasks of the open run, and whether it is still processing) and `GET /chat/interactions` (the
 approvals and questions waiting for this user). A reload in mid-run therefore comes back with the
@@ -1228,7 +1236,7 @@ The demo's dock therefore repeats the page's `Application` fact word for word.
 
 **What the agent remembers about the user** (#439) rides in the same block, under its own heading,
 and is read **once per conversation** for the same prompt-cache reason: `ChatProcessor.sendMessage`
-asks `ChatSessionManager.getActiveMemories` when the first message of a conversation is sent, keeps
+asks `ChatSessionManager.getMemories` when the first message of a conversation is sent, keeps
 the answer on the session state and binds it for every run of that conversation
 (`UserMemoryBinding`). A memory the agent writes in turn 3 therefore shows up in the user's memory
 list at once, and in the agent's block in the *next* conversation. The rail section that lists them
@@ -1355,7 +1363,7 @@ type:
 
 | On the channel | The pane shows |
 |--|--|
-| one object | its form: every attribute not hidden from display, inherited ones first (so `name` leads), each composition as a `<composition-table>` below the fields - the engine's `<field>` prints a composition as text |
+| one object | its form: every attribute not hidden from display, inherited ones first (so `name` leads), each composition and each computed list of objects (a derived multi-valued reference, such as a research run's `citedSources`) as a `<composition-table>` below the fields - the engine's `<field>` prints a composition as text (`PaneLayouts.isTable`). Such a table annotated `<collapsed/>` (`CollapsedDisplay`, tl-ai-core) is in a closed `<group>` of its own, and the body of a binary value of type `text/html` is shown in place (`<html display="inline">`) below its field, which keeps the download - without the elements of class `download-only`, which say what the fields already show (#764, #827) |
 | several objects | a `<table>` typed to their most specific common type: the type's `<main-properties>`, or else up to six single-valued attributes that are not long text; the rest of the type is offered in the column selection. One personalization per type (`chat-pane:<type>`), so the columns a user picked for events are those of the next table of events |
 | a `Presentation` (what `present` writes) | the table, chart (the engine's React `<chart>`, `tl-layout-react-chartjs`) or form it names, titled with the agent's `title`. Every chart is the one Chart.js configuration `Presentation.chartData()` computes; `PaneCharts` adds the pane's look only where the configuration says nothing itself |
 
@@ -1530,5 +1538,5 @@ or address.
 ## Notes
 
 - Active chat state lives in session memory; completed sessions persisted to KnowledgeBase
-- SSE connections have no timeout; stay open until client disconnects
+- A chat handler lives until `DELETE /chat/stream`, until its window's page is unloaded, or until a newer attach of the same conversation replaces it
 - Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<capacity chat-workers>` on `AgentRuntimeService` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip

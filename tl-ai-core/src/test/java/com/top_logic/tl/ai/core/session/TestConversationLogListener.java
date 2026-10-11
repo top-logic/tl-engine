@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
@@ -60,7 +61,7 @@ public class TestConversationLogListener extends TestCase {
 		assertEquals(80, _log.currentTurn().cumulativeUsage().outputTokens());
 
 		_listener.onEvent(new AgentEvent.RunCompleted("r1", 2, now,
-			StopReason.COMPLETE, new TokenUsage(180, 80, 0, 0, 0)));
+			StopReason.COMPLETE, new TokenUsage(180, 80, 0, 0, 0), Money.zero(Money.USD)));
 		assertNull(_log.currentTurn());
 		assertEquals(1, _log.turns().size());
 	}
@@ -100,7 +101,8 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "Hello world"));
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY, List.of()));
-		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY));
+		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY,
+			Money.zero(Money.USD)));
 
 		Turn turn = _log.turns().get(0);
 		boolean hasText = turn.assistantParts().stream()
@@ -121,7 +123,8 @@ public class TestConversationLogListener extends TestCase {
 			listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 			listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 			listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "One, two, "));
-			listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, reason, TokenUsage.EMPTY));
+			listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, reason, TokenUsage.EMPTY,
+				Money.zero(Money.USD)));
 
 			List<Part> parts = log.turns().get(0).assistantParts();
 			boolean cancelled = parts.get(parts.size() - 1) instanceof Part.SystemPart system
@@ -415,7 +418,8 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Let me "));
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "think..."));
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY, List.of()));
-		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY));
+		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY,
+			Money.zero(Money.USD)));
 
 		Turn turn = _log.turns().get(0);
 		boolean hasThinking = turn.assistantParts().stream()
@@ -451,7 +455,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 3, now, "Done!"));
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 3, now, new TokenUsage(30, 10, 0, 0, 0), List.of()));
 		_listener.onEvent(new AgentEvent.RunCompleted("r1", 3, now, StopReason.COMPLETE,
-			new TokenUsage(120, 45, 0, 0, 0)));
+			new TokenUsage(120, 45, 0, 0, 0), Money.zero(Money.USD)));
 
 		// All in ONE ConversationLog turn
 		assertEquals(1, _log.turns().size());
@@ -534,7 +538,8 @@ public class TestConversationLogListener extends TestCase {
 		// No tool call: nothing has flushed the buffers when the turn completes.
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY,
 			List.of(new ThinkingContent("Lissabon ist es.", "sig-1", "anthropic"))));
-		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY));
+		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY,
+			Money.zero(Money.USD)));
 
 		Part.ThinkingPart thinking = onlyThinkingPart(_log.turns().get(0));
 		assertEquals("Lissabon ist es.", thinking.text());

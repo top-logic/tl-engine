@@ -5,14 +5,11 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-
-import jakarta.servlet.AsyncContext;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -20,20 +17,23 @@ import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.basic.json.JSON;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Drives {@link ChatSSEHandler} over its real delivery path - register, resolve through
- * {@link ChatEventHandlerRegistry}, buffer, flush, write - and asserts the SSE frames that reach
- * the wire.
+ * {@link ChatEventHandlerRegistry}, buffer, flush, write - and asserts the frames that reach the
+ * window's event stream.
  *
  * <p>
- * Only the HTTP transport is stubbed: the handler runs with its real scheduled flush task and
- * writes into a {@link StringWriter} instead of a servlet response. This is the regression guard
- * for the SSE path across the extraction of {@link ChatEventHandler}: the browser must keep seeing
- * the same frames, produced by the same lookup, in the same order.
+ * Only the last step is stubbed: the handler runs with its real scheduled flush task and a real
+ * window, and each patch it would put on the window's queue is written into a {@link StringWriter}
+ * instead, one {@code event: <name>} line per frame followed by the patch. The browser must keep
+ * seeing the same frames, produced by the same lookup, in the same order.
  * </p>
  */
 public class TestChatSSEDelivery extends TestCase {
@@ -51,11 +51,14 @@ public class TestChatSSEDelivery extends TestCase {
 	protected void setUp() {
 		_tracker = new TaskProgressTracker();
 		_wire = new StringWriter();
-		AsyncContext asyncContext = (AsyncContext) Proxy.newProxyInstance(
-			getClass().getClassLoader(),
-			new Class<?>[] { AsyncContext.class },
-			(proxy, method, args) -> null);
-		_handler = new ChatSSEHandler(_tracker, asyncContext, new PrintWriter(_wire));
+		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
+		SSEUpdateQueue queue = registry.getOrCreateQueue("w1");
+		_handler = new ChatSSEHandler(_tracker, null, registry, "w1", queue, "t1") {
+			@Override
+			void deliver(String patch) {
+				_wire.write(render(patch));
+			}
+		};
 		_handler.start();
 	}
 
@@ -148,8 +151,23 @@ public class TestChatSSEDelivery extends TestCase {
 			ChatEventHandlerRegistry.find(_tracker));
 		_handler.sendMessageComplete(MessageCompleteEvent.create().setContentText("late"));
 		Thread.sleep(3 * 50);
-		assertEquals("A stopped handler must not write to a closed connection.",
+		assertEquals("A stopped handler must not write to its window any more.",
 			written, _wire.toString().length());
+	}
+
+	/** One {@code event: <name>} line per frame of the patch, then the patch itself. */
+	@SuppressWarnings("unchecked")
+	private static String render(String patch) {
+		StringBuilder text = new StringBuilder();
+		try {
+			for (Map<String, Object> frame : (List<Map<String, Object>>) ((Map<String, Object>) JSON
+				.fromString(patch)).get("frames")) {
+				text.append("event: ").append(frame.get("event")).append('\n');
+			}
+		} catch (Exception ex) {
+			throw new AssertionError("A patch must be JSON: " + patch, ex);
+		}
+		return text.append(patch).append("\n\n").toString();
 	}
 
 	private String awaitFrame(String frame) throws InterruptedException {

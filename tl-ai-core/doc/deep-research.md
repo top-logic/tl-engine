@@ -111,6 +111,83 @@ address and keeps its text.
 tl-ai-demo has both in `WEB-INF/conf/research.config.xml`: Brave, with the key in the environment
 variable `tl_brave_api_key`, and an allowlist with `model.read`, `data.read` and `egress`.
 
+## Research without a chat window: `aiResearch`
+
+The TL-Script function `aiResearch(question, effort, owner)` starts a research run on a background
+thread and returns at once (#767). Use it from a script or from a scheduled task.
+
+```
+aiResearch("What did our three main competitors announce this month?", "deep")
+```
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `question` | - | What to research. |
+| `effort` | `standard` | `quick`, `standard` or `deep`, as in the table above. |
+| `owner` | the calling account | The account the run acts as. The run spends the budget of this account, uses its rights, and the report goes into its chat list. An account or a login name. |
+
+A user can start a research only for themselves. Only a call without an account, such as a
+scheduled `ScriptTask`, can name a different owner.
+
+### What happens
+
+1. The function makes a chat of the owner, with the title "Research:" and the start of the
+   question, and returns the persistent id of the chat as the handle.
+2. On a background thread, Albert gets the question, the instruction to use `TL_deepResearch`, the
+   effort, and the information that nobody can answer.
+3. The run is unattended. `askUser` answers at once that nobody is there. The policy's
+   `<background-allowlist>` limits the tools, as for every run without a person.
+4. The run records its turns in the chat. The report is the answer of the run, with footnotes for
+   the pages that the workers read.
+
+The owner finds the report in the chat list and opens it like any chat. The new chat in the list
+tells the owner that the report is there. The engine has no notification for an account that is
+not logged in, and mail is a module that tl-ai does not depend on. An application that wants a mail
+reads the report with `aiAgentRunResult` and sends it.
+
+The handle works with the functions of `aiAgentChatAsync`: `aiAgentRunStatus`, `aiAgentRunResult`,
+`aiAgentRunError`, `aiAgentRunCancel`. Read it in a later request than the one that started the run.
+
+### Budget
+
+The owner's token and money budget limit the run, like a chat run (`<budget>` on
+`AgentPolicyService`, see `run-limits.md`). When the budget is already spent, the run calls no
+model. The chat then holds the question and the refusal as the answer, so the owner reads why there
+is no report. Its status is `REJECTED`.
+
+### Every Monday: a scheduled research
+
+A `ScriptTask` of the engine runs TL-Script in a system context, without an account. Name the owner:
+
+```xml
+<config service-class="com.top_logic.util.sched.Scheduler">
+	<instance class="com.top_logic.util.sched.Scheduler">
+		<tasks>
+			<task class="com.top_logic.model.search.providers.ScriptTask"
+				name="WeeklyFundingResearch"
+			>
+				<script>aiResearch("Which new funding programmes for small companies were announced in the last seven days?", "standard", "jdoe")</script>
+				<schedules>
+					<weekly day-of-week="MONDAY" time-of-day="07:00"/>
+				</schedules>
+			</task>
+		</tasks>
+	</instance>
+</config>
+```
+
+The file goes in `WEB-INF/autoconf/com.top_logic.util.sched.Scheduler.config.xml`. The task returns
+after it started the run. The run continues on its own thread.
+
+`com.top_logic.ai.chat.sched.AgentTask` (tl-chat, `scheduled-agent.md`) can also put a research
+question to Albert. It runs through the chat and waits for the end of the run. `aiResearch` names
+the skill and the effort for the model, and it needs no tl-chat.
+
+### Not yet
+
+The report is the answer of the run. A stored research object with its own view (`ResearchRun`) is
+a separate change. When it exists, `aiResearch` stores the report there too.
+
 ## Tests
 
 `TestDeepResearchSkill` (tl-ai-eval) runs the shipped skill and worker on a scripted model and on a
@@ -118,3 +195,9 @@ fixture web (`FixtureWeb`: search results and pages under the reserved domain `.
 the shape of the run: the lead loads the skill, starts one worker for each sub-question in one turn,
 waits, lists the findings every worker recorded, calls no web tool itself, and writes one report
 that cites exactly the pages the workers read.
+
+`TestHeadlessResearch` (tl-ai-eval) starts `aiResearch` in a system context for a named owner, on
+the same scripted model and fixture web. It checks that the report goes into a chat of the owner,
+with a footnote for the page that the worker read, and that a spent budget asks no model and records
+the refusal. `TestHeadlessResearchArguments` (tl-ai-core) checks who the run acts as and the effort
+levels.

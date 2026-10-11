@@ -764,6 +764,68 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Starts a web research on a background thread and returns at once with a handle (#767).
+	 *
+	 * <p>
+	 * The research is Albert's {@code TL_deepResearch} skill: Albert plans sub-questions, research
+	 * workers read the web in parallel, and Albert writes one report that links the pages the workers
+	 * read. This function starts it without a chat window - from a script, or from a scheduled
+	 * {@code ScriptTask}. See {@code tl-ai-core/doc/deep-research.md}.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Where the report goes.</b> The run is recorded as a chat of the owner, titled "Research:" and
+	 * the start of the question. The chat appears in the owner's chat list, and the owner reads the
+	 * report there, with its footnotes. {@link #agentRunResult(Object)} returns the same report for the
+	 * handle; {@link #agentRunStatus(Object)} and {@link #agentRunCancel(Object)} work as for
+	 * {@link #agentChatAsync(String, Object)}. As there, read the handle in a later request than the
+	 * one that started the run.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Nobody is there.</b> The run cannot ask a question, and it confirms its own tool calls. The
+	 * background allowlist of the tool access policy bounds its tools, as for every unattended run;
+	 * the workers need {@code egress} in it. The owner's token and money budget bound
+	 * the run like a chat run. A run that the budget refuses calls no model and records the refusal as
+	 * its answer.
+	 * </p>
+	 *
+	 * <p>
+	 * Example usage in TL-Script:
+	 * </p>
+	 *
+	 * <pre>
+	 * aiResearch("What did our three main competitors announce this month?", "deep")
+	 * </pre>
+	 *
+	 * <p>
+	 * From a scheduled {@code ScriptTask}, which runs without an account, name the owner:
+	 * </p>
+	 *
+	 * <pre>
+	 * aiResearch("Which new funding programmes for SMEs were announced this week?", "standard", "jdoe")
+	 * </pre>
+	 *
+	 * @param question
+	 *        What to research.
+	 * @param effort
+	 *        How thoroughly: {@code "quick"} (one worker), {@code "standard"} (three workers, the
+	 *        default) or {@code "deep"} (five to eight workers, two further rounds).
+	 * @param owner
+	 *        The account the research acts as, whose budget it spends and whose chat list shows the
+	 *        report: an account or its login name. Empty means the calling account. Only a call
+	 *        without an account, such as a scheduled task, may name another account.
+	 * @return The handle of the run: the persistent id of its chat, as a string.
+	 * @throws TopLogicException
+	 *         If the question is empty, the effort is unknown, no owner can be determined, or a user
+	 *         names another account.
+	 * @see #agentRunResult(Object)
+	 */
+	public static String research(String question, String effort, Object owner) {
+		return HeadlessResearch.start(question, effort, owner);
+	}
+
+	/**
 	 * Returns the status of an async agent run started with
 	 * {@link #agentChatAsync(String, Object)}.
 	 *

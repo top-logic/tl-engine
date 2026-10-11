@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -42,6 +44,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -50,6 +53,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -69,6 +73,18 @@ import com.top_logic.util.model.ModelService;
  * transaction for the writes of an earlier call; a copy written into it would be rolled back with
  * that turn and the citation would point at nothing. The copy is therefore written by this service's
  * own worker in a system interaction, and the tool waits for it.
+ * </p>
+ *
+ * <p>
+ * <b>Extended once, not per window.</b> A long document is read in windows, and its copy is to hold
+ * every window read. Rewriting the copy per window would store the text read so far again for every
+ * window - a document read in <i>k</i> windows would cost <i>k</i> commits and some <i>k</i>²/2
+ * windows of bytes. The first window is therefore stored at once, so the citation has an address,
+ * and what later windows add is only remembered: the copy is given the longer text when the run
+ * ends ({@link #flush(ReadingList)}), when somebody opens it, when a research run is kept with it,
+ * at the latest {@link #FLUSH_DELAY} after it was first extended, and when the service shuts down.
+ * The copy can therefore lag what the run read while the run is still reading; a process that dies
+ * meanwhile keeps the windows written until then.
  * </p>
  *
  * <p>
@@ -107,6 +123,12 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 
 	/** How long a tool waits for its copy to be written before it reads on without one. */
 	private static final Duration WRITE_TIMEOUT = Duration.ofSeconds(20);
+
+	/**
+	 * How long what later windows add to a copy may stay unwritten when nothing else writes it - a
+	 * run that never ends normally, a tool called outside of one.
+	 */
+	static final Duration FLUSH_DELAY = Duration.ofMinutes(1);
 
 	/** Configuration of {@link PageArchive}. */
 	public interface Config<I extends PageArchive> extends ConfiguredManagedClass.Config<I> {
@@ -186,7 +208,31 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		}
 	};
 
+	/**
+	 * The copies this service stored or extended, by handle: those it may extend without looking
+	 * them up, because it knows their address and owner.
+	 */
+	private final Map<String, Known> _known = new LinkedHashMap<>(16, 0.75f, true) {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<String, Known> eldest) {
+			return size() > DEDUP_ENTRIES;
+		}
+	};
+
+	/** The longer text of a copy that is not written yet, by handle; guarded by {@link #_known}. */
+	private final Map<String, Pending> _pending = new LinkedHashMap<>();
+
 	private ScheduledExecutorService _worker;
+
+	/** A stored copy, with what decides whether a run may extend it. */
+	private record Known(String url, Person owner, Copy copy) {
+		// Pure data.
+	}
+
+	/** What a copy is to be given when it is next written. */
+	private record Pending(String url, String title, String text, Person owner) {
+		// Pure data.
+	}
 
 	/**
 	 * Creates a {@link PageArchive} from configuration.
@@ -216,6 +262,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	@Override
 	protected void shutDown() {
 		if (_worker != null) {
+			flush(pendingHandles());
 			_worker.shutdownNow();
 			_worker = null;
 		}
@@ -253,6 +300,12 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	 * address and belongs to the same account; otherwise a new copy is stored.
 	 * </p>
 	 *
+	 * <p>
+	 * A copy this service stored is not written again here: the longer text is remembered and
+	 * written once, later (see the class comment). Only a copy it does not know is looked up and
+	 * written at once.
+	 * </p>
+	 *
 	 * @param url
 	 *        The address the page was read from.
 	 * @param title
@@ -271,9 +324,13 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 			|| url.length() > MAX_URL || text == null || text.isBlank()) {
 			return null;
 		}
-		String kept = text.length() > getConfig().getMaxChars()
-			? text.substring(0, Math.max(0, getConfig().getMaxChars()))
-			: text;
+		if (previousHandle != null && !previousHandle.isEmpty()) {
+			Copy deferred = defer(previousHandle, url, title, text, owner);
+			if (deferred != null) {
+				return deferred;
+			}
+		}
+		String kept = kept(text);
 		String hash = sha256(kept);
 		String key = ownerKey(owner) + "|" + url + "|" + hash;
 		synchronized (_recent) {
@@ -296,10 +353,166 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		}
 		if (copy != null) {
 			synchronized (_recent) {
+				forgetTexts(copy.handle());
 				_recent.put(key, copy);
+			}
+			synchronized (_known) {
+				_known.put(copy.handle(), new Known(url, owner, copy));
 			}
 		}
 		return copy;
+	}
+
+	/**
+	 * Forgets which texts the copy under {@code handle} was stored with: it is being given a longer
+	 * one, and a run that reads only the shorter one must not be handed a copy that shows more than
+	 * it read. Called while holding {@link #_recent}.
+	 */
+	private void forgetTexts(String handle) {
+		_recent.values().removeIf(copy -> copy.handle().equals(handle));
+	}
+
+	/** The part of a text a copy keeps. */
+	private String kept(String text) {
+		return text.length() > getConfig().getMaxChars()
+			? text.substring(0, Math.max(0, getConfig().getMaxChars()))
+			: text;
+	}
+
+	/**
+	 * Remembers the longer text of a copy this service knows, to be written later.
+	 *
+	 * @return The copy, or <code>null</code> when this service does not know it as a copy of
+	 *         {@code url} owned by {@code owner}.
+	 */
+	private Copy defer(String handle, String url, String title, String text, Person owner) {
+		boolean first;
+		Copy copy;
+		synchronized (_known) {
+			Known known = _known.get(handle);
+			if (known == null || !url.equals(known.url()) || !Objects.equals(owner, known.owner())) {
+				return null;
+			}
+			copy = known.copy();
+			first = _pending.put(handle, new Pending(url, title, text, owner)) == null;
+		}
+		synchronized (_recent) {
+			forgetTexts(handle);
+		}
+		if (first) {
+			// The safety net for a copy nothing else flushes; flushing it earlier leaves this with
+			// nothing to do.
+			try {
+				_worker.schedule(() -> writePending(handle), FLUSH_DELAY.toMillis(), TimeUnit.MILLISECONDS);
+			} catch (RejectedExecutionException ex) {
+				// Shutting down: the shutdown writes what is pending.
+			}
+		}
+		return copy;
+	}
+
+	/**
+	 * Writes what the run read of its web pages beyond what their copies hold.
+	 *
+	 * <p>
+	 * Called when the run ends, so that the copies its citations point at show every window it read.
+	 * Waits for the writes; does nothing where this service is not running.
+	 * </p>
+	 *
+	 * @param list
+	 *        The run's reading list; may be <code>null</code>.
+	 */
+	public static void flush(ReadingList list) {
+		if (list == null || !Module.INSTANCE.isActive()) {
+			return;
+		}
+		List<String> handles = new ArrayList<>();
+		for (ReadSource source : list.sources()) {
+			String handle = handleOf(source.archiveUrl());
+			if (!handle.isEmpty()) {
+				handles.add(handle);
+			}
+		}
+		getInstance().flush(handles);
+	}
+
+	/**
+	 * Writes what the copies under the given handles are still to be given, and waits for it.
+	 *
+	 * @param handles
+	 *        The copies; a handle with nothing pending is skipped.
+	 * @return Whether anything was written.
+	 */
+	public boolean flush(Collection<String> handles) {
+		List<String> pending = new ArrayList<>();
+		synchronized (_known) {
+			for (String handle : handles) {
+				if (_pending.containsKey(handle)) {
+					pending.add(handle);
+				}
+			}
+		}
+		ScheduledExecutorService worker = _worker;
+		if (pending.isEmpty() || worker == null) {
+			return false;
+		}
+		Future<Boolean> result = worker.submit(() -> {
+			boolean written = false;
+			for (String handle : pending) {
+				written |= writePending(handle);
+			}
+			return Boolean.valueOf(written);
+		});
+		try {
+			return result.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS).booleanValue();
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			return false;
+		} catch (ExecutionException | TimeoutException ex) {
+			Logger.error("Extending the archived copies " + pending + " failed.", ex, PageArchive.class);
+			return false;
+		}
+	}
+
+	private List<String> pendingHandles() {
+		synchronized (_known) {
+			return new ArrayList<>(_pending.keySet());
+		}
+	}
+
+	/**
+	 * Gives the copy under {@code handle} its pending text, on the worker.
+	 *
+	 * @return Whether a copy was written.
+	 */
+	private boolean writePending(String handle) {
+		Pending pending;
+		synchronized (_known) {
+			pending = _pending.remove(handle);
+		}
+		if (pending == null) {
+			return false;
+		}
+		String kept = kept(pending.text());
+		String hash = sha256(kept);
+		String key = ownerKey(pending.owner()) + "|" + pending.url() + "|" + hash;
+		try {
+			Copy copy = ThreadContextManager.inSystemInteraction(PageArchive.class,
+				() -> replace(handle, pending.url(), pending.title(), kept, hash, pending.owner()));
+			if (copy == null) {
+				Logger.info("The archived copy of " + pending.url() + " is gone; what the run read on is not kept.",
+					PageArchive.class);
+				return false;
+			}
+			synchronized (_recent) {
+				forgetTexts(handle);
+				_recent.put(key, copy);
+			}
+			return true;
+		} catch (RuntimeException ex) {
+			Logger.error("Extending the archived copy of " + pending.url() + " failed.", ex, PageArchive.class);
+			return false;
+		}
 	}
 
 	/**
@@ -337,7 +550,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	 *         such copy.
 	 */
 	private Copy replace(String handle, String url, String title, String text, String hash, Person owner) {
-		Optional<ArchivedPage> found = findByHandle(handle);
+		Optional<ArchivedPage> found = find(handle);
 		if (found.isEmpty()) {
 			return null;
 		}
@@ -378,13 +591,22 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	}
 
 	/**
-	 * The copy stored under {@code handle}.
+	 * The copy stored under {@code handle}, with every window read of it so far.
+	 *
+	 * <p>
+	 * Writes what the copy is still to be given first, so whoever opens it sees all the run read.
+	 * The calling thread then reads at the newest revision, to see that write: call it where nothing
+	 * the thread has read so far needs to stay as it was - a request that only shows the copy.
+	 * </p>
 	 *
 	 * @param handle
 	 *        The handle a {@link #viewUrl(String) view address} names.
 	 * @return The copy, or empty for an unknown handle.
 	 */
 	public Optional<ArchivedPage> findByHandle(String handle) {
+		if (handle != null && flush(List.of(handle))) {
+			HistoryUtils.updateSessionRevision();
+		}
 		return find(handle);
 	}
 
@@ -488,6 +710,9 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		}
 		synchronized (_recent) {
 			_recent.clear();
+		}
+		synchronized (_known) {
+			_known.clear();
 		}
 		return expired.size();
 	}

@@ -5,7 +5,6 @@
  */
 package com.top_logic.tl.ai.core.research;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -24,9 +23,11 @@ import java.util.regex.Pattern;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.IdentifierUtil;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -172,7 +173,7 @@ public final class ResearchDocument {
 		Resources resources = Resources.getInstance(locale);
 		DateTimeFormatter dates =
 			DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).withZone(zone);
-		String question = nonNull(run.getQuestion());
+		String question = StringServices.nonNull(run.getQuestion());
 
 		ReadingList cited = new ReadingList();
 		Map<String, ResearchSource> byId = new HashMap<>();
@@ -183,29 +184,35 @@ public final class ResearchDocument {
 			cited.add(read);
 			byId.put(read.id(), source);
 		}
-		CitationValidator.Result validated = CitationValidator.validate(nonNull(run.getReport()), cited, List.of());
+		CitationValidator.Result validated =
+			CitationValidator.validate(StringServices.nonNull(run.getReport()), cited, List.of());
 
 		StringBuilder out = new StringBuilder();
-		out.append("<!DOCTYPE html>\n<html lang=\"").append(escape(locale.getLanguage())).append("\">\n<head>\n")
+		out.append("<!DOCTYPE html>\n<html lang=\"").append(TagUtil.encodeXMLAttribute(locale.getLanguage()))
+			.append("\">\n<head>\n")
 			.append("<meta charset=\"utf-8\">\n")
 			.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
-			.append("<title>").append(escape(question)).append("</title>\n")
+			.append("<title>").append(TagUtil.encodeXML(question)).append("</title>\n")
 			.append("<style>").append(STYLE).append("</style>\n</head>\n<body>\n<div class=\"report\">\n");
 		// Title and date are for the reader of the download: the chat's side pane shows both as
 		// fields of the run and leaves out what is marked "download-only".
-		out.append("<p class=\"title download-only\"><strong>").append(escape(question)).append("</strong></p>\n");
+		out.append("<p class=\"title download-only\"><strong>").append(TagUtil.encodeXML(question))
+			.append("</strong></p>\n");
 		out.append("<p class=\"meta download-only\">");
 		Date finished = run.getFinished();
 		if (finished != null) {
-			out.append(escape(resources.getString(I18NConstants.REPORT_META__DATE.fill(dates.format(finished.toInstant())))));
+			out.append(TagUtil.encodeXML(
+				resources.getString(I18NConstants.REPORT_META__DATE.fill(dates.format(finished.toInstant())))));
 		}
 		TLClassifier effort = run.getEffort();
 		if (effort != null) {
-			out.append(" · ").append(escape(resources.getString(TLModelNamingConvention.classifierKey(effort))));
+			out.append(" · ")
+				.append(TagUtil.encodeXML(resources.getString(TLModelNamingConvention.classifierKey(effort))));
 		}
 		out.append("</p>\n");
 		if (run.getStatus() == TlAiExecutionFactory.getPARTIALResearchStatusClassifier()) {
-			out.append("<p class=\"status\">").append(escape(resources.getString(I18NConstants.PARTIAL))).append("</p>\n");
+			out.append("<p class=\"status\">").append(TagUtil.encodeXML(resources.getString(I18NConstants.PARTIAL)))
+				.append("</p>\n");
 		}
 
 		int count = validated.citations().size();
@@ -216,13 +223,13 @@ public final class ResearchDocument {
 			.append("\n</div>\n");
 
 		if (count > 0) {
-			out.append("<h2>").append(escape(resources.getString(I18NConstants.SOURCES))).append("</h2>\n");
+			out.append("<h2>").append(TagUtil.encodeXML(resources.getString(I18NConstants.SOURCES))).append("</h2>\n");
 			out.append("<ol class=\"sources\">\n");
 			for (Citation citation : validated.citations()) {
 				out.append("<li id=\"source-").append(citation.index()).append("\">");
 				entry(out, citation, byId.get(citation.id()), resources, dates);
 				if (citation.passage() != null && !citation.passage().isEmpty()) {
-					out.append("<blockquote>").append(escape(citation.passage())).append("</blockquote>");
+					out.append("<blockquote>").append(TagUtil.encodeXML(citation.passage())).append("</blockquote>");
 				}
 				out.append("</li>\n");
 			}
@@ -239,7 +246,7 @@ public final class ResearchDocument {
 	 */
 	private static ReadSource readSource(ResearchSource source, String contextPath) {
 		Instant readAt = source.getReadAt() == null ? null : source.getReadAt().toInstant();
-		String name = nonNull(source.getDisplayName());
+		String name = StringServices.nonNull(source.getDisplayName());
 		ArchivedPage page = source.getPage();
 		if (page != null) {
 			String archive = contextPath + PageArchive.URL_PREFIX + page.getHandle();
@@ -250,9 +257,9 @@ public final class ResearchDocument {
 		if (object != null) {
 			return new ReadSource(kind(source, CitationKinds.OBJECT), ReadFilter.idOf(object), name, "", "", "", readAt);
 		}
-		String reference = nonNull(source.getUrl());
-		return new ReadSource(kind(source, ""), reference, name, isWebAddress(reference) ? reference : "", "", "",
-			readAt);
+		String reference = StringServices.nonNull(source.getUrl());
+		return new ReadSource(kind(source, ""), reference, name, ReadingList.isWebAddress(reference) ? reference : "",
+			"", "", readAt);
 	}
 
 	private static String kind(ResearchSource source, String fallback) {
@@ -262,25 +269,26 @@ public final class ResearchDocument {
 
 	private static void entry(StringBuilder out, Citation citation, ResearchSource source, Resources resources,
 			DateTimeFormatter dates) {
-		String url = nonNull(citation.url());
-		link(out, url, nonNull(citation.label()));
+		String url = StringServices.nonNull(citation.url());
+		link(out, url, StringServices.nonNull(citation.label()));
 		out.append("<div class=\"where\">");
 		String separator = "";
 		if (!url.isEmpty()) {
-			out.append(escape(url));
+			out.append(TagUtil.encodeXML(url));
 			separator = " · ";
 		}
 		Date readAt = source == null ? null : source.getReadAt();
 		if (readAt != null) {
 			out.append(separator)
-				.append(escape(resources.getString(I18NConstants.READ_AT__DATE.fill(dates.format(readAt.toInstant())))));
+				.append(TagUtil.encodeXML(
+					resources.getString(I18NConstants.READ_AT__DATE.fill(dates.format(readAt.toInstant())))));
 			separator = " · ";
 		}
-		String archive = nonNull(citation.archiveUrl());
+		String archive = StringServices.nonNull(citation.archiveUrl());
 		if (!archive.isEmpty()) {
-			out.append(separator).append("<a href=\"").append(escape(archive))
+			out.append(separator).append("<a href=\"").append(TagUtil.encodeXMLAttribute(archive))
 				.append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
-				.append(escape(resources.getString(I18NConstants.ARCHIVED_COPY))).append("</a>");
+				.append(TagUtil.encodeXML(resources.getString(I18NConstants.ARCHIVED_COPY))).append("</a>");
 		}
 		out.append("</div>");
 	}
@@ -334,24 +342,13 @@ public final class ResearchDocument {
 
 	/** A link for an http(s) address; the text alone for anything else. */
 	private static void link(StringBuilder out, String url, String text) {
-		if (isWebAddress(url)) {
+		if (ReadingList.isWebAddress(url)) {
 			// A new tab: shown in place inside the application, a link must not take the page away.
-			out.append("<a href=\"").append(escape(url)).append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
-				.append(escape(text)).append("</a>");
+			out.append("<a href=\"").append(TagUtil.encodeXMLAttribute(url))
+				.append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
+				.append(TagUtil.encodeXML(text)).append("</a>");
 		} else {
-			out.append(escape(text));
-		}
-	}
-
-	private static boolean isWebAddress(String url) {
-		if (url == null || url.isBlank()) {
-			return false;
-		}
-		try {
-			String scheme = URI.create(url.strip()).getScheme();
-			return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
-		} catch (IllegalArgumentException ex) {
-			return false;
+			out.append(TagUtil.encodeXML(text));
 		}
 	}
 
@@ -409,30 +406,6 @@ public final class ResearchDocument {
 	}
 
 	private static String nonBlank(String value, String fallback) {
-		return value == null || value.isBlank() ? nonNull(fallback) : value;
-	}
-
-	private static String nonNull(String value) {
-		return value == null ? "" : value;
-	}
-
-	/** Escapes text for HTML content and attribute values. */
-	static String escape(String text) {
-		if (text == null) {
-			return "";
-		}
-		StringBuilder out = new StringBuilder(text.length());
-		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			switch (c) {
-				case '<' -> out.append("&lt;");
-				case '>' -> out.append("&gt;");
-				case '&' -> out.append("&amp;");
-				case '"' -> out.append("&quot;");
-				case '\'' -> out.append("&#39;");
-				default -> out.append(c);
-			}
-		}
-		return out.toString();
+		return value == null || value.isBlank() ? StringServices.nonNull(fallback) : value;
 	}
 }

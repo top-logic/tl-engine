@@ -79,11 +79,15 @@ public record Finding(String id, String claim, String source, String sourceTitle
 			return false;
 		}
 		String squeezed = squeeze(text);
-		return squeezed.contains(words) || squeeze(unescape(text)).contains(words)
-			|| squeeze(unescape(asShown(text))).contains(words);
+		return squeezed.contains(words) || squeeze(unescapeMarkdown(text)).contains(words)
+			|| squeeze(unescapeMarkdown(asShown(text))).contains(words);
 	}
 
-	private static String unescape(String text) {
+	/**
+	 * The text without the backslashes Markdown escapes punctuation with ({@code 2\.5},
+	 * {@code ?a=1\&b=2}), as a reader of the rendered text writes it.
+	 */
+	public static String unescapeMarkdown(String text) {
 		return MARKDOWN_ESCAPE.matcher(text).replaceAll("$1");
 	}
 

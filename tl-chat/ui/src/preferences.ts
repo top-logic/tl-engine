@@ -55,7 +55,7 @@ function path(at: ChatAddress, layoutKey: string): string {
 /**
  * Reads the stored layout out of the control state.
  *
- * The bootstrap comes with the control (`ChatViewBinding.writeLayoutState`), so there is no `GET`
+ * The bootstrap comes with the control (`ChatViewBinding.writeRenderState`), so there is no `GET`
  * to make: the values are already in the first render. The control writes them again on every
  * render, so a reloaded page starts from the layout stored now rather than the one the window was
  * first rendered with.

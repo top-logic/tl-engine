@@ -5,8 +5,7 @@
  */
 package com.top_logic.tl.ai.core.tools.web;
 
-import java.util.regex.Pattern;
-
+import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.citation.SeenUrls;
@@ -69,9 +68,6 @@ public final class UrlProvenance {
 		+ " page. This run may not send what it typed to a web site, so nothing was sent. Read the pages"
 		+ " you need instead of submitting forms.";
 
-	/** A backslash escaping a punctuation character in Markdown. */
-	private static final Pattern MARKDOWN_ESCAPE = Pattern.compile("\\\\(\\p{Punct})");
-
 	private UrlProvenance() {
 		// Static utility.
 	}
@@ -84,8 +80,8 @@ public final class UrlProvenance {
 	 * @return The tool's answer for a refused address, or {@code null}.
 	 */
 	public static String refusal(String url) {
-		SeenUrls seen = ledger();
-		if (seen == null || !appliesTo(RunInfoBinding.current()) || seen.contains(url)) {
+		SeenUrls seen = boundLedger();
+		if (seen == null || seen.contains(url)) {
 			return null;
 		}
 		return "Error: this run may open only a web address that its task or the user gave, that a web"
@@ -97,11 +93,18 @@ public final class UrlProvenance {
 	/**
 	 * Records an address the running agent was given by a tool: a search result or a page's link.
 	 *
+	 * <p>
+	 * Only for a run the rule applies to. The ledger of any other run is never asked: it is merged
+	 * only into the ledger of the run that delegated, and under every scope the rule applies to that
+	 * run no more than to its subagent. So a run outside the rule skips normalizing every address it
+	 * reads.
+	 * </p>
+	 *
 	 * @param url
-	 *        The address; ignored outside an agent run.
+	 *        The address; ignored outside an agent run and for a run the rule does not apply to.
 	 */
 	public static void record(String url) {
-		SeenUrls seen = ledger();
+		SeenUrls seen = boundLedger();
 		if (seen != null) {
 			seen.add(url);
 		}
@@ -118,12 +121,12 @@ public final class UrlProvenance {
 	 * </p>
 	 *
 	 * @param pageText
-	 *        The page as the agent was shown it; ignored outside an agent run.
+	 *        The page as the agent was shown it; ignored as {@link #record(String)} ignores an address.
 	 */
 	public static void recordAllIn(String pageText) {
-		SeenUrls seen = ledger();
+		SeenUrls seen = boundLedger();
 		if (seen != null && pageText != null) {
-			seen.addAllShownIn(MARKDOWN_ESCAPE.matcher(pageText).replaceAll("$1"));
+			seen.addAllShownIn(Finding.unescapeMarkdown(pageText));
 		}
 	}
 
@@ -169,11 +172,11 @@ public final class UrlProvenance {
 	 * @param documentKey
 	 *        What tells this text from every other one the run reads.
 	 * @param pageText
-	 *        The whole text of the document; ignored outside an agent run.
+	 *        The whole text of the document; ignored as {@link #record(String)} ignores an address.
 	 * @see #recordAllIn(String)
 	 */
 	public static void recordAllIn(String documentKey, String pageText) {
-		SeenUrls seen = ledger();
+		SeenUrls seen = boundLedger();
 		if (seen != null && seen.firstLook(documentKey)) {
 			recordAllIn(pageText);
 		}

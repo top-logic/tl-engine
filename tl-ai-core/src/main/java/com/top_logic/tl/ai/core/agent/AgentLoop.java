@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.Logger;
@@ -52,6 +53,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
+import com.top_logic.tl.ai.core.citation.PageArchive;
 import com.top_logic.tl.ai.core.citation.SeenUrls;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.cost.RunCosts;
@@ -97,7 +99,6 @@ import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
@@ -347,12 +348,6 @@ public class AgentLoop {
 	}
 
 	/**
-	 * The start of every text the framework puts into the user's role: subagent results and
-	 * questions, the notice after an empty reply, the rollback notice.
-	 */
-	private static final String FRAMEWORK_NOTICE = "[Framework notice]";
-
-	/**
 	 * Records the web addresses that the run's user or lead wrote, for the URL provenance rule.
 	 *
 	 * <p>
@@ -378,15 +373,9 @@ public class AgentLoop {
 	}
 
 	private static boolean givenByUserOrLead(UserMessage message) {
-		if (SummarizingStrategy.isSummary(message)) {
-			return false;
-		}
-		for (ContentPart part : message.content()) {
-			if (part instanceof TextContent text && text.text().startsWith(FRAMEWORK_NOTICE)) {
-				return false;
-			}
-		}
-		return true;
+		// A summary restored from a compaction sidecar written before messages recorded their origin
+		// reads back as the user's; its text still tells it apart.
+		return message.origin() != UserMessage.Origin.FRAMEWORK && !SummarizingStrategy.isSummary(message);
 	}
 
 	/**
@@ -523,21 +512,20 @@ public class AgentLoop {
 	 * user message is therefore this one, and the block sits in front of the delivery text. Either
 	 * way nothing here touches what the user wrote.
 	 * </p>
-	 *
-	 * <p>
-	 * Public for the chat's wake: a lead turn started because a subagent finished delivers before its
-	 * run, so that the run does not start without the news it was started for.
-	 * </p>
-	 *
-	 * @return Whether anything was delivered.
 	 */
-	public static boolean injectSubagentResults(Conversation conversation, ToolContext context) {
-		return !injectSubagentNews(conversation, context).isEmpty();
+	static void injectSubagentResults(Conversation conversation, ToolContext context) {
+		injectSubagentNews(conversation, context);
 	}
 
 	/**
 	 * Delivers what the subagents of the bound registry have to say, as
 	 * {@link #injectSubagentResults(Conversation, ToolContext)} does, and says who said what.
+	 *
+	 * <p>
+	 * Public for the chat's wake: a lead turn started because a subagent finished delivers before its
+	 * run, so that the run does not start without the news it was started for, and names in the chat
+	 * who reported back.
+	 * </p>
 	 *
 	 * @return The news delivered: the ended subagents in the order they were started, then the asking
 	 *         ones; empty when nothing was delivered.
@@ -711,6 +699,10 @@ public class AgentLoop {
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
 				RunCosts.zero()));
 			throw e;
+		} finally {
+			// The archived copy of a document read in parts is extended once, here, rather than per
+			// part; see PageArchive.
+			PageArchive.flush(context.readingList());
 		}
 	}
 
@@ -802,53 +794,21 @@ public class AgentLoop {
 
 			injectBetweenTurns(conversation, context, listener, runId, turn);
 
-			StopReason limit = announceFinalTurn(conversation, turn, maxTurns, listener, runId);
+			boolean lastTurn = announceFinalTurn(conversation, turn, maxTurns, listener, runId);
 
-			AssistantMessage assistantMsg = null;
-			boolean askedForAnswer = false;
-			while (true) {
-				try {
-					int currentTurn = turn;
-					assistantMsg = callRouted(
-						() -> callProvider(conversation, context, listener, runId, currentTurn),
-						context, listener, runId, turn);
-				} catch (ProviderException e) {
-					if (askedForAnswer && stopReasonFor(e, context) == StopReason.ERROR) {
-						// The run ends with the reply it has, as it did before it asked once more.
-						withdrawFinalAnswerRequest(conversation, e, runId);
-						break;
-					}
-					rollbackFailedRun(conversation, resumePoint);
-					return endOnProviderFailure(e, context, listener, runId, turn, totalUsage, totalCost);
-				} finally {
-					_finalTurn = false;
-				}
-
-				if (limit != null) {
-					assistantMsg = withoutToolCalls(assistantMsg, runId);
-				}
-				conversation.add(assistantMsg);
-				totalUsage = totalUsage.add(assistantMsg.usage());
-				// Priced per request and with the model that answered it: a failover moves the run to
-				// another price list, and a tiered price depends on this request's prompt alone.
-				Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
-				totalCost = totalCost.plus(turnCost);
-				context.budgetAllowance().record(assistantMsg.usage(), turnCost);
-
-				if (limit == null || askedForAnswer || unfinished(assistantMsg) != StopReason.NO_ANSWER) {
-					break;
-				}
-				askedForAnswer = true;
-				askForFinalAnswer(conversation, runId, turn);
-				_finalTurn = true;
+			int currentTurn = turn;
+			TurnReply reply = requestReply(conversation, context, listener, runId, turn, lastTurn, totalUsage,
+				totalCost, () -> callProvider(conversation, context, listener, runId, currentTurn), null);
+			totalUsage = reply.totalUsage();
+			totalCost = reply.totalCost();
+			if (reply.failure() != null) {
+				rollbackFailedRun(conversation, resumePoint);
+				return endOnProviderFailure(reply.failure(), context, listener, runId, turn, totalUsage, totalCost);
 			}
+			AssistantMessage assistantMsg = reply.message();
 
-			if (limit != null) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
-				Logger.info("Run " + runId + " ends at its limit (" + limit + ") after a last turn without tools.",
-					AgentLoop.class);
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), limit, totalUsage, totalCost));
-				return new AgentResult(limit, turn, totalUsage);
+			if (lastTurn) {
+				return endAtLimit(assistantMsg, listener, runId, turn, totalUsage, totalCost);
 			}
 
 			if (!_config.responseValidator().test(assistantMsg)) {
@@ -964,7 +924,106 @@ public class AgentLoop {
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
 				RunCosts.zero()));
 			throw e;
+		} finally {
+			// The archived copy of a document read in parts is extended once, here, rather than per
+			// part; see PageArchive.
+			PageArchive.flush(context.readingList());
 		}
+	}
+
+	/**
+	 * What {@link #requestReply} brought: the turn's reply, or the provider failure that ends the run.
+	 *
+	 * <p>
+	 * It carries the run's totals rather than this turn's alone, so that every request is added to
+	 * them one by one, in the order the loop always added them.
+	 * </p>
+	 *
+	 * @param message
+	 *        The reply, already in the conversation; <code>null</code> on a failure.
+	 * @param totalUsage
+	 *        The tokens of the run so far, this turn's requests included.
+	 * @param totalCost
+	 *        The cost of the run so far, this turn's requests included.
+	 * @param failure
+	 *        The provider failure that ends the run, or <code>null</code>.
+	 */
+	private record TurnReply(AssistantMessage message, TokenUsage totalUsage, Money totalCost,
+			ProviderException failure) {
+		// Nothing but the components.
+	}
+
+	/**
+	 * Requests the turn's reply, adds it to the conversation, and prices it and books it on the run's
+	 * budget.
+	 *
+	 * <p>
+	 * On the run's last turn the reply loses the tool calls it may still hold, and a reply without
+	 * any text is asked for once more - see {@link #askForFinalAnswer}. When that second request
+	 * fails, the run ends at its limit with the reply it has.
+	 * </p>
+	 *
+	 * @param lastTurn
+	 *        Whether {@link #announceFinalTurn} made this turn the run's last.
+	 * @param request
+	 *        The provider call of the loop the turn runs in.
+	 * @param afterReply
+	 *        Called with each reply once it is booked, or <code>null</code>.
+	 */
+	private TurnReply requestReply(Conversation conversation, ToolContext context, AgentEventListener listener,
+			String runId, int turn, boolean lastTurn, TokenUsage totalUsage, Money totalCost,
+			ProviderCall request, Consumer<AssistantMessage> afterReply) {
+		AssistantMessage assistantMsg = null;
+		UserMessage answerRequest = null;
+		while (true) {
+			try {
+				assistantMsg = callRouted(request, context, listener, runId, turn);
+			} catch (ProviderException e) {
+				if (answerRequest != null && stopReasonFor(e, context) == StopReason.ERROR) {
+					// The run ends with the reply it has, as it did before it asked once more.
+					withdrawFinalAnswerRequest(conversation, answerRequest, e, runId);
+					break;
+				}
+				return new TurnReply(null, totalUsage, totalCost, e);
+			} finally {
+				_finalTurn = false;
+			}
+
+			if (lastTurn) {
+				assistantMsg = withoutToolCalls(assistantMsg, runId);
+			}
+			conversation.add(assistantMsg);
+			totalUsage = totalUsage.add(assistantMsg.usage());
+			// Priced per request and with the model that answered it: a failover moves the run to
+			// another price list, and a tiered price depends on this request's prompt alone.
+			Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
+			totalCost = totalCost.plus(turnCost);
+			context.budgetAllowance().record(assistantMsg.usage(), turnCost);
+			if (afterReply != null) {
+				afterReply.accept(assistantMsg);
+			}
+
+			if (!lastTurn || answerRequest != null || unfinished(assistantMsg) != StopReason.NO_ANSWER) {
+				break;
+			}
+			answerRequest = askForFinalAnswer(conversation, runId, turn);
+			_finalTurn = true;
+		}
+		return new TurnReply(assistantMsg, totalUsage, totalCost, null);
+	}
+
+	/**
+	 * Ends a run at its turn limit with the reply of the last turn {@link #announceFinalTurn} allowed
+	 * it.
+	 */
+	private static AgentResult endAtLimit(AssistantMessage reply, AgentEventListener listener, String runId,
+			int turn, TokenUsage totalUsage, Money totalCost) {
+		StopReason limit = StopReason.MAX_TURNS;
+		emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), reply.usage(), reply.content()));
+		Logger.info("Run " + runId + " ends at its limit (" + limit + ") after a last turn without tools.",
+			AgentLoop.class);
+		emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), limit, totalUsage, totalCost));
+		return new AgentResult(limit, turn, totalUsage);
 	}
 
 	/**
@@ -1076,54 +1135,22 @@ public class AgentLoop {
 
 			compactIfOverBudget(memory, listener, runId, turn);
 
-			StopReason limit = announceFinalTurn(conversation, turn, maxTurns, listener, runId);
+			boolean lastTurn = announceFinalTurn(conversation, turn, maxTurns, listener, runId);
 
-			AssistantMessage assistantMsg = null;
-			boolean askedForAnswer = false;
-			while (true) {
-				try {
-					int currentTurn = turn;
-					assistantMsg = callRouted(
-						() -> callProviderWithReactiveCompaction(
-							conversation, context, memory, listener, runId, currentTurn),
-						context, listener, runId, turn);
-				} catch (ProviderException e) {
-					if (askedForAnswer && stopReasonFor(e, context) == StopReason.ERROR) {
-						// The run ends with the reply it has, as it did before it asked once more.
-						withdrawFinalAnswerRequest(conversation, e, runId);
-						break;
-					}
-					return endOnProviderFailure(e, context, listener, runId, turn, totalUsage, totalCost);
-				} finally {
-					_finalTurn = false;
-				}
-
-				if (limit != null) {
-					assistantMsg = withoutToolCalls(assistantMsg, runId);
-				}
-				conversation.add(assistantMsg);
-				totalUsage = totalUsage.add(assistantMsg.usage());
-				// Priced per request and with the model that answered it: a failover moves the run to
-				// another price list, and a tiered price depends on this request's prompt alone.
-				Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
-				totalCost = totalCost.plus(turnCost);
-				context.budgetAllowance().record(assistantMsg.usage(), turnCost);
-				memory.updateTokenBaseline(assistantMsg.usage());
-
-				if (limit == null || askedForAnswer || unfinished(assistantMsg) != StopReason.NO_ANSWER) {
-					break;
-				}
-				askedForAnswer = true;
-				askForFinalAnswer(conversation, runId, turn);
-				_finalTurn = true;
+			int currentTurn = turn;
+			TurnReply reply = requestReply(conversation, context, listener, runId, turn, lastTurn, totalUsage,
+				totalCost,
+				() -> callProviderWithReactiveCompaction(conversation, context, memory, listener, runId, currentTurn),
+				answer -> memory.updateTokenBaseline(answer.usage()));
+			totalUsage = reply.totalUsage();
+			totalCost = reply.totalCost();
+			if (reply.failure() != null) {
+				return endOnProviderFailure(reply.failure(), context, listener, runId, turn, totalUsage, totalCost);
 			}
+			AssistantMessage assistantMsg = reply.message();
 
-			if (limit != null) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
-				Logger.info("Run " + runId + " ends at its limit (" + limit + ") after a last turn without tools.",
-					AgentLoop.class);
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), limit, totalUsage, totalCost));
-				return new AgentResult(limit, turn, totalUsage);
+			if (lastTurn) {
+				return endAtLimit(assistantMsg, listener, runId, turn, totalUsage, totalCost);
 			}
 
 			if (!_config.responseValidator().test(assistantMsg)) {
@@ -2283,23 +2310,22 @@ public class AgentLoop {
 	 * always did.
 	 * </p>
 	 *
-	 * @return The limit the run reached, or <code>null</code> if it goes on as usual.
+	 * @return Whether the coming turn is the run's last, ending it at {@link StopReason#MAX_TURNS}.
 	 */
-	private StopReason announceFinalTurn(Conversation conversation, int turn, int maxTurns,
+	private boolean announceFinalTurn(Conversation conversation, int turn, int maxTurns,
 			AgentEventListener listener, String runId) {
 		if (turn != maxTurns || maxTurns <= 1) {
-			return null;
+			return false;
 		}
-		StopReason limit = StopReason.MAX_TURNS;
 		String notice = String.format(FINAL_TURN_NOTICE_TURNS, maxTurns);
-		Logger.info("Run " + runId + " turn " + turn + " is its last (" + limit + "): no tool may be called.",
-			AgentLoop.class);
+		Logger.info("Run " + runId + " turn " + turn + " is its last (" + StopReason.MAX_TURNS
+			+ "): no tool may be called.", AgentLoop.class);
 		conversation.add(new UserMessage(
 			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(notice)),
 			UserMessage.Origin.FRAMEWORK));
-		emit(listener, new AgentEvent.FinalTurnRequested(runId, turn, now(), limit, notice));
+		emit(listener, new AgentEvent.FinalTurnRequested(runId, turn, now(), notice));
 		_finalTurn = true;
-		return limit;
+		return true;
 	}
 
 	/**
@@ -2317,16 +2343,21 @@ public class AgentLoop {
 	 * The request goes out as the last one did, with the tools listed and none callable. Recorded like
 	 * {@link #askToContinue}, so that a reloaded session puts the notice back between the two replies.
 	 * </p>
+	 *
+	 * @return The notice added to the conversation.
 	 */
-	private static void askForFinalAnswer(Conversation conversation, String runId, int turn) {
+	private static UserMessage askForFinalAnswer(Conversation conversation, String runId, int turn) {
 		Logger.info("Run " + runId + " turn " + turn + ": the last reply at the run's limit held no text;"
 			+ " asking once more for the answer.", AgentLoop.class);
-		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(FINAL_ANSWER_NOTICE))));
+		UserMessage notice = new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(FINAL_ANSWER_NOTICE)),
+			UserMessage.Origin.FRAMEWORK);
+		conversation.add(notice);
 		ConversationLogListener log = ConversationLogListenerBinding.getListener();
 		if (log != null) {
 			log.recordContinuationRequested(FINAL_ANSWER_NOTICE);
 		}
+		return notice;
 	}
 
 	/**
@@ -2337,14 +2368,18 @@ public class AgentLoop {
 	 * failed one. The notice is removed, so that the conversation ends with the run's last reply, as it
 	 * did before.
 	 * </p>
+	 *
+	 * @param request
+	 *        The notice {@link #askForFinalAnswer} added. Recognised by its id, which a compaction that
+	 *        rewrites the message keeps.
 	 */
-	private static void withdrawFinalAnswerRequest(Conversation conversation, ProviderException e, String runId) {
+	private static void withdrawFinalAnswerRequest(Conversation conversation, UserMessage request,
+			ProviderException e, String runId) {
 		Logger.info("Run " + runId + ": asking once more for the answer failed (" + e.getMessage()
 			+ "); the run ends at its limit with its last reply.", AgentLoop.class);
 		List<Message> messages = conversation.messages();
 		int last = messages.size() - 1;
-		if (last >= 0 && messages.get(last) instanceof UserMessage notice && !notice.content().isEmpty()
-			&& notice.content().get(0) instanceof TextContent text && FINAL_ANSWER_NOTICE.equals(text.text())) {
+		if (last >= 0 && messages.get(last).id().equals(request.id())) {
 			conversation.replaceRange(last, last + 1, List.of());
 		}
 	}

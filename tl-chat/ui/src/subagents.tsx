@@ -2,13 +2,14 @@ import { React } from 'tl-react-bridge'
 import { formatTokens } from './context-usage'
 import { plainText } from './plain-text'
 import type { bundle } from './i18n'
-import type { ChatMessage, SubagentActivity, SubagentBudget, SubagentLive } from './types'
+import { isEnded, type ChatMessage, type SubagentActivity, type SubagentBudget, type SubagentLive } from './types'
 
 const { useEffect, useMemo, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
-function formatDuration(ms: number): string {
+/** A run's duration, as both the activity panel and a subagent's card show it. */
+export function formatDuration(ms: number): string {
   if (ms <= 0) return ''
   if (ms < 1000) return `${ms}ms`
   if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
@@ -121,7 +122,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   const [error, setError] = useState('')
 
   const activeCount = useMemo(
-    () => subagents.filter((item) => item.status === 'RUNNING' || item.status === 'QUEUED').length,
+    () => subagents.filter((item) => !isEnded(item.status)).length,
     [subagents],
   )
   // What needs the user first, then what works, then what has yet to start, then what has ended (#778).
@@ -221,7 +222,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
 
           <div className="activity-list">
             {ordered.map((item) => {
-              const isActive = item.status === 'RUNNING' || item.status === 'QUEUED'
+              const isActive = !isEnded(item.status)
               const isExpanded = expanded.has(item.subagentId)
               const transcript = transcripts[item.subagentId]
               return (

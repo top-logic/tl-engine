@@ -49,6 +49,9 @@ import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
+import com.top_logic.ai.chat.api.messages.SubagentBudgetDto;
+import com.top_logic.ai.chat.api.messages.SubagentJobDto;
+import com.top_logic.ai.chat.api.messages.SubagentListResponse;
 import com.top_logic.ai.chat.api.messages.SubagentMessageRequest;
 import com.top_logic.ai.chat.api.messages.SubagentMessageResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
@@ -56,6 +59,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionManager;
+import com.top_logic.ai.chat.layout.ChatState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
@@ -518,6 +522,10 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
+		// Unlike the other endpoints that name a chat, this one switches the window to it, as a send
+		// does: it starts a run, and a run is sent into the chat the window shows and streams there.
+		// The regenerate button sits under an answer of the chat on screen, so this is the chat the
+		// window shows already.
 		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
 		if (tracker.hasActiveProcessingState()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
@@ -547,13 +555,13 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
-		int turnCount = log.turnCount();
+		ChatState chat = tracker.getSessionManager().getActiveChatState();
+		int turnCount = chat.log().turnCount();
 		if (turnCount == 0) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
 			return;
 		}
-		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, turnCount - 1);
+		Removed removed = removeTurnsFrom(tracker, chat, resolveCurrentPerson(req), turnCount - 1);
 		if (removed.text().isEmpty()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
 			return;
@@ -602,12 +610,16 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
-		if (tracker.hasActiveProcessingState()) {
+		// Acts on the chat it names without switching the window to it: dropping turns starts no run,
+		// and which chat the window shows is not this request's business. Busy means a run of that
+		// chat is writing into the turns that would go; a run of another chat does not touch them.
+		if (tracker.hasActiveProcessingStateFor(sessionId)) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
 			return;
 		}
-		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, body.getFromTurn());
+		Person person = resolveCurrentPerson(req);
+		ChatState chat = tracker.getSessionManager().chatStateFor(sessionId, person);
+		Removed removed = removeTurnsFrom(tracker, chat, person, body.getFromTurn());
 		writeTruncateResponse(resp, TruncateResponse.create()
 			.setStatus("ok")
 			.setRemovedTurns(removed.turns())
@@ -662,11 +674,13 @@ public class ChatServlet extends TopLogicServlet {
 	 * that no longer exist.
 	 * </p>
 	 *
+	 * @param chat
+	 *        The chat to remove the turns from, whether or not the window shows it.
 	 * @return how many turns went, and the user text of the first of them
 	 */
-	private static Removed removeTurnsFrom(TaskProgressTracker tracker, Person person, String sessionId,
+	private static Removed removeTurnsFrom(TaskProgressTracker tracker, ChatState chat, Person person,
 			int fromTurn) {
-		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
+		ConversationLog log = chat.log();
 		List<Turn> turns = log.turns();
 		if (fromTurn < 0 || fromTurn >= turns.size()) {
 			return new Removed(0, "");
@@ -674,12 +688,13 @@ public class ChatServlet extends TopLogicServlet {
 		String text = userTextOf(turns.get(fromTurn));
 		int removed = log.removeFrom(fromTurn);
 
-		ConversationMemory memory = tracker.getConversationMemory();
+		ConversationMemory memory = chat.memory();
 		if (memory != null) {
 			ConversationLogReplay.rebuildMemory(log, memory.conversation());
 		}
-		tracker.dropFeedbackFrom(fromTurn);
+		chat.dropFeedbackFrom(fromTurn);
 
+		String sessionId = chat.sessionId();
 		if (sessionId != null) {
 			// Guarded again here, not only in the handler: this is the call that deletes, and it must
 			// be impossible to reach it through a path that forgot to ask whose session it is.
@@ -688,7 +703,7 @@ public class ChatServlet extends TopLogicServlet {
 				ChatHistoryService.truncateConversation(session, fromTurn);
 			}
 		}
-		tracker.getSessionManager().persistActiveSession();
+		tracker.getSessionManager().persist(chat);
 		return new Removed(removed, text);
 	}
 
@@ -730,9 +745,10 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
-		tracker.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
-		tracker.getSessionManager().persistActiveSession();
+		// The rated chat, not the one the window shows: a rating is no reason to switch it.
+		ChatState chat = tracker.getSessionManager().chatStateFor(sessionId, resolveCurrentPerson(req));
+		chat.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
+		tracker.getSessionManager().persist(chat);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -1184,8 +1200,13 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		Person person = resolveCurrentPerson(req);
-		tracker.setActiveSessionId(sessionId, person);
-		tracker.setApprovalMode(approvalMode);
+		// The chat named, not the one the window shows, and without switching to it. The mode is
+		// stored below; a copy of the chat this window holds is brought in line here, and one it does
+		// not hold reads the stored mode when it is loaded.
+		ChatState held = tracker.getSessionManager().getChatState(sessionId);
+		if (held != null) {
+			held.setApprovalMode(approvalMode);
+		}
 		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
 		// stored mode, so that no window writes back the one it opened the chat with.
 		ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
@@ -1896,14 +1917,9 @@ public class ChatServlet extends TopLogicServlet {
 
 	private void handleListSubagents(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
-		StringBuilder json = new StringBuilder("{\"subagents\":[");
+		SubagentListResponse response = SubagentListResponse.create();
 		if (registry != null) {
-			boolean first = true;
 			for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
-				if (!first) {
-					json.append(",");
-				}
-				first = false;
 				long tokens = job.result() != null ? job.result().tokenUsage().totalTokens() : 0;
 				long durationMs = job.result() != null ? job.result().durationMs() : 0;
 				// finalText doubles as the error summary for failed jobs; sending it lets the
@@ -1913,28 +1929,25 @@ public class ChatServlet extends TopLogicServlet {
 				// hasTranscript lets the client show a "view transcript" affordance only when the
 				// recorded child run is available (GET /chat/subagents/{id}/transcript).
 				boolean hasTranscript = job.childRunId() != null && !job.childRunId().isEmpty();
-				json.append("{\"subagentId\":\"").append(jsonEscape(job.subagentId()))
-					.append("\",\"targetAgentName\":\"").append(jsonEscape(job.targetAgentName()))
-					.append("\",\"status\":\"").append(job.status().name())
-					.append("\",\"totalTokens\":").append(tokens)
-					.append(",\"durationMs\":").append(durationMs)
-					.append(",\"hasTranscript\":").append(hasTranscript)
-					.append(",\"parentToolCallId\":\"").append(jsonEscape(job.parentToolCallId())).append('"')
-					.append(",\"task\":\"").append(jsonEscape(job.taskBrief() != null ? job.taskBrief() : "")).append('"')
-					.append(",\"childRunId\":\"").append(jsonEscape(job.childRunId() != null ? job.childRunId() : "")).append('"')
-					.append(costJson(job.cost()))
-					.append(",\"stopReason\":\"").append(job.result() != null && job.result().stopReason() != null
-						? job.result().stopReason().name() : "").append('"')
-					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
-					.append("\"}");
+				response.addSubagent(withCost(SubagentJobDto.create()
+					.setSubagentId(Objects.toString(job.subagentId(), ""))
+					.setTargetAgentName(Objects.toString(job.targetAgentName(), ""))
+					.setStatus(job.status().name())
+					.setTotalTokens(tokens)
+					.setDurationMs(durationMs)
+					.setHasTranscript(hasTranscript)
+					.setParentToolCallId(Objects.toString(job.parentToolCallId(), ""))
+					.setTask(Objects.toString(job.taskBrief(), ""))
+					.setChildRunId(Objects.toString(job.childRunId(), ""))
+					.setStopReason(job.result() != null && job.result().stopReason() != null
+						? job.result().stopReason().name() : "")
+					.setDetail(Objects.toString(detail, "")), job.cost()));
 			}
+			response.setBudget(budgetOf(registry));
 		}
-		json.append("]");
-		json.append(budgetJson(registry));
-		json.append("}");
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(json.toString());
+		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
 	/**
@@ -1972,12 +1985,7 @@ public class ChatServlet extends TopLogicServlet {
 		if (text.length() > MAX_SUBAGENT_MESSAGE_CHARS) {
 			text = text.substring(0, MAX_SUBAGENT_MESSAGE_CHARS);
 		}
-		String sessionId = blankToNull(body.getSessionId());
-		if (sessionId == null) {
-			sessionId = currentTracker().getActiveSessionId();
-		}
-		SubagentJob job = sessionId == null || ChatHistoryService.findOwnedSessionById(sessionId, person) == null
-			? null : ChatSessionManager.findSubagent(sessionId, id, body.getParentToolCallId());
+		SubagentJob job = findOwnedSubagent(person, body.getSessionId(), id, body.getParentToolCallId());
 		if (job == null) {
 			writeSubagentMessageAnswer(resp, HttpServletResponse.SC_NOT_FOUND, "unknown", "");
 			return;
@@ -1988,6 +1996,30 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		writeSubagentMessageAnswer(resp, HttpServletResponse.SC_OK, "sent", message.id());
+	}
+
+	/**
+	 * The subagent a request to one subagent names, found in the named chat of this account,
+	 * whichever of the account's windows started it; without a chat named, in the chat this window
+	 * shows.
+	 *
+	 * @return The subagent, or <code>null</code> when there is no account, no such chat of this
+	 *         account, or no such subagent in it - which callers answer alike, so that the answer says
+	 *         nothing about which exist.
+	 */
+	private static SubagentJob findOwnedSubagent(Person person, String sessionId, String subagentId,
+			String parentToolCallId) {
+		if (person == null) {
+			return null;
+		}
+		String chat = blankToNull(sessionId);
+		if (chat == null) {
+			chat = currentTracker().getActiveSessionId();
+		}
+		if (chat == null || ChatHistoryService.findOwnedSessionById(chat, person) == null) {
+			return null;
+		}
+		return ChatSessionManager.findSubagent(chat, subagentId, parentToolCallId);
 	}
 
 	private static void writeSubagentMessageAnswer(HttpServletResponse resp, int code, String status,
@@ -2001,38 +2033,36 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * A job's cost as JSON members, in the currency the chat shows costs in - the system currency at
-	 * today's rate, or US dollars without one ({@link CostConversion}); none while its run has not
-	 * reported one.
+	 * The job with its cost, in the currency the chat shows costs in - the system currency at
+	 * today's rate, or US dollars without one ({@link CostConversion}); without one while its run has
+	 * not reported one.
 	 */
-	private static String costJson(Money cost) {
+	private static SubagentJobDto withCost(SubagentJobDto job, Money cost) {
 		if (cost == null) {
-			return "";
+			return job;
 		}
 		Money shown = CostConversion.shown(cost, null);
-		return ",\"cost\":" + shown.amount() + ",\"currency\":\"" + jsonEscape(shown.currency()) + '"';
+		return job.setCost(shown.amount()).setCurrency(shown.currency());
 	}
 
 	/**
-	 * The budget the subagents of this list spend from, as a JSON member: the allowance of the run
-	 * that started them, which they share (#783). Its headroom when that run started, per kind; -1
-	 * for a kind it does not bound. Nothing when no subagent's run is bounded.
+	 * The budget the subagents of this list spend from: the allowance of the run that started them,
+	 * which they share (#783). Its headroom when that run started, per kind; -1 for a kind it does
+	 * not bound. <code>null</code> when no subagent's run is bounded.
 	 */
-	private static String budgetJson(SubagentJobRegistry registry) {
-		if (registry == null) {
-			return "";
-		}
+	private static SubagentBudgetDto budgetOf(SubagentJobRegistry registry) {
 		for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
 			BudgetAllowance budget = job.budget();
 			if (!budget.isLimited()) {
 				continue;
 			}
 			BudgetAllowance.MoneyBudget money = budget.moneyBudget();
-			return ",\"budget\":{\"tokens\":" + (budget.isTokenLimited() ? budget.tokenHeadroom() : -1)
-				+ ",\"money\":" + (money != null ? money.headroom() : -1)
-				+ ",\"currency\":\"" + jsonEscape(money != null ? money.currency() : "") + "\"}";
+			return SubagentBudgetDto.create()
+				.setTokens(budget.isTokenLimited() ? budget.tokenHeadroom() : -1)
+				.setMoney(money != null ? money.headroom() : -1)
+				.setCurrency(money != null ? money.currency() : "");
 		}
-		return "";
+		return null;
 	}
 
 	/**
@@ -2048,15 +2078,8 @@ public class ChatServlet extends TopLogicServlet {
 	 */
 	private void handleCancelSubagent(HttpServletRequest req, HttpServletResponse resp, String id)
 			throws IOException {
-		Person person = resolveCurrentPerson(req);
-		String sessionId = blankToNull(req.getParameter("sessionId"));
-		if (sessionId == null) {
-			sessionId = currentTracker().getActiveSessionId();
-		}
-		SubagentJob job = person == null || sessionId == null
-			|| ChatHistoryService.findOwnedSessionById(sessionId, person) == null
-				? null
-				: ChatSessionManager.findSubagent(sessionId, id, req.getParameter("parentToolCallId"));
+		SubagentJob job = findOwnedSubagent(resolveCurrentPerson(req), req.getParameter("sessionId"), id,
+			req.getParameter("parentToolCallId"));
 		boolean cancelled = job != null && !job.status().isTerminal();
 		if (cancelled) {
 			job.cancellationToken().cancel();
@@ -2307,35 +2330,6 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"error\",\"error\":\"stale_window\"}");
-	}
-
-	/**
-	 * Minimal JSON string escaping for inline JSON values.
-	 */
-	private static String jsonEscape(String s) {
-		if (s == null) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder(s.length() + 8);
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			switch (c) {
-				case '"': sb.append("\\\""); break;
-				case '\\': sb.append("\\\\"); break;
-				case '\n': sb.append("\\n"); break;
-				case '\r': sb.append("\\r"); break;
-				case '\t': sb.append("\\t"); break;
-				case '\b': sb.append("\\b"); break;
-				case '\f': sb.append("\\f"); break;
-				default:
-					if (c < 0x20) {
-						sb.append(String.format("\\u%04x", (int) c));
-					} else {
-						sb.append(c);
-					}
-			}
-		}
-		return sb.toString();
 	}
 
 	/** Extracts session ID from path like "/sessions/123". */

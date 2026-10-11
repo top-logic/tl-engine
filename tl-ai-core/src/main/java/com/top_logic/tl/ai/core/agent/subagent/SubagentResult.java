@@ -34,4 +34,14 @@ public record SubagentResult(
 			tokenUsage = TokenUsage.EMPTY;
 		}
 	}
+
+	/**
+	 * Whether the subagent stopped in order at a limit - turns, budget or output - so
+	 * that its answer may be incomplete.
+	 *
+	 * @see StopReason#isLimit()
+	 */
+	public boolean stoppedAtLimit() {
+		return stopReason != null && stopReason.isLimit();
+	}
 }

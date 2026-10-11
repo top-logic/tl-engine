@@ -182,6 +182,8 @@ public class TestChatConversationRouting extends BasicTestCase {
 		TLObject chat = ChatHistoryService.createSession("Im Dock", user);
 		HistoryUtils.updateSessionRevision();
 		String chatId = chat.tHandle().getObjectName().toExternalForm();
+		// The switch sits in a conversation that shows the chat; it does not open the chat itself.
+		assertTrue(dock.setActiveSessionId(chatId, user));
 
 		assertEquals(HttpServletResponse.SC_OK, signedInPost("/approval-mode", DOCK,
 			"{\"mode\":\"AUTO_APPROVE\",\"sessionId\":\"" + chatId + "\"}")._status);
@@ -190,6 +192,48 @@ public class TestChatConversationRouting extends BasicTestCase {
 			ApprovalMode.AUTO_APPROVE, dock.getApprovalMode());
 		assertEquals("The page's conversation was not addressed and must not have changed.",
 			ApprovalMode.MANUAL, page.getApprovalMode());
+	}
+
+	/**
+	 * Rating an answer and switching auto-approve act on the chat they name, and leave the chat the
+	 * conversation shows where it is.
+	 *
+	 * <p>
+	 * Both used to switch the conversation to the named chat before they wrote, so a rating or a
+	 * switch sent for a chat the conversation had moved away from pulled the window back to it.
+	 * </p>
+	 */
+	public void testActingOnAnotherChatKeepsTheShownOne() throws Exception {
+		TaskProgressTracker page = register(PAGE);
+		String shown = idOf(ChatHistoryService.createSession("Gezeigt", user));
+		String cached = idOf(ChatHistoryService.createSession("Vorher gezeigt", user));
+		String unheld = idOf(ChatHistoryService.createSession("Nie geladen", user));
+		HistoryUtils.updateSessionRevision();
+		// The window held "cached" before it moved on to "shown".
+		assertTrue(page.setActiveSessionId(cached, user));
+		assertTrue(page.setActiveSessionId(shown, user));
+
+		assertEquals(HttpServletResponse.SC_OK, signedInPost("/approval-mode", PAGE,
+			"{\"mode\":\"AUTO_APPROVE\",\"sessionId\":\"" + cached + "\"}")._status);
+		assertEquals(HttpServletResponse.SC_OK, signedInPost("/approval-mode", PAGE,
+			"{\"mode\":\"AUTO_APPROVE\",\"sessionId\":\"" + unheld + "\"}")._status);
+		assertEquals(HttpServletResponse.SC_OK, signedInPost("/feedback", PAGE,
+			"{\"sessionId\":\"" + unheld + "\",\"turnIndex\":0,\"rating\":\"up\"}")._status);
+		HistoryUtils.updateSessionRevision();
+
+		assertEquals("The window still shows the chat it showed.", shown, page.getActiveSessionId());
+		assertEquals("The shown chat's mode is untouched.", ApprovalMode.MANUAL, page.getApprovalMode());
+		assertEquals("The window's copy of the switched chat follows the switch.",
+			ApprovalMode.AUTO_APPROVE, page.getSessionManager().getChatState(cached).approvalMode());
+		assertNull("A chat the window did not hold is not loaded into it.",
+			page.getSessionManager().getChatState(unheld));
+		String stored = ChatHistoryService.getMetadataJson(ChatHistoryService.findOwnedSessionById(unheld, user));
+		assertTrue("The rating is stored with the chat it names: " + stored, stored.contains("\"rating\":\"up\""));
+		assertTrue("The rating keeps the stored mode: " + stored, stored.contains("\"approvalMode\":\"AUTO_APPROVE\""));
+	}
+
+	private static String idOf(TLObject session) {
+		return session.tHandle().getObjectName().toExternalForm();
 	}
 
 	/** A request naming a conversation this window does not show is refused, not served. */

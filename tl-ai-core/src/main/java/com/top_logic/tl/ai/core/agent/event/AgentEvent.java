@@ -539,12 +539,31 @@ public sealed interface AgentEvent {
 	 * @param parentToolCallId the id of the parent's tool call that started it, so a UI can show the
 	 *                        subagent at that call; empty if unknown
 	 * @param queued          whether it waits in the queue for a free slot rather than starting at
-	 *                        once; its first own event says it has started
+	 *                        once; a {@link SubagentRunning} says when it has started
 	 */
 	record SubagentStarted(String runId, int turnNumber, Instant timestamp,
 			String subagentId, String targetAgentName, String taskBrief, String parentToolCallId,
 			boolean queued)
 			implements AgentEvent {}
+
+	/**
+	 * Emitted when a subagent that {@link SubagentStarted#queued() waited in the queue} gets a slot
+	 * and starts its run.
+	 *
+	 * <p>
+	 * Its own steps are no evidence of that: the first may be a request for approval, which a chat
+	 * shows elsewhere than on the subagent's card, and a window that shows the chat but receives none
+	 * of its steps would never learn of it. A subagent that started at once has no such event.
+	 * </p>
+	 *
+	 * @param runId            agent run identifier
+	 * @param turnNumber       1-based loop iteration
+	 * @param timestamp        when the event occurred
+	 * @param subagentId       the job id
+	 * @param parentToolCallId see {@link SubagentCompleted#parentToolCallId()}
+	 */
+	record SubagentRunning(String runId, int turnNumber, Instant timestamp,
+			String subagentId, String parentToolCallId) implements AgentEvent {}
 
 	/**
 	 * Emitted when a lead turn starts without a user message, because subagents it started finished or
@@ -583,7 +602,7 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
-	 * Emitted when a run reached its turn limit or used up its tool calls, before its last turn:
+	 * Emitted when a run reached its turn limit, before its last turn:
 	 * the model is told, in a user message, that it can call no tool any more and has to answer with
 	 * what it has (#775).
 	 *
@@ -596,10 +615,9 @@ public sealed interface AgentEvent {
 	 * @param runId      the run identifier
 	 * @param turnNumber the turn that is the run's last
 	 * @param timestamp  when the run reached the limit
-	 * @param limit      the limit it reached: {@code MAX_TURNS}
 	 * @param text       the text the model is shown
 	 */
-	record FinalTurnRequested(String runId, int turnNumber, Instant timestamp, StopReason limit, String text)
+	record FinalTurnRequested(String runId, int turnNumber, Instant timestamp, String text)
 			implements AgentEvent {}
 
 	/**

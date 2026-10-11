@@ -37,7 +37,7 @@ public class TestSubagentPart extends TestCase {
 		Part.SubagentPart started = onlySubagentPart(turn);
 		assertEquals("sa-1", started.subagentId());
 		assertEquals("call-1", started.parentToolCallId());
-		assertEquals("RUNNING", started.status());
+		assertEquals(Part.SubagentStatus.RUNNING, started.status());
 		assertEquals("The UI places the card by the same call id.", "call-1",
 			((AgentEvent.SubagentStarted) forwarded.get(0)).parentToolCallId());
 
@@ -48,7 +48,7 @@ public class TestSubagentPart extends TestCase {
 			new SubagentResult("X is 42.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-1");
 
 		Part.SubagentPart ended = onlySubagentPart(turn);
-		assertEquals("DONE", ended.status());
+		assertEquals(Part.SubagentStatus.DONE, ended.status());
 		assertEquals("X is 42.", ended.summary());
 		assertEquals("run-1", ended.childRunId());
 		assertEquals(started.id(), ended.id());
@@ -64,14 +64,115 @@ public class TestSubagentPart extends TestCase {
 		Turn turn = log.startTurn();
 
 		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true);
-		assertEquals("QUEUED", onlySubagentPart(turn).status());
+		assertEquals(Part.SubagentStatus.QUEUED, onlySubagentPart(turn).status());
 
 		listener.recordSubagentRunning("sa-1");
-		assertEquals("RUNNING", onlySubagentPart(turn).status());
+		assertEquals(Part.SubagentStatus.RUNNING, onlySubagentPart(turn).status());
 
 		listener.recordSubagentCompleted("sa-1",
 			new SubagentResult("X is 42.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-1");
-		assertEquals("DONE", onlySubagentPart(turn).status());
+		assertEquals(Part.SubagentStatus.DONE, onlySubagentPart(turn).status());
+	}
+
+	/**
+	 * A queued subagent that gets its slot is announced, before any step of its own: its first step may
+	 * be a request for approval, which the chat does not show on its card. A subagent that started at
+	 * once is not announced a second time.
+	 */
+	public void testAQueuedSubagentIsAnnouncedWhenItStarts() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		List<AgentEvent> forwarded = new ArrayList<>();
+		listener.setParentListener(forwarded::add);
+		Turn turn = log.startTurn();
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true);
+		listener.recordSubagentStarted("sa-2", "researcher", "find Y", "call-2", false);
+
+		listener.recordSubagentRunning("sa-1");
+		listener.recordSubagentRunning("sa-2");
+
+		List<AgentEvent.SubagentRunning> running = new ArrayList<>();
+		for (AgentEvent event : forwarded) {
+			if (event instanceof AgentEvent.SubagentRunning e) {
+				running.add(e);
+			}
+		}
+		assertEquals(1, running.size());
+		assertEquals("sa-1", running.get(0).subagentId());
+		assertEquals("The UI finds the card by the call that started it.", "call-1",
+			running.get(0).parentToolCallId());
+		assertEquals("The part is written before the event is sent.", Part.SubagentStatus.RUNNING,
+			((Part.SubagentPart) turn.assistantParts().get(0)).status());
+
+		listener.recordSubagentRunning("sa-1");
+		assertEquals("A start is announced once.", 3, forwarded.size());
+	}
+
+	/**
+	 * A subagent started while no turn was current has no part, but the chat was told it waits; it is
+	 * told when it starts as well.
+	 */
+	public void testAQueuedSubagentWithoutAPartIsAnnounced() {
+		ConversationLogListener listener = new ConversationLogListener(new ConversationLog());
+		List<AgentEvent> forwarded = new ArrayList<>();
+		listener.setParentListener(forwarded::add);
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true);
+
+		listener.recordSubagentRunning("sa-1");
+
+		AgentEvent.SubagentRunning running = (AgentEvent.SubagentRunning) forwarded.get(1);
+		assertEquals("sa-1", running.subagentId());
+		assertEquals("", running.parentToolCallId());
+	}
+
+	/** A subagent cancelled while it waited never starts, and is not announced as running. */
+	public void testASubagentCancelledInTheQueueIsNotAnnouncedAsRunning() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		List<AgentEvent> forwarded = new ArrayList<>();
+		listener.setParentListener(forwarded::add);
+		log.startTurn();
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true);
+		listener.recordSubagentCancelled("sa-1", null);
+
+		listener.recordSubagentRunning("sa-1");
+
+		assertEquals(2, forwarded.size());
+		assertTrue(forwarded.get(1) instanceof AgentEvent.SubagentCancelled);
+	}
+
+	/**
+	 * The recorded names are the state's names, so transcripts written before the state was an enum
+	 * load as they were; a name this version does not know is read as at work, which the startup
+	 * sweep closes once its process is gone, never as an end it did not have.
+	 */
+	public void testTheRecordedNamesAreKept() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.addAssistantPart(new Part.SubagentPart("p-1", java.time.Instant.now(), "sa-1", "a", "t", "", null,
+			Part.SubagentStatus.LIMIT, "partial"));
+		log.completeTurn();
+		String json = ConversationLogSerializer.toJson(log);
+		assertTrue(json, json.contains("\"LIMIT\""));
+
+		for (Part.SubagentStatus status : Part.SubagentStatus.values()) {
+			String written = json.replace("\"LIMIT\"", "\"" + status.name() + "\"");
+			assertEquals(status, onlySubagentPart(ConversationLogSerializer.fromJson(written).turns().get(0)).status());
+		}
+		String unknown = json.replace("\"LIMIT\"", "\"PAUSED\"");
+		assertEquals(Part.SubagentStatus.RUNNING,
+			onlySubagentPart(ConversationLogSerializer.fromJson(unknown).turns().get(0)).status());
+		assertEquals(Part.SubagentStatus.RUNNING, Part.SubagentStatus.fromName(null));
+	}
+
+	/** Which states are an end - the set the startup sweep and the chat's cards both go by. */
+	public void testWhichStatesHaveEnded() {
+		assertFalse(Part.SubagentStatus.QUEUED.hasEnded());
+		assertFalse(Part.SubagentStatus.RUNNING.hasEnded());
+		assertTrue(Part.SubagentStatus.DONE.hasEnded());
+		assertTrue(Part.SubagentStatus.LIMIT.hasEnded());
+		assertTrue(Part.SubagentStatus.FAILED.hasEnded());
+		assertTrue(Part.SubagentStatus.CANCELLED.hasEnded());
 	}
 
 	/** A subagent stopped in order at a limit is recorded as such, so its card says so (#786). */
@@ -87,13 +188,13 @@ public class TestSubagentPart extends TestCase {
 		listener.recordSubagentCompleted("sa-2",
 			new SubagentResult("Y is 7.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-2");
 
-		List<String> states = new ArrayList<>();
+		List<Part.SubagentStatus> states = new ArrayList<>();
 		for (Part part : turn.assistantParts()) {
 			if (part instanceof Part.SubagentPart subagent) {
 				states.add(subagent.status());
 			}
 		}
-		assertEquals(List.of("LIMIT", "DONE"), states);
+		assertEquals(List.of(Part.SubagentStatus.LIMIT, Part.SubagentStatus.DONE), states);
 	}
 
 	/**
@@ -142,11 +243,11 @@ public class TestSubagentPart extends TestCase {
 		Part.SubagentPart running = onlySubagentPart(turn);
 
 		String rewritten = ConversationLogSerializer.replacePart(recorded,
-			running.ended("DONE", "X is 42.", "run-1"));
+			running.ended(Part.SubagentStatus.DONE, "X is 42.", "run-1"));
 
 		Turn read = ConversationLogSerializer.fromJson(rewritten).turns().get(0);
 		Part.SubagentPart ended = onlySubagentPart(read);
-		assertEquals("DONE", ended.status());
+		assertEquals(Part.SubagentStatus.DONE, ended.status());
 		assertEquals("run-1", ended.childRunId());
 		assertEquals(running.id(), ended.id());
 		assertEquals("Bitte zählen", ((Part.TextPart) read.userParts().get(0)).text());
@@ -154,7 +255,8 @@ public class TestSubagentPart extends TestCase {
 
 		assertNull("A transcript without the part is left alone.",
 			ConversationLogSerializer.replacePart(recorded,
-				new Part.SubagentPart("other", java.time.Instant.now(), "sa-9", "a", "t", "", null, "DONE", null)));
+				new Part.SubagentPart("other", java.time.Instant.now(), "sa-9", "a", "t", "", null,
+					Part.SubagentStatus.DONE, null)));
 	}
 
 	/** A long report is cut: the part points at the transcript, it does not copy the report. */
@@ -167,7 +269,7 @@ public class TestSubagentPart extends TestCase {
 		listener.recordSubagentFailed("sa-1", "e".repeat(1000), null);
 
 		Part.SubagentPart ended = onlySubagentPart(turn);
-		assertEquals("FAILED", ended.status());
+		assertEquals(Part.SubagentStatus.FAILED, ended.status());
 		assertTrue(ended.summary().length() < 300);
 	}
 
@@ -192,7 +294,7 @@ public class TestSubagentPart extends TestCase {
 		assertEquals("find X", part.task());
 		assertEquals("call-1", part.parentToolCallId());
 		assertEquals("run-1", part.childRunId());
-		assertEquals("CANCELLED", part.status());
+		assertEquals(Part.SubagentStatus.CANCELLED, part.status());
 
 		Conversation conversation = new Conversation();
 		ConversationLogReplay.rebuildMemory(reloaded, conversation);

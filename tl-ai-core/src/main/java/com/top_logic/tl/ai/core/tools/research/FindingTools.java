@@ -232,7 +232,7 @@ public class FindingTools {
 			if (read == null) {
 				return "No findings: the source is not one this run or its subagents read.";
 			}
-			only = read.url().isEmpty() ? read.id() : read.url();
+			only = read.reference();
 		}
 		List<Finding> findings = list.findings();
 		StringBuilder body = new StringBuilder();
@@ -314,7 +314,7 @@ public class FindingTools {
 		UntrustedEnvelope envelope = CitationKinds.WEB.equals(read.kind())
 			? UntrustedEnvelope.PAGE_CONTENT
 			: UntrustedEnvelope.MODEL_DATA;
-		StringBuilder out = new StringBuilder(envelope.wrap(read.url().isEmpty() ? read.id() : read.url(),
+		StringBuilder out = new StringBuilder(envelope.wrap(read.reference(),
 			text.substring(start, end)));
 		if (start == 0 && end == text.length()) {
 			return out.toString();

@@ -83,12 +83,12 @@ public class TestChatViewBinding extends TestCase {
 		ChatViewBinding binding = ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main");
 
 		Map<String, Object> first = new HashMap<>();
-		binding.writeLayoutState(first::put);
+		binding.writeRenderState(first::put);
 		assertEquals(Boolean.FALSE, first.get("railOpen"));
 
 		railOpen.set(true);
 		Map<String, Object> second = new HashMap<>();
-		binding.writeLayoutState(second::put);
+		binding.writeRenderState(second::put);
 		assertEquals("The second render replays the layout stored now.", Boolean.TRUE,
 			second.get("railOpen"));
 	}
@@ -102,9 +102,9 @@ public class TestChatViewBinding extends TestCase {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 
 		Map<String, Object> main = new HashMap<>();
-		ChatViewBinding.bind(scope, "w1", "/app", "main").writeLayoutState(main::put);
+		ChatViewBinding.bind(scope, "w1", "/app", "main").writeRenderState(main::put);
 		Map<String, Object> other = new HashMap<>();
-		ChatViewBinding.bind(scope, "w1", "/app", "other").writeLayoutState(other::put);
+		ChatViewBinding.bind(scope, "w1", "/app", "other").writeRenderState(other::put);
 
 		assertEquals("main", main.get("layoutKey"));
 		assertEquals(Boolean.TRUE, main.get("railOpen"));
@@ -116,7 +116,7 @@ public class TestChatViewBinding extends TestCase {
 	public void testUndecidedRailIsWrittenAsNull() {
 		ChatViewBinding.preferenceSource = chatId -> ChatPreferencesDto.create();
 		Map<String, Object> state = new HashMap<>();
-		ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main").writeLayoutState(state::put);
+		ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main").writeRenderState(state::put);
 
 		assertTrue("The key is written, so a patch can clear a stale value.", state.containsKey("railOpen"));
 		assertNull("Null, not false: nothing decided is not 'closed'.", state.get("railOpen"));

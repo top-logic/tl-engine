@@ -4,8 +4,8 @@ package com.top_logic.ai.chat.api.messages;
  * SSE event carrying subagent lifecycle status.
  *
  * <p>
- * Emitted for {@code subagent_started}, {@code subagent_completed}, {@code subagent_failed},
- * and {@code subagent_cancelled} events.
+ * Emitted for {@code subagent_started}, {@code subagent_running}, {@code subagent_completed},
+ * {@code subagent_failed}, and {@code subagent_cancelled} events.
  * </p>
  */
 public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
@@ -176,7 +176,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 
 	/**
 	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
-	 * call; sent on start and on the end, so that a window which did not see the start finds the card.
+	 * call; sent on start, on leaving the queue and on the end, so that a window which did not see the
+	 * start finds the card.
 	 */
 	public final String getParentToolCallId() {
 		return _parentToolCallId;
@@ -196,8 +197,8 @@ public class SubagentStatusEvent extends de.haumacher.msgbuf.data.AbstractDataOb
 	}
 
 	/**
-	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. Its
-	 * first own step says it has started.
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. A
+	 * {@code subagent_running} event says when it has started.
 	 */
 	public final boolean isQueued() {
 		return _queued;

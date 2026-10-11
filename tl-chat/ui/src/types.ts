@@ -321,8 +321,33 @@ export interface Capabilities {
   promptImproverAvailable?: boolean
 }
 
-/** `LIMIT`: it stopped in order at a limit - turns, tool calls, budget, output - with an answer that may be incomplete. */
-export type SubagentStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'LIMIT' | 'FAILED' | 'CANCELLED'
+/**
+ * The states of a background subagent, as the server names them (`Part.SubagentStatus`): in a
+ * recorded part, in the job list and in the frames. `LIMIT`: it stopped in order at a limit - turns,
+ * budget, output - with an answer that may be incomplete.
+ */
+export const SUBAGENT_STATUSES = ['QUEUED', 'RUNNING', 'DONE', 'LIMIT', 'FAILED', 'CANCELLED'] as const
+
+export type SubagentStatus = (typeof SUBAGENT_STATUSES)[number]
+
+const ENDED_STATUSES: ReadonlySet<string> = new Set<SubagentStatus>(['DONE', 'LIMIT', 'FAILED', 'CANCELLED'])
+
+/**
+ * Whether a subagent has stopped for good - the one set every check goes by, as
+ * `Part.SubagentStatus.hasEnded` does on the server. Every other state - queued, running, and on a
+ * card waiting for the user or for its lead - is one it can still move on from.
+ */
+export function isEnded(status: string): boolean {
+  return ENDED_STATUSES.has(status)
+}
+
+/**
+ * The state of a name the server sent. One this version does not know - written by another one - is
+ * read as `RUNNING`, as the server reads it: a subagent not known to have ended is shown at work.
+ */
+export function subagentStatus(name: string | undefined): SubagentStatus {
+  return (SUBAGENT_STATUSES as readonly string[]).includes(name ?? '') ? (name as SubagentStatus) : 'RUNNING'
+}
 
 export interface SubagentActivity {
   subagentId: string
@@ -388,6 +413,24 @@ export interface SubagentLive {
   currency?: string
 }
 
+/**
+ * How many steps a card keeps of a subagent; the rest is in its transcript.
+ *
+ * Lives here rather than in the store because the recorded transcript (`api.ts`) caps a delegation's
+ * steps the same way, and a card must not show more after a reload than it showed live.
+ */
+export const MAX_CHILD_STEPS = 20
+
+/** A subagent card before its first event has told it anything. */
+export function emptyLive(startedAt: number = Date.now()): SubagentLive {
+  return { steps: [], text: '', turns: 0, tokens: 0, startedAt }
+}
+
+/** The newest `max` entries of a list that grows at its end. */
+export function keepLast<T>(items: T[], max: number): T[] {
+  return items.length > max ? items.slice(items.length - max) : items
+}
+
 /** One message the user wrote to a subagent from its card, with its receipt. */
 export interface SubagentNote {
   /** The server's id of the message, by which the read receipt names it. */
@@ -448,7 +491,7 @@ export interface SubagentStatusEvent {
   durationMs?: number
   /** On start: the id of the lead's tool call that started it. */
   parentToolCallId?: string
-  /** On start: it waits in the queue for a free slot; its first own step says it has started. */
+  /** On start: it waits in the queue for a free slot; a `subagent_running` frame says when it has started. */
   queued?: boolean
   /** On the end: its own run id, its transcript's key. */
   childRunId?: string

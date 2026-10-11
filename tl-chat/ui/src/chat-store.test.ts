@@ -722,29 +722,94 @@ describe('the stream', () => {
     release()
   })
 
-  /* A subagent beyond the cap waits; its card says so until its first own step arrives. */
-  it('shows a queued subagent as waiting until it starts', async () => {
+  /*
+   * A subagent beyond the cap waits; its card says so until the server says it has started - its
+   * own steps say nothing about that.
+   */
+  it('shows a queued subagent as waiting until the server says it started', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const sa5 = () => store.getState().subagents.find((s) => s.subagentId === 'sa-5')
+
+    stream.emit('subagent_started', { subagentId: 'sa-5', targetAgentName: 'researcher', detail: 'find X', queued: true })
+    // Not started, so no run yet whose transcript could be opened (#834).
+    expect(sa5()).toMatchObject({ status: 'QUEUED', task: 'find X', hasTranscript: false })
+
+    stream.emit('subagent_running', { subagentId: 'sa-5', parentToolCallId: 'call-5' })
+    expect(sa5()).toMatchObject({
+      status: 'RUNNING',
+      targetAgentName: 'researcher',
+      task: 'find X',
+      hasTranscript: true,
+      parentToolCallId: 'call-5',
+    })
+
+    await settle()
+    release()
+  })
+
+  /*
+   * A queued subagent whose first act is a request for approval: the request goes to the prompt
+   * stack, never to the card, and the card still says the subagent works - it used to stay "queued".
+   */
+  it('shows a queued subagent whose first act is an approval as running', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const sa6 = () => store.getState().subagents.find((s) => s.subagentId === 'sa-6')
+
+    stream.emit('subagent_started', { subagentId: 'sa-6', targetAgentName: 'writer', detail: 'draft Y', queued: true })
+    stream.emit('subagent_running', { subagentId: 'sa-6' })
+    stream.emit('delegation_event', {
+      subagentId: 'sa-6',
+      eventType: 'approval_required',
+      eventData: JSON.stringify({ approvalRequestId: 'ap-6', toolName: 'createObject', argsJson: '{}' }),
+    })
+
+    expect(sa6()).toMatchObject({ status: 'RUNNING' })
+    expect(store.getState().messages.find((m) => m.id === 'ap-6')).toMatchObject({
+      askedBy: { subagentId: 'sa-6', agent: 'writer' },
+    })
+
+    await settle()
+    release()
+  })
+
+  /* A step of a queued subagent is no evidence that it started; only the server's frame is. */
+  it('leaves a queued subagent queued on a step of its own', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
 
-    stream.emit('subagent_started', { subagentId: 'sa-5', targetAgentName: 'researcher', detail: 'find X', queued: true })
-    // Not started, so no run yet whose transcript could be opened (#834).
-    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({
-      status: 'QUEUED',
-      task: 'find X',
-      hasTranscript: false,
-    })
+    stream.emit('subagent_started', { subagentId: 'sa-7', targetAgentName: 'researcher', detail: 'find Z', queued: true })
+    stream.emit('delegation_event', { subagentId: 'sa-7', eventType: 'turn_started', eventData: '{"turnNumber":1}' })
 
-    stream.emit('delegation_event', { subagentId: 'sa-5', eventType: 'turn_started', eventData: '{"turnNumber":1}' })
-    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({
-      status: 'RUNNING',
-      targetAgentName: 'researcher',
-      task: 'find X',
-      hasTranscript: true,
-    })
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-7')).toMatchObject({ status: 'QUEUED' })
+
+    await settle()
+    release()
+  })
+
+  /* A start frame that arrives after the subagent's end does not bring it back to life. */
+  it('keeps an ended subagent ended on a late start frame', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('subagent_started', { subagentId: 'sa-8', targetAgentName: 'researcher', detail: 'find W', queued: true })
+    stream.emit('subagent_cancelled', { subagentId: 'sa-8' })
+    stream.emit('subagent_running', { subagentId: 'sa-8' })
+
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-8')).toMatchObject({ status: 'CANCELLED' })
 
     await settle()
     release()
@@ -1920,9 +1985,9 @@ describe('the turn settings', () => {
  */
 describe('eventBelongsToChat', () => {
   it('drops a run-scoped frame that names another session', () => {
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77', text: 'x' }), '42')).toBe(false)
-    expect(eventBelongsToChat('run_started', JSON.stringify({ sessionId: '77' }), '42')).toBe(false)
-    expect(eventBelongsToChat('message_complete', JSON.stringify({ sessionId: '42' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', { sessionId: '77', text: 'x' }, '42')).toBe(false)
+    expect(eventBelongsToChat('run_started', { sessionId: '77' }, '42')).toBe(false)
+    expect(eventBelongsToChat('message_complete', { sessionId: '42' }, '42')).toBe(true)
   })
 
   /**
@@ -1930,22 +1995,22 @@ describe('eventBelongsToChat', () => {
    * dropped those would leave every transcript empty. It tightens by itself once they do.
    */
   it('delivers a frame that names no session, and anything unparsable', () => {
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', { text: 'x' }, '42')).toBe(true)
     expect(eventBelongsToChat('text_delta', 'not json', '42')).toBe(true)
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', { sessionId: '' }, '42')).toBe(true)
   })
 
   /** What is addressed to the window rather than to a turn is never filtered. */
   it('always delivers the frames that belong to the window', () => {
     for (const name of ['connected', 'heartbeat', 'approval_required', 'user_interaction']) {
-      expect(eventBelongsToChat(name, JSON.stringify({ sessionId: '77' }), '42')).toBe(true)
+      expect(eventBelongsToChat(name, { sessionId: '77' }, '42')).toBe(true)
     }
   })
 
   /** A store with no session open yet must not swallow the run that is creating one. */
   it('drops a named frame while no session is open, and keeps an unnamed one', () => {
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77' }), null)).toBe(false)
-    expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), null)).toBe(true)
+    expect(eventBelongsToChat('text_delta', { sessionId: '77' }, null)).toBe(false)
+    expect(eventBelongsToChat('text_delta', { text: 'x' }, null)).toBe(true)
   })
 })
 

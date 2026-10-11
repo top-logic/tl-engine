@@ -133,10 +133,10 @@ public final class SubagentResultDelivery {
 	 * </p>
 	 */
 	static String limitLine(SubagentResult result) {
-		StopReason reason = result.stopReason();
-		if (reason == null || !reason.isLimit()) {
+		if (!result.stoppedAtLimit()) {
 			return null;
 		}
+		StopReason reason = result.stopReason();
 		String what = switch (reason) {
 			case MAX_TURNS -> "it reached its turn limit and wrote its report from what it had by then";
 			case BUDGET_EXHAUSTED -> "the token or money budget it spends from ran out, and it stopped between"

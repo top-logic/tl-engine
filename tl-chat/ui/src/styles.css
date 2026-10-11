@@ -2445,11 +2445,21 @@
 
 /*
  * How to send is worth saying at every width; only how much of it fits changes. The short form is
- * shown where the long one would push the row into a second line.
+ * shown where the long one would not fit.
+ *
+ * The hint is a container of its own and takes whatever the row leaves it: with `flex-basis: 0` and
+ * no minimum it never pushes the row into a second line, and whether the long form fits is asked of
+ * the room it actually has - not worked out backwards from the stage's width minus every sibling's,
+ * which held for one wording, one switch label and one set of paddings only (#761).
  */
 .composer-hint {
-  margin-left: auto;
+  flex: 1 1 0;
   min-width: 0;
+  container-type: inline-size;
+  container-name: composer-hint;
+  overflow: hidden;
+  text-align: end;
+  text-overflow: ellipsis;
   color: var(--text-secondary);
   font-size: var(--chat-small);
   white-space: nowrap;
@@ -2457,6 +2467,20 @@
 
 .composer-hint-short {
   display: none;
+}
+
+/*
+ * The long form no longer fits. In `em` of the hint's own font, so a theme's type scale moves the
+ * breakpoint with the text: the German wording, the longest the product ships, is about 27.8 em.
+ */
+@container composer-hint (max-width: 28em) {
+  .composer-hint-long {
+    display: none;
+  }
+
+  .composer-hint-short {
+    display: inline;
+  }
 }
 
 .attach-row {
@@ -3684,29 +3708,14 @@
  * What the composer gives up, in the order it gives it up.
  *
  * Measured on the stage, because that is the box the prompt field is in: the window says nothing
- * about it once a rail, an artefact pane or a host's panel has taken its share. These four steps
- * replace the viewport query that used to switch the Enter hint and the `.tl-cockpit.has-pane` /
+ * about it once a rail, an artefact pane or a host's panel has taken its share. These steps - with
+ * the Enter hint's, which measures its own box instead (see `.composer-hint`) - replace the
+ * viewport query that used to switch the Enter hint and the `.tl-cockpit.has-pane` /
  * `.has-document` class hacks, which read a state and guessed a width from it - and which a
  * composed `<chat-conversation/>`, having neither class, never got at all.
  *
  * The widths are where the German wording stops fitting, that being the longest the product ships.
  */
-
-/*
- * The long hint and the auto-approve label no longer fit on one line together. Measured in German:
- * switch 163 px + gap 8 px + long hint 334 px, inside the composer foot, which is 2 rem narrower
- * than the stage plus its own 0.5 rem padding - about 34 rem of stage. Below that the row wrapped,
- * hint right-aligned under the switch, e.g. beside an open rail at 1440 px (#761).
- */
-@container chat-stage (max-width: 35rem) {
-  .composer-hint-long {
-    display: none;
-  }
-
-  .composer-hint-short {
-    display: inline;
-  }
-}
 
 /* The switch keeps its track, its tooltip and its accessible name; only the written label goes. */
 @container chat-stage (max-width: 19rem) {

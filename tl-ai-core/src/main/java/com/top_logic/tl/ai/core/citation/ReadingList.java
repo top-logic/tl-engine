@@ -146,7 +146,7 @@ public final class ReadingList {
 		if (source == null) {
 			return;
 		}
-		String key = normalize(source.url().isEmpty() ? source.id() : source.url());
+		String key = normalize(source.reference());
 		if (key.isEmpty()) {
 			return;
 		}
@@ -225,7 +225,7 @@ public final class ReadingList {
 		if (_findings.size() >= MAX_FINDINGS) {
 			return null;
 		}
-		String reference = source.url().isEmpty() ? source.id() : source.url();
+		String reference = source.reference();
 		String title = source.title().isEmpty() ? reference : source.title();
 		Finding finding = new Finding("F" + (++_findingCount) + "-" + _findingTag, claim, reference, title, quote,
 			recordedBy == null ? "" : recordedBy, runId == null ? "" : runId);

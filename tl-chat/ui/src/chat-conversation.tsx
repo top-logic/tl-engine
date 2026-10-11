@@ -22,6 +22,9 @@ import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicat
 
 const { useCallback, useEffect, useMemo, useRef } = React
 
+/** A conversation opens no source pane of its own; one function, so the transcript's memo holds. */
+const OPEN_NO_SOURCE = (): void => undefined
+
 export interface ThreadConfig {
   citationMarkers: boolean
   copy: boolean
@@ -348,6 +351,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     () => resolveMenuItems(Array.isArray(state.menuItems) ? state.menuItems.map(String) : []),
     [state.menuItems],
   )
+  // Memoised like the menu items: a fresh list on every render re-rendered every turn of the
+  // memoised transcript.
+  const extraActions = useMemo(
+    () => resolveMessageActions(Array.isArray(state.hostActions) ? state.hostActions.map(String) : []),
+    [state.hostActions],
+  )
   const referenceCandidates = useMemo(
     () =>
       modelBoundSource(state.referenceCandidates) ??
@@ -625,9 +634,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           citationMarkers={config.citationMarkers}
           showTimestamp={config.timestamp}
           workingIndicator={workingIndicator}
-          extraActions={resolveMessageActions(
-            Array.isArray(state.hostActions) ? state.hostActions.map(String) : [],
-          )}
+          extraActions={extraActions}
           renderAnnotation={registeredAnnotationRenderer(
             typeof state.citationRenderer === 'string' ? state.citationRenderer : '',
           )}
@@ -651,7 +658,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
               />
             ) : null
           }
-          onOpenSource={() => undefined}
+          onOpenSource={OPEN_NO_SOURCE}
         />
         {promptCards.length > 0 && promptCardsVisible(chat.sessionId, chat.messages.length) ? (
           <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />

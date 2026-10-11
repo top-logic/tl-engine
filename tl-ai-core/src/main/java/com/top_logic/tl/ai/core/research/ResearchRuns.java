@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -153,6 +154,7 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 	 *         When the run could not be written.
 	 */
 	public Saved save(ResearchReport report, Person owner) {
+		flushArchivedPages(report);
 		Future<Saved> write = _worker.submit(() -> ThreadContextManager.inSystemInteraction(ResearchRuns.class,
 			() -> store(report, owner)));
 		try {
@@ -165,6 +167,25 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 		} catch (ExecutionException ex) {
 			throw new IllegalStateException("The research report could not be written: " + ex.getMessage(), ex);
 		}
+	}
+
+	/**
+	 * Writes what the run read of the pages the report rests on beyond what their copies hold yet,
+	 * so that the kept run references copies that show it - also when it is kept while its run
+	 * still reads.
+	 */
+	private static void flushArchivedPages(ResearchReport report) {
+		if (!PageArchive.Module.INSTANCE.isActive()) {
+			return;
+		}
+		List<String> handles = new ArrayList<>();
+		for (ResearchReport.Source source : report.cited()) {
+			handles.add(source.pageHandle());
+		}
+		for (ResearchReport.Source source : report.alsoRead()) {
+			handles.add(source.pageHandle());
+		}
+		PageArchive.getInstance().flush(handles);
 	}
 
 	private Saved store(ResearchReport report, Person owner) {
@@ -193,7 +214,7 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 			run.setQuestion(report.question());
 			run.setStatus(status(report.status()));
 			run.setEffort(effort(report.effort()));
-			run.setPlan(emptyToNull(report.plan()));
+			run.setPlan(StringServices.nonEmpty(report.plan()));
 			run.setReport(report.markdown());
 			run.setStarted(date(report.started()));
 			run.setFinished(date(report.finished()));
@@ -229,15 +250,15 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 			result.setObject(source.object());
 			// What the source shows once the object is deleted, which clears the reference; the id
 			// is what the report cites, so its footnote keeps its number.
-			result.setTitle(emptyToNull(source.title()));
-			result.setUrl(emptyToNull(source.reference()));
+			result.setTitle(StringServices.nonEmpty(source.title()));
+			result.setUrl(StringServices.nonEmpty(source.reference()));
 		} else {
 			// Neither reference applies - a page that was not archived, a record that is no model
 			// object: the source is kept with what the reading list says of it.
-			result.setTitle(emptyToNull(source.title()));
-			result.setUrl(emptyToNull(source.url().isEmpty() ? source.reference() : source.url()));
+			result.setTitle(StringServices.nonEmpty(source.title()));
+			result.setUrl(StringServices.nonEmpty(source.url().isEmpty() ? source.reference() : source.url()));
 		}
-		result.setKind(emptyToNull(source.kind()));
+		result.setKind(StringServices.nonEmpty(source.kind()));
 		result.setCited(Boolean.valueOf(source.isCited()));
 		result.setFootnote(source.isCited() ? Integer.valueOf(source.footnote()) : null);
 		result.setReadAt(date(source.readAt()));
@@ -309,10 +330,6 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 
 	private static Date date(Instant instant) {
 		return instant == null ? null : Date.from(instant);
-	}
-
-	private static String emptyToNull(String value) {
-		return value == null || value.isEmpty() ? null : value;
 	}
 
 	/** The running instance. */

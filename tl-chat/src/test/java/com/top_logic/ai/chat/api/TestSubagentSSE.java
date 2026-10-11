@@ -75,6 +75,23 @@ public class TestSubagentSSE extends TestCase {
 		assertTrue(frames.get(0), frames.get(0).contains("\"childRunId\":\"child-1\""));
 	}
 
+	/**
+	 * A queued subagent's start reaches the browser as a frame of its own, with the call its card is
+	 * drawn at: its first step may be an approval prompt, which is not drawn on the card.
+	 */
+	public void testAQueuedSubagentsStartIsSent() {
+		List<String> frames = new ArrayList<>();
+		ChatSSEHandler handler = frames(frames);
+
+		handler.onEventForTest(new AgentEvent.SubagentRunning("", 0, Instant.now(), "sa-4", "call-4"));
+
+		assertEquals(1, frames.size());
+		String frame = frames.get(0);
+		assertTrue(frame, frame.startsWith("subagent_running "));
+		assertTrue(frame, frame.contains("\"subagentId\":\"sa-4\""));
+		assertTrue(frame, frame.contains("\"parentToolCallId\":\"call-4\""));
+	}
+
 	/** A lead turn the subagents started says which ones and why. */
 	public void testTheWakeNamesTheSubagents() {
 		List<String> frames = new ArrayList<>();

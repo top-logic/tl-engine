@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
@@ -101,6 +102,16 @@ public class ConversationLogListener implements AgentEventListener {
 	 * subagent id: the turn that started it, which is no longer the current one once the child ends.
 	 */
 	private final Map<String, SubagentPlace> _runningSubagents = new ConcurrentHashMap<>();
+
+	/**
+	 * The ids of the background subagents that were started into the queue and have not left it yet.
+	 *
+	 * <p>
+	 * Kept apart from {@link #_runningSubagents}: a subagent started while no turn was current has no
+	 * part, but the chat was still told it waits, and must be told when it starts.
+	 * </p>
+	 */
+	private final Set<String> _queuedSubagents = ConcurrentHashMap.newKeySet();
 
 	/**
 	 * @param leadExecution
@@ -869,32 +880,50 @@ public class ConversationLogListener implements AgentEventListener {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part.SubagentPart part = new Part.SubagentPart(UUID.randomUUID().toString(), Instant.now(),
-				subagentId, targetAgentName, taskBrief, nullToEmpty(parentToolCallId), null,
-				queued ? "QUEUED" : "RUNNING", null);
+				subagentId, targetAgentName, taskBrief, StringServices.nonNull(parentToolCallId), null,
+				queued ? Part.SubagentStatus.QUEUED : Part.SubagentStatus.RUNNING, null);
 			turn.addAssistantPart(part);
 			_runningSubagents.put(subagentId, new SubagentPlace(turn, part.id(), leadExecution));
+		}
+		if (queued) {
+			_queuedSubagents.add(subagentId);
 		}
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentStarted("", 0, Instant.now(), subagentId, targetAgentName,
-				taskBrief, nullToEmpty(parentToolCallId), queued));
+				taskBrief, StringServices.nonNull(parentToolCallId), queued));
 		}
 	}
 
 	/**
-	 * Records that a background subagent that waited in the queue has started.
+	 * Records that a background subagent that waited in the queue has started, and forwards a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentRunning} lifecycle event to the
+	 * parent listener.
 	 *
 	 * <p>
 	 * Its part says {@code RUNNING} from now on, in the turn that started it and in the recorded
-	 * transcript of that turn's run, so that a reloaded card shows it at work rather than waiting. A
-	 * subagent that started at once, or one this log does not know, is left as it is.
+	 * transcript of that turn's run - once that run has written it, see
+	 * {@link AgentExecutionStore#replaceTranscriptPart(AgentExecution, Part)} - so that a reloaded card
+	 * shows it at work rather than waiting. The part is written before the event is sent, so a window
+	 * that is told and reads the conversation back finds it. A subagent that started at once is left
+	 * as it is and announced no second time: its start already said it runs.
 	 * </p>
 	 */
 	public void recordSubagentRunning(String subagentId) {
+		if (!_queuedSubagents.remove(subagentId)) {
+			return;
+		}
+		String parentToolCallId = "";
 		SubagentPlace place = _runningSubagents.get(subagentId);
-		if (place != null && place.turn().findPart(place.partId()) instanceof Part.SubagentPart part
-			&& "QUEUED".equals(part.status())) {
-			replaceSubagentPart(place, part.running());
+		if (place != null && place.turn().findPart(place.partId()) instanceof Part.SubagentPart part) {
+			parentToolCallId = StringServices.nonNull(part.parentToolCallId());
+			if (part.status() == Part.SubagentStatus.QUEUED) {
+				replaceSubagentPart(place, part.running());
+			}
+		}
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentRunning("", 0, Instant.now(), subagentId, parentToolCallId));
 		}
 	}
 
@@ -931,13 +960,14 @@ public class ConversationLogListener implements AgentEventListener {
 	public void recordSubagentCompleted(String subagentId,
 			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result, String childRunId) {
 		// An orderly stop at a limit has an answer, but maybe not the whole one; the card says so (#786).
-		boolean atLimit = result != null && result.stopReason() != null && result.stopReason().isLimit();
-		String parentToolCallId = endSubagent(subagentId, atLimit ? "LIMIT" : "DONE",
+		boolean atLimit = result != null && result.stoppedAtLimit();
+		String parentToolCallId = endSubagent(subagentId,
+			atLimit ? Part.SubagentStatus.LIMIT : Part.SubagentStatus.DONE,
 			result == null ? null : result.finalText(), childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result,
-				parentToolCallId, nullToEmpty(childRunId)));
+				parentToolCallId, StringServices.nonNull(childRunId)));
 		}
 	}
 
@@ -950,11 +980,11 @@ public class ConversationLogListener implements AgentEventListener {
 	 *        The child's run id; <code>null</code> if unknown.
 	 */
 	public void recordSubagentFailed(String subagentId, String errorSummary, String childRunId) {
-		String parentToolCallId = endSubagent(subagentId, "FAILED", errorSummary, childRunId);
+		String parentToolCallId = endSubagent(subagentId, Part.SubagentStatus.FAILED, errorSummary, childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentFailed("", 0, Instant.now(), subagentId, errorSummary,
-				parentToolCallId, nullToEmpty(childRunId)));
+				parentToolCallId, StringServices.nonNull(childRunId)));
 		}
 	}
 
@@ -967,11 +997,11 @@ public class ConversationLogListener implements AgentEventListener {
 	 *        The child's run id; <code>null</code> if unknown.
 	 */
 	public void recordSubagentCancelled(String subagentId, String childRunId) {
-		String parentToolCallId = endSubagent(subagentId, "CANCELLED", null, childRunId);
+		String parentToolCallId = endSubagent(subagentId, Part.SubagentStatus.CANCELLED, null, childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId,
-				parentToolCallId, nullToEmpty(childRunId)));
+				parentToolCallId, StringServices.nonNull(childRunId)));
 		}
 	}
 
@@ -992,7 +1022,10 @@ public class ConversationLogListener implements AgentEventListener {
 	 *
 	 * @return The id of the lead's tool call that started the subagent; empty if unknown.
 	 */
-	private String endSubagent(String subagentId, String status, String summary, String childRunId) {
+	private String endSubagent(String subagentId, Part.SubagentStatus status, String summary,
+			String childRunId) {
+		// Cancelled while it was queued: it never leaves the queue.
+		_queuedSubagents.remove(subagentId);
 		SubagentPlace place = _runningSubagents.remove(subagentId);
 		if (place == null) {
 			return "";
@@ -1001,7 +1034,7 @@ public class ConversationLogListener implements AgentEventListener {
 			String shortSummary = summary == null || summary.length() <= SUBAGENT_SUMMARY_CHARS ? summary
 				: summary.substring(0, SUBAGENT_SUMMARY_CHARS) + "...";
 			replaceSubagentPart(place, part.ended(status, shortSummary, childRunId));
-			return nullToEmpty(part.parentToolCallId());
+			return StringServices.nonNull(part.parentToolCallId());
 		}
 		return "";
 	}
@@ -1253,9 +1286,5 @@ public class ConversationLogListener implements AgentEventListener {
 			default:
 				throw new IllegalArgumentException("Unknown outcome: " + outcome);
 		}
-	}
-
-	private static String nullToEmpty(String value) {
-		return value == null ? "" : value;
 	}
 }

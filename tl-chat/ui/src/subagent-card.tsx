@@ -3,7 +3,8 @@ import type { SubagentMessageStatus } from './api'
 import { formatTokens } from './context-usage'
 import { plainText } from './plain-text'
 import type { bundle } from './i18n'
-import { transcriptLine } from './subagents'
+import { formatDuration, transcriptLine } from './subagents'
+import { emptyLive, isEnded } from './types'
 import type {
   ChatMessage,
   DelegationRef,
@@ -18,6 +19,14 @@ import type {
 const { useEffect, useRef, useState } = React
 
 type Labels = ReturnType<typeof bundle>
+
+/**
+ * How a subagent is named where its id alone must tell it apart from a sibling of the same agent:
+ * the id, with the agent's name when it is known.
+ */
+export function subagentDisplayName(subagent: { subagentId: string; agentName?: string }): string {
+  return subagent.agentName ? `${subagent.subagentId} (${subagent.agentName})` : subagent.subagentId
+}
 
 /** What a card shows: the state of a running job, the record of an ended one, or both. */
 export interface SubagentCardModel {
@@ -77,7 +86,6 @@ export function cardsForTurn(
     const parent = job.parentToolCallId
     if (!parent || !callOrder.has(parent)) continue
     const ref = refs.find((item) => item.subagentId === job.subagentId && item.parentToolCallId === parent)
-    const ended = job.status === 'DONE' || job.status === 'LIMIT' || job.status === 'FAILED' || job.status === 'CANCELLED'
     cards.push({
       order: callOrder.get(parent) ?? 0,
       card: {
@@ -85,7 +93,7 @@ export function cardsForTurn(
         agentName: job.targetAgentName || ref?.agentName || '',
         task: job.task || ref?.task || '',
         status: runningState(job.status, waiting.has(job.subagentId), live[job.subagentId]),
-        summary: ended ? job.detail : '',
+        summary: isEnded(job.status) ? job.detail : '',
         live: live[job.subagentId],
         totalTokens: job.totalTokens,
         durationMs: job.durationMs,
@@ -177,7 +185,7 @@ function delegationCards(
       // The recorded steps, unless this window saw more of them live.
       live: watched && watched.steps.length >= ref.steps.length
         ? watched
-        : { steps: ref.steps, text: '', turns: ref.turns, tokens: ref.totalTokens, startedAt: ref.timestamp },
+        : { ...emptyLive(ref.timestamp), steps: ref.steps, turns: ref.turns, tokens: ref.totalTokens },
       totalTokens: ref.totalTokens,
       durationMs: ref.durationMs,
       childRunId: ref.childRunId || undefined,
@@ -232,12 +240,6 @@ function statusLabel(status: SubagentCardModel['status'], labels: Labels, leadNa
   }
 }
 
-function formatSeconds(ms: number): string {
-  if (ms <= 0) return ''
-  const seconds = Math.round(ms / 1000)
-  return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`
-}
-
 /** One step: the tool's id as code (#550), then the values it was called with, as plain text. */
 function StepLine({ step }: { step: SubagentStep }) {
   return (
@@ -284,7 +286,7 @@ function CardMessages({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState('')
-  const name = card.agentName ? `${card.subagentId} (${card.agentName})` : card.subagentId
+  const name = subagentDisplayName(card)
   const canWrite = active && onSend !== undefined
   const hintId = `subagent-hint-${card.parentToolCallId ?? ''}-${card.subagentId}`
 
@@ -387,8 +389,7 @@ export function SubagentCard({
   const [failed, setFailed] = useState(false)
   const live = card.live
   const current = live?.steps[live.steps.length - 1]
-  const active =
-    card.status === 'RUNNING' || card.status === 'QUEUED' || card.status === 'WAITING' || card.status === 'WAITING_LEAD'
+  const active = !isEnded(card.status)
   // A tool call can take a minute with no event; the seconds move on regardless.
   useSecondTick(active && live !== undefined && !card.durationMs)
   const tokens = card.totalTokens || live?.tokens || 0
@@ -396,7 +397,7 @@ export function SubagentCard({
   const meta = [
     live?.turns ? labels.subagentTurns(live.turns) : '',
     tokens ? `${formatTokens(tokens)} ${labels.tokens}` : '',
-    formatSeconds(elapsed),
+    formatDuration(elapsed),
   ].filter(Boolean)
 
   // A synchronous delegation ends with the lead's turn; the main Stop is its stop.
@@ -448,7 +449,7 @@ export function SubagentCard({
             type="button"
             className="text-button is-danger subagent-card-stop"
             disabled={stopping}
-            aria-label={labels.subagentStopOne(card.agentName ? `${card.subagentId} (${card.agentName})` : card.subagentId)}
+            aria-label={labels.subagentStopOne(subagentDisplayName(card))}
             onClick={() => void stop()}
           >
             <i className="bi bi-stop-circle subagent-card-stop-icon" aria-hidden="true" />
@@ -515,9 +516,6 @@ export const FOLD_ABOVE = 3
 /** The event a link pointing at a folded card sends it, so that its list unfolds first. */
 export const REVEAL_CARD_EVENT = 'tl-subagent-reveal'
 
-function ended(card: SubagentCardModel): boolean {
-  return card.status === 'DONE' || card.status === 'LIMIT' || card.status === 'FAILED' || card.status === 'CANCELLED'
-}
 
 /** "5 Subagenten: 1 wartet, 2 laufen, 2 fertig" - the states of a turn's cards, each counted once. */
 export function cardSummary(cards: SubagentCardModel[], labels: Labels): string {
@@ -558,8 +556,8 @@ export function SubagentCards({
   const [folded, setFolded] = useState(true)
   const foldRef = useRef<HTMLDivElement>(null)
   const many = cards.length > FOLD_ABOVE
-  const endedCards = many ? cards.filter(ended) : []
-  const shown = many ? cards.filter((card) => !ended(card)) : cards
+  const endedCards = many ? cards.filter((card) => isEnded(card.status)) : []
+  const shown = many ? cards.filter((card) => !isEnded(card.status)) : cards
 
   // A link to a folded card (the woken line names an ended subagent) unfolds the list before it
   // scrolls: the attribute goes at once, so the card can be scrolled to in the same task.

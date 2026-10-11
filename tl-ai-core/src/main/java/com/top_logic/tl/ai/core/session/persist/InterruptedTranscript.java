@@ -147,7 +147,7 @@ public final class InterruptedTranscript {
 			} else if (part instanceof Part.ToolCallPart call
 				&& call.status() == Part.ToolCallStatus.RUNNING) {
 				parts.set(i, call.failed(INTERRUPTED_CALL, Duration.ZERO));
-			} else if (part instanceof Part.SubagentPart subagent && !hasEnded(subagent)) {
+			} else if (part instanceof Part.SubagentPart subagent && !subagent.status().hasEnded()) {
 				parts.set(i, interrupted(subagent));
 			}
 		}
@@ -198,7 +198,7 @@ public final class InterruptedTranscript {
 		int ended = 0;
 		for (Turn turn : log.turns()) {
 			for (Part part : turn.assistantParts()) {
-				if (part instanceof Part.SubagentPart subagent && !hasEnded(subagent)
+				if (part instanceof Part.SubagentPart subagent && !subagent.status().hasEnded()
 					&& subagent.timestamp().isBefore(processStart)) {
 					turn.updatePart(subagent.id(), interrupted(subagent));
 					ended++;
@@ -208,15 +208,8 @@ public final class InterruptedTranscript {
 		return ended;
 	}
 
-	/** Whether the part says how its subagent ended: done, stopped at a limit, failed or cancelled. */
-	private static boolean hasEnded(Part.SubagentPart subagent) {
-		String status = subagent.status();
-		return "DONE".equals(status) || "LIMIT".equals(status) || "FAILED".equals(status)
-			|| "CANCELLED".equals(status);
-	}
-
 	private static Part.SubagentPart interrupted(Part.SubagentPart subagent) {
-		return subagent.ended("FAILED", INTERRUPTED_SUBAGENT, null);
+		return subagent.ended(Part.SubagentStatus.FAILED, INTERRUPTED_SUBAGENT, null);
 	}
 
 	/**

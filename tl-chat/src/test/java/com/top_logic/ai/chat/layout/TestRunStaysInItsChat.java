@@ -165,21 +165,21 @@ public class TestRunStaysInItsChat extends BasicTestCase {
 		TaskProgressTracker window = new TaskProgressTracker();
 		assertTrue(window.setActiveSessionId(_chatA, _owner));
 		window.setApprovalMode(ApprovalMode.AUTO_APPROVE);
-		window.addSessionApprovedTool("object-edit.updateObject");
+		window.activeChat().addApprovedTool("object-edit.updateObject");
 		window.addLoadedSkill(SKILL);
 		window.setFeedback(0, "up", "good");
 		window.setEffort("high");
 
 		assertTrue(window.setActiveSessionId(_chatB, _owner));
 		assertEquals(ApprovalMode.MANUAL, window.getApprovalMode());
-		assertTrue(window.getSessionApprovedTools().isEmpty());
+		assertTrue(window.activeChat().approvedTools().isEmpty());
 		assertTrue(window.getLoadedSkills().isEmpty());
 		assertTrue(window.getFeedback().isEmpty());
 		assertNull(window.getEffort());
 
 		assertTrue(window.setActiveSessionId(_chatA, _owner));
 		assertEquals(ApprovalMode.AUTO_APPROVE, window.getApprovalMode());
-		assertEquals(java.util.Set.of("object-edit.updateObject"), window.getSessionApprovedTools());
+		assertEquals(java.util.Set.of("object-edit.updateObject"), window.activeChat().approvedTools());
 		assertEquals(java.util.Set.of(SKILL), window.getLoadedSkills());
 		assertEquals(1, window.getFeedback().size());
 		assertEquals("high", window.getEffort());

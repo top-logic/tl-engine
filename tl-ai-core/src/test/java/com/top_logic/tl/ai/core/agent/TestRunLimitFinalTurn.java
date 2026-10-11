@@ -83,7 +83,6 @@ public class TestRunLimitFinalTurn extends TestCase {
 		assertEquals(StopReason.MAX_TURNS, result.stopReason());
 		assertEquals(3, result.turnsUsed());
 		assertEquals("The run's own log hears of the notice, as an event.", 1, announced.size());
-		assertEquals(StopReason.MAX_TURNS, announced.get(0).limit());
 		assertEquals(3, announced.get(0).turnNumber());
 		assertEquals("Turns 1 and 2 work, turn 3 answers.", 2, _runs.get("fetch").get());
 		assertEquals(FINAL, lastText(conversation));

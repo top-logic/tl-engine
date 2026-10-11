@@ -2,6 +2,7 @@ import { React } from 'tl-react-bridge'
 import {
   cardsForTurn,
   REVEAL_CARD_EVENT,
+  subagentDisplayName,
   SubagentCards,
   subagentsWaitingForUser,
   type SendToSubagent,
@@ -9,6 +10,7 @@ import {
 } from './subagent-card'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
+import { sameFields, sameItems, sameMembers, useStable } from './use-stable'
 import { AnswerSources, citedSources } from './sources'
 import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken } from './reference'
 import { TokenInput, type TokenInputHandle } from './token-input'
@@ -108,6 +110,22 @@ function groupTurns(messages: ChatMessage[]): RunTurn[] {
   }
   flush()
   return turns
+}
+
+/**
+ * The turns of `messages`, each the very object of the previous render while its messages are the
+ * same - a streamed word changes the last turn, and a memoised turn above it must not see a change.
+ */
+function useStableTurns(messages: ChatMessage[]): RunTurn[] {
+  const kept = useRef(new Map<string, RunTurn>())
+  return useMemo(() => {
+    const turns = groupTurns(messages).map((turn) => {
+      const before = kept.current.get(turn.id)
+      return before && sameTurn(before, turn) ? before : turn
+    })
+    kept.current = new Map(turns.map((turn) => [turn.id, turn]))
+    return turns
+  }, [messages])
 }
 
 function lastAnswer(events: ChatMessage[]): AssistantText | null {
@@ -979,7 +997,7 @@ function WokenLine({ woken, labels }: { woken: WokenSubagent[]; labels: Labels }
     <div className="notice-line is-woken">
       <ul className="woken-list">
         {woken.map((item) => {
-          const name = item.agentName ? `${item.subagentId} (${item.agentName})` : item.subagentId
+          const name = subagentDisplayName(item)
           return (
             <li key={`${item.parentToolCallId}|${item.subagentId}`} className={`woken-${item.reason.toLowerCase()}`}>
               <button
@@ -1115,34 +1133,7 @@ function RunMetaLine({
   )
 }
 
-function AgentRun({
-  turn,
-  results,
-  traceMode,
-  busy,
-  labels,
-  language,
-  effort,
-  rating,
-  note,
-  regenerating,
-  onRate,
-  onRegenerate,
-  renderAnnotation,
-  openInPane,
-  extraActions,
-  onOpenSource,
-  canCopy = true,
-  canRate = true,
-  citationMarkers = true,
-  showTimestamp = true,
-  workingIndicator = DOTS,
-  subagentCards = [],
-  onLoadSubagentTranscript,
-  onSendSubagentMessage,
-  onCancelSubagent,
-  leadName,
-}: {
+interface AgentRunProps {
   turn: RunTurn
   results: Map<string, ToolResult>
   traceMode: TraceMode
@@ -1174,7 +1165,36 @@ function AgentRun({
   onCancelSubagent?: (id: string, parentToolCallId?: string) => Promise<void>
   /** What the agent the user talks to is called, for a card whose subagent waits for it. */
   leadName?: string
-}) {
+}
+
+const AgentRun = React.memo(function AgentRun({
+  turn,
+  results,
+  traceMode,
+  busy,
+  labels,
+  language,
+  effort,
+  rating,
+  note,
+  regenerating,
+  onRate,
+  onRegenerate,
+  renderAnnotation,
+  openInPane,
+  extraActions,
+  onOpenSource,
+  canCopy = true,
+  canRate = true,
+  citationMarkers = true,
+  showTimestamp = true,
+  workingIndicator = DOTS,
+  subagentCards = [],
+  onLoadSubagentTranscript,
+  onSendSubagentMessage,
+  onCancelSubagent,
+  leadName,
+}: AgentRunProps) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
   const tools = toolsOf(turn.events)
@@ -1265,6 +1285,66 @@ function AgentRun({
         : null}
     </div>
   )
+})
+
+/**
+ * One turn's answer, with what only this turn needs worked out here rather than in the thread.
+ *
+ * The thread re-renders on every streamed word. Handed fresh closures and a fresh card list, every
+ * finished turn above the running one re-rendered with it and worked out its subagent cards again;
+ * here each turn keeps them, so `AgentRun`'s memo holds for every turn the word did not land in.
+ */
+const TurnRun = React.memo(function TurnRun({
+  turn,
+  subagents,
+  subagentLive,
+  delegationLive,
+  waitingSubagents,
+  rateTurn,
+  regenerateTurn,
+  ...run
+}: Omit<AgentRunProps, 'subagentCards' | 'onRate' | 'onRegenerate'> & {
+  subagents?: SubagentActivity[]
+  subagentLive?: Record<string, SubagentLive>
+  delegationLive?: Record<string, SubagentLive>
+  waitingSubagents: Set<string>
+  /** Rates a turn; absent where this turn cannot be rated. */
+  rateTurn?: (turnIndex: number, rating: Rating, note?: string) => void
+  /** Produces a turn's answer again; absent where this turn's cannot be. */
+  regenerateTurn?: (messageId: string, turnIndex: number) => void
+}) {
+  const { onLoadSubagentTranscript } = run
+  const computed = useMemo(
+    () =>
+      subagents && onLoadSubagentTranscript
+        ? cardsForTurn(turn.events, subagents, subagentLive ?? {}, waitingSubagents, delegationLive ?? {})
+        : undefined,
+    [turn.events, subagents, subagentLive, waitingSubagents, delegationLive, onLoadSubagentTranscript],
+  )
+  // Any subagent's step changes the live state every turn reads; only the turn whose cards it
+  // changes has to draw them again.
+  const subagentCards = useStable(computed, sameCards)
+  const index = turn.index
+  const onRate = useMemo(
+    () => (rateTurn ? (rating: Rating, note?: string) => rateTurn(index, rating, note) : undefined),
+    [rateTurn, index],
+  )
+  const userId = turn.user?.id
+  const onRegenerate = useMemo(
+    () => (regenerateTurn && userId ? () => regenerateTurn(userId, index) : undefined),
+    [regenerateTurn, userId, index],
+  )
+  return <AgentRun {...run} turn={turn} subagentCards={subagentCards} onRate={onRate} onRegenerate={onRegenerate} />
+})
+
+function sameCards(a: SubagentCardModel[] | undefined, b: SubagentCardModel[] | undefined): boolean {
+  if (!a || !b) return a === b
+  return a.length === b.length && a.every((card, index) => sameFields(card, b[index]))
+}
+
+/** A turn the messages still group into as before, so that its memo holds. */
+function sameTurn(a: RunTurn, b: RunTurn): boolean {
+  return a.id === b.id && a.index === b.index && a.user === b.user && sameItems(a.events, b.events)
 }
 
 export const Thread = React.memo(function Thread({
@@ -1352,16 +1432,22 @@ export const Thread = React.memo(function Thread({
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
   const [showJump, setShowJump] = useState(false)
+  // Kept while no result changed, so a streamed word does not hand every turn a new map.
+  const toolResults = useStable(
+    useMemo(() => messages.filter((message): message is ToolResult => message.type === 'tool_result'), [messages]),
+    sameItems,
+  )
   const results = useMemo(() => {
     const map = new Map<string, ToolResult>()
-    for (const message of messages) {
-      if (message.type === 'tool_result') map.set(message.toolUseId, message)
-    }
+    for (const result of toolResults) map.set(result.toolUseId, result)
     return map
-  }, [messages])
-  const turns = useMemo(() => groupTurns(messages), [messages])
+  }, [toolResults])
+  const turns = useStableTurns(messages)
   // A subagent is waiting while a question or an approval it asked is open; its card says so.
-  const waitingSubagents = useMemo(() => subagentsWaitingForUser(messages), [messages])
+  const waitingSubagents = useStable(
+    useMemo(() => subagentsWaitingForUser(messages), [messages]),
+    sameMembers,
+  )
   const ratings = useMemo(() => {
     const map = new Map<number, MessageFeedback>()
     for (const entry of feedback) map.set(entry.turnIndex, entry)
@@ -1444,14 +1530,13 @@ export const Thread = React.memo(function Thread({
                       }}
                     />
                   ) : null}
-                  <AgentRun
+                  <TurnRun
                     turn={turn}
                     results={results}
-                    subagentCards={
-                      subagents && onLoadSubagentTranscript
-                        ? cardsForTurn(turn.events, subagents, subagentLive ?? {}, waitingSubagents, delegationLive ?? {})
-                        : undefined
-                    }
+                    subagents={subagents}
+                    subagentLive={subagentLive}
+                    delegationLive={delegationLive}
+                    waitingSubagents={waitingSubagents}
                     onLoadSubagentTranscript={onLoadSubagentTranscript}
                     onSendSubagentMessage={onSendSubagentMessage}
                     onCancelSubagent={onCancelSubagent}
@@ -1467,15 +1552,11 @@ export const Thread = React.memo(function Thread({
                     rating={entry?.rating ?? null}
                     note={entry?.note}
                     regenerating={regenerating}
-                    onRate={
-                      canRate && turn.index >= 0 ? (value, note) => onRate(turn.index, value, note) : undefined
-                    }
+                    rateTurn={canRate && turn.index >= 0 ? onRate : undefined}
                     // Only the last answer can be produced again: regenerating an earlier one would
                     // silently discard everything said after it, which is what editing is for.
-                    onRegenerate={
-                      canRegenerate && user && position === lastIndex && !busy
-                        ? () => onRegenerate(user.id, turn.index)
-                        : undefined
+                    regenerateTurn={
+                      canRegenerate && user && position === lastIndex && !busy ? onRegenerate : undefined
                     }
                     renderAnnotation={renderAnnotation}
                     openInPane={openInPane}

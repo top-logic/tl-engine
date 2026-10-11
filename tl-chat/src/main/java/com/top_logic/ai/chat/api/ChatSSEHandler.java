@@ -116,7 +116,7 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * <li>{@code lock_acquired}, {@code lock_failed} - Edit lock</li>
  * <li>{@code tx_began}, {@code tx_committed}, {@code tx_rollback} - Transactions</li>
  * <li>{@code compaction_started} - Context compaction</li>
- * <li>{@code subagent_started}, {@code subagent_completed}, {@code subagent_failed}, {@code subagent_cancelled} - Background subagents</li>
+ * <li>{@code subagent_started}, {@code subagent_running}, {@code subagent_completed}, {@code subagent_failed}, {@code subagent_cancelled} - Background subagents</li>
  * <li>{@code lead_woken}, {@code lead_wakes_exhausted} - A lead turn started for subagents' news, or not started any more</li>
  * <li>{@code provider_error} - Unrecoverable provider errors</li>
  * <li>{@code message_complete} - Final assistant message with HTML</li>
@@ -579,6 +579,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setDetail(e.taskBrief())
 				.setParentToolCallId(e.parentToolCallId())
 				.setQueued(e.queued())));
+		} else if (event instanceof AgentEvent.SubagentRunning e) {
+			sendEvent("subagent_running", DtoMapper.toJson(SubagentStatusEvent.create()
+				.setSubagentId(e.subagentId())
+				.setParentToolCallId(e.parentToolCallId())));
 		} else if (event instanceof AgentEvent.LeadWoken e) {
 			LeadWokenEvent woken = LeadWokenEvent.create()
 				.setFinished(e.finished())

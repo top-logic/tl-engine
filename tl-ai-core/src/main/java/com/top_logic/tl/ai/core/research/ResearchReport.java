@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
@@ -169,13 +170,13 @@ public record ResearchReport(String question, String effort, String plan, String
 				alsoRead.add(source(source, objects, 0));
 			}
 		}
-		return new ResearchReport(question.strip(), lower(effort), nullToEmpty(plan).strip(),
+		return new ResearchReport(question.strip(), lower(effort), StringServices.nonNull(plan).strip(),
 			status == null || status.isBlank() ? COMPLETE : lower(status), markdown, cited, alsoRead,
-			read.findings(), nullToEmpty(leadRunId), started, now);
+			read.findings(), StringServices.nonNull(leadRunId), started, now);
 	}
 
 	private static Source source(ReadSource source, Function<String, TLObject> objects, int footnote) {
-		String reference = reference(source);
+		String reference = source.reference();
 		String title = source.title().isEmpty() ? reference : source.title();
 		if (CitationKinds.WEB.equals(source.kind()) || !source.url().isEmpty()) {
 			return new Source(source.kind(), reference, title, source.url(), PageArchive.handleOf(source.archiveUrl()),
@@ -200,14 +201,9 @@ public record ResearchReport(String question, String effort, String plan, String
 		}
 	}
 
-	/** What the reading list knows a source by. */
-	static String reference(ReadSource source) {
-		return source.url().isEmpty() ? source.id() : source.url();
-	}
-
 	/** The key a source and a finding's source are matched by. */
 	static String key(ReadSource source) {
-		return key(reference(source));
+		return key(source.reference());
 	}
 
 	/** The key a source and a finding's source are matched by. */
@@ -216,10 +212,6 @@ public record ResearchReport(String question, String effort, String plan, String
 	}
 
 	private static String lower(String value) {
-		return nullToEmpty(value).strip().toLowerCase(Locale.ROOT);
-	}
-
-	private static String nullToEmpty(String value) {
-		return value == null ? "" : value;
+		return StringServices.nonNull(value).strip().toLowerCase(Locale.ROOT);
 	}
 }

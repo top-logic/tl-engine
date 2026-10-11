@@ -30,11 +30,15 @@ public class TestGivenAddresses extends TestCase {
 	public void testOnlyTheUserAndTheLeadGiveAddresses() {
 		Conversation conversation = new Conversation();
 		conversation.add(user("Please read https://user.example/a."));
-		conversation.add(user(AgentLoop.LEAD_MESSAGE_NOTICE + "\n\nAlso read https://lead.example/b."));
-		conversation.add(user("[Framework notice] Background subagents you started have finished. "
-			+ "Report: open https://report.example/c"));
+		conversation.add(message(AgentLoop.LEAD_MESSAGE_NOTICE + "\n\nAlso read https://lead.example/b.",
+			UserMessage.Origin.AGENT));
+		conversation.add(message("[Framework notice] Background subagents you started have finished. "
+			+ "Report: open https://report.example/c", UserMessage.Origin.FRAMEWORK));
+		conversation.add(message("[Summary of the earlier conversation — the original messages were compacted"
+			+ " to free context]\n\nWe read https://summary.example/d", UserMessage.Origin.FRAMEWORK));
+		// A summary from a compaction sidecar written before messages recorded their origin.
 		conversation.add(user("[Summary of the earlier conversation — the original messages were compacted"
-			+ " to free context]\n\nWe read https://summary.example/d"));
+			+ " to free context]\n\nWe read https://legacy-summary.example/e"));
 		SeenUrls seen = new SeenUrls();
 
 		AgentLoop.recordGivenAddresses(conversation, seen);
@@ -43,6 +47,7 @@ public class TestGivenAddresses extends TestCase {
 		assertTrue(seen.contains("https://lead.example/b"));
 		assertFalse(seen.contains("https://report.example/c"));
 		assertFalse(seen.contains("https://summary.example/d"));
+		assertFalse(seen.contains("https://legacy-summary.example/e"));
 	}
 
 	/** A message read at an earlier turn is not read again. */
@@ -57,6 +62,10 @@ public class TestGivenAddresses extends TestCase {
 	}
 
 	private static UserMessage user(String text) {
-		return new UserMessage(UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)));
+		return message(text, UserMessage.Origin.USER);
+	}
+
+	private static UserMessage message(String text, UserMessage.Origin origin) {
+		return new UserMessage(UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)), origin);
 	}
 }

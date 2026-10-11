@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.scripting;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
 
 import com.top_logic.base.context.TLSubSessionContext;
@@ -36,6 +35,7 @@ import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.research.ResearchReport;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
@@ -80,10 +80,7 @@ public final class HeadlessResearch {
 	static final String SKILL = "TL_deepResearch";
 
 	/** The effort a research gets when the caller names none. */
-	static final String DEFAULT_EFFORT = "standard";
-
-	/** The effort levels of the skill. */
-	static final Set<String> EFFORTS = Set.of("quick", "standard", "deep");
+	static final String DEFAULT_EFFORT = ResearchReport.STANDARD;
 
 	/** How many characters of the question the session title shows. */
 	private static final int TITLE_LENGTH = 60;
@@ -133,7 +130,7 @@ public final class HeadlessResearch {
 			return DEFAULT_EFFORT;
 		}
 		String level = effort.trim().toLowerCase(Locale.ROOT);
-		if (!EFFORTS.contains(level)) {
+		if (!ResearchReport.EFFORTS.contains(level)) {
 			throw new TopLogicException(I18NConstants.ERROR_RESEARCH_EFFORT__VALUE.fill(effort));
 		}
 		return level;

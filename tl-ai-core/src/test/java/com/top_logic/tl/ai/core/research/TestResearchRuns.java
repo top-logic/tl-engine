@@ -23,6 +23,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -258,7 +259,7 @@ public class TestResearchRuns extends BasicTestCase {
 		String document = render(run);
 		assertTrue("the deleted object keeps its footnote number: " + document,
 			document.contains("<sup><a href=\"#source-2\">[2]</a></sup>"));
-		assertTrue(document, document.contains("<li id=\"source-2\">" + ResearchDocument.escape(deleted)));
+		assertTrue(document, document.contains("<li id=\"source-2\">" + TagUtil.encodeXML(deleted)));
 	}
 
 	/** A report that opens with the question as its heading does not show the question twice. */

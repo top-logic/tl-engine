@@ -422,10 +422,7 @@ public class ChatProcessor {
 			ToolContext toolContext, AgentEventListener listener) {
 		List<SubagentNews> news = AgentLoop.injectSubagentNews(conversation, toolContext);
 		if (news.isEmpty()) {
-			int index = convLog.turns().indexOf(convLog.currentTurn());
-			if (index >= 0) {
-				convLog.removeFrom(index);
-			}
+			discardCurrentTurn(convLog);
 			return false;
 		}
 		int asking = (int) news.stream().filter(item -> item.reason() == SubagentNews.Reason.ASKS).count();
@@ -547,6 +544,7 @@ public class ChatProcessor {
 		String taskId;
 		ChatState chat;
 		String sessionId;
+		readSpendOutsideTheLock(tracker, spendReading);
 		// Taken with the lead turn a subagent's news starts, so that the two cannot both find the
 		// chat idle and start a turn each.
 		synchronized (tracker.sendLock()) {
@@ -584,23 +582,11 @@ public class ChatProcessor {
 			// questions). Prior runs' final events have already been flushed by this point.
 			tracker.evictCompletedStatesForSession(sessionId);
 
-			state = new AIProcessingState();
-			state.startProcessing();
-			taskId = tracker.generateTaskId();
-			state.setCurrentTaskId(taskId);
-			// Before it is registered: that is what the other side of the lock asks for.
-			state.setSessionId(sessionId);
-			state.setChatState(chat);
-			tracker.addProcessingState(taskId, state);
+			state = registerRun(tracker, chat, sessionId, false);
+			taskId = state.getCurrentTaskId();
 		}
 
-		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
-		state.setFacts(facts);
-		state.setSpendReading(spendReading);
-		// Read here, on the request thread and in the acting account's context, and only once per
-		// conversation: they go into the environment block, which has to stay byte-identical
-		// across the turns of one conversation. See ChatSessionManager.getMemories.
-		state.setMemories(tracker.getSessionManager().getMemories(sessionId, tracker.getSessionOwner()));
+		prepareRun(tracker, state, options != null ? options : ChatRunOptions.DEFAULT, facts, spendReading);
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -670,6 +656,7 @@ public class ChatProcessor {
 		AIProcessingState state;
 		String taskId;
 		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
+		readSpendOutsideTheLock(tracker, spendReading);
 		ChatState chat;
 		synchronized (tracker.sendLock()) {
 			// Whether the window shows the chat, and what the turn writes into, read in one step: a
@@ -680,19 +667,10 @@ public class ChatProcessor {
 				return false;
 			}
 			tracker.evictCompletedStatesForSession(sessionId);
-			state = new AIProcessingState();
-			state.setWake(true);
-			state.startProcessing();
-			taskId = tracker.generateTaskId();
-			state.setCurrentTaskId(taskId);
-			state.setSessionId(sessionId);
-			state.setChatState(chat);
-			tracker.addProcessingState(taskId, state);
+			state = registerRun(tracker, chat, sessionId, true);
+			taskId = state.getCurrentTaskId();
 		}
-		state.setRunOptions(last.options());
-		state.setFacts(last.facts());
-		state.setSpendReading(spendReading);
-		state.setMemories(tracker.getSessionManager().getMemories(sessionId, tracker.getSessionOwner()));
+		prepareRun(tracker, state, last.options(), last.facts(), spendReading);
 
 		ConversationLog convLog = chat.log();
 		convLog.startTurn().setUserParts(List.of());
@@ -702,16 +680,75 @@ public class ChatProcessor {
 			state._backgroundTask = ChatRunExecutor.submit(new AIBackgroundTask(tracker, state,
 				null, null, userSession));
 		} catch (ChatRunExecutor.NoRoom ex) {
-			int index = convLog.turns().indexOf(convLog.currentTurn());
-			if (index >= 0) {
-				convLog.removeFrom(index);
-			}
+			discardCurrentTurn(convLog);
 			state.completeSuccessfully();
 			tracker.removeProcessingState(taskId);
 			return false;
 		}
 		Logger.info("Started a lead turn for subagent news in chat " + sessionId + ".", ChatProcessor.class);
 		return true;
+	}
+
+	/**
+	 * Reads the account's spend into the given reading now, before the caller takes
+	 * {@link TaskProgressTracker#sendLock()}.
+	 *
+	 * <p>
+	 * The reading is a pass over the account's recorded runs on the store's writer thread, and
+	 * {@link #noRoomReason(TaskProgressTracker, RunLimits.SpendReading)} asks it under the lock. The
+	 * lock orders a send against a wake of the same chat; it does not guard the spend, which runs
+	 * change without it. Read here, the check under the lock finds the reading taken and the other
+	 * side of the lock does not wait on the writer thread. Reads nothing where no budget applies.
+	 * </p>
+	 */
+	private static void readSpendOutsideTheLock(TaskProgressTracker tracker, RunLimits.SpendReading reading) {
+		RunLimits.budgetRefusal(tracker.getSessionOwner(), reading);
+	}
+
+	/**
+	 * Creates the processing state of a new run of the given chat and registers it with the window.
+	 *
+	 * <p>
+	 * Called under {@link TaskProgressTracker#sendLock()}: once registered, the chat counts as busy
+	 * for the other side of the lock.
+	 * </p>
+	 *
+	 * @param wake
+	 *        Whether the run is a lead turn started for subagents' news rather than by the user.
+	 */
+	private static AIProcessingState registerRun(TaskProgressTracker tracker, ChatState chat, String sessionId,
+			boolean wake) {
+		AIProcessingState state = new AIProcessingState();
+		state.setWake(wake);
+		state.startProcessing();
+		String taskId = tracker.generateTaskId();
+		state.setCurrentTaskId(taskId);
+		// Before it is registered: that is what the other side of the lock asks for.
+		state.setSessionId(sessionId);
+		state.setChatState(chat);
+		tracker.addProcessingState(taskId, state);
+		return state;
+	}
+
+	/** Hands a registered run what it is started with. */
+	private static void prepareRun(TaskProgressTracker tracker, AIProcessingState state, ChatRunOptions options,
+			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
+		state.setRunOptions(options);
+		state.setFacts(facts);
+		state.setSpendReading(spendReading);
+		// Read here, on the request thread and in the acting account's context, and only once per
+		// conversation: they go into the environment block, which has to stay byte-identical
+		// across the turns of one conversation. See ChatSessionManager.getMemories.
+		state.setMemories(
+			tracker.getSessionManager().getMemories(state.getSessionId(), tracker.getSessionOwner()));
+	}
+
+	/** Takes the turn just opened out of the log again, for a run that is not going to fill it. */
+	private static void discardCurrentTurn(ConversationLog convLog) {
+		int index = convLog.turns().indexOf(convLog.currentTurn());
+		if (index >= 0) {
+			convLog.removeFrom(index);
+		}
 	}
 
 	/**
@@ -726,7 +763,7 @@ public class ChatProcessor {
 			}
 
 			@Override
-			public boolean wake(SubagentJobRegistry.News news) {
+			public boolean wake() {
 				return sendWake(tracker, sessionId);
 			}
 
@@ -1033,6 +1070,9 @@ public class ChatProcessor {
 				|| event instanceof AgentEvent.SubagentFailed
 				|| event instanceof AgentEvent.SubagentCancelled) {
 				subagentEndRecorded(startedIn, owner, sessionId, log.log());
+			} else if (event instanceof AgentEvent.SubagentRunning) {
+				// The part now says RUNNING; a copy another window loaded while it was queued does not.
+				subagentPartRecorded(startedIn, owner, sessionId, log.log());
 			}
 			for (ChatEventHandler handler : ChatEventHandlerRegistry.findStreamTargets(startedIn, owner,
 				sessionId)) {
@@ -1063,6 +1103,23 @@ public class ChatProcessor {
 		if (sessionId == null) {
 			return;
 		}
+		subagentPartRecorded(startedIn, owner, sessionId, recordedIn);
+		// A window shows the chat as the subagent ends: the user sees the end there, so the chat
+		// list must not report it as news.
+		if (!ChatEventHandlerRegistry.findForSession(owner, sessionId).isEmpty()) {
+			ChatHistoryService.markSeen(ChatHistoryService.findOwnedSessionById(sessionId, owner));
+		}
+	}
+
+	/**
+	 * Has every window that holds a copy of the conversation read it back, because a subagent's part
+	 * was rewritten in its recorded transcript - see {@link #subagentEndRecorded}.
+	 */
+	private static void subagentPartRecorded(TaskProgressTracker startedIn, Person owner, String sessionId,
+			ConversationLog recordedIn) {
+		if (sessionId == null) {
+			return;
+		}
 		Set<TaskProgressTracker> windows = new LinkedHashSet<>();
 		windows.add(startedIn);
 		for (ChatEventHandler handler : ChatEventHandlerRegistry.findOthers(owner, null)) {
@@ -1074,11 +1131,6 @@ public class ChatProcessor {
 			if (!window.hasActiveProcessingStateFor(sessionId)) {
 				window.getSessionManager().markChangedElsewhere(sessionId, recordedIn);
 			}
-		}
-		// A window shows the chat as the subagent ends: the user sees the end there, so the chat
-		// list must not report it as news.
-		if (!ChatEventHandlerRegistry.findForSession(owner, sessionId).isEmpty()) {
-			ChatHistoryService.markSeen(ChatHistoryService.findOwnedSessionById(sessionId, owner));
 		}
 	}
 

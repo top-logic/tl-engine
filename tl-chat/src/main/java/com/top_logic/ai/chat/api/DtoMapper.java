@@ -335,12 +335,8 @@ public final class DtoMapper {
 		if (mode == null || fresh == null) {
 			return fresh;
 		}
-		try {
-			SessionMetadata meta = SessionMetadata.readSessionMetadata(new JsonReader(new StringR(fresh)));
-			return toJson(meta.setApprovalMode(mode));
-		} catch (IOException | RuntimeException ex) {
-			return fresh;
-		}
+		SessionMetadata meta = parseOrNull(fresh);
+		return meta == null ? fresh : toJson(meta.setApprovalMode(mode));
 	}
 
 	/**
@@ -353,15 +349,9 @@ public final class DtoMapper {
 	 * @return The JSON to store.
 	 */
 	public static String withApprovalMode(String stored, ApprovalMode mode) {
-		SessionMetadata meta = null;
-		if (stored != null && !stored.isEmpty()) {
-			try {
-				meta = SessionMetadata.readSessionMetadata(new JsonReader(new StringR(stored)));
-			} catch (IOException | RuntimeException ex) {
-				// Corrupted metadata: the mode is still stored, in a bag of its own.
-			}
-		}
+		SessionMetadata meta = parseOrNull(stored);
 		if (meta == null) {
+			// Nothing stored yet, or corrupted metadata: the mode is still stored, in a bag of its own.
 			meta = SessionMetadata.create();
 		}
 		return toJson(meta.setApprovalMode(mode.name()));
@@ -369,12 +359,29 @@ public final class DtoMapper {
 
 	/** The approval mode the given metadata JSON stores, or {@code null} when it stores none. */
 	private static String storedApprovalMode(String json) {
+		SessionMetadata meta = parseOrNull(json);
+		if (meta == null) {
+			return null;
+		}
+		String mode = meta.getApprovalMode();
+		return mode == null || mode.isEmpty() ? null : mode;
+	}
+
+	/**
+	 * The metadata the given JSON stores, or {@code null} when it is {@code null}, empty or
+	 * unreadable.
+	 *
+	 * <p>
+	 * Forgiving on purpose: a chat whose stored bag is corrupted must still open and still be saved,
+	 * so every reader falls back to a fresh bag rather than failing.
+	 * </p>
+	 */
+	private static SessionMetadata parseOrNull(String json) {
 		if (json == null || json.isEmpty()) {
 			return null;
 		}
 		try {
-			String mode = SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json))).getApprovalMode();
-			return mode == null || mode.isEmpty() ? null : mode;
+			return SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
 		} catch (IOException | RuntimeException ex) {
 			return null;
 		}
@@ -393,12 +400,12 @@ public final class DtoMapper {
 	public static void loadMetadata(String json, ChatState chat) {
 		// A chat that stores no mode runs with auto-approve off (#808).
 		chat.setApprovalMode(ApprovalMode.MANUAL);
-		if (json == null || json.isEmpty()) {
+		SessionMetadata meta = parseOrNull(json);
+		if (meta == null) {
+			// Missing or corrupted metadata — start fresh.
 			return;
 		}
 		try {
-			SessionMetadata meta =
-				SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
 			chat.loadApprovedTools(new HashSet<>(meta.getApprovedTools()));
 			TokenUsageDto usage = meta.getCumulativeUsage();
 			if (usage != null) {
@@ -417,8 +424,8 @@ public final class DtoMapper {
 			if (loadedSkills != null && !loadedSkills.isEmpty()) {
 				chat.loadLoadedSkills(new LinkedHashSet<>(loadedSkills));
 			}
-		} catch (Exception e) {
-			// Corrupted metadata — ignore and start fresh.
+		} catch (RuntimeException e) {
+			// Corrupted metadata (an unknown approval mode, say) — ignore and start fresh.
 		}
 	}
 
@@ -430,15 +437,13 @@ public final class DtoMapper {
 	 * @return A {@code TaskStore} populated from the metadata, or an empty store.
 	 */
 	public static TaskStore loadTaskStore(String json) {
-		if (json == null || json.isEmpty()) {
+		SessionMetadata meta = parseOrNull(json);
+		if (meta == null) {
 			return new TaskStore();
 		}
 		try {
-			SessionMetadata meta =
-				SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
-			String tasksJson = meta.getTasksJson();
-			return TaskStore.fromJson(tasksJson);
-		} catch (Exception e) {
+			return TaskStore.fromJson(meta.getTasksJson());
+		} catch (RuntimeException e) {
 			return new TaskStore();
 		}
 	}

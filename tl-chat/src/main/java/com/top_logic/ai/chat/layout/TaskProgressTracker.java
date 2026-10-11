@@ -540,16 +540,6 @@ public class TaskProgressTracker {
 		}
 	}
 
-	/** Adds a tool to the ones approved for the rest of the active chat. */
-	public void addSessionApprovedTool(String toolName) {
-		activeChat().addApprovedTool(toolName);
-	}
-
-	/** The tools approved for the rest of the active chat. */
-	public Set<String> getSessionApprovedTools() {
-		return activeChat().approvedTools();
-	}
-
 	/** Adds a skill to the ones loaded in the active chat. */
 	public void addLoadedSkill(String skillId) {
 		activeChat().addLoadedSkill(skillId);

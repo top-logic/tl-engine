@@ -11,8 +11,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.top_logic.basic.StringServices;
 
 /**
  * The web addresses one agent run was given: by its user or its lead, by a search, or as a link of
@@ -104,13 +107,7 @@ public final class SeenUrls {
 	 *        The text; may be {@code null}.
 	 */
 	public void addAllIn(String text) {
-		if (text == null || text.isEmpty()) {
-			return;
-		}
-		Matcher matcher = URL.matcher(text);
-		while (matcher.find()) {
-			add(trimTail(matcher.group()));
-		}
+		addAllIn(text, url -> true);
 	}
 
 	/**
@@ -133,10 +130,18 @@ public final class SeenUrls {
 			}
 			typed = List.copyOf(_typed);
 		}
+		addAllIn(text, url -> typed.stream().noneMatch(entry -> entry.contains(url)));
+	}
+
+	/** Records every address in {@code text} that {@code accept} lets through. */
+	private void addAllIn(String text, Predicate<String> accept) {
+		if (text == null || text.isEmpty()) {
+			return;
+		}
 		Matcher matcher = URL.matcher(text);
 		while (matcher.find()) {
 			String url = trimTail(matcher.group());
-			if (typed.stream().noneMatch(entry -> entry.contains(url))) {
+			if (accept.test(url)) {
 				add(url);
 			}
 		}
@@ -267,22 +272,12 @@ public final class SeenUrls {
 			char last = result.charAt(result.length() - 1);
 			if (".,;:!?".indexOf(last) >= 0) {
 				result = result.substring(0, result.length() - 1);
-			} else if (last == ')' && count(result, ')') > count(result, '(')) {
+			} else if (last == ')' && StringServices.count(result, ')') > StringServices.count(result, '(')) {
 				result = result.substring(0, result.length() - 1);
 			} else {
 				return result;
 			}
 		}
 		return result;
-	}
-
-	private static int count(String text, char c) {
-		int n = 0;
-		for (int i = 0; i < text.length(); i++) {
-			if (text.charAt(i) == c) {
-				n++;
-			}
-		}
-		return n;
 	}
 }

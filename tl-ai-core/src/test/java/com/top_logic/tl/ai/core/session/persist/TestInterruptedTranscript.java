@@ -158,17 +158,17 @@ public class TestInterruptedTranscript extends TestCase {
 		ConversationLog log = new ConversationLog();
 		Turn turn = log.startTurn(T0);
 		turn.setUserParts(List.of(new Part.TextPart("u1", T0, "Recherchiere im Hintergrund.")));
-		turn.addAssistantPart(subagent("running", "sa-1", "RUNNING"));
-		turn.addAssistantPart(subagent("done", "sa-2", "DONE"));
+		turn.addAssistantPart(subagent("running", "sa-1", Part.SubagentStatus.RUNNING));
+		turn.addAssistantPart(subagent("done", "sa-2", Part.SubagentStatus.DONE));
 
 		Turn closed = ConversationLogSerializer.fromJson(
 			InterruptedTranscript.close(ConversationLogSerializer.toJson(log))).turns().get(0);
 
 		Part.SubagentPart running = (Part.SubagentPart) closed.findPart("running");
-		assertEquals("FAILED", running.status());
+		assertEquals(Part.SubagentStatus.FAILED, running.status());
 		assertEquals(InterruptedTranscript.INTERRUPTED_SUBAGENT, running.summary());
 		assertEquals("run-sa-1", running.childRunId());
-		assertEquals("DONE", ((Part.SubagentPart) closed.findPart("done")).status());
+		assertEquals(Part.SubagentStatus.DONE, ((Part.SubagentPart) closed.findPart("done")).status());
 	}
 
 	/**
@@ -178,15 +178,15 @@ public class TestInterruptedTranscript extends TestCase {
 	public void testOnlySubagentsOfAnEarlierProcessAreEnded() {
 		ConversationLog log = new ConversationLog();
 		Turn turn = log.startTurn(T0);
-		turn.addAssistantPart(subagent("old", "sa-1", "RUNNING"));
+		turn.addAssistantPart(subagent("old", "sa-1", Part.SubagentStatus.RUNNING));
 		turn.addAssistantPart(new Part.SubagentPart("new", T0.plusSeconds(3600), "sa-2", "worker", "task", "",
-			null, "RUNNING", null));
+			null, Part.SubagentStatus.RUNNING, null));
 
 		int ended = InterruptedTranscript.endInterruptedSubagents(log, T0.plusSeconds(60));
 
 		assertEquals(1, ended);
-		assertEquals("FAILED", ((Part.SubagentPart) turn.findPart("old")).status());
-		assertEquals("RUNNING", ((Part.SubagentPart) turn.findPart("new")).status());
+		assertEquals(Part.SubagentStatus.FAILED, ((Part.SubagentPart) turn.findPart("old")).status());
+		assertEquals(Part.SubagentStatus.RUNNING, ((Part.SubagentPart) turn.findPart("new")).status());
 	}
 
 	/**
@@ -197,19 +197,19 @@ public class TestInterruptedTranscript extends TestCase {
 		ConversationLog log = new ConversationLog();
 		Turn turn = log.startTurn(T0);
 		turn.setUserParts(List.of(new Part.TextPart("u1", T0, "Recherchiere im Hintergrund.")));
-		turn.addAssistantPart(subagent("limit", "sa-1", "LIMIT"));
+		turn.addAssistantPart(subagent("limit", "sa-1", Part.SubagentStatus.LIMIT));
 
 		Turn closed = ConversationLogSerializer.fromJson(
 			InterruptedTranscript.close(ConversationLogSerializer.toJson(log))).turns().get(0);
-		assertEquals("LIMIT", ((Part.SubagentPart) closed.findPart("limit")).status());
+		assertEquals(Part.SubagentStatus.LIMIT, ((Part.SubagentPart) closed.findPart("limit")).status());
 
 		assertEquals(0, InterruptedTranscript.endInterruptedSubagents(log, T0.plusSeconds(60)));
-		assertEquals("LIMIT", ((Part.SubagentPart) turn.findPart("limit")).status());
+		assertEquals(Part.SubagentStatus.LIMIT, ((Part.SubagentPart) turn.findPart("limit")).status());
 	}
 
-	private static Part.SubagentPart subagent(String id, String subagentId, String status) {
+	private static Part.SubagentPart subagent(String id, String subagentId, Part.SubagentStatus status) {
 		return new Part.SubagentPart(id, T0.plusSeconds(1), subagentId, "worker", "task", "call-1",
-			"run-" + subagentId, status, "DONE".equals(status) ? "found it" : null);
+			"run-" + subagentId, status, status == Part.SubagentStatus.DONE ? "found it" : null);
 	}
 
 	/**

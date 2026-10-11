@@ -204,6 +204,37 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * The state of the given chat of the given account, to act on without showing it.
+	 *
+	 * <p>
+	 * What a request that names a chat works on - rating an answer, dropping turns - when it has no
+	 * reason to switch the chat this window shows. The state this window holds of the chat, when it
+	 * holds one that is current; otherwise one read from the database, which this manager does not
+	 * keep: putting it in the cache could push out a chat the window holds, and a chat that a run of
+	 * another window has written to is read afresh by the next switch to it anyway.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat; the caller has established that it is the given account's.
+	 * @param owner
+	 *        The account acting.
+	 * @return The chat's state, or <code>null</code> when no chat is named.
+	 */
+	public ChatState chatStateFor(String sessionId, Person owner) {
+		if (sessionId == null) {
+			return null;
+		}
+		synchronized (_lock) {
+			SessionState held = _sessions.get(sessionId);
+			if (held != null && owner != null && owner.equals(held.owner())
+				&& !_changedElsewhere.contains(sessionId)) {
+				return held;
+			}
+			return loadFromDatabase(sessionId, owner);
+		}
+	}
+
+	/**
 	 * Returns the active session's {@link Chat}.
 	 *
 	 * @see #getActiveChatState()
@@ -333,6 +364,9 @@ public class ChatSessionManager {
 		state._subagentLease = SubagentRegistries.attach(subagentRegistryKey(_activeSessionId));
 		SubagentJobRegistry registry = state._subagentLease.registry();
 		state._subagentRegistry = registry;
+		// Before the window's own listener: that one is removed with the window, while a subagent it
+		// registered works on and must still be dropped when it ends.
+		PendingInteractionRegistry.forgetEndedOf(registry);
 		state._subagentListeners.add(
 			PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
 		state._subagentWaker = new SubagentWaker(registry, ChatProcessor.wakeHost(tracker, owner, _activeSessionId));

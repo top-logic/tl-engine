@@ -90,12 +90,12 @@ public class TestSubagentNews extends TestCase {
 	public void testTheDeliveryALeadTurnOpensWith() {
 		Conversation conversation = new Conversation();
 		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(_registry)) {
-			assertFalse(AgentLoop.injectSubagentResults(conversation, null));
+			assertTrue(AgentLoop.injectSubagentNews(conversation, null).isEmpty());
 			assertTrue(conversation.messages().isEmpty());
 
 			SubagentJob done = _registry.register("worker", "a", new CancellationToken());
 			done.markTerminal(SubagentJobStatus.DONE, result("found it"));
-			assertTrue(AgentLoop.injectSubagentResults(conversation, null));
+			assertFalse(AgentLoop.injectSubagentNews(conversation, null).isEmpty());
 		}
 		assertEquals(1, conversation.messages().size());
 		UserMessage delivery = (UserMessage) conversation.messages().get(0);
@@ -154,17 +154,21 @@ public class TestSubagentNews extends TestCase {
 
 		assertEquals(List.of(
 			new SubagentNews(limited.subagentId(), "Counter", SubagentNews.Reason.LIMIT, "call-1", "")), news);
-		assertEquals(news, SubagentNews.fromJson(SubagentNews.toJson(news)));
+		String json = SubagentNews.toJson(news);
+		assertTrue(json, json.contains("\"reason\":\"LIMIT\""));
 	}
 
-	/** What a lead turn's log keeps of the news reads back as the same news. */
-	public void testTheNewsReadsBackFromItsJson() {
+	/** What a lead turn's log keeps of the news: every field of every item, for the chat to read. */
+	public void testTheNewsAsJson() {
 		List<SubagentNews> news = List.of(
 			new SubagentNews("sa-1", "Counter", SubagentNews.Reason.CANCELLED, "call-1", ""),
 			new SubagentNews("sa-2", "Writer", SubagentNews.Reason.ASKS, "", "Welche \"Veranstaltung\"?"));
 
-		assertEquals(news, SubagentNews.fromJson(SubagentNews.toJson(news)));
-		assertEquals("A text that is not such news reads as none.", List.of(), SubagentNews.fromJson("[Subagent results]"));
+		assertEquals("[{\"subagentId\":\"sa-1\",\"agentName\":\"Counter\",\"reason\":\"CANCELLED\","
+			+ "\"parentToolCallId\":\"call-1\",\"question\":\"\"},"
+			+ "{\"subagentId\":\"sa-2\",\"agentName\":\"Writer\",\"reason\":\"ASKS\","
+			+ "\"parentToolCallId\":\"\",\"question\":\"Welche \\\"Veranstaltung\\\"?\"}]",
+			SubagentNews.toJson(news));
 	}
 
 	/** The lead's log keeps the news on the turn, as a part the model is never shown again. */
@@ -178,7 +182,7 @@ public class TestSubagentNews extends TestCase {
 
 		Part.SystemPart part = (Part.SystemPart) log.currentTurn().assistantParts().get(0);
 		assertEquals(Part.SystemEventType.LEAD_WOKEN, part.eventType());
-		assertEquals(news, SubagentNews.fromJson(part.details()));
+		assertEquals(SubagentNews.toJson(news), part.details());
 
 		Conversation replayed = new Conversation();
 		ConversationLogReplay.rebuildMemory(log, replayed);

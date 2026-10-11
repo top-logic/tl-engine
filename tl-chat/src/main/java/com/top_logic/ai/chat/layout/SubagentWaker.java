@@ -5,12 +5,11 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 
@@ -62,23 +61,17 @@ final class SubagentWaker implements SubagentJobRegistry.Listener {
 		boolean leadRuns();
 
 		/**
-		 * Starts a turn of the lead that opens with the news.
+		 * Starts a turn of the lead that opens with the news waiting in the registry.
 		 *
 		 * @return Whether it was started; <code>false</code> when the chat cannot run one now - no
 		 *         window shows it, the window shows another chat, or the installation has no room -
 		 *         which is asked again later.
 		 */
-		boolean wake(SubagentJobRegistry.News news);
+		boolean wake();
 
 		/** Tells the user that no more turns are started until their next message. */
 		void wakesExhausted(int wakes);
 	}
-
-	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(task -> {
-		Thread thread = new Thread(task, "subagent-waker");
-		thread.setDaemon(true);
-		return thread;
-	});
 
 	private final SubagentJobRegistry _registry;
 
@@ -159,7 +152,7 @@ final class SubagentWaker implements SubagentJobRegistry.Listener {
 		if (_pending != null && !_pending.isDone()) {
 			return;
 		}
-		_pending = SCHEDULER.schedule(this::check, delayMs, TimeUnit.MILLISECONDS);
+		_pending = SchedulerService.getInstance().schedule(this::check, delayMs, TimeUnit.MILLISECONDS);
 	}
 
 	private void cancelPending() {
@@ -195,7 +188,7 @@ final class SubagentWaker implements SubagentJobRegistry.Listener {
 		}
 		boolean started;
 		try {
-			started = _host.wake(news);
+			started = _host.wake();
 		} catch (RuntimeException ex) {
 			Logger.error("Could not start a lead turn for subagent news: " + ex.getMessage(), ex,
 				SubagentWaker.class);

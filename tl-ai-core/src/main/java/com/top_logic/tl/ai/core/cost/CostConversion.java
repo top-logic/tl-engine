@@ -85,7 +85,8 @@ public final class CostConversion {
 	}
 
 	/**
-	 * Where a test takes its rates from instead of the engine.
+	 * The rate of US dollars per day: where a test takes its rates from instead of the engine, and
+	 * what {@link CostConversion#usdRates()} hands out.
 	 *
 	 * @see CostConversion#override(String, Rates)
 	 */
@@ -127,35 +128,73 @@ public final class CostConversion {
 	 *         other than 1, no system currency, or cannot read its rates - this never throws.
 	 */
 	public static OptionalDouble usdRate(Date day) {
-		Date at = day == null ? new Date() : day;
-		try {
-			return readRate(at);
-		} catch (RuntimeException ex) {
-			// Nothing that needs a cost may fail over a rate that cannot be read - not a run, not the
-			// monitor, not the start of the application. On a new database the engine's own cache of
-			// the rates refuses to read while the initial data is still being written.
-			Logger.info("The exchange rate of USD cannot be read, costs are taken as having none: " + ex.getMessage(),
-				CostConversion.class);
-			return OptionalDouble.empty();
-		}
+		return usdRates().usdRate(day);
 	}
 
-	private static OptionalDouble readRate(Date at) {
+	/**
+	 * The {@link #usdRate(Date) rate} of any day, with the currencies looked up once.
+	 *
+	 * <p>
+	 * For a caller that converts many costs in one go, such as the sum a budget is checked against:
+	 * finding the system currency and the currency "USD" is the part of {@link #usdRate(Date)} that
+	 * costs, and it does not depend on the day. The days' rates are still read from the currency's
+	 * dated rates per call, so every day gets exactly the rate {@link #usdRate(Date)} would give it.
+	 * </p>
+	 *
+	 * <p>
+	 * Meant for one such go and then dropped: a rate an administrator enters afterwards is seen only
+	 * by a lookup made afterwards.
+	 * </p>
+	 *
+	 * @return The rates; a day of {@code null} means now. Never throws, like {@link #usdRate(Date)}.
+	 */
+	public static Rates usdRates() {
+		Rates resolved;
+		try {
+			resolved = resolveRates();
+		} catch (RuntimeException ex) {
+			noRate(ex);
+			return day -> OptionalDouble.empty();
+		}
+		return day -> {
+			Date at = day == null ? new Date() : day;
+			try {
+				return resolved.usdRate(at);
+			} catch (RuntimeException ex) {
+				noRate(ex);
+				return OptionalDouble.empty();
+			}
+		};
+	}
+
+	private static void noRate(RuntimeException ex) {
+		// Nothing that needs a cost may fail over a rate that cannot be read - not a run, not the
+		// monitor, not the start of the application. On a new database the engine's own cache of
+		// the rates refuses to read while the initial data is still being written.
+		Logger.info("The exchange rate of USD cannot be read, costs are taken as having none: " + ex.getMessage(),
+			CostConversion.class);
+	}
+
+	private static Rates resolveRates() {
 		Substitute overridden = _override;
 		if (overridden != null) {
-			return Money.USD.equals(overridden.systemCurrency()) ? OptionalDouble.of(1) : overridden.rates().usdRate(at);
+			return Money.USD.equals(overridden.systemCurrency()) ? at -> OptionalDouble.of(1) : overridden.rates();
 		}
 		Currency system = system();
 		if (system == null) {
-			return OptionalDouble.empty();
+			return at -> OptionalDouble.empty();
 		}
 		if (Money.USD.equals(system.getName())) {
-			return OptionalDouble.of(1);
+			return at -> OptionalDouble.of(1);
 		}
 		Currency usd = Currency.getCurrencyInstance(Money.USD);
 		if (usd == null) {
-			return OptionalDouble.empty();
+			return at -> OptionalDouble.empty();
 		}
+		return at -> readRate(system, usd, at);
+	}
+
+	private static OptionalDouble readRate(Currency system, Currency usd, Date at) {
 		double factor;
 		SortedMap<Object, KnowledgeAssociation> rates = usd.getExchangeRateKAs();
 		if (rates != null && (!rates.headMap(at).isEmpty() || rates.containsKey(at))) {

@@ -1,9 +1,13 @@
 import { subscribe, unsubscribe } from 'tl-react-bridge'
 import { attachChatStream, detachChatStream, type ChatAddress } from './api'
 
-/** One frame as the store's handlers read it: its payload as JSON text. */
+/**
+ * One frame as the store's handlers read it: its payload as the window's stream delivered it,
+ * already parsed - turning it back into text only for every handler to parse it again cost two
+ * passes over each frame.
+ */
 export interface StreamFrame {
-  data: string
+  data: unknown
 }
 
 /** What the store listens to: the frames by name, `open` once attached, and a failed attach. */
@@ -79,7 +83,7 @@ class WindowChatStream implements ChatStream {
       return
     }
     this.attached = true
-    this.dispatch('open', '')
+    this.dispatch('open', {})
   }
 
   /** A patch of the window's stream: the frames of one flush on the server, in order. */
@@ -89,12 +93,12 @@ class WindowChatStream implements ChatStream {
     if (!Array.isArray(frames)) return
     for (const frame of frames as { event?: unknown; data?: unknown }[]) {
       if (typeof frame?.event !== 'string') continue
-      this.dispatch(frame.event, JSON.stringify(frame.data ?? {}))
+      this.dispatch(frame.event, frame.data ?? {})
       if (this.closed) return
     }
   }
 
-  private dispatch(name: string, data: string): void {
+  private dispatch(name: string, data: unknown): void {
     for (const listener of this.listeners.get(name) ?? []) listener({ data })
   }
 }

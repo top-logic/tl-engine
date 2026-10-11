@@ -353,7 +353,7 @@ public final class ConversationLogSerializer {
 				.setTask(nullToEmpty(sap.task()))
 				.setParentToolCallId(nullToEmpty(sap.parentToolCallId()))
 				.setChildRunId(nullToEmpty(sap.childRunId()))
-				.setStatus(nullToEmpty(sap.status()))
+				.setStatus(sap.status() == null ? "" : sap.status().name())
 				.setSummary(nullToEmpty(sap.summary())));
 		} else if (part instanceof Part.SystemPart sp) {
 			dto.setType(TYPE_SYSTEM);
@@ -484,7 +484,7 @@ public final class ConversationLogSerializer {
 					emptyToNull(data.getTask()),
 					data.getParentToolCallId(),
 					emptyToNull(data.getChildRunId()),
-					emptyToNull(data.getStatus()),
+					Part.SubagentStatus.fromName(data.getStatus()),
 					emptyToNull(data.getSummary()));
 			}
 			case TYPE_SYSTEM: {

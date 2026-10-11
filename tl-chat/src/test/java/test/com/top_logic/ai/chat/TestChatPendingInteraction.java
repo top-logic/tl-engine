@@ -263,9 +263,9 @@ public class TestChatPendingInteraction extends BasicTestCase {
 				+ "\"toolName\":\"createObject\"}", anna));
 
 		assertTrue("The run's own chat holds the set its next runs are given.",
-			_windowA.getSessionApprovedTools().contains("createObject"));
+			_windowA.activeChat().approvedTools().contains("createObject"));
 		assertFalse("The answering window's set is not what the run consults.",
-			windowB.getSessionApprovedTools().contains("createObject"));
+			windowB.activeChat().approvedTools().contains("createObject"));
 	}
 
 	/**
@@ -381,6 +381,49 @@ public class TestChatPendingInteraction extends BasicTestCase {
 		assertEquals(HttpServletResponse.SC_OK,
 			post("{\"requestId\":\"" + question.getId() + "\",\"response\":\"Nordics\"}", anna));
 		assertFalse(question.getFuture().isDone());
+	}
+
+	/**
+	 * A subagent that ends after the window that registered it stopped listening is dropped all the
+	 * same: the window's listener is gone by then, and nothing sweeps the register on a poll any more.
+	 */
+	public void testASubagentEndingAfterItsWindowLeftIsForgotten() throws Exception {
+		SubagentJobRegistry registry = new SubagentJobRegistry(1);
+		try {
+			PendingInteractionRegistry.forgetEndedOf(registry);
+			SubagentJobRegistry.Listener window =
+				PendingInteractionRegistry.subagentListener(anna, _windowA, chatId());
+			registry.addListener(window);
+			int before = PendingInteractionRegistry.subagentCount();
+
+			CompletableFuture<Void> release = new CompletableFuture<>();
+			SubagentJob job = registry.register("researcher", "find X", new CancellationToken());
+			registry.spawn(job, j -> {
+				release.get(5, TimeUnit.SECONDS);
+				return null;
+			});
+			awaitCount(before + 1);
+			assertEquals(List.of(job.interactionStore()),
+				PendingInteractionRegistry.subagentStores(anna, chatId()));
+
+			// The window leaves while the subagent works on.
+			registry.removeListener(window);
+			release.complete(null);
+
+			awaitCount(before);
+			assertEquals(List.of(), PendingInteractionRegistry.subagentStores(anna, chatId()));
+		} finally {
+			registry.cancelAll();
+			registry.shutdown();
+		}
+	}
+
+	private static void awaitCount(int expected) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + 5_000;
+		while (PendingInteractionRegistry.subagentCount() != expected && System.currentTimeMillis() < deadline) {
+			Thread.sleep(10);
+		}
+		assertEquals(expected, PendingInteractionRegistry.subagentCount());
 	}
 
 	/** Registers a recording chat UI of the given account for the given window. */

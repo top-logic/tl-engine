@@ -6,8 +6,11 @@
 package com.top_logic.ai.chat.layout;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
@@ -60,9 +63,17 @@ import com.top_logic.tl.ai.core.session.ConversationLogListener;
  * <b>Background subagents</b> are registered the same way, but for as long as each one works rather
  * than for the turn that started it: that turn ends while the subagent goes on, and a question or an
  * approval it raises afterwards waits in the {@link SubagentJob#interactionStore() job's own store}.
- * {@link #subagentListener} registers a job when its work starts and drops it when it ends.
+ * {@link #subagentListener} registers a job when its work starts, and drops it when it ends - with
+ * {@link #forgetEndedOf} also when the window that registered it has stopped listening meanwhile.
  * {@link #findWaiting(Person, String)} finds a request in either kind of store, and
  * {@link #subagentStores(Person, String)} lists the stores of the subagents working for a chat.
+ * </p>
+ *
+ * <p>
+ * Every open chat window asks {@link #findBySession} and {@link #subagentStores} on each flush of its
+ * stream, many times a second, idle or not. Both registers are therefore also indexed by account, so
+ * that such a question reads only the asking account's entries rather than those of every user of
+ * the installation, and writes nothing.
  * </p>
  */
 public final class PendingInteractionRegistry {
@@ -130,7 +141,41 @@ public final class PendingInteractionRegistry {
 
 	private static final Map<String, PendingRun> RUNS = new ConcurrentHashMap<>();
 
+	/** The task ids in {@link #RUNS}, by {@link PendingRun#responder()}. */
+	private static final Map<Person, Set<String>> RUNS_BY_RESPONDER = new ConcurrentHashMap<>();
+
 	private static final Map<SubagentJob, PendingSubagent> SUBAGENTS = new ConcurrentHashMap<>();
+
+	/** The jobs in {@link #SUBAGENTS}, by {@link PendingSubagent#responder()}. */
+	private static final Map<Person, Set<SubagentJob>> SUBAGENTS_BY_RESPONDER = new ConcurrentHashMap<>();
+
+	/**
+	 * The subagent registries {@link #ENDED} listens to.
+	 *
+	 * <p>
+	 * Weak, because a registry is forgotten once nobody listens to it and nothing works in it any
+	 * more; this set must not keep it.
+	 * </p>
+	 */
+	private static final Set<SubagentJobRegistry> FORGETTING =
+		Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+
+	/**
+	 * Drops a job when it ends.
+	 *
+	 * <p>
+	 * Apart from the listener of the window that registered the job, because that one is removed
+	 * when the window stops listening to the registry - it holds the window - while the job works on.
+	 * A job's end is told only to who listens at that moment, so without this listener, which holds
+	 * nothing and therefore may stay, an ended job would remain registered.
+	 * </p>
+	 */
+	private static final SubagentJobRegistry.Listener ENDED = new SubagentJobRegistry.Listener() {
+		@Override
+		public void finished(SubagentJob job) {
+			removeSubagent(job);
+		}
+	};
 
 	private PendingInteractionRegistry() {
 		// Static registry.
@@ -163,7 +208,11 @@ public final class PendingInteractionRegistry {
 			}
 			return;
 		}
-		RUNS.put(taskId, new PendingRun(taskId, responder, tracker, state));
+		PendingRun before = RUNS.put(taskId, new PendingRun(taskId, responder, tracker, state));
+		if (before != null && !before.responder().equals(responder)) {
+			removeFromIndex(RUNS_BY_RESPONDER, before.responder(), taskId);
+		}
+		addToIndex(RUNS_BY_RESPONDER, responder, taskId);
 	}
 
 	/**
@@ -174,7 +223,10 @@ public final class PendingInteractionRegistry {
 	 */
 	public static void unregister(String taskId) {
 		if (taskId != null) {
-			RUNS.remove(taskId);
+			PendingRun run = RUNS.remove(taskId);
+			if (run != null) {
+				removeFromIndex(RUNS_BY_RESPONDER, run.responder(), taskId);
+			}
 		}
 	}
 
@@ -198,10 +250,7 @@ public final class PendingInteractionRegistry {
 		if (responder == null || requestId == null) {
 			return null;
 		}
-		for (PendingRun run : RUNS.values()) {
-			if (!responder.equals(run.responder())) {
-				continue;
-			}
+		for (PendingRun run : runsOf(responder)) {
 			UserInteractionStore store = run.state().getUserInteractionStore();
 			if (store != null && store.isPending(requestId)) {
 				return run;
@@ -235,11 +284,7 @@ public final class PendingInteractionRegistry {
 		if (responder == null || requestId == null) {
 			return null;
 		}
-		forgetEnded();
-		for (PendingSubagent subagent : SUBAGENTS.values()) {
-			if (!responder.equals(subagent.responder())) {
-				continue;
-			}
+		for (PendingSubagent subagent : subagentsOf(responder)) {
 			UserInteractionStore store = subagent.job().interactionStore();
 			if (store.isPending(requestId)) {
 				TaskProgressTracker window = subagent.tracker();
@@ -252,11 +297,21 @@ public final class PendingInteractionRegistry {
 	}
 
 	/**
-	 * Drops the subagents that have ended without their listener hearing it: the chat window that
-	 * listened let go of the registry while they worked.
+	 * Makes sure that a job of the given registry is dropped from this register when it ends, whoever
+	 * listens to the registry by then.
+	 *
+	 * <p>
+	 * To be called before a {@link #subagentListener} is added to the registry, so that no job is
+	 * registered whose end nothing here hears. Idempotent.
+	 * </p>
+	 *
+	 * @param registry
+	 *        The registry whose jobs a {@link #subagentListener} is about to register.
 	 */
-	private static void forgetEnded() {
-		SUBAGENTS.keySet().removeIf(job -> job.status().isTerminal());
+	public static void forgetEndedOf(SubagentJobRegistry registry) {
+		if (FORGETTING.add(registry)) {
+			registry.addListener(ENDED);
+		}
 	}
 
 	/**
@@ -284,11 +339,12 @@ public final class PendingInteractionRegistry {
 			@Override
 			public void started(SubagentJob job) {
 				SUBAGENTS.put(job, new PendingSubagent(job, responder, tracker, sessionId));
+				addToIndex(SUBAGENTS_BY_RESPONDER, responder, job);
 			}
 
 			@Override
 			public void finished(SubagentJob job) {
-				SUBAGENTS.remove(job);
+				removeSubagent(job);
 			}
 		};
 	}
@@ -313,17 +369,19 @@ public final class PendingInteractionRegistry {
 	 *        The chat; may be <code>null</code>, which finds nothing.
 	 */
 	public static List<UserInteractionStore> subagentStores(Person owner, String sessionId) {
-		List<UserInteractionStore> stores = new ArrayList<>();
 		if (owner == null || sessionId == null) {
-			return stores;
+			return List.of();
 		}
-		forgetEnded();
-		for (PendingSubagent subagent : SUBAGENTS.values()) {
-			if (owner.equals(subagent.responder()) && sessionId.equals(subagent.sessionId())) {
+		List<UserInteractionStore> stores = null;
+		for (PendingSubagent subagent : subagentsOf(owner)) {
+			if (sessionId.equals(subagent.sessionId())) {
+				if (stores == null) {
+					stores = new ArrayList<>();
+				}
 				stores.add(subagent.job().interactionStore());
 			}
 		}
-		return stores;
+		return stores == null ? List.of() : stores;
 	}
 
 	/**
@@ -353,8 +411,8 @@ public final class PendingInteractionRegistry {
 			return null;
 		}
 		PendingRun ending = null;
-		for (PendingRun run : RUNS.values()) {
-			if (!owner.equals(run.responder()) || !sessionId.equals(run.state().getSessionId())) {
+		for (PendingRun run : runsOf(owner)) {
+			if (!sessionId.equals(run.state().getSessionId())) {
 				continue;
 			}
 			if (run.state().isProcessing()) {
@@ -365,6 +423,71 @@ public final class PendingInteractionRegistry {
 			}
 		}
 		return ending;
+	}
+
+	/** The runs registered for the given account. */
+	private static List<PendingRun> runsOf(Person responder) {
+		Set<String> taskIds = RUNS_BY_RESPONDER.get(responder);
+		if (taskIds == null) {
+			return List.of();
+		}
+		List<PendingRun> runs = new ArrayList<>(taskIds.size());
+		for (String taskId : taskIds) {
+			PendingRun run = RUNS.get(taskId);
+			if (run != null && responder.equals(run.responder())) {
+				runs.add(run);
+			}
+		}
+		return runs;
+	}
+
+	/**
+	 * The subagents registered for the given account that have not ended.
+	 *
+	 * <p>
+	 * One that has ended is left out even before its end is heard: its status turns terminal just
+	 * before its listeners are told.
+	 * </p>
+	 */
+	private static List<PendingSubagent> subagentsOf(Person responder) {
+		Set<SubagentJob> jobs = SUBAGENTS_BY_RESPONDER.get(responder);
+		if (jobs == null) {
+			return List.of();
+		}
+		List<PendingSubagent> subagents = new ArrayList<>(jobs.size());
+		for (SubagentJob job : jobs) {
+			PendingSubagent subagent = SUBAGENTS.get(job);
+			if (subagent != null && !job.status().isTerminal()) {
+				subagents.add(subagent);
+			}
+		}
+		return subagents;
+	}
+
+	private static void removeSubagent(SubagentJob job) {
+		PendingSubagent subagent = SUBAGENTS.remove(job);
+		if (subagent != null) {
+			removeFromIndex(SUBAGENTS_BY_RESPONDER, subagent.responder(), job);
+		}
+	}
+
+	/**
+	 * Adds the key under the given account, atomically with {@link #removeFromIndex} dropping an
+	 * emptied set, so that a concurrent removal cannot swallow the addition.
+	 */
+	private static <K> void addToIndex(Map<Person, Set<K>> index, Person responder, K key) {
+		index.compute(responder, (account, keys) -> {
+			Set<K> result = keys == null ? ConcurrentHashMap.newKeySet() : keys;
+			result.add(key);
+			return result;
+		});
+	}
+
+	private static <K> void removeFromIndex(Map<Person, Set<K>> index, Person responder, K key) {
+		index.computeIfPresent(responder, (account, keys) -> {
+			keys.remove(key);
+			return keys.isEmpty() ? null : keys;
+		});
 	}
 
 	/** How many subagents are currently registered. For tests and diagnostics. */

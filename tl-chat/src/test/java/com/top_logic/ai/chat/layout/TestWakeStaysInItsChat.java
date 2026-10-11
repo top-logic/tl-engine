@@ -21,6 +21,7 @@ import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -184,6 +185,7 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestWakeStaysInItsChat.class),
 				ModelService.Module.INSTANCE,
+				SchedulerService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE));
 	}
 }

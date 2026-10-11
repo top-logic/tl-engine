@@ -522,9 +522,14 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 *
 	 * <p>
-	 * A transcript that does not hold the part - a run still going, checkpointed before it recorded
-	 * the part - is left alone: the run's own final transcript, taken when it is written, carries the
-	 * part's current form. Best-effort: a failure is logged.
+	 * A run that has not ended yet is left alone, without reading its transcript: its final
+	 * transcript is taken from the conversation when it is written, behind this on the writer thread,
+	 * so it carries the part's current form anyway. Rewriting its checkpoint would parse and store
+	 * the lead's whole transcript once per status change of every subagent it waits for - the lead of
+	 * a research run waits for all of them. Should the process end before the run does, the startup
+	 * sweep closes the checkpoint as interrupted, and a subagent part still at work in it with it
+	 * ({@link InterruptedTranscript}). A transcript that does not hold the part is left alone too.
+	 * Best-effort: a failure is logged.
 	 * </p>
 	 *
 	 * @param execution
@@ -535,6 +540,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	public void replaceTranscriptPart(AgentExecution execution, Part part) {
 		try {
 			write(() -> {
+				if (execution.getEndedAt() == null) {
+					return null;
+				}
 				String transcript = execution.getTranscript();
 				String rewritten;
 				try {
@@ -1225,7 +1233,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * Only the account's own rows are read: its sessions through their owner reference, and their
 	 * runs through the session reference - lookups the knowledge base answers from the association
 	 * index, so the cost grows with what this account recorded and not with every run of the
-	 * installation (#835).
+	 * installation (#835). A session that was last updated before the window cannot hold a run that
+	 * started within it, so its runs are not read at all; and the currencies the cost is converted
+	 * with are {@link CostConversion#usdRates() looked up once} for the whole sum.
 	 * </p>
 	 *
 	 * <p>
@@ -1249,9 +1259,14 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			long tokens = 0;
 			double cost = 0;
 			boolean complete = true;
-			for (TLObject session : owner.tReferers(TlAiExecutionFactory.getOwnerAgentSessionAttr())) {
-				for (TLObject obj : session.tReferers(TlAiExecutionFactory.getSessionAgentExecutionAttr())) {
-					AgentExecution execution = (AgentExecution) obj;
+			CostConversion.Rates rates = CostConversion.usdRates();
+			for (TLObject obj : owner.tReferers(TlAiExecutionFactory.getOwnerAgentSessionAttr())) {
+				AgentSession session = (AgentSession) obj;
+				if (since != null && quietSince(session, since)) {
+					continue;
+				}
+				for (TLObject run : session.tReferers(TlAiExecutionFactory.getSessionAgentExecutionAttr())) {
+					AgentExecution execution = (AgentExecution) run;
 					Date started = execution.getStartedAt();
 					if (since != null && (started == null || started.before(since))) {
 						continue;
@@ -1259,7 +1274,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 					tokens += usageOf(execution).totalTokens();
 					Double runCost = execution.getCost();
 					if (runCost != null && runCost.doubleValue() > 0) {
-						OptionalDouble rate = CostConversion.usdRate(started);
+						OptionalDouble rate = rates.usdRate(started);
 						if (rate.isPresent()) {
 							cost += runCost.doubleValue() * rate.getAsDouble();
 						} else {
@@ -1270,6 +1285,22 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			}
 			return new AccountSpend(tokens, cost, complete);
 		});
+	}
+
+	/**
+	 * Whether no run of the given session can have started at or after the given point in time.
+	 *
+	 * <p>
+	 * {@link #beginExecution} stamps the session's {@link AgentSession#getLastUpdated() last update}
+	 * after the run's start, and nothing moves that stamp back, so a session last updated before
+	 * {@code since} started all its runs before it too. Skipping it spares the budget check the
+	 * runs of every conversation the account has not touched in the window - which, for an account
+	 * with a long history, is nearly all of them. A session without the stamp is not skipped.
+	 * </p>
+	 */
+	private static boolean quietSince(AgentSession session, Date since) {
+		Date lastUpdated = session.getLastUpdated();
+		return lastUpdated != null && lastUpdated.before(since);
 	}
 
 	/**

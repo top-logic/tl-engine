@@ -412,6 +412,56 @@ public sealed interface Part {
 	}
 
 	/**
+	 * The state a {@link SubagentPart} records of its subagent.
+	 *
+	 * <p>
+	 * The states of a subagent job, and {@link #LIMIT} besides: the job of a subagent that stopped
+	 * in order at a limit is done, but its card says the answer may be incomplete. The names are
+	 * what a recorded transcript holds and what the browser reads, so a constant is never renamed.
+	 * </p>
+	 */
+	enum SubagentStatus {
+		/** Waits in the queue for a free slot. */
+		QUEUED,
+		/** At work. */
+		RUNNING,
+		/** Finished with its answer. */
+		DONE,
+		/** Stopped in order at a limit - turns, budget, output - with an answer that may be incomplete. */
+		LIMIT,
+		/** Ended with an error, or was interrupted by the end of the process it ran in. */
+		FAILED,
+		/** Cancelled, while it ran or while it was still queued. */
+		CANCELLED;
+
+		/** Whether the subagent has stopped for good: no other state follows this one. */
+		public boolean hasEnded() {
+			return this == DONE || this == LIMIT || this == FAILED || this == CANCELLED;
+		}
+
+		/**
+		 * The state of the given recorded name.
+		 *
+		 * <p>
+		 * A name this version does not know - written by another one - or none at all is read as
+		 * {@link #RUNNING}, as the browser reads it: a part that is not known to have ended is closed
+		 * by {@code InterruptedTranscript#endInterruptedSubagents} once its process is gone, whereas
+		 * a part read as ended would hide a subagent that is still at work.
+		 * </p>
+		 */
+		public static SubagentStatus fromName(String name) {
+			if (name != null) {
+				for (SubagentStatus status : values()) {
+					if (status.name().equals(name)) {
+						return status;
+					}
+				}
+			}
+			return RUNNING;
+		}
+	}
+
+	/**
 	 * A background subagent the turn started, as the lead's log keeps it: who it is, what it was asked,
 	 * where in the turn it was started, and how it ended - never its steps.
 	 *
@@ -430,21 +480,20 @@ public sealed interface Part {
 	 * @param task the task brief it was given
 	 * @param parentToolCallId the id of the lead's tool call that started it; empty if unknown
 	 * @param childRunId the run id of the child run, its transcript's key; {@code null} until known
-	 * @param status the job's state as a {@code SubagentJobStatus} name ({@code QUEUED}, {@code RUNNING},
-	 *        {@code DONE}, {@code FAILED}, {@code CANCELLED}), or {@code LIMIT} for a stop at a limit
+	 * @param status the subagent's state
 	 * @param summary a short summary of how it ended; {@code null} while it runs
 	 */
 	record SubagentPart(String id, Instant timestamp, String subagentId, String agentName, String task,
-			String parentToolCallId, String childRunId, String status, String summary) implements Part {
+			String parentToolCallId, String childRunId, SubagentStatus status, String summary) implements Part {
 
 		/** The same part of a subagent that has left the queue and works. */
 		public SubagentPart running() {
 			return new SubagentPart(id, timestamp, subagentId, agentName, task, parentToolCallId, childRunId,
-				"RUNNING", summary);
+				SubagentStatus.RUNNING, summary);
 		}
 
 		/** The same part, ended with the given status. */
-		public SubagentPart ended(String endStatus, String endSummary, String endChildRunId) {
+		public SubagentPart ended(SubagentStatus endStatus, String endSummary, String endChildRunId) {
 			return new SubagentPart(id, timestamp, subagentId, agentName, task, parentToolCallId,
 				endChildRunId != null ? endChildRunId : childRunId, endStatus, endSummary);
 		}

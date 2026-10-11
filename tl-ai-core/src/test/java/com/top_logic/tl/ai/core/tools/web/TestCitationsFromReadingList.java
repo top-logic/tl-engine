@@ -34,6 +34,7 @@ import com.meterware.servletunit.ServletRunner;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
@@ -247,6 +248,35 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 			Recording copy = get(handleOf(report.archiveUrl()), anna);
 			assertEquals(HttpServletResponse.SC_OK, copy._status);
 			assertTrue("and the archived copy shows it", copy.body().contains(lastPage));
+		}
+	}
+
+	/**
+	 * The copy of a long report is not written again for every window: the windows after the first
+	 * are written once, when the run is done with them - a report read in 60 windows used to be
+	 * committed 60 times, each time with everything read so far.
+	 */
+	public void testTheCopyOfALongReportIsExtendedOnceNotPerWindow() throws Exception {
+		try (RecordingServer origin = serveReport(); FilteringProxy egress = egressTo(origin)) {
+			WebFetchTool fetch = new WebFetchTool(publicAnswer(), egress);
+			ReadingList list = new ReadingList();
+			try (ReadingListBinding.Binding bound = ReadingListBinding.bind(list)) {
+				Integer offset = null;
+				do {
+					offset = nextOffset(fetch.webFetch(REPORT, offset));
+				} while (offset != null);
+			}
+			String handle = handleOf(list.find(REPORT).archiveUrl());
+
+			HistoryUtils.updateSessionRevision();
+			String stored = PageArchive.text(PageArchive.find(handle).get());
+			assertTrue("the first window is stored at once", stored.contains(finding(1)));
+			assertFalse("the windows after it are not written per window", stored.contains(finding(60)));
+
+			PageArchive.flush(list);
+			HistoryUtils.updateSessionRevision();
+			String extended = PageArchive.text(PageArchive.find(handle).get());
+			assertEquals("when the run is done, the copy holds all it read", list.find(REPORT).text(), extended);
 		}
 	}
 

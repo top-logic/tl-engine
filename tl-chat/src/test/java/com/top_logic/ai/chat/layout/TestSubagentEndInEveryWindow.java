@@ -104,7 +104,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 
 		_windowB = new TaskProgressTracker();
 		assertTrue(_windowB.getSessionManager().switchSession(_chat, owner));
-		assertEquals("RUNNING", subagentPart(_windowB).status());
+		assertEquals(Part.SubagentStatus.RUNNING, subagentPart(_windowB).status());
 		_watcherB = new Watcher(_windowB, owner);
 		ChatEventHandlerRegistry.register(_watcherB);
 	}
@@ -122,7 +122,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		TaskProgressTracker windowC = new TaskProgressTracker();
 		assertTrue(windowC.getSessionManager().switchSession(_chat, owner));
 		Part.SubagentPart part = subagentPart(windowC);
-		assertEquals("DONE", part.status());
+		assertEquals(Part.SubagentStatus.DONE, part.status());
 		assertEquals("Anmeldungen: 12", part.summary());
 		assertEquals("Its transcript can be opened.", "child-run-1", part.childRunId());
 	}
@@ -132,7 +132,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		subagentFinished();
 
 		assertTrue(_windowB.getSessionManager().switchSession(_chat, owner));
-		assertEquals("DONE", subagentPart(_windowB).status());
+		assertEquals(Part.SubagentStatus.DONE, subagentPart(_windowB).status());
 	}
 
 	/** A window showing the chat is told at once, with where the subagent's card stands. */
@@ -146,6 +146,19 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		assertEquals("child-run-1", end.childRunId());
 	}
 
+	/**
+	 * A window showing the chat is told when a queued subagent starts, though it receives none of the
+	 * subagent's steps.
+	 */
+	public void testAnOpenWindowIsToldThatAQueuedSubagentStarted() {
+		_listener.recordSubagentStarted("sa-2", "Counter", "Abmeldungen zählen", "call-2", true, _lead);
+
+		_listener.recordSubagentRunning("sa-2");
+
+		assertEquals(1, _watcherB._running.size());
+		assertEquals("sa-2", _watcherB._running.get(0).subagentId());
+	}
+
 	/** The window that started it holds the very log the end was written into, and keeps it. */
 	public void testTheStartingWindowKeepsItsCopy() {
 		ConversationLog before = _windowA.getSessionManager().getOrCreateConversationLog();
@@ -154,7 +167,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 
 		assertTrue(_windowA.getSessionManager().switchSession(_chat, owner));
 		assertSame(before, _windowA.getSessionManager().getOrCreateConversationLog());
-		assertEquals("DONE", subagentPart(_windowA).status());
+		assertEquals(Part.SubagentStatus.DONE, subagentPart(_windowA).status());
 	}
 
 	/**
@@ -221,6 +234,8 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 
 		final List<AgentEvent.SubagentCompleted> _ended = new ArrayList<>();
 
+		final List<AgentEvent.SubagentRunning> _running = new ArrayList<>();
+
 		Watcher(TaskProgressTracker window, Person account) {
 			_window = window;
 			_account = account;
@@ -245,6 +260,8 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		public void onEvent(AgentEvent event) {
 			if (event instanceof AgentEvent.SubagentCompleted completed) {
 				_ended.add(completed);
+			} else if (event instanceof AgentEvent.SubagentRunning running) {
+				_running.add(running);
 			}
 		}
 

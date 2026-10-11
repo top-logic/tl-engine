@@ -21,6 +21,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.sched.SchedulerService;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
@@ -49,7 +50,7 @@ public class TestSubagentWaker extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_registry = new SubagentJobRegistry(4);
-		_host = new FakeHost();
+		_host = new FakeHost(_registry);
 		_waker = new SubagentWaker(_registry, _host, DEBOUNCE_MS, 50);
 		_registry.addListener(_waker);
 	}
@@ -197,18 +198,26 @@ public class TestSubagentWaker extends TestCase {
 
 		final AtomicInteger exhaustedCount = new AtomicInteger();
 
+		private final SubagentJobRegistry _news;
+
+		FakeHost(SubagentJobRegistry news) {
+			_news = news;
+		}
+
 		@Override
 		public boolean leadRuns() {
 			return leadRuns.get();
 		}
 
 		@Override
-		public boolean wake(SubagentJobRegistry.News news) {
+		public boolean wake() {
 			attempts.incrementAndGet();
 			if (refuse.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
 				return false;
 			}
-			newsSeen.add(news);
+			// What the turn would open with: nothing in this test delivers, so the registry still
+			// holds the news the waker saw.
+			newsSeen.add(_news.news());
 			synchronized (this) {
 				wakes.incrementAndGet();
 				notifyAll();
@@ -238,6 +247,7 @@ public class TestSubagentWaker extends TestCase {
 	/** The registry asks the installation's subagent ceiling, which reads the configuration. */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(new TestSuite(TestSubagentWaker.class), TypeIndex.Module.INSTANCE));
+			ServiceTestSetup.createSetup(new TestSuite(TestSubagentWaker.class), TypeIndex.Module.INSTANCE,
+				SchedulerService.Module.INSTANCE));
 	}
 }

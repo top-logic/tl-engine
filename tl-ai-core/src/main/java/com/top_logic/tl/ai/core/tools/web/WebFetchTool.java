@@ -372,9 +372,12 @@ public class WebFetchTool {
 		String text = new String(body.bytes(), charsetOf(contentType));
 		if (contentType.contains("html") || contentType.contains("xml")
 				|| (contentType.isEmpty() && looksLikeHtml(text))) {
+			Document page = Jsoup.parse(text, url);
+			// Taken before the conversion, which removes the head with the title in it.
+			String title = page.title();
 			List<String> links = new ArrayList<>();
-			String markdown = htmlToMarkdown(text, url, links).strip();
-			return new FetchedDocument(url, Jsoup.parse(text).title(), markdown, List.of(), List.copyOf(links));
+			String markdown = htmlToMarkdown(page, links).strip();
+			return new FetchedDocument(url, title, markdown, List.of(), List.copyOf(links));
 		}
 		if (contentType.startsWith("text/") || contentType.contains("json") || contentType.isEmpty()) {
 			return new FetchedDocument(url, "", text.strip());
@@ -521,15 +524,15 @@ public class WebFetchTool {
 	 * the resulting Markdown contains usable absolute URLs. Package-visible for testing.
 	 */
 	static String htmlToMarkdown(String html, String baseUrl) {
-		return htmlToMarkdown(html, baseUrl, new ArrayList<>());
+		return htmlToMarkdown(Jsoup.parse(html, baseUrl), new ArrayList<>());
 	}
 
 	/**
-	 * {@link #htmlToMarkdown(String, String)}, also collecting the absolute address of every link the
-	 * Markdown keeps into {@code links}.
+	 * {@link #htmlToMarkdown(String, String)} of a parsed document, also collecting the absolute
+	 * address of every link the Markdown keeps into {@code links}. Removes the non-content chrome from
+	 * {@code document}.
 	 */
-	static String htmlToMarkdown(String html, String baseUrl, List<String> links) {
-		Document document = Jsoup.parse(html, baseUrl);
+	private static String htmlToMarkdown(Document document, List<String> links) {
 		document.select(JUNK_SELECTOR).remove();
 		Element root = document.body() != null ? document.body() : document;
 

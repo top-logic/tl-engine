@@ -374,6 +374,38 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 	}
 
 	/**
+	 * The sum reads only what can lie in the window - not the runs of a conversation nobody touched
+	 * since, nor those of an active conversation that started before it - and comes out as the sum
+	 * over every run that started in it, each at the rate of its day.
+	 */
+	public void testTheSpendCountsOnlyRunsThatStartedInTheWindow() {
+		Person account = freshAccount();
+		AgentExecution quiet = record(account, new TokenUsage(1000, 0, 0, 0, 0), usd(1));
+		backdate(quiet, 48);
+		backdateSession(quiet.getSession(), 48);
+		AgentSession active = _store.createSession(SessionKind.CHAT, account, "budget-test");
+		AgentExecution before = finished(active, "test-agent", null, new TokenUsage(2000, 0, 0, 0, 0), usd(2));
+		advance();
+		backdate(before, 48);
+		finished(active, "test-agent", null, new TokenUsage(300, 0, 0, 0, 0), usd(3));
+		advance();
+
+		Date yesterday = new Date(System.currentTimeMillis() - 24 * 3600_000L);
+		try (RunLimitSettings.Overridden rates = CostConversion.override("EUR",
+			day -> OptionalDouble.of(day.before(yesterday) ? 0.5 : 0.9))) {
+			AgentExecutionStore.AccountSpend window = _store.spentSince(account, yesterday);
+			assertEquals("Only the run of today counts.", 300, window.tokens());
+			assertEquals("3 USD at today's 0.9.", 2.7, window.cost(), 1e-9);
+			assertTrue(window.complete());
+
+			AgentExecutionStore.AccountSpend all = _store.spentSince(account, null);
+			assertEquals("Without a window every run counts, the quiet conversation's too.", 3300, all.tokens());
+			assertEquals("1 and 2 USD at the old 0.5, 3 USD at today's 0.9.", 4.2, all.cost(), 1e-9);
+			assertTrue(all.complete());
+		}
+	}
+
+	/**
 	 * Without a rate nobody is refused for a sum nobody could convert: the money budget is not
 	 * checked, the log is told, and the token budget still applies.
 	 */
@@ -585,6 +617,17 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 		try (com.top_logic.knowledge.service.Transaction tx =
 			execution.tKnowledgeBase().beginTransaction()) {
 			execution.setStartedAt(then);
+			tx.commit();
+		}
+		advance();
+	}
+
+	/** Moves a conversation's last activity out of the window, as if nobody had touched it since. */
+	private void backdateSession(AgentSession session, int hours) {
+		Date then = new Date(System.currentTimeMillis() - hours * 3600_000L);
+		try (com.top_logic.knowledge.service.Transaction tx =
+			session.tKnowledgeBase().beginTransaction()) {
+			session.setLastUpdated(then);
 			tx.commit();
 		}
 		advance();

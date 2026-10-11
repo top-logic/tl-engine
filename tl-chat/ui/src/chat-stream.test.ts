@@ -69,7 +69,7 @@ describe('the chat stream', () => {
     const stream = openChatStream(AT)
     const seen: string[] = []
     for (const name of ['open', 'text_delta', 'run_completed']) {
-      stream.addEventListener(name, (frame: StreamFrame) => seen.push(`${name} ${frame.data}`))
+      stream.addEventListener(name, (frame: StreamFrame) => seen.push(`${name} ${JSON.stringify(frame.data)}`))
     }
     await settle()
     emitPatch(listenerOf(calls[0].url), {
@@ -80,7 +80,7 @@ describe('the chat stream', () => {
     })
 
     expect(seen).toEqual([
-      'open ',
+      'open {}',
       'text_delta {"text":"Hallo","end":5}',
       'run_completed {"stopReason":"COMPLETE"}',
     ])
@@ -90,7 +90,7 @@ describe('the chat stream', () => {
 
   it('stops listening when closed and tells the server, with the same id', async () => {
     const stream = openChatStream(AT)
-    const seen: string[] = []
+    const seen: unknown[] = []
     stream.addEventListener('text_delta', (frame) => seen.push(frame.data))
     await settle()
     const listener = listenerOf(calls[0].url)

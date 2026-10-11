@@ -37,6 +37,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -330,6 +331,7 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestSubagentMessageEndpoint.class),
 				ModelService.Module.INSTANCE,
+				SchedulerService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE));

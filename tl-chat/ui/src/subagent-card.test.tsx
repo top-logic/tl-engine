@@ -473,9 +473,9 @@ describe('the time on a running card', () => {
       }
       root.render(React.createElement(SubagentCard, { card, labels, onLoadTranscript: async () => [] }))
       await vi.advanceTimersByTimeAsync(0)
-      expect(container.querySelector('.subagent-card-meta')?.textContent).toContain('5s')
+      expect(container.querySelector('.subagent-card-meta')?.textContent).toContain('5.0s')
       await vi.advanceTimersByTimeAsync(2000)
-      expect(container.querySelector('.subagent-card-meta')?.textContent).toContain('7s')
+      expect(container.querySelector('.subagent-card-meta')?.textContent).toContain('7.0s')
     } finally {
       root.unmount()
       container.remove()

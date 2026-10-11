@@ -159,7 +159,8 @@ public class SubagentSpawner {
 
 		registry.spawn(job, j -> {
 			if (logListener != null) {
-				// A subagent that waited for a slot is at work from now on; its part says so.
+				// A subagent that waited for a slot is at work from now on; its part says so, and the
+				// chat is told - its own steps are no evidence of it, see AgentEvent.SubagentRunning.
 				logListener.recordSubagentRunning(j.subagentId());
 			}
 			ComputationEx2<SubagentResult, RuntimeException, RuntimeException> work = () -> {

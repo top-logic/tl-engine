@@ -84,7 +84,7 @@ public class ChatDockControl extends ReactControl {
 	@Override
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
-		_binding.writeLayoutState(this::putState);
+		_binding.writeRenderState(this::putState);
 	}
 
 	private static String label(ResKey key) {

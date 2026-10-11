@@ -49,7 +49,7 @@ public class TestChatLanguage extends BasicTestCase {
 			assertEquals("The window's chat answers in the language chosen since.", "en",
 				render(again).get("language"));
 			Map<String, Object> reload = new HashMap<>();
-			again.writeLayoutState(reload::put);
+			again.writeRenderState(reload::put);
 			assertEquals("A reload re-renders the chat in the language chosen since.", "en", reload.get("language"));
 		} finally {
 			ChatViewBinding.preferenceSource = previousSource;

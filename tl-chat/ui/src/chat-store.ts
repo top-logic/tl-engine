@@ -4,8 +4,8 @@ import {
   autoTitle,
   cancelRun,
   cancelSubagent,
+  completedStatus,
   delegationEnd,
-  isLimitStop,
   sendSubagentMessage,
   type SubagentMessageStatus,
   createSession,
@@ -62,6 +62,10 @@ import {
   writeTraceMode,
 } from './store'
 import {
+  emptyLive,
+  isEnded,
+  keepLast,
+  MAX_CHILD_STEPS,
   promptTokens,
   type AgentOption,
   type ApprovalOutcome,
@@ -115,6 +119,11 @@ function parseJson<T>(raw: string, fallback: T): T {
   }
 }
 
+/** A frame's payload as the shape its handler reads, or `fallback` when the server sent no object. */
+function frameData<T>(data: unknown, fallback: T): T {
+  return data !== null && typeof data === 'object' ? (data as T) : fallback
+}
+
 /** Tool arguments arrive as a JSON string; a tool that sends something else keeps it as text. */
 function parseToolInput(argsJson: string | undefined): unknown {
   if (argsJson == null) return ''
@@ -156,9 +165,6 @@ export function asker(
   return { subagentId, agent: agent || known?.targetAgentName || '' }
 }
 
-/** How many steps a card keeps of a running subagent; the rest is in its transcript. */
-const MAX_CHILD_STEPS = 20
-
 /** How much of a running subagent's text its card keeps - the end, the newest. */
 const MAX_CHILD_TEXT = 400
 
@@ -183,7 +189,7 @@ export function applyChildEvent(
     currency?: string
   },
 ): SubagentLive {
-  const live: SubagentLive = current ?? { steps: [], text: '', turns: 0, tokens: 0, startedAt: Date.now() }
+  const live: SubagentLive = current ?? emptyLive()
   const setStatus = (status: ToolCallStatus): SubagentLive =>
     data.toolCallId
       ? {
@@ -220,7 +226,7 @@ export function applyChildEvent(
         },
       ]
       // A new step starts a new thought: the text the card shows is what the child wrote since.
-      return { ...live, text: '', steps: steps.slice(Math.max(0, steps.length - MAX_CHILD_STEPS)) }
+      return { ...live, text: '', steps: keepLast(steps, MAX_CHILD_STEPS) }
     }
     case 'user_message_read':
       return readNotes(live, data.messages ?? [])
@@ -239,9 +245,9 @@ const MAX_NOTES = 20
 
 /** A message the user wrote to a subagent, added to what its card shows as sent and not yet read. */
 export function addNote(current: SubagentLive | undefined, id: string, text: string): SubagentLive {
-  const live: SubagentLive = current ?? { steps: [], text: '', turns: 0, tokens: 0, startedAt: Date.now() }
+  const live: SubagentLive = current ?? emptyLive()
   const notes = [...(live.notes ?? []).filter((note) => note.id !== id), { id, text, read: false }]
-  return { ...live, notes: notes.slice(Math.max(0, notes.length - MAX_NOTES)) }
+  return { ...live, notes: keepLast(notes, MAX_NOTES) }
 }
 
 /**
@@ -256,7 +262,7 @@ function readNotes(live: SubagentLive, read: { id?: string; text?: string }[]): 
     if (index >= 0) notes[index] = { ...notes[index], read: true }
     else notes.push({ id: message.id, text: message.text ?? '', read: true })
   }
-  return { ...live, notes: notes.slice(Math.max(0, notes.length - MAX_NOTES)) }
+  return { ...live, notes: keepLast(notes, MAX_NOTES) }
 }
 
 function mergeSubagent(
@@ -281,7 +287,7 @@ function mergeSubagent(
     hasTranscript: (status !== 'CANCELLED' && status !== 'QUEUED') || previous?.hasTranscript === true,
     parentToolCallId: event.parentToolCallId || previous?.parentToolCallId,
     // The detail of a start event is the task; later events carry the result there instead.
-    task: previous?.task ?? (status === 'RUNNING' || status === 'QUEUED' ? event.detail : undefined),
+    task: previous?.task ?? (isEnded(status) ? undefined : event.detail),
     childRunId: event.childRunId || previous?.childRunId,
   }
   if (index < 0) return [...current, next]
@@ -391,13 +397,7 @@ const RUN_SCOPED_EVENTS = new Set([
  */
 export function eventBelongsToChat(name: string, raw: unknown, sessionId: string | null): boolean {
   if (!RUN_SCOPED_EVENTS.has(name)) return true
-  if (typeof raw !== 'string') return true
-  let named: unknown
-  try {
-    named = (JSON.parse(raw) as { sessionId?: unknown }).sessionId
-  } catch {
-    return true
-  }
+  const named = frameData<{ sessionId?: unknown }>(raw, {}).sessionId
   if (typeof named !== 'string' || !named) return true
   return named === sessionId
 }
@@ -569,6 +569,37 @@ export interface ChatState {
   collapsedSections: string[]
   /** Per section name, whether the user left it open. A section never toggled is absent. */
   sectionChoices: Record<string, boolean>
+}
+
+/**
+ * What belongs to one conversation and to no other: its subagents, its tasks, the user's feedback
+ * on its answers and the notice strip about it.
+ *
+ * Opening, starting and deleting a chat all empty this at once. Each used to list the fields itself,
+ * and the lists drifted apart - a deleted chat's notice stayed up, and no switch dropped the previous
+ * run's subagent budget.
+ */
+const EMPTY_CONVERSATION: Pick<
+  ChatState,
+  | 'subagents'
+  | 'subagentBudget'
+  | 'subagentLive'
+  | 'delegationLive'
+  | 'tasks'
+  | 'feedback'
+  | 'notice'
+  | 'noticeDetail'
+  | 'noticeTone'
+> = {
+  subagents: [],
+  subagentBudget: undefined,
+  subagentLive: {},
+  delegationLive: {},
+  tasks: [],
+  feedback: [],
+  notice: '',
+  noticeDetail: '',
+  noticeTone: 'warn',
 }
 
 /** What a send needs from the element that triggered it. */
@@ -1011,19 +1042,12 @@ export class ChatStore {
       // user starts with, not a setting that overrules what this user picked.
       traceMode: readTraceMode() ?? boot.traceMode,
       messages: [],
-      feedback: [],
       sources: [],
       latestSources: [],
       busy: false,
       regenerating: false,
-      subagents: [],
-      subagentLive: {},
-      delegationLive: {},
-      tasks: [],
+      ...EMPTY_CONVERSATION,
       connection: 'connecting',
-      notice: '',
-      noticeDetail: '',
-      noticeTone: 'warn',
       // The user's own decision, else what the element configured. The one is stored, the other is
       // not - which is the whole of the precedence rule (#423).
       sideOpen: boot.railOpen ?? boot.railOpenDefault,
@@ -1392,7 +1416,7 @@ export class ChatStore {
       on('heartbeat', () => undefined)
 
       on('run_started', (e) => {
-        const data = parseJson<{ runId?: string; usedTokens?: number; contextWindow?: number; model?: string }>(
+        const data = frameData<{ runId?: string; usedTokens?: number; contextWindow?: number; model?: string }>(
           e.data,
           {},
         )
@@ -1412,7 +1436,7 @@ export class ChatStore {
         }))
       })
       on('turn_started', (e) => {
-        const data = parseJson<{ usedTokens?: number; contextWindow?: number }>(e.data, {})
+        const data = frameData<{ usedTokens?: number; contextWindow?: number }>(e.data, {})
         this.setRun((s) => ({
           ...s,
           estimatedTokens: data.usedTokens ?? s.estimatedTokens,
@@ -1424,7 +1448,7 @@ export class ChatStore {
         this.dispatch({ type: 'ADD_ASSISTANT', id: this.assistantId, text: '', isStreaming: true })
       })
       on('context_composition', (e) => {
-        const data = parseJson<Partial<ContextComposition>>(e.data, {})
+        const data = frameData<Partial<ContextComposition>>(e.data, {})
         this.setRun((s) => ({
           ...s,
           composition: {
@@ -1440,7 +1464,7 @@ export class ChatStore {
         // The model refused the call and the run waits before it asks again - for a busy key that
         // can be minutes (#678). Said in the strip, not in the transcript: it is a state of the
         // moment, gone as soon as the model answers, and a line per attempt would bury the turn.
-        const data = parseJson<{ kind?: string; waitMs?: number }>(e.data, {})
+        const data = frameData<{ kind?: string; waitMs?: number }>(e.data, {})
         const seconds = Math.max(1, Math.round((data.waitMs ?? 0) / 1000))
         const labels = this.labels
         this.showNotice(
@@ -1452,17 +1476,17 @@ export class ChatStore {
       })
       on('text_delta', (e) => {
         this.clearRetryNotice()
-        const data = parseJson<{ text?: string; end?: number }>(e.data, {})
+        const data = frameData<{ text?: string; end?: number }>(e.data, {})
         if (data.text) this.appendDelta(data.text, data.end ?? 0)
       })
       on('thinking_delta', (e) => {
         this.clearRetryNotice()
-        const data = parseJson<{ text?: string }>(e.data, {})
+        const data = frameData<{ text?: string }>(e.data, {})
         if (data.text) this.dispatch({ type: 'APPEND_THINKING', delta: data.text })
       })
       on('tool_started', (e) => {
         this.clearRetryNotice()
-        const data = parseJson<{ toolCallId?: string; toolName?: string; argsJson?: string }>(e.data, {})
+        const data = frameData<{ toolCallId?: string; toolName?: string; argsJson?: string }>(e.data, {})
         if (!data.toolCallId) return
         this.dispatch({
           type: 'ADD_TOOL',
@@ -1472,13 +1496,13 @@ export class ChatStore {
         })
       })
       on('tool_completed', (e) => {
-        const data = parseJson<{ toolCallId?: string; result?: string; durationMs?: number }>(e.data, {})
+        const data = frameData<{ toolCallId?: string; result?: string; durationMs?: number }>(e.data, {})
         if (!data.toolCallId) return
         this.dispatch({ type: 'UPDATE_TOOL', toolUseId: data.toolCallId, status: 'done', durationMs: data.durationMs })
         this.dispatch({ type: 'ADD_TOOL_RESULT', toolUseId: data.toolCallId, output: data.result ?? '' })
       })
       on('tool_failed', (e) => {
-        const data = parseJson<{ toolCallId?: string; errorMessage?: string; durationMs?: number }>(e.data, {})
+        const data = frameData<{ toolCallId?: string; errorMessage?: string; durationMs?: number }>(e.data, {})
         if (!data.toolCallId) return
         this.dispatch({ type: 'UPDATE_TOOL', toolUseId: data.toolCallId, status: 'error', durationMs: data.durationMs })
         this.dispatch({
@@ -1489,7 +1513,7 @@ export class ChatStore {
         })
       })
       on('tool_denied', (e) => {
-        const data = parseJson<{ toolCallId?: string; reason?: string }>(e.data, {})
+        const data = frameData<{ toolCallId?: string; reason?: string }>(e.data, {})
         if (!data.toolCallId) return
         this.dispatch({ type: 'UPDATE_TOOL', toolUseId: data.toolCallId, status: 'error' })
         this.dispatch({
@@ -1500,15 +1524,15 @@ export class ChatStore {
         })
       })
       on('task_update', (e) => {
-        const data = parseJson<{ tasksJson?: string }>(e.data, {})
+        const data = frameData<{ tasksJson?: string }>(e.data, {})
         this.patch({ tasks: parseTasksJson(data.tasksJson) })
       })
       on('approval_mode', (e) => {
-        const data = parseJson<{ mode?: string }>(e.data, {})
+        const data = frameData<{ mode?: string }>(e.data, {})
         this.patch({ autoApprove: data.mode === 'AUTO_APPROVE' })
       })
       on('approval_required', (e) => {
-        const data = parseJson<{
+        const data = frameData<{
           approvalRequestId?: string
           toolCallId?: string
           toolName?: string
@@ -1539,7 +1563,7 @@ export class ChatStore {
         })
       })
       on('approval_resolved', (e) => {
-        const data = parseJson<{ approvalRequestId?: string; outcome?: string }>(e.data, {})
+        const data = frameData<{ approvalRequestId?: string; outcome?: string }>(e.data, {})
         if (!data.approvalRequestId) return
         this.dispatch({
           type: 'RESOLVE_APPROVAL',
@@ -1552,7 +1576,7 @@ export class ChatStore {
         // whose run it is hears the same news as `approval_resolved` from the run itself; this
         // frame is what reaches a window that only listed the request (a second tab, a reloaded
         // page). Both message kinds are addressed by the same id, so one of the two takes effect.
-        const data = parseJson<{ requestId?: string; outcome?: string }>(e.data, {})
+        const data = frameData<{ requestId?: string; outcome?: string }>(e.data, {})
         if (!data.requestId) return
         const outcome = approvalOutcome(data.outcome)
         if (outcome) {
@@ -1561,7 +1585,7 @@ export class ChatStore {
         this.dispatch({ type: 'RESOLVE_INTERACTION', requestId: data.requestId })
       })
       on('user_interaction', (e) => {
-        const data = parseJson<{
+        const data = frameData<{
           requestId?: string
           question?: string
           header?: string
@@ -1586,7 +1610,7 @@ export class ChatStore {
         })
       })
       on('delegation_event', (e) => {
-        const wrap = parseJson<{
+        const wrap = frameData<{
           eventType?: string
           eventData?: string
           subagentId?: string
@@ -1597,10 +1621,6 @@ export class ChatStore {
         // Its approvals still reach the prompt stack below, where the user answers them.
         if (wrap.subagentId && wrap.eventType !== 'approval_required' && wrap.eventType !== 'approval_resolved') {
           const id = wrap.subagentId
-          // A queued subagent's first own step is the news that it has started.
-          if (this.state.subagents.some((item) => item.subagentId === id && item.status === 'QUEUED')) {
-            this.patch({ subagents: mergeSubagent(this.state.subagents, { subagentId: id }, 'RUNNING') })
-          }
           const live = applyChildEvent(this.state.subagentLive[id], wrap.eventType ?? '', parseJson(wrap.eventData ?? '', {}))
           if (live !== this.state.subagentLive[id]) {
             this.patch({ subagentLive: { ...this.state.subagentLive, [id]: live } })
@@ -1662,44 +1682,55 @@ export class ChatStore {
         }
       })
       on('subagent_started', (e) => {
-        const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
+        const data = frameData<SubagentStatusEvent>(e.data, { subagentId: '' })
         if (data.subagentId) {
           this.patch({ subagents: mergeSubagent(this.state.subagents, data, data.queued ? 'QUEUED' : 'RUNNING') })
         }
       })
+      on('subagent_running', (e) => {
+        // A queued subagent got its slot. Told by the server, not read off its first step: that may be
+        // an approval prompt, which never reaches the card, and a window may receive no step at all.
+        const data = frameData<SubagentStatusEvent>(e.data, { subagentId: '' })
+        const known = this.state.subagents.find((item) => item.subagentId === data.subagentId)
+        // An end that arrived first stays: the frames of one flush are not ordered across subagents.
+        if (data.subagentId && !(known && isEnded(known.status))) {
+          this.patch({ subagents: mergeSubagent(this.state.subagents, data, 'RUNNING') })
+        }
+      })
       on('lead_woken', (e) => {
         // Ahead of the turn's run_started: the line opens the turn in place of the user's bubble.
-        const data = parseJson<{ subagents?: WokenSubagent[] }>(e.data, {})
+        const data = frameData<{ subagents?: WokenSubagent[] }>(e.data, {})
         this.dispatch({ type: 'ADD_NOTICE', kind: 'lead_woken', detail: '', woken: wokenList(data.subagents) })
       })
       on('lead_wakes_exhausted', () => {
         this.showNotice(this.labels.leadWakesExhausted, '', { tone: 'info' })
       })
       on('subagent_completed', (e) => {
-        const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
-        const status = isLimitStop(data.stopReason) ? 'LIMIT' : 'DONE'
-        if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, status) })
+        const data = frameData<SubagentStatusEvent>(e.data, { subagentId: '' })
+        if (data.subagentId) {
+          this.patch({ subagents: mergeSubagent(this.state.subagents, data, completedStatus(data.stopReason)) })
+        }
       })
       on('subagent_failed', (e) => {
-        const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
+        const data = frameData<SubagentStatusEvent>(e.data, { subagentId: '' })
         if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, 'FAILED') })
       })
       on('subagent_cancelled', (e) => {
-        const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
+        const data = frameData<SubagentStatusEvent>(e.data, { subagentId: '' })
         if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, 'CANCELLED') })
       })
       on('compaction_started', (e) => {
-        const data = parseJson<{ contextWindow?: number }>(e.data, {})
+        const data = frameData<{ contextWindow?: number }>(e.data, {})
         // The measured figure describes a conversation that no longer exists; the next turn
         // reports the compacted one, and until then the ring falls back to the estimate.
         this.setRun((s) => ({ ...s, measuredTokens: 0, contextWindow: data.contextWindow || s.contextWindow }))
       })
       on('turn_completed', (e) => {
-        const data = parseJson<{ turnUsage?: TokenUsage; contextWindow?: number }>(e.data, {})
+        const data = frameData<{ turnUsage?: TokenUsage; contextWindow?: number }>(e.data, {})
         if (data.turnUsage) setTokens(data.contextWindow, undefined, data.turnUsage)
       })
       on('run_completed', (e) => {
-        const data = parseJson<{ reason?: string }>(e.data, {})
+        const data = frameData<{ reason?: string }>(e.data, {})
         // A run the user stopped is not a failure, and the server does not report it as one
         // (#549). It says so once, in the transcript where the answer stops - the same line the
         // server records for a reload or another window - and not a second time in the strip.
@@ -1711,7 +1742,7 @@ export class ChatStore {
       on('message_complete', (e) => {
         // The authoritative answer. The deltas were a live preview of it; applying it here is what
         // keeps the last fragment from being lost when it arrives after this event.
-        const data = parseJson<{ contentText?: string; citations?: Citation[] }>(e.data, {})
+        const data = frameData<{ contentText?: string; citations?: Citation[] }>(e.data, {})
         const target = this.assistantId ?? this.lastAssistantId
         if (target && data.contentText) {
           this.dispatch({ type: 'SET_TEXT', id: target, text: data.contentText, citations: data.citations })
@@ -1733,7 +1764,7 @@ export class ChatStore {
         finish()
       })
       on('provider_error', (e) => {
-        const data = parseJson<{ errorMessage?: string; kind?: string }>(e.data, {})
+        const data = frameData<{ errorMessage?: string; kind?: string }>(e.data, {})
         const text = providerErrorText(data.kind, this.state.language)
         // Also into the transcript, not only into the composer's notice strip: a run that ended
         // without an answer has to say so where the answer would have been, and the strip is
@@ -1756,7 +1787,7 @@ export class ChatStore {
         //
         // The reason is the server's own line, verbatim, which is what the recorded transaction
         // part carries too - so the notice reads the same live as after a reload.
-        const data = parseJson<{ reason?: string }>(e.data, {})
+        const data = frameData<{ reason?: string }>(e.data, {})
         this.dispatch({
           type: 'ADD_NOTICE',
           kind: 'transaction_rolled_back',
@@ -1770,7 +1801,7 @@ export class ChatStore {
         // reason the provider error is (#429) - it is part of what happened in this turn, and the
         // composer's strip is wiped by the next send. Composed in exactly the wording the server
         // persists, so the line reads the same live as after a reload.
-        const data = parseJson<{ fromModel?: string; toModel?: string; reason?: string }>(e.data, {})
+        const data = frameData<{ fromModel?: string; toModel?: string; reason?: string }>(e.data, {})
         this.dispatch({
           type: 'ADD_NOTICE',
           kind: 'model_switched',
@@ -2078,17 +2109,7 @@ export class ChatStore {
         this.runId = null
         this.streamMark = null
         this.watching = false
-        this.patch({
-          busy: false,
-          subagents: [],
-          subagentLive: {},
-          delegationLive: {},
-          tasks: [],
-          feedback: [],
-          notice: '',
-          noticeDetail: '',
-          noticeTone: 'warn',
-        })
+        this.patch({ busy: false, ...EMPTY_CONVERSATION })
         this.noticeSticky = false
         // The model does not change when the chat does, so its window survives the reset; only what
         // the previous conversation measured is dropped.
@@ -2147,14 +2168,7 @@ export class ChatStore {
           sessionId: null,
           // Auto-approve is a setting of one chat, and a new chat starts with it off (#808).
           autoApprove: false,
-          subagents: [],
-          subagentLive: {},
-          delegationLive: {},
-          tasks: [],
-          feedback: [],
-          notice: '',
-          noticeDetail: '',
-          noticeTone: 'warn',
+          ...EMPTY_CONVERSATION,
           messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           busy: false,
         })
@@ -2164,13 +2178,11 @@ export class ChatStore {
       deleteSession: async (id: string) => {
         await deleteSession(this.at, id)
         if (this.state.sessionId === id) {
+          this.noticeSticky = false
           this.patch({
             sessionId: null,
             autoApprove: false,
-            subagents: [],
-            subagentLive: {},
-            delegationLive: {},
-            tasks: [],
+            ...EMPTY_CONVERSATION,
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })
           this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
@@ -2475,13 +2487,13 @@ export class ChatStore {
       stopSubagents: async () => {
         const at = this.at
         const active = this.state.subagents.filter(
-          (item) => item.status === 'RUNNING' || item.status === 'QUEUED',
+          (item) => !isEnded(item.status),
         )
         const sessionId = this.state.sessionId
         await Promise.all(active.map((item) => cancelSubagent(at, item.subagentId, sessionId, item.parentToolCallId)))
         this.patch({
           subagents: this.state.subagents.map((item) =>
-            item.status === 'RUNNING' || item.status === 'QUEUED' ? { ...item, status: 'CANCELLED' } : item,
+            isEnded(item.status) ? item : { ...item, status: 'CANCELLED' },
           ),
         })
       },

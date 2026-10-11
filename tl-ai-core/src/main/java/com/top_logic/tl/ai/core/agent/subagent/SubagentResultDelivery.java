@@ -133,18 +133,22 @@ public final class SubagentResultDelivery {
 	 * </p>
 	 */
 	static String limitLine(SubagentJob job, SubagentResult result) {
-		if (result.stopReason() == StopReason.MAX_TOOL_CALLS) {
-			return "_Stopped at its limit: it used up its budget of "
+		StopReason reason = result.stopReason();
+		if (reason == null || !reason.isLimit()) {
+			return null;
+		}
+		String what = switch (reason) {
+			case MAX_TOOL_CALLS -> "it used up its budget of "
 				+ (job.toolCallLimit() > 0 ? job.toolCallLimit() + " " : "") + "tool calls and wrote its"
-				+ " report from what it had by then. Treat the report as possibly incomplete, and name this"
-				+ " subagent where you say what is still open._";
-		}
-		if (result.stopReason() == StopReason.MAX_TURNS) {
-			return "_Stopped at its limit: it reached its turn limit and wrote its report from what it had by"
-				+ " then. Treat the report as possibly incomplete, and name this subagent where you say what"
-				+ " is still open._";
-		}
-		return null;
+				+ " report from what it had by then";
+			case MAX_TURNS -> "it reached its turn limit and wrote its report from what it had by then";
+			case BUDGET_EXHAUSTED -> "the token or money budget it spends from ran out, and it stopped between"
+				+ " two turns without a final report";
+			case OUTPUT_LIMIT -> "its last answer reached the output limit and is cut off";
+			default -> "it reached a limit";
+		};
+		return "_Stopped at its limit: " + what + ". Treat the report as possibly incomplete, and name this"
+			+ " subagent where you say what is still open._";
 	}
 
 	/**

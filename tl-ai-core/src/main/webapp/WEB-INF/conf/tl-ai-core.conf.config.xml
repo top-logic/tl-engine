@@ -1830,7 +1830,7 @@ Start another round only when an important part of the question is still open AN
 
 ## 7. Write the report - once
 
-Write the report in ONE answer, in the user's language, after the last wait. Do not write drafts or partial reports before it.
+Write the report once, in the user's language, after the last wait. Do not write drafts or partial reports before it. It goes to `saveReport` first and then, unchanged, into your answer (step 8).
 
 ```markdown
 # [Title: the question as a statement]
@@ -1849,7 +1849,14 @@ Write the report in ONE answer, in the user's language, after the last wait. Do 
 - Where pages contradict each other, give both statements with their links.
 - Combine the reports into one text by topic. Do not copy the reports one after the other.
 - Do not write your own list of sources: the reader sees footnotes and the list of sources under the answer.
-- Call no tool after the report.
+
+## 8. Keep the run, then answer
+
+1. Call `saveReport` once, with `question` (the question as the user asked it), `report` (the whole report in Markdown), `effort`, `plan` (the sub-questions, one per line) and `status`: "partial" when a worker failed, was cancelled or was stopped at its limit and that leaves part of the question open, else "complete". It answers the id of the kept run.
+2. If you have the tool `present`, call it with `ids` = [that id] and `as` = "FORM": it opens the report beside the chat. Without `present`, skip this.
+3. Then give the report as your answer, exactly as you passed it to `saveReport`. Write nothing before or after it, and call no tool after it.
+
+If `saveReport` answers with an error, do not repeat it: give the report as your answer all the same.
 </workflow>
 ]]></content>
 						<tools>
@@ -1862,6 +1869,7 @@ Write the report in ONE answer, in the user's language, after the last wait. Do 
 							<tool name="subagent.list_agents"/>
 							<tool name="research.listFindings"/>
 							<tool name="research.readSource"/>
+							<tool name="research.saveReport"/>
 						</tools>
 					</skill>
 				</skills>

@@ -24,6 +24,12 @@ Gitea #723.
 6. **Another round.** Only for an important gap, and only as often as the effort level permits.
 7. **Report.** Albert writes the report once, in the user's language, from the findings. It links
    each statement to the source of its finding, with the finding's quote as link title.
+8. **Keep and answer.** Albert calls `saveReport` with the question, the report, the effort, the
+   plan and the status (#794). The tool keeps the run as a `tl.ai.execution:ResearchRun` for the
+   user the run works for (#764). Where the run has `present`, Albert opens the kept run beside the
+   chat. Then it gives the same report as its answer, and calls no tool after it. The answer stays
+   the report, so a headless run (`aiResearch()`) records the report as its result, and keeps a
+   `ResearchRun` for its owner too.
 
 | Effort | Workers | Tool calls per worker | Further rounds |
 |---|---|---|---|

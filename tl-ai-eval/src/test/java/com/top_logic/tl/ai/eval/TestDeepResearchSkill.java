@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -19,9 +21,11 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
@@ -41,6 +45,9 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.ResearchRun;
+import com.top_logic.tl.ai.core.execution.model.ResearchSource;
+import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
@@ -52,6 +59,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -64,6 +72,7 @@ import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -76,8 +85,9 @@ import com.top_logic.util.model.ModelService;
  * per sub-question, the workers' web tools, the delivery of their results to the waiting lead, the
  * join of their reading lists into the lead's, and the citation check of the report. The shape this
  * pins is the one the skill prescribes: the lead loads the skill, starts its workers in one turn,
- * waits, lists the findings the workers recorded, never reads a page itself, and writes one report
- * whose links point at the pages the findings rest on.
+ * waits, lists the findings the workers recorded, never reads a page itself, keeps the run with its
+ * report, opens it where it can, and answers with one report whose links point at the pages the
+ * findings rest on (#794).
  * </p>
  *
  * <p>
@@ -94,6 +104,12 @@ public class TestDeepResearchSkill extends BasicTestCase {
 	private static final String QUESTION = "Compare the heat pump subsidies of Germany, Austria and Denmark.";
 
 	private static final String INVENTED = "https://invented.test/never-read";
+
+	/** The plan the lead shows and keeps with the run. */
+	private static final String PLAN = "1. Germany\n2. Austria\n3. Denmark";
+
+	/** The id of the kept run in the answer of {@code saveReport}. */
+	private static final Pattern KEPT = Pattern.compile("Kept research run (\\S+?): ");
 
 	private static final List<Topic> TOPICS = List.of(
 		new Topic("Germany", "heat pump subsidy Germany 2026", "https://bafa.de.test/heat-pumps",
@@ -125,6 +141,8 @@ public class TestDeepResearchSkill extends BasicTestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		// The account the run acts for, bound as a chat request binds it: the kept run's owner.
+		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
 		for (Topic topic : TOPICS) {
 			FixtureWeb.search(topic.query(),
 				new WebSearchHit(topic.country() + " subsidy page", topic.url(), topic.fact(), ""));
@@ -158,10 +176,10 @@ public class TestDeepResearchSkill extends BasicTestCase {
 
 		assertEquals(StopReason.COMPLETE, run.stopReason());
 		List<String> leadCalls = run.toolCalls();
-		assertEquals("The lead loads the skill, starts one worker per sub-question in one turn, waits, and"
-			+ " lists the findings before it writes.",
+		assertEquals("The lead loads the skill, starts one worker per sub-question in one turn, waits,"
+			+ " lists the findings and keeps the run before it answers. Without a page there is no present.",
 			List.of("loadSkill", "spawn_subagent", "spawn_subagent", "spawn_subagent", "wait_for_subagent",
-				"listFindings"),
+				"listFindings", "saveReport"),
 			leadCalls);
 		String findings = run.result("listFindings");
 		assertTrue("The lead sees every worker's finding: " + findings, findings.startsWith("3 findings:"));
@@ -197,6 +215,38 @@ public class TestDeepResearchSkill extends BasicTestCase {
 			run.response().contains(INVENTED));
 		assertTrue("The statement of the invented link stays as text: " + run.response(),
 			run.response().contains("Sweden pays nothing"));
+		assertTrue("The answer is the report: " + run.response(),
+			run.response().startsWith("# Heat pump subsidies compared"));
+
+		String kept = run.result("saveReport");
+		Matcher id = KEPT.matcher(kept);
+		assertTrue("The run is kept: " + kept, id.find());
+		ResearchRun researchRun = newestResearchRun();
+		assertEquals(QUESTION, researchRun.getQuestion());
+		assertEquals(root, researchRun.getOwner());
+		assertEquals("standard", researchRun.getEffort());
+		assertEquals(PLAN, researchRun.getPlan());
+		Set<String> keptSources = new TreeSet<>();
+		for (ResearchSource source : researchRun.getCitedSources()) {
+			keptSources.add(source.getUrl());
+		}
+		assertEquals("The kept run cites the pages the report cites.", read, keptSources);
+		assertEquals("Every worker's finding is kept with it.", TOPICS.size(), researchRun.getFindings().size());
+	}
+
+	/** The research run kept last. */
+	private static ResearchRun newestResearchRun() {
+		HistoryUtils.updateSessionRevision();
+		ResearchRun newest = null;
+		for (TLObject object : MetaElementUtil.getAllInstancesOf(TlAiExecutionFactory.getResearchRunType(),
+			TLObject.class)) {
+			ResearchRun run = (ResearchRun) object;
+			if (newest == null || !run.getFinished().before(newest.getFinished())) {
+				newest = run;
+			}
+		}
+		assertNotNull("A research run was kept.", newest);
+		return newest;
 	}
 
 	/**
@@ -225,15 +275,23 @@ public class TestDeepResearchSkill extends BasicTestCase {
 				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
 			case 3:
 				return List.of(call("listFindings", "{}"));
+			case 4:
+				return List.of(call("saveReport", "{\"question\": " + json(QUESTION) + ", \"report\": "
+					+ json(report()) + ", \"effort\": \"standard\", \"plan\": " + json(PLAN) + "}"));
 			default:
-				StringBuilder report = new StringBuilder("# Heat pump subsidies compared\n\n");
-				for (Topic topic : TOPICS) {
-					report.append("## ").append(topic.country()).append("\n[").append(topic.fact())
-						.append("](").append(topic.url()).append(" \"").append(topic.fact()).append("\")\n\n");
-				}
-				report.append("## Open points\n[Sweden pays nothing](").append(INVENTED).append(").\n");
-				return List.of(new TextContent(report.toString()));
+				return List.of(new TextContent(report()));
 		}
+	}
+
+	/** The report the lead keeps and answers with. */
+	private static String report() {
+		StringBuilder report = new StringBuilder("# Heat pump subsidies compared\n\n");
+		for (Topic topic : TOPICS) {
+			report.append("## ").append(topic.country()).append("\n[").append(topic.fact())
+				.append("](").append(topic.url()).append(" \"").append(topic.fact()).append("\")\n\n");
+		}
+		report.append("## Open points\n[Sweden pays nothing](").append(INVENTED).append(").\n");
+		return report.toString();
 	}
 
 	/** The task of the worker that would search forever. */
@@ -444,6 +502,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 				LLMProviderService.Module.INSTANCE,
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
-				AgentPolicyService.Module.INSTANCE));
+				AgentPolicyService.Module.INSTANCE,
+				ResearchRuns.Module.INSTANCE));
 	}
 }

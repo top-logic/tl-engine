@@ -294,7 +294,8 @@ a scripted model, including the service restart. See `tl-ai-core/doc/init-skill.
 `TL_deepResearch` (#723) has Albert research a topic on the public web: it plans sub-questions,
 spawns one `TL_ResearchWorker` per sub-question in one turn, waits with `wait_for_subagent` (the one
 route that works with and without a chat) and writes one report that links the pages the workers
-read. The worker carries `webSearch` and `webFetch` only - no application data, no writes - and the
+read. It keeps the run with `research.saveReport`, opens it with `present` where the page has a
+place, and then answers with the same report, so a headless `aiResearch()` run keeps one too (#794). The worker carries `webSearch` and `webFetch` only - no application data, no writes - and the
 lead reads no page itself. A spawned worker is unattended, so an application needs a
 `<background-allowlist>` that admits `egress` and a search engine on `WebToolsService`; tl-ai-demo
 has both in `WEB-INF/conf/research.config.xml`. `TestDeepResearchSkill` (tl-ai-eval) runs it on a

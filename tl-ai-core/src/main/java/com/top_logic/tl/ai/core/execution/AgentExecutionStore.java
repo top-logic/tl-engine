@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.execution;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -46,6 +47,7 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -1434,6 +1436,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		// listener that still holds this session needs to hear which one it was. The external form
 		// is the id the browser and /chat/* use, which is what such a listener keys its state on.
 		String deletedId = session.tHandle().getObjectName().toExternalForm();
+		stopSubagents(deletedId, ExecutionRecorder.conversationIdOf(session));
 		Person deletedOwner = write(() -> {
 		try (Transaction tx = beginTx("Delete agent session")) {
 			// Read before the delete: afterwards the wrapper has no owner to report any more.
@@ -1461,6 +1464,28 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		});
 		notifySessionDeleted(deletedOwner, deletedId);
 		notifyChanged(deletedOwner);
+	}
+
+	/**
+	 * Stops the background subagents of a conversation that is being deleted: those of every window
+	 * that showed it - also one that dropped it from its cache or was closed - and those of a run
+	 * without a window. There is no conversation left to report to.
+	 *
+	 * @param ids
+	 *        The ids the conversation's registries may be keyed with: the chat uses the external form
+	 *        of the session's id, a run without a window the one its recorder derives.
+	 */
+	private static void stopSubagents(String... ids) {
+		int cancelled = 0;
+		for (String id : new LinkedHashSet<>(Arrays.asList(ids))) {
+			if (id != null) {
+				cancelled += SubagentRegistries.removeConversation(id);
+			}
+		}
+		if (cancelled > 0) {
+			Logger.info("Cancelled " + cancelled + " subagent(s) of deleted conversation " + ids[0] + ".",
+				AgentExecutionStore.class);
+		}
 	}
 
 	// ---- InteractionRequest ----

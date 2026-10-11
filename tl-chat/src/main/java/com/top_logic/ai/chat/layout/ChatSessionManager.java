@@ -316,12 +316,7 @@ public class ChatSessionManager {
 
 	/** The key of the given chat's registry in this window; see {@link SubagentRegistries}. */
 	private String subagentRegistryKey(String sessionId) {
-		return subagentRegistryPrefix(sessionId) + _windowKey;
-	}
-
-	/** What the keys of the given chat's registries start with, in every window. */
-	private static String subagentRegistryPrefix(String sessionId) {
-		return "chat:" + sessionId + "@";
+		return SubagentRegistries.windowKey(sessionId, _windowKey);
 	}
 
 	/**
@@ -346,7 +341,7 @@ public class ChatSessionManager {
 			return null;
 		}
 		boolean anyCall = parentToolCallId == null || parentToolCallId.isEmpty();
-		for (SubagentJobRegistry registry : SubagentRegistries.withKeyPrefix(subagentRegistryPrefix(sessionId))) {
+		for (SubagentJobRegistry registry : SubagentRegistries.ofConversation(sessionId)) {
 			SubagentJob job = registry.get(subagentId);
 			if (job != null && (anyCall || parentToolCallId.equals(job.parentToolCallId()))) {
 				return job;
@@ -630,13 +625,9 @@ public class ChatSessionManager {
 			if (state == null && !wasActive) {
 				return false;
 			}
+			// Its subagents were stopped by the deletion itself, in every window - see
+			// AgentExecutionStore.deleteSession. This window only stops listening to them.
 			disposeSessionState(state);
-			// The chat is gone, and with it the conversation its subagents would report to.
-			int cancelled = SubagentRegistries.remove(subagentRegistryKey(sessionId));
-			if (cancelled > 0) {
-				Logger.info("Cancelled " + cancelled + " subagent(s) of deleted chat " + sessionId + ".",
-					ChatSessionManager.class);
-			}
 			if (wasActive) {
 				_activeSessionId = null;
 				_activeOwner = null;

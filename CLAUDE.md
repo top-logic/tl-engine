@@ -571,7 +571,10 @@ conversation in a `ConversationMemory` sized to its model's window, with
 (`SubagentRegistries`, one per conversation, and in the chat per window): `AgentRunner` binds the
 conversation's for every top-level run that has none bound, so TL-Script, the eval and scheduled runs
 can spawn too, and a chat window that drops or reloads a conversation leaves its children running;
-only deleting the chat cancels them. After a restart the startup sweep fails the children's runs, and
+only deleting the chat cancels them - `AgentExecutionStore.deleteSession` stops every registry of the
+conversation (`SubagentRegistries.removeConversation`: each window's and the one of a run without a
+window), whichever path deleted it (#818). Such a run borrows its registry, which is forgotten when
+the run ends with no work left in it. After a restart the startup sweep fails the children's runs, and
 a reopened conversation ends their parts as failed (`InterruptedTranscript`). Its result reaches the parent on one of two paths, and
 both render it through `SubagentResultDelivery` so the parent reads the same block either way:
 `wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the

@@ -101,7 +101,10 @@ ended stays undelivered, and a later run of the same conversation picks it up.
 
 The registries are the process's, not the chat's: a chat window that drops a conversation from its
 cache, or reloads it because another window wrote to it, only stops listening, and coming back finds
-the children and what they finished. Deleting the chat cancels them. A restart ends them all: the
+the children and what they finished. Deleting the chat cancels them: `AgentExecutionStore.deleteSession`
+stops every registry of the conversation - the one of each window, also a closed one or one that
+dropped the chat, and the one of a run without a window. A run without a window borrows its registry:
+when it ends and no subagent works or waits for delivery, the registry is forgotten. A restart ends them all: the
 startup sweep fails their runs, and a conversation read back ends their parts as failed.
 
 ## Transcript, chat, reload

@@ -371,6 +371,11 @@ public final class A2ATask {
 
 	/**
 	 * A task's JSON and the event index it is current with.
+	 *
+	 * @param task
+	 *        The task as JSON.
+	 * @param eventIndex
+	 *        The number of stream events the task includes.
 	 */
 	public record Snapshot(Map<String, Object> task, int eventIndex) {
 		// Pure value.

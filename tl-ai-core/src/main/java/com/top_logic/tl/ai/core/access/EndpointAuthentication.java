@@ -165,6 +165,11 @@ public final class EndpointAuthentication {
 	/**
 	 * An authenticated account and its login name, carried alongside because reading the name is a
 	 * {@code KnowledgeBase} operation and is needed where no interaction is bound.
+	 *
+	 * @param account
+	 *        The authenticated account.
+	 * @param name
+	 *        The login name of {@code account}.
 	 */
 	public record Caller(Person account, String name) {
 		// Pure value.

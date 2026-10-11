@@ -56,7 +56,9 @@ public class ViewTools {
 		+ " where a view has one: give the script as the attribute function=\"...\" (with \" as &quot;).";
 
 	/**
-	 * What {@link #editView} does to one element.
+	 * What a view edit does to one element.
+	 *
+	 * @see ViewTools#editView
 	 */
 	public enum Op {
 		/** Sets an attribute, or removes it when the value is empty. */

@@ -30,6 +30,13 @@ public sealed interface ViewEdit {
 
 	/**
 	 * Sets an attribute; a <code>null</code> value removes it.
+	 *
+	 * @param at
+	 *        The element's address.
+	 * @param name
+	 *        The attribute's name.
+	 * @param value
+	 *        Its new value, or <code>null</code>.
 	 */
 	record Set(String at, String name, String value) implements ViewEdit {
 		@Override
@@ -66,6 +73,11 @@ public sealed interface ViewEdit {
 
 	/**
 	 * Replaces an element, with everything inside it, by other XML.
+	 *
+	 * @param at
+	 *        The element's address.
+	 * @param xml
+	 *        The XML that takes its place.
 	 */
 	record Replace(String at, String xml) implements ViewEdit {
 		@Override
@@ -78,6 +90,9 @@ public sealed interface ViewEdit {
 
 	/**
 	 * Removes an element with everything inside it, and its line when it stood alone on it.
+	 *
+	 * @param at
+	 *        The element's address.
 	 */
 	record Remove(String at) implements ViewEdit {
 		@Override
@@ -100,6 +115,13 @@ public sealed interface ViewEdit {
 
 	/**
 	 * Inserts XML as the last child of an element, or before or after it.
+	 *
+	 * @param at
+	 *        The element's address.
+	 * @param xml
+	 *        The XML to insert.
+	 * @param position
+	 *        Where to insert it, relative to the element.
 	 */
 	record Insert(String at, String xml, Position position) implements ViewEdit {
 		@Override

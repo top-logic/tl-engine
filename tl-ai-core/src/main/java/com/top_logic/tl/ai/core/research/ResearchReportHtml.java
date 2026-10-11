@@ -46,6 +46,9 @@ public final class ResearchReportHtml {
 	/** A Markdown heading in the first line of a text. */
 	private static final Pattern LEADING_HEADING = Pattern.compile("#{1,6}[ \\t]+([^\\n]*)\\n?");
 
+	/** The opening or closing tag of a heading of level 1 to 5. */
+	private static final Pattern HEADING_TAG = Pattern.compile("<(/?)h([1-5])(?=[\\s>])");
+
 	/** A footnote marker the citation validator left in the text. */
 	private static final Pattern FOOTNOTE = Pattern.compile("\\[(\\d{1,3})\\]");
 
@@ -104,8 +107,9 @@ public final class ResearchReportHtml {
 			out.append("<p class=\"status\">").append(escape(resources.getString(I18NConstants.PARTIAL))).append("</p>\n");
 		}
 
-		out.append("<div class=\"text\">\n").append(footnotes(Converters.markdownToHtmlString(withoutTitle(report)),
-			report.cited().size())).append("\n</div>\n");
+		out.append("<div class=\"text\">\n").append(footnotes(
+			belowTitle(Converters.markdownToHtmlString(withoutTitle(report))), report.cited().size()))
+			.append("\n</div>\n");
 
 		if (!report.cited().isEmpty()) {
 			out.append("<h2>").append(escape(resources.getString(I18NConstants.SOURCES))).append("</h2>\n");
@@ -137,6 +141,21 @@ public final class ResearchReportHtml {
 			return text.substring(heading.end()).stripLeading();
 		}
 		return report.text();
+	}
+
+	/**
+	 * The report's headings one level lower: the question is the document's title, so the report's
+	 * own {@code #} is a section of it, not a second title (#800).
+	 */
+	static String belowTitle(String html) {
+		Matcher matcher = HEADING_TAG.matcher(html);
+		StringBuilder out = new StringBuilder();
+		while (matcher.find()) {
+			int level = Integer.parseInt(matcher.group(2)) + 1;
+			matcher.appendReplacement(out, "<" + matcher.group(1) + "h" + level);
+		}
+		matcher.appendTail(out);
+		return out.toString();
 	}
 
 	private static String squeeze(String text) {

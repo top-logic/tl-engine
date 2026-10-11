@@ -167,6 +167,10 @@ public class SubagentSpawner {
 		}
 
 		registry.spawn(job, j -> {
+			if (logListener != null) {
+				// A subagent that waited for a slot is at work from now on; its part says so.
+				logListener.recordSubagentRunning(j.subagentId());
+			}
 			ComputationEx2<SubagentResult, RuntimeException, RuntimeException> work = () -> {
 				try (
 					BindingSnapshot.Established established = bindings.establish();

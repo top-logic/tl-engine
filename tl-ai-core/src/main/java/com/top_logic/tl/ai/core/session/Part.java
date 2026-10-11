@@ -430,12 +430,18 @@ public sealed interface Part {
 	 * @param task the task brief it was given
 	 * @param parentToolCallId the id of the lead's tool call that started it; empty if unknown
 	 * @param childRunId the run id of the child run, its transcript's key; {@code null} until known
-	 * @param status the job's state as a {@code SubagentJobStatus} name ({@code RUNNING}, {@code DONE},
-	 *        {@code FAILED}, {@code CANCELLED})
+	 * @param status the job's state as a {@code SubagentJobStatus} name ({@code QUEUED}, {@code RUNNING},
+	 *        {@code DONE}, {@code FAILED}, {@code CANCELLED}), or {@code LIMIT} for a stop at a limit
 	 * @param summary a short summary of how it ended; {@code null} while it runs
 	 */
 	record SubagentPart(String id, Instant timestamp, String subagentId, String agentName, String task,
 			String parentToolCallId, String childRunId, String status, String summary) implements Part {
+
+		/** The same part of a subagent that has left the queue and works. */
+		public SubagentPart running() {
+			return new SubagentPart(id, timestamp, subagentId, agentName, task, parentToolCallId, childRunId,
+				"RUNNING", summary);
+		}
 
 		/** The same part, ended with the given status. */
 		public SubagentPart ended(String endStatus, String endSummary, String endChildRunId) {

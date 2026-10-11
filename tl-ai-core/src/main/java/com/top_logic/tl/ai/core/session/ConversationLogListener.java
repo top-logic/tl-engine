@@ -869,7 +869,8 @@ public class ConversationLogListener implements AgentEventListener {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part.SubagentPart part = new Part.SubagentPart(UUID.randomUUID().toString(), Instant.now(),
-				subagentId, targetAgentName, taskBrief, nullToEmpty(parentToolCallId), null, "RUNNING", null);
+				subagentId, targetAgentName, taskBrief, nullToEmpty(parentToolCallId), null,
+				queued ? "QUEUED" : "RUNNING", null);
 			turn.addAssistantPart(part);
 			_runningSubagents.put(subagentId, new SubagentPlace(turn, part.id(), leadExecution));
 		}
@@ -877,6 +878,23 @@ public class ConversationLogListener implements AgentEventListener {
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentStarted("", 0, Instant.now(), subagentId, targetAgentName,
 				taskBrief, nullToEmpty(parentToolCallId), queued));
+		}
+	}
+
+	/**
+	 * Records that a background subagent that waited in the queue has started.
+	 *
+	 * <p>
+	 * Its part says {@code RUNNING} from now on, in the turn that started it and in the recorded
+	 * transcript of that turn's run, so that a reloaded card shows it at work rather than waiting. A
+	 * subagent that started at once, or one this log does not know, is left as it is.
+	 * </p>
+	 */
+	public void recordSubagentRunning(String subagentId) {
+		SubagentPlace place = _runningSubagents.get(subagentId);
+		if (place != null && place.turn().findPart(place.partId()) instanceof Part.SubagentPart part
+			&& "QUEUED".equals(part.status())) {
+			replaceSubagentPart(place, part.running());
 		}
 	}
 
@@ -960,14 +978,18 @@ public class ConversationLogListener implements AgentEventListener {
 		if (place.turn().findPart(place.partId()) instanceof Part.SubagentPart part) {
 			String shortSummary = summary == null || summary.length() <= SUBAGENT_SUMMARY_CHARS ? summary
 				: summary.substring(0, SUBAGENT_SUMMARY_CHARS) + "...";
-			Part.SubagentPart ended = part.ended(status, shortSummary, childRunId);
-			place.turn().updatePart(place.partId(), ended);
-			if (place.leadExecution() != null && AgentExecutionStore.Module.INSTANCE.isActive()) {
-				AgentExecutionStore.getInstance().replaceTranscriptPart(place.leadExecution(), ended);
-			}
+			replaceSubagentPart(place, part.ended(status, shortSummary, childRunId));
 			return nullToEmpty(part.parentToolCallId());
 		}
 		return "";
+	}
+
+	/** Puts the given form of a subagent's part in place of the old one, in its turn and its run. */
+	private static void replaceSubagentPart(SubagentPlace place, Part.SubagentPart replacement) {
+		place.turn().updatePart(place.partId(), replacement);
+		if (place.leadExecution() != null && AgentExecutionStore.Module.INSTANCE.isActive()) {
+			AgentExecutionStore.getInstance().replaceTranscriptPart(place.leadExecution(), replacement);
+		}
 	}
 
 	/** How much of a finished subagent's report its part keeps. */

@@ -705,13 +705,19 @@ describe('the stream', () => {
     const stream = streams[0]
 
     stream.emit('subagent_started', { subagentId: 'sa-5', targetAgentName: 'researcher', detail: 'find X', queued: true })
-    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({ status: 'QUEUED', task: 'find X' })
+    // Not started, so no run yet whose transcript could be opened (#834).
+    expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({
+      status: 'QUEUED',
+      task: 'find X',
+      hasTranscript: false,
+    })
 
     stream.emit('delegation_event', { subagentId: 'sa-5', eventType: 'turn_started', eventData: '{"turnNumber":1}' })
     expect(store.getState().subagents.find((s) => s.subagentId === 'sa-5')).toMatchObject({
       status: 'RUNNING',
       targetAgentName: 'researcher',
       task: 'find X',
+      hasTranscript: true,
     })
 
     await settle()

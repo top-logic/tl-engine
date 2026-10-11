@@ -276,8 +276,9 @@ function mergeSubagent(
     detail: event.detail ?? previous?.detail ?? '',
     totalTokens: event.totalTokens ?? previous?.totalTokens ?? 0,
     durationMs: event.durationMs ?? previous?.durationMs ?? 0,
-    // A running child's live log answers too, so its transcript opens from the start.
-    hasTranscript: status !== 'CANCELLED' || previous?.hasTranscript === true,
+    // A running child's live log answers too, so its transcript opens from the start. A queued one
+    // has no run yet, and a cancelled one may never have had one.
+    hasTranscript: (status !== 'CANCELLED' && status !== 'QUEUED') || previous?.hasTranscript === true,
     parentToolCallId: event.parentToolCallId || previous?.parentToolCallId,
     // The detail of a start event is the task; later events carry the result there instead.
     task: previous?.task ?? (status === 'RUNNING' || status === 'QUEUED' ? event.detail : undefined),

@@ -5,9 +5,11 @@
  */
 package com.top_logic.ai.a2a;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.top_logic.ai.a2a.client.RemoteAgents;
@@ -40,6 +42,7 @@ import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentica
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.observe.ObserverQueue;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -48,8 +51,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * (tool factory {@code a2a}, {@code A2AClientTools}).
  *
  * <p>
- * Deny by default: an agent is reachable only if it is listed under {@code <agents>}, and only with a
- * credential one of the {@code <authentications>} accepts - the schemes of the MCP endpoint, personal
+ * Deny by default: an agent is reachable only if it is listed under &lt;agents&gt;, and only with a
+ * credential one of the &lt;authentications&gt; accepts - the schemes of the MCP endpoint, personal
  * access tokens among them. A run acts as the account the credential names.
  * </p>
  */
@@ -91,7 +94,7 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 
 		/**
 		 * How a calling agent proves who it is: personal access tokens
-		 * ({@code <personal-access-token-authentication>}), an API key mapped to an account, OAuth
+		 * (&lt;personal-access-token-authentication&gt;), an API key mapped to an account, OAuth
 		 * bearer tokens, HTTP basic. Empty: every call is refused.
 		 */
 		@Override
@@ -147,6 +150,14 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		@Name("data-handlers")
 		@EntryTag("handler")
 		List<PolymorphicConfiguration<? extends A2ADataHandler>> getDataHandlers();
+
+		/**
+		 * Hooks that learn of the A2A exchanges in both directions. None by default; one that passes
+		 * them on outside the application must authenticate that itself - see {@link A2AObserver}.
+		 */
+		@Name("observers")
+		@EntryTag("observer")
+		List<PolymorphicConfiguration<? extends A2AObserver>> getObservers();
 	}
 
 	/**
@@ -273,6 +284,12 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 
 	private final List<A2ADataHandler> _dataHandlers;
 
+	private final List<A2AObserver> _observers;
+
+	private ObserverQueue _observerQueue;
+
+	private Consumer<A2AExchange> _observer;
+
 	private final ContextBook _contexts = new ContextBook();
 
 	private Authenticator _authenticator;
@@ -292,6 +309,7 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		_artifactContributors = instances(context, config.getArtifactContributors());
 		_artifactSources = instances(context, config.getArtifactSources());
 		_dataHandlers = instances(context, config.getDataHandlers());
+		_observers = instances(context, config.getObservers());
 	}
 
 	private static <T> List<T> instances(InstantiationContext context,
@@ -316,9 +334,14 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		Config<?> config = getConfig();
 		_authenticator =
 			EndpointAuthentication.build("/a2a/*", config.getAuthentications(), config.getSecrets());
+		if (!_observers.isEmpty()) {
+			ObserverQueue queue = new ObserverQueue("a2a-observers");
+			_observerQueue = queue;
+			_observer = exchange -> queue.deliver(_observers, observer -> observer.onExchange(exchange));
+		}
 		_backend = new AgentRunBackend(this);
 		_handler = new A2ARequestHandler(_backend, path -> exposedAgent(path) != null,
-			config.getMaxBlockingSeconds() * 1000L);
+			config.getMaxBlockingSeconds() * 1000L, observer());
 		_remoteAgents = new RemoteAgents(config.getRemoteAgents());
 		_instance = this;
 		Logger.info("A2A service started: agents " + config.getAgents().stream().map(ExposedAgentConfig::getPath).toList()
@@ -330,6 +353,9 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		_instance = null;
 		if (_backend != null) {
 			_backend.shutDown();
+		}
+		if (_observerQueue != null) {
+			_observerQueue.close();
 		}
 		super.shutDown();
 	}
@@ -347,6 +373,30 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 	/** The data handlers, in order. */
 	public List<A2ADataHandler> dataHandlers() {
 		return _dataHandlers;
+	}
+
+	/**
+	 * What hands an exchange to the {@link A2AObserver}s on their own thread, or <code>null</code>
+	 * when none is configured.
+	 */
+	public Consumer<A2AExchange> observer() {
+		return _observer;
+	}
+
+	/**
+	 * Tells the observers that an artifact of {@code ref} was read.
+	 *
+	 * @param agent
+	 *        The local agent that read it, or <code>null</code> when a remote client read it.
+	 * @param peer
+	 *        The remote side: the reading client, or the application the artifact belongs to.
+	 */
+	public void observeFetch(A2AExchange.Direction direction, String agent, String peer, ArtifactRef ref,
+			String section, String runId) {
+		if (_observer != null) {
+			_observer.accept(new A2AExchange(Instant.now(), direction, A2AExchange.Kind.ARTIFACT_FETCHED, agent, peer,
+				null, ref.taskId(), null, runId, Json.map("ref", ref.toString(), "section", section)));
+		}
 	}
 
 	/** Context ids of local conversations and remembered subjects. */

@@ -142,6 +142,11 @@ public class SecurityContextProxy implements SecurityContext {
 	}
 
 	@Override
+	public RunPrincipal principal() {
+		return _impl.principal();
+	}
+
+	@Override
 	public ModelSecurity modelSecurity() {
 		return _impl.modelSecurity();
 	}

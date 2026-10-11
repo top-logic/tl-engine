@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the "A2A" section to the administration defined by tl-layout-view
+	(WEB-INF/views/admin/admin.view.xml): the A2A conversations of this application in both
+	directions. A same-path overlay, merged onto the base in dependency order - see the "Access
+	tokens" section of tl-ai-core for why a section of its own.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar>
+		<tabs>
+			<tab id="a2a"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>A2A</en>
+					<de>A2A</de>
+				</label>
+				<view-ref view="tl-ai-a2a/admin/a2a.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

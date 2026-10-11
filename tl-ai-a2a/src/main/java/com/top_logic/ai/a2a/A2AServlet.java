@@ -132,6 +132,9 @@ public class A2AServlet extends HttpServlet {
 		Map<String, Object> answer = TLContextManager.<Map<String, Object>, RuntimeException, RuntimeException> inPersonContext(
 			caller.account(), () -> A2AService.artifactResponse(service.resolveArtifact(ref, caller.name()), ref,
 				req.getParameter("section")));
+		if (!answer.containsKey("error")) {
+			service.observeFetch(A2AExchange.Direction.INCOMING, null, caller.name(), ref, req.getParameter("section"), null);
+		}
 		json(resp, answer.containsKey("error") ? HttpServletResponse.SC_NOT_FOUND : HttpServletResponse.SC_OK,
 			Json.write(answer));
 	}

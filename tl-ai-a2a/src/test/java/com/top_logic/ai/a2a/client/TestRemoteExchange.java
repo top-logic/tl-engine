@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.top_logic.ai.a2a.A2AArtifactSource;
+import com.top_logic.ai.a2a.A2AExchange;
 import com.top_logic.ai.a2a.A2AService;
 import com.top_logic.ai.a2a.ContextBook;
 import com.top_logic.ai.a2a.client.RemoteAgents.RemoteAgent;
@@ -50,10 +51,15 @@ public class TestRemoteExchange extends TestCase {
 
 	private RemoteAgents _agents;
 
+	private final List<A2AExchange> _served = new CopyOnWriteArrayList<>();
+
+	private final List<A2AExchange> _asked = new CopyOnWriteArrayList<>();
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		A2ARequestHandler handler = new A2ARequestHandler(new ScriptedAgent(_metadata, _messages), "alpha"::equals, 10_000);
+		A2ARequestHandler handler = new A2ARequestHandler(new ScriptedAgent(_metadata, _messages), "alpha"::equals, 10_000,
+			_served::add);
 		_server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 		_server.setExecutor(Executors.newCachedThreadPool());
 		String base = "http://127.0.0.1:" + _server.getAddress().getPort();
@@ -75,10 +81,12 @@ public class TestRemoteExchange extends TestCase {
 	}
 
 	public void testAskBackReplyAndProgress() throws Exception {
-		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", "conv-1", "project-7", "Projekt Prüfmittel");
+		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", "conv-1", "project-7", "Projekt Prüfmittel",
+			"run-1");
 		List<String> progress = new CopyOnWriteArrayList<>();
 
-		RemoteExchange exchange = new RemoteExchange(_agents, _contexts, caller, 10_000, progress::add, () -> false);
+		RemoteExchange exchange =
+			new RemoteExchange(_agents, _contexts, caller, 10_000, progress::add, () -> false, _asked::add);
 		RemoteExchange.Outcome asked = exchange.ask("alpha", "ask: build REQ-001", null, null, null, List.of());
 		assertEquals(TaskState.INPUT_REQUIRED, asked._state);
 		assertEquals("Which site?", asked._statusText);
@@ -104,10 +112,42 @@ public class TestRemoteExchange extends TestCase {
 			_contexts.contextFor("conv-1"));
 		assertEquals("project-7", _contexts.rememberedSubject(asked._contextId));
 
+		assertObservedOnBothSides(asked);
+	}
+
+	/**
+	 * Both sides tell their observers of one conversation with the same ids, so that the two can be
+	 * stitched together.
+	 */
+	private void assertObservedOnBothSides(RemoteExchange.Outcome asked) {
+		A2AExchange sent = _asked.get(0);
+		assertEquals(A2AExchange.Kind.MESSAGE_SENT, sent.kind());
+		assertEquals(A2AExchange.Direction.OUTGOING, sent.direction());
+		assertEquals("Beta", sent.agent());
+		assertEquals("alpha", sent.peer());
+		assertEquals("run-1", sent.runId());
+		A2AExchange received = _served.get(0);
+		assertEquals(A2AExchange.Kind.MESSAGE_RECEIVED, received.kind());
+		assertEquals(A2AExchange.Direction.INCOMING, received.direction());
+		assertEquals("The receiver sees the message the sender sent.", Json.str(sent.content(), "messageId"),
+			Json.str(received.content(), "messageId"));
+		assertEquals(asked._taskId, received.taskId());
+		assertEquals(asked._contextId, received.contextId());
+
+		for (List<A2AExchange> side : List.of(_served, _asked)) {
+			List<String> steps = side.stream()
+				.filter(step -> asked._taskId.equals(step.taskId()) && step.kind() == A2AExchange.Kind.STATE_CHANGED)
+				.map(step -> step.state().name()).distinct().toList();
+			assertTrue("Each side sees the task ask and complete: " + steps,
+				steps.containsAll(List.of("INPUT_REQUIRED", "COMPLETED")));
+			assertTrue("Each side sees the artifacts.",
+				side.stream().anyMatch(step -> step.kind() == A2AExchange.Kind.ARTIFACT_PRODUCED
+					&& asked._contextId.equals(step.contextId())));
+		}
 	}
 
 	public void testConversationsByTopicAndHandOffByReference() throws Exception {
-		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", "conv-2", null, null);
+		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", "conv-2", null, null, null);
 		RemoteExchange.Outcome main = ask(caller, "hello", null, null, List.of());
 		RemoteExchange.Outcome design = ask(caller, "design the screens", "new", "design",
 			List.of("tl-artifact://beta/spec/7"));
@@ -181,7 +221,7 @@ public class TestRemoteExchange extends TestCase {
 	private RemoteExchange exchange(RemoteExchange.Caller caller, long waitMillis) {
 		return new RemoteExchange(_agents, _contexts, caller, waitMillis, line -> {
 			// ignored
-		}, () -> false);
+		}, () -> false, null);
 	}
 
 	private RemoteExchange.Outcome ask(RemoteExchange.Caller caller, String text, String conversation, String topic,
@@ -207,7 +247,7 @@ public class TestRemoteExchange extends TestCase {
 	}
 
 	public void testWaitLimitLeavesTheTaskToGetAgentTaskWhichWaits() throws Exception {
-		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", null, null, null);
+		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", null, null, null, null);
 		RemoteExchange.Outcome outcome = exchange(caller, 1_000).ask("alpha", "slow", null, null, null, List.of());
 		assertEquals(TaskState.WORKING, outcome._state);
 		assertTrue(RemoteExchange.format(outcome).contains("getAgentTask(taskId=\""));
@@ -221,7 +261,7 @@ public class TestRemoteExchange extends TestCase {
 	}
 
 	public void testUnknownAgentAndRefusedTokenAreReportedAsErrors() throws Exception {
-		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", null, null, null);
+		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", null, null, null, null);
 		try {
 			exchange(caller, 1_000).ask("nobody", "hi", null, null, null, List.of());
 			fail("An unknown agent was asked.");

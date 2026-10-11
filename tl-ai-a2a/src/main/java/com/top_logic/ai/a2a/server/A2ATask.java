@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.ai.a2a.A2AExchange;
 import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.Json;
@@ -57,6 +58,8 @@ public final class A2ATask {
 	private Consumer<String> _answerHandler;
 
 	private Runnable _cancelHandler;
+
+	private Consumer<A2AExchange> _observer;
 
 	/**
 	 * Creates a task in state {@link TaskState#SUBMITTED}.
@@ -145,6 +148,24 @@ public final class A2ATask {
 	}
 
 	/**
+	 * Tells {@code observer} of every message, state change and artifact of this task from now on.
+	 *
+	 * @param observer
+	 *        Called under this task's monitor, so it must only hand the exchange on; <code>null</code>
+	 *        for none.
+	 */
+	public synchronized void observeWith(Consumer<A2AExchange> observer) {
+		_observer = observer;
+	}
+
+	private void observe(A2AExchange.Kind kind, Map<String, Object> content) {
+		if (_observer != null) {
+			_observer.accept(new A2AExchange(Instant.now(), A2AExchange.Direction.INCOMING, kind, _agent, peer(),
+				_contextId, _id, _state, Json.str(_metadata, "runId"), content));
+		}
+	}
+
+	/**
 	 * Sets a metadata entry (shown in the task's {@code metadata}).
 	 */
 	public synchronized void putMetadata(String key, Object value) {
@@ -172,6 +193,7 @@ public final class A2ATask {
 		copy.putIfAbsent("taskId", _id);
 		copy.putIfAbsent("contextId", _contextId);
 		_history.add(copy);
+		observe(A2AExchange.Kind.MESSAGE_RECEIVED, copy);
 	}
 
 	/**
@@ -202,6 +224,7 @@ public final class A2ATask {
 		}
 		_events.add(Json.map("statusUpdate", Json.map("taskId", _id, "contextId", _contextId,
 			"status", A2AJson.status(state, _statusMessage, _statusTime))));
+		observe(A2AExchange.Kind.STATE_CHANGED, _statusMessage);
 		notifyAll();
 		return true;
 	}
@@ -214,6 +237,7 @@ public final class A2ATask {
 		_artifacts.add(copy);
 		_events.add(Json.map("artifactUpdate", Json.map("taskId", _id, "contextId", _contextId,
 			"artifact", copy, "append", Boolean.FALSE, "lastChunk", Boolean.TRUE)));
+		observe(A2AExchange.Kind.ARTIFACT_PRODUCED, copy);
 		notifyAll();
 	}
 

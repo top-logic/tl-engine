@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The A2A conversations of this application, for an administrator, read from what is persisted:
+
+	- incoming: one row per served context, the AgentSession (kind BACKGROUND) whose metadata holds
+	  the "a2a" object AgentRunBackend writes - its tasks with their history and the runId of each;
+	- outgoing: the calls of askAgent, replyAgent and getAgentTask in the recorded transcripts of
+	  the local runs, one row per remote context id their answers name. The client's own book of
+	  remote conversations (ContextBook) lives in memory only.
+
+	A task's tool calls are those of its local run: the run that served it, or the run whose agent
+	asked. A table rather than the run's transcriptHtml, which the agent activity monitor shows: a
+	macro attribute renders in a classic form only. Rows are dictionaries; every commit of a session
+	or a run computes them again, and a selected conversation whose data changed is unselected.
+-->
+<view>
+	<channels>
+		<channel name="conversation"/>
+		<channel name="task"/>
+	</channels>
+	<split-panel
+		orientation="vertical"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="150"
+				size="45"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>A2A conversations</en>
+						<de>A2A-Unterhaltungen</de>
+					</title>
+					<table
+						observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution"
+						selection="conversation"
+					>
+						<columns>
+							<computed-column name="direction"
+								type="tl.core:String"
+								width="120"
+							>
+								<label>
+									<en>Direction</en>
+									<de>Richtung</de>
+								</label>
+								<value><![CDATA[c -> $c["direction"]]]></value>
+							</computed-column>
+							<computed-column name="agent"
+								type="tl.core:String"
+								width="150"
+							>
+								<label>
+									<en>Local agent</en>
+									<de>Lokaler Agent</de>
+								</label>
+								<value><![CDATA[c -> $c["agent"]]]></value>
+							</computed-column>
+							<computed-column name="remote"
+								type="tl.core:String"
+								width="170"
+							>
+								<label>
+									<en>Remote side</en>
+									<de>Gegenseite</de>
+								</label>
+								<value><![CDATA[c -> $c["remote"]]]></value>
+							</computed-column>
+							<computed-column name="topic"
+								type="tl.core:String"
+								width="320"
+							>
+								<label>
+									<en>Topic</en>
+									<de>Thema</de>
+								</label>
+								<value><![CDATA[c -> $c["topic"]]]></value>
+							</computed-column>
+							<computed-column name="state"
+								type="tl.core:String"
+								width="190"
+							>
+								<label>
+									<en>State of the latest task</en>
+									<de>Status der letzten Aufgabe</de>
+								</label>
+								<value><![CDATA[c -> $c["state"]]]></value>
+							</computed-column>
+							<computed-column name="started"
+								type="tl.core:DateTime"
+								width="150"
+							>
+								<label>
+									<en>Started</en>
+									<de>Begonnen</de>
+								</label>
+								<value><![CDATA[c -> $c["started"]]]></value>
+							</computed-column>
+							<computed-column name="lastActivity"
+								sort="DESC"
+								type="tl.core:DateTime"
+								width="150"
+							>
+								<label>
+									<en>Last activity</en>
+									<de>Letzte Aktivität</de>
+								</label>
+								<value><![CDATA[c -> $c["lastActivity"]]]></value>
+							</computed-column>
+						</columns>
+						<rows><![CDATA[{
+	labels = {
+		"SUBMITTED": #('Submitted'@en, 'Angenommen'@de),
+		"WORKING": #('Working'@en, 'In Arbeit'@de),
+		"INPUT_REQUIRED": #('Waiting for input'@en, 'Wartet auf Antwort'@de),
+		"AUTH_REQUIRED": #('Waiting for authorization'@en, 'Wartet auf Anmeldung'@de),
+		"COMPLETED": #('Completed'@en, 'Abgeschlossen'@de),
+		"FAILED": #('Failed'@en, 'Fehlgeschlagen'@de),
+		"CANCELED": #('Cancelled'@en, 'Abgebrochen'@de),
+		"REJECTED": #('Rejected'@en, 'Abgelehnt'@de)
+	};
+	// A state as the wire writes it (TASK_STATE_COMPLETED) or as the client tools answer it (COMPLETED).
+	state = s -> {
+		key = isEmpty($s) ? "" : regex("^TASK_STATE_").regexReplace(toString($s), "");
+		label = $labels[$key];
+		isEmpty($label) ? $key : $label.localize();
+	};
+	// A served task whose run was not recorded has no start; it sorts first.
+	byTime = (x -> isEmpty($x["started"]) ? 0 : toMillis($x["started"])).comparator();
+	// A model's answer often starts with blank lines, and a cell shows its first line.
+	text = parts -> $parts.map(p -> $p["text"]).filter(t -> !isEmpty($t)).join(separator: "\n").trim();
+
+	incoming = all(`tl.ai.execution:AgentSession`)
+		.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#BACKGROUND`
+			&& !isEmpty($s.get(`tl.ai.execution:AgentSession#metadata`))
+			&& $s.get(`tl.ai.execution:AgentSession#metadata`).stringContains('"a2a"'))
+		.map(s -> {
+			a2a = parseJson($s.get(`tl.ai.execution:AgentSession#metadata`))["a2a"];
+			runs = $s.referers(`tl.ai.execution:AgentExecution#session`)
+				.indexBy(e -> $e.get(`tl.ai.execution:AgentExecution#runId`));
+			tasks = $a2a["tasks"].values().map(r -> {
+				t = $r["task"];
+				run = $runs[$t["metadata"]["runId"]];
+				{
+					"id": $t["id"],
+					"state": $state($t["status"]["state"]),
+					"started": isEmpty($run) ? null : $run.get(`tl.ai.execution:AgentExecution#startedAt`),
+					"ended": isEmpty($run) ? null : $run.get(`tl.ai.execution:AgentExecution#endedAt`),
+					"run": $run,
+					"messages": $t["history"].map(m -> {
+						"from": $m["role"] == "ROLE_USER" ? $a2a["peer"] : $a2a["agent"],
+						"text": $text($m["parts"])
+					})
+				};
+			}).sort($byTime);
+			peer = $a2a["peer"];
+			caller = $a2a["caller"];
+			{
+				"direction": #('Incoming'@en, 'Eingehend'@de).localize(),
+				"agent": $a2a["agent"],
+				"remote": $peer == $caller ? $peer : $peer + " (" + $caller + ")",
+				"topic": $tasks.firstElement()["messages"].firstElement()["text"],
+				"state": $tasks.lastElement()["state"],
+				"started": $s.get(`tl.ai.execution:AgentSession#createdAt`),
+				"lastActivity": isEmpty($s.get(`tl.ai.execution:AgentSession#lastUpdated`))
+					? $s.get(`tl.ai.execution:AgentSession#createdAt`)
+					: $s.get(`tl.ai.execution:AgentSession#lastUpdated`),
+				"tasks": $tasks
+			};
+		});
+
+	tools = regex("askAgent|replyAgent|getAgentTask");
+	// The facts the client tools state in the clear at the top of their answer ("taskId: ...").
+	line = name -> regex("(?m)^" + $name + ": (.+)$");
+	remoteLine = $line("Remote agent");
+	taskLine = $line("taskId");
+	contextLine = $line("contextId");
+	stateLine = $line("state");
+	topicLine = regex('(?m)^conversation: "(.*)"$');
+	field = re -> answer -> $re.regexSearch($answer).regexGroup(1).firstElement();
+	// What the remote agent wrote: the "answer:", "question:" or "message:" block inside the envelope.
+	saidBlock = regex("(?s)(?:answer|question|message):\n(.*?)(?:\n+artifacts:|\n*</untrusted)");
+	said = answer -> {
+		text = $saidBlock.regexSearch($answer).regexGroup(1).firstElement();
+		(isEmpty($text) ? $answer : $text).trim();
+	};
+	calls = all(`tl.ai.execution:AgentExecution`)
+		.filter(e -> {
+			raw = $e.get(`tl.ai.execution:AgentExecution#transcript`);
+			!isEmpty($raw) && $tools.regexSearch($raw).size() > 0;
+		})
+		.flatMap(e -> parseJson($e.get(`tl.ai.execution:AgentExecution#transcript`))["turns"]
+			.flatMap(t -> $t["assistantParts"])
+			.filter(p -> $p["type"] == "tool_call" && $tools.regexSearch(toString($p["toolCallData"]["toolName"])).size() > 0)
+			.map(p -> {
+				answer = toString($p["toolCallData"]["result"]);
+				args = $p["toolCallData"]["argsJson"];
+				millis = $p["timestamp"];
+				{
+					"run": $e,
+					"time": toDate($millis),
+					"end": toDate($millis + (isEmpty($p["toolCallData"]["durationMs"]) ? 0 : $p["toolCallData"]["durationMs"])),
+					"message": isEmpty($args) ? null : parseJson($args)["message"],
+					"answer": $answer,
+					"remote": $field($remoteLine)($answer),
+					"taskId": $field($taskLine)($answer),
+					"contextId": $field($contextLine)($answer),
+					"state": $field($stateLine)($answer),
+					"topic": $field($topicLine)($answer)
+				};
+			}))
+		.filter(c -> !isEmpty($c["contextId"]) && $c["contextId"] != "null");
+	outgoing = $calls.groupBy(c -> $c["contextId"]).values().map(group -> {
+		sorted = $group.sort((c -> $c["time"]).comparator());
+		first = $sorted.firstElement();
+		last = $sorted.lastElement();
+		agent = $first["run"].get(`tl.ai.execution:AgentExecution#agentName`);
+		{
+			"direction": #('Outgoing'@en, 'Ausgehend'@de).localize(),
+			"agent": $agent,
+			"remote": $first["remote"],
+			"topic": isEmpty($first["topic"]) ? $first["message"] : $first["topic"],
+			"state": $state($last["state"]),
+			"started": $first["time"],
+			"lastActivity": $last["end"],
+			"tasks": $sorted.filter(c -> !isEmpty($c["taskId"])).groupBy(c -> $c["taskId"]).values().map(steps -> {
+				end = $steps.lastElement();
+				{
+					"id": $end["taskId"],
+					"state": $state($end["state"]),
+					"started": $steps.firstElement()["time"],
+					"ended": $end["end"],
+					"run": $end["run"],
+					"messages": $steps.flatMap(c -> [
+						{"from": $agent, "text": $c["message"]},
+						{"from": $c["remote"], "text": $said($c["answer"])}
+					]).filter(m -> !isEmpty($m["text"]))
+				};
+			}).sort($byTime)
+		};
+	});
+
+	concat($incoming, $outgoing);
+}]]></rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="55"
+				unit="%"
+			>
+				<split-panel
+					orientation="horizontal"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							min-size="200"
+							size="42"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Tasks</en>
+									<de>Aufgaben</de>
+								</title>
+								<table selection="task">
+									<inputs>
+										<input channel="conversation"/>
+									</inputs>
+									<columns>
+										<computed-column name="state"
+											type="tl.core:String"
+											width="150"
+										>
+											<label>
+												<en>State</en>
+												<de>Status</de>
+											</label>
+											<value><![CDATA[t -> $t["state"]]]></value>
+										</computed-column>
+										<computed-column name="started"
+											sort="DESC"
+											type="tl.core:DateTime"
+											width="140"
+										>
+											<label>
+												<en>Started</en>
+												<de>Begonnen</de>
+											</label>
+											<value><![CDATA[t -> $t["started"]]]></value>
+										</computed-column>
+										<computed-column name="duration"
+											type="tl.core:Long"
+											width="90"
+										>
+											<label>
+												<en>Duration (s)</en>
+												<de>Dauer (s)</de>
+											</label>
+											<value><![CDATA[t -> isEmpty($t["started"]) || isEmpty($t["ended"]) ? null
+	: round(($t["ended"].toMillis() - $t["started"].toMillis()) / 1000)]]></value>
+										</computed-column>
+										<computed-column name="id"
+											type="tl.core:String"
+											width="150"
+										>
+											<label>
+												<en>Task ID</en>
+												<de>Aufgaben-ID</de>
+											</label>
+											<value><![CDATA[t -> $t["id"]]]></value>
+										</computed-column>
+									</columns>
+									<rows><![CDATA[c -> $c["tasks"]]]></rows>
+								</table>
+							</panel>
+						</pane>
+						<pane
+							size="58"
+							unit="%"
+						>
+							<tab-bar active-tab="messages">
+								<tabs>
+									<tab id="messages">
+										<label>
+											<en>Messages</en>
+											<de>Nachrichten</de>
+										</label>
+										<table>
+											<inputs>
+												<input channel="task"/>
+											</inputs>
+											<columns>
+												<computed-column name="from"
+													type="tl.core:String"
+													width="160"
+												>
+													<label>
+														<en>From</en>
+														<de>Von</de>
+													</label>
+													<value><![CDATA[m -> $m["from"]]]></value>
+												</computed-column>
+												<computed-column name="text"
+													type="tl.core:Text"
+													width="700"
+												>
+													<label>
+														<en>Text</en>
+														<de>Text</de>
+													</label>
+													<value><![CDATA[m -> $m["text"]]]></value>
+												</computed-column>
+											</columns>
+											<rows><![CDATA[t -> $t["messages"]]]></rows>
+										</table>
+									</tab>
+									<tab id="tool-calls">
+										<label>
+											<en>Tool calls of the run</en>
+											<de>Tool-Aufrufe des Laufs</de>
+										</label>
+										<table>
+											<inputs>
+												<input channel="task"/>
+											</inputs>
+											<columns>
+												<computed-column name="time"
+													sort="ASC"
+													type="tl.core:DateTime"
+													width="150"
+												>
+													<label>
+														<en>Time</en>
+														<de>Zeit</de>
+													</label>
+													<value><![CDATA[c -> $c["time"]]]></value>
+												</computed-column>
+												<computed-column name="tool"
+													type="tl.core:String"
+													width="200"
+												>
+													<label>
+														<en>Tool</en>
+														<de>Tool</de>
+													</label>
+													<value><![CDATA[c -> $c["tool"]]]></value>
+												</computed-column>
+												<computed-column name="status"
+													type="tl.core:String"
+													width="130"
+												>
+													<label>
+														<en>Status</en>
+														<de>Status</de>
+													</label>
+													<value><![CDATA[c -> $c["status"]]]></value>
+												</computed-column>
+												<computed-column name="duration"
+													type="tl.core:Long"
+													width="100"
+												>
+													<label>
+														<en>Duration (ms)</en>
+														<de>Dauer (ms)</de>
+													</label>
+													<value><![CDATA[c -> $c["duration"]]]></value>
+												</computed-column>
+												<computed-column name="arguments"
+													type="tl.core:Text"
+													width="300"
+												>
+													<label>
+														<en>Arguments</en>
+														<de>Argumente</de>
+													</label>
+													<value><![CDATA[c -> $c["arguments"]]]></value>
+												</computed-column>
+												<computed-column name="result"
+													type="tl.core:Text"
+													width="400"
+												>
+													<label>
+														<en>Result</en>
+														<de>Ergebnis</de>
+													</label>
+													<value><![CDATA[c -> $c["result"]]]></value>
+												</computed-column>
+											</columns>
+											<rows><![CDATA[t -> {
+	raw = isEmpty($t["run"]) ? null : $t["run"].get(`tl.ai.execution:AgentExecution#transcript`);
+	cut = s -> isEmpty($s) ? $s : (length($s) > 1000 ? subString($s, 0, 1000) + "…" : $s);
+	isEmpty($raw) ? list() : parseJson($raw)["turns"]
+		.flatMap(turn -> $turn["assistantParts"])
+		.filter(p -> $p["type"] == "tool_call")
+		.map(p -> {
+			call = $p["toolCallData"];
+			{
+				"time": $p["timestamp"].toDate(),
+				"tool": $call["toolName"],
+				"status": $call["status"],
+				"duration": $call["durationMs"],
+				"arguments": $cut($call["argsJson"]),
+				"result": $cut(isEmpty($call["errorMessage"]) ? $call["result"] : $call["errorMessage"])
+			};
+		});
+}]]></rows>
+										</table>
+									</tab>
+								</tabs>
+							</tab-bar>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

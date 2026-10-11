@@ -33,7 +33,7 @@ public class TestA2ARequestHandler extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_agent = new FakeAgent();
-		_handler = new A2ARequestHandler(_agent, AGENT::equals, 10_000);
+		_handler = new A2ARequestHandler(_agent, AGENT::equals, 10_000, null);
 	}
 
 	public void testBlockingSendAnswersWithTheCompletedTask() throws IOException {

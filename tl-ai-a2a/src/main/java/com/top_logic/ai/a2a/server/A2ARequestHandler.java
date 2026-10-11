@@ -12,8 +12,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.top_logic.ai.a2a.A2AExchange;
 import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.Json;
@@ -108,16 +110,23 @@ public class A2ARequestHandler {
 
 	private final long _maxBlockingMillis;
 
+	private final Consumer<A2AExchange> _observer;
+
 	/**
 	 * Creates an {@link A2ARequestHandler}.
 	 *
 	 * @param knownAgent
 	 *        Whether an agent path is exposed.
+	 * @param observer
+	 *        Learns of what happens in the tasks this handler starts, see
+	 *        {@link A2ATask#observeWith(Consumer)}; <code>null</code> for none.
 	 */
-	public A2ARequestHandler(TaskBackend backend, Predicate<String> knownAgent, long maxBlockingMillis) {
+	public A2ARequestHandler(TaskBackend backend, Predicate<String> knownAgent, long maxBlockingMillis,
+			Consumer<A2AExchange> observer) {
 		_backend = backend;
 		_knownAgent = knownAgent;
 		_maxBlockingMillis = maxBlockingMillis;
+		_observer = observer;
 	}
 
 	/**
@@ -258,6 +267,7 @@ public class A2ARequestHandler {
 			if (peer != null) {
 				task.putMetadata(A2ATask.PEER, peer);
 			}
+			task.observeWith(_observer);
 			task.addHistory(message);
 			add(task);
 		}

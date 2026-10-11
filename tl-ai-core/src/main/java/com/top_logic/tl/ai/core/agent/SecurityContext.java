@@ -10,6 +10,7 @@ import java.util.Set;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -252,6 +253,18 @@ public interface SecurityContext {
 	 */
 	default RunAuthorization runAuthorization() {
 		return RunAuthorization.UNCHECKED;
+	}
+
+	/**
+	 * Who the run acts as and how it was started, or <code>null</code> for a context that was not
+	 * built for a described run - a test seam. Every context {@code RunSecurity} hands out names it.
+	 *
+	 * <p>
+	 * Information, not a decision: nothing is authorized by it.
+	 * </p>
+	 */
+	default RunPrincipal principal() {
+		return null;
 	}
 
 	/**

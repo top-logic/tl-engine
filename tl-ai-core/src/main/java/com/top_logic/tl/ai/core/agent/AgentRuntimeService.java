@@ -14,6 +14,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -37,6 +38,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.limits.CapacityConfig;
+import com.top_logic.tl.ai.core.observe.RunObserver;
+import com.top_logic.tl.ai.core.observe.RunObservers;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.LLMProviderService.ServiceModelOptions;
@@ -344,6 +347,7 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		Config.CHAT_ENTRY_POINT,
 		Config.CAPACITY,
 		Config.SECURITY_CONTEXT,
+		Config.RUN_OBSERVERS,
 	})
 	public interface Config<I extends AgentRuntimeService> extends ConfiguredManagedClass.Config<I> {
 
@@ -367,6 +371,9 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 
 		/** Configuration property name for {@link #getSecurityContext()}. */
 		String SECURITY_CONTEXT = "security-context";
+
+		/** Configuration property name for {@link #getRunObservers()}. */
+		String RUN_OBSERVERS = "run-observers";
 
 		/**
 		 * The model every agent runs on that has no model of its own in the
@@ -473,6 +480,19 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		@ItemDefault
 		@ImplementationClassDefault(DefaultSecurityContextFactory.class)
 		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
+
+		/**
+		 * What learns of every agent run of this application, from its start to its end.
+		 *
+		 * <p>
+		 * None by default. An observer sees what the run sees; one that passes it on outside the
+		 * application must authenticate that itself - see {@link RunObserver}.
+		 * </p>
+		 *
+		 * @see #RUN_OBSERVERS
+		 */
+		@Name(RUN_OBSERVERS)
+		List<PolymorphicConfiguration<RunObserver>> getRunObservers();
 	}
 
 	/**
@@ -543,6 +563,8 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		_securityContextFactory = securityContextFactory == null
 			? DefaultSecurityContextFactory.INSTANCE : securityContextFactory;
 
+		RunObservers.install(TypedConfiguration.getInstanceList(_context, getConfig().getRunObservers()));
+
 		_instance = this;
 	}
 
@@ -550,6 +572,7 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 	protected void shutDown() {
 		try {
 			_instance = null;
+			RunObservers.install(List.of());
 		} finally {
 			super.shutDown();
 		}

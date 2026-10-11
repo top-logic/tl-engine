@@ -77,6 +77,15 @@ public record ArtifactRef(String app, String kind, String id, String version) {
 	}
 
 	/**
+	 * The task of an artifact {@link #ofTask(String, String, String) of an A2A task}, else
+	 * <code>null</code>.
+	 */
+	public String taskId() {
+		int slash = id.indexOf('/');
+		return TASK_KIND.equals(kind) && slash > 0 ? id.substring(0, slash) : null;
+	}
+
+	/**
 	 * Whether a text is a reference.
 	 */
 	public static boolean isRef(String text) {

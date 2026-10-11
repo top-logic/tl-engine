@@ -452,11 +452,20 @@ the run as in a chat and the task goes to `INPUT_REQUIRED`; the caller's reply c
 question, so the same run resumes. Remote answers reach a local model inside
 `UntrustedEnvelope.A2A_RESULT`, cut short, with artifacts as `tl-artifact://<app>/<kind>/<id>`
 references that `fetchArtifact` reads section by section. A served context lives in its session's
-metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`.
+metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`. An `A2AObserver` (`<observers>` on `A2AService`)
+learns of every exchange in both directions with context, task and message ids, through the same
+`ObserverQueue`. Administration > A2A (`tl-ai-a2a/admin/a2a.view.xml`) lists the conversations of both
+directions from persisted data: served contexts from their sessions, outgoing calls from the run transcripts.
 
 ### Event System (tl-ai-core `agent/`)
 
 `AgentEvent` sealed interface with 25 record subtypes covering run/turn/tool/approval/transaction/memory lifecycle. `AgentEventListener` enables real-time SSE streaming and structured logging.
+
+A `RunObserver` (`observe/`, configured in `<run-observers>` on `AgentRuntimeService`, none by default) receives
+the events of every run `AgentLoop` starts - chat, script, MCP, A2A, delegation, subagent - with who the run is
+for (`ObservedRun`: agent, account, entry point, conversation, parent run). `ObserverQueue` delivers them on a
+thread of its own behind a bounded queue, so an observer can neither slow down nor break a run. An observer sees
+what the run sees; one that passes it on outside the application must authenticate that itself.
 
 ### Chat UI (tl-chat)
 

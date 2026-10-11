@@ -33,7 +33,7 @@ public class TestSystemPromptContributor extends TestCase {
 		"You are Albert.", List.of(), List.of(), List.of(), List.of(), AgentSource.CONFIG);
 
 	private static final AgentModelAssignment ASSIGNMENT = new AgentModelAssignment("test-model",
-		null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+		null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
 	/**
 	 * An installation that configures no contributor gets the prompt it had before the seam existed.

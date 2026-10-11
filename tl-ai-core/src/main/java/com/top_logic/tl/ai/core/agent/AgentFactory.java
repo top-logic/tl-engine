@@ -273,9 +273,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			// budget with the effective context window (assignment override > catalog).
 			conversationMemory.setContextWindowTokens(coreConfig.contextWindowTokens());
 			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory, maxToolResultChars);
+			loop.limitToolCalls(maxToolCalls(assignment));
 			result = loop.run(context, listener);
 		} else {
 			loop = new AgentLoop(coreConfig, provider, registry, maxToolResultChars);
+			loop.limitToolCalls(maxToolCalls(assignment));
 			result = loop.run(conversation, context, listener);
 		}
 
@@ -691,7 +693,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
-		return new AgentLoop(config, provider, registry, maxToolResultChars);
+		AgentLoop loop = new AgentLoop(config, provider, registry, maxToolResultChars);
+		loop.limitToolCalls(maxToolCalls(assignment));
+		return loop;
 	}
 
 	/**
@@ -730,7 +734,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			? buildStaticToolCatalog(agentDef, false, capabilities)
 			: buildDynamicToolCatalog(agentDef, false, capabilities);
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
-		return new AgentLoop(config, provider, registry, maxToolResultChars);
+		AgentLoop loop = new AgentLoop(config, provider, registry, maxToolResultChars);
+		loop.limitToolCalls(maxToolCalls(assignment));
+		return loop;
 	}
 
 	/**
@@ -887,6 +893,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 		facts.addAll(RunFactsBinding.facts());
 		return facts;
+	}
+
+	/** The agent's own limit of tool calls per run; 0 for none. */
+	private static int maxToolCalls(AgentModelAssignment assignment) {
+		Integer value = assignment.maxToolCalls();
+		return value == null ? 0 : value.intValue();
 	}
 
 	private static int resolveMaxToolResultChars(AgentModelAssignment assignment) {

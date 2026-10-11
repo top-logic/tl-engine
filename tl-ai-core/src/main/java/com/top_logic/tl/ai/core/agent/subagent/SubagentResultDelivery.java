@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.util.List;
 
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
@@ -85,7 +86,36 @@ public final class SubagentResultDelivery {
 		text.append("_tokens: ").append(result.tokenUsage().totalTokens())
 			.append(", duration: ").append(result.durationMs())
 			.append("ms, tools: ").append(result.toolCallCount()).append('_');
+		String limit = limitLine(job, result);
+		if (limit != null) {
+			text.append('\n').append(limit);
+		}
 		return text.toString();
+	}
+
+	/**
+	 * The framework's line about a subagent that was stopped at its limit rather than finishing by
+	 * itself, or <code>null</code> for one that finished.
+	 *
+	 * <p>
+	 * Outside the report's envelope, because it is the framework's statement, not the subagent's.
+	 * The subagent wrote its report in a last turn without tools, so the report is what it had by
+	 * then - the lead has to know that it may be incomplete, and say so.
+	 * </p>
+	 */
+	static String limitLine(SubagentJob job, SubagentResult result) {
+		if (result.stopReason() == StopReason.MAX_TOOL_CALLS) {
+			return "_Stopped at its limit: it used up its budget of "
+				+ (job.toolCallLimit() > 0 ? job.toolCallLimit() + " " : "") + "tool calls and wrote its"
+				+ " report from what it had by then. Treat the report as possibly incomplete, and name this"
+				+ " subagent where you say what is still open._";
+		}
+		if (result.stopReason() == StopReason.MAX_TURNS) {
+			return "_Stopped at its limit: it reached its turn limit and wrote its report from what it had by"
+				+ " then. Treat the report as possibly incomplete, and name this subagent where you say what"
+				+ " is still open._";
+		}
+		return null;
 	}
 
 	/**

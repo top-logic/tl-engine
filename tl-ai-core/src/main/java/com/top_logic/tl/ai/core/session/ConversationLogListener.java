@@ -163,6 +163,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleRunCompleted(e);
 		} else if (event instanceof AgentEvent.LeadMessageDelivered e) {
 			recordInboxMessage(Part.SystemEventType.LEAD_MESSAGE, e.text());
+		} else if (event instanceof AgentEvent.FinalTurnRequested e) {
+			recordContinuationRequested(e.text());
 		} else if (event instanceof AgentEvent.UserMessageDelivered e) {
 			recordInboxMessage(Part.SystemEventType.USER_MESSAGE, e.text());
 		} else if (event instanceof AgentEvent.LeadWoken e) {

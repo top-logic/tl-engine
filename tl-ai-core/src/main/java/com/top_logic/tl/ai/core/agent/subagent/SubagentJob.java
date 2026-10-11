@@ -57,6 +57,8 @@ public class SubagentJob {
 
 	private volatile ReadingList _readingList = new ReadingList();
 
+	private volatile int _toolCallLimit;
+
 	/** */
 	public SubagentJob(String subagentId, String targetAgentName, String taskBrief,
 			CancellationToken cancellationToken) {
@@ -276,6 +278,16 @@ public class SubagentJob {
 	/** Sets the {@link #childRunId() recorded child run id}. */
 	public void setChildRunId(String childRunId) {
 		_childRunId = childRunId;
+	}
+
+	/** The most tool calls the subagent's run may make; 0 for no limit. */
+	public int toolCallLimit() {
+		return _toolCallLimit;
+	}
+
+	/** Sets the {@link #toolCallLimit() limit of tool calls} the subagent's run was given. */
+	public void setToolCallLimit(int toolCallLimit) {
+		_toolCallLimit = toolCallLimit;
 	}
 
 	/**

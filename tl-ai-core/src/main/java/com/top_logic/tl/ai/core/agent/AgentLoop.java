@@ -80,6 +80,7 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
@@ -96,6 +97,7 @@ import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
@@ -232,6 +234,22 @@ public class AgentLoop {
 
 	/** Consecutive A/B alternations matching {@link #_secondLastToolCallSignature}. */
 	private int _alternationRepeats;
+
+	/**
+	 * The most tool calls one run of this loop may make; 0 for no limit.
+	 *
+	 * @see #limitToolCalls(int)
+	 */
+	private int _toolCallLimit;
+
+	/** The calls the current run made that count against {@link #_toolCallLimit}. */
+	private int _toolCallsUsed;
+
+	/**
+	 * Whether the request being built is the run's last one: the tools stay in the request, so that
+	 * the cached prefix stays the same, but the model may call none of them.
+	 */
+	private boolean _finalTurn;
 
 	/** Maximum consecutive times the same tool+args combination may be called before being blocked. */
 	private static final int MAX_DUPLICATE_TOOL_CALLS = AgentTuning.MAX_DUPLICATE_TOOL_CALLS;
@@ -771,6 +789,8 @@ public class AgentLoop {
 
 			injectBetweenTurns(conversation, context, listener, runId, turn);
 
+			StopReason limit = announceFinalTurn(conversation, turn, maxTurns, listener, runId);
+
 			AssistantMessage assistantMsg;
 			try {
 				int currentTurn = turn;
@@ -780,8 +800,13 @@ public class AgentLoop {
 			} catch (ProviderException e) {
 				rollbackFailedRun(conversation, resumePoint);
 				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage, totalCost);
+			} finally {
+				_finalTurn = false;
 			}
 
+			if (limit != null) {
+				assistantMsg = withoutToolCalls(assistantMsg, runId);
+			}
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
 			// Priced per request and with the model that answered it: a failover moves the run to
@@ -789,6 +814,14 @@ public class AgentLoop {
 			Money turnCost = RunCosts.costOf(_config.model(), assistantMsg.usage());
 			totalCost = addCost(totalCost, turnCost, runId);
 			context.budgetAllowance().record(assistantMsg.usage(), turnCost);
+
+			if (limit != null) {
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
+				Logger.info("Run " + runId + " ends at its limit (" + limit + ") after a last turn without tools.",
+					AgentLoop.class);
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), limit, totalUsage, totalCost));
+				return new AgentResult(limit, turn, totalUsage);
+			}
 
 			if (!_config.responseValidator().test(assistantMsg)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
@@ -994,6 +1027,28 @@ public class AgentLoop {
 		+ " received no answer yet. Keep your reasoning short and continue the task now: call the tool"
 		+ " you need next, or write your answer to the user.";
 
+	/**
+	 * What the model is told before the last turn of a run that reached its turn limit; the number
+	 * is the limit.
+	 */
+	static final String FINAL_TURN_NOTICE_TURNS = "[Framework notice] This run has reached its limit of"
+		+ " %d turns. You cannot call any tool any more. Write your final answer now from what you"
+		+ " have: what you found, and what is still open and why. If another agent started you, this"
+		+ " answer is your report to it.";
+
+	/**
+	 * What the model is told before the last turn of a run that used up its tool calls; the number
+	 * is the budget.
+	 */
+	static final String FINAL_TURN_NOTICE_TOOL_CALLS = "[Framework notice] This run has used up its"
+		+ " budget of %d tool calls. You cannot call any tool any more. Write your final answer now"
+		+ " from what you have: what you found, and what is still open and why. If another agent"
+		+ " started you, this answer is your report to it.";
+
+	/** The answer to a tool call the budget left no room for. */
+	static final String NOT_RUN_OVER_BUDGET = "Not run: this run has used up its budget of %d tool calls."
+		+ " Write your final answer with what you have.";
+
 	/** Base backoff delay in milliseconds for transient retries. Doubles each attempt. */
 	private static final long BASE_BACKOFF_MS = AgentTuning.BASE_BACKOFF_MS;
 
@@ -1021,6 +1076,8 @@ public class AgentLoop {
 
 			compactIfOverBudget(memory, listener, runId, turn);
 
+			StopReason limit = announceFinalTurn(conversation, turn, maxTurns, listener, runId);
+
 			AssistantMessage assistantMsg;
 			try {
 				int currentTurn = turn;
@@ -1030,8 +1087,13 @@ public class AgentLoop {
 					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage, totalCost);
+			} finally {
+				_finalTurn = false;
 			}
 
+			if (limit != null) {
+				assistantMsg = withoutToolCalls(assistantMsg, runId);
+			}
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
 			// Priced per request and with the model that answered it: a failover moves the run to
@@ -1040,6 +1102,14 @@ public class AgentLoop {
 			totalCost = addCost(totalCost, turnCost, runId);
 			context.budgetAllowance().record(assistantMsg.usage(), turnCost);
 			memory.updateTokenBaseline(assistantMsg.usage());
+
+			if (limit != null) {
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
+				Logger.info("Run " + runId + " ends at its limit (" + limit + ") after a last turn without tools.",
+					AgentLoop.class);
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), limit, totalUsage, totalCost));
+				return new AgentResult(limit, turn, totalUsage);
+			}
 
 			if (!_config.responseValidator().test(assistantMsg)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
@@ -1181,7 +1251,22 @@ public class AgentLoop {
 		// sees what others committed since the run last looked.
 		catchUpWithOtherCommits();
 
-		List<List<ToolCall>> batches = partitionBatches(toolCalls, context);
+		// The calls the budget leaves room for, in the order the model wrote them; the rest are answered
+		// below without running, so that every call has its result.
+		List<ToolCall> admitted = new ArrayList<>(toolCalls.size());
+		List<ToolCall> overBudget = new ArrayList<>();
+		for (ToolCall call : toolCalls) {
+			if (!spendsBudget(call)) {
+				admitted.add(call);
+			} else if (_toolCallLimit > 0 && _toolCallsUsed >= _toolCallLimit) {
+				overBudget.add(call);
+			} else {
+				_toolCallsUsed++;
+				admitted.add(call);
+			}
+		}
+
+		List<List<ToolCall>> batches = partitionBatches(admitted, context);
 		int messagesBefore = conversation.size();
 
 		for (List<ToolCall> batch : batches) {
@@ -1196,6 +1281,13 @@ public class AgentLoop {
 			} else {
 				executeConcurrent(batch, context, conversation, listener, runId, turn);
 			}
+		}
+
+		for (ToolCall call : overBudget) {
+			_turnBlockedCallIds.add(call.id());
+			ToolResultMessage notRun = errorResult(call, String.format(NOT_RUN_OVER_BUDGET, _toolCallLimit));
+			conversation.add(notRun);
+			reportResult(call, notRun, listener, runId, turn, _turnDeniedCallIds);
 		}
 
 		// End-of-turn: commit unless a tool actually executed and failed. Synthetic
@@ -2195,7 +2287,101 @@ public class AgentLoop {
 	 * health state of the moment, not inherited.
 	 * </p>
 	 */
+	/**
+	 * Limits every run of this loop to the given number of tool calls, or to the limit it already
+	 * has, whichever is smaller.
+	 *
+	 * <p>
+	 * A call the budget leaves no room for is answered without being run, and the run then gets one
+	 * last turn without tools, in which the model answers with what it has; the run ends as
+	 * {@link StopReason#MAX_TOOL_CALLS}. Calls of interaction tools - asking, loading a skill,
+	 * recording a finding - spend nothing (see {@link #spendsBudget(ToolCall)}). Narrowing only: an
+	 * agent's own limit cannot be raised by whoever starts it.
+	 * </p>
+	 *
+	 * @param limit
+	 *        The most tool calls a run may make; 0 or less changes nothing.
+	 */
+	public void limitToolCalls(int limit) {
+		if (limit > 0 && (_toolCallLimit == 0 || limit < _toolCallLimit)) {
+			_toolCallLimit = limit;
+		}
+	}
+
+	/** The most tool calls one run of this loop may make; 0 for no limit. */
+	public int toolCallLimit() {
+		return _toolCallLimit;
+	}
+
+	/**
+	 * Whether the call counts against the run's {@link #limitToolCalls(int) budget of tool calls}.
+	 *
+	 * <p>
+	 * A tool of the {@link ToolGroups#INTERACTION interaction} group - asking the user or the lead,
+	 * loading a skill, recording a finding - does not: a budget bounds the work a run does, not how it
+	 * talks to whoever started it. A call naming no tool counts, so that a model cannot spend its way
+	 * around the budget by misspelling.
+	 * </p>
+	 */
+	private boolean spendsBudget(ToolCall call) {
+		Tool tool = _registry.getTool(call.name());
+		return tool == null || !ToolGroups.INTERACTION.equals(tool.group());
+	}
+
+	/**
+	 * Makes the coming turn the run's last one if the run has reached a limit, and tells the model.
+	 *
+	 * <p>
+	 * A run that used up its tool calls, or that is at its last allowed turn, gets one more request,
+	 * with the tools still listed but none callable, and a notice that says so - a user message, for
+	 * the reason {@link #injectSubagentResults} gives, announced as
+	 * {@link AgentEvent.FinalTurnRequested}, which the run's own log records so that a reloaded
+	 * session replays it. A run limited to one turn has no turn to spare for this and ends as it
+	 * always did.
+	 * </p>
+	 *
+	 * @return The limit the run reached, or <code>null</code> if it goes on as usual.
+	 */
+	private StopReason announceFinalTurn(Conversation conversation, int turn, int maxTurns,
+			AgentEventListener listener, String runId) {
+		String notice;
+		StopReason limit;
+		if (_toolCallLimit > 0 && _toolCallsUsed >= _toolCallLimit) {
+			limit = StopReason.MAX_TOOL_CALLS;
+			notice = String.format(FINAL_TURN_NOTICE_TOOL_CALLS, _toolCallLimit);
+		} else if (turn == maxTurns && maxTurns > 1) {
+			limit = StopReason.MAX_TURNS;
+			notice = String.format(FINAL_TURN_NOTICE_TURNS, maxTurns);
+		} else {
+			return null;
+		}
+		Logger.info("Run " + runId + " turn " + turn + " is its last (" + limit + "): no tool may be called.",
+			AgentLoop.class);
+		conversation.add(new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(notice))));
+		emit(listener, new AgentEvent.FinalTurnRequested(runId, turn, now(), limit, notice));
+		_finalTurn = true;
+		return limit;
+	}
+
+	/**
+	 * The last reply of a run without the tool calls it may still hold - a provider that ignores
+	 * the request not to call any. Nothing runs them, and a call without a result would break the
+	 * next request of the conversation.
+	 */
+	private static AssistantMessage withoutToolCalls(AssistantMessage reply, String runId) {
+		List<ContentPart> kept = reply.content().stream().filter(part -> !(part instanceof ToolCall)).toList();
+		if (kept.size() == reply.content().size()) {
+			return reply;
+		}
+		Logger.info("Run " + runId + ": the last reply called " + (reply.content().size() - kept.size())
+			+ " tool(s) although none may be called; they are dropped.", AgentLoop.class);
+		return new AssistantMessage(reply.id(), reply.timestamp(), kept, reply.usage(), reply.finishReason());
+	}
+
 	private void beginRun() {
+		_toolCallsUsed = 0;
+		_finalTurn = false;
 		_config = _configuredParams;
 		_provider = _configuredProvider;
 		_chainIndex = 0;
@@ -2434,7 +2620,7 @@ public class AgentLoop {
 			_config.maxOutputTokens(),
 			_config.modelOptions(),
 			_config.responseFormat(),
-			_config.toolChoice(),
+			_finalTurn ? ToolChoice.NONE : _config.toolChoice(),
 			Duration.ofSeconds(_config.timeoutSeconds()),
 			stableToolCount);
 

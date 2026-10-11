@@ -1226,8 +1226,9 @@ public class ChatProcessor {
 
 	/**
 	 * The answer, with a line saying why it stops there when the run did not end with a whole one:
-	 * the account's budget ran out mid-run, the model stopped without an answer, or its answer was
-	 * cut off at the output limit (#677).
+	 * the account's budget ran out mid-run, the model stopped without an answer, its answer was
+	 * cut off at the output limit (#677), or the run reached its limit of turns or tool calls and
+	 * answered with what it had.
 	 *
 	 * <p>
 	 * The run itself is orderly - it kept every turn it finished - but an answer that simply ends is
@@ -1244,6 +1245,8 @@ public class ChatProcessor {
 			case BUDGET_EXHAUSTED -> RunLimits.budgetStopNotice(context.security());
 			case NO_ANSWER -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_NO_ANSWER;
 			case OUTPUT_LIMIT -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_OUTPUT_LIMIT;
+			case MAX_TURNS -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_TURN_LIMIT;
+			case MAX_TOOL_CALLS -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_TOOL_LIMIT;
 			default -> null;
 		};
 		if (notice == null) {

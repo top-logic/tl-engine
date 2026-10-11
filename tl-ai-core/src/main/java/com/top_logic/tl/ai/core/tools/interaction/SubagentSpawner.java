@@ -108,6 +108,20 @@ public class SubagentSpawner {
 	public static ToolResult spawnAsync(String targetAgentName, String task, String contextStr,
 			ToolContext toolContext, DelegationTool.AgentLoopFactory loopFactory,
 			SubagentJobRegistry registry) {
+		return spawnAsync(targetAgentName, task, contextStr, 0, toolContext, loopFactory, registry);
+	}
+
+	/**
+	 * {@link #spawnAsync(String, String, String, ToolContext, DelegationTool.AgentLoopFactory, SubagentJobRegistry)}
+	 * with a budget of tool calls for the subagent.
+	 *
+	 * @param toolCallBudget
+	 *        The most tool calls the subagent may make, narrowing the agent's own limit; 0 for none
+	 *        beyond the agent's own. See {@link AgentLoop#limitToolCalls(int)}.
+	 */
+	public static ToolResult spawnAsync(String targetAgentName, String task, String contextStr,
+			int toolCallBudget, ToolContext toolContext, DelegationTool.AgentLoopFactory loopFactory,
+			SubagentJobRegistry registry) {
 
 		// Before anything is registered or a thread is taken: a child that can reach no tool this run
 		// may call would burn a provider round trip and come back with nothing.
@@ -185,6 +199,8 @@ public class SubagentSpawner {
 					j.setReadingList(childContext.readingList());
 
 					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName, childContext.security());
+					targetLoop.limitToolCalls(toolCallBudget);
+					j.setToolCallLimit(targetLoop.toolCallLimit());
 					Conversation conversation = new Conversation();
 					conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 						List.of(new TextContent(userPrompt))));
@@ -263,16 +279,19 @@ public class SubagentSpawner {
 			}
 		});
 
+		String budget = toolCallBudget > 0
+			? " It may make at most " + toolCallBudget + " tool calls, then it writes its report."
+			: "";
 		int position = registry.queuePosition(job);
 		if (position > 0) {
 			return ToolResult.of("Subagent " + targetAgentName + " queued (id=" + job.subagentId()
 				+ ", position " + position + "): as many subagents as may run at once are running, and"
 				+ " it starts when one of them ends. Its result will arrive in a later turn or via"
-				+ " wait_for_subagent.");
+				+ " wait_for_subagent." + budget);
 		}
 		return ToolResult.of("Subagent " + targetAgentName + " started (id=" + job.subagentId()
 			+ "). It runs in the background; its result will arrive in a later turn or via "
-			+ "wait_for_subagent.");
+			+ "wait_for_subagent." + budget);
 	}
 
 	/**

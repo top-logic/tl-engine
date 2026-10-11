@@ -56,6 +56,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
@@ -292,6 +293,15 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		}
 		report.append("## Open points\n[Sweden pays nothing](").append(INVENTED).append(").\n");
 		return report.toString();
+	}
+
+	/**
+	 * One answer of a research worker - a tool call or its report - is bounded, so a model that loops
+	 * in a tool call's arguments stops within minutes rather than at the model's own limit (#798).
+	 */
+	public void testAWorkersAnswerIsBounded() {
+		AgentModelAssignment worker = AgentRuntimeService.getInstance().resolveModelAssignment(WORKER);
+		assertEquals(Integer.valueOf(16384), worker.maxTokens());
 	}
 
 	/** The task of the worker that would search forever. */

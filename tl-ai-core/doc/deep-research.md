@@ -50,6 +50,11 @@ The tool-call budget is not a request in the prompt; the agent loop enforces it 
 - The lead receives the report with the line "Stopped at its limit", and names that worker under
   Open points.
 
+One answer of the worker is at most 16384 tokens (`max-tokens` of its agent override, #798). A tool
+call or a report needs a few thousand. Without this limit, a model that loops in the arguments of a
+tool call writes until the model's own output limit: 128000 tokens and about 15 minutes for
+gpt-5.6-luna, while the lead waits.
+
 A run at its `max-turns` limit ends the same way, as `MAX_TURNS`: its last turn is an answer, not a
 tool call. This is true for every agent, not only for the worker.
 

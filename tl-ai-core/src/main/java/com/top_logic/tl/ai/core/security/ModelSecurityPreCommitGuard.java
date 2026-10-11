@@ -58,8 +58,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * {@link ModelSecurity#canSetInitial}, the question the application's create dialogs ask, and that
  * question is about the object being created - so it is asked in the transaction's own view, where
  * that object and its container exist, after the committed-view checks passed for its creation. An
- * attribute counts as given an initial value when its value is not empty and is not the default the
- * model gives it ({@link #givenValues}).
+ * attribute counts as given an initial value unless its value is the one the engine creates it with
+ * ({@link #givenValues}).
  * </p>
  *
  * @see PreCommitGuard#forRun()
@@ -88,14 +88,26 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 	 * The attributes of the given new object that the turn gave a value.
 	 *
 	 * <p>
-	 * An attribute whose value is empty is left out, and so is one whose value is the default the
-	 * model gives it: the engine sets that default when it creates the object, and a create dialog
-	 * creates it as well for a user who may not edit the attribute. A default the engine computes in
-	 * the transaction (a sequence number) cannot be asked for again without drawing the next one, and
-	 * a default that is different every time it is computed (a UUID, the current time) cannot be told
-	 * from a given value; for both the attribute is left out. Derived and backwards references are
-	 * left out too: a derived attribute stores nothing, and a backwards reference is stored on the
-	 * object it points to, where the guard checks it as a write of that object.
+	 * An attribute is left out only when its value is the one the engine creates the object with: the
+	 * default the model gives the attribute, or an empty value where the model gives none. The engine
+	 * sets that default when it creates the object, and a create dialog creates it as well for a user
+	 * who may not edit the attribute. The value is compared with the default before anything else, so
+	 * {@code false} or an empty value given to an attribute whose default is {@code true} or not empty
+	 * counts as given.
+	 * </p>
+	 *
+	 * <p>
+	 * A default that is different every time it is computed (a UUID, the current time) is computed
+	 * once more and the attribute is left out only when the value equals it, which in practice means
+	 * it is asked: the value cannot be told from one a tool wrote, and a refusal is safer than a
+	 * skip. A default the engine computes in the transaction (a sequence number) cannot be computed
+	 * again without drawing the next one, so such an attribute is always asked when it has a value.
+	 * </p>
+	 *
+	 * <p>
+	 * Derived and backwards references are left out: a derived attribute stores nothing, and a
+	 * backwards reference is stored on the object it points to, where the guard checks it as a write
+	 * of that object.
 	 * </p>
 	 */
 	static List<TLStructuredTypePart> givenValues(TLObject object, TLStructuredType type) {
@@ -104,8 +116,7 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 			if (part.isDerived() || (part instanceof TLReference reference && reference.isBackwards())) {
 				continue;
 			}
-			Object value = object.tValue(part);
-			if (isEmpty(value) || isDefault(object, part, value)) {
+			if (isAsCreated(object, part, object.tValue(part))) {
 				continue;
 			}
 			result.add(part);
@@ -113,29 +124,25 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 		return result;
 	}
 
+	/** Whether the given value is the one the engine creates the object with. */
+	private static boolean isAsCreated(TLObject object, TLStructuredTypePart part, Object value) {
+		DefaultProvider provider = DisplayAnnotations.getDefaultProvider(part);
+		if (provider == null) {
+			return isEmpty(value);
+		}
+		if (provider.isComputedInTransaction()) {
+			// Computing it again draws the next number, so there is nothing to compare with.
+			return isEmpty(value);
+		}
+		Object initial = provider.createDefault(object.tContainer(), part);
+		return sameValue(initial, value) || (isEmpty(initial) && isEmpty(value));
+	}
+
 	private static boolean isEmpty(Object value) {
 		return value == null
 			|| Boolean.FALSE.equals(value)
 			|| (value instanceof CharSequence text && text.length() == 0)
 			|| (value instanceof Collection<?> collection && collection.isEmpty());
-	}
-
-	private static boolean isDefault(TLObject object, TLStructuredTypePart part, Object value) {
-		DefaultProvider provider = DisplayAnnotations.getDefaultProvider(part);
-		if (provider == null) {
-			return false;
-		}
-		if (provider.isComputedInTransaction()) {
-			return true;
-		}
-		Object context = object.tContainer();
-		Object first = provider.createDefault(context, part);
-		Object second = provider.createDefault(context, part);
-		if (!sameValue(first, second)) {
-			// A default that differs every time: the value cannot be told from it.
-			return true;
-		}
-		return sameValue(first, value);
 	}
 
 	private static boolean sameValue(Object a, Object b) {

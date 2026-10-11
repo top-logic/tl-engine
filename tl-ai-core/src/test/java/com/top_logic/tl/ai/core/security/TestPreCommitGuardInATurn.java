@@ -369,6 +369,88 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 			rights.asked().stream().anyMatch(writeOf("subject")));
 	}
 
+	/**
+	 * {@code false} is not empty where the default is {@code true}: the turn gave the value, and needs
+	 * the right to give it.
+	 */
+	public void testFalseAgainstADefaultOfTrueNeedsTheRight() {
+		StandIn rights = StandIn.withholding(writeOf("active"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Inactive", "active", Boolean.FALSE)), "{}");
+
+		assertFalse("The account may not set a new permit inactive.", turn.committed());
+		assertContains("setting 'active' of new objects of type 'test.objectedit:Permit'", turn.notice());
+	}
+
+	/** The default {@code true} the engine sets needs no right. */
+	public void testADefaultOfTrueNeedsNoRight() {
+		StandIn rights = StandIn.withholding(writeOf("active"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Active by default", null, null)), "{}");
+
+		assertTrue("A default the account did not set must not refuse the turn: " + turn.notice(),
+			turn.committed());
+	}
+
+	/** {@code false} where the model gives no default is as empty as no value. */
+	public void testFalseWithoutADefaultNeedsNoRight() {
+		StandIn rights = StandIn.withholding(writeOf("archived"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Not archived", "archived", Boolean.FALSE)), "{}");
+
+		assertTrue("False without a default is no value: " + turn.notice(), turn.committed());
+	}
+
+	/**
+	 * A default that is the current time cannot be told from a value a tool wrote: a back-dated value
+	 * is asked about, and refused.
+	 */
+	public void testAValueInPlaceOfTheCurrentTimeNeedsTheRight() {
+		StandIn rights = StandIn.withholding(writeOf("validFrom"));
+
+		Turn turn = runTurn(rights,
+			unchecked(() -> permit("Back-dated", "validFrom", Date.from(T0.minusSeconds(86400 * 365)))), "{}");
+
+		assertFalse("The account may not back-date a new permit.", turn.committed());
+		assertContains("setting 'validFrom' of new objects of type 'test.objectedit:Permit'", turn.notice());
+	}
+
+	/**
+	 * A default that differs every time it is computed is asked about even when the turn left it
+	 * alone: it cannot be told from a value a tool wrote, and a refusal is safer than a skip.
+	 */
+	public void testAVolatileDefaultIsAsked() {
+		StandIn rights = StandIn.withholding(writeOf("code"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("UUID by default", null, null)), "{}");
+
+		assertFalse("A UUID default cannot be told from a given value, so it is asked.", turn.committed());
+		assertContains("setting 'code'", turn.notice());
+	}
+
+	/** A sequence number drawn in the transaction cannot be drawn again to compare, so it is asked. */
+	public void testASequenceNumberIsAsked() {
+		StandIn rights = StandIn.withholding(writeOf("number"));
+
+		Turn turn = runTurn(rights, unchecked(() -> permit("Numbered by default", null, null)), "{}");
+
+		assertFalse("A sequence number cannot be told from a given value, so it is asked.", turn.committed());
+		assertContains("setting 'number'", turn.notice());
+	}
+
+	/**
+	 * Creates a permit with the given subject and, unless the attribute is <code>null</code>, the
+	 * given value of that attribute.
+	 */
+	private static void permit(String subject, String attribute, Object value) {
+		TLClass type = (TLClass) TLModelUtil.findType("test.objectedit:Permit");
+		TLObject permit = ModelService.getInstance().getFactory().createObject(type, null);
+		permit.tUpdate(type.getPart("subject"), subject);
+		if (attribute != null) {
+			permit.tUpdate(type.getPart(attribute), value);
+		}
+	}
+
 	/** Every question about writing the attribute of the given name. */
 	private static Predicate<Question> writeOf(String attribute) {
 		return question -> question.operation() == SimpleBoundCommandGroup.WRITE && question.attribute() != null

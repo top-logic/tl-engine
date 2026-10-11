@@ -148,6 +148,9 @@ One line per run, in the order the matrix ran them.
 | `toolCalls` | every tool the model asked for, in order, separated by `\|` |
 | `failedGraders` | labels of the expectations that did not hold, separated by `\|` |
 | `error` | the exception, or why the arm was not started |
+| `subagents` | how many background subagents the run started |
+| `subagentInputTokens`, `subagentCacheReadTokens`, `subagentOutputTokens` | their tokens, summed |
+| `subagentToolCalls` | their tool calls, summed |
 
 Three things about those columns are worth knowing before anybody averages them.
 
@@ -211,7 +214,24 @@ Without `-Dtl.ai.research.e2e=true` the test reports as skipped. `TestResearchPl
 the questions in every build, on a scripted model and a scripted judge, with the near-misses each
 expectation exists for.
 
-The token columns count the lead's run only; the workers are recorded as runs of their own.
+An arm can put the agents its agent starts on other models (#784) - the research lead on one model,
+its workers on another - and cap the subagents that run at once, for a server that answers one
+request at a time:
+
+```xml
+<arm name="albert-gpt-worker-qwen" agent="TL_SingleAgent" model="gpt-5.6-luna" subagent-workers="1">
+    <agent-models>
+        <agent-model agent="TL_ResearchWorker" model="qwen3.8-27b" provider="qwen"/>
+    </agent-models>
+</arm>
+```
+
+`TestResearchEval` assigns them before the arm's runs and removes them afterwards.
+`-Dtl.ai.research.arms=name,name` runs some of the arms. The local arm needs `tl_qwen_api_key` and
+the company network.
+
+The token columns count the lead's run; the `subagent*` columns at the end of each line count what
+its subagents spent - how many there were, their tokens and their tool calls.
 
 ---
 

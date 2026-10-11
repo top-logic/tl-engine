@@ -14,7 +14,11 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
@@ -93,6 +97,7 @@ public class EvalRunner {
 		RunObservation observation = new RunObservation();
 		String response = "";
 		RunAnswer answer = RunAnswer.none(scenario.getPrompt());
+		SubagentTotals subagents = SubagentTotals.NONE;
 		String registryKey = null;
 		String error = null;
 		long startedAt = System.currentTimeMillis();
@@ -118,6 +123,7 @@ public class EvalRunner {
 		} finally {
 			context.transaction().close();
 			if (registryKey != null) {
+				subagents = subagentTotals(SubagentRegistries.find(registryKey));
 				// The registries belong to the process. A subagent still running when the lead
 				// finished must not go on into the next run, and a later suite's fresh database hands
 				// out the same session ids.
@@ -155,7 +161,7 @@ public class EvalRunner {
 			outcome, observation.turns(), usage.promptTokens(), usage.cacheReadTokens(),
 			usage.outputTokens(), durationMs,
 			stopReason != null ? stopReason.name() : (error != null ? "ERROR" : "UNKNOWN"),
-			toolCalls, verdicts, response, error);
+			toolCalls, verdicts, response, error, subagents);
 	}
 
 	/**
@@ -205,7 +211,51 @@ public class EvalRunner {
 		if (!model.capabilities().toolCall()) {
 			return "Model '" + arm.getModel() + "' cannot call tools, so it cannot run this harness.";
 		}
+		for (EvalConfig.AgentModel agentModel : arm.getAgentModels()) {
+			ModelInfo info = LLMProviderService.getInstance().getModel(agentModel.getModel());
+			if (info == null) {
+				return "Model '" + agentModel.getModel() + "' of agent '" + agentModel.getAgent()
+					+ "' is not in the catalogue of this application.";
+			}
+			if (!info.capabilities().toolCall()) {
+				return "Model '" + agentModel.getModel() + "' of agent '" + agentModel.getAgent()
+					+ "' cannot call tools.";
+			}
+		}
 		return null;
+	}
+
+	/**
+	 * What the subagents of the run spent, from the jobs of its registry; none when it has none.
+	 *
+	 * <p>
+	 * A subagent still running when the lead finished counts with nothing: it has no result yet, and
+	 * removing the registry cancels it.
+	 * </p>
+	 */
+	static SubagentTotals subagentTotals(SubagentJobRegistry registry) {
+		if (registry == null) {
+			return SubagentTotals.NONE;
+		}
+		int runs = 0;
+		int input = 0;
+		int cached = 0;
+		int output = 0;
+		int calls = 0;
+		for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
+			runs++;
+			SubagentResult result = job.result();
+			if (result == null) {
+				continue;
+			}
+			if (result.tokenUsage() != null) {
+				input += result.tokenUsage().promptTokens();
+				cached += result.tokenUsage().cacheReadTokens();
+				output += result.tokenUsage().outputTokens();
+			}
+			calls += result.toolCallCount();
+		}
+		return new SubagentTotals(runs, input, cached, output, calls);
 	}
 
 	/**

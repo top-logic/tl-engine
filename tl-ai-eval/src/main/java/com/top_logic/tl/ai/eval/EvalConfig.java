@@ -15,6 +15,8 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.Subtypes;
+import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 
@@ -86,6 +88,12 @@ public interface EvalConfig extends ConfigurationItem {
 		/** @see #getModel() */
 		String MODEL = "model";
 
+		/** @see #getAgentModels() */
+		String AGENT_MODELS = "agent-models";
+
+		/** @see #getSubagentWorkers() */
+		String SUBAGENT_WORKERS = "subagent-workers";
+
 		/**
 		 * The agent definition this arm runs, by its configured name.
 		 *
@@ -105,6 +113,79 @@ public interface EvalConfig extends ConfigurationItem {
 		@Name(MODEL)
 		@Mandatory
 		String getModel();
+
+		/**
+		 * The models of the agents the arm's agent starts, where they differ from {@link #getModel()} -
+		 * a research lead on one model and its workers on another.
+		 *
+		 * <p>
+		 * The harness assigns them before the arm's runs, as an installation does in
+		 * {@code <agent-overrides>}; an agent not named here runs on {@link #getModel()}.
+		 * </p>
+		 *
+		 * @see #AGENT_MODELS
+		 */
+		@Name(AGENT_MODELS)
+		@Subtypes({
+			@Subtype(tag = "agent-model", type = AgentModel.class),
+		})
+		List<AgentModel> getAgentModels();
+
+		/**
+		 * How many background subagents may run at the same time while this arm runs; 0 for the
+		 * installation's setting.
+		 *
+		 * <p>
+		 * For a model behind an endpoint that serves one request at a time - a local model with one
+		 * concurrent request per key.
+		 * </p>
+		 *
+		 * @see #SUBAGENT_WORKERS
+		 */
+		@Name(SUBAGENT_WORKERS)
+		int getSubagentWorkers();
+	}
+
+	/**
+	 * The model one agent runs on within an {@link Arm}.
+	 */
+	interface AgentModel extends ConfigurationItem {
+
+		/** @see #getAgent() */
+		String AGENT = "agent";
+
+		/** @see #getModel() */
+		String MODEL = "model";
+
+		/** @see #getProvider() */
+		String PROVIDER = "provider";
+
+		/**
+		 * The agent, by its configured name.
+		 *
+		 * @see #AGENT
+		 */
+		@Name(AGENT)
+		@Mandatory
+		String getAgent();
+
+		/**
+		 * The model it runs on.
+		 *
+		 * @see #MODEL
+		 */
+		@Name(MODEL)
+		@Mandatory
+		String getModel();
+
+		/**
+		 * The provider serving {@link #getModel()}, or empty when only one provider exposes it.
+		 *
+		 * @see #PROVIDER
+		 */
+		@Name(PROVIDER)
+		@Nullable
+		String getProvider();
 	}
 
 	/**

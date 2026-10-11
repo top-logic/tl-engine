@@ -100,7 +100,7 @@ public class TestResearchEval extends BasicTestCase {
 		List<RunRecord> rows = new ArrayList<>();
 		for (String arm : List.copyOf(config.getArms().keySet())) {
 			EvalConfig single = EvalConfigs.restrictedTo(config, List.of(arm));
-			runOn(single.getArms().get(arm).getModel());
+			runOn(single.getArms().get(arm));
 			rows.addAll(EvalMatrix.run(single, PersonManager.getManager().getRoot(), () -> {
 				// A research question reads the web and changes no data.
 			}, judge));
@@ -131,8 +131,15 @@ public class TestResearchEval extends BasicTestCase {
 			new ClassRelativeBinaryContent(TestResearchEval.class, "research-scenarios.config.xml"));
 	}
 
-	/** The configuration with only the scenarios and the repeats the system properties ask for. */
+	/** The configuration with only the arms, scenarios and repeats the system properties ask for. */
 	private static EvalConfig selected(EvalConfig config) {
+		String arms = System.getProperty(ResearchE2e.ARMS_PROPERTY, "").strip();
+		if (!arms.isEmpty()) {
+			List<String> wanted = Arrays.stream(arms.split(",")).map(String::strip).toList();
+			assertTrue("Unknown arm in -D" + ResearchE2e.ARMS_PROPERTY + "=" + arms,
+				config.getArms().keySet().containsAll(wanted));
+			config = EvalConfigs.restrictedTo(config, wanted);
+		}
 		EvalConfig result = TypedConfiguration.copy(config);
 		String ids = System.getProperty(ResearchE2e.SCENARIOS_PROPERTY, "").strip();
 		if (!ids.isEmpty()) {
@@ -157,8 +164,27 @@ public class TestResearchEval extends BasicTestCase {
 		return new Judge(model, System.getProperty(ResearchE2e.JUDGE_PROVIDER_PROPERTY, "").strip());
 	}
 
-	/** Makes the given model the default one, for the lead and its workers, and restarts the runtime. */
-	private void runOn(String model) throws Exception {
+	/**
+	 * Assigns the arm's models - its model as the default one, for the lead and every agent the arm
+	 * names no model for, and the models of its agents as agent overrides - and restarts the runtime.
+	 * The layer of the arm before is removed first, so that nothing of it carries over.
+	 */
+	private void runOn(EvalConfig.Arm arm) throws Exception {
+		XMLProperties.Module.INSTANCE.config().getTypedConfigs().removeAll(_layers);
+		_layers.clear();
+
+		StringBuilder overrides = new StringBuilder();
+		for (EvalConfig.AgentModel agentModel : arm.getAgentModels()) {
+			overrides.append("<agent name=\"").append(agentModel.getAgent()).append("\" model=\"")
+				.append(agentModel.getModel()).append('"');
+			if (agentModel.getProvider() != null && !agentModel.getProvider().isBlank()) {
+				overrides.append(" provider=\"").append(agentModel.getProvider()).append('"');
+			}
+			overrides.append("/>");
+		}
+		String capacity = arm.getSubagentWorkers() > 0
+			? "<capacity subagent-workers=\"" + arm.getSubagentWorkers() + "\"/>"
+			: "";
 		Path file = Files.createTempFile("research-arm", ".config.xml");
 		Files.writeString(file, """
 			<?xml version="1.0" encoding="utf-8" ?>
@@ -167,17 +193,23 @@ public class TestResearchEval extends BasicTestCase {
 			>
 				<services>
 					<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-						<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService" default-model="%s"/>
+						<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService" default-model="%s">
+							%s
+							<agent-overrides>%s</agent-overrides>
+						</instance>
 					</config>
 				</services>
 			</application>
-			""".formatted(model), StandardCharsets.UTF_8);
+			""".formatted(arm.getModel(), capacity, overrides), StandardCharsets.UTF_8);
 		file.toFile().deleteOnExit();
 		BinaryData layer = BinaryDataFactory.createBinaryDataWithName(file.toFile(), file.getFileName().toString());
 		XMLProperties.Module.INSTANCE.config().getTypedConfigs().add(layer);
 		_layers.add(layer);
 		restartRuntime();
-		assertEquals(model, AgentRuntimeService.getInstance().getDefaultModel());
+		assertEquals(arm.getModel(), AgentRuntimeService.getInstance().getDefaultModel());
+		for (EvalConfig.AgentModel agentModel : arm.getAgentModels()) {
+			assertEquals(agentModel.getModel(), AgentRuntimeService.getInstance().resolveModel(agentModel.getAgent()));
+		}
 	}
 
 	private static void restartRuntime() throws Exception {

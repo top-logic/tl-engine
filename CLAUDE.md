@@ -150,6 +150,10 @@ good model is three points better than another.
 hosts, links to unread pages), `<judge>` by a pinned judge model of another family against a rubric.
 Real models and the real web, so behind `-Dtl.ai.research.e2e=true` - see `ResearchE2e`; the
 graders run in every build against a scripted model and judge (`TestResearchPlumbing`).
+An arm can put the workers on another model than the lead (`<agent-models>`, `subagent-workers`
+for a server with one request at a time, #784); the CSV's `subagent*` columns count what the workers
+spent. `-Dtl.ai.research.arms=` selects arms; `albert-gpt-worker-qwen` needs `tl_qwen_api_key` and
+the company network.
 
 ```bash
 export tl_openai_api_key=... tl_anthropic_api_key=... tl_brave_api_key=...   # each "unencrypted:<key>"

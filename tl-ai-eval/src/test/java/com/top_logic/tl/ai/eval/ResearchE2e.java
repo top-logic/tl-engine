@@ -36,7 +36,7 @@ import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
  * </pre>
  *
  * <p>
- * {@code -Dtl.ai.research.scenarios=id,id} runs a sample, {@code -Dtl.ai.research.repeats=1} one run
+ * {@code -Dtl.ai.research.arms=name,name} runs some of the arms, {@code -Dtl.ai.research.scenarios=id,id} a sample, {@code -Dtl.ai.research.repeats=1} one run
  * per question, {@code -Dtl.ai.research.judge=model} another judge than the pinned one - whose rows
  * then compare with nothing graded by the pinned one.
  * </p>
@@ -45,6 +45,9 @@ public class ResearchE2e {
 
 	/** System property that enables the real research questions. */
 	public static final String ENABLED_PROPERTY = "tl.ai.research.e2e";
+
+	/** System property naming the arms to run, comma-separated; all when unset. */
+	public static final String ARMS_PROPERTY = "tl.ai.research.arms";
 
 	/** System property naming the scenarios to run, comma-separated; all when unset. */
 	public static final String SCENARIOS_PROPERTY = "tl.ai.research.scenarios";

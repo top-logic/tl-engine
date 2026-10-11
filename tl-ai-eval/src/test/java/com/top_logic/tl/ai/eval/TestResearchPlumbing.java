@@ -16,6 +16,8 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
@@ -92,6 +94,24 @@ public class TestResearchPlumbing extends BasicTestCase {
 		assertEquals(row.verdicts().toString(), RunOutcome.PASS, row.outcome());
 		assertEquals("judge eval-scripted: 3/3 criteria met", verdict(row, "correct").detail());
 		assertEquals("1 sources from 1 hosts, 0 unread links", verdict(row, "cites-a-read-page").detail());
+		assertEquals("The row counts the worker: one run, its search and its read.", 1, row.subagents().runs());
+		assertEquals(2, row.subagents().toolCalls());
+		assertTrue(row.subagents().inputTokens() > 0);
+	}
+
+	/** An arm whose worker runs on a model this application does not know is not started. */
+	public void testAnArmWithAnUnknownWorkerModelIsNotStarted() throws Exception {
+		EvalConfig.Arm arm = (EvalConfig.Arm) TypedConfiguration.parse("arm", EvalConfig.Arm.class,
+			CharacterContents.newContent("<arm name='mixed' agent='TL_SingleAgent' model='eval-scripted'>"
+				+ "<agent-models><agent-model agent='TL_ResearchWorker' model='no-such-model'/></agent-models>"
+				+ "</arm>", "arm.xml"));
+
+		String reason = EvalRunner.whyUnusable(arm);
+
+		assertNotNull(reason);
+		assertTrue(reason, reason.contains("'no-such-model' of agent 'TL_ResearchWorker'"));
+		assertNull("The same arm with a known worker model runs.",
+			EvalRunner.whyUnusable(Arms.of("plain", "TL_SingleAgent", "eval-scripted")));
 	}
 
 	/** A lead that reads the page itself fails the research shape, whatever its report says. */

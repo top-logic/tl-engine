@@ -46,6 +46,9 @@ import java.util.List;
  *        The final assistant text, kept for reading a surprising row rather than for grading.
  * @param error
  *        Why the run failed or could not be started, or {@code null}.
+ * @param subagents
+ *        What the background subagents the run started spent; the token columns before count the
+ *        run's own requests only.
  */
 public record RunRecord(
 		String scenarioId,
@@ -63,7 +66,16 @@ public record RunRecord(
 		List<String> toolCalls,
 		List<Verdict> verdicts,
 		String response,
-		String error) {
+		String error,
+		SubagentTotals subagents) {
+
+	/** A row of a run whose subagents are not counted. */
+	public RunRecord(String scenarioId, String arm, String model, String agent, int repeat, RunOutcome outcome,
+			int turns, int inputTokens, int cacheReadTokens, int outputTokens, long durationMs, String stopReason,
+			List<String> toolCalls, List<Verdict> verdicts, String response, String error) {
+		this(scenarioId, arm, model, agent, repeat, outcome, turns, inputTokens, cacheReadTokens, outputTokens,
+			durationMs, stopReason, toolCalls, verdicts, response, error, SubagentTotals.NONE);
+	}
 
 	/** The stop reason recorded for an arm that was never started. */
 	public static final String NOT_RUN = "NOT_RUN";

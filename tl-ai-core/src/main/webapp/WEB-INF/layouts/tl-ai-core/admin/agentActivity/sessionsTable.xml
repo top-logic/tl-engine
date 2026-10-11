@@ -126,9 +126,10 @@
 				]]></accessor>
 			</configurationProvider>
 			<!--
-				Text rather than a number: the runs of one session may have recorded their cost in two
-				currencies - the installation changed it in between - and two amounts in two currencies
-				are written side by side, never added. In the common case it is one amount.
+				Text rather than a number: the runs of one session are shown in the system currency at
+				the rate of their day, or in US dollars where no rate converts them, and two amounts in
+				two currencies are written side by side, never added. In the common case it is one
+				amount.
 			-->
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="costTotal"
@@ -138,11 +139,11 @@
 				<accessor><![CDATA[
 					s -> {
 						priced = $s.referers(`tl.ai.execution:AgentExecution#session`)
-							.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#cost`)));
-						byCurrency = $priced.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#currency`));
+							.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#displayCost`)));
+						byCurrency = $priced.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`));
 						$byCurrency.keySet().toList().sort()
-							.map(c -> numberFormat('#,##0.00').format($byCurrency[$c]
-								.map(e -> $e.get(`tl.ai.execution:AgentExecution#cost`)).sum()) + ' ' + $c)
+							.map(c -> numberFormat('#,##0.00##').format($byCurrency[$c]
+								.map(e -> $e.get(`tl.ai.execution:AgentExecution#displayCost`)).sum()) + ' ' + $c)
 							.join(' + ');
 					}
 				]]></accessor>

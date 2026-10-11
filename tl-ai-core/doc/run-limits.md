@@ -35,8 +35,6 @@ account may spend is `<budget>` on `AgentPolicyService` ("Agent policy"):
         <budget
             token-budget="0"
             money-budget="0"
-            currency="USD"
-            exchange-rate="1"
             budget-window-hours="24"
         >
             <role-budgets>
@@ -53,9 +51,7 @@ account may spend is `<budget>` on `AgentPolicyService` ("Agent policy"):
 | `chat-queue` | `0` = **queue of no fixed length** | How many sends may wait for a free worker, once there is a ceiling. `-1` keeps no queue and refuses instead. |
 | `concurrent-runs-per-account` | `0` = off | How many runs one account may have going, over every entry point. |
 | `token-budget` | `0` = unlimited | How many tokens one account may spend in the window. |
-| `money-budget` | `0` = unlimited | How much money one account may spend in the window, in `currency`. |
-| `currency` | `USD` | The ISO 4217 code of the currency that the installation records costs in. |
-| `exchange-rate` | `1` | How many units of `currency` one US dollar is worth. A fixed number. |
+| `money-budget` | `0` = unlimited | How much money one account may spend in the window, in the application's system currency (euro by default). Checked only while a rate of USD is valid today, see "The currency" below. |
 | `budget-window-hours` | `24` | How far back both budgets count. A rolling window, not a calendar day. |
 | `<role-budget name tokens money>` | none | A budget for the holders of one role. `0` is unlimited. An attribute that is not set says nothing about that budget. An entry that sets neither stops the start of `AgentPolicyService` (#825). |
 
@@ -164,7 +160,7 @@ is a 429 with a sentence rather than a turn that fails.
 
 Also decided in `RunLimits.admit`, and in two halves:
 
-**At run start.** `AgentExecutionStore.spentSince(owner, since, currency)` sums every recorded run of
+**At run start.** `AgentExecutionStore.spentSince(owner, since)` sums every recorded run of
 that account which *started* within the window - prompt including its cached part, and output
 including reasoning (#730: a reasoning token is a part of the output and counts once). Every execution row counts once, delegated children included: they carry their own usage
 and belong to the same session, so summing rows is the account's true spend; a sum that added each
@@ -241,16 +237,43 @@ it a price in `<model-overrides>`. `RunCosts` writes one INFO line for each mode
 </model-overrides>
 ```
 
-**The currency.** One currency for each installation, set in `<budget currency exchange-rate>`. The
-run converts the dollar cost with the configured rate and records the amount and the currency code
-on its `AgentExecution` row (`cost`, `currency`), together with the token counts. Nothing gets a
-live exchange rate, because a budget must not change when nobody changes it. A changed rate applies
-to the runs that follow. The recorded runs keep their amounts. `AgentPolicyService` does not start
-with a currency code that is not ISO 4217, or with a rate that is not a positive number.
+**The currency.** A run records its cost in US dollars, the currency of the prices, on its
+`AgentExecution` row (`cost`), together with the token counts. Nothing is converted when it is
+recorded. The cost is converted where it is shown or compared with a budget, into the engine's
+system currency (`CurrencySystem`, euro unless the application configures another), at the rate of
+the engine's currency USD for the day the run started (`CostConversion`):
 
-**What is counted.** `AgentExecutionStore.spentSince(owner, since, currency)` reads the tokens and
-the cost of the account's runs in one pass. Only rows in the current currency add their cost. After
-a change of the currency the account starts with no money spent.
+1. A dated exchange rate of USD that is valid on that day (`Currency.getConversionFactor(Date)`). A
+   dated rate entered later changes nothing for an earlier run. The engine's screens cannot enter
+   dated rates; they come from a data import or a script (`Currency.saveExchangeRatio`).
+2. Otherwise the conversion factor of USD - the "Umrechnungsfaktor" an administrator edits under
+   Administration > Basisadministration > Währungen. It is not dated, so changing it changes the
+   amounts of every run that has no dated rate. A factor of exactly 1 counts as no rate:
+   `CurrencySystem` creates every currency with the factor 1, so that value says nothing.
+
+`<budget>` has no `currency` and no `exchange-rate` any more (they came with #722 and were never
+released). A configuration that still sets them is refused when it is read: delete the two
+attributes, set the conversion factor of USD under Administration > Basisadministration > Währungen,
+and state `money-budget` in the
+system currency.
+
+The direction of a rate is the engine's: an amount is converted as amount x factor(own) /
+factor(target), so the rate of USD says how many units of the system currency one US dollar is
+worth. With the system currency EUR, a factor of 0.92 makes one dollar 0.92 euro. A system currency
+that is US dollars needs no rate.
+
+**Without a rate nobody is blocked.** When the application has no currency USD, or no rate of it is
+valid today, costs are shown in US dollars and the money budget is **not** checked; the token budget
+still is. The log says so with a WARN at the start of `AgentPolicyService` (when the currency system
+is already running) and when a budget check is skipped, at most once an hour. The token tile of the
+agent activity monitor shows the same sentence, for example "Kein Wechselkurs USD -> EUR:
+Geldbudget wird nicht geprüft, Kosten werden in USD angezeigt." (`aiCostWarning()`).
+
+**What is counted.** `AgentExecutionStore.spentSince(owner, since)` reads the tokens and the cost of
+the account's runs in one pass and converts each cost at the rate of its run's day. A run with a cost
+and no rate for its day makes the sum incomplete, and the money budget is then not checked either.
+The run that starts counts its own costs at today's rate, which `RunLimits` hands to the run's
+`BudgetAllowance` (`MoneyBudget.usdRate`).
 
 ### Role budgets
 
@@ -271,10 +294,12 @@ It is deliberately this small: a table of numbers, not a place to express *when*
 
 The run monitor (Agentenaktivität) shows the cost next to the tokens:
 
-- **Läufe** and the run detail: `Kosten` and `Währung` of each run.
+- **Läufe** and the run detail: `Kosten` and `Währung` of each run (`displayCost`,
+  `displayCurrency`: converted at the rate of the run's day, or US dollars without one), and
+  `Kosten (USD)` as the run recorded it.
 - **Sitzungen**: `Kosten` of all runs of a session, for each currency.
-- **Überblick**: the token tile shows the cost of the selected period, and its table shows the cost
-  of each run.
+- **Überblick**: the token tile shows the cost of the selected period - and, while no rate of USD is
+  valid today, a warning line - and its table shows the cost of each run.
 - **Verbrauch**: the chart "Kosten nach Konto" shows the ten accounts with the highest cost in the
   period, one bar for each currency.
 

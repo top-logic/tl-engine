@@ -25,6 +25,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.KBUtils;
@@ -41,6 +42,8 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
@@ -50,6 +53,7 @@ import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -77,6 +81,7 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
@@ -1153,6 +1158,72 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			result.add(row);
 		}
 		return result;
+	}
+
+	/**
+	 * What the given run cost, in the currency the agent activity monitor shows costs in.
+	 *
+	 * <p>
+	 * A run records its cost in US dollars, the currency of the prices. This converts it into the
+	 * application's system currency at the exchange rate of the currency "USD" that was valid on the
+	 * day the run started, and leaves it in US dollars while there is no such rate; see
+	 * {@link CostConversion}. {@link #costCurrency(Object)} names the currency. The derived attribute
+	 * {@code tl.ai.execution:AgentExecution#displayCost} is this function.
+	 * </p>
+	 *
+	 * @param execution
+	 *        An agent run ({@code tl.ai.execution:AgentExecution}).
+	 * @return The amount; {@code null} for a run that recorded no cost, and for anything else than a
+	 *         run.
+	 */
+	public static Double cost(Object execution) {
+		Money shown = shownCost(execution);
+		return shown == null ? null : Double.valueOf(shown.amount());
+	}
+
+	/**
+	 * The ISO 4217 code of the currency {@link #cost(Object)} answers in for the given run: the
+	 * system currency, or {@code USD} while no rate of the run's day converts it.
+	 *
+	 * @param execution
+	 *        An agent run ({@code tl.ai.execution:AgentExecution}).
+	 * @return The code; {@code null} for a run that recorded no cost.
+	 */
+	public static String costCurrency(Object execution) {
+		Money shown = shownCost(execution);
+		return shown == null ? null : shown.currency();
+	}
+
+	private static Money shownCost(Object execution) {
+		if (!(execution instanceof AgentExecution run)) {
+			return null;
+		}
+		Double usd = run.getCost();
+		if (usd == null) {
+			return null;
+		}
+		return CostConversion.shown(new Money(usd.doubleValue(), Money.USD), run.getStartedAt());
+	}
+
+	/**
+	 * What the agent activity monitor warns about costs today, in the user's language.
+	 *
+	 * <p>
+	 * While no exchange rate converts US dollars into the system currency today, costs are shown in
+	 * US dollars and a money budget is not checked; this says which of the two applies. Nothing
+	 * while there is such a rate, or the system currency is US dollars.
+	 * </p>
+	 *
+	 * @return The warning, or {@code null} when there is nothing to warn about.
+	 */
+	public static String costWarning() {
+		if (CostConversion.usdRate(null).isPresent()) {
+			return null;
+		}
+		ResKey1 template = RunLimitSettings.anyMoneyBudget()
+			? I18NConstants.COST_NO_RATE_BUDGET_UNCHECKED__CURRENCY
+			: I18NConstants.COST_NO_RATE__CURRENCY;
+		return Resources.getInstance().getString(template.fill(CostConversion.systemCurrency()));
 	}
 
 	/**

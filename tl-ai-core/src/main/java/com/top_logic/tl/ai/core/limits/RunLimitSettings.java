@@ -6,14 +6,11 @@
 package com.top_logic.tl.ai.core.limits;
 
 import java.util.Collection;
-import java.util.Locale;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.cost.CostCurrency;
-import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 
 /**
@@ -216,6 +213,28 @@ public class RunLimitSettings {
 		return config.getTokenBudget() > 0 || config.getMoneyBudget() > 0 || !config.getRoleBudgets().isEmpty();
 	}
 
+	/** Whether the configured budget limits money for anybody. */
+	public static boolean anyMoneyBudget() {
+		return namesMoney(budget());
+	}
+
+	/**
+	 * Whether the given budget section limits money for anybody: its own money budget, or the money
+	 * figure of a role.
+	 */
+	public static boolean namesMoney(BudgetConfig config) {
+		if (config.getMoneyBudget() > 0) {
+			return true;
+		}
+		for (RoleBudget role : config.getRoleBudgets().values()) {
+			Double money = role.getMoney();
+			if (money != null && money.doubleValue() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * How many tokens an account holding the given roles may spend in the window; {@code 0} for
 	 * unlimited.
@@ -240,8 +259,9 @@ public class RunLimitSettings {
 	}
 
 	/**
-	 * How much money an account holding the given roles may spend in the window, in
-	 * {@link #costCurrency() the installation's currency}; {@code 0} for unlimited.
+	 * How much money an account holding the given roles may spend in the window, in the engine's
+	 * system currency ({@link com.top_logic.tl.ai.core.cost.CostConversion}); {@code 0} for
+	 * unlimited.
 	 *
 	 * <p>
 	 * Decided exactly like {@link #tokenBudget(Collection)}, over the money figures of the role
@@ -256,41 +276,6 @@ public class RunLimitSettings {
 		Double granted = roleBudget(config, heldRoleNames, RoleBudget::getMoney);
 		double budget = granted != null ? granted.doubleValue() : config.getMoneyBudget();
 		return budget > 0 ? budget : 0;
-	}
-
-	/**
-	 * The currency this installation states and records costs in, with its rate to the US dollar.
-	 *
-	 * <p>
-	 * US dollars at the rate of one when the configured currency or rate cannot be used. The
-	 * service refuses to start with such a value, so this only covers a configuration handed in
-	 * through {@link #override(RunLimitsConfig)}.
-	 * </p>
-	 *
-	 * @see BudgetConfig#getCurrency()
-	 * @see BudgetConfig#getExchangeRate()
-	 */
-	public static CostCurrency costCurrency() {
-		BudgetConfig config = budget();
-		try {
-			return currencyOf(config);
-		} catch (IllegalArgumentException ex) {
-			return CostCurrency.USD;
-		}
-	}
-
-	/**
-	 * The currency the given section configures.
-	 *
-	 * @throws IllegalArgumentException
-	 *         If the section names no ISO 4217 currency, or no positive exchange rate.
-	 */
-	public static CostCurrency currencyOf(BudgetConfig config) {
-		String code = config.getCurrency();
-		if (code == null || code.isBlank()) {
-			code = Money.USD;
-		}
-		return new CostCurrency(code.trim().toUpperCase(Locale.ROOT), config.getExchangeRate());
 	}
 
 	/**

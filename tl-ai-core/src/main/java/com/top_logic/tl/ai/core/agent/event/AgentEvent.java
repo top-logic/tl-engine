@@ -129,8 +129,8 @@ public sealed interface AgentEvent {
 	 * @param timestamp when the event occurred
 	 * @param reason why the run stopped
 	 * @param totalUsage cumulative token usage for the run
-	 * @param totalCost what the run cost, in the currency the installation states costs in; each
-	 *        request priced with the model that answered it
+	 * @param totalCost what the run cost, in US dollars like the prices; each request priced with
+	 *        the model that answered it. {@code CostConversion} converts it for display
 	 */
 	record RunCompleted(String runId, int turnNumber, Instant timestamp,
 			StopReason reason, TokenUsage totalUsage, Money totalCost) implements AgentEvent {}

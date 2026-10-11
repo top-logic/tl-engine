@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -48,6 +49,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -1077,8 +1079,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				execution.setCacheWriteTokens((long) usage.cacheWriteTokens());
 			}
 			if (cost != null) {
-				execution.setCost(Double.valueOf(cost.amount()));
-				execution.setCurrency(cost.currency());
+				execution.setCost(Double.valueOf(usd(cost, execution.getRunId())));
 			}
 			execution.setTranscript(transcript.get());
 			execution.setResponse(response);
@@ -1183,16 +1184,34 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * The given cost as the US dollars a run records.
+	 *
+	 * <p>
+	 * A run prices every request in US dollars ({@code RunCosts}), so another currency here is a
+	 * caller's mistake; it is recorded as nothing rather than as a wrong amount.
+	 * </p>
+	 */
+	private static double usd(Money cost, String runId) {
+		if (Money.USD.equals(cost.currency())) {
+			return cost.amount();
+		}
+		Logger.error("Run " + runId + " reported its cost in " + cost.currency() + ", not in USD; it is recorded as"
+			+ " costing nothing.", AgentExecutionStore.class);
+		return 0;
+	}
+
+	/**
 	 * What the given account's runs consumed since the given point in time: tokens, and what they
-	 * cost in the given currency.
+	 * cost in the engine's system currency.
 	 *
 	 * <p>
 	 * The figures the budgets are enforced against: everything the provider was asked to read and
 	 * write - prompt including its cached part, and output including reasoning - and the recorded
 	 * cost of it, summed over every recorded run of that account which <em>started</em> within the
-	 * window. A run whose cost was recorded in another currency adds its tokens and not its cost:
-	 * amounts in two currencies do not add up, and this product converts an amount only where it is
-	 * made.
+	 * window. A run records its cost in US dollars; it is converted at the rate that was valid on
+	 * the day the run started ({@link CostConversion#usdRate(Date)}). A run with a cost and no rate
+	 * for its day adds its tokens and not its cost, and makes the sum {@link AccountSpend#complete()
+	 * incomplete}.
 	 * </p>
 	 *
 	 * <p>
@@ -1220,17 +1239,16 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        The account whose runs are counted; <code>null</code> yields nothing spent.
 	 * @param since
 	 *        The start of the window; <code>null</code> counts every recorded run.
-	 * @param currency
-	 *        The ISO 4217 code of the currency whose costs are summed.
 	 * @return What was spent; never <code>null</code>.
 	 */
-	public AccountSpend spentSince(Person owner, Date since, String currency) {
+	public AccountSpend spentSince(Person owner, Date since) {
 		if (owner == null) {
-			return new AccountSpend(0, 0);
+			return new AccountSpend(0, 0, true);
 		}
 		return onWriterThread(() -> {
 			long tokens = 0;
 			double cost = 0;
+			boolean complete = true;
 			for (TLObject session : owner.tReferers(TlAiExecutionFactory.getOwnerAgentSessionAttr())) {
 				for (TLObject obj : session.tReferers(TlAiExecutionFactory.getSessionAgentExecutionAttr())) {
 					AgentExecution execution = (AgentExecution) obj;
@@ -1240,12 +1258,17 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 					}
 					tokens += usageOf(execution).totalTokens();
 					Double runCost = execution.getCost();
-					if (runCost != null && currency.equals(execution.getCurrency())) {
-						cost += runCost.doubleValue();
+					if (runCost != null && runCost.doubleValue() > 0) {
+						OptionalDouble rate = CostConversion.usdRate(started);
+						if (rate.isPresent()) {
+							cost += runCost.doubleValue() * rate.getAsDouble();
+						} else {
+							complete = false;
+						}
 					}
 				}
 			}
-			return new AccountSpend(tokens, cost);
+			return new AccountSpend(tokens, cost, complete);
 		});
 	}
 
@@ -1255,12 +1278,15 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * @param tokens
 	 *        The tokens, never negative.
 	 * @param cost
-	 *        What they cost, in the currency that was asked for; never negative.
+	 *        What they cost, in the system currency; never negative.
+	 * @param complete
+	 *        Whether {@code cost} counts every run: {@code false} when a run that cost something had
+	 *        no exchange rate for its day.
 	 *
-	 * @see AgentExecutionStore#spentSince(Person, Date, String)
+	 * @see AgentExecutionStore#spentSince(Person, Date)
 	 */
-	public record AccountSpend(long tokens, double cost) {
-		// A pair, nothing more.
+	public record AccountSpend(long tokens, double cost, boolean complete) {
+		// Pure data.
 	}
 
 	/**

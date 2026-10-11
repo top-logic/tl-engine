@@ -14,9 +14,11 @@
 	so the label states the selected period and follows it. The table title behind the tile cannot,
 	and no longer tries to name a window.
 	
-	The cost of the period is the second line under the number (#722): what the runs recorded, summed
-	per currency, so that a period in which the installation changed its currency shows two amounts
-	rather than one wrong one. A token count stays the headline, because it is what every provider
+	The cost of the period is the second line under the number (#722): what the runs cost in the
+	system currency, each at the rate of USD valid on its day, summed per currency, so that a period
+	with runs no rate converts shows their US dollars beside the converted amount rather than one
+	wrong sum. While no rate is valid today, a third line says so - and that a money budget is then
+	not checked (aiCostWarning). A token count stays the headline, because it is what every provider
 	reports, while a cost is only as good as the price list behind it.
 -->
 <securityLayout name="aiOverviewTokensTile"
@@ -71,12 +73,13 @@
 						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
 							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
 						cached = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#cacheReadTokens`)($e)).sum();
-						priced = $recent.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#cost`)));
-						byCurrency = $priced.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#currency`));
+						priced = $recent.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#displayCost`)));
+						byCurrency = $priced.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`));
 						cost = $byCurrency.keySet().toList().sort()
-							.map(c -> numberFormat('#,##0.00').format($byCurrency[$c]
-								.map(e -> $e.get(`tl.ai.execution:AgentExecution#cost`)).sum()) + ' ' + $c)
+							.map(c -> numberFormat('#,##0.00##').format($byCurrency[$c]
+								.map(e -> $e.get(`tl.ai.execution:AgentExecution#displayCost`)).sum()) + ' ' + $c)
 							.join(' + ');
+						warning = aiCostWarning();
 						// A seven-digit number is not a number a reader takes in at a glance; the exact value is one
 						// click away in the table behind this tile.
 						short = v -> $v >= 1000000
@@ -91,6 +94,9 @@
 								<div class="aiKpiNote">
 									{#('Cost: {0}'@en, 'Kosten: {0}'@de).fill(ifElse(isEmpty($cost), '-', $cost))}
 								</div>
+								{ isEmpty($warning) ? "" : {{{
+									<div class="aiKpiNote aiKpiAlert">{$warning}</div>
+								}}} }
 							</div>
 						}}};
 					}
@@ -127,7 +133,7 @@
 				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>
 			<table
-				defaultColumns="displayName,agentName,model,startedAt,inputTokens,outputTokens,thinkingTokens,cacheReadTokens,cacheWriteTokens,cost,currency"
+				defaultColumns="displayName,agentName,model,startedAt,inputTokens,outputTokens,thinkingTokens,cacheReadTokens,cacheWriteTokens,displayCost,displayCurrency"
 				defaultSortOrder="startedAt:descending"
 				fixedColumns="1"
 			>
@@ -160,11 +166,14 @@
 					<column name="cacheWriteTokens"
 						columnWidth="145px"
 					/>
-					<column name="cost"
+					<column name="displayCost"
 						columnWidth="90px"
 					/>
-					<column name="currency"
-						columnWidth="80px"
+					<column name="displayCurrency"
+						columnWidth="100px"
+					/>
+					<column name="cost"
+						columnWidth="100px"
 					/>
 					<column name="transcript"
 						visibility="excluded"

@@ -128,14 +128,19 @@
 							type="tl.core:Long"
 						/>
 						<field
-							attribute="cost"
-							fullQualifiedName="tl.ai.execution:AgentExecution#cost"
+							attribute="displayCost"
+							fullQualifiedName="tl.ai.execution:AgentExecution#displayCost"
 							type="tl.core:Double"
 						/>
 						<field
-							attribute="currency"
-							fullQualifiedName="tl.ai.execution:AgentExecution#currency"
+							attribute="displayCurrency"
+							fullQualifiedName="tl.ai.execution:AgentExecution#displayCurrency"
 							type="tl.core:String"
+						/>
+						<field
+							attribute="cost"
+							fullQualifiedName="tl.ai.execution:AgentExecution#cost"
+							type="tl.core:Double"
 						/>
 					</group>
 					<group

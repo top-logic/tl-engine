@@ -87,6 +87,12 @@
 	color: #8b1113;
 }
 
+/* A sentence in a tile wraps: the tile is a fifth of the row wide, and a warning is longer than that. */
+.aiKpiNote {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
 /* --- turn ---------------------------------------------------------------- */
 
 .aiTrTurn {

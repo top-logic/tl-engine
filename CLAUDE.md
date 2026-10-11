@@ -382,13 +382,18 @@ it, and shares that run's `BudgetAllowance`. The budget is computed from the rec
 headroom rides on `ToolContext.budgetAllowance()`, and a run that spends it stops **between turns**
 with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`).
 
-**Money (#722).** `AgentLoop` prices every request with the model that answered it (`RunCosts`,
+**Money (#722, #858).** `AgentLoop` prices every request with the model that answered it (`RunCosts`,
 `CostCalculator`: input, output, reasoning, cache read and cache write each at its own price, the
-over-200k tier per request), converts the dollar price into the one `currency` of `<budget>` at its
-fixed `exchange-rate`, and the run records `cost` and `currency` on its `AgentExecution`. Prices are
-the models.dev catalog's, or the `*-price` attributes of a `<model-overrides>` entry on
-`LLMProviderService`; a model without a price costs 0. The refusal names the amounts in the user's
-number format. See `tl-ai-core/doc/run-limits.md`.
+over-200k tier per request), and the run records `cost` on its `AgentExecution` **in US dollars**,
+the currency of the prices. Prices are the models.dev catalog's, or the `*-price` attributes of a
+`<model-overrides>` entry on `LLMProviderService`; a model without a price costs 0. A cost is
+converted only where it is shown or compared with `money-budget`: into the engine's system currency
+(`CurrencySystem`), at the dated rate of the engine's currency USD valid on the run's day, else at
+that currency's conversion factor unless it is the 1 every currency is created with (`CostConversion`;
+Administration > Basisadministration > Währungen). Without such a rate costs are shown in USD and the
+money budget is **not** checked, with a rate-limited WARN and a line on the monitor's token tile; the
+token budget still is. The monitor reads `AgentExecution#displayCost`/`#displayCurrency`. The refusal
+names the amounts in the user's number format. See `tl-ai-core/doc/run-limits.md`.
 
 ### Provider System (tl-ai-core `provider/`)
 

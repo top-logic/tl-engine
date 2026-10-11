@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import com.top_logic.base.services.CurrencySystem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -17,6 +18,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
+import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.limits.BudgetConfig;
 import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
@@ -146,7 +148,7 @@ public class AgentPolicyService extends ConfiguredManagedClass<AgentPolicyServic
 	@Override
 	protected void startUp() {
 		super.startUp();
-		refuseUnusableCurrency(getConfig().getBudget());
+		warnWithoutRate(getConfig().getBudget());
 		refuseEmptyRoleBudgets(getConfig().getBudget());
 		_instance = this;
 	}
@@ -176,25 +178,22 @@ public class AgentPolicyService extends ConfiguredManagedClass<AgentPolicyServic
 	}
 
 	/**
-	 * Stops the start when the budget names a currency or an exchange rate no cost could be
-	 * converted with.
+	 * Tells the log at the start when a money budget is configured that cannot be checked today.
 	 *
 	 * <p>
-	 * At the start rather than at the first run: a wrong currency code would otherwise show only as
-	 * runs whose cost is recorded in dollars, on a budget the administrator believes to be in euros.
+	 * The money budget is stated in the system currency and runs record US dollars; without a rate of
+	 * the currency "USD" valid today the budget is not checked (see {@link CostConversion}). The
+	 * start does not fail over it - nobody is to be blocked for a rate nobody entered - but the
+	 * administrator learns it here and not only from the first run. The currency system is asked
+	 * only when it is already running; otherwise the first budget check tells the log.
 	 * </p>
 	 */
-	private static void refuseUnusableCurrency(BudgetConfig budget) {
-		if (budget == null) {
+	private static void warnWithoutRate(BudgetConfig budget) {
+		if (budget == null || !RunLimitSettings.namesMoney(budget) || !CurrencySystem.Module.INSTANCE.isActive()) {
 			return;
 		}
-		try {
-			RunLimitSettings.currencyOf(budget);
-		} catch (IllegalArgumentException ex) {
-			throw new RuntimeException("The <budget> of AgentPolicyService names currency '" + budget.getCurrency()
-				+ "' with exchange rate " + budget.getExchangeRate() + ", which cannot be used: " + ex.getMessage()
-				+ " The currency must be an ISO 4217 code such as EUR, and the rate the positive number of its"
-				+ " units one US dollar is worth.", ex);
+		if (CostConversion.usdRate(null).isEmpty()) {
+			CostConversion.warnNoRate("the money budget of AgentPolicyService is not checked");
 		}
 	}
 

@@ -2,11 +2,11 @@
 
 <!--
 	"Kosten nach Konto", what each account's runs cost over the period the tab's control names - the
-	figure a money budget is enforced against (#722), summed from the cost every run recorded.
+	figure a money budget is enforced against (#722), summed from what every run cost in the system
+	currency at the rate of USD valid on its day (displayCost).
 	
-	One data set per currency. A run records its cost in the currency the installation named at that
-	moment, and a period that spans a change of currency has amounts in two; they are drawn as two
-	bars, never added. The ten accounts that cost most are shown, ranked by the plain sum of their
+	One data set per currency. A run no rate converts is shown in US dollars, the currency it records,
+	so a period with such runs has amounts in two currencies; they are drawn as two bars, never added. The ten accounts that cost most are shown, ranked by the plain sum of their
 	amounts, which is exact in the common case of one currency. A run without a cost - recorded before
 	costs were - is not counted; a model without a price contributes 0.
 -->
@@ -24,7 +24,7 @@
 				$model);
 			executions = all(`tl.ai.execution:AgentExecution`);
 			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
-			cost = e -> $e.get(`tl.ai.execution:AgentExecution#cost`);
+			cost = e -> $e.get(`tl.ai.execution:AgentExecution#displayCost`);
 			start = $period.get(`tl.ai.monitor:Period#windowStart`);
 			end = $period.get(`tl.ai.monitor:Period#windowEnd`);
 			recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
@@ -35,9 +35,9 @@
 			byOwner = $priced.groupBy(e -> $owner($e));
 			ranked = $byOwner.keySet().toList().sort(desc(comparator(o -> $byOwner[$o].map(e -> $cost($e)).sum())));
 			names = ifElse($ranked.size() > 10, $ranked.subList(0, 10), $ranked);
-			currencies = $priced.map(e -> $e.get(`tl.ai.execution:AgentExecution#currency`)).toSet().toList().sort();
-			// Dollars, the currency of the price lists, in a colour of their own: the two currencies a
-			// period that spans a change of currency most likely shows are told apart at a glance.
+			currencies = $priced.map(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`)).toSet().toList().sort();
+			// Dollars, the currency of runs no rate converts, in a colour of their own: told apart from
+			// the system currency at a glance.
 			colorOf = c -> ifElse($c == 'USD', '#8a3ffc', '#2968c8');
 			{
 				'type': 'bar',
@@ -47,7 +47,7 @@
 						dataset = {
 							'label': $c,
 							'data': $names.map(o -> $byOwner[$o]
-								.filter(e -> $e.get(`tl.ai.execution:AgentExecution#currency`) == $c)
+								.filter(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`) == $c)
 								.map(e -> $cost($e)).sum()),
 							'backgroundColor': $colorOf($c),
 							'maxBarThickness': 26

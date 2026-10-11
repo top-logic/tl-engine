@@ -64,6 +64,7 @@ import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovement
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.limits.RunLimits;
@@ -1951,12 +1952,17 @@ public class ChatServlet extends TopLogicServlet {
 			.setMessageId(messageId)));
 	}
 
-	/** A job's cost as JSON members; none while its run has not reported one. */
+	/**
+	 * A job's cost as JSON members, in the currency the chat shows costs in - the system currency at
+	 * today's rate, or US dollars without one ({@link CostConversion}); none while its run has not
+	 * reported one.
+	 */
 	private static String costJson(Money cost) {
 		if (cost == null) {
 			return "";
 		}
-		return ",\"cost\":" + cost.amount() + ",\"currency\":\"" + jsonEscape(cost.currency()) + '"';
+		Money shown = CostConversion.shown(cost, null);
+		return ",\"cost\":" + shown.amount() + ",\"currency\":\"" + jsonEscape(shown.currency()) + '"';
 	}
 
 	/**

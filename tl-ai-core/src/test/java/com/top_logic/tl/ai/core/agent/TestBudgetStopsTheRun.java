@@ -20,9 +20,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.cost.RunCosts;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance.MoneyBudget;
-import com.top_logic.tl.ai.core.limits.BudgetConfig;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
-import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
@@ -139,29 +137,23 @@ public class TestBudgetStopsTheRun extends TestCase {
 	 *
 	 * <p>
 	 * One turn is 100 input tokens at 10 000 USD per million, i.e. 1 USD, which is 0.90 EUR at the
-	 * configured rate. With 4.00 EUR of a 6.00 EUR budget spent before the run, the third turn
-	 * reaches it.
+	 * rate the money budget carries. With 4.00 EUR of a 6.00 EUR budget spent before the run, the
+	 * third turn reaches it. The run reports its cost in US dollars, as the prices state it.
 	 * </p>
 	 */
 	public void testTheRunStopsWhenTheMoneyIsSpent() {
-		RunLimitsConfig config = RunLimitSettings.newConfig();
-		config.update(config.descriptor().getProperty(BudgetConfig.CURRENCY), "EUR");
-		config.update(config.descriptor().getProperty(BudgetConfig.EXCHANGE_RATE), Double.valueOf(0.9));
-		try (RunLimitSettings.Overridden settings = RunLimitSettings.override(config);
-				RunLimitSettings.Overridden prices = RunCosts.overridePrices(
-					model -> MODEL.equals(model) ? new ModelCost(10_000, 0, null, null, null, null, null, null)
-						: null)) {
+		try (RunLimitSettings.Overridden prices = RunCosts.overridePrices(
+			model -> MODEL.equals(model) ? new ModelCost(10_000, 0, null, null, null, null, null, null) : null)) {
 			BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
-				new MoneyBudget(6, 4, "EUR"));
+				new MoneyBudget(6, 4, "EUR", 0.9));
 			List<AgentEvent> events = run(allowance, 10);
 
 			AgentEvent.RunCompleted completed = completion(events);
 			assertEquals(StopReason.BUDGET_EXHAUSTED, completed.reason());
 			assertEquals("0.90 EUR per turn: after three turns 2.70 EUR exceed the 2.00 EUR left.",
 				3, completed.turnNumber());
-			assertEquals("EUR", completed.totalCost().currency());
-			assertEquals("The run reports what it cost, converted at the configured rate.",
-				2.70, completed.totalCost().amount(), 1e-9);
+			assertEquals("USD", completed.totalCost().currency());
+			assertEquals("The run reports what it cost in US dollars.", 3.0, completed.totalCost().amount(), 1e-9);
 		}
 	}
 
@@ -169,7 +161,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 	public void testAnUnpricedModelCostsNothing() {
 		try (RunLimitSettings.Overridden prices = RunCosts.overridePrices(model -> null)) {
 			BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
-				new MoneyBudget(1, 0, "USD"));
+				new MoneyBudget(1, 0, "USD", 1));
 			List<AgentEvent> events = run(allowance, 3);
 
 			assertEquals(StopReason.MAX_TURNS, completion(events).reason());

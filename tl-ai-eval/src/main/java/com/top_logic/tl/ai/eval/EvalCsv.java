@@ -50,11 +50,19 @@ import java.util.List;
  */
 public class EvalCsv {
 
-	/** The header line, and with it the column contract. */
-	public static final String HEADER =
-		"scenario,arm,model,agent,repeat,outcome,turns,inputTokens,cacheReadTokens,outputTokens,"
-			+ "durationMs,stopReason,toolCalls,failedGraders,error,subagents,subagentInputTokens,"
-			+ "subagentCacheReadTokens,subagentOutputTokens,subagentToolCalls";
+	/**
+	 * The header line, and with it the column contract.
+	 *
+	 * <p>
+	 * Joined at class initialisation, not a compile-time constant: a constant is copied into every
+	 * class that reads it, so a test compiled before a column was added kept the old header and failed
+	 * against a build that had recompiled only this class (#795).
+	 * </p>
+	 */
+	public static final String HEADER = String.join(",",
+		"scenario", "arm", "model", "agent", "repeat", "outcome", "turns", "inputTokens", "cacheReadTokens",
+		"outputTokens", "durationMs", "stopReason", "toolCalls", "failedGraders", "error", "subagents",
+		"subagentInputTokens", "subagentCacheReadTokens", "subagentOutputTokens", "subagentToolCalls");
 
 	private EvalCsv() {
 		// Static utility.

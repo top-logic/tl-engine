@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -285,10 +286,12 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			|| windowName == null || windowName.isEmpty()) {
 			return;
 		}
-		if (registry.getQueue(windowName) == null) {
+		TLSessionContext session = subSession.getSessionContext();
+		if (session != null && session.getSubSession(windowName) != subSession) {
 			// A tree built for no browser window - a view rendered headlessly to check it - renders
-			// its chat elements too. It must not replace the window the sub-session really shows:
-			// a browser window's queue is in its registry before its tree is built.
+			// its chat elements too, in the sub-session of whoever asked for the check. It must not
+			// replace the window that sub-session really shows: a browser window's sub-session is
+			// the one its session holds under the window's name.
 			return;
 		}
 		// The account is read here, on the rendering request's thread, and kept: the refresh runs on

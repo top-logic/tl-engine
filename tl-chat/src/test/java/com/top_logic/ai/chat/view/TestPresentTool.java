@@ -154,6 +154,7 @@ public class TestPresentTool extends BasicTestCase {
 	public void testAChannelCountsWhileItsConversationIsDisplayed() throws Exception {
 		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
 		String window = "displayedWindow";
+		subSession().getSessionContext().setIfAbsent(window, subSession());
 		DefaultViewContext view = new DefaultViewContext(
 			new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry));
 		view.registerChannel(PANE, _channel);
@@ -514,8 +515,10 @@ public class TestPresentTool extends BasicTestCase {
 	/** Registers the window the run belongs to, as a rendering chat element does. */
 	private void withWindow() {
 		_window = new ReactWindowRegistry("test-session");
-		// The queue a browser window has before its tree is built.
+		// The queue a browser window has before its tree is built, and the sub-session its session
+		// holds under the window's name.
 		_window.getOrCreateQueue(windowName());
+		subSession().getSessionContext().setIfAbsent(windowName(), subSession());
 		AgentViewRefreshService.registerWindow(subSession(), windowName(), _window);
 	}
 

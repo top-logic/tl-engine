@@ -102,6 +102,8 @@ public class TestAgentViewRefresh extends BasicTestCase {
 			}
 		};
 		_scope.addModelListener(TlAiExecutionFactory.getUserMemoryType(), _listener);
+		// The sub-session a browser window has: the one its session holds under the window's name.
+		subSession().getSessionContext().setIfAbsent(WINDOW, subSession());
 		AgentViewRefreshService.registerWindow(subSession(), WINDOW, _registry);
 	}
 

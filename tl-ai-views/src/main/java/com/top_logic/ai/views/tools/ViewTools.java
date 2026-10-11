@@ -19,6 +19,8 @@ import com.top_logic.ai.views.ViewFiles;
 import com.top_logic.ai.views.source.ViewEdit;
 import com.top_logic.ai.views.source.ViewSource;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -43,8 +45,9 @@ import com.top_logic.util.TLContextManager;
  *
  * <p>
  * A write changes the application's structure, so it is a {@link ToolMode#STRUCTURAL} call the user
- * approves. The view file is written when the call runs; the turn's transaction covers the record
- * of the change, not the file.
+ * approves. The view file is written when the call runs, and its change-set record is committed with
+ * it ({@link CommittedNow}): a turn that rolls back afterwards cannot leave a written file without
+ * its record.
  * </p>
  */
 public class ViewTools {
@@ -311,9 +314,13 @@ public class ViewTools {
 		+ " again, a view it created is deleted. Refused when a view was changed again afterwards; revert the"
 		+ " newer change first.",
 		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
-	public ToolResult revertViewChange(@P("The change set id from listViewChanges") TLObject changeSet) {
+	public ToolResult revertViewChange(@P("The change set id from listViewChanges") TLObject changeSet,
+			ToolExecutionContext context) {
+		ObjectKey key = changeSet.tId();
 		try {
-			List<String> written = ViewChanges.revert(changeSet);
+			List<String> written = CommittedNow.run(() -> ViewChanges.revert(
+				PersistencyLayer.getKnowledgeBase().resolveObjectKey(key).getWrapper()));
+			context.catchUpWithCommits();
 			return ToolResult.of("Reverted " + ReadFilter.idOf(changeSet) + ". " + RunPage.show(written));
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.failure("Nothing was reverted: " + ex.getMessage());
@@ -323,8 +330,10 @@ public class ViewTools {
 	private static ToolResult write(String title, Supplier<List<Change>> changes, ToolExecutionContext context) {
 		try {
 			List<Change> resolved = changes.get();
-			TLObject set = ViewChanges.write(title, author(context), resolved);
-			return ToolResult.of("Saved as change set " + ReadFilter.idOf(set) + ". "
+			String author = author(context);
+			String set = CommittedNow.run(() -> ReadFilter.idOf(ViewChanges.write(title, author, resolved)));
+			context.catchUpWithCommits();
+			return ToolResult.of("Saved as change set " + set + ". "
 				+ RunPage.show(resolved.stream().map(Change::resource).toList()));
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.failure(ex.getMessage());

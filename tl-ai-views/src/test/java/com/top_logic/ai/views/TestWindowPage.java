@@ -21,6 +21,9 @@ import com.top_logic.ai.views.tools.ViewTools;
 import com.top_logic.ai.views.tools.ViewTools.Edit;
 import com.top_logic.ai.views.tools.ViewTools.Op;
 import com.top_logic.ai.views.tools.WindowTools;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -124,6 +127,27 @@ public class TestWindowPage extends BasicTestCase {
 		assertEquals("tabs", state(SIDEBAR, "activeItemId"));
 		assertEquals("second", state(TAB_BAR, "activeTabId"));
 		assertContains("<!-- Two tabs, the first one open; TestWindowPage changes the second. -->", ViewFiles.read(TABS));
+	}
+
+	/**
+	 * A turn rolled back after a write takes neither the written file nor its change-set record:
+	 * the record is committed with the file, not with the turn.
+	 */
+	public void testAWriteOutlivesARolledBackTurn() {
+		int recorded = ViewChanges.all().size();
+		Transaction turn = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		ToolResult result;
+		try {
+			result = new ViewTools().editView("test-window/tabs.view.xml",
+				List.of(new Edit(Op.SET, "/view/tab-bar", null, "active-tab", "second")), ToolContext.EMPTY);
+		} finally {
+			turn.rollback();
+		}
+		HistoryUtils.updateSessionRevision();
+
+		assertContains("Saved as change set", result.text());
+		assertContains("active-tab=\"second\"", ViewFiles.read(TABS));
+		assertEquals(recorded + 1, ViewChanges.all().size());
 	}
 
 	private static void act(String address, String command, Map<String, Object> arguments) {

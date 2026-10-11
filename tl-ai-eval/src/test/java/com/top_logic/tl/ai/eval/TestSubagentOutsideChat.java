@@ -28,7 +28,6 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
@@ -79,17 +78,32 @@ public class TestSubagentOutsideChat extends BasicTestCase {
 		AgentSession session =
 			AgentExecutionStore.getInstance().createSession(SessionKind.SCRIPT, root, "TestSubagentOutsideChat");
 
+		String key = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session));
+		// Borrowed beside the run, so that the registry can be read after the run let go of it.
+		try (SubagentRegistries.Lease lease = SubagentRegistries.borrow(key)) {
+			Conversation conversation = run(root, session);
+
+			String answer = lastText(conversation);
+			assertTrue("The lead read the subagent's result: " + answer, answer.contains(FINDING));
+			List<SubagentJob> jobs = lease.registry().byStatus(SubagentJobStatus.values());
+			assertEquals("The conversation's registry ran the subagent.", 1, jobs.size());
+			assertEquals(SubagentJobStatus.DONE, jobs.get(0).status());
+			assertEquals(WORKER, jobs.get(0).targetAgentName());
+		}
+	}
+
+	/** A run outside a chat leaves no registry behind once its subagent ended and was delivered. */
+	public void testARunOutsideAChatLeavesNoRegistryBehind() {
+		ScriptedProvider.install(TestSubagentOutsideChat::reply);
+		Person root = PersonManager.getManager().getRoot();
+		AgentSession session =
+			AgentExecutionStore.getInstance().createSession(SessionKind.SCRIPT, root, "TestSubagentOutsideChat");
+
 		Conversation conversation = run(root, session);
 
-		String answer = lastText(conversation);
-		assertTrue("The lead read the subagent's result: " + answer, answer.contains(FINDING));
-		SubagentJobRegistry registry = SubagentRegistries.find(
-			SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session)));
-		assertNotNull("The conversation's registry ran the subagent.", registry);
-		List<SubagentJob> jobs = registry.byStatus(SubagentJobStatus.values());
-		assertEquals(1, jobs.size());
-		assertEquals(SubagentJobStatus.DONE, jobs.get(0).status());
-		assertEquals(WORKER, jobs.get(0).targetAgentName());
+		assertTrue(lastText(conversation).contains(FINDING));
+		assertNull(SubagentRegistries.find(
+			SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session))));
 	}
 
 	private static Conversation run(Person root, AgentSession session) {

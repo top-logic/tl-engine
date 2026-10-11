@@ -26,8 +26,11 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.model.ModelService;
@@ -93,15 +96,48 @@ public class TestSubagentsOutliveTheChatCache extends BasicTestCase {
 
 	/** A deleted chat's subagents are stopped: there is no conversation left to report to. */
 	public void testADeletedChatsSubagentsAreStopped() throws Exception {
+		AgentSession chat = newChat("Wird gelöscht");
 		TaskProgressTracker window = new TaskProgressTracker();
-		ChatSessionManager chats = window.getSessionManager();
-		assertTrue(chats.switchSession(CHATS.get(7), owner));
+		assertTrue(window.getSessionManager().switchSession(idOf(chat), owner));
 		SubagentJob job = startBlocking(window.getActiveSubagentRegistry());
 
-		assertTrue(chats.forgetSession(CHATS.get(7)));
+		ChatHistoryService.deleteSession(chat);
 
 		awaitTerminal(job);
 		assertEquals(SubagentJobStatus.CANCELLED, job.status());
+	}
+
+	/**
+	 * Deleting a chat stops its subagents wherever they run: in a window that dropped the chat from
+	 * its cache, in another window, and in a run that has no window at all.
+	 */
+	public void testADeletedChatsSubagentsAreStoppedEverywhere() throws Exception {
+		AgentSession chat = newChat("Überall gelöscht");
+		String id = idOf(chat);
+
+		TaskProgressTracker first = new TaskProgressTracker();
+		assertTrue(first.getSessionManager().switchSession(id, owner));
+		SubagentJob dropped = startBlocking(first.getActiveSubagentRegistry());
+		// Five more chats push it out of the first window's cache.
+		for (int i = 0; i < 5; i++) {
+			assertTrue(first.getSessionManager().switchSession(CHATS.get(i), owner));
+		}
+
+		TaskProgressTracker second = new TaskProgressTracker();
+		assertTrue(second.getSessionManager().switchSession(id, owner));
+		SubagentJob otherWindow = startBlocking(second.getActiveSubagentRegistry());
+
+		String headlessKey = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(chat));
+		SubagentJob headless = startBlocking(SubagentRegistries.forKey(headlessKey));
+
+		ChatHistoryService.deleteSession(chat);
+
+		for (SubagentJob job : List.of(dropped, otherWindow, headless)) {
+			awaitTerminal(job);
+			assertEquals(job.subagentId(), SubagentJobStatus.CANCELLED, job.status());
+		}
+		assertTrue("Nothing is kept for the deleted chat.", SubagentRegistries.ofConversation(id).isEmpty());
+		assertNull(SubagentRegistries.find(headlessKey));
 	}
 
 	/** Each window keeps its own conversation, so it keeps its own subagents too. */
@@ -112,6 +148,16 @@ public class TestSubagentsOutliveTheChatCache extends BasicTestCase {
 		assertTrue(second.getSessionManager().switchSession(CHATS.get(6), owner));
 
 		assertNotSame(first.getActiveSubagentRegistry(), second.getActiveSubagentRegistry());
+	}
+
+	private static AgentSession newChat(String title) {
+		AgentSession chat = (AgentSession) ChatHistoryService.createSession(title, owner);
+		HistoryUtils.updateSessionRevision();
+		return chat;
+	}
+
+	private static String idOf(TLObject chat) {
+		return chat.tHandle().getObjectName().toExternalForm();
 	}
 
 	private SubagentJob startBlocking(SubagentJobRegistry registry) throws InterruptedException {

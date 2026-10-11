@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -76,6 +77,56 @@ public class TestSubagentRegistries extends TestCase {
 		assertNull("Idle and old: forgotten.", SubagentRegistries.find(idleKey));
 		assertTrue(SubagentRegistries.size() <= SubagentRegistries.MAX_IDLE + 1);
 		assertEquals(SubagentJobStatus.RUNNING, job.status());
+	}
+
+	/**
+	 * Removing a conversation stops the registry of a run without a window and those of every window,
+	 * and leaves a conversation whose id merely starts with the same digits alone.
+	 */
+	public void testRemovingAConversationStopsAllItsRegistries() throws Exception {
+		String id = UUID.randomUUID().toString();
+		SubagentJob headless = startBlocking(SubagentRegistries.forKey(SubagentRegistries.conversationKey(id)));
+		SubagentJob window1 = startBlocking(SubagentRegistries.forKey(SubagentRegistries.windowKey(id, "w1")));
+		SubagentJob window2 = startBlocking(SubagentRegistries.forKey(SubagentRegistries.windowKey(id, "w2")));
+		String neighbourKey = SubagentRegistries.conversationKey(id + "0");
+		SubagentJob neighbour = startBlocking(SubagentRegistries.forKey(neighbourKey));
+		assertEquals(3, SubagentRegistries.ofConversation(id).size());
+
+		assertEquals(3, SubagentRegistries.removeConversation(id));
+
+		for (SubagentJob job : List.of(headless, window1, window2)) {
+			awaitTerminal(job);
+			assertEquals(SubagentJobStatus.CANCELLED, job.status());
+		}
+		assertTrue(SubagentRegistries.ofConversation(id).isEmpty());
+		assertEquals("Another conversation works on.", SubagentJobStatus.RUNNING, neighbour.status());
+		SubagentRegistries.remove(neighbourKey);
+	}
+
+	/** A borrowed registry with nothing left to do is forgotten when the last borrower lets go. */
+	public void testAnIdleBorrowedRegistryIsForgottenOnRelease() {
+		String key = key();
+		SubagentRegistries.Lease first = SubagentRegistries.borrow(key);
+		SubagentRegistries.Lease second = SubagentRegistries.borrow(key);
+		assertSame(first.registry(), second.registry());
+
+		first.close();
+		assertNotNull("Still borrowed.", SubagentRegistries.find(key));
+		second.close();
+		assertNull("Nobody borrows it and it has no work.", SubagentRegistries.find(key));
+	}
+
+	/** A borrowed registry whose subagent still works is kept when the run lets go. */
+	public void testABusyBorrowedRegistryIsKept() throws Exception {
+		String key = key();
+		SubagentJob job;
+		try (SubagentRegistries.Lease lease = SubagentRegistries.borrow(key)) {
+			job = startBlocking(lease.registry());
+		}
+		assertNotNull("Its subagent still works.", SubagentRegistries.find(key));
+
+		assertEquals(1, SubagentRegistries.remove(key));
+		awaitTerminal(job);
 	}
 
 	/** A registry whose finished result nobody has read yet is not idle. */

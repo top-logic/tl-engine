@@ -139,6 +139,12 @@ public class TestDeepResearchSkill extends BasicTestCase {
 
 	private String _registryKey;
 
+	/**
+	 * The conversation's registry, borrowed beside the run: the run lets go of it when it ends, and an
+	 * idle registry nobody borrows is forgotten.
+	 */
+	private SubagentRegistries.Lease _registry;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -158,6 +164,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 			// The registries belong to the process, and the next suite's fresh database hands out the
 			// same session ids: a registry left here would be found by the next test's run.
 			SubagentRegistries.remove(_registryKey);
+			_registry.close();
 		}
 		super.tearDown();
 	}
@@ -173,6 +180,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 			"TestDeepResearchSkill");
 
 		_registryKey = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session));
+		_registry = SubagentRegistries.borrow(_registryKey);
 		Run run = run(root, session);
 
 		assertEquals(StopReason.COMPLETE, run.stopReason());
@@ -188,8 +196,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 			assertTrue(findings, findings.contains(topic.url()) && findings.contains(topic.fact()));
 		}
 
-		SubagentJobRegistry registry = SubagentRegistries.find(_registryKey);
-		assertNotNull("The conversation's registry ran the workers.", registry);
+		SubagentJobRegistry registry = _registry.registry();
 		List<SubagentJob> jobs = registry.byStatus(SubagentJobStatus.values());
 		assertEquals("Spawn answers: " + run.conversation().messages(), TOPICS.size(), jobs.size());
 		for (SubagentJob job : jobs) {
@@ -322,6 +329,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		AgentSession session = AgentExecutionStore.getInstance().createSession(SessionKind.SCRIPT, root,
 			"TestDeepResearchSkill-budget");
 		_registryKey = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session));
+		_registry = SubagentRegistries.borrow(_registryKey);
 
 		Run run = run(root, session);
 
@@ -353,7 +361,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 	}
 
 	private SubagentJob job(String task) {
-		return SubagentRegistries.find(_registryKey).byStatus(SubagentJobStatus.values()).stream()
+		return _registry.registry().byStatus(SubagentJobStatus.values()).stream()
 			.filter(j -> j.taskBrief().contains(task.substring(0, 40))).findFirst().orElseThrow();
 	}
 

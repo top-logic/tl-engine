@@ -99,6 +99,7 @@ public class EvalRunner {
 		RunAnswer answer = RunAnswer.none(scenario.getPrompt());
 		SubagentTotals subagents = SubagentTotals.NONE;
 		String registryKey = null;
+		SubagentRegistries.Lease registry = null;
 		String error = null;
 		long startedAt = System.currentTimeMillis();
 
@@ -113,6 +114,9 @@ public class EvalRunner {
 				.createSession(SessionKind.SCRIPT, actor, sessionTitle(scenario, arm, repeat));
 
 			registryKey = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session));
+			// Borrowed for the whole run, so that what the subagents spent can still be read after the
+			// lead finished: the run's own lease lets an idle registry go when the run ends.
+			registry = SubagentRegistries.borrow(registryKey);
 			AgentRunner.RecordedRun run = AgentRunner.run(arm.getAgent(), conversation, null,
 				context, observation, null, env.logListener().log(), session, null);
 			response = run.response() == null ? "" : run.response();
@@ -122,12 +126,13 @@ public class EvalRunner {
 			error = ex.getClass().getSimpleName() + ": " + ex.getMessage();
 		} finally {
 			context.transaction().close();
-			if (registryKey != null) {
-				subagents = subagentTotals(SubagentRegistries.find(registryKey));
+			if (registry != null) {
+				subagents = subagentTotals(registry.registry());
 				// The registries belong to the process. A subagent still running when the lead
 				// finished must not go on into the next run, and a later suite's fresh database hands
 				// out the same session ids.
 				SubagentRegistries.remove(registryKey);
+				registry.close();
 			}
 		}
 		long durationMs = System.currentTimeMillis() - startedAt;

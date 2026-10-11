@@ -19,7 +19,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.context.DevelopmentWorkspace;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.RunInfo;
@@ -40,12 +39,9 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
- * A write is an {@link ToolMode#EXTERNAL} call the user approves: the view file is written when the
- * call runs and no transaction of the turn can take it back, so its change-set record is committed
- * with it ({@link CommittedNow}). A turn that rolls back afterwards therefore neither loses the
- * record nor reports the write as undone. The files are the application's source, so the writes are
- * offered only where the application runs from it (see {@link #noWorkspace}), as the engine's own
- * structural changes are.
+ * A write changes the application's structure, so it is a {@link ToolMode#STRUCTURAL} call the user
+ * approves. The view file is written when the call runs and no transaction of the turn can take it
+ * back, so its change-set record is committed with it ({@link CommittedNow}), not with the turn.
  * </p>
  */
 public class ViewTools {
@@ -171,8 +167,7 @@ public class ViewTools {
 		+ " an existing view, editView keeps the rest of the file as written). It is checked first; with an"
 		+ " error nothing is saved and every error names its line - fix those and call again. The user's open page"
 		+ " shows the change.",
-		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
-		unavailable = "noWorkspace")
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public ToolResult writeView(
 			@P("View path relative to /WEB-INF/views/") String path,
 			@P("The complete <view> document") String xml,
@@ -188,8 +183,7 @@ public class ViewTools {
 		+ " check: {op:SET, at, attribute, value} (empty value removes it), {op:REPLACE, at, xml},"
 		+ " {op:INSERT_INTO|INSERT_BEFORE|INSERT_AFTER, at, xml}, {op:REMOVE, at}. 'at' is an address from"
 		+ " readView, e.g. /view/split-panel/panes/pane[2]/form; tag[id=x] selects by an attribute.",
-		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
-		unavailable = "noWorkspace")
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public ToolResult editView(
 			@P("View path relative to /WEB-INF/views/") String path,
 			@P("The edits") List<Edit> edits,
@@ -202,8 +196,7 @@ public class ViewTools {
 	 */
 	@ToolMethod(description = "Delete a view file. Remove the references to it first (a navigation entry, a"
 		+ " view-ref); revertViewChange brings it back.",
-		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
-		unavailable = "noWorkspace")
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public ToolResult deleteView(@P("View path relative to /WEB-INF/views/") String path, ToolExecutionContext context) {
 		return write("Delete " + path, () -> List.of(new Change(ViewFiles.resource(path), null)), context);
 	}
@@ -214,8 +207,7 @@ public class ViewTools {
 	@ToolMethod(description = "Undo a view change: every view it changed gets its text from before again, a view it"
 		+ " created is deleted. Without an id: the newest change of this user still applied. Refused when a view was changed again"
 		+ " afterwards; undo the newer change first.",
-		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
-		unavailable = "noWorkspace")
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public ToolResult revertViewChange(
 			@P(value = "The change set id a write answered with; empty for the newest", required = false) TLObject changeSet,
 			ToolExecutionContext context) {
@@ -264,15 +256,6 @@ public class ViewTools {
 			}
 		}
 		return new Change(resource, text);
-	}
-
-	/**
-	 * Why the writes are not offered in this run, or <code>null</code> when they are.
-	 */
-	String noWorkspace(ToolExecutionContext context) {
-		return DevelopmentWorkspace.webapp() != null ? null
-			: "The view files are the application's source, so they are only changed where the application runs from"
-				+ " it - started with tl_operation_mode=development. Show the user the XML instead.";
 	}
 
 	private static String account() {

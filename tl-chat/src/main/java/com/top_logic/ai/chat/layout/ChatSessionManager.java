@@ -278,6 +278,64 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * The {@link SubagentJobRegistry} of the given chat in this window, creating one on first use.
+	 *
+	 * <p>
+	 * What a run of that chat spawns into and reads its subagents' news from - also when the window
+	 * has switched to another chat since the run was started. For the active chat this is
+	 * {@link #getActiveSubagentRegistry()}; another chat's registry is listened to again when the
+	 * window shows that chat again.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat; <code>null</code> means the active one.
+	 */
+	public SubagentJobRegistry getSubagentRegistry(String sessionId) {
+		synchronized (_lock) {
+			if (sessionId == null || sessionId.equals(_activeSessionId)) {
+				return getActiveSubagentRegistry();
+			}
+			return SubagentRegistries.forKey(subagentRegistryKey(sessionId));
+		}
+	}
+
+	/**
+	 * What a run of the given chat writes into, if that chat is the one this window shows.
+	 *
+	 * <p>
+	 * The check and the capture are one step under the lock that a session switch takes, so a switch
+	 * in between cannot hand over the state of the chat the window switched to.
+	 * </p>
+	 *
+	 * @return The chat's state, or <code>null</code> if the window does not show it.
+	 */
+	OpenChat openChat(String sessionId) {
+		synchronized (_lock) {
+			if (sessionId == null || !sessionId.equals(_activeSessionId)) {
+				return null;
+			}
+			SessionState state = _sessions.get(sessionId);
+			if (state == null) {
+				return null;
+			}
+			if (state._conversationMemory == null) {
+				state._conversationMemory = createDefaultMemory();
+			}
+			if (state._conversationLog == null) {
+				state._conversationLog = new ConversationLog();
+			}
+			return new OpenChat(state._chat, state._conversationMemory, state._conversationLog);
+		}
+	}
+
+	/**
+	 * The state of one chat that a run writes into; see {@link ChatSessionManager#openChat(String)}.
+	 */
+	record OpenChat(Chat chat, ConversationMemory memory, ConversationLog log) {
+		// Plain data.
+	}
+
+	/**
 	 * Listens to the given registry for the session's state: the register that lets any window of the
 	 * account find and answer what a subagent asks, and the waker that starts a lead turn when there is
 	 * news - which, for a registry that worked on while nobody listened, may already be there.
@@ -406,9 +464,20 @@ public class ChatSessionManager {
 	 *        The account to read for; {@code null} yields an empty list.
 	 */
 	public List<UserMemories.Entry> getActiveMemories(Person owner) {
+		return getMemories(_activeSessionId, owner);
+	}
+
+	/**
+	 * The memories the given conversation was opened with, as {@link #getActiveMemories(Person)}
+	 * reads them for the active one.
+	 *
+	 * @param sessionId
+	 *        The conversation; one this window does not hold reads afresh and keeps nothing.
+	 */
+	public List<UserMemories.Entry> getMemories(String sessionId, Person owner) {
 		SessionState state;
 		synchronized (_lock) {
-			state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			state = sessionId != null ? _sessions.get(sessionId) : null;
 			if (state != null && state._memories != null) {
 				return state._memories;
 			}

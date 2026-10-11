@@ -570,7 +570,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setTotalTokens(e.result().tokenUsage().totalTokens())
 				.setDurationMs(e.result().durationMs())
 				.setParentToolCallId(e.parentToolCallId())
-				.setChildRunId(e.childRunId())));
+				.setChildRunId(e.childRunId())
+				.setStopReason(e.result().stopReason() == null ? "" : e.result().stopReason().name())));
 		} else if (event instanceof AgentEvent.SubagentFailed e) {
 			sendEvent("subagent_failed", DtoMapper.toJson(SubagentStatusEvent.create()
 				.setSubagentId(e.subagentId())

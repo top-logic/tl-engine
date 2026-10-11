@@ -1005,6 +1005,9 @@ message SubagentStatusEvent {
 
 	/** The subagent's own run id, its transcript's key; sent on the end, empty if unknown. */
 	string childRunId;
+
+	/** On completion: why the subagent's run stopped, a {@code StopReason} name; empty otherwise. */
+	string stopReason;
 }
 
 /**

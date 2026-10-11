@@ -238,6 +238,7 @@ const EN = {
   subagentsRunningN: (count: number) => `${count} running`,
   subagentsQueuedN: (count: number) => `${count} queued`,
   subagentsDoneN: (count: number) => `${count} done`,
+  subagentsLimitN: (count: number) => `${count} at the limit`,
   subagentsFailedN: (count: number) => `${count} failed`,
   subagentsCancelledN: (count: number) => `${count} cancelled`,
   /** Unfolds the ended cards of such a turn. */
@@ -246,6 +247,8 @@ const EN = {
   /** In the panel header: the share of the run's budget the subagents spent ("4", "< 1"). */
   subagentsBudgetShare: (percent: string) => `${percent} % of the budget`,
   subagentDone: 'done',
+  /** Stopped in order at a limit (turns, tool calls, budget): its answer may be incomplete. */
+  subagentLimit: 'limit reached',
   subagentFailed: 'failed',
   subagentCancelled: 'cancelled',
   subagentNoSteps: 'No steps yet.',
@@ -555,12 +558,14 @@ const DE: Bundle = {
   subagentsRunningN: (count: number) => `${count} ${count === 1 ? 'läuft' : 'laufen'}`,
   subagentsQueuedN: (count: number) => `${count} ${count === 1 ? 'wartet' : 'warten'} auf Start`,
   subagentsDoneN: (count: number) => `${count} fertig`,
+  subagentsLimitN: (count: number) => `${count} am Limit`,
   subagentsFailedN: (count: number) => `${count} fehlgeschlagen`,
   subagentsCancelledN: (count: number) => `${count} abgebrochen`,
   subagentsShowEnded: (count: number) => `Beendete zeigen (${count})`,
   subagentsHideEnded: 'Beendete ausblenden',
   subagentsBudgetShare: (percent: string) => `${percent} % des Budgets`,
   subagentDone: 'fertig',
+  subagentLimit: 'Limit erreicht',
   subagentFailed: 'fehlgeschlagen',
   subagentCancelled: 'abgebrochen',
   subagentNoSteps: 'Noch keine Schritte.',

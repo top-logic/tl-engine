@@ -443,7 +443,11 @@ export async function listSubagents(at: ChatAddress): Promise<{ subagents: Subag
   const data = await readJson<{ subagents?: SubagentActivity[]; budget?: SubagentBudget }>(
     await chatFetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
   )
-  return { subagents: data.subagents ?? [], budget: data.budget }
+  // The job ends DONE whatever stopped its run; a stop at a limit reads as such (#786).
+  const subagents = (data.subagents ?? []).map((item) =>
+    item.status === 'DONE' && isLimitStop(item.stopReason) ? { ...item, status: 'LIMIT' as const } : item,
+  )
+  return { subagents, budget: data.budget }
 }
 
 /**
@@ -632,11 +636,19 @@ function mapToolStatus(status: string | undefined): { status: ToolCallStatus; is
   }
 }
 
+/**
+ * Whether a run with the given stop reason stopped in order at one of its limits (`StopReason.isLimit`
+ * on the server): it has an answer, but maybe not the whole one (#786).
+ */
+export function isLimitStop(reason: string | undefined): boolean {
+  return reason === 'MAX_TURNS' || reason === 'MAX_TOOL_CALLS' || reason === 'BUDGET_EXHAUSTED' || reason === 'OUTPUT_LIMIT'
+}
+
 /** How a synchronous delegation ended, from its run's stop reason. */
 export function delegationEnd(reason: string | undefined): SubagentStatus {
+  if (isLimitStop(reason)) return 'LIMIT'
   switch (reason) {
     case 'COMPLETE':
-    case 'MAX_TURNS':
       return 'DONE'
     case 'ABORTED':
       return 'CANCELLED'
@@ -674,6 +686,7 @@ function subagentStatus(status: string | undefined): SubagentStatus {
     case 'QUEUED':
     case 'RUNNING':
     case 'DONE':
+    case 'LIMIT':
     case 'FAILED':
     case 'CANCELLED':
       return status

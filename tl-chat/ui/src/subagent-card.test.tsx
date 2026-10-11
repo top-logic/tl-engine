@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { turnsJsonToMessages, type SubagentMessageStatus } from './api'
+import { delegationEnd, turnsJsonToMessages, type SubagentMessageStatus } from './api'
 import { addNote, applyChildEvent } from './chat-store'
 import { bundle } from './i18n'
 import { cardsForTurn, cardSummary, SubagentCard, SubagentCards, type SubagentCardModel } from './subagent-card'
@@ -639,5 +639,33 @@ describe('what the subagents spent', () => {
     expect(subagentCosts([job({ totalTokens: 0 })], {}, undefined, labels, 'en')).toBe('')
     expect(subagentCosts([job({ totalTokens: 100 })], {}, { tokens: 1_000_000, money: -1, currency: '' }, labels, 'en'))
       .toBe('100 tokens · < 1 % of the budget')
+  })
+})
+
+describe('a subagent stopped at a limit', () => {
+  /* Turns, tool calls, budget, output: an orderly stop with an answer that may be incomplete (#786). */
+  it('ends a delegation at its limit as such, not as failed', () => {
+    expect(delegationEnd('MAX_TOOL_CALLS')).toBe('LIMIT')
+    expect(delegationEnd('BUDGET_EXHAUSTED')).toBe('LIMIT')
+    expect(delegationEnd('MAX_TURNS')).toBe('LIMIT')
+    expect(delegationEnd('COMPLETE')).toBe('DONE')
+    expect(delegationEnd('ERROR')).toBe('FAILED')
+  })
+
+  it('says "Limit erreicht" on a reloaded card of a subagent recorded at its limit', () => {
+    const messages = turnsJsonToMessages(JSON.stringify([
+      {
+        id: 't1', timestamp: 0, userParts: [],
+        assistantParts: [
+          { type: 'tool_call', id: 'call-1', timestamp: 0, toolCallData: { toolName: 'spawn_subagent', argsJson: '{}', status: 'DONE' } },
+          { type: 'subagent', id: 'p1', timestamp: 0, subagentData: { subagentId: 'sa-1', agentName: 'researcher', task: 'find X', parentToolCallId: 'call-1', childRunId: 'r1', status: 'LIMIT', summary: 'X is 4..' } },
+        ],
+      },
+    ]))
+    const cards = cardsForTurn(messages, [], {}, new Set())
+    expect(cards[0].status).toBe('LIMIT')
+    const html = renderToStaticMarkup(React.createElement(SubagentCard, { card: cards[0], labels: bundle('de'), onLoadTranscript: async () => [] }))
+    expect(html).toContain('Limit erreicht')
+    expect(html).not.toContain('subagent-card-stop')
   })
 })

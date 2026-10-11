@@ -77,7 +77,7 @@ export function cardsForTurn(
     const parent = job.parentToolCallId
     if (!parent || !callOrder.has(parent)) continue
     const ref = refs.find((item) => item.subagentId === job.subagentId && item.parentToolCallId === parent)
-    const ended = job.status === 'DONE' || job.status === 'FAILED' || job.status === 'CANCELLED'
+    const ended = job.status === 'DONE' || job.status === 'LIMIT' || job.status === 'FAILED' || job.status === 'CANCELLED'
     cards.push({
       order: callOrder.get(parent) ?? 0,
       card: {
@@ -223,6 +223,8 @@ function statusLabel(status: SubagentCardModel['status'], labels: Labels, leadNa
       return labels.subagentWaiting
     case 'DONE':
       return labels.subagentDone
+    case 'LIMIT':
+      return labels.subagentLimit
     case 'FAILED':
       return labels.subagentFailed
     case 'CANCELLED':
@@ -514,7 +516,7 @@ export const FOLD_ABOVE = 3
 export const REVEAL_CARD_EVENT = 'tl-subagent-reveal'
 
 function ended(card: SubagentCardModel): boolean {
-  return card.status === 'DONE' || card.status === 'FAILED' || card.status === 'CANCELLED'
+  return card.status === 'DONE' || card.status === 'LIMIT' || card.status === 'FAILED' || card.status === 'CANCELLED'
 }
 
 /** "5 Subagenten: 1 wartet, 2 laufen, 2 fertig" - the states of a turn's cards, each counted once. */
@@ -525,6 +527,7 @@ export function cardSummary(cards: SubagentCardModel[], labels: Labels): string 
     [count((card) => card.status === 'RUNNING'), labels.subagentsRunningN],
     [count((card) => card.status === 'QUEUED'), labels.subagentsQueuedN],
     [count((card) => card.status === 'DONE'), labels.subagentsDoneN],
+    [count((card) => card.status === 'LIMIT'), labels.subagentsLimitN],
     [count((card) => card.status === 'FAILED'), labels.subagentsFailedN],
     [count((card) => card.status === 'CANCELLED'), labels.subagentsCancelledN],
   ]

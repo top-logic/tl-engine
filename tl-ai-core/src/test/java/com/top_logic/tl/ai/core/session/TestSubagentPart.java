@@ -54,6 +54,28 @@ public class TestSubagentPart extends TestCase {
 		assertEquals(started.id(), ended.id());
 	}
 
+	/** A subagent stopped in order at a limit is recorded as such, so its card says so (#786). */
+	public void testAStopAtALimitIsRecordedAsSuch() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		Turn turn = log.startTurn();
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1");
+		listener.recordSubagentStarted("sa-2", "researcher", "find Y", "call-2");
+
+		listener.recordSubagentCompleted("sa-1",
+			new SubagentResult("X is 4..", TokenUsage.EMPTY, 10L, 8, StopReason.MAX_TOOL_CALLS), "run-1");
+		listener.recordSubagentCompleted("sa-2",
+			new SubagentResult("Y is 7.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-2");
+
+		List<String> states = new ArrayList<>();
+		for (Part part : turn.assistantParts()) {
+			if (part instanceof Part.SubagentPart subagent) {
+				states.add(subagent.status());
+			}
+		}
+		assertEquals(List.of("LIMIT", "DONE"), states);
+	}
+
 	/**
 	 * The end is announced with the call that started the subagent and its run, so a window that did
 	 * not see the start finds the card and the transcript.

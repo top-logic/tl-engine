@@ -5,6 +5,7 @@ import {
   cancelRun,
   cancelSubagent,
   delegationEnd,
+  isLimitStop,
   sendSubagentMessage,
   type SubagentMessageStatus,
   createSession,
@@ -1672,7 +1673,8 @@ export class ChatStore {
       })
       on('subagent_completed', (e) => {
         const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })
-        if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, 'DONE') })
+        const status = isLimitStop(data.stopReason) ? 'LIMIT' : 'DONE'
+        if (data.subagentId) this.patch({ subagents: mergeSubagent(this.state.subagents, data, status) })
       })
       on('subagent_failed', (e) => {
         const data = parseJson<SubagentStatusEvent>(e.data, { subagentId: '' })

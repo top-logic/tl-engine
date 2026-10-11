@@ -87,5 +87,18 @@ public enum StopReason {
 	 * rest would be a second answer, and only the last one of a run is the one a surface shows.
 	 * </p>
 	 */
-	OUTPUT_LIMIT
+	OUTPUT_LIMIT;
+
+	/**
+	 * Whether the run stopped in order at one of its limits - turns, tool calls, budget, output -
+	 * rather than because it was done or failed.
+	 *
+	 * <p>
+	 * Such a run has an answer, but maybe not the whole one; the chat says "limit reached" for it
+	 * (#786).
+	 * </p>
+	 */
+	public boolean isLimit() {
+		return this == MAX_TURNS || this == MAX_TOOL_CALLS || this == BUDGET_EXHAUSTED || this == OUTPUT_LIMIT;
+	}
 }

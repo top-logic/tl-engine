@@ -678,6 +678,24 @@ describe('the stream', () => {
     release()
   })
 
+  /* The end frame names the stop reason: a stop at a limit reads as such, not as done (#786). */
+  it('ends a subagent stopped at its limit as such', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
+    stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'researcher', detail: 'find Y', parentToolCallId: 'call-2' })
+
+    stream.emit('subagent_completed', { subagentId: 'sa-1', detail: 'X is 4..', stopReason: 'MAX_TOOL_CALLS' })
+    stream.emit('subagent_completed', { subagentId: 'sa-2', detail: 'Y is 7.', stopReason: 'COMPLETE' })
+
+    expect(store.getState().subagents.map((item) => item.status)).toEqual(['LIMIT', 'DONE'])
+    await settle()
+    release()
+  })
+
   /* A subagent beyond the cap waits; its card says so until its first own step arrives. */
   it('shows a queued subagent as waiting until it starts', async () => {
     const store = chatStore('alpha', BOOT)

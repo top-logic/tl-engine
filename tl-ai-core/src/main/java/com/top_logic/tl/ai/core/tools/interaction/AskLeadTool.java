@@ -141,24 +141,48 @@ public class AskLeadTool implements Tool {
 		LeadQuestion asked = job.askLead(question);
 		CancellationToken cancellation = context.cancellationToken();
 		CancellationToken.Registration cancelHook = cancellation.onCancel(() -> asked.answer().complete(null));
+		boolean timedOut = false;
+		String answer;
 		try {
 			Duration timeout = _timeout != null ? _timeout : InteractionTimeoutService.questionTimeout();
-			String answer = asked.answer().get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-			if (answer == null || cancellation.isCancelled()) {
-				return ToolResult.of(CANCELLED);
-			}
-			return ToolResult.of("The agent that started you answers:\n\n" + answer);
+			answer = asked.answer().get(timeout.toMillis(), TimeUnit.MILLISECONDS);
 		} catch (TimeoutException ex) {
-			Logger.info("Subagent " + job.subagentId() + ": its question to the lead timed out.", AskLeadTool.class);
-			return ToolResult.of(NO_ANSWER);
+			timedOut = true;
+			answer = giveUp(asked);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
-			return ToolResult.of(CANCELLED);
+			answer = giveUp(asked);
 		} catch (ExecutionException ex) {
-			return ToolResult.of(NO_ANSWER);
+			answer = null;
 		} finally {
 			cancelHook.close();
 			job.clearLeadQuestion(asked);
 		}
+		if (answer != null && !cancellation.isCancelled()) {
+			return ToolResult.of("The agent that started you answers:\n\n" + answer);
+		}
+		if (cancellation.isCancelled() || Thread.currentThread().isInterrupted()) {
+			return ToolResult.of(CANCELLED);
+		}
+		if (timedOut) {
+			Logger.info("Subagent " + job.subagentId() + ": its question to the lead timed out.", AskLeadTool.class);
+		}
+		return ToolResult.of(NO_ANSWER);
+	}
+
+	/**
+	 * Stops waiting for the answer, and returns it if it came first after all.
+	 *
+	 * <p>
+	 * The question's future decides between the two: completing it here makes a later
+	 * {@code reply_to_subagent} fail, so the lead is never told "answered" for a question the subagent
+	 * no longer waits for. When the lead's answer completed it first, that answer is used.
+	 * </p>
+	 *
+	 * @return The lead's answer, or <code>null</code> when there is none.
+	 */
+	private static String giveUp(LeadQuestion asked) {
+		asked.answer().complete(null);
+		return asked.answer().getNow(null);
 	}
 }

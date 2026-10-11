@@ -243,7 +243,7 @@ public class SummarizingStrategy implements CompactionStrategy {
 			summarizeZone.size(), tokensBefore, "auto"));
 		replacement.add(new UserMessage(
 			UUID.randomUUID().toString(), now,
-			List.of(new TextContent(SUMMARY_PREFIX + summaryText))));
+			List.of(new TextContent(SUMMARY_PREFIX + summaryText)), UserMessage.Origin.FRAMEWORK));
 		replacement.addAll(preserveZone);
 
 		// Unlike tokensBefore, this is always the raw estimator heuristic over just the
@@ -423,7 +423,7 @@ public class SummarizingStrategy implements CompactionStrategy {
 				stripped.add(part);
 			}
 		}
-		return new UserMessage(msg.id(), msg.timestamp(), stripped);
+		return new UserMessage(msg.id(), msg.timestamp(), stripped, msg.origin());
 	}
 
 	/**

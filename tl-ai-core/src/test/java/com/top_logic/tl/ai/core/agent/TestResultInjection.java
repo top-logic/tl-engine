@@ -180,6 +180,8 @@ public class TestResultInjection extends TestCase {
 			injected instanceof UserMessage);
 		assertTrue("The text must mark itself as a framework notice.",
 			text(injected).startsWith(SubagentResultDelivery.NOTICE));
+		assertEquals("The message itself says that the user did not write it.",
+			UserMessage.Origin.FRAMEWORK, ((UserMessage) injected).origin());
 	}
 
 	/**
@@ -328,6 +330,9 @@ public class TestResultInjection extends TestCase {
 		assertEquals("The user's question and the delivered result.", 2, rebuilt.size());
 		assertEquals("Any news?", text(rebuilt.messages().get(0)));
 		assertEquals(text(live.messages().get(0)), text(rebuilt.messages().get(1)));
+		assertEquals(UserMessage.Origin.USER, ((UserMessage) rebuilt.messages().get(0)).origin());
+		assertEquals("The delivery is still not the user's after a reload.",
+			UserMessage.Origin.FRAMEWORK, ((UserMessage) rebuilt.messages().get(1)).origin());
 	}
 
 	/** The text of a message, however many content parts it has. */

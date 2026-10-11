@@ -162,7 +162,7 @@ public class ConversationLogReplay {
 					? List.of(new TextContent(turnContext), text)
 					: List.of(text);
 				contextPending = false;
-				_messages.add(new UserMessage(sp.id(), sp.timestamp(), content));
+				_messages.add(new UserMessage(sp.id(), sp.timestamp(), content, originOf(sp)));
 			}
 			// Skip: ApprovalPart, InteractionPart, other SystemParts, TransactionPart,
 			//        ErrorPart, DelegationPart
@@ -170,6 +170,15 @@ public class ConversationLogReplay {
 
 		// 3. Flush remaining content as final assistant message.
 		flushAssistantMessage(turn);
+	}
+
+	/** Who wrote the user message a system part of the conversation's content stands for. */
+	private static UserMessage.Origin originOf(Part.SystemPart part) {
+		return switch (part.eventType()) {
+			case USER_MESSAGE -> UserMessage.Origin.USER;
+			case LEAD_MESSAGE -> UserMessage.Origin.AGENT;
+			default -> UserMessage.Origin.FRAMEWORK;
+		};
 	}
 
 	private static boolean isConversationContent(Part.SystemPart part) {

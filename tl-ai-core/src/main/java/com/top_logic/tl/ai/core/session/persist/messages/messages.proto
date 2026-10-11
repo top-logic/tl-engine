@@ -474,6 +474,12 @@ message PersistedMessage {
 message UserMessageDto {
 	/** The message content. */
 	repeated PersistedContent content;
+
+	/**
+	 * Who wrote the message, when it was not the user: the name of the message's origin, for
+	 * example "FRAMEWORK". Empty for a message of the user.
+	 */
+	string origin;
 }
 
 /** A message from the assistant. */

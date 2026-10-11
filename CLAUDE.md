@@ -245,8 +245,10 @@ The agent keeps things about the user across conversations: `tl.ai.execution:Use
 **`remember` refuses a memory the user did not agree to in that turn**, as a Java check on the call
 path rather than a line in a prompt: `MemoryConsent` is built from the user's own message at the
 start of the run and from what `AskUserTool` recorded, and a nested run inherits it rather than
-building its own. The words it matches are configurable, because they are matched against what the
-user typed.
+building its own. Only a `UserMessage` whose `origin` is `USER` counts: a delivered subagent report,
+a framework notice and a lead's task are marked `FRAMEWORK` or `AGENT`, so a lead turn the chat
+wakes for a subagent's news has no consent (#807). The words it matches are configurable, because
+they are matched against what the user typed.
 
 The section is read **once per conversation** (`UserMemoryBinding`, bound by `ChatProcessor` from
 the chat session state), because the block has to stay byte-identical across the turns of one.

@@ -451,12 +451,12 @@ public class AgentLoop {
 		}
 		if (!fromLead.isEmpty()) {
 			String text = inboxText(LEAD_MESSAGE_NOTICE, fromLead);
-			conversation.add(userMessage(text));
+			conversation.add(userMessage(text, UserMessage.Origin.AGENT));
 			emit(listener, new AgentEvent.LeadMessageDelivered(runId, turn, now(), text));
 		}
 		if (!fromUser.isEmpty()) {
 			String text = inboxText(USER_MESSAGE_NOTICE, fromUser);
-			conversation.add(userMessage(text));
+			conversation.add(userMessage(text, UserMessage.Origin.USER));
 			emit(listener, new AgentEvent.UserMessageDelivered(runId, turn, now(), text, List.copyOf(fromUser)));
 		}
 	}
@@ -489,8 +489,9 @@ public class AgentLoop {
 		return text.toString();
 	}
 
-	private static UserMessage userMessage(String text) {
-		return new UserMessage(UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)));
+	private static UserMessage userMessage(String text, UserMessage.Origin origin) {
+		return new UserMessage(UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)),
+			origin);
 	}
 
 	/**
@@ -571,7 +572,8 @@ public class AgentLoop {
 		}
 		String text = SubagentResultDelivery.deliveryText(finished, asking);
 		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)),
+			UserMessage.Origin.FRAMEWORK));
 
 		ConversationLogListener log = ConversationLogListenerBinding.getListener();
 		if (log != null) {
@@ -630,7 +632,8 @@ public class AgentLoop {
 			+ " (finish reason '" + reply.finishReason() + "'); asking the model to continue.",
 			AgentLoop.class);
 		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text)),
+			UserMessage.Origin.FRAMEWORK));
 
 		ConversationLogListener log = ConversationLogListenerBinding.getListener();
 		if (log != null) {
@@ -1370,7 +1373,7 @@ public class AgentLoop {
 			// tools succeeded. Correct that picture: their writes are gone now.
 			conversation.add(new UserMessage(
 				UUID.randomUUID().toString(), now(),
-				List.of(new TextContent("[Framework notice] " + notice))));
+				List.of(new TextContent("[Framework notice] " + notice)), UserMessage.Origin.FRAMEWORK));
 		}
 	}
 
@@ -2384,7 +2387,8 @@ public class AgentLoop {
 		Logger.info("Run " + runId + " turn " + turn + " is its last (" + limit + "): no tool may be called.",
 			AgentLoop.class);
 		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(notice))));
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(notice)),
+			UserMessage.Origin.FRAMEWORK));
 		emit(listener, new AgentEvent.FinalTurnRequested(runId, turn, now(), limit, notice));
 		_finalTurn = true;
 		return limit;
@@ -2782,7 +2786,7 @@ public class AgentLoop {
 		}
 		if (newestUser < 0) {
 			conversation.add(new UserMessage(UUID.randomUUID().toString(), now(),
-				List.of(new TextContent(block))));
+				List.of(new TextContent(block)), UserMessage.Origin.FRAMEWORK));
 			return;
 		}
 		UserMessage target = (UserMessage) messages.get(newestUser);
@@ -2790,7 +2794,7 @@ public class AgentLoop {
 		content.add(new TextContent(block));
 		content.addAll(target.content());
 		conversation.replaceRange(newestUser, newestUser + 1,
-			List.of(new UserMessage(target.id(), target.timestamp(), content)));
+			List.of(new UserMessage(target.id(), target.timestamp(), content, target.origin())));
 	}
 
 	/** Whether the given message already carries the block as one of its content parts. */

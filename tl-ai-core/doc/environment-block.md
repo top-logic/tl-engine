@@ -461,8 +461,16 @@ is fine" is a refusal). The words are configurable, because they are matched aga
 
 A nested run inherits the record rather than building one (`MemoryConsentBinding.bindIfAbsent`): a
 delegate's "user message" is the instruction its parent wrote, so a run allowed to build its own
-could agree with itself by delegating with the words "remember that ...". A detached subagent binds
-none and can keep nothing.
+could agree with itself by delegating with the words "remember that ...". A detached subagent builds
+its record from its task, which its lead wrote, so it can keep nothing.
+
+**Only a message the user wrote counts** (#807). The framework also puts text into the user's role:
+a delivered subagent report or question, a notice, a compaction summary, and the task or message a
+lead writes for its subagent. Each such `UserMessage` carries its `origin` (`AGENT` or
+`FRAMEWORK`, not `USER`), and the replay and the compaction sidecar keep it. When the newest message
+in the user's role is not the user's, the record grants nothing. This is the case in a lead turn that
+the chat starts for a subagent's news: a subagent's report repeats what it read, and a web page can
+ask to be remembered.
 
 **What the check establishes**: memory was the subject of this turn and the user was in favour. It
 cannot establish that the stored sentence is the sentence the user meant - no server-side check can

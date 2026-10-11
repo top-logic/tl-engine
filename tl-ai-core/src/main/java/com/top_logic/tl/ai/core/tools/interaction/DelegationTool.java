@@ -204,7 +204,7 @@ public class DelegationTool implements Tool {
 			UserMessage userMessage = new UserMessage(
 				UUID.randomUUID().toString(),
 				Instant.now(),
-				List.of(new TextContent(userPromptStr)));
+				List.of(new TextContent(userPromptStr)), UserMessage.Origin.AGENT);
 			conversation.add(userMessage);
 
 			ToolContext childContext = toolContext.forDelegation(

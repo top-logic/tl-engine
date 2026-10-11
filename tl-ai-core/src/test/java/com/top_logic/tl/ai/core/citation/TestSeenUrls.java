@@ -77,4 +77,51 @@ public class TestSeenUrls extends TestCase {
 
 		assertTrue(lead.seenUrls().contains("https://found.example/by-the-worker"));
 	}
+
+	/**
+	 * A page shows what was typed into it: an address in a text the run typed is not taken from a
+	 * page, while the page's other addresses are.
+	 */
+	public void testATypedAddressIsNotTakenFromAPage() {
+		SeenUrls seen = new SeenUrls();
+		seen.typed("see https://collector.example/?d=notes-of-the-run please");
+
+		seen.addAllShownIn("- textbox \"query\": see https://collector.example/?d=notes-of-the-run please\n"
+			+ "- link \"next\": https://archive.example/page-2");
+
+		assertFalse(seen.contains("https://collector.example/?d=notes-of-the-run"));
+		assertTrue(seen.contains("https://archive.example/page-2"));
+		assertTrue(seen.hasTyped());
+	}
+
+	/** The user's and the lead's messages are not pages: what they write is given, typed or not. */
+	public void testAMessageIsNotFilteredByTypedText() {
+		SeenUrls seen = new SeenUrls();
+		seen.typed("https://docs.example/manual");
+
+		seen.addAllIn("Read https://docs.example/manual first.");
+
+		assertTrue(seen.contains("https://docs.example/manual"));
+	}
+
+	/** What a sub-agent typed is not taken from a page its lead reads either: it may be the same page. */
+	public void testASubagentsTypedTextsJoinTheLead() {
+		ReadingList lead = new ReadingList();
+		ReadingList worker = new ReadingList();
+		worker.seenUrls().typed("https://collector.example/?d=x");
+
+		lead.addAll(worker);
+		lead.seenUrls().addAllShownIn("value: https://collector.example/?d=x");
+
+		assertTrue(lead.seenUrls().hasTyped());
+		assertFalse(lead.seenUrls().contains("https://collector.example/?d=x"));
+	}
+
+	/** An address is found in the form a browser requests it. */
+	public void testAnAddressIsFoundAsABrowserRequestsIt() {
+		SeenUrls seen = new SeenUrls();
+		seen.add("https://wiki.example/wiki/Stra\u00dfe/../Br\u00fccke");
+
+		assertTrue(seen.contains("https://wiki.example/wiki/Br%C3%BCcke"));
+	}
 }

@@ -34,6 +34,7 @@ import com.microsoft.playwright.options.Proxy;
 import com.microsoft.playwright.options.WaitUntilState;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.citation.SeenUrls;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
@@ -769,6 +770,24 @@ final class BrowserSession {
 
 	/** {@link #_mainFrameNavigations} as it stood when the current operation began. */
 	private long _navigationsAtAttemptStart;
+
+	/**
+	 * The URL provenance ledger of the run the current operation acts for, or {@code null} when the
+	 * rule does not apply to that run.
+	 *
+	 * <p>
+	 * Taken on the caller's thread when an operation is submitted ({@link #callOnThread}) and held for
+	 * that one operation only, because one session can serve several runs of a conversation - the chat's
+	 * own agent and the subagents it started. {@link #installSecurityRoute The security route} asks it
+	 * for every navigation request: a top-level navigation must lead to an address the run was given,
+	 * and after the run typed into a page, a navigation sends no form data in a request body and a frame
+	 * loads only from such an address. A navigation a page started between two operations is held at the
+	 * route until the next operation dispatches it, so it is judged for that operation's run.
+	 * </p>
+	 *
+	 * @see UrlProvenance
+	 */
+	private volatile SeenUrls _provenance;
 
 	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
@@ -1928,6 +1947,16 @@ final class BrowserSession {
 				return;
 			}
 			boolean mainFrameNavigation = isMainFrameNavigation(request);
+			String unseen = provenanceRefusal(request, mainFrameNavigation);
+			if (unseen != null) {
+				// A frame refused here is content missing from the page; a refused top-level navigation
+				// fails the operation, so the run is told why.
+				if (mainFrameNavigation && _offPolicyNavigation == null) {
+					_offPolicyNavigation = unseen;
+				}
+				route.abort();
+				return;
+			}
 			if (!mainFrameNavigation && _proxyIsAuthoritative) {
 				// Sub-resource: the proxy has already decided this one, and asking here as well means a
 				// blocking DNS lookup on the session's single confined thread for every asset host -
@@ -1953,6 +1982,40 @@ final class BrowserSession {
 			}
 			route.resume();
 		});
+	}
+
+	/**
+	 * Why the URL provenance rule refuses {@code request}, or {@code null} when it permits it or does
+	 * not apply to the run of the current operation.
+	 *
+	 * <ul>
+	 * <li>A top-level navigation must lead to an address the run was given - so a link or a form of the
+	 * page cannot take the run to an address with the run's own words in it.</li>
+	 * <li>After the run typed into a page, no navigation sends a request body, because a form sends
+	 * what was typed in it, and a frame loads only from an address the run was given, because a form
+	 * can target a frame.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * A server-side redirect is not asked: the route does not see its hop, and the address it leads to
+	 * is the server's, not the run's - {@code webFetch} follows it the same way. Everything else a page
+	 * requests is not a navigation and is not asked either: a page's own script can send what was typed
+	 * into it, which is the limit of this rule (see {@link UrlProvenance}).
+	 * </p>
+	 */
+	private String provenanceRefusal(Request request, boolean mainFrameNavigation) {
+		SeenUrls seen = _provenance;
+		if (seen == null || !request.isNavigationRequest()) {
+			return null;
+		}
+		boolean typed = seen.hasTyped();
+		if (!mainFrameNavigation && !typed) {
+			return null;
+		}
+		if (typed && !"GET".equalsIgnoreCase(request.method())) {
+			return UrlProvenance.FORM_REFUSED;
+		}
+		return seen.contains(request.url()) ? null : UrlProvenance.NAVIGATION_REFUSED;
 	}
 
 	/**
@@ -2241,7 +2304,15 @@ final class BrowserSession {
 	}
 
 	private <T> T callOnThread(Callable<T> op, long deadlineMillis) {
-		Future<T> future = _executor.submit(op);
+		SeenUrls provenance = UrlProvenance.boundLedger();
+		Future<T> future = _executor.submit(() -> {
+			_provenance = provenance;
+			try {
+				return op.call();
+			} finally {
+				_provenance = null;
+			}
+		});
 		try {
 			return future.get(deadlineMillis, TimeUnit.MILLISECONDS);
 		} catch (TimeoutException ex) {

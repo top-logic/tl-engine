@@ -27,6 +27,16 @@ declare module 'tl-react-bridge' {
   export function useTLState(): Record<string, unknown>
 
   /**
+   * Listens to the patches the window's event stream addresses to `controlId`, each one as it
+   * arrives. The id need not belong to a mounted control: the chat's frames travel under an id of
+   * their own (`openChatStream`).
+   */
+  export function subscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
+
+  /** Stops a listener `subscribe` added. */
+  export function unsubscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
+
+  /**
    * The class name of a control's root element: the given classes the component brings itself,
    * followed by the `css-class` the view configured for this one element. Falsy entries are left out.
    */

@@ -444,7 +444,7 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 
 ### Chat UI (tl-chat)
 
-`ChatServlet` at `/chat/*` handles REST + SSE. `ChatProcessor` orchestrates background agent execution. `ChatSSEHandler` implements `AgentEventListener` for real-time push (50ms flush batching, 30+ event types).
+`ChatServlet` at `/chat/*` handles REST + SSE. `ChatProcessor` orchestrates background agent execution. `ChatSSEHandler` implements `AgentEventListener` for real-time push (50ms flush batching, 30+ event types). The chat has no event stream of its own: the frames travel on the window's React event stream (`/react-api/events`), attached with `POST /chat/stream`. A second long-lived connection per page let three tabs exhaust the browser's six connections to the server (#867). See `tl-chat/CLAUDE.md`.
 
 One front end consumes that API, the React chat (`tl-chat/ui/`): TypeScript + Vite, mounted into the React view layer by the composed view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop. It is shown in two kinds of page:
 

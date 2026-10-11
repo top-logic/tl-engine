@@ -19,7 +19,6 @@ import {
   listSubagents,
   loadSession,
   loadSubagentTranscript,
-  openEventStream,
   regenerate as regenerateTurn,
   respond,
   sendFeedback,
@@ -31,6 +30,7 @@ import {
   type ChatAddress,
   type SessionDetail,
 } from './api'
+import { openChatStream, type ChatStream, type StreamFrame } from './chat-stream'
 import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
@@ -1306,16 +1306,19 @@ export class ChatStore {
   // --- the stream --------------------------------------------------------------------------
 
   /**
-   * The chat's one `EventSource`, opened by the first element that joined this chat and closed by
+   * The chat's one stream, opened by the first element that joined this chat and closed by
    * the last one to leave.
    */
   private connect(): (() => void) | void {
-    // An EventSource against a 401 reconnects for as long as the page is open; a session that is
-    // not signed in opens none.
+    // The window's stream reconnects by itself, and its queue keeps what it could not write. What
+    // the engine cannot bring back is the attach: the server ends it when the page counts as left,
+    // or forgets the window. A stream that stays silent past STALE_AFTER_MS - the server sends a
+    // heartbeat every 15 s - is therefore attached again, and so is one the server failed to
+    // start. A session that is not signed in attaches none.
     if (!this.state.authenticated) return
     const at = this.at
     let closed = false
-    let source: EventSource | null = null
+    let source: ChatStream | null = null
     let staleTimer = 0
     let reopenTimer = 0
     let connectTimer = 0
@@ -1362,17 +1365,17 @@ export class ChatStore {
 
     const open = () => {
       if (closed) return
-      const es = openEventStream(at)
+      const es = openChatStream(at)
       source = es
-      const on = (name: string, fn: (e: MessageEvent) => void) =>
-        es.addEventListener(name, ((event: MessageEvent) => {
+      const on = (name: string, fn: (e: StreamFrame) => void) =>
+        es.addEventListener(name, (event: StreamFrame) => {
           markAlive()
           // A frame naming a session other than the open one is a run this conversation has since
           // moved away from - see `eventBelongsToChat`. While a chat is being opened, that chat is
           // the open one: its run's frames are the ones that matter, and the old chat's are not.
           if (!eventBelongsToChat(name, event.data, this.opening?.sessionId ?? this.state.sessionId)) return
           fn(event)
-        }) as EventListener)
+        })
 
       const setTokens = (windowSize?: number, modelName?: string, usage?: TokenUsage) => {
         this.setRun((s) => ({
@@ -1775,13 +1778,14 @@ export class ChatStore {
         })
       })
 
-      es.onerror = () => {
-        if (es.readyState === EventSource.CLOSED) {
-          this.patch({ connection: 'reconnecting' })
-          void this.windowKnown(at).then((known) => {
-            if (known) reopen()
-          })
-        }
+      es.onerror = (error) => {
+        // The one refusal a new stream cannot cure is `stale_window`: the page is being reloaded,
+        // and asking again would only repeat it, once a second, for as long as the page is open.
+        // Any other failure - a server that is restarting answers nothing useful yet - is tried
+        // again, and the window's own stream reloads the page once the server is back.
+        if (this.staleWindow(error)) return
+        this.patch({ connection: 'reconnecting' })
+        reopen()
       }
 
       // Not alive until something answers: if no frame arrives within this, say so and keep saying
@@ -2037,24 +2041,6 @@ export class ChatStore {
       this.showNotice(this.labels.staleWindow, '', { tone: 'warn', sticky: true })
     }
     return true
-  }
-
-  /**
-   * Whether the server still knows this page's window, for a stream it closed.
-   *
-   * An `EventSource` cannot read why it was refused, and the one refusal a new stream cannot cure is
-   * `stale_window`: re-opening then only repeats it, once a second, for as long as the page is open.
-   * The run snapshot is the cheapest call that is answered the same way. Any other failure counts
-   * as known, so the stream is re-opened as before - a server that is restarting answers nothing
-   * useful yet, and the page's own stream reloads it once it is back.
-   */
-  private async windowKnown(at: ChatAddress): Promise<boolean> {
-    try {
-      await fetchRunSnapshot(at)
-      return true
-    } catch (err) {
-      return !this.staleWindow(err)
-    }
   }
 
   /**
@@ -2691,7 +2677,7 @@ export interface ChatHandle {
  * Joins the chat with the given id.
  *
  * Every element that passes the same id sees the same conversation, the same run and the same one
- * `EventSource`; the first to arrive opens the stream and the last to leave closes it.
+ * stream; the first to arrive opens the stream and the last to leave closes it.
  */
 export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The bootstrap seeds a store that does not exist yet; an existing one keeps what it has and

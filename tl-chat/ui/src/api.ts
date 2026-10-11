@@ -397,8 +397,28 @@ export async function respond(at: ChatAddress, body: Record<string, unknown>): P
   if (!res.ok) throw new Error(`respond failed (${res.status})`)
 }
 
-export function openEventStream(at: ChatAddress): EventSource {
-  return new EventSource(withWindow('/chat/events', at), { withCredentials: true })
+/**
+ * Asks the server to send this conversation's frames over the window's own event stream, as
+ * patches to the listener `tl-chat-stream:<token>` - see `openChatStream`.
+ */
+export async function attachChatStream(at: ChatAddress, token: string): Promise<void> {
+  const res = await chatFetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error(`attach failed (${res.status})`)
+}
+
+/**
+ * Stops the frames `attachChatStream` started for the same token. Best effort, and sent with
+ * `keepalive` so that it still goes out while the page is being left.
+ */
+export function detachChatStream(at: ChatAddress, token: string): void {
+  void fetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
+    method: 'DELETE',
+    credentials: 'include',
+    keepalive: true,
+  }).catch(() => undefined)
 }
 
 export async function improvePrompt(

@@ -37,13 +37,6 @@ class FakeResizeObserver {
   }
 }
 
-class FakeEventSource {
-  readyState = 0
-  addEventListener(): void {}
-  removeEventListener(): void {}
-  close(): void {}
-}
-
 const PROGRESS = { controlId: 'c2', module: 'TLDataList', state: {} }
 const INVOICES = { controlId: 'c3', module: 'TLDataList', state: {} }
 const PANE = { controlId: 'c4', module: 'TLForm', state: {} }
@@ -154,7 +147,6 @@ beforeEach(() => {
   chatId = `rail-drawer-${++serial}`
   const globals = globalThis as unknown as Record<string, unknown>
   globals.ResizeObserver = FakeResizeObserver
-  globals.EventSource = FakeEventSource
   globals.fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) }))
   host = document.createElement('div')
   Object.defineProperty(host, 'clientWidth', { get: () => hostWidth })

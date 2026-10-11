@@ -113,10 +113,6 @@ describe('the input channel of a conversation', () => {
       const body = id ? { id, turnsJson: '' } : url.includes('/chat/sessions') ? { sessions: [{ id: 'previous-page', title: 'A' }] } : {}
       return { ok: true, status: 200, json: async () => body }
     }) as unknown as typeof fetch
-    ;(globalThis as unknown as { EventSource: unknown }).EventSource = class {
-      addEventListener(): void {}
-      close(): void {}
-    }
     for (const key of Object.keys(window.sessionStorage)) window.sessionStorage.removeItem(key)
     window.sessionStorage.setItem(`tl-chat-session:${CHAT}-restore`, 'previous-page')
     const chatId = CHAT + '-restore'

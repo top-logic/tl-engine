@@ -61,10 +61,6 @@ beforeEach(() => {
     }
     return { ok: true, status: 200, json: async () => body }
   }) as unknown as typeof fetch
-  ;(globalThis as unknown as { EventSource: unknown }).EventSource = class {
-    addEventListener(): void {}
-    close(): void {}
-  }
   for (const key of Object.keys(window.sessionStorage)) window.sessionStorage.removeItem(key)
   container = document.createElement('div')
   document.body.appendChild(container)

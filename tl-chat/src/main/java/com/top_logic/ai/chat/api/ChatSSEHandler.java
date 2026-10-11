@@ -5,8 +5,6 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,10 +17,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.AsyncEvent;
-import jakarta.servlet.AsyncListener;
+import java.util.regex.Pattern;
 
 import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
 import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
@@ -61,6 +56,10 @@ import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -74,13 +73,34 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
- * Push-based SSE implementation of {@link ChatEventHandler}.
+ * Push-based implementation of {@link ChatEventHandler} that writes the chat's frames onto the
+ * event stream the browser window already holds for the React layer.
  *
  * <p>
  * Receives agent events directly via {@link #onEvent(AgentEvent)}, buffers them in a
- * {@link ConcurrentLinkedQueue}, and flushes to the SSE stream every 50ms. User interaction
- * events from {@link UserInteractionStore} are still polled during the flush cycle because
- * they originate outside the agent event system.
+ * {@link ConcurrentLinkedQueue}, and flushes them every 50ms. User interaction events from
+ * {@link UserInteractionStore} are still polled during the flush cycle because they originate
+ * outside the agent event system.
+ * </p>
+ *
+ * <p>
+ * <b>One connection per page (#867).</b> A browser opens at most six connections to one host over
+ * HTTP/1.1, for all its tabs together, and every page of the React layer holds one of them for its
+ * event stream ({@code /react-api/events}). The chat used to open a second stream of its own: three
+ * tabs then held all six, and no request of any tab reached the server any more - no click, no
+ * navigation, no message. The frames of one flush therefore travel as one {@link PatchEvent} on the
+ * window's {@link SSEUpdateQueue}, as <code>{"frames":[{"event":"text_delta","data":{...}}, ...]}</code>,
+ * addressed to a listener id the browser chose when it attached ({@code subscribe} of the React
+ * bridge). The id belongs to no control, so no control state is touched and the window's
+ * interaction is not needed; the queue is thread-safe and keeps what it could not write until the
+ * window's stream reconnects.
+ * </p>
+ *
+ * <p>
+ * The handler lives while its window is displayed: known to the registry, served by the same queue,
+ * its page not unloaded. A tab that is closed or reloaded stops it, and with it the window's
+ * presence in {@link ChatEventHandlerRegistry} - what waking a lead for subagent news and marking a
+ * result seen go by.
  * </p>
  *
  * <p>
@@ -126,8 +146,29 @@ public class ChatSSEHandler implements ChatEventHandler {
 	/** The signed-in account this stream was opened for; may be <code>null</code>. */
 	private final Person _account;
 
-	private final AsyncContext _asyncContext;
-	private final PrintWriter _writer;
+	/** Prefix of every listener id, so a chat's id cannot name a control of the window. */
+	static final String LISTENER_PREFIX = "tl-chat-stream:";
+
+	/** What the browser may choose as its part of the listener id. */
+	private static final Pattern TOKEN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
+
+	private final ReactWindowRegistry _registry;
+
+	private final String _window;
+
+	private final SSEUpdateQueue _queue;
+
+	private final String _listener;
+
+	/**
+	 * The frames of the current flush cycle, each written by {@link #frame(String, String)}.
+	 *
+	 * <p>
+	 * Written by the flush task only, and by {@link #start()} before that task is scheduled.
+	 * </p>
+	 */
+	private final List<String> _frames = new ArrayList<>();
+
 	private final AtomicBoolean _closed = new AtomicBoolean(false);
 
 	/** Thread-safe event buffer between agent thread and SSE flush thread. */
@@ -156,32 +197,59 @@ public class ChatSSEHandler implements ChatEventHandler {
 	private ScheduledFuture<?> _flushTask;
 
 	/**
-	 * Creates a new SSE handler.
+	 * Creates a {@link ChatSSEHandler} for one conversation of a browser window.
 	 *
 	 * @param tracker
 	 *        Session-scoped task progress tracker.
-	 * @param asyncContext
-	 *        Async context from the servlet.
-	 * @param writer
-	 *        Response writer for SSE output.
-	 */
-	public ChatSSEHandler(TaskProgressTracker tracker, AsyncContext asyncContext, PrintWriter writer) {
-		this(tracker, null, asyncContext, writer);
-	}
-
-	/**
-	 * Creates a {@link ChatSSEHandler} for the window of a known account.
-	 *
 	 * @param account
 	 *        The signed-in account this stream was opened for; what makes this window one of the
 	 *        account's when another of them answers a request. May be <code>null</code>.
+	 * @param registry
+	 *        The window registry of the session the window belongs to.
+	 * @param window
+	 *        The window's name, the {@code windowId} the chat sends with every request.
+	 * @param queue
+	 *        The window's event queue, as the registry hands it out now.
+	 * @param token
+	 *        The browser's part of the listener id, see {@link #isToken(String)}.
 	 */
-	public ChatSSEHandler(TaskProgressTracker tracker, Person account, AsyncContext asyncContext,
-			PrintWriter writer) {
+	public ChatSSEHandler(TaskProgressTracker tracker, Person account, ReactWindowRegistry registry,
+			String window, SSEUpdateQueue queue, String token) {
 		_tracker = tracker;
 		_account = account;
-		_asyncContext = asyncContext;
-		_writer = writer;
+		_registry = registry;
+		_window = window;
+		_queue = queue;
+		_listener = listenerId(token);
+	}
+
+	/**
+	 * Whether the browser's part of a listener id is acceptable: letters, digits, {@code -} and
+	 * {@code _}, at most 64 of them.
+	 */
+	public static boolean isToken(String token) {
+		return token != null && TOKEN.matcher(token).matches();
+	}
+
+	/**
+	 * The listener id the browser subscribes to for the given token.
+	 */
+	static String listenerId(String token) {
+		return LISTENER_PREFIX + token;
+	}
+
+	/**
+	 * One frame as the patch carries it: an object of the frame's name and its payload.
+	 */
+	static String frame(String event, String data) {
+		return "{\"event\":\"" + JsonEscape.escape(event) + "\",\"data\":" + data + "}";
+	}
+
+	/**
+	 * The patch that carries the given frames, each written by {@link #frame(String, String)}.
+	 */
+	static String patch(List<String> frames) {
+		return "{\"frames\":[" + String.join(",", frames) + "]}";
 	}
 
 	@Override
@@ -200,36 +268,30 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	/**
-	 * Starts the SSE event stream.
+	 * Whether this handler writes to the given listener id.
+	 */
+	boolean writesTo(String listener) {
+		return _listener.equals(listener);
+	}
+
+	/**
+	 * Whether the window this handler writes to is still displayed: known to the registry, served
+	 * by the same queue, and its page not unloaded.
+	 */
+	boolean isWindowShown() {
+		WindowEntry window = _registry.getWindow(_window);
+		return window != null && window.getQueue() == _queue && window.getUnloadedAt() == 0;
+	}
+
+	/**
+	 * Starts sending this conversation's frames.
 	 */
 	public void start() {
-		// Registering also drops stale handlers of the same tracker (e.g. on SSE reconnection).
+		// Registering also drops the handler of an earlier attach of the same tracker.
 		ChatEventHandlerRegistry.register(this);
 
-		_asyncContext.addListener(new AsyncListener() {
-			@Override
-			public void onComplete(AsyncEvent event) {
-				stop();
-			}
-
-			@Override
-			public void onTimeout(AsyncEvent event) {
-				stop();
-			}
-
-			@Override
-			public void onError(AsyncEvent event) {
-				stop();
-			}
-
-			@Override
-			public void onStartAsync(AsyncEvent event) {
-				// Nothing
-			}
-		});
-
-		sendProxyBustPadding();
 		sendConnectedEvent();
+		flushFrames();
 
 		_flushTask = SSE_EXECUTOR.scheduleWithFixedDelay(
 			this::flushAndPoll,
@@ -247,24 +309,19 @@ public class ChatSSEHandler implements ChatEventHandler {
 			if (_flushTask != null) {
 				_flushTask.cancel(false);
 			}
-			try {
-				_asyncContext.complete();
-			} catch (Exception ignored) {
-				// Already completed or invalid state
-			}
 		}
 	}
 
 	@Override
 	public void onEvent(AgentEvent event) {
 		if (_closed.get()) {
-			// This handler's SSE connection is gone (browser reconnected).
+			// This handler was replaced by a newer attach of the window, or its window is gone.
 			// Forward to the current active handler for the same tracker.
 			ChatEventHandler current = ChatEventHandlerRegistry.find(_tracker);
 			if (current != null && current != this) {
 				current.onEvent(event);
 			} else {
-				Logger.warn("SSE handler closed, no replacement found — dropping event: "
+				Logger.warn("SSE handler closed, no replacement found - dropping event: "
 					+ event.getClass().getSimpleName(), ChatSSEHandler.class);
 			}
 			return;
@@ -349,37 +406,6 @@ public class ChatSSEHandler implements ChatEventHandler {
 		_eventQueue.add(new Frame(type, data));
 	}
 
-	/**
-	 * Sends an SSE comment block large enough to flush corporate proxy buffers.
-	 *
-	 * <p>
-	 * Many corporate proxies (Zscaler, BlueCoat, F5) buffer the response until they've
-	 * accumulated enough data (typically 4-8 KB). This padding forces the proxy to flush,
-	 * ensuring SSE events reach the browser immediately.
-	 * </p>
-	 */
-	private void sendProxyBustPadding() {
-		if (_closed.get()) {
-			return;
-		}
-		try {
-			synchronized (_writer) {
-				// SSE comments (lines starting with ':') are ignored by EventSource.
-				// Send 4 KB of padding to push through proxy buffers.
-				StringBuilder padding = new StringBuilder(4096);
-				padding.append(": proxy-bust-padding\n");
-				while (padding.length() < 4096) {
-					padding.append(": " + " ".repeat(253) + "\n");
-				}
-				padding.append('\n');
-				_writer.write(padding.toString());
-				_writer.flush();
-			}
-		} catch (Exception e) {
-			Logger.error("Failed to send proxy-bust padding", e, ChatSSEHandler.class);
-		}
-	}
-
 	private void sendConnectedEvent() {
 		Chat chat = _tracker.getChat();
 		int messageCount = chat.getMessages().size();
@@ -440,6 +466,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		if (now - _lastActivityTime > HEARTBEAT_INTERVAL_MS) {
 			sendHeartbeat();
 		}
+
+		flushFrames();
 	}
 
 	private void emitAgentEvent(AgentEvent event) {
@@ -788,23 +816,37 @@ public class ChatSSEHandler implements ChatEventHandler {
 			return;
 		}
 
+		_frames.add(frame(eventType, data));
+		_lastActivityTime = System.currentTimeMillis();
+	}
+
+	/**
+	 * Writes what the cycle produced as one patch, and stops once the window is no longer shown.
+	 */
+	private void flushFrames() {
+		if (_closed.get()) {
+			return;
+		}
 		try {
-			synchronized (_writer) {
-				_writer.write("event: " + eventType + "\n");
-				_writer.write("data: " + data + "\n\n");
-				_writer.flush();
+			if (!_frames.isEmpty()) {
+				String patch = patch(_frames);
+				_frames.clear();
+				deliver(patch);
 			}
-
-			if (_writer.checkError()) {
+			if (!isWindowShown()) {
 				stop();
-				return;
 			}
-
-			_lastActivityTime = System.currentTimeMillis();
 		} catch (Exception e) {
-			Logger.error("Failed to write SSE event", e, ChatSSEHandler.class);
+			Logger.error("Failed to write chat frames", e, ChatSSEHandler.class);
 			stop();
 		}
+	}
+
+	/**
+	 * Puts one patch on the window's event stream, to this handler's listener id.
+	 */
+	void deliver(String patch) {
+		_queue.enqueue(PatchEvent.create().setControlId(_listener).setPatch(patch));
 	}
 
 	private int usedTokens() {
@@ -833,11 +875,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 
 	/**
 	 * Creates a handler whose {@link #sendEvent(String, String)} forwards event names to the given
-	 * consumer instead of writing to a real HTTP connection. The tracker and asyncContext are
-	 * unused by the code paths exercised via {@link #onEventForTest(AgentEvent)}.
+	 * consumer instead of writing to a window. The tracker and the window are unused by the code
+	 * paths exercised via {@link #onEventForTest(AgentEvent)}.
 	 */
 	static ChatSSEHandler recordingForTest(Consumer<String> eventNameSink) {
-		return new ChatSSEHandler(null, null, new PrintWriter(new StringWriter())) {
+		return new ChatSSEHandler(null, null, null, null, null, "test") {
 			@Override
 			void sendEvent(String eventType, String data) {
 				eventNameSink.accept(eventType);

@@ -20,8 +20,13 @@ Both served by `ChatServlet` at `/chat/*`:
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
    - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. Its `chatId` is the key the layout is *stored* under, not the conversation the request comes from; the conversation travels beside it as `conversation=…`, like on every other call. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
 
-2. **SSE API** (real-time push):
-   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
+2. **Push** (real-time frames, on the window's event stream): `ChatSSEHandler` receives `AgentEvent`s and emits structured frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
+   - `POST /chat/stream?stream=<token>` – attaches. The frames travel on the event stream the browser window already holds for the React layer (`/react-api/events`), as one `PatchEvent` per 50 ms flush to the listener id `tl-chat-stream:<token>`, which the browser subscribes with the bridge's `subscribe` before it asks (`chat-stream.ts`). The token is new for every attach, so the frames of a replaced handler reach nobody.
+   - `DELETE /chat/stream?stream=<token>` – detaches, when the last chat element of the conversation leaves the page. A page that is left (closed, reloaded) stops its handler too: the handler lives while its window is displayed, and that is what "a window shows this chat" means for waking a lead and marking a result seen.
+
+   The chat therefore works only in a window of the React layer - a React page or a classic tab through `tl-chat-classic`; there is no stand-alone event stream.
+
+   **Why no `EventSource` of its own (#867).** A browser opens at most six connections to one host over HTTP/1.1, for all its tabs together, and every React page holds one for `/react-api/events`. A chat stream of its own made it two per page: three tabs held all six, the browser queued every other request of every tab, and no click, navigation or message reached the server any more. A page now holds one connection. Six tabs still exhaust the pool with the engine's stream alone; HTTP/2 (which needs TLS in browsers) lifts the limit.
 
 `ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
 additionally refuses anonymous ones with 401, because an application may hand a visitor a session
@@ -174,7 +179,7 @@ run. See `doc/scheduled-agent.md`.
 
 - `Chat` uses `CopyOnWriteArrayList` for thread-safe message access
 - `AIProcessingState` uses `synchronized` blocks and `volatile` fields
-- `ChatSSEHandler` uses `AtomicBoolean` for close detection and synchronized writer access
+- `ChatSSEHandler` uses `AtomicBoolean` for close detection; its frame buffer is written only by its flush task (and by `start()` before that task runs). `SSEUpdateQueue.enqueue` is thread-safe, so writing a patch needs no window interaction
 
 ## Persistence Model
 
@@ -564,7 +569,7 @@ it rewrites a draft and never answers as a persona.
 | `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
 | `chat-sources.tsx` | `<chat-sources/>`: the one rail section the chat still contributes as an element of its own |
 | `data-list.tsx` | `<data-list>` as `TLDataList`: the generic list - rows, lines, groups, search, selection, per-row state class |
-| `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
+| `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the attach to the window's event stream |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
 | `subagent-card.tsx` | One card per background subagent at the tool call that started it, from the live events (`subagentLive`) or, after a reload, from the lead's recorded `SubagentPart`; `cardsForTurn` decides which cards a turn shows |
@@ -784,7 +789,7 @@ conversation.
 
 | | |
 |--|--|
-| What the store owns | The bootstrap, the capabilities, the session list and the open session, the turn settings, the transcript (through `chatReducer`), the run, the layout preferences, and the chat's one `EventSource` |
+| What the store owns | The bootstrap, the capabilities, the session list and the open session, the turn settings, the transcript (through `chatReducer`), the run, the layout preferences, and the chat's one attach to the window's event stream |
 | What a chat element keeps | Its own geometry and its host composition: for `App` the session drawer, the collapsed rail, the sheet breakpoint, the published `--composer-height`, and `ChatExtensions` |
 | Lifetime | The first element to subscribe opens the stream, the last to leave closes it and drops the chat - a fresh mount starts as fresh as it did when `App` owned the state |
 | `PUT /chat/preferences` | Written by the store and by nothing else, so several elements on one chat cannot race on the `tl-chat.layout` key |
@@ -813,7 +818,7 @@ render's control state and then persisted that stale value.
 are idempotent - they only touch what the user has not decided - so a remount, or a second rail,
 re-states the same defaults and changes nothing.
 
-Run state is recovered the same way, but over REST rather than the control state: the SSE stream
+Run state is recovered the same way, but over REST rather than the control state: the chat's stream
 replays nothing, so on restoring or selecting a session the store also reads `GET /chat/updates`
 (the tasks of the open run, and whether it is still processing) and `GET /chat/interactions` (the
 approvals and questions waiting for this user). A reload in mid-run therefore comes back with the
@@ -1533,5 +1538,5 @@ or address.
 ## Notes
 
 - Active chat state lives in session memory; completed sessions persisted to KnowledgeBase
-- SSE connections have no timeout; stay open until client disconnects
+- A chat handler lives until `DELETE /chat/stream`, until its window's page is unloaded, or until a newer attach of the same conversation replaces it
 - Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<capacity chat-workers>` on `AgentRuntimeService` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip

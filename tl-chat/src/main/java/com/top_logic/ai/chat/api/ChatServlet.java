@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 
-import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -91,6 +90,8 @@ import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
@@ -128,7 +129,8 @@ import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).
+ * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, POST /chat/stream (the chat's
+ * frames on the window's event stream).
  *
  * <p>
  * Uses {@link SessionService} to resolve the authenticated user from the HTTP session. All
@@ -151,7 +153,7 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_CANCEL_PROMPT_IMPROVEMENT = "/improve-prompt/cancel";
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
-	private static final String PATH_EVENTS = "/events";
+	private static final String PATH_STREAM = "/stream";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String PATH_SUBAGENTS = "/subagents";
@@ -211,8 +213,6 @@ public class ChatServlet extends TopLogicServlet {
 	 */
 	private static final int SC_TOO_MANY_REQUESTS = 429;
 
-	private static final String CONTENT_TYPE_SSE = "text/event-stream";
-
 	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
 	private static final String TYPE_APPROVAL = "approval";
 
@@ -234,6 +234,10 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_SEND) || pathInfo.equals(PATH_SEND + "/")) {
 			handleSend(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_STREAM) || pathInfo.equals(PATH_STREAM + "/")) {
+			handleAttachStream(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_RESPOND) || pathInfo.equals(PATH_RESPOND + "/")) {
@@ -287,11 +291,7 @@ public class ChatServlet extends TopLogicServlet {
 		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path: /chat/updates or /chat/events");
-			return;
-		}
-		if (pathInfo.equals(PATH_EVENTS) || pathInfo.equals(PATH_EVENTS + "/")) {
-			handleSSE(req, resp);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path");
 			return;
 		}
 		if (pathInfo.equals(PATH_UPDATES) || pathInfo.equals(PATH_UPDATES + "/")) {
@@ -348,6 +348,10 @@ public class ChatServlet extends TopLogicServlet {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+		if (pathInfo.equals(PATH_STREAM) || pathInfo.equals(PATH_STREAM + "/")) {
+			handleDetachStream(req, resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SUBAGENTS + "/")) {
@@ -1572,22 +1576,65 @@ public class ChatServlet extends TopLogicServlet {
 		return type == null ? null : type.getName().toLowerCase(java.util.Locale.ROOT);
 	}
 
-	private void handleSSE(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		TaskProgressTracker tracker = currentTracker();
-
-		resp.setContentType(CONTENT_TYPE_SSE);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
-		resp.setHeader("X-Accel-Buffering", "no");
-		resp.setHeader("Connection", "keep-alive");
-		resp.setBufferSize(0);
-
-		AsyncContext asyncContext = req.startAsync();
-		asyncContext.setTimeout(0); // No timeout - connection stays open until client disconnects
-
+	/**
+	 * Starts sending this conversation's frames over the event stream the browser window already
+	 * holds, to the listener id the request names ({@code stream}).
+	 *
+	 * <p>
+	 * The chat has no event stream of its own: a page then holds one connection to the server, not
+	 * two - see {@link ChatSSEHandler}. The browser subscribes to the listener id before it asks, so
+	 * it misses nothing, and it chooses a new id for each attach, so the frames of a handler this one
+	 * replaces reach no listener.
+	 * </p>
+	 *
+	 * <p>
+	 * A window the React layer does not know is answered as stale, like every request of a window
+	 * this servlet does not know.
+	 * </p>
+	 */
+	private void handleAttachStream(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String token = req.getParameter("stream");
+		if (!ChatSSEHandler.isToken(token)) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing or invalid stream id.");
+			return;
+		}
+		String window = windowId(req);
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(req.getSession());
+		SSEUpdateQueue queue = window == null ? null : registry.getQueue(window);
+		if (queue == null) {
+			sendStaleWindow(resp);
+			return;
+		}
 		ChatSSEHandler handler =
-			new ChatSSEHandler(tracker, resolveCurrentPerson(req), asyncContext, resp.getWriter());
+			new ChatSSEHandler(currentTracker(), resolveCurrentPerson(req), registry, window, queue, token);
 		handler.start();
+
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\"}");
+	}
+
+	/**
+	 * Stops the frames a {@code POST /chat/stream} with the same {@code stream} id started.
+	 *
+	 * <p>
+	 * Sent when the last chat element of the conversation leaves the page. A handler started by a
+	 * later attach of the same window is left alone. A tab that closes sends nothing; its handler
+	 * stops when the window's page is unloaded.
+	 * </p>
+	 */
+	private void handleDetachStream(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String token = req.getParameter("stream");
+		if (ChatSSEHandler.isToken(token)
+			&& ChatEventHandlerRegistry.find(currentTracker()) instanceof ChatSSEHandler handler
+			&& handler.writesTo(ChatSSEHandler.listenerId(token))) {
+			handler.stop();
+		}
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\"}");
 	}
 
 	private void handleSessionGet(HttpServletRequest req, HttpServletResponse resp, String pathInfo)

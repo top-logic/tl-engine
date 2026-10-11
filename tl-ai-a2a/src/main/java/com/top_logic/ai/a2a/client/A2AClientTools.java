@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.ai.a2a.A2AExchange;
 import com.top_logic.ai.a2a.A2AService;
 import com.top_logic.ai.a2a.ContextBook;
 import com.top_logic.ai.a2a.client.RemoteAgents.RemoteAgent;
@@ -179,7 +180,8 @@ public class A2AClientTools {
 	public ToolResult fetchArtifact(
 			@P("The reference, tl-artifact://...") String ref,
 			@P(value = "A section: a heading of a Markdown text, a member (or path a/b) of a JSON object.",
-				required = false) String section) {
+				required = false) String section,
+			ToolExecutionContext context) {
 		return call(service -> {
 			ArtifactRef parsed = ArtifactRef.parse(ref);
 			if (parsed == null) {
@@ -190,6 +192,12 @@ public class A2AClientTools {
 				? A2AService.artifactResponse(service.resolveArtifact(parsed, TLContext.currentUser().getName()),
 					parsed, section)
 				: service.remoteAgents().fetchArtifact(parsed, section);
+			if (!parsed.app().equals(service.appName()) && !answer.containsKey("error")) {
+				RunInfo info = context.runInfo();
+				service.observeFetch(A2AExchange.Direction.OUTGOING,
+					service.localDisplayName(info == null ? null : info.agentName()), parsed.app(), parsed, section,
+					info == null ? null : info.runId());
+			}
 			return formatArtifact(answer, parsed);
 		});
 	}
@@ -276,7 +284,8 @@ public class A2AClientTools {
 
 	private static RemoteExchange exchange(A2AService service, ToolExecutionContext context) {
 		return new RemoteExchange(service.remoteAgents(), service.contexts(), caller(service, context),
-			maxWaitMillis(service), progress(context), () -> context.cancellationToken().isCancelled());
+			maxWaitMillis(service), progress(context), () -> context.cancellationToken().isCancelled(),
+			service.observer());
 	}
 
 	/**
@@ -305,7 +314,8 @@ public class A2AClientTools {
 			subject = subjectOf(toolContext);
 		}
 		return new RemoteExchange.Caller(service.appName(), service.localDisplayName(info == null ? null : info.agentName()),
-			conversationId, subject, subject == null ? null : MetaLabelProvider.INSTANCE.getLabel(subject));
+			conversationId, subject, subject == null ? null : MetaLabelProvider.INSTANCE.getLabel(subject),
+			info == null ? null : info.runId());
 	}
 
 	private static TLObject subjectOf(ToolContext context) {

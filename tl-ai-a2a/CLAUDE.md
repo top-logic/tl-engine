@@ -20,4 +20,4 @@ The A2A v1.0 endpoint and the client tools - see `README.md` for what an applica
 - Authentication is tl-ai-core's `EndpointAuthentication`, the same as `/mcp/*`; this module never
   depends on `tl-ai-mcp-server`.
 - Nothing application-specific here: an application adds its behaviour through the hooks
-  (`A2ASubjectResolver`, `A2AArtifactSource`, `A2AArtifactContributor`, `A2ADataHandler`).
+  (`A2ASubjectResolver`, `A2AArtifactSource`, `A2AArtifactContributor`, `A2ADataHandler`, `A2AObserver`).

@@ -452,7 +452,9 @@ the run as in a chat and the task goes to `INPUT_REQUIRED`; the caller's reply c
 question, so the same run resumes. Remote answers reach a local model inside
 `UntrustedEnvelope.A2A_RESULT`, cut short, with artifacts as `tl-artifact://<app>/<kind>/<id>`
 references that `fetchArtifact` reads section by section. A served context lives in its session's
-metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`.
+metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`. An `A2AObserver` (`<observers>` on `A2AService`)
+learns of every exchange in both directions with context, task and message ids, through the same
+`ObserverQueue`.
 
 ### Event System (tl-ai-core `agent/`)
 

@@ -97,8 +97,14 @@ Configured on `A2AService`, each a list asked in order:
 | `<artifact-sources>` | `A2AArtifactSource` | for a reference of this application: the artifact |
 | `<artifact-contributors>` | `A2AArtifactContributor` | after a completed task: more artifacts |
 | `<data-handlers>` | `A2ADataHandler` | for a data part of an incoming message: the text the agent reads instead |
+| `<observers>` | `A2AObserver` | for every step of a conversation in either direction: message, state change, artifact |
 
-Each runs in the `TLContext` of the calling account; one that throws is logged and skipped.
+Each runs in the `TLContext` of the calling account; one that throws is logged and skipped. An observer
+is the exception: it runs on a thread of its own, behind a bounded queue, so it can neither slow down nor
+break a conversation. Its `A2AExchange` carries the context id, the task id and the message id - the same
+on both sides of a conversation - and the local run id, which a `RunObserver` of tl-ai-core reports. An
+observer sees every caller's messages; one that passes them on outside the application must authenticate
+that itself.
 
 ## Limits
 

@@ -533,16 +533,27 @@ sources on every delivery path, and a delivered report is followed by the worker
 each. The lead works from them with `research.listFindings` and reads a source's stored text with
 `research.readSource` - it never fetches. All three are READ tools of the `interaction` group.
 
-When the lead has written its report it calls **`research.saveReport`** (#764): the report's links are
-validated against the run tree's reading list, and `ResearchRuns` keeps a `tl.ai.execution:ResearchRun`
-on its own thread - question, effort, plan, status, the Markdown, one self-contained HTML document
-(`ResearchReportHtml`: the text with footnotes linked to the cited sources, only tags the HTML safety
-check allows), the cited sources, the sources read and not cited (`alsoRead`, `<collapsed/>`), and the
-findings split the same way. Owner and administrators read it (role rules in
-`tl-ai-core.binarySecurity.config.xml`, as for screenshots). The tool answers the run's id, and `present`
-opens it in the chat's side pane, which shows the document's body in place and folds the collapsed
-parts. The owner is the account the run works for, so a headless `aiResearch()` run (#767) keeps its
-run for the account it runs as, the same way - as soon as the `TL_deepResearch` skill calls the tool.
+When the lead has written its report it calls **`research.saveReport`** (#764, #827): the report's
+links are validated against the run tree's reading list, and `ResearchRuns` keeps a
+`tl.ai.execution:ResearchRun` on its own thread, **once per lead run** - a second call replaces what
+the first kept, and a write that takes longer than the tool waits is answered "still being written,
+do not call again". The run holds question, effort and status (enums), plan, the report Markdown -
+the one source of truth - and **references, not copies**: `execution` (the lead's
+`AgentExecution`, the chat through its session), one ordered composition of `sources` (cited first,
+by footnote) whose web sources reference their `ArchivedPage` and whose object sources reference
+the object (a generic reference: when the object is deleted, the source shows the label it was read
+with, marked as deleted, and keeps its footnote), and `findings` that reference their source and the
+worker run that recorded them. `citedSources` and `alsoRead` (`<collapsed/>`) are TL-Script
+selections of `sources`; `document` (`ResearchDocument`) and `tokens` (the execution tree) are
+computed on every read, never stored - the document links archived copies below the request's
+context path, never with a host, and links only the footnotes the citation check wrote. Owner and
+administrators read the run, its parts and the pages they reference (role rules in
+`tl-ai-core.binarySecurity.config.xml`); the computed lists apply the reader's rights. The archive's
+retention keeps a page a run references; deleting the run keeps its pages. The tool answers the run's
+id, and `present` opens it in the chat's side pane, which shows the document's body in place and the
+two lists and the findings as tables. The owner is the account the run works for, so a headless
+`aiResearch()` run (#767) keeps its run for the account it runs as, the same way - as soon as the
+`TL_deepResearch` skill calls the tool.
 
 ### Memory & Compaction (tl-ai-core `memory/`)
 

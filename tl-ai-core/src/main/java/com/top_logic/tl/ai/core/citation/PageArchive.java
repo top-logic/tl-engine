@@ -151,7 +151,8 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		 * After how many days an archived copy is deleted; 0 keeps every copy.
 		 *
 		 * <p>
-		 * A citation of a deleted copy still links to the live page.
+		 * A citation of a deleted copy still links to the live page. A copy a kept research run
+		 * references is kept as long as the run.
 		 * </p>
 		 *
 		 * @see #getRetentionDays()

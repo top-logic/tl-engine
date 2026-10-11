@@ -21,6 +21,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.tools.ChatPresentTool;
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -153,6 +154,7 @@ public class TestPresentTool extends BasicTestCase {
 	public void testAChannelCountsWhileItsConversationIsDisplayed() throws Exception {
 		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
 		String window = "displayedWindow";
+		subSession().getSessionContext().setIfAbsent(window, subSession());
 		DefaultViewContext view = new DefaultViewContext(
 			new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry));
 		view.registerChannel(PANE, _channel);
@@ -513,6 +515,10 @@ public class TestPresentTool extends BasicTestCase {
 	/** Registers the window the run belongs to, as a rendering chat element does. */
 	private void withWindow() {
 		_window = new ReactWindowRegistry("test-session");
+		// The queue a browser window has before its tree is built, and the sub-session its session
+		// holds under the window's name.
+		_window.getOrCreateQueue(windowName());
+		subSession().getSessionContext().setIfAbsent(windowName(), subSession());
 		AgentViewRefreshService.registerWindow(subSession(), windowName(), _window);
 	}
 
@@ -653,6 +659,7 @@ public class TestPresentTool extends BasicTestCase {
 				AgentExecutionStore.Module.INSTANCE,
 				AgentViewRefreshService.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
-				FieldControlService.Module.INSTANCE));
+				FieldControlService.Module.INSTANCE,
+				SessionService.Module.INSTANCE));
 	}
 }

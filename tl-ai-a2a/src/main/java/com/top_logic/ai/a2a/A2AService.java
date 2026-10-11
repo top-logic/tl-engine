@@ -51,8 +51,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * (tool factory {@code a2a}, {@code A2AClientTools}).
  *
  * <p>
- * Deny by default: an agent is reachable only if it is listed under {@code <agents>}, and only with a
- * credential one of the {@code <authentications>} accepts - the schemes of the MCP endpoint, personal
+ * Deny by default: an agent is reachable only if it is listed under &lt;agents&gt;, and only with a
+ * credential one of the &lt;authentications&gt; accepts - the schemes of the MCP endpoint, personal
  * access tokens among them. A run acts as the account the credential names.
  * </p>
  */
@@ -94,7 +94,7 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 
 		/**
 		 * How a calling agent proves who it is: personal access tokens
-		 * ({@code <personal-access-token-authentication>}), an API key mapped to an account, OAuth
+		 * (&lt;personal-access-token-authentication&gt;), an API key mapped to an account, OAuth
 		 * bearer tokens, HTTP basic. Empty: every call is refused.
 		 */
 		@Override

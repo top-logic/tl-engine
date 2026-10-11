@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -157,6 +158,29 @@ public class TestSubagentAsksLead extends BasicTestCase {
 
 		String late = lead(new ReplyToSubagentTool(), Map.of("subagentId", child.subagentId(), "answer", "Europe."));
 		assertTrue(late, late.startsWith("Not delivered: subagent " + child.subagentId() + " is not waiting"));
+	}
+
+	/**
+	 * An answer that arrives after the question timed out is refused: the lead is told it answered only
+	 * when the subagent goes on with that answer (#812).
+	 */
+	public void testAnAnswerAfterTheTimeoutIsRefused() {
+		AtomicBoolean lateAccepted = new AtomicBoolean();
+		SubagentJob job = new SubagentJob("sa-1", "worker", "research X", new CancellationToken()) {
+			@Override
+			public void clearLeadQuestion(LeadQuestion asked) {
+				// The lead's answer arrives after the timeout, before the question is forgotten.
+				lateAccepted.set(answerLead("Europe only."));
+				super.clearLeadQuestion(asked);
+			}
+		};
+		String answer;
+		try (SubagentJobBinding.Binding bound = SubagentJobBinding.bind(job)) {
+			answer = new AskLeadTool(Duration.ofMillis(50)).execute(Map.of("question", QUESTION), leadContext()).text();
+		}
+		assertTrue(answer, answer.startsWith("No answer from the agent that started you"));
+		assertFalse("The lead must not be told that a subagent which gave up goes on with its answer.",
+			lateAccepted.get());
 	}
 
 	/** Cancelling a child that waits for an answer ends the wait and the child. */

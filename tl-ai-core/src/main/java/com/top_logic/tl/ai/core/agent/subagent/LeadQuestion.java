@@ -48,7 +48,15 @@ public final class LeadQuestion {
 		return _askedAt;
 	}
 
-	/** Completed with the lead's answer, or with a framework sentence when there is none. */
+	/**
+	 * Completed with the lead's answer, or with <code>null</code> when the subagent stopped waiting -
+	 * its question timed out or it was cancelled.
+	 *
+	 * <p>
+	 * Whoever completes it first decides: an answer that comes after the subagent stopped waiting is
+	 * refused, and the subagent goes on with an answer that came first.
+	 * </p>
+	 */
 	public CompletableFuture<String> answer() {
 		return _answer;
 	}

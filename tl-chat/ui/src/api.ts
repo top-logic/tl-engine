@@ -138,13 +138,21 @@ export async function listSessions(at: ChatAddress): Promise<SessionSummary[]> {
   return data.sessions ?? []
 }
 
-export async function createSession(at: ChatAddress, title: string): Promise<SessionSummary> {
+/**
+ * Creates a chat. `approvalMode` is the mode the user set before the chat existed; the chat stores
+ * it at once, because a chat that stores no mode runs with auto-approve off (#808).
+ */
+export async function createSession(
+  at: ChatAddress,
+  title: string,
+  approvalMode: 'AUTO_APPROVE' | 'MANUAL' = 'MANUAL',
+): Promise<SessionSummary> {
   return readJson<SessionSummary>(
     await chatFetch(withWindow('/chat/sessions', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ title }),
+      body: JSON.stringify({ title, approvalMode }),
     }),
   )
 }
@@ -411,20 +419,20 @@ export async function improvePrompt(
 }
 
 /**
- * Turns "auto-approve" on or off. The mode is a setting of the chat: with a `sessionId` the server
- * stores it with that chat at once and tells the account's other windows showing it (#658). A
- * conversation that has no chat yet sends none, and its first send stores the mode with the chat.
+ * Turns "auto-approve" on or off for one chat. The mode is a setting of the chat: the server stores
+ * it with that chat at once and tells the account's other windows showing it (#658). A conversation
+ * that has no chat yet does not call this; it names the mode in `createSession`.
  */
 export async function setApprovalMode(
   at: ChatAddress,
   mode: 'AUTO_APPROVE' | 'MANUAL',
-  sessionId: string | null,
+  sessionId: string,
 ): Promise<void> {
   const res = await chatFetch(withWindow('/chat/approval-mode', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify(sessionId ? { mode, sessionId } : { mode }),
+    body: JSON.stringify({ mode, sessionId }),
   })
   if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
 }

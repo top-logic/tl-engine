@@ -530,6 +530,12 @@ message CreateSessionRequest {
 	 * Title for the new session.
 	 */
 	string title;
+
+	/**
+	 * The approval mode the new session starts with, as the user set it before the session existed:
+	 * AUTO_APPROVE or MANUAL. Empty starts the session with MANUAL.
+	 */
+	string approvalMode;
 }
 
 /**

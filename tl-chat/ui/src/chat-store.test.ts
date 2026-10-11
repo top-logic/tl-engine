@@ -2766,16 +2766,20 @@ describe('choosing a chat while another one loads', () => {
 
 /**
  * The auto-approve switch is a setting of the chat (#658): the server stores it with the chat the
- * switch names, and the switch shows what the server runs the opened chat with.
+ * switch names, and the switch shows what the server runs the opened chat with. A new chat starts
+ * with it off (#808).
  */
 describe('the auto-approve switch', () => {
   /** The body of every `POST /chat/approval-mode`, in order. */
   let modeBodies: Record<string, unknown>[]
+  /** The body of every `POST /chat/sessions`, in order. */
+  let createBodies: Record<string, unknown>[]
   /** What `GET /chat/sessions/{id}` says about the chat's mode. */
   let storedMode: string
 
   beforeEach(() => {
     modeBodies = []
+    createBodies = []
     storedMode = 'AUTO_APPROVE'
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
@@ -2783,6 +2787,9 @@ describe('the auto-approve switch', () => {
       if (url.includes('/chat/approval-mode')) {
         modeBodies.push(JSON.parse(init?.body ?? '{}'))
         return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
+      }
+      if (init?.method === 'POST' && /\/chat\/sessions(\?|$)/.test(url)) {
+        createBodies.push(JSON.parse(init.body ?? '{}'))
       }
       if (/\/chat\/sessions\/[^/?]/.test(url)) {
         return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '', approvalMode: storedMode }) }
@@ -2818,15 +2825,59 @@ describe('the auto-approve switch', () => {
     release()
   })
 
-  it('names no chat for a conversation that has none yet', async () => {
+  /** Auto-approve in one chat does not carry over into the next new chat (#808). */
+  it('starts a new chat with auto-approve off', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    expect(store.getState().autoApprove).toBe(true)
+
+    store.actions.newChat()
+    expect(store.getState().autoApprove).toBe(false)
+
+    await store.actions.send('Erste Frage', [])
+    expect(createBodies).toHaveLength(1)
+    expect(createBodies[0].approvalMode).toBe('MANUAL')
+    await settle()
+    release()
+  })
+
+  it('shows a chat that stores no mode as manual', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    expect(store.getState().autoApprove).toBe(true)
+
+    storedMode = ''
+    await store.actions.selectSession('s2')
+
+    expect(store.getState().autoApprove).toBe(false)
+    release()
+  })
+
+  /**
+   * A conversation that has no chat yet has nothing to store the mode with, so it keeps it and the
+   * send that creates the chat names it.
+   */
+  it('stores a mode set before the first send with the chat that send creates', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
     await settle()
 
     await store.actions.toggleAutoApprove()
+    expect(modeBodies).toEqual([])
+    expect(store.getState().autoApprove).toBe(true)
 
-    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE' }])
+    await store.actions.send('Erste Frage', [])
+
+    expect(createBodies).toHaveLength(1)
+    expect(createBodies[0].approvalMode).toBe('AUTO_APPROVE')
+    await settle()
     release()
   })
 })

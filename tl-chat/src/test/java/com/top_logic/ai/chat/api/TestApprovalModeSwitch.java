@@ -15,6 +15,8 @@ import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -185,23 +187,49 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	}
 
 	/**
-	 * A conversation that has no chat yet keeps the mode on its window, and its first saved turn
-	 * stores it with the chat it creates.
+	 * Auto-approve is a setting of one chat (#808): a window that ran a chat with it on and then
+	 * opens a new chat runs that chat manual, and the new chat's first save stores it manual.
 	 */
-	public void testAConversationWithoutAChatStoresItWithItsFirstTurn() throws Exception {
-		Answer answer = call(post("{\"mode\":\"AUTO_APPROVE\"}"), anna, false);
-		assertEquals(HttpServletResponse.SC_OK, answer.status());
+	public void testANewChatStartsManual() throws Exception {
 		assertEquals(ApprovalMode.AUTO_APPROVE, _window.getApprovalMode());
 
 		TLObject created = ChatHistoryService.createSession("Neu", anna);
 		HistoryUtils.updateSessionRevision();
 		_window.setActiveSessionId(idOf(created), anna);
+		assertEquals(ApprovalMode.MANUAL, _window.getApprovalMode());
+
 		_window.getSessionManager().persistActiveSession();
+		HistoryUtils.updateSessionRevision();
+		assertTrue("The first save stores the new chat manual: " + ChatHistoryService.getMetadataJson(created),
+			ChatHistoryService.getMetadataJson(created).contains("\"approvalMode\":\"MANUAL\""));
+		TaskProgressTracker fresh = new TaskProgressTracker();
+		fresh.setActiveSessionId(idOf(created), anna);
+		assertEquals(ApprovalMode.MANUAL, fresh.getApprovalMode());
+	}
+
+	/**
+	 * A conversation that has no chat yet keeps the mode in the browser, which names it when it
+	 * creates the chat: the chat stores it at once.
+	 */
+	public void testAChatIsCreatedWithTheModeItNames() throws Exception {
+		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/sessions",
+			new ByteArrayInputStream("{\"title\":\"Neu\",\"approvalMode\":\"AUTO_APPROVE\"}"
+				.getBytes(StandardCharsets.UTF_8)), "application/json"), anna, false);
+		assertEquals(HttpServletResponse.SC_OK, answer.status());
+		Matcher id = Pattern.compile("\"id\":\"([^\"]+)\"").matcher(answer.body());
+		assertTrue("The answer names the created chat: " + answer.body(), id.find());
 		HistoryUtils.updateSessionRevision();
 
 		TaskProgressTracker fresh = new TaskProgressTracker();
-		fresh.setActiveSessionId(idOf(created), anna);
+		fresh.setActiveSessionId(id.group(1), anna);
 		assertEquals(ApprovalMode.AUTO_APPROVE, fresh.getApprovalMode());
+	}
+
+	/** A switch that names no chat has nothing to store the mode with, and is refused. */
+	public void testASwitchWithoutAChatIsRefused() throws Exception {
+		Answer answer = call(post("{\"mode\":\"AUTO_APPROVE\"}"), anna, false);
+
+		assertEquals(HttpServletResponse.SC_BAD_REQUEST, answer.status());
 	}
 
 	// --- Fixture ---

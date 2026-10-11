@@ -18,7 +18,12 @@ public class CreateSessionRequest extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #getTitle() */
 	public static final String TITLE__PROP = "title";
 
+	/** @see #getApprovalMode() */
+	public static final String APPROVAL_MODE__PROP = "approvalMode";
+
 	private String _title = "";
+
+	private String _approvalMode = "";
 
 	/**
 	 * Creates a {@link CreateSessionRequest} instance.
@@ -49,6 +54,27 @@ public class CreateSessionRequest extends de.haumacher.msgbuf.data.AbstractDataO
 		_title = value;
 	}
 
+	/**
+	 * The approval mode the new session starts with, as the user set it before the session existed:
+	 * AUTO_APPROVE or MANUAL. Empty starts the session with MANUAL.
+	 */
+	public final String getApprovalMode() {
+		return _approvalMode;
+	}
+
+	/**
+	 * @see #getApprovalMode()
+	 */
+	public com.top_logic.ai.chat.api.messages.CreateSessionRequest setApprovalMode(String value) {
+		internalSetApprovalMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getApprovalMode()} without chain call utility. */
+	protected final void internalSetApprovalMode(String value) {
+		_approvalMode = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CREATE_SESSION_REQUEST__TYPE;
@@ -57,7 +83,8 @@ public class CreateSessionRequest extends de.haumacher.msgbuf.data.AbstractDataO
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			TITLE__PROP);
+			TITLE__PROP, 
+			APPROVAL_MODE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -83,6 +110,7 @@ public class CreateSessionRequest extends de.haumacher.msgbuf.data.AbstractDataO
 	public Object get(String field) {
 		switch (field) {
 			case TITLE__PROP: return getTitle();
+			case APPROVAL_MODE__PROP: return getApprovalMode();
 			default: return null;
 		}
 	}
@@ -91,6 +119,7 @@ public class CreateSessionRequest extends de.haumacher.msgbuf.data.AbstractDataO
 	public void set(String field, Object value) {
 		switch (field) {
 			case TITLE__PROP: internalSetTitle((String) value); break;
+			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 		}
 	}
 
@@ -111,12 +140,15 @@ public class CreateSessionRequest extends de.haumacher.msgbuf.data.AbstractDataO
 		super.writeFields(out);
 		out.name(TITLE__PROP);
 		out.value(getTitle());
+		out.name(APPROVAL_MODE__PROP);
+		out.value(getApprovalMode());
 	}
 
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

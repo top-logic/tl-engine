@@ -47,7 +47,9 @@ import com.top_logic.basic.Logger;
  * <p>
  * The wait is bounded: an answer that asks for more than {@link #MAX_WAIT} - an exhausted monthly
  * quota asks for days - is not waited for, because the agent run waits with it. The search then
- * fails with a sentence that says so. So does a search whose slot lies further ahead than that.
+ * fails with a sentence that says so. So does a search whose slot lies further ahead than that. A
+ * search that is not sent - refused for its slot, or interrupted while it waits - takes no slot from
+ * the searches after it.
  * </p>
  */
 final class SearchHttp {
@@ -118,14 +120,21 @@ final class SearchHttp {
 	HttpResponse<String> send(HttpRequest request) throws IOException, InterruptedException {
 		Duration wait = Duration.ZERO;
 		for (int attempt = 0;; attempt++) {
-			Duration untilSlot = reserveSlot(wait);
+			Instant now = _clock.instant();
+			Instant slot = reserveSlot(now, wait);
+			Duration untilSlot = Duration.between(now, slot);
 			if (untilSlot.compareTo(MAX_WAIT) > 0) {
 				throw new IOException(_engine + " search is rate-limited: the searches already waiting take the"
 					+ " next " + untilSlot.toSeconds() + " seconds. Search less often, or wait before you search"
 					+ " again.");
 			}
 			if (!untilSlot.isZero() && !untilSlot.isNegative()) {
-				_sleeper.sleep(untilSlot);
+				try {
+					_sleeper.sleep(untilSlot);
+				} catch (InterruptedException ex) {
+					releaseSlot(slot);
+					throw ex;
+				}
 			}
 			HttpResponse<String> response = _client.send(request, BodyHandlers.ofString());
 			learnPace(response);
@@ -149,17 +158,40 @@ final class SearchHttp {
 	}
 
 	/**
-	 * Books the next free slot that is at least {@code wait} from now.
+	 * Books the next free slot that is at least {@code wait} after {@code now}.
 	 *
-	 * @return How long the caller waits for its slot.
+	 * <p>
+	 * A slot further ahead than {@link #MAX_WAIT} is returned without being booked: the caller does not
+	 * send its request, and a slot booked for it would push every later search out by one interval -
+	 * with workers that retry after the refusal, until no search fits any more.
+	 * </p>
+	 *
+	 * @return The slot; the caller sends its request then.
 	 */
-	private Duration reserveSlot(Duration wait) {
+	private Instant reserveSlot(Instant now, Duration wait) {
 		synchronized (this) {
-			Instant now = _clock.instant();
 			Instant earliest = now.plus(wait);
 			Instant slot = earliest.isAfter(_nextSlot) ? earliest : _nextSlot;
-			_nextSlot = slot.plus(_spacing);
-			return Duration.between(now, slot);
+			if (Duration.between(now, slot).compareTo(MAX_WAIT) <= 0) {
+				_nextSlot = slot.plus(_spacing);
+			}
+			return slot;
+		}
+	}
+
+	/**
+	 * Gives back {@code slot}, whose request is not sent, when no later slot was booked after it.
+	 *
+	 * <p>
+	 * A slot with later ones behind it stays booked: the searches behind it keep their slots, and the
+	 * gap is one interval in which nothing is sent.
+	 * </p>
+	 */
+	private void releaseSlot(Instant slot) {
+		synchronized (this) {
+			if (_nextSlot.equals(slot.plus(_spacing))) {
+				_nextSlot = slot;
+			}
 		}
 	}
 

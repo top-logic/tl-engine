@@ -63,9 +63,6 @@ public final class WindowPage {
 	 * role, name, the view file it comes from and its state.
 	 */
 	public static String describe(ReactControl root) {
-		if (root == null) {
-			return "The window shows no page.";
-		}
 		ScriptingSession session = ScriptingSession.forRoot(root);
 		StringBuilder out = new StringBuilder();
 		describe(session, session.observe(), 0, out);
@@ -104,7 +101,7 @@ public final class WindowPage {
 
 	/** The view the window was opened with, its start page. */
 	public static String startView(ReactControl root) {
-		return root == null ? null : first(root, WindowPage::viewSource);
+		return first(root, WindowPage::viewSource);
 	}
 
 	/**

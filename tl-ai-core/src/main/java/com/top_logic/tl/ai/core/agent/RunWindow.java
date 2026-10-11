@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import com.top_logic.base.context.TLSubSessionContext;
 
 /**
- * The browser window an agent run belongs to, for a tool that reads or moves the page the user
+ * The browser window an agent run belongs to, for a tool that reads or rebuilds the page the user
  * looks at.
  *
  * <p>

@@ -34,6 +34,9 @@ final class RunPage {
 	/** How long a rebuild of the start page waits for the run that wrote it, in seconds. */
 	private static final long WAIT_LIMIT = 30 * 60;
 
+	/** What the model is told when the run's window shows no built page. */
+	static final String NO_PAGE = "The user's window shows no built page for this run.";
+
 	/** The views changed in a window whose rebuild waits for the end of the run. */
 	private static final Map<TLSubSessionContext, Set<String>> PENDING = new ConcurrentHashMap<>();
 
@@ -47,8 +50,12 @@ final class RunPage {
 	 * @return The result, empty when the run has no window or its page is not built.
 	 */
 	static <T> Optional<T> inWindow(Function<ReactControl, T> action) {
+		return inWindow(TLContextManager.getSubSession(), action);
+	}
+
+	private static <T> Optional<T> inWindow(TLSubSessionContext subSession, Function<ReactControl, T> action) {
 		AtomicReference<T> result = new AtomicReference<>();
-		RunWindow.get().inWindow(TLContextManager.getSubSession(), root -> {
+		RunWindow.get().inWindow(subSession, root -> {
 			// A window whose page is not built (yet, or any more) shows nothing to read or rebuild.
 			if (root != null) {
 				result.set(action.apply((ReactControl) root));
@@ -70,8 +77,9 @@ final class RunPage {
 	 */
 	static String show(Collection<String> resources) {
 		Set<String> changed = new LinkedHashSet<>(resources);
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		try {
-			Optional<Boolean> deferred = inWindow(page -> {
+			Optional<Boolean> deferred = inWindow(subSession, page -> {
 				if (changed.contains(WindowPage.startView(page))) {
 					return Boolean.TRUE;
 				}
@@ -79,12 +87,12 @@ final class RunPage {
 				return Boolean.FALSE;
 			});
 			if (deferred.isEmpty()) {
-				return "No page is open for this run; the change shows when the view is opened next.";
+				return NO_PAGE + " The change shows when the view is opened next.";
 			}
 			if (!deferred.get()) {
 				return "The user's page shows the change already.";
 			}
-			rebuildAfterRun(TLContextManager.getSubSession(), changed);
+			rebuildAfterRun(subSession, changed);
 			return "The change touches the start page, so the user's page is rebuilt when this answer is finished.";
 		} catch (RuntimeException ex) {
 			// The change is written; only bringing it onto the open page failed.
@@ -114,10 +122,9 @@ final class RunPage {
 			task.get().cancel(false);
 			Set<String> resources = PENDING.remove(subSession);
 			try {
-				RunWindow.get().inWindow(subSession, root -> {
-					if (root != null) {
-						WindowPage.rebuild((ReactControl) root, resources);
-					}
+				inWindow(subSession, root -> {
+					WindowPage.rebuild(root, resources);
+					return null;
 				});
 			} catch (RuntimeException ex) {
 				Logger.warn("Could not rebuild the page after a change of " + resources + ".", ex, RunPage.class);

@@ -28,7 +28,7 @@
 			<artifactId>tl-ai-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<!-- The views this module reads, checks, writes and previews, and the page it projects. -->
+		<!-- The views this module reads, checks and writes, and the page it projects. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-layout-view</artifactId>

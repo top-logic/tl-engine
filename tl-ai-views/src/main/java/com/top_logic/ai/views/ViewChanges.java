@@ -107,7 +107,9 @@ public final class ViewChanges {
 	 *         When the set is not applied, or a view changed after it was applied.
 	 */
 	public static List<String> revert(TLObject set) {
-		requireStatus(set, APPLIED);
+		if (!APPLIED.equals(status(set))) {
+			throw new RefusedException("Only an applied change can be undone; this one is " + status(set) + ".");
+		}
 		Map<String, String> before = new LinkedHashMap<>();
 		for (TLObject change : changes(set)) {
 			String resource = ViewFiles.resource(string(change, "name"));
@@ -126,30 +128,42 @@ public final class ViewChanges {
 
 	/** The views a change set changes. */
 	@SuppressWarnings("unchecked")
-	public static List<TLObject> changes(TLObject set) {
+	private static List<TLObject> changes(TLObject set) {
 		Object changes = set.tValueByName("changes");
 		return changes == null ? List.of() : new ArrayList<>((List<TLObject>) changes);
 	}
 
 	/**
-	 * Every change set, newest first.
+	 * Every change set.
 	 */
 	public static List<TLObject> all() {
-		TLClass type = (TLClass) TLModelUtil.findType(SET);
-		List<TLObject> sets = new ArrayList<>(
-			MetaElementUtil.getAllDirectInstancesOf(type, TLObject.class));
-		sets.sort((a, b) -> Objects.compare((Date) b.tValueByName("date"), (Date) a.tValueByName("date"),
-			Date::compareTo));
-		return sets;
+		return new ArrayList<>(MetaElementUtil.getAllDirectInstancesOf((TLClass) TLModelUtil.findType(SET), TLObject.class));
 	}
 
-	/** The newest change set still applied, or <code>null</code>. */
-	public static TLObject newestApplied() {
-		return all().stream().filter(set -> APPLIED.equals(status(set))).findFirst().orElse(null);
+	/**
+	 * The newest change set an account made that is still applied, or <code>null</code>.
+	 *
+	 * @param account
+	 *        The name of the account, as {@link #write} records it in the author.
+	 */
+	public static TLObject newestApplied(String account) {
+		TLObject newest = null;
+		Date newestDate = null;
+		for (TLObject set : all()) {
+			Object author = set.tValueByName("author");
+			Date date = (Date) set.tValueByName("date");
+			if (APPLIED.equals(status(set)) && author != null
+				&& (author.equals(account) || author.toString().startsWith(account + " ("))
+				&& (newestDate == null || date != null && date.after(newestDate))) {
+				newest = set;
+				newestDate = date;
+			}
+		}
+		return newest;
 	}
 
 	/** One line per finding. */
-	public static String lines(List<Finding> findings) {
+	private static String lines(List<Finding> findings) {
 		return findings.stream().map(Finding::toString).collect(Collectors.joining("\n"));
 	}
 
@@ -176,13 +190,6 @@ public final class ViewChanges {
 		if (!Objects.equals(ViewFiles.read(resource), expected)) {
 			throw new RefusedException(ViewFiles.relative(resource)
 				+ " was changed after this change; revert the newer change first.");
-		}
-	}
-
-	private static void requireStatus(TLObject set, String expected) {
-		String status = status(set);
-		if (!expected.equals(status)) {
-			throw new RefusedException("The change set is " + status + ", not " + expected + ".");
 		}
 	}
 

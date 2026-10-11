@@ -16,8 +16,6 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  */
 public class WindowTools {
 
-	private static final String NO_PAGE = "No page is open for this run.";
-
 	/**
 	 * Creates a {@link WindowTools}.
 	 */
@@ -33,6 +31,6 @@ public class WindowTools {
 		+ " mean.",
 		mode = ToolMode.READ, group = ToolGroups.DATA_READ)
 	public ToolResult whereAmI() {
-		return RunPage.inWindow(WindowPage::describe).map(ToolResult::of).orElseGet(() -> ToolResult.failure(NO_PAGE));
+		return RunPage.inWindow(WindowPage::describe).map(ToolResult::of).orElseGet(() -> ToolResult.failure(RunPage.NO_PAGE));
 	}
 }

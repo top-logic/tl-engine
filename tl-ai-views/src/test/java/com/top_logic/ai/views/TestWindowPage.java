@@ -41,7 +41,7 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.model.ModelService;
 
 /**
- * What the agent sees of the user's window, how it moves in it, and that a view it changes shows on
+ * What the agent sees of the user's window, and that a view it changes shows on
  * the open page without moving the user.
  *
  * <p>
@@ -101,7 +101,7 @@ public class TestWindowPage extends BasicTestCase {
 
 		ToolResult result = new WindowTools().whereAmI();
 
-		assertContains("No page is open", result.text());
+		assertContains("no built page", result.text());
 	}
 
 	/** A view the agent changes shows on the open page, and the user stays on their item and tab. */
@@ -173,7 +173,6 @@ public class TestWindowPage extends BasicTestCase {
 		root.stateAsJSON();
 		return root;
 	}
-
 
 	/**
 	 * The suite: a knowledge base for the change records, and the view layer.

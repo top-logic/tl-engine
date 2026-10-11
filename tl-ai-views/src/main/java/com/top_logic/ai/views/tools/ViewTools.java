@@ -14,12 +14,12 @@ import com.top_logic.ai.views.ViewElements;
 import com.top_logic.ai.views.ViewFiles;
 import com.top_logic.ai.views.source.ViewEdit;
 import com.top_logic.ai.views.source.ViewSource;
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.context.DevelopmentWorkspace;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.RunInfo;
@@ -28,7 +28,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.util.TLContextManager;
+import com.top_logic.util.TLContext;
 
 /**
  * The tools that read, check and change the views of the running application.
@@ -40,10 +40,12 @@ import com.top_logic.util.TLContextManager;
  * </p>
  *
  * <p>
- * A write changes the application's structure, so it is a {@link ToolMode#STRUCTURAL} call the user
- * approves. The view file is written when the call runs, and its change-set record is committed with
- * it ({@link CommittedNow}): a turn that rolls back afterwards cannot leave a written file without
- * its record.
+ * A write is an {@link ToolMode#EXTERNAL} call the user approves: the view file is written when the
+ * call runs and no transaction of the turn can take it back, so its change-set record is committed
+ * with it ({@link CommittedNow}). A turn that rolls back afterwards therefore neither loses the
+ * record nor reports the write as undone. The files are the application's source, so the writes are
+ * offered only where the application runs from it (see {@link #noWorkspace}), as the engine's own
+ * structural changes are.
  * </p>
  */
 public class ViewTools {
@@ -169,7 +171,8 @@ public class ViewTools {
 		+ " an existing view, editView keeps the rest of the file as written). It is checked first; with an"
 		+ " error nothing is saved and every error names its line - fix those and call again. The user's open page"
 		+ " shows the change.",
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		unavailable = "noWorkspace")
 	public ToolResult writeView(
 			@P("View path relative to /WEB-INF/views/") String path,
 			@P("The complete <view> document") String xml,
@@ -185,7 +188,8 @@ public class ViewTools {
 		+ " check: {op:SET, at, attribute, value} (empty value removes it), {op:REPLACE, at, xml},"
 		+ " {op:INSERT_INTO|INSERT_BEFORE|INSERT_AFTER, at, xml}, {op:REMOVE, at}. 'at' is an address from"
 		+ " readView, e.g. /view/split-panel/panes/pane[2]/form; tag[id=x] selects by an attribute.",
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		unavailable = "noWorkspace")
 	public ToolResult editView(
 			@P("View path relative to /WEB-INF/views/") String path,
 			@P("The edits") List<Edit> edits,
@@ -198,7 +202,8 @@ public class ViewTools {
 	 */
 	@ToolMethod(description = "Delete a view file. Remove the references to it first (a navigation entry, a"
 		+ " view-ref); revertViewChange brings it back.",
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		unavailable = "noWorkspace")
 	public ToolResult deleteView(@P("View path relative to /WEB-INF/views/") String path, ToolExecutionContext context) {
 		return write("Delete " + path, () -> List.of(new Change(ViewFiles.resource(path), null)), context);
 	}
@@ -207,13 +212,14 @@ public class ViewTools {
 	 * Undoes an applied change set.
 	 */
 	@ToolMethod(description = "Undo a view change: every view it changed gets its text from before again, a view it"
-		+ " created is deleted. Without an id: the newest change still applied. Refused when a view was changed again"
+		+ " created is deleted. Without an id: the newest change of this user still applied. Refused when a view was changed again"
 		+ " afterwards; undo the newer change first.",
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.EXTERNAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		unavailable = "noWorkspace")
 	public ToolResult revertViewChange(
 			@P(value = "The change set id a write answered with; empty for the newest", required = false) TLObject changeSet,
 			ToolExecutionContext context) {
-		TLObject set = changeSet != null ? changeSet : ViewChanges.newestApplied();
+		TLObject set = changeSet != null ? changeSet : ViewChanges.newestApplied(account());
 		if (set == null) {
 			return ToolResult.failure("There is no applied view change to undo.");
 		}
@@ -260,10 +266,22 @@ public class ViewTools {
 		return new Change(resource, text);
 	}
 
+	/**
+	 * Why the writes are not offered in this run, or <code>null</code> when they are.
+	 */
+	String noWorkspace(ToolExecutionContext context) {
+		return DevelopmentWorkspace.webapp() != null ? null
+			: "The view files are the application's source, so they are only changed where the application runs from"
+				+ " it - started with tl_operation_mode=development. Show the user the XML instead.";
+	}
+
+	private static String account() {
+		Person person = TLContext.currentUser();
+		return person == null ? "system" : person.getName();
+	}
+
 	private static String author(ToolExecutionContext context) {
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		Person person = subSession == null ? null : subSession.getPerson();
-		String account = person == null ? "system" : person.getName();
+		String account = account();
 		RunInfo run = context.runInfo();
 		return run.agentName() == null ? account : account + " (" + run.agentName() + ")";
 	}

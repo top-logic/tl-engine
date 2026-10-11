@@ -45,12 +45,16 @@ final class CommittedNow {
 		FutureTask<T> task = new FutureTask<>(() -> ThreadContextManager.inContext(subSession,
 			(ComputationEx2<T, RuntimeException, RuntimeException>) () -> KBUtils.inTransaction(action)));
 		Thread thread = new Thread(task, "view-change");
+		thread.setDaemon(true);
 		thread.start();
 		try {
 			return task.get();
 		} catch (ExecutionException ex) {
 			if (ex.getCause() instanceof RuntimeException cause) {
 				throw cause;
+			}
+			if (ex.getCause() instanceof Error error) {
+				throw error;
 			}
 			throw new IllegalStateException(ex.getCause());
 		} catch (InterruptedException ex) {

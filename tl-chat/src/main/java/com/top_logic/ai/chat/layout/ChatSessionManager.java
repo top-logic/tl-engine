@@ -436,15 +436,15 @@ public class ChatSessionManager {
 	 * The background subagent of the given chat with the given id, whichever window's run started it.
 	 *
 	 * <p>
-	 * Subagent ids start at {@code sa-1} in every window, so the id of the lead's tool call that
-	 * started it tells two namesakes apart. Does not check who asks: the caller makes sure the chat is
-	 * theirs.
+	 * Subagent ids are unique within a chat, over all its windows; the id of the lead's tool call that
+	 * started it, when given, makes sure a card finds the subagent it shows and no other. Does not check
+	 * who asks: the caller makes sure the chat is theirs.
 	 * </p>
 	 *
 	 * @param sessionId
 	 *        The chat; <code>null</code> finds nothing.
 	 * @param subagentId
-	 *        The subagent's id within its window, e.g. {@code sa-2}.
+	 *        The subagent's id within its chat, e.g. {@code sa-2}.
 	 * @param parentToolCallId
 	 *        The id of the call that started it; empty takes the first subagent with that id.
 	 * @return The subagent's job, or <code>null</code> if no window holds one.

@@ -38,6 +38,8 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -228,6 +230,26 @@ public class TestSubagentSteering extends BasicTestCase {
 		int unread = delivered.indexOf("_Not read: 1 message");
 		assertTrue("The lead is told: " + delivered, unread > reportEnd && reportEnd > 0);
 		assertTrue(delivered, delivered.contains("- from the user: Nur Europa."));
+	}
+
+	/**
+	 * A subagent spawned in a conversation whose log already names subagents - of an earlier server
+	 * life, or of a registry that was forgotten - gets an id none of them has (#839).
+	 */
+	public void testAnIdCountsOnFromTheLeadsLog() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener earlier = new ConversationLogListener(log);
+		log.startTurn();
+		earlier.recordSubagentStarted("sa-3", "worker", "earlier task", "call-0");
+		log.completeTurn();
+		log.startTurn();
+
+		SubagentJob job;
+		try (ConversationLogListenerBinding.Binding bound =
+			ConversationLogListenerBinding.bind(new ConversationLogListener(log))) {
+			job = spawnChild();
+		}
+		assertEquals("sa-4", job.subagentId());
 	}
 
 	/** An unknown id is an error the lead can correct. */

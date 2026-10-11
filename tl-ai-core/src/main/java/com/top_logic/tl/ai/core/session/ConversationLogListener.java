@@ -899,6 +899,28 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
+	 * The highest number of a subagent id this log names, 0 if it names none.
+	 *
+	 * <p>
+	 * The log of a conversation outlives the registries that numbered its subagents, so a new subagent
+	 * counts on from here - see
+	 * {@link com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry#countOnFrom(int)}.
+	 * </p>
+	 */
+	public int highestSubagentNumber() {
+		int highest = 0;
+		for (Turn turn : _log.turns()) {
+			for (Part part : turn.assistantParts()) {
+				if (part instanceof Part.SubagentPart subagent) {
+					highest = Math.max(highest,
+						com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry.numberOf(subagent.subagentId()));
+				}
+			}
+		}
+		return highest;
+	}
+
+	/**
 	 * Records that a background subagent finished, and forwards a
 	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCompleted} lifecycle event to the
 	 * parent listener.

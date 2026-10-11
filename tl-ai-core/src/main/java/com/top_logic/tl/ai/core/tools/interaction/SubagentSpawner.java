@@ -154,6 +154,11 @@ public class SubagentSpawner {
 				: AgentExecutionStore.getInstance().sessionOf(parentExecution);
 
 		CancellationToken childToken = new CancellationToken();
+		if (logListener != null) {
+			// The conversation may name subagents its registries no longer know of; none of their ids
+			// is handed out again.
+			registry.countOnFrom(logListener.highestSubagentNumber());
+		}
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
 		job.setParentToolCallId(toolContext.toolCallId());
 		// A detached child spends from the allowance of the run that started it; the chat shows how

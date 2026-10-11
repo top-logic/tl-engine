@@ -54,6 +54,26 @@ public class TestSubagentPart extends TestCase {
 		assertEquals(started.id(), ended.id());
 	}
 
+	/**
+	 * A subagent that waits for a free slot is recorded as queued, and as running once it starts, so a
+	 * reloaded card does not call a waiting subagent busy (#834).
+	 */
+	public void testAQueuedSubagentIsRecordedAsQueuedUntilItStarts() {
+		ConversationLog log = new ConversationLog();
+		ConversationLogListener listener = new ConversationLogListener(log);
+		Turn turn = log.startTurn();
+
+		listener.recordSubagentStarted("sa-1", "researcher", "find X", "call-1", true);
+		assertEquals("QUEUED", onlySubagentPart(turn).status());
+
+		listener.recordSubagentRunning("sa-1");
+		assertEquals("RUNNING", onlySubagentPart(turn).status());
+
+		listener.recordSubagentCompleted("sa-1",
+			new SubagentResult("X is 42.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-1");
+		assertEquals("DONE", onlySubagentPart(turn).status());
+	}
+
 	/** A subagent stopped in order at a limit is recorded as such, so its card says so (#786). */
 	public void testAStopAtALimitIsRecordedAsSuch() {
 		ConversationLog log = new ConversationLog();

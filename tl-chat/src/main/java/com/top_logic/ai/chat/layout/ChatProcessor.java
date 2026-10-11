@@ -344,7 +344,10 @@ public class ChatProcessor {
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
-			SubagentJobRegistry subagentRegistry = taskTracker.getActiveSubagentRegistry();
+			// The run's own chat, not whatever the window shows by now: a lead turn reads its news
+			// from here, and must not be handed another chat's.
+			SubagentJobRegistry subagentRegistry =
+				taskTracker.getSessionManager().getSubagentRegistry(state.getSessionId());
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
 
 			// Record the run against the session captured at send time (not the currently
@@ -663,7 +666,7 @@ public class ChatProcessor {
 	 */
 	static boolean sendWake(TaskProgressTracker tracker, String sessionId) {
 		LastSend last = tracker.getLastSend();
-		if (last == null || sessionId == null || !sessionId.equals(tracker.getActiveSessionId())) {
+		if (last == null || sessionId == null) {
 			return false;
 		}
 		TLSubSessionContext userSession = last.userSession().get();
@@ -677,8 +680,13 @@ public class ChatProcessor {
 		AIProcessingState state;
 		String taskId;
 		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
+		ChatSessionManager.OpenChat chat;
 		synchronized (tracker.sendLock()) {
-			if (tracker.hasActiveProcessingStateFor(sessionId) || noRoomReason(tracker, spendReading) != null) {
+			// Whether the window shows the chat, and what the turn writes into, read in one step: a
+			// switch to another chat in between would start this chat's turn in that chat's log.
+			chat = tracker.getSessionManager().openChat(sessionId);
+			if (chat == null || tracker.hasActiveProcessingStateFor(sessionId)
+				|| noRoomReason(tracker, spendReading) != null) {
 				return false;
 			}
 			tracker.evictCompletedStatesForSession(sessionId);
@@ -690,19 +698,19 @@ public class ChatProcessor {
 			state.setSessionId(sessionId);
 			tracker.addProcessingState(taskId, state);
 		}
-		state.setChat(tracker.getChat());
+		state.setChat(chat.chat());
 		state.setRunOptions(last.options());
 		state.setFacts(last.facts());
 		state.setSpendReading(spendReading);
-		state.setMemories(tracker.getSessionManager().getActiveMemories(tracker.getSessionOwner()));
+		state.setMemories(tracker.getSessionManager().getMemories(sessionId, tracker.getSessionOwner()));
 
-		ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
+		ConversationLog convLog = chat.log();
 		convLog.startTurn().setUserParts(List.of());
 		state.setConversationLog(convLog);
 
 		try {
 			state._backgroundTask = ChatRunExecutor.submit(new AIBackgroundTask(tracker, state,
-				tracker.getConversationMemory(), null, null, userSession));
+				chat.memory(), null, null, userSession));
 		} catch (ChatRunExecutor.NoRoom ex) {
 			int index = convLog.turns().indexOf(convLog.currentTurn());
 			if (index >= 0) {

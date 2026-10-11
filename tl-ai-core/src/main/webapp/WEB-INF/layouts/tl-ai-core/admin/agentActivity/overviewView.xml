@@ -13,9 +13,12 @@
 	style/agentActivity.css gives it the size a KPI has to have to be read at a glance.
 	
 	The tile navigator keeps its own band of the split, so drilling into a tile replaces that band
-	and leaves the trend charts visible below the rows that explain them. That band cannot shrink to
-	the height of the cards: it also has to hold a table once a tile is opened, so it is sized for
-	the table and the cards leave some air under them. The split is draggable either way.
+	and leaves the trend charts visible below the rows that explain them. The band has a fixed
+	height, not a share of the window: what it has to hold is one row of cards, and the tallest of
+	them - the token tile with its cost and warning lines - does not get shorter on a lower window.
+	A third of the window cut that card off at its bottom even on a window 1000 px high (#860).
+	Where the cards wrap into a second row, on a narrow window, the band scrolls. The same height
+	leaves room for a table once a tile is opened, and the split is draggable either way.
 	
 	One period control at the top governs the whole tab: the three counting tiles, the two charts and
 	the tables behind those tiles all read the period it publishes as their model. It sits above the
@@ -62,7 +65,7 @@
 					name="aiAgentOverviewRootTile"
 					titleKey="admin.ai.agentActivity.overview.title"
 				>
-					<layoutInfo size="32%"/>
+					<layoutInfo size="310px"/>
 					<!--
 						The toolbar carries the drill-down breadcrumb rather than a fixed title:
 						opening a tile replaces this half of the tab, so without it a reader has no

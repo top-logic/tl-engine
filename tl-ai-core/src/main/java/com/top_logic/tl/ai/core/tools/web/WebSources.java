@@ -28,6 +28,17 @@ import com.top_logic.util.TLContext;
  */
 final class WebSources {
 
+	/**
+	 * The longest title a page is listed under.
+	 *
+	 * <p>
+	 * A page chooses its own title, and the title travels further than the page's text: into the
+	 * footnotes of an answer, the findings a worker delivers and the kept research run. One bounded
+	 * line names a page; it is no channel for a paragraph of instructions.
+	 * </p>
+	 */
+	static final int MAX_TITLE = 200;
+
 	private WebSources() {
 		// Static utility.
 	}
@@ -78,7 +89,7 @@ final class WebSources {
 			return;
 		}
 		String text = list.readPart(finalUrl, document, start, end);
-		String name = title == null || title.isBlank() ? finalUrl : title.strip();
+		String name = title(title, finalUrl);
 		ReadSource known = list.find(finalUrl);
 		String archiveUrl = known == null ? "" : known.archiveUrl();
 		Instant readAt = known == null || known.archiveUrl().isEmpty() ? Instant.now() : known.readAt();
@@ -93,6 +104,25 @@ final class WebSources {
 		ReadingListBinding.read(
 			new ReadSource(CitationKinds.WEB, finalUrl, name, finalUrl, text, archiveUrl, readAt),
 			requestedUrl == null ? "" : requestedUrl);
+	}
+
+	/**
+	 * The name a page is listed under: its title as one line of at most {@link #MAX_TITLE}
+	 * characters, or its address when it has no title.
+	 */
+	private static String title(String title, String url) {
+		String line = title == null ? "" : title.replaceAll("(?U)\\s+", " ").strip();
+		if (line.isEmpty()) {
+			return url;
+		}
+		if (line.length() <= MAX_TITLE) {
+			return line;
+		}
+		int end = MAX_TITLE - 3;
+		if (Character.isHighSurrogate(line.charAt(end - 1))) {
+			end--;
+		}
+		return line.substring(0, end).stripTrailing() + "...";
 	}
 
 	/** The handle of the copy an archive address names, or <code>null</code> for none. */

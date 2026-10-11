@@ -13,3 +13,7 @@ research.config.xml
 # The MCP endpoint /mcp with HTTP basic login and three model-reading tools - for a local demo only.
 # Uncomment the following line to enable it. See the file for how to connect Claude Code.
 #mcp-demo.config.xml
+
+# Albert as an A2A agent at /a2a/albert (personal access tokens, HTTP basic for a local try)
+# and the tools to call other A2A agents. Uncomment the following line to enable it. See the file.
+#a2a-demo.config.xml

@@ -23,6 +23,7 @@
   </scm>
   <modules>
     <module>tl-ai-mcp-server</module>
+    <module>tl-ai-a2a</module>
     <module>tl-chat</module>
     <module>tl-chat-classic</module>
     <module>tl-ai-demo</module>

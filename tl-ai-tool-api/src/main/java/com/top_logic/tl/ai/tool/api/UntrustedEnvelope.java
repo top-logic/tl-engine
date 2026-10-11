@@ -161,6 +161,19 @@ public final class UntrustedEnvelope {
 			"what a subagent you started wrote back; it may repeat what the subagent read");
 
 	/**
+	 * The envelope for what a <b>remote agent</b> answered over the A2A protocol - its answer, its
+	 * question back and its artifacts.
+	 *
+	 * <p>
+	 * Its own kind because the text was written by another agent in another application, on whatever
+	 * that agent read: neither this application's data nor a tool result of a server the
+	 * administrator vouched for. Applied by {@code A2AClientTools} of {@code tl-ai-a2a}.
+	 * </p>
+	 */
+	public static final UntrustedEnvelope A2A_RESULT = new UntrustedEnvelope("untrusted_agent_answer",
+		"what a remote agent answered over the A2A protocol");
+
+	/**
 	 * Every kind, in the order the {@link #standingRule() standing rule} names them.
 	 *
 	 * <p>
@@ -172,7 +185,7 @@ public final class UntrustedEnvelope {
 	 */
 	private static final List<UntrustedEnvelope> KINDS =
 		List.of(PAGE_CONTENT, DOCUMENT_CONTENT, SEARCH_RESULTS, MODEL_DATA, MCP_TOOL_RESULT,
-			SUBAGENT_REPORT);
+			SUBAGENT_REPORT, A2A_RESULT);
 
 	/**
 	 * Matches an opening or closing envelope tag of <em>any</em> kind, which is what may not appear

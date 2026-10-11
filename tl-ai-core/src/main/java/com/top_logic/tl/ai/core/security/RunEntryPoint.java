@@ -28,6 +28,12 @@ public enum RunEntryPoint {
 	/** A request that arrived over the MCP endpoint with a credential of its own. */
 	MCP,
 
+	/**
+	 * A request of another agent over the A2A endpoint ({@code tl-ai-a2a}), with a credential of its
+	 * own. The calling agent answers what the run asks, so such a run is not a background run.
+	 */
+	A2A,
+
 	/** A run a scheduler started, at a time nobody chose to be present for. */
 	SCHEDULED,
 

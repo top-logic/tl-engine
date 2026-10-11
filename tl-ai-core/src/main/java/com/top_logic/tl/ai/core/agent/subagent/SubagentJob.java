@@ -246,7 +246,8 @@ public class SubagentJob {
 	 * (yet).
 	 *
 	 * <p>
-	 * What its transcript is read from while it works; once it has ended, its recorded execution is.
+	 * What its transcript is read from while it works; once it has ended, its recorded execution is,
+	 * and the job lets go of the log.
 	 * Written by the child's thread - a reader takes {@link ConversationLog#turns()}, which is a
 	 * snapshot.
 	 * </p>
@@ -371,6 +372,8 @@ public class SubagentJob {
 		}
 		_result = result;
 		_status = terminal;
+		// Read only while the subagent works; afterwards its recorded execution is.
+		_liveLog = null;
 	}
 
 	/** Marks the result as delivered to the parent (idempotent). */

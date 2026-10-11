@@ -12,6 +12,7 @@ import java.util.Map;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 
@@ -89,9 +90,32 @@ public final class ChatSessionRegistry {
 		if (subSession == null || tracker == null) {
 			return;
 		}
-		Map<String, TaskProgressTracker> trackers = subSession.mkMap(CHAT_TRACKERS);
+		boolean first;
+		Map<String, TaskProgressTracker> trackers;
+		synchronized (subSession) {
+			first = !subSession.isSet(CHAT_TRACKERS);
+			trackers = subSession.mkMap(CHAT_TRACKERS);
+		}
 		synchronized (trackers) {
 			trackers.put(key(conversation), tracker);
+		}
+		if (first) {
+			subSession.addUnboundListener(ChatSessionRegistry::windowEnded);
+		}
+	}
+
+	/**
+	 * The window - the sub-session - has ended: its conversations stop listening to their subagents,
+	 * which are kept by the process and would otherwise keep the window's state in memory.
+	 */
+	private static void windowEnded(TLSubSessionContext subSession) {
+		for (TaskProgressTracker tracker : trackers(subSession)) {
+			try {
+				tracker.close();
+			} catch (RuntimeException ex) {
+				Logger.warn("Could not let go of a closed window's chat: " + ex.getMessage(), ex,
+					ChatSessionRegistry.class);
+			}
 		}
 	}
 

@@ -37,6 +37,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -89,6 +90,8 @@ public class TestSubagentSteering extends BasicTestCase {
 	public void testAMessageReachesTheChildsNextTurn() throws Exception {
 		SubagentJob job = spawnChild();
 		assertTrue("The child must reach its tool call.", _inProbe.await(20, TimeUnit.SECONDS));
+		// Read while the child works: an ended job lets go of its live log.
+		ConversationLog log = job.liveLog();
 
 		String answer = lead(new SendToSubagentTool(),
 			Map.of("subagentId", job.subagentId(), "message", "Only look at the year 2026."));
@@ -104,11 +107,11 @@ public class TestSubagentSteering extends BasicTestCase {
 			_childRequests.get(1).contains("[Message from the lead agent]")
 				&& _childRequests.get(1).contains("Only look at the year 2026."));
 
-		Part.SystemPart recorded = inboxPart(job, Part.SystemEventType.LEAD_MESSAGE);
+		Part.SystemPart recorded = inboxPart(log, Part.SystemEventType.LEAD_MESSAGE);
 		assertTrue(recorded.details().contains("Only look at the year 2026."));
 
 		Conversation replayed = new Conversation();
-		ConversationLogReplay.rebuildMemory(job.liveLog(), replayed);
+		ConversationLogReplay.rebuildMemory(log, replayed);
 		List<Message> messages = replayed.messages();
 		int at = indexOfMessageStartingWith(messages, "[Message from the lead agent]");
 		assertTrue("The replayed transcript holds the message: " + messages, at > 0);
@@ -123,6 +126,8 @@ public class TestSubagentSteering extends BasicTestCase {
 	public void testAUserMessageReachesTheChildAsTheUsers() throws Exception {
 		SubagentJob job = spawnChild();
 		assertTrue("The child must reach its tool call.", _inProbe.await(20, TimeUnit.SECONDS));
+		// Read while the child works: an ended job lets go of its live log.
+		ConversationLog log = job.liveLog();
 
 		assertTrue(job.inbox().post(
 			SubagentInbox.Message.of(SubagentInbox.Sender.USER, "Nur Anmeldungen aus 2026.")));
@@ -136,11 +141,11 @@ public class TestSubagentSteering extends BasicTestCase {
 			second.contains("[Message from the user]") && second.contains("Nur Anmeldungen aus 2026."));
 		assertFalse("Not passed off as the lead's: " + second, second.contains("[Message from the lead agent]"));
 
-		Part.SystemPart recorded = inboxPart(job, Part.SystemEventType.USER_MESSAGE);
+		Part.SystemPart recorded = inboxPart(log, Part.SystemEventType.USER_MESSAGE);
 		assertTrue(recorded.details().contains("Nur Anmeldungen aus 2026."));
 
 		Conversation replayed = new Conversation();
-		ConversationLogReplay.rebuildMemory(job.liveLog(), replayed);
+		ConversationLogReplay.rebuildMemory(log, replayed);
 		List<Message> messages = replayed.messages();
 		int at = indexOfMessageStartingWith(messages, "[Message from the user]");
 		assertTrue("The replayed transcript holds the message: " + messages, at > 0);
@@ -321,9 +326,9 @@ public class TestSubagentSteering extends BasicTestCase {
 		assertTrue("The child must have ended.", job.status().isTerminal());
 	}
 
-	private static Part.SystemPart inboxPart(SubagentJob job, Part.SystemEventType type) {
+	private static Part.SystemPart inboxPart(ConversationLog log, Part.SystemEventType type) {
 		List<Part.SystemPart> found = new ArrayList<>();
-		for (Turn turn : job.liveLog().turns()) {
+		for (Turn turn : log.turns()) {
 			for (Part part : turn.assistantParts()) {
 				if (part instanceof Part.SystemPart system && system.eventType() == type) {
 					found.add(system);

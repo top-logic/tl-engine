@@ -519,6 +519,16 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * The window this tracker belongs to has ended: stops listening to the subagents of its chats.
+	 *
+	 * @see ChatSessionManager#close()
+	 */
+	public void close() {
+		_sessionManager.close();
+		PendingInteractionRegistry.windowClosed(this);
+	}
+
+	/**
 	 * Returns the session manager for this tracker.
 	 */
 	public ChatSessionManager getSessionManager() {

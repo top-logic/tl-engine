@@ -283,9 +283,12 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			TLSubSessionContext subSession = TLContextManager.getSubSession();
 			Person previous = subSession.getPerson();
 			subSession.setPerson(account);
+			TaskProgressTracker tracker = newTracker(account);
 			try {
-				runSitting(account, subSession, newTracker(account));
+				runSitting(account, subSession, tracker);
 			} finally {
+				// The sitting is this run's window, and it ends here.
+				tracker.close();
 				subSession.setPerson(previous);
 			}
 		} finally {

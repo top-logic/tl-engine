@@ -580,7 +580,10 @@ can spawn too, and a chat window that drops or reloads a conversation leaves its
 only deleting the chat cancels them - `AgentExecutionStore.deleteSession` stops every registry of the
 conversation (`SubagentRegistries.removeConversation`: each window's and the one of a run without a
 window), whichever path deleted it (#818). Such a run borrows its registry, which is forgotten when
-the run ends with no work left in it. After a restart the startup sweep fails the children's runs, and
+the run ends with no work left in it. A chat window attaches to its registry while it listens and
+lets go when the window ends (the sub-session's unbound listener, #856); a registry nobody has
+borrowed for 24 hours is cancelled and forgotten, so a closed window's results no lead reads do not
+stay for the life of the process. After a restart the startup sweep fails the children's runs, and
 a reopened conversation ends their parts as failed (`InterruptedTranscript`). Its result reaches the parent on one of two paths, and
 both render it through `SubagentResultDelivery` so the parent reads the same block either way:
 `wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the

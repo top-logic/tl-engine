@@ -129,6 +129,49 @@ public class TestSubagentRegistries extends TestCase {
 		awaitTerminal(job);
 	}
 
+	/**
+	 * A registry nobody has borrowed for a day is cancelled and forgotten, also with work left: no lead
+	 * reads what it reports.
+	 */
+	public void testAnAbandonedRegistryIsForgotten() throws Exception {
+		String key = key();
+		SubagentJob job;
+		try (SubagentRegistries.Lease window = SubagentRegistries.attach(key)) {
+			job = startBlocking(window.registry());
+		}
+		long released = System.currentTimeMillis();
+		assertNotNull("Kept when the window lets go.", SubagentRegistries.find(key));
+
+		SubagentRegistries.expireAbandoned(released + SubagentRegistries.ABANDONED_AFTER_MILLIS / 2);
+		assertNotNull("Kept for a day.", SubagentRegistries.find(key));
+
+		SubagentRegistries.expireAbandoned(released + SubagentRegistries.ABANDONED_AFTER_MILLIS + 1000);
+		assertNull("Forgotten after a day.", SubagentRegistries.find(key));
+		awaitTerminal(job);
+		assertEquals(SubagentJobStatus.CANCELLED, job.status());
+	}
+
+	/** A registry a window still listens to is never forgotten, however old. */
+	public void testAnAttachedRegistryIsKept() {
+		String key = key();
+		try (SubagentRegistries.Lease window = SubagentRegistries.attach(key)) {
+			SubagentRegistries.expireAbandoned(System.currentTimeMillis() + 10 * SubagentRegistries.ABANDONED_AFTER_MILLIS);
+			assertSame(window.registry(), SubagentRegistries.find(key));
+		}
+		SubagentRegistries.remove(key);
+	}
+
+	/** A window that lets go of an idle registry keeps it: it may show the chat again. */
+	public void testAWindowKeepsAnIdleRegistry() {
+		String key = key();
+		SubagentJobRegistry registry;
+		try (SubagentRegistries.Lease window = SubagentRegistries.attach(key)) {
+			registry = window.registry();
+		}
+		assertSame(registry, SubagentRegistries.find(key));
+		SubagentRegistries.remove(key);
+	}
+
 	/** A registry whose finished result nobody has read yet is not idle. */
 	public void testAnUndeliveredResultIsNotIdle() {
 		SubagentJobRegistry registry = new SubagentJobRegistry();

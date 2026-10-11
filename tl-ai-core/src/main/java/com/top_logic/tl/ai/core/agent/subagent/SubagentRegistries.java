@@ -10,6 +10,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import com.top_logic.basic.Logger;
 
 /**
  * The {@link SubagentJobRegistry registries} of this process, one per conversation.
@@ -32,6 +35,14 @@ import java.util.Map;
  * </p>
  *
  * <p>
+ * A registry nobody has borrowed for {@link #ABANDONED_AFTER_MILLIS} - the window that showed it was
+ * closed, the run that used it ended long ago - is cancelled and forgotten even when it still has
+ * work: no lead reads what its subagents report, and its jobs, their logs and the listeners of a
+ * window that is gone would otherwise stay in memory for the life of the process. A chat window
+ * {@link #attach(String) attaches} to its registry for as long as it listens to it.
+ * </p>
+ *
+ * <p>
  * Every registry of one conversation has a key that starts with that conversation's
  * {@link #conversationKey(String) key}, so deleting the conversation finds and stops all of them -
  * those of every window and the one of a run without a window - with
@@ -43,18 +54,32 @@ public final class SubagentRegistries {
 	/** How many idle registries are kept before the oldest are dropped. */
 	static final int MAX_IDLE = 1024;
 
+	/**
+	 * How long a registry nobody borrows is kept before it is cancelled and forgotten: a day, so that
+	 * a window that was only reloaded or a chat the user comes back to the same day never meets it.
+	 */
+	static final long ABANDONED_AFTER_MILLIS = TimeUnit.HOURS.toMillis(24);
+
+	/** How often, at most, {@link #expireAbandoned(long)} looks at all registries. */
+	private static final long SWEEP_MILLIS = TimeUnit.MINUTES.toMillis(1);
+
+	/** When {@link #expireAbandoned(long)} last ran. */
+	private static long _lastSweep;
+
 	/** Between the conversation's key and the window in a {@link #windowKey(String, String)}. */
 	private static final char WINDOW_SEPARATOR = '@';
 
 	/** By key, least recently asked for first. */
 	private static final Map<String, Entry> REGISTRIES = new LinkedHashMap<>(16, 0.75f, true);
 
-	/** A registry and how many runs borrow it now. */
+	/** A registry, how many runs and windows borrow it now, and since when nobody does. */
 	private static final class Entry {
 
 		final SubagentJobRegistry _registry = new SubagentJobRegistry();
 
 		int _borrowers;
+
+		long _unborrowedSince = System.currentTimeMillis();
 
 	}
 
@@ -69,6 +94,7 @@ public final class SubagentRegistries {
 	 *        Which registry; see {@link #conversationKey(String)}.
 	 */
 	public static SubagentJobRegistry forKey(String key) {
+		sweepIfDue();
 		synchronized (REGISTRIES) {
 			return entry(key)._registry;
 		}
@@ -85,10 +111,28 @@ public final class SubagentRegistries {
 	 * </p>
 	 */
 	public static Lease borrow(String key) {
+		return lease(key, true);
+	}
+
+	/**
+	 * Borrows the registry for the given key, created on first use, for a window that listens to it.
+	 *
+	 * <p>
+	 * Unlike {@link #borrow(String)}, closing the last lease keeps an idle registry: the window may
+	 * show the chat again, and its subagents' ids go on from where they were. A registry nobody
+	 * borrows is forgotten after {@link #ABANDONED_AFTER_MILLIS}.
+	 * </p>
+	 */
+	public static Lease attach(String key) {
+		return lease(key, false);
+	}
+
+	private static Lease lease(String key, boolean forgetIfIdle) {
+		sweepIfDue();
 		synchronized (REGISTRIES) {
 			Entry entry = entry(key);
 			entry._borrowers++;
-			return new Lease(key, entry);
+			return new Lease(key, entry, forgetIfIdle);
 		}
 	}
 
@@ -190,6 +234,51 @@ public final class SubagentRegistries {
 	}
 
 	/**
+	 * Runs {@link #expireAbandoned(long)} when it has not run for {@link #SWEEP_MILLIS}. Called before
+	 * the lock is taken, because cancelling subagents is not something to do while holding it.
+	 */
+	private static void sweepIfDue() {
+		long now = System.currentTimeMillis();
+		synchronized (REGISTRIES) {
+			if (now - _lastSweep < SWEEP_MILLIS) {
+				return;
+			}
+			_lastSweep = now;
+		}
+		expireAbandoned(now);
+	}
+
+	/**
+	 * Cancels and forgets every registry nobody has borrowed for {@link #ABANDONED_AFTER_MILLIS}.
+	 *
+	 * @param now
+	 *        The time to measure against.
+	 * @return How many registries were forgotten.
+	 */
+	static int expireAbandoned(long now) {
+		List<Entry> expired = new ArrayList<>();
+		synchronized (REGISTRIES) {
+			for (Iterator<Entry> it = REGISTRIES.values().iterator(); it.hasNext();) {
+				Entry entry = it.next();
+				if (entry._borrowers == 0 && now - entry._unborrowedSince >= ABANDONED_AFTER_MILLIS) {
+					expired.add(entry);
+					it.remove();
+				}
+			}
+		}
+		int cancelled = 0;
+		for (Entry entry : expired) {
+			cancelled += cancel(entry);
+		}
+		if (!expired.isEmpty()) {
+			Logger.info("Forgot " + expired.size() + " subagent registr" + (expired.size() == 1 ? "y" : "ies")
+				+ " nobody had used for " + TimeUnit.MILLISECONDS.toHours(ABANDONED_AFTER_MILLIS)
+				+ " hours; cancelled " + cancelled + " subagent(s) still at work in them.", SubagentRegistries.class);
+		}
+		return expired.size();
+	}
+
+	/**
 	 * Cancelled, not shut down: interrupting the pool would end a subagent as failed before its
 	 * cancellation is noticed, and the pool lets its threads go once they are idle.
 	 */
@@ -222,11 +311,14 @@ public final class SubagentRegistries {
 
 		private final Entry _entry;
 
+		private final boolean _forgetIfIdle;
+
 		private boolean _closed;
 
-		Lease(String key, Entry entry) {
+		Lease(String key, Entry entry, boolean forgetIfIdle) {
 			_key = key;
 			_entry = entry;
+			_forgetIfIdle = forgetIfIdle;
 		}
 
 		/** The borrowed registry. */
@@ -235,7 +327,8 @@ public final class SubagentRegistries {
 		}
 
 		/**
-		 * Lets go of the registry, and forgets it when nobody else borrows it and it has no work left.
+		 * Lets go of the registry. A run's lease forgets it when nobody else borrows it and it has no
+		 * work left; see {@link SubagentRegistries#borrow(String)}.
 		 */
 		@Override
 		public void close() {
@@ -245,7 +338,11 @@ public final class SubagentRegistries {
 				}
 				_closed = true;
 				_entry._borrowers--;
-				if (_entry._borrowers == 0 && _entry._registry.isIdle() && REGISTRIES.get(_key) == _entry) {
+				if (_entry._borrowers > 0) {
+					return;
+				}
+				_entry._unborrowedSince = System.currentTimeMillis();
+				if (_forgetIfIdle && _entry._registry.isIdle() && REGISTRIES.get(_key) == _entry) {
 					REGISTRIES.remove(_key);
 				}
 			}

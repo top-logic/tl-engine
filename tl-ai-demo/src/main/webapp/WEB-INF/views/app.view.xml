@@ -188,6 +188,22 @@
 					</label>
 					<view-ref view="tl-ai-demo/profile.view.xml"/>
 				</nav-item>
+
+				<!--
+					The view changes Albert wrote or proposed (tl-ai-views): proposed ones are
+					reviewed with a live preview and applied or rejected here, written ones reverted.
+				-->
+				<nav-item id="view-changes"
+					config:position="before"
+					config:reference="system-separator"
+					icon="css:bi bi-git"
+				>
+					<label>
+						<en>View changes</en>
+						<de>Ansichtsänderungen</de>
+					</label>
+					<view-ref view="tl-ai-views/view-changes.view.xml"/>
+				</nav-item>
 			</sidebar>
 		</content>
 		<!--

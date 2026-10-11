@@ -17,3 +17,7 @@ research.config.xml
 # Albert as an A2A agent at /a2a/albert (personal access tokens, HTTP basic for a local try)
 # and the tools to call other A2A agents. Uncomment the following line to enable it. See the file.
 #a2a-demo.config.xml
+
+# Living Views: Albert builds and changes the pages of this demo (skill TL_buildViews). It writes the
+# view files of the workspace the demo runs from. Uncomment the following line to enable it.
+#views-demo.config.xml

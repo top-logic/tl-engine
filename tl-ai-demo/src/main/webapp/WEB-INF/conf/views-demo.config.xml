@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Living Views: Albert builds and changes the pages of this demo and sees the page the user has
+	open. Enable it in metaConf.txt.
+
+	A change Albert saves is written into the view files of the workspace the demo runs from
+	(tl-ai-demo/src/main/webapp/WEB-INF/views) and recorded as a change set; the page "View changes"
+	lists them, previews proposed ones and applies, rejects or reverts them.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="TL_SingleAgent">
+						<skills>
+							<skill name="TL_buildViews"/>
+						</skills>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+	</services>
+</application>

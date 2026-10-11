@@ -890,8 +890,10 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	public void recordSubagentCompleted(String subagentId,
 			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result, String childRunId) {
-		String parentToolCallId = endSubagent(subagentId, "DONE", result == null ? null : result.finalText(),
-			childRunId);
+		// An orderly stop at a limit has an answer, but maybe not the whole one; the card says so (#786).
+		boolean atLimit = result != null && result.stopReason() != null && result.stopReason().isLimit();
+		String parentToolCallId = endSubagent(subagentId, atLimit ? "LIMIT" : "DONE",
+			result == null ? null : result.finalText(), childRunId);
 		AgentEventListener parent = _parentListener;
 		if (parent != null) {
 			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result,

@@ -321,7 +321,8 @@ export interface Capabilities {
   promptImproverAvailable?: boolean
 }
 
-export type SubagentStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'FAILED' | 'CANCELLED'
+/** `LIMIT`: it stopped in order at a limit - turns, tool calls, budget, output - with an answer that may be incomplete. */
+export type SubagentStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'LIMIT' | 'FAILED' | 'CANCELLED'
 
 export interface SubagentActivity {
   subagentId: string
@@ -337,6 +338,8 @@ export interface SubagentActivity {
   task?: string
   /** Its own run id, by which its transcript is found once it has ended; absent while unknown. */
   childRunId?: string
+  /** Why its run stopped, a `StopReason` name, once it has ended; absent while unknown. */
+  stopReason?: string
   /** What its run cost, in `currency`, once it has ended; absent while unknown. */
   cost?: number
   currency?: string
@@ -449,6 +452,8 @@ export interface SubagentStatusEvent {
   queued?: boolean
   /** On the end: its own run id, its transcript's key. */
   childRunId?: string
+  /** On completion: why its run stopped, a `StopReason` name. */
+  stopReason?: string
 }
 
 export interface ImprovePromptResponse {

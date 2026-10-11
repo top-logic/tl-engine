@@ -458,6 +458,12 @@ metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`.
 
 `AgentEvent` sealed interface with 25 record subtypes covering run/turn/tool/approval/transaction/memory lifecycle. `AgentEventListener` enables real-time SSE streaming and structured logging.
 
+A `RunObserver` (`observe/`, configured in `<run-observers>` on `AgentRuntimeService`, none by default) receives
+the events of every run `AgentLoop` starts - chat, script, MCP, A2A, delegation, subagent - with who the run is
+for (`ObservedRun`: agent, account, entry point, conversation, parent run). `ObserverQueue` delivers them on a
+thread of its own behind a bounded queue, so an observer can neither slow down nor break a run. An observer sees
+what the run sees; one that passes it on outside the application must authenticate that itself.
+
 ### Chat UI (tl-chat)
 
 `ChatServlet` at `/chat/*` handles REST + SSE. `ChatProcessor` orchestrates background agent execution. `ChatSSEHandler` implements `AgentEventListener` for real-time push (50ms flush batching, 30+ event types). The chat has no event stream of its own: the frames travel on the window's React event stream (`/react-api/events`), attached with `POST /chat/stream`. A second long-lived connection per page let three tabs exhaust the browser's six connections to the server (#867). See `tl-chat/CLAUDE.md`.

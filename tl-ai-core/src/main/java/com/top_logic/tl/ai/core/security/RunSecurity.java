@@ -42,7 +42,31 @@ public final class RunSecurity {
 				+ " answered no security context for a run of " + run.entryPoint()
 				+ ". A run without a context cannot be authorized; return the default context instead.");
 		}
-		return result;
+		return result.principal() != null ? result : new Described(result, run);
+	}
+
+	/**
+	 * A context that names the run it was built for, whatever the factory answered - see
+	 * {@link SecurityContext#principal()}.
+	 */
+	private static final class Described extends SecurityContextProxy {
+
+		private final RunPrincipal _run;
+
+		Described(SecurityContext impl, RunPrincipal run) {
+			super(impl);
+			_run = run;
+		}
+
+		@Override
+		public RunPrincipal principal() {
+			return _run;
+		}
+
+		@Override
+		protected SecurityContext copy(SecurityContext narrowed) {
+			return new Described(narrowed, _run);
+		}
 	}
 
 	/**

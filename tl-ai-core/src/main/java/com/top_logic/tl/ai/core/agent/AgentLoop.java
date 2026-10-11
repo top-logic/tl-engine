@@ -75,6 +75,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.observe.RunObservers;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.MessageHistorySanitizer;
@@ -673,8 +674,8 @@ public class AgentLoop {
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
-		AgentEventListener serialized =
-			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
+		AgentEventListener serialized = AgentEventListener.serializing(
+			new DiagnosticLoggingListener(RunObservers.observe(context, listener)));
 		String runId = UUID.randomUUID().toString();
 		// Publish the run's identity to its tools before anything of the run happens, and as plain
 		// data: the persistent AgentExecution row is written later, by the execution store's writer
@@ -907,8 +908,8 @@ public class AgentLoop {
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
-		AgentEventListener serialized =
-			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
+		AgentEventListener serialized = AgentEventListener.serializing(
+			new DiagnosticLoggingListener(RunObservers.observe(context, listener)));
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 		emitEnvironment(serialized, runId);

@@ -13,8 +13,8 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- * Builders and readers for the A2A v1.0 data objects (Message, Part, Artifact, TaskStatus) as JSON
- * trees.
+ * Builders and readers for the A2A v1.0 data objects (<code>Message</code>, <code>Part</code>,
+ * <code>Artifact</code>, <code>TaskStatus</code>) as JSON trees.
  */
 public final class A2AJson {
 

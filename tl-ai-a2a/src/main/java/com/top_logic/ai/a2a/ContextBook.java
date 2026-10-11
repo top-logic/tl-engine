@@ -48,10 +48,16 @@ public final class ContextBook {
 	/**
 	 * A conversation with remote agents, as the local conversation that holds it knows it.
 	 *
+	 * @param contextId
+	 *        The A2A context id.
 	 * @param label
 	 *        A short topic, by which a later call continues it.
 	 * @param agent
 	 *        The remote agent last talked to in it.
+	 * @param lastTaskId
+	 *        The last task of the conversation, or <code>null</code>.
+	 * @param lastState
+	 *        The state of the last task, or <code>null</code>.
 	 */
 	public record RemoteConversation(String contextId, String label, String agent, String lastTaskId,
 			TaskState lastState) {
@@ -60,6 +66,11 @@ public final class ContextBook {
 
 	/**
 	 * The context a call talks in, and its label.
+	 *
+	 * @param contextId
+	 *        The A2A context id.
+	 * @param label
+	 *        The context's label.
 	 */
 	public record Choice(String contextId, String label) {
 		// Pure value.
@@ -70,6 +81,8 @@ public final class ContextBook {
 	 *
 	 * @param agent
 	 *        The configured name of the remote agent.
+	 * @param contextId
+	 *        The A2A context id the task runs in.
 	 */
 	public record RemoteTask(String agent, String contextId) {
 		// Pure value.

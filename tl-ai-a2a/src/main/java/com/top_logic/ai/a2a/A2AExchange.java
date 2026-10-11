@@ -63,7 +63,7 @@ public record A2AExchange(Instant time, Direction direction, Kind kind, String a
 		/** The asking side sent a message. */
 		MESSAGE_SENT,
 
-		/** The task moved to {@link A2AExchange#state()}; the status message, if any, is the content. */
+		/** The task moved to the exchange's state; the status message, if any, is the content. */
 		STATE_CHANGED,
 
 		/** The task has a new artifact. */

@@ -81,8 +81,8 @@ import com.top_logic.util.model.ModelService;
  * window - a document read in <i>k</i> windows would cost <i>k</i> commits and some <i>k</i>²/2
  * windows of bytes. The first window is therefore stored at once, so the citation has an address,
  * and what later windows add is only remembered: the copy is given the longer text when the run
- * ends ({@link #flush(ReadingList)}), when somebody opens it, when a research run is kept with it,
- * at the latest {@link #FLUSH_DELAY} after it was first extended, and when the service shuts down.
+ * ends, when somebody opens it, when a research run is kept with it, at the latest a minute after it
+ * was first extended, and when the service shuts down.
  * The copy can therefore lag what the run read while the run is still reading; a process that dies
  * meanwhile keeps the windows written until then.
  * </p>
@@ -95,6 +95,8 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * @see #archive(String, String, String, Person)
+ * @see #flush(ReadingList)
+ * @see #FLUSH_DELAY
  * @see ArchivedPageServlet
  */
 @ServiceDependencies({

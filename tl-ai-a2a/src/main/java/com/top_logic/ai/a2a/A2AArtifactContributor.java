@@ -30,6 +30,10 @@ public interface A2AArtifactContributor {
 	 *        The exposed agent's path.
 	 * @param agentName
 	 *        The tl-ai agent that served it.
+	 * @param contextId
+	 *        The A2A context id of the task.
+	 * @param taskId
+	 *        The A2A task id.
 	 * @param request
 	 *        The text of the message the task answered.
 	 * @param answer

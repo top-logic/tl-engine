@@ -392,6 +392,15 @@ public final class ViewSource {
 
 	/**
 	 * An attribute of an element: its value and the range from its name to its closing quote.
+	 *
+	 * @param name
+	 *        The attribute's name.
+	 * @param value
+	 *        The attribute's value, decoded.
+	 * @param start
+	 *        The offset of its name.
+	 * @param end
+	 *        The offset after its closing quote.
 	 */
 	public record Attribute(String name, String value, int start, int end) {
 		// Read from the text.

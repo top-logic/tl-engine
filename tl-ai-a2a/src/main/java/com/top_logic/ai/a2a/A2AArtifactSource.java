@@ -32,6 +32,8 @@ public interface A2AArtifactSource {
 	/**
 	 * A published artifact.
 	 *
+	 * @param name
+	 *        The artifact's name.
 	 * @param mediaType
 	 *        E.g. {@code text/markdown}, {@code application/json}.
 	 * @param content

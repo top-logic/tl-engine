@@ -65,6 +65,10 @@ public final class RemoteExchange {
 	/**
 	 * Who calls: the local application, its agent and conversation.
 	 *
+	 * @param app
+	 *        The local application.
+	 * @param agent
+	 *        The local agent that calls.
 	 * @param conversationId
 	 *        The local conversation, or <code>null</code>.
 	 * @param subject

@@ -2335,18 +2335,6 @@ public class AgentLoop {
 	// ---- Cross-provider failover (Gitea #344) ----
 
 	/**
-	 * Puts the run back on the model it was configured with, and works out where it may go from
-	 * there.
-	 *
-	 * <p>
-	 * Called at the start of every run, because a loop is allowed to serve more than one: a run
-	 * that ended on a fallback must not hand its successor that fallback as its starting point.
-	 * The successor may of course be routed there again straight away - the mark that sent the
-	 * first run over is still held - but that decision is taken by {@link #callRouted} with the
-	 * health state of the moment, not inherited.
-	 * </p>
-	 */
-	/**
 	 * Limits every run of this loop to the given number of tool calls, or to the limit it already
 	 * has, whichever is smaller.
 	 *
@@ -2486,6 +2474,18 @@ public class AgentLoop {
 		return new AssistantMessage(reply.id(), reply.timestamp(), kept, reply.usage(), reply.finishReason());
 	}
 
+	/**
+	 * Puts the run back on the model it was configured with, and works out where it may go from
+	 * there.
+	 *
+	 * <p>
+	 * Called at the start of every run, because a loop is allowed to serve more than one: a run
+	 * that ended on a fallback must not hand its successor that fallback as its starting point.
+	 * The successor may of course be routed there again straight away - the mark that sent the
+	 * first run over is still held - but that decision is taken by {@link #callRouted} with the
+	 * health state of the moment, not inherited.
+	 * </p>
+	 */
 	private void beginRun() {
 		_toolCallsUsed = 0;
 		_finalTurn = false;

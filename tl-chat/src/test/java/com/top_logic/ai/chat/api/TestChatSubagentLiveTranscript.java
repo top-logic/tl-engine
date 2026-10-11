@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.ai.chat;
+package com.top_logic.ai.chat.api;
 
 import java.time.Instant;
 import java.util.List;
@@ -15,7 +15,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.ai.chat.TestChatServletOwnership.Recording;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
@@ -24,7 +23,7 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 
-import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.api.TestSubagentMessageEndpoint.Recording;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -71,7 +70,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 
 	private static ServletRunner runner;
 
-	private TestChatServletOwnership.Probe _servlet;
+	private TestSubagentMessageEndpoint.Probe _servlet;
 
 	private SubagentJob _job;
 
@@ -85,7 +84,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 			runner = new ServletRunner();
 			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
-		_servlet = new TestChatServletOwnership.Probe();
+		_servlet = new TestSubagentMessageEndpoint.Probe();
 
 		TaskProgressTracker window = new TaskProgressTracker();
 		assertTrue(window.getSessionManager().switchSession(chatId(), lena));

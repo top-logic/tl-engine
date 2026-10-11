@@ -45,6 +45,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.ResearchFinding;
 import com.top_logic.tl.ai.core.execution.model.ResearchRun;
 import com.top_logic.tl.ai.core.execution.model.ResearchSource;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
@@ -231,14 +232,21 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		ResearchRun researchRun = newestResearchRun();
 		assertEquals(QUESTION, researchRun.getQuestion());
 		assertEquals(root, researchRun.getOwner());
-		assertEquals("standard", researchRun.getEffort());
+		assertEquals(TlAiExecutionFactory.getSTANDARDResearchEffortClassifier(), researchRun.getEffort());
 		assertEquals(PLAN, researchRun.getPlan());
+		assertNotNull("The run references the lead run that kept it.", researchRun.getExecution());
 		Set<String> keptSources = new TreeSet<>();
 		for (ResearchSource source : researchRun.getCitedSources()) {
+			// The fixture web archives nothing, so a page is kept with its address.
 			keptSources.add(source.getUrl());
 		}
 		assertEquals("The kept run cites the pages the report cites.", read, keptSources);
 		assertEquals("Every worker's finding is kept with it.", TOPICS.size(), researchRun.getFindings().size());
+		for (ResearchFinding finding : researchRun.getFindings()) {
+			assertNotNull("A finding references its source: " + finding.getFindingId(), finding.getSource());
+			assertEquals("A finding references the worker run that recorded it.", WORKER,
+				finding.getRecordedBy().getAgentName());
+		}
 	}
 
 	/** The research run kept last. */

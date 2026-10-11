@@ -230,7 +230,9 @@ public class WebFetchTool {
 					return offPolicy;
 				}
 			} else {
-				document = fetch(requestedUrl, browsing, timeoutSeconds, maxBytes);
+				// Cut to what the cache keeps, so a long document is fetched once, not once per window.
+				document = fetch(requestedUrl, browsing, timeoutSeconds, maxBytes)
+					.cutTo(FetchedDocuments.MAX_DOCUMENT_CHARS);
 				_documents.put(requestedUrl, document);
 			}
 			String answer = renderWindow(requestedUrl, document, start, maxChars);
@@ -245,7 +247,7 @@ public class WebFetchTool {
 			// Where a redirect led and what the page links to are addresses this run was given.
 			UrlProvenance.record(document.url());
 			document.links().forEach(UrlProvenance::record);
-			UrlProvenance.recordAllIn(document.text());
+			UrlProvenance.recordAllIn(documentKey(document), document.text());
 			return answer;
 		} catch (Refusal ex) {
 			return ex.getMessage();
@@ -380,6 +382,16 @@ public class WebFetchTool {
 		// The tool's own sentence, not page content, so it is not wrapped as one.
 		throw new Refusal("Fetched " + url + " (" + contentType
 			+ "), but it is not a text, HTML or PDF document; cannot extract text.");
+	}
+
+	/**
+	 * What tells one fetched text from another, for reading its addresses once per run: the address it
+	 * was read from and its text. The hash of a string is computed once and kept with it, so asking
+	 * again for the next window of the same text costs nothing.
+	 */
+	private static String documentKey(FetchedDocument document) {
+		String text = document.text();
+		return "document:" + document.url() + "#" + text.length() + ":" + text.hashCode();
 	}
 
 	/**

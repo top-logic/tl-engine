@@ -158,6 +158,28 @@ public final class UrlProvenance {
 	}
 
 	/**
+	 * Records every address that occurs in a document the running agent read, once per run.
+	 *
+	 * <p>
+	 * A long document is read in windows, and all its addresses are recorded with the first window the
+	 * run reads. Reading them again for every further window would run through the whole text once per
+	 * window.
+	 * </p>
+	 *
+	 * @param documentKey
+	 *        What tells this text from every other one the run reads.
+	 * @param pageText
+	 *        The whole text of the document; ignored outside an agent run.
+	 * @see #recordAllIn(String)
+	 */
+	public static void recordAllIn(String documentKey, String pageText) {
+		SeenUrls seen = ledger();
+		if (seen != null && seen.firstLook(documentKey)) {
+			recordAllIn(pageText);
+		}
+	}
+
+	/**
 	 * Whether the rule applies to the given run under the configured scope.
 	 *
 	 * @param run

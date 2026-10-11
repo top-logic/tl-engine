@@ -145,17 +145,17 @@
 			<!--
 				This module's parent is tl-parent-app, not tl-ai-parent, so it does not inherit the
 				aggregator's surefire includes and repeats them here. Keep the two in step - see the
-				comment in the aggregator pom for what the regex is for and why the version is
-				pinned, and TestSuiteReachability for what asserts that it still reaches every test.
+				comment in the aggregator pom for what the regexes are for and why each accepts two
+				spellings of a class, and TestSuiteReachability for what asserts that they still reach
+				every test.
 			-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.6</version>
 				<configuration>
 					<includes>
-						<include>test/TestAll.java</include>
-						<include>%regex[com/top_logic/(ai|tl/ai)/(.*/)?(Test[A-Z0-9][^/$]*|[^/$]*Test)\.class]</include>
+						<include>%regex[test[/.]TestAll(\.class)?]</include>
+						<include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
 					</includes>
 				</configuration>
 			</plugin>

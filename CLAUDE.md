@@ -43,8 +43,13 @@ Two includes decide what that runs, configured once in the aggregator `pom.xml` 
 
 | Include | Runs |
 |---|---|
-| `test/TestAll.java` | the engine's generic suite (file names, layout normalization, JSP content, I18N constants, migration-script consistency) **plus** everything below `src/test/java/test/`, recursively |
-| `%regex[com/top_logic/(ai\|tl/ai)/...]` | this repository's own tests, which live in packages mirroring the production code |
+| `%regex[test[/.]TestAll(\.class)?]` | the engine's generic suite `test/TestAll.java` (file names, layout normalization, JSP content, I18N constants, migration-script consistency) **plus** everything below `src/test/java/test/`, recursively |
+| `%regex[com[/.]top_logic[/.](ai\|tl[/.]ai)[/.]...]` | this repository's own tests, which live in packages mirroring the production code |
+
+Both are regular expressions that accept a class as its class file path and as its class name: the
+surefire 3.6.0 that the parent brings checks the class name a second time, and there an include
+that knows only the path, or an Ant include next to a regex, runs no test. The comment in the
+aggregator `pom.xml` says why.
 
 **Adding a test.** Put it next to the code it tests, in the mirrored package
 (`com.top_logic.tl.ai.core.agent` for something in `com.top_logic.tl.ai.core.agent`), and name it

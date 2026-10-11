@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.basic.Logger;
 
@@ -72,14 +73,24 @@ public final class SubagentRegistries {
 	/** By key, least recently asked for first. */
 	private static final Map<String, Entry> REGISTRIES = new LinkedHashMap<>(16, 0.75f, true);
 
+	/**
+	 * The subagent id counter of each conversation, by its {@link #conversationKey(String) key}, least
+	 * recently asked for first; guarded by {@link #REGISTRIES}. See {@link #idsOf(String)}.
+	 */
+	private static final Map<String, AtomicInteger> IDS = new LinkedHashMap<>(16, 0.75f, true);
+
 	/** A registry, how many runs and windows borrow it now, and since when nobody does. */
 	private static final class Entry {
 
-		final SubagentJobRegistry _registry = new SubagentJobRegistry();
+		final SubagentJobRegistry _registry;
 
 		int _borrowers;
 
 		long _unborrowedSince = System.currentTimeMillis();
+
+		Entry(SubagentJobRegistry registry) {
+			_registry = registry;
+		}
 
 	}
 
@@ -192,6 +203,8 @@ public final class SubagentRegistries {
 					it.remove();
 				}
 			}
+			// The conversation is gone, and with it every id it handed out.
+			IDS.remove(conversationKey(conversationId));
 		}
 		int cancelled = 0;
 		for (Entry entry : removed) {
@@ -226,11 +239,61 @@ public final class SubagentRegistries {
 		}
 	}
 
-	/** The entry for the given key, created on first use. Must be called holding the lock. */
+	/**
+	 * The entry for the given key, created on first use. Must be called holding the lock.
+	 *
+	 * <p>
+	 * A new registry numbers its subagents with the counter of the other registries of its
+	 * conversation, if one is kept, so that the windows of a conversation never hand out the same id.
+	 * </p>
+	 */
 	private static Entry entry(String key) {
-		Entry entry = REGISTRIES.computeIfAbsent(key, k -> new Entry());
+		Entry entry = REGISTRIES.get(key);
+		if (entry == null) {
+			entry = new Entry(new SubagentJobRegistry(SubagentJobRegistry.DEFAULT_MAX_CONCURRENT, idsOf(key)));
+			REGISTRIES.put(key, entry);
+		}
 		dropIdle(entry);
 		return entry;
+	}
+
+	/**
+	 * The subagent id counter of the conversation of the given key, shared by all its registries. Must
+	 * be called holding the lock.
+	 *
+	 * <p>
+	 * Kept apart from the registries, so that it outlives one that expired or was forgotten while idle:
+	 * a registry made for the conversation later counts on. Counters of conversations that have no
+	 * registry any more are dropped beyond {@link #MAX_IDLE}, oldest first; a spawn then still counts on
+	 * from the lead's log - see {@link SubagentJobRegistry#countOnFrom(int)}.
+	 * </p>
+	 */
+	private static AtomicInteger idsOf(String key) {
+		AtomicInteger ids = IDS.computeIfAbsent(conversationPart(key), k -> new AtomicInteger());
+		int excess = IDS.size() - MAX_IDLE;
+		for (Iterator<String> it = IDS.keySet().iterator(); excess > 0 && it.hasNext();) {
+			String conversation = it.next();
+			if (!hasRegistry(conversation)) {
+				it.remove();
+				excess--;
+			}
+		}
+		return ids;
+	}
+
+	private static boolean hasRegistry(String conversation) {
+		for (String key : REGISTRIES.keySet()) {
+			if (conversationPart(key).equals(conversation)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The key without its window: the {@link #conversationKey(String) conversation's key}. */
+	private static String conversationPart(String key) {
+		int window = key.indexOf(WINDOW_SEPARATOR);
+		return window < 0 ? key : key.substring(0, window);
 	}
 
 	/**

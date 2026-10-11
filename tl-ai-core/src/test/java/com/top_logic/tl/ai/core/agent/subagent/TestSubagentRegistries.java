@@ -184,6 +184,55 @@ public class TestSubagentRegistries extends TestCase {
 		assertTrue(registry.isIdle());
 	}
 
+	/**
+	 * The windows of one conversation, and its run without a window, never hand out the same subagent
+	 * id: a card, a transcript link and the lead's own history name a subagent by it (#839).
+	 */
+	public void testSubagentIdsAreUniqueInAConversation() {
+		String id = UUID.randomUUID().toString();
+		try {
+			SubagentJob first = SubagentRegistries.forKey(SubagentRegistries.windowKey(id, "w1"))
+				.register("worker", "t", new CancellationToken());
+			SubagentJob second = SubagentRegistries.forKey(SubagentRegistries.windowKey(id, "w2"))
+				.register("worker", "t", new CancellationToken());
+			SubagentJob third = SubagentRegistries.forKey(SubagentRegistries.conversationKey(id))
+				.register("worker", "t", new CancellationToken());
+			assertEquals(List.of("sa-1", "sa-2", "sa-3"),
+				List.of(first.subagentId(), second.subagentId(), third.subagentId()));
+
+			SubagentJob other = SubagentRegistries.forKey(SubagentRegistries.windowKey(id + "0", "w1"))
+				.register("worker", "t", new CancellationToken());
+			assertEquals("Another conversation counts on its own.", "sa-1", other.subagentId());
+		} finally {
+			SubagentRegistries.removeConversation(id);
+			SubagentRegistries.removeConversation(id + "0");
+		}
+	}
+
+	/**
+	 * A registry that expired takes nothing of its conversation's ids with it: the registry made next
+	 * for that conversation counts on (#839).
+	 */
+	public void testSubagentIdsOutliveAnExpiredRegistry() {
+		String id = UUID.randomUUID().toString();
+		try {
+			SubagentJob first = SubagentRegistries.forKey(SubagentRegistries.windowKey(id, "w1"))
+				.register("worker", "t", new CancellationToken());
+			assertEquals("sa-1", first.subagentId());
+			first.markTerminal(SubagentJobStatus.CANCELLED,
+				new SubagentResult("x", TokenUsage.EMPTY, 1L, 0, StopReason.ABORTED));
+
+			SubagentRegistries.expireAbandoned(System.currentTimeMillis() + 365L * 24 * 3600 * 1000);
+			assertNull("The registry expired.", SubagentRegistries.find(SubagentRegistries.windowKey(id, "w1")));
+
+			SubagentJob next = SubagentRegistries.forKey(SubagentRegistries.windowKey(id, "w2"))
+				.register("worker", "t", new CancellationToken());
+			assertEquals("sa-2", next.subagentId());
+		} finally {
+			SubagentRegistries.removeConversation(id);
+		}
+	}
+
 	private SubagentJob startBlocking(SubagentJobRegistry registry) throws InterruptedException {
 		SubagentJob job = registry.register("worker", "task", new CancellationToken());
 		CountDownLatch running = new CountDownLatch(1);

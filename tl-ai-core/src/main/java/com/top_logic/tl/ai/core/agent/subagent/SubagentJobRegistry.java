@@ -30,6 +30,9 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
  */
 public class SubagentJobRegistry {
 
+	/** How every subagent id starts; the number of the subagent in its conversation follows. */
+	private static final String ID_PREFIX = "sa-";
+
 	/** Default maximum concurrently-running subagents per session. */
 	public static final int DEFAULT_MAX_CONCURRENT = 4;
 
@@ -37,7 +40,11 @@ public class SubagentJobRegistry {
 
 	private final Map<String, SubagentJob> _jobs = new ConcurrentHashMap<>();
 
-	private final AtomicInteger _counter = new AtomicInteger();
+	/**
+	 * The number of the last subagent id handed out - shared by every registry of one conversation, see
+	 * {@link #SubagentJobRegistry(int, AtomicInteger)}.
+	 */
+	private final AtomicInteger _ids;
 
 	private final ExecutorService _executor =
 		Executors.newCachedThreadPool(r -> {
@@ -70,7 +77,37 @@ public class SubagentJobRegistry {
 
 	/** */
 	public SubagentJobRegistry(int maxConcurrent) {
+		this(maxConcurrent, new AtomicInteger());
+	}
+
+	/**
+	 * Creates a registry that numbers its subagents with the given counter.
+	 *
+	 * @param ids
+	 *        The number of the last subagent id handed out. The registries of one conversation - one
+	 *        per window, and the one of a run without a window - share it, so that no two subagents of
+	 *        a conversation have the same id: a card, a transcript link and the lead's own history name
+	 *        a subagent by it.
+	 */
+	public SubagentJobRegistry(int maxConcurrent, AtomicInteger ids) {
 		_maxConcurrent = maxConcurrent;
+		_ids = ids;
+	}
+
+	/**
+	 * Makes sure the next subagent id is beyond the given number.
+	 *
+	 * <p>
+	 * For ids handed out before this registry existed: the lead's log of a conversation that outlived
+	 * its registries - a server restart, a registry forgotten while idle - names its earlier subagents,
+	 * and a new one must not take one of their ids.
+	 * </p>
+	 *
+	 * @param number
+	 *        The highest number of a subagent id already in use; see {@link #numberOf(String)}.
+	 */
+	public void countOnFrom(int number) {
+		_ids.accumulateAndGet(number, Math::max);
 	}
 
 	/**
@@ -129,7 +166,7 @@ public class SubagentJobRegistry {
 
 	/** Registers a new QUEUED job and returns it. */
 	public SubagentJob register(String targetAgentName, String taskBrief, CancellationToken token) {
-		String id = "sa-" + _counter.incrementAndGet();
+		String id = ID_PREFIX + _ids.incrementAndGet();
 		SubagentJob job = new SubagentJob(id, targetAgentName, taskBrief, token);
 		job.setQuestionSignal(() -> questionAsked(job));
 		_jobs.put(id, job);
@@ -346,15 +383,22 @@ public class SubagentJobRegistry {
 	 * this registry did not mint (which therefore sorts last rather than throwing).
 	 */
 	private static int sequenceOf(SubagentJob job) {
-		String id = job.subagentId();
-		int separator = id.lastIndexOf('-');
-		if (separator < 0) {
-			return Integer.MAX_VALUE;
+		int number = numberOf(job.subagentId());
+		return number == 0 ? Integer.MAX_VALUE : number;
+	}
+
+	/**
+	 * The number in a subagent id this class hands out ({@code "sa-7"} is 7), or 0 for any other
+	 * string.
+	 */
+	public static int numberOf(String subagentId) {
+		if (subagentId == null || !subagentId.startsWith(ID_PREFIX)) {
+			return 0;
 		}
 		try {
-			return Integer.parseInt(id.substring(separator + 1));
+			return Math.max(0, Integer.parseInt(subagentId.substring(ID_PREFIX.length())));
 		} catch (NumberFormatException ex) {
-			return Integer.MAX_VALUE;
+			return 0;
 		}
 	}
 

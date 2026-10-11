@@ -52,7 +52,7 @@ export interface SubagentCardModel {
  * A job the server holds is matched to the turn by the id of the tool call that started it; a
  * recorded part stands in for one the server no longer holds - after a restart, or for a chat this
  * window has not held since. A part and a job are the same subagent only when both the subagent id
- * and the starting call agree, because subagent ids start again at `sa-1` in a new server life.
+ * and the starting call agree.
  *
  * A synchronous delegation gets a card too, at its `delegate_to_*` call: from its live events while
  * this window watches it, from its recorded part after a reload.

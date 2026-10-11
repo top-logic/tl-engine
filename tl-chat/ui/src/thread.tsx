@@ -1023,8 +1023,8 @@ const CARD_HIGHLIGHT_MS = 2000
  * Scrolls the card of the given subagent into view and marks it for a moment.
  *
  * Looked up within the transcript the link stands in, never in the whole page: a page may show two
- * chats, and subagent ids start at `sa-1` in each. The card is keyed by its starting call as well,
- * because ids start again in a new server life.
+ * chats, and subagent ids are unique only within a chat. The card is keyed by its starting call as
+ * well, so that a link finds the card of exactly the subagent it names.
  */
 export function showSubagentCard(from: Element, item: Pick<WokenSubagent, 'subagentId' | 'parentToolCallId'>): boolean {
   const scope = from.closest('.thread') ?? from.ownerDocument

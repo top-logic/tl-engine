@@ -751,6 +751,12 @@ message RunCompletedEvent {
 
 	/** Total token usage for the run. */
 	TokenUsageDto totalUsage;
+
+	/** What the run cost, in {@link #getCurrency()}; 0 when no price was known. */
+	double totalCost;
+
+	/** The ISO 4217 code of {@link #getTotalCost()}; empty when the run reported no cost. */
+	string currency;
 }
 
 /** SSE event for turn started. */

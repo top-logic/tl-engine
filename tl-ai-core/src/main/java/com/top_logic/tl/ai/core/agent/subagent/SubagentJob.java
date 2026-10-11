@@ -10,6 +10,8 @@ import java.time.Instant;
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.citation.ReadingList;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
@@ -54,6 +56,10 @@ public class SubagentJob {
 	private volatile boolean _delivered;
 
 	private volatile String _childRunId;
+
+	private volatile Money _cost;
+
+	private volatile BudgetAllowance _budget = BudgetAllowance.UNLIMITED;
 
 	private volatile ReadingList _readingList = new ReadingList();
 
@@ -273,6 +279,32 @@ public class SubagentJob {
 	 */
 	public String childRunId() {
 		return _childRunId;
+	}
+
+	/**
+	 * What the subagent's run cost, as its run reported when it ended; <code>null</code> while it
+	 * works or when its run reported none.
+	 */
+	public Money cost() {
+		return _cost;
+	}
+
+	/** Sets the {@link #cost() cost} of the subagent's run. */
+	public void setCost(Money cost) {
+		_cost = cost;
+	}
+
+	/**
+	 * The budget the subagent spends from: the allowance of the run that started it, which a
+	 * background subagent shares (see {@code ToolContext.forDetachedSubagent}). Unlimited by default.
+	 */
+	public BudgetAllowance budget() {
+		return _budget;
+	}
+
+	/** Sets the {@link #budget() budget} the subagent spends from. */
+	public void setBudget(BudgetAllowance budget) {
+		_budget = budget == null ? BudgetAllowance.UNLIMITED : budget;
 	}
 
 	/** Sets the {@link #childRunId() recorded child run id}. */

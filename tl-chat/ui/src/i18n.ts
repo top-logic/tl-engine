@@ -243,6 +243,8 @@ const EN = {
   /** Unfolds the ended cards of such a turn. */
   subagentsShowEnded: (count: number) => `Show ended (${count})`,
   subagentsHideEnded: 'Hide ended',
+  /** In the panel header: the share of the run's budget the subagents spent ("4", "< 1"). */
+  subagentsBudgetShare: (percent: string) => `${percent} % of the budget`,
   subagentDone: 'done',
   subagentFailed: 'failed',
   subagentCancelled: 'cancelled',
@@ -557,6 +559,7 @@ const DE: Bundle = {
   subagentsCancelledN: (count: number) => `${count} abgebrochen`,
   subagentsShowEnded: (count: number) => `Beendete zeigen (${count})`,
   subagentsHideEnded: 'Beendete ausblenden',
+  subagentsBudgetShare: (percent: string) => `${percent} % des Budgets`,
   subagentDone: 'fertig',
   subagentFailed: 'fehlgeschlagen',
   subagentCancelled: 'abgebrochen',

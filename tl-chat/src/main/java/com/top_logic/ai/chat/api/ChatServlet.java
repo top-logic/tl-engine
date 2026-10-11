@@ -64,6 +64,8 @@ import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovement
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -1860,11 +1862,14 @@ public class ChatServlet extends TopLogicServlet {
 					.append(",\"parentToolCallId\":\"").append(jsonEscape(job.parentToolCallId())).append('"')
 					.append(",\"task\":\"").append(jsonEscape(job.taskBrief() != null ? job.taskBrief() : "")).append('"')
 					.append(",\"childRunId\":\"").append(jsonEscape(job.childRunId() != null ? job.childRunId() : "")).append('"')
+					.append(costJson(job.cost()))
 					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
 					.append("\"}");
 			}
 		}
-		json.append("]}");
+		json.append("]");
+		json.append(budgetJson(registry));
+		json.append("}");
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(json.toString());
@@ -1931,6 +1936,36 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write(DtoMapper.toJson(SubagentMessageResponse.create()
 			.setStatus(status)
 			.setMessageId(messageId)));
+	}
+
+	/** A job's cost as JSON members; none while its run has not reported one. */
+	private static String costJson(Money cost) {
+		if (cost == null) {
+			return "";
+		}
+		return ",\"cost\":" + cost.amount() + ",\"currency\":\"" + jsonEscape(cost.currency()) + '"';
+	}
+
+	/**
+	 * The budget the subagents of this list spend from, as a JSON member: the allowance of the run
+	 * that started them, which they share (#783). Its headroom when that run started, per kind; -1
+	 * for a kind it does not bound. Nothing when no subagent's run is bounded.
+	 */
+	private static String budgetJson(SubagentJobRegistry registry) {
+		if (registry == null) {
+			return "";
+		}
+		for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
+			BudgetAllowance budget = job.budget();
+			if (!budget.isLimited()) {
+				continue;
+			}
+			BudgetAllowance.MoneyBudget money = budget.moneyBudget();
+			return ",\"budget\":{\"tokens\":" + (budget.isTokenLimited() ? budget.tokenHeadroom() : -1)
+				+ ",\"money\":" + (money != null ? money.headroom() : -1)
+				+ ",\"currency\":\"" + jsonEscape(money != null ? money.currency() : "") + "\"}";
+		}
+		return "";
 	}
 
 	/**

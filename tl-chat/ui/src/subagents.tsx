@@ -1,7 +1,8 @@
 import { React } from 'tl-react-bridge'
 import { formatTokens } from './context-usage'
+import { plainText } from './plain-text'
 import type { bundle } from './i18n'
-import type { ChatMessage, SubagentActivity } from './types'
+import type { ChatMessage, SubagentActivity, SubagentBudget, SubagentLive } from './types'
 
 const { useEffect, useMemo, useState } = React
 
@@ -29,6 +30,63 @@ export function transcriptLine(message: ChatMessage, labels: Labels): string | n
   }
 }
 
+/**
+ * What the subagents of the chat spent together, for the panel's header (#783): tokens - live while
+ * they work -, money where their runs were priced, and the share of the budget they spend from.
+ * Empty while there is nothing to sum.
+ */
+export function subagentCosts(
+  subagents: SubagentActivity[],
+  live: Record<string, SubagentLive>,
+  budget: SubagentBudget | undefined,
+  labels: Labels,
+  language: string,
+): string {
+  let tokens = 0
+  let money = 0
+  let currency = ''
+  for (const item of subagents) {
+    const watched = live[item.subagentId]
+    tokens += item.totalTokens || watched?.tokens || 0
+    const cost = item.cost ?? watched?.cost
+    const costCurrency = item.currency || watched?.currency || ''
+    if (cost !== undefined && costCurrency) {
+      money += cost
+      currency = currency || costCurrency
+    }
+  }
+  const parts: string[] = []
+  if (tokens > 0) parts.push(`${formatTokens(tokens)} ${labels.tokens}`)
+  if (currency && money > 0) parts.push(formatMoney(money, currency, language))
+  const share =
+    budget && budget.money > 0 && currency && budget.currency === currency
+      ? money / budget.money
+      : budget && budget.tokens > 0
+        ? tokens / budget.tokens
+        : undefined
+  if (share !== undefined && (tokens > 0 || money > 0)) parts.push(labels.subagentsBudgetShare(percent(share)))
+  return parts.join(' · ')
+}
+
+function formatMoney(amount: number, currency: string, language: string): string {
+  try {
+    // A short run costs less than a cent: then four places, otherwise the currency's own.
+    return new Intl.NumberFormat(language, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: amount < 0.1 ? 4 : 2,
+    }).format(amount)
+  } catch {
+    return `${amount.toFixed(4)} ${currency}`
+  }
+}
+
+function percent(share: number): string {
+  const value = share * 100
+  if (value > 0 && value < 1) return '< 1'
+  return String(Math.round(value))
+}
+
 export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   subagents,
   labels,
@@ -36,6 +94,10 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   onStopAll,
   onLoadTranscript,
   waiting,
+  live = {},
+  budget,
+  language = 'de',
+  onOpen,
 }: {
   subagents: SubagentActivity[]
   labels: Labels
@@ -44,6 +106,13 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   onLoadTranscript: (id: string) => Promise<ChatMessage[]>
   /** The subagents whose question or approval is open; listed first. */
   waiting?: Set<string>
+  /** What each subagent did live - its tokens and cost while the list does not know them yet. */
+  live?: Record<string, SubagentLive>
+  /** The budget the subagents spend from, as the last list said. */
+  budget?: SubagentBudget
+  language?: string
+  /** Called when the panel opens: the list is read anew for the costs and the budget. */
+  onOpen?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
@@ -75,6 +144,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   }, [open])
 
   if (subagents.length === 0) return null
+  const costs = subagentCosts(subagents, live, budget, labels, language)
 
   const toggleDetails = (id: string) => {
     setExpanded((current) => {
@@ -107,7 +177,12 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
         className="overlay-chip working-chip"
         aria-expanded={open}
         aria-controls="subagent-activity-panel"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() =>
+          setOpen((value) => {
+            if (!value) onOpen?.()
+            return !value
+          })
+        }
       >
         <span className={`status-spinner${activeCount ? ' is-active' : ''}`} aria-hidden="true" />
         {activeCount ? `${labels.working_plural} · ${activeCount}` : `${labels.tasks} · ${subagents.length}`}
@@ -121,7 +196,10 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
       {open ? (
         <section id="subagent-activity-panel" className="activity-panel" aria-label={labels.tasks}>
           <header className="activity-header">
-            <strong>{activeCount ? labels.working_plural : labels.tasks}</strong>
+            <div className="activity-title">
+              <strong>{activeCount ? labels.working_plural : labels.tasks}</strong>
+              {costs ? <span className="activity-cost">{costs}</span> : null}
+            </div>
             <div>
               {activeCount ? (
                 <button
@@ -156,7 +234,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
                       aria-expanded={isExpanded}
                       onClick={() => toggleDetails(item.subagentId)}
                     >
-                      <strong>{item.detail || item.targetAgentName}</strong>
+                      <strong>{plainText(item.detail) || item.targetAgentName}</strong>
                       <span>
                         {item.targetAgentName}
                         {item.durationMs ? ` · ${formatDuration(item.durationMs)}` : ''}
@@ -178,7 +256,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
 
                   {isExpanded ? (
                     <div className="activity-detail">
-                      <p>{item.detail || labels.noDetails}</p>
+                      <p>{plainText(item.detail) || labels.noDetails}</p>
                       {item.hasTranscript ? (
                         <button
                           type="button"

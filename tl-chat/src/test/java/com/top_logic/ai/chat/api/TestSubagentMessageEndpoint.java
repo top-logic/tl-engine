@@ -42,6 +42,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -84,6 +86,10 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 
 		void delete(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 			doDelete(req, resp);
+		}
+
+		void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+			doGet(req, resp);
 		}
 	}
 
@@ -190,6 +196,33 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 
 		assertTrue(answer.text(), answer.text().contains("\"cancelled\":false"));
 		assertFalse(_job.cancellationToken().isCancelled());
+	}
+
+	/**
+	 * The list of the window's subagents says what each run cost and the budget they spend from, so
+	 * the panel can sum them up (#783).
+	 */
+	public void testTheListSaysWhatTheSubagentsSpentAndFromWhat() throws Exception {
+		_job.setCost(new Money(0.0125, "EUR"));
+		_job.setBudget(BudgetAllowance.of(200_000,
+			new BudgetAllowance.MoneyBudget(5.0, 1.0, "EUR")));
+		ChatSessionRegistry.register(TLContextManager.getSubSession(), null, _leadWindow);
+
+		Recording answer = new Recording();
+		InvocationContext invocation = runner.newClient().newInvocation(
+			new com.meterware.httpunit.GetMethodWebRequest("http://localhost/chat/subagents"));
+		HttpServletRequest request = invocation.getRequest();
+		ThreadContext.pushSuperUser();
+		try {
+			SessionService.getInstance().loginUser(request, answer.asResponse(), mia);
+		} finally {
+			ThreadContext.popSuperUser();
+		}
+		_servlet.get(request, answer.asResponse());
+
+		String json = answer.text();
+		assertTrue(json, json.contains("\"cost\":0.0125,\"currency\":\"EUR\""));
+		assertTrue(json, json.contains("\"budget\":{\"tokens\":200000,\"money\":4.0,\"currency\":\"EUR\"}"));
 	}
 
 	private String body(String parentToolCallId, String text) {

@@ -337,6 +337,19 @@ export interface SubagentActivity {
   task?: string
   /** Its own run id, by which its transcript is found once it has ended; absent while unknown. */
   childRunId?: string
+  /** What its run cost, in `currency`, once it has ended; absent while unknown. */
+  cost?: number
+  currency?: string
+}
+
+/**
+ * The budget a turn's subagents spend from - the run's that started them, which they share - as its
+ * headroom when that run started; -1 for a kind it does not bound.
+ */
+export interface SubagentBudget {
+  tokens: number
+  money: number
+  currency: string
 }
 
 /** One tool call of a running subagent, as its card lists it. */
@@ -367,6 +380,9 @@ export interface SubagentLive {
   notes?: SubagentNote[]
   /** For a synchronous delegation: how its run ended, once it has; its own end frame says so. */
   ended?: SubagentStatus
+  /** What its run cost, once its end frame said so, in `currency`. */
+  cost?: number
+  currency?: string
 }
 
 /** One message the user wrote to a subagent from its card, with its receipt. */

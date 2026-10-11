@@ -124,6 +124,20 @@ assertFalse("what was read and not cited is the run's, not the report's", run.do
 		assertTrue(document, document.contains("<p class=\"title download-only\"><strong>Wie wächst der Speicher?</strong></p>"));
 	}
 
+	/**
+	 * The question is the document's title, so the report's own headings start one level below it: a
+	 * report titled with a statement does not show a second, equally large title (#800).
+	 */
+	public void testTheReportsHeadingsAreBelowTheTitle() throws Exception {
+		keep("How did prices develop?", "# Prices fell\n\nThey fell [laut Bericht](" + CITED + ").\n\n"
+			+ "## Reasons\n\nCheaper cells.");
+
+		String document = latestRun().document;
+		assertFalse("one title, the question's: " + document, document.contains("<h1"));
+		assertTrue(document, document.contains("<h2>Prices fell</h2>"));
+		assertTrue(document, document.contains("<h3>Reasons</h3>"));
+	}
+
 	/** A page's title is the page's text: it is escaped, never markup. */
 	public void testAPagesTitleIsEscaped() throws Exception {
 		keep("Escaping?", "Cited [here](" + HOSTILE + ").");

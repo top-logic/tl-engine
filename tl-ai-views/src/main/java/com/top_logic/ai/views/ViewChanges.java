@@ -26,11 +26,10 @@ import com.top_logic.util.model.ModelService;
  * of every view before and after.
  *
  * <p>
- * A change is either written at once ({@link #write}) or proposed for review ({@link #propose})
- * and written when somebody {@link #apply applies} it. Either way it is checked first and nothing
- * is written while a view would not work, and either way the record is what {@link #revert} puts
- * back. The text a change was made from is its base: a view that changed since is a conflict, and
- * the change is refused rather than overwriting what somebody else wrote.
+ * A change is checked first and nothing is written while a view would not work ({@link #write});
+ * the record is what {@link #revert} puts back. The text a view had before a change is its base for
+ * the revert: a view that changed since is a conflict, and the revert is refused rather than
+ * overwriting what somebody else wrote.
  * </p>
  *
  * <p>
@@ -45,14 +44,8 @@ public final class ViewChanges {
 
 	private static final String CHANGE = MODULE + ":ViewChange";
 
-	/** Status of a set nobody has decided on. */
-	public static final String PROPOSED = "PROPOSED";
-
 	/** Status of a set whose views are written. */
 	public static final String APPLIED = "APPLIED";
-
-	/** Status of a set that was declined. */
-	public static final String REJECTED = "REJECTED";
 
 	/** Status of a set that was applied and put back. */
 	public static final String REVERTED = "REVERTED";
@@ -101,56 +94,9 @@ public final class ViewChanges {
 			throw new RefusedException("Nothing was written, because the view would not work:\n" + lines(findings));
 		}
 		writeAll(after);
-		TLObject set = record(title, null, author, before, changes, List.of());
+		TLObject set = record(title, author, before, changes);
 		setStatus(set, APPLIED);
 		return set;
-	}
-
-	/**
-	 * Records changes for review without writing them.
-	 *
-	 * <p>
-	 * A change that would not work is recorded too, with its findings: the reviewer sees what is
-	 * wrong, and {@link #apply} refuses it as it stands.
-	 * </p>
-	 *
-	 * @return The change set, {@link #PROPOSED}.
-	 */
-	public static TLObject propose(String title, String summary, String author, List<Change> changes) {
-		Map<String, String> before = currentTexts(changes);
-		TLObject set = record(title, summary, author, before, changes, ViewCheck.check(after(changes)));
-		setStatus(set, PROPOSED);
-		return set;
-	}
-
-	/**
-	 * Writes a proposed change set.
-	 *
-	 * @return The views written, as resource paths.
-	 * @throws RefusedException
-	 *         When the set is not proposed, a view changed since it was made, or a view would not
-	 *         work; nothing is written.
-	 */
-	public static List<String> apply(TLObject set) {
-		requireStatus(set, PROPOSED);
-		Map<String, String> after = texts(set, "before", "after");
-		List<Finding> findings = ViewCheck.check(after);
-		if (!findings.isEmpty()) {
-			throw new RefusedException("The change set was not applied, because a view would not work:\n" + lines(findings));
-		}
-		writeAll(after);
-		// What the check found when the set was proposed no longer holds: it passed just now.
-		set.tUpdateByName("findings", null);
-		setStatus(set, APPLIED);
-		return new ArrayList<>(after.keySet());
-	}
-
-	/**
-	 * Declines a proposed change set.
-	 */
-	public static void reject(TLObject set) {
-		requireStatus(set, PROPOSED);
-		setStatus(set, REJECTED);
 	}
 
 	/**
@@ -162,24 +108,15 @@ public final class ViewChanges {
 	 */
 	public static List<String> revert(TLObject set) {
 		requireStatus(set, APPLIED);
-		Map<String, String> before = texts(set, "after", "before");
+		Map<String, String> before = new LinkedHashMap<>();
+		for (TLObject change : changes(set)) {
+			String resource = ViewFiles.resource(string(change, "name"));
+			requireText(resource, string(change, "after"));
+			before.put(resource, string(change, "before"));
+		}
 		writeAll(before);
 		setStatus(set, REVERTED);
 		return new ArrayList<>(before.keySet());
-	}
-
-	/**
-	 * The texts a change set writes, by view: each view's {@code target} text, after checking that
-	 * the view still has its {@code expected} one.
-	 */
-	private static Map<String, String> texts(TLObject set, String expected, String target) {
-		Map<String, String> texts = new LinkedHashMap<>();
-		for (TLObject change : changes(set)) {
-			String resource = ViewFiles.resource(string(change, "name"));
-			requireText(resource, string(change, expected));
-			texts.put(resource, string(change, target));
-		}
-		return texts;
 	}
 
 	/** The status of a change set, as one of the constants of this class. */
@@ -204,6 +141,11 @@ public final class ViewChanges {
 		sets.sort((a, b) -> Objects.compare((Date) b.tValueByName("date"), (Date) a.tValueByName("date"),
 			Date::compareTo));
 		return sets;
+	}
+
+	/** The newest change set still applied, or <code>null</code>. */
+	public static TLObject newestApplied() {
+		return all().stream().filter(set -> APPLIED.equals(status(set))).findFirst().orElse(null);
 	}
 
 	/** One line per finding. */
@@ -233,7 +175,7 @@ public final class ViewChanges {
 	private static void requireText(String resource, String expected) {
 		if (!Objects.equals(ViewFiles.read(resource), expected)) {
 			throw new RefusedException(ViewFiles.relative(resource)
-				+ " was changed after this change set was made; make a new one from its current text.");
+				+ " was changed after this change; revert the newer change first.");
 		}
 	}
 
@@ -244,15 +186,12 @@ public final class ViewChanges {
 		}
 	}
 
-	private static TLObject record(String title, String summary, String author, Map<String, String> before,
-			List<Change> changes, List<Finding> findings) {
+	private static TLObject record(String title, String author, Map<String, String> before, List<Change> changes) {
 		ModelService models = ModelService.getInstance();
 		TLObject set = models.getFactory().createObject((TLClass) TLModelUtil.findType(SET));
 		set.tUpdateByName("name", title);
-		set.tUpdateByName("summary", summary);
 		set.tUpdateByName("author", author);
 		set.tUpdateByName("date", new Date());
-		set.tUpdateByName("findings", findings.isEmpty() ? null : lines(findings));
 		List<TLObject> parts = new ArrayList<>();
 		for (Change change : changes) {
 			TLObject part = models.getFactory().createObject((TLClass) TLModelUtil.findType(CHANGE));

@@ -14,28 +14,22 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
-import com.top_logic.layout.react.scripting.ScriptingAction;
 import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.react.scripting.ScriptingSession;
-import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
 import com.top_logic.layout.react.state.TabBarState;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.form.FormControl;
-import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
- * The page a browser window shows, read and moved through on the server.
+ * The page a browser window shows, read and rebuilt on the server.
  *
  * <p>
  * Built on the engine's headless projection ({@link ScriptingSession}): the addresses are the
- * engine's, and an action runs through the same command entry point a click does. What this adds is
- * a projection compact enough to read, the view file each part of the page comes from, and a rebuild
- * after a view file changed that keeps the user on the navigation item and tab they were on.
+ * engine's. What this adds is a projection compact enough to read, the view file each part of the
+ * page comes from, and a rebuild after a view file changed that keeps the user on the navigation
+ * item and tab they were on.
  * </p>
  *
  * <p>
@@ -66,7 +60,7 @@ public final class WindowPage {
 
 	/**
 	 * What the window shows: one line per part of the page, indented by nesting, with its address,
-	 * role, name, the view file it comes from, its state and the actions it offers.
+	 * role, name, the view file it comes from and its state.
 	 */
 	public static String describe(ReactControl root) {
 		if (root == null) {
@@ -95,9 +89,6 @@ public final class WindowPage {
 					out.append(' ').append(entry.getKey()).append("=\"").append(clip(String.valueOf(value))).append('"');
 				}
 			}
-			if (!node.actions().isEmpty()) {
-				out.append("  actions: ").append(String.join(", ", node.actions().stream().map(WindowPage::action).toList()));
-			}
 			out.append('\n');
 			depth++;
 		}
@@ -109,40 +100,6 @@ public final class WindowPage {
 			}
 			describe(session, children.get(n), depth, out);
 		}
-	}
-
-	private static String action(ScriptingAction action) {
-		if (action.params() == null || action.params().isEmpty()) {
-			return action.command();
-		}
-		return action.command() + "(" + String.join(", ", action.params().stream().map(p -> p.name()).toList()) + ")";
-	}
-
-	/**
-	 * Runs a command of a part of the page, as a click does.
-	 *
-	 * @return What happened, in a sentence.
-	 * @throws IllegalArgumentException
-	 *         When nothing is at the address.
-	 */
-	public static String act(ReactControl root, String address, String command, Map<String, Object> arguments) {
-		ScriptingSession session = ScriptingSession.forRoot(root);
-		ReactControl target = session.resolve(address);
-		if (target == null) {
-			throw new IllegalArgumentException("Name a part of the page, not the window itself.");
-		}
-		if (PLACES.stream().anyMatch(place -> place.command().equals(command)) && hasUnsavedChanges(root)) {
-			return "Not done: the page holds changes nobody saved. Ask the user to save or discard them first.";
-		}
-		HandlerResult result = target.executeCommand(command, arguments);
-		if (result != null && !result.isSuccess()) {
-			List<String> messages = new ArrayList<>();
-			for (ResKey error : result.getEncodedErrors()) {
-				messages.add(Resources.getInstance().getString(error));
-			}
-			return "The application refused '" + command + "': " + String.join(" ", messages);
-		}
-		return "Ran '" + command + "' on " + address + ".";
 	}
 
 	/** The view the window was opened with, its start page. */
@@ -206,15 +163,6 @@ public final class WindowPage {
 			}
 		}
 		return null;
-	}
-
-	private static boolean hasUnsavedChanges(ReactControl root) {
-		for (ReactControl child : ScriptingTreeProjector.visibleChildren(root)) {
-			if (child instanceof FormControl form && form.isDirty() || hasUnsavedChanges(child)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**

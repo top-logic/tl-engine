@@ -20,8 +20,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.ai.views.ViewChanges.Change;
 import com.top_logic.ai.views.ViewChanges.RefusedException;
 import com.top_logic.layout.view.command.CommandCliqueService;
-import com.top_logic.layout.view.form.FieldControlService;
-import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.model.ModelService;
 
@@ -90,55 +88,20 @@ public class TestViewChanges extends BasicTestCase {
 		assertEquals(before, ViewChanges.all().size());
 	}
 
-	/** A proposal writes nothing until it is applied, and applying writes exactly the proposed text. */
-	public void testAProposalIsWrittenWhenApplied() {
-		inTransaction(() -> ViewChanges.write("Create", "tester", List.of(new Change(VIEW, TEXT))));
-		String after = TEXT.replace("<en>Before</en>", "<en>After</en>");
-
-		TLObject proposal = inTransaction(
-			() -> ViewChanges.propose("Rename", "Says after.", "tester", List.of(new Change(VIEW, after))));
-
-		assertEquals(ViewChanges.PROPOSED, ViewChanges.status(proposal));
-		assertNull(proposal.tValueByName("findings"));
-		assertEquals(TEXT, ViewFiles.read(VIEW));
-
-		inTransaction(() -> ViewChanges.apply(proposal));
-
-		assertEquals(ViewChanges.APPLIED, ViewChanges.status(proposal));
-		assertEquals(after, ViewFiles.read(VIEW));
-	}
-
-	/** A view changed after the proposal was made is a conflict: applying it would lose that change. */
-	public void testAChangedViewIsAConflict() {
-		inTransaction(() -> ViewChanges.write("Create", "tester", List.of(new Change(VIEW, TEXT))));
-		TLObject proposal = inTransaction(() -> ViewChanges.propose("Rename", null, "tester",
-			List.of(new Change(VIEW, TEXT.replace("Before", "Proposed")))));
+	/** A view changed after a change is a conflict: reverting the change would lose the newer one. */
+	public void testARevertRefusesAViewChangedSince() {
+		TLObject first = inTransaction(() -> ViewChanges.write("Create", "tester", List.of(new Change(VIEW, TEXT))));
 		String meanwhile = TEXT.replace("Before", "Meanwhile");
 		inTransaction(() -> ViewChanges.write("Meanwhile", "someone", List.of(new Change(VIEW, meanwhile))));
 
 		try {
-			inTransaction(() -> ViewChanges.apply(proposal));
-			fail("The view changed since the proposal.");
+			inTransaction(() -> ViewChanges.revert(first));
+			fail("The view changed since.");
 		} catch (RefusedException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("was changed after"));
 		}
 		assertEquals(meanwhile, ViewFiles.read(VIEW));
-		assertEquals(ViewChanges.PROPOSED, ViewChanges.status(proposal));
-	}
-
-	/** A proposal that does not work is kept with its findings for the reviewer, and cannot be applied. */
-	public void testABrokenProposalIsKeptButNotApplied() {
-		TLObject proposal = inTransaction(() -> ViewChanges.propose("Broken", null, "tester",
-			List.of(new Change(VIEW, "<view><no-such-element/></view>"))));
-
-		assertNotNull(proposal.tValueByName("findings"));
-		try {
-			inTransaction(() -> ViewChanges.apply(proposal));
-			fail("The view does not work.");
-		} catch (RefusedException ex) {
-			assertTrue(ex.getMessage(), ex.getMessage().contains("no-such-element"));
-		}
-		assertNull(ViewFiles.read(VIEW));
+		assertEquals(ViewChanges.APPLIED, ViewChanges.status(first));
 	}
 
 	/** Two views of one change may refer to each other although neither is written yet. */
@@ -152,20 +115,11 @@ public class TestViewChanges extends BasicTestCase {
 		assertEquals(TEXT, ViewFiles.read(OTHER));
 	}
 
-	/** The review page of change sets works over the change set model. */
-	public void testTheReviewPageWorks() {
-		String page = ViewFiles.resource("tl-ai-views/view-changes.view.xml");
-
-		assertEquals(List.of(), ViewCheck.check(page, ViewFiles.read(page)));
-	}
-
-
 	/**
 	 * The suite: a knowledge base with the change set model.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(ServiceTestSetup.createSetup(new TestSuite(TestViewChanges.class),
-			ModelService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE,
-			ColumnProviderService.Module.INSTANCE, FieldControlService.Module.INSTANCE));
+			ModelService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
 	}
 }

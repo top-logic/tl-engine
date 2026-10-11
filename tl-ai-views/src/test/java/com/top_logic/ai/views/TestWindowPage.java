@@ -92,21 +92,16 @@ public class TestWindowPage extends BasicTestCase {
 		assertContains("Welcome", here);
 	}
 
-	/** The agent moves through the page with the actions it lists. */
-	public void testActOpensAnItemAndATab() {
-		act(SIDEBAR, "selectItem", Map.of("itemId", "tabs"));
-		render();
-		act(TAB_BAR, "selectTab", Map.of("tabId", "second"));
+	/** A window whose page is not built has nothing to read, which is no failure of the run. */
+	public void testWhereAmIWithoutABuiltPage() {
+		RunWindow.install((subSession, action) -> {
+			action.accept(null);
+			return true;
+		});
 
-		assertEquals("tabs", state(SIDEBAR, "activeItemId"));
-		assertEquals("second", state(TAB_BAR, "activeTabId"));
-	}
+		ToolResult result = new WindowTools().whereAmI();
 
-	/** An address that names nothing is refused with what is there. */
-	public void testActOnNothingSaysWhatIsThere() {
-		ToolResult result = new WindowTools().act(SIDEBAR + "/nothing", "selectItem", null);
-
-		assertTrue(result.text(), result.text().contains("Available"));
+		assertContains("No page is open", result.text());
 	}
 
 	/** A view the agent changes shows on the open page, and the user stays on their item and tab. */
@@ -150,9 +145,9 @@ public class TestWindowPage extends BasicTestCase {
 		assertEquals(recorded + 1, ViewChanges.all().size());
 	}
 
-	private static void act(String address, String command, Map<String, Object> arguments) {
-		ToolResult result = new WindowTools().act(address, command, arguments);
-		assertContains("Ran '" + command + "'", result.text());
+	/** What a click does: the user moves on the page. */
+	private void act(String address, String command, Map<String, Object> arguments) {
+		ScriptingSession.forRoot(_root).resolve(address).executeCommand(command, arguments);
 	}
 
 	private Object state(String address, String key) {

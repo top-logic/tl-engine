@@ -2,22 +2,14 @@
 
 <!--
 	View change sets: changes of the application's view files, each with the text of every view
-	before and after it.
-
-	A proposed set waits for a person to review and apply it on the page
-	tl-ai-views/view-changes.view.xml. A change an agent writes at once is recorded the same way, as
-	an applied set, which is what makes it reversible.
+	before and after it - the record that makes a change an agent wrote reversible.
 -->
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.ai.views">
 		<types>
 			<enum name="ViewChangeStatus">
-				<!-- Waits for review; nothing is written. -->
-				<classifier name="PROPOSED"/>
 				<!-- Written into the view files. -->
 				<classifier name="APPLIED"/>
-				<!-- Declined; never written. -->
-				<classifier name="REJECTED"/>
 				<!-- Applied, then put back. -->
 				<classifier name="REVERTED"/>
 			</enum>
@@ -28,13 +20,10 @@
 				</annotations>
 				<attributes>
 					<property name="name" mandatory="true" type="tl.core:String"/>
-					<property name="summary" type="tl.core:Text"/>
 					<reference name="status" mandatory="true" type="ViewChangeStatus"/>
 					<!-- Who made the change set: the account, and the agent when one did. -->
 					<property name="author" type="tl.core:String"/>
 					<property name="date" type="tl.core:DateTime"/>
-					<!-- What the check found when the set was made; empty when every view works. -->
-					<property name="findings" type="tl.core:Text"/>
 					<reference name="changes"
 						composite="true"
 						multiple="true"

@@ -5,15 +5,11 @@
  */
 package com.top_logic.ai.views.tools;
 
-import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Supplier;
 
 import com.top_logic.ai.views.ViewChanges;
 import com.top_logic.ai.views.ViewChanges.Change;
-import com.top_logic.ai.views.ViewCheck;
 import com.top_logic.ai.views.ViewElements;
 import com.top_logic.ai.views.ViewFiles;
 import com.top_logic.ai.views.source.ViewEdit;
@@ -38,9 +34,9 @@ import com.top_logic.util.TLContextManager;
  * The tools that read, check and change the views of the running application.
  *
  * <p>
- * Every change is checked before it is written ({@link ViewCheck}) and recorded as a change set
- * ({@link ViewChanges}), which is what makes it reversible. A change written at once is shown on the
- * user's open page; a proposed one waits for a person to apply it on the review page.
+ * Every change is checked before it is written ({@link com.top_logic.ai.views.ViewCheck}) and
+ * recorded as a change set ({@link ViewChanges}), which is what makes it reversible. A change is
+ * shown on the user's open page at once.
  * </p>
  *
  * <p>
@@ -51,8 +47,6 @@ import com.top_logic.util.TLContextManager;
  * </p>
  */
 public class ViewTools {
-
-	private static final int MAX_LISTED = 50;
 
 	/**
 	 * What {@link #editView} does to one element.
@@ -108,22 +102,6 @@ public class ViewTools {
 			}
 			return xml;
 		}
-	}
-
-	/**
-	 * One view of a proposed change set.
-	 *
-	 * @param path
-	 *        The view, relative to the views directory.
-	 * @param xml
-	 *        Its complete new text; or
-	 * @param edits
-	 *        edits of its current text; or
-	 * @param delete
-	 *        <code>true</code> to delete it.
-	 */
-	public record ProposedView(String path, String xml, List<Edit> edits, Boolean delete) {
-		// As the model writes it.
 	}
 
 	/**
@@ -185,29 +163,6 @@ public class ViewTools {
 	}
 
 	/**
-	 * Checks a view without writing it.
-	 */
-	@ToolMethod(description = "Check a view without saving: the engine reads it with the other modules' overlays,"
-		+ " compiles its TL-Script against the model and builds the page once with the real data. With xml: that"
-		+ " text as the new content of path; without: the view as it is.",
-		mode = ToolMode.READ, group = ToolGroups.MODEL_READ, marking = AnswerMarking.NONE)
-	public ToolResult checkView(
-			@P("View path relative to /WEB-INF/views/") String path,
-			@P(value = "Candidate XML for the path", required = false) String xml) {
-		try {
-			String resource = ViewFiles.resource(path);
-			String text = xml != null && !xml.isBlank() ? xml : ViewFiles.read(resource);
-			if (text == null) {
-				return ToolResult.failure("There is no view " + path + ".");
-			}
-			List<ViewCheck.Finding> findings = ViewCheck.check(resource, text);
-			return ToolResult.of(findings.isEmpty() ? "The view works." : ViewChanges.lines(findings));
-		} catch (IllegalArgumentException ex) {
-			return ToolResult.failure(ex.getMessage());
-		}
-	}
-
-	/**
 	 * Writes a whole view.
 	 */
 	@ToolMethod(description = "Save a view from XML: create it, or replace an existing one (for a small change of"
@@ -249,79 +204,25 @@ public class ViewTools {
 	}
 
 	/**
-	 * Proposes changes for review.
-	 */
-	@ToolMethod(description = "Propose view changes for a person to review instead of saving them: they are checked"
-		+ " and recorded as a change set the user applies or rejects on the review page, with the views before and"
-		+ " after. Use it when the user wants to look before anything changes. Each view gives xml, edits (as in"
-		+ " editView) or delete:true.",
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
-	public ToolResult proposeViewChanges(
-			@P("A title saying what the change is for") String title,
-			@P(value = "What the reviewer should know", required = false) String summary,
-			@P("The views it changes") List<ProposedView> views,
-			ToolExecutionContext context) {
-		try {
-			List<Change> changes = new ArrayList<>();
-			for (ProposedView view : views) {
-				changes.add(Boolean.TRUE.equals(view.delete()) ? new Change(ViewFiles.resource(view.path()), null)
-					: view.edits() != null && !view.edits().isEmpty() ? edited(view.path(), view.edits())
-					: new Change(ViewFiles.resource(view.path()), view.xml()));
-			}
-			TLObject set = ViewChanges.propose(title, summary, author(context), changes);
-			Object findings = set.tValueByName("findings");
-			return ToolResult.of("Proposed as change set " + ReadFilter.idOf(set) + "; it waits on the review page."
-				+ (findings == null ? " Every view works." : " The check found, and the reviewer will see:\n" + findings));
-		} catch (IllegalArgumentException ex) {
-			return ToolResult.failure("Nothing was proposed: " + ex.getMessage());
-		}
-	}
-
-	/**
-	 * The recorded change sets.
-	 */
-	@ToolMethod(description = "The view change sets, at most the newest " + MAX_LISTED + ": id, status (PROPOSED, APPLIED, REJECTED,"
-		+ " REVERTED), when, by whom, title and the views each changes.",
-		mode = ToolMode.READ, group = ToolGroups.MODEL_READ, marking = AnswerMarking.NONE)
-	public String listViewChanges(@P(value = "Only sets with this status", required = false) String status) {
-		StringBuilder out = new StringBuilder();
-		DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.ENGLISH);
-		int listed = 0;
-		for (TLObject set : ViewChanges.all()) {
-			String own = ViewChanges.status(set);
-			if (status != null && !status.isBlank() && !status.strip().equalsIgnoreCase(own)) {
-				continue;
-			}
-			if (listed++ == MAX_LISTED) {
-				out.append("... older change sets are not listed.\n");
-				break;
-			}
-			Object created = set.tValueByName("date");
-			out.append(ReadFilter.idOf(set)).append(' ').append(own)
-				.append(created == null ? "" : " " + format.format(created))
-				.append(" by ").append(set.tValueByName("author")).append(": ").append(set.tValueByName("name"))
-				.append(" (").append(String.join(", ",
-					ViewChanges.changes(set).stream().map(c -> String.valueOf(c.tValueByName("name"))).toList()))
-				.append(")\n");
-		}
-		return out.length() == 0 ? "No change sets." : out.toString();
-	}
-
-	/**
 	 * Undoes an applied change set.
 	 */
-	@ToolMethod(description = "Undo an applied view change set: every view it changed gets its text from before"
-		+ " again, a view it created is deleted. Refused when a view was changed again afterwards; revert the"
-		+ " newer change first.",
+	@ToolMethod(description = "Undo a view change: every view it changed gets its text from before again, a view it"
+		+ " created is deleted. Without an id: the newest change still applied. Refused when a view was changed again"
+		+ " afterwards; undo the newer change first.",
 		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
-	public ToolResult revertViewChange(@P("The change set id from listViewChanges") TLObject changeSet,
+	public ToolResult revertViewChange(
+			@P(value = "The change set id a write answered with; empty for the newest", required = false) TLObject changeSet,
 			ToolExecutionContext context) {
-		ObjectKey key = changeSet.tId();
+		TLObject set = changeSet != null ? changeSet : ViewChanges.newestApplied();
+		if (set == null) {
+			return ToolResult.failure("There is no applied view change to undo.");
+		}
+		ObjectKey key = set.tId();
 		try {
 			List<String> written = CommittedNow.run(() -> ViewChanges.revert(
 				PersistencyLayer.getKnowledgeBase().resolveObjectKey(key).getWrapper()));
 			context.catchUpWithCommits();
-			return ToolResult.of("Reverted " + ReadFilter.idOf(changeSet) + ". " + RunPage.show(written));
+			return ToolResult.of("Reverted " + ReadFilter.idOf(set) + ". " + RunPage.show(written));
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.failure("Nothing was reverted: " + ex.getMessage());
 		}

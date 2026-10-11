@@ -2,7 +2,7 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
-		<!-- The tools: views.* reads, checks and changes view files; view-window.* the user's open page. -->
+		<!-- The tools: views.* reads and changes view files; view-window.whereAmI reads the user's open page. -->
 		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
@@ -28,7 +28,7 @@
 			<instance>
 				<skills>
 					<skill name="TL_buildViews"
-						description="Build or change a page (view, screen, Ansicht, Seite, Maske) of this application from TopLogic's view elements - tables, forms, master-detail, tabs, charts, navigation entries - or from .view.xml the user gives; see and move through the page the user has open; propose view changes for review and undo them. Load it whenever the user asks for a page, a list, a form, an overview, a change to what a page shows, or points at something on their page."
+						description="Build or change a page (view, screen, Ansicht, Seite, Maske) of this application from TopLogic's view elements - tables, forms, master-detail, tabs, charts, navigation entries - or from .view.xml the user gives; see the page the user has open; undo view changes. Load it whenever the user asks for a page, a list, a form, an overview, a change to what a page shows, or points at something on their page."
 					>
 						<content><![CDATA[# Build views
 
@@ -49,9 +49,8 @@ its properties and an example from this application.
 
 ## How you work
 1. If the user points at something ("this table", "this page", "here"), call `whereAmI` - every time,
-   because they may have moved since you last looked. It shows their page: every part with
-   its address and the view file it comes from (`[view ...]`). `act` moves on it for them (open a
-   navigation item, switch a tab, select a row).
+   because they may have moved since you last looked. It shows their page: every part with its address
+   and the view file it comes from (`[view ...]`).
 2. Read the model (`listTypes`, `listTypeParts`); use real attribute names only. 4-7 columns a user scans a list
    by; the rest into the form.
 3. Changing an existing page: `readView` (outline with addresses + XML), then `editView` with element
@@ -67,11 +66,12 @@ its properties and an example from this application.
    XML the user hands you: save it as given, fix only what the check reports.
 6. The user's open page shows the change by itself; a change of the start page shows when your answer
    is finished. Say in one or two sentences what the page shows and where to find it. No XML unless asked.
-7. Every write is a change set: `listViewChanges` names them, `revertViewChange` undoes one.
-   When the user wants to look before anything changes, `proposeViewChanges` instead: they review,
-   apply or reject it on the review page (tl-ai-views/view-changes.view.xml).
+7. Every write is recorded: its answer names the change set. `revertViewChange` undoes the newest
+   change, or the one you name.
 
 ## Writing view XML
+- In the XML you pass to a tool, write no CDATA sections: put TL-Script directly into the element and
+  escape `<` as `&lt;` and `&` as `&amp;` (`->` and `>` need no escaping).
 - Root `<view>` with `<channels>` and one content element. Channels connect elements: a table writes
   `selection="selectedX"`, a form reads `input="selectedX"`. Declare every channel you name.
 - `rows` is TL-Script: `all(`module:Type`)`, filtered with `.filter(x -> $x.get(`module:Type#attr`) == ...)`.
@@ -105,7 +105,7 @@ Master-detail page (replace module:Type, the channel and the attributes):
 							<confirm>
 								<confirm-label><en>Delete</en><de>Löschen</de></confirm-label>
 								<cancel-label><en>Cancel</en><de>Abbrechen</de></cancel-label>
-								<expr><![CDATA[x -> {"en": "Delete " + $x + "?", "de": $x + " löschen?"}.internationalize()]]]]><![CDATA[></expr>
+								<expr>x -> {"en": "Delete " + $x + "?", "de": $x + " löschen?"}.internationalize()</expr>
 							</confirm>
 							<with-transaction><execute-script function="x -> { $x.delete(); null; }"/></with-transaction>
 							<write-channel name="selectedThing"/>
@@ -165,16 +165,12 @@ Answer in the user's language and name pages by the label the user sees.
 							<tool name="model-browser.listTypes"/>
 							<tool name="model-browser.listTypeParts"/>
 							<tool name="view-window.whereAmI"/>
-							<tool name="view-window.act"/>
 							<tool name="views.viewElements"/>
 							<tool name="views.listViews"/>
 							<tool name="views.readView"/>
-							<tool name="views.checkView"/>
 							<tool name="views.writeView"/>
 							<tool name="views.editView"/>
 							<tool name="views.deleteView"/>
-							<tool name="views.proposeViewChanges"/>
-							<tool name="views.listViewChanges"/>
 							<tool name="views.revertViewChange"/>
 						</tools>
 					</skill>

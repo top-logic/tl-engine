@@ -1,7 +1,7 @@
 # tl-ai-views - Living Views
 
 Agents build and change the views (`.view.xml`, the React view layer) of the running application,
-and see and move through the page the user has open.
+and see the page the user has open.
 
 ## What it does
 
@@ -12,13 +12,11 @@ and see and move through the page the user has open.
   element, addressed by its path (`/view/split-panel/panes/pane[2]/form`, `nav-item[id=events]`).
   Every other character - comments, indentation - stays.
 - **Change sets** (`ViewChanges`, model `tl.ai.views`): every write is recorded with the text of each
-  view before and after. A proposed set waits on the page `tl-ai-views/view-changes.view.xml`, which
-  previews it live and read-only (`<view-preview>`) and applies, rejects or reverts it
-  (`<view-change action="...">`). The text a change was made from is its base: a view changed since
-  is refused as a conflict.
+  view before and after, committed with the file. `revertViewChange` puts the newest (or a named)
+  change back; a view changed since is refused as a conflict.
 - **The open page** (`WindowPage`): the engine's headless projection, compact, with the view file of
-  each part; actions run like clicks; after a write the changed parts rebuild and the user stays on
-  their navigation item and tab. A change of the start page waits until the run has ended.
+  each part; after a write the changed parts rebuild and the user stays on their navigation item and
+  tab. A change of the start page waits until the run has ended.
 
 ## Use it
 
@@ -38,9 +36,8 @@ Depend on `tl-ai-views` and give an agent the skill:
 </config>
 ```
 
-and put the review page into the navigation: `<view-ref view="tl-ai-views/view-changes.view.xml"/>`.
 The module brings the model module `tl.ai.views`, so an existing database needs a fresh start or a
-model migration. tl-ai-demo has both; switch the skill on with `views-demo.config.xml` in its
+model migration. In tl-ai-demo, switch the skill on with `views-demo.config.xml` in its
 `metaConf.txt`.
 
 Writes go to the application's workspace (`FileManager.getIDEFile`), as the engine's view designer
@@ -49,6 +46,5 @@ writes them; a view that only a module jar holds is read-only. The window is rea
 
 ## Tools
 
-`views.*`: `viewElements`, `listViews`, `readView`, `checkView` (read); `writeView`, `editView`,
-`deleteView`, `revertViewChange` (structural, approved); `proposeViewChanges`, `listViewChanges`.
-`view-window.*`: `whereAmI` (read), `act` (data write).
+`views.*`: `viewElements`, `listViews`, `readView` (read); `writeView`, `editView`, `deleteView`,
+`revertViewChange` (structural, approved). `view-window.whereAmI` (read).

@@ -127,7 +127,9 @@ public class FindingTools {
 		if (finding == null) {
 			return "Error: this run has recorded as many findings as it keeps; write your report now.";
 		}
-		return "Recorded finding " + finding.id() + " (source: " + finding.sourceTitle() + ").";
+		// The address as the run wrote it, never the page's title: this answer is the tool's own text,
+		// outside any envelope, and a page chooses its title.
+		return "Recorded finding " + finding.id() + " (source: " + source.strip() + ").";
 	}
 
 	/**

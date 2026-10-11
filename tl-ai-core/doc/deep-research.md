@@ -26,7 +26,8 @@ Gitea #723.
    each statement to the source of its finding, with the finding's quote as link title.
 8. **Keep and answer.** Albert calls `saveReport` with the question, the report, the effort, the
    plan and the status (#794). The tool keeps the run as a `tl.ai.execution:ResearchRun` for the
-   user the run works for (#764). Where the run has `present`, Albert opens the kept run beside the
+   user the run works for (#764), once per lead run (#827): a second call replaces what the first
+   kept. Where the run has `present`, Albert opens the kept run beside the
    chat. Then it gives the same report as its answer, and calls no tool after it. The answer stays
    the report, so a headless run (`aiResearch()`) records the report as its result, and keeps a
    `ResearchRun` for its owner too.
@@ -254,10 +255,28 @@ after it started the run. The run continues on its own thread.
 question to Albert. It runs through the chat and waits for the end of the run. `aiResearch` names
 the skill and the effort for the model, and it needs no tl-chat.
 
-### Not yet
+### The kept run
 
-The report is the answer of the run. A stored research object with its own view (`ResearchRun`) is
-a separate change. When it exists, `aiResearch` stores the report there too.
+`ResearchRuns` writes the `ResearchRun` on its own thread (#764, #827). The run references what it
+rests on. It copies nothing:
+
+- `report` is the Markdown the lead wrote. It is the one source of truth.
+- `execution` is the lead run. The chat is the session of that run.
+- `sources` holds every source the run tree read, the cited sources first in the order of their
+  footnotes. A web source references its `ArchivedPage`. An object source references the object.
+  `url` and `title` are set only when no reference applies, and for an object source: there they
+  keep the id and the label, so that the source still names the object after somebody deletes it.
+  The reference is then empty and the source is marked as deleted.
+- `findings` reference their source and the worker run (`recordedBy`) that recorded them.
+- `citedSources` and `alsoRead` are TL-Script selections of `sources`. They apply the reader's
+  rights.
+- `document` and `tokens` are computed when they are read. `ResearchDocument` validates the report
+  again against the cited sources and renders it. It links an archived copy below the context path
+  of the request, never with a host. It links only the footnote markers that the citation check
+  wrote, never a `[1]` in code.
+
+The archive's retention does not delete a page that a kept run references. Deleting a run deletes its
+sources and findings, never a page or an object.
 
 ## Tests
 

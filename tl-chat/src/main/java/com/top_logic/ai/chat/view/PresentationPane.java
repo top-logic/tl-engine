@@ -85,12 +85,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * <b>What the model says about a form.</b> Two annotations of the model change a form, and nothing
- * else does: a composition annotated {@code <collapsed/>} ({@link CollapsedDisplay}) is shown in a
- * group of its own, closed, and a binary attribute whose value is an HTML document is shown below its
- * field - read in place, in the pane's typography, and still downloadable from the field. A
- * research run is shown this way: its report, then its cited sources, and what it read and did not
- * cite folded away.
+ * <b>What the model says about a form.</b> A composition and a computed list of objects are each a
+ * table below the fields ({@link PaneLayouts#isTable}). Two annotations of the model change a form,
+ * and nothing else does: such a table annotated {@code <collapsed/>} ({@link CollapsedDisplay}) is
+ * shown in a group of its own, closed, and a binary attribute whose value is an HTML document is
+ * shown below its field - read in place, in the pane's typography, and still downloadable from the
+ * field. A research run is shown this way: its report, then its cited sources and findings, and
+ * what it read and did not cite folded away - two computed selections of its one composition of
+ * sources.
  * </p>
  *
  * <p>
@@ -437,32 +439,8 @@ final class PresentationPane {
 		List<PolymorphicConfiguration<? extends UIElement>> fields = new ArrayList<>();
 		List<PolymorphicConfiguration<? extends UIElement>> compositions = new ArrayList<>();
 		for (TLStructuredTypePart part : PaneLayouts.ordered(object.tType())) {
-			if (PaneLayouts.isComposition(part)) {
-				boolean collapsed = CollapsedDisplay.isCollapsed(part);
-				CompositionTableElement.Config table =
-					TypedConfiguration.newConfigItem(CompositionTableElement.Config.class);
-				if (collapsed) {
-					// The group names the composition; the stylesheet hides the table's own title.
-					set(table, UIElement.Config.CSS_CLASS, GROUPED_TABLE);
-				}
-				set(table, CompositionTableElement.Config.ATTRIBUTE, part.getName());
-				if (part.getType() instanceof TLStructuredType partType) {
-					List<String> columns = PaneLayouts.columns(partType);
-					if (!columns.isEmpty()) {
-						set(table, CompositionTableElement.Config.COLUMNS, columnsConfig(columns));
-					}
-				}
-				if (collapsed) {
-					// Parts the reader opens when they want them: in a group of their own, closed.
-					GroupElement.Config group = TypedConfiguration.newConfigItem(GroupElement.Config.class);
-					set(group, GroupElement.Config.LABEL, TLModelI18N.getI18NKey(part));
-					set(group, GroupElement.Config.COLLAPSIBLE, Boolean.TRUE);
-					set(group, GroupElement.Config.COLLAPSED, Boolean.TRUE);
-					set(group, GroupElement.Config.CHILDREN, List.of(table));
-					compositions.add(group);
-				} else {
-					compositions.add(table);
-				}
+			if (PaneLayouts.isTable(part)) {
+				compositions.add(table(part));
 			} else {
 				FieldElement.Config field = TypedConfiguration.newConfigItem(FieldElement.Config.class);
 				set(field, FieldElement.Config.ATTRIBUTE, part.getName());
@@ -489,6 +467,37 @@ final class PresentationPane {
 
 		ReactControl control = control(form, context);
 		return new Step(id, value, PresentAs.FORM, MetaLabelProvider.INSTANCE.getLabel(object), control, null);
+	}
+
+	/**
+	 * The table a form shows an attribute as that {@link PaneLayouts#isTable is one}: the engine's
+	 * {@code <composition-table>}, which reads the attribute's value whether it is stored or
+	 * computed, in a closed group of its own when the attribute is {@link CollapsedDisplay collapsed}.
+	 */
+	static PolymorphicConfiguration<? extends UIElement> table(TLStructuredTypePart part) {
+		boolean collapsed = CollapsedDisplay.isCollapsed(part);
+		CompositionTableElement.Config table = TypedConfiguration.newConfigItem(CompositionTableElement.Config.class);
+		if (collapsed) {
+			// The group names the composition; the stylesheet hides the table's own title.
+			set(table, UIElement.Config.CSS_CLASS, GROUPED_TABLE);
+		}
+		set(table, CompositionTableElement.Config.ATTRIBUTE, part.getName());
+		if (part.getType() instanceof TLStructuredType partType) {
+			List<String> columns = PaneLayouts.columns(partType);
+			if (!columns.isEmpty()) {
+				set(table, CompositionTableElement.Config.COLUMNS, columnsConfig(columns));
+			}
+		}
+		if (!collapsed) {
+			return table;
+		}
+		// Parts the reader opens when they want them: in a group of their own, closed.
+		GroupElement.Config group = TypedConfiguration.newConfigItem(GroupElement.Config.class);
+		set(group, GroupElement.Config.LABEL, TLModelI18N.getI18NKey(part));
+		set(group, GroupElement.Config.COLLAPSIBLE, Boolean.TRUE);
+		set(group, GroupElement.Config.COLLAPSED, Boolean.TRUE);
+		set(group, GroupElement.Config.CHILDREN, List.of(table));
+		return group;
 	}
 
 	/**

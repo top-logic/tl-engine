@@ -21,7 +21,7 @@ public interface ResearchFindingBase extends com.top_logic.model.TLObject {
 	 * Part <code>claim</code> of <code>ResearchFinding</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Text</code> in configuration.
 	 * </p>
 	 */
 	String CLAIM_ATTR = "claim";
@@ -39,7 +39,7 @@ public interface ResearchFindingBase extends com.top_logic.model.TLObject {
 	 * Part <code>quote</code> of <code>ResearchFinding</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Text</code> in configuration.
 	 * </p>
 	 */
 	String QUOTE_ATTR = "quote";
@@ -48,7 +48,7 @@ public interface ResearchFindingBase extends com.top_logic.model.TLObject {
 	 * Part <code>recordedBy</code> of <code>ResearchFinding</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.ai.execution:AgentExecution</code> in configuration.
 	 * </p>
 	 */
 	String RECORDED_BY_ATTR = "recordedBy";
@@ -57,7 +57,7 @@ public interface ResearchFindingBase extends com.top_logic.model.TLObject {
 	 * Part <code>source</code> of <code>ResearchFinding</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.ai.execution:ResearchSource</code> in configuration.
 	 * </p>
 	 */
 	String SOURCE_ATTR = "source";
@@ -107,28 +107,28 @@ public interface ResearchFindingBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #RECORDED_BY_ATTR}.
 	 */
-	default String getRecordedBy() {
-		return (String) tValueByName(RECORDED_BY_ATTR);
+	default com.top_logic.tl.ai.core.execution.model.AgentExecution getRecordedBy() {
+		return (com.top_logic.tl.ai.core.execution.model.AgentExecution) tValueByName(RECORDED_BY_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #RECORDED_BY_ATTR}.
 	 */
-	default void setRecordedBy(String newValue) {
+	default void setRecordedBy(com.top_logic.tl.ai.core.execution.model.AgentExecution newValue) {
 		tUpdateByName(RECORDED_BY_ATTR, newValue);
 	}
 
 	/**
 	 * Getter for part {@link #SOURCE_ATTR}.
 	 */
-	default String getSource() {
-		return (String) tValueByName(SOURCE_ATTR);
+	default com.top_logic.tl.ai.core.execution.model.ResearchSource getSource() {
+		return (com.top_logic.tl.ai.core.execution.model.ResearchSource) tValueByName(SOURCE_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #SOURCE_ATTR}.
 	 */
-	default void setSource(String newValue) {
+	default void setSource(com.top_logic.tl.ai.core.execution.model.ResearchSource newValue) {
 		tUpdateByName(SOURCE_ATTR, newValue);
 	}
 

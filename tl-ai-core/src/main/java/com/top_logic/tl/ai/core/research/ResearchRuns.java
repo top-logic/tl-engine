@@ -5,10 +5,15 @@
  */
 package com.top_logic.tl.ai.core.research;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,16 +22,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.citation.Finding;
+import com.top_logic.tl.ai.core.citation.PageArchive;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
 import com.top_logic.tl.ai.core.execution.model.ResearchFinding;
 import com.top_logic.tl.ai.core.execution.model.ResearchRun;
 import com.top_logic.tl.ai.core.execution.model.ResearchSource;
@@ -44,9 +54,17 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
+ * <b>Once per lead run.</b> A lead run that keeps its report a second time - because the first
+ * answer came late, or because it rewrote the report - replaces what it kept before; it never keeps
+ * a second run. The writes are done one after the other on one thread, so a second call that comes
+ * while the first is still being written finds the run the first one kept.
+ * </p>
+ *
+ * <p>
  * <b>Private to its owner.</b> The run is written with the account the research ran for as its
- * owner; the role rule in {@code tl-ai-core.binarySecurity.config.xml} lets that account, and only
- * that account, read the run and its parts. Administrators read everything anyway.
+ * owner; the role rules in {@code tl-ai-core.binarySecurity.config.xml} let that account, and only
+ * that account, read the run, its parts and the archived pages they reference. Administrators read
+ * everything anyway.
  * </p>
  */
 @ServiceDependencies({
@@ -58,12 +76,33 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 	/** How long a run waits for its report to be written. */
 	private static final Duration WRITE_TIMEOUT = Duration.ofSeconds(30);
 
-	/** What the stored document is. */
-	public static final String DOCUMENT_TYPE = "text/html; charset=utf-8";
-
 	/** Configuration of {@link ResearchRuns}. */
 	public interface Config<I extends ResearchRuns> extends ConfiguredManagedClass.Config<I> {
 		// Nothing to configure.
+	}
+
+	/**
+	 * What {@link ResearchRuns#save(ResearchReport, Person)} did.
+	 *
+	 * @param id
+	 *        The id of the kept run, as every tool reads it ({@code ResearchRun:...}).
+	 * @param replaced
+	 *        Whether the lead run had kept a run before, which is now replaced.
+	 */
+	public record Saved(String id, boolean replaced) {
+		// Value type only.
+	}
+
+	/**
+	 * Thrown when the run is not written within the time a caller waits: it is still being written,
+	 * and will be kept.
+	 */
+	public static class StillWriting extends IllegalStateException {
+
+		/** Creates a {@link StillWriting}. */
+		StillWriting(Throwable cause) {
+			super("The research run is still being written.", cause);
+		}
 	}
 
 	private ExecutorService _worker;
@@ -100,85 +139,172 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 	}
 
 	/**
-	 * Keeps a research run.
+	 * Keeps a research run, or replaces the one its lead run kept before.
 	 *
 	 * @param report
 	 *        What is kept of it.
-	 * @param document
-	 *        The report as an HTML document.
 	 * @param owner
 	 *        The account the research ran for; {@code null} for a run without one, which only
 	 *        administrators can read.
-	 * @return The id of the stored run, as every tool reads it ({@code ResearchRun:...}).
+	 * @return What was kept.
+	 * @throws StillWriting
+	 *         When the run is not written within the time this call waits; it is written later.
 	 * @throws IllegalStateException
 	 *         When the run could not be written.
 	 */
-	public String save(ResearchReport report, String document, Person owner) {
-		Future<String> write = _worker.submit(() -> ThreadContextManager.inSystemInteraction(ResearchRuns.class,
-			() -> store(report, document, owner)));
+	public Saved save(ResearchReport report, Person owner) {
+		Future<Saved> write = _worker.submit(() -> ThreadContextManager.inSystemInteraction(ResearchRuns.class,
+			() -> store(report, owner)));
 		try {
 			return write.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException("Interrupted while the research report was written.", ex);
-		} catch (ExecutionException | TimeoutException ex) {
+		} catch (TimeoutException ex) {
+			throw new StillWriting(ex);
+		} catch (ExecutionException ex) {
 			throw new IllegalStateException("The research report could not be written: " + ex.getMessage(), ex);
 		}
 	}
 
-	private String store(ResearchReport report, String document, Person owner) {
+	private Saved store(ResearchReport report, Person owner) {
 		TlAiExecutionFactory factory = TlAiExecutionFactory.getInstance();
+		Map<String, AgentExecution> executions = executions(report);
+		AgentExecution lead = executions.get(report.leadRunId());
+		ResearchRun run = lead == null ? null : keptFor(lead);
+		boolean replaced = run != null;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 			.beginTransaction(ResKey.text("Keep research run: " + report.question()))) {
-			ResearchRun run = factory.createResearchRun();
+			if (run == null) {
+				run = factory.createResearchRun();
+				run.setExecution(lead);
+			} else {
+				// What the run kept before is replaced as a whole: a part removed from a composition
+				// is not deleted with it.
+				List<TLObject> before = new ArrayList<>();
+				before.addAll(run.getFindings());
+				before.addAll(run.getSources());
+				run.setFindings(new ArrayList<>());
+				run.setSources(new ArrayList<>());
+				for (TLObject part : before) {
+					part.tDelete();
+				}
+			}
 			run.setQuestion(report.question());
-			run.setStatus(report.status());
-			run.setEffort(emptyToNull(report.effort()));
+			run.setStatus(status(report.status()));
+			run.setEffort(effort(report.effort()));
 			run.setPlan(emptyToNull(report.plan()));
 			run.setReport(report.markdown());
 			run.setStarted(date(report.started()));
 			run.setFinished(date(report.finished()));
-			run.setTokens(report.tokens());
-			run.setDocument(BinaryDataFactory.createBinaryData(document.getBytes(StandardCharsets.UTF_8),
-				DOCUMENT_TYPE, "research-report.html"));
-			if (owner != null) {
-				run.setOwner(owner);
-			}
+			run.setOwner(owner);
+			Map<String, ResearchSource> byKey = new HashMap<>();
 			for (ResearchReport.Source source : report.cited()) {
-				run.addCitedSource(source(factory, source));
+				addSource(factory, run, source, byKey);
 			}
 			for (ResearchReport.Source source : report.alsoRead()) {
-				run.addAlsoRead(source(factory, source));
+				addSource(factory, run, source, byKey);
 			}
 			for (Finding finding : report.findings()) {
-				run.addFinding(finding(factory, finding));
-			}
-			for (Finding finding : report.otherFindings()) {
-				run.addOtherFinding(finding(factory, finding));
+				ResearchFinding result = factory.createResearchFinding();
+				result.setFindingId(finding.id());
+				result.setClaim(finding.claim());
+				result.setQuote(finding.quote());
+				result.setSource(byKey.get(ResearchReport.key(finding.source())));
+				result.setRecordedBy(executions.get(finding.runId()));
+				run.addFinding(result);
 			}
 			tx.commit();
-			return ReadFilter.idOf(run);
+			return new Saved(ReadFilter.idOf(run), replaced);
 		}
 	}
 
-	private static ResearchSource source(TlAiExecutionFactory factory, ResearchReport.Source source) {
+	private static void addSource(TlAiExecutionFactory factory, ResearchRun run, ResearchReport.Source source,
+			Map<String, ResearchSource> byKey) {
 		ResearchSource result = factory.createResearchSource();
-		result.setTitle(source.title());
-		result.setUrl(source.url());
-		result.setKind(source.kind());
-		result.setArchive(emptyToNull(source.archive()));
+		ArchivedPage page = PageArchive.find(source.pageHandle()).orElse(null);
+		if (page != null) {
+			result.setPage(page);
+		} else if (source.object() != null) {
+			result.setObject(source.object());
+			// What the source shows once the object is deleted, which clears the reference; the id
+			// is what the report cites, so its footnote keeps its number.
+			result.setTitle(emptyToNull(source.title()));
+			result.setUrl(emptyToNull(source.reference()));
+		} else {
+			// Neither reference applies - a page that was not archived, a record that is no model
+			// object: the source is kept with what the reading list says of it.
+			result.setTitle(emptyToNull(source.title()));
+			result.setUrl(emptyToNull(source.url().isEmpty() ? source.reference() : source.url()));
+		}
+		result.setKind(emptyToNull(source.kind()));
+		result.setCited(Boolean.valueOf(source.isCited()));
+		result.setFootnote(source.isCited() ? Integer.valueOf(source.footnote()) : null);
 		result.setReadAt(date(source.readAt()));
+		run.addSource(result);
+		byKey.putIfAbsent(ResearchReport.key(source.reference()), result);
+	}
+
+	/**
+	 * The recorded executions of the lead run and of the runs that recorded findings, by run id.
+	 *
+	 * <p>
+	 * Read here, on this service's thread at the current revision, where the rows the execution
+	 * store wrote on its own thread are visible.
+	 * </p>
+	 */
+	private static Map<String, AgentExecution> executions(ResearchReport report) {
+		Set<String> wanted = new HashSet<>();
+		if (!report.leadRunId().isEmpty()) {
+			wanted.add(report.leadRunId());
+		}
+		for (Finding finding : report.findings()) {
+			if (!finding.runId().isEmpty()) {
+				wanted.add(finding.runId());
+			}
+		}
+		Map<String, AgentExecution> result = new HashMap<>();
+		if (wanted.isEmpty()) {
+			return result;
+		}
+		for (TLObject object : MetaElementUtil.getAllInstancesOf(TlAiExecutionFactory.getAgentExecutionType(),
+			TLObject.class)) {
+			AgentExecution execution = (AgentExecution) object;
+			String runId = execution.getRunId();
+			if (runId != null && wanted.contains(runId)) {
+				result.put(runId, execution);
+			}
+		}
 		return result;
 	}
 
-	private static ResearchFinding finding(TlAiExecutionFactory factory, Finding finding) {
-		ResearchFinding result = factory.createResearchFinding();
-		result.setFindingId(finding.id());
-		result.setClaim(finding.claim());
-		result.setQuote(finding.quote());
-		result.setSource(finding.source());
-		result.setRecordedBy(emptyToNull(finding.recordedBy()));
-		return result;
+	/** The run the given lead run kept before, or {@code null}. */
+	private static ResearchRun keptFor(AgentExecution lead) {
+		for (TLObject referer : lead.tReferers(TlAiExecutionFactory.getExecutionResearchRunAttr())) {
+			if (referer instanceof ResearchRun run) {
+				return run;
+			}
+		}
+		return null;
+	}
+
+	private static TLClassifier status(String status) {
+		return ResearchReport.PARTIAL.equals(status)
+			? TlAiExecutionFactory.getPARTIALResearchStatusClassifier()
+			: TlAiExecutionFactory.getCOMPLETEResearchStatusClassifier();
+	}
+
+	private static TLClassifier effort(String effort) {
+		switch (effort) {
+			case ResearchReport.QUICK:
+				return TlAiExecutionFactory.getQUICKResearchEffortClassifier();
+			case ResearchReport.STANDARD:
+				return TlAiExecutionFactory.getSTANDARDResearchEffortClassifier();
+			case ResearchReport.DEEP:
+				return TlAiExecutionFactory.getDEEPResearchEffortClassifier();
+			default:
+				return null;
+		}
 	}
 
 	private static Date date(Instant instant) {

@@ -18,13 +18,22 @@ public interface ResearchSourceBase extends com.top_logic.model.TLObject {
 	String RESEARCH_SOURCE_TYPE = "ResearchSource";
 
 	/**
-	 * Part <code>archive</code> of <code>ResearchSource</code>
+	 * Part <code>cited</code> of <code>ResearchSource</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
 	 * </p>
 	 */
-	String ARCHIVE_ATTR = "archive";
+	String CITED_ATTR = "cited";
+
+	/**
+	 * Part <code>footnote</code> of <code>ResearchSource</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String FOOTNOTE_ATTR = "footnote";
 
 	/**
 	 * Part <code>kind</code> of <code>ResearchSource</code>
@@ -34,6 +43,33 @@ public interface ResearchSourceBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String KIND_ATTR = "kind";
+
+	/**
+	 * Part <code>displayName</code> of <code>ResearchSource</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_NAME_ATTR = "displayName";
+
+	/**
+	 * Part <code>object</code> of <code>ResearchSource</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLObject</code> in configuration.
+	 * </p>
+	 */
+	String OBJECT_ATTR = "object";
+
+	/**
+	 * Part <code>page</code> of <code>ResearchSource</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.ai.execution:ArchivedPage</code> in configuration.
+	 * </p>
+	 */
+	String PAGE_ATTR = "page";
 
 	/**
 	 * Part <code>readAt</code> of <code>ResearchSource</code>
@@ -63,17 +99,31 @@ public interface ResearchSourceBase extends com.top_logic.model.TLObject {
 	String URL_ATTR = "url";
 
 	/**
-	 * Getter for part {@link #ARCHIVE_ATTR}.
+	 * Getter for part {@link #CITED_ATTR}.
 	 */
-	default String getArchive() {
-		return (String) tValueByName(ARCHIVE_ATTR);
+	default Boolean getCited() {
+		return (Boolean) tValueByName(CITED_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #ARCHIVE_ATTR}.
+	 * Setter for part {@link #CITED_ATTR}.
 	 */
-	default void setArchive(String newValue) {
-		tUpdateByName(ARCHIVE_ATTR, newValue);
+	default void setCited(Boolean newValue) {
+		tUpdateByName(CITED_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #FOOTNOTE_ATTR}.
+	 */
+	default Integer getFootnote() {
+		return (Integer) tValueByName(FOOTNOTE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #FOOTNOTE_ATTR}.
+	 */
+	default void setFootnote(Integer newValue) {
+		tUpdateByName(FOOTNOTE_ATTR, newValue);
 	}
 
 	/**
@@ -88,6 +138,41 @@ public interface ResearchSourceBase extends com.top_logic.model.TLObject {
 	 */
 	default void setKind(String newValue) {
 		tUpdateByName(KIND_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default String getDisplayName() {
+		return (String) tValueByName(DISPLAY_NAME_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #OBJECT_ATTR}.
+	 */
+	default com.top_logic.model.TLObject getObject() {
+		return (com.top_logic.model.TLObject) tValueByName(OBJECT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #OBJECT_ATTR}.
+	 */
+	default void setObject(com.top_logic.model.TLObject newValue) {
+		tUpdateByName(OBJECT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #PAGE_ATTR}.
+	 */
+	default com.top_logic.tl.ai.core.execution.model.ArchivedPage getPage() {
+		return (com.top_logic.tl.ai.core.execution.model.ArchivedPage) tValueByName(PAGE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #PAGE_ATTR}.
+	 */
+	default void setPage(com.top_logic.tl.ai.core.execution.model.ArchivedPage newValue) {
+		tUpdateByName(PAGE_ATTR, newValue);
 	}
 
 	/**

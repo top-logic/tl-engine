@@ -74,7 +74,8 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * <b>Bounded.</b> At most {@link Config#getMaxChars()} characters of a page are kept, the same page
  * read twice with the same text by the same account is stored once (within the life of the
- * process), and copies older than {@link Config#getRetentionDays()} are deleted once a day.
+ * process), and copies older than {@link Config#getRetentionDays()} are deleted once a day - except a
+ * copy a kept research run references, which lives as long as the run.
  * </p>
  *
  * @see #archive(String, String, String, Person)
@@ -150,7 +151,8 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		 * After how many days an archived copy is deleted; 0 keeps every copy.
 		 *
 		 * <p>
-		 * A citation of a deleted copy still links to the live page.
+		 * A citation of a deleted copy still links to the live page. A copy a kept research run
+		 * references is kept as long as the run.
 		 * </p>
 		 *
 		 * @see #getRetentionDays()
@@ -383,6 +385,18 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	 * @return The copy, or empty for an unknown handle.
 	 */
 	public Optional<ArchivedPage> findByHandle(String handle) {
+		return find(handle);
+	}
+
+	/**
+	 * The copy stored under {@code handle}, also where this service is not running.
+	 *
+	 * @param handle
+	 *        The handle a {@link #viewUrl(String) view address} names.
+	 * @return The copy, or empty for an unknown handle.
+	 * @see #findByHandle(String)
+	 */
+	public static Optional<ArchivedPage> find(String handle) {
 		if (handle == null || handle.isEmpty()) {
 			return Optional.empty();
 		}
@@ -428,6 +442,26 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	}
 
 	/**
+	 * The handle a {@link #viewUrl(String) view address} names.
+	 *
+	 * @param viewUrl
+	 *        An address of an archived copy, absolute or relative; may be {@code null}.
+	 * @return The handle, or the empty string when the address names no archived copy.
+	 */
+	public static String handleOf(String viewUrl) {
+		if (viewUrl == null) {
+			return "";
+		}
+		int start = viewUrl.indexOf(URL_PREFIX);
+		if (start < 0) {
+			return "";
+		}
+		String handle = viewUrl.substring(start + URL_PREFIX.length());
+		int end = handle.indexOf('?');
+		return end < 0 ? handle : handle.substring(0, end);
+	}
+
+	/**
 	 * Deletes every copy read before {@code cutoff}.
 	 *
 	 * @return How many copies were deleted.
@@ -438,7 +472,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 			TLObject.class)) {
 			ArchivedPage page = (ArchivedPage) object;
 			Date fetchedAt = page.getFetchedAt();
-			if (fetchedAt != null && fetchedAt.toInstant().isBefore(cutoff)) {
+			if (fetchedAt != null && fetchedAt.toInstant().isBefore(cutoff) && !isResearchSource(page)) {
 				expired.add(page);
 			}
 		}
@@ -456,6 +490,14 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 			_recent.clear();
 		}
 		return expired.size();
+	}
+
+	/**
+	 * Whether a kept research run rests on the copy: it then lives as long as the run, so that the
+	 * run's quotes can still be checked against what its sources said.
+	 */
+	private static boolean isResearchSource(ArchivedPage page) {
+		return !page.tReferers(TlAiExecutionFactory.getPageResearchSourceAttr()).isEmpty();
 	}
 
 	private void purgeQuietly() {

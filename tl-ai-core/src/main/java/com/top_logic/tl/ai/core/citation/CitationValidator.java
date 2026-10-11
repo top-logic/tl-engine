@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -448,6 +449,44 @@ public final class CitationValidator {
 
 	private static boolean isTokenChar(char c) {
 		return Character.isLetterOrDigit(c) || c == '_';
+	}
+
+	/**
+	 * Replaces the footnote markers of a text this class validated, and nothing that only looks like
+	 * one.
+	 *
+	 * <p>
+	 * In the text of an answer that cites, a {@code [n]} outside code is a marker this class wrote:
+	 * a bracketed number of the model's own is written as {@code &#91;n&#93;} there. A {@code [n]} in
+	 * an inline code span or a code block - {@code items[1]} - is code and stays as it is.
+	 * </p>
+	 *
+	 * @param text
+	 *        The {@link Result#text() text} of a validation.
+	 * @param count
+	 *        How many footnotes the validation numbered; a number above it is no marker.
+	 * @param note
+	 *        What a marker of footnote {@code n} is replaced with.
+	 * @return The text with its markers replaced.
+	 */
+	public static String replaceFootnotes(String text, int count, IntFunction<String> note) {
+		if (text == null || text.isEmpty() || count == 0) {
+			return text == null ? "" : text;
+		}
+		boolean[] code = codeMask(text);
+		Matcher marker = BRACKET_NUMBER.matcher(text);
+		StringBuilder out = new StringBuilder();
+		int last = 0;
+		while (marker.find()) {
+			int n = marker.group(1).length() > 9 ? 0 : Integer.parseInt(marker.group(1));
+			if (code[marker.start()] || n < 1 || n > count) {
+				continue;
+			}
+			out.append(text, last, marker.start()).append(note.apply(n));
+			last = marker.end();
+		}
+		out.append(text, last, text.length());
+		return out.toString();
 	}
 
 	/**

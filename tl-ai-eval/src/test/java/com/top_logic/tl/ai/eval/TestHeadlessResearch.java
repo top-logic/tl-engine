@@ -39,6 +39,7 @@ import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.ResearchRun;
+import com.top_logic.tl.ai.core.execution.model.ResearchSource;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
@@ -148,8 +149,11 @@ public class TestHeadlessResearch extends BasicTestCase {
 		ResearchRun kept = keptRun(QUESTION);
 		assertEquals("The run is kept for the owner, not for the system context it was started in.", root,
 			kept.getOwner());
-		assertEquals("quick", kept.getEffort());
-		assertEquals(URL, kept.getCitedSources().get(0).getUrl());
+		assertEquals(TlAiExecutionFactory.getQUICKResearchEffortClassifier(), kept.getEffort());
+		ResearchSource cited = kept.getSources().get(0);
+		assertEquals("The page the report cites comes first, with its footnote.", Integer.valueOf(1),
+			cited.getFootnote());
+		assertEquals("The fixture web archives nothing, so the page is kept with its address.", URL, cited.getUrl());
 	}
 
 	/** The research run kept for the given question. */

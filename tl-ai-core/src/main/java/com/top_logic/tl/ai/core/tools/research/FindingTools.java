@@ -8,24 +8,21 @@ package com.top_logic.tl.ai.core.tools.research;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.core.research.ResearchReport;
-import com.top_logic.tl.ai.core.research.ResearchReportHtml;
 import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.tools.web.BrowsingPolicies;
 import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ReadSource;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -123,7 +120,8 @@ public class FindingTools {
 				+ " was not recorded. Copy the words exactly from the page text you read; if they are in a"
 				+ " part of the document you have not read yet, read that part first.";
 		}
-		Finding finding = list.recordFinding(claim.strip(), read, words, RunInfoBinding.current().agentName());
+		RunInfo run = RunInfoBinding.current();
+		Finding finding = list.recordFinding(claim.strip(), read, words, run.agentName(), run.runId());
 		if (finding == null) {
 			return "Error: this run has recorded as many findings as it keeps; write your report now.";
 		}
@@ -146,17 +144,18 @@ public class FindingTools {
 	 * @param status
 	 *        complete or partial; {@code null} for complete.
 	 * @param context
-	 *        The run, for what it spent.
+	 *        The run, whose read rights resolve the objects the sources name.
 	 * @return The id of the kept run, or why it was not kept.
 	 */
 	@ToolMethod(
-		description = "Keep this research run, once, when its report is final: the question, the"
-			+ " report exactly as you give it to the user (Markdown, citing each statement with a link to"
-			+ " the source it rests on), and optionally the effort, the plan and the status. The report's"
-			+ " links are checked against what the research read; the sources it cites, the sources read"
-			+ " and not cited, and all findings are kept with it, as a document the user can open and"
-			+ " download. The answer gives the run's id; to open the report for the user, call present"
-			+ " with that id, where the page offers it.",
+		description = "Keep this research run when its report is final: the question, the report exactly"
+			+ " as you give it to the user (Markdown, citing each statement with a link to the source it"
+			+ " rests on), and optionally the effort, the plan and the status. The report's links are"
+			+ " checked against what the research read; the sources it cites, the sources read and not"
+			+ " cited, and all findings are kept with it, as a document the user can open and download."
+			+ " Call it once. A second call in the same run replaces what the first one kept. The answer"
+			+ " gives the run's id; to open the report for the user, call present with that id, where the"
+			+ " page offers it.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE)
 	public String saveReport(
@@ -178,29 +177,33 @@ public class FindingTools {
 		if (question == null || question.isBlank() || report == null || report.isBlank()) {
 			return "Error: question and report are required.";
 		}
-		if (status != null && !status.isBlank() && !STATUSES.contains(status.strip().toLowerCase(Locale.ROOT))) {
+		if (status != null && !status.isBlank()
+			&& !ResearchReport.STATUSES.contains(status.strip().toLowerCase(Locale.ROOT))) {
 			return "Error: status must be complete or partial.";
 		}
-		Long tokens = null;
-		if (context instanceof ToolContext toolContext && toolContext.budgetAllowance().isTokenLimited()) {
-			tokens = Long.valueOf(toolContext.budgetAllowance().spentTokens());
+		if (effort != null && !effort.isBlank()
+			&& !ResearchReport.EFFORTS.contains(effort.strip().toLowerCase(Locale.ROOT))) {
+			return "Error: effort must be quick, standard or deep.";
 		}
-		ResearchReport kept = ResearchReport.compose(question, report, effort, plan, status, list, tokens, Instant.now());
-		String document = ResearchReportHtml.render(kept, RunEnvironment.runLocale(), RunEnvironment.runZone());
-		String id;
+		ResearchReport kept = ResearchReport.compose(question, report, effort, plan, status, list,
+			context == null ? null : context::resolveObject, RunInfoBinding.current().runId(), Instant.now());
+		ResearchRuns.Saved saved;
 		try {
-			id = ResearchRuns.getInstance().save(kept, document, BrowsingPolicies.currentAccountQuietly());
+			saved = ResearchRuns.getInstance().save(kept, BrowsingPolicies.currentAccountQuietly());
+		} catch (ResearchRuns.StillWriting ex) {
+			// The write goes on and is kept; a second call would only replace it with the same.
+			return "The research run is still being written and will be kept. Do not call saveReport again;"
+				+ " give the user the report as your answer.";
 		} catch (IllegalStateException ex) {
 			Logger.error("Keeping a research run failed.", ex, FindingTools.class);
 			return "Error: the research run could not be kept: " + ex.getMessage();
 		}
-		return "Kept research run " + id + ": " + kept.cited().size() + " cited sources, " + kept.alsoRead().size()
-			+ " sources read and not cited, " + (kept.findings().size() + kept.otherFindings().size())
+		String id = saved.id();
+		return (saved.replaced() ? "Replaced the research run this run kept before, " : "Kept research run ") + id
+			+ ": " + kept.cited().size() + " cited sources, " + kept.alsoRead().size()
+			+ " sources read and not cited, " + kept.findings().size()
 			+ " findings. To open the report for the user, call present with ids [\"" + id + "\"].";
 	}
-
-	/** The statuses a research run may be kept with. */
-	private static final Set<String> STATUSES = Set.of(ResearchReport.COMPLETE, ResearchReport.PARTIAL);
 
 	/**
 	 * Lists the findings of this run and of the subagents whose results it received.

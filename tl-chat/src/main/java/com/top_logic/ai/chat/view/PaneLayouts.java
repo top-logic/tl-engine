@@ -30,8 +30,8 @@ import com.top_logic.model.annotate.util.TLAnnotations;
  * {@code name} of a common base type - and a form or a table that started with the type's own
  * details and ended with its name would read backwards.</li>
  * <li><b>A composition is a table, not a value.</b> The engine's {@code <field>} has no view of a
- * composition and prints its parts as text; the form shows each as a {@code <composition-table>}
- * below the fields, and a table that chooses its own columns leaves compositions and other
+ * composition and prints its parts as text; the form shows each - and each computed list of objects,
+ * which is usually a selection of such parts - as a {@code <composition-table>} below the fields, and a table that chooses its own columns leaves compositions and other
  * multi-valued attributes to the column selection - and long text, which a column cuts to one
  * line.</li>
  * </ul>
@@ -88,6 +88,16 @@ public final class PaneLayouts {
 	/** Whether the attribute holds parts of the object rather than a value of it. */
 	public static boolean isComposition(TLStructuredTypePart part) {
 		return part instanceof TLReference reference && reference.isComposite();
+	}
+
+	/**
+	 * Whether a form shows the attribute as a table of its own: a composition, or a computed list of
+	 * objects - a selection of the object's parts, such as the sources a research run cites out of
+	 * all it read.
+	 */
+	public static boolean isTable(TLStructuredTypePart part) {
+		return isComposition(part)
+			|| (part instanceof TLReference reference && reference.isMultiple() && reference.isDerived());
 	}
 
 	/**

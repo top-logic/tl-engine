@@ -48,10 +48,19 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	 * Part <code>effort</code> of <code>ResearchRun</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.ai.execution:ResearchEffort</code> in configuration.
 	 * </p>
 	 */
 	String EFFORT_ATTR = "effort";
+
+	/**
+	 * Part <code>execution</code> of <code>ResearchRun</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.ai.execution:AgentExecution</code> in configuration.
+	 * </p>
+	 */
+	String EXECUTION_ATTR = "execution";
 
 	/**
 	 * Part <code>findings</code> of <code>ResearchRun</code>
@@ -72,15 +81,6 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	String FINISHED_ATTR = "finished";
 
 	/**
-	 * Part <code>otherFindings</code> of <code>ResearchRun</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.ai.execution:ResearchFinding</code> in configuration.
-	 * </p>
-	 */
-	String OTHER_FINDINGS_ATTR = "otherFindings";
-
-	/**
 	 * Part <code>owner</code> of <code>ResearchRun</code>
 	 * 
 	 * <p>
@@ -93,7 +93,7 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	 * Part <code>plan</code> of <code>ResearchRun</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Text</code> in configuration.
 	 * </p>
 	 */
 	String PLAN_ATTR = "plan";
@@ -102,7 +102,7 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	 * Part <code>question</code> of <code>ResearchRun</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Text</code> in configuration.
 	 * </p>
 	 */
 	String QUESTION_ATTR = "question";
@@ -111,10 +111,19 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	 * Part <code>report</code> of <code>ResearchRun</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Text</code> in configuration.
 	 * </p>
 	 */
 	String REPORT_ATTR = "report";
+
+	/**
+	 * Part <code>sources</code> of <code>ResearchRun</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.ai.execution:ResearchSource</code> in configuration.
+	 * </p>
+	 */
+	String SOURCES_ATTR = "sources";
 
 	/**
 	 * Part <code>started</code> of <code>ResearchRun</code>
@@ -129,7 +138,7 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	 * Part <code>status</code> of <code>ResearchRun</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.ai.execution:ResearchStatus</code> in configuration.
 	 * </p>
 	 */
 	String STATUS_ATTR = "status";
@@ -152,81 +161,11 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	}
 
 	/**
-	 * Live view of the {@link #ALSO_READ_ATTR} part.
-	 * <p>
-	 * Changes to this {@link java.util.Collection} change directly the attribute value.
-	 * The caller has to take care of the transaction handling.
-	 * </p>
-	 */
-	default java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> getAlsoReadModifiable() {
-		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(ALSO_READ_ATTR);
-		@SuppressWarnings("unchecked")
-		java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> result = (java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
-		return result;
-	}
-
-	/**
-	 * Setter for part {@link #ALSO_READ_ATTR}.
-	 */
-	default void setAlsoRead(java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> newValue) {
-		tUpdateByName(ALSO_READ_ATTR, newValue);
-	}
-
-	/**
-	 * Adds a value to the {@link #ALSO_READ_ATTR} reference.
-	 */
-	default void addAlsoRead(com.top_logic.tl.ai.core.execution.model.ResearchSource newValue) {
-		tAddByName(ALSO_READ_ATTR, newValue);
-	}
-
-	/**
-	 * Removes the given value from the {@link #ALSO_READ_ATTR} reference.
-	 */
-	default void removeAlsoRead(com.top_logic.tl.ai.core.execution.model.ResearchSource oldValue) {
-		tRemoveByName(ALSO_READ_ATTR, oldValue);
-	}
-
-	/**
 	 * Getter for part {@link #CITED_SOURCES_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")
 	default java.util.List<? extends com.top_logic.tl.ai.core.execution.model.ResearchSource> getCitedSources() {
 		return (java.util.List<? extends com.top_logic.tl.ai.core.execution.model.ResearchSource>) tValueByName(CITED_SOURCES_ATTR);
-	}
-
-	/**
-	 * Live view of the {@link #CITED_SOURCES_ATTR} part.
-	 * <p>
-	 * Changes to this {@link java.util.Collection} change directly the attribute value.
-	 * The caller has to take care of the transaction handling.
-	 * </p>
-	 */
-	default java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> getCitedSourcesModifiable() {
-		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(CITED_SOURCES_ATTR);
-		@SuppressWarnings("unchecked")
-		java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> result = (java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
-		return result;
-	}
-
-	/**
-	 * Setter for part {@link #CITED_SOURCES_ATTR}.
-	 */
-	default void setCitedSources(java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> newValue) {
-		tUpdateByName(CITED_SOURCES_ATTR, newValue);
-	}
-
-	/**
-	 * Adds a value to the {@link #CITED_SOURCES_ATTR} reference.
-	 */
-	default void addCitedSource(com.top_logic.tl.ai.core.execution.model.ResearchSource newValue) {
-		tAddByName(CITED_SOURCES_ATTR, newValue);
-	}
-
-	/**
-	 * Removes the given value from the {@link #CITED_SOURCES_ATTR} reference.
-	 */
-	default void removeCitedSource(com.top_logic.tl.ai.core.execution.model.ResearchSource oldValue) {
-		tRemoveByName(CITED_SOURCES_ATTR, oldValue);
 	}
 
 	/**
@@ -237,24 +176,31 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	}
 
 	/**
-	 * Setter for part {@link #DOCUMENT_ATTR}.
-	 */
-	default void setDocument(com.top_logic.basic.io.binary.BinaryDataSource newValue) {
-		tUpdateByName(DOCUMENT_ATTR, newValue);
-	}
-
-	/**
 	 * Getter for part {@link #EFFORT_ATTR}.
 	 */
-	default String getEffort() {
-		return (String) tValueByName(EFFORT_ATTR);
+	default com.top_logic.model.TLClassifier getEffort() {
+		return (com.top_logic.model.TLClassifier) tValueByName(EFFORT_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #EFFORT_ATTR}.
 	 */
-	default void setEffort(String newValue) {
+	default void setEffort(com.top_logic.model.TLClassifier newValue) {
 		tUpdateByName(EFFORT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #EXECUTION_ATTR}.
+	 */
+	default com.top_logic.tl.ai.core.execution.model.AgentExecution getExecution() {
+		return (com.top_logic.tl.ai.core.execution.model.AgentExecution) tValueByName(EXECUTION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #EXECUTION_ATTR}.
+	 */
+	default void setExecution(com.top_logic.tl.ai.core.execution.model.AgentExecution newValue) {
+		tUpdateByName(EXECUTION_ATTR, newValue);
 	}
 
 	/**
@@ -315,49 +261,6 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	}
 
 	/**
-	 * Getter for part {@link #OTHER_FINDINGS_ATTR}.
-	 */
-	@SuppressWarnings("unchecked")
-	default java.util.List<? extends com.top_logic.tl.ai.core.execution.model.ResearchFinding> getOtherFindings() {
-		return (java.util.List<? extends com.top_logic.tl.ai.core.execution.model.ResearchFinding>) tValueByName(OTHER_FINDINGS_ATTR);
-	}
-
-	/**
-	 * Live view of the {@link #OTHER_FINDINGS_ATTR} part.
-	 * <p>
-	 * Changes to this {@link java.util.Collection} change directly the attribute value.
-	 * The caller has to take care of the transaction handling.
-	 * </p>
-	 */
-	default java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchFinding> getOtherFindingsModifiable() {
-		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(OTHER_FINDINGS_ATTR);
-		@SuppressWarnings("unchecked")
-		java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchFinding> result = (java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchFinding>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
-		return result;
-	}
-
-	/**
-	 * Setter for part {@link #OTHER_FINDINGS_ATTR}.
-	 */
-	default void setOtherFindings(java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchFinding> newValue) {
-		tUpdateByName(OTHER_FINDINGS_ATTR, newValue);
-	}
-
-	/**
-	 * Adds a value to the {@link #OTHER_FINDINGS_ATTR} reference.
-	 */
-	default void addOtherFinding(com.top_logic.tl.ai.core.execution.model.ResearchFinding newValue) {
-		tAddByName(OTHER_FINDINGS_ATTR, newValue);
-	}
-
-	/**
-	 * Removes the given value from the {@link #OTHER_FINDINGS_ATTR} reference.
-	 */
-	default void removeOtherFinding(com.top_logic.tl.ai.core.execution.model.ResearchFinding oldValue) {
-		tRemoveByName(OTHER_FINDINGS_ATTR, oldValue);
-	}
-
-	/**
 	 * Getter for part {@link #OWNER_ATTR}.
 	 */
 	default com.top_logic.knowledge.wrap.person.Person getOwner() {
@@ -414,6 +317,49 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	}
 
 	/**
+	 * Getter for part {@link #SOURCES_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.List<? extends com.top_logic.tl.ai.core.execution.model.ResearchSource> getSources() {
+		return (java.util.List<? extends com.top_logic.tl.ai.core.execution.model.ResearchSource>) tValueByName(SOURCES_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #SOURCES_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> getSourcesModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(SOURCES_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> result = (java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #SOURCES_ATTR}.
+	 */
+	default void setSources(java.util.List<com.top_logic.tl.ai.core.execution.model.ResearchSource> newValue) {
+		tUpdateByName(SOURCES_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #SOURCES_ATTR} reference.
+	 */
+	default void addSource(com.top_logic.tl.ai.core.execution.model.ResearchSource newValue) {
+		tAddByName(SOURCES_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #SOURCES_ATTR} reference.
+	 */
+	default void removeSource(com.top_logic.tl.ai.core.execution.model.ResearchSource oldValue) {
+		tRemoveByName(SOURCES_ATTR, oldValue);
+	}
+
+	/**
 	 * Getter for part {@link #STARTED_ATTR}.
 	 */
 	default java.util.Date getStarted() {
@@ -430,14 +376,14 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #STATUS_ATTR}.
 	 */
-	default String getStatus() {
-		return (String) tValueByName(STATUS_ATTR);
+	default com.top_logic.model.TLClassifier getStatus() {
+		return (com.top_logic.model.TLClassifier) tValueByName(STATUS_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #STATUS_ATTR}.
 	 */
-	default void setStatus(String newValue) {
+	default void setStatus(com.top_logic.model.TLClassifier newValue) {
 		tUpdateByName(STATUS_ATTR, newValue);
 	}
 
@@ -446,13 +392,6 @@ public interface ResearchRunBase extends com.top_logic.model.TLObject {
 	 */
 	default Long getTokens() {
 		return (Long) tValueByName(TOKENS_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #TOKENS_ATTR}.
-	 */
-	default void setTokens(Long newValue) {
-		tUpdateByName(TOKENS_ATTR, newValue);
 	}
 
 }

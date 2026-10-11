@@ -1967,7 +1967,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		return MetaElementUtil.getAllInstancesOf(type, TLObject.class);
 	}
 
-	private static TokenUsage usageOf(AgentExecution execution) {
+	/**
+	 * What one recorded run consumed, as its execution row says; 0 for a count not recorded.
+	 */
+	public static TokenUsage usageOf(AgentExecution execution) {
 		return new TokenUsage(
 			intValue(execution.getInputTokens()),
 			intValue(execution.getOutputTokens()),

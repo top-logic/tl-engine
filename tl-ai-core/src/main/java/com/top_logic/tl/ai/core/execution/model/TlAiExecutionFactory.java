@@ -142,6 +142,41 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	public static final String PREFERENCE_MEMORY_KIND_CLASSIFIER = "PREFERENCE";
 
 	/**
+	 * Name of the enumeration <code>ResearchEffort</code> in module {@value #TL_AI_EXECUTION_STRUCTURE}.
+	 */
+	public static final String RESEARCH_EFFORT_ENUM = "ResearchEffort";
+
+	/**
+	 * Name of the classifier <code>DEEP</code> in enumeration {@value #RESEARCH_EFFORT_ENUM}.
+	 */
+	public static final String DEEP_RESEARCH_EFFORT_CLASSIFIER = "DEEP";
+
+	/**
+	 * Name of the classifier <code>QUICK</code> in enumeration {@value #RESEARCH_EFFORT_ENUM}.
+	 */
+	public static final String QUICK_RESEARCH_EFFORT_CLASSIFIER = "QUICK";
+
+	/**
+	 * Name of the classifier <code>STANDARD</code> in enumeration {@value #RESEARCH_EFFORT_ENUM}.
+	 */
+	public static final String STANDARD_RESEARCH_EFFORT_CLASSIFIER = "STANDARD";
+
+	/**
+	 * Name of the enumeration <code>ResearchStatus</code> in module {@value #TL_AI_EXECUTION_STRUCTURE}.
+	 */
+	public static final String RESEARCH_STATUS_ENUM = "ResearchStatus";
+
+	/**
+	 * Name of the classifier <code>COMPLETE</code> in enumeration {@value #RESEARCH_STATUS_ENUM}.
+	 */
+	public static final String COMPLETE_RESEARCH_STATUS_CLASSIFIER = "COMPLETE";
+
+	/**
+	 * Name of the classifier <code>PARTIAL</code> in enumeration {@value #RESEARCH_STATUS_ENUM}.
+	 */
+	public static final String PARTIAL_RESEARCH_STATUS_CLASSIFIER = "PARTIAL";
+
+	/**
 	 * Lookup {@link ArchivedPage} type.
 	 */
 	public static com.top_logic.model.TLClass getArchivedPageType() {
@@ -228,8 +263,15 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	/**
 	 * Lookup {@link ResearchRun#EFFORT_ATTR} of {@link ResearchRun}.
 	 */
-	public static com.top_logic.model.TLProperty getEffortResearchRunAttr() {
-		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.EFFORT_ATTR);
+	public static com.top_logic.model.TLReference getEffortResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.EFFORT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchRun#EXECUTION_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getExecutionResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.EXECUTION_ATTR);
 	}
 
 	/**
@@ -244,13 +286,6 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public static com.top_logic.model.TLProperty getFinishedResearchRunAttr() {
 		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.FINISHED_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ResearchRun#OTHER_FINDINGS_ATTR} of {@link ResearchRun}.
-	 */
-	public static com.top_logic.model.TLReference getOtherFindingsResearchRunAttr() {
-		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.OTHER_FINDINGS_ATTR);
 	}
 
 	/**
@@ -282,6 +317,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link ResearchRun#SOURCES_ATTR} of {@link ResearchRun}.
+	 */
+	public static com.top_logic.model.TLReference getSourcesResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.SOURCES_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ResearchRun#STARTED_ATTR} of {@link ResearchRun}.
 	 */
 	public static com.top_logic.model.TLProperty getStartedResearchRunAttr() {
@@ -291,8 +333,8 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	/**
 	 * Lookup {@link ResearchRun#STATUS_ATTR} of {@link ResearchRun}.
 	 */
-	public static com.top_logic.model.TLProperty getStatusResearchRunAttr() {
-		return (com.top_logic.model.TLProperty) getResearchRunType().getPart(ResearchRun.STATUS_ATTR);
+	public static com.top_logic.model.TLReference getStatusResearchRunAttr() {
+		return (com.top_logic.model.TLReference) getResearchRunType().getPart(ResearchRun.STATUS_ATTR);
 	}
 
 	/**
@@ -310,10 +352,17 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
-	 * Lookup {@link ResearchSource#ARCHIVE_ATTR} of {@link ResearchSource}.
+	 * Lookup {@link ResearchSource#CITED_ATTR} of {@link ResearchSource}.
 	 */
-	public static com.top_logic.model.TLProperty getArchiveResearchSourceAttr() {
-		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.ARCHIVE_ATTR);
+	public static com.top_logic.model.TLProperty getCitedResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.CITED_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#FOOTNOTE_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getFootnoteResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.FOOTNOTE_ATTR);
 	}
 
 	/**
@@ -321,6 +370,27 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public static com.top_logic.model.TLProperty getKindResearchSourceAttr() {
 		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.KIND_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#DISPLAY_NAME_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLProperty getDisplayNameResearchSourceAttr() {
+		return (com.top_logic.model.TLProperty) getResearchSourceType().getPart(ResearchSource.DISPLAY_NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#OBJECT_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLReference getObjectResearchSourceAttr() {
+		return (com.top_logic.model.TLReference) getResearchSourceType().getPart(ResearchSource.OBJECT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ResearchSource#PAGE_ATTR} of {@link ResearchSource}.
+	 */
+	public static com.top_logic.model.TLReference getPageResearchSourceAttr() {
+		return (com.top_logic.model.TLReference) getResearchSourceType().getPart(ResearchSource.PAGE_ATTR);
 	}
 
 	/**
@@ -375,15 +445,15 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	/**
 	 * Lookup {@link ResearchFinding#RECORDED_BY_ATTR} of {@link ResearchFinding}.
 	 */
-	public static com.top_logic.model.TLProperty getRecordedByResearchFindingAttr() {
-		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.RECORDED_BY_ATTR);
+	public static com.top_logic.model.TLReference getRecordedByResearchFindingAttr() {
+		return (com.top_logic.model.TLReference) getResearchFindingType().getPart(ResearchFinding.RECORDED_BY_ATTR);
 	}
 
 	/**
 	 * Lookup {@link ResearchFinding#SOURCE_ATTR} of {@link ResearchFinding}.
 	 */
-	public static com.top_logic.model.TLProperty getSourceResearchFindingAttr() {
-		return (com.top_logic.model.TLProperty) getResearchFindingType().getPart(ResearchFinding.SOURCE_ATTR);
+	public static com.top_logic.model.TLReference getSourceResearchFindingAttr() {
+		return (com.top_logic.model.TLReference) getResearchFindingType().getPart(ResearchFinding.SOURCE_ATTR);
 	}
 
 	/**
@@ -1000,6 +1070,55 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public static com.top_logic.model.TLClassifier getPREFERENCEMemoryKindClassifier() {
 		return getMemoryKindEnum().getClassifier(PREFERENCE_MEMORY_KIND_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup {@value #RESEARCH_EFFORT_ENUM} enumeration.
+	 */
+	public static com.top_logic.model.TLEnumeration getResearchEffortEnum() {
+		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(RESEARCH_EFFORT_ENUM);
+	}
+
+	/**
+	 * Lookup classifier {@value #DEEP_RESEARCH_EFFORT_CLASSIFIER} of enumeration {@value #RESEARCH_EFFORT_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getDEEPResearchEffortClassifier() {
+		return getResearchEffortEnum().getClassifier(DEEP_RESEARCH_EFFORT_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #QUICK_RESEARCH_EFFORT_CLASSIFIER} of enumeration {@value #RESEARCH_EFFORT_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getQUICKResearchEffortClassifier() {
+		return getResearchEffortEnum().getClassifier(QUICK_RESEARCH_EFFORT_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #STANDARD_RESEARCH_EFFORT_CLASSIFIER} of enumeration {@value #RESEARCH_EFFORT_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getSTANDARDResearchEffortClassifier() {
+		return getResearchEffortEnum().getClassifier(STANDARD_RESEARCH_EFFORT_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup {@value #RESEARCH_STATUS_ENUM} enumeration.
+	 */
+	public static com.top_logic.model.TLEnumeration getResearchStatusEnum() {
+		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(RESEARCH_STATUS_ENUM);
+	}
+
+	/**
+	 * Lookup classifier {@value #COMPLETE_RESEARCH_STATUS_CLASSIFIER} of enumeration {@value #RESEARCH_STATUS_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getCOMPLETEResearchStatusClassifier() {
+		return getResearchStatusEnum().getClassifier(COMPLETE_RESEARCH_STATUS_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #PARTIAL_RESEARCH_STATUS_CLASSIFIER} of enumeration {@value #RESEARCH_STATUS_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getPARTIALResearchStatusClassifier() {
+		return getResearchStatusEnum().getClassifier(PARTIAL_RESEARCH_STATUS_CLASSIFIER);
 	}
 
 	/**

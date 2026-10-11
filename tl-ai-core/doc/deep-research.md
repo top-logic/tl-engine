@@ -74,8 +74,73 @@ tool that reads application data, and no tool that changes data. It does this:
 - It reports in at most 800 words: an answer, its findings by id with their pages, and conflicts and
   gaps. The findings travel with the report, so the report does not repeat the quotes.
 
-The worker runs on the installation's default model. To use a cheaper model, assign it in
-`<agent-overrides>` of `AgentRuntimeService`, where its `max-tool-calls="25"` also stands.
+The worker runs on the installation's default model unless an installation assigns it another one.
+
+### Worker model profiles
+
+The workers spend most of the tokens of a research run, so an installation can give them another
+model than the lead (#784). No code is needed: an entry in `<agent-overrides>` of
+`AgentRuntimeService` assigns a model and its provider to `TL_ResearchWorker`. The entry merges with
+the shipped one that sets `max-tool-calls="25"`; the lead stays on the default model.
+
+**Hosted** - the workers on a hosted mid-tier model (decision D7):
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+		<agent-overrides>
+			<agent name="TL_ResearchWorker" model="gpt-5.6-luna" provider="openai"/>
+		</agent-overrides>
+	</instance>
+</config>
+```
+
+**Local** - the workers on a local model behind an OpenAI-compatible server (here vLLM serving
+`qwen3.8-27b`). Declare the server as a provider in `LLMProviderService`, with its context window
+in the model catalog, because no public catalog knows a local model:
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+	<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+		<providers>
+			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
+				api-key="%QWEN_API_KEY%"
+				base-url="http://ki.bos.local:8080"
+				catalog-provider-id=""
+				models="qwen3.8-27b"
+				name="qwen"
+			/>
+		</providers>
+		<model-catalog>
+			<model-overrides>
+				<model name="qwen3.8-27b" context-window="230000" max-output="16000"
+					reasoning="false" temperature="true" tool-call="true"/>
+			</model-overrides>
+		</model-catalog>
+	</instance>
+</config>
+```
+
+and assign it to the worker. The server answers one request at a time per key, so let only one
+background subagent run at a time - the other workers wait in the queue:
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+		<capacity subagent-workers="1"/>
+		<agent-overrides>
+			<agent name="TL_ResearchWorker" model="qwen3.8-27b" provider="qwen"/>
+		</agent-overrides>
+	</instance>
+</config>
+```
+
+`subagent-workers` applies to every background subagent of the installation, not only to research
+workers. `%QWEN_API_KEY%` is an alias the application declares for the environment variable that
+holds the key (prefix `unencrypted:`).
+
+How the two compare on the research questions is measured with the eval (`tl-ai-eval`, arms
+`albert-gpt` and `albert-gpt-worker-qwen`); the results are in #784.
 
 ## Security
 

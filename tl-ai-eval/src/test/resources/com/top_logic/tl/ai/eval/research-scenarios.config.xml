@@ -25,6 +25,15 @@
 <eval judge-model="claude-sonnet-4-6" judge-provider="anthropic" repeats="3">
 	<arms>
 		<arm name="albert-gpt" agent="TL_SingleAgent" model="gpt-5.6-luna"/>
+		<!--
+			The lead on the same model, its research workers on a local model (#784). The local server
+			answers one request at a time, so the workers run one after the other.
+		-->
+		<arm name="albert-gpt-worker-qwen" agent="TL_SingleAgent" model="gpt-5.6-luna" subagent-workers="1">
+			<agent-models>
+				<agent-model agent="TL_ResearchWorker" model="qwen3.8-27b" provider="qwen"/>
+			</agent-models>
+		</arm>
 	</arms>
 	<scenarios>
 

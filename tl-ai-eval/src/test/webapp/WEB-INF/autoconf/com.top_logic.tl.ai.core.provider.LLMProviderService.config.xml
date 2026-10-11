@@ -15,6 +15,10 @@
 	"gpt-5.6-luna" is the model the research questions (research-scenarios.config.xml) run on, behind
 	-Dtl.ai.research.e2e=true and with tl_openai_api_key in the environment.
 
+	"qwen3.8-27b" is a local model on an OpenAI-compatible server in the company network (vLLM, one
+	request at a time per key), the research workers' model of one arm of the research questions;
+	key in tl_qwen_api_key.
+
 	"eval-no-tools" exists to be a model that cannot call tools, so that the harness's own
 	"could not run" path is exercised by a test rather than only by a model nobody has today.
 
@@ -55,6 +59,13 @@
 						models="gpt-5.6-luna"
 						name="openai"
 					/>
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
+						api-key="%QWEN_API_KEY%"
+						base-url="http://ki.bos.local:8080"
+						catalog-provider-id=""
+						models="qwen3.8-27b"
+						name="qwen"
+					/>
 				</providers>
 				<model-catalog>
 					<model-overrides>
@@ -91,6 +102,13 @@
 							max-output="64000"
 							reasoning="true"
 							temperature="false"
+							tool-call="true"
+						/>
+						<model name="qwen3.8-27b"
+							context-window="230000"
+							max-output="16000"
+							reasoning="false"
+							temperature="true"
 							tool-call="true"
 						/>
 					</model-overrides>

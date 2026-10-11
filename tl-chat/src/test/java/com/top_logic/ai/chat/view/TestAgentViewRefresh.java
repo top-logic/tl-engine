@@ -27,6 +27,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -112,6 +113,18 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		_scope.removeModelListener(TlAiExecutionFactory.getUserMemoryType(), _listener);
 		SessionService.getInstance().terminateSession(_session.getId());
 		super.tearDown();
+	}
+
+	/**
+	 * A view rendered for no browser window - the check of a view that holds a chat - does not
+	 * replace the window the sub-session shows, so a run still reaches the user's page.
+	 */
+	public void testAHeadlessRenderDoesNotReplaceTheWindow() {
+		AgentViewRefreshService.registerWindow(subSession(), "view-check", new ReactWindowRegistry("view-check"));
+
+		assertTrue(RunWindow.get().inWindow(subSession(), root -> {
+			// Only whether the window is reached.
+		}));
 	}
 
 	/**

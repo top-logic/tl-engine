@@ -285,6 +285,12 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			|| windowName == null || windowName.isEmpty()) {
 			return;
 		}
+		if (registry.getQueue(windowName) == null) {
+			// A tree built for no browser window - a view rendered headlessly to check it - renders
+			// its chat elements too. It must not replace the window the sub-session really shows:
+			// a browser window's queue is in its registry before its tree is built.
+			return;
+		}
 		// The account is read here, on the rendering request's thread, and kept: the refresh runs on
 		// a scheduler thread with no interaction context of its own, and asking a sub-session for
 		// its account there is a knowledge-base access outside any context. It also cannot change -

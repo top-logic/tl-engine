@@ -518,7 +518,10 @@ public class SubagentJobRegistry {
 	 *
 	 * <p>
 	 * A question ends the wait whichever subagent asks it: a subagent the lead waits for cannot finish
-	 * before it is answered, and another one's question must not wait behind a long wait.
+	 * before it is answered, and another one's question must not wait behind a long wait. For the same
+	 * reason the wait does not start at all while one of the given jobs waits for the lead to answer a
+	 * question the lead was shown before: the lead and the subagent would wait for each other until the
+	 * timeout.
 	 * </p>
 	 */
 	public List<SubagentResult> awaitBlocking(List<String> ids, long timeoutMs) {
@@ -526,7 +529,7 @@ public class SubagentJobRegistry {
 		synchronized (_completionLock) {
 			int questions = _questionsAsked;
 			while (!allTerminal(ids) && _questionsAsked == questions && !hasUndeliveredQuestion()
-					&& System.currentTimeMillis() < deadline) {
+					&& !waitsForLead(ids) && System.currentTimeMillis() < deadline) {
 				long wait = deadline - System.currentTimeMillis();
 				if (wait <= 0) {
 					break;
@@ -546,6 +549,17 @@ public class SubagentJobRegistry {
 		for (SubagentJob job : _jobs.values()) {
 			LeadQuestion asked = job.leadQuestion();
 			if (asked != null && !asked.isDelivered() && !asked.answer().isDone()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Whether one of the given jobs waits for the lead to answer its question. */
+	private boolean waitsForLead(List<String> ids) {
+		for (String id : ids) {
+			SubagentJob job = get(id);
+			if (job != null && job.waitingFor() == SubagentJob.Waiting.LEAD_ANSWER) {
 				return true;
 			}
 		}

@@ -6,7 +6,9 @@
 package com.top_logic.tl.ai.core.citation;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -27,9 +29,17 @@ import java.util.regex.Pattern;
  * </p>
  *
  * <p>
+ * The same holds for what the run typed into a browser page: a page shows a text field's value, so an
+ * address the model typed would come back as part of the page. The ledger therefore keeps the texts
+ * the run {@link #typed(String) typed}, and an address that occurs in one of them is never taken from
+ * a page ({@link #addAllShownIn(String)}).
+ * </p>
+ *
+ * <p>
  * Addresses are compared {@link #normalize(String) normalized}: scheme and host in lower case, the
- * default port and the fragment dropped, an empty path read as {@code /}. Path and query are compared
- * exactly, so an address with a parameter the model added is a different address.
+ * default port and the fragment dropped, an empty path read as {@code /}, characters outside ASCII
+ * percent-encoded and dot segments resolved, as a browser requests the address. Path and query are
+ * otherwise compared exactly, so an address with a parameter the model added is a different address.
  * </p>
  *
  * <p>
@@ -43,6 +53,9 @@ public final class SeenUrls {
 	/** How many addresses one run keeps; past this, new ones are not added. */
 	private static final int MAX_URLS = 20_000;
 
+	/** How many typed texts one run keeps; past this, a run's page addresses are no longer taken. */
+	private static final int MAX_TYPED = 1_000;
+
 	/** An http(s) address in running text, up to the first character no address contains. */
 	private static final Pattern URL = Pattern.compile("https?://[^\\s<>\"'`{}|\\\\^\\[\\]]+",
 		Pattern.CASE_INSENSITIVE);
@@ -50,6 +63,8 @@ public final class SeenUrls {
 	private final Set<String> _urls = new HashSet<>();
 
 	private final Set<String> _messages = new HashSet<>();
+
+	private final List<String> _typed = new ArrayList<>();
 
 	/** Creates an empty ledger. */
 	public SeenUrls() {
@@ -97,6 +112,63 @@ public final class SeenUrls {
 	}
 
 	/**
+	 * Records every address that occurs in a page the run was shown, except an address that occurs in
+	 * a text the run {@link #typed(String) typed}: a page shows what was typed into it, and that is the
+	 * model's own words, not the page's.
+	 *
+	 * @param text
+	 *        The page text; may be {@code null}.
+	 */
+	public void addAllShownIn(String text) {
+		if (text == null || text.isEmpty()) {
+			return;
+		}
+		List<String> typed;
+		synchronized (this) {
+			if (_typed.size() >= MAX_TYPED) {
+				// Too many texts to tell apart: a page of this run adds nothing any more.
+				return;
+			}
+			typed = List.copyOf(_typed);
+		}
+		Matcher matcher = URL.matcher(text);
+		while (matcher.find()) {
+			String url = trimTail(matcher.group());
+			if (typed.stream().noneMatch(entry -> entry.contains(url))) {
+				add(url);
+			}
+		}
+	}
+
+	/**
+	 * Records a text the run typed into a page.
+	 *
+	 * <p>
+	 * From then on, no address that occurs in the text is taken from a page, and a browser that acts
+	 * for the run sends no form data ({@link #hasTyped()}).
+	 * </p>
+	 *
+	 * @param text
+	 *        What was typed; {@code null} and empty texts are ignored.
+	 */
+	public synchronized void typed(String text) {
+		if (text == null || text.isEmpty()) {
+			return;
+		}
+		if (_typed.size() < MAX_TYPED) {
+			// A full list is never added to: addAllShownIn then takes nothing at all.
+			_typed.add(text);
+		}
+	}
+
+	/**
+	 * Whether the run typed anything into a page.
+	 */
+	public synchronized boolean hasTyped() {
+		return !_typed.isEmpty();
+	}
+
+	/**
 	 * Marks a message as read into this ledger.
 	 *
 	 * @param messageId
@@ -108,16 +180,22 @@ public final class SeenUrls {
 	}
 
 	/**
-	 * Takes over every address of another run's ledger - a sub-agent whose result this run received.
+	 * Takes over every address and every typed text of another run's ledger - a sub-agent whose result
+	 * this run received.
 	 */
 	public void addAll(SeenUrls other) {
 		if (other == null || other == this) {
 			return;
 		}
 		Set<String> theirs;
+		List<String> theirTyped;
 		synchronized (other) {
 			theirs = new HashSet<>(other._urls);
+			theirTyped = List.copyOf(other._typed);
 		}
+		// What the other run typed is not taken from a page this run reads either: it may be the same
+		// browser page.
+		theirTyped.forEach(this::typed);
 		synchronized (this) {
 			for (String url : theirs) {
 				if (_urls.size() >= MAX_URLS) {
@@ -150,7 +228,9 @@ public final class SeenUrls {
 		}
 		URI uri;
 		try {
-			uri = URI.create(url.strip());
+			// In the form a browser requests it: characters outside ASCII percent-encoded, dot segments
+			// of the path resolved - so an address the run was given is found when the browser asks for it.
+			uri = URI.create(URI.create(url.strip()).toASCIIString()).normalize();
 		} catch (IllegalArgumentException ex) {
 			return null;
 		}

@@ -252,12 +252,30 @@ it was given:
 
 Any other address - one the model wrote itself, or changed by one character - is refused before
 anything is sent, with a sentence that tells the model to use an address from one of these sources.
-Addresses are compared with scheme and host in lower case, without the default port and the fragment;
-path and query are compared exactly.
+Addresses are compared with scheme and host in lower case, without the default port and the fragment,
+with characters outside ASCII percent-encoded and dot segments resolved, as a browser requests them;
+path and query are otherwise compared exactly.
+
+**The browser (#813).** The rule holds for every navigation of the browser while it acts for such a run,
+not only for the address `browserNavigate` is given. A click on a link and a form submit open a page too,
+and a form puts what was typed into it in the address. So the browser session checks each request that
+loads a page:
+
+- A top-level navigation must lead to an address the run was given. A link or form that leads anywhere
+  else is not followed; the tool answers that the page tried to open an address the run was not given,
+  and names no address.
+- After the run typed into a page (`browserType`), a navigation sends no request body, because a form
+  sends what was typed in its body, also to an address the run was given. And a frame of a page loads
+  only from an address the run was given, because a form can target a frame. Such a frame stays empty;
+  a refused form post fails the tool call.
+- A server-side redirect is followed, as `webFetch` follows it: the address it leads to is the server's,
+  not the run's.
 
 **What does not give addresses.** Text the model can steer: the query line a search answer repeats,
 an error that names the address it was given, a subagent's report, a summary of compacted history.
-Otherwise the model could launder an address it composed through such a text.
+Otherwise the model could launder an address it composed through such a text. For the same reason, an
+address that occurs in a text the run typed into a browser page is never taken from a page: the page
+snapshot shows the value of a text field, so a typed address would come back as part of the page.
 
 **Where it is configured.** `url-provenance` on `WebToolsService`:
 
@@ -268,9 +286,12 @@ Otherwise the model could launder an address it composed through such a text.
 | `OFF` | none |
 
 **What it does not cover.** A web search query still goes to the search provider, and a worker can be
-made to put data into a query. The browser can still type into a form of a page it opened, and the page
-sends what was typed. Both are reasons to give a research worker no private data. With `ALL`, a chat run
-does not remember the addresses of earlier runs of the same conversation: the ledger belongs to one run.
+made to put data into a query. A page's own script reads what is typed into the page and can send it
+anywhere without a navigation (a `fetch`, an image request). The browser rule closes the routes a page
+without script has - links and forms - which is what injected text on an otherwise honest site usually
+is; it does not close the routes of a hostile site's script. Both are reasons to give a research worker
+no private data. With `ALL`, a chat run does not remember the addresses of earlier runs of the same
+conversation: the ledger belongs to one run.
 
 ---
 

@@ -26,10 +26,20 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  * </p>
  *
  * <p>
+ * <b>The browser.</b> The rule holds for every navigation of the browser while it acts for such a run,
+ * not only for the address {@code browserNavigate} is given: a link the run clicks and a form it
+ * submits open a new page too, and a form sends what was typed into it in its address. The browser
+ * session asks the run's ledger before every top-level navigation ({@link #boundLedger()}). After the
+ * run typed into a page ({@link #typed(String)}), it also sends no form data in a request body and
+ * loads no frame from an address it was not given. An address that occurs in a text the run typed is
+ * never taken from a page, because a page shows what was typed into it.
+ * </p>
+ *
+ * <p>
  * <b>What it does not cover.</b> The query of a web search still goes to the search provider; a
- * worker can be made to put data into a query. The browser can still type into a form of a page it
- * opened, and the page sends what was typed. Both are reasons to give a research worker no private
- * data in the first place.
+ * worker can be made to put data into a query. A page's own script reads what is typed into the page
+ * and can send it anywhere, without a navigation. Both are reasons to give a research worker no
+ * private data in the first place.
  * </p>
  *
  * <p>
@@ -39,6 +49,25 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  * </p>
  */
 public final class UrlProvenance {
+
+	/**
+	 * The answer for a navigation the browser refused under this rule: a link or a form of the page led
+	 * to an address the run was not given.
+	 *
+	 * <p>
+	 * It names no address: the refused one may be an address the model composed, and an answer that
+	 * repeated it would give the model a way to make it "seen".
+	 * </p>
+	 */
+	static final String NAVIGATION_REFUSED = "The page tried to open a web address that this run was not"
+		+ " given: its task or the user did not give it, no web search returned it, and no page read in"
+		+ " this run links to it. So it was not opened. A link or form you use must lead to such an"
+		+ " address; to open one, call browserNavigate with it exactly as it was given.";
+
+	/** The answer for a form the browser refused to send after the run typed into a page. */
+	static final String FORM_REFUSED = "The page tried to send form data, after this run typed into a"
+		+ " page. This run may not send what it typed to a web site, so nothing was sent. Read the pages"
+		+ " you need instead of submitting forms.";
 
 	/** A backslash escaping a punctuation character in Markdown. */
 	private static final Pattern MARKDOWN_ESCAPE = Pattern.compile("\\\\(\\p{Punct})");
@@ -79,7 +108,8 @@ public final class UrlProvenance {
 	}
 
 	/**
-	 * Records every address that occurs in a page the running agent read.
+	 * Records every address that occurs in a page the running agent read, except an address that
+	 * occurs in a text the agent typed into a page (see {@link SeenUrls#addAllShownIn(String)}).
 	 *
 	 * <p>
 	 * The page is Markdown, which escapes some characters of a plain-text address
@@ -93,8 +123,38 @@ public final class UrlProvenance {
 	public static void recordAllIn(String pageText) {
 		SeenUrls seen = ledger();
 		if (seen != null && pageText != null) {
-			seen.addAllIn(MARKDOWN_ESCAPE.matcher(pageText).replaceAll("$1"));
+			seen.addAllShownIn(MARKDOWN_ESCAPE.matcher(pageText).replaceAll("$1"));
 		}
+	}
+
+	/**
+	 * Records a text the running agent typed into a browser page.
+	 *
+	 * @param text
+	 *        What was typed; ignored outside an agent run.
+	 */
+	public static void typed(String text) {
+		SeenUrls seen = ledger();
+		if (seen != null) {
+			seen.typed(text);
+		}
+	}
+
+	/**
+	 * The ledger a browser acting for the running agent must check every navigation against, or
+	 * {@code null} when the rule does not apply to the running agent.
+	 *
+	 * <p>
+	 * Asked on the thread of the tool call, where the run is bound; the browser session holds the
+	 * answer for the duration of the one operation it performs for that call.
+	 * </p>
+	 */
+	static SeenUrls boundLedger() {
+		SeenUrls seen = ledger();
+		if (seen == null || !appliesTo(RunInfoBinding.current())) {
+			return null;
+		}
+		return seen;
 	}
 
 	/**

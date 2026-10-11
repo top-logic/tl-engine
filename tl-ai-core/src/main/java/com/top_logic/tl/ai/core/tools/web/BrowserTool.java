@@ -201,7 +201,7 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
-		return readPage(execute(service, () -> service.navigate(sessionKey, trimmed), false));
+		return execute(service, () -> service.navigate(sessionKey, trimmed), false, true);
 	}
 
 	/**
@@ -232,7 +232,7 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
-		return readPage(execute(service, () -> service.snapshot(sessionKey), false));
+		return execute(service, () -> service.snapshot(sessionKey), false, true);
 	}
 
 	/**
@@ -317,6 +317,9 @@ public class BrowserTool {
 			return "Error: no execution context is available for the browser session.";
 		}
 		String trimmedRef = ref.trim();
+		// Before the field is filled: filling it can submit its form, and the browser has to know by then
+		// that the run typed (see UrlProvenance).
+		UrlProvenance.typed(text);
 		return execute(service, () -> service.type(sessionKey, trimmedRef, text), true);
 	}
 
@@ -347,7 +350,7 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
-		return readPage(execute(service, () -> service.back(sessionKey), true));
+		return execute(service, () -> service.back(sessionKey), true, true);
 	}
 
 	/**
@@ -692,6 +695,32 @@ public class BrowserTool {
 	 * </p>
 	 */
 	static String execute(BrowserToolsService service, Supplier<PageView> op, boolean terse) {
+		return execute(service, op, terse, false);
+	}
+
+	/**
+	 * As {@link #execute(BrowserToolsService, Supplier, boolean)}, and records the page the operation
+	 * ended on for the URL provenance rule: its address and, with {@code readPage}, every address in
+	 * the answer.
+	 *
+	 * <p>
+	 * Only an answer that shows a page adds addresses. An error answer adds none: it may name an
+	 * address the run was refused, and recording that would make it "seen". An address that occurs in
+	 * a text the run typed is not taken from the answer either, because the page shows the typed text
+	 * (see {@link UrlProvenance#recordAllIn(String)}).
+	 * </p>
+	 *
+	 * @param readPage
+	 *        Whether the answer shows the page to the run, so the addresses in it were given to the run.
+	 *
+	 * <p>
+	 * Package-visible so the recording can be asserted against a real page.
+	 * </p>
+	 *
+	 * @see UrlProvenance
+	 */
+	static String execute(BrowserToolsService service, Supplier<PageView> op, boolean terse,
+			boolean readPage) {
 		PageView view;
 		try {
 			view = op.get();
@@ -718,29 +747,19 @@ public class BrowserTool {
 			Logger.error("Browser operation failed: " + ex.getMessage(), ex, BrowserTool.class);
 			return "Error: browser operation failed: " + ex.getMessage();
 		}
-		return render(view, service.getMaxPageBytes(), service.getMaxPageChars(), terse);
+		String answer = render(view, service.getMaxPageBytes(), service.getMaxPageChars(), terse);
+		// The page the run is on now: an address it was given, or where a server redirected it.
+		UrlProvenance.record(view.finalUrl());
+		if (readPage) {
+			UrlProvenance.recordAllIn(answer);
+		}
+		return answer;
 	}
 
 	/**
 	 * Auto-generates a screenshot filename {@code <host>-<yyyyMMdd-HHmmss>.png} from the captured URL,
 	 * falling back to {@code screenshot} for the host when it cannot be parsed.
 	 */
-	/**
-	 * Records the addresses on a page this run was shown, for the URL provenance rule, and returns
-	 * the page unchanged.
-	 *
-	 * <p>
-	 * Every address in the answer counts: the page's links and its own address. An error answer adds
-	 * none the run did not have, because it names at most the address the run was allowed to open.
-	 * </p>
-	 *
-	 * @see UrlProvenance
-	 */
-	private static String readPage(String answer) {
-		UrlProvenance.recordAllIn(answer);
-		return answer;
-	}
-
 	private static String autoName(String url) {
 		String host = null;
 		try {

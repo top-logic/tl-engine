@@ -481,7 +481,11 @@ ledger is `SeenUrls` on the run's `ReadingList`: `AgentLoop` adds the addresses 
 lead's messages at each turn start (not framework notices, subagent reports or summaries), the web tools
 add search result addresses and page links (`UrlProvenance.record*`). Never add addresses from a tool
 answer that echoes its arguments - the model could launder a composed address through it.
-`TestUrlProvenance` pins the rule, `TestResearchInjection` (behind `-Dtl.ai.injection.e2e=true`, OpenAI)
+The browser session asks the same ledger for every navigation it makes for such a run (#813): a link or
+form must lead to a given address, and after `browserType` no navigation sends a body and no frame loads
+from an unseen address; an address in a text the run typed is never taken from a page.
+`TestUrlProvenance` pins the rule, `TestBrowserUrlProvenance` (behind `-Dtl.ai.browser.e2e=true`) the
+browser's half, `TestResearchInjection` (behind `-Dtl.ai.injection.e2e=true`, OpenAI)
 puts a real model in front of it.
 
 ### Served binaries: two routes, two rules

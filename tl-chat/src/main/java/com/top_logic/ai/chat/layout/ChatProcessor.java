@@ -1284,7 +1284,6 @@ public class ChatProcessor {
 			case NO_ANSWER -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_NO_ANSWER;
 			case OUTPUT_LIMIT -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_OUTPUT_LIMIT;
 			case MAX_TURNS -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_TURN_LIMIT;
-			case MAX_TOOL_CALLS -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_TOOL_LIMIT;
 			default -> null;
 		};
 		if (notice == null) {

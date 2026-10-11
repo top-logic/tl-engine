@@ -83,7 +83,7 @@ public class TestSubagentPart extends TestCase {
 		listener.recordSubagentStarted("sa-2", "researcher", "find Y", "call-2");
 
 		listener.recordSubagentCompleted("sa-1",
-			new SubagentResult("X is 4..", TokenUsage.EMPTY, 10L, 8, StopReason.MAX_TOOL_CALLS), "run-1");
+			new SubagentResult("X is 4..", TokenUsage.EMPTY, 10L, 8, StopReason.MAX_TURNS), "run-1");
 		listener.recordSubagentCompleted("sa-2",
 			new SubagentResult("Y is 7.", TokenUsage.EMPTY, 10L, 1, StopReason.COMPLETE), "run-2");
 

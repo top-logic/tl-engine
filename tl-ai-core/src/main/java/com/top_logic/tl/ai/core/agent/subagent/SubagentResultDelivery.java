@@ -86,7 +86,7 @@ public final class SubagentResultDelivery {
 		text.append("_tokens: ").append(result.tokenUsage().totalTokens())
 			.append(", duration: ").append(result.durationMs())
 			.append("ms, tools: ").append(result.toolCallCount()).append('_');
-		String limit = limitLine(job, result);
+		String limit = limitLine(result);
 		if (limit != null) {
 			text.append('\n').append(limit);
 		}
@@ -132,15 +132,12 @@ public final class SubagentResultDelivery {
 	 * then - the lead has to know that it may be incomplete, and say so.
 	 * </p>
 	 */
-	static String limitLine(SubagentJob job, SubagentResult result) {
+	static String limitLine(SubagentResult result) {
 		StopReason reason = result.stopReason();
 		if (reason == null || !reason.isLimit()) {
 			return null;
 		}
 		String what = switch (reason) {
-			case MAX_TOOL_CALLS -> "it used up its budget of "
-				+ (job.toolCallLimit() > 0 ? job.toolCallLimit() + " " : "") + "tool calls and wrote its"
-				+ " report from what it had by then";
 			case MAX_TURNS -> "it reached its turn limit and wrote its report from what it had by then";
 			case BUDGET_EXHAUSTED -> "the token or money budget it spends from ran out, and it stopped between"
 				+ " two turns without a final report";

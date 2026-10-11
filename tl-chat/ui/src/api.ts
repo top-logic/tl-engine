@@ -649,7 +649,7 @@ function mapToolStatus(status: string | undefined): { status: ToolCallStatus; is
  * on the server): it has an answer, but maybe not the whole one (#786).
  */
 export function isLimitStop(reason: string | undefined): boolean {
-  return reason === 'MAX_TURNS' || reason === 'MAX_TOOL_CALLS' || reason === 'BUDGET_EXHAUSTED' || reason === 'OUTPUT_LIMIT'
+  return reason === 'MAX_TURNS' || reason === 'BUDGET_EXHAUSTED' || reason === 'OUTPUT_LIMIT'
 }
 
 /** How a synchronous delegation ended, from its run's stop reason. */

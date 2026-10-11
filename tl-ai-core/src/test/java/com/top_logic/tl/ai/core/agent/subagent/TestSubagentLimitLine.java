@@ -26,7 +26,6 @@ public class TestSubagentLimitLine extends TestCase {
 
 	/** The line says which limit it was, outside the subagent's own text. */
 	public void testTheLineSaysWhichLimit() {
-		assertLine(StopReason.MAX_TOOL_CALLS, "budget of 5 tool calls");
 		assertLine(StopReason.MAX_TURNS, "turn limit");
 		assertLine(StopReason.BUDGET_EXHAUSTED, "token or money budget");
 		assertLine(StopReason.OUTPUT_LIMIT, "output limit");
@@ -41,7 +40,6 @@ public class TestSubagentLimitLine extends TestCase {
 
 	private static SubagentJob job(StopReason reason) {
 		SubagentJob job = new SubagentJob("sa-1", "worker", "research X", new CancellationToken());
-		job.setToolCallLimit(5);
 		job.markTerminal(SubagentJobStatus.DONE, new SubagentResult("What I found.", TokenUsage.EMPTY, 1L, 5, reason));
 		return job;
 	}

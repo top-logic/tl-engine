@@ -41,11 +41,6 @@ public class SpawnSubagentTool implements Tool {
 				"context": {
 					"type": "string",
 					"description": "Relevant background from the conversation that the subagent needs."
-				},
-				"toolCallBudget": {
-					"type": "integer",
-					"minimum": 1,
-					"description": "Optional: the most tool calls the subagent may make; asking you and recording findings do not count. When it has used them, it gets one last turn without tools to write its report. It cannot raise the limit the agent itself has."
 				}
 			},
 			"required": ["agent", "task"]
@@ -129,11 +124,6 @@ public class SpawnSubagentTool implements Tool {
 			return ToolResult.of("ERROR: 'task' parameter is required.");
 		}
 		String contextStr = (String) args.get("context");
-		Object budgetArg = args.get("toolCallBudget");
-		int toolCallBudget = budgetArg instanceof Number number ? number.intValue() : 0;
-		if (budgetArg != null && toolCallBudget < 1) {
-			return ToolResult.of("ERROR: 'toolCallBudget' must be a whole number of at least 1, or left out.");
-		}
 
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
@@ -141,7 +131,7 @@ public class SpawnSubagentTool implements Tool {
 				+ " none. Do the task yourself, or with a delegate_to_* tool.");
 		}
 
-		return SubagentSpawner.spawnAsync(agentName, task, contextStr, toolCallBudget, toolContext, _loopFactory,
+		return SubagentSpawner.spawnAsync(agentName, task, contextStr, toolContext, _loopFactory,
 			registry);
 	}
 }

@@ -405,11 +405,6 @@
 				-->
 				<capacity/>
 				<!--
-					The research worker of TL_deepResearch never makes more than 25 tool calls (searches
-					and page reads), the budget of the deep effort level; the lead gives each worker the
-					smaller budget of its effort level when it spawns it. At the limit the worker gets one
-					last turn without tools and writes its report from what it has.
-
 					One answer of the worker is at most 16384 tokens: a tool call or a sub-question's
 					report needs a few thousand. Without the limit, a model that loops in a tool call's
 					arguments - spaces after a quote it closed too early - writes until the model's own
@@ -417,7 +412,7 @@
 					An installation that assigns the worker a model with a smaller output limit lowers it.
 				-->
 				<agent-overrides>
-					<agent name="TL_ResearchWorker" max-tool-calls="25" max-tokens="16384"/>
+					<agent name="TL_ResearchWorker" max-tokens="16384"/>
 				</agent-overrides>
 			</instance>
 		</config>
@@ -1789,11 +1784,11 @@ Decide for yourself, without showing it as a separate step:
 - the question in one sentence, what the report must cover, the time frame and region;
 - the effort, from this table. Use standard unless the user asks for something else: "quick" or a single fact is quick; "deep", "thorough" or "a full report" is deep.
 
-| effort | use it for | workers | tool calls per worker | further rounds |
+| effort | use it for | workers | how much each worker reads | further rounds |
 |---|---|---|---|---|
-| quick | one fact, one narrow question | 1 | 10 | 0 |
-| standard | the default | 3 | 15 | 1 |
-| deep | the user asks for depth | 5-8 | 25 | 2 |
+| quick | one fact, one narrow question | 1 | a few sources | 0 |
+| standard | the default | 3 | enough to answer its sub-question | 1 |
+| deep | the user asks for depth | 5-8 | thoroughly: several independent sources | 2 |
 
 ## 3. Plan
 
@@ -1806,12 +1801,13 @@ Tell the user in a few lines: the effort, the sub-questions as a numbered list, 
 
 ## 4. Fan out
 
-Call `spawn_subagent` once per sub-question, ALL in the SAME turn, with `agent` = "TL_ResearchWorker" and `toolCallBudget` = the tool calls of the effort level (quick 10, standard 15, deep 25). This name is fixed: do not look it up, and do not load another skill to spawn. The budget is enforced: a worker that has used it writes its report from what it has. Write each `task` so that it stands alone:
+Call `spawn_subagent` once per sub-question, ALL in the SAME turn, with `agent` = "TL_ResearchWorker". This name is fixed: do not look it up, and do not load another skill to spawn. Write each `task` so that it stands alone:
 
 ```
 Sub-question: [one sentence]
 Purpose: [what the report needs from it, one sentence]
 Scope: [time frame, region; languages to search in]
+Effort: [quick: read a few sources | standard: read enough to answer the sub-question | deep: read thoroughly, several independent sources]
 Start from: [URLs the user gave, if any]
 ```
 
@@ -2754,11 +2750,11 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 						A spawned worker is an unattended run, so it reaches its tools only where the
 						<background-allowlist> admits "egress". Its model is the installation's default;
 						an installation that wants a cheaper model for it assigns one in <agent-overrides>.
-						Its tool calls are capped at 25 there (max-tool-calls, the deep effort level); the
-						lead gives each worker the budget of its effort level when it spawns it (#775).
+						How much it reads follows the effort the lead writes into its task; nothing counts
+						its tool calls. Its turn limit and its output limit are its safety nets.
 					-->
 					<agent name="TL_ResearchWorker"
-						description="Research worker for TL_deepResearch: answers ONE research sub-question from the public web with webSearch and webFetch, and reports findings, each with the URL of the page it read and a sentence quoted from it. No application data, no changes. Give it a self-contained task: the sub-question, its purpose, the scope (time frame, region, languages) and a budget of tool calls."
+						description="Research worker for TL_deepResearch: answers ONE research sub-question from the public web with webSearch and webFetch, and reports findings, each with the URL of the page it read and a sentence quoted from it. No application data, no changes. Give it a self-contained task: the sub-question, its purpose, the scope (time frame, region, languages) and the effort - how much to read."
 					>
 						<display-name>
 							<en>Research worker</en>
@@ -2773,16 +2769,16 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 <tools>
 - `webSearch` finds pages. Write specific queries: names, terms, numbers, a year. Search in the language in which the best sources are probably written; the task can name languages.
 - `webFetch` reads one page. Only a page you read with `webFetch` is a source. A search result is NOT a source: read the page first.
-- A long page or PDF comes in parts. Read the next part only when the part you have does not answer what you look for: every part costs one call of your budget.
-- `recordFinding` keeps one finding: a claim, the URL of the page as you read it, and the words of the page the claim rests on. The quote is checked against the text you read; a quote the page does not contain is refused. It does not count against your budget, and neither does `ask_lead`.
+- A long page or PDF comes in parts. Read the next part only when the part you have does not answer what you look for.
+- `recordFinding` keeps one finding: a claim, the URL of the page as you read it, and the words of the page the claim rests on. The quote is checked against the text you read; a quote the page does not contain is refused.
 </tools>
 
 <method>
-1. Read the task: the question, its purpose and the scope. Your budget of searches and page reads is enforced: when you have used it, you are told so and can call no tool any more - then write your report from what you have. So read the most promising pages first, and record each finding as soon as you have its evidence.
+1. Read the task: the question, its purpose, the scope and the effort. The effort says how much to read: quick - a few sources; standard - enough to answer the question; deep - thoroughly, several independent sources. Read the most promising pages first, and record each finding as soon as you have its evidence.
 2. Search. From the results, choose the 2-4 most promising pages. Prefer primary sources: the organisation itself, official statistics, laws and regulators, standards, scientific papers, original announcements. Aggregators, SEO pages and content farms are weak sources: use them only to find the primary source.
 3. Read the pages you chose with `webFetch`. For each statement that answers part of the question, call `recordFinding` at once: the claim in your own words, the URL, and the sentence of the page that supports it, copied word for word. If the quote is refused, copy it again exactly from the page text.
 4. After every 2-3 calls, check: what is answered, what is missing, do pages contradict each other? Search again with a narrower query for what is missing.
-5. Stop as soon as one of these is true: the question is answered with sources; you used your budget; two searches one after the other brought no new useful page.
+5. Stop as soon as one of these is true: the question is answered with sources, as far as the effort asks; two searches one after the other brought no new useful page.
 </method>
 
 <rules>

@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.Logger;
@@ -533,11 +534,24 @@ final class PresentationPane {
 		}
 	}
 
-	/** What the pane shows of an HTML document: its body, without what is for the download only. */
+	/**
+	 * What the pane shows of an HTML document: its body, without what is for the download only.
+	 *
+	 * <p>
+	 * The language the document declares on its {@code <html>} element goes with the body, on an
+	 * element around it: the pane hyphenates a long word, and a browser hyphenates by the language
+	 * an element is in. Without it, the body would be in the language of the page.
+	 * </p>
+	 */
 	static String inPlace(String document) {
-		Element body = Jsoup.parse(document).body();
+		Document parsed = Jsoup.parse(document);
+		Element body = parsed.body();
 		body.select("." + DOWNLOAD_ONLY).remove();
-		return body.html();
+		String lang = parsed.selectFirst("html").attr("lang").strip();
+		if (lang.isEmpty()) {
+			return body.html();
+		}
+		return new Element("div").attr("lang", lang).html(body.html()).outerHtml();
 	}
 
 	private Step table(Object value, List<TLObject> rows, String title) {

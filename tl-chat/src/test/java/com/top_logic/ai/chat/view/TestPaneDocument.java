@@ -34,4 +34,20 @@ public class TestPaneDocument extends TestCase {
 		assertFalse(shown, shown.contains("Research report"));
 		assertTrue(shown, shown.contains("<p>The answer.</p>"));
 	}
+
+	/** The pane hyphenates by language, so the body is in the language the document declares. */
+	public void testTheDeclaredLanguageGoesWithTheBody() {
+		String shown = PresentationPane.inPlace("<!DOCTYPE html><html lang=\"de\"><head></head>"
+			+ "<body><div class=\"report\"><h2>Photovoltaikanlagen</h2></div></body></html>");
+
+		assertTrue(shown, shown.startsWith("<div lang=\"de\">"));
+		assertTrue(shown, shown.contains("<h2>Photovoltaikanlagen</h2>"));
+	}
+
+	/** A document that declares no language is shown in the language of the page. */
+	public void testNoLanguageNoWrapper() {
+		String shown = PresentationPane.inPlace("<html><body><p>Text</p></body></html>");
+
+		assertEquals("<p>Text</p>", shown);
+	}
 }

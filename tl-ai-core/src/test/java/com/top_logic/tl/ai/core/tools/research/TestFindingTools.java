@@ -67,6 +67,27 @@ public class TestFindingTools extends TestCase {
 		}
 	}
 
+	/**
+	 * A link is quoted as the words the page shows: the stored text has the link's Markdown, a reader
+	 * quotes its text.
+	 */
+	public void testALinkIsQuotedAsItsText() {
+		String page = "Energy storage is one option to making [grids](https://en.example/wiki/Electrical_grid"
+			+ " \"Electrical grid\") more flexible. Most of it is [pumped hydro](https://en.example/wiki/Hydro_(power))"
+			+ " today. ![Dam](https://en.example/dam.png) A dam [\\[3\\]](#cite-3) holds the water.";
+		ReadingList list = listWith(REPORT, "Grid storage", page);
+		try (ReadingListBinding.Binding bound = ReadingListBinding.bind(list)) {
+			assertTrue(_tools.recordFinding("Storage adds flexibility.", REPORT,
+				"Energy storage is one option to making grids more flexible.").startsWith("Recorded"));
+			assertTrue(_tools.recordFinding("Pumped hydro dominates.", REPORT,
+				"Most of it is pumped hydro today.").startsWith("Recorded"));
+			assertTrue(_tools.recordFinding("A dam holds it.", REPORT, "A dam [3] holds the water.")
+				.startsWith("Recorded"));
+			assertTrue("the address is not the page's text", _tools.recordFinding("Wrong.", REPORT,
+				"one option to making grids https://en.example/wiki/Electrical_grid").startsWith("Error"));
+		}
+	}
+
 	/** A quote the source does not say is refused, and nothing is recorded. */
 	public void testAnInventedQuoteIsRefused() {
 		ReadingList list = listWith(REPORT, "Energy report 2026", PAGE);

@@ -41,12 +41,25 @@ public record Finding(String id, String claim, String source, String sourceTitle
 	private static final Pattern MARKDOWN_ESCAPE = Pattern.compile("\\\\(\\p{Punct})");
 
 	/**
+	 * The target of a Markdown link or image: an address, with at most one level of parentheses in it,
+	 * and an optional title.
+	 */
+	private static final String TARGET = "\\((?:[^()\\s]|\\([^()\\s]*\\))*(?:\\s+\"[^\"]*\")?\\)";
+
+	/** A Markdown image, which the page shows as no words at all. */
+	private static final Pattern IMAGE = Pattern.compile("!\\[(?:\\\\.|[^\\]\\\\])*\\]" + TARGET);
+
+	/** A Markdown link, which the page shows as its text. */
+	private static final Pattern LINK = Pattern.compile("\\[((?:\\\\.|[^\\]\\\\])*)\\]" + TARGET);
+
+	/**
 	 * Whether {@code quote} occurs in {@code text}.
 	 *
 	 * <p>
 	 * Word for word, but not white space for white space: a line break in a PDF's text is a space in a
 	 * sentence quoted from it, so every run of white space counts as one space on both sides. The
-	 * Markdown escapes of the stored text ({@code 2\.5}) are not required in the quote either.
+	 * Markdown escapes of the stored text ({@code 2\.5}) are not required in the quote either, and a
+	 * link is quoted as the words the page shows: its text, without its address.
 	 * </p>
 	 *
 	 * @param text
@@ -63,7 +76,17 @@ public record Finding(String id, String claim, String source, String sourceTitle
 			return false;
 		}
 		String squeezed = squeeze(text);
-		return squeezed.contains(words) || squeeze(MARKDOWN_ESCAPE.matcher(text).replaceAll("$1")).contains(words);
+		return squeezed.contains(words) || squeeze(unescape(text)).contains(words)
+			|| squeeze(unescape(asShown(text))).contains(words);
+	}
+
+	private static String unescape(String text) {
+		return MARKDOWN_ESCAPE.matcher(text).replaceAll("$1");
+	}
+
+	/** The text with each link replaced by its text and each image left out, as the page shows it. */
+	private static String asShown(String text) {
+		return LINK.matcher(IMAGE.matcher(text).replaceAll("")).replaceAll("$1");
 	}
 
 	private static String squeeze(String text) {

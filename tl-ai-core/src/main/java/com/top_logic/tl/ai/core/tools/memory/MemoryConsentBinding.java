@@ -23,8 +23,10 @@ import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
  * outermost run of a turn - the one the user's message started - is the one whose record counts,
  * and a delegate or a subagent inherits it. That is deliberate: a delegate's "user message" is the
  * instruction its parent wrote, so a run allowed to build its own record could agree with itself by
- * delegating with the words "remember that ...". A detached subagent, which runs long after the
- * turn ended and binds nothing, has no consent and can keep nothing - which is the safe default.
+ * delegating with the words "remember that ...". A detached subagent runs long after the turn
+ * ended, on a thread of its own, and builds its own record from its task - which its lead wrote, not
+ * the user ({@link com.top_logic.tl.ai.core.message.UserMessage.Origin#AGENT}). So it has no consent
+ * and can keep nothing, which is the safe default.
  * </p>
  */
 public class MemoryConsentBinding {

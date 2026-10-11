@@ -79,6 +79,20 @@ public class TestCompactionSidecar extends TestCase {
 	}
 
 	/**
+	 * A summary the framework wrote comes back from storage as the framework's, not as something the
+	 * user typed.
+	 */
+	public void testTheSummaryStaysTheFrameworks() {
+		recordTurnEndingInCompaction();
+		finishRun();
+
+		List<Message> reloaded = replay(roundTrip(_log));
+
+		UserMessage summary = (UserMessage) reloaded.get(1);
+		assertEquals(UserMessage.Origin.FRAMEWORK, summary.origin());
+	}
+
+	/**
 	 * The fingerprint survives a full serialize/deserialize round trip unchanged.
 	 *
 	 * <p>
@@ -219,7 +233,8 @@ public class TestCompactionSidecar extends TestCase {
 
 		List<Message> replacement = List.of(
 			new CompactionMarker("m1", T0, 4, 1200, "proactive"),
-			new UserMessage("s1", T0, List.of(new TextContent("The report was read."))),
+			new UserMessage("s1", T0, List.of(new TextContent("The report was read.")),
+				UserMessage.Origin.FRAMEWORK),
 			new AssistantMessage("a1", T0, List.of(new TextContent("Ready.")),
 				TokenUsage.EMPTY, "stop"));
 		compact(1, 1200, 150, replacement);

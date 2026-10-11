@@ -206,7 +206,7 @@ public class SubagentSpawner {
 					j.setToolCallLimit(targetLoop.toolCallLimit());
 					Conversation conversation = new Conversation();
 					conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
-						List.of(new TextContent(userPrompt))));
+						List.of(new TextContent(userPrompt)), UserMessage.Origin.AGENT));
 					int before = conversation.messages().size();
 
 					AgentEventListener childListener = subagentListener(logListener, j.subagentId());

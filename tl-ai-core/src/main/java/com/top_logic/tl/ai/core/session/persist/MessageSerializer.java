@@ -87,6 +87,9 @@ public final class MessageSerializer {
 			dto.setType(TYPE_USER);
 			UserMessageDto data = UserMessageDto.create();
 			data.setContent(toContentDtos(user.content()));
+			if (!user.fromUser()) {
+				data.setOrigin(user.origin().name());
+			}
 			dto.setUserData(data);
 		} else if (message instanceof AssistantMessage assistant) {
 			dto.setType(TYPE_ASSISTANT);
@@ -130,8 +133,9 @@ public final class MessageSerializer {
 
 		switch (dto.getType()) {
 			case TYPE_USER: {
-				return new UserMessage(id, timestamp,
-					fromContentDtos(dto.getUserData().getContent()));
+				UserMessageDto data = dto.getUserData();
+				return new UserMessage(id, timestamp, fromContentDtos(data.getContent()),
+					data.getOrigin().isEmpty() ? UserMessage.Origin.USER : UserMessage.Origin.valueOf(data.getOrigin()));
 			}
 			case TYPE_ASSISTANT: {
 				AssistantMessageDto data = dto.getAssistantData();

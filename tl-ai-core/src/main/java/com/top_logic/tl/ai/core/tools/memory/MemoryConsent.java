@@ -77,9 +77,11 @@ public class MemoryConsent {
 	 * The consent record of a turn whose user message is the newest one of the given conversation.
 	 *
 	 * <p>
-	 * Only the text parts are read. An attachment is not a sentence, and the framework's own
-	 * additions to a conversation - a rollback notice, a delivered subagent result - arrive later,
-	 * after the record has been built, so they cannot be mistaken for something the user typed.
+	 * Only the text parts are read: an attachment is not a sentence. Only a message the user wrote
+	 * counts ({@link UserMessage#fromUser()}). When the newest message in the user's role was written
+	 * by the framework or by another agent - a lead turn that a subagent's news started, a subagent's
+	 * task - the user said nothing in this turn, and the record grants nothing. The subagent's report
+	 * repeats what the subagent read, and that can be a page that asks to be remembered.
 	 * </p>
 	 */
 	public static MemoryConsent forNewestTurn(Conversation conversation) {
@@ -141,6 +143,9 @@ public class MemoryConsent {
 		List<Message> messages = conversation.messages();
 		for (int i = messages.size() - 1; i >= 0; i--) {
 			if (messages.get(i) instanceof UserMessage user) {
+				if (!user.fromUser()) {
+					return null;
+				}
 				StringBuilder text = new StringBuilder();
 				user.content().stream()
 					.filter(TextContent.class::isInstance)

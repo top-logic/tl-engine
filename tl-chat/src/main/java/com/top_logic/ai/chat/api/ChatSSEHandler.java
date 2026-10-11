@@ -66,6 +66,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -452,10 +453,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setUsedTokens(usedTokens())
 				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.RunCompleted e) {
-			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
+			sendEvent("run_completed", DtoMapper.toJson(withCost(RunCompletedEvent.create()
 				.setRunId(e.runId())
 				.setReason(e.reason().name())
-				.setTotalUsage(mapTokenUsage(e.totalUsage()))));
+				.setTotalUsage(mapTokenUsage(e.totalUsage())), e.totalCost())));
 		} else if (event instanceof AgentEvent.TurnStarted e) {
 			sendEvent("turn_started", DtoMapper.toJson(TurnStartedEvent.create()
 				.setTurnNumber(e.turnNumber())
@@ -600,6 +601,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 		}
 	}
 
+	private static RunCompletedEvent withCost(RunCompletedEvent event, Money cost) {
+		return cost == null ? event : event.setTotalCost(cost.amount()).setCurrency(cost.currency());
+	}
+
 	private void emitDelegatedEvent(AgentEvent.DelegatedEvent delegated) {
 		AgentEvent child = delegated.childEvent();
 		String innerType;
@@ -650,9 +655,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setUsedTokens(usedTokens()).setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.RunCompleted e) {
 			innerType = "run_completed";
-			innerData = DtoMapper.toJson(RunCompletedEvent.create()
+			// A subagent's cost reaches its card and the panel's sum (#783).
+			innerData = DtoMapper.toJson(withCost(RunCompletedEvent.create()
 				.setRunId(e.runId()).setReason(e.reason().name())
-				.setTotalUsage(mapTokenUsage(e.totalUsage())));
+				.setTotalUsage(mapTokenUsage(e.totalUsage())), e.totalCost()));
 		} else if (child instanceof AgentEvent.TurnStarted e) {
 			innerType = "turn_started";
 			innerData = DtoMapper.toJson(TurnStartedEvent.create()

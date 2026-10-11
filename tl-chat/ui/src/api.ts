@@ -15,6 +15,7 @@ import type {
   MessageFeedback,
   Rating,
   SubagentActivity,
+  SubagentBudget,
   SubagentStatus,
   SubagentStep,
   TokenUsage,
@@ -437,11 +438,12 @@ export async function cancelPromptImprovement(at: ChatAddress, requestId: string
   })
 }
 
-export async function listSubagents(at: ChatAddress): Promise<SubagentActivity[]> {
-  const data = await readJson<{ subagents?: SubagentActivity[] }>(
+/** The subagents of this window's chat, and the budget they spend from when the run has one. */
+export async function listSubagents(at: ChatAddress): Promise<{ subagents: SubagentActivity[]; budget?: SubagentBudget }> {
+  const data = await readJson<{ subagents?: SubagentActivity[]; budget?: SubagentBudget }>(
     await chatFetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
   )
-  return data.subagents ?? []
+  return { subagents: data.subagents ?? [], budget: data.budget }
 }
 
 /**

@@ -24,11 +24,21 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getTotalUsage() */
 	public static final String TOTAL_USAGE__PROP = "totalUsage";
 
+	/** @see #getTotalCost() */
+	public static final String TOTAL_COST__PROP = "totalCost";
+
+	/** @see #getCurrency() */
+	public static final String CURRENCY__PROP = "currency";
+
 	private String _runId = "";
 
 	private String _reason = "";
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _totalUsage = null;
+
+	private double _totalCost = 0.0d;
+
+	private String _currency = "";
 
 	/**
 	 * Creates a {@link RunCompletedEvent} instance.
@@ -106,6 +116,46 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 		return _totalUsage != null;
 	}
 
+	/**
+	 * What the run cost, in {@link #getCurrency()}; 0 when no price was known.
+	 */
+	public final double getTotalCost() {
+		return _totalCost;
+	}
+
+	/**
+	 * @see #getTotalCost()
+	 */
+	public com.top_logic.ai.chat.api.messages.RunCompletedEvent setTotalCost(double value) {
+		internalSetTotalCost(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTotalCost()} without chain call utility. */
+	protected final void internalSetTotalCost(double value) {
+		_totalCost = value;
+	}
+
+	/**
+	 * The ISO 4217 code of {@link #getTotalCost()}; empty when the run reported no cost.
+	 */
+	public final String getCurrency() {
+		return _currency;
+	}
+
+	/**
+	 * @see #getCurrency()
+	 */
+	public com.top_logic.ai.chat.api.messages.RunCompletedEvent setCurrency(String value) {
+		internalSetCurrency(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getCurrency()} without chain call utility. */
+	protected final void internalSetCurrency(String value) {
+		_currency = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return RUN_COMPLETED_EVENT__TYPE;
@@ -116,7 +166,9 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 		java.util.List<String> local = java.util.Arrays.asList(
 			RUN_ID__PROP, 
 			REASON__PROP, 
-			TOTAL_USAGE__PROP);
+			TOTAL_USAGE__PROP, 
+			TOTAL_COST__PROP, 
+			CURRENCY__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -144,6 +196,8 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RUN_ID__PROP: return getRunId();
 			case REASON__PROP: return getReason();
 			case TOTAL_USAGE__PROP: return getTotalUsage();
+			case TOTAL_COST__PROP: return getTotalCost();
+			case CURRENCY__PROP: return getCurrency();
 			default: return null;
 		}
 	}
@@ -154,6 +208,8 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RUN_ID__PROP: internalSetRunId((String) value); break;
 			case REASON__PROP: internalSetReason((String) value); break;
 			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
+			case TOTAL_COST__PROP: internalSetTotalCost((double) value); break;
+			case CURRENCY__PROP: internalSetCurrency((String) value); break;
 		}
 	}
 
@@ -180,6 +236,10 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 			out.name(TOTAL_USAGE__PROP);
 			getTotalUsage().writeTo(out);
 		}
+		out.name(TOTAL_COST__PROP);
+		out.value(getTotalCost());
+		out.name(CURRENCY__PROP);
+		out.value(getCurrency());
 	}
 
 	@Override
@@ -188,6 +248,8 @@ public class RunCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RUN_ID__PROP: setRunId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REASON__PROP: setReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case TOTAL_COST__PROP: setTotalCost(in.nextDouble()); break;
+			case CURRENCY__PROP: setCurrency(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

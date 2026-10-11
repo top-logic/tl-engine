@@ -3459,6 +3459,28 @@
   gap: 0.125rem;
 }
 
+/* The header's title and, under it, what the subagents spent together (#783). */
+.activity-header {
+  gap: 0.5rem;
+}
+
+.activity-header .activity-title {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
+}
+
+.activity-header .text-button {
+  white-space: nowrap;
+}
+
+.activity-cost {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
 .activity-list {
   display: flex;
   flex-direction: column;

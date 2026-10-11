@@ -156,6 +156,9 @@ public class SubagentSpawner {
 		CancellationToken childToken = new CancellationToken();
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
 		job.setParentToolCallId(toolContext.toolCallId());
+		// A detached child spends from the allowance of the run that started it; the chat shows how
+		// much of it the subagents took.
+		job.setBudget(toolContext.budgetAllowance());
 
 		// Lifecycle: SubagentStarted to the parent's listener (for the UI panel).
 		if (logListener != null) {
@@ -214,6 +217,9 @@ public class SubagentSpawner {
 					// the store's committer writes ("created after access revision N"). The event
 					// carries the id without any KB access, on both the success and failure paths.
 					AgentEventListener capturingListener = event -> {
+						if (event instanceof AgentEvent.RunCompleted completed) {
+							j.setCost(completed.totalCost());
+						}
 						if (event instanceof AgentEvent.RunStarted started) {
 							// At once, not after the run: the transcript of a running child is
 							// what the user wants to open while it works.

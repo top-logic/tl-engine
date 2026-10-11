@@ -7,7 +7,7 @@ import { turnsJsonToMessages, type SubagentMessageStatus } from './api'
 import { addNote, applyChildEvent } from './chat-store'
 import { bundle } from './i18n'
 import { cardsForTurn, cardSummary, SubagentCard, SubagentCards, type SubagentCardModel } from './subagent-card'
-import { SubagentActivityPanel } from './subagents'
+import { SubagentActivityPanel, subagentCosts } from './subagents'
 import { showSubagentCard } from './thread'
 import type { ChatMessage, SubagentActivity, SubagentRef } from './types'
 
@@ -591,5 +591,53 @@ describe('many cards on one turn', () => {
     await new Promise((resolve) => setTimeout(resolve, 20))
     const rows = Array.from(container.querySelectorAll('.activity-item strong')).map((el) => el.textContent)
     expect(rows).toEqual(['four', 'three', 'two', 'one'])
+  })
+})
+
+describe('what the subagents spent', () => {
+  /* Tokens live while they work, money where priced, the share of the budget they spend from (#783). */
+  it('sums tokens and money and puts them against the budget', () => {
+    const jobs = [
+      job({ subagentId: 'sa-1', status: 'DONE', totalTokens: 8000, cost: 0.012, currency: 'EUR' }),
+      job({ subagentId: 'sa-2', status: 'RUNNING', totalTokens: 0 }),
+    ]
+    let live = applyChildEvent(undefined, 'turn_completed', { turnUsage: { inputTokens: 3000, outputTokens: 1400 } })
+    live = applyChildEvent(live, 'run_completed', { totalCost: 0.008, currency: 'EUR' })
+    const de = bundle('de')
+    // Intl writes a no-break space between amount and currency, as it should.
+    const costs = (...args: Parameters<typeof subagentCosts>) => subagentCosts(...args).replace(/\u00a0/g, ' ')
+
+    expect(costs(jobs, { 'sa-2': live }, undefined, de, 'de')).toBe('12K Token · 0,02 €')
+    expect(costs(jobs, { 'sa-2': live }, { tokens: -1, money: 0.5, currency: 'EUR' }, de, 'de'))
+      .toBe('12K Token · 0,02 € · 4 % des Budgets')
+    expect(costs(jobs, { 'sa-2': live }, { tokens: 1_000_000, money: -1, currency: '' }, labels, 'en'))
+      .toBe('12K tokens · €0.02 · 1 % of the budget')
+  })
+
+  /* The panel's rows show a report as text, as the cards do since #769. */
+  it('shows the panel rows without Markdown markers', async () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    try {
+      root.render(React.createElement(SubagentActivityPanel, {
+        subagents: [job({ status: 'DONE', detail: '**Evidenz** - `listInstances`' })], labels,
+        onCancel: async () => undefined, onStopAll: async () => undefined, onLoadTranscript: async () => [],
+      }))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      ;(container.querySelector('.working-chip') as HTMLButtonElement).click()
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      const row = container.querySelector('.activity-item strong')
+      expect(row?.textContent).toBe('Evidenz - listInstances')
+    } finally {
+      root.unmount()
+      container.remove()
+    }
+  })
+
+  it('says nothing while nothing was spent, and less than a percent as such', () => {
+    expect(subagentCosts([job({ totalTokens: 0 })], {}, undefined, labels, 'en')).toBe('')
+    expect(subagentCosts([job({ totalTokens: 100 })], {}, { tokens: 1_000_000, money: -1, currency: '' }, labels, 'en'))
+      .toBe('100 tokens · < 1 % of the budget')
   })
 })

@@ -79,6 +79,7 @@ import {
   type RunSnapshot,
   type SessionSummary,
   type SubagentActivity,
+  type SubagentBudget,
   type SubagentLive,
   type SubagentStatus,
   type SubagentStatusEvent,
@@ -177,6 +178,8 @@ export function applyChildEvent(
     turnNumber?: number
     turnUsage?: { inputTokens?: number; outputTokens?: number }
     messages?: { id?: string; text?: string }[]
+    totalCost?: number
+    currency?: string
   },
 ): SubagentLive {
   const live: SubagentLive = current ?? { steps: [], text: '', turns: 0, tokens: 0, startedAt: Date.now() }
@@ -190,6 +193,9 @@ export function applyChildEvent(
   switch (eventType) {
     case 'turn_started':
       return { ...live, turns: Math.max(live.turns, data.turnNumber ?? live.turns + 1) }
+    case 'run_completed':
+      // What the run cost, when it was priced; the panel sums it (#783).
+      return data.currency ? { ...live, cost: data.totalCost ?? 0, currency: data.currency } : live
     case 'turn_completed':
       return {
         ...live,
@@ -470,6 +476,8 @@ export interface ChatState {
   busy: boolean
   regenerating: boolean
   subagents: SubagentActivity[]
+  /** The budget the subagents spend from, as the last list said; absent while the run has none. */
+  subagentBudget?: SubagentBudget
   /** What each running subagent has done so far, by subagent id - what its card shows live. */
   subagentLive: Record<string, SubagentLive>
   /**
@@ -621,6 +629,8 @@ export interface ChatActions {
    */
   messageSubagent(id: string, parentToolCallId: string, text: string): Promise<SubagentMessageStatus>
   stopSubagents(): Promise<void>
+  /** Reads the subagents of the chat anew - their costs, and the budget they spend from. */
+  refreshSubagents(): Promise<void>
   loadSubagentTranscript(id: string, runId?: string): Promise<ChatMessage[]>
   openPane(content: ReactNode, options: PaneOpenOptions): void
   closePane(): void
@@ -1996,11 +2006,12 @@ export class ChatStore {
     }
   }
 
-  private async refreshSubagents(): Promise<void> {
+  async refreshSubagents(): Promise<void> {
     try {
-      this.patch({ subagents: await listSubagents(this.at) })
+      const list = await listSubagents(this.at)
+      this.patch({ subagents: list.subagents, subagentBudget: list.budget })
     } catch {
-      this.patch({ subagents: [] })
+      this.patch({ subagents: [], subagentBudget: undefined })
     }
   }
 
@@ -2455,6 +2466,8 @@ export class ChatStore {
         }
         return answer.status
       },
+
+      refreshSubagents: () => this.refreshSubagents(),
 
       stopSubagents: async () => {
         const at = this.at

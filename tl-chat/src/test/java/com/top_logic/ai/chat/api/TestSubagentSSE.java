@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -112,6 +113,22 @@ public class TestSubagentSSE extends TestCase {
 		assertTrue(frame, frame.contains("\"eventType\":\"user_message_read\""));
 		assertTrue("The card's receipt is keyed by the id the send answered with: " + frame,
 			frame.contains(message.id()));
+	}
+
+	/** What a subagent's run cost reaches the browser with its end, for the panel's sum (#783). */
+	public void testASubagentsRunCostReachesThePanel() {
+		List<String> frames = new ArrayList<>();
+		ChatSSEHandler handler = frames(frames);
+
+		handler.onEventForTest(new AgentEvent.DelegatedEvent("child", 2, Instant.now(), "sa-1", "",
+			new AgentEvent.RunCompleted("child", 2, Instant.now(), StopReason.COMPLETE, TokenUsage.EMPTY,
+				new Money(0.0125, "EUR"))));
+
+		assertEquals(1, frames.size());
+		String frame = frames.get(0);
+		assertTrue(frame, frame.contains("run_completed"));
+		assertTrue(frame, frame.contains("totalCost") && frame.contains("0.0125"));
+		assertTrue(frame, frame.contains("EUR"));
 	}
 
 	private static ChatSSEHandler frames(List<String> sink) {

@@ -681,6 +681,10 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           promptImprovementEnabled={promptImprovementEnabled && chat.caps.promptImproverAvailable !== false}
           subagents={chat.subagents}
           onCancelSubagent={actions.cancelSubagent}
+          subagentLive={chat.subagentLive}
+          subagentBudget={chat.subagentBudget}
+          onRefreshSubagents={actions.refreshSubagents}
+          language={chat.language}
           onStopSubagents={actions.stopSubagents}
           onLoadSubagentTranscript={actions.loadSubagentTranscript}
           busy={chat.busy}

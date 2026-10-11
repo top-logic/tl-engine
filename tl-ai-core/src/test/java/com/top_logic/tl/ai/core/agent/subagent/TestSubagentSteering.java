@@ -148,6 +148,18 @@ public class TestSubagentSteering extends BasicTestCase {
 			messages.get(at - 1) instanceof com.top_logic.tl.ai.core.message.ToolResultMessage);
 	}
 
+	/** The job keeps what its run cost, and the budget it spends from, for the chat's panel (#783). */
+	public void testTheJobKnowsItsCostAndBudget() throws Exception {
+		SubagentJob job = spawnChild();
+		assertTrue(_inProbe.await(20, TimeUnit.SECONDS));
+		assertNull("Unknown while it works.", job.cost());
+		assertSame(com.top_logic.tl.ai.core.limits.BudgetAllowance.UNLIMITED, job.budget());
+		_release.countDown();
+		awaitTerminal(job);
+
+		assertNotNull("Its run reported what it cost.", job.cost());
+	}
+
 	/** Cancelling ends the job cancelled with the reason, and a message to it is refused. */
 	public void testCancelEndsTheJobAndRefusesMessages() throws Exception {
 		SubagentJob job = spawnChild();

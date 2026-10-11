@@ -25,6 +25,8 @@ import type {
   ModelOption,
   NoticeTone,
   SubagentActivity,
+  SubagentBudget,
+  SubagentLive,
   TraceMode,
 } from './types'
 
@@ -273,6 +275,10 @@ export const Composer = React.memo(
   dispatch,
   promptImprovementEnabled,
   subagents,
+  subagentLive,
+  subagentBudget,
+  onRefreshSubagents,
+  language,
   onCancelSubagent,
   onStopSubagents,
   onLoadSubagentTranscript,
@@ -324,6 +330,14 @@ export const Composer = React.memo(
   dispatch: React.Dispatch<ChatAction>
   promptImprovementEnabled: boolean
   subagents: SubagentActivity[]
+  /** What each subagent did live; the panel sums its tokens and cost. */
+  subagentLive?: Record<string, SubagentLive>
+  /** The budget the subagents spend from. */
+  subagentBudget?: SubagentBudget
+  /** Reads the subagents anew; called when their panel opens. */
+  onRefreshSubagents?: () => Promise<void>
+  /** The chat's language, for the money in the panel. */
+  language?: string
   onCancelSubagent: (id: string, parentToolCallId?: string) => Promise<void>
   onStopSubagents: () => Promise<void>
   onLoadSubagentTranscript: (id: string) => Promise<ChatMessage[]>
@@ -684,6 +698,10 @@ export const Composer = React.memo(
           <SubagentActivityPanel
             subagents={subagents}
             waiting={waitingSubagents}
+            live={subagentLive}
+            budget={subagentBudget}
+            language={language}
+            onOpen={onRefreshSubagents ? () => void onRefreshSubagents() : undefined}
             labels={labels}
             onCancel={onCancelSubagent}
             onStopAll={onStopSubagents}

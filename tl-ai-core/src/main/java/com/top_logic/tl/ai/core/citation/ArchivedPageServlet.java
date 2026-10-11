@@ -118,7 +118,7 @@ public class ArchivedPageServlet extends SignedInContentServlet {
 			.append("</style></head><body>")
 			.append("<div class=\"archived\">Archived copy of ");
 		if (ReadingList.isWebAddress(url)) {
-			html.append("<a href=\"").append(TagUtil.encodeXML(url))
+			html.append("<a href=\"").append(TagUtil.encodeXMLAttribute(url))
 				.append("\" rel=\"noopener noreferrer\" target=\"_blank\">").append(TagUtil.encodeXML(url))
 				.append("</a>");
 		} else {

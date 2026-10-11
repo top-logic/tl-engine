@@ -30,7 +30,6 @@ package com.top_logic.tl.ai.core.provider;
  * @param timeoutSeconds     request timeout, or {@code null} for default
  * @param maxRetries         max retries on transient errors, or {@code null} for default
  * @param maxToolResultChars max chars per tool result, or {@code null} for default
- * @param maxToolCalls       the most tool calls one run may make, or {@code null} for no limit
  *
  * @see com.top_logic.tl.ai.core.agent.AgentRuntimeService#resolveModelAssignment(String)
  */
@@ -49,8 +48,7 @@ public record AgentModelAssignment(
 		String toolChoice,
 		Integer timeoutSeconds,
 		Integer maxRetries,
-		Integer maxToolResultChars,
-		Integer maxToolCalls) {
+		Integer maxToolResultChars) {
 
 	/**
 	 * Returns a copy of this assignment using a different model, keeping all tuning parameters.
@@ -58,7 +56,7 @@ public record AgentModelAssignment(
 	public AgentModelAssignment withModel(String newModel) {
 		return new AgentModelAssignment(newModel, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
 			thinkingEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
-			maxToolResultChars, maxToolCalls);
+			maxToolResultChars);
 	}
 
 	/**
@@ -70,7 +68,7 @@ public record AgentModelAssignment(
 	public AgentModelAssignment withThinkingEffort(String newEffort) {
 		return new AgentModelAssignment(model, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
 			newEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
-			maxToolResultChars, maxToolCalls);
+			maxToolResultChars);
 	}
 
 	/**
@@ -82,7 +80,7 @@ public record AgentModelAssignment(
 	public AgentModelAssignment withReasoningEffort(String newEffort) {
 		return new AgentModelAssignment(model, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
 			thinkingEffort, topK, newEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
-			maxToolResultChars, maxToolCalls);
+			maxToolResultChars);
 	}
 
 	/**

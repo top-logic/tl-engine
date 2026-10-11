@@ -46,7 +46,7 @@ public class TestTextPromptContributor extends TestCase {
 	}
 
 	private static final AgentModelAssignment ASSIGNMENT = new AgentModelAssignment("test-model",
-		null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+		null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
 	private static final AgentDefinition ALBERT = agent("TL_SingleAgent");
 

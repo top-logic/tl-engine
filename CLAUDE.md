@@ -187,17 +187,15 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 
 Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` → `StreamHandler` → `ToolCatalog.execute()` → repeat.
 
-Stop conditions: `StopReason` - COMPLETE, MAX_TURNS, MAX_TOOL_CALLS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT.
+Stop conditions: `StopReason` - COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT.
 
-**A limit ends with an answer (#775).** A run at its `max-turns`, or one that used up its tool-call
-budget (`max-tool-calls` in `<agent-overrides>`, narrowed per spawn by `spawn_subagent`'s
-`toolCallBudget` through `AgentLoop.limitToolCalls`), gets one last turn that keeps the tool list -
-the cached prefix stays the same - but sends `ToolChoice.NONE` and a framework notice to answer with
-what it has; calls a provider still returns there are dropped, and a last reply left without text is
-asked for once more, the same way (#819). Calls beyond the budget are answered
-"Not run"; calls of `interaction` tools spend nothing. The run ends as `MAX_TURNS` or
-`MAX_TOOL_CALLS`, the chat appends a notice, and a delivered subagent result says "Stopped at its
-limit". A run limited to one turn has no turn to spare and works in it. `TestRunLimitFinalTurn` pins it.
+**A limit ends with an answer (#775).** A run at its `max-turns` gets one last turn that keeps the
+tool list - the cached prefix stays the same - but sends `ToolChoice.NONE` and a framework notice to
+answer with what it has; calls a provider still returns there are dropped, and a last reply left
+without text is asked for once more, the same way (#819). The run ends as `MAX_TURNS`, the chat
+appends a notice, and a delivered subagent result says "Stopped at its limit". A run limited to one
+turn has no turn to spare and works in it. `TestRunLimitFinalTurn` pins it. There is no budget of
+tool calls (removed, #850): how much a research worker reads is guidance in its prompt.
 
 **What a turn reads (#647).** A run holds one interaction for all its turns, and an interaction reads
 at the revision it read first, so `AgentLoop` moves the run's view to the newest commit before a

@@ -596,7 +596,7 @@ public sealed interface AgentEvent {
 	 * @param runId      the run identifier
 	 * @param turnNumber the turn that is the run's last
 	 * @param timestamp  when the run reached the limit
-	 * @param limit      the limit it reached: {@code MAX_TURNS} or {@code MAX_TOOL_CALLS}
+	 * @param limit      the limit it reached: {@code MAX_TURNS}
 	 * @param text       the text the model is shown
 	 */
 	record FinalTurnRequested(String runId, int turnNumber, Instant timestamp, StopReason limit, String text)

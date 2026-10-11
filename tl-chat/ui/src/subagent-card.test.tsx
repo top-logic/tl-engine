@@ -646,9 +646,9 @@ describe('what the subagents spent', () => {
 })
 
 describe('a subagent stopped at a limit', () => {
-  /* Turns, tool calls, budget, output: an orderly stop with an answer that may be incomplete (#786). */
+  /* Turns, budget, output: an orderly stop with an answer that may be incomplete (#786). */
   it('ends a delegation at its limit as such, not as failed', () => {
-    expect(delegationEnd('MAX_TOOL_CALLS')).toBe('LIMIT')
+    expect(delegationEnd('OUTPUT_LIMIT')).toBe('LIMIT')
     expect(delegationEnd('BUDGET_EXHAUSTED')).toBe('LIMIT')
     expect(delegationEnd('MAX_TURNS')).toBe('LIMIT')
     expect(delegationEnd('COMPLETE')).toBe('DONE')

@@ -29,8 +29,6 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.ToolResultMessage;
-import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -38,12 +36,11 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * A run that reaches its turn limit or its budget of tool calls ends with an answer: one last turn
+ * A run that reaches its turn limit ends with an answer: one last turn
  * offers no tool, tells the model the limit is reached, and the run ends with the limit as its stop
  * reason (#775).
  *
@@ -63,7 +60,7 @@ public class TestRunLimitFinalTurn extends TestCase {
 	private static final String FINAL = "Final report: what I found so far.";
 
 	/** The calls each tool ran, by tool name. */
-	private final Map<String, AtomicInteger> _runs = Map.of("fetch", new AtomicInteger(), "note", new AtomicInteger());
+	private final Map<String, AtomicInteger> _runs = Map.of("fetch", new AtomicInteger());
 
 	/** What every request of the run looked like. */
 	private final List<ProviderRequest> _requests = new ArrayList<>();
@@ -110,48 +107,6 @@ public class TestRunLimitFinalTurn extends TestCase {
 	}
 
 	/**
-	 * A budget of three tool calls: the call beyond it is answered without running, the next turn
-	 * is the answer, and the run says which limit it hit.
-	 */
-	public void testABudgetOfToolCalls() {
-		Conversation conversation = question();
-		AgentLoop loop = new AgentLoop(config(20), provider(request -> List.of(call("fetch"), call("fetch"))),
-			registry());
-		loop.limitToolCalls(3);
-
-		AgentResult result = loop.run(conversation, silent());
-
-		assertEquals(StopReason.MAX_TOOL_CALLS, result.stopReason());
-		assertEquals("Two calls in turn 1, one of two in turn 2, the answer in turn 3.", 3, result.turnsUsed());
-		assertEquals(3, _runs.get("fetch").get());
-		List<String> notRun = results(conversation).stream()
-			.filter(r -> r.state() instanceof ToolState.Failed failed && failed.error().startsWith("Not run"))
-			.map(ToolResultMessage::toolCallId).toList();
-		assertEquals("The call beyond the budget has its result, without having run.", 1, notRun.size());
-		assertEquals(FINAL, lastText(conversation));
-		assertTrue(lastUserText(_requests.get(2)), lastUserText(_requests.get(2)).contains("budget of 3 tool calls"));
-	}
-
-	/** Asking, loading a skill and recording a finding are interaction tools and spend nothing. */
-	public void testInteractionToolsSpendNoBudget() {
-		Conversation conversation = question();
-		AtomicInteger turn = new AtomicInteger();
-		AgentLoop loop = new AgentLoop(config(20), provider(request -> switch (turn.incrementAndGet()) {
-			case 1 -> List.of(call("note"), call("note"), call("fetch"));
-			case 2 -> List.of(call("note"), call("fetch"));
-			default -> List.of(call("note"));
-		}), registry());
-		loop.limitToolCalls(2);
-
-		AgentResult result = loop.run(conversation, silent());
-
-		assertEquals(StopReason.MAX_TOOL_CALLS, result.stopReason());
-		assertEquals(2, _runs.get("fetch").get());
-		assertEquals(3, _runs.get("note").get());
-		assertEquals(FINAL, lastText(conversation));
-	}
-
-	/**
 	 * A provider that calls a tool although none may be called: the call is dropped, nothing runs it,
 	 * and the conversation holds no call without a result.
 	 */
@@ -179,7 +134,7 @@ public class TestRunLimitFinalTurn extends TestCase {
 	public void testALastReplyOfToolCallsOnlyIsAskedOnceMore() {
 		Conversation conversation = question();
 		AtomicInteger finalRequests = new AtomicInteger();
-		AgentLoop loop = new AgentLoop(config(20), (request, handler) -> {
+		AgentLoop loop = new AgentLoop(config(3), (request, handler) -> {
 			_requests.add(request);
 			if (request.toolChoice() == ToolChoice.NONE && finalRequests.incrementAndGet() > 1) {
 				emit(handler, List.of(new TextContent(FINAL)));
@@ -187,11 +142,9 @@ public class TestRunLimitFinalTurn extends TestCase {
 				emit(handler, List.of(call("fetch")));
 			}
 		}, registry());
-		loop.limitToolCalls(2);
-
 		AgentResult result = loop.run(conversation, silent());
 
-		assertEquals(StopReason.MAX_TOOL_CALLS, result.stopReason());
+		assertEquals(StopReason.MAX_TURNS, result.stopReason());
 		assertEquals("Asked once more, with no tool callable again.", 2, finalRequests.get());
 		assertEquals(2, _runs.get("fetch").get());
 		ProviderRequest retry = _requests.get(_requests.size() - 1);
@@ -218,18 +171,6 @@ public class TestRunLimitFinalTurn extends TestCase {
 		assertEquals(2, _runs.get("fetch").get());
 	}
 
-	/** A limit can be narrowed, never widened, and a run of one turn keeps it. */
-	public void testALimitOnlyNarrows() {
-		AgentLoop loop = new AgentLoop(config(5), provider(request -> List.of(call("fetch"))), registry());
-		assertEquals(0, loop.toolCallLimit());
-		loop.limitToolCalls(25);
-		loop.limitToolCalls(30);
-		assertEquals(25, loop.toolCallLimit());
-		loop.limitToolCalls(10);
-		loop.limitToolCalls(0);
-		assertEquals(10, loop.toolCallLimit());
-	}
-
 	/** A run limited to one turn has no turn to spare and works in it, as it always did. */
 	public void testAOneTurnRunWorksInItsTurn() {
 		Conversation conversation = question();
@@ -249,12 +190,6 @@ public class TestRunLimitFinalTurn extends TestCase {
 			.execute((args, context) -> {
 				_runs.get("fetch").incrementAndGet();
 				return ToolResult.of("page text");
-			}).build());
-		result.register(ToolStubs.builder("note").description("Notes a finding.")
-			.schema(new ToolSchema("note", "Notes a finding.", "{}")).group(ToolGroups.INTERACTION)
-			.execute((args, context) -> {
-				_runs.get("note").incrementAndGet();
-				return ToolResult.of("noted");
 			}).build());
 		result.freeze();
 		return result;
@@ -326,16 +261,6 @@ public class TestRunLimitFinalTurn extends TestCase {
 			}
 		}
 		return "";
-	}
-
-	private static List<ToolResultMessage> results(Conversation conversation) {
-		List<ToolResultMessage> result = new ArrayList<>();
-		for (Message message : conversation.messages()) {
-			if (message instanceof ToolResultMessage toolResult) {
-				result.add(toolResult);
-			}
-		}
-		return result;
 	}
 
 	/**

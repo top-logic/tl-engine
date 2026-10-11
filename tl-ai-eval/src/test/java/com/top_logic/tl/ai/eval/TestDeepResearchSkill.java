@@ -59,7 +59,6 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
@@ -128,7 +127,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		String task() {
 			return "Sub-question: What heat pump subsidy does " + country + " pay in 2026?\n"
 				+ "Purpose: one section of the comparison.\nScope: 2026, " + country + ".\n"
-				+ "Budget: at most 15 tool calls.";
+				+ "Effort: standard: read enough to answer the sub-question.";
 		}
 
 		String findings() {
@@ -309,95 +308,6 @@ public class TestDeepResearchSkill extends BasicTestCase {
 	public void testAWorkersAnswerIsBounded() {
 		AgentModelAssignment worker = AgentRuntimeService.getInstance().resolveModelAssignment(WORKER);
 		assertEquals(Integer.valueOf(16384), worker.maxTokens());
-	}
-
-	/** The task of the worker that would search forever. */
-	private static final String ENDLESS = "Sub-question: Find every heat pump subsidy of every country in the world.";
-
-	/**
-	 * A worker that would search forever ends at the budget its lead gave it, with its report, and
-	 * the lead learns that it stopped there and says so (#775). A worker spawned without a budget
-	 * gets the research worker's own limit.
-	 */
-	public void testAWorkerEndsAtItsBudgetWithAReport() {
-		for (int n = 0; n < 10; n++) {
-			FixtureWeb.search("heat pump subsidy country " + n,
-				new WebSearchHit("Country " + n, "https://country" + n + ".test/", "A subsidy.", ""));
-		}
-		ScriptedProvider.install(TestDeepResearchSkill::budgetReply);
-		Person root = PersonManager.getManager().getRoot();
-		AgentSession session = AgentExecutionStore.getInstance().createSession(SessionKind.SCRIPT, root,
-			"TestDeepResearchSkill-budget");
-		_registryKey = SubagentRegistries.conversationKey(ExecutionRecorder.conversationIdOf(session));
-		_registry = SubagentRegistries.borrow(_registryKey);
-
-		Run run = run(root, session);
-
-		assertEquals(StopReason.COMPLETE, run.stopReason());
-		SubagentJob endless = job(ENDLESS);
-		assertEquals(SubagentJobStatus.DONE, endless.status());
-		assertEquals(StopReason.MAX_TOOL_CALLS, endless.result().stopReason());
-		assertEquals(3, endless.toolCallLimit());
-		assertEquals("The worker reports in its last turn.", "## Answer\nNot all countries could be covered.",
-			endless.result().finalText().substring(0, 45));
-		String delivered = run.result("wait_for_subagent");
-		assertTrue("The lead is told the worker stopped at its budget: " + delivered,
-			delivered.contains("Stopped at its limit: it used up its budget of 3 tool calls"));
-		assertTrue("The lead's report names the worker: " + run.response(),
-			run.response().contains(endless.subagentId()));
-
-		for (Turn turn : run.log().turns()) {
-			for (Part part : turn.assistantParts()) {
-				assertFalse("The worker's last-turn notice stays in the worker's transcript, out of the lead's.",
-					part instanceof Part.SystemPart system
-						&& system.eventType() == Part.SystemEventType.CONTINUATION_REQUESTED);
-			}
-		}
-
-		SubagentJob germany = job(TOPICS.get(0).task());
-		assertEquals("Without a budget of its own the research worker has its agent's limit.", 25,
-			germany.toolCallLimit());
-		assertEquals(StopReason.COMPLETE, germany.result().stopReason());
-	}
-
-	private SubagentJob job(String task) {
-		return _registry.registry().byStatus(SubagentJobStatus.values()).stream()
-			.filter(j -> j.taskBrief().contains(task.substring(0, 40))).findFirst().orElseThrow();
-	}
-
-	/** The lead of the budget scenario: one endless worker with a budget of 3, one ordinary worker. */
-	private static List<ContentPart> budgetReply(ProviderRequest request, int turn) {
-		String prompt = String.valueOf(request.systemPrompt());
-		if (prompt.startsWith("You are a research worker.")) {
-			String brief = String.valueOf(request.messages().get(0));
-			if (!brief.contains(ENDLESS)) {
-				return worker(request, turn);
-			}
-			if (request.toolChoice() == ToolChoice.NONE) {
-				return List.of(new TextContent("## Answer\nNot all countries could be covered.\n\n## Findings\n-"
-					+ " none\n\n## Conflicts and gaps\n- The budget ended the search."));
-			}
-			return List.of(call("webSearch", "{\"query\": \"heat pump subsidy country " + turn + "\"}"));
-		}
-		switch (turn) {
-			case 0:
-				return List.of(call("loadSkill", "{\"skillId\": \"TL_deepResearch\"}"));
-			case 1:
-				return List.of(
-					call("spawn_subagent", "{\"agent\": \"" + WORKER + "\", \"task\": " + json(ENDLESS)
-						+ ", \"toolCallBudget\": 3}"),
-					call("spawn_subagent", "{\"agent\": \"" + WORKER + "\", \"task\": "
-						+ json(TOPICS.get(0).task()) + "}"));
-			case 2:
-				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
-			default:
-				String seen = String.valueOf(request.messages());
-				int at = seen.lastIndexOf("_Stopped at its limit");
-				String id = at < 0 ? "?" : seen.substring(seen.lastIndexOf("### Subagent ", at) + 13).split(" ")[0];
-				return List.of(new TextContent("# Heat pump subsidies\n\n[" + TOPICS.get(0).fact() + "]("
-					+ TOPICS.get(0).url() + ")\n\n## Open points\nWorker " + id
-					+ " stopped at its budget; not every country is covered."));
-		}
 	}
 
 	private static List<ContentPart> worker(ProviderRequest request, int turn) {

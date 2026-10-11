@@ -133,17 +133,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey RUN_STOPPED_TURN_LIMIT;
 
-	/**
-	 * Notice appended to the answer of a run that used up its tool calls, see
-	 * {@link StopReason#MAX_TOOL_CALLS}.
-	 *
-	 * @en The agent used up its budget of tool calls and answered with what it had by then. Write
-	 *     "Please continue" to let it go on.
-	 * @de Der Agent hat sein Budget an Tool-Aufrufen aufgebraucht und mit dem bisherigen Stand
-	 *     geantwortet. Schreiben Sie „Bitte weitermachen“, damit er weiterarbeitet.
-	 */
-	public static ResKey RUN_STOPPED_TOOL_LIMIT;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

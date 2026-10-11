@@ -25,17 +25,6 @@ public enum StopReason {
 	 */
 	MAX_TURNS,
 
-	/**
-	 * Used up its budget of tool calls - the agent's {@code max-tool-calls}, or the budget the
-	 * agent that started it gave it.
-	 *
-	 * <p>
-	 * An orderly stop like {@link #MAX_TURNS}: calls beyond the budget are answered without being
-	 * run, and one last turn without tools lets the model answer with what it has.
-	 * </p>
-	 */
-	MAX_TOOL_CALLS,
-
 	/** Unrecoverable provider error. */
 	ERROR,
 
@@ -90,7 +79,7 @@ public enum StopReason {
 	OUTPUT_LIMIT;
 
 	/**
-	 * Whether the run stopped in order at one of its limits - turns, tool calls, budget, output -
+	 * Whether the run stopped in order at one of its limits - turns, budget, output -
 	 * rather than because it was done or failed.
 	 *
 	 * <p>
@@ -99,6 +88,6 @@ public enum StopReason {
 	 * </p>
 	 */
 	public boolean isLimit() {
-		return this == MAX_TURNS || this == MAX_TOOL_CALLS || this == BUDGET_EXHAUSTED || this == OUTPUT_LIMIT;
+		return this == MAX_TURNS || this == BUDGET_EXHAUSTED || this == OUTPUT_LIMIT;
 	}
 }

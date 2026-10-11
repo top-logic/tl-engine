@@ -145,7 +145,7 @@ public class TestSubagentNews extends TestCase {
 		SubagentJob limited = _registry.register("Counter", "a", new CancellationToken());
 		limited.setParentToolCallId("call-1");
 		limited.markTerminal(SubagentJobStatus.DONE,
-			new SubagentResult("3 of 40 read", TokenUsage.EMPTY, 1L, 2, StopReason.MAX_TOOL_CALLS));
+			new SubagentResult("3 of 40 read", TokenUsage.EMPTY, 1L, 2, StopReason.MAX_TURNS));
 
 		List<SubagentNews> news;
 		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(_registry)) {

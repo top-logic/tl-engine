@@ -688,7 +688,7 @@ describe('the stream', () => {
     stream.emit('subagent_started', { subagentId: 'sa-1', targetAgentName: 'researcher', detail: 'find X', parentToolCallId: 'call-1' })
     stream.emit('subagent_started', { subagentId: 'sa-2', targetAgentName: 'researcher', detail: 'find Y', parentToolCallId: 'call-2' })
 
-    stream.emit('subagent_completed', { subagentId: 'sa-1', detail: 'X is 4..', stopReason: 'MAX_TOOL_CALLS' })
+    stream.emit('subagent_completed', { subagentId: 'sa-1', detail: 'X is 4..', stopReason: 'MAX_TURNS' })
     stream.emit('subagent_completed', { subagentId: 'sa-2', detail: 'Y is 7.', stopReason: 'COMPLETE' })
 
     expect(store.getState().subagents.map((item) => item.status)).toEqual(['LIMIT', 'DONE'])

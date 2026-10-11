@@ -247,7 +247,7 @@ const EN = {
   /** In the panel header: the share of the run's budget the subagents spent ("4", "< 1"). */
   subagentsBudgetShare: (percent: string) => `${percent} % of the budget`,
   subagentDone: 'done',
-  /** Stopped in order at a limit (turns, tool calls, budget): its answer may be incomplete. */
+  /** Stopped in order at a limit (turns, budget, output): its answer may be incomplete. */
   subagentLimit: 'limit reached',
   subagentFailed: 'failed',
   subagentCancelled: 'cancelled',

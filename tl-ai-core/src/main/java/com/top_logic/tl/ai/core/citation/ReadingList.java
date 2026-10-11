@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
@@ -90,10 +92,31 @@ public final class ReadingList {
 	/** Finding id -> finding, in the order they were recorded or received. */
 	private final Map<String, Finding> _findings = new LinkedHashMap<>();
 
+	/** The letters of a {@link #_findingTag}: no letter a reader confuses with a digit. */
+	private static final String TAG_LETTERS = "abcdefghijkmnpqrstuvwxyz";
+
+	/** The length of a {@link #_findingTag}. */
+	private static final int TAG_LENGTH = 5;
+
+	/** How many different tags there are. */
+	private static final long TAGS = pow(TAG_LETTERS.length(), TAG_LENGTH);
+
+	/**
+	 * The number of the next list's tag. It starts at a random number, so the ids of a run after a
+	 * restart are unlikely to be those of a run before it, which a conversation may still name.
+	 */
+	private static final AtomicLong NEXT_TAG = new AtomicLong(ThreadLocalRandom.current().nextLong(TAGS));
+
 	/**
 	 * What makes the ids of this list's own findings differ from those of every other run's list, so
 	 * that a lead receiving the findings of several subagents keeps all of them under the ids their
 	 * reports name.
+	 *
+	 * <p>
+	 * Counted, not drawn at random: the lists of one process have different tags until
+	 * {@link #TAGS} lists were made, which is no run tree's concern. A random tag of a few letters is
+	 * shared by two of a few hundred lists already.
+	 * </p>
 	 */
 	private final String _findingTag = findingTag();
 
@@ -220,14 +243,22 @@ public final class ReadingList {
 		return id == null ? null : _findings.get(id.strip());
 	}
 
-	private static String findingTag() {
-		String letters = "abcdefghijkmnpqrstuvwxyz";
-		StringBuilder tag = new StringBuilder(4);
-		ThreadLocalRandom random = ThreadLocalRandom.current();
-		for (int i = 0; i < 4; i++) {
-			tag.append(letters.charAt(random.nextInt(letters.length())));
+	private static long pow(int base, int exponent) {
+		long result = 1;
+		for (int i = 0; i < exponent; i++) {
+			result *= base;
 		}
-		return tag.toString();
+		return result;
+	}
+
+	private static String findingTag() {
+		long number = Math.floorMod(NEXT_TAG.getAndIncrement(), TAGS);
+		char[] tag = new char[TAG_LENGTH];
+		for (int i = TAG_LENGTH - 1; i >= 0; i--) {
+			tag[i] = TAG_LETTERS.charAt((int) (number % TAG_LETTERS.length()));
+			number /= TAG_LETTERS.length();
+		}
+		return new String(tag);
 	}
 
 	/**
@@ -266,7 +297,11 @@ public final class ReadingList {
 				if (_findings.size() >= MAX_FINDINGS) {
 					break;
 				}
-				_findings.putIfAbsent(finding.id(), finding);
+				Finding known = _findings.putIfAbsent(finding.id(), finding);
+				if (known != null && !known.equals(finding)) {
+					Logger.warn("Two findings have the id " + finding.id() + "; the one received later is dropped: "
+						+ finding.claim(), ReadingList.class);
+				}
 			}
 			for (Map.Entry<String, ReadSource> entry : sources.entrySet()) {
 				ReadSource known = _sources.get(entry.getKey());

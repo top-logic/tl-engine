@@ -33,6 +33,7 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -121,6 +122,32 @@ public class TestSubagentAsksLead extends BasicTestCase {
 		assertEquals("The child asked once and went on in the next request of the same run.", 2, childRequests.size());
 		assertTrue(childRequests.get(1), childRequests.get(1).contains("Europe only."));
 		assertNull(child.waitingFor());
+	}
+
+	/**
+	 * An address in the lead's answer is an address the child was given, as one in a message of its
+	 * lead is: the URL provenance rule lets the child open it.
+	 */
+	public void testAnAddressInTheLeadsAnswerIsGiven() throws Exception {
+		String manual = "https://docs.example/manual";
+		CompletableFuture<Boolean> given = new CompletableFuture<>();
+		Tool probe = ToolStubs.builder("probe").execute((args, context) -> {
+			given.complete(Boolean.valueOf(ReadingListBinding.current().seenUrls().contains(manual)));
+			return ToolResult.of("probed");
+		}).build();
+		SubagentJob child = spawn(List.of(new AskLeadTool(), probe), new CopyOnWriteArrayList<>(),
+			() -> List.of(new ToolCall("q1", "ask_lead", "{\"question\":\"Which source should I read?\"}")),
+			() -> List.of(new ToolCall("p1", "probe", "{}")),
+			() -> List.of(new TextContent("Read it.")));
+		awaitWaiting(child);
+
+		runLead(new CopyOnWriteArrayList<>(),
+			() -> List.of(new ToolCall("r1", "reply_to_subagent",
+				"{\"subagentId\":\"" + child.subagentId() + "\",\"answer\":\"Read " + manual + ".\"}")),
+			() -> List.of(new TextContent("I answered the worker.")));
+
+		assertEquals("the address in the lead's answer is given to the child", Boolean.TRUE,
+			given.get(20, TimeUnit.SECONDS));
 	}
 
 	/** A lead waiting for one subagent returns at once when another one asks. */
@@ -245,8 +272,13 @@ public class TestSubagentAsksLead extends BasicTestCase {
 
 	@SafeVarargs
 	private SubagentJob spawn(Tool tool, List<String> requests, Supplier<List<ContentPart>>... replies) {
+		return spawn(List.of(tool), requests, replies);
+	}
+
+	@SafeVarargs
+	private SubagentJob spawn(List<Tool> catalog, List<String> requests, Supplier<List<ContentPart>>... replies) {
 		ToolCatalog tools = new ToolCatalog();
-		tools.register(tool);
+		catalog.forEach(tools::register);
 		tools.freeze();
 		AgentLoop child = new AgentLoop(params("child"), scripted(requests, replies), tools);
 		DelegationTool spawn = new DelegationTool("delegate_to_worker", "worker", "worker", "lead",

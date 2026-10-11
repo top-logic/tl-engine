@@ -246,7 +246,9 @@ work, so for such runs a second rule applies.
 **The rule.** A run the rule applies to opens with `webFetch` or `browserNavigate` only an address that
 it was given:
 
-- an address in a message of its user or its lead (the task of a subagent, a message the lead sent);
+- an address in a message of its user or its lead (the task of a subagent, a message the lead sent),
+  or in what they wrote in answer to its question (`askUser`, the lead's `reply_to_subagent` to
+  `ask_lead`) - not an option of `askUser` the model offered and the user picked;
 - a result address of a web search;
 - a link of a page it read, or an address written on that page, and the address a redirect led to.
 

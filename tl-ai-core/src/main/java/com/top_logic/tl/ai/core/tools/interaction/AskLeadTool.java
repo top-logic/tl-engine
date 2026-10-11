@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.subagent.LeadQuestion;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobBinding;
+import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -159,6 +160,9 @@ public class AskLeadTool implements Tool {
 			job.clearLeadQuestion(asked);
 		}
 		if (answer != null && !cancellation.isCancelled()) {
+			// The lead's own words: an address in them is given to this run, as one in a message of the
+			// lead is (URL provenance).
+			ReadingListBinding.givenAddressesIn(answer);
 			return ToolResult.of("The agent that started you answers:\n\n" + answer);
 		}
 		if (cancellation.isCancelled() || Thread.currentThread().isInterrupted()) {

@@ -14,6 +14,7 @@ import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
+import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
@@ -171,6 +172,12 @@ public class AskUserTool {
 			// what the model reports the user said. See MemoryConsent.
 			MemoryConsentBinding.recordAnswer(question, isBlank(ownWords) ? response
 				: isBlank(response) ? ownWords : response + "\n" + ownWords);
+			// An address the user wrote is given to this run, as one in the user's message is (URL
+			// provenance). The picked options of a choice are not the user's words but the model's.
+			if (!"choice".equals(type)) {
+				ReadingListBinding.givenAddressesIn(response);
+			}
+			ReadingListBinding.givenAddressesIn(ownWords);
 			return answer;
 		} catch (TimeoutException e) {
 			Logger.warn("User interaction timed out (id: " + request.getId() + ")", AskUserTool.class);

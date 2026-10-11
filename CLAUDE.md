@@ -478,7 +478,8 @@ here, unlike in #392 - this is a statement about the destination, not about the 
 that the run's user or lead did not write, that no search returned and that no page it read links to -
 so an injected page cannot make a research worker write its task or findings into an address. The
 ledger is `SeenUrls` on the run's `ReadingList`: `AgentLoop` adds the addresses of the user's and the
-lead's messages at each turn start (not framework notices, subagent reports or summaries), the web tools
+lead's messages at each turn start (not framework notices, subagent reports or summaries), `askUser`
+and `ask_lead` add what the user or lead wrote in answer (not a picked option), the web tools
 add search result addresses and page links (`UrlProvenance.record*`). Never add addresses from a tool
 answer that echoes its arguments - the model could launder a composed address through it.
 The browser session asks the same ledger for every navigation it makes for such a run (#813): a link or

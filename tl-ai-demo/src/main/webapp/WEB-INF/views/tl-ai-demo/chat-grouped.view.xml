@@ -213,38 +213,43 @@
 			</row-commands>
 			<!--
 				Which chats this list offers, and the one place the page's rule about that is written
-				(Issue #508). With an object open in the pane it is that object's conversations, found
-				by asking the object which sessions refer to it; with none open it is every chat of
-				this account, which is what this page showed before there was a subject at all.
+				(Issue #508). With an object open in the pane it is that object's conversations; with
+				none open it is every chat of this account, which is what this page showed before there
+				was a subject at all.
 
-				Three things are worth reading off it. The backwards navigation is the whole feature -
-				a host needs no remembered id, because the conversation says in the database what it
-				is about. The owner filter stays, because `referers` is not a security boundary.
-				And a chat that was started with nothing open simply is not in the scoped list:
-				there is no backfill, and the unscoped list below is where it is still found.
+				Two things are worth reading off it. A host needs no remembered id, because the
+				conversation says in the database what it is about. And a chat that was started with
+				nothing open simply is not in the scoped list: there is no backfill, and the unscoped
+				list is where it is still found.
 
-				The input is the pane's single object, so the agent's own `present` re-scopes this
-				list as well - which is consistent (the conversation is about what is being looked
-				at) but means the open chat can leave the list while staying open.
+				The input is the pane's single object, and the pane cannot tell who put it there: the
+				user opening an invoice, or the agent presenting a research run or any other object of
+				its own (#868). Two rules keep the latter from emptying the list. An object that is the
+				subject of no chat scopes nothing - the list falls back to every chat, because a
+				research run is what a chat produced, not what one is about. And a scoped list always
+				keeps the open chat, so whatever the agent presents, the chat the user is reading
+				never leaves the list while it stays open.
 
-				One thing `referers` does NOT survive: the object itself being deleted while the
-				channel still holds it - the engine refuses a lookup from a deleted object, so this
-				expression would throw in that window. It is not this list's window alone (the
-				<form> in the pane below reads the same channel), and a page that must survive it
-				asks the sessions rather than the object:
-
-					all(`tl.ai.execution:AgentSession`)
-						.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $object)
+				The chats are asked for their subject rather than the object for its referers: the
+				account's chats are needed for the fallback anyway, and asking the object would throw
+				when it is deleted while the pane still holds it.
 			-->
 			<inputs>
 				<input channel="paneItem"/>
+				<input channel="chatSession"/>
 			</inputs>
-			<rows><![CDATA[object -> ifElse(isEmpty($object),
-					all(`tl.ai.execution:AgentSession`),
-					$object.referers(`tl.ai.execution:AgentSession#subject`))
-				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
-				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
-				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+			<rows><![CDATA[object -> open -> {
+				chats = all(`tl.ai.execution:AgentSession`)
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`);
+				about = ifElse(isEmpty($object), list(),
+					$chats.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $object));
+				ifElse($about.isEmpty(),
+					$chats,
+					ifElse(isEmpty($open), $about,
+						$about.filter(s -> $s != $open).union(list($open))))
+					.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc());
+			}]]></rows>
 			<title>
 				<en>Chats</en>
 				<de>Chats</de>

@@ -97,6 +97,28 @@ public class TestAgentPolicyService extends TestCase {
 		assertNull("A service that refused to start is not the running one.", AgentPolicyService.getInstance());
 	}
 
+	/**
+	 * A role budget that names neither figure stops the start (#825): it used to exempt the role from
+	 * the token budget, and now it would say nothing, so the message says what to write instead.
+	 */
+	public void testAnEmptyRoleBudgetStopsTheStart() throws Exception {
+		try {
+			start(ServiceConfigFixture.file(AgentPolicyService.class.getName(), """
+				<instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+					<budget token-budget="1000">
+						<role-budgets>
+							<role-budget name="tl.admin"/>
+						</role-budgets>
+					</budget>
+				</instance>"""));
+			fail("A role budget without tokens and money must stop the start.");
+		} catch (RuntimeException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains("\"tl.admin\""));
+			assertTrue(expected.getMessage(), expected.getMessage().contains("tokens=\"0\""));
+		}
+		assertNull("A service that refused to start is not the running one.", AgentPolicyService.getInstance());
+	}
+
 	private void start(String file) throws ConfigurationException {
 		AgentPolicyService service = new AgentPolicyService(
 			new DefaultInstantiationContext(TestAgentPolicyService.class),

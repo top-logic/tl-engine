@@ -18,6 +18,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
 import com.top_logic.tl.ai.core.limits.BudgetConfig;
+import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 
 /**
@@ -146,7 +147,32 @@ public class AgentPolicyService extends ConfiguredManagedClass<AgentPolicyServic
 	protected void startUp() {
 		super.startUp();
 		refuseUnusableCurrency(getConfig().getBudget());
+		refuseEmptyRoleBudgets(getConfig().getBudget());
 		_instance = this;
+	}
+
+	/**
+	 * Stops the start when a role budget names neither tokens nor money.
+	 *
+	 * <p>
+	 * Such an entry says nothing: its holders get the section's budget. Before the two figures could
+	 * be left empty (#747), {@code <role-budget name="..."/>} gave the role an unlimited token budget,
+	 * and an installation that exempted a role that way would find it limited after the upgrade.
+	 * Refusing the entry makes the administrator write what is meant (#825).
+	 * </p>
+	 */
+	private static void refuseEmptyRoleBudgets(BudgetConfig budget) {
+		if (budget == null) {
+			return;
+		}
+		for (RoleBudget role : budget.getRoleBudgets().values()) {
+			if (role.getTokens() == null && role.getMoney() == null) {
+				throw new RuntimeException("The <role-budget name=\"" + role.getName()
+					+ "\"/> of AgentPolicyService names neither tokens nor money, so it changes nothing for"
+					+ " the role. Write tokens=\"0\" (and money=\"0\") to exempt the role from the budget,"
+					+ " give it the figures it may spend, or delete the entry.");
+			}
+		}
 	}
 
 	/**

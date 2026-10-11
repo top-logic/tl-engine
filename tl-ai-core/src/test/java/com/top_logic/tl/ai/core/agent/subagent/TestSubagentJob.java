@@ -11,6 +11,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
@@ -39,6 +40,19 @@ public class TestSubagentJob extends TestCase {
 		assertSame(result, job.result());
 		assertEquals(StopReason.COMPLETE, job.result().stopReason());
 		assertFalse("result not yet delivered", job.isDelivered());
+	}
+
+	/** An ended job lets go of its live log: its transcript is read from the recorded run now. */
+	public void testAnEndedJobLetsGoOfItsLiveLog() {
+		SubagentJob job = new SubagentJob("sa-4", "worker", "task", new CancellationToken());
+		job.markRunning();
+		job.setLiveLog(new ConversationLog());
+		assertNotNull(job.liveLog());
+
+		job.markTerminal(SubagentJobStatus.DONE,
+			new SubagentResult("done", TokenUsage.EMPTY, 1L, 1, StopReason.COMPLETE));
+
+		assertNull(job.liveLog());
 	}
 
 	public void testDeliveredFlipsOnce() {

@@ -448,14 +448,32 @@ public class SubagentJobRegistry {
 		}
 	}
 
+	/**
+	 * Tells who listens now that the job started. A method of its own, so that nothing of the
+	 * listener list stays in the frame of {@link #run(Pending)} while the job works.
+	 */
+	private void notifyStarted(SubagentJob job) {
+		for (Listener listener : _listeners) {
+			listener.started(job);
+		}
+	}
+
+	/**
+	 * Tells who listens now - not who listened when the job started - that it ended: a chat window
+	 * that reloaded the chat meanwhile has to hear it, and one that has ended must not be held for as
+	 * long as the job works.
+	 */
+	private void notifyFinished(SubagentJob job) {
+		for (Listener listener : _listeners) {
+			listener.finished(job);
+		}
+	}
+
 	private void run(Pending pending) {
 		SubagentJob job = pending.job();
 		try {
 			job.markRunning();
-			List<Listener> listeners = List.copyOf(_listeners);
-			for (Listener listener : listeners) {
-				listener.started(job);
-			}
+			notifyStarted(job);
 			SubagentJobStatus terminal;
 			SubagentResult result;
 			try {
@@ -472,9 +490,7 @@ public class SubagentJobRegistry {
 			// when no turn was left to read it is named in the result, not lost.
 			job.setUnreadMessages(job.inbox().closeAndDrain());
 			job.markTerminal(terminal, result);
-			for (Listener listener : listeners) {
-				listener.finished(job);
-			}
+			notifyFinished(job);
 			signalCompletion();
 		} finally {
 			ended();

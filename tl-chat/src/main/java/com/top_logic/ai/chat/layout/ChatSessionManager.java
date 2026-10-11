@@ -96,6 +96,9 @@ public class ChatSessionManager {
 		}
 	};
 
+	/** Whether the window this manager belongs to has ended; see {@link #close()}. */
+	private boolean _closed;
+
 	/** The currently active session ID, or null if none. */
 	private volatile String _activeSessionId;
 
@@ -131,6 +134,9 @@ public class ChatSessionManager {
 
 		/** Borrowed from {@link SubagentRegistries}; see {@link #getActiveSubagentRegistry()}. */
 		SubagentJobRegistry _subagentRegistry;
+
+		/** What {@link #_subagentRegistry} is borrowed under while this state listens to it. */
+		SubagentRegistries.Lease _subagentLease;
 
 		/** What listens to {@link #_subagentRegistry} for this state. */
 		final List<SubagentJobRegistry.Listener> _subagentListeners = new ArrayList<>();
@@ -271,7 +277,7 @@ public class ChatSessionManager {
 			SubagentJobRegistry registry = SubagentRegistries.forKey(subagentRegistryKey(_activeSessionId));
 			if (state._subagentRegistry != registry) {
 				detachSubagents(state);
-				attachSubagents(state, registry);
+				attachSubagents(state);
 			}
 			return registry;
 		}
@@ -282,13 +288,18 @@ public class ChatSessionManager {
 	 * account find and answer what a subagent asks, and the waker that starts a lead turn when there is
 	 * news - which, for a registry that worked on while nobody listened, may already be there.
 	 */
-	private void attachSubagents(SessionState state, SubagentJobRegistry registry) {
+	private void attachSubagents(SessionState state) {
 		Person owner = _activeOwner;
 		TaskProgressTracker tracker = _tracker;
-		if (owner == null || tracker == null) {
-			// Not marked as attached: the next call tries again, rather than never.
+		if (owner == null || tracker == null || _closed) {
+			// Not marked as attached: the next call tries again, rather than never. A closed window
+			// is not attached again by a run of it that ends afterwards: nothing would detach it.
 			return;
 		}
+		// Attached rather than merely asked for: a registry nobody listens to any more is forgotten
+		// after a while, and this window is listening.
+		state._subagentLease = SubagentRegistries.attach(subagentRegistryKey(_activeSessionId));
+		SubagentJobRegistry registry = state._subagentLease.registry();
 		state._subagentRegistry = registry;
 		state._subagentListeners.add(
 			PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
@@ -314,9 +325,8 @@ public class ChatSessionManager {
 		if (state._subagentRegistry != null) {
 			return;
 		}
-		SubagentJobRegistry registry = SubagentRegistries.find(subagentRegistryKey(_activeSessionId));
-		if (registry != null) {
-			attachSubagents(state, registry);
+		if (SubagentRegistries.find(subagentRegistryKey(_activeSessionId)) != null) {
+			attachSubagents(state);
 		}
 	}
 
@@ -333,6 +343,30 @@ public class ChatSessionManager {
 		}
 		state._subagentListeners.clear();
 		state._subagentRegistry = null;
+		if (state._subagentLease != null) {
+			state._subagentLease.close();
+			state._subagentLease = null;
+		}
+	}
+
+	/**
+	 * Stops listening to the subagents of every chat this manager holds, because the window it
+	 * belongs to has ended.
+	 *
+	 * <p>
+	 * The registries are the process's and outlive the window; what this window hung on them - its
+	 * waker, the register of its questions - holds the window's whole state, and would keep it in
+	 * memory for as long as the registry lives. The subagents work on; a registry nobody listens to is
+	 * forgotten after a while (see {@link SubagentRegistries}).
+	 * </p>
+	 */
+	public void close() {
+		synchronized (_lock) {
+			_closed = true;
+			for (SessionState state : _sessions.values()) {
+				detachSubagents(state);
+			}
+		}
 	}
 
 	/** The key of the given chat's registry in this window; see {@link SubagentRegistries}. */

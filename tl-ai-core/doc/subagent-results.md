@@ -107,7 +107,12 @@ cache, or reloads it because another window wrote to it, only stops listening, a
 the children and what they finished. Deleting the chat cancels them: `AgentExecutionStore.deleteSession`
 stops every registry of the conversation - the one of each window, also a closed one or one that
 dropped the chat, and the one of a run without a window. A run without a window borrows its registry:
-when it ends and no subagent works or waits for delivery, the registry is forgotten. A restart ends them all: the
+when it ends and no subagent works or waits for delivery, the registry is forgotten. A chat window
+attaches to the registry of its chat while it listens to it; when the window ends - its sub-session
+is unbound - it stops listening and lets go (#856). A registry that nobody has borrowed for 24 hours
+is cancelled and forgotten, with whatever still works or waits in it: no lead reads it any more. A
+job's end is told to whoever listens at that moment, so a window that listens again after a reload
+hears it, and one that has ended is not held by a job that works on. A restart ends them all: the
 startup sweep fails their runs, and a conversation read back ends their parts as failed.
 
 ## Transcript, chat, reload

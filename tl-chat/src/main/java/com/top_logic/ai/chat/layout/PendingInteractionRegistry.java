@@ -96,7 +96,9 @@ public final class PendingInteractionRegistry {
 	 *        The account whose windows may answer it. Never <code>null</code>.
 	 * @param tracker
 	 *        The tracker of the window whose run started it - where "approve for this session" is
-	 *        recorded, as for the run itself.
+	 *        recorded, as for the run itself. <code>null</code> once that window has ended: the
+	 *        subagent stays answerable from the account's other windows, but no longer holds the
+	 *        window's state in memory.
 	 * @param sessionId
 	 *        The chat the run that started it belongs to; may be <code>null</code>.
 	 */
@@ -111,7 +113,8 @@ public final class PendingInteractionRegistry {
 	 * @param responder
 	 *        The account the request is addressed to.
 	 * @param tracker
-	 *        The window the session-approved tools are recorded against.
+	 *        The window the session-approved tools are recorded against; <code>null</code> when that
+	 *        window has ended.
 	 * @param store
 	 *        The store the request waits in; resolving it there unparks the asking thread.
 	 * @param logListener
@@ -283,6 +286,16 @@ public final class PendingInteractionRegistry {
 				SUBAGENTS.remove(job);
 			}
 		};
+	}
+
+	/**
+	 * The given window has ended: the subagents its runs started stay answerable from the account's
+	 * other windows, but no longer refer to it.
+	 */
+	public static void windowClosed(TaskProgressTracker tracker) {
+		SUBAGENTS.replaceAll((job, subagent) -> subagent.tracker() == tracker
+			? new PendingSubagent(job, subagent.responder(), null, subagent.sessionId())
+			: subagent);
 	}
 
 	/**

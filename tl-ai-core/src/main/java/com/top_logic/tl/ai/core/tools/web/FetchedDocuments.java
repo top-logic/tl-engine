@@ -38,6 +38,9 @@ final class FetchedDocuments {
 	/** How many characters of text all kept documents hold together, at most. */
 	static final int MAX_CHARS = 8_000_000;
 
+	/** How many characters of text one kept document holds, at most: half the cache. */
+	static final int MAX_DOCUMENT_CHARS = MAX_CHARS / 2;
+
 	private final Clock _clock;
 
 	private final Map<String, Entry> _entries = new LinkedHashMap<>(16, 0.75f, true);
@@ -64,12 +67,13 @@ final class FetchedDocuments {
 	}
 
 	/**
-	 * Keeps a document fetched for {@code url}. A document larger than half the cache is not kept:
-	 * it would push out everything else, and is read anew instead.
+	 * Keeps a document fetched for {@code url}. A document larger than {@link #MAX_DOCUMENT_CHARS} is
+	 * not kept: it would push out everything else. {@link WebFetchTool} cuts every document to that
+	 * size, so that a document read in windows is fetched once, not once per window.
 	 */
 	synchronized void put(String url, FetchedDocument document) {
 		int size = document.text().length();
-		if (size > MAX_CHARS / 2) {
+		if (size > MAX_DOCUMENT_CHARS) {
 			return;
 		}
 		Entry previous = _entries.remove(url);

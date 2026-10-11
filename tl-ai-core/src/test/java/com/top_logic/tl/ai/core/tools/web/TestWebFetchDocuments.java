@@ -172,6 +172,65 @@ public class TestWebFetchDocuments extends TestCase {
 		}
 	}
 
+	/**
+	 * A document longer than one cache entry is cut to it with a note, and read on from the kept text:
+	 * it used to be downloaded and extracted again for every window.
+	 */
+	public void testAVeryLongDocumentIsDownloadedOnce() throws Exception {
+		String paragraph = FILLER.repeat(20) + "\n\n";
+		String body = paragraph.repeat(FetchedDocuments.MAX_DOCUMENT_CHARS / paragraph.length() + 100);
+		try (RecordingServer origin = RecordingServer.start(target -> new Reply(200, "OK",
+				List.of("Content-Type: text/plain; charset=utf-8"), body));
+				FilteringProxy egress = egressTo(origin)) {
+			WebFetchTool tool = new WebFetchTool(publicAnswer(), egress);
+			int next = nextOffset(tool.webFetch("http://fixture.invalid/long.txt", null));
+
+			tool.webFetch("http://fixture.invalid/long.txt", next);
+			String last = tool.webFetch("http://fixture.invalid/long.txt", FetchedDocuments.MAX_DOCUMENT_CHARS - 1_000);
+
+			assertEquals("reading on uses the kept text", 1, origin.contactCount());
+			assertTrue("the end says where the text is cut: " + tail(last),
+				last.contains("[The text of this document is cut here: this application reads at most "
+					+ FetchedDocuments.MAX_DOCUMENT_CHARS + " characters of one document.]"));
+		}
+	}
+
+	/** Of a PDF with more pages than are read, the text stops with a note naming the last page read. */
+	public void testAPdfIsReadUpToItsPageBound() throws Exception {
+		byte[] pdf = FixturePdf.of(12, page -> "Finding " + page + " of the report.");
+
+		FetchedDocument document = PdfText.extract("https://example.com/r.pdf", pdf, 10, 1_000_000);
+
+		assertTrue(document.text().contains("--- Page 10 of 12 ---\n\nFinding 10 of the report."));
+		assertFalse(document.text().contains("Page 11 of 12"));
+		assertTrue(document.text(), document.text().endsWith("[The text of this document stops here, after page 10"
+			+ " of 12: this application reads at most 10 pages and 1000000 characters of one PDF.]"));
+		assertEquals("the document still has 12 pages", 12, document.pageCount());
+		assertEquals(10, document.pageStarts().size());
+	}
+
+	/** Of a PDF with more text than is read, the text stops after the page that reached the bound. */
+	public void testAPdfIsReadUpToItsCharacterBound() throws Exception {
+		byte[] pdf = FixturePdf.of(20, page -> "Finding " + page + " of the report. " + FILLER.repeat(10));
+
+		FetchedDocument document = PdfText.extract("https://example.com/r.pdf", pdf, 2_000, 3_000);
+
+		int pages = document.pageStarts().size();
+		assertTrue("stopped early: " + pages, pages > 1 && pages < 20);
+		assertTrue(document.text().contains("after page " + pages + " of 20"));
+		assertTrue("the page that reached the bound is whole", document.text().contains("Finding " + pages + " of"));
+	}
+
+	/** A page without text keeps its marker, between pages and at the end, so the page numbers hold. */
+	public void testAPageWithoutTextKeepsItsMarker() throws Exception {
+		byte[] pdf = FixturePdf.of(5, page -> page == 2 || page == 3 || page == 5 ? "" : "Finding " + page + ".");
+
+		String text = PdfText.extract("https://example.com/r.pdf", pdf).text();
+
+		assertEquals("--- Page 1 of 5 ---\n\nFinding 1.\n\n--- Page 2 of 5 ---\n\n\n\n--- Page 3 of 5 ---\n\n"
+			+ "\n\n--- Page 4 of 5 ---\n\nFinding 4.\n\n--- Page 5 of 5 ---\n\n", text);
+	}
+
 	/** An offset past the end says how long the document is. */
 	public void testAnOffsetPastTheEndIsAClearError() {
 		String answer = WebFetchTool.renderWindow("https://example.com/a",

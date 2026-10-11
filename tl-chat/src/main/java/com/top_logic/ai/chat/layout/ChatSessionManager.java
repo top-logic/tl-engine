@@ -283,12 +283,13 @@ public class ChatSessionManager {
 	 * news - which, for a registry that worked on while nobody listened, may already be there.
 	 */
 	private void attachSubagents(SessionState state, SubagentJobRegistry registry) {
-		state._subagentRegistry = registry;
 		Person owner = _activeOwner;
 		TaskProgressTracker tracker = _tracker;
 		if (owner == null || tracker == null) {
+			// Not marked as attached: the next call tries again, rather than never.
 			return;
 		}
+		state._subagentRegistry = registry;
 		state._subagentListeners.add(
 			PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
 		state._subagentWaker = new SubagentWaker(registry, ChatProcessor.wakeHost(tracker, owner, _activeSessionId));
@@ -297,6 +298,26 @@ public class ChatSessionManager {
 			registry.addListener(listener);
 		}
 		state._subagentWaker.leadRunEnded();
+	}
+
+	/**
+	 * Listens again to the subagents the active chat started in this window before its state was
+	 * dropped or reloaded. Must be called under {@link #_lock}, after the chat became the active one.
+	 *
+	 * <p>
+	 * At once, not on the next use of {@link #getActiveSubagentRegistry()}: a subagent that finishes
+	 * or asks its lead before the window sends anything would otherwise wake nobody. A chat that never
+	 * started a subagent in this window gets no registry here.
+	 * </p>
+	 */
+	private void reattachSubagents(SessionState state) {
+		if (state._subagentRegistry != null) {
+			return;
+		}
+		SubagentJobRegistry registry = SubagentRegistries.find(subagentRegistryKey(_activeSessionId));
+		if (registry != null) {
+			attachSubagents(state, registry);
+		}
 	}
 
 	/** Stops listening to the session's registry; its subagents work on. */
@@ -471,7 +492,9 @@ public class ChatSessionManager {
 						_tracker.resetSessionState();
 					}
 					disposeSessionState(_sessions.remove(sessionId));
-					_sessions.put(sessionId, loadFromDatabase(sessionId, owner));
+					SessionState reloaded = loadFromDatabase(sessionId, owner);
+					_sessions.put(sessionId, reloaded);
+					reattachSubagents(reloaded);
 				}
 				return true;
 			}
@@ -500,6 +523,7 @@ public class ChatSessionManager {
 				_sessions.put(sessionId, newState);
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
+				reattachSubagents(newState);
 			}
 		}
 		persistOutsideLock(outgoing);

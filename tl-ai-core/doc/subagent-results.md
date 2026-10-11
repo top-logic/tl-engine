@@ -87,6 +87,9 @@ a question a child asks with `ask_lead` - otherwise it would wait unanswered unt
 - The turn runs as the user's last message in that window did: in that window, with the same agent,
   model and page facts. It needs that window to be open and showing the chat; otherwise the news
   waits for the next message, as it did before.
+- The window listens again as soon as it shows the chat again - after its cache dropped the chat, or
+  after it reloaded the chat because another window wrote to it - not only when it sends something
+  (#837). A chat that never started a subagent in the window gets no registry by being opened.
 
 `ChatProcessor.sendWake` starts the run; it opens with `injectSubagentResults` and announces itself
 with `AgentEvent.LeadWoken`, which the chat draws as a line in place of the user's bubble. The turn is

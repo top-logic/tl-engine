@@ -193,7 +193,8 @@ Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, MAX_TOOL_CALLS, ERROR, CO
 budget (`max-tool-calls` in `<agent-overrides>`, narrowed per spawn by `spawn_subagent`'s
 `toolCallBudget` through `AgentLoop.limitToolCalls`), gets one last turn that keeps the tool list -
 the cached prefix stays the same - but sends `ToolChoice.NONE` and a framework notice to answer with
-what it has; calls a provider still returns there are dropped. Calls beyond the budget are answered
+what it has; calls a provider still returns there are dropped, and a last reply left without text is
+asked for once more, the same way (#819). Calls beyond the budget are answered
 "Not run"; calls of `interaction` tools spend nothing. The run ends as `MAX_TURNS` or
 `MAX_TOOL_CALLS`, the chat appends a notice, and a delivered subagent result says "Stopped at its
 limit". A run limited to one turn has no turn to spare and works in it. `TestRunLimitFinalTurn` pins it.

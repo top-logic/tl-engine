@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The view change sets of this application: what an agent proposed for review and what it wrote,
+	with the views before and after - running with the real data, read-only - and Apply, Reject and
+	Revert.
+
+	An application puts it into its navigation, e.g. as a nav-item of its shell:
+	<view-ref view="tl-ai-views/view-changes.view.xml"/>.
+-->
+<view>
+	<channels>
+		<channel name="selectedSet"/>
+		<channel name="selectedChange"/>
+	</channels>
+
+	<split-panel orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane min-size="360"
+				size="40"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>View changes</en>
+						<de>Ansichtsänderungen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-check2-circle"
+							input="selectedSet"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Apply</en>
+								<de>Übernehmen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Apply</en>
+									<de>Übernehmen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[s -> {
+									"en": "Write “" + $s + "” into the views of this application?",
+									"de": "„" + $s + "“ in die Ansichten dieser Anwendung übernehmen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<view-change action="APPLY"/>
+							<write-channel name="selectedSet"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-x-circle"
+							input="selectedSet"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Reject</en>
+								<de>Ablehnen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Reject</en>
+									<de>Ablehnen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[s -> {
+									"en": "Reject “" + $s + "”?",
+									"de": "„" + $s + "“ ablehnen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<view-change action="REJECT"/>
+							<write-channel name="selectedSet"/>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-arrow-counterclockwise"
+							input="selectedSet"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Revert</en>
+								<de>Zurücknehmen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Revert</en>
+									<de>Zurücknehmen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[s -> {
+									"en": "Put the views back as they were before “" + $s + "”?",
+									"de": "Die Ansichten auf den Stand vor „" + $s + "“ zurücksetzen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<view-change action="REVERT"/>
+							<write-channel name="selectedSet"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.ai.views:ViewChangeSet"
+						selection="selectedSet"
+						types="tl.ai.views:ViewChangeSet"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="status"/>
+							<column attribute="author"/>
+							<column attribute="date"/>
+						</columns>
+						<!-- Newest first. -->
+						<rows><![CDATA[all(`tl.ai.views:ViewChangeSet`)
+							.sort((s -> $s.get(`tl.ai.views:ViewChangeSet#date`)).comparator().desc())]]></rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="60"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Change set</en>
+						<de>Änderungsvorschlag</de>
+					</title>
+					<split-panel orientation="vertical"
+						resizable="true"
+					>
+						<panes>
+							<pane size="40"
+								unit="%"
+							>
+								<stack direction="column"
+									gap="default"
+								>
+									<form input="selectedSet"
+										mode-switch="false"
+										with-inset="true"
+									>
+										<field attribute="name"/>
+										<field attribute="status"/>
+										<field attribute="summary"/>
+										<field attribute="findings"/>
+									</form>
+									<table
+										observed-types="tl.ai.views:ViewChange,tl.ai.views:ViewChangeSet"
+										selection="selectedChange"
+										types="tl.ai.views:ViewChange"
+									>
+										<inputs>
+											<input channel="selectedSet"/>
+										</inputs>
+										<columns>
+											<column attribute="name"/>
+										</columns>
+										<rows><![CDATA[s -> ifElse(isEmpty($s), list(), $s.get(`tl.ai.views:ViewChangeSet#changes`))]]></rows>
+									</table>
+								</stack>
+							</pane>
+							<pane size="60"
+								unit="%"
+							>
+								<tab-bar active-tab="after">
+									<tab id="after">
+										<label>
+											<en>After</en>
+											<de>Nachher</de>
+										</label>
+										<view-preview change="selectedChange"
+											side="AFTER"
+										/>
+									</tab>
+									<tab id="before">
+										<label>
+											<en>Before</en>
+											<de>Vorher</de>
+										</label>
+										<view-preview change="selectedChange"
+											side="BEFORE"
+										/>
+									</tab>
+									<tab id="xml">
+										<label>
+											<en>XML</en>
+											<de>XML</de>
+										</label>
+										<form input="selectedChange"
+											mode-switch="false"
+											with-inset="true"
+										>
+											<field attribute="before"/>
+											<field attribute="after"/>
+										</form>
+									</tab>
+								</tab-bar>
+							</pane>
+						</panes>
+					</split-panel>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -21,7 +21,8 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 
 /**
- * Authenticates a caller by a personal access token in {@code Authorization: Bearer <token>}.
+ * Authenticates a caller by a personal access token in the header {@code Authorization: Bearer}, followed by
+ * the token.
  *
  * <p>
  * The tokens are not configured: each person creates their own in the application, and the request

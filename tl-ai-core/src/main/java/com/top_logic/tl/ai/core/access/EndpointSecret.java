@@ -66,7 +66,7 @@ public interface EndpointSecret extends SecretConfiguration, ConfigPart {
 	 * An API key, and the account a request with it acts as.
 	 *
 	 * <p>
-	 * An {@code <api-key-authentication>} of the same domain checks the key.
+	 * An &lt;api-key-authentication&gt; of the same domain checks the key.
 	 * </p>
 	 *
 	 * @see ServerAPIKeySecret
@@ -110,7 +110,7 @@ public interface EndpointSecret extends SecretConfiguration, ConfigPart {
 	 * The client credentials the endpoint service introspects OAuth bearer tokens with.
 	 *
 	 * <p>
-	 * A {@code <client-credentials-authentication>} of the same domain uses them.
+	 * A &lt;client-credentials-authentication&gt; of the same domain uses them.
 	 * </p>
 	 *
 	 * @see ServerCredentialSecret

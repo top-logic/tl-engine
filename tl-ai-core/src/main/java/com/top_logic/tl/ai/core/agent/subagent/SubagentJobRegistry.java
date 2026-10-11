@@ -412,16 +412,18 @@ public class SubagentJobRegistry {
 	 *
 	 * <p>
 	 * Called when a job is queued, when one ends, when a queued one is cancelled, and when the
-	 * installation frees a slot this registry asked for.
+	 * installation frees a slot this registry asked for. Once the registry is {@link #shutdown() shut
+	 * down}, nothing starts any more, and every queued job ends cancelled.
 	 * </p>
 	 */
 	void dispatch() {
 		List<Pending> starting = new ArrayList<>();
 		List<Pending> dropped = new ArrayList<>();
 		synchronized (this) {
+			boolean shutDown = _executor.isShutdown();
 			for (Iterator<Pending> it = _queue.iterator(); it.hasNext();) {
 				Pending pending = it.next();
-				if (pending.job().cancellationToken().isCancelled()) {
+				if (shutDown || pending.job().cancellationToken().isCancelled()) {
 					it.remove();
 					dropped.add(pending);
 				}
@@ -439,8 +441,9 @@ public class SubagentJobRegistry {
 			try {
 				_executor.submit(() -> run(pending));
 			} catch (java.util.concurrent.RejectedExecutionException ex) {
-				// Shut down meanwhile: the job will not run; give its slots back.
+				// Shut down meanwhile: the job will not run; give its slots back and end it.
 				ended();
+				endNotStarted(pending);
 			}
 		}
 	}
@@ -559,9 +562,17 @@ public class SubagentJobRegistry {
 		return true;
 	}
 
-	/** Shuts down the background executor (call on session teardown); queued jobs never start. */
+	/**
+	 * Shuts down the background executor (call on session teardown).
+	 *
+	 * <p>
+	 * Running jobs are interrupted. Queued jobs, and jobs spawned afterwards, never start: they end
+	 * {@link SubagentJobStatus#CANCELLED} at once, so that nobody waits for them.
+	 * </p>
+	 */
 	public void shutdown() {
 		SubagentSlots.forget(this);
 		_executor.shutdownNow();
+		dispatch();
 	}
 }

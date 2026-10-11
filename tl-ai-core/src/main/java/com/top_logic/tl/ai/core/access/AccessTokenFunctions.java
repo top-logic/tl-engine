@@ -3,20 +3,20 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.token;
+package com.top_logic.tl.ai.core.access;
 
 import java.util.Collection;
 
-import com.top_logic.ai.mcp.server.model.AccessToken;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.tl.ai.core.access.model.AccessToken;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * TL-Script functions behind the views that create and revoke personal access tokens of the MCP
- * endpoint.
+ * TL-Script functions behind the views that create and revoke personal access tokens of the agent
+ * endpoints.
  *
  * <p>
  * Both act for the account that runs the script and check it here rather than in the view: a
@@ -24,7 +24,7 @@ import com.top_logic.util.error.TopLogicException;
  * console and a scheduler task as well.
  * </p>
  */
-@ScriptPrefix("mcp")
+@ScriptPrefix("ai")
 public class AccessTokenFunctions extends TLScriptFunctions {
 
 	/**
@@ -36,7 +36,7 @@ public class AccessTokenFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Example: <code>mcpAccessTokenCreate("Claude Code laptop", 90)</code>
+	 * Example: <code>aiAccessTokenCreate("Claude Code laptop", 90)</code>
 	 * </p>
 	 *
 	 * @param name
@@ -61,7 +61,7 @@ public class AccessTokenFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param token
-	 *        The <code>tl.ai.mcp.server:AccessToken</code> to revoke.
+	 *        The <code>tl.ai.access:AccessToken</code> to revoke.
 	 * @return Always <code>true</code>; a refusal is an error, not a <code>false</code>.
 	 */
 	public static boolean accessTokenRevoke(Object token) {

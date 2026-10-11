@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.token;
+package com.top_logic.tl.ai.core.access;
 
 import junit.framework.TestCase;
 

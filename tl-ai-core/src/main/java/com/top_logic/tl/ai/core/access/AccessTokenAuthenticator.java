@@ -3,26 +3,26 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.token;
+package com.top_logic.tl.ai.core.access;
 
 import java.time.Instant;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.top_logic.ai.mcp.server.model.AccessToken;
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.tl.ai.core.access.model.AccessToken;
 
 /**
  * Resolves {@code Authorization: Bearer <token>} to the person who created the token.
  *
  * <p>
- * Runs in the system interaction {@code McpAuthenticationFilter} opens for resolving a credential,
+ * Runs in the system interaction the endpoint opens for resolving a credential,
  * so the lookup sees every token and the last-used stamp can be committed.
  * </p>
  *
@@ -63,7 +63,7 @@ public class AccessTokenAuthenticator implements Authenticator {
 		} catch (RuntimeException ex) {
 			// A last-used stamp that could not be written - two requests racing on one token, say -
 			// is no reason to refuse a valid credential.
-			Logger.warn("Could not record the use of MCP access token '" + token.getName() + "' of '"
+			Logger.warn("Could not record the use of personal access token '" + token.getName() + "' of '"
 				+ token.getOwner().getName() + "'.", ex, AccessTokenAuthenticator.class);
 		}
 		return token.getOwner();
@@ -78,7 +78,7 @@ public class AccessTokenAuthenticator implements Authenticator {
 	private static AuthenticationFailure failure(ResKey message, String error) {
 		AuthenticationFailure result = new AuthenticationFailure(message);
 		result.setResponseEnhancer((response, failure, path) -> {
-			Logger.info("Refused an MCP access token for '" + path + "': " + failure.getMessage(),
+			Logger.info("Refused a personal access token for '" + path + "': " + failure.getMessage(),
 				AccessTokenAuthenticator.class);
 			AuthorizationUtil.setBearerAuthenticationRequestHeader(response, error, null);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, failure.getMessage());

@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.model.impl;
+package com.top_logic.tl.ai.core.access.model.impl;
 
 /**
  * Basic interface for {@link #ACCESS_TOKEN_TYPE} business objects.

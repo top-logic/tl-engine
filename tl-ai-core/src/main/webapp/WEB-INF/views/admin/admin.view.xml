@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Overlay contributing the MCP section to the administration defined by tl-layout-view
+	Overlay contributing the "Access tokens" section to the administration defined by tl-layout-view
 	(WEB-INF/views/admin/admin.view.xml): every personal access token of every account, which an
 	administrator may revoke (Issue #671). A same-path overlay, merged onto the base in dependency
 	order.
@@ -14,25 +14,15 @@
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<tab-bar>
 		<tabs>
-			<tab id="mcp"
+			<tab id="access-tokens"
 				config:operation="add"
 				config:position="end"
 			>
 				<label>
-					<en>MCP</en>
-					<de>MCP</de>
+					<en>Access tokens</en>
+					<de>Zugriffstokens</de>
 				</label>
-				<tab-bar active-tab="access-tokens">
-					<tabs>
-						<tab id="access-tokens">
-							<label>
-								<en>Access tokens</en>
-								<de>Zugriffstokens</de>
-							</label>
-							<view-ref view="tl-ai-mcp-server/admin/access-tokens.view.xml"/>
-						</tab>
-					</tabs>
-				</tab-bar>
+				<view-ref view="tl-ai-core/admin/access-tokens.view.xml"/>
 			</tab>
 		</tabs>
 	</tab-bar>

@@ -34,7 +34,7 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * <p>
  * The MCP specification requires authorization on <em>every</em> HTTP request from client to server,
  * not only on {@code initialize}, so this is a per-request filter and not a session check. The
- * mechanism is whatever the deployment configured - see {@link McpAuthentication}; the challenge and
+ * mechanism is whatever the deployment configured - see {@link EndpointAuthentication}; the challenge and
  * the status code on a failure come from the framework's own {@code ResponseEnhancer}, so a basic
  * scheme answers {@code 401} with {@code WWW-Authenticate: Basic} and a bearer scheme with
  * {@code WWW-Authenticate: Bearer ... error="invalid_token"}.

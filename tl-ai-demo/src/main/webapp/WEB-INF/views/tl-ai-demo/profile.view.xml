@@ -36,9 +36,9 @@
 		</panel>
 		<!--
 			The personal access tokens an MCP client acts as this account with (Issue #671). The demo
-			has no settings dialog, where tl-ai-mcp-server contributes the same view as a tab, so it
+			has no settings dialog, where tl-ai-core contributes the same view as a tab, so it
 			stands here.
 		-->
-		<view-ref view="tl-ai-mcp-server/access-tokens.view.xml"/>
+		<view-ref view="tl-ai-core/access-tokens.view.xml"/>
 	</stack>
 </view>

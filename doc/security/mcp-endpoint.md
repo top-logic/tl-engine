@@ -46,7 +46,7 @@ Enabling the module is not enough, and that is deliberate.
 > with **HTTP 503** and a message naming what to configure. There is no state in which the endpoint
 > answers an anonymous caller.
 
-`McpAuthentication` is where that decision lives. The OpenAPI server reads an operation that declares
+`EndpointAuthentication` (tl-ai-core, shared with the A2A endpoint) is where that decision lives. The OpenAPI server reads an operation that declares
 no authentication as *"publish this"*, because a REST path is something an administrator wrote out by
 hand. `/mcp/*` exists because the module is on the classpath, nobody wrote it out, and its resource
 handlers read the KnowledgeBase - so the default here is the opposite one.
@@ -118,18 +118,18 @@ tokens are not configured:
 </config>
 ```
 
-**Creating one.** *Settings -> Access tokens -> New token* (the engine's settings dialog, which this
-module extends): a name, typically the client it is for, and optionally how many days it stays
+**Creating one.** *Settings -> Access tokens -> New token* (the engine's settings dialog, which
+tl-ai-core extends): a name, typically the client it is for, and optionally how many days it stays
 valid. The token is shown **once**, in the dialog that follows; nothing can show it again, so a lost
 token is revoked and replaced. The same tab lists the person's tokens - name, the first characters,
 created, expires, last used - and revokes one. An application without the settings dialog places
-`tl-ai-mcp-server/access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on
+`tl-ai-core/access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on
 *My settings*.
 
-**Administering them.** *Administration -> MCP -> Access tokens* lists the tokens of every
+**Administering them.** *Administration -> Access tokens* lists the tokens of every
 account and revokes any of them - what to do when a token leaked or an account must lose MCP access
 at once. Deleting an account deletes its tokens. A person reads only their own tokens: model access is
-deny-by-default, so the owner holds the technical role `McpAccessTokenOwner` on each of their
+deny-by-default, so the owner holds the technical role `AccessTokenOwner` on each of their
 tokens through a role rule on `owner`, and that role is granted Read.
 
 **Connecting Claude Code:**
@@ -340,11 +340,12 @@ demo only; the file says how to connect Claude Code.
   instructions, `tools/list` shows only the published tool with its title and annotations, a tool that
   is not published is unknown, a foreign `Origin` is refused and a missing one is served),
   `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused),
-  `TestAccessTokens` (the token format and its hash), `TestMcpAuthentication` (nothing configured
-  serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches
+  `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge),
+  `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches
   the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table
   above, that the hints survive the JSON mapper, and that a tl-ai consuming them still says
   `EXTERNAL`).
+- `tl-ai-core`: `TestAccessTokens` (the token format and its hash).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and real
   access rights - a resource read filtered per object, an attribute left out, a listing counted after
   filtering, an API key resolved to its account, a tool call authorized and one refused by the

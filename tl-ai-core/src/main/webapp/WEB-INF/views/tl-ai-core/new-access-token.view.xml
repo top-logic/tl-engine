@@ -2,7 +2,7 @@
 
 <!--
 	Creating a personal access token (Issue #671). The model is a transient
-	tl.ai.mcp.server:AccessTokenRequest; Create stores the token's hash, writes the token itself onto
+	tl.ai.access:AccessTokenRequest; Create stores the token's hash, writes the token itself onto
 	that transient object only, and replaces this dialog by the one that shows it - once.
 -->
 <view>
@@ -26,8 +26,8 @@
 		>
 			<text>
 				<label>
-					<en>An MCP client such as Claude Code acts as you with this token, with all your rights.</en>
-					<de>Ein MCP-Client wie Claude Code handelt mit diesem Token als Sie, mit all Ihren Rechten.</de>
+					<en>A client - an MCP client such as Claude Code, or another agent over A2A - acts as you with this token, with all your rights.</en>
+					<de>Ein Client - ein MCP-Client wie Claude Code oder ein anderer Agent über A2A - handelt mit diesem Token als Sie, mit all Ihren Rechten.</de>
 				</label>
 			</text>
 			<field attribute="name"/>
@@ -44,16 +44,16 @@
 					<store-form-state/>
 					<with-transaction>
 						<execute-script>
-							<function><![CDATA[r -> $r..set(`tl.ai.mcp.server:AccessTokenRequest#token`,
-								mcpAccessTokenCreate(
-									$r.get(`tl.ai.mcp.server:AccessTokenRequest#name`),
-									$r.get(`tl.ai.mcp.server:AccessTokenRequest#validForDays`)))]]></function>
+							<function><![CDATA[r -> $r..set(`tl.ai.access:AccessTokenRequest#token`,
+								aiAccessTokenCreate(
+									$r.get(`tl.ai.access:AccessTokenRequest#name`),
+									$r.get(`tl.ai.access:AccessTokenRequest#validForDays`)))]]></function>
 						</execute-script>
 					</with-transaction>
 					<close-dialog/>
 					<open-dialog
 						bind-input-to="model"
-						dialog-view="tl-ai-mcp-server/access-token-created.view.xml"
+						dialog-view="tl-ai-core/access-token-created.view.xml"
 					/>
 				</generic-command>
 			</commands>

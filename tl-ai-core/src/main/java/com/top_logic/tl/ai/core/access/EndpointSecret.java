@@ -3,9 +3,8 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.authentication;
+package com.top_logic.tl.ai.core.access;
 
-import com.top_logic.ai.mcp.server.MCPServerService;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -29,26 +28,26 @@ import com.top_logic.service.openapi.server.layout.AllUsers;
 import com.top_logic.service.openapi.server.layout.UserNameMapping;
 
 /**
- * A secret a caller of {@code /mcp/*} authenticates with, configured on
- * {@link MCPServerService.Config#getSecrets()}.
+ * A secret a caller of an agent endpoint ({@code /mcp/*}, {@code /a2a/*}) authenticates with,
+ * configured in the {@code <secrets>} of the endpoint's service.
  *
  * <p>
  * The engine's own secret types ({@link ServerAPIKeySecret}, {@link ServerCredentialSecret}) may
  * only stand in the configuration of the <i>OpenAPI</i> server: their container property is typed
  * with that configuration, and the configuration framework refuses them anywhere else (issue #672).
- * So the MCP service has these types, with the same tag names and properties, and
- * {@link McpAuthentication} turns them into the engine's types when it builds the authenticator. A
+ * So the endpoint services have these types, with the same tag names and properties, and
+ * {@link EndpointAuthentication} turns them into the engine's types when it builds the authenticator. A
  * configuration written for the <i>OpenAPI</i> server can therefore be copied unchanged.
  * </p>
  *
  * <p>
  * There is no counterpart of the engine's {@code basic-auth-server-secret}: HTTP basic with a
- * technical login processes a request in system context, which {@code /mcp/*} refuses. HTTP basic
+ * technical login processes a request in system context, which an agent endpoint refuses. HTTP basic
  * against the account's own password needs no secret.
  * </p>
  */
 @Abstract
-public interface McpSecret extends SecretConfiguration, ConfigPart {
+public interface EndpointSecret extends SecretConfiguration, ConfigPart {
 
 	/**
 	 * @see #getOwner()
@@ -56,12 +55,12 @@ public interface McpSecret extends SecretConfiguration, ConfigPart {
 	String OWNER = "owner";
 
 	/**
-	 * The configuration of the MCP service this secret belongs to.
+	 * The configuration of the endpoint service this secret belongs to.
 	 */
 	@Container
 	@Name(OWNER)
 	@Hidden
-	MCPServerService.Config<?> getOwner();
+	ServerAuthentications getOwner();
 
 	/**
 	 * An API key, and the account a request with it acts as.
@@ -80,7 +79,7 @@ public interface McpSecret extends SecretConfiguration, ConfigPart {
 	})
 	@TagName("api-key-server-secret")
 	@Label("API key")
-	interface ApiKey extends McpSecret, APIKeySecret {
+	interface ApiKey extends EndpointSecret, APIKeySecret {
 
 		/**
 		 * @see #getUserId()
@@ -89,7 +88,7 @@ public interface McpSecret extends SecretConfiguration, ConfigPart {
 
 		@Override
 		@Options(fun = AllAPIKeyDomains.class,
-			args = { @Ref({ McpSecret.OWNER, ServerAuthentications.AUTHENTICATIONS }) })
+			args = { @Ref({ EndpointSecret.OWNER, ServerAuthentications.AUTHENTICATIONS }) })
 		String getDomain();
 
 		/**
@@ -97,7 +96,7 @@ public interface McpSecret extends SecretConfiguration, ConfigPart {
 		 *
 		 * <p>
 		 * Required in practice: for a key without an account, the framework processes the request
-		 * in system context, and {@code /mcp/*} refuses such a request.
+		 * in system context, and an agent endpoint refuses such a request.
 		 * </p>
 		 */
 		@Name(USER_ID)
@@ -108,7 +107,7 @@ public interface McpSecret extends SecretConfiguration, ConfigPart {
 	}
 
 	/**
-	 * The client credentials the MCP service introspects OAuth bearer tokens with.
+	 * The client credentials the endpoint service introspects OAuth bearer tokens with.
 	 *
 	 * <p>
 	 * A {@code <client-credentials-authentication>} of the same domain uses them.
@@ -122,11 +121,11 @@ public interface McpSecret extends SecretConfiguration, ConfigPart {
 	})
 	@TagName("client-credentials-server-secret")
 	@Label("OpenID authentication")
-	interface ClientCredentials extends McpSecret, CredentialSecret {
+	interface ClientCredentials extends EndpointSecret, CredentialSecret {
 
 		@Override
 		@Options(fun = AllServerCredentialsDomains.class,
-			args = { @Ref({ McpSecret.OWNER, ServerAuthentications.AUTHENTICATIONS }) })
+			args = { @Ref({ EndpointSecret.OWNER, ServerAuthentications.AUTHENTICATIONS }) })
 		String getDomain();
 
 	}

@@ -2,38 +2,22 @@
 
 <objectlist>
 
-	<!-- Personal access tokens of the MCP endpoint (tl.ai.mcp.server:AccessToken, Issue #671). The
-	     hash gets a column of its own with a unique index, because every MCP request looks its token
-	     up by it; the dates and the owner use the generic flex/association storage. -->
+	<!-- Put your database schema definitions here, for example: -->
+	<!-- 
 	<metaobject
-		object_name="McpAccessToken"
+		object_name="MyTable"
 		super_class="TLObject"
 	>
 		<mo_attribute
 			att_name="name"
 			att_type="String"
 			db_size="255"
-			mandatory="true"
 		/>
 		<mo_attribute
-			att_name="hint"
-			att_type="String"
-			db_size="32"
-			mandatory="true"
+			att_name="x"
+			att_type="Integer"
 		/>
-		<mo_attribute
-			att_name="secretHash"
-			att_type="String"
-			db_size="64"
-			mandatory="true"
-		/>
-		<index>
-			<mo_index name="secretHash" unique="true">
-				<index-parts>
-					<index_part name="secretHash"/>
-				</index-parts>
-			</mo_index>
-		</index>
 	</metaobject>
-
+ 	-->
+	
 </objectlist>

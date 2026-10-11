@@ -7,7 +7,6 @@ package com.top_logic.ai.mcp.server.authentication;
 
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey1;
 
 /**
  * Messages the MCP endpoint sends back to a caller it will not serve.
@@ -17,32 +16,9 @@ import com.top_logic.basic.util.ResKey1;
  * change rather than merely that access was denied.
  * </p>
  *
- * @see McpAuthentication
+ * @see McpAuthenticationFilter
  */
 public class I18NConstants extends I18NConstantsBase {
-
-	/**
-	 * The endpoint serves nobody because no authentication is configured for it.
-	 *
-	 * @en The MCP endpoint /mcp/* is not available: this application configures no authentication
-	 *     for it, and the endpoint serves no request it cannot attribute to an account. Configure
-	 *     an authentication and a secret on MCPServerService - see doc/security/mcp-endpoint.md.
-	 * @de Der MCP-Endpunkt /mcp/* ist nicht verfügbar: Diese Anwendung konfiguriert keine
-	 *     Authentifizierung dafür, und der Endpunkt bedient keine Anfrage, die er keinem Konto
-	 *     zuordnen kann. Konfigurieren Sie eine Authentifizierung und ein Secret an
-	 *     MCPServerService - siehe doc/security/mcp-endpoint.md.
-	 */
-	public static ResKey ERROR_NO_AUTHENTICATION_CONFIGURED;
-
-	/**
-	 * One configured authentication could not be built, so it authenticates nobody.
-	 *
-	 * @en The MCP authentication "{0}" could not be created and therefore authenticates nobody.
-	 *     Check its configuration and its secret on MCPServerService.
-	 * @de Die MCP-Authentifizierung "{0}" konnte nicht erzeugt werden und authentifiziert daher
-	 *     niemanden. Prüfen Sie deren Konfiguration und deren Secret an MCPServerService.
-	 */
-	public static ResKey1 ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN;
 
 	/**
 	 * The caller authenticated, but the credential is not mapped to an application account.

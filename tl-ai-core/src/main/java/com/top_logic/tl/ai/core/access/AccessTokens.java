@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.token;
+package com.top_logic.tl.ai.core.access;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -16,18 +16,18 @@ import java.util.Date;
 import java.util.HexFormat;
 import java.util.Iterator;
 
-import com.top_logic.ai.mcp.server.model.AccessToken;
-import com.top_logic.ai.mcp.server.model.TlAiMcpServerFactory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.access.model.AccessToken;
+import com.top_logic.tl.ai.core.access.model.TlAiAccessFactory;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Personal access tokens of the MCP endpoint: how one is made, stored, found and refused.
+ * Personal access tokens of the agent endpoints (MCP, A2A): how one is made, stored, found and refused.
  *
  * <h2>The format</h2>
  *
@@ -72,7 +72,7 @@ public final class AccessTokens {
 	 * How stale {@link AccessToken#getLastUsed()} may be.
 	 *
 	 * <p>
-	 * Writing it on every request would make every MCP request a commit; a person asking "is this
+	 * Writing it on every request would make every authenticated request a commit; a person asking "is this
 	 * token still in use" needs the day, not the second.
 	 * </p>
 	 */
@@ -128,8 +128,8 @@ public final class AccessTokens {
 		}
 		String plain = newToken();
 		Instant now = Instant.now();
-		try (Transaction tx = kb().beginTransaction(ResKey.text("Create MCP access token"))) {
-			AccessToken token = TlAiMcpServerFactory.getInstance().createAccessToken();
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Create personal access token"))) {
+			AccessToken token = TlAiAccessFactory.getInstance().createAccessToken();
 			token.setOwner(owner);
 			token.setName(name.strip());
 			token.setHint(hint(plain));
@@ -150,7 +150,7 @@ public final class AccessTokens {
 	 * Deletes a token, which revokes it: the next request presenting it is refused.
 	 */
 	public static void revoke(AccessToken token) {
-		try (Transaction tx = kb().beginTransaction(ResKey.text("Revoke MCP access token"))) {
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Revoke personal access token"))) {
 			token.tDelete();
 			tx.commit();
 		}
@@ -164,7 +164,7 @@ public final class AccessTokens {
 	 * @return The token, or <code>null</code> if none has this hash - never created, or revoked.
 	 */
 	public static AccessToken find(String presented) {
-		Iterator<KnowledgeItem> hits = kb().getObjectsByAttribute(TlAiMcpServerFactory.KO_NAME_ACCESS_TOKEN,
+		Iterator<KnowledgeItem> hits = kb().getObjectsByAttribute(TlAiAccessFactory.KO_NAME_ACCESS_TOKEN,
 			AccessToken.SECRET_HASH_ATTR, hash(presented));
 		return hits.hasNext() ? hits.next().getWrapper() : null;
 	}
@@ -186,7 +186,7 @@ public final class AccessTokens {
 		if (lastUsed != null && Duration.between(lastUsed.toInstant(), now).compareTo(LAST_USED_GRANULARITY) < 0) {
 			return;
 		}
-		try (Transaction tx = kb().beginTransaction(ResKey.text("Record use of MCP access token"))) {
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Record use of personal access token"))) {
 			token.setLastUsed(Date.from(now));
 			tx.commit();
 		}

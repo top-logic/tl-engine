@@ -3,8 +3,8 @@
 <!--
 	Overlay contributing the "Access tokens" tab to the settings dialog defined by tl-layout-view
 	(WEB-INF/views/settings-tabs.view.xml): where a person creates, lists and revokes the personal
-	access tokens an MCP client acts as them with (Issue #671). A same-path overlay, merged onto the
-	base in dependency order, so tl-layout-view needs no knowledge of this module.
+	access tokens an MCP client or another agent acts as them with (Issue #671). A same-path overlay,
+	merged onto the base in dependency order, so tl-layout-view needs no knowledge of this module.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<tab-bar>
@@ -18,7 +18,7 @@
 					<en>Access tokens</en>
 					<de>Zugriffstokens</de>
 				</label>
-				<view-ref view="tl-ai-mcp-server/access-tokens.view.xml"/>
+				<view-ref view="tl-ai-core/access-tokens.view.xml"/>
 			</tab>
 		</tabs>
 	</tab-bar>

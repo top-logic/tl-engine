@@ -18,16 +18,11 @@ import java.util.function.BiFunction;
 import junit.framework.Test;
 
 import com.top_logic.ai.mcp.server.MCPServerService;
-import com.top_logic.ai.mcp.server.authentication.McpAuthentication;
 import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
-import com.top_logic.ai.mcp.server.model.AccessToken;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
-import com.top_logic.ai.mcp.server.token.AccessTokenAuthenticator;
-import com.top_logic.ai.mcp.server.token.AccessTokenFunctions;
-import com.top_logic.ai.mcp.server.token.AccessTokens;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
@@ -45,6 +40,11 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.tl.ai.core.access.AccessTokenAuthenticator;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.tl.ai.core.access.AccessTokenFunctions;
+import com.top_logic.tl.ai.core.access.AccessTokens;
+import com.top_logic.tl.ai.core.access.model.AccessToken;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
@@ -550,7 +550,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * Model access is deny-by-default: without the role rule that makes the owner
-	 * {@code McpAccessTokenOwner} of their token, a person holding no role on it could not even list
+	 * {@code AccessTokenOwner} of their token, a person holding no role on it could not even list
 	 * it, and the settings tab would stay empty for everybody but an administrator.
 	 * </p>
 	 */
@@ -566,7 +566,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A person revokes their own token, and not somebody else's; an administrator revokes any.
 	 *
 	 * <p>
-	 * The check is in {@code mcpAccessTokenRevoke} rather than in the view, because a command's input
+	 * The check is in {@code aiAccessTokenRevoke} rather than in the view, because a command's input
 	 * is whatever a channel holds.
 	 * </p>
 	 */
@@ -724,7 +724,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		ApplicationConfig.Config application = (ApplicationConfig.Config) reader.read();
 		MCPServerService.Config<?> config =
 			(MCPServerService.Config<?>) application.getServices().get(MCPServerService.class).getInstance();
-		return McpAuthentication.build(config.getAuthentications(), config.getSecrets());
+		return EndpointAuthentication.build("/mcp/*", config.getAuthentications(), config.getSecrets());
 	}
 
 	/**

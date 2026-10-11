@@ -30,6 +30,8 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.tl.ai.core.access.EndpointSecret;
 
 /**
  * Tests that the secrets {@code doc/security/mcp-endpoint.md} documents are read from an
@@ -81,13 +83,13 @@ public class TestMcpSecrets extends TestCase {
 		MCPServerService.Config<?> config = read(DOCUMENTED_API_KEY_CONFIGURATION);
 
 		assertEquals(1, config.getSecrets().size());
-		McpSecret.ApiKey secret = (McpSecret.ApiKey) config.getSecrets().get(0);
+		EndpointSecret.ApiKey secret = (EndpointSecret.ApiKey) config.getSecrets().get(0);
 		assertEquals("mcp", secret.getDomain());
 		assertEquals("some-key", secret.getAPIKey());
 		assertEquals("mcp-service", secret.getUserId());
 
 		Authenticator authenticator =
-			McpAuthentication.build(config.getAuthentications(), config.getSecrets());
+			EndpointAuthentication.build("/mcp/*", config.getAuthentications(), config.getSecrets());
 
 		Recorded recorded = new Recorded();
 		recorded.requestHeaders.put("X-Api-Key", "not-the-configured-key");
@@ -116,13 +118,13 @@ public class TestMcpSecrets extends TestCase {
 			+ "    </client-credentials-server-secret>\n"
 			+ "  </secrets>");
 
-		McpSecret.ClientCredentials secret = (McpSecret.ClientCredentials) config.getSecrets().get(0);
+		EndpointSecret.ClientCredentials secret = (EndpointSecret.ClientCredentials) config.getSecrets().get(0);
 		assertEquals("oidc", secret.getDomain());
 		assertEquals("mcp", secret.getClientSecret().getClientId());
 		assertEquals("pw", secret.getClientSecret().getPassword());
 
 		Authenticator authenticator =
-			McpAuthentication.build(config.getAuthentications(), config.getSecrets());
+			EndpointAuthentication.build("/mcp/*", config.getAuthentications(), config.getSecrets());
 		Recorded recorded = new Recorded();
 		assertRefused(authenticator, recorded);
 		assertEquals("A request without a token must be challenged. A 500 says the scheme found no"

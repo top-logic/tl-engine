@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.authentication;
+package com.top_logic.tl.ai.core.access;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,15 +24,16 @@ import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticat
 import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentialSecret;
 
 /**
- * Builds the {@link Authenticator} that guards {@code /mcp/*} from the service configuration.
+ * Builds the {@link Authenticator} that guards an agent endpoint ({@code /mcp/*}, {@code /a2a/*})
+ * from its service's configuration.
  *
  * <p>
  * The mechanism is not decided here. TopLogic already ships a pluggable, {@code Person}-resolving
  * HTTP authentication framework - HTTP basic against the account's authentication device, an API key
- * mapped to an account, and an OAuth bearer token validated by RFC 7662 introspection - so an
- * application configures {@code <authentications>} and {@code <secrets>} on the MCP service exactly
- * the way it already configures them on its <i>OpenAPI</i> server, and the choice becomes a
- * per-deployment one.
+ * mapped to an account, and an OAuth bearer token validated by RFC 7662 introspection - and this
+ * module adds personal access tokens ({@link AccessTokenAuthentication}). So an application configures
+ * {@code <authentications>} and {@code <secrets>} on the endpoint's service exactly the way it already
+ * configures them on its <i>OpenAPI</i> server, and the choice becomes a per-deployment one.
  * </p>
  *
  * <h2>Nothing configured means nothing served</h2>
@@ -41,8 +42,8 @@ import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentia
  * <b>An empty {@code <authentications>} yields {@link NeverAuthenticated}.</b> The <i>OpenAPI</i>
  * server defaults an operation that declares no authentication to
  * {@code AlwaysAuthenticated} - a REST path an administrator wrote out by hand is one they meant to
- * publish. {@code /mcp/*} is the opposite case: the path exists because the module is on the
- * classpath, nobody wrote it out, and its resource handlers read the {@code KnowledgeBase}. So the
+ * publish. An agent endpoint is the opposite case: the path exists because the module is on the
+ * classpath, nobody wrote it out, and what answers there reads the {@code KnowledgeBase}. So the
  * default here is the other one, and it is the single decision this class exists to hold. Getting it
  * backwards reopens issue #261.
  * </p>
@@ -54,74 +55,63 @@ import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentia
  * secret, say) contributes a {@link NeverAuthenticated} rather than being skipped, so a
  * misconfiguration cannot widen access.
  * </p>
- *
- * @see McpAuthenticationFilter
  */
-public final class McpAuthentication {
+public final class EndpointAuthentication {
 
-	private McpAuthentication() {
+	private EndpointAuthentication() {
 		// Static utility.
 	}
 
 	/**
-	 * The {@link Authenticator} for {@code /mcp/*}.
+	 * The {@link Authenticator} for an endpoint.
 	 *
+	 * @param endpoint
+	 *        The path the authenticator guards, e.g. {@code /mcp/*}, for the messages.
 	 * @param authentications
-	 *        The configured authentication schemes by name, from
-	 *        {@code MCPServerService.Config.getAuthentications()}. May be empty.
+	 *        The configured authentication schemes by name. May be empty.
 	 * @param secrets
-	 *        The configured secrets, from {@code MCPServerService.Config.getSecrets()}.
+	 *        The configured secrets; converted to the engine's secret types here, see
+	 *        {@link EndpointSecret}.
 	 * @return An {@link Authenticator} that refuses everything when {@code authentications} is
 	 *         empty. Never <code>null</code>.
 	 */
-	public static Authenticator build(Map<String, ServerAuthentication.Config<?>> authentications,
-			List<? extends McpSecret> secrets) {
+	public static Authenticator build(String endpoint, Map<String, ServerAuthentication.Config<?>> authentications,
+			List<? extends EndpointSecret> secrets) {
 		if (authentications.isEmpty()) {
-			return refuseEverything();
+			// 503 rather than 401: there is no scheme to challenge the caller with, and no credential
+			// the caller could send would change the answer.
+			return new NeverAuthenticated(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+				I18NConstants.ERROR_NO_AUTHENTICATION_CONFIGURED__ENDPOINT.fill(endpoint));
 		}
 
 		List<SecretConfiguration> serverSecrets = serverSecrets(secrets);
 		Authenticator result = null;
 		for (Map.Entry<String, ServerAuthentication.Config<?>> entry : authentications.entrySet()) {
-			Authenticator next = create(entry.getKey(), entry.getValue(), serverSecrets);
+			Authenticator next = create(endpoint, entry.getKey(), entry.getValue(), serverSecrets);
 			result = result == null ? next : result.or(next);
 		}
 		return result;
 	}
 
 	/**
-	 * The {@link Authenticator} of a deployment that configured none.
-	 *
-	 * <p>
-	 * Answers {@code 503} rather than {@code 401}: there is no scheme to challenge the caller with,
-	 * and no credential the caller could send would change the answer. The message names what an
-	 * administrator has to configure.
-	 * </p>
-	 */
-	public static Authenticator refuseEverything() {
-		return new NeverAuthenticated(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-			I18NConstants.ERROR_NO_AUTHENTICATION_CONFIGURED);
-	}
-
-	/**
-	 * The engine's secrets for the given MCP secrets.
+	 * The engine's secrets for the given endpoint secrets.
 	 *
 	 * <p>
 	 * The engine's authentications look for their own secret types ({@link ServerAPIKeySecret},
-	 * {@link ServerCredentialSecret}), which cannot be configured on the MCP service - see
-	 * {@link McpSecret}. The copies stand in no configuration, so nothing restricts their container.
+	 * {@link ServerCredentialSecret}), which cannot be configured on an endpoint's service - see
+	 * {@link EndpointSecret}. The copies stand in no configuration, so nothing restricts their container.
 	 * </p>
 	 */
-	private static List<SecretConfiguration> serverSecrets(List<? extends McpSecret> secrets) {
+	private static List<SecretConfiguration> serverSecrets(List<? extends EndpointSecret> secrets) {
 		List<SecretConfiguration> result = new ArrayList<>(secrets.size());
-		for (McpSecret secret : secrets) {
+		for (EndpointSecret secret : secrets) {
 			result.add(serverSecret(secret));
 		}
 		return result;
 	}
 
-	private static SecretConfiguration serverSecret(McpSecret secret) {
-		if (secret instanceof McpSecret.ApiKey apiKey) {
+	private static SecretConfiguration serverSecret(EndpointSecret secret) {
+		if (secret instanceof EndpointSecret.ApiKey apiKey) {
 			ServerAPIKeySecret result = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
 			TypedConfigUtil.setProperty(result, APIKeySecret.DOMAIN, apiKey.getDomain());
 			TypedConfigUtil.setProperty(result, APIKeySecret.API_KEY, apiKey.getAPIKey());
@@ -129,17 +119,17 @@ public final class McpAuthentication {
 			TypedConfigUtil.setProperty(result, APIKeySecret.DESCRIPTION, apiKey.getDescription());
 			return result;
 		}
-		if (secret instanceof McpSecret.ClientCredentials credentials) {
+		if (secret instanceof EndpointSecret.ClientCredentials credentials) {
 			ServerCredentialSecret result = TypedConfiguration.newConfigItem(ServerCredentialSecret.class);
 			TypedConfigUtil.setProperty(result, CredentialSecret.DOMAIN, credentials.getDomain());
 			TypedConfigUtil.setProperty(result, CredentialSecret.CLIENT_SECRET,
 				TypedConfiguration.copy(credentials.getClientSecret()));
 			return result;
 		}
-		throw new IllegalArgumentException("Unknown kind of MCP secret: " + secret);
+		throw new IllegalArgumentException("Unknown kind of endpoint secret: " + secret);
 	}
 
-	private static Authenticator create(String name, ServerAuthentication.Config<?> config,
+	private static Authenticator create(String endpoint, String name, ServerAuthentication.Config<?> config,
 			List<? extends SecretConfiguration> secrets) {
 		try {
 			return TypedConfigUtil.createInstance(config).createAuthenticator(secrets);
@@ -147,10 +137,10 @@ public final class McpAuthentication {
 			// Not rethrown: one broken authentication must not take the whole application down, and
 			// not skipped either - a skipped entry would leave the endpoint open to whatever the
 			// remaining entries accept, which is not what the administrator configured.
-			Logger.error("Cannot create the MCP authentication '" + name + "'; it will authenticate"
-				+ " nobody.", ex, McpAuthentication.class);
+			Logger.error("Cannot create the authentication '" + name + "' of " + endpoint
+				+ "; it will authenticate nobody.", ex, EndpointAuthentication.class);
 			return new NeverAuthenticated(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-				I18NConstants.ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN.fill(name));
+				I18NConstants.ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN_ENDPOINT.fill(name, endpoint));
 		}
 	}
 }

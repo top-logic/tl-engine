@@ -10,7 +10,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 
 /**
- * I18N constants of the research report document, which a person reads.
+ * I18N constants of a kept research run, which a person reads.
  */
 public class I18NConstants extends I18NConstantsBase {
 
@@ -53,6 +53,22 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Gelesen am {0}
 	 */
 	public static ResKey1 READ_AT__DATE;
+
+	/**
+	 * The name of a source of a research run whose page or object was deleted.
+	 *
+	 * @en {0} (deleted)
+	 * @de {0} (gelöscht)
+	 */
+	public static ResKey1 DELETED__NAME;
+
+	/**
+	 * The name of a web source of a research run whose archived page was deleted.
+	 *
+	 * @en Deleted web page
+	 * @de Gelöschte Webseite
+	 */
+	public static ResKey DELETED_PAGE;
 
 	static {
 		initConstants(I18NConstants.class);

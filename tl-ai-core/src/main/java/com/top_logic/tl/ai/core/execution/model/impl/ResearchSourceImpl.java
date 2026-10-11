@@ -6,6 +6,8 @@
 package com.top_logic.tl.ai.core.execution.model.impl;
 
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.tl.ai.core.research.ResearchDocument;
+import com.top_logic.util.Resources;
 
 /**
  * Wrapper implementation class for <code>tl.ai.execution:ResearchSource</code> business objects.
@@ -19,6 +21,15 @@ public class ResearchSourceImpl extends com.top_logic.element.meta.kbbased.Attri
 	 */
 	public ResearchSourceImpl(KnowledgeObject ko) {
 		super(ko);
+	}
+
+	/**
+	 * The value of {@link #DISPLAY_NAME_ATTR}: what the source is called, in the current user's language.
+	 *
+	 * @see ResearchDocument#name(com.top_logic.tl.ai.core.execution.model.ResearchSource, Resources)
+	 */
+	public String computeDisplayName() {
+		return ResearchDocument.name(this, Resources.getInstance());
 	}
 
 }

@@ -49,6 +49,7 @@ public class TestFindingIds extends TestCase {
 		ReadSource source = new ReadSource(CitationKinds.WEB, URL, "Report", URL, "Storage reached 41 GWh.", "",
 			Instant.now());
 		list.add(source);
-		return list.recordFinding("Storage reached 41 GWh.", list.find(URL), "Storage reached 41 GWh.", "worker").id();
+		return list.recordFinding("Storage reached 41 GWh.", list.find(URL), "Storage reached 41 GWh.", "worker",
+			null).id();
 	}
 }

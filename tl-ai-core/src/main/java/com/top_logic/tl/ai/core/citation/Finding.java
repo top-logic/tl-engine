@@ -31,8 +31,11 @@ import java.util.regex.Pattern;
  *        The words of the source the claim rests on.
  * @param recordedBy
  *        The agent whose run recorded the finding, or empty.
+ * @param runId
+ *        The id of the run that recorded the finding, or empty outside a run.
  */
-public record Finding(String id, String claim, String source, String sourceTitle, String quote, String recordedBy) {
+public record Finding(String id, String claim, String source, String sourceTitle, String quote, String recordedBy,
+		String runId) {
 
 	/** Runs of white space, which a quote may render differently from the stored text. */
 	private static final Pattern WHITE_SPACE = Pattern.compile("\\s+");

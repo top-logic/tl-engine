@@ -215,17 +215,20 @@ public final class ReadingList {
 	 *        in the source's text.
 	 * @param recordedBy
 	 *        The agent recording it, or empty.
+	 * @param runId
+	 *        The id of the run recording it, or {@code null} outside a run.
 	 * @return The finding with its new id, or <code>null</code> when the list holds as many as it
 	 *         keeps.
 	 */
-	public synchronized Finding recordFinding(String claim, ReadSource source, String quote, String recordedBy) {
+	public synchronized Finding recordFinding(String claim, ReadSource source, String quote, String recordedBy,
+			String runId) {
 		if (_findings.size() >= MAX_FINDINGS) {
 			return null;
 		}
 		String reference = source.url().isEmpty() ? source.id() : source.url();
 		String title = source.title().isEmpty() ? reference : source.title();
 		Finding finding = new Finding("F" + (++_findingCount) + "-" + _findingTag, claim, reference, title, quote,
-			recordedBy == null ? "" : recordedBy);
+			recordedBy == null ? "" : recordedBy, runId == null ? "" : runId);
 		_findings.put(finding.id(), finding);
 		return finding;
 	}

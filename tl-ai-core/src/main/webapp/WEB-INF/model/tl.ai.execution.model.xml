@@ -42,6 +42,19 @@
 				<classifier name="FEEDBACK"/>
 			</enum>
 
+			<!-- How much a research run set out to read (Issue #827). -->
+			<enum name="ResearchEffort">
+				<classifier name="QUICK"/>
+				<classifier name="STANDARD"/>
+				<classifier name="DEEP"/>
+			</enum>
+
+			<!-- Whether a research run answered its question or stopped before (Issue #827). -->
+			<enum name="ResearchStatus">
+				<classifier name="COMPLETE"/>
+				<classifier name="PARTIAL"/>
+			</enum>
+
 			<enum name="InteractionState">
 				<classifier name="PENDING"/>
 				<classifier name="RESOLVED"/>
@@ -793,13 +806,22 @@
 			</class>
 
 			<!--
-				One research run, kept when its lead has written the report (Issue #764): the
-				question, the report, what the report rests on and what else the run tree read.
+				One research run, kept when its lead has written the report (Issue #764, #827): the
+				question, the report, the sources the run tree read and the findings it recorded.
 
-				Private to its owner, like an archived page: the role rule in
-				tl-ai-core.binarySecurity.config.xml gives the owner, and only the owner, the right
-				to read the run and its parts; administrators read everything anyway. Written by
-				ResearchRuns on its own thread, never by a user.
+				The report is the one source of truth: the document the side pane shows and the user
+				downloads is rendered from it and from the sources whenever it is read (document),
+				never stored. What the run spent is read from the execution tree (tokens), never
+				copied.
+
+				Private to its owner: the role rules in tl-ai-core.binarySecurity.config.xml give the
+				owner, and only the owner, the right to read the run, its parts and the archived pages
+				its sources reference; administrators read everything anyway. Written by ResearchRuns
+				on its own thread, never by a user.
+
+				Deleting the run deletes its sources and findings, never an archived page or an object
+				of the application. Deleting the chat the run came from only clears execution (the
+				default deletion policy): the run outlives the conversation, like a user memory.
 			-->
 			<class name="ResearchRun">
 				<annotations>
@@ -809,19 +831,13 @@
 				<attributes>
 					<property name="question"
 						mandatory="true"
-						type="tl.core:String"
-					>
-						<annotations>
-							<multi-line/>
-						</annotations>
-					</property>
-					<!-- complete or partial, as the lead reported it. -->
-					<property name="status"
-						type="tl.core:String"
+						type="tl.core:Text"
 					/>
-					<!-- quick, standard or deep. -->
-					<property name="effort"
-						type="tl.core:String"
+					<reference name="effort"
+						type="tl.ai.execution:ResearchEffort"
+					/>
+					<reference name="status"
+						type="tl.ai.execution:ResearchStatus"
 					/>
 					<!-- When the run tree read its first source. -->
 					<property name="started"
@@ -830,35 +846,64 @@
 					<property name="finished"
 						type="tl.core:DateTime"
 					/>
-					<!-- What the run tree spent, when it was counted; empty otherwise. -->
-					<property name="tokens"
-						type="tl.core:Long"
-					/>
 					<!--
-						The report as a self-contained HTML document: the text with its footnotes and
-						the sources it cites, linked. What the side pane shows and what is downloaded;
-						what was read and not cited is in alsoRead, which the pane folds away.
+						The report as an HTML document: the text with its footnotes and the sources it
+						cites, linked. Rendered from report and sources on every read, so that the
+						side pane and the download always show what the run holds now, with links
+						relative to the context path of this application.
 					-->
 					<property name="document"
-						mandatory="true"
 						type="tl.core:Binary"
-					/>
-					<property name="plan"
-						type="tl.core:String"
 					>
 						<annotations>
-							<multi-line/>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchRunImpl#computeDocument()"/>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
 						</annotations>
 					</property>
-					<!-- The report as the lead wrote it, Markdown with links to its sources. -->
-					<property name="report"
-						type="tl.core:String"
+					<property name="plan"
+						type="tl.core:Text"
+					/>
+					<!--
+						What the lead run and every run below it spent: the tokens the providers read
+						and wrote. Empty when the run's chat was deleted.
+					-->
+					<property name="tokens"
+						type="tl.core:Long"
 					>
 						<annotations>
-							<multi-line/>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchRunImpl#computeTokens()"/>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<!--
+						The report as the lead wrote it, Markdown with links to its sources: the one
+						source of truth of the document.
+					-->
+					<property name="report"
+						type="tl.core:Text"
+					>
+						<annotations>
 							<visibility value="hidden"/>
 						</annotations>
 					</property>
+					<!-- The lead run; its session is the chat the research ran in. -->
+					<reference name="execution"
+						type="tl.ai.execution:AgentExecution"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
 					<reference name="owner"
 						type="tl.accounts:Person"
 					>
@@ -866,14 +911,40 @@
 							<visibility value="hidden"/>
 						</annotations>
 					</reference>
-					<reference name="citedSources"
+					<!--
+						Every source the run tree read: the cited ones first, in the order of their
+						footnotes, then the others in the order they were read. Shown through
+						citedSources and alsoRead.
+					-->
+					<reference name="sources"
 						composite="true"
 						kind="forwards"
 						multiple="true"
 						navigate="true"
 						ordered="true"
 						type="ResearchSource"
-					/>
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+					<!-- The sources the report cites, in the order of its footnotes. -->
+					<reference name="citedSources"
+						multiple="true"
+						ordered="true"
+						type="ResearchSource"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										r -> $r.get(`tl.ai.execution:ResearchRun#sources`)
+											.filter(s -> $s.get(`tl.ai.execution:ResearchSource#cited`))
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</reference>
 					<reference name="findings"
 						composite="true"
 						kind="forwards"
@@ -882,54 +953,91 @@
 						ordered="true"
 						type="ResearchFinding"
 					/>
-					<!-- Sources the run tree read that the report does not cite. -->
+					<!-- The sources the run tree read that the report does not cite. -->
 					<reference name="alsoRead"
-						composite="true"
-						kind="forwards"
 						multiple="true"
-						navigate="true"
 						ordered="true"
 						type="ResearchSource"
 					>
 						<annotations>
 							<collapsed/>
-						</annotations>
-					</reference>
-					<!-- Findings whose source the report does not cite. -->
-					<reference name="otherFindings"
-						composite="true"
-						kind="forwards"
-						multiple="true"
-						navigate="true"
-						ordered="true"
-						type="ResearchFinding"
-					>
-						<annotations>
-							<collapsed/>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										r -> $r.get(`tl.ai.execution:ResearchRun#sources`)
+											.filter(s -> !$s.get(`tl.ai.execution:ResearchSource#cited`))
+									]]></expr>
+								</query>
+							</storage-algorithm>
 						</annotations>
 					</reference>
 				</attributes>
 			</class>
 
-			<!-- A source a research run read: a web page, or an object of the application. -->
+			<!--
+				A source a research run read: a web page, an object of the application, or a record an
+				application put on the reading list.
+
+				A web page references its archived copy (page), an object the object itself (object).
+				url and title are set for a source no reference applies to - a page that was not
+				archived, an application record that is no model object - and, for an object, hold its
+				id and the label it had when it was read.
+
+				Deletion: both references keep the default deletion policy, which clears the reference.
+				An object of the application may be deleted at any time; its source then shows the
+				label it was read with, marked as deleted, and the report's footnote of it keeps its
+				number, because url still holds the id the report cites. An archived page a source
+				references is not deleted by the archive's retention; a page an administrator deletes
+				leaves a source named as a deleted page. The run and its document never break for it.
+				(stabilise-reference is no option: on a model reference it maps to a table that does
+				not stabilise, and the reference is cleared all the same.)
+			-->
 			<class name="ResearchSource">
 				<annotations>
-					<main-properties properties="title,url,readAt"/>
+					<id-column value="displayName"/>
+					<main-properties properties="displayName,readAt"/>
 				</annotations>
 				<attributes>
-					<property name="title"
+					<!--
+						What the source is called: the page's title, the object's label, or the title,
+						marked as deleted when the page or the object was deleted.
+					-->
+					<property name="displayName"
 						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchSourceImpl#computeDisplayName()"/>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="page"
+						type="tl.ai.execution:ArchivedPage"
+					/>
+					<reference name="object"
+						type="tl.model:TLObject"
 					/>
 					<property name="url"
+						type="tl.core:String"
+					/>
+					<property name="title"
 						type="tl.core:String"
 					/>
 					<!-- The source kind of the reading list: web, object, or one an application declared. -->
 					<property name="kind"
 						type="tl.core:String"
 					/>
-					<!-- Where the copy the run read is kept, for a web page. -->
-					<property name="archive"
-						type="tl.core:String"
+					<!-- Whether the report cites it. -->
+					<property name="cited"
+						type="tl.core:Boolean"
+					/>
+					<!-- The number of its footnote in the report; empty for a source the report does not cite. -->
+					<property name="footnote"
+						type="tl.core:Integer"
 					/>
 					<property name="readAt"
 						type="tl.core:DateTime"
@@ -940,6 +1048,7 @@
 			<!-- A finding a research run recorded: a claim and the words of its source. -->
 			<class name="ResearchFinding">
 				<annotations>
+					<id-column value="findingId"/>
 					<main-properties properties="findingId,claim,quote,source"/>
 				</annotations>
 				<attributes>
@@ -947,24 +1056,18 @@
 						type="tl.core:String"
 					/>
 					<property name="claim"
-						type="tl.core:String"
-					>
-						<annotations>
-							<multi-line/>
-						</annotations>
-					</property>
-					<property name="quote"
-						type="tl.core:String"
-					>
-						<annotations>
-							<multi-line/>
-						</annotations>
-					</property>
-					<property name="source"
-						type="tl.core:String"
+						type="tl.core:Text"
 					/>
-					<property name="recordedBy"
-						type="tl.core:String"
+					<property name="quote"
+						type="tl.core:Text"
+					/>
+					<!-- The source the quote is from: one of the sources of the same run. -->
+					<reference name="source"
+						type="ResearchSource"
+					/>
+					<!-- The run that recorded the finding, usually a research worker's. -->
+					<reference name="recordedBy"
+						type="tl.ai.execution:AgentExecution"
 					/>
 				</attributes>
 			</class>

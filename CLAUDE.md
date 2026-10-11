@@ -187,7 +187,7 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 
 Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` → `StreamHandler` → `ToolCatalog.execute()` → repeat.
 
-Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, MAX_TOOL_CALLS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT.
+Stop conditions: `StopReason` - COMPLETE, MAX_TURNS, MAX_TOOL_CALLS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT.
 
 **A limit ends with an answer (#775).** A run at its `max-turns`, or one that used up its tool-call
 budget (`max-tool-calls` in `<agent-overrides>`, narrowed per spawn by `spawn_subagent`'s

@@ -2095,8 +2095,8 @@ export class ChatStore {
         this.patch({
           busy: false,
           subagents: [],
-      subagentLive: {},
-      delegationLive: {},
+          subagentLive: {},
+          delegationLive: {},
           tasks: [],
           feedback: [],
           notice: '',
@@ -2162,8 +2162,8 @@ export class ChatStore {
           // Auto-approve is a setting of one chat, and a new chat starts with it off (#808).
           autoApprove: false,
           subagents: [],
-      subagentLive: {},
-      delegationLive: {},
+          subagentLive: {},
+          delegationLive: {},
           tasks: [],
           feedback: [],
           notice: '',
@@ -2182,8 +2182,8 @@ export class ChatStore {
             sessionId: null,
             autoApprove: false,
             subagents: [],
-      subagentLive: {},
-      delegationLive: {},
+            subagentLive: {},
+            delegationLive: {},
             tasks: [],
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })

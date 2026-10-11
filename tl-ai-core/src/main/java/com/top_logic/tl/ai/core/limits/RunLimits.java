@@ -71,8 +71,98 @@ public class RunLimits {
 	 */
 	private static final Map<String, AtomicInteger> RUNNING = new ConcurrentHashMap<>();
 
+	/** The reading the run start on this thread takes over, see {@link #reuse(SpendReading)}. */
+	private static final ThreadLocal<SpendReading> REUSED = new ThreadLocal<>();
+
 	private RunLimits() {
 		// Static utility.
+	}
+
+	/**
+	 * What one account had spent, read once and asked by every budget check of one send.
+	 *
+	 * <p>
+	 * Reading the spend is a pass over the account's recorded runs. One send asks the budget up to
+	 * three times - the pre-check of a regenerate, the pre-check of the send and the start of its
+	 * run - and all of them are about the same moment, so they share one reading rather than each
+	 * reading again (#835). The spend is read when a check first needs it, so a reading for an
+	 * account without a budget reads nothing.
+	 * </p>
+	 *
+	 * <p>
+	 * The pre-checks are given the reading; the start of the run, on another thread, takes it over
+	 * through {@link #reuse(SpendReading)}.
+	 * </p>
+	 */
+	public static final class SpendReading {
+
+		private final Person _principal;
+
+		private AccountSpend _spent;
+
+		private int _hours;
+
+		private String _currency;
+
+		private SpendReading(Person principal) {
+			_principal = principal;
+		}
+
+		/** What the account spent in the given window, read on the first call for it. */
+		synchronized AccountSpend spent(int hours, CostCurrency currency) {
+			if (_spent == null || _hours != hours || !currency.code().equals(_currency)) {
+				_spent = spentSince(_principal, hours, currency);
+				_hours = hours;
+				_currency = currency.code();
+			}
+			return _spent;
+		}
+
+		boolean isFor(Person principal) {
+			return _principal.equals(principal);
+		}
+	}
+
+	/**
+	 * A reading of what the given account spent, not read yet.
+	 *
+	 * @param principal
+	 *        The acting account, or {@code null} if the request has none.
+	 * @return The reading; {@code null} for {@code null}.
+	 */
+	public static SpendReading spendReading(Person principal) {
+		return principal == null ? null : new SpendReading(principal);
+	}
+
+	/**
+	 * Lets the next {@link #admit(ToolContext) run start} on this thread use the given reading
+	 * instead of reading the spend again.
+	 *
+	 * <p>
+	 * Used once, and only by a run of the account the reading was taken for; a run of another account
+	 * reads its own. Closing the binding drops a reading nobody used.
+	 * </p>
+	 *
+	 * @param reading
+	 *        The reading the send's pre-check took; {@code null} binds nothing.
+	 * @return The binding; close it when the run ended.
+	 */
+	public static Reuse reuse(SpendReading reading) {
+		SpendReading before = REUSED.get();
+		REUSED.set(reading);
+		return () -> {
+			if (before == null) {
+				REUSED.remove();
+			} else {
+				REUSED.set(before);
+			}
+		};
+	}
+
+	/** The binding of {@link #reuse(SpendReading)}; closing it throws nothing. */
+	public interface Reuse extends AutoCloseable {
+		@Override
+		void close();
 	}
 
 	/**
@@ -138,11 +228,21 @@ public class RunLimits {
 		String key = keyOf(principal);
 		acquireSlot(principal, key);
 		try {
-			return new Admission(allowanceFor(principal, heldRoles(context.security())), key);
+			return new Admission(allowanceFor(principal, heldRoles(context.security()), takeReused(principal)), key);
 		} catch (RuntimeException ex) {
 			release(key);
 			throw ex;
 		}
+	}
+
+	/** The reading bound for the given account's run on this thread, used up; else a new one. */
+	private static SpendReading takeReused(Person principal) {
+		SpendReading reading = REUSED.get();
+		if (reading != null && reading.isFor(principal)) {
+			REUSED.set(null);
+			return reading;
+		}
+		return new SpendReading(principal);
 	}
 
 	/**
@@ -191,8 +291,10 @@ public class RunLimits {
 	 * </p>
 	 *
 	 * <p>
-	 * <b>What it costs.</b> Nothing while no budget is configured. With one, a pass over the recorded
-	 * runs - the same pass the run start makes.
+	 * <b>What it costs.</b> Nothing while no budget is configured. With one, a pass over the account's
+	 * recorded runs; an entry point that asks more than once for one send passes one
+	 * {@link #spendReading(Person) reading} to {@link #budgetRefusal(Person, SpendReading)} and
+	 * hands it to the run with {@link #reuse(SpendReading)}.
 	 * </p>
 	 *
 	 * @param principal
@@ -200,10 +302,29 @@ public class RunLimits {
 	 * @return The refusal in the user's language, or {@code null} if nothing refuses.
 	 */
 	public static ResKey budgetRefusal(Person principal) {
+		return budgetRefusal(principal, spendReading(principal));
+	}
+
+	/**
+	 * {@link #budgetRefusal(Person)} on a reading the send shares with its other checks.
+	 *
+	 * @param principal
+	 *        The acting account, or {@code null} if the request has none.
+	 * @param reading
+	 *        The send's reading of the account's spend, see {@link #spendReading(Person)}.
+	 * @return The refusal in the user's language, or {@code null} if nothing refuses.
+	 */
+	public static ResKey budgetRefusal(Person principal, SpendReading reading) {
 		if (principal == null || !RunLimitSettings.anyBudget()) {
 			return null;
 		}
-		return budgetRefusal(principal, AiToolAccessService.heldRoleNames(principal));
+		SpendReading forPrincipal = reading != null && reading.isFor(principal) ? reading : spendReading(principal);
+		try {
+			allowanceFor(principal, AiToolAccessService.heldRoleNames(principal), forPrincipal);
+			return null;
+		} catch (RunLimitExceededException ex) {
+			return ex.reason();
+		}
 	}
 
 	/**
@@ -220,7 +341,7 @@ public class RunLimits {
 			return null;
 		}
 		try {
-			allowanceFor(principal, heldRoles);
+			allowanceFor(principal, heldRoles, spendReading(principal));
 			return null;
 		} catch (RunLimitExceededException ex) {
 			return ex.reason();
@@ -276,7 +397,8 @@ public class RunLimits {
 	 * @throws RunLimitExceededException
 	 *         If nothing is left of either.
 	 */
-	private static BudgetAllowance allowanceFor(Person principal, Collection<String> heldRoles) {
+	private static BudgetAllowance allowanceFor(Person principal, Collection<String> heldRoles,
+			SpendReading reading) {
 		long tokenBudget = RunLimitSettings.tokenBudget(heldRoles);
 		double moneyBudget = RunLimitSettings.moneyBudget(heldRoles);
 		if (tokenBudget <= 0 && moneyBudget <= 0) {
@@ -284,7 +406,7 @@ public class RunLimits {
 		}
 		int hours = RunLimitSettings.budgetWindowHours();
 		CostCurrency currency = RunLimitSettings.costCurrency();
-		AccountSpend spent = spentSince(principal, hours, currency);
+		AccountSpend spent = reading.spent(hours, currency);
 
 		long tokenHeadroom = BudgetAllowance.UNLIMITED_TOKENS;
 		if (tokenBudget > 0) {

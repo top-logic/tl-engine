@@ -85,8 +85,9 @@ public interface BudgetConfig extends ConfigPart {
 	 * </p>
 	 *
 	 * <p>
-	 * <b>What it costs.</b> The figure is read from the recorded runs at every run start, which is
-	 * one pass over the execution rows. That is why it is off unless an administrator asks for it.
+	 * <b>What it costs.</b> The figure is read from the account's recorded runs once for every
+	 * message sent, which is one pass over that account's execution rows. That is why it is off
+	 * unless an administrator asks for it.
 	 * </p>
 	 *
 	 * @see #TOKEN_BUDGET

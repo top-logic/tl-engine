@@ -195,9 +195,12 @@ The budget needs run recording. An installation without an `AgentExecutionStore`
 count, and a budget that cannot be read admits the run and logs an error: refusing runs for a spend
 nobody measured is the wrong direction.
 
-**What it costs.** One pass over the execution rows per run start, on the writer thread, and one
-more for the chat's pre-check. That is the reason the budget is off unless an administrator asks for
-it. While no budget is configured, neither pass happens.
+**What it costs.** One pass over the account's own execution rows per message, on the writer
+thread. The rows are found through the session's owner and the run's session, which the knowledge base
+answers from its association index, so the pass does not grow with the other accounts' runs. The chat's
+pre-checks and the run start share one reading (`RunLimits.SpendReading`, #835): the pre-check takes
+it, and the run start takes it over through `RunLimits.reuse`. That is the reason the budget is off
+unless an administrator asks for it. While no budget is configured, no pass happens.
 
 ### 4. The money budget - cost per run
 

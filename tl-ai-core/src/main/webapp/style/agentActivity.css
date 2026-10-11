@@ -93,11 +93,22 @@
 	text-align: center;
 }
 
+/*
+ * The number scales with its card. A card is a fifth of the row, 192px at 1280px with the
+ * navigation open, and a fixed 2.6rem cut a six-digit count off at its right edge (#874). 15% of
+ * the card's width is the size at which "123,4 Mio." still fits there; on a wide row the number
+ * stops at 2.6rem. Should a longer one ever come, it wraps at its space rather than being cut.
+ */
+.card:has(.aiKpi) {
+	container-type: inline-size;
+}
+
 .aiKpiValue {
-	font-size: 2.6rem;
+	font-size: min(2.6rem, 15cqi);
 	font-weight: 600;
 	line-height: 1.15;
 	color: #1a1a1a;
+	white-space: normal;
 }
 
 .aiKpiNote {

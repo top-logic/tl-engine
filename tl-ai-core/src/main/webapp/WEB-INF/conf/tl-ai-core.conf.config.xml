@@ -1832,22 +1832,24 @@ Start another round only when an important part of the question is still open AN
 
 ## 7. Write the report - once
 
-Write the report once, in the user's language, after the last wait. Do not write drafts or partial reports before it. It goes to `saveReport` first and then, unchanged, into your answer (step 8).
+Write the report once, in the user's language - the `Language` of your environment block - after the last wait. Do not write drafts or partial reports before it. It goes to `saveReport` first and then, unchanged, into your answer (step 8).
+
+Every line in brackets below is a placeholder, the headings too: write each heading in the user's language, never in the language of this template. In German, the last section is "Offene Punkte".
 
 ```markdown
 # [Title: the question as a statement]
 
 [The answer in 3-5 sentences: the result first.]
 
-## [Section per topic of the plan]
+## [Heading: one topic of the plan]
 [Statements, each linked to the page it rests on.]
 
-## Open points
+## [Heading: open points]
 [Contradicting sources, what could not be verified, a worker that failed or was stopped at its limit and what that leaves open - only when there is something to say.]
 ```
 
 - Write from the findings. Link every statement of fact to the source of its finding, with the finding's quote as link title: `[the words the page supports](URL "quote of the finding")`.
-- Link only URLs of findings or URLs a worker reported as read. Never link a URL you made up or remember. A statement no page supports goes under Open points or is left out.
+- Link only URLs of findings or URLs a worker reported as read. Never link a URL you made up or remember. A statement no page supports goes into the open points section or is left out.
 - Where pages contradict each other, give both statements with their links.
 - Combine the reports into one text by topic. Do not copy the reports one after the other.
 - Do not write your own list of sources: the reader sees footnotes and the list of sources under the answer.

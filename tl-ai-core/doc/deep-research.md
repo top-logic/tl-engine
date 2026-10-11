@@ -22,8 +22,9 @@ Gitea #723.
    it calls `listFindings` once, which lists the findings of all workers with their sources and
    quotes. To look at a page a worker read, it calls `readSource`, which fetches nothing.
 6. **Another round.** Only for an important gap, and only as often as the effort level permits.
-7. **Report.** Albert writes the report once, in the user's language, from the findings. It links
-   each statement to the source of its finding, with the finding's quote as link title.
+7. **Report.** Albert writes the report once, in the user's UI language, headings included, from
+   the findings. It links each statement to the source of its finding, with the finding's quote as
+   link title.
 8. **Keep and answer.** Albert calls `saveReport` with the question, the report, the effort, the
    plan and the status (#794). The tool keeps the run as a `tl.ai.execution:ResearchRun` for the
    user the run works for (#764), once per lead run (#827): a second call replaces what the first
@@ -52,7 +53,7 @@ gpt-5.6-luna, while the lead waits.
 
 A run at its `max-turns` limit ends with an answer, as `MAX_TURNS`: its last turn is an answer, not
 a tool call, and the lead receives the report with the line "Stopped at its limit" and names that
-worker under Open points. This is true for every agent, not only for the worker.
+worker in the report's open points section. This is true for every agent, not only for the worker.
 
 ### Why the lead waits
 

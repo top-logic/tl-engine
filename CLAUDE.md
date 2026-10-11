@@ -454,7 +454,8 @@ question, so the same run resumes. Remote answers reach a local model inside
 references that `fetchArtifact` reads section by section. A served context lives in its session's
 metadata and run transcripts and survives a restart. See `tl-ai-a2a/README.md`. An `A2AObserver` (`<observers>` on `A2AService`)
 learns of every exchange in both directions with context, task and message ids, through the same
-`ObserverQueue`.
+`ObserverQueue`. Administration > A2A (`tl-ai-a2a/admin/a2a.view.xml`) lists the conversations of both
+directions from persisted data: served contexts from their sessions, outgoing calls from the run transcripts.
 
 ### Event System (tl-ai-core `agent/`)
 

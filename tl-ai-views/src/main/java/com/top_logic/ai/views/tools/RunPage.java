@@ -44,13 +44,17 @@ final class RunPage {
 	/**
 	 * Computes something in the run's window, see {@link RunWindow#inWindow}.
 	 *
-	 * @return The result, empty when the run has no window.
+	 * @return The result, empty when the run has no window or its page is not built.
 	 */
 	static <T> Optional<T> inWindow(Function<ReactControl, T> action) {
 		AtomicReference<T> result = new AtomicReference<>();
-		boolean reached = RunWindow.get().inWindow(TLContextManager.getSubSession(),
-			root -> result.set(action.apply((ReactControl) root)));
-		return reached ? Optional.ofNullable(result.get()) : Optional.empty();
+		RunWindow.get().inWindow(TLContextManager.getSubSession(), root -> {
+			// A window whose page is not built (yet, or any more) shows nothing to read or rebuild.
+			if (root != null) {
+				result.set(action.apply((ReactControl) root));
+			}
+		});
+		return Optional.ofNullable(result.get());
 	}
 
 	/**
@@ -66,21 +70,27 @@ final class RunPage {
 	 */
 	static String show(Collection<String> resources) {
 		Set<String> changed = new LinkedHashSet<>(resources);
-		Optional<Boolean> deferred = inWindow(page -> {
-			if (changed.contains(WindowPage.startView(page))) {
-				return Boolean.TRUE;
+		try {
+			Optional<Boolean> deferred = inWindow(page -> {
+				if (changed.contains(WindowPage.startView(page))) {
+					return Boolean.TRUE;
+				}
+				WindowPage.rebuild(page, changed);
+				return Boolean.FALSE;
+			});
+			if (deferred.isEmpty()) {
+				return "No page is open for this run; the change shows when the view is opened next.";
 			}
-			WindowPage.rebuild(page, changed);
-			return Boolean.FALSE;
-		});
-		if (deferred.isEmpty()) {
-			return "No page is open for this run; the change shows when the view is opened next.";
+			if (!deferred.get()) {
+				return "The user's page shows the change already.";
+			}
+			rebuildAfterRun(TLContextManager.getSubSession(), changed);
+			return "The change touches the start page, so the user's page is rebuilt when this answer is finished.";
+		} catch (RuntimeException ex) {
+			// The change is written; only bringing it onto the open page failed.
+			Logger.warn("Could not show the change of " + changed + " on the open page.", ex, RunPage.class);
+			return "The user's page shows the change after a reload.";
 		}
-		if (!deferred.get()) {
-			return "The user's page shows the change already.";
-		}
-		rebuildAfterRun(TLContextManager.getSubSession(), changed);
-		return "The change touches the start page, so the user's page is rebuilt when this answer is finished.";
 	}
 
 	/**
@@ -104,7 +114,11 @@ final class RunPage {
 			task.get().cancel(false);
 			Set<String> resources = PENDING.remove(subSession);
 			try {
-				RunWindow.get().inWindow(subSession, root -> WindowPage.rebuild((ReactControl) root, resources));
+				RunWindow.get().inWindow(subSession, root -> {
+					if (root != null) {
+						WindowPage.rebuild((ReactControl) root, resources);
+					}
+				});
 			} catch (RuntimeException ex) {
 				Logger.warn("Could not rebuild the page after a change of " + resources + ".", ex, RunPage.class);
 			}

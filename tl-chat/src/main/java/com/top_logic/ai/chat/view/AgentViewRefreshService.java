@@ -31,8 +31,8 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 
@@ -336,8 +336,9 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		return ThreadContextManager.inContext(subSession,
 			(ComputationEx2<Boolean, RuntimeException, RuntimeException>) () -> ReactWindowReplay
 				.inWindow(registry, windowName, () -> {
-					WindowEntry entry = registry.getWindow(windowName);
-					action.accept(entry == null ? null : entry.getRootControl());
+					// The tree the window displays, where the engine's own replay looks for it.
+					SSEUpdateQueue queue = registry.getQueue(windowName);
+					action.accept(queue == null ? null : queue.getRootControl());
 				}));
 	}
 

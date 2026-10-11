@@ -21,9 +21,11 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
@@ -36,6 +38,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.ResearchRun;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
@@ -45,6 +48,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
@@ -74,6 +78,9 @@ public class TestHeadlessResearch extends BasicTestCase {
 	private static final String FACT = "Austria pays up to 7500 euros for a heat pump.";
 
 	private static final String QUERY = "heat pump subsidy Austria 2026";
+
+	/** The report the lead keeps and answers with. */
+	private static final String REPORT = "# Austria\n[" + FACT + "](" + URL + ")\n";
 
 	private static final long TIMEOUT_MILLIS = 60_000;
 
@@ -107,8 +114,8 @@ public class TestHeadlessResearch extends BasicTestCase {
 	}
 
 	/**
-	 * Started without an account, for a named owner: the lead researches with the skill, and the
-	 * report with its source lands in a chat of the owner.
+	 * Started without an account, for a named owner: the lead researches with the skill, the report
+	 * with its source lands in a chat of the owner, and the run is kept for the owner (#794).
 	 */
 	public void testAScheduledResearchWritesTheReportIntoTheOwnersChats() throws Exception {
 		Person root = PersonManager.getManager().getRoot();
@@ -137,6 +144,26 @@ public class TestHeadlessResearch extends BasicTestCase {
 			run.getTranscript().contains("\"citations\":[{\"index\":1") && run.getTranscript().contains(URL));
 		assertTrue("The question is on record in the chat.", run.getTranscript().contains("Which heat pump"));
 		assertEquals("The report is what the handle answers.", report, AIScriptFunctions.agentRunResult(handle));
+
+		ResearchRun kept = keptRun(QUESTION);
+		assertEquals("The run is kept for the owner, not for the system context it was started in.", root,
+			kept.getOwner());
+		assertEquals("quick", kept.getEffort());
+		assertEquals(URL, kept.getCitedSources().get(0).getUrl());
+	}
+
+	/** The research run kept for the given question. */
+	private static ResearchRun keptRun(String question) {
+		HistoryUtils.updateSessionRevision();
+		for (TLObject object : MetaElementUtil.getAllInstancesOf(TlAiExecutionFactory.getResearchRunType(),
+			TLObject.class)) {
+			ResearchRun run = (ResearchRun) object;
+			if (question.equals(run.getQuestion())) {
+				return run;
+			}
+		}
+		fail("No research run was kept for: " + question);
+		return null;
 	}
 
 	/** A run of an account whose budget is spent asks no model and says why in its chat. */
@@ -209,7 +236,7 @@ public class TestHeadlessResearch extends BasicTestCase {
 		HistoryUtils.updateSessionRevision();
 	}
 
-	/** The lead loads the skill, spawns one worker, waits and writes; the worker searches and reads. */
+	/** The lead loads the skill, spawns one worker, waits, keeps the run and writes; the worker searches and reads. */
 	private static List<ContentPart> reply(ProviderRequest request, int turn) {
 		CALLS.incrementAndGet();
 		String prompt = String.valueOf(request.systemPrompt());
@@ -235,8 +262,11 @@ public class TestHeadlessResearch extends BasicTestCase {
 						+ "Purpose: the report.\\nScope: 2026, Austria.\\nBudget: at most 10 tool calls.\"}"));
 			case 2:
 				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 60000}"));
+			case 3:
+				return List.of(call("saveReport", "{\"question\": \"" + QUESTION + "\", \"report\": \""
+					+ REPORT.replace("\n", "\\n") + "\", \"effort\": \"quick\"}"));
 			default:
-				return List.of(new TextContent("# Austria\n[" + FACT + "](" + URL + ")\n"));
+				return List.of(new TextContent(REPORT));
 		}
 	}
 
@@ -262,6 +292,7 @@ public class TestHeadlessResearch extends BasicTestCase {
 				LLMProviderService.Module.INSTANCE,
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
-				AgentPolicyService.Module.INSTANCE));
+				AgentPolicyService.Module.INSTANCE,
+				ResearchRuns.Module.INSTANCE));
 	}
 }

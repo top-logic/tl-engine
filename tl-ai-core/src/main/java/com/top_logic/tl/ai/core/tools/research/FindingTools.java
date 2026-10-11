@@ -148,7 +148,7 @@ public class FindingTools {
 	 * @return The id of the kept run, or why it was not kept.
 	 */
 	@ToolMethod(
-		description = "Keep this research run, once, after you have written the report: the question, the"
+		description = "Keep this research run, once, when its report is final: the question, the"
 			+ " report exactly as you give it to the user (Markdown, citing each statement with a link to"
 			+ " the source it rests on), and optionally the effort, the plan and the status. The report's"
 			+ " links are checked against what the research read; the sources it cites, the sources read"

@@ -20,10 +20,12 @@ import com.top_logic.ai.views.WindowPage;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tl.ai.core.agent.RunWindow;
-import com.top_logic.tl.ai.core.limits.RunLimits;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -70,12 +72,15 @@ final class RunPage {
 	 * <p>
 	 * The parts of the page that show a changed view are rebuilt at once, which leaves the rest of
 	 * the page - the chat the run answers in - as it is. A change of the start page itself rebuilds
-	 * the whole page, chat included, so that waits until the account has no run going any more.
+	 * the whole page, chat included, so that waits until the run has ended.
+	 *
+	 * @param run
+	 *        The run that wrote.
 	 * </p>
 	 *
 	 * @return A sentence for the model about what the user sees.
 	 */
-	static String show(Collection<String> resources) {
+	static String show(Collection<String> resources, RunInfo run) {
 		Set<String> changed = new LinkedHashSet<>(resources);
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		try {
@@ -92,7 +97,7 @@ final class RunPage {
 			if (!deferred.get()) {
 				return "The user's page shows the change already.";
 			}
-			rebuildAfterRun(subSession, changed);
+			rebuildAfterRun(subSession, changed, topRunId(run));
 			return "The change touches the start page, so the user's page is rebuilt when this answer is finished.";
 		} catch (RuntimeException ex) {
 			// The change is written; only bringing it onto the open page failed.
@@ -102,21 +107,20 @@ final class RunPage {
 	}
 
 	/**
-	 * Rebuilds the window once the account has no run going any more. Changes made meanwhile join
-	 * the rebuild already waiting for the window.
+	 * Rebuilds the window once the run that wrote has ended. Changes made meanwhile join the
+	 * rebuild already waiting for the window.
 	 */
-	private static void rebuildAfterRun(TLSubSessionContext subSession, Set<String> changed) {
+	private static void rebuildAfterRun(TLSubSessionContext subSession, Set<String> changed, String runId) {
 		Set<String> waiting = PENDING.computeIfAbsent(subSession, x -> ConcurrentHashMap.newKeySet());
 		boolean first = waiting.isEmpty();
 		waiting.addAll(changed);
 		if (!first) {
 			return;
 		}
-		Person account = subSession.getPerson();
 		long until = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(WAIT_LIMIT);
 		AtomicReference<ScheduledFuture<?>> task = new AtomicReference<>();
 		task.set(SchedulerService.getInstance().scheduleWithFixedDelay(() -> {
-			if (RunLimits.runningFor(account) > 0 && System.currentTimeMillis() < until) {
+			if (running(runId) && System.currentTimeMillis() < until) {
 				return;
 			}
 			task.get().cancel(false);
@@ -130,5 +134,25 @@ final class RunPage {
 				Logger.warn("Could not rebuild the page after a change of " + resources + ".", ex, RunPage.class);
 			}
 		}, 1, 1, TimeUnit.SECONDS));
+	}
+
+	/** The run a delegated run belongs to: the one whose answer the user is reading. */
+	private static String topRunId(RunInfo run) {
+		RunInfo top = run;
+		while (top.parent() != null) {
+			top = top.parent();
+		}
+		return top.runId();
+	}
+
+	/** Whether the run is recorded and has not ended. */
+	private static boolean running(String runId) {
+		if (runId == null) {
+			return false;
+		}
+		return ThreadContextManager.<Boolean, RuntimeException, RuntimeException> inSystemInteraction(RunPage.class, () -> {
+			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
+			return execution != null && execution.getEndedAt() == null;
+		});
 	}
 }

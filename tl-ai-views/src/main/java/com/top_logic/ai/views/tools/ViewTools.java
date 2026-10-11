@@ -230,7 +230,7 @@ public class ViewTools {
 			List<String> written = CommittedNow.run(() -> ViewChanges.revert(
 				PersistencyLayer.getKnowledgeBase().resolveObjectKey(key).getWrapper()));
 			context.catchUpWithCommits();
-			return ToolResult.of("Reverted " + ReadFilter.idOf(set) + ". " + RunPage.show(written));
+			return ToolResult.of("Reverted " + ReadFilter.idOf(set) + ". " + RunPage.show(written, context.runInfo()));
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.failure("Nothing was reverted: " + ex.getMessage());
 		}
@@ -243,7 +243,7 @@ public class ViewTools {
 			String set = CommittedNow.run(() -> ReadFilter.idOf(ViewChanges.write(title, author, resolved)));
 			context.catchUpWithCommits();
 			return ToolResult.of("Saved as change set " + set + ". "
-				+ RunPage.show(resolved.stream().map(Change::resource).toList()));
+				+ RunPage.show(resolved.stream().map(Change::resource).toList(), context.runInfo()));
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.failure(ex.getMessage());
 		}

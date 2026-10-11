@@ -5,8 +5,6 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -132,7 +130,7 @@ public class TestSubagentSSE extends TestCase {
 	}
 
 	private static ChatSSEHandler frames(List<String> sink) {
-		return new ChatSSEHandler(null, null, new PrintWriter(new StringWriter())) {
+		return new ChatSSEHandler(null, null, null, null, null, "test") {
 			@Override
 			void sendEvent(String eventType, String data) {
 				sink.add(eventType + " " + data);

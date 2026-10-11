@@ -5,8 +5,6 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -174,12 +172,12 @@ public class TestChatEventHandlerRegistry extends TestCase {
 
 	/**
 	 * The SSE handler resolves through the same registry with the same semantics it had when the
-	 * lookup lived on {@link ChatSSEHandler} itself: it is found while its connection is open and
+	 * lookup lived on {@link ChatSSEHandler} itself: it is found while it is started and
 	 * gone once it is stopped.
 	 */
 	public void testSseHandlerUsesTheSameRegistry() {
 		TaskProgressTracker sseTracker = new TaskProgressTracker();
-		ChatSSEHandler sse = new ChatSSEHandler(sseTracker, null, new PrintWriter(new StringWriter()));
+		ChatSSEHandler sse = new ChatSSEHandler(sseTracker, null, null, null, null, "test");
 		try {
 			ChatEventHandlerRegistry.register(sse);
 

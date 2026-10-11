@@ -21,13 +21,6 @@ function act(work: () => void): void {
   flushSync(work)
 }
 
-class FakeEventSource {
-  readyState = 0
-  addEventListener(): void {}
-  removeEventListener(): void {}
-  close(): void {}
-}
-
 const CHAT = { controlId: 'c2', module: 'TLStack', state: {} }
 
 let chatId = ''
@@ -65,7 +58,6 @@ let observer: MutationObserver
 beforeEach(() => {
   chatId = `dock-mount-${++serial}`
   const globals = globalThis as unknown as Record<string, unknown>
-  globals.EventSource = FakeEventSource
   globals.fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) }))
   host = document.createElement('div')
   document.body.append(host)

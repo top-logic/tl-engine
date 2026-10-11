@@ -35,7 +35,7 @@ const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = R
  * store.
  *
  * Everything the conversation *is* - the transcript, the run, the session list, the capabilities,
- * the layout preferences and the one `EventSource` - lives in that store, keyed by `chat-id`, so
+ * the layout preferences and the one stream - lives in that store, keyed by `chat-id`, so
  * further view elements can show the same chat beside this one. What stays here is what only this
  * element has: its own geometry (the session drawer, the collapsed rail, the sheet breakpoint, the
  * published composer height) and the host's {@link ChatExtensions}.

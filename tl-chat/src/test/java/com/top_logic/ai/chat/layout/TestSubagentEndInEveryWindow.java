@@ -85,7 +85,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 		assertTrue(_windowA.getSessionManager().switchSession(_chat, owner));
 		ConversationLog log = _windowA.getSessionManager().getOrCreateConversationLog();
 		_listener = new ConversationLogListener(log);
-		_listener.setParentListener(ChatProcessor.streamForwarder(_windowA, owner, _chat, _listener));
+		_listener.setParentListener(ChatProcessor.streamForwarder(_windowA, _windowA.activeChat(), owner, _listener));
 
 		// The lead's run: it starts a subagent and ends, writing its transcript, while the subagent
 		// works on.

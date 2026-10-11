@@ -212,8 +212,7 @@ public class ChatProcessor {
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
-			ConversationMemory conversationMemory, String userMessage,
-			List<AttachmentDto> attachments) throws Exception {
+			String userMessage, List<AttachmentDto> attachments) throws Exception {
 		if (state == null) {
 			return;
 		}
@@ -221,6 +220,10 @@ public class ChatProcessor {
 		if (taskId == null) {
 			return;
 		}
+		// The chat the run was sent in, captured with the send: everything the run reads and writes
+		// of its chat is this, whatever chat the window shows by now (#844).
+		ChatState chatState = state.getChatState();
+		ConversationMemory conversationMemory = chatState.memory();
 
 		ConversationLog convLog = state.getConversationLog();
 		if (convLog == null) {
@@ -230,7 +233,7 @@ public class ChatProcessor {
 		ConversationLogListener logListener = new ConversationLogListener(convLog);
 		state.setLogListener(logListener);
 
-		TaskStore taskStore = taskTracker.getActiveTaskStore();
+		TaskStore taskStore = chatState.taskStore();
 
 		UserInteractionStore interactionStore = new UserInteractionStore();
 		state.setUserInteractionStore(interactionStore);
@@ -238,7 +241,7 @@ public class ChatProcessor {
 		// Ordered, because the order is what the next run restores the tool catalog in: a catalog
 		// restored in another order sends the same tools as different bytes (Gitea #346).
 		Set<String> loadedSkills = Collections.synchronizedSet(new LinkedHashSet<>());
-		loadedSkills.addAll(taskTracker.getLoadedSkills());
+		loadedSkills.addAll(chatState.loadedSkills());
 
 		// One token per run, shared by the tool context, the transaction scope and the run's
 		// thread-local environment. Created here rather than in buildToolContext so that the
@@ -296,8 +299,7 @@ public class ChatProcessor {
 			}
 
 			// Build ToolContext with real security, approval, and transaction scope
-			ToolContext toolContext =
-				buildToolContext(interactionStore, taskTracker, cancellationToken, state.getSessionId());
+			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, chatState, cancellationToken);
 			// Expose the run's cancellation token so /chat/cancel can fire cooperative-cancellation
 			// listeners in addition to interrupting the agent thread.
 			state.setCancellationToken(cancellationToken);
@@ -338,7 +340,7 @@ public class ChatProcessor {
 					ChatProcessor.class);
 			}
 			AgentEventListener sseForwarder =
-				streamForwarder(taskTracker, taskTracker.getSessionOwner(), state.getSessionId(), logListener);
+				streamForwarder(taskTracker, chatState, taskTracker.getSessionOwner(), logListener);
 			AgentEventListener listener =
 				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
 			// Allow sub-agent approval events to bubble up to the SSE handler
@@ -348,7 +350,7 @@ public class ChatProcessor {
 			// from here, and must not be handed another chat's.
 			SubagentJobRegistry subagentRegistry =
 				taskTracker.getSessionManager().getSubagentRegistry(state.getSessionId());
-			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
+			ToolRegistry sessionRegistry = chatState.toolRegistry();
 
 			// Record the run against the session captured at send time (not the currently
 			// active one), so a completed run is never written under the wrong session.
@@ -371,14 +373,14 @@ public class ChatProcessor {
 						// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
 						// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
 						// rebuilds it from the updated service configuration.
-						taskTracker.setActiveToolRegistry(null);
+						chatState.setToolRegistry(null);
 					} else {
-						taskTracker.setActiveToolRegistry(runResult.registry());
+						chatState.setToolRegistry(runResult.registry());
 					}
 					// Replaced rather than merged: the run's set is authoritative, and a skill the
 					// catalog evicted has to disappear from the session too, or the next run restores
 					// tools that are no longer loaded.
-					taskTracker.loadLoadedSkills(loadedSkills);
+					chatState.loadLoadedSkills(loadedSkills);
 					result = withStopNotice(runResult.response(), runResult.result(), toolContext);
 				} catch (RunLimitExceededException ex) {
 					// A ceiling of this installation, not a failure: the account's budget was already
@@ -395,20 +397,10 @@ public class ChatProcessor {
 
 				// Flush pending messages (including agent response) into Chat before persisting,
 				// so the persisted data includes the agent's response.
-				Chat chat = state.getChat();
-				if (chat == null) {
-					chat = taskTracker.getChat();
-				}
-				applyPollUpdates(state, chat, taskTracker);
+				applyPollUpdates(state, chatState.chat(), taskTracker);
 
-				// Persist conversation log, task store, and metadata in a single write
-				String sessionId = state.getSessionId();
-				if (sessionId == null) {
-					sessionId = taskTracker.getActiveSessionId();
-				}
-				if (sessionId != null) {
-					persistMessages(taskTracker, sessionId);
-				}
+				// The run's chat, not the one the window shows by now.
+				taskTracker.getSessionManager().persist(chatState);
 			}
 
 		} finally {
@@ -553,12 +545,18 @@ public class ChatProcessor {
 			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
 		AIProcessingState state;
 		String taskId;
+		ChatState chat;
+		String sessionId;
 		// Taken with the lead turn a subagent's news starts, so that the two cannot both find the
 		// chat idle and start a turn each.
 		synchronized (tracker.sendLock()) {
+			// The chat the message is sent in, read once: everything below and the whole run go to
+			// this chat, also when the window switches to another one meanwhile (#844).
+			chat = tracker.activeChat();
+			sessionId = chat.sessionId();
 			// Busy is per chat session: a run in another session must not block this one.
-			if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
-				tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
+			if (tracker.hasActiveProcessingStateFor(sessionId)) {
+				chat.chat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
 				return SendResult.busy();
 			}
 
@@ -576,44 +574,37 @@ public class ChatProcessor {
 				}
 			}
 			ChatMessage message = new ChatMessage(userName, userMessage, Instant.now(), attachmentMeta);
-			tracker.getChat().addMessage(message);
+			chat.chat().addMessage(message);
 
 			// Persist user message before AI processing starts
-			if (tracker.getActiveSessionId() != null) {
-				persistMessages(tracker, tracker.getActiveSessionId());
-			}
+			tracker.getSessionManager().persist(chat);
 
 			// Evict any dead state left over from a prior run of this session so it cannot shadow the
 			// new run in getProcessingStateForSession (which would swallow the new run's ask-user
 			// questions). Prior runs' final events have already been flushed by this point.
-			tracker.evictCompletedStatesForSession(tracker.getActiveSessionId());
+			tracker.evictCompletedStatesForSession(sessionId);
 
 			state = new AIProcessingState();
 			state.startProcessing();
 			taskId = tracker.generateTaskId();
 			state.setCurrentTaskId(taskId);
 			// Before it is registered: that is what the other side of the lock asks for.
-			state.setSessionId(tracker.getActiveSessionId());
+			state.setSessionId(sessionId);
+			state.setChatState(chat);
 			tracker.addProcessingState(taskId, state);
 		}
 
-		// Capture session context so background task writes to the correct Chat,
-		// even if the user switches sessions before the task completes.
-		Chat capturedChat = tracker.getChat();
-		String capturedSessionId = tracker.getActiveSessionId();
-		state.setChat(capturedChat);
-		state.setSessionId(capturedSessionId);
 		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
 		state.setFacts(facts);
 		state.setSpendReading(spendReading);
 		// Read here, on the request thread and in the acting account's context, and only once per
 		// conversation: they go into the environment block, which has to stay byte-identical
-		// across the turns of one conversation. See ChatSessionManager.getActiveMemories.
-		state.setMemories(tracker.getSessionManager().getActiveMemories(tracker.getSessionOwner()));
+		// across the turns of one conversation. See ChatSessionManager.getMemories.
+		state.setMemories(tracker.getSessionManager().getMemories(sessionId, tracker.getSessionOwner()));
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
-		ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
+		ConversationLog convLog = chat.log();
 		Turn turn = convLog.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart(
 			UUID.randomUUID().toString(), Instant.now(), messageText)));
@@ -623,12 +614,11 @@ public class ChatProcessor {
 		// to avoid a race condition: the JS client reconnects SSE during session switching,
 		// and the new SSE connection may not be established yet when /chat/send arrives.
 
-		ConversationMemory conversationMemory = tracker.getConversationMemory();
 		// Pass state directly to background task so it is immune to tracker-level overwrites
 		Future<?> future;
 		try {
 			future = ChatRunExecutor.submit(
-				new AIBackgroundTask(tracker, state, conversationMemory, userMessage, attachments, userSession));
+				new AIBackgroundTask(tracker, state, userMessage, attachments, userSession));
 		} catch (ChatRunExecutor.NoRoom ex) {
 			// The pre-check above said there was room and another request took it in between. Rare,
 			// and the only path on which the user's message is already in the conversation - so it is
@@ -637,13 +627,13 @@ public class ChatProcessor {
 			String reason = Resources.getInstance().getString(I18NConstants.TOO_MANY_RUNS_IN_PROGRESS);
 			state.completeSuccessfully();
 			tracker.removeProcessingState(taskId);
-			capturedChat.addMessage(new ChatMessage("System", reason));
+			chat.chat().addMessage(new ChatMessage("System", reason));
 			return SendResult.rejected(reason);
 		}
 		state._backgroundTask = future;
 
 		tracker.setLastSend(new LastSend(new WeakReference<>(userSession), state.getRunOptions(), state.getFacts()));
-		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(capturedSessionId);
+		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(sessionId);
 		if (waker != null) {
 			waker.userSent();
 		}
@@ -680,7 +670,7 @@ public class ChatProcessor {
 		AIProcessingState state;
 		String taskId;
 		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
-		ChatSessionManager.OpenChat chat;
+		ChatState chat;
 		synchronized (tracker.sendLock()) {
 			// Whether the window shows the chat, and what the turn writes into, read in one step: a
 			// switch to another chat in between would start this chat's turn in that chat's log.
@@ -696,9 +686,9 @@ public class ChatProcessor {
 			taskId = tracker.generateTaskId();
 			state.setCurrentTaskId(taskId);
 			state.setSessionId(sessionId);
+			state.setChatState(chat);
 			tracker.addProcessingState(taskId, state);
 		}
-		state.setChat(chat.chat());
 		state.setRunOptions(last.options());
 		state.setFacts(last.facts());
 		state.setSpendReading(spendReading);
@@ -710,7 +700,7 @@ public class ChatProcessor {
 
 		try {
 			state._backgroundTask = ChatRunExecutor.submit(new AIBackgroundTask(tracker, state,
-				chat.memory(), null, null, userSession));
+				null, null, userSession));
 		} catch (ChatRunExecutor.NoRoom ex) {
 			int index = convLog.turns().indexOf(convLog.currentTurn());
 			if (index >= 0) {
@@ -850,18 +840,6 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Persists the current chat state to the active session.
-	 */
-	static void persistMessages(TaskProgressTracker tracker, String sessionId) {
-		try {
-			tracker.getSessionManager().persistActiveSession();
-		} catch (Exception ex) {
-			Logger.error("SessionID: " + sessionId + "; Failed to persist chat messages: " + ex.getMessage(), ex,
-				ChatProcessor.class);
-		}
-	}
-
-	/**
 	 * Converts an {@link AttachmentDto} to a tl-ai-core {@link ContentPart}.
 	 *
 	 * <p>
@@ -922,9 +900,10 @@ public class ChatProcessor {
 	 * </p>
 	 */
 	static ToolContext buildToolContext(UserInteractionStore interactionStore,
-			TaskProgressTracker taskTracker, CancellationToken cancellationToken, String sessionId) {
+			TaskProgressTracker taskTracker, ChatState chat, CancellationToken cancellationToken) {
 		ApprovalCallback approvalCallback;
-		if (taskTracker.getApprovalMode() == ApprovalMode.AUTO_APPROVE) {
+		// The run's own chat decides, not the one the window shows by the time the run starts.
+		if (chat.approvalMode() == ApprovalMode.AUTO_APPROVE) {
 			approvalCallback = ApprovalCallback.AUTO_APPROVE;
 		} else {
 			approvalCallback = request -> {
@@ -977,10 +956,10 @@ public class ChatProcessor {
 		boolean unattended = taskTracker.isUnattended();
 		RunEntryPoint entryPoint = unattended ? RunEntryPoint.SCHEDULED : RunEntryPoint.CHAT;
 		SecurityContext security = RunSecurity.contextFor(
-			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, sessionId));
+			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, chat.sessionId()));
 		ToolContext context = new ToolContext(
 			security, approvalCallback, new TransactionScope(cancellationToken),
-			taskTracker.getSessionApprovedTools(), cancellationToken);
+			chat.approvedTools(), cancellationToken);
 		return unattended ? context.unattended() : context;
 	}
 
@@ -1032,23 +1011,24 @@ public class ChatProcessor {
 	 * </p>
 	 *
 	 * @param startedIn
-	 *        The tracker of the window the run was started in; the run's tokens are counted there.
+	 *        The tracker of the window the run was started in.
+	 * @param chat
+	 *        The chat the run writes into, where its tokens are counted. A state without a chat is
+	 *        shown in the window the run was started in alone.
 	 * @param owner
 	 *        The account the run belongs to.
-	 * @param sessionId
-	 *        The chat the run writes into; <code>null</code> for a run that has none, which is shown
-	 *        in the window it was started in alone.
 	 * @param log
 	 *        The run's log listener. It must see every event before this listener does: it is what
 	 *        says where in the run's text a delta ends.
 	 */
-	public static AgentEventListener streamForwarder(TaskProgressTracker startedIn, Person owner,
-			String sessionId, ConversationLogListener log) {
+	public static AgentEventListener streamForwarder(TaskProgressTracker startedIn, ChatState chat,
+			Person owner, ConversationLogListener log) {
+		String sessionId = chat.sessionId();
 		return event -> {
 			if (event instanceof AgentEvent.RunCompleted completed) {
-				// Counted here, once, against the window the run belongs to - not by each window
-				// that shows it.
-				startedIn.addTokenUsage(completed.totalUsage());
+				// Counted here, once, against the chat the run belongs to - not by each window that
+				// shows it.
+				chat.addTokenUsage(completed.totalUsage());
 			} else if (event instanceof AgentEvent.SubagentCompleted
 				|| event instanceof AgentEvent.SubagentFailed
 				|| event instanceof AgentEvent.SubagentCancelled) {
@@ -1144,19 +1124,16 @@ public class ChatProcessor {
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
 		private final AIProcessingState _state;
-		private final ConversationMemory _conversationMemory;
 		private final String _userMessage;
 		private final List<AttachmentDto> _attachments;
 
 		private final SubSessionContext _userSession;
 
 		/** */
-		AIBackgroundTask(TaskProgressTracker taskTracker, AIProcessingState state,
-				ConversationMemory conversationMemory, String userMessage, List<AttachmentDto> attachments,
-				TLSubSessionContext userSession) {
+		AIBackgroundTask(TaskProgressTracker taskTracker, AIProcessingState state, String userMessage,
+				List<AttachmentDto> attachments, TLSubSessionContext userSession) {
 			_taskTracker = taskTracker;
 			_state = state;
-			_conversationMemory = conversationMemory;
 			_userMessage = userMessage;
 			_attachments = attachments;
 			// The originating application-window sub-session (resolved by ChatServlet from the
@@ -1172,7 +1149,7 @@ public class ChatProcessor {
 			try {
 				ThreadContextManager.inContext(_userSession, () -> {
 					try {
-						executeOrchestrator(_taskTracker, state, _conversationMemory, _userMessage, _attachments);
+						executeOrchestrator(_taskTracker, state, _userMessage, _attachments);
 						state.completeSuccessfully();
 
 						String responseText = state.getLastAgentResponse();
@@ -1365,9 +1342,9 @@ public class ChatProcessor {
 		private volatile ConversationLogListener _logListener = null;
 
 		// Session context: captured at creation, never changes.
-		// Ensures background task writes to the correct Chat even if the user switches sessions.
+		// Ensures background task writes to the correct chat even if the user switches sessions.
 		private volatile String _sessionId = null;
-		private volatile Chat _chat = null;
+		private volatile ChatState _chatState = null;
 
 		// User interaction store for HITL flow
 		private volatile UserInteractionStore _userInteractionStore = null;
@@ -1527,12 +1504,21 @@ public class ChatProcessor {
 
 		/** The Chat this processing state writes to; set once at creation. */
 		public Chat getChat() {
-			return _chat;
+			ChatState chat = _chatState;
+			return chat == null ? null : chat.chat();
 		}
 
-		/** Sets the captured Chat reference (called once in {@link ChatProcessor#sendMessage}). */
-		public void setChat(Chat chat) {
-			_chat = chat;
+		/**
+		 * The state of the chat the run was sent in, which it reads and writes to its end; set once
+		 * at creation.
+		 */
+		public ChatState getChatState() {
+			return _chatState;
+		}
+
+		/** @see #getChatState() */
+		public void setChatState(ChatState chat) {
+			_chatState = chat;
 		}
 
 		/** The user interaction store for HITL flow; may be null when not processing. */

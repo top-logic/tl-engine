@@ -144,7 +144,7 @@ run. See `doc/scheduled-agent.md`.
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
 - **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
-- **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
+- **`TaskProgressTracker`** – One window's chat: its processing states, and accessors that read and write the `ChatState` of the chat the window shows
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
 - **`ChatEventHandlerRegistry`** – Interface-typed lookup of the chat UI observing a `TaskProgressTracker`;
@@ -157,7 +157,8 @@ run. See `doc/scheduled-agent.md`.
   "stopping a run belongs to the account too"
 - **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
-- **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
+- **`ChatSessionManager`** – Holds a `ChatState` per chat with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
+- **`ChatState`** – Everything one chat holds in a window's memory: Chat, ConversationMemory, ConversationLog, the agent's plan (`TaskStore`) and tool catalog, and the settings of its metadata bag (approval mode, approved tools, loaded skills, ratings, effort, token usage). They belong to the chat, not to the window: a window that comes back to a chat it holds finds them as it left them. A send captures the state of its chat under the send lock, and the run reads and writes only that state, also when the window has switched to another chat by the time the run starts or ends (#844)
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
@@ -1230,7 +1231,7 @@ The demo's dock therefore repeats the page's `Application` fact word for word.
 
 **What the agent remembers about the user** (#439) rides in the same block, under its own heading,
 and is read **once per conversation** for the same prompt-cache reason: `ChatProcessor.sendMessage`
-asks `ChatSessionManager.getActiveMemories` when the first message of a conversation is sent, keeps
+asks `ChatSessionManager.getMemories` when the first message of a conversation is sent, keeps
 the answer on the session state and binds it for every run of that conversation
 (`UserMemoryBinding`). A memory the agent writes in turn 3 therefore shows up in the user's memory
 list at once, and in the agent's block in the *next* conversation. The rail section that lists them

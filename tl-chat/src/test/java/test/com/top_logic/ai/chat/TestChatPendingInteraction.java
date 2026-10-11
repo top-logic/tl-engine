@@ -46,6 +46,7 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
@@ -241,15 +242,19 @@ public class TestChatPendingInteraction extends BasicTestCase {
 	}
 
 	/**
-	 * "Approve for this session" is remembered by the run's window, not by the answering one.
+	 * "Approve for this session" is remembered in the run's own chat, not in the answering window.
 	 *
 	 * <p>
-	 * The set the agent loop consults is the one of the tracker the run was started in. Recording
-	 * the decision against the window that happened to answer would leave the run asking about the
+	 * The set the chat's next runs are given is the one of the chat the run was sent in. Recording
+	 * the decision against the window that happened to answer would leave the chat asking about the
 	 * same tool again.
 	 * </p>
 	 */
-	public void testSessionApprovalIsRememberedByTheRunsWindow() throws Exception {
+	public void testSessionApprovalIsRememberedInTheRunsChat() throws Exception {
+		// What a send gives its run: the state of the chat the window showed.
+		HistoryUtils.updateSessionRevision();
+		assertTrue(_windowA.setActiveSessionId(chatId(), anna));
+		_run.setChatState(_windowA.activeChat());
 		TaskProgressTracker windowB = newWindow();
 		inWindow(windowB);
 
@@ -257,7 +262,7 @@ public class TestChatPendingInteraction extends BasicTestCase {
 			post("{\"requestId\":\"" + _requestId + "\",\"response\":\"APPROVED_FOR_SESSION\","
 				+ "\"toolName\":\"createObject\"}", anna));
 
-		assertTrue("The run's own window holds the set the agent loop asks.",
+		assertTrue("The run's own chat holds the set its next runs are given.",
 			_windowA.getSessionApprovedTools().contains("createObject"));
 		assertFalse("The answering window's set is not what the run consults.",
 			windowB.getSessionApprovedTools().contains("createObject"));

@@ -98,8 +98,8 @@ public class TestUnattendedRunContext extends BasicTestCase {
 	}
 
 	private static ToolContext contextOf(TaskProgressTracker tracker) {
-		return ChatProcessor.buildToolContext(new UserInteractionStore(), tracker,
-			new CancellationToken(), "test-session");
+		return ChatProcessor.buildToolContext(new UserInteractionStore(), tracker, tracker.activeChat(),
+			new CancellationToken());
 	}
 
 	private static TaskProgressTracker newTracker(ApprovalMode mode, boolean unattended) {

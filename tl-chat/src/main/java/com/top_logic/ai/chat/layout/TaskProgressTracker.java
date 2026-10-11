@@ -5,12 +5,6 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,34 +74,8 @@ public class TaskProgressTracker {
 	 */
 	private volatile String _windowId = null;
 
-	/** Session-scoped approval mode. Persists across messages/processing states. */
-	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
-
 	/** Whether the runs of this tracker have nobody to ask. Only a scheduled run sets it. */
 	private volatile boolean _unattended = false;
-
-	/** Tools approved for the current session. */
-	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
-
-	/** Skills loaded via loadSkill() in this session. */
-	private final Set<String> _loadedSkills = Collections.synchronizedSet(new LinkedHashSet<>());
-
-	/**
-	 * Answer ratings of the active session, keyed by the zero-based turn index they belong to.
-	 *
-	 * <p>
-	 * Session state like the approved tools above: it is written into the session metadata on
-	 * persist and read back when the session is re-opened, and it is cleared when the window
-	 * switches to another session.
-	 * </p>
-	 */
-	private final Map<Integer, MessageFeedbackDto> _feedback = new ConcurrentHashMap<>();
-
-	/** Effort level last chosen in the active session; {@code null} when none was. */
-	private volatile String _effort;
-
-	/** Cumulative token usage across all runs in this session. */
-	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
 	/** What the user's last message in this window was sent with; see {@link #getLastSend()}. */
 	private volatile ChatProcessor.LastSend _lastSend;
@@ -418,14 +386,22 @@ public class TaskProgressTracker {
 		_windowId = windowId;
 	}
 
-	/** Returns the session-scoped approval mode. */
+	/**
+	 * The approval mode of the active chat.
+	 *
+	 * @see ChatState#approvalMode()
+	 */
 	public ApprovalMode getApprovalMode() {
-		return _approvalMode;
+		return activeChat().approvalMode();
 	}
 
-	/** Sets the session-scoped approval mode. */
+	/**
+	 * Sets the approval mode of the active chat.
+	 *
+	 * @see ChatState#approvalMode()
+	 */
 	public void setApprovalMode(ApprovalMode mode) {
-		_approvalMode = mode;
+		activeChat().setApprovalMode(mode);
 	}
 
 	/**
@@ -512,10 +488,12 @@ public class TaskProgressTracker {
 	}
 
 	/**
-	 * Sets the session-scoped tool registry.
+	 * The state of the chat this window shows, or the window's own state when it shows none.
+	 *
+	 * @see ChatSessionManager#getActiveChatState()
 	 */
-	public void setActiveToolRegistry(ToolRegistry registry) {
-		_sessionManager.setActiveToolRegistry(registry);
+	public ChatState activeChat() {
+		return _sessionManager.getActiveChatState();
 	}
 
 	/**
@@ -562,134 +540,66 @@ public class TaskProgressTracker {
 		}
 	}
 
-	/** Adds a tool to the session-approved set. */
+	/** Adds a tool to the ones approved for the rest of the active chat. */
 	public void addSessionApprovedTool(String toolName) {
-		_sessionApprovedTools.add(toolName);
+		activeChat().addApprovedTool(toolName);
 	}
 
-	/** Returns the set of session-approved tool names. */
+	/** The tools approved for the rest of the active chat. */
 	public Set<String> getSessionApprovedTools() {
-		return Set.copyOf(_sessionApprovedTools);
+		return activeChat().approvedTools();
 	}
 
-	/** Loads session-approved tools (e.g., from persisted metadata). */
-	public void loadSessionApprovedTools(Set<String> tools) {
-		_sessionApprovedTools.clear();
-		_sessionApprovedTools.addAll(tools);
-	}
-
-	/** Adds a skill ID to the loaded set. */
+	/** Adds a skill to the ones loaded in the active chat. */
 	public void addLoadedSkill(String skillId) {
-		_loadedSkills.add(skillId);
+		activeChat().addLoadedSkill(skillId);
 	}
 
 	/**
-	 * The loaded skill IDs, in the order the session loaded them.
+	 * The skills loaded in the active chat, in the order they were loaded.
 	 *
-	 * <p>
-	 * Ordered on purpose: this is what the next run restores its tool catalog from, and a catalog
-	 * restored in another order sends the same tools as different bytes - a prompt cache thrown away
-	 * for nothing (Gitea #346).
-	 * </p>
+	 * @see ChatState#loadedSkills()
 	 */
 	public Set<String> getLoadedSkills() {
-		synchronized (_loadedSkills) {
-			return Collections.unmodifiableSet(new LinkedHashSet<>(_loadedSkills));
-		}
+		return activeChat().loadedSkills();
 	}
 
-	/** Loads skill IDs from persisted metadata. */
-	public void loadLoadedSkills(Set<String> skills) {
-		_loadedSkills.clear();
-		_loadedSkills.addAll(skills);
-	}
-
-	/** Adds token usage from a completed run. */
-	public void addTokenUsage(TokenUsage usage) {
-		_cumulativeUsage = _cumulativeUsage.add(usage);
-	}
-
-	/** Returns cumulative token usage. */
+	/** What the runs of the active chat have spent together. */
 	public TokenUsage getCumulativeUsage() {
-		return _cumulativeUsage;
+		return activeChat().cumulativeUsage();
 	}
 
 	/**
-	 * Resets session-specific state (approvals, loaded skills, tokens and the approval mode).
+	 * Records, changes or withdraws the rating of one answer of the active chat.
 	 *
-	 * <p>
-	 * The approval mode goes back to {@link ApprovalMode#MANUAL}: auto-approve is a setting of one
-	 * chat, and a chat that stores no mode - a new one - starts with it off (#808). The chat the
-	 * tracker switches to brings its own mode back when it stores one.
-	 * </p>
-	 */
-	public void resetSessionState() {
-		_approvalMode = ApprovalMode.MANUAL;
-		_sessionApprovedTools.clear();
-		_loadedSkills.clear();
-		_feedback.clear();
-		_effort = null;
-		_cumulativeUsage = TokenUsage.EMPTY;
-	}
-
-	/**
-	 * Records, changes or withdraws the rating of one answer.
-	 *
-	 * @param turnIndex
-	 *        zero-based index of the turn whose answer was rated
-	 * @param rating
-	 *        {@code "up"} or {@code "down"}; anything else withdraws an earlier rating
-	 * @param note
-	 *        free text the user added, or {@code null}
+	 * @see ChatState#setFeedback(int, String, String)
 	 */
 	public void setFeedback(int turnIndex, String rating, String note) {
-		if (!"up".equals(rating) && !"down".equals(rating)) {
-			_feedback.remove(Integer.valueOf(turnIndex));
-			return;
-		}
-		_feedback.put(Integer.valueOf(turnIndex), MessageFeedbackDto.create()
-			.setTurnIndex(turnIndex)
-			.setRating(rating)
-			.setNote(note == null ? "" : note)
-			.setRecordedAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now())));
+		activeChat().setFeedback(turnIndex, rating, note);
 	}
 
-	/** Every rating of the active session, in turn order. */
+	/** Every rating of the active chat, in turn order. */
 	public List<MessageFeedbackDto> getFeedback() {
-		List<MessageFeedbackDto> all = new ArrayList<>(_feedback.values());
-		all.sort(Comparator.comparingInt(MessageFeedbackDto::getTurnIndex));
-		return all;
-	}
-
-	/** Replaces the active session's ratings, e.g. when the session is loaded. */
-	public void loadFeedback(List<MessageFeedbackDto> feedback) {
-		_feedback.clear();
-		if (feedback == null) {
-			return;
-		}
-		for (MessageFeedbackDto entry : feedback) {
-			_feedback.put(Integer.valueOf(entry.getTurnIndex()), entry);
-		}
+		return activeChat().feedback();
 	}
 
 	/**
-	 * Drops the ratings of turns that no longer exist.
+	 * Drops the ratings of the active chat's turns that no longer exist.
 	 *
-	 * @param turnCount
-	 *        how many turns the session has left; ratings at or after this index are removed
+	 * @see ChatState#dropFeedbackFrom(int)
 	 */
 	public void dropFeedbackFrom(int turnCount) {
-		_feedback.keySet().removeIf(index -> index.intValue() >= turnCount);
+		activeChat().dropFeedbackFrom(turnCount);
 	}
 
-	/** Effort level last chosen in the active session, or {@code null}. */
+	/** Effort level last chosen in the active chat, or {@code null}. */
 	public String getEffort() {
-		return _effort;
+		return activeChat().effort();
 	}
 
-	/** Remembers the effort level chosen for the active session. */
+	/** Remembers the effort level chosen for the active chat. */
 	public void setEffort(String effort) {
-		_effort = effort == null || effort.isBlank() ? null : effort.trim();
+		activeChat().setEffort(effort);
 	}
 
 	/**

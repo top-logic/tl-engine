@@ -75,12 +75,12 @@ public final class PendingInteractionRegistry {
 	 * @param responder
 	 *        The account whose windows may answer this run's requests. Never <code>null</code>.
 	 * @param tracker
-	 *        The tracker of the window the run was started in. The run's session-approved tools
-	 *        live here, so "approve for this session" has to be recorded against it - not against
-	 *        the tracker of whichever window happens to answer.
+	 *        The tracker of the window the run was started in.
 	 * @param state
 	 *        The run's processing state, holding the {@link UserInteractionStore} the answer
-	 *        completes and the conversation log the decision is recorded in.
+	 *        completes, the conversation log the decision is recorded in and the run's chat, where
+	 *        "approve for this session" is recorded - not in the chat of whichever window happens
+	 *        to answer.
 	 */
 	public record PendingRun(String taskId, Person responder, TaskProgressTracker tracker,
 			AIProcessingState state) {
@@ -95,10 +95,10 @@ public final class PendingInteractionRegistry {
 	 * @param responder
 	 *        The account whose windows may answer it. Never <code>null</code>.
 	 * @param tracker
-	 *        The tracker of the window whose run started it - where "approve for this session" is
-	 *        recorded, as for the run itself. <code>null</code> once that window has ended: the
-	 *        subagent stays answerable from the account's other windows, but no longer holds the
-	 *        window's state in memory.
+	 *        The tracker of the window whose run started it, which holds the chat "approve for this
+	 *        session" is recorded in. <code>null</code> once that window has ended: the subagent
+	 *        stays answerable from the account's other windows, but no longer holds the window's
+	 *        state in memory.
 	 * @param sessionId
 	 *        The chat the run that started it belongs to; may be <code>null</code>.
 	 */
@@ -113,16 +113,18 @@ public final class PendingInteractionRegistry {
 	 * @param responder
 	 *        The account the request is addressed to.
 	 * @param tracker
-	 *        The window the session-approved tools are recorded against; <code>null</code> when that
-	 *        window has ended.
+	 *        The window the asking run was started in; <code>null</code> when that window has ended.
+	 * @param chat
+	 *        The chat the session-approved tools are recorded in; <code>null</code> when no window
+	 *        holds it any more.
 	 * @param store
 	 *        The store the request waits in; resolving it there unparks the asking thread.
 	 * @param logListener
 	 *        The conversation log the decision is recorded in, or <code>null</code> when no run of
 	 *        the chat is recording - a subagent that asks after its lead's turn has ended.
 	 */
-	public record Waiting(Person responder, TaskProgressTracker tracker, UserInteractionStore store,
-			ConversationLogListener logListener) {
+	public record Waiting(Person responder, TaskProgressTracker tracker, ChatState chat,
+			UserInteractionStore store, ConversationLogListener logListener) {
 		// Plain data.
 	}
 
@@ -227,8 +229,8 @@ public final class PendingInteractionRegistry {
 	public static Waiting findWaiting(Person responder, String requestId) {
 		PendingRun run = find(responder, requestId);
 		if (run != null) {
-			return new Waiting(run.responder(), run.tracker(), run.state().getUserInteractionStore(),
-				run.state().getLogListener());
+			return new Waiting(run.responder(), run.tracker(), run.state().getChatState(),
+				run.state().getUserInteractionStore(), run.state().getLogListener());
 		}
 		if (responder == null || requestId == null) {
 			return null;
@@ -240,7 +242,10 @@ public final class PendingInteractionRegistry {
 			}
 			UserInteractionStore store = subagent.job().interactionStore();
 			if (store.isPending(requestId)) {
-				return new Waiting(subagent.responder(), subagent.tracker(), store, null);
+				TaskProgressTracker window = subagent.tracker();
+				ChatState chat =
+					window == null ? null : window.getSessionManager().getChatState(subagent.sessionId());
+				return new Waiting(subagent.responder(), window, chat, store, null);
 			}
 		}
 		return null;

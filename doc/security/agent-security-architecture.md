@@ -1361,11 +1361,16 @@ the current transaction is allowed everything by construction, so asking about i
 **The initial values of a new object are asked in the transaction's own view** (#683), after its
 creation passed: `canSetInitial` (engine `isAllowedInitial`) is the question the create dialogs ask
 about the object being created, and that object exists only there. An attribute counts as given a value
-when its value is not empty and is not the default the model gives it - the engine sets that default
-when it creates the object, and a create dialog creates it too for a user who may not edit the field. A
-default the engine computes in the transaction (a sequence number) or that differs every time it is
-computed (a UUID, the current time) cannot be told from a given value, so such an attribute is not
-asked. Before #683 `changeData` could set a value the create dialog would refuse, while `createObject`
+unless its value is the one the engine creates the object with: the default the model gives it, or an
+empty value where the model gives none. The engine sets that default when it creates the object, and a
+create dialog creates it too for a user who may not edit the field. The value is compared with the
+default first, so `false` given to an attribute whose default is `true` is a given value. A default
+that differs every time it is computed (a UUID, the current time) is computed once more, and the
+attribute is asked unless the value equals that result - in practice it is always asked, because the
+value cannot be told from one a tool wrote and a refusal is safer than a skip. A default the engine
+computes in the transaction (a sequence number) cannot be computed again without drawing the next
+number, so such an attribute is always asked. An account that may not set such an attribute on a new
+object therefore cannot have an agent create that object, although the create dialog lets it. Before #683 `changeData` could set a value the create dialog would refuse, while `createObject`
 refused it.
 
 **Ordering caveat, verified against the engine.** `ModelAccessRights.isAllowed` returns `true` for

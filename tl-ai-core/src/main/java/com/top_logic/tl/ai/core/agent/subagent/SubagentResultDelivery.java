@@ -90,6 +90,35 @@ public final class SubagentResultDelivery {
 		if (limit != null) {
 			text.append('\n').append(limit);
 		}
+		String unread = unreadLine(job);
+		if (unread != null) {
+			text.append('\n').append(unread);
+		}
+		return text.toString();
+	}
+
+	/**
+	 * The framework's line about the messages a subagent did not read, or <code>null</code> when it
+	 * read every message it was sent.
+	 *
+	 * <p>
+	 * Outside the report's envelope: the messages are the lead's and the user's own words, and the
+	 * line is the framework's statement that the report does not take them into account.
+	 * </p>
+	 */
+	static String unreadLine(SubagentJob job) {
+		List<SubagentInbox.Message> unread = job.unreadMessages();
+		if (unread.isEmpty()) {
+			return null;
+		}
+		StringBuilder text = new StringBuilder("_Not read: ").append(unread.size())
+			.append(unread.size() == 1 ? " message" : " messages")
+			.append(" sent to it arrived after its last turn, so its report does not take ")
+			.append(unread.size() == 1 ? "it" : "them").append(" into account:_");
+		for (SubagentInbox.Message message : unread) {
+			text.append("\n- from the ").append(message.sender() == SubagentInbox.Sender.USER ? "user" : "lead")
+				.append(": ").append(message.text());
+		}
 		return text.toString();
 	}
 

@@ -465,8 +465,9 @@ public class SubagentJobRegistry {
 				terminal = SubagentJobStatus.FAILED;
 				result = new SubagentResult("ERROR: " + e.getMessage(), TokenUsage.EMPTY, 0L, 0, StopReason.ERROR);
 			}
-			// Before the job reads as ended: a message sent from then on is refused, not left unread.
-			job.inbox().close();
+			// Before the job reads as ended: a message sent from then on is refused, and one that arrived
+			// when no turn was left to read it is named in the result, not lost.
+			job.setUnreadMessages(job.inbox().closeAndDrain());
 			job.markTerminal(terminal, result);
 			for (Listener listener : listeners) {
 				listener.finished(job);
@@ -488,7 +489,7 @@ public class SubagentJobRegistry {
 
 	private void endNotStarted(Pending pending) {
 		SubagentJob job = pending.job();
-		job.inbox().close();
+		job.setUnreadMessages(job.inbox().closeAndDrain());
 		job.markTerminal(SubagentJobStatus.CANCELLED, cancelledResult(job));
 		pending.notStarted().run();
 		signalCompletion();

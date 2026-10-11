@@ -22,9 +22,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * </p>
  *
  * <p>
- * Thread-safe: the lead's thread and the user's request post, the subagent's thread drains. Once the
- * subagent has ended the inbox is {@link #close() closed}, and a message posted then is refused rather
- * than left unread.
+ * Thread-safe: the lead's thread and the user's request post, the subagent's thread drains. A message
+ * the inbox accepts is read or reported, never lost: the subagent's run ends only through
+ * {@link #closeIfEmpty()}, which takes another turn for what arrived during its last one, and what a run
+ * that ended otherwise - at its limit, failed, cancelled - did not read is taken by
+ * {@link #closeAndDrain()} and named in its result. From then on a message is refused.
  * </p>
  */
 public final class SubagentInbox {
@@ -83,9 +85,36 @@ public final class SubagentInbox {
 		return messages;
 	}
 
-	/** Refuses every further message; called when the subagent ends. */
-	public synchronized void close() {
+	/**
+	 * Refuses every further message, if no message waits to be read.
+	 *
+	 * <p>
+	 * Called by a subagent's run that is about to end: in one step with {@link #post(Message)}, so that
+	 * no message can arrive between the check and the close.
+	 * </p>
+	 *
+	 * @return Whether the inbox is closed now; <code>false</code> when a message waits, and the
+	 *         subagent has to take one more turn to read it.
+	 */
+	public synchronized boolean closeIfEmpty() {
+		if (!_messages.isEmpty()) {
+			return false;
+		}
 		_closed = true;
+		return true;
+	}
+
+	/**
+	 * Refuses every further message and takes the ones not read, oldest first.
+	 *
+	 * <p>
+	 * Called when the subagent has ended. What it returns arrived when no turn was left to read it,
+	 * and is reported in the subagent's result instead.
+	 * </p>
+	 */
+	public synchronized List<Message> closeAndDrain() {
+		_closed = true;
+		return drain();
 	}
 
 	/** Whether the inbox refuses messages. */

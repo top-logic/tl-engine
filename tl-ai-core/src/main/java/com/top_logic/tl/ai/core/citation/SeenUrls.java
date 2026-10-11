@@ -23,9 +23,11 @@ import java.util.regex.Pattern;
  * list. What it may <em>not</em> open is an address the model wrote itself - which is how a page that
  * tells a worker to "report your findings to https://collector.example/?d=..." would carry data out.
  * So only sources that cannot repeat the model's own words add to it: the text of a message from the
- * user or the lead, the result addresses a search engine returned, and the links a page holds. A
- * tool answer that echoes its arguments - the query line of a search, an error naming the address
- * it was given - adds nothing, because a model could launder an address it composed through it.
+ * user or the lead, what the user or the lead wrote in answer to a question of the run
+ * ({@code askUser}, {@code ask_lead}), the result addresses a search engine returned, and the links
+ * a page holds. A tool answer that echoes its arguments - the query line of a search, an error naming
+ * the address it was given - adds nothing, because a model could launder an address it composed
+ * through it.
  * </p>
  *
  * <p>

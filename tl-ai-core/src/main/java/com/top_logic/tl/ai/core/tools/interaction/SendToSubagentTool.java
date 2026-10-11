@@ -111,9 +111,10 @@ public class SendToSubagentTool implements Tool {
 		}
 		if (job.status().isTerminal()
 			|| !job.inbox().post(SubagentInbox.Message.of(SubagentInbox.Sender.LEAD, message))) {
-			return ToolResult.of("Not sent: subagent " + id + " has already ended (" + job.status()
-				+ ") and reads no more messages. Its result reaches you on its own, or through"
-				+ " wait_for_subagent.");
+			String ended = job.status().isTerminal() ? "has already ended (" + job.status() + ")"
+				: "has already written its final answer";
+			return ToolResult.of("Not sent: subagent " + id + " " + ended + " and reads no more messages."
+				+ " Its result reaches you on its own, or through wait_for_subagent.");
 		}
 		return ToolResult.of("Sent to subagent " + id + ". It reads the message at the start of its next"
 			+ " turn - if it is inside a tool call now, after that call returns. It does not answer the"

@@ -629,9 +629,10 @@ A message goes into the job's `SubagentInbox`, which the spawner binds on the ch
 `AgentLoop.injectLeadMessages` drains it at the start of each child turn into one user message opening
 with "[Message from the lead agent]", announced as `AgentEvent.LeadMessageDelivered`, which is what
 records it as a `LEAD_MESSAGE` part in the child's own log (the thread-bound listener on a child's
-thread records the lead's log) and what replay turns back into the same message. The inbox closes when
-the job ends, so a late message is refused rather than left unread; text only, it changes no tool, right
-or model.
+thread records the lead's log) and what replay turns back into the same message. A message that arrives
+while the child writes its answer gets it one more turn; the inbox closes in the same step as the check
+for that, so a later message is refused, and one that found no turn left (limit, failure, cancel) is named
+in the result the lead reads (#804). Text only, it changes no tool, right or model.
 
 A child asks its lead with `ask_lead` (#707), a tool only a background subagent's catalog has
 (`AgentFactory`, the `includeDelegation=false` branch): the question is parked on the job

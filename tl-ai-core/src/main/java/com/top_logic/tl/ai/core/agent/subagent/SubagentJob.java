@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -64,6 +65,8 @@ public class SubagentJob {
 	private volatile ReadingList _readingList = new ReadingList();
 
 	private volatile int _toolCallLimit;
+
+	private volatile List<SubagentInbox.Message> _unreadMessages = List.of();
 
 	/** */
 	public SubagentJob(String subagentId, String targetAgentName, String taskBrief,
@@ -337,6 +340,23 @@ public class SubagentJob {
 	/** Sets the {@link #readingList() reading list} of the subagent's run. */
 	public void setReadingList(ReadingList readingList) {
 		_readingList = readingList == null ? new ReadingList() : readingList;
+	}
+
+	/**
+	 * The messages sent to this subagent that it did not read, because they arrived when its run had
+	 * no turn left - it stopped at its limit, failed or was cancelled; empty while it works.
+	 *
+	 * <p>
+	 * Its result names them, so that whoever sent one learns that it was not taken into account.
+	 * </p>
+	 */
+	public List<SubagentInbox.Message> unreadMessages() {
+		return _unreadMessages;
+	}
+
+	/** Sets the {@link #unreadMessages() messages this subagent did not read}. */
+	void setUnreadMessages(List<SubagentInbox.Message> unread) {
+		_unreadMessages = List.copyOf(unread);
 	}
 
 	/** Transition QUEUED -&gt; RUNNING. */

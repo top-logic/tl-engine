@@ -180,6 +180,51 @@ public class TestSubagentSteering extends BasicTestCase {
 		assertTrue(again, again.contains("has already ended"));
 	}
 
+	/**
+	 * A message sent while the child writes what would have been its last answer is read in one more
+	 * turn, not accepted and dropped (#804).
+	 */
+	public void testAMessageSentDuringTheLastAnswerIsRead() throws Exception {
+		SubagentJob job = spawnAnsweringChild(AgentParams.DEFAULT_MAX_TURNS);
+		assertTrue("The child must be writing its answer.", _inProbe.await(20, TimeUnit.SECONDS));
+
+		String answer = lead(new SendToSubagentTool(),
+			Map.of("subagentId", job.subagentId(), "message", "Only Europe, please."));
+		assertTrue(answer, answer.startsWith("Sent to subagent " + job.subagentId()));
+		_release.countDown();
+		awaitTerminal(job);
+
+		assertEquals(SubagentJobStatus.DONE, job.status());
+		assertEquals("The child takes one more turn for the message: " + _childRequests, 2, _childRequests.size());
+		assertTrue(_childRequests.get(1), _childRequests.get(1).contains("Only Europe, please."));
+		assertEquals("Answer 2.", job.result().finalText());
+		assertTrue("Read, so not reported as unread.", job.unreadMessages().isEmpty());
+
+		String late = lead(new SendToSubagentTool(), Map.of("subagentId", job.subagentId(), "message", "And Asia."));
+		assertTrue(late, late.startsWith("Not sent: subagent " + job.subagentId()));
+	}
+
+	/**
+	 * A message that arrives when the child has no turn left is named in the result the lead reads,
+	 * outside the child's report.
+	 */
+	public void testAMessageWithoutATurnLeftIsReportedAsUnread() throws Exception {
+		SubagentJob job = spawnAnsweringChild(1);
+		assertTrue("The child must be writing its answer.", _inProbe.await(20, TimeUnit.SECONDS));
+
+		assertTrue(job.inbox().post(SubagentInbox.Message.of(SubagentInbox.Sender.USER, "Nur Europa.")));
+		_release.countDown();
+		awaitTerminal(job);
+
+		assertEquals(1, _childRequests.size());
+		assertEquals(1, job.unreadMessages().size());
+		String delivered = SubagentResultDelivery.describe(job);
+		int reportEnd = delivered.lastIndexOf("</untrusted_subagent_report>");
+		int unread = delivered.indexOf("_Not read: 1 message");
+		assertTrue("The lead is told: " + delivered, unread > reportEnd && reportEnd > 0);
+		assertTrue(delivered, delivered.contains("- from the user: Nur Europa."));
+	}
+
 	/** An unknown id is an error the lead can correct. */
 	public void testAnUnknownSubagentIsAnError() {
 		assertTrue(lead(new SendToSubagentTool(), Map.of("subagentId", "sa-99", "message", "x"))
@@ -192,6 +237,32 @@ public class TestSubagentSteering extends BasicTestCase {
 		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(_registry)) {
 			return tool.execute(args, ToolContext.EMPTY).text();
 		}
+	}
+
+	/**
+	 * A child that answers in every turn, "Answer 1." first; its first request waits until the test
+	 * releases it, so a message can be sent while it writes that answer.
+	 */
+	private SubagentJob spawnAnsweringChild(int maxTurns) {
+		AtomicInteger calls = new AtomicInteger();
+		LLMProvider provider = (request, handler) -> {
+			int idx = calls.getAndIncrement();
+			_childRequests.add(String.valueOf(request.messages()));
+			if (idx == 0) {
+				_inProbe.countDown();
+				try {
+					_release.await(30, TimeUnit.SECONDS);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+				}
+			}
+			List<ContentPart> content = List.of(new TextContent("Answer " + (idx + 1) + "."));
+			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn", USAGE, content));
+		};
+		ToolCatalog tools = new ToolCatalog();
+		tools.freeze();
+		return spawn(new AgentLoop(new AgentParams(MODEL, "child", maxTurns, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS),
+			provider, tools));
 	}
 
 	/** A child that calls a blocking tool in its first turn and answers in its second. */
@@ -226,8 +297,11 @@ public class TestSubagentSteering extends BasicTestCase {
 			return ToolResult.of("probed");
 		}).build());
 		tools.freeze();
-		AgentLoop child = new AgentLoop(new AgentParams(MODEL, "child", AgentParams.DEFAULT_MAX_TURNS,
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), provider, tools);
+		return spawn(new AgentLoop(new AgentParams(MODEL, "child", AgentParams.DEFAULT_MAX_TURNS,
+			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), provider, tools));
+	}
+
+	private SubagentJob spawn(AgentLoop child) {
 		DelegationTool spawn = new DelegationTool("delegate_to_worker", "worker", "worker", "lead",
 			(name, security) -> child);
 		CancellationToken token = new CancellationToken();

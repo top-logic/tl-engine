@@ -461,6 +461,26 @@ public class AgentLoop {
 		}
 	}
 
+	/**
+	 * Whether a background subagent that is about to end has messages it has not read, and therefore
+	 * takes one more turn, in which {@link #injectInboxMessages} hands them over.
+	 *
+	 * <p>
+	 * When none waits, its inbox is closed in the same step, so a message sent while the subagent wrote
+	 * its answer is either read in the next turn or refused - never accepted and then left unread. A run
+	 * without an inbox - every run but a background subagent's - ends as before.
+	 * </p>
+	 */
+	private static boolean messagesArrivedDuringLastTurn(String runId, int turn) {
+		SubagentInbox inbox = SubagentInboxBinding.getInbox();
+		if (inbox == null || inbox.closeIfEmpty()) {
+			return false;
+		}
+		Logger.info("Run " + runId + " turn " + turn + ": messages arrived while the subagent wrote its answer;"
+			+ " it takes one more turn to read them.", AgentLoop.class);
+		return true;
+	}
+
 	private static String inboxText(String notice, List<SubagentInbox.Message> messages) {
 		StringBuilder text = new StringBuilder(notice);
 		for (SubagentInbox.Message message : messages) {
@@ -844,6 +864,9 @@ public class AgentLoop {
 					askToContinue(conversation, assistantMsg, runId, turn);
 					continue;
 				}
+				if (turn < maxTurns && messagesArrivedDuringLastTurn(runId, turn)) {
+					continue;
+				}
 				StopReason stopReason = unfinished != null ? unfinished : StopReason.COMPLETE;
 				if (unfinished != null) {
 					Logger.info("Run " + runId + " ends without a complete answer (" + stopReason
@@ -1130,6 +1153,9 @@ public class AgentLoop {
 					&& turn < maxTurns) {
 					continuations++;
 					askToContinue(conversation, assistantMsg, runId, turn);
+					continue;
+				}
+				if (turn < maxTurns && messagesArrivedDuringLastTurn(runId, turn)) {
 					continue;
 				}
 				StopReason stopReason = unfinished != null ? unfinished : StopReason.COMPLETE;

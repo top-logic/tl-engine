@@ -489,7 +489,7 @@
 					  </budget>
 
 					The budget counts what the account's recorded runs consumed, so it needs run
-					recording; reading it costs one pass over the execution rows at every run start.
+					recording; reading it costs one pass over the account's execution rows for every message.
 					See tl-ai-core/doc/run-limits.md.
 				-->
 				<budget/>

@@ -66,6 +66,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance;
+import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -532,7 +533,9 @@ public class ChatServlet extends TopLogicServlet {
 
 		// Before the turns are dropped: a regenerate refused afterwards would have removed the
 		// answer the user still has and given them nothing in its place.
-		String noRoom = ChatProcessor.noRoomReason(tracker);
+		// One reading of the account's spend for the pre-check here, the send's and the run's (#835).
+		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
+		String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
 		if (noRoom != null) {
 			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, noRoom),
 				TruncateResponse.create().setStatus(REJECTED).setReason(noRoom));
@@ -555,7 +558,7 @@ public class ChatServlet extends TopLogicServlet {
 		String userName = resolveUserName(req, tracker);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
 			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options,
-			facts(body.getFacts()));
+			facts(body.getFacts()), spendReading);
 
 		TruncateResponse response = TruncateResponse.create()
 			.setRemovedTurns(removed.turns())

@@ -1203,6 +1203,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 *
 	 * <p>
+	 * Only the account's own rows are read: its sessions through their owner reference, and their
+	 * runs through the session reference - lookups the knowledge base answers from the association
+	 * index, so the cost grows with what this account recorded and not with every run of the
+	 * installation (#835).
+	 * </p>
+	 *
+	 * <p>
 	 * Read {@link #onWriterThread(Supplier) on the writer thread}, in a fresh interaction at the
 	 * current revision: the caller is a run that is about to start, whose own thread reads at the
 	 * revision its interaction was opened with, and the rows that matter are the newest ones
@@ -1224,20 +1231,18 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		return onWriterThread(() -> {
 			long tokens = 0;
 			double cost = 0;
-			for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
-				AgentExecution execution = (AgentExecution) obj;
-				Date started = execution.getStartedAt();
-				if (since != null && (started == null || started.before(since))) {
-					continue;
-				}
-				AgentSession session = execution.getSession();
-				if (session == null || !owner.equals(session.getOwner())) {
-					continue;
-				}
-				tokens += usageOf(execution).totalTokens();
-				Double runCost = execution.getCost();
-				if (runCost != null && currency.equals(execution.getCurrency())) {
-					cost += runCost.doubleValue();
+			for (TLObject session : owner.tReferers(TlAiExecutionFactory.getOwnerAgentSessionAttr())) {
+				for (TLObject obj : session.tReferers(TlAiExecutionFactory.getSessionAgentExecutionAttr())) {
+					AgentExecution execution = (AgentExecution) obj;
+					Date started = execution.getStartedAt();
+					if (since != null && (started == null || started.before(since))) {
+						continue;
+					}
+					tokens += usageOf(execution).totalTokens();
+					Double runCost = execution.getCost();
+					if (runCost != null && currency.equals(execution.getCurrency())) {
+						cost += runCost.doubleValue();
+					}
 				}
 			}
 			return new AccountSpend(tokens, cost);

@@ -257,7 +257,8 @@ public class ChatProcessor {
 				RunFactsBinding.Binding factsBinding =
 					RunFactsBinding.bind(state.getFacts(), turnNumber);
 				UserMemoryBinding.Binding memoryBinding =
-					UserMemoryBinding.bind(state.getMemories())) {
+					UserMemoryBinding.bind(state.getMemories());
+				RunLimits.Reuse spendReading = RunLimits.reuse(state.getSpendReading())) {
 
 			// This run belongs to the account, not to the window it was started in: any window of
 			// theirs - a second tab, a reloaded page, a new login - may answer what it asks and may
@@ -532,6 +533,21 @@ public class ChatProcessor {
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options,
 			List<EnvironmentFact> facts) {
+		return sendMessage(tracker, userSession, userName, userMessage, attachments, options, facts,
+			RunLimits.spendReading(tracker.getSessionOwner()));
+	}
+
+	/**
+	 * {@link #sendMessage(TaskProgressTracker, TLSubSessionContext, String, String, List, ChatRunOptions, List)}
+	 * for a caller that asked {@link #noRoomReason(TaskProgressTracker, RunLimits.SpendReading)}
+	 * itself: the send and its run go on with the caller's reading of the account's spend.
+	 *
+	 * @param spendReading
+	 *        The reading the caller's pre-check took, see {@link RunLimits#spendReading}.
+	 */
+	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
+			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options,
+			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
 		AIProcessingState state;
 		String taskId;
 		// Taken with the lead turn a subagent's news starts, so that the two cannot both find the
@@ -543,7 +559,7 @@ public class ChatProcessor {
 				return SendResult.busy();
 			}
 
-			String noRoom = noRoomReason(tracker);
+			String noRoom = noRoomReason(tracker, spendReading);
 			if (noRoom != null) {
 				return SendResult.rejected(noRoom);
 			}
@@ -586,6 +602,7 @@ public class ChatProcessor {
 		state.setSessionId(capturedSessionId);
 		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
 		state.setFacts(facts);
+		state.setSpendReading(spendReading);
 		// Read here, on the request thread and in the acting account's context, and only once per
 		// conversation: they go into the environment block, which has to stay byte-identical
 		// across the turns of one conversation. See ChatSessionManager.getActiveMemories.
@@ -659,8 +676,9 @@ public class ChatProcessor {
 		}
 		AIProcessingState state;
 		String taskId;
+		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
 		synchronized (tracker.sendLock()) {
-			if (tracker.hasActiveProcessingStateFor(sessionId) || noRoomReason(tracker) != null) {
+			if (tracker.hasActiveProcessingStateFor(sessionId) || noRoomReason(tracker, spendReading) != null) {
 				return false;
 			}
 			tracker.evictCompletedStatesForSession(sessionId);
@@ -675,6 +693,7 @@ public class ChatProcessor {
 		state.setChat(tracker.getChat());
 		state.setRunOptions(last.options());
 		state.setFacts(last.facts());
+		state.setSpendReading(spendReading);
 		state.setMemories(tracker.getSessionManager().getActiveMemories(tracker.getSessionOwner()));
 
 		ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
@@ -751,6 +770,17 @@ public class ChatProcessor {
 	 * </p>
 	 */
 	public static String noRoomReason(TaskProgressTracker tracker) {
+		return noRoomReason(tracker, RunLimits.spendReading(tracker.getSessionOwner()));
+	}
+
+	/**
+	 * {@link #noRoomReason(TaskProgressTracker)} on a reading of the account's spend that the send
+	 * shares with its other budget checks, so that one send reads the spend once (#835).
+	 *
+	 * @param spendReading
+	 *        The send's reading, see {@link RunLimits#spendReading}.
+	 */
+	public static String noRoomReason(TaskProgressTracker tracker, RunLimits.SpendReading spendReading) {
 		if (!ChatRunExecutor.hasRoom()) {
 			Logger.info("Chat run refused: " + ChatRunExecutor.noRoomDescription(), ChatProcessor.class);
 			return Resources.getInstance().getString(I18NConstants.TOO_MANY_RUNS_IN_PROGRESS);
@@ -759,7 +789,7 @@ public class ChatProcessor {
 		if (capRefusal == null) {
 			// A budget that is spent refuses the run where it starts too, but there no answer is
 			// written under which the chat could show the sentence (#722).
-			capRefusal = RunLimits.budgetRefusal(tracker.getSessionOwner());
+			capRefusal = RunLimits.budgetRefusal(tracker.getSessionOwner(), spendReading);
 		}
 		return capRefusal == null ? null : Resources.getInstance().getString(capRefusal);
 	}
@@ -1349,6 +1379,9 @@ public class ChatProcessor {
 
 		private volatile List<EnvironmentFact> _facts = List.of();
 
+		/** The send's reading of the account's spend, which the run start takes over. */
+		private volatile RunLimits.SpendReading _spendReading;
+
 		/** Whether the run opens with subagents' news rather than with a message of the user. */
 		private volatile boolean _wake;
 
@@ -1553,6 +1586,19 @@ public class ChatProcessor {
 		/** Captures the page's facts before the background task starts. */
 		public void setFacts(List<EnvironmentFact> facts) {
 			_facts = facts == null ? List.of() : List.copyOf(facts);
+		}
+
+		/**
+		 * The reading of the account's spend the send's pre-check took; {@code null} when it took
+		 * none. The run start uses it instead of reading again (#835).
+		 */
+		public RunLimits.SpendReading getSpendReading() {
+			return _spendReading;
+		}
+
+		/** @see #getSpendReading() */
+		void setSpendReading(RunLimits.SpendReading reading) {
+			_spendReading = reading;
 		}
 
 		/**

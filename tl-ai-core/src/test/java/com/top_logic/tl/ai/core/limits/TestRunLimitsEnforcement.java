@@ -429,6 +429,50 @@ public class TestRunLimitsEnforcement extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * The checks of one send share one reading of the spend (#835): the run start takes over what the
+	 * pre-check read rather than reading the account's runs again, and only once.
+	 */
+	public void testTheRunStartTakesOverTheSendsReading() {
+		Person account = freshAccount();
+		record(account, new TokenUsage(500, 0, 0, 0, 0));
+
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(budget(1000))) {
+			RunLimits.SpendReading reading = RunLimits.spendReading(account);
+			// What the send's pre-check reads.
+			reading.spent(RunLimitSettings.budgetWindowHours(), RunLimitSettings.costCurrency());
+			record(account, new TokenUsage(300, 0, 0, 0, 0));
+
+			try (RunLimits.Reuse reuse = RunLimits.reuse(reading)) {
+				try (RunLimits.Admission admission = RunLimits.admit(runOf(account))) {
+					assertEquals("The run start uses the send's reading, not a second pass.",
+						500, admission.allowance().tokenHeadroom());
+				}
+				try (RunLimits.Admission next = RunLimits.admit(runOf(account))) {
+					assertEquals("A reading serves one run start; the next one reads again.",
+						200, next.allowance().tokenHeadroom());
+				}
+			}
+		}
+	}
+
+	/** A reading taken for one account is not used for a run of another. */
+	public void testAReadingOfAnotherAccountIsNotUsed() {
+		Person reader = freshAccount();
+		Person runner = freshAccount();
+		record(runner, new TokenUsage(400, 0, 0, 0, 0));
+
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(budget(1000))) {
+			RunLimits.SpendReading reading = RunLimits.spendReading(reader);
+			reading.spent(RunLimitSettings.budgetWindowHours(), RunLimitSettings.costCurrency());
+
+			try (RunLimits.Reuse reuse = RunLimits.reuse(reading);
+					RunLimits.Admission admission = RunLimits.admit(runOf(runner))) {
+				assertEquals(600, admission.allowance().tokenHeadroom());
+			}
+		}
+	}
+
 	// ---- helpers ----
 
 	/** An account no other test of this suite has recorded a run for. */

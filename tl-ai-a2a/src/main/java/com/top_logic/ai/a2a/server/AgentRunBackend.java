@@ -52,6 +52,7 @@ import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
@@ -199,15 +200,14 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				// Canceled before it started.
 				return;
 			}
-			String peer = task.peer();
-			String text = A2AJson.text(message, data -> handleData(agent, peer, task, data));
+			String text = A2AJson.text(message, data -> handleData(agent, task, data));
 
 			AgentExecutionStore store = AgentExecutionStore.getInstance();
 			if (!context._restoreChecked) {
 				restore(store, person, context);
 			}
 			AgentSession session = context._session != null ? context._session
-				: createSession(store, person, task, agent, context, metadata, text, peer);
+				: createSession(store, person, task, agent, context, metadata, text);
 			persist(task, context);
 
 			SecurityContext security = RunSecurity.contextFor(
@@ -216,7 +216,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				ApprovalCallback.AUTO_APPROVE, new TransactionScope(token), token);
 			run[0] = toolContext;
 
-			String prompt = header(message, peer, context._subject) + text;
+			String prompt = header(message, task.peer(), context._subject) + text;
 			context._conversation.add(new UserMessage(A2AJson.newId(), Instant.now(),
 				List.<ContentPart> of(new TextContent(prompt))));
 			context._log.startTurn()
@@ -283,26 +283,18 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 	}
 
 	/**
-	 * Asks the application's {@link A2ADataHandler}s for a data part of the message.
+	 * What the agent reads for a data part of the message: the answer of the application's
+	 * {@link A2ADataHandler}s, or <code>null</code> for the JSON.
 	 */
-	private String handleData(ExposedAgentConfig agent, String peer, A2ATask task, Object data) {
+	private String handleData(ExposedAgentConfig agent, A2ATask task, Object data) {
 		A2ADataHandler.Request request =
-			new A2ADataHandler.Request(agent.getPath(), peer, task.contextId(), task.id(), data);
-		for (A2ADataHandler handler : _service.dataHandlers()) {
-			try {
-				String answer = handler.handle(request);
-				if (answer != null) {
-					return answer;
-				}
-			} catch (RuntimeException ex) {
-				Logger.error("A2A data handler failed: " + ex.getMessage(), ex, AgentRunBackend.class);
-			}
-		}
-		return null;
+			new A2ADataHandler.Request(agent.getPath(), task.peer(), task.contextId(), task.id(), data);
+		return A2AService.ask(_service.dataHandlers(), handler -> handler.handle(request));
 	}
 
 	private AgentSession createSession(AgentExecutionStore store, Person person, A2ATask task,
-			ExposedAgentConfig agent, Context context, Map<String, Object> metadata, String text, String peer) {
+			ExposedAgentConfig agent, Context context, Map<String, Object> metadata, String text) {
+		String peer = task.peer();
 		AgentSession session = store.createSession(AgentExecutionStore.SessionKind.BACKGROUND, person,
 			"A2A " + peer + " → " + A2AService.displayName(agent) + ": " + firstLine(text));
 		HistoryUtils.updateSessionRevision();
@@ -313,18 +305,8 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			? object : null;
 		A2ASubjectResolver.Request request = new A2ASubjectResolver.Request(agent.getPath(), agent.getAgent(),
 			task.contextId(), task.owner(), peer, metadata, text, remembered);
-		TLObject subject = remembered;
-		for (A2ASubjectResolver resolver : _service.subjectResolvers()) {
-			try {
-				TLObject resolved = resolver.resolveSubject(request);
-				if (resolved != null) {
-					subject = resolved;
-					break;
-				}
-			} catch (RuntimeException ex) {
-				Logger.error("A2A subject resolver failed: " + ex.getMessage(), ex, AgentRunBackend.class);
-			}
-		}
+		TLObject resolved = A2AService.ask(_service.subjectResolvers(), resolver -> resolver.resolveSubject(request));
+		TLObject subject = resolved != null ? resolved : remembered;
 		if (subject != null) {
 			store.setSubject(session, subject);
 			task.putMetadata("subject", label(subject));
@@ -391,13 +373,10 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				task.addArtifact(artifact);
 			}
 		};
-		for (A2AArtifactContributor contributor : _service.artifactContributors()) {
-			try {
-				contributor.contribute(info, sink);
-			} catch (RuntimeException ex) {
-				Logger.error("A2A artifact contributor failed: " + ex.getMessage(), ex, AgentRunBackend.class);
-			}
-		}
+		A2AService.ask(_service.artifactContributors(), contributor -> {
+			contributor.contribute(info, sink);
+			return null;
+		});
 	}
 
 	/**
@@ -420,7 +399,8 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		String from = agent != null
 			? "the agent " + agent + " of the application '" + peer + "'"
 			: "the remote client '" + peer + "'";
-		String about = subject == null ? "" : " This conversation is about " + label(subject) + " in this application.";
+		String about = subject == null ? ""
+			: " This conversation is about " + ReadFilter.labelled(subject) + " in this application.";
 		return "[A2A message from " + from + ". You talk to that agent, not to a person: what you ask with"
 			+ " askUser goes to it, and your final answer is returned to it." + about + "]\n\n";
 	}
@@ -465,7 +445,8 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			}
 			for (AgentExecution execution : store.executionsOf(session)) {
 				String transcript = execution.getTranscript();
-				if (transcript != null && !transcript.isBlank()) {
+				// A sub-agent's run has a transcript of its own, which is not this conversation.
+				if (execution.getParentExecution() == null && transcript != null && !transcript.isBlank()) {
 					try {
 						ConversationLogReplay.rebuildMemory(ConversationLogSerializer.fromJson(transcript),
 							context._conversation);

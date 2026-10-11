@@ -31,62 +31,65 @@ public final class RemoteAgents {
 	private final A2AClient _client = new A2AClient();
 
 	/**
-	 * A remote agent.
-	 *
-	 * @param tokenEnv
-	 *        The environment variable or system property holding the bearer token, or
-	 *        <code>null</code>.
+	 * A remote agent and its cached card.
 	 */
-	public record RemoteAgent(String name, String cardUrl, String tokenEnv, Card card) {
+	public static final class RemoteAgent {
+
+		private final String _name;
+
+		private final String _cardUrl;
+
+		private final String _tokenEnv;
+
+		private Map<String, Object> _card;
+
+		private long _cardTime;
 
 		/**
-		 * Creates a {@link RemoteAgent} whose card is not fetched yet.
+		 * Creates a {@link RemoteAgent}.
+		 *
+		 * @param tokenEnv
+		 *        The environment variable or system property holding the bearer token, or
+		 *        <code>null</code>.
 		 */
 		public RemoteAgent(String name, String cardUrl, String tokenEnv) {
-			this(name, cardUrl, tokenEnv, new Card());
+			_name = name;
+			_cardUrl = cardUrl;
+			_tokenEnv = tokenEnv;
+		}
+
+		/** The configured name. */
+		public String name() {
+			return _name;
 		}
 
 		/**
 		 * The bearer token calls to this agent carry, or <code>null</code>.
 		 */
 		public String token() {
-			if (tokenEnv == null || tokenEnv.isBlank()) {
+			if (_tokenEnv == null || _tokenEnv.isBlank()) {
 				return null;
 			}
-			String value = System.getenv(tokenEnv.trim());
-			return value != null && !value.isBlank() ? value.trim() : System.getProperty(tokenEnv.trim());
+			String value = System.getenv(_tokenEnv.trim());
+			return value != null && !value.isBlank() ? value.trim() : System.getProperty(_tokenEnv.trim());
 		}
 
 		/**
 		 * The display name from the card if known, else the configured name.
 		 */
-		public String displayName() {
-			String name = Json.str(card.cached(), "name");
-			return name == null ? this.name : name;
-		}
-	}
-
-	/**
-	 * The cached agent card of a remote agent.
-	 */
-	public static final class Card {
-
-		private Map<String, Object> _card;
-
-		private long _time;
-
-		synchronized Map<String, Object> cached() {
-			return _card;
+		public synchronized String displayName() {
+			String name = Json.str(_card, "name");
+			return name == null ? _name : name;
 		}
 
-		synchronized Map<String, Object> get(A2AClient client, RemoteAgent agent) throws IOException, InterruptedException {
-			if (_card == null || System.currentTimeMillis() - _time > CARD_TTL_MILLIS) {
-				Map<String, Object> card = Json.asObject(client.getJson(agent.cardUrl(), null, false));
+		synchronized Map<String, Object> card(A2AClient client) throws IOException, InterruptedException {
+			if (_card == null || System.currentTimeMillis() - _cardTime > CARD_TTL_MILLIS) {
+				Map<String, Object> card = Json.asObject(client.getJson(_cardUrl, null, false));
 				if (card == null) {
-					throw new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The agent card of '" + agent.name() + "' is no object.");
+					throw new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The agent card of '" + _name + "' is no object.");
 				}
 				_card = card;
-				_time = System.currentTimeMillis();
+				_cardTime = System.currentTimeMillis();
 			}
 			return _card;
 		}
@@ -143,7 +146,7 @@ public final class RemoteAgents {
 	 * The agent card of a remote agent, fetched at most once a minute.
 	 */
 	public Map<String, Object> card(RemoteAgent agent) throws IOException, InterruptedException {
-		return agent.card().get(_client, agent);
+		return agent.card(_client);
 	}
 
 	/**

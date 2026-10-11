@@ -40,8 +40,6 @@ public class TestRemoteExchange extends TestCase {
 
 	private HttpServer _server;
 
-	private RemoteExchange _exchange;
-
 	private ContextBook _contexts;
 
 	private final List<String> _authorizations = new CopyOnWriteArrayList<>();
@@ -67,7 +65,6 @@ public class TestRemoteExchange extends TestCase {
 		_agents = new RemoteAgents(List.of());
 		_agents.add(new RemoteAgent("alpha", base + "/a2a/alpha/agent-card.json", "a2a_test_token"));
 		_contexts = new ContextBook();
-		_exchange = new RemoteExchange(_agents, _contexts);
 	}
 
 	@Override
@@ -81,10 +78,10 @@ public class TestRemoteExchange extends TestCase {
 		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", "conv-1", "project-7", "Projekt Prüfmittel");
 		List<String> progress = new CopyOnWriteArrayList<>();
 
-		RemoteExchange.Outcome asked = _exchange.ask(caller, "alpha", "ask: build REQ-001", null, null, null,
-			List.of(), 10_000, progress::add, () -> false);
-		assertEquals(TaskState.INPUT_REQUIRED, asked.state());
-		assertEquals("Which site?", asked.statusText());
+		RemoteExchange exchange = new RemoteExchange(_agents, _contexts, caller, 10_000, progress::add, () -> false);
+		RemoteExchange.Outcome asked = exchange.ask("alpha", "ask: build REQ-001", null, null, null, List.of());
+		assertEquals(TaskState.INPUT_REQUIRED, asked._state);
+		assertEquals("Which site?", asked._statusText);
 		assertTrue("The remote agent's steps reach the caller: " + progress,
 			progress.contains("Alpha: reading ask: build REQ-001"));
 		assertEquals("The caller names itself, its conversation and the conversation's subject.",
@@ -93,20 +90,19 @@ public class TestRemoteExchange extends TestCase {
 		assertEquals("The bearer token is sent on every request.", List.of("Bearer " + TOKEN),
 			_authorizations.stream().distinct().toList());
 
-		String formatted = RemoteExchange.format(asked, (source, body) -> "<u source=\"" + source + "\">" + body + "</u>");
-		assertTrue(formatted, formatted.contains("replyAgent(taskId=\"" + asked.taskId() + "\""));
-		assertTrue("Remote text is enveloped: " + formatted, formatted.contains("<u source=\"a2a:alpha\">question:\nWhich site?"));
+		String formatted = RemoteExchange.format(asked);
+		assertTrue(formatted, formatted.contains("replyAgent(taskId=\"" + asked._taskId + "\""));
+		assertTrue("Remote text is enveloped: " + formatted, formatted.contains("source=\"a2a:alpha\"") && formatted.contains("question:\nWhich site?"));
 
-		RemoteExchange.Outcome done = _exchange.reply(caller, null, asked.taskId(), "Werk Nord", 10_000, progress::add,
-			() -> false);
-		assertEquals(asked.taskId(), done.taskId());
-		assertEquals(TaskState.COMPLETED, done.state());
-		assertEquals("Built for Werk Nord", done.statusText());
-		assertEquals("design.json", Json.str(done.artifacts().get(1), "name"));
+		RemoteExchange.Outcome done = exchange.reply(null, asked._taskId, "Werk Nord");
+		assertEquals(asked._taskId, done._taskId);
+		assertEquals(TaskState.COMPLETED, done._state);
+		assertEquals("Built for Werk Nord", done._statusText);
+		assertEquals("design.json", Json.str(new ArrayList<>(done._artifacts.values()).get(1), "name"));
 
-		assertEquals("A follow-up of the same conversation talks in the same context.", asked.contextId(),
+		assertEquals("A follow-up of the same conversation talks in the same context.", asked._contextId,
 			_contexts.contextFor("conv-1"));
-		assertEquals("project-7", _contexts.rememberedSubject(asked.contextId()));
+		assertEquals("project-7", _contexts.rememberedSubject(asked._contextId));
 
 	}
 
@@ -115,18 +111,18 @@ public class TestRemoteExchange extends TestCase {
 		RemoteExchange.Outcome main = ask(caller, "hello", null, null, List.of());
 		RemoteExchange.Outcome design = ask(caller, "design the screens", "new", "design",
 			List.of("tl-artifact://beta/spec/7"));
-		assertFalse("A new conversation has a context of its own.", main.contextId().equals(design.contextId()));
+		assertFalse("A new conversation has a context of its own.", main._contextId.equals(design._contextId));
 
 		Map<String, Object> handedOver = _messages.get(_messages.size() - 1);
 		assertTrue("The reference travels as a part, not as its content: " + A2AJson.text(handedOver),
 			A2AJson.text(handedOver).contains("fetchArtifact(ref=\"tl-artifact://beta/spec/7\")"));
 
-		assertEquals("A topic names the conversation.", design.contextId(),
-			ask(caller, "and the tokens?", "design", null, List.of()).contextId());
-		assertEquals("Continue is the conversation last used with the agent.", design.contextId(),
-			ask(caller, "thanks", "continue", null, List.of()).contextId());
-		assertEquals("A known context id works too.", main.contextId(),
-			ask(caller, "back to the first", main.contextId(), null, List.of()).contextId());
+		assertEquals("A topic names the conversation.", design._contextId,
+			ask(caller, "and the tokens?", "design", null, List.of())._contextId);
+		assertEquals("Continue is the conversation last used with the agent.", design._contextId,
+			ask(caller, "thanks", "continue", null, List.of())._contextId);
+		assertEquals("A known context id works too.", main._contextId,
+			ask(caller, "back to the first", main._contextId, null, List.of())._contextId);
 
 		List<String> labels = new ArrayList<>();
 		for (ContextBook.RemoteConversation conversation : _contexts.conversations("conv-2")) {
@@ -142,8 +138,13 @@ public class TestRemoteExchange extends TestCase {
 
 		Map<String, Object> missing = _agents.fetchArtifact(ArtifactRef.parse("tl-artifact://alpha-app/spec/1"), "REQ-099");
 		assertNotNull(missing.get("error"));
-		String formatted = A2AClientTools.formatArtifact(missing, ArtifactRef.parse("tl-artifact://alpha-app/spec/1"));
-		assertTrue(formatted, formatted.contains("REQ-002 Kalibrierplan"));
+		try {
+			A2AClientTools.formatArtifact(missing, ArtifactRef.parse("tl-artifact://alpha-app/spec/1"));
+			fail("An unknown section is an error.");
+		} catch (com.top_logic.ai.a2a.protocol.A2AError ex) {
+			assertTrue("The error lists the sections there are: " + ex.getMessage(),
+				ex.getMessage().contains("REQ-002 Kalibrierplan"));
+		}
 	}
 
 	public void testTheCallerReadsAShortAnswerAndReferencesNotBodies() {
@@ -159,14 +160,14 @@ public class TestRemoteExchange extends TestCase {
 			"tl-artifact://gamma/task/t1/frame.html"));
 		outcome.acceptArtifact(A2AJson.artifact("foreign", null, List.of(A2AJson.textPart("z".repeat(1000)))));
 
-		String formatted = RemoteExchange.format(outcome, (source, body) -> body);
+		String formatted = RemoteExchange.format(outcome);
 
 		assertTrue(formatted, formatted.contains("full answer: fetchArtifact(ref=\"tl-artifact://gamma/task/t1/answer\")"));
 		assertFalse("The answer is cut.", formatted.contains("x".repeat(RemoteExchange.MAX_ANSWER_CHARS + 1)));
 		assertTrue(formatted, formatted.contains("- frame.html (text/html, 5013 characters) - Frame SCR-01\n  ref: tl-artifact://gamma/task/t1/frame.html"));
 		assertFalse("No artifact body reaches the caller.", formatted.contains("yyyy"));
 		outcome._statusText = "kurz";
-		assertTrue("A short answer names its reference too.", RemoteExchange.format(outcome, (source, body) -> body)
+		assertTrue("A short answer names its reference too.", RemoteExchange.format(outcome)
 			.contains("kurz\n[answer ref: tl-artifact://gamma/task/t1/answer]"));
 		assertTrue("A foreign artifact without reference shows a glimpse only.", formatted.contains("z".repeat(300) + "…"));
 		assertFalse(formatted.contains("z".repeat(301)));
@@ -177,11 +178,15 @@ public class TestRemoteExchange extends TestCase {
 		return artifact;
 	}
 
-	private RemoteExchange.Outcome ask(RemoteExchange.Caller caller, String text, String conversation, String topic,
-			List<String> refs) throws Exception {
-		return _exchange.ask(caller, "alpha", text, conversation, topic, null, refs, 10_000, line -> {
+	private RemoteExchange exchange(RemoteExchange.Caller caller, long waitMillis) {
+		return new RemoteExchange(_agents, _contexts, caller, waitMillis, line -> {
 			// ignored
 		}, () -> false);
+	}
+
+	private RemoteExchange.Outcome ask(RemoteExchange.Caller caller, String text, String conversation, String topic,
+			List<String> refs) throws Exception {
+		return exchange(caller, 10_000).ask("alpha", text, conversation, topic, null, refs);
 	}
 
 	private void serveArtifact(HttpExchange exchange) throws IOException {
@@ -203,39 +208,29 @@ public class TestRemoteExchange extends TestCase {
 
 	public void testWaitLimitLeavesTheTaskToGetAgentTaskWhichWaits() throws Exception {
 		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", null, null, null);
-		RemoteExchange.Outcome outcome = _exchange.ask(caller, "alpha", "slow", null, null, null, List.of(), 1_000, line -> {
-			// ignored
-		}, () -> false);
-		assertEquals(TaskState.WORKING, outcome.state());
-		assertTrue(RemoteExchange.format(outcome, (s, b) -> b).contains("getAgentTask(taskId=\""));
+		RemoteExchange.Outcome outcome = exchange(caller, 1_000).ask("alpha", "slow", null, null, null, List.of());
+		assertEquals(TaskState.WORKING, outcome._state);
+		assertTrue(RemoteExchange.format(outcome).contains("getAgentTask(taskId=\""));
 
-		RemoteExchange.Outcome now = _exchange.follow(caller, null, outcome.taskId(), 0, line -> {
-			// ignored
-		}, () -> false);
-		assertEquals("Without a wait, the current state.", TaskState.WORKING, now.state());
+		RemoteExchange.Outcome now = exchange(caller, 10_000).follow(null, outcome._taskId, false);
+		assertEquals("Without a wait, the current state.", TaskState.WORKING, now._state);
 
-		RemoteExchange.Outcome later = _exchange.follow(caller, null, outcome.taskId(), 10_000, line -> {
-			// ignored
-		}, () -> false);
-		assertEquals("getAgentTask waits for the task to end.", TaskState.COMPLETED, later.state());
-		assertEquals("Echo: slow", later.statusText());
+		RemoteExchange.Outcome later = exchange(caller, 10_000).follow(null, outcome._taskId, true);
+		assertEquals("getAgentTask waits for the task to end.", TaskState.COMPLETED, later._state);
+		assertEquals("Echo: slow", later._statusText);
 	}
 
 	public void testUnknownAgentAndRefusedTokenAreReportedAsErrors() throws Exception {
 		RemoteExchange.Caller caller = new RemoteExchange.Caller("beta", "Beta", null, null, null);
 		try {
-			_exchange.ask(caller, "nobody", "hi", null, null, null, List.of(), 1_000, line -> {
-				// ignored
-			}, () -> false);
+			exchange(caller, 1_000).ask("nobody", "hi", null, null, null, List.of());
 			fail("An unknown agent was asked.");
 		} catch (com.top_logic.ai.a2a.protocol.A2AError ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("Known: alpha"));
 		}
 		System.setProperty("a2a_test_token", "wrong");
 		try {
-			_exchange.ask(caller, "alpha", "hi", null, null, null, List.of(), 1_000, line -> {
-				// ignored
-			}, () -> false);
+			exchange(caller, 1_000).ask("alpha", "hi", null, null, null, List.of());
 			fail("A refused token went unnoticed.");
 		} catch (com.top_logic.ai.a2a.protocol.A2AError ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("refused the credentials"));

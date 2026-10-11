@@ -9,14 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecret;
+import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
@@ -127,6 +131,43 @@ public final class EndpointAuthentication {
 			return result;
 		}
 		throw new IllegalArgumentException("Unknown kind of endpoint secret: " + secret);
+	}
+
+	/**
+	 * The account the request's credential names, in a context that can look one up.
+	 *
+	 * <p>
+	 * <b>Resolving a credential is itself a {@code KnowledgeBase} read</b> - every authenticator ends
+	 * in an account lookup by login name - and a servlet request thread carries no TopLogic
+	 * interaction, so one has to be opened around it. It is a <em>system</em> interaction because at
+	 * this point there is no account to open it as; that is the one thing a system interaction is
+	 * legitimately for here, and it is closed again before anything of the request is served. What
+	 * runs inside it is the authenticator and nothing else. The login name is read here for the same
+	 * reason.
+	 * </p>
+	 *
+	 * @param requester
+	 *        The class that resolves, named on the interaction.
+	 * @return The caller, or <code>null</code> if the credential authenticated but names no account -
+	 *         which an endpoint refuses, because it never acts in system context.
+	 * @throws AuthenticationFailure
+	 *         With the scheme's own challenge, see {@link AuthenticationFailure#enhanceResponse}.
+	 */
+	public static Caller resolve(Authenticator authenticator, HttpServletRequest req, HttpServletResponse resp,
+			Class<?> requester) throws AuthenticationFailure {
+		return ThreadContextManager.<Caller, AuthenticationFailure, RuntimeException> inSystemInteraction(requester,
+			() -> {
+				Person account = authenticator.authenticate(req, resp);
+				return account == null ? null : new Caller(account, account.getName());
+			});
+	}
+
+	/**
+	 * An authenticated account and its login name, carried alongside because reading the name is a
+	 * {@code KnowledgeBase} operation and is needed where no interaction is bound.
+	 */
+	public record Caller(Person account, String name) {
+		// Pure value.
 	}
 
 	private static Authenticator create(String endpoint, String name, ServerAuthentication.Config<?> config,

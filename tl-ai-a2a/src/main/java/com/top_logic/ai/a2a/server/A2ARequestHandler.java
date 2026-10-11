@@ -7,7 +7,7 @@ package com.top_logic.ai.a2a.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -171,9 +171,6 @@ public class A2ARequestHandler {
 			}
 		} catch (A2AError ex) {
 			transport.sendJson(Json.write(response(id, "error", ex.toJson())));
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
-			transport.sendJson(Json.write(response(id, "error", new A2AError(A2AError.INTERNAL_ERROR, "Interrupted.").toJson())));
 		}
 	}
 
@@ -192,8 +189,7 @@ public class A2ARequestHandler {
 		return response;
 	}
 
-	private Map<String, Object> send(String caller, String agent, Map<String, Object> params)
-			throws InterruptedException {
+	private Map<String, Object> send(String caller, String agent, Map<String, Object> params) {
 		A2ATask task = startOrContinue(caller, agent, params);
 		Map<String, Object> configuration = Json.obj(params, "configuration");
 		if (!Json.bool(configuration, "returnImmediately", false)) {
@@ -215,12 +211,14 @@ public class A2ARequestHandler {
 			throw new A2AError(A2AError.INVALID_PARAMS, "A client sends messages with role ROLE_USER.");
 		}
 		Map<String, Object> metadata = Json.map();
-		for (Map<String, Object> source : Arrays.asList(Json.obj(params, "metadata"), Json.obj(message, "metadata"))) {
-			if (source != null) {
-				metadata.putAll(Json.copy(source));
-			}
+		if (Json.obj(params, "metadata") != null) {
+			metadata.putAll(Json.obj(params, "metadata"));
+		}
+		if (Json.obj(message, "metadata") != null) {
+			metadata.putAll(Json.obj(message, "metadata"));
 		}
 
+		String peer = A2AJson.peerOf(message);
 		String contextId = Json.str(message, "contextId");
 		String taskId = Json.str(message, "taskId");
 		if (taskId != null) {
@@ -249,7 +247,6 @@ public class A2ARequestHandler {
 			if (active != null) {
 				// Peers that share one account are told apart by the application they name, so one of
 				// them cannot answer the question another one was asked.
-				String peer = A2AJson.peerOf(message);
 				if (active.agent().equals(agent) && active.owner().equals(caller)
 					&& (peer == null || peer.equals(active.peer())) && active.answer(message)) {
 					return active;
@@ -258,8 +255,8 @@ public class A2ARequestHandler {
 					+ " is busy with another task; try again when it has finished, or use another context id.");
 			}
 			task = new A2ATask(A2AJson.newId(), contextId, agent, caller);
-			if (A2AJson.peerOf(message) != null) {
-				task.putMetadata(A2ATask.PEER, A2AJson.peerOf(message));
+			if (peer != null) {
+				task.putMetadata(A2ATask.PEER, peer);
 			}
 			task.addHistory(message);
 			add(task);
@@ -318,19 +315,21 @@ public class A2ARequestHandler {
 				if (task.owner().equals(caller) && task.agent().equals(agent)
 					&& (contextId == null || task.contextId().equals(contextId))
 					&& (status == null || task.state() == status)) {
-					matching.add(0, task);
+					matching.add(task);
 				}
 			}
 		}
+		Collections.reverse(matching);
+		Integer historyLength = Json.integer(params, "historyLength");
 		List<Object> tasks = new ArrayList<>();
 		for (A2ATask task : matching.subList(0, Math.min(limit, matching.size()))) {
-			tasks.add(task.toJson(Json.integer(params, "historyLength")));
+			tasks.add(task.toJson(historyLength));
 		}
 		return Json.map("tasks", tasks, "nextPageToken", "", "pageSize", limit, "totalSize", matching.size());
 	}
 
 	private void subscribe(Transport transport, Object id, String caller, String agent, String taskId)
-			throws IOException, InterruptedException {
+			throws IOException {
 		A2ATask task = ownTask(caller, agent, taskId);
 		if (task.state().isTerminal()) {
 			throw new A2AError(A2AError.UNSUPPORTED_OPERATION, "Task " + taskId + " has finished.");
@@ -341,7 +340,7 @@ public class A2ARequestHandler {
 	/**
 	 * Streams a task: its current state first, then every change, until it ends or asks.
 	 */
-	private void stream(Transport transport, Object id, A2ATask task) throws IOException, InterruptedException {
+	private void stream(Transport transport, Object id, A2ATask task) throws IOException {
 		A2ATask.Snapshot snapshot = task.snapshot();
 		EventSink sink = transport.openStream();
 		sink.send(Json.write(response(id, "result", Json.map("task", snapshot.task()))));

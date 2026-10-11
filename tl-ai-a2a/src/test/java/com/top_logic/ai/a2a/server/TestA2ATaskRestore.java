@@ -50,7 +50,7 @@ public class TestA2ATaskRestore extends TestCase {
 		A2ATask restored = A2ATask.restored(reread(task), "alpha", "root");
 
 		assertEquals(TaskState.FAILED, restored.state());
-		assertTrue(A2AJson.plainText(restored.statusMessage()).contains("restarted"));
+		assertTrue(A2AJson.plainText(Json.obj(Json.obj(restored.toJson(null), "status"), "message")).contains("restarted"));
 		assertFalse("Nothing waits for an answer any more.",
 			restored.answer(A2AJson.textMessage(A2AJson.ROLE_USER, null, null, "Werk Nord")));
 		List<?> history = Json.list(restored.toJson(null), "history");

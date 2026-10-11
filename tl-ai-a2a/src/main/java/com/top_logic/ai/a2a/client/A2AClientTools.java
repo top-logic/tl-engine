@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.util.TLContext;
 
@@ -54,7 +55,7 @@ public class A2AClientTools {
 	@ToolMethod(description = "List the remote agents (other applications' agents, reached over the A2A protocol) "
 		+ "you can ask with askAgent: their names, what they do and their skills.",
 		mode = ToolMode.READ, group = ToolGroups.EGRESS, marking = AnswerMarking.TOOL)
-	public String listAgents() {
+	public ToolResult listAgents() {
 		return call(service -> {
 			StringBuilder known = new StringBuilder();
 			for (RemoteAgent agent : service.remoteAgents().all()) {
@@ -91,7 +92,7 @@ public class A2AClientTools {
 		+ "material by reference (refs) instead of pasting it. Never send a second message while a task of "
 		+ "that agent is still WORKING: wait for it with getAgentTask.",
 		mode = ToolMode.EXTERNAL, group = ToolGroups.EGRESS, marking = AnswerMarking.TOOL, concurrencySafe = true)
-	public String askAgent(
+	public ToolResult askAgent(
 			@P("Name of the remote agent, as listAgents shows it.") String agent,
 			@P("The message: the question or the assignment, self-contained.") String message,
 			@P(value = "Which remote conversation: 'continue' (default: the one you last used with this agent), "
@@ -103,9 +104,8 @@ public class A2AClientTools {
 				required = false) String refs,
 			@P(value = "Optional structured data to send along, as a JSON value.", required = false) String data,
 			ToolExecutionContext context) {
-		return call(service -> RemoteExchange.format(exchange(service).ask(caller(service, context), agent, message,
-			conversation, topic, parseData(data), parseRefs(refs), maxWaitMillis(service), progress(context),
-			() -> context.cancellationToken().isCancelled()), UntrustedEnvelope.A2A_RESULT::wrap));
+		return call(service -> RemoteExchange.format(
+			exchange(service, context).ask(agent, message, conversation, topic, parseData(data), parseRefs(refs))));
 	}
 
 	/**
@@ -114,15 +114,13 @@ public class A2AClientTools {
 	@ToolMethod(description = "Answer a question a remote agent asked you (its task is INPUT_REQUIRED), then wait "
 		+ "for it again, like askAgent.",
 		mode = ToolMode.EXTERNAL, group = ToolGroups.EGRESS, marking = AnswerMarking.TOOL, concurrencySafe = true)
-	public String replyAgent(
+	public ToolResult replyAgent(
 			@P("The taskId the question came with.") String taskId,
 			@P("Your answer.") String message,
 			@P(value = "Name of the remote agent; only needed if the task is not known from this run.",
 				required = false) String agent,
 			ToolExecutionContext context) {
-		return call(service -> RemoteExchange.format(exchange(service).reply(caller(service, context), agent, taskId,
-			message, maxWaitMillis(service), progress(context), () -> context.cancellationToken().isCancelled()),
-			UntrustedEnvelope.A2A_RESULT::wrap));
+		return call(service -> RemoteExchange.format(exchange(service, context).reply(agent, taskId, message)));
 	}
 
 	/**
@@ -134,16 +132,15 @@ public class A2AClientTools {
 		+ "it again while the task is still WORKING - do not end your turn and do not send the agent a new "
 		+ "message meanwhile.",
 		mode = ToolMode.READ, group = ToolGroups.EGRESS, marking = AnswerMarking.TOOL)
-	public String getAgentTask(
+	public ToolResult getAgentTask(
 			@P("The taskId.") String taskId,
 			@P(value = "Name of the remote agent; only needed if the task is not known from this application.",
 				required = false) String agent,
 			@P(value = "0: do not wait, just read the state. Anything else: wait up to the configured limit.",
 				required = false) Integer waitSeconds,
 			ToolExecutionContext context) {
-		return call(service -> RemoteExchange.format(exchange(service).follow(caller(service, context), agent, taskId,
-			waitSeconds != null && waitSeconds == 0 ? 0 : maxWaitMillis(service), progress(context),
-			() -> context.cancellationToken().isCancelled()), UntrustedEnvelope.A2A_RESULT::wrap));
+		return call(service -> RemoteExchange.format(
+			exchange(service, context).follow(agent, taskId, waitSeconds == null || waitSeconds != 0)));
 	}
 
 	/**
@@ -152,7 +149,7 @@ public class A2AClientTools {
 	@ToolMethod(description = "List the conversations this conversation has open with remote agents: topic, agent, "
 		+ "context id, last task and its state. Continue one with askAgent(conversation=<topic>).",
 		mode = ToolMode.READ, group = ToolGroups.EGRESS, marking = AnswerMarking.NONE)
-	public String listAgentConversations(ToolExecutionContext context) {
+	public ToolResult listAgentConversations(ToolExecutionContext context) {
 		return call(service -> {
 			List<ContextBook.RemoteConversation> conversations =
 				service.contexts().conversations(caller(service, context).conversationId());
@@ -179,14 +176,15 @@ public class A2AClientTools {
 		+ "artifact (shortened if very long) and the list of its sections; read long artifacts section by "
 		+ "section.",
 		mode = ToolMode.READ, group = ToolGroups.EGRESS, marking = AnswerMarking.TOOL)
-	public String fetchArtifact(
+	public ToolResult fetchArtifact(
 			@P("The reference, tl-artifact://...") String ref,
 			@P(value = "A section: a heading of a Markdown text, a member (or path a/b) of a JSON object.",
 				required = false) String section) {
 		return call(service -> {
 			ArtifactRef parsed = ArtifactRef.parse(ref);
 			if (parsed == null) {
-				return "error: Not a reference: " + ref + ". A reference reads tl-artifact://<app>/<kind>/<id>.";
+				throw new A2AError(A2AError.INVALID_PARAMS,
+					"Not a reference: " + ref + ". A reference reads tl-artifact://<app>/<kind>/<id>.");
 			}
 			Map<String, Object> answer = parsed.app().equals(service.appName())
 				? A2AService.artifactResponse(service.resolveArtifact(parsed, TLContext.currentUser().getName()),
@@ -200,7 +198,7 @@ public class A2AClientTools {
 		List<?> sections = Json.list(answer, "sections");
 		String error = Json.str(answer, "error");
 		if (error != null) {
-			return "error: " + error + (sections.isEmpty() ? "" : " Sections: " + sections + ".");
+			throw new A2AError(A2AError.TASK_NOT_FOUND, error + (sections.isEmpty() ? "" : " Sections: " + sections + "."));
 		}
 		Object content = answer.get("content");
 		String text = content instanceof String str ? str : Json.write(content);
@@ -258,26 +256,27 @@ public class A2AClientTools {
 		String run(A2AService service) throws IOException, InterruptedException;
 	}
 
-	private static String call(Call call) {
+	private static ToolResult call(Call call) {
 		A2AService service = A2AService.getInstance();
 		if (service == null) {
-			return "error: The A2A service is not running in this application.";
+			return ToolResult.failure("The A2A service is not running in this application.");
 		}
 		try {
-			return call.run(service);
+			return ToolResult.of(call.run(service));
 		} catch (A2AError ex) {
-			return "error: " + ex.getMessage();
+			return ToolResult.failure(ex.getMessage());
 		} catch (IOException ex) {
 			Logger.info("A2A call failed: " + ex.getMessage(), A2AClientTools.class);
-			return "error: The remote application cannot be reached: " + ex.getMessage();
+			return ToolResult.failure("The remote application cannot be reached: " + ex.getMessage());
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
-			return "error: interrupted.";
+			return ToolResult.failure("Interrupted.");
 		}
 	}
 
-	private static RemoteExchange exchange(A2AService service) {
-		return new RemoteExchange(service.remoteAgents(), service.contexts());
+	private static RemoteExchange exchange(A2AService service, ToolExecutionContext context) {
+		return new RemoteExchange(service.remoteAgents(), service.contexts(), caller(service, context),
+			maxWaitMillis(service), progress(context), () -> context.cancellationToken().isCancelled());
 	}
 
 	/**

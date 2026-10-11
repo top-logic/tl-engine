@@ -20,9 +20,9 @@ import com.top_logic.ai.mcp.server.MCPServerService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
@@ -122,9 +122,9 @@ public class McpAuthenticationFilter implements Filter {
 			return;
 		}
 
-		AuthenticatedCaller caller;
+		EndpointAuthentication.Caller caller;
 		try {
-			caller = resolve(authenticator, req, resp);
+			caller = EndpointAuthentication.resolve(authenticator, req, resp, McpAuthenticationFilter.class);
 		} catch (AuthenticationFailure ex) {
 			// The failure carries the scheme's own challenge and status code.
 			ex.enhanceResponse(resp, req.getRequestURI());
@@ -149,38 +149,10 @@ public class McpAuthenticationFilter implements Filter {
 	}
 
 	/**
-	 * The account the request's credential names, in a context that can look one up.
-	 *
-	 * <p>
-	 * <b>Resolving a credential is itself a {@code KnowledgeBase} read</b> - every authenticator ends
-	 * in an account lookup by login name - and a servlet request thread carries no TopLogic
-	 * interaction, so one has to be opened around it. It is a <em>system</em> interaction because at
-	 * this point there is no account to open it as; that is the one thing a system interaction is
-	 * legitimately for here, and it is closed again before anything of the request is served. What
-	 * runs inside it is the authenticator and nothing else.
-	 * </p>
-	 *
-	 * <p>
-	 * The login name is read here for the same reason: it is a {@code KnowledgeBase} read too, and
-	 * the session-ownership check and the binding happen outside this interaction.
-	 * </p>
-	 *
-	 * @return The caller, or <code>null</code> if the credential authenticated but names no account.
-	 */
-	private static AuthenticatedCaller resolve(Authenticator authenticator, HttpServletRequest req,
-			HttpServletResponse resp) throws AuthenticationFailure {
-		return ThreadContextManager.<AuthenticatedCaller, AuthenticationFailure, RuntimeException> inSystemInteraction(
-			McpAuthenticationFilter.class, () -> {
-				Person account = authenticator.authenticate(req, resp);
-				return account == null ? null : new AuthenticatedCaller(account, account.getName());
-			});
-	}
-
-	/**
 	 * Runs the rest of the chain as {@code caller}, and maintains that account's session ownership.
 	 */
 	private static void serve(HttpServletRequest req, HttpServletResponse resp, FilterChain chain,
-			AuthenticatedCaller caller, McpSessionPrincipals sessions, String requestedSession)
+			EndpointAuthentication.Caller caller, McpSessionPrincipals sessions, String requestedSession)
 			throws IOException, ServletException {
 		McpCallerContext.<Void, IOException, ServletException> withCaller(caller.account(),
 			() -> TLContextManager.<Void, IOException, ServletException> inPersonContext(caller.account(),
@@ -199,24 +171,6 @@ public class McpAuthenticationFilter implements Filter {
 		if (requestedSession != null && "DELETE".equals(req.getMethod())) {
 			sessions.release(requestedSession);
 		}
-	}
-
-	/**
-	 * An authenticated account and its login name.
-	 *
-	 * <p>
-	 * The name is carried alongside the wrapper because reading it is a {@code KnowledgeBase}
-	 * operation, and the filter needs it in places that have no interaction bound - see
-	 * {@link #resolve}.
-	 * </p>
-	 *
-	 * @param account
-	 *        The authenticated account, never <code>null</code>.
-	 * @param name
-	 *        Its login name, never <code>null</code>.
-	 */
-	private record AuthenticatedCaller(Person account, String name) {
-		// Pure value.
 	}
 
 	/**

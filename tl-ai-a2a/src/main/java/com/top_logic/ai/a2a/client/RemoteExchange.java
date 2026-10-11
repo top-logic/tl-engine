@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -22,6 +21,7 @@ import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.ArtifactRef;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.TaskState;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * One exchange of a local agent with a remote A2A agent: send a message (a new one, or the answer to
@@ -47,6 +47,14 @@ public final class RemoteExchange {
 	private final RemoteAgents _agents;
 
 	private final ContextBook _contexts;
+
+	private final Caller _caller;
+
+	private final long _waitMillis;
+
+	private final Consumer<String> _progress;
+
+	private final BooleanSupplier _cancelled;
 
 	/**
 	 * Who calls: the local application, its agent and conversation.
@@ -85,31 +93,6 @@ public final class RemoteExchange {
 
 		long _waitedSeconds;
 
-		/** The remote task id, or <code>null</code>. */
-		public String taskId() {
-			return _taskId;
-		}
-
-		/** The context id. */
-		public String contextId() {
-			return _contextId;
-		}
-
-		/** The last known state, or <code>null</code>. */
-		public TaskState state() {
-			return _state;
-		}
-
-		/** The text of the last status message (answer, question or error), or <code>null</code>. */
-		public String statusText() {
-			return _statusText;
-		}
-
-		/** The artifacts received, in order. */
-		public List<Map<String, Object>> artifacts() {
-			return new ArrayList<>(_artifacts.values());
-		}
-
 		void acceptTask(Map<String, Object> task) {
 			_taskId = first(Json.str(task, "id"), _taskId);
 			_contextId = first(Json.str(task, "contextId"), _contextId);
@@ -142,10 +125,22 @@ public final class RemoteExchange {
 
 	/**
 	 * Creates a {@link RemoteExchange}.
+	 *
+	 * @param waitMillis
+	 *        How long a call follows the remote task at most.
+	 * @param progress
+	 *        Receives one line per remote progress step.
+	 * @param cancelled
+	 *        Whether the local run was cancelled.
 	 */
-	public RemoteExchange(RemoteAgents agents, ContextBook contexts) {
+	public RemoteExchange(RemoteAgents agents, ContextBook contexts, Caller caller, long waitMillis,
+			Consumer<String> progress, BooleanSupplier cancelled) {
 		_agents = agents;
 		_contexts = contexts;
+		_caller = caller;
+		_waitMillis = waitMillis;
+		_progress = progress;
+		_cancelled = cancelled;
 	}
 
 	/**
@@ -157,17 +152,12 @@ public final class RemoteExchange {
 	 *        A structured payload sent as a data part, or <code>null</code>.
 	 * @param refs
 	 *        References handed over instead of their content.
-	 * @param progress
-	 *        Receives one line per remote progress step.
-	 * @param cancelled
-	 *        Whether the local run was cancelled.
 	 */
-	public Outcome ask(Caller caller, String agentName, String text, String conversation, String topic, Object data,
-			List<String> refs, long waitMillis, Consumer<String> progress, BooleanSupplier cancelled)
-			throws IOException, InterruptedException {
+	public Outcome ask(String agentName, String text, String conversation, String topic, Object data,
+			List<String> refs) throws IOException, InterruptedException {
 		RemoteAgent agent = _agents.get(agentName);
-		ContextBook.Choice choice = _contexts.choose(caller.conversationId(), agent.name(), conversation, topic, text);
-		_contexts.rememberSubject(choice.contextId(), caller.subject());
+		ContextBook.Choice choice = _contexts.choose(_caller.conversationId(), agent.name(), conversation, topic, text);
+		_contexts.rememberSubject(choice.contextId(), _caller.subject());
 		List<Map<String, Object>> parts = new ArrayList<>();
 		parts.add(A2AJson.textPart(text));
 		if (data != null) {
@@ -178,8 +168,7 @@ public final class RemoteExchange {
 		}
 		Outcome outcome = new Outcome();
 		outcome._label = choice.label();
-		return exchange(caller, agent, A2AJson.message(A2AJson.ROLE_USER, choice.contextId(), null, parts),
-			waitMillis, progress, cancelled, outcome);
+		return exchange(agent, A2AJson.message(A2AJson.ROLE_USER, choice.contextId(), null, parts), outcome);
 	}
 
 	/**
@@ -188,36 +177,29 @@ public final class RemoteExchange {
 	 * @param agentName
 	 *        The remote agent; <code>null</code>: the one remembered for the task.
 	 */
-	public Outcome reply(Caller caller, String agentName, String taskId, String text, long waitMillis,
-			Consumer<String> progress, BooleanSupplier cancelled) throws IOException, InterruptedException {
+	public Outcome reply(String agentName, String taskId, String text) throws IOException, InterruptedException {
 		ContextBook.RemoteTask known = _contexts.remoteTask(taskId);
 		RemoteAgent agent = agentOf(agentName, known, taskId);
 		Map<String, Object> message = A2AJson.message(A2AJson.ROLE_USER, known == null ? null : known.contextId(),
 			taskId, List.of(A2AJson.textPart(text)));
-		return exchange(caller, agent, message, waitMillis, progress, cancelled, new Outcome());
+		return exchange(agent, message, new Outcome());
 	}
 
 	/**
-	 * Reads a remote task and, while it is still working, follows it until it ends or asks back, at
-	 * most {@code waitMillis}.
+	 * Reads a remote task and, while it is still working, follows it until it ends or asks back.
 	 *
-	 * @param waitMillis
-	 *        0: answer the current state at once.
+	 * @param wait
+	 *        <code>false</code>: answer the current state at once.
 	 */
-	public Outcome follow(Caller caller, String agentName, String taskId, long waitMillis, Consumer<String> progress,
-			BooleanSupplier cancelled) throws IOException, InterruptedException {
+	public Outcome follow(String agentName, String taskId, boolean wait) throws IOException, InterruptedException {
 		RemoteAgent agent = agentOf(agentName, _contexts.remoteTask(taskId), taskId);
 		Outcome outcome = get(agent, taskId);
-		for (ContextBook.RemoteConversation known : _contexts.conversations(caller.conversationId())) {
-			if (known.contextId().equals(outcome._contextId)) {
-				outcome._label = known.label();
-			}
-		}
-		if (waitMillis > 0 && outcome._state != null && !outcome._state.endsWait()) {
+		outcome._label = _contexts.label(_caller.conversationId(), outcome._contextId);
+		if (wait && outcome._state != null && !outcome._state.endsWait()) {
 			long start = System.currentTimeMillis();
 			try {
 				_agents.client().stream(_agents.endpoint(agent), agent.token(), "SubscribeToTask", Json.map("id", taskId),
-					follower(outcome, agent, progress), waitMillis, cancelled);
+					follower(outcome, agent), _waitMillis, _cancelled);
 			} catch (A2AError ex) {
 				if (ex.code() != A2AError.UNSUPPORTED_OPERATION) {
 					throw ex;
@@ -227,7 +209,7 @@ public final class RemoteExchange {
 			outcome.acceptTask(Json.asObject(call(agent, "GetTask", taskId)));
 			outcome._waitedSeconds = (System.currentTimeMillis() - start) / 1000;
 		}
-		_contexts.record(caller.conversationId(), agent.name(), outcome._contextId, null, taskId, outcome._state);
+		_contexts.record(_caller.conversationId(), agent.name(), outcome._contextId, null, taskId, outcome._state);
 		return outcome;
 	}
 
@@ -252,23 +234,22 @@ public final class RemoteExchange {
 		return _agents.client().call(_agents.endpoint(agent), agent.token(), method, Json.map("id", taskId), CALL_TIMEOUT);
 	}
 
-	private Outcome exchange(Caller caller, RemoteAgent agent, Map<String, Object> message, long waitMillis,
-			Consumer<String> progress, BooleanSupplier cancelled, Outcome outcome)
+	private Outcome exchange(RemoteAgent agent, Map<String, Object> message, Outcome outcome)
 			throws IOException, InterruptedException {
-		message.put("metadata", Json.map(A2AJson.CALLER_METADATA, Json.map("app", caller.app(), "agent", caller.agent(),
-			"conversationId", caller.conversationId(), "subject", caller.subjectLabel())));
+		message.put("metadata", Json.map(A2AJson.CALLER_METADATA, Json.map("app", _caller.app(), "agent", _caller.agent(),
+			"conversationId", _caller.conversationId(), "subject", _caller.subjectLabel())));
 		outcome._agent = agent.name();
 		outcome._contextId = Json.str(message, "contextId");
 		outcome._taskId = Json.str(message, "taskId");
 
 		long start = System.currentTimeMillis();
 		_agents.client().stream(_agents.endpoint(agent), agent.token(), "SendStreamingMessage",
-			Json.map("message", message), follower(outcome, agent, progress), waitMillis, cancelled);
+			Json.map("message", message), follower(outcome, agent), _waitMillis, _cancelled);
 		outcome._waitedSeconds = (System.currentTimeMillis() - start) / 1000;
 
 		if (outcome._taskId != null) {
 			try {
-				if (cancelled.getAsBoolean() && (outcome._state == null || !outcome._state.endsWait())) {
+				if (_cancelled.getAsBoolean() && (outcome._state == null || !outcome._state.endsWait())) {
 					call(agent, "CancelTask", outcome._taskId);
 					outcome._state = TaskState.CANCELED;
 				} else {
@@ -279,7 +260,7 @@ public final class RemoteExchange {
 				// What the stream said stands.
 			}
 		}
-		_contexts.record(caller.conversationId(), agent.name(), outcome._contextId, outcome._label, outcome._taskId,
+		_contexts.record(_caller.conversationId(), agent.name(), outcome._contextId, outcome._label, outcome._taskId,
 			outcome._state);
 		return outcome;
 	}
@@ -288,7 +269,7 @@ public final class RemoteExchange {
 	 * Reads the events of a remote task's stream into {@code outcome}, reporting progress, until the
 	 * task ends or asks back.
 	 */
-	private A2AClient.StreamListener follower(Outcome outcome, RemoteAgent agent, Consumer<String> progress) {
+	private A2AClient.StreamListener follower(Outcome outcome, RemoteAgent agent) {
 		return result -> {
 			Map<String, Object> task = Json.obj(result, "task");
 			Map<String, Object> update = Json.obj(result, "statusUpdate");
@@ -301,7 +282,7 @@ public final class RemoteExchange {
 				outcome.acceptStatus(Json.obj(update, "status"));
 				if (outcome._state == TaskState.WORKING) {
 					String note = A2AJson.plainText(Json.obj(Json.obj(update, "status"), "message"));
-					progress.accept(agent.displayName() + ": " + (note.isBlank() ? "working" : note));
+					_progress.accept(agent.displayName() + ": " + (note.isBlank() ? "working" : note));
 				}
 			} else if (artifact != null) {
 				outcome.acceptArtifact(artifact);
@@ -321,13 +302,10 @@ public final class RemoteExchange {
 
 	/**
 	 * The outcome as a tool result for the calling model: the facts in the clear, and what the remote
-	 * agent wrote inside {@code envelope} - its answer (or question) up to {@link #MAX_ANSWER_CHARS},
-	 * and its artifacts as references only, never their bodies.
-	 *
-	 * @param envelope
-	 *        Wraps the remote content: <code>(source, body) -&gt; marked text</code>.
+	 * agent wrote inside {@link UntrustedEnvelope#A2A_RESULT} - its answer (or question) up to
+	 * {@link #MAX_ANSWER_CHARS}, and its artifacts as references only, never their bodies.
 	 */
-	public static String format(Outcome outcome, BiFunction<String, String, String> envelope) {
+	public static String format(Outcome outcome) {
 		TaskState state = outcome._state;
 		StringBuilder out = new StringBuilder("Remote agent: ").append(outcome._agent);
 		if (outcome._label != null) {
@@ -352,7 +330,7 @@ public final class RemoteExchange {
 		}
 
 		Map<String, Object> answer = null;
-		for (Map<String, Object> artifact : outcome.artifacts()) {
+		for (Map<String, Object> artifact : outcome._artifacts.values()) {
 			if (A2AJson.ANSWER.equals(Json.str(artifact, "name"))) {
 				answer = artifact;
 			}
@@ -365,7 +343,7 @@ public final class RemoteExchange {
 			content.add(heading + ":\n" + capped(outcome._statusText, refOf(answer)) + details);
 		}
 		StringBuilder artifacts = new StringBuilder();
-		for (Map<String, Object> artifact : outcome.artifacts()) {
+		for (Map<String, Object> artifact : outcome._artifacts.values()) {
 			if (artifact != answer) {
 				artifacts.append(describe(artifact));
 			}
@@ -374,7 +352,7 @@ public final class RemoteExchange {
 			content.add("artifacts (read one with fetchArtifact(ref=..., section=...)):" + artifacts);
 		}
 		if (!content.isEmpty()) {
-			out.append("\n\n").append(envelope.apply("a2a:" + outcome._agent, String.join("\n\n", content)));
+			out.append("\n\n").append(UntrustedEnvelope.A2A_RESULT.wrap("a2a:" + outcome._agent, String.join("\n\n", content)));
 		}
 		return out.toString();
 	}

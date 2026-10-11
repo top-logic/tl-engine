@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,9 +21,8 @@ import com.top_logic.ai.a2a.protocol.ArtifactRef;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.server.A2ARequestHandler;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -37,15 +38,12 @@ import com.top_logic.util.TLContextManager;
  */
 public class A2AServlet extends HttpServlet {
 
-	private static final String CARD = "agent-card.json";
-
-	private static final String WELL_KNOWN_CARD = "/.well-known/" + CARD;
+	private static final Pattern CARD = Pattern.compile("/a2a/([^/]+)/(?:\\.well-known/)?agent-card\\.json");
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		A2AService service = A2AService.getInstance();
+		A2AService service = service(resp);
 		if (service == null) {
-			error(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "The A2A service is not running.");
 			return;
 		}
 		String path = path(req);
@@ -53,16 +51,10 @@ public class A2AServlet extends HttpServlet {
 			artifact(service, req, resp);
 			return;
 		}
-		ExposedAgentConfig agent;
-		if (path.equals(WELL_KNOWN_CARD)) {
-			agent = service.getConfig().getAgents().stream().findFirst().orElse(null);
-		} else if (path.startsWith("/a2a/") && path.endsWith("/" + CARD)) {
-			// An SDK resolves the card below the agent's URL: /a2a/{agent}/.well-known/agent-card.json.
-			String rest = path.substring("/a2a/".length()).replace(WELL_KNOWN_CARD, "/" + CARD);
-			agent = service.exposedAgent(rest.substring(0, rest.length() - CARD.length() - 1));
-		} else {
-			agent = null;
-		}
+		Matcher card = CARD.matcher(path);
+		ExposedAgentConfig agent = card.matches() ? service.exposedAgent(card.group(1))
+			: path.equals("/.well-known/agent-card.json") ? service.getConfig().getAgents().stream().findFirst().orElse(null)
+			: null;
 		if (agent == null) {
 			error(resp, HttpServletResponse.SC_NOT_FOUND, "No such A2A agent.");
 			return;
@@ -75,9 +67,8 @@ public class A2AServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		A2AService service = A2AService.getInstance();
+		A2AService service = service(resp);
 		if (service == null) {
-			error(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "The A2A service is not running.");
 			return;
 		}
 		String path = path(req);
@@ -86,38 +77,41 @@ public class A2AServlet extends HttpServlet {
 			error(resp, HttpServletResponse.SC_NOT_FOUND, "POST to /a2a/{agent}.");
 			return;
 		}
-		Person caller = authenticate(service, req, resp);
+		EndpointAuthentication.Caller caller = authenticate(service, req, resp);
 		if (caller == null) {
 			return;
 		}
 		String body = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-		service.handler().handle(body, req.getHeader("A2A-Version"), caller.getName(), agent, new Transport(resp));
+		service.handler().handle(body, req.getHeader("A2A-Version"), caller.name(), agent, new Transport(resp));
+	}
+
+	private static A2AService service(HttpServletResponse resp) throws IOException {
+		A2AService service = A2AService.getInstance();
+		if (service == null) {
+			error(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "The A2A service is not running.");
+		}
+		return service;
 	}
 
 	/**
-	 * The account the request's credential names, or <code>null</code> after the refusal was sent.
-	 *
-	 * <p>
-	 * Resolving a credential reads the {@code KnowledgeBase}, so it runs in a system interaction - and
-	 * nothing else of the request does: the agent runs act as the resolved account on their own
-	 * threads. A credential that names no account is refused, as on the MCP endpoint.
-	 * </p>
+	 * The account the request's credential names, or <code>null</code> after the refusal was sent. A
+	 * credential that names no account is refused, as on the MCP endpoint: the agent runs act as the
+	 * resolved account, never in system context.
 	 */
-	private static Person authenticate(A2AService service, HttpServletRequest req, HttpServletResponse resp)
-			throws IOException {
-		Person person;
+	private static EndpointAuthentication.Caller authenticate(A2AService service, HttpServletRequest req,
+			HttpServletResponse resp) throws IOException {
+		EndpointAuthentication.Caller caller;
 		try {
-			person = ThreadContextManager.<Person, AuthenticationFailure, RuntimeException> inSystemInteraction(
-				A2AServlet.class, () -> service.authenticator().authenticate(req, resp));
+			caller = EndpointAuthentication.resolve(service.authenticator(), req, resp, A2AServlet.class);
 		} catch (AuthenticationFailure ex) {
 			Logger.info("Refused an A2A request to " + req.getRequestURI() + ": " + ex.getMessage(), A2AServlet.class);
 			ex.enhanceResponse(resp, req.getRequestURI());
 			return null;
 		}
-		if (person == null) {
+		if (caller == null) {
 			error(resp, HttpServletResponse.SC_FORBIDDEN, "The credential names no account.");
 		}
-		return person;
+		return caller;
 	}
 
 	/**
@@ -126,7 +120,7 @@ public class A2AServlet extends HttpServlet {
 	 */
 	private static void artifact(A2AService service, HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-		Person caller = authenticate(service, req, resp);
+		EndpointAuthentication.Caller caller = authenticate(service, req, resp);
 		if (caller == null) {
 			return;
 		}
@@ -136,7 +130,7 @@ public class A2AServlet extends HttpServlet {
 			return;
 		}
 		Map<String, Object> answer = TLContextManager.<Map<String, Object>, RuntimeException, RuntimeException> inPersonContext(
-			caller, () -> A2AService.artifactResponse(service.resolveArtifact(ref, caller.getName()), ref,
+			caller.account(), () -> A2AService.artifactResponse(service.resolveArtifact(ref, caller.name()), ref,
 				req.getParameter("section")));
 		json(resp, answer.containsKey("error") ? HttpServletResponse.SC_NOT_FOUND : HttpServletResponse.SC_OK,
 			Json.write(answer));

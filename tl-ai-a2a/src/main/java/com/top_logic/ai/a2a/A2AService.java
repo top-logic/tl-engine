@@ -8,6 +8,7 @@ package com.top_logic.ai.a2a;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.top_logic.ai.a2a.client.RemoteAgents;
 import com.top_logic.ai.a2a.protocol.ArtifactRef;
@@ -428,14 +429,22 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		if (ArtifactRef.TASK_KIND.equals(ref.kind())) {
 			return _backend.taskArtifact(ref.id(), account);
 		}
-		for (A2AArtifactSource source : _artifactSources) {
+		return ask(_artifactSources, source -> source.resolve(ref));
+	}
+
+	/**
+	 * Asks application hooks in order: the first non-<code>null</code> answer wins. A hook that throws
+	 * is logged and skipped.
+	 */
+	public static <H, R> R ask(List<H> hooks, Function<H, R> question) {
+		for (H hook : hooks) {
 			try {
-				A2AArtifactSource.Artifact artifact = source.resolve(ref);
-				if (artifact != null) {
-					return artifact;
+				R answer = question.apply(hook);
+				if (answer != null) {
+					return answer;
 				}
 			} catch (RuntimeException ex) {
-				Logger.error("A2A artifact source failed for " + ref + ": " + ex.getMessage(), ex, A2AService.class);
+				Logger.error("A2A hook " + hook.getClass().getName() + " failed: " + ex.getMessage(), ex, A2AService.class);
 			}
 		}
 		return null;

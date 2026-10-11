@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.TaskState;
+import com.top_logic.basic.col.LRUCache;
 
 /**
  * Which A2A context ids belong to which local conversation, in both directions.
@@ -36,13 +37,13 @@ public final class ContextBook {
 	private static final int MAX_ENTRIES = 5000;
 
 	/** Local conversation id ("" for an unrecorded run) to its remote conversations. */
-	private final Map<String, Local> _locals = lru();
+	private final Map<String, Local> _locals = new LRUCache<>(MAX_ENTRIES);
 
 	/** A2A context id to the subject of the local conversation that sent it. */
-	private final Map<String, Object> _subjects = lru();
+	private final Map<String, Object> _subjects = new LRUCache<>(MAX_ENTRIES);
 
 	/** Remote task id to the remote agent that runs it and its context. */
-	private final Map<String, RemoteTask> _remoteTasks = lru();
+	private final Map<String, RemoteTask> _remoteTasks = new LRUCache<>(MAX_ENTRIES);
 
 	/**
 	 * A conversation with remote agents, as the local conversation that holds it knows it.
@@ -169,6 +170,14 @@ public final class ContextBook {
 	}
 
 	/**
+	 * The label of a remote conversation of a local conversation, or <code>null</code>.
+	 */
+	public synchronized String label(String conversationId, String contextId) {
+		RemoteConversation known = local(conversationId)._byContext.get(contextId);
+		return known == null ? null : known.label();
+	}
+
+	/**
 	 * Remembers the subject of the conversation that sent {@code contextId}; <code>null</code> keeps
 	 * what is remembered.
 	 */
@@ -204,15 +213,14 @@ public final class ContextBook {
 	}
 
 	private static String unique(Local local, String label) {
-		String result = label;
-		for (int n = 2; isTaken(local, result); n++) {
-			result = label + " " + n;
+		int n = 1;
+		while (true) {
+			String candidate = n == 1 ? label : label + " " + n;
+			if (local._byContext.values().stream().noneMatch(known -> candidate.equalsIgnoreCase(known.label()))) {
+				return candidate;
+			}
+			n++;
 		}
-		return result;
-	}
-
-	private static boolean isTaken(Local local, String label) {
-		return local._byContext.values().stream().anyMatch(conversation -> label.equalsIgnoreCase(conversation.label()));
 	}
 
 	/**
@@ -228,14 +236,5 @@ public final class ContextBook {
 			out.append(' ').append(words[n]);
 		}
 		return out.toString();
-	}
-
-	private static <V> Map<String, V> lru() {
-		return new LinkedHashMap<>(16, 0.75f, true) {
-			@Override
-			protected boolean removeEldestEntry(Map.Entry<String, V> eldest) {
-				return size() > MAX_ENTRIES;
-			}
-		};
 	}
 }

@@ -12,13 +12,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.TaskState;
 
 /**
  * One A2A task on the serving side: its state, history and artifacts, and the ordered stream events a
- * subscriber receives.
+ * subscriber receives. What it stores is never changed afterwards; what it hands out to be changed is
+ * a copy.
  *
  * <p>
  * Thread-safe: the agent run changes it on its own thread, request threads read and wait on it, all
@@ -96,11 +98,7 @@ public final class A2ATask {
 						+ "; its run is gone. Send your message (or your answer) again in the same context - the"
 						+ " conversation continues.");
 			}
-			try {
-				task._statusTime = Instant.parse(Json.str(status, "timestamp"));
-			} catch (RuntimeException ex) {
-				// No usable time stored: now.
-			}
+			task._statusTime = Instant.parse(Json.str(status, "timestamp"));
 			for (Object message : Json.list(json, "history")) {
 				task._history.add(Json.copy((Map<String, Object>) message));
 			}
@@ -139,11 +137,6 @@ public final class A2ATask {
 	/** The current state. */
 	public synchronized TaskState state() {
 		return _state;
-	}
-
-	/** The message of the current status, or <code>null</code>. */
-	public synchronized Map<String, Object> statusMessage() {
-		return Json.copy(_statusMessage);
 	}
 
 	/** The calling application: {@link #PEER} metadata, else the owner. */
@@ -201,7 +194,7 @@ public final class A2ATask {
 			_statusMessage.putIfAbsent("contextId", _contextId);
 			if (state != TaskState.WORKING) {
 				// Progress notes of a working task are stream events, not conversation history.
-				_history.add(Json.copy(_statusMessage));
+				_history.add(_statusMessage);
 			}
 		}
 		if (!state.isInterrupted()) {
@@ -217,9 +210,10 @@ public final class A2ATask {
 	 * Adds an artifact.
 	 */
 	public synchronized void addArtifact(Map<String, Object> artifact) {
-		_artifacts.add(Json.copy(artifact));
+		Map<String, Object> copy = Json.copy(artifact);
+		_artifacts.add(copy);
 		_events.add(Json.map("artifactUpdate", Json.map("taskId", _id, "contextId", _contextId,
-			"artifact", Json.copy(artifact), "append", Boolean.FALSE, "lastChunk", Boolean.TRUE)));
+			"artifact", copy, "append", Boolean.FALSE, "lastChunk", Boolean.TRUE)));
 		notifyAll();
 	}
 
@@ -230,12 +224,10 @@ public final class A2ATask {
 	 * @return Whether the task now waits for input; <code>false</code> if it already ended.
 	 */
 	public synchronized boolean requestInput(Map<String, Object> question, Consumer<String> answerHandler) {
-		Consumer<String> before = _answerHandler;
-		_answerHandler = answerHandler;
 		if (!moveTo(TaskState.INPUT_REQUIRED, question)) {
-			_answerHandler = before;
 			return false;
 		}
+		_answerHandler = answerHandler;
 		return true;
 	}
 
@@ -290,26 +282,38 @@ public final class A2ATask {
 	 *
 	 * @return The events from {@code index} on; empty after a timeout.
 	 */
-	public synchronized List<Map<String, Object>> awaitEvents(int index, long timeoutMillis)
-			throws InterruptedException {
+	public synchronized List<Map<String, Object>> awaitEvents(int index, long timeoutMillis) {
 		long deadline = System.currentTimeMillis() + timeoutMillis;
 		while (_events.size() <= index) {
 			long left = deadline - System.currentTimeMillis();
 			if (left <= 0) {
 				return List.of();
 			}
-			wait(left);
+			pause(left);
 		}
-		return Json.copy(new ArrayList<>(_events.subList(index, _events.size())));
+		// Events are never changed once added, so they are handed out as they are.
+		return new ArrayList<>(_events.subList(index, _events.size()));
 	}
 
 	/**
 	 * Waits until the task ends or asks, at most {@code timeoutMillis}.
 	 */
-	public synchronized void awaitEndOfWait(long timeoutMillis) throws InterruptedException {
+	public synchronized void awaitEndOfWait(long timeoutMillis) {
 		long deadline = System.currentTimeMillis() + timeoutMillis;
 		for (long left = timeoutMillis; !_state.endsWait() && left > 0; left = deadline - System.currentTimeMillis()) {
-			wait(left);
+			pause(left);
+		}
+	}
+
+	/**
+	 * Waits on this task's monitor; an interruption ends the request that waits.
+	 */
+	private void pause(long millis) {
+		try {
+			wait(millis);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw new A2AError(A2AError.INTERNAL_ERROR, "Interrupted.");
 		}
 	}
 

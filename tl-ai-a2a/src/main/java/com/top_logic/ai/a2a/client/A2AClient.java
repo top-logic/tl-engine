@@ -5,10 +5,8 @@
  */
 package com.top_logic.ai.a2a.client;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,6 +24,7 @@ import java.util.function.BooleanSupplier;
 
 import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.Json;
+import com.top_logic.tl.ai.core.provider.SSEReader;
 
 /**
  * A minimal A2A v1.0 JSON-RPC client: agent cards, unary calls, and streaming calls read as
@@ -138,19 +137,12 @@ public final class A2AClient {
 				}
 			}
 		}, 1, 1, TimeUnit.SECONDS);
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8))) {
-			StringBuilder data = new StringBuilder();
-			for (String line; (line = reader.readLine()) != null;) {
-				if (line.startsWith("data:")) {
-					data.append(data.length() > 0 ? "\n" : "").append(line.substring(5).stripLeading());
-				} else if (line.isEmpty() && data.length() > 0) {
-					Map<String, Object> result = Json.asObject(result(parse(data.toString())));
-					data.setLength(0);
-					if (result != null && !listener.onResult(result)) {
-						return;
-					}
+		try (SSEReader reader = new SSEReader(body)) {
+			for (SSEReader.Event event; (event = reader.next()) != null;) {
+				Map<String, Object> result = Json.asObject(result(parse(event.data())));
+				if (result != null && !listener.onResult(result)) {
+					return;
 				}
-				// Comments, "event:", "id:" and "retry:" lines carry nothing for a client.
 			}
 		} catch (IOException ex) {
 			if (!stopped.get()) {

@@ -202,6 +202,11 @@ public interface BudgetConfig extends ConfigPart {
 	/**
 	 * What the holders of one role may spend.
 	 *
+	 * <p>
+	 * An entry names at least one of the two figures. One that names neither says nothing about the
+	 * role, and the service that holds the budget does not start with it.
+	 * </p>
+	 *
 	 * @see BudgetConfig#getRoleBudgets()
 	 */
 	@TagName("role-budget")

@@ -57,7 +57,7 @@ account may spend is `<budget>` on `AgentPolicyService` ("Agent policy"):
 | `currency` | `USD` | The ISO 4217 code of the currency that the installation records costs in. |
 | `exchange-rate` | `1` | How many units of `currency` one US dollar is worth. A fixed number. |
 | `budget-window-hours` | `24` | How far back both budgets count. A rolling window, not a calendar day. |
-| `<role-budget name tokens money>` | none | A budget for the holders of one role. `0` is unlimited. An attribute that is not set says nothing about that budget. |
+| `<role-budget name tokens money>` | none | A budget for the holders of one role. `0` is unlimited. An attribute that is not set says nothing about that budget. An entry that sets neither stops the start of `AgentPolicyService` (#825). |
 
 ### Nothing is limited until it is configured
 
@@ -257,6 +257,10 @@ unlimited. `RunLimitSettings.moneyBudget(heldRoleNames)` does the same with the 
 `money-budget`. A role that sets only `tokens` does not change the money budget of its holders, and
 the opposite. A role therefore grants headroom and never takes it away, which is the only reading under
 which holding one more role cannot make an account worse off.
+
+An entry that sets neither `tokens` nor `money` says nothing, so `AgentPolicyService` does not start
+with one (#825). Before #747 `<role-budget name="tl.admin"/>` gave the role an unlimited token budget;
+write `tokens="0"` (and `money="0"`) for that now. The refusal names the role.
 
 It is deliberately this small: a table of numbers, not a place to express *when* a budget applies.
 

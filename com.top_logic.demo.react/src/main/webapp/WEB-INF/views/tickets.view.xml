@@ -536,6 +536,9 @@
 						<form input="ticket">
 							<field attribute="name"/>
 							<field attribute="status"/>
+							<field attribute="statusLabel"/>
+							<field attribute="headline"/>
+							<field attribute="resolution"/>
 						</form>
 						<object-list
 							element-channel="comment"

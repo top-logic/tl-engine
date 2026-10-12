@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields) or when a channel write must ask about unsaved changes.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
 order: 40
 ---
 
@@ -163,3 +163,25 @@ A check reads the values entered in the form, not the stored ones: it receives t
 The rule counts only errors on display: an error the user cannot see yet leaves the command enabled, and the attempt to execute it is what reveals the error.
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
+
+## Derived fields
+
+A `<field>` of a derived attribute - one computed by a `<storage-algorithm><query>` - follows the values entered in the form. While the form is edited, the field computes the attribute's expression over the form's edits instead of the stored values, and computes it again when a field it reads changes. This holds through a chain of derived attributes as well: a `headline` reading a derived `statusLabel` that reads the `status` reference changes as soon as another status is selected, before anything is saved. A derived field is never dirty - it holds no input of its own and is not stored - but it announces each change of its value, so whatever depends on it follows in turn.
+
+The same applies to every script a form evaluates for an object it edits: a `dynamic-visibility` mode selector, an options expression, a constraint check. Each records the attributes it reads (directly or through derived attributes), reads their entered values and is evaluated again when one of them changes, so a field appears, disappears or changes its options while the user is still typing:
+
+```xml
+<property name="resolution"
+	type="tl.core:String"
+>
+	<annotations>
+		<dynamic-visibility>
+			<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+				function="t -> editMode -> if(demoTicketsIsClosed($t), if($editMode, 'editable', 'read-only'), 'hidden')"
+			/>
+		</dynamic-visibility>
+	</annotations>
+</property>
+```
+
+A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this only when it reads the attributes of its arguments through `EvalContext.access(...)`: it declares a parameter of type `EvalContext`, which receives the context of the evaluation and is not a script argument (see the topic on extending TL-Script in the Developer Guide). An attribute read through a generated getter or `tValue(...)` is invisible to the form: the script reads its stored value and is not evaluated again when the field is edited.

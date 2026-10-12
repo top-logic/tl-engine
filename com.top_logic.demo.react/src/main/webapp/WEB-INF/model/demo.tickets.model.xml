@@ -56,6 +56,28 @@
 							</storage-algorithm>
 						</annotations>
 					</property>
+					<property name="headline"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr>t -&gt; $t.get(`demo.tickets:Ticket#name`) + ' (' + $t.get(`demo.tickets:Ticket#statusLabel`) + ')'</expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="resolution"
+						type="tl.core:String"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="t -> editMode -> if(demoTicketsIsClosed($t), if($editMode, &quot;editable&quot;, &quot;read-only&quot;), &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 					<reference name="comments"
 						composite="true"
 						kind="forwards"

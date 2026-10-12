@@ -18,7 +18,7 @@ import com.top_logic.layout.react.control.ReactCommand;
  * to people.
  * </p>
  */
-@Label("Freeze column '{column}': {locked}")
+@Label("Set column '{column}' frozen to {locked}")
 public interface ColumnLockArguments extends ReactCommand {
 
 	/** @see #getColumn() */

@@ -1622,8 +1622,9 @@ a.tl-field-value:hover {
 /* --- reorder-list/reorder-list.css --- */
 /* Umsortierbare Liste — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W11), 3b §8.
    ul.tl-reorder-list > li.tl-reorder-list__item: vorn der Griff (tl-reorder-list__handle, ein
-   tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter, was der
-   Eintrag trägt (Gruppierungsknopf, label.tl-choice mit tl-checkbox). Die Ziehen-Optik zeichnet
+   tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter die
+   Beschriftung und rechts Schloss und Auge (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
+   oder Fokus (Spec 2026-10-12, #29825). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
    hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
    Suche bleibt stehen, nur die Liste scrollt, und die Höhe gibt der Behälter (Sichtprüfung 12.10.). */
@@ -1675,27 +1676,88 @@ a.tl-field-value:hover {
 .tl-reorder-list__handle {
   color: var(--tl-icon-secondary);
   cursor: grab;
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
 .tl-reorder-list__handle:active {
   cursor: grabbing;
 }
 
-.tl-reorder-list__handle:focus-visible {
+.tl-reorder-list__handle:focus-visible,
+.tl-reorder-list__actions > .tl-button:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
-/* Das Kästchen mit seiner Beschriftung nimmt den Rest der Zeile; die Beschriftung endet mit Ellipse. */
-.tl-reorder-list__item > .tl-choice {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
+/* Die Beschriftung nimmt den Rest der Zeile und endet mit Ellipse. */
 .tl-reorder-list__label {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Rechts am Ende der Zeile: Schloss (fixieren) und Auge (aus- und einblenden). Ihre Plätze sind immer reserviert,
+   damit die Zeile beim Zeigen nicht springt. */
+.tl-reorder-list__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  margin-inline-start: auto;
+}
+
+/* Die Knöpfe erscheinen beim Zeigen oder wenn ein Element der Zeile den Fokus hat (der Griff ebenso, seine opacity
+   steht in seiner Grundregel oben). opacity, nicht visibility: ein unsichtbarer Knopf bleibt mit Tab erreichbar und
+   erscheint, sobald er den Fokus hat. */
+.tl-reorder-list__actions > .tl-button {
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-reorder-list__item:hover > .tl-reorder-list__handle,
+.tl-reorder-list__item:focus-within > .tl-reorder-list__handle,
+.tl-reorder-list__item:hover > .tl-reorder-list__actions > .tl-button,
+.tl-reorder-list__item:focus-within > .tl-reorder-list__actions > .tl-button {
+  opacity: 1;
+}
+
+/* Gesetzte Zustände bleiben zu sehen: das Auge einer ausgeblendeten, das Schloss einer fixierten Spalte. */
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
+.tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
+  opacity: 1;
+}
+
+/* Ohne Zeigen (Touch) gäbe es nie :hover — dort stehen Griff und Knöpfe immer. */
+@media (hover: none) {
+  .tl-reorder-list__handle,
+  .tl-reorder-list__actions > .tl-button {
+    opacity: 1;
+  }
+}
+
+/* Ausgeblendet: die Spalte behält ihren Platz, ihr Name wird blass. */
+.tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label {
+  color: var(--tl-text-disabled);
+}
+
+/* Der Block „Fixiert“: eine Überschrift davor, eine Linie unter seinem letzten Eintrag. */
+.tl-reorder-list__section {
+  padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
+  color: var(--tl-text-secondary);
+}
+
+.tl-reorder-list__item[data-tl-state~="section-end"] {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 
 /* Die Suche ab elf Einträgen steht vor der Liste: eine tl-field-group mit Lupe; der Abstand sitzt an

@@ -11,6 +11,18 @@
 /** The handle an entry is dragged and moved by (select chip, column selection, value list). */
 export const ICON_HANDLE = 'css:fa-solid fa-grip-vertical';
 
+/** Shows a hidden entry (column selection: the eye of a hidden column). */
+export const ICON_HIDDEN = 'css:fa-solid fa-eye-slash';
+
+/** Hides a shown entry (column selection: the eye of a shown column). */
+export const ICON_VISIBLE = 'css:fa-solid fa-eye';
+
+/** Releases a frozen entry (column selection: the lock of a frozen column). */
+export const ICON_LOCK = 'css:fa-solid fa-lock';
+
+/** Freezes an entry (column selection: the lock of a column that is not frozen). */
+export const ICON_UNLOCK = 'css:fa-solid fa-lock-open';
+
 /** Removes one entry (select chip, filter chip, value list). */
 export const ICON_REMOVE = 'css:fa-solid fa-xmark';
 

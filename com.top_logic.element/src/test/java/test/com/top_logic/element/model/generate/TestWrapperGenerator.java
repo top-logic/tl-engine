@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -108,9 +110,19 @@ public class TestWrapperGenerator extends TestCase {
 		Iterable<? extends File> sourceFiles = listJavaFiles(root);
 
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
 			Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFiles);
-			compiler.getTask(null, fileManager, null, null, null, compilationUnits).call();
+			Boolean success = compiler.getTask(null, fileManager, diagnostics, null, null, compilationUnits).call();
+			if (!success.booleanValue()) {
+				StringBuilder errors = new StringBuilder("Generated sources do not compile:");
+				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+					if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+						errors.append('\n').append(diagnostic);
+					}
+				}
+				fail(errors.toString());
+			}
 		}
 	}
 

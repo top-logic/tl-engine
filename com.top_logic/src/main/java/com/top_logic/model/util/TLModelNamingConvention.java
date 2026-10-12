@@ -160,6 +160,57 @@ public class TLModelNamingConvention {
 	}
 
 	/**
+	 * Name of the java constant in the class {@link #enumClassName(TLEnumeration)} that holds the
+	 * name of the enumeration.
+	 */
+	public static final String ENUM_TYPE_NAME_CONSTANT = "TYPE_NAME";
+
+	/**
+	 * Name of the static method in the class {@link #enumClassName(TLEnumeration)} that looks up
+	 * the enumeration in the application model.
+	 */
+	public static final String ENUM_TYPE_ACCESSOR = "type";
+
+	/**
+	 * Fully qualified name of the java class holding the model metadata of the given
+	 * {@link TLEnumeration}.
+	 * 
+	 * <p>
+	 * The class is placed in the {@link #javaInterfacePackage(TLModule) interface package} of the
+	 * enumeration's module.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The enumeration to get the class name for.
+	 * 
+	 * @return The fully qualified java class name or <code>null</code>, if no class can be
+	 *         determined.
+	 */
+	public static String enumClassName(TLEnumeration type) {
+		String intfPackage = javaInterfacePackage(type.getModule());
+		if (intfPackage == null) {
+			return null;
+		}
+		return intfPackage + '.' + toCamelCase(type.getName());
+	}
+
+	/**
+	 * Name of the java constant in the class {@link #enumClassName(TLEnumeration)} of the owner of
+	 * the given {@link TLClassifier} that holds the classifier name.
+	 */
+	public static String classifierConstant(TLClassifier classifier) {
+		return toAllUpperCase(classifier.getName()) + "_CLASSIFIER";
+	}
+
+	/**
+	 * Name of the static method in the class {@link #enumClassName(TLEnumeration)} of the owner of
+	 * the given {@link TLClassifier} that looks up the classifier.
+	 */
+	public static String classifierAccessor(TLClassifier classifier) {
+		return toLowerCaseStart(toCamelCase(classifier.getName())) + "Classifier";
+	}
+
+	/**
 	 * Name of the java constant in type {@link #constantName(TLType)} of the owner type of the
 	 * given part, that hold the name of the given type part.
 	 */

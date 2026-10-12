@@ -8,6 +8,9 @@ package com.top_logic.element.model.generate;
 import static com.top_logic.basic.generate.CodeUtil.*;
 import static com.top_logic.model.util.TLModelNamingConvention.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.element.config.SingletonConfig;
@@ -42,6 +45,15 @@ public class FactoryGenerator extends TLModelGenerator {
 	private final String _structureNameConst;
 
 	private String _factoryClassName;
+
+	/**
+	 * Names of the members already written as deprecated aliases for enumeration members.
+	 * 
+	 * <p>
+	 * Method names carry a <code>()</code> suffix to separate them from constant names.
+	 * </p>
+	 */
+	private final Set<String> _enumAliases = new HashSet<>();
 
 	/**
 	 * Creates a new {@link FactoryGenerator}.
@@ -292,21 +304,42 @@ public class FactoryGenerator extends TLModelGenerator {
 	}
 
 	private void writeClassifierConstant(TLEnumeration type, TLClassifier classifier) {
+		String constant = classifierNameConstant(classifier);
+		if (!_enumAliases.add(constant)) {
+			// Ambiguous name, the alias would clash with an alias of another enumeration.
+			return;
+		}
+		String enumClass = dropPackage(enumClassName(type));
+		String target = enumClass + "#" + classifierConstant(classifier);
+
 		javadocStart();
-		commentLine("Name of the classifier <code>" + classifier.getName() + "</code> in enumeration {@value #"
-				+ enumNameConstant(type) + "}.");
+		commentLine("Name of the classifier <code>" + classifier.getName() + "</code> in enumeration <code>"
+			+ type.getName() + "</code>.");
+		commentLine("");
+		commentLine("@deprecated Use {@link " + target + "}.");
 		javadocStop();
-		line("public static final String " + classifierNameConstant(classifier) + " = "
-				+ toStringLiteral(classifier.getName()) + ";");
+		line("@Deprecated");
+		line("public static final String " + constant + " = " + enumClass + "." + classifierConstant(classifier)
+			+ ";");
 		nl();
 	}
 
 	private void writeEnumNameConstant(TLEnumeration type) {
+		String constant = enumNameConstant(type);
+		if (!_enumAliases.add(constant)) {
+			// Ambiguous name, the alias would clash with an alias of another enumeration.
+			return;
+		}
+		String enumClass = dropPackage(enumClassName(type));
+
 		javadocStart();
 		commentLine("Name of the enumeration <code>" + type.getName() + "</code> in module {@value #"
 				+ _structureNameConst + "}.");
+		commentLine("");
+		commentLine("@deprecated Use {@link " + enumClass + "#" + ENUM_TYPE_NAME_CONSTANT + "}.");
 		javadocStop();
-		line("public static final String " + enumNameConstant(type) + " = " + toStringLiteral(type.getName()) + ";");
+		line("@Deprecated");
+		line("public static final String " + constant + " = " + enumClass + "." + ENUM_TYPE_NAME_CONSTANT + ";");
 		nl();
 	}
 
@@ -333,36 +366,47 @@ public class FactoryGenerator extends TLModelGenerator {
 
 	private void writeEnumLookup(TLEnumeration type) {
 		String enumAccessorName = enumAccessorName(type);
-		String typeNameConstant = enumNameConstant(type);
+		if (_enumAliases.add(enumAccessorName + "()")) {
+			String enumClass = dropPackage(enumClassName(type));
 
-		javadocStart();
-		commentLine("Lookup {@value #" + typeNameConstant + "} enumeration.");
-		javadocStop();
-		line("public static " + type(TLEnumeration.class) + " " + enumAccessorName + "() {");
-		{
-			line(
-				"return (" + type(TLEnumeration.class) + ") " + type(ModelService.class)
-						+ ".getApplicationModel().getModule("
-						+ _structureNameConst + ").getType("
-						+ typeNameConstant + ");");
+			javadocStart();
+			commentLine("Lookup the enumeration <code>" + type.getName() + "</code>.");
+			commentLine("");
+			commentLine("@deprecated Use {@link " + enumClass + "#" + ENUM_TYPE_ACCESSOR + "()}.");
+			javadocStop();
+			line("@Deprecated");
+			line("public static " + type(TLEnumeration.class) + " " + enumAccessorName + "() {");
+			{
+				line("return " + enumClass + "." + ENUM_TYPE_ACCESSOR + "();");
+			}
+			line("}");
+			nl();
 		}
-		line("}");
-		nl();
 
 		for (TLClassifier part : sort(type.getClassifiers())) {
-			writeClassifier(enumAccessorName, type, part);
+			writeClassifier(type, part);
 		}
-
 	}
 
-	private void writeClassifier(String enumAccessorName, TLEnumeration enumeration, TLClassifier classifier) {
+	private void writeClassifier(TLEnumeration enumeration, TLClassifier classifier) {
+		String accessorName = classifierAccessorName(classifier);
+		if (!_enumAliases.add(accessorName + "()")) {
+			// Ambiguous name, the alias would clash with an alias of another enumeration.
+			return;
+		}
+		String enumClass = dropPackage(enumClassName(enumeration));
+		String accessor = classifierAccessor(classifier);
+
 		javadocStart();
-		commentLine("Lookup classifier {@value #" + classifierNameConstant(classifier) + "} of enumeration {@value #"
-				+ enumNameConstant(enumeration) + "}.");
+		commentLine("Lookup classifier <code>" + classifier.getName() + "</code> of enumeration <code>"
+			+ enumeration.getName() + "</code>.");
+		commentLine("");
+		commentLine("@deprecated Use {@link " + enumClass + "#" + accessor + "()}.");
 		javadocStop();
-		line("public static " + type(TLClassifier.class) + " " + classifierAccessorName(classifier) + "() {");
+		line("@Deprecated");
+		line("public static " + type(TLClassifier.class) + " " + accessorName + "() {");
 		{
-			line("return " + enumAccessorName + "().getClassifier(" + classifierNameConstant(classifier) + ");");
+			line("return " + enumClass + "." + accessor + "();");
 		}
 		line("}");
 		nl();

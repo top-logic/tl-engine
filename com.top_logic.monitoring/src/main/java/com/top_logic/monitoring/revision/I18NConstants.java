@@ -33,6 +33,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CHANGE_TYPE_UPDATE;
 
+	/**
+	 * @en Neither a start nor an end of the range is given. Enter at least one of them.
+	 */
+	public static ResKey ERROR_NO_RANGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

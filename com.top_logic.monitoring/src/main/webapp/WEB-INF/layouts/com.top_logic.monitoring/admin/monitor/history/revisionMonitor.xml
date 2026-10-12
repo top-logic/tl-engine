@@ -14,7 +14,7 @@
 			securityObject="securityRoot"
 			toolbar="false"
 		>
-			<layoutInfo size="50px"/>
+			<layoutInfo size="100px"/>
 			<buttons>
 				<button id="refreshRevisionTable"
 					class="com.top_logic.monitoring.revision.UpdateChangeSetTreeCommand"

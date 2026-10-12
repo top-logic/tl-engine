@@ -8,20 +8,20 @@ package com.top_logic.monitoring.revision;
 import java.util.Date;
 import java.util.Map;
 
-import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.TrueFilter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.CommitEvent;
-import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.form.component.AbstractFormCommandHandler;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.monitoring.revision.ChangeSetTreeBuilder.ChangeSetTreeRoot;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -55,7 +55,19 @@ public class UpdateChangeSetTreeCommand extends AbstractFormCommandHandler {
 
 	@Override
 	protected HandlerResult applyChanges(LayoutComponent component, FormContext formContext, Object model, Map<String, Object> arguments) {
-		Date date = FormFieldHelper.getDateValue(formContext.getMember(ChangeSetSelector.RANGE_START_FIELD));
+		RangeMode rangeMode =
+			ChangeSetSelector.getRangeMode((SelectField) formContext.getField(ChangeSetSelector.RANGE_MODE_FIELD));
+		boolean timeRange = rangeMode == RangeMode.TIME_RANGE;
+		Date rangeStart = (Date) formContext.getField(ChangeSetSelector.RANGE_START_FIELD).getValue();
+		Date rangeEnd = (Date) formContext.getField(ChangeSetSelector.RANGE_END_FIELD).getValue();
+		Number revisionStart = (Number) formContext.getField(ChangeSetSelector.REVISION_START_FIELD).getValue();
+		Number revisionEnd = (Number) formContext.getField(ChangeSetSelector.REVISION_END_FIELD).getValue();
+		boolean noRange = timeRange ? rangeStart == null && rangeEnd == null
+			: revisionStart == null && revisionEnd == null;
+		if (noRange) {
+			return HandlerResult.error(I18NConstants.ERROR_NO_RANGE);
+		}
+
 		boolean includeTechnicalObjects =
 			FormFieldHelper.getbooleanValue(formContext.getMember(ChangeSetSelector.SHOW_TECHNICAL_FIELD));
 		boolean includeSystemChanges =
@@ -67,33 +79,48 @@ public class UpdateChangeSetTreeCommand extends AbstractFormCommandHandler {
 			filter = HIDE_SYSTEM_CHANGES;
 		}
 
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		HistoryManager hm = kb.getHistoryManager();
+		long firstCommit;
+		long lastCommit;
+		if (!timeRange) {
+			firstCommit = revisionStart == null ? hm.getFirstRevision() : revisionStart.longValue();
+			lastCommit = revisionEnd == null ? hm.getLastRevision() : revisionEnd.longValue() - 1;
+		} else {
+			// The first revision created at or after the start of the range.
+			firstCommit = rangeStart == null ? hm.getFirstRevision()
+				: hm.getRevisionAt(rangeStart.getTime() - 1).getCommitNumber() + 1;
+			// The last revision created before the end of the range.
+			lastCommit = rangeEnd == null ? hm.getLastRevision()
+				: hm.getRevisionAt(rangeEnd.getTime() - 1).getCommitNumber();
+		}
+
 		ChangeSetTreeRoot newSelection =
-			newInstance(PersistencyLayer.getKnowledgeBase(), date, includeTechnicalObjects, filter);
+			newInstance(kb, firstCommit, lastCommit, includeTechnicalObjects, filter);
 		((Selectable) component).setSelected(newSelection);
 
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private ChangeSetTreeRoot newInstance(KnowledgeBase kb, Date day, boolean showSystemObjects,
-			Filter<? super ChangeSet> filter) {
-		Revision firstRev = HistoryUtils.getInitialRevision(kb.getHistoryManager());
+	/**
+	 * Creates the {@link ChangeSetTreeRoot} displaying the revisions with commit numbers between
+	 * the given commit numbers (both inclusive).
+	 */
+	private ChangeSetTreeRoot newInstance(KnowledgeBase kb, long firstCommit, long lastCommit,
+			boolean showSystemObjects, Filter<? super ChangeSet> filter) {
+		HistoryManager hm = kb.getHistoryManager();
+		long first = Math.max(firstCommit, hm.getFirstRevision());
+		long last = Math.min(lastCommit, hm.getLastRevision());
+
 		Revision startRev;
-		Date dayBegin = DateUtil.adjustToDayBegin(day);
-	
-		if (dayBegin.getTime() <= firstRev.getDate()) {
-			// time given that is before the first revision
-			startRev = firstRev;
-		} else {
-			startRev = HistoryUtils.getRevisionAt(dayBegin.getTime());
-		}
 		Revision stopRev;
-		Date dayEnd = DateUtil.adjustToDayEnd(day);
-	
-		if (dayEnd.getTime() <= firstRev.getDate()) {
-			// time given that is before the first revision
-			stopRev = firstRev;
+		if (first > last) {
+			// Empty range.
+			startRev = null;
+			stopRev = null;
 		} else {
-			stopRev = HistoryUtils.getRevisionAt(dayEnd.getTime());
+			startRev = hm.getRevision(first);
+			stopRev = hm.getRevision(last);
 		}
 		return new ChangeSetTreeRoot(kb, startRev, stopRev, showSystemObjects, filter);
 	}

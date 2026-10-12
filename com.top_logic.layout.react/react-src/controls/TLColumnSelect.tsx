@@ -80,7 +80,8 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   // A lock click can reorder the list (the column joins or leaves the frozen block), and React then moves the row's node,
   // which takes the focus from the lock. The clicked lock is remembered by column name and focused again once the
-  // re-pushed list has rendered, as the keyboard move of the handle does.
+  // re-pushed list has rendered, as the keyboard move of the handle does - but only a lock that had the focus: a click
+  // that does not focus the button (Safari, for one) must not scroll the list to the block and show a focus ring.
   const lockRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const pendingLockFocus = React.useRef<string | null>(null);
 
@@ -91,13 +92,18 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
     pendingLockFocus.current = null;
     const lock = lockRefs.current.get(name);
-    if (lock && document.activeElement !== lock) {
+    // The user went on before the new list arrived: the focus is not the list's to take back.
+    const active = document.activeElement;
+    if (active !== null && active !== document.body && active !== lock) {
+      return;
+    }
+    if (lock && active !== lock) {
       lock.focus();
     }
   }, [entries]);
 
-  const handleLock = React.useCallback((name: string, locked: boolean) => {
-    pendingLockFocus.current = name;
+  const handleLock = React.useCallback((name: string, locked: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
+    pendingLockFocus.current = document.activeElement === event.currentTarget ? name : null;
     sendCommand(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [sendCommand]);
 
@@ -171,7 +177,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   aria-label={lockLabel}
                   ref={(element) => { if (element) lockRefs.current.set(entry.name, element); else lockRefs.current.delete(entry.name); }}
                   {...tooltipProps(lockLabel)}
-                  onClick={() => handleLock(entry.name, !entry.locked)}
+                  onClick={(event) => handleLock(entry.name, !entry.locked, event)}
                 >
                   <ThemeIcon encoded={entry.locked ? ICON_LOCK : ICON_UNLOCK} className="tl-button__icon tl-icon-sm" />
                 </button>

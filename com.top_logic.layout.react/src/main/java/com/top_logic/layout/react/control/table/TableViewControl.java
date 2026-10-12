@@ -1186,7 +1186,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Opens the column selection: which columns the table displays, in which order, and which of
-	 * them the rows are grouped by.
+	 * them it freezes.
 	 *
 	 * <p>
 	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
@@ -1207,7 +1207,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Resources resources = Resources.getInstance();
 
 		ReactColumnSelectControl selection =
-			new ReactColumnSelectControl(context, _view.columnOptions(), getGroupedColumn(), !_treeMode);
+			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames());
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
@@ -1217,8 +1217,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		window.setHeight(DisplayDimension.percent(70));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
-			setGroupedColumn(selection.groupedColumn());
-			applyColumns(selection.visibleColumns());
+			applyColumns(selection.visibleColumns(), selection.lockedColumns());
 			dialogs.closeTopDialog(DialogResult.ok(null));
 			return HandlerResult.DEFAULT_RESULT;
 		});
@@ -1226,9 +1225,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
 				// Resetting restores the table as it is defined, which includes showing its rows
-				// ungrouped again.
+				// ungrouped and freezing no column again.
 				setGroupedColumn(null);
-				applyColumns(_view.defaultColumnOrder());
+				applyColumns(_view.defaultColumnOrder(), List.of());
 				dialogs.closeTopDialog(DialogResult.ok(null));
 				return HandlerResult.DEFAULT_RESULT;
 			}),
@@ -1243,24 +1242,55 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Applies a new set of displayed columns and re-renders: the cell controls of the buffered rows
-	 * belong to the previous columns, so they are rebuilt for the new ones.
+	 * Applies a new set of displayed columns and the columns to freeze, and re-renders: the cell controls of the
+	 * buffered rows belong to the previous columns, so they are rebuilt for the new ones.
 	 *
 	 * <p>
-	 * Columns and rows must reach the client as one patch: a client that already knows a newly shown
-	 * column but still holds the rows of the previous column set would render a cell that has no
-	 * control yet.
+	 * Columns, frozen count and rows must reach the client as one patch: a client that already knows a newly shown
+	 * column but still holds the rows of the previous column set would render a cell that has no control yet.
 	 * </p>
+	 *
+	 * @param columns
+	 *        The columns to display, in display order.
+	 * @param lockedColumns
+	 *        The displayed columns to freeze; the table freezes up to the last of them in the new order.
 	 */
-	private void applyColumns(List<String> columns) {
+	protected void applyColumns(List<String> columns, List<String> lockedColumns) {
 		Object update = beginUpdate();
 		try {
 			_view.setColumnOrder(columns);
+			_view.setFrozenColumnCount(frozenPrefixOf(lockedColumns));
 			clearCells();
 			buildFullState();
 		} finally {
 			commitUpdate(update);
 		}
+	}
+
+	/**
+	 * The number of leading displayed columns up to and including the last of the given ones.
+	 */
+	private int frozenPrefixOf(List<String> lockedColumns) {
+		int result = 0;
+		List<ColumnView> displayed = _view.columns();
+		for (int n = 0; n < displayed.size(); n++) {
+			if (lockedColumns.contains(displayed.get(n).name())) {
+				result = n + 1;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The names of the columns the table freezes now.
+	 */
+	private Set<String> lockedColumnNames() {
+		Set<String> result = new HashSet<>();
+		List<ColumnView> displayed = _view.columns();
+		for (int n = 0; n < Math.min(_view.frozenColumnCount(), displayed.size()); n++) {
+			result.add(displayed.get(n).name());
+		}
+		return result;
 	}
 
 	/**

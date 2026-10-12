@@ -2036,10 +2036,14 @@ a.tl-field-value:hover {
 
 /* --- Kopf ------------------------------------------------------------------------ */
 
+/* Der Kopf scrollt waagerecht wie der Körper — Mausrad und Trackpad über dem Kopf, ohne eigenen Balken —,
+   und beide folgen einander (TLTableView koppelt in beide Richtungen; Hendrik 12.10.). */
 .tl-table__header {
   flex-shrink: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
   border-bottom: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
 }
 

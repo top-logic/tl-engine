@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
@@ -486,8 +487,8 @@ public class SidebarElement implements UIElement {
 				Runnable update = () -> sidebar.updateBadge(_id, badge(channel.get()));
 
 				ChannelListener listener = (sender, oldValue, newValue) -> update.run();
-				channel.addListener(listener);
-				sidebar.addCleanupAction(() -> channel.removeListener(listener));
+				Registration registration = channel.addListener(listener);
+				sidebar.addCleanupAction(registration::dispose);
 
 				ChannelObjectObserver observer = new ChannelObjectObserver(List.of(channel), Set.of(), update);
 				sidebar.addAttachListener(() -> observer.attach(context.getModelScope()));

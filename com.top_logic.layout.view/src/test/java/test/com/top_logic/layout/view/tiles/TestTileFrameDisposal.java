@@ -27,6 +27,7 @@ import test.com.top_logic.layout.view.form.ItemFixture;
 import com.top_logic.basic.DefaultFileManager;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
@@ -351,7 +352,7 @@ public class TestTileFrameDisposal extends BasicTestCase {
 	 */
 	private static final class SubscriptionCountingChannel extends DefaultViewChannel {
 
-		private final List<ChannelListener> _listeners = new ArrayList<>();
+		private final List<Registration> _registrations = new ArrayList<>();
 
 		private final List<VetoListener> _vetoListeners = new ArrayList<>();
 
@@ -360,15 +361,10 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		}
 
 		@Override
-		public void addListener(ChannelListener listener) {
-			_listeners.add(listener);
-			super.addListener(listener);
-		}
-
-		@Override
-		public void removeListener(ChannelListener listener) {
-			_listeners.remove(listener);
-			super.removeListener(listener);
+		public Registration addListener(ChannelListener listener) {
+			Registration registration = super.addListener(listener);
+			_registrations.add(registration);
+			return registration;
 		}
 
 		@Override
@@ -383,9 +379,15 @@ public class TestTileFrameDisposal extends BasicTestCase {
 			super.removeVetoListener(listener);
 		}
 
-		/** The number of listeners registered and not removed. */
+		/** The number of listener registrations that are still active. */
 		int listenerCount() {
-			return _listeners.size();
+			int result = 0;
+			for (Registration registration : _registrations) {
+				if (registration.isActive()) {
+					result++;
+				}
+			}
+			return result;
 		}
 
 		/** The number of veto listeners registered and not removed. */

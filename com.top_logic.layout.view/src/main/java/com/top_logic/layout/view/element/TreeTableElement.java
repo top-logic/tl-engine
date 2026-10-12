@@ -137,7 +137,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 		// The rows follow the tree, which follows the model and the input.
 		Runnable refresh = () -> {
-			source.structureChanged();
+			source.refresh();
 			control.refreshData();
 			if (table.selectionBinding() != null) {
 				table.selectionBinding().rowsRefreshed();

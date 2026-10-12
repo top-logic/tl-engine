@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.listen;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 
@@ -17,30 +18,33 @@ import com.top_logic.model.TLStructuredType;
  */
 public final class DummyModelScope implements ModelScope {
 	@Override
-	public boolean addModelListener(ModelListener listener) {
-		return false;
+	public Registration addModelListener(ModelListener listener) {
+		return Registration.NONE;
 	}
 
 	@Override
-	public boolean addModelListener(TLStructuredType type, ModelListener listener) {
-		return false;
+	public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+		return Registration.NONE;
 	}
 
 	@Override
-	public boolean addModelListener(TLObject object, ModelListener listener) {
-		return false;
+	public Registration addModelListener(TLObject object, ModelListener listener) {
+		return Registration.NONE;
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(ModelListener listener) {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(TLObject object, ModelListener listener) {
 		return false;

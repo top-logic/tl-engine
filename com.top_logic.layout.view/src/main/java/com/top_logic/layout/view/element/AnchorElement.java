@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
@@ -119,8 +120,8 @@ public class AnchorElement implements UIElement {
 			control.setCssClass(_config.getCssClass());
 			ChannelListener listener =
 				(sender, oldValue, newValue) -> control.setKey(AnchorControl.anchorId(newValue));
-			channel.addListener(listener);
-			control.addCleanupAction(() -> channel.removeListener(listener));
+			Registration registration = channel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 			return control;
 		}
 		AnchorControl result = new AnchorControl(context, child, _config.getName());

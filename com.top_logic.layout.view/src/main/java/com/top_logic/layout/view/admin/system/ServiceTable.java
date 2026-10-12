@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.util.ResKey;
@@ -152,8 +153,8 @@ public class ServiceTable implements UIElement {
 				source.setElements(rows(newValue));
 				control.refreshData();
 			};
-			dataChannel.addListener(listener);
-			control.addCleanupAction(() -> dataChannel.removeListener(listener));
+			Registration registration = dataChannel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 
 		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;

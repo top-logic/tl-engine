@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.util.Resources;
 
 /**
@@ -46,8 +46,6 @@ public class ReactTileBreadcrumbControl extends ReactControl {
 
 	private final ResKey _homeLabel;
 
-	private final ChannelListener _pathListener;
-
 	/**
 	 * Creates a new {@link ReactTileBreadcrumbControl}.
 	 *
@@ -63,9 +61,9 @@ public class ReactTileBreadcrumbControl extends ReactControl {
 		_pathChannel = pathChannel;
 		_homeLabel = homeLabel;
 
-		_pathListener = (sender, oldValue, newValue) -> putState(ITEMS, buildItems());
-		_pathChannel.addListener(_pathListener);
-		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
+		Registration pathRegistration =
+			_pathChannel.addListener((sender, oldValue, newValue) -> putState(ITEMS, buildItems()));
+		addCleanupAction(pathRegistration::dispose);
 
 		putState(ITEMS, buildItems());
 	}

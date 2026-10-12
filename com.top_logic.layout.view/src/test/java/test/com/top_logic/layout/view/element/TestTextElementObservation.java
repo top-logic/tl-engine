@@ -22,6 +22,7 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClassImpl;
@@ -389,31 +390,37 @@ public class TestTextElementObservation extends BasicTestCase {
 		private final Set<ModelListener> _globalListeners = new LinkedHashSet<>();
 
 		@Override
-		public boolean addModelListener(ModelListener listener) {
-			return _globalListeners.add(listener);
+		public Registration addModelListener(ModelListener listener) {
+			_globalListeners.add(listener);
+			return Registration.onDispose(() -> removeModelListener(listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLStructuredType type, ModelListener listener) {
-			return _typeListeners.computeIfAbsent(type, x -> new LinkedHashSet<>()).add(listener);
+		public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+			_typeListeners.computeIfAbsent(type, x -> new LinkedHashSet<>()).add(listener);
+			return Registration.onDispose(() -> removeModelListener(type, listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLObject object, ModelListener listener) {
-			return _objectListeners.computeIfAbsent(object.tId(), x -> new LinkedHashSet<>()).add(listener);
+		public Registration addModelListener(TLObject object, ModelListener listener) {
+			_objectListeners.computeIfAbsent(object.tId(), x -> new LinkedHashSet<>()).add(listener);
+			return Registration.onDispose(() -> removeModelListener(object, listener));
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(ModelListener listener) {
 			return _globalListeners.remove(listener);
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 			Set<ModelListener> listeners = _typeListeners.get(type);
 			return listeners != null && listeners.remove(listener);
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLObject object, ModelListener listener) {
 			Set<ModelListener> listeners = _objectListeners.get(object.tId());

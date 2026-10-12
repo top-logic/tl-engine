@@ -210,14 +210,15 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 	}
 
 	/**
-	 * Takes up a change of the {@link TreeStructure}: the displayed rows are computed again from
-	 * the nodes it holds now.
+	 * Recomputes the displayed rows after the {@link TreeStructure} changed - a node added or
+	 * removed, children replaced - and notifies the listeners.
 	 *
 	 * <p>
-	 * A node whose {@link TreeStructure#key(Object) key} is still there keeps being expanded.
+	 * A node whose {@link TreeStructure#key(Object) key} is still part of the tree keeps being
+	 * expanded.
 	 * </p>
 	 */
-	public void structureChanged() {
+	public void refresh() {
 		recompute();
 		fireInvalidated();
 	}

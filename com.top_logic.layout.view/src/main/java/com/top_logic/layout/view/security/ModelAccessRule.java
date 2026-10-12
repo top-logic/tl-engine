@@ -19,11 +19,11 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.ObservableRule;
@@ -402,19 +402,17 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 	 */
 	@Override
 	public Runnable observe(Runnable revalidate) {
-		List<Runnable> stops = new ArrayList<>();
-		follow(_objectChannel, revalidate, stops);
-		follow(_containerChannel, revalidate, stops);
-		return () -> stops.forEach(Runnable::run);
+		List<Registration> registrations = new ArrayList<>();
+		follow(_objectChannel, revalidate, registrations);
+		follow(_containerChannel, revalidate, registrations);
+		return () -> registrations.forEach(Registration::dispose);
 	}
 
-	private static void follow(ViewChannel channel, Runnable revalidate, List<Runnable> stops) {
+	private static void follow(ViewChannel channel, Runnable revalidate, List<Registration> registrations) {
 		if (channel == null) {
 			return;
 		}
-		ChannelListener listener = (sender, oldValue, newValue) -> revalidate.run();
-		channel.addListener(listener);
-		stops.add(() -> channel.removeListener(listener));
+		registrations.add(channel.addListener((sender, oldValue, newValue) -> revalidate.run()));
 	}
 
 	@Override

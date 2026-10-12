@@ -386,13 +386,28 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		return false;
 	}
 
+	/**
+	 * Registers the listeners updating the buttons that move options between the option tree and
+	 * the selection list.
+	 * 
+	 * <p>
+	 * These buttons and listeners only exist in a multiple selection.
+	 * </p>
+	 */
 	private void registerSelectionListeners() {
+		if (!multiSelect) {
+			return;
+		}
 		optionTree.getSelectionModel().addSelectionListener(_selectButtonUpdater);
 		selectionList.getSelectionModel().addListSelectionListener(_selectButtonUpdater);
 		selectionList.getListModel().addListDataListener(_listButtonUpdater);
 	}
 
+	/** @see #registerSelectionListeners() */
 	private void unregisterSelectionListeners() {
+		if (!multiSelect) {
+			return;
+		}
 		optionTree.getSelectionModel().removeSelectionListener(_selectButtonUpdater);
 		selectionList.getSelectionModel().removeListSelectionListener(_selectButtonUpdater);
 		selectionList.getListModel().removeListDataListener(_listButtonUpdater);

@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
@@ -137,8 +138,8 @@ public class LockTable implements UIElement {
 				source.setElements(rows(newValue));
 				control.refreshData();
 			};
-			dataChannel.addListener(listener);
-			control.addCleanupAction(() -> dataChannel.removeListener(listener));
+			Registration registration = dataChannel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 
 		if (_selectionRef != null) {

@@ -10,17 +10,24 @@ import java.util.List;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracedValueComputation;
 import com.top_logic.model.search.configured.QueryExecutorMethod;
 import com.top_logic.model.search.configured.TracingScriptMethod;
 import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.AccessLike;
 import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.interpreter.Rewriter;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.Pointer;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link Rewriter} replacing expressions accessing model properties with those that create an
@@ -72,12 +79,80 @@ public final class TracingAccessRewriter extends Rewriter<Void> {
 	}
 
 	/**
+	 * Looks up the value of an attribute in a tracing evaluation.
+	 *
+	 * <p>
+	 * The access itself is reported to the trace in the context variable {@link #TRACE}. The value
+	 * is read from the overlay of the given object, if the {@link OverlayLookup} in the context
+	 * variable {@link #UPDATE_CONTAINER} has one. If the attribute's {@link StorageDetail storage}
+	 * is a {@link TracedValueComputation}, the value is computed through
+	 * {@link TracedValueComputation#computeTraced(TLObject, TLStructuredTypePart, Sink, OverlayLookup)}
+	 * with the same trace and overlay lookup, so that the accesses of the computation are reported
+	 * as well and the computation is based on the edited values. Otherwise, the value is looked up
+	 * with {@link AccessLike#lookupValue(TLObject, TLStructuredTypePart, boolean)}.
+	 * </p>
+	 *
+	 * @param definitions
+	 *        The tracing {@link EvalContext} defining {@link #TRACE} and {@link #UPDATE_CONTAINER}.
+	 * @param self
+	 *        The object to access.
+	 * @param part
+	 *        The attribute to look up.
+	 * @param withSecurity
+	 *        Whether the read access to the attribute must be checked.
+	 * @return The value of the given attribute.
+	 */
+	public static Object lookupTraced(EvalContext definitions, TLObject self, TLStructuredTypePart part,
+			boolean withSecurity) {
+		traceAccess(definitions, self, part);
+
+		OverlayLookup overlays = (OverlayLookup) definitions.getVar(UPDATE_CONTAINER);
+		TLObject target = self;
+		if (overlays != null) {
+			TLObject overlay = overlays.getExistingOverlay(self);
+			if (overlay != null) {
+				target = overlay;
+			}
+		}
+
+		TLStructuredTypePart concretePart = concretePart(target, part);
+		if (concretePart != null
+			&& concretePart.getStorageImplementation() instanceof TracedValueComputation computation) {
+			if (withSecurity && !ModelAccessRights.getInstance().isReadAllowed(target, part)) {
+				return TLModelUtil.getEmptyValue(part);
+			}
+			Object value = computation.computeTraced(target, concretePart, trace(definitions), overlays);
+			return SearchExpression.normalizeValue(value);
+		}
+
+		return AccessLike.lookupValue(target, part, withSecurity);
+	}
+
+	/**
+	 * The part of the type of the given object that implements the given (potentially abstract)
+	 * part, or <code>null</code> if it cannot be resolved.
+	 */
+	private static TLStructuredTypePart concretePart(TLObject self, TLStructuredTypePart part) {
+		if (!part.isAbstract()) {
+			return part;
+		}
+		TLStructuredType type = self.tType();
+		if (type == null) {
+			return null;
+		}
+		return type.getPart(part.getName());
+	}
+
+	/**
 	 * Marks the combination of {@link TLObject self} and {@link TLStructuredTypePart part} as
 	 * relevant for the trace.
 	 */
 	public static void traceAccess(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		@SuppressWarnings("unchecked")
-		Sink<Pointer> trace = (Sink<Pointer>) definitions.getVar(TRACE);
-		trace.add(Pointer.create(self, part));
+		trace(definitions).add(Pointer.create(self, part));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Sink<Pointer> trace(EvalContext definitions) {
+		return (Sink<Pointer>) definitions.getVar(TRACE);
 	}
 }

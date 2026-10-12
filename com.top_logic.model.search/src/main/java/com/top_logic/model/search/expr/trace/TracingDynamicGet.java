@@ -24,7 +24,6 @@ class TracingDynamicGet extends DynamicGet {
 
 	@Override
 	public Object lookupValue(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		TracingAccessRewriter.traceAccess(definitions, self, part);
-		return super.lookupValue(definitions, self, part);
+		return TracingAccessRewriter.lookupTraced(definitions, self, part, usesSecurity());
 	}
 }

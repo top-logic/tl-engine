@@ -35,6 +35,8 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracedValueComputation;
 import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.persistency.attribute.AbstractExpressionAttribute;
@@ -51,7 +53,8 @@ import com.top_logic.util.error.TopLogicException;
  */
 @InApp
 @Label("Calculation via TL-Script")
-public class AttributeByExpression<C extends AttributeByExpression.Config<?>> extends AbstractExpressionAttribute<C> {
+public class AttributeByExpression<C extends AttributeByExpression.Config<?>> extends AbstractExpressionAttribute<C>
+		implements TracedValueComputation {
 
 	/**
 	 * Configuration options for {@link AttributeByExpression}.
@@ -130,6 +133,13 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) throws AttributeException {
 		Object result = executor(attribute.tKnowledgeBase(), attribute.getModel(), getExpr()).execute(object);
+		return convertAndCheck(object, attribute, result);
+	}
+
+	@Override
+	public Object computeTraced(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+			OverlayLookup overlays) {
+		Object result = _analyzer.execute(attribute.tKnowledgeBase(), trace, overlays, object);
 		return convertAndCheck(object, attribute, result);
 	}
 

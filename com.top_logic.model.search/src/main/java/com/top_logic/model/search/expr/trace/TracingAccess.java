@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr.trace;
 
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -25,17 +24,6 @@ class TracingAccess extends Access {
 
 	@Override
 	public Object lookupValue(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		TracingAccessRewriter.traceAccess(definitions, self, part);
-		OverlayLookup overlays =
-			(OverlayLookup) definitions.getVar(TracingAccessRewriter.UPDATE_CONTAINER);
-
-		if (overlays != null) {
-			TLObject overlay = overlays.getExistingOverlay(self);
-			if (overlay != null) {
-				return super.lookupValue(definitions, overlay, part);
-			}
-		}
-
-		return super.lookupValue(definitions, self, part);
+		return TracingAccessRewriter.lookupTraced(definitions, self, part, usesSecurity());
 	}
 }

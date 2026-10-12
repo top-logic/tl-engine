@@ -2418,6 +2418,13 @@ a.tl-field-value:hover {
   flex: 1 1 auto;
 }
 
+/* Die Leerzeile bleibt am linken Rand des Körpers, auch wenn er waagerecht gescrollt ist: sonst stünde
+   „Keine Einträge" außerhalb des Bildes, sobald ein Filter die letzte Zeile nimmt (Sichtprüfung 12.10.). */
+.tl-table__body > [role="row"]:has(> .tl-status) {
+  position: sticky;
+  inset-inline-start: 0;
+}
+
 /* --- Ablehnung beim Ziehen ------------------------------------------------------- */
 
 /* Warum das Ziel unter dem Zeiger ablehnt: ein tl-popover (Lage aus bridge/popover.ts), Text und Rand

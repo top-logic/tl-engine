@@ -90,6 +90,8 @@ The source is a Java class implementing `ChannelSource`, configured in the `<sou
 
 Java code that has a `ViewContext` and a channel at hand - an action starting background work, an element of its own - does not need a declared source: a `ChannelPublisher` created on a request thread delivers values into the channel from any thread with the same threading, throttling and conflation; `close()` ends it.
 
+Demo: `com.top_logic.demo.react/src/main/webapp/WEB-INF/views/demo/live-channel-demo.view.xml` with the source `com.top_logic.demo.react.channel.DemoTickerSource`.
+
 ## How elements use channels
 
 Elements and commands name channels in their configuration; a channel reference is the plain channel name. The common properties:

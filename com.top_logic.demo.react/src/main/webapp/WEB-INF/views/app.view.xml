@@ -322,6 +322,15 @@
 								<de>Lang laufender Auftrag</de>
 							</label>
 						</nav-item>
+						<nav-item id="live-channel"
+							icon="css:bi bi-broadcast"
+						>
+							<view-ref view="demo/live-channel-demo.view.xml"/>
+							<label>
+								<en>Live channel</en>
+								<de>Live-Kanal</de>
+							</label>
+						</nav-item>
 						<nav-item id="wizard"
 							icon="css:bi bi-signpost-2"
 						>

@@ -14,6 +14,8 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -21,6 +23,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
@@ -54,6 +57,22 @@ public class TestFieldControlRegistry extends TestCase {
 		assertNotNull("A number has a control", _registry.lookup(Integer.class));
 		assertNotNull("A date has a control", _registry.lookup(Date.class));
 		assertNotNull("An internationalized text has a control", _registry.lookup(ResKey.class));
+	}
+
+	/**
+	 * A binary value is edited by the binary control registered for the application type of the
+	 * platform's binary datatype, {@link BinaryDataSource}, which also serves a {@link BinaryData}
+	 * value, and not as text.
+	 */
+	public void testBinaryValueTypes() {
+		ReactFieldControlProvider binary = _registry.lookup(BinaryDataSource.class);
+		assertNotNull("A binary data source has a control", binary);
+		assertNotSame("A binary value is not edited as text", FieldControlRegistry.TEXT, binary);
+		assertSame("A binary data is a binary data source", binary, _registry.lookup(BinaryData.class));
+
+		ReactControl control = _registry.createControl(context(), FieldSpec.of(BinaryDataSource.class, "File"),
+			new AbstractFieldModel(null));
+		assertInstanceof(ReactBinaryFieldControl.class, control);
 	}
 
 	/**
@@ -191,10 +210,12 @@ public class TestFieldControlRegistry extends TestCase {
 	}
 
 	private static ReactControl createControl(FieldSpec field, ReactFieldControlProvider provider) {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
-			new ReactWindowRegistry("test"));
-		return FieldControlRegistry.getInstance().createControl(context, field,
+		return FieldControlRegistry.getInstance().createControl(context(), field,
 			new AbstractFieldModel(List.of("A")), provider);
+	}
+
+	private static ReactContext context() {
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	private static void assertInstanceof(Class<?> expected, Object actual) {

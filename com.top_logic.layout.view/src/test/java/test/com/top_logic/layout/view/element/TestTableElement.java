@@ -388,6 +388,8 @@ public class TestTableElement extends TestCase {
 		assertNotNull("The objects standing for the columns are computed.", milestones.getColumns());
 		assertNotNull("The columns are named after their objects.", milestones.getColumnName());
 		assertNotNull("The columns are labelled after their objects.", milestones.getColumnLabel());
+		assertNotNull("The columns say which of them are shown from the start.",
+			milestones.getColumnVisible());
 		assertNotNull("The cell value is computed.", milestones.getValue());
 		assertNotNull("An edited value is written back.", milestones.getUpdate());
 		assertNotNull("The columns say which of their rows are edited.", milestones.getCanUpdate());
@@ -397,6 +399,8 @@ public class TestTableElement extends TestCase {
 
 		DynamicColumns.Config plain = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
 		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
+		assertNull("Without a visibility function, every column is shown from the start.",
+			plain.getColumnVisible());
 		assertEquals("The columns keep the width their type derives.", 0, plain.getWidth());
 		assertFalse("The columns are edited like any other unless they say otherwise.",
 			plain.getReadonly());

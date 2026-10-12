@@ -62,6 +62,17 @@ public interface DynamicColumnSet {
 	ColumnType type(Object column);
 
 	/**
+	 * Whether the column the given object stands for is shown from the start, rather than only
+	 * offered in the column selection.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 */
+	default boolean visible(Object column) {
+		return true;
+	}
+
+	/**
 	 * Reads the cell value of the column the given object stands for from a row.
 	 *
 	 * @param column

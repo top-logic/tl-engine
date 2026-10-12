@@ -393,6 +393,10 @@
   flex: 0 0 auto;
   display: inline-grid;
   place-content: center;
+  /* Auf einer Textzeile (die Eingabe im Formularfeld) mittig statt auf der Grundlinie: die eines
+     inline-grid kommt vom ersten Kind, und das ist erst mit Haken das ::after — ohne diese Zeile sprang
+     das Kästchen beim Ankreuzen um 2,6 px (Sichtprüfung 12.10.). */
+  vertical-align: middle;
   width: var(--tl-size-choice);
   height: var(--tl-size-choice);
   margin: 0;
@@ -625,7 +629,13 @@
 .tl-segmented__segment[data-tl-role="category-8"] { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
 
 .tl-segmented__segment:where(:not(:disabled)):hover {
-  background: var(--tl-surface-interactive-hover);
+  background: var(--tl-surface-interactive-selected);
+}
+
+/* Das Segment liegt auf der Feldfläche: dort rückt die Skala eine Stufe vor wie bei den Knöpfen im Feld
+   (06.10.) — Zeigen -selected, Drücken -active; -hover hielte hell nur 1,01 (Sichtprüfung 12.10.). */
+.tl-segmented__segment:where(:not(:disabled)):active {
+  background: var(--tl-surface-interactive-active);
 }
 
 .tl-segmented__segment[aria-checked="true"],
@@ -698,7 +708,13 @@
 .tl-chip[data-tl-role="category-8"] { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
 
 .tl-chip:where(:not(:disabled)):hover {
-  background: var(--tl-surface-interactive-hover);
+  background: var(--tl-surface-interactive-selected);
+}
+
+/* Die Kapsel ist selbst Feldfläche (surface-field): Zeigen und Drücken rücken eine Stufe vor wie bei den
+   Knöpfen im Feld (06.10.); -hover hielte hell nur 1,01 (Sichtprüfung 12.10.). */
+.tl-chip:where(:not(:disabled)):active {
+  background: var(--tl-surface-interactive-active);
 }
 
 /* Gewählt sieht aus wie angekreuzt: die Marke als Fläche, die Beschriftung auf der Marke. */
@@ -1609,8 +1625,8 @@ a.tl-field-value:hover {
    tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter, was der
    Eintrag trägt (Gruppierungsknopf, label.tl-choice mit tl-checkbox). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
-   hoch; dann scrollt die Liste in sich. Steht die Suche davor, ist sie genau so hoch: ein Dialog um
-   sie schrumpft beim Tippen nicht unter dem Zeiger. */
+   hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
+   Suche bleibt stehen, nur die Liste scrollt, und die Höhe gibt der Behälter (Sichtprüfung 12.10.). */
 
 .tl-reorder-list {
   display: flex;
@@ -1623,10 +1639,23 @@ a.tl-field-value:hover {
 }
 .tl-reorder-list[hidden] { display: none; }
 
-/* Mit Suche davor eine feste Höhe: weniger Treffer lassen die Liste leer auslaufen, statt sie und den
-   Dialog um sie zu verkürzen. */
+/* Mit Suche davor füllen Suche und Liste den Behälter, der sie trägt (die Spaltenwahl: ein Fenster mit
+   fester Höhe): eine Spalte mit Innenabstand, damit der Fokusring der Suche ganz zu sehen ist; die
+   Liste nimmt den Rest und scrollt allein. Vorher war die Liste fest size-popover-max hoch und lief im
+   kleineren Fensterkörper über — zwei Scrollbereiche ineinander, die Suche scrollte weg (12.10.).
+   Weniger Treffer lassen die Liste leer auslaufen; die Höhe hält der Behälter. */
+:where(:has(> .tl-reorder-list__search)) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding: var(--tl-space-md) var(--tl-space-md) 0;
+}
+
 .tl-reorder-list__search ~ .tl-reorder-list {
-  block-size: var(--tl-size-popover-max);
+  flex: 1 1 auto;
+  min-block-size: 0;
 }
 
 .tl-reorder-list__item {

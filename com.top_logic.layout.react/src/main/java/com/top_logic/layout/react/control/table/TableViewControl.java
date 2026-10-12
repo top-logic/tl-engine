@@ -1230,6 +1230,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
+		// A fixed height: the search stays in place above the list, which fills the rest and scrolls
+		// alone, and the window keeps its size while a search narrows the list.
+		window.setHeight(DisplayDimension.percent(70));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
 			setGroupedColumn(selection.groupedColumn());

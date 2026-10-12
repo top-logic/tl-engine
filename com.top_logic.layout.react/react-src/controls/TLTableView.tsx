@@ -114,6 +114,13 @@ interface RowState {
    * offers this text; the others offer their own text while it does not fit.
    */
   tooltips?: Record<string, string>;
+  /** The CSS class the row's element carries in addition to its own classes; absent for none. */
+  cssClass?: string;
+  /**
+   * The CSS class of the cells that are marked, by column name. A cell named here carries it in
+   * addition to its column's class; the others carry the column's class only.
+   */
+  cellClasses?: Record<string, string>;
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
@@ -1534,7 +1541,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 (dropState && dropState.row === row.id
                   ? (dropRefused ? ' tlTableView__row--dropRefused' : ' tlTableView__row--dragOver-' + dropState.position)
                   : '') +
-                (row.groupCount != null ? ' tlTableView__row--group' : '')
+                (row.groupCount != null ? ' tlTableView__row--group' : '') +
+                (row.cssClass ? ' ' + row.cssClass : '')
               }
               style={{
                 position: 'absolute',
@@ -1594,6 +1602,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   cellClass += ' tlTableView__cell--pinnedEndFirst';
                 }
                 if (col.cssClass) cellClass += ' ' + col.cssClass;
+                const rowCellClass = row.cellClasses?.[col.name];
+                if (rowCellClass) cellClass += ' ' + rowCellClass;
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
                 // What the cell says: the tooltip of its content where it has one, its own text

@@ -4029,6 +4029,59 @@ button.tlDrawer__closeBtn:focus-visible {
 	clip-path: inset(0 0 0 -4px);
 }
 
+/* -- Highlighted rows and cells --
+   A row or a single cell carrying one of the classes tl-status-error, tl-status-warning,
+   tl-status-success or tl-status-info (the CSS class the table view answers for the row or the cell)
+   is tinted with the subtle surface of that status role.
+
+   Selection wins over the tint: a selected row shows the selection colors only, on its scrolling
+   and on its frozen and pinned cells alike, and so does a marked cell in it. Hover does not change a
+   tinted row or a tinted cell: the tint stays while the pointer is over it. The frozen and the pinned
+   cells paint an opaque background of their own, so they are tinted together with their row -
+   otherwise the tint would stop at the frozen boundary. All of this is expressed by matching unselected
+   rows only; the selectors outrank the hover rules above by specificity. */
+
+.tlTableView__row.tl-status-error:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-error:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-error:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-error-subtle);
+}
+
+.tlTableView__row.tl-status-warning:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-warning:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-warning:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-warning-subtle);
+}
+
+.tlTableView__row.tl-status-success:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-success:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-success:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-success-subtle);
+}
+
+.tlTableView__row.tl-status-info:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-info:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-info:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-info-subtle);
+}
+
+/* A marked cell in a tinted row shows its own tint: the cell rules follow the row rules. */
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-error {
+	background: var(--tl-status-error-subtle);
+}
+
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-warning {
+	background: var(--tl-status-warning-subtle);
+}
+
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-success {
+	background: var(--tl-status-success-subtle);
+}
+
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-info {
+	background: var(--tl-status-info-subtle);
+}
+
 /* -- A column offering a command on every row: the button is ghost and small, carrying its own
    frame under the pointer and keyboard focus, so the column needs none of its own. */
 

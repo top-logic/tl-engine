@@ -101,6 +101,36 @@ public interface TableView<R> {
 	CellContent cell(Row<R> row, String column);
 
 	/**
+	 * The CSS class marking the given row as a whole, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier puts it on the row's element, so that a row can be highlighted by what its row
+	 * object is (e.g. by its state). The cells keep the column-level class
+	 * {@link Column#cssClass()} and their own {@link #cellCssClass(Row, String) cell class}.
+	 * </p>
+	 *
+	 * @see #cellCssClass(Row, String)
+	 */
+	default String rowCssClass(Row<R> row) {
+		return null;
+	}
+
+	/**
+	 * The CSS class marking the given row's cell in the named column, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier puts it on the cell's element, so that a single cell can be highlighted by the row
+	 * it is in, see {@link Column#cssClass(Object)}. It is added to the column-level class
+	 * {@link Column#cssClass()}, it does not replace it.
+	 * </p>
+	 *
+	 * @see #rowCssClass(Row)
+	 */
+	default String cellCssClass(Row<R> row, String column) {
+		return null;
+	}
+
+	/**
 	 * The filter of the named column, or {@code null} if the column is not filterable. Used
 	 * by a UI tier (together with {@link #columnMatchCounts} and the current
 	 * {@link #state()}) to build a filter editor.

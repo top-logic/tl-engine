@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -30,6 +31,7 @@ import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
 import com.top_logic.table.SearchSpec;
@@ -94,6 +96,9 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * The order last handed to the {@link RowSource}, see {@link #pushOrder()}.
 	 */
 	private SortSpec _pushedOrder = SortSpec.NONE;
+
+	/** @see #setRowCssClass(Function) */
+	private Function<? super R, String> _rowCssClass;
 
 	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
@@ -500,6 +505,61 @@ public class DefaultTableView<R> implements TableView<R> {
 			default:
 				return CellContent.empty();
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A {@link RowKind#DATA data row} answers the function set with
+	 * {@link #setRowCssClass(Function)}, a group header or aggregate row none.
+	 * </p>
+	 */
+	@Override
+	public String rowCssClass(Row<R> row) {
+		if (_rowCssClass == null || row.kind() != RowKind.DATA) {
+			return null;
+		}
+		return _rowCssClass.apply(row.data());
+	}
+
+	/**
+	 * Sets the function computing the CSS class of a {@link RowKind#DATA data row} from its row
+	 * object.
+	 *
+	 * <p>
+	 * The function is evaluated whenever a UI tier fetches the row, so the class follows the row
+	 * object's state.
+	 * </p>
+	 *
+	 * @param rowCssClass
+	 *        The function answering the class for a row object, or {@code null} for none. The
+	 *        function may answer {@code null} for a row object that gets no class.
+	 *
+	 * @see #rowCssClass(Row)
+	 */
+	public void setRowCssClass(Function<? super R, String> rowCssClass) {
+		_rowCssClass = rowCssClass;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A {@link RowKind#DATA data row} answers the column's {@link Column#cssClass(Object)} for
+	 * its row object, a group header or aggregate row none.
+	 * </p>
+	 */
+	@Override
+	public String cellCssClass(Row<R> row, String column) {
+		if (row.kind() != RowKind.DATA) {
+			return null;
+		}
+		Column<R, ?> definition = _columns.get(column);
+		if (definition == null) {
+			return null;
+		}
+		return definition.cssClass(row.data());
 	}
 
 	private <V> CellContent aggregate(Column<R, V> column, Group<R> group) {

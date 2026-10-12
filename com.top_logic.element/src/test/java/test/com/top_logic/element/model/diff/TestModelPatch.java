@@ -117,12 +117,22 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		return left;
 	}
 
+	public void testPatchAddGeneralizationOverride() throws SQLException {
+		doTestMigrate("test-add-generalization-override-left.model.xml",
+			"test-add-generalization-override-right.model.xml");
+	}
+
 	public void testPatchTransient() {
 		doTestTransient("test1-left.model.xml", "test1-right.model.xml");
 	}
 
 	public void testPatchOverrideTransient() {
 		doTestTransient("test-override-left.model.xml", "test-override-right.model.xml");
+	}
+
+	public void testPatchAddGeneralizationOverrideTransient() {
+		doTestTransient("test-add-generalization-override-left.model.xml",
+			"test-add-generalization-override-right.model.xml");
 	}
 
 	public void testPatchRefDeleteTransient() {
@@ -143,6 +153,8 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		assertCopyWithoutDiff("test1-left.model.xml");
 		assertCopyWithoutDiff("test1-right.model.xml");
 		assertCopyWithoutDiff("test-override-left.model.xml");
+		assertCopyWithoutDiff("test-add-generalization-override-left.model.xml");
+		assertCopyWithoutDiff("test-add-generalization-override-right.model.xml");
 	}
 
 	private void assertCopyWithoutDiff(String fixture) {

@@ -117,7 +117,7 @@ input:
 
 | Operation | Checked on the input |
 |---|---|
-| Reading an attribute (`$o.get(attr)`, UI field) | Attribute right `Read` (R3). Denied: the empty value. |
+| Reading an attribute (`$o.get(attr)`, UI field) | Attribute right `Read` (R3). Denied: the empty value; a table cell shows a placeholder (R11a). |
 | Writing an attribute (`update`, `set`, UI field) | Attribute right `Write` (R3). |
 | Creating a part | `Create` on the composition of the container. |
 | Deleting an object | `Delete` on the object. |
@@ -213,6 +213,26 @@ Consequences:
 - A field shows the stored value, so field and validation see the same value.
 - TL-Script and form fields differ: `$root.get(`pm:Root#as`).size()` counts the discoverable
   elements only, the field of `Root#as` shows all of them, the undiscoverable ones masked.
+
+### R11a - table cells mask unreadable attributes
+
+A table cell of an attribute the user may not read on its row shows the placeholder (`*****`),
+whatever its value - also when no value is set, and for every type of attribute (text, number,
+date, boolean, reference, composition). The cell is distinguishable from an empty value: an
+unreadable boolean is no unchecked checkbox, an unreadable reference no empty cell.
+
+- The value is not read; the cell holds a marker instead of the empty value of the attribute.
+- The cell is not editable, even for a user holding `Write` on the attribute.
+- Sorting, filtering and export see only the placeholder: an unreadable cell sorts after every
+  value, matches no filter criterion on a value, is found by the table search only through the
+  placeholder text, and is exported as the placeholder.
+- An embedded column whose path passes a reference the user may not read shows the placeholder as
+  well.
+- A column whose attribute the user may read on no row is not offered at all.
+- Exception: a column built by a column provider of the application (`ColumnProvider`) shows and
+  searches the cell by the placeholder, but its own sort and filter see the cell as empty - the
+  provider is given the readable values only.
+- Form fields are not affected: a field of an attribute the user may not read is hidden.
 
 ### R12 - secured and unsecured script kinds
 
@@ -358,7 +378,7 @@ as the value of a reference (R7).
 
 ## Consequences
 
-- **Scope: the React view layer.** The user interface part of this specification (R4, R8, R11) is
+- **Scope: the React view layer.** The user interface part of this specification (R4, R8, R11, R11a) is
   implemented for the React view layer. The classic layout UI does not check attribute rights; its
   script based providers deliver the discoverable (not only the readable) objects, so a table there
   shows all column values of a row the user may only discover. An application using model based
@@ -406,6 +426,8 @@ before it.
 - References used to deliver their targets unfiltered; with R4 they are filtered for `Discover`.
 - Form fields used to show all elements of a reference with their labels; with R11 the
   undiscoverable ones are masked.
+- Table cells of an attribute the user may not read used to show the empty value of the attribute;
+  with R11a they show the placeholder.
 - Label scripts used to be evaluated secured; with R12 they are evaluated unsecured.
 - Constraint messages could name any object; with R12 they mask undiscoverable ones.
 - Ticket #29453 restricted `all()`, `all($t)` and `kbQuery` in a secured evaluation to the readable

@@ -114,6 +114,13 @@
 							roles="TestViewModelAccess.Responsible"
 						/>
 					</part>
+					<part name="TestViewModelAccess:Project#approved">
+						<!-- Only the responsible of the project may see whether it is approved. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
 					<part name="TestViewModelAccess:Project#classified">
 						<!-- Nobody but a super-user may read this attribute. -->
 						<grant operation="Read"/>

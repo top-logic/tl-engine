@@ -58,9 +58,9 @@ import com.top_logic.util.error.TopLogicException;
  * {@value #SECRET} is denied for every role. The {@link CommandApprovalService} refuses writing a
  * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden). The account in
  * {@value #VIEWER} holds the role {@value #ROLE_VIEWER} on the project, which grants read only.
- * Reading {@value #BUDGET} is granted to {@value #ROLE_RESPONSIBLE} only, reading
- * {@value #CLASSIFIED} to no role, reading the reference {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE}
- * only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
+ * Reading {@value #BUDGET} and the boolean {@value #APPROVED} are granted to
+ * {@value #ROLE_RESPONSIBLE} only, reading {@value #CLASSIFIED} to no role, reading the reference
+ * {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE} only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
  * The attribute {@value #CODE} is read-only by its display annotation, and writing it is granted to
  * {@value #ROLE_VIEWER} only.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
@@ -114,6 +114,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
 	protected static final String BUDGET = "budget";
+
+	/** Name of the boolean {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
+	protected static final String APPROVED = "approved";
 
 	/** Name of the {@link #PROJECT} attribute nobody but a super-user may read. */
 	protected static final String CLASSIFIED = "classified";

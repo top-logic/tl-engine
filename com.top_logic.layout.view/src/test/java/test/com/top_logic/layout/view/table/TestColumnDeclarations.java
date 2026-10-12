@@ -91,8 +91,8 @@ public class TestColumnDeclarations extends TestCase {
 		assertNull("A column aggregates nothing unless it says so.", setup.aggregate());
 
 		Column<Object, ?> column = setup.buildColumn();
-		assertEquals("A whole number is filtered by a numeric range.", ComparableColumnFilter.class,
-			column.filter().get().getClass());
+		assertTrue("A whole number is filtered by a numeric range.",
+			column.filter().get() instanceof ComparableColumnFilter);
 		assertEquals("A whole number is shown in the number width.",
 			ColumnProviderService.getInstance().getConfig().getNumberWidth(), column.defaultWidth());
 		assertTrue("A column that aggregates nothing leaves its group cell empty.",
@@ -146,8 +146,8 @@ public class TestColumnDeclarations extends TestCase {
 			TLModelUtil.qualifiedName(setup.type().type()));
 
 		Column<Object, ?> column = setup.buildColumn();
-		assertEquals("A computed whole number is filtered by a numeric range, too.",
-			ComparableColumnFilter.class, column.filter().get().getClass());
+		assertTrue("A computed whole number is filtered by a numeric range, too.",
+			column.filter().get() instanceof ComparableColumnFilter);
 		assertEquals("A computed whole number is shown in the number width, too.",
 			ColumnProviderService.getInstance().getConfig().getNumberWidth(), column.defaultWidth());
 	}

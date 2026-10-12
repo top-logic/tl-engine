@@ -448,6 +448,8 @@
 									</computed-column>
 								</columns>
 								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
+								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
 						<panel>

@@ -76,6 +76,8 @@ import com.top_logic.layout.view.table.TableDragConfig;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.RowClassConfig;
+import com.top_logic.layout.view.table.RowClassFunction;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -138,7 +140,7 @@ public class TableElement implements UIElement {
 	 * Configuration for {@link TableElement}.
 	 */
 	@TagName("table")
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, RowClassConfig {
 
 		@Override
 		@ClassDefault(TableElement.class)
@@ -771,6 +773,9 @@ public class TableElement implements UIElement {
 
 	private final QueryExecutor _rowsExecutor;
 
+	/** The compiled {@link Config#getRowClass() row class function}. */
+	private final RowClassFunction _rowClass;
+
 	/** The declared {@link Config#getColumns() columns}, in display order. */
 	private final List<ColumnDeclaration> _declarations;
 
@@ -864,6 +869,7 @@ public class TableElement implements UIElement {
 		_config = config;
 		_log = context;
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
+		_rowClass = RowClassFunction.compile(config.getRowClass());
 		_dragType = dragType(context, config);
 		_drops = compileDrops(context, config.getDrops());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (_dragType != null || !_drops.isEmpty())) {
@@ -1093,6 +1099,7 @@ public class TableElement implements UIElement {
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
 			declaredFilters(columns, declaredNames, inputValues), filterStore(), _initialFilter);
+		view.setRowCssClass(_rowClass.bind(inputChannels));
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 		control.setCssClass(_config.getCssClass());
@@ -1274,6 +1281,7 @@ public class TableElement implements UIElement {
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
+		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 
 		contributeAddRowCommand(context, formControl, binding, control);

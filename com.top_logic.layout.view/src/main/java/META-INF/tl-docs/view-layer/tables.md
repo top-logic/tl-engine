@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <table> (TableViewControl) in a .view.xml - column declarations, row selection, row activation, grouping, the filter bar and its presets, pinned columns, and drag and drop of rows.
+description: Read before configuring a <table> (TableViewControl) in a .view.xml - column declarations, row selection, row activation, grouping, CSS classes marking rows by their data (row-class on <table> and <composition-table>, tl-status-error / -warning / -success / -info), the filter bar and its presets, pinned columns, and drag and drop of rows.
 order: 60
 ---
 
@@ -83,6 +83,32 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - **One column at a time** — `ListRowSource` rejects a multi-column `GroupSpec`, and the UI offers a single column accordingly.
 - Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row.
 - Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
+
+## Row classes: marking rows by their data
+
+`row-class` gives each row a CSS class computed from the row's object — the way to tint the failed jobs of a list red or mark the overdue tickets. It is the same property on `<table>` and on `<composition-table>`:
+
+```xml
+<table group-by="status" observed-types="demo.tickets:Ticket">
+	<inputs>
+		<input channel="state"/>
+	</inputs>
+	<rows>state -> …</rows>
+	<row-class>state -> row -> $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+</table>
+
+<composition-table attribute="parts"
+	row-class="row -> $row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
+/>
+```
+
+- **Arguments follow the convention of every table function**: the values of the `<table>`'s declared `<inputs>` first, in declaration order, the row object last. A `<composition-table>` has no inputs, so there the row object is the only argument.
+- **The result becomes the class**: `null` or an empty string gives the row none, a list gives it all of its members (joined with spaces), any other value its text — the conversion the classic table's `RowClassProviderByExpression` applies, `CellClassProviderByExpression.toCssClass(Object)`.
+- **Four standard classes come with the theme**: `tl-status-error`, `tl-status-warning`, `tl-status-success` and `tl-status-info` tint a row (or a single cell) with the subtle background of the matching status token, frozen and pinned cells included. A selected row shows its selection instead. Any other class is the application's to style in its own stylesheet.
+- **Only data rows get a class**: a group header and an aggregate row stand for no object and carry none.
+- **The class follows the row's data**: it is evaluated whenever the control pushes a row to the client, so it is computed again with every push of the rows — after a change of an object of the `observed-types`, after an input channel changed, and when a `<composition-table>` or a row-editing `<table>` switches between view and edit mode (on save, say) or a row is added or removed.
+- **The Java seam** (`com.top_logic.table`): `TableView#rowCssClass(Row)` answers the class of a row and `TableView#cellCssClass(Row, String)` that of one cell; `TableViewControl` sends both, and the client puts them on the row and cell elements. `DefaultTableView#setRowCssClass(Function)` installs a function over the row object (applied to data rows only), and a column's per-cell class is `Column#cssClass(row)`, set with `DefaultColumn.Builder#css(Function)`. `RowClassConfig` is the configuration mixin both elements extend; `RowClassFunction` compiles the function once per element and binds it to the input channels of each table built — `TableElement` installs it on its `DefaultTableView`, the row-editing `<table row-edit="…">` and `<composition-table>` through `RowSetTableControl#setRowCssClass(Function)`, which applies it to every table it (re-)builds on an edit-mode switch.
+- Demos in `com.top_logic.demo.react`: *Object list* (`tickets.view.xml`) tints the tickets in progress of its Open list; *Attributes* (`attributes.view.xml`) marks the parts of an object with an amount above 100 in its *Parts* composition table.
 
 ## Filtering: the filter bar and its presets
 

@@ -25,13 +25,13 @@ const VARIANTS: Record<TextStateJson.Variant, TypographyProps['variant']> = {
 /**
  * The color of the `Typography` for each color role: a palette key of its `color` prop (a dotted
  * palette path such as `error.main` produces no color there). A helper text is drawn like
- * secondary text. Text on a filled surface has no palette key, see {@link ON_COLOR_SX}.
+ * secondary text, a placeholder like disabled text. Text on a filled surface has no palette key, see {@link ON_COLOR_SX}.
  */
 const COLORS: Record<TextStateJson.Tone, TypographyProps['color'] | undefined> = {
   primary: 'textPrimary',
   secondary: 'textSecondary',
   helper: 'textSecondary',
-  accent: 'primary',
+  placeholder: 'textDisabled',
   success: 'success',
   warning: 'warning',
   error: 'error',
@@ -46,13 +46,11 @@ const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--text-on-color, var(--mui-pal
 
 /**
  * The color role a text of the given tone is drawn in as a pill without a role of its own, as
- * TLText draws it: the meanings keep their name, the accent is the brand, everything else is
- * neutral.
+ * TLText draws it: the meanings keep their name, everything else is neutral.
  */
 function roleOfTone(tone: TextStateJson.Tone): string {
   switch (tone) {
     case 'success': case 'warning': case 'error': return tone;
-    case 'accent': return 'brand';
     default: return 'neutral';
   }
 }
@@ -67,7 +65,7 @@ function roleOfTone(tone: TextStateJson.Tone): string {
  * <li>variant → the typography variant: body → `body2`, title → `h6`, headline → `h5`,
  *     display → `h4`, label → `subtitle2`, caption → `caption`;</li>
  * <li>tone → the `color` of the `Typography`: primary → `textPrimary`, secondary and helper →
- *     `textSecondary`, accent → `primary`, success, warning and error → the palette color of that
+ *     `textSecondary`, placeholder → `textDisabled`, success, warning and error → the palette color of that
  *     name, on-color → the theme color for text on a filled surface (`text-on-color`, as in TLText);</li>
  * <li>overflow `ellipsis` → `noWrap`;</li>
  * <li>colorRole, or appearance `pill` → a small `Chip` of the color of the role (for a pill

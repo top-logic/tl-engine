@@ -323,6 +323,30 @@ part): the siblings below a path object would then get the role and become visib
 | `all(`pm:A`).size()` | `1` | R6 |
 | `$c1.get(`pm:C#name`)` | the name | `Reader` reads `C` |
 
+### Trying it in `tl-demo-react`
+
+The React demo (`com.top_logic.demo.react`) configures this example on its project model as the
+ticket-watcher scenario (see `demoReactConf.config.xml`): a person listed in the watchers of a
+ticket (`Ticket#watchers`) is a `demo.react.TicketWatcher` of the ticket and reads it; on the project
+containing the ticket, it is a `demo.react.ProjectPathViewer`, which reads only the names of the
+project and its milestones and the structure references `ProjectScope#milestones` and
+`Milestone#tickets`. Unlike in the example above, a milestone has its
+project as access parent, so the watcher discovers every milestone of the project, but only the
+watched tickets below them.
+
+1. Log in as `root` and create an account in the administration.
+2. Open the ticket `T1` (e.g. in the detail drawer demo), edit it and add the person of the new
+   account to its watchers.
+3. Log in as the new account and open the tree demo: it shows the project of `T1` with its
+   milestones, and `T1` below its milestone - not the other tickets and not the other projects.
+   The project and its milestones show their names, every other attribute (description, budget,
+   members, due date) stays empty, and the project cannot be edited.
+
+The group `users` does not matter here: its members read every account, every group and every
+contributor, but get no role on the project model. To additionally see accounts masked in a
+reference field (`*****`, e.g. the members of a project the account may read), remove the account
+from the group `users`.
+
 ## Example: option list with a business restriction
 
 ```

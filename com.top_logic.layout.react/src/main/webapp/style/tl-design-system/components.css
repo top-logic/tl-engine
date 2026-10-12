@@ -1745,9 +1745,11 @@ a.tl-field-value:hover {
   }
 }
 
-/* Ausgeblendet: die Spalte behält ihren Platz, ihr Name wird blass. */
+/* Ausgeblendet: die Spalte behält ihren Platz, ihr Name tritt zurück. Der Eintrag bleibt bedienbar — die
+   WCAG-Ausnahme für text-disabled gilt nur für inaktive Elemente, darum text-secondary; das zugeklappte Auge trägt
+   den Zustand mit. */
 .tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label {
-  color: var(--tl-text-disabled);
+  color: var(--tl-text-secondary);
 }
 
 /* Der Block „Fixiert“: eine Überschrift davor, eine Linie unter seinem letzten Eintrag. */

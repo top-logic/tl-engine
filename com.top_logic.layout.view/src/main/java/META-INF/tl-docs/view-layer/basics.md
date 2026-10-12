@@ -76,7 +76,23 @@ order: 10
       </value-input>
     </fields>
     ```
-    Another command is `<on-submit class="fq.MyCommand" .../>`. What counts as a submit depends on the control: a field the user *types* in (`ReactTextInputControl` single-line, `ReactNumberInputControl`) reports `ReactFormFieldControl.hasSubmitGesture() == true` and submits on **Enter** - the client sends the `submit` command (`FieldSubmitArguments`, carrying the text, so one recorded step both stores and submits it) from the shared `useTLSubmitOnEnter()` bridge hook, enabled by the `submitOnEnter` state the server sets in `setSubmitListener(…)`. A field that is *picked* from - a dropdown, a date picker, a checkbox - has no such gesture, so **every choice is a submit**; there the element follows `ChannelFieldBinding.setCommitListener(…)`, which reports only values the user produced (a value pushed in from the channel is not a commit). A multi-line text area has no submit gesture at all, since Enter is part of the text.
+    Another command is `<on-submit class="fq.MyCommand" .../>`.
+
+    **When the command runs** is decided by `submit-on` (`ValueInputElement.Config.getSubmitOn()`, enum `SubmitOn`) for a field the user *types* in - a text, a number:
+    - `enter` (default): the command runs when the user presses **Enter** - search fields, jump-to boxes, any input whose value is a request.
+    - `change`: the command runs on **each edit the user finishes** - by Enter, or by leaving the field after changing its value - once per edit. For an input whose value is applied at once:
+      ```xml
+      <value-input type="tl.core:Integer" value="pageSize" submit-on="change">
+        <on-submit>
+          <execute-script function="size -> $size"/>
+          <write-channel name="appliedPageSize"/>
+        </on-submit>
+      </value-input>
+      ```
+
+    **The entered value reaches the channel and the server in every case** - when the field is left as well as on Enter - whatever `submit-on` says; `submit-on` only decides whether the command runs at that point. A field that is *picked* from - a dropdown, a date picker, a checkbox, a radio group - has no typing to finish, so **every choice runs the command** and `submit-on` has no effect there; the element follows `ChannelFieldBinding.setCommitListener(…)`, which reports only values the user produced (a value pushed in from the channel is not a commit). A multi-line text area runs its command only with `submit-on="change"`, on leaving it: Enter is part of the text.
+
+    On the server, `followSubmit(…)` asks the control: a control with `ReactFormFieldControl.commitsEdits() == true` (`ReactTextInputControl` single- and multi-line, `ReactNumberInputControl`, `ReactPasswordInputControl`, `ReactI18NStringInputControl`) gets `setCommitListener(…)` for `change`, and `setSubmitListener(…)` for `enter` where it `hasSubmitGesture()` (single-line text, number, password). On the client, every typed input runs the shared `useTLTypingField()` bridge hook: the `commitEdits` state, set by `setCommitListener(…)`, makes it send the `commit` command once per finished edit after the value; the `submitOnEnter` state, set by `setSubmitListener(…)`, makes plain Enter send the `submit` command (`FieldSubmitArguments`, carrying the text, so one recorded step both stores and submits it). The listener's `HandlerResult` is the result of the client's command, so a refusal is shown to the user.
   - **`input-control`** names the control the value is entered in, overriding the one the type leads to - the same property `<field>` carries, resolved by the same chain: `<value-input type="demo:Priority" value="p"><input-control class="com.top_logic.layout.view.form.SelectControlProvider" display="segmented"/></value-input>`. It reaches `FieldControlService.createFieldControl(context, type, spec, model, control)`, whose first step builds the named provider and skips the type-based resolution entirely. See "Display variants of input fields" below.
   - The tag is `value-input`, not `input`: `input` is the name of the channel property ~21 element configs declare, and a content tag that shadows a property name of the same config makes that config invalid outright - "Ambiguous content tag name 'input': May either represent the property getInput(), or a content element of the default container" - which would take out `<form>`, `<anchor>`, `<switch>` and every other element that has both an `input` channel and children.
 - **Dialogs** open a `.view.xml` via `<open-dialog dialog-view="…">`; close via `CancelDialogCommand` / `DialogManager.closeTopDialog`. `currentUser()` is a TL-Script function usable in `<derived-channel expr="…">`.

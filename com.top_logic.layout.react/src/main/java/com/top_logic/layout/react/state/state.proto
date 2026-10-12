@@ -398,9 +398,10 @@ message TypingFieldState extends FieldState {
 	bool sendValueOnBlur;
 
 	/**
-	 * Whether the field sends the command {@code commit} when it loses focus.
+	 * Whether a finished edit sends the command {@code commit}: leaving the field after a change,
+	 * and Enter in a single-line input, once per edit. A value still held back is sent first.
 	 */
-	bool commitOnBlur;
+	bool commitEdits;
 }
 
 /**

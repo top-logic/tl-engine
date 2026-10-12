@@ -23,6 +23,12 @@ export const CMD_VALUE_CHANGED = 'valueChanged';
 export const CMD_SUBMIT = 'submit';
 
 /**
+ * Command name for reporting an edit the user has finished in a typed field. Must match
+ * {@code ReactFormFieldControl#COMMIT_COMMAND}.
+ */
+export const CMD_COMMIT = 'commit';
+
+/**
  * Command name for reporting a file the client refused to upload because it exceeds the configured
  * size limit. Must match {@code ReactServlet#CMD_UPLOAD_REJECTED}.
  */

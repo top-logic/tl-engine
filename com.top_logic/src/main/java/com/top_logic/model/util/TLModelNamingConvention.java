@@ -160,6 +160,20 @@ public class TLModelNamingConvention {
 	}
 
 	/**
+	 * Name of the java constant in the generated {@link #interfaceBaseName(TLType) interface} of a
+	 * concrete {@link TLClass} that holds the name of the table storing its instances.
+	 */
+	public static final String TABLE_NAME_CONSTANT = "TABLE_NAME";
+
+	/**
+	 * Name of the java constant in the {@link #factoryClassName(TLModule) factory} of the given
+	 * module that holds the module name.
+	 */
+	public static String moduleNameConstant(TLModule module) {
+		return toAllUpperCase(module.getName()) + "_MODULE";
+	}
+
+	/**
 	 * Name of the java constant in the class {@link #enumClassName(TLEnumeration)} that holds the
 	 * name of the enumeration.
 	 */

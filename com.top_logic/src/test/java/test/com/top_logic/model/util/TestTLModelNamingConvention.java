@@ -90,6 +90,12 @@ public class TestTLModelNamingConvention extends TestCase {
 		assertEquals("nrwClassifier", TLModelNamingConvention.classifierAccessor(upper));
 	}
 
+	public void testModuleNameConstant() {
+		assertEquals("MY_MODULE_MODULE", TLModelNamingConvention.moduleNameConstant(_module));
+		assertEquals("TL_CORE_MODULE",
+			TLModelNamingConvention.moduleNameConstant(TLModelUtil.makeModule(_module.getModel(), "tl.core")));
+	}
+
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestTLModelNamingConvention.class, TypeIndex.Module.INSTANCE));

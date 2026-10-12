@@ -10,7 +10,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.tools.Diagnostic;
@@ -58,6 +60,7 @@ public class TestWrapperGenerator extends TestCase {
 		changeProperties(fooResources);
 		generateWrappers(root, app1, foo);
 		checkProperties(fooResources);
+		addClient(root, pkg);
 		generateWrappers(root, app1, bar);
 	}
 
@@ -71,6 +74,15 @@ public class TestWrapperGenerator extends TestCase {
 		WrapperGenerator.main(args);
 
 		compileSources(root);
+	}
+
+	/**
+	 * Adds a client of the generated API to the sources compiled with the generated code.
+	 */
+	private void addClient(File root, File pkg) throws IOException {
+		File clientDir = new File(root, "test/client");
+		clientDir.mkdirs();
+		Files.copy(new File(pkg, "Client.java.txt").toPath(), new File(clientDir, "Client.java").toPath());
 	}
 
 	private void changeProperties(String path) throws FileNotFoundException, IOException {
@@ -113,11 +125,14 @@ public class TestWrapperGenerator extends TestCase {
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
 			Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFiles);
-			Boolean success = compiler.getTask(null, fileManager, diagnostics, null, null, compilationUnits).call();
+			Boolean success = compiler.getTask(null, fileManager, diagnostics, List.of("-Xlint:deprecation", "-Werror"), null,
+				compilationUnits).call();
 			if (!success.booleanValue()) {
 				StringBuilder errors = new StringBuilder("Generated sources do not compile:");
 				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-					if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+					if (diagnostic.getKind() == Diagnostic.Kind.ERROR
+						|| diagnostic.getKind() == Diagnostic.Kind.WARNING
+						|| diagnostic.getKind() == Diagnostic.Kind.MANDATORY_WARNING) {
 						errors.append('\n').append(diagnostic);
 					}
 				}

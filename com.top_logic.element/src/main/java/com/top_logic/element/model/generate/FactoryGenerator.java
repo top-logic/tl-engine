@@ -30,7 +30,6 @@ import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -41,6 +40,8 @@ import com.top_logic.util.model.ModelService;
 public class FactoryGenerator extends TLModelGenerator {
 
 	private final TLModule _module;
+
+	private final String _moduleNameConst;
 
 	private final String _structureNameConst;
 
@@ -67,6 +68,7 @@ public class FactoryGenerator extends TLModelGenerator {
 		super(packageName(factoryClassName));
 		_factoryClassName = factoryClassName;
 		_module = module;
+		_moduleNameConst = moduleNameConstant(_module);
 		_structureNameConst = CodeUtil.toAllUpperCase(_module.getName()) + "_STRUCTURE";
 	}
 		
@@ -151,7 +153,7 @@ public class FactoryGenerator extends TLModelGenerator {
 				String rootInterface = getSingletonTypeName(config);
 
 				javadocStart();
-				commentLine("Name of singleton {@link #" + _structureNameConst + "}.");
+				commentLine("Name of singleton {@link #" + _moduleNameConst + "}.");
 				javadocStop();
 				line("public static final String " + singletonConstName(config.getName()) + " = " + '"'
 						+ config.getName() + '"' + ";");
@@ -234,7 +236,7 @@ public class FactoryGenerator extends TLModelGenerator {
 		line("public static " + className() + " getInstance() {");
 		{
 			line("return (" + className() + ") " + type(DynamicModelService.class) + ".getFactoryFor("
-					+ _structureNameConst + ");");
+					+ _moduleNameConst + ");");
 		}
 		line("}");
 	}
@@ -253,7 +255,7 @@ public class FactoryGenerator extends TLModelGenerator {
 
 		javadocStart();
 		commentLine(
-			"Name of type <code>" + typeName + "</code> in structure {@link #" + _structureNameConst + "}.");
+			"Name of type <code>" + typeName + "</code> in module {@link #" + _moduleNameConst + "}.");
 		commentLine("");
 		commentLine("@deprecated Use {@link " + interfaceName + "#" + typeNameConstant + "}.");
 		javadocStop();
@@ -269,12 +271,19 @@ public class FactoryGenerator extends TLModelGenerator {
 			 * a template for concrete specialisations. */
 			return;
 		}
-		String tableName = TLAnnotations.getTable(type);
+		/* Qualified by the generated interface declaring the constant: The business interface may
+		 * extend further interfaces declaring a table name, which makes the constant ambiguous when
+		 * qualified by the business interface. */
+		String baseName = dropPackage(interfaceBaseName(type));
+
 		javadocStart();
 		commentLine("Storage table name of {@link #" + nodeNameConstant(type) + "} objects.");
+		commentLine("");
+		commentLine("@deprecated Use {@link " + baseName + "#" + TABLE_NAME_CONSTANT + "}.");
 		javadocStop();
-		line(
-			"public static final String " + tableNameConstant(type) + " = " + toStringLiteral(tableName) + ";");
+		line("@Deprecated");
+		line("public static final String " + tableNameConstant(type) + " = " + baseName + "."
+			+ TABLE_NAME_CONSTANT + ";");
 		nl();
 	}
 
@@ -284,11 +293,20 @@ public class FactoryGenerator extends TLModelGenerator {
 
 	private void writeConstants() {
 		javadocStart();
-		commentLine("Name of the structure <code>" + _module.getName() + "</code> defined by {@link " + className()
+		commentLine("Name of the module <code>" + _module.getName() + "</code> defined by {@link " + className()
 			+ "}.");
 		javadocStop();
-		line("public static final String " + _structureNameConst + " = " + toStringLiteral(_module.getName()) + ";");
-		
+		line("public static final String " + _moduleNameConst + " = " + toStringLiteral(_module.getName()) + ";");
+		nl();
+
+		javadocStart();
+		commentLine("Name of the structure <code>" + _module.getName() + "</code> defined by {@link " + className()
+			+ "}.");
+		commentLine("");
+		commentLine("@deprecated Use {@link #" + _moduleNameConst + "}.");
+		javadocStop();
+		line("@Deprecated");
+		line("public static final String " + _structureNameConst + " = " + _moduleNameConst + ";");
 		nl();
 
 		for (TLEnumeration type : _module.getEnumerations()) {
@@ -334,7 +352,7 @@ public class FactoryGenerator extends TLModelGenerator {
 
 		javadocStart();
 		commentLine("Name of the enumeration <code>" + type.getName() + "</code> in module {@value #"
-				+ _structureNameConst + "}.");
+				+ _moduleNameConst + "}.");
 		commentLine("");
 		commentLine("@deprecated Use {@link " + enumClass + "#" + ENUM_TYPE_NAME_CONSTANT + "}.");
 		javadocStop();
@@ -346,7 +364,7 @@ public class FactoryGenerator extends TLModelGenerator {
 	private void writeDataTypeNameConstant(TLPrimitive type) {
 		javadocStart();
 		commentLine("Name of the data type <code>" + type.getName() + "</code> in module {@value #"
-				+ _structureNameConst + "}.");
+				+ _moduleNameConst + "}.");
 		javadocStop();
 		line("public static final String " + typeNameConstant(type) + " = " + toStringLiteral(type.getName()) + ";");
 		nl();
@@ -424,7 +442,7 @@ public class FactoryGenerator extends TLModelGenerator {
 			line(
 				"return (" + type(TLPrimitive.class) + ") " + type(ModelService.class)
 						+ ".getApplicationModel().getModule("
-						+ _structureNameConst + ").getType("
+						+ _moduleNameConst + ").getType("
 						+ typeNameConstant + ");");
 		}
 		line("}");
@@ -444,7 +462,7 @@ public class FactoryGenerator extends TLModelGenerator {
 		{
 			line(
 				"return (" + type(TLClass.class) + ") " + type(ModelService.class) + ".getApplicationModel().getModule("
-					+ _structureNameConst + ").getType("
+					+ _moduleNameConst + ").getType("
 				+ interfaceName + "." + typeNameConstant + ");");
 		}
 		line("}");

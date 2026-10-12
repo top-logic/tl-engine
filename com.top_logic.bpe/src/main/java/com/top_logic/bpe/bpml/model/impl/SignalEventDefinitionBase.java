@@ -17,4 +17,9 @@ public interface SignalEventDefinitionBase extends com.top_logic.bpe.bpml.model.
 	 */
 	String SIGNAL_EVENT_DEFINITION_TYPE = "SignalEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #SIGNAL_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

@@ -17,4 +17,9 @@ public interface EventBasedGatewayBase extends com.top_logic.bpe.bpml.model.Gate
 	 */
 	String EVENT_BASED_GATEWAY_TYPE = "EventBasedGateway";
 
+	/**
+	 * Name of the table storing {@link #EVENT_BASED_GATEWAY_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

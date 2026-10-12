@@ -17,15 +17,23 @@ package com.top_logic.security.selfservice.model;
 public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>tl.security.selfservice</code> defined by {@link TlSecuritySelfserviceFactory}.
+	 * Name of the module <code>tl.security.selfservice</code> defined by {@link TlSecuritySelfserviceFactory}.
 	 */
-	public static final String TL_SECURITY_SELFSERVICE_STRUCTURE = "tl.security.selfservice";
+	public static final String TL_SECURITY_SELFSERVICE_MODULE = "tl.security.selfservice";
+
+	/**
+	 * Name of the structure <code>tl.security.selfservice</code> defined by {@link TlSecuritySelfserviceFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_SECURITY_SELFSERVICE_MODULE}.
+	 */
+	@Deprecated
+	public static final String TL_SECURITY_SELFSERVICE_STRUCTURE = TL_SECURITY_SELFSERVICE_MODULE;
 
 	/**
 	 * Lookup {@link Invitation} type.
 	 */
 	public static com.top_logic.model.TLClass getInvitationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_SECURITY_SELFSERVICE_STRUCTURE).getType(Invitation.INVITATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_SECURITY_SELFSERVICE_MODULE).getType(Invitation.INVITATION_TYPE);
 	}
 
 	/**
@@ -57,7 +65,7 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
-	 * Name of type <code>Invitation</code> in structure {@link #TL_SECURITY_SELFSERVICE_STRUCTURE}.
+	 * Name of type <code>Invitation</code> in module {@link #TL_SECURITY_SELFSERVICE_MODULE}.
 	 * 
 	 * @deprecated Use {@link Invitation#INVITATION_TYPE}.
 	 */
@@ -66,8 +74,11 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 
 	/**
 	 * Storage table name of {@link #INVITATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.security.selfservice.model.impl.InvitationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_INVITATION = "Invitation";
+	@Deprecated
+	public static final String KO_NAME_INVITATION = com.top_logic.security.selfservice.model.impl.InvitationBase.TABLE_NAME;
 
 
 	/**
@@ -88,6 +99,6 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	 * The singleton instance of {@link TlSecuritySelfserviceFactory}.
 	 */
 	public static TlSecuritySelfserviceFactory getInstance() {
-		return (TlSecuritySelfserviceFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_SECURITY_SELFSERVICE_STRUCTURE);
+		return (TlSecuritySelfserviceFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_SECURITY_SELFSERVICE_MODULE);
 	}
 }

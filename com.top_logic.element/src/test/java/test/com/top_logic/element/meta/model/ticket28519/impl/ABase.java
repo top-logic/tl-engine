@@ -27,6 +27,11 @@ public interface ABase extends com.top_logic.model.TLObject {
 	String BS_ATTR = "bs";
 
 	/**
+	 * Name of the table storing {@link #A_TYPE} objects.
+	 */
+	String TABLE_NAME = "Ticket28519_A";
+
+	/**
 	 * Getter for part {@link #BS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

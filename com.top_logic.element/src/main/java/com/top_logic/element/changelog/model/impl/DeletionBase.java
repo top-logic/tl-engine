@@ -17,4 +17,9 @@ public interface DeletionBase extends com.top_logic.element.changelog.model.Chan
 	 */
 	String DELETION_TYPE = "Deletion";
 
+	/**
+	 * Name of the table storing {@link #DELETION_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

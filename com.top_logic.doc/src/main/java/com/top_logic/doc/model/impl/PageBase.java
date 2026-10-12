@@ -72,6 +72,11 @@ public interface PageBase extends com.top_logic.element.structured.StructuredEle
 	String UUID_ATTR = "uuid";
 
 	/**
+	 * Name of the table storing {@link #PAGE_TYPE} objects.
+	 */
+	String TABLE_NAME = "tl.doc.Page";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

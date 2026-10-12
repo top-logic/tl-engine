@@ -17,4 +17,9 @@ public interface MessageEventDefinitionBase extends com.top_logic.bpe.bpml.model
 	 */
 	String MESSAGE_EVENT_DEFINITION_TYPE = "MessageEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #MESSAGE_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

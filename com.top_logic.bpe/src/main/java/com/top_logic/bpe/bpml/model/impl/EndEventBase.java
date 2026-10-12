@@ -17,4 +17,9 @@ public interface EndEventBase extends com.top_logic.bpe.bpml.model.Event, com.to
 	 */
 	String END_EVENT_TYPE = "EndEvent";
 
+	/**
+	 * Name of the table storing {@link #END_EVENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

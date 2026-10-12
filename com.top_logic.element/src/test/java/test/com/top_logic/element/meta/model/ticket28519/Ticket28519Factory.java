@@ -17,15 +17,23 @@ package test.com.top_logic.element.meta.model.ticket28519;
 public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>ticket28519</code> defined by {@link Ticket28519Factory}.
+	 * Name of the module <code>ticket28519</code> defined by {@link Ticket28519Factory}.
 	 */
-	public static final String TICKET28519_STRUCTURE = "ticket28519";
+	public static final String TICKET28519_MODULE = "ticket28519";
+
+	/**
+	 * Name of the structure <code>ticket28519</code> defined by {@link Ticket28519Factory}.
+	 * 
+	 * @deprecated Use {@link #TICKET28519_MODULE}.
+	 */
+	@Deprecated
+	public static final String TICKET28519_STRUCTURE = TICKET28519_MODULE;
 
 	/**
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
@@ -39,25 +47,25 @@ public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link B} type.
 	 */
 	public static com.top_logic.model.TLClass getBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_STRUCTURE).getType(B.B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_MODULE).getType(B.B_TYPE);
 	}
 
 	/**
 	 * Lookup {@link B1} type.
 	 */
 	public static com.top_logic.model.TLClass getB1Type() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_STRUCTURE).getType(B1.B1_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_MODULE).getType(B1.B1_TYPE);
 	}
 
 	/**
 	 * Lookup {@link B2} type.
 	 */
 	public static com.top_logic.model.TLClass getB2Type() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_STRUCTURE).getType(B2.B2_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TICKET28519_MODULE).getType(B2.B2_TYPE);
 	}
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #TICKET28519_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #TICKET28519_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -66,11 +74,14 @@ public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #A_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.meta.model.ticket28519.impl.ABase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A = "Ticket28519_A";
+	@Deprecated
+	public static final String KO_NAME_A = test.com.top_logic.element.meta.model.ticket28519.impl.ABase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>B</code> in structure {@link #TICKET28519_STRUCTURE}.
+	 * Name of type <code>B</code> in module {@link #TICKET28519_MODULE}.
 	 * 
 	 * @deprecated Use {@link B#B_TYPE}.
 	 */
@@ -78,7 +89,7 @@ public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.Abstr
 	public static final String B_NODE = B.B_TYPE;
 
 	/**
-	 * Name of type <code>B1</code> in structure {@link #TICKET28519_STRUCTURE}.
+	 * Name of type <code>B1</code> in module {@link #TICKET28519_MODULE}.
 	 * 
 	 * @deprecated Use {@link B1#B1_TYPE}.
 	 */
@@ -87,11 +98,14 @@ public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #B1_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.meta.model.ticket28519.impl.B1Base#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B1 = "Ticket28519_B1";
+	@Deprecated
+	public static final String KO_NAME_B1 = test.com.top_logic.element.meta.model.ticket28519.impl.B1Base.TABLE_NAME;
 
 	/**
-	 * Name of type <code>B2</code> in structure {@link #TICKET28519_STRUCTURE}.
+	 * Name of type <code>B2</code> in module {@link #TICKET28519_MODULE}.
 	 * 
 	 * @deprecated Use {@link B2#B2_TYPE}.
 	 */
@@ -100,8 +114,11 @@ public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #B2_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.meta.model.ticket28519.impl.B2Base#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B2 = "Ticket28519_B2";
+	@Deprecated
+	public static final String KO_NAME_B2 = test.com.top_logic.element.meta.model.ticket28519.impl.B2Base.TABLE_NAME;
 
 
 	/**
@@ -150,6 +167,6 @@ public class Ticket28519Factory extends com.top_logic.element.meta.kbbased.Abstr
 	 * The singleton instance of {@link Ticket28519Factory}.
 	 */
 	public static Ticket28519Factory getInstance() {
-		return (Ticket28519Factory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TICKET28519_STRUCTURE);
+		return (Ticket28519Factory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TICKET28519_MODULE);
 	}
 }

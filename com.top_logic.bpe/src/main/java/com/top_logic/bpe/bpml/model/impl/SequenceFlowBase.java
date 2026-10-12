@@ -54,6 +54,11 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	String SKIP_STANDARD_OPERATION_ATTR = "skipStandardOperation";
 
 	/**
+	 * Name of the table storing {@link #SEQUENCE_FLOW_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPEdge";
+
+	/**
 	 * Getter for part {@link #FORM_TYPE_ATTR}.
 	 */
 	default com.top_logic.model.TLClass getFormType() {

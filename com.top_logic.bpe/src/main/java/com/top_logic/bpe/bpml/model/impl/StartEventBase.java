@@ -36,6 +36,11 @@ public interface StartEventBase extends com.top_logic.bpe.bpml.model.Event, com.
 	String TITLE_ATTR = "title";
 
 	/**
+	 * Name of the table storing {@link #START_EVENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #REQUIRE_REVIEW_ATTR}.
 	 */
 	default boolean getRequireReview() {

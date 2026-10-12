@@ -17,4 +17,9 @@ public interface IntermediateCatchEventBase extends com.top_logic.bpe.bpml.model
 	 */
 	String INTERMEDIATE_CATCH_EVENT_TYPE = "IntermediateCatchEvent";
 
+	/**
+	 * Name of the table storing {@link #INTERMEDIATE_CATCH_EVENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

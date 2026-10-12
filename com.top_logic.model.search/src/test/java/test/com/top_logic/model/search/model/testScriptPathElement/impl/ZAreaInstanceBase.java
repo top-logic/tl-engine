@@ -27,6 +27,11 @@ public interface ZAreaInstanceBase extends test.com.top_logic.model.search.model
 	String TEMPLATE_ATTR = "template";
 
 	/**
+	 * Name of the table storing {@link #Z_AREA_INSTANCE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #TEMPLATE_ATTR}.
 	 */
 	default test.com.top_logic.model.search.model.testScriptPathElement.ZArea getTemplate() {

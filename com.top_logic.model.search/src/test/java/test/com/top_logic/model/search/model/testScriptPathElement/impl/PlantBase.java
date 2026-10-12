@@ -17,4 +17,9 @@ public interface PlantBase extends test.com.top_logic.model.search.model.testScr
 	 */
 	String PLANT_TYPE = "Plant";
 
+	/**
+	 * Name of the table storing {@link #PLANT_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

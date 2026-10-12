@@ -27,6 +27,11 @@ public interface TimerEventDefinitionBase extends com.top_logic.bpe.bpml.model.E
 	String DELAY_IN_MILLIS_ATTR = "delayInMillis";
 
 	/**
+	 * Name of the table storing {@link #TIMER_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
+	/**
 	 * Getter for part {@link #DELAY_IN_MILLIS_ATTR}.
 	 */
 	default Long getDelayInMillis() {

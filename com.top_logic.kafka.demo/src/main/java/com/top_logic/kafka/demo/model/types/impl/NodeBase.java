@@ -45,6 +45,11 @@ public interface NodeBase extends com.top_logic.kafka.demo.model.types.CommonNod
 	String UNTRANSFERRED_NODE2_ATTR = "untransferredNode2";
 
 	/**
+	 * Name of the table storing {@link #NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "KafkaDemo";
+
+	/**
 	 * Getter for part {@link #NOT_EXTERNALIZED_ATTR}.
 	 */
 	@Override

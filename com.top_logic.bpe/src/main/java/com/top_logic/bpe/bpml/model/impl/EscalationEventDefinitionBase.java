@@ -17,4 +17,9 @@ public interface EscalationEventDefinitionBase extends com.top_logic.bpe.bpml.mo
 	 */
 	String ESCALATION_EVENT_DEFINITION_TYPE = "EscalationEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #ESCALATION_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

@@ -27,6 +27,11 @@ public interface OperationBase extends com.top_logic.model.TLObject {
 	String CONFIRMATIONS_ATTR = "confirmations";
 
 	/**
+	 * Name of the table storing {@link #OPERATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #CONFIRMATIONS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

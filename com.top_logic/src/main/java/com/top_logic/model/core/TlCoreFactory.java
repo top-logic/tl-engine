@@ -17,124 +17,137 @@ package com.top_logic.model.core;
 public interface TlCoreFactory {
 
 	/**
-	 * Name of the structure <code>tl.core</code> defined by {@link TlCoreFactory}.
+	 * Name of the module <code>tl.core</code> defined by {@link TlCoreFactory}.
 	 */
-	public static final String TL_CORE_STRUCTURE = "tl.core";
+	public static final String TL_CORE_MODULE = "tl.core";
 
 	/**
-	 * Name of the data type <code>Boolean</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the structure <code>tl.core</code> defined by {@link TlCoreFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_CORE_MODULE}.
+	 */
+	@Deprecated
+	public static final String TL_CORE_STRUCTURE = TL_CORE_MODULE;
+
+	/**
+	 * Name of the data type <code>Boolean</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String BOOLEAN_TYPE = "Boolean";
 
 	/**
-	 * Name of the data type <code>Tristate</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Tristate</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String TRISTATE_TYPE = "Tristate";
 
 	/**
-	 * Name of the data type <code>Byte</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Byte</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String BYTE_TYPE = "Byte";
 
 	/**
-	 * Name of the data type <code>Short</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Short</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String SHORT_TYPE = "Short";
 
 	/**
-	 * Name of the data type <code>Integer</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Integer</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String INTEGER_TYPE = "Integer";
 
 	/**
-	 * Name of the data type <code>Long</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Long</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String LONG_TYPE = "Long";
 
 	/**
-	 * Name of the data type <code>Float</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Float</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String FLOAT_TYPE = "Float";
 
 	/**
-	 * Name of the data type <code>Double</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Double</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String DOUBLE_TYPE = "Double";
 
 	/**
-	 * Name of the data type <code>Name</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Name</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String NAME_TYPE = "Name";
 
 	/**
-	 * Name of the data type <code>Key</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Key</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String KEY_TYPE = "Key";
 
 	/**
-	 * Name of the data type <code>String</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>String</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String STRING_TYPE = "String";
 
 	/**
-	 * Name of the data type <code>Password</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Password</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String PASSWORD_TYPE = "Password";
 
 	/**
-	 * Name of the data type <code>Text</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Text</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String TEXT_TYPE = "Text";
 
 	/**
-	 * Name of the data type <code>Date</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Date</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String DATE_TYPE = "Date";
 
 	/**
-	 * Name of the data type <code>Day</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Day</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String DAY_TYPE = "Day";
 
 	/**
-	 * Name of the data type <code>Time</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Time</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String TIME_TYPE = "Time";
 
 	/**
-	 * Name of the data type <code>DateTime</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>DateTime</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String DATE_TIME_TYPE = "DateTime";
 
 	/**
-	 * Name of the data type <code>Binary</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Duration</code> in module {@value #TL_CORE_MODULE}.
+	 */
+	public static final String DURATION_TYPE = "Duration";
+
+	/**
+	 * Name of the data type <code>Binary</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String BINARY_TYPE = "Binary";
 
 	/**
-	 * Name of the data type <code>Icon</code> in module {@value #TL_CORE_STRUCTURE}.
+	 * Name of the data type <code>Icon</code> in module {@value #TL_CORE_MODULE}.
 	 */
 	public static final String ICON_TYPE = "Icon";
 
 	/**
-	 * Lookup {@link Author} type.
+	 * Lookup {@link com.top_logic.model.core.Author} type.
 	 */
 	public static com.top_logic.model.TLClass getAuthorType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(Author.AUTHOR_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(com.top_logic.model.core.Author.AUTHOR_TYPE);
 	}
 
 	/**
-	 * Lookup {@link Author#NAME_ATTR} of {@link Author}.
+	 * Lookup {@link com.top_logic.model.core.Author#NAME_ATTR} of {@link com.top_logic.model.core.Author}.
 	 */
 	public static com.top_logic.model.TLProperty getNameAuthorAttr() {
-		return (com.top_logic.model.TLProperty) getAuthorType().getPart(Author.NAME_ATTR);
+		return (com.top_logic.model.TLProperty) getAuthorType().getPart(com.top_logic.model.core.Author.NAME_ATTR);
 	}
 
 	/**
 	 * Lookup {@link com.top_logic.knowledge.service.Revision} type.
 	 */
 	public static com.top_logic.model.TLClass getRevisionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(com.top_logic.knowledge.service.Revision.REVISION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(com.top_logic.knowledge.service.Revision.REVISION_TYPE);
 	}
 
 	/**
@@ -169,145 +182,152 @@ public interface TlCoreFactory {
 	 * Lookup {@value #BOOLEAN_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getBooleanType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(BOOLEAN_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(BOOLEAN_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #TRISTATE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getTristateType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(TRISTATE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(TRISTATE_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #BYTE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getByteType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(BYTE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(BYTE_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #SHORT_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getShortType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(SHORT_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(SHORT_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #INTEGER_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getIntegerType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(INTEGER_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(INTEGER_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #LONG_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getLongType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(LONG_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(LONG_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #FLOAT_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getFloatType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(FLOAT_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(FLOAT_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DOUBLE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDoubleType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(DOUBLE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(DOUBLE_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #NAME_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getNameType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(NAME_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(NAME_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #KEY_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getKeyType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(KEY_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(KEY_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #STRING_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getStringType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(STRING_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(STRING_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #PASSWORD_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getPasswordType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(PASSWORD_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(PASSWORD_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #TEXT_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getTextType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(TEXT_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(TEXT_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DATE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDateType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(DATE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(DATE_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DAY_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDayType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(DAY_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(DAY_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #TIME_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getTimeType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(TIME_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(TIME_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DATE_TIME_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDateTimeType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(DATE_TIME_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(DATE_TIME_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #DURATION_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getDurationType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(DURATION_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #BINARY_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getBinaryType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(BINARY_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(BINARY_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #ICON_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getIconType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_STRUCTURE).getType(ICON_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CORE_MODULE).getType(ICON_TYPE);
 	}
 
 	/**
-	 * Name of type <code>Author</code> in structure {@link #TL_CORE_STRUCTURE}.
+	 * Name of type <code>Author</code> in module {@link #TL_CORE_MODULE}.
 	 * 
-	 * @deprecated Use {@link Author#AUTHOR_TYPE}.
+	 * @deprecated Use {@link com.top_logic.model.core.Author#AUTHOR_TYPE}.
 	 */
 	@Deprecated
-	public static final String AUTHOR_NODE = Author.AUTHOR_TYPE;
+	public static final String AUTHOR_NODE = com.top_logic.model.core.Author.AUTHOR_TYPE;
 
 	/**
-	 * Name of type <code>Revision</code> in structure {@link #TL_CORE_STRUCTURE}.
+	 * Name of type <code>Revision</code> in module {@link #TL_CORE_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.knowledge.service.Revision#REVISION_TYPE}.
 	 */
@@ -316,7 +336,10 @@ public interface TlCoreFactory {
 
 	/**
 	 * Storage table name of {@link #REVISION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.core.generated.RevisionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_REVISION = "Revision";
+	@Deprecated
+	public static final String KO_NAME_REVISION = com.top_logic.model.core.generated.RevisionBase.TABLE_NAME;
 
 }

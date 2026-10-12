@@ -17,20 +17,28 @@ package com.top_logic.doc.model;
 public class TLDocFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #TL_DOC_STRUCTURE}.
+	 * Name of singleton {@link #TL_DOC_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT = "ROOT";
 
 	/**
-	 * Name of the structure <code>tl.doc</code> defined by {@link TLDocFactory}.
+	 * Name of the module <code>tl.doc</code> defined by {@link TLDocFactory}.
 	 */
-	public static final String TL_DOC_STRUCTURE = "tl.doc";
+	public static final String TL_DOC_MODULE = "tl.doc";
+
+	/**
+	 * Name of the structure <code>tl.doc</code> defined by {@link TLDocFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_DOC_MODULE}.
+	 */
+	@Deprecated
+	public static final String TL_DOC_STRUCTURE = TL_DOC_MODULE;
 
 	/**
 	 * Lookup {@link Root} type.
 	 */
 	public static com.top_logic.model.TLClass getRootType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DOC_STRUCTURE).getType(Root.ROOT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DOC_MODULE).getType(Root.ROOT_TYPE);
 	}
 
 	/**
@@ -44,7 +52,7 @@ public class TLDocFactory extends com.top_logic.element.structured.wrap.Structur
 	 * Lookup {@link Page} type.
 	 */
 	public static com.top_logic.model.TLClass getPageType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DOC_STRUCTURE).getType(Page.PAGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DOC_MODULE).getType(Page.PAGE_TYPE);
 	}
 
 	/**
@@ -104,7 +112,7 @@ public class TLDocFactory extends com.top_logic.element.structured.wrap.Structur
 	}
 
 	/**
-	 * Name of type <code>Root</code> in structure {@link #TL_DOC_STRUCTURE}.
+	 * Name of type <code>Root</code> in module {@link #TL_DOC_MODULE}.
 	 * 
 	 * @deprecated Use {@link Root#ROOT_TYPE}.
 	 */
@@ -113,11 +121,14 @@ public class TLDocFactory extends com.top_logic.element.structured.wrap.Structur
 
 	/**
 	 * Storage table name of {@link #ROOT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.doc.model.impl.RootBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ROOT = "tl.doc.Page";
+	@Deprecated
+	public static final String KO_NAME_ROOT = com.top_logic.doc.model.impl.RootBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Page</code> in structure {@link #TL_DOC_STRUCTURE}.
+	 * Name of type <code>Page</code> in module {@link #TL_DOC_MODULE}.
 	 * 
 	 * @deprecated Use {@link Page#PAGE_TYPE}.
 	 */
@@ -126,8 +137,11 @@ public class TLDocFactory extends com.top_logic.element.structured.wrap.Structur
 
 	/**
 	 * Storage table name of {@link #PAGE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.doc.model.impl.PageBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PAGE = "tl.doc.Page";
+	@Deprecated
+	public static final String KO_NAME_PAGE = com.top_logic.doc.model.impl.PageBase.TABLE_NAME;
 
 	/**
 	 * Singleton <code>ROOT</code>.
@@ -183,6 +197,6 @@ public class TLDocFactory extends com.top_logic.element.structured.wrap.Structur
 	 * The singleton instance of {@link TLDocFactory}.
 	 */
 	public static TLDocFactory getInstance() {
-		return (TLDocFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_DOC_STRUCTURE);
+		return (TLDocFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_DOC_MODULE);
 	}
 }

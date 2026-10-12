@@ -8,10 +8,16 @@
 	The toolbar creates a project and deletes the selected one; the table observes projects, so
 	both are reflected in the rows without a reload. A project being created has its creator as
 	administrator, so the creator sees and administers it once it is created.
+	
+	Above the table, a new budget for the selected project is applied in place: each edit the user
+	finishes - Enter, or leaving the input after a change - stores the entered budget
+	(submit-on="change"), which the budget column then shows. A negative budget is refused with an
+	error message.
 -->
 <view>
 	<channels>
 		<channel name="project"/>
+		<channel name="budget"/>
 	</channels>
 
 	<panel>
@@ -57,26 +63,49 @@
 				<write-channel name="project"/>
 			</generic-command>
 		</commands>
-		<table
-			observed-types="tl.demo.projectManagement:ProjectScope"
-			selection="project"
-			types="tl.demo.projectManagement:ProjectScope"
-		>
-			<columns>
-				<column attribute="name"/>
-				<column attribute="description"/>
-				<column attribute="budget"/>
-			</columns>
-			<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
-			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="project"
-				view="projects/milestones.view.xml"
+		<stack direction="column">
+			<fields with-inset="true">
+				<value-input
+					submit-on="change"
+					type="tl.core:Double"
+					value="budget"
+				>
+					<label>
+						<en>New budget of the selected project</en>
+						<de>Neues Budget des gewählten Projekts</de>
+					</label>
+					<on-submit>
+						<with-transaction>
+							<execute-script function="p -> b -> if($p == null, null, if($b != null &amp;&amp; $b &lt; 0, throw(#('A budget cannot be negative.'@en, 'Ein Budget kann nicht negativ sein.'@de)), $p.set(`tl.demo.projectManagement:ProjectScope#budget`, $b)))">
+								<inputs>
+									<input channel="project"/>
+								</inputs>
+							</execute-script>
+						</with-transaction>
+					</on-submit>
+				</value-input>
+			</fields>
+			<table
+				observed-types="tl.demo.projectManagement:ProjectScope"
+				selection="project"
+				types="tl.demo.projectManagement:ProjectScope"
 			>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
-					inputs="project"
-				/>
-			</on-activate>
-		</table>
+				<columns>
+					<column attribute="name"/>
+					<column attribute="description"/>
+					<column attribute="budget"/>
+				</columns>
+				<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
+				<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+					bind-input-to="project"
+					view="projects/milestones.view.xml"
+				>
+					<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+						expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
+						inputs="project"
+					/>
+				</on-activate>
+			</table>
+		</stack>
 	</panel>
 </view>

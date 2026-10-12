@@ -46,8 +46,8 @@ public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl
 	}
 
 	@Override
-	public com.top_logic.layout.react.state.NumberInputState setCommitOnBlur(boolean value) {
-		internalSetCommitOnBlur(value);
+	public com.top_logic.layout.react.state.NumberInputState setCommitEdits(boolean value) {
+		internalSetCommitEdits(value);
 		return this;
 	}
 

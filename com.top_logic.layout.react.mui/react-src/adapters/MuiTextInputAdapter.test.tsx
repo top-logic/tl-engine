@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_SUBMIT, CMD_VALUE_CHANGED, VALUE_DEBOUNCE_MS, fieldLabel } from 'tl-react-bridge';
+import { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, VALUE_DEBOUNCE_MS, fieldLabel } from 'tl-react-bridge';
 import type { TextInputStateJson } from 'tl-react-bridge';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { CONTROL_ID, fakeDebounceTimers, mountAdapter, settle } from './wire-test-support';
@@ -11,9 +11,6 @@ import type { MountOptions } from './wire-test-support';
 
 /** The argument of {@link CMD_VALUE_CHANGED} and {@link CMD_SUBMIT} holding the text. */
 const ARG_VALUE = 'value';
-
-/** The command a typing field sends when it is left after an edit. */
-const CMD_COMMIT = 'commit';
 
 /** The translation key of the label of the clear button; the test server answers it with itself. */
 const KEY_CLEAR = 'js.textInput.clear';
@@ -116,14 +113,115 @@ describe('TLTextInput as MUI TextField', () => {
     expect(sent.mock.calls).toEqual([changedTo('abc')]);
   });
 
-  it('sends commit after the value when it is left after an edit with commitOnBlur', async () => {
-    const sent = mountText({ value: '', commitOnBlur: true });
+  it('sends commit after the value when it is left after an edit with commitEdits', async () => {
+    const sent = mountText({ value: '', commitEdits: true });
 
     fireEvent.change(input(), { target: { value: 'abc' } });
     fireEvent.blur(input());
     await settle();
 
     expect(sent.mock.calls).toEqual([changedTo('abc'), [CMD_COMMIT, {}]]);
+  });
+
+  it('sends no commit when it is left without an edit', async () => {
+    const sent = mountText({ value: 'abc', commitEdits: true });
+
+    fireEvent.blur(input());
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('sends no commit after an edit without commitEdits', async () => {
+    const sent = mountText({ value: '' });
+
+    fireEvent.change(input(), { target: { value: 'abc' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    fireEvent.blur(input());
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('abc')]);
+  });
+
+  it('sends commit after the value on Enter after an edit, and lets Enter pass on', async () => {
+    const sent = mountText({ value: '', commitEdits: true });
+
+    fireEvent.change(input(), { target: { value: 'abc' } });
+    const passedOn = fireEvent.keyDown(input(), { key: 'Enter' });
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('abc'), [CMD_COMMIT, {}]]);
+    expect(passedOn).toBe(true);
+  });
+
+  it('sends no second commit when it is left right after Enter', async () => {
+    const sent = mountText({ value: '', commitEdits: true });
+
+    fireEvent.change(input(), { target: { value: 'abc' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    fireEvent.blur(input());
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('abc'), [CMD_COMMIT, {}]]);
+  });
+
+  it('commits each edit once: Enter, a further edit, leaving the field', async () => {
+    const sent = mountText({ value: '', commitEdits: true });
+
+    fireEvent.change(input(), { target: { value: 'abc' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    fireEvent.change(input(), { target: { value: 'abcd' } });
+    fireEvent.blur(input());
+    await settle();
+
+    expect(sent.mock.calls).toEqual([
+      changedTo('abc'), [CMD_COMMIT, {}], changedTo('abcd'), [CMD_COMMIT, {}],
+    ]);
+  });
+
+  it('sends no commit on Enter without an edit, but still the submit', async () => {
+    const sent = mountText({ value: 'abc', commitEdits: true, submitOnEnter: true });
+
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_SUBMIT, { [ARG_VALUE]: 'abc' }]]);
+  });
+
+  it('sends the commit before the submit on Enter after an edit', async () => {
+    const sent = mountText({ value: '', commitEdits: true, submitOnEnter: true });
+
+    fireEvent.change(input(), { target: { value: 'abc' } });
+    const passedOn = fireEvent.keyDown(input(), { key: 'Enter' });
+    await settle();
+
+    expect(sent.mock.calls).toEqual([
+      changedTo('abc'), [CMD_COMMIT, {}], [CMD_SUBMIT, { [ARG_VALUE]: 'abc' }],
+    ]);
+    expect(passedOn).toBe(false);
+  });
+
+  it('commits nothing on Enter with a modifier', async () => {
+    const sent = mountText({ value: '', commitEdits: true });
+
+    fireEvent.change(input(), { target: { value: 'abc' } });
+    fireEvent.keyDown(input(), { key: 'Enter', shiftKey: true });
+    await settle();
+
+    expect(sent.mock.calls).toEqual([]);
+  });
+
+  it('commits an edit of a text area only when it is left, Enter being text there', async () => {
+    const sent = mountText({ value: '', commitEdits: true, multiline: true });
+
+    fireEvent.change(input(), { target: { value: 'a' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    await settle();
+    expect(sent.mock.calls.filter(call => call[0] === CMD_COMMIT)).toEqual([]);
+
+    fireEvent.blur(input());
+    await settle();
+    expect(sent.mock.calls).toEqual([changedTo('a'), [CMD_COMMIT, {}]]);
   });
 
   it('sends submit with the text on Enter with submitOnEnter', async () => {

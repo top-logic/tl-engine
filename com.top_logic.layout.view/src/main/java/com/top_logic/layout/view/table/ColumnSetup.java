@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -13,6 +16,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.Column;
+import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DelegatingColumn;
 
 /**
@@ -46,6 +50,11 @@ import com.top_logic.table.impl.DelegatingColumn;
  * @param aggregate
  *        What the column shows for a group of rows, computed from the group's member rows, or
  *        {@code null} for a column that leaves its group cell empty.
+ * @param comparator
+ *        The ascending order of the column's values, by which it sorts the rows and orders the
+ *        groups it forms, or {@code null} for the order its binding derives. It is never passed
+ *        {@code null}; rows without a value are ordered apart from it, a group without a value
+ *        comes last.
  * @param hiddenByDefault
  *        Whether the column is displayed only once the user selects it in the column selection.
  */
@@ -59,23 +68,25 @@ public record ColumnSetup(
 		int width,
 		CellEditing editing,
 		Function<List<Object>, Object> aggregate,
+		Comparator<Object> comparator,
 		boolean hiddenByDefault) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that is displayed from the start, is not edited and
-	 * aggregates nothing.
+	 * Creates a {@link ColumnSetup} of a column that is displayed from the start, is not edited,
+	 * aggregates nothing and sorts in the order its binding derives.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
 	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ViewContext viewContext, ColumnBinding binding, int width) {
-		this(name, label, type, value, viewContext, binding, width, null, null, false);
+		this(name, label, type, value, viewContext, binding, width, null, null, null, false);
 	}
 
 	/**
 	 * The runtime column for this descriptor: the column its {@link #binding()} builds, displayed
-	 * in the {@link #width() configured width} when there is one, and showing the
-	 * {@link #aggregate()} in the header row of a group when it computes one.
+	 * in the {@link #width() configured width} when there is one, showing the
+	 * {@link #aggregate()} in the header row of a group when it computes one, and sorting by the
+	 * {@link #comparator()} when it declares one.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -101,7 +112,61 @@ public record ColumnSetup(
 				}
 			};
 		}
+		if (comparator != null) {
+			Sort<V> sort = sort(binding().order(comparator));
+			result = new DelegatingColumn<>(result) {
+				@Override
+				public Optional<Sort<V>> sort() {
+					return Optional.of(sort);
+				}
+			};
+		}
 		return result;
+	}
+
+	/**
+	 * The order of collections of values by the given order of their elements: element by element,
+	 * the first differing element deciding, an empty element after every other one, and a
+	 * collection that starts with all elements of a longer one before it.
+	 *
+	 * <p>
+	 * A value that is no collection is ordered as a collection holding only that value.
+	 * </p>
+	 *
+	 * @param elementOrder
+	 *        The ascending order of the elements, never passed {@code null}.
+	 */
+	public static Comparator<Object> elementwise(Comparator<Object> elementOrder) {
+		Comparator<Object> elements = Comparator.nullsLast(elementOrder);
+		return (value1, value2) -> {
+			Iterator<?> it1 = elements(value1).iterator();
+			Iterator<?> it2 = elements(value2).iterator();
+			while (it1.hasNext() && it2.hasNext()) {
+				int result = elements.compare(it1.next(), it2.next());
+				if (result != 0) {
+					return result;
+				}
+			}
+			return Boolean.compare(it1.hasNext(), it2.hasNext());
+		};
+	}
+
+	/** The elements of a value ordered {@link #elementwise(Comparator) element by element}. */
+	private static Collection<?> elements(Object value) {
+		return value instanceof Collection<?> collection ? collection : List.of(value);
+	}
+
+	/**
+	 * The sort capability of a column ordering its values by the given comparator.
+	 *
+	 * @implNote The cast is safe since the comparator is the one
+	 *           {@link ColumnBinding#order(Comparator)} derives for the values of the very column
+	 *           the binding built.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <V> Sort<V> sort(Comparator<?> order) {
+		Comparator<V> valueOrder = (Comparator<V>) order;
+		return () -> valueOrder;
 	}
 
 }

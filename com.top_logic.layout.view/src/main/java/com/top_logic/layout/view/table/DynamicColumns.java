@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -117,6 +118,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
+
+		/** Configuration name for {@link #getComparator()}. */
+		String COMPARATOR = "comparator";
 
 		@Override
 		@ClassDefault(DynamicColumns.class)
@@ -300,6 +304,25 @@ public class DynamicColumns implements ColumnDeclaration {
 		@Nullable
 		Expr getAggregate();
 
+		/**
+		 * The order of the values of every column: a function comparing two cell values, by which
+		 * a column sorts the rows and orders the groups it forms.
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order, then the two cell
+		 * values. The function yields a negative number, zero, or a positive number, as the first
+		 * value comes before, together with, or after the second one - the contract of the
+		 * comparator of TL-Script's <code>sort</code> function; without inputs, an order by a key
+		 * of the values is written <code>comparator(v -&gt; $v.get(`m:Type#position`))</code>. The
+		 * function is never passed an empty value; rows without a value are ordered apart from
+		 * it, a group without a value comes last. Unset, the columns keep the order derived from
+		 * the type of their values.
+		 * </p>
+		 */
+		@Name(COMPARATOR)
+		@Nullable
+		Expr getComparator();
+
 	}
 
 	private final String _name;
@@ -389,7 +412,7 @@ public class DynamicColumns implements ColumnDeclaration {
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
-				!set.visible(column)));
+				set.comparator(column), !set.visible(column)));
 		}
 		return result;
 	}
@@ -411,6 +434,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _aggregate;
 
+		private final QueryExecutor _comparator;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -429,6 +454,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columnType = QueryExecutor.compileOptional(config.getColumnType());
 			_columnVisible = QueryExecutor.compileOptional(config.getColumnVisible());
 			_aggregate = QueryExecutor.compileOptional(config.getAggregate());
+			_comparator = QueryExecutor.compileOptional(config.getComparator());
 			_functions = ColumnFunctions.compile(config.getValue(), config.getUpdate(), config.getCanUpdate(),
 				config.getInputs());
 			_typeRef = config.getType();
@@ -532,6 +558,16 @@ public class DynamicColumns implements ColumnDeclaration {
 				}
 				QueryExecutor aggregate = _aggregate;
 				return members -> aggregate.execute(_cells.inputs(members, column));
+			}
+
+			@Override
+			public Comparator<Object> comparator(Object column) {
+				if (_comparator == null) {
+					return null;
+				}
+				QueryExecutor comparator = _comparator;
+				return AbstractColumnDeclaration
+					.order((value1, value2) -> comparator.execute(_cells.inputs(value1, value2)));
 			}
 
 		}

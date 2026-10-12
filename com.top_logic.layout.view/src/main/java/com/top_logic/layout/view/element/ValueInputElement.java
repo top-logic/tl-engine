@@ -86,9 +86,11 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A {@link Config#getOnSubmit() submit command} turns the input into an action: the value the user
- * finishes entering is written to the channel and then run through the command, which is what a
- * search field or a jump-to box is - one input and one command over what was entered.
+ * A {@link Config#getOnSubmit() submit command} turns the input into an action over the value the
+ * user enters: a search field or a jump-to box runs it on Enter, an input whose value is applied at
+ * once runs it on every edit the user finishes, as {@link Config#getSubmitOn() stated}. A value
+ * that is picked from options runs it with every choice. Whenever the command runs, the value has
+ * already reached the channel.
  * </p>
  */
 @InApp
@@ -144,6 +146,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getOnSubmit()}. */
 		String ON_SUBMIT = "on-submit";
+
+		/** Configuration name for {@link #getSubmitOn()}. */
+		String SUBMIT_ON = "submit-on";
 
 		/** Configuration name for {@link #getInputControl()}. */
 		String INPUT_CONTROL = "input-control";
@@ -307,10 +312,11 @@ public class ValueInputElement implements UIElement {
 		 * The command run on the value the user submits.
 		 *
 		 * <p>
-		 * A value the user finishes entering is written to the value channel and then handed to
-		 * this command as its input. In a field the user types in - a text, a number - the value is
-		 * finished by pressing Enter; in a field that is picked from - a dropdown, a date, a
-		 * checkbox - every choice finishes it.
+		 * The command receives the value of the input as its input, after the value has reached the
+		 * value channel. In a field the user types in - a text, a number - the
+		 * {@link #getSubmitOn() submit gesture} decides when it runs: on Enter, or on every edit the
+		 * user finishes. In a field that is picked from - a dropdown, a date, a checkbox - every
+		 * choice runs it.
 		 * </p>
 		 *
 		 * <p>
@@ -323,6 +329,31 @@ public class ValueInputElement implements UIElement {
 		@ImplementationClassDefault(GenericViewCommand.class)
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
+
+		/**
+		 * When the {@link #getOnSubmit() submit command} runs on a value the user types - a text, a
+		 * number.
+		 *
+		 * <p>
+		 * With {@link SubmitOn#ENTER}, the command runs when the user presses Enter, which is what a
+		 * search field or a jump-to box does. With {@link SubmitOn#CHANGE}, it runs on each edit the
+		 * user finishes, by pressing Enter or by leaving the input after changing its value - once
+		 * per edit, which is what an input does whose value is applied at once.
+		 * </p>
+		 *
+		 * <p>
+		 * The entered value reaches the {@link #getValue() value channel} and the server in every
+		 * case, when the input is left as well as on Enter, whatever is stated here. This property
+		 * only decides whether the command runs at that point.
+		 * </p>
+		 *
+		 * <p>
+		 * A value that is picked - from a dropdown, a date picker, a checkbox - runs the command
+		 * with every choice; this property has no effect there.
+		 * </p>
+		 */
+		@Name(SUBMIT_ON)
+		SubmitOn getSubmitOn();
 
 		/**
 		 * The control the value is entered in, overriding the one its type implies.
@@ -372,6 +403,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ViewCommand.Config _submitCommandConfig;
 
+	private final SubmitOn _submitOn;
+
 	private final PolymorphicConfiguration<? extends ReactFieldControlProvider> _inputControl;
 
 	private final String _cssClass;
@@ -397,6 +430,7 @@ public class ValueInputElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
 		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_submitOn = config.getSubmitOn();
 		_inputControl = config.getInputControl();
 		_cssClass = config.getCssClass();
 	}
@@ -453,23 +487,35 @@ public class ValueInputElement implements UIElement {
 	 * entering.
 	 *
 	 * <p>
-	 * Where the control has a submit gesture of its own, the submit is that gesture; otherwise
+	 * In a field the user types in, the {@link Config#getSubmitOn() submit gesture} decides: on
+	 * {@link SubmitOn#CHANGE}, each edit the user finishes runs the command; on
+	 * {@link SubmitOn#ENTER}, the Enter gesture of the field does, and a field without one - a text
+	 * area, in which Enter starts a new line - runs no command. In a field that is picked from,
 	 * every value the user produces is a finished one, and the binding reports it once it has
 	 * reached the channel. The command's executability rule decides per value, so the model needs
 	 * no attachment to a channel.
 	 * </p>
 	 *
 	 * <p>
-	 * The command's result - its refusal included - is reported to the user: a submit gesture
-	 * returns it as the result of the client's submit. A committed value is reported from within
-	 * the value change the client sent, which has no result to return it through, so a failed
-	 * result is shown right away.
+	 * The command's result - its refusal included - is reported to the user: a finished edit and a
+	 * submit return it as the result of the client's command. A picked value is reported from
+	 * within the value change the client sent, which has no result to return it through, so a
+	 * failed result is shown right away.
 	 * </p>
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, ChannelFieldBinding binding) {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
-		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.hasSubmitGesture()) {
-			fieldControl.setSubmitListener(value -> model.execute(context, value));
+		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
+			switch (_submitOn) {
+				case CHANGE:
+					fieldControl.setCommitListener(value -> model.execute(context, value));
+					break;
+				case ENTER:
+					if (fieldControl.hasSubmitGesture()) {
+						fieldControl.setSubmitListener(value -> model.execute(context, value));
+					}
+					break;
+			}
 		} else {
 			binding.setCommitListener(value -> {
 				HandlerResult result = model.execute(context, value);

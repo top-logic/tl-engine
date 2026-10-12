@@ -370,8 +370,8 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a {@code <dynamic-columns>} is parsed with everything it says about the columns it
-	 * computes: the objects standing for them, their names, labels, values, edits, aggregate and
-	 * the display all of them share.
+	 * computes: the objects standing for them, their names, labels, values, edits, aggregate, the
+	 * order of their values and the display all of them share.
 	 */
 	public void testParseDynamicColumns() throws Exception {
 		DynamicColumns.Config milestones = dynamicColumns(readTableConfig());
@@ -394,6 +394,7 @@ public class TestTableElement extends TestCase {
 		assertNotNull("An edited value is written back.", milestones.getUpdate());
 		assertNotNull("The columns say which of their rows are edited.", milestones.getCanUpdate());
 		assertNotNull("The columns aggregate over a group.", milestones.getAggregate());
+		assertNotNull("The columns order their values themselves.", milestones.getComparator());
 		assertEquals("Should declare one input", 1, milestones.getInputs().size());
 		assertEquals("testInput", milestones.getInputs().get(0).getChannelName());
 
@@ -401,6 +402,7 @@ public class TestTableElement extends TestCase {
 		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
 		assertNull("Without a visibility function, every column is shown from the start.",
 			plain.getColumnVisible());
+		assertNull("The columns keep the order their type derives.", plain.getComparator());
 		assertEquals("The columns keep the width their type derives.", 0, plain.getWidth());
 		assertFalse("The columns are edited like any other unless they say otherwise.",
 			plain.getReadonly());
@@ -592,7 +594,8 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a {@code <column>} carries what it declares about its column: the display width,
-	 * the header label overriding the attribute's own, the sort direction and the read-only flag.
+	 * the header label overriding the attribute's own, the sort direction, the order of its values
+	 * and the read-only flag.
 	 */
 	public void testParseAttributeColumns() throws Exception {
 		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
@@ -605,12 +608,15 @@ public class TestTableElement extends TestCase {
 			((ResKey.LiteralKey) name.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
 		assertEquals(SortDirection.ASC, name.getSort());
 		assertFalse("A column is editable unless it says otherwise.", name.getReadonly());
+		assertNotNull("The column orders its values themselves.", name.getComparator());
 
 		AttributeColumn.Config active = (AttributeColumn.Config) columns.get(1);
 		assertEquals("active", active.getAttribute());
 		assertEquals("A column without a width keeps the one its type derives.", 0, active.getWidth());
 		assertNull("A column without a label keeps the attribute's.", active.getLabel());
 		assertNull("A column that declares no direction starts unsorted.", active.getSort());
+		assertNull("A column without a comparator keeps the order its type derives.",
+			active.getComparator());
 
 		AttributeColumn.Config owner = (AttributeColumn.Config) columns.get(2);
 		assertEquals("owner", owner.getAttribute());
@@ -619,7 +625,7 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a {@code <computed-column>} is parsed with the type of its values, the inputs its
-	 * value function receives and what it aggregates over a group.
+	 * value function receives, what it aggregates over a group and the order of its values.
 	 */
 	public void testParseComputedColumn() throws Exception {
 		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
@@ -634,6 +640,7 @@ public class TestTableElement extends TestCase {
 		assertEquals("Should declare one input", 1, total.getInputs().size());
 		assertEquals("testInput", total.getInputs().get(0).getChannelName());
 		assertNotNull("The column aggregates over a group.", total.getAggregate());
+		assertNotNull("The column orders its values themselves.", total.getComparator());
 		assertNull("A column without a label is named after itself.", total.getLabel());
 	}
 

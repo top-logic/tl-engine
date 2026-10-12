@@ -8,6 +8,7 @@
 	computed, and the table needs no row type at all. "Transient rows" shows a table over objects
 	that were never persisted. "Embedded columns" shows the columns of the object a row points to
 	as columns of the row. "Dynamic columns" shows one column per milestone, decided by the data.
+	"Group order" shows groups ordered by a comparator the grouping column declares.
 	"Editable column" edits a computed column through its update function. "Default columns" shows
 	what a table displays when it declares no columns: the main properties of its row type.
 	
@@ -254,6 +255,75 @@
 		.size())
 	.sum()]]></aggregate>
 							</dynamic-columns>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="group-order"
+				icon="css:bi bi-sort-down"
+			>
+				<label>
+					<en>Group order</en>
+					<de>Gruppenreihenfolge</de>
+				</label>
+				<panel>
+					<title>
+						<en>Groups in a declared order</en>
+						<de>Gruppen in deklarierter Reihenfolge</de>
+					</title>
+					<!--
+						The table starts grouped by the computed load column, which classifies a contributor
+						by the number of assigned tickets. Its comparator orders the classes none, few, many -
+						alphabetically they would read few, many, none. The ticket column sums the tickets
+						of a group in its header row.
+					-->
+					<table
+						group-by="load"
+						observed-types="tl.demo.projectManagement:Contributor"
+						personalization-key="table-columns-group-order"
+						types="tl.demo.projectManagement:Contributor"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<computed-column name="load"
+								type="tl.core:String"
+								width="120"
+							>
+								<label>
+									<en>Load</en>
+									<de>Auslastung</de>
+								</label>
+								<value><![CDATA[c -> {
+	count = $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size();
+	switch {
+		$count == 0: "none";
+		$count <= 2: "few";
+		default: "many";
+	};
+}]]></value>
+								<comparator><![CDATA[comparator(load -> switch ($load) {
+	"none": 0;
+	"few": 1;
+	default: 2;
+})]]></comparator>
+							</computed-column>
+							<computed-column name="tickets"
+								type="tl.core:Integer"
+								width="120"
+							>
+								<label>
+									<en>Tickets</en>
+									<de>Tickets</de>
+								</label>
+								<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size()]]></value>
+								<aggregate><![CDATA[rows -> $rows
+	.map(c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size())
+	.sum()]]></aggregate>
+							</computed-column>
 						</columns>
 						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
 					</table>

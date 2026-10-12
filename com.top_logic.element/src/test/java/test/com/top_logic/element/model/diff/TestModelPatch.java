@@ -8,6 +8,7 @@ package test.com.top_logic.element.model.diff;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 import junit.framework.Test;
 
@@ -24,6 +25,7 @@ import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.element.config.ModelConfig;
+import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.model.DefaultModelFactory;
 import com.top_logic.element.model.ModelCopy;
@@ -39,10 +41,12 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.IdentityMapping;
 import com.top_logic.model.config.ModelPartConfig;
@@ -62,10 +66,30 @@ public class TestModelPatch extends AbstractModelPatchTest {
 	}
 
 	private void doTestMigrate(String leftResource, String rightResource) throws SQLException {
-		TLModel left = setupModel(leftResource);
+		doTestMigrate(leftResource, rightResource, null, migrated -> {
+			// No additional checks.
+		});
+	}
 
-		TLModel base = loadModelTransient(leftResource);
-		TLModel right = loadModelTransient(rightResource);
+	/**
+	 * Migrates a persistent model created from the left fixture to the right fixture with the
+	 * migration processors created while patching a transient copy.
+	 *
+	 * @param moduleName
+	 *        The name to give the single module of both fixtures, see
+	 *        {@link #fixture(String, String)}.
+	 * @param check
+	 *        Additional checks on the migrated persistent model.
+	 */
+	private void doTestMigrate(String leftResource, String rightResource, String moduleName,
+			Consumer<TLModel> check) throws SQLException {
+		ModelConfig leftConfig = fixture(leftResource, moduleName);
+		ModelConfig rightConfig = fixture(rightResource, moduleName);
+
+		TLModel left = setupModel(leftConfig);
+
+		TLModel base = loadModelTransient(leftConfig);
+		TLModel right = loadModelTransient(rightConfig);
 
 		// Compute patch.
 		List<DiffElement> diff = createPatch(base, right);
@@ -100,6 +124,60 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		// Check that migration removes all differences between persistent and target model.
 		assertEmpty(createPatch(left, right));
 		assertEqualsConfig(right, left);
+		check.accept(left);
+	}
+
+	/**
+	 * Applies the patch from the left to the right fixture directly to a persistent model, the
+	 * way the model service upgrades the application model at startup.
+	 *
+	 * @param moduleName
+	 *        The name to give the single module of both fixtures, see
+	 *        {@link #fixture(String, String)}.
+	 * @param check
+	 *        Additional checks on the patched persistent model.
+	 */
+	private void doTestPersistent(String leftResource, String rightResource, String moduleName,
+			Consumer<TLModel> check) {
+		TLModel left = setupModel(fixture(leftResource, moduleName));
+		TLModel right = loadModelTransient(fixture(rightResource, moduleName));
+
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			applyDiff(left, right);
+			tx.commit();
+		}
+
+		assertEmpty(createPatch(left, right));
+		assertEqualsConfig(right, left);
+		check.accept(left);
+	}
+
+	/**
+	 * Reads a model fixture.
+	 *
+	 * <p>
+	 * Migration processors identify modules by name in the database, and all tests share a single
+	 * knowledge base that keeps the rows of deleted modules in its history. Therefore, each test
+	 * creating a persistent model from a fixture used by another test must give the module of
+	 * the fixture a name of its own.
+	 * </p>
+	 *
+	 * @param resource
+	 *        The name of the fixture resource.
+	 * @param moduleName
+	 *        The new name of the single module of the fixture, <code>null</code> to keep the
+	 *        name. Types in a renamed fixture must reference each other by their local names.
+	 */
+	private ModelConfig fixture(String resource, String moduleName) {
+		ModelConfig config = readModelConfig(resource);
+		if (moduleName != null) {
+			assertEquals(resource, 1, config.getModules().size());
+			ModuleConfig module = TypedConfiguration.copy(config.getModules().iterator().next());
+			module.setName(moduleName);
+			config.getModules().clear();
+			config.getModules().add(module);
+		}
+		return config;
 	}
 
 	private <T extends TLObject> T reload(KnowledgeBase kb, T left) {
@@ -108,10 +186,10 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		return left;
 	}
 
-	private TLModel setupModel(String configResource) {
+	private TLModel setupModel(ModelConfig config) {
 		TLModel left;
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			left = loadModel(configResource);
+			left = loadModel(config);
 			tx.commit();
 		}
 		return left;
@@ -119,7 +197,76 @@ public class TestModelPatch extends AbstractModelPatchTest {
 
 	public void testPatchAddGeneralizationOverride() throws SQLException {
 		doTestMigrate("test-add-generalization-override-left.model.xml",
-			"test-add-generalization-override-right.model.xml");
+			"test-add-generalization-override-right.model.xml", "addGeneralizationOverride", migrated -> {
+				// No additional checks.
+			});
+	}
+
+	public void testPatchBecomesOverride() throws SQLException {
+		doTestMigrate("test-becomes-override-left.model.xml", "test-becomes-override-right.model.xml",
+			"becomesOverride", migrated -> assertBecameOverride(migrated, "becomesOverride"));
+	}
+
+	public void testPatchBecomesOwnPart() throws SQLException {
+		doTestMigrate("test-becomes-override-right.model.xml", "test-becomes-override-left.model.xml",
+			"becomesOwnPart", migrated -> assertBecameOwnPart(migrated, "becomesOwnPart"));
+	}
+
+	public void testPatchBecomesOverridePersistent() {
+		doTestPersistent("test-becomes-override-left.model.xml", "test-becomes-override-right.model.xml",
+			"becomesOverridePersistent", patched -> assertBecameOverride(patched, "becomesOverridePersistent"));
+	}
+
+	public void testPatchBecomesOwnPartPersistent() {
+		doTestPersistent("test-becomes-override-right.model.xml", "test-becomes-override-left.model.xml",
+			"becomesOwnPartPersistent", patched -> assertBecameOwnPart(patched, "becomesOwnPartPersistent"));
+	}
+
+	private void assertBecameOverride(TLModel model, String module) {
+		TLStructuredTypePart baseA = localPart(model, module, "Base", "a");
+		assertDefinition(localPart(model, module, "Ext", "a"), baseA);
+		assertDefinition(localPart(model, module, "Ext2", "a"), baseA);
+	}
+
+	private void assertBecameOwnPart(TLModel model, String module) {
+		TLStructuredTypePart extA = localPart(model, module, "Ext", "a");
+		assertDefinition(extA, extA);
+		assertDefinition(localPart(model, module, "Ext2", "a"), extA);
+	}
+
+	private void assertDefinition(TLStructuredTypePart part, TLStructuredTypePart expectedDefinition) {
+		String partName = TLModelUtil.qualifiedName(part);
+		assertEquals(partName, expectedDefinition, part.getDefinition());
+		assertEquals(partName, part != expectedDefinition, part.isOverride());
+	}
+
+	/**
+	 * Navigates to a local part of a class.
+	 *
+	 * <p>
+	 * Navigates the same way as the {@link ModelConfigExtractor} to observe the parts of a model
+	 * reloaded after a cache reset, not wrappers kept by lookup indexes.
+	 * </p>
+	 */
+	private static TLStructuredTypePart localPart(TLModel model, String moduleName, String typeName,
+			String partName) {
+		TLModule module = model.getModules().stream()
+			.filter(m -> m.getName().equals(moduleName))
+			.findFirst().orElseThrow();
+		TLClass type = (TLClass) module.getTypes().stream()
+			.filter(t -> t.getName().equals(typeName))
+			.findFirst().orElseThrow();
+		return type.getLocalParts().stream()
+			.filter(p -> p.getName().equals(partName))
+			.findFirst().orElseThrow();
+	}
+
+	public void testPatchBecomesOverrideTransient() {
+		doTestTransient("test-becomes-override-left.model.xml", "test-becomes-override-right.model.xml");
+	}
+
+	public void testPatchBecomesOwnPartTransient() {
+		doTestTransient("test-becomes-override-right.model.xml", "test-becomes-override-left.model.xml");
 	}
 
 	public void testPatchTransient() {
@@ -155,6 +302,8 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		assertCopyWithoutDiff("test-override-left.model.xml");
 		assertCopyWithoutDiff("test-add-generalization-override-left.model.xml");
 		assertCopyWithoutDiff("test-add-generalization-override-right.model.xml");
+		assertCopyWithoutDiff("test-becomes-override-left.model.xml");
+		assertCopyWithoutDiff("test-becomes-override-right.model.xml");
 	}
 
 	private void assertCopyWithoutDiff(String fixture) {

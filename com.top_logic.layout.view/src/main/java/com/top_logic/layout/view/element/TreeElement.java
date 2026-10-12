@@ -21,11 +21,14 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -164,22 +167,31 @@ public class TreeElement implements UIElement {
 		 * which computes the child list of every node passed on the way - affordable for a tree of
 		 * small extent, not for a large or an unbounded one.
 		 * </p>
+		 *
+		 * <p>
+		 * It is also where the tree places a created or changed object of the
+		 * {@link #getObservedTypes() observed types} it has no node for, so it is required while
+		 * {@link #getObservedTypes()} names a type.
+		 * </p>
 		 */
 		@Name(PARENTS)
+		@Constraint(value = MandatoryIfSet.class, args = @Ref(OBSERVED_TYPES))
 		Expr getParents();
 
 		/**
-		 * Types to observe for object creation events.
+		 * Types whose created or changed objects the tree places even while it has no node for
+		 * them.
 		 *
 		 * <p>
-		 * When configured, the tree re-evaluates its root function when objects of these types
-		 * are created. This enables automatic node insertion for trees that query all instances
-		 * of a type.
+		 * Such an object is placed through {@link #getParents()}: the node of what holds it now
+		 * gets its child list computed again, so the object appears there - if that node is open.
+		 * Where it is not, the object appears when somebody opens it. Requires
+		 * {@link #getParents()}.
 		 * </p>
 		 *
 		 * <p>
-		 * When empty (default), only updates and deletes of currently displayed nodes are
-		 * observed. This is correct for trees whose nodes come directly from a channel.
+		 * When empty (default), the tree follows only the objects it displays: their changes and
+		 * deletions.
 		 * </p>
 		 */
 		@Name(OBSERVED_TYPES)
@@ -363,8 +375,9 @@ public class TreeElement implements UIElement {
 		treeControl.setCssClass(_config.getCssClass());
 
 		// 6. Create ObservableTreeModel to forward model changes to the tree control. The function
-		//    saying what holds an object serves the observation (where an object that moved went)
-		//    and the selection (which node an object of the channel has).
+		//    saying what holds an object serves the observation (where an object that moved went,
+		//    where an object of an observed type belongs) and the selection (which node an object of
+		//    the channel has).
 		Function<Object, Object> parentFunction = createParentFunction(inputChannels);
 		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
 		QueryExecutor rootExec = _rootExecutor;

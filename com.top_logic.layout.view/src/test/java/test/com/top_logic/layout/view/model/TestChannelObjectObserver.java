@@ -21,6 +21,8 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateChain;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.LiveExecutability;
+import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.mig.html.layout.AssociationEndRelevance;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
@@ -291,6 +293,27 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 
 		assertEquals("A deletion is no change.", 0, _reported);
 		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
+	}
+
+	/**
+	 * Tests that the {@link LiveExecutability} of a command over the channel reports the deletion
+	 * of the object on it as a change, and then refuses the command: the deleted object counts as no
+	 * input.
+	 */
+	public void testLiveExecutabilityReportsDeletionAsChange() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		LiveExecutability live = new LiveExecutability(NullInputDisabled.INSTANCE, _input, Set.of(), () -> _reported++);
+		live.attach(_scope);
+		assertTrue("The command is executable over the object.", live.getState().isExecutable());
+
+		delete(b1);
+
+		assertEquals("Deleting the input object is reported as a change.", 1, _reported);
+		assertFalse("The deleted input object counts as no input.", live.getState().isExecutable());
+		assertNull("The command is handed no deleted object.", live.getInput());
+		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
+		live.detach();
 	}
 
 	/**

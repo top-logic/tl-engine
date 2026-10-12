@@ -175,6 +175,28 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	}
 
 	/**
+	 * Creates a {@link ChannelObjectObserver} for a holder that re-reads the channels itself and
+	 * also wants to hear about the deletion of an observed object.
+	 *
+	 * @param channels
+	 *        The channels whose objects are observed.
+	 * @param observedTypes
+	 *        Types whose object changes are observed in addition to the channels' objects (empty
+	 *        observes just those).
+	 * @param onChange
+	 *        Run on every change of an observed object while all objects the channels hold are
+	 *        {@link TLObject#tValid() valid}, and once when the observation resumes, where the
+	 *        objects may have been changed unseen.
+	 * @param onDeleted
+	 *        Run on every event that arrives while one of the objects the channels hold is
+	 *        {@link TLObject#tValid() invalid}.
+	 */
+	public ChannelObjectObserver(List<ViewChannel> channels, Set<TLStructuredType> observedTypes, Runnable onChange,
+			Runnable onDeleted) {
+		this(channels, observedTypes, event -> onChange.run(), event -> onDeleted.run(), onChange);
+	}
+
+	/**
 	 * Creates a {@link ChannelObjectObserver} reporting changes to the given callback, and resuming
 	 * through the given action.
 	 *

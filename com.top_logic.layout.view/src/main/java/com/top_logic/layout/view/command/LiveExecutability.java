@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,8 +18,10 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -25,12 +30,21 @@ import com.top_logic.tool.execution.ExecutableState;
  *
  * <p>
  * The {@link #getState() state} is the rule's answer for the value the input channel holds now.
+ * The rule never sees a deleted object: an input object that is no longer
+ * {@link TLObject#tValid() valid} counts as no input at all, and the deleted members of a
+ * collection input are left out (see {@link #withoutDeleted(Object)}). A channel may hold a deleted
+ * object until the display that writes it chooses another value, but nothing can be decided over
+ * an object that is gone.
+ * </p>
+ *
+ * <p>
  * While {@link #attach(ModelScope) attached}, every event after which the rule may answer
  * differently runs the change callback given at construction:
  * </p>
  * <ul>
  * <li>the input channel taking a new value,</li>
- * <li>the object that value holds being changed or deleted, or an object of one of the
+ * <li>the object that value holds being changed or deleted - a deletion disables what the rule
+ * decides for, since the deleted object then counts as no input -, or an object of one of the
  * {@link ExecutabilityConfig#getObservedTypes() observed types} being created, changed or deleted
  * (see {@link ChannelObjectObserver}),</li>
  * <li>a rule deciding by more than its input reporting a change of its own
@@ -92,7 +106,7 @@ public class LiveExecutability {
 		_onChange = onChange;
 
 		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
-		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, onChange);
+		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, onChange, onChange);
 	}
 
 	/**
@@ -131,10 +145,11 @@ public class LiveExecutability {
 	}
 
 	/**
-	 * The current value of the {@link #getInputChannel() input channel}, {@code null} without one.
+	 * The current value of the {@link #getInputChannel() input channel} without the objects deleted
+	 * meanwhile (see {@link #withoutDeleted(Object)}), {@code null} without a channel.
 	 */
 	public Object getInput() {
-		return _inputChannel != null ? _inputChannel.get() : null;
+		return _inputChannel != null ? withoutDeleted(_inputChannel.get()) : null;
 	}
 
 	/**
@@ -150,10 +165,45 @@ public class LiveExecutability {
 	 * {@link #getInput() channel value} - a single row of a table, say.
 	 *
 	 * @param input
-	 *        The value the rule decides over.
+	 *        The value the rule decides over, after leaving out what is deleted (see
+	 *        {@link #withoutDeleted(Object)}).
 	 */
 	public ExecutableState getState(Object input) {
-		return _rule.isExecutable(input);
+		return _rule.isExecutable(withoutDeleted(input));
+	}
+
+	/**
+	 * The given input without the objects in it that are deleted.
+	 *
+	 * <p>
+	 * A single {@link TLObject} that is not {@link TLObject#tValid() valid} any more counts as no
+	 * input, {@code null}. A collection holding such objects is answered with a copy leaving them
+	 * out - a {@link Set} by a set, any other collection by a list, both in the original order; a
+	 * collection of which nothing is left stays an empty collection. Any other value is answered
+	 * unchanged.
+	 * </p>
+	 *
+	 * @param input
+	 *        The value of an input channel, or a value supplied in its place.
+	 * @return The value a rule and a command decide and act over.
+	 */
+	public static Object withoutDeleted(Object input) {
+		if (input instanceof TLObject object) {
+			return object.tValid() ? input : null;
+		}
+		if (input instanceof Collection<?> values) {
+			if (ObservedObjects.objects(values).stream().allMatch(TLObject::tValid)) {
+				return input;
+			}
+			Collection<Object> result = values instanceof Set ? new LinkedHashSet<>() : new ArrayList<>();
+			for (Object value : values) {
+				if (!(value instanceof TLObject object) || object.tValid()) {
+					result.add(value);
+				}
+			}
+			return result;
+		}
+		return input;
 	}
 
 	/**

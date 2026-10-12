@@ -41,7 +41,6 @@ import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.model.impl.TransientTLObjectImpl;
 import com.top_logic.table.SelectionMode;
 
 /**
@@ -351,8 +350,8 @@ public class TestTreeSelectionBinding extends TestCase {
 	 * on the channel.
 	 */
 	public void testDeletedObjectIsNotLookedFor() {
-		Item survivor = new Item("survivor");
-		Item deleted = new Item("deleted");
+		DeletableItem survivor = new DeletableItem("survivor");
+		DeletableItem deleted = new DeletableItem("deleted");
 		_children.put(ROOT, new ArrayList<>(List.of(survivor, deleted)));
 		List<Object> lookedFor = new ArrayList<>();
 		bind(true, recordingLocator(lookedFor));
@@ -376,7 +375,7 @@ public class TestTreeSelectionBinding extends TestCase {
 	 * instead of leaving the deleted object on it for everybody reading it to fail over.
 	 */
 	public void testDeletedSelectionClearsTheChannel() {
-		Item item = new Item("item");
+		DeletableItem item = new DeletableItem("item");
 		_children.put(ROOT, new ArrayList<>(List.of(item)));
 		bind(false, recordingLocator(new ArrayList<>()));
 		_selectionModel.setSelected(node(item), true);
@@ -430,42 +429,10 @@ public class TestTreeSelectionBinding extends TestCase {
 	private static NodeLocator recordingLocator(List<Object> lookedFor) {
 		return (root, businessObject) -> {
 			assertTrue("Nothing can be computed over a deleted object.",
-				!(businessObject instanceof Item item) || item.tValid());
+				!(businessObject instanceof DeletableItem item) || item.tValid());
 			lookedFor.add(businessObject);
 			return NodeLocator.SEARCHING.locate(root, businessObject);
 		};
-	}
-
-	/**
-	 * Object of the displayed structure that can be deleted.
-	 */
-	private static class Item extends TransientTLObjectImpl {
-
-		private final String _name;
-
-		private boolean _deleted;
-
-		Item(String name) {
-			super(null, null);
-			_name = name;
-		}
-
-		/**
-		 * Makes this object one that was deleted.
-		 */
-		void markDeleted() {
-			_deleted = true;
-		}
-
-		@Override
-		public boolean tValid() {
-			return !_deleted;
-		}
-
-		@Override
-		public String toString() {
-			return _name;
-		}
 	}
 
 	/**

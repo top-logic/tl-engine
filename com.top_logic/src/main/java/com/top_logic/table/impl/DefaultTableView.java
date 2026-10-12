@@ -67,6 +67,13 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	private final TableViewState _state;
 
+	/**
+	 * The state this table is defined with, before a personalization is restored onto it.
+	 *
+	 * @see #resetToDefaults()
+	 */
+	private final TableViewState _defaults;
+
 	private final List<TableViewListener> _listeners = new ArrayList<>();
 
 	private final RowSourceListener _sourceListener = this::onRowsInvalidated;
@@ -183,6 +190,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		_source = source;
 		_state = state;
+		_defaults = state.copy();
 		_store = store;
 		_id = id;
 		_hiddenByDefault = new LinkedHashSet<>(hiddenByDefault);
@@ -197,8 +205,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
 		restore();
-		pinColumns();
-		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
+		fitArrangement();
 		// Whatever the order and the grouping end up being - the initial default or the user's
 		// persisted choice - the row source has to be told about them.
 		pushOrder();
@@ -372,8 +379,8 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *
 	 * <p>
 	 * Called whenever the column order is set from outside - by the caller, by a restored
-	 * personalization, by a column selection - so that the displayed order it establishes holds for
-	 * every consumer: {@link #columns()} lists a pinned column last, and the
+	 * personalization, by a column selection, by a reset - so that the displayed order it
+	 * establishes holds for every consumer: {@link #columns()} lists a pinned column last, and the
 	 * {@link #frozenColumnCount() frozen prefix} counts none of them. A pinned column is always
 	 * displayed; a state hiding it shows it again.
 	 * </p>
@@ -392,6 +399,18 @@ public class DefaultTableView<R> implements TableView<R> {
 		order.removeAll(pinned);
 		_state.getHiddenColumns().removeAll(pinned);
 		order.addAll(pinned);
+	}
+
+	/**
+	 * Brings a column arrangement set from outside into the shape {@link #columns()} relies on: the
+	 * {@link #pinColumns() pinned columns} trail the order, and the frozen prefix ends behind a
+	 * column that {@link #frozenPrefix(int) may be frozen} - a column that was frozen may have been
+	 * hidden or moved out of the frozen range, and the frozen prefix can never reach beyond the
+	 * columns that are left.
+	 */
+	private void fitArrangement() {
+		pinColumns();
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 	}
 
 	/** Whether the column with the given name keeps its place at the end of the table. */
@@ -447,17 +466,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
 			if (entry.getValue().selectable() && !_state.getColumnOrder().contains(entry.getKey())) {
 				result.add(new ColumnOption(entry.getKey(), entry.getValue().label(), false));
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public List<String> defaultColumnOrder() {
-		List<String> result = new ArrayList<>(_columns.size());
-		for (String name : _columns.keySet()) {
-			if (!_hiddenByDefault.contains(name)) {
-				result.add(name);
 			}
 		}
 		return result;
@@ -897,10 +905,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		_state.setHiddenColumns(hidden);
-		pinColumns();
-		// A column that was frozen may have been hidden or moved out of the frozen range; the
-		// frozen prefix can never reach beyond the columns that are left.
-		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
+		fitArrangement();
 		searchScopeChanged();
 		pushOrder();
 		persist();
@@ -989,6 +994,24 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public void setFrozenColumnCount(int count) {
 		_state.setFrozenCount(frozenPrefix(count));
+		persist();
+		fireColumnsChanged();
+	}
+
+	@Override
+	public void resetToDefaults() {
+		TableViewState defaults = _defaults.copy();
+		_state.setColumnOrder(defaults.getColumnOrder());
+		_state.setHiddenColumns(defaults.getHiddenColumns());
+		_state.setWidths(defaults.getWidths());
+		_state.setFrozenCount(defaults.getFrozenCount());
+		_state.setSort(defaults.getSort());
+		_state.setGrouping(defaults.getGrouping());
+		fitArrangement();
+		searchScopeChanged();
+		pushOrder();
+		// Also an empty grouping is handed over: it removes the one the user chose.
+		_source.withGrouping(_state.getGrouping());
 		persist();
 		fireColumnsChanged();
 	}

@@ -56,11 +56,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_COLUMN_TYPE;
 
 	/**
-	 * @en Module
-	 */
-	public static ResKey COVERAGE_COLUMN_MODULE;
-
-	/**
 	 * @en Status
 	 */
 	public static ResKey COVERAGE_COLUMN_STATUS;

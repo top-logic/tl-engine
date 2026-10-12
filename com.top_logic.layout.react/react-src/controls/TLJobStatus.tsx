@@ -97,7 +97,9 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   // The bar shows its share as a percentage; the state above it says what progresses and names the
   // bar, so the percentage is announced once, as the bar's value.
   const stateId = `${controlId}-state`;
-  const percent = fraction != null ? PERCENT.format(fraction) : null;
+  // Rounded to whole percent as the bar rounds its aria-valuenow (Math.round of fraction × 100): the format
+  // alone rounds the decimal digits of the fraction and can show one percent more (0.285: 29 %, the bar 28).
+  const percent = fraction != null ? PERCENT.format(Math.round(fraction * 100) / 100) : null;
 
   return (
     <div id={controlId} className={rootClassName(state, `tlJobStatus tlJobStatus--${status}`)} role="status" aria-live="polite">

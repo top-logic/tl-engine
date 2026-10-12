@@ -1710,6 +1710,12 @@ a.tl-field-value:hover {
   min-width: 0;
 }
 
+/* Das Komma zwischen zwei Lesewerten als Text folgt dem Wert davor; der Spalt der Reihe steht danach
+   als Leerzeichen (das Leerzeichen am Ende des Trenners fällt am Ende seines Flex-Elements weg). */
+.tl-select__values > .tl-select__separator {
+  margin-inline-start: calc(-1 * var(--tl-space-2xs));
+}
+
 /* Der Einzelwert: Text oder Pill; Kinder dürfen schrumpfen, damit die Pill mit Ellipse endet. */
 .tl-select__value {
   display: inline-flex;

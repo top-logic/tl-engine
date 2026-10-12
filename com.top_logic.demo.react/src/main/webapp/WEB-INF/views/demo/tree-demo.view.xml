@@ -25,13 +25,15 @@
 	nothing while there is none. An activation names one node, so the "activated" channel always
 	holds the single node the gesture opened.
 	
-	The tree follows the objects it displays: the types in observed-types announce a create, and a
-	change reconciles the child lists in place, so the subtrees the user opened stay open. The
-	"parents" expression says what holds an object in the tree - the milestone of a ticket, the
-	scope of a milestone, the type the tree is built from for a scope - so the node of an object
-	written to "selected" is found by walking up from it instead of searching the whole tree.
+	The tree follows the objects it displays. The "parents" expression says what holds an object in
+	the tree - the milestone of a ticket, the scope of a milestone, the type the tree is built from
+	for a scope. An object of one of the observed-types that is created or changed while the tree
+	has no node for it is placed through "parents": the child list of the node holding it is
+	brought up to date, so the object appears under its open holder, and the subtrees the user
+	opened stay open. The node of an object written to "selected" is found the same way, by walking
+	up from it instead of searching the whole tree.
 	
-	The four commands show that in the four shapes a model change takes:
+	The five commands show that in the five shapes a model change takes:
 	- "New milestone" creates a milestone in the selected scope through a dialog and writes it to
 	"selected". The tree has no node for it while the dialog closes, and reveals and selects it
 	as soon as the create arrives.
@@ -40,6 +42,9 @@
 	- "Detach from milestone" takes the milestone off the selected ticket. Nothing is deleted, yet
 	the ticket leaves the child list it hung in: its node goes, the milestone stays open, and the
 	tree writes what is left of the selection back to the channel.
+	- "Attach a free ticket" gives a ticket without a milestone - a detached one, for instance - the
+	selected milestone and writes it to "selected". The tree has no node for that ticket; the
+	change places it under the still-open milestone, where it is selected.
 	- "Delete" deletes whatever is selected, one object or several.
 	
 	A command works on the selection through a derived channel naming what it can process: the
@@ -160,6 +165,36 @@
 				<with-transaction>
 					<execute-script function="ticket -> { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, null); null; }"/>
 				</with-transaction>
+			</generic-command>
+			<!--
+				A ticket without a milestone hangs in no child list of the tree. The command attaches
+				the first such ticket of the selected milestone's scope to the milestone and writes it
+				to "selected". The tickets are observed, because whether there is a free ticket depends
+				on objects beyond the selected milestone. Should the free ticket be gone by the time the
+				command runs, the script answers the milestone, which leaves the selection where it is.
+			-->
+			<generic-command
+				image="css:bi bi-box-arrow-in-down"
+				input="selectedMilestone"
+				observed-types="tl.demo.projectManagement:Ticket"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Attach a free ticket</en>
+					<de>Freies Ticket anhängen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="milestone -> if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
+				</executability>
+				<with-transaction>
+					<commitMessage>
+						<en>Attached a ticket to milestone {0}.</en>
+						<de>Ticket an Meilenstein {0} angehängt.</de>
+					</commitMessage>
+					<execute-script function="milestone -> { ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }"/>
+				</with-transaction>
+				<write-channel name="selected"/>
 			</generic-command>
 			<!-- <delete-object/> deletes a single object as well as a set of them. -->
 			<generic-command

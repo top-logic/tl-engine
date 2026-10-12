@@ -88,7 +88,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  * running while the publisher is closed completes.
  * </p>
  */
-public class ChannelPublisher {
+public class ChannelPublisher implements ChannelSink {
 
 	private final ReactContext _context;
 
@@ -188,6 +188,7 @@ public class ChannelPublisher {
 	 * @param value
 	 *        The value the channel is to hold.
 	 */
+	@Override
 	public void publish(Object value) {
 		enqueue(value, false);
 	}

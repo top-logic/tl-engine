@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> and <derived-channel> (inputs, expr, reverse, observed-types), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel>, <derived-channel> (inputs, expr, reverse, observed-types) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
 order: 15
 ---
 
@@ -9,10 +9,11 @@ A channel is a named value of one view instance. Elements read the object they d
 
 ## Declaring channels: `<channels>`
 
-The channels of a view are declared in the `<channels>` section of its `<view>` element (`ViewElement.Config.getChannels()`). Every name is unique within the view. Two kinds exist:
+The channels of a view are declared in the `<channels>` section of its `<view>` element (`ViewElement.Config.getChannels()`). Every name is unique within the view. Three kinds exist:
 
 - **`<channel name="…"/>`** (`ValueChannelConfig`) is a writable value. It starts empty and holds whatever an element or an action writes into it last.
 - **`<derived-channel name="…" inputs="…" expr="…"/>`** (`DerivedChannelConfig`) computes its value from other channels with a TL-Script function. The values of the `inputs` channels are the positional arguments of `expr`, in the order the inputs are listed: with `inputs="a, b"` the function is written `x -> y -> …` and receives the value of `a` as `x` and the value of `b` as `y`. The value is computed when the view is built and computed again whenever one of the inputs takes a new value; listeners are told only when the result differs from the previous one. A derived channel is read-only: an element writing it fails (`UnsupportedOperationException`) unless the channel has a `reverse` function (below).
+- **`<source-channel name="…"><source class="…"/></source-channel>`** (`SourceChannelConfig`) is a writable value that additionally receives what a server-side source publishes, see [below](#channels-fed-by-a-server-side-source-source-channel).
 
 ```xml
 <channels>
@@ -66,6 +67,28 @@ A derived channel with a `reverse` function is bidirectional. A value written to
 Selecting a ticket writes `ticket`, `ticketId` follows, and the route parameter shows the identifier; opening a link writes the identifier into `ticketId`, and `reverse` resolves it into the ticket on `ticket`. The bindings of channels to the URL are described in [URL routing](doc:view-layer/navigation#url-routing-what-ends-up-in-the-address-bar).
 
 A form with unsaved input that is bound to a derived channel also blocks the write of the inputs the value is computed from, see [unsaved changes](doc:view-layer/forms#unsaved-changes-are-asked-before-a-channel-write-transitively).
+
+## Channels fed by a server-side source: `<source-channel>`
+
+Some values change without a request of the window: a listener of a message bus receives a message, a queue fills up, a timer ticks. A `<source-channel>` (`SourceChannelConfig`) is a channel such a server-side source writes into. It is a writable value like a `<channel>` - elements and actions may still write it - and additionally holds the latest value its source published. A view that only has to follow commits to the model does not need a source: a `<derived-channel>` with `observed-types` (above) does that.
+
+```xml
+<channels>
+	<source-channel name="status" update-interval="500">
+		<source class="my.app.StatusSource"/>
+	</source-channel>
+</channels>
+```
+
+The source is a Java class implementing `ChannelSource`, configured in the `<source>` element; it is created once from the configuration and serves every view instance declaring the channel. Its single method `subscribe(ViewContext, ChannelSink)` returns a `Registration`:
+
+- **On subscribe, the source publishes its current state** into the `ChannelSink` right away - the channel knows nothing of what happened before - and every later state after that.
+- **`ChannelSink.publish(value)` may be called from any thread and never blocks.** The value is written to the channel later, in the sub-session of the request that subscribed and under the window's interaction, so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the session like a command is.
+- **The channel holds state, not events.** `update-interval` is the shortest time in milliseconds between two deliveries (default 250, zero delivers every value): a value published while an earlier one is still held back replaces it, and the last value of a burst is always delivered. A source whose consumers must see every message accumulates them into the value itself.
+- **The subscription follows the display.** The channel subscribes when the view declaring it is displayed and disposes the registration when the view is hidden - a tab nobody looks at, a closed dialog - or destroyed, exactly like the observation of a derived channel. The source therefore sees one subscription per displayed view instance per window, and one again each time a view is displayed anew. After the registration is disposed, publishing into its sink is harmless and ignored. A source that shares one external connection among its subscribers manages that sharing itself.
+- A source whose `subscribe` fails is logged, and the channel stays an ordinary writable value.
+
+Java code that has a `ViewContext` and a channel at hand - an action starting background work, an element of its own - does not need a declared source: a `ChannelPublisher` created on a request thread delivers values into the channel from any thread with the same threading, throttling and conflation; `close()` ends it.
 
 ## How elements use channels
 

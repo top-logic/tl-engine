@@ -11,6 +11,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.ObservedObjects;
 
 /**
  * Default {@link ViewChannel} implementation that holds a mutable value.
@@ -33,8 +36,28 @@ import com.top_logic.layout.view.form.StateHandler;
  * they object with are collected into a single {@link ChannelVetoException}. A handler reachable
  * over several {@link VetoForwarder forwarding} paths is reported once.
  * </p>
+ *
+ * <p>
+ * While {@link #attach(ModelScope) attached}, the channel observes the {@link TLObject}s its value
+ * holds. When one of them is deleted, the channel drops it with an ordinary change: a single object
+ * is replaced by {@code null}, a collection by a copy without the deleted members (see
+ * {@link DeletedObjects#withoutDeleted(Object)}). Every listener hears the deletion as the new
+ * value, so no reader is left holding an object that is gone - a reader evaluating an expression
+ * over the value, a display showing it, a command deciding over it. A selector writing the channel
+ * answers that drop with its next selection.
+ * </p>
+ *
+ * <p>
+ * The drop is not offered to the veto listeners: nothing can be saved on an object that is gone, so
+ * unsaved changes cannot keep it on the channel.
+ * </p>
+ *
+ * <p>
+ * Attaching validates the value: a deletion that happened while the channel was detached - the
+ * view declaring it was off screen - is announced then.
+ * </p>
  */
-public class DefaultViewChannel implements ViewChannel {
+public class DefaultViewChannel implements ObservingChannel {
 
 	private final String _name;
 
@@ -43,6 +66,14 @@ public class DefaultViewChannel implements ViewChannel {
 	private final ChannelListeners _listeners = new ChannelListeners(this);
 
 	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
+
+	/**
+	 * The objects of the value, observed for their deletion while {@link #_attached}; {@code null}
+	 * until the channel is attached for the first time.
+	 */
+	private ObservedObjects _observed;
+
+	private boolean _attached;
 
 	/**
 	 * Creates a {@link DefaultViewChannel} programmatically.
@@ -76,9 +107,67 @@ public class DefaultViewChannel implements ViewChannel {
 			}
 		}
 
-		_value = newValue;
-		_listeners.notifyChange(oldValue, newValue);
+		update(newValue);
 		return true;
+	}
+
+	/**
+	 * Begins observing the objects of the value, and drops the ones deleted meanwhile.
+	 */
+	@Override
+	public void attach(ModelScope scope) {
+		if (_attached) {
+			return;
+		}
+		_attached = true;
+		if (_observed == null) {
+			_observed = new ObservedObjects(event -> dropDeleted());
+		}
+		_observed.observeValue(_value);
+		_observed.attach(scope);
+		dropDeleted();
+	}
+
+	/**
+	 * Stops observing the objects of the value.
+	 */
+	@Override
+	public void detach() {
+		if (!_attached) {
+			return;
+		}
+		_attached = false;
+		_observed.detach();
+	}
+
+	/**
+	 * Stops observing the objects of the value.
+	 */
+	@Override
+	public void release() {
+		detach();
+	}
+
+	/**
+	 * Replaces the value by the value without its deleted objects, where it holds one.
+	 */
+	private void dropDeleted() {
+		Object valid = DeletedObjects.withoutDeleted(_value);
+		if (valid != _value) {
+			update(valid);
+		}
+	}
+
+	/**
+	 * Stores the given value, observes its objects and announces it to the listeners.
+	 */
+	private void update(Object newValue) {
+		Object oldValue = _value;
+		_value = newValue;
+		if (_attached) {
+			_observed.observeValue(newValue);
+		}
+		_listeners.notifyChange(oldValue, newValue);
 	}
 
 	@Override

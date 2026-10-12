@@ -480,6 +480,72 @@ public class TestTreeSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Tests that the channel announcing the deletion of the selected object - dropping it to
+	 * <code>null</code>, as an attached channel does - leaves the tree's selection and its memory
+	 * of it alone, so that the structure change removing the node selects the node it hung in.
+	 */
+	public void testAnnouncedDeletionIsAnsweredByTheStructureChange() {
+		DeletableItem item = new DeletableItem("item");
+		_children.put(A, new ArrayList<>(List.of(item)));
+		bind(false, NodeLocator.SEARCHING);
+		_selectionModel.setSelected(node(item), true);
+		DefaultTreeUINode itemNode = node(item);
+
+		item.markDeleted();
+		_channel.set(null);
+
+		assertEquals("The announced deletion asks for no selection.", Set.of(itemNode),
+			_selectionModel.getSelection());
+
+		removeChild(node(A), item);
+		_binding.structureChanged();
+
+		assertEquals("The node the deleted object hung in is the selection.", Set.of(node(A)),
+			_selectionModel.getSelection());
+		assertEquals("The tree answers the deletion with its next selection.", A, _channel.get());
+	}
+
+	/**
+	 * Tests that the channel announcing the deletion of a member of a multi-selection - dropping it
+	 * from the set - leaves the tree's selection alone until the structure change, which writes the
+	 * survivors.
+	 */
+	public void testAnnouncedDeletionOfAMemberKeepsTheSurvivors() {
+		DeletableItem survivor = new DeletableItem("survivor");
+		DeletableItem deleted = new DeletableItem("deleted");
+		_children.put(ROOT, new ArrayList<>(List.of(survivor, deleted)));
+		bind(true, NodeLocator.SEARCHING);
+		_selectionModel.setSelection(Set.of(node(survivor), node(deleted)));
+		Set<Object> selectedNodes = Set.copyOf(_selectionModel.getSelection());
+
+		deleted.markDeleted();
+		_channel.set(Set.of(survivor));
+
+		assertEquals("The announced deletion asks for no selection.", selectedNodes,
+			Set.copyOf(_selectionModel.getSelection()));
+
+		removeChild(root(), deleted);
+		_binding.structureChanged();
+
+		assertEquals(Set.of(node(survivor)), _selectionModel.getSelection());
+		assertEquals("What is left of the selection is the value.", survivor, _channel.get());
+	}
+
+	/**
+	 * Tests that another writer clearing the channel while the selected object is still valid
+	 * clears the tree's selection.
+	 */
+	public void testClearedChannelClearsTheSelection() {
+		bind(false, NodeLocator.SEARCHING);
+		_selectionModel.setSelected(node(A), true);
+
+		_channel.set(null);
+
+		assertTrue("A value naming nothing is no selection.", _selectionModel.getSelection().isEmpty());
+		assertNull(_channel.get());
+	}
+
+	/**
 	 * Tests that a click on a node writes the object of that node to the channel and nothing else:
 	 * a display bound to the channel goes straight from one clicked node to the next, without the
 	 * empty selection in between that giving the former one up would show.

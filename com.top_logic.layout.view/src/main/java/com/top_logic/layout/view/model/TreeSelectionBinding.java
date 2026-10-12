@@ -24,6 +24,7 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TLTreeModelUtil;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeNodeComparator;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.model.TLObject;
@@ -65,11 +66,21 @@ import com.top_logic.model.TLObject;
  * </p>
  *
  * <p>
- * A value the tree has no node for - and a deleted object, which is nowhere at all - means no more
- * than "no node selected here": the tree leaves the channel alone, and leaves its own selection
- * where it is. Clearing the channel would destroy what another writer put there - the object a
- * second display over other objects selected, or the object a create command wrote before this tree
- * caught up with it.
+ * A value the tree has no node for means no more than "no node selected here": the tree leaves the
+ * channel alone, and leaves its own selection where it is. Clearing the channel would destroy what
+ * another writer put there - the object a second display over other objects selected, or the object
+ * a create command wrote before this tree caught up with it.
+ * </p>
+ *
+ * <p>
+ * A channel drops an object it holds once that object is deleted (see
+ * {@link com.top_logic.layout.view.channel.DefaultViewChannel}): the value then is the displayed
+ * selection without the deleted objects - <code>null</code> where nothing else was selected. That
+ * value announces the deletion, it asks for no selection: the tree leaves its selection and its
+ * memory of it alone (see {@link DeletedObjects#dropsDeletedOnly(Collection, Object)}), and answers
+ * with its next selection once its own structure change removes the nodes - the survivors, or the
+ * node the deleted one hung in. A deleted object the channel still holds - one nobody attached -
+ * has no node, like any foreign value, and is replaced the same way.
  * </p>
  *
  * <p>
@@ -161,6 +172,10 @@ public class TreeSelectionBinding {
 	 * </p>
 	 */
 	public void structureChanged() {
+		// A value that only announced the deletion of displayed objects is answered here, not
+		// applied: applying it would clear the selection this change chooses in their place.
+		boolean deletionAnnounced = DeletedObjects.dropsDeletedOnly(_displayed.keySet(), _channel.get());
+
 		Set<DefaultTreeUINode> survivors = new LinkedHashSet<>();
 		List<List<Object>> vanishedAncestors = new ArrayList<>();
 		for (Map.Entry<Object, List<Object>> entry : _displayed.entrySet()) {
@@ -190,7 +205,9 @@ public class TreeSelectionBinding {
 		showSelection(selection, reveal);
 		recordDisplayed(selection);
 
-		applyChannelValue();
+		if (!deletionAnnounced) {
+			applyChannelValue();
+		}
 
 		if (displayedNodeGone) {
 			// The value names nodes nobody can see any more, so it is replaced by what the tree
@@ -298,6 +315,12 @@ public class TreeSelectionBinding {
 	 */
 	private void applyChannelValue() {
 		Object value = _channel.get();
+		if (DeletedObjects.dropsDeletedOnly(_displayed.keySet(), value)) {
+			// The channel announces the deletion of displayed objects. The tree answers with its
+			// next selection when its structure change removes their nodes; until then, it keeps
+			// the selection and the memory of what it displayed, which that answer is computed from.
+			return;
+		}
 		if (isDisplayed(value)) {
 			// The tree already shows this selection: it is the tree's own, echoed back through the
 			// channel.

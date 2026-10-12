@@ -78,7 +78,26 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
   }, [sendCommand]);
 
+  // A lock click can reorder the list (the column joins or leaves the frozen block), and React then moves the row's node,
+  // which takes the focus from the lock. The clicked lock is remembered by column name and focused again once the
+  // re-pushed list has rendered, as the keyboard move of the handle does.
+  const lockRefs = React.useRef(new Map<string, HTMLButtonElement>());
+  const pendingLockFocus = React.useRef<string | null>(null);
+
+  React.useLayoutEffect(() => {
+    const name = pendingLockFocus.current;
+    if (name === null) {
+      return;
+    }
+    pendingLockFocus.current = null;
+    const lock = lockRefs.current.get(name);
+    if (lock && document.activeElement !== lock) {
+      lock.focus();
+    }
+  }, [entries]);
+
   const handleLock = React.useCallback((name: string, locked: boolean) => {
+    pendingLockFocus.current = name;
     sendCommand(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [sendCommand]);
 
@@ -150,6 +169,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   type="button"
                   className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__lock' })}
                   aria-label={lockLabel}
+                  ref={(element) => { if (element) lockRefs.current.set(entry.name, element); else lockRefs.current.delete(entry.name); }}
                   {...tooltipProps(lockLabel)}
                   onClick={() => handleLock(entry.name, !entry.locked)}
                 >

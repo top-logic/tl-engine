@@ -549,7 +549,8 @@ public class ValueInputElement implements UIElement {
 	 *
 	 * <p>
 	 * A {@link Config#getMandatory() mandatory} value that is empty is not handed to the command:
-	 * the field shows the missing value, and a finished edit or a submit answers with it.
+	 * the field shows the missing value, and the finished edit or the submit succeeds without
+	 * running anything.
 	 * </p>
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
@@ -557,10 +558,10 @@ public class ValueInputElement implements UIElement {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
 			Function<Object, HandlerResult> submit = value -> {
-				ResKey missing = missingValue(value);
-				if (missing != null) {
+				if (missingValue(value) != null) {
+					// The field reports the missing value; the submit itself has nothing to add.
 					field.setRevealed(true);
-					return HandlerResult.error(missing);
+					return HandlerResult.DEFAULT_RESULT;
 				}
 				return model.execute(context, value);
 			};

@@ -898,13 +898,13 @@ public class TestValueInputElement extends TestCase {
 		assertFalse("An input that appears empty does not complain before it is touched.", field.hasError());
 		assertHasError(control, false);
 
-		HandlerResult refused = control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ""));
+		HandlerResult empty = control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ""));
 
 		assertNull("The empty value reaches the channel like any other, as no value.", _term.get());
 		assertMissing(field);
 		assertHasError(control, true);
-		assertFalse("The submit of an empty mandatory value fails.", refused.isSuccess());
-		assertEquals(List.of(I18NConstants.ERROR_MANDATORY_FIELD_EMPTY), refused.getEncodedErrors());
+		assertTrue("An empty mandatory value is reported at the field alone; the submit itself succeeds.",
+			empty.isSuccess());
 		assertEquals("No command runs on an empty mandatory value.", List.of(), RecordingCommand.EXECUTED);
 
 		HandlerResult result =
@@ -931,8 +931,9 @@ public class TestValueInputElement extends TestCase {
 		assertNull("The emptied value reaches the channel, as no value.", _term.get());
 		assertMissing(field);
 
-		HandlerResult refused = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
-		assertFalse("The commit of an empty mandatory value fails.", refused.isSuccess());
+		HandlerResult empty = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+		assertTrue("An empty mandatory value is reported at the field alone; the commit itself succeeds.",
+			empty.isSuccess());
 		assertEquals("No command runs on an empty mandatory value.", List.of(), RecordingCommand.EXECUTED);
 
 		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ENTERED));

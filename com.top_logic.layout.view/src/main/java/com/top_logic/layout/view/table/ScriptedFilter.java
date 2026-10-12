@@ -150,6 +150,11 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	}
 
 	@Override
+	public Comparator<?> order(Comparator<Object> cellOrder) {
+		return Comparator.comparing(ScriptedCell::value, Comparator.nullsLast(cellOrder));
+	}
+
+	@Override
 	public void installUI(ColumnSetup setup, TableViewControl<?> control) {
 		List<ViewChannel> inputChannels = ChannelInputs.resolve(setup.viewContext(), _inputs);
 		control.setFilterUI(setup.name(), new ScriptedFilterUI(this, inputChannels));

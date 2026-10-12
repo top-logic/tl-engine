@@ -36,6 +36,14 @@ public class ReactPasswordInputControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * A typed password is complete when the user presses Enter.
+	 */
+	@Override
+	public boolean hasSubmitGesture() {
+		return true;
+	}
+
+	/**
 	 * A typed password is committed when the field is left or Enter is pressed.
 	 */
 	@Override

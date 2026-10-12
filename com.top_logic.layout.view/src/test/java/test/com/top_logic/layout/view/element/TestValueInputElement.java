@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -15,23 +16,28 @@ import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -45,15 +51,21 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.GenericViewCommand;
-import com.top_logic.layout.view.element.ValueInputElement;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.element.SubmitOn;
+import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BooleanControlProvider;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
@@ -75,11 +87,13 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPrese
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.model.CompatibilityService;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests for {@link ValueInputElement} - the {@code <value-input>} element binding a channel to an input
@@ -97,7 +111,8 @@ import com.top_logic.util.model.CompatibilityService;
  * <p>
  * Third, the submit hook: which controls report a submit of their own, that the submit a client
  * sends both stores the value and reports it, and that only a value the user produced counts as
- * committed.
+ * committed. The {@link ValueInputElement.Config#getSubmitOn() submit gesture} decides for a typed
+ * value whether Enter or every finished edit runs the command, and leaves a picked value alone.
  * </p>
  *
  * <p>
@@ -157,6 +172,27 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final String DEBOUNCE_MS = "debounceMs";
 
+	/** Position of the text input of the test view running its command on every finished edit. */
+	private static final int TEXT_ON_CHANGE = 8;
+
+	/** Position of the text input of the test view running its command on Enter. */
+	private static final int TEXT_ON_ENTER = 9;
+
+	/** Position of the checkbox of the test view stating that its command runs on every edit. */
+	private static final int FLAG_ON_CHANGE = 10;
+
+	/** Position of the checkbox of the test view stating no submit gesture. */
+	private static final int FLAG_ON_ENTER = 11;
+
+	/** The channel the text inputs of the test view write to. */
+	private static final String TERM = "term";
+
+	/** The channel the checkboxes of the test view write to. */
+	private static final String FLAG = "flag";
+
+	/** The value a test enters in a text input. */
+	private static final String ENTERED = "DEMO-1";
+
 	/** The icon a search box carries, as the test view states it. */
 	private static final String SEARCH_ICON = "css:fa-solid fa-magnifying-glass";
 
@@ -168,6 +204,14 @@ public class TestValueInputElement extends TestCase {
 
 	private ReactContext _context;
 
+	private ViewContext _viewContext;
+
+	/** The channel the text inputs of the test view write to. */
+	private ViewChannel _term;
+
+	/** The channel the checkboxes of the test view write to. */
+	private ViewChannel _flag;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -176,10 +220,33 @@ public class TestValueInputElement extends TestCase {
 		_module = TLModelUtil.addModule(_model, MODULE);
 		_row = _model.addClass(_module, _module, "Row");
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		_viewContext = new DefaultViewContext(new HeadlessReactContext());
+		_term = new DefaultViewChannel(TERM);
+		_viewContext.registerChannel(TERM, _term);
+		_flag = new DefaultViewChannel(FLAG);
+		_viewContext.registerChannel(FLAG, _flag);
+		RecordingCommand.EXECUTED.clear();
+	}
+
+	/**
+	 * Runs the test in an interaction: an input resolves the type of its value in the application
+	 * model, which reads the knowledge base.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestValueInputElement.class,
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
+		RecordingCommand.EXECUTED.clear();
+		_flag = null;
+		_term = null;
+		_viewContext = null;
 		_context = null;
 		_row = null;
 		_module = null;
@@ -194,7 +261,7 @@ public class TestValueInputElement extends TestCase {
 	 */
 	public void testParseInputs() throws Exception {
 		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
-		assertEquals("Every input of the test view must be parsed.", 8, inputs.size());
+		assertEquals("Every input of the test view must be parsed.", 12, inputs.size());
 
 		ValueInputElement.Config text = config(inputs, 0);
 		assertEquals("term", text.getValue().getChannelName());
@@ -212,6 +279,10 @@ public class TestValueInputElement extends TestCase {
 			text.getOnSubmit() instanceof GenericViewCommand.Config);
 		assertEquals("The actions to run on the submitted value stand inside the element.",
 			2, ((GenericViewCommand.Config) text.getOnSubmit()).getActions().size());
+		assertEquals("Without a word, a typed value runs the command on Enter.", SubmitOn.ENTER, text.getSubmitOn());
+		assertEquals("A stated submit gesture must reach the configuration.",
+			SubmitOn.CHANGE, config(inputs, TEXT_ON_CHANGE).getSubmitOn());
+		assertEquals(SubmitOn.ENTER, config(inputs, TEXT_ON_ENTER).getSubmitOn());
 
 		assertEquals("tl.core:Boolean", config(inputs, 1).getType().qualifiedName());
 		assertEquals("tl.core:Date", config(inputs, 2).getType().qualifiedName());
@@ -529,6 +600,176 @@ public class TestValueInputElement extends TestCase {
 		assertFalse("The delay is rendering-only.", projection.containsKey(DEBOUNCE_MS));
 		assertEquals("The text a label-less input names itself by stays observable.",
 			"Search", projection.get(PLACEHOLDER));
+	}
+
+	/**
+	 * A text input running its command on every finished edit asks the client for the commits of
+	 * its edits, not for submits on Enter.
+	 */
+	public void testATextSubmittedOnChangeAsksForCommits() throws Exception {
+		Map<String, Object> state = input(TEXT_ON_CHANGE).scriptingScalarState();
+
+		assertEquals("The client must report each finished edit.",
+			Boolean.TRUE, state.get(TypingFieldState.COMMIT_EDITS__PROP));
+		assertFalse("Enter is no gesture of its own here, it finishes an edit like leaving the input does.",
+			Boolean.TRUE.equals(state.get(FieldState.SUBMIT_ON_ENTER__PROP)));
+	}
+
+	/**
+	 * A finished edit of a text input running its command on every finished edit runs the command
+	 * over the entered value, which has reached the channel before, and what the command returns is
+	 * the result of the commit.
+	 */
+	public void testAFinishedEditRunsTheCommand() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_CHANGE);
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ENTERED));
+		assertEquals("The entered value reaches the channel while the edit is still going on.",
+			ENTERED, _term.get());
+		assertEquals("A value still being edited runs no command.", List.of(), RecordingCommand.EXECUTED);
+
+		HandlerResult result = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+
+		assertEquals("The finished edit runs the command over the entered value.",
+			List.of(ENTERED), RecordingCommand.EXECUTED);
+		assertSame("What the command returns is the result of the commit.", RecordingCommand.RESULT, result);
+	}
+
+	/**
+	 * Enter in a text input running its command on every finished edit is no submit: the client
+	 * reports it as the commit of the edit, and a submit on its own stores the value only.
+	 */
+	public void testASubmitRunsNoCommandOnChange() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_CHANGE);
+
+		control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+
+		assertEquals("The value is stored.", ENTERED, _term.get());
+		assertEquals("...but no command runs on a submit.", List.of(), RecordingCommand.EXECUTED);
+	}
+
+	/**
+	 * A text input running its command on Enter asks the client for submits, not for the commits
+	 * of its edits.
+	 */
+	public void testATextSubmittedOnEnterAsksForSubmits() throws Exception {
+		Map<String, Object> state = input(TEXT_ON_ENTER).scriptingScalarState();
+
+		assertEquals("The client must submit on Enter.",
+			Boolean.TRUE, state.get(FieldState.SUBMIT_ON_ENTER__PROP));
+		assertFalse("Leaving the input after an edit runs nothing, so the client need not report it.",
+			Boolean.TRUE.equals(state.get(TypingFieldState.COMMIT_EDITS__PROP)));
+	}
+
+	/**
+	 * In a text input running its command on Enter, the submit runs the command and a finished
+	 * edit does not.
+	 */
+	public void testOnlyEnterRunsTheCommandOnEnter() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_ENTER);
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", "typed"));
+		control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+		assertEquals("The typed value reaches the channel when the input is left.",
+			"typed", _term.get());
+		assertEquals("...but leaving the input runs no command.", List.of(), RecordingCommand.EXECUTED);
+
+		HandlerResult result =
+			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+
+		assertEquals("Enter runs the command over the submitted value.", List.of(ENTERED), RecordingCommand.EXECUTED);
+		assertSame("What the command returns is the result of the submit.", RecordingCommand.RESULT, result);
+	}
+
+	/**
+	 * A picked value runs the command with every choice, whatever submit gesture the input states.
+	 */
+	public void testAPickedValueIgnoresTheSubmitGesture() throws Exception {
+		for (int index : new int[] { FLAG_ON_CHANGE, FLAG_ON_ENTER }) {
+			_flag.set(null);
+			RecordingCommand.EXECUTED.clear();
+			ReactFormFieldControl control = input(index);
+
+			Map<String, Object> state = control.scriptingScalarState();
+			assertFalse("A choice is no edit to report: " + index,
+				Boolean.TRUE.equals(state.get(TypingFieldState.COMMIT_EDITS__PROP)));
+			assertFalse("A choice has no Enter to submit with: " + index,
+				Boolean.TRUE.equals(state.get(FieldState.SUBMIT_ON_ENTER__PROP)));
+
+			control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", Boolean.TRUE));
+
+			assertEquals("The choice reaches the channel: " + index,
+				Boolean.TRUE, _flag.get());
+			assertEquals("...and runs the command: " + index, List.of(Boolean.TRUE), RecordingCommand.EXECUTED);
+		}
+	}
+
+	/**
+	 * The input control built by the {@code <value-input>} at the given position of the test view.
+	 */
+	private ReactFormFieldControl input(int index) throws Exception {
+		ValueInputElement.Config config = config(parseInputs(), index);
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputElement.class);
+		UIElement element = context.getInstance(config);
+		context.checkErrors();
+
+		IReactControl control = element.createControl(_viewContext);
+		assertTrue("An input without a label is the field control itself, but is " + control,
+			control instanceof ReactFormFieldControl);
+		return (ReactFormFieldControl) control;
+	}
+
+	/**
+	 * {@link ViewCommand} recording the inputs it is run on, the submit command of the inputs of the
+	 * test view testing the submit gesture.
+	 */
+	public static class RecordingCommand implements ViewCommand {
+
+		/** The inputs the command was run on, in the order of the runs. */
+		static final List<Object> EXECUTED = new ArrayList<>();
+
+		/** The result of every run, distinguishable from the result of a run of no command. */
+		static final HandlerResult RESULT = HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+
+		/**
+		 * Configuration for {@link RecordingCommand}.
+		 */
+		public interface Config extends ViewCommand.Config {
+
+			@Override
+			@ClassDefault(RecordingCommand.class)
+			Class<? extends ViewCommand> getImplementationClass();
+		}
+
+		/**
+		 * Creates a {@link RecordingCommand} from configuration.
+		 */
+		@CalledByReflection
+		public RecordingCommand(InstantiationContext context, Config config) {
+			// Nothing to configure.
+		}
+
+		@Override
+		public HandlerResult execute(ReactContext context, Object input) {
+			EXECUTED.add(input);
+			return RESULT;
+		}
+	}
+
+	/**
+	 * React context of a test that displays no persistent object, and therefore has no
+	 * {@link ModelScope} to observe one in.
+	 */
+	private static final class HeadlessReactContext extends DefaultReactContext {
+
+		HeadlessReactContext() {
+			super("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		}
+
+		@Override
+		public ModelScope getModelScope() {
+			return null;
+		}
 	}
 
 	/** A text field described as a search box: an icon, a clear button and a delay of its own. */
@@ -916,13 +1157,15 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module for resolving the element tags, and the
-	 * services a model part consults while answering for an annotation.
+	 * Test suite requiring the {@link TypeIndex} module for resolving the element tags, the services
+	 * a model part consults while answering for an annotation, and the model and the
+	 * {@link FieldControlService} an input resolves its type and its control with.
 	 */
 	public static Test suite() {
-		return ModuleLicenceTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestValueInputElement.class,
-				TypeIndex.Module.INSTANCE, CompatibilityService.Module.INSTANCE,
-				AttributeSettings.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(TestValueInputElement.class,
+			ServiceTestSetup.createStarterFactoryForModules(
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
+				CompatibilityService.Module.INSTANCE, AttributeSettings.Module.INSTANCE,
+				ModelService.Module.INSTANCE, FieldControlService.Module.INSTANCE));
 	}
 }

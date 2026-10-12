@@ -93,8 +93,8 @@ to TL-Script and to the UI alike:
 
 A filter on `all(...)` is compiled into the database query for an access on the query root only if,
 for the owner type of the accessed attribute and its concrete specializations, every role holding
-`Discover` also holds `Read`, no access parent is configured and the attribute has no read grant of
-its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
+`Discover` also holds `Read`, no access parent is configured, no singleton of these types has grants
+of its own and the attribute has no read grant of its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
 interpreted.
 
 Model elements (types, attributes, modules) are not filtered. A form field showing the value of a
@@ -222,10 +222,10 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 |---|---|
 | derived attributes (`AttributeByExpression`, `AttributeValueLocatorByExpression`) | option lists (`OptionsByExpression`, `TreeOptionsByExpression`, `DefaultSelectionProviderByExpression`, `CreateTypeOptionsByExpression`) |
 | constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`) | default values (`DefaultByExpression`) |
-| **labels** (`LabelByExpression`, `LabelProviderByExpression`) | executability (`ExecutabilityByExpression`) |
+| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`) | executability (`ExecutabilityByExpression`) |
 | role rules and access parents (`PathByExpression`, `ScriptAccessParent`, `SecurityObjectByExpression`) | process initialisation (`ProcessInitializerByExpression`) |
 | lock strategies (`LockStrategyByExpression`) | scripts in layouts and views, commands, the script console |
-| BPE execution, scheduled tasks (`ScriptTask`), migration scripts, message consumers | |
+| BPE execution, scheduled tasks (`ScriptTask`), migration scripts, message consumers | tooltips and titles (`TooltipProviderByExpression`, `TitleByExpression`, the tooltip script of `LabelByExpression`) |
 
 A called function - built-in or configured (`ConfiguredTLScriptFunctions`) - has no setting of its
 own: it takes over the setting of the calling script.
@@ -235,12 +235,15 @@ Rules for the individual kinds:
 - **Labels are computed unsecured.** By R1 the label belongs to `Discover`; a secured label script
   reading `A#name` would deliver an empty label for a user holding only `Discover` on `A`.
   *Before this change, label scripts were evaluated secured.*
+- **Tooltips and titles are computed secured.** Only the label belongs to `Discover` (R1). A tooltip
+  or title script typically shows attribute values (a budget, a description) and would disclose them
+  to a user holding only `Discover`.
 - **Default values are computed secured.** An unsecured default could set a reference to an object
   the user may not discover and thereby bypass R7. The default is user dependent (R6).
 - **Constraint messages name only discoverable objects.** A constraint is evaluated unsecured (a
   uniqueness check must see every object), but its message is shown to the user: an object the user
   does not hold `Discover` on is not named ("name already in use", not "name already used by
-  *Project X*").
+  *Project X*"). This holds for the veto message of a delete constraint as well.
 - **Derived attributes are computed unsecured.** Their value may contain data derived from objects
   the user may not read (e.g. a sum of budgets). Objects in the value are filtered (R4), computed
   values are not. The modeler decides with the derived attribute what it discloses; reading it is
@@ -330,6 +333,12 @@ Each user gets the projects of the organisation they hold `Discover` on, and may
 as the value of a reference (R7).
 
 ## Consequences
+
+- **Scope: the React view layer.** The user interface part of this specification (R4, R8, R11) is
+  implemented for the React view layer. The classic layout UI does not check attribute rights; its
+  script based providers deliver the discoverable (not only the readable) objects, so a table there
+  shows all column values of a row the user may only discover. An application using model based
+  security with `Discover`-only roles must use the React view layer for such types.
 
 - **The guarantee depends on every object source filtering.** Every source - including script
   functions of applications - must use the common layer (R8). The input checks (R5) stay as a second

@@ -357,6 +357,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private final Map<TLClass, Set<BoundedRole>> _discoverRoles = new HashMap<>();
 
 	/**
+	 * The part of the {@link #_discoverRoles} of a class that does not stem from its class rights:
+	 * the roles of the rights of its attributes and the {@link SimpleBoundCommandGroup#CREATE}
+	 * rights of the types creatable in its compositions.
+	 *
+	 * <p>
+	 * A singleton with rights of its own replaces the class rights by its own rights, but is
+	 * discoverable by the rights on its attributes and compositions as well.
+	 * </p>
+	 */
+	private final Map<TLClass, Set<BoundedRole>> _discoverRolesWithoutClassRights = new HashMap<>();
+
+	/**
 	 * The types without security, each mapped to the part whose definition declares the mark.
 	 *
 	 * @see #getWithoutSecurityOrigin(TLClass)
@@ -439,7 +451,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private void computeDiscoverRoles() {
 		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
 			Set<BoundedRole> roles = new HashSet<>();
-			_expandedClassRights.getOrDefault(type, Collections.emptyMap()).values().forEach(roles::addAll);
 			for (TLStructuredTypePart part : type.getAllParts()) {
 				_typePartRights.getOrDefault(part.getDefinition(), Collections.emptyMap()).values()
 					.forEach(roles::addAll);
@@ -450,6 +461,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 					}
 				}
 			}
+			if (!roles.isEmpty()) {
+				_discoverRolesWithoutClassRights.put(type, new HashSet<>(roles));
+			}
+			_expandedClassRights.getOrDefault(type, Collections.emptyMap()).values().forEach(roles::addAll);
 			if (!roles.isEmpty()) {
 				_discoverRoles.put(type, roles);
 			}
@@ -883,8 +898,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!singletonRights.isEmpty()) {
 			// Singleton!
 			if (SimpleBoundCommandGroup.DISCOVER.equals(group)) {
+				// The rights of the singleton replace the class rights, but not the rights on its
+				// attributes and compositions, which imply Discover as well.
 				Set<BoundedRole> all = new HashSet<>();
 				singletonRights.values().forEach(all::addAll);
+				if (object.tType() instanceof TLClass clazz) {
+					all.addAll(_discoverRolesWithoutClassRights.getOrDefault(clazz, Collections.emptySet()));
+				}
 				return all;
 			}
 			return singletonRights.getOrDefault(group, Collections.emptySet());
@@ -917,6 +937,21 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return _typePartRights
 			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
 			.getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public boolean hasSingletonRights(TLClass type) {
+		for (Map.Entry<TLObject, Map<BoundCommandGroup, Set<BoundedRole>>> entry : _singletonRights.entrySet()) {
+			if (entry.getValue().isEmpty()) {
+				// Without rights, the singleton is decided by its class rights, see getRoles().
+				continue;
+			}
+			if (entry.getKey().tType() instanceof TLClass singletonType
+				&& TLModelUtil.isGeneralization(type, singletonType)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

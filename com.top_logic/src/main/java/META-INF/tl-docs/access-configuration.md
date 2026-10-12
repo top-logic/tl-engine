@@ -41,7 +41,8 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    relation leads nowhere (no container, an empty reference) is denied, as is one whose chain of
    access parents runs in a cycle.
 5. The roles granted the operation on the object's type are looked up (for a module singleton, the
-   singleton's own grants take precedence).
+   singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
+   grants and by the rights on the attributes and compositions of its type).
 6. `AccessManager.hasRole(person, object, roles)` decides whether the user holds one of them on the
    object.
 7. For an attribute value: if the attribute has its own `<part>` grants for the operation, they
@@ -50,6 +51,8 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    roles denies everyone. Without attribute-level grants the class-level decision stands.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
+The classic layout UI does not check attribute rights; an application using model based security
+with `Discover`-only roles must use the React view layer for such types.
 
 ## Grants: which roles may do what on a type
 

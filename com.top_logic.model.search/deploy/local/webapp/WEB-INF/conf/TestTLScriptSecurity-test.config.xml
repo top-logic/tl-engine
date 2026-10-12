@@ -117,6 +117,36 @@
 							roles="TestTLScriptSecurity.PathWriter"
 						/>
 					</part>
+					<class name="TestTLScriptSecurity:PathHome">
+						<!-- By the class rights alone, whoever discovers a home may read it. -->
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathReader"
+						/>
+					</class>
+					<singleton name="TestTLScriptSecurity#HOME">
+						<!-- The singleton additionally grants Write without Read. -->
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
+					</singleton>
+					<singleton name="TestTLScriptSecurity#OFFICE">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.ProjectReader"
+						/>
+					</singleton>
+					<part name="TestTLScriptSecurity:PathOffice#title">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+					</part>
 				</security-config>
 			</instance>
 		</config>
@@ -172,6 +202,46 @@
 						>
 							<path>
 								<step attribute="TestTLScriptSecurity:PathB#editors"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c07"
+							meta-element="TestTLScriptSecurity:PathHome"
+							role="TestTLScriptSecurity.PathReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathHome#readers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c08"
+							meta-element="TestTLScriptSecurity:PathHome"
+							role="TestTLScriptSecurity.PathWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathHome#editors"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c09"
+							meta-element="TestTLScriptSecurity:PathOffice"
+							role="TestTLScriptSecurity.PathViewer"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathOffice#viewers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c0a"
+							meta-element="TestTLScriptSecurity:PathOffice"
+							role="TestTLScriptSecurity.NoteWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathOffice#writers"/>
 								<step attribute="TestTLScriptSecurity:Employee#account"/>
 							</path>
 						</rule>

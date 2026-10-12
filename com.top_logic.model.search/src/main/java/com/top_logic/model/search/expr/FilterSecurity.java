@@ -17,8 +17,8 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
- * {@link GenericMethodWithSecurity} that secures a value by applying the current user's read
- * permissions, removing all business objects the user must not see.
+ * {@link GenericMethodWithSecurity} that secures a value by applying the current user's Discover
+ * right, removing all business objects the user must not discover.
  *
  * <p>
  * Every object source in a secured TL-Script delivers only discoverable objects (see the Discover
@@ -36,7 +36,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * This expression secures a value <em>within</em> a script, e.g. a partial result that is rendered
  * or handed to another context during the evaluation. It must not be applied to an intermediate
  * result that the script still computes with, since that could drop objects the computation needs
- * (e.g. for a filter) even though the final result would be readable.
+ * (e.g. for a filter) even though the final result would be discoverable.
  * </p>
  *
  * <p>

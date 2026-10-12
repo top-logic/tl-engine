@@ -71,7 +71,9 @@ public class CompiledContext extends CompiledExpression {
 	 * <li>for the declaring class and all its concrete specializations, the roles granted Discover
 	 * are a subset of the roles granted Read, and</li>
 	 * <li>none of these classes has an access parent (readability would depend on another
-	 * object).</li>
+	 * object), and</li>
+	 * <li>no singleton of these classes has rights of its own (they replace the class rights the
+	 * subset check relies on).</li>
 	 * </ul>
 	 */
 	@Override
@@ -98,6 +100,9 @@ public class CompiledContext extends CompiledExpression {
 				continue;
 			}
 			if (rights.getAccessParent(type) != null) {
+				return true;
+			}
+			if (rights.hasSingletonRights(type)) {
 				return true;
 			}
 			if (!rights.getAllowedRoles(type, SimpleBoundCommandGroup.READ)

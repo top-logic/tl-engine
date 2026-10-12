@@ -32,11 +32,15 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.constraint.DeleteConstraintByExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
 import com.top_logic.model.search.providers.I18NConstants;
+import com.top_logic.model.search.providers.LabelByExpression;
 import com.top_logic.model.search.providers.LabelProviderByExpression;
+import com.top_logic.model.search.providers.TitleByExpression;
+import com.top_logic.model.search.providers.TooltipProviderByExpression;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -109,6 +113,15 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		becomeUser(PersonManager.getManager().getRoot());
 		_kb.removeUpdateListener(_creationListener);
 		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			// The singletons outlive the test, their values must not keep test objects.
+			for (String name : Arrays.asList("HOME", "OFFICE")) {
+				TLObject singleton = singleton(name);
+				for (TLStructuredTypePart part : singleton.tType().getAllParts()) {
+					if (!part.isDerived()) {
+						singleton.tUpdate(part, TLModelUtil.getEmptyValue(part));
+					}
+				}
+			}
 			// A cascading delete may already have removed a tracked item (e.g. an association).
 			for (KnowledgeItem item : _toDelete.values()) {
 				if (item.isAlive()) {
@@ -131,6 +144,76 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		TLObject result = newObject(className);
 		result.tUpdateByName("name", name);
 		return result;
+	}
+
+	static TLObject singleton(String name) {
+		return ((TLClass) TLModelUtil.findType("TestTLScriptSecurity:PathHome")).getModule().getSingleton(name);
+	}
+
+	/**
+	 * Lets the given person hold the role that the given reference of the given object delivers.
+	 */
+	void assign(TLObject object, String reference, Person person) throws Exception {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject employee = newObject("Employee");
+			employee.tUpdateByName("account", person);
+			object.tUpdateByName(reference, Collections.singletonList(employee));
+			tx.commit();
+		}
+	}
+
+	void setTitle(TLObject object, String title) throws Exception {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			object.tUpdateByName("title", title);
+			tx.commit();
+		}
+	}
+
+	/**
+	 * R2 for a singleton with rights of its own: an attribute right on one of its attributes implies
+	 * Discover on it.
+	 */
+	public void testAttributeRightImpliesDiscoverOnSingleton() throws Exception {
+		TLObject office = singleton("OFFICE");
+		assertFalse(rights().isDiscoverAllowed(_stranger, office));
+		assign(office, "viewers", _stranger);
+		assertTrue(rights().isReadAllowed(_stranger, office, part("PathOffice", "title")));
+		assertFalse(rights().isReadAllowed(_stranger, office));
+		assertTrue(rights().isDiscoverAllowed(_stranger, office));
+	}
+
+	/**
+	 * R2 for a singleton with rights of its own: the right to create in one of its compositions
+	 * implies Discover on it.
+	 */
+	public void testCreateImpliesDiscoverOnSingleton() throws Exception {
+		TLObject office = singleton("OFFICE");
+		assign(office, "writers", _stranger);
+		assertFalse(rights().isReadAllowed(_stranger, office));
+		assertTrue(rights().isDiscoverAllowed(_stranger, office));
+	}
+
+	public void testHasSingletonRights() {
+		assertTrue(rights().hasSingletonRights((TLClass) TLModelUtil.findType("TestTLScriptSecurity:PathHome")));
+		assertTrue(rights().hasSingletonRights((TLClass) TLModelUtil.findType("TestTLScriptSecurity:PathNode")));
+		assertFalse(rights().hasSingletonRights((TLClass) TLModelUtil.findType("TestTLScriptSecurity:PathA")));
+	}
+
+	/**
+	 * By its class rights, a home is readable whenever it is discoverable, but the rights of the
+	 * singleton let a writer discover it without reading it. A filter compiled into the database
+	 * query must therefore not deliver the singleton by the value of an attribute the user must not
+	 * read.
+	 */
+	public void testCompiledFilterRespectsSingletonRights() throws Exception {
+		TLObject home = singleton("HOME");
+		setTitle(home, "home");
+		assign(home, "editors", _stranger);
+		assertTrue(rights().isDiscoverAllowed(_stranger, home));
+		assertFalse(rights().isReadAllowed(_stranger, home, part("PathHome", "title")));
+		becomeUser(_stranger);
+		assertEquals(Collections.emptyList(), asList(eval(
+			"all(`TestTLScriptSecurity:PathHome`).filter(h -> $h.get(`TestTLScriptSecurity:PathHome#title`) == \"home\")")));
 	}
 
 	static ModelAccessRights rights() {
@@ -457,6 +540,8 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		return ((TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className)).getPart(partName);
 	}
 
+	private static final String NAME_SCRIPT = "x -> $x.get(`TestTLScriptSecurity:PathNode#name`)";
+
 	public void testLabelScriptUnsecured() throws Exception {
 		LabelProviderByExpression.Config<?> config =
 			TypedConfiguration.newConfigItem(LabelProviderByExpression.Config.class);
@@ -466,6 +551,71 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 			new LabelProviderByExpression<>(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 		becomeUser(_pathUser);
 		assertEquals("a1", provider.getLabel(_a1));
+	}
+
+	/**
+	 * R12: Only labels belong to Discover; a tooltip script is evaluated secured and does not
+	 * disclose attributes of a discover-only object.
+	 */
+	public void testTooltipScriptSecured() throws Exception {
+		TooltipProviderByExpression.Config<?> config =
+			TypedConfiguration.newConfigItem(TooltipProviderByExpression.Config.class);
+		config.update(config.descriptor().getProperty("tooltip"), parse(NAME_SCRIPT));
+		TooltipProviderByExpression<?> provider =
+			new TooltipProviderByExpression<>(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		becomeUser(_pathUser);
+		assertNull(provider.getTooltip(_a1));
+	}
+
+	/**
+	 * R12: In a {@link LabelByExpression}, the label script is evaluated unsecured, the tooltip
+	 * script secured.
+	 */
+	public void testLabelByExpressionTooltipSecured() throws Exception {
+		LabelByExpression.Config<?> config = TypedConfiguration.newConfigItem(LabelByExpression.Config.class);
+		config.update(config.descriptor().getProperty("label"), parse(NAME_SCRIPT));
+		config.update(config.descriptor().getProperty("tooltip"), parse(NAME_SCRIPT));
+		LabelByExpression provider =
+			new LabelByExpression(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		QueryExecutor tooltipExpr = (QueryExecutor) privateField(LabelByExpression.class, "_tooltipExpr", provider);
+		becomeUser(_pathUser);
+		assertEquals("a1", provider.getLabel(_a1));
+		assertNull(tooltipExpr.execute(_a1));
+	}
+
+	/**
+	 * R12: A title script is evaluated secured.
+	 */
+	public void testTitleScriptSecured() throws Exception {
+		TitleByExpression.Config<?> config = TypedConfiguration.newConfigItem(TitleByExpression.Config.class);
+		config.update(config.descriptor().getProperty("expr"), parse(NAME_SCRIPT));
+		TitleByExpression<?> provider =
+			new TitleByExpression<>(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		QueryExecutor titleExpr = (QueryExecutor) privateField(TitleByExpression.class, "_expr", provider);
+		becomeUser(_pathUser);
+		assertNull(titleExpr.execute(_a1));
+	}
+
+	private static Object privateField(Class<?> type, String name, Object instance) throws Exception {
+		java.lang.reflect.Field field = type.getDeclaredField(name);
+		field.setAccessible(true);
+		return field.get(instance);
+	}
+
+	/**
+	 * R12: The veto message of a delete constraint is evaluated unsecured but names only objects
+	 * the user may discover.
+	 */
+	public void testDeleteVetoMasksUndiscoverable() throws Exception {
+		DeleteConstraintByExpression.Config<?> config =
+			TypedConfiguration.newConfigItem(DeleteConstraintByExpression.Config.class);
+		config.update(config.descriptor().getProperty("expr"),
+			parse("r -> 'In use by {0}'@en.fill($r.get(`TestTLScriptSecurity:PathRoot#as`))"));
+		DeleteConstraintByExpression<?> constraint =
+			new DeleteConstraintByExpression<>(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		becomeUser(_pathUser);
+		ResKey veto = constraint.getDeleteVeto(_root).get();
+		assertEquals(Arrays.asList(_a1, I18NConstants.MASKED_OBJECT), asList(veto.arguments()[0]));
 	}
 
 	public void testConstraintMessageMasksUndiscoverable() {

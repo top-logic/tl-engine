@@ -136,6 +136,24 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * Whether a singleton of the given type or of one of its specializations has rights of its own.
+	 *
+	 * <p>
+	 * The rights of such a singleton take precedence over the rights of its type, therefore
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup)} does not describe the access to all
+	 * instances of the type.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @implSpec An implementation without a notion of singleton rights answers <code>false</code>
+	 *           for every type.
+	 */
+	default boolean hasSingletonRights(TLClass type) {
+		return false;
+	}
+
+	/**
 	 * Returns the roles granted the given command group on the given attribute. Relevant for READ
 	 * and WRITE command groups to implement attribute-level access rights.
 	 *
@@ -159,8 +177,10 @@ public interface ModelAccessRights {
 	 * Whether the given attribute has an attribute-level grant for the given command group.
 	 *
 	 * <p>
-	 * Only an attribute with such a grant restricts the command group beyond the rights on the
-	 * object, to the roles {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists.
+	 * An attribute with such a grant decides the command group by its own roles instead of the
+	 * rights on the object: the user needs one of the roles
+	 * {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists, no matter whether the
+	 * class grants him the command group on the object as a whole.
 	 * A grant listing no role at all denies the command group on the attribute to every user except
 	 * one bypassing the model security, independent of the object the attribute is accessed on.
 	 * </p>

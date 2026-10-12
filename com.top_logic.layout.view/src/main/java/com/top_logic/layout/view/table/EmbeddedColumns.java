@@ -7,6 +7,7 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
@@ -321,7 +322,10 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * The column showing what the given column of the embedded object shows, as a column of the
 	 * row: named and labelled after the path leading to the embedded object, reading its value
 	 * through that path, and displayed but not edited - an embedded object is shown through the
-	 * row, and what it holds is changed where that object itself is edited.
+	 * row, and what it holds is changed where that object itself is edited. It orders its values
+	 * as the embedded column does; a column collecting the values of several objects orders those
+	 * collections {@link ColumnSetup#elementwise(Comparator) element by element} by the same
+	 * comparator.
 	 *
 	 * @param setup
 	 *        The column as the embedded object's own table would show it.
@@ -332,6 +336,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		Function<Object, Object> navigation = target.navigation();
 		Function<Object, Object> embedded = setup.value();
 		Function<List<Object>, Object> aggregate = setup.aggregate();
+		Comparator<Object> comparator = setup.comparator();
 
 		return new ColumnSetup(
 			embeddedName(setup.name()),
@@ -343,6 +348,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.width(),
 			null,
 			aggregate == null ? null : rows -> aggregate.apply(objects(rows, navigation)),
+			comparator != null && target.multiple() ? ColumnSetup.elementwise(comparator) : comparator,
 			setup.hiddenByDefault());
 	}
 

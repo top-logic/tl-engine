@@ -67,10 +67,11 @@ public class TestWrapperGenerator extends TestCase {
 	private static final String PACKAGE_WITHOUT_SINGLETON = "test/ticket29806/plain";
 
 	/**
-	 * Matches the class declaration of a generated class and captures its super class.
+	 * Matches the class declaration of a generated class and captures the optional
+	 * {@code abstract} modifier (group 1) and its super class (group 2).
 	 */
 	private static final Pattern EXTENDS_PATTERN =
-		Pattern.compile("^public (?:abstract )?class \\w+ extends ([\\w.]+)", Pattern.MULTILINE);
+		Pattern.compile("^public (abstract )?class \\w+ extends ([\\w.]+)", Pattern.MULTILINE);
 
 	public void testGenerate() throws Exception {
 		File root = BasicTestCase.createdCleanTestDir("TestWrapperGenerator");
@@ -109,6 +110,10 @@ public class TestWrapperGenerator extends TestCase {
 		assertEquals(ATTRIBUTED_WRAPPER, superClass(root, singletonImpl + "MarkerImpl"));
 		assertEquals(STRUCTURED_WRAPPER, superClass(root, singletonImpl + "NodeImpl"));
 		assertEquals("NodeImpl", superClass(root, singletonImpl + "MarkedNodeImpl"));
+		assertTrue("Implementation of an interface type must be abstract.",
+			isAbstract(root, singletonImpl + "MarkerImpl"));
+		assertFalse(isAbstract(root, singletonImpl + "PlainImpl"));
+		assertFalse(isAbstract(root, singletonImpl + "NodeImpl"));
 
 		String plainImpl = PACKAGE_WITHOUT_SINGLETON + "/impl/";
 		assertEquals(STRUCTURED_WRAPPER, superClass(root, plainImpl + "LeafImpl"));
@@ -145,9 +150,17 @@ public class TestWrapperGenerator extends TestCase {
 	}
 
 	private static String superClass(File root, String classPath) throws IOException {
+		return superClassOf(source(root, classPath));
+	}
+
+	private static boolean isAbstract(File root, String classPath) throws IOException {
+		return classDeclaration(source(root, classPath)).group(1) != null;
+	}
+
+	private static String source(File root, String classPath) throws IOException {
 		File file = new File(root, classPath + ".java");
 		assertTrue("Not generated: " + file, file.exists());
-		return superClassOf(source(file));
+		return source(file);
 	}
 
 	private static String source(File file) throws IOException {
@@ -155,9 +168,13 @@ public class TestWrapperGenerator extends TestCase {
 	}
 
 	private static String superClassOf(String source) {
+		return classDeclaration(source).group(2);
+	}
+
+	private static Matcher classDeclaration(String source) {
 		Matcher matcher = EXTENDS_PATTERN.matcher(source);
 		assertTrue("No class declaration with super class found.", matcher.find());
-		return matcher.group(1);
+		return matcher;
 	}
 
 	private void generateWrappers(File root, File app, TLModule module) throws Exception, IOException {

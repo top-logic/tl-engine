@@ -50,10 +50,7 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 		writeCvsTags();
 		javadocStop();
 
-		/* Generate non abstract java classes, because it may also possible for abstract TLClass
-		 * that dynamically concrete subclasses may be defined which use this wrapper as
-		 * implementation class. */
-		line("public class " + className() + " extends " + getExtends() + " implements "
+		line("public " + classModifier() + "class " + className() + " extends " + getExtends() + " implements "
 			+ interfaceSpec + " {");
 		{
 			nl();
@@ -68,6 +65,23 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 			nl();
 		}
 		line("}");
+	}
+
+	/**
+	 * The modifier of the generated class declaration: {@code abstract} for an abstract type, empty
+	 * otherwise.
+	 *
+	 * <p>
+	 * An abstract type (an abstract class or an interface of the model) gets an abstract
+	 * implementation class, so that abstract methods of its business interface need an
+	 * implementation only in the classes of its concrete subtypes. An object of a subtype that is
+	 * defined dynamically, without a generated class of its own, is implemented by the nearest
+	 * non-abstract implementation class along its primary generalizations, see
+	 * {@link DynamicBinding}.
+	 * </p>
+	 */
+	private String classModifier() {
+		return type() instanceof TLClass clazz && clazz.isAbstract() ? "abstract " : "";
 	}
 
 	private String getExtends() {
@@ -85,7 +99,9 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 	 * generated for it by naming convention (see
 	 * {@link TLModelNamingConvention#implementationName(TLType)}). A type without such a class
 	 * uses the implementation class of its own primary generalization. This is the rule
-	 * {@link DynamicBinding} applies when it chooses the class implementing an object at runtime.
+	 * {@link DynamicBinding} applies when it chooses the class implementing an object at runtime,
+	 * except that an abstract class is a valid base class here, whereas {@link DynamicBinding}
+	 * skips it, because it cannot implement an object.
 	 * </p>
 	 */
 	private String superTypeSpec(TLType type) {

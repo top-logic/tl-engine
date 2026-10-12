@@ -9,9 +9,12 @@ import static com.top_logic.model.util.TLModelNamingConvention.*;
 
 import java.util.List;
 
+import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.binding.DynamicBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
  * Code generator that creates {@link Wrapper} templates for {@link TLType}.
@@ -72,22 +75,30 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 
 	}
 
+	/**
+	 * The name of the class the implementation class of the given type extends: the
+	 * implementation class of its primary (first) generalization, or {@link AttributedWrapper} for
+	 * a type without generalizations.
+	 *
+	 * <p>
+	 * The implementation class of a type is the class of its implementation binding, or the class
+	 * generated for it by naming convention (see
+	 * {@link TLModelNamingConvention#implementationName(TLType)}). A type without such a class
+	 * uses the implementation class of its own primary generalization. This is the rule
+	 * {@link DynamicBinding} applies when it chooses the class implementing an object at runtime.
+	 * </p>
+	 */
 	private String superTypeSpec(TLType type) {
 		List<TLClass> superTypes = generalizations(type);
-		if (!superTypes.isEmpty()) {
-			TLClass primary = superTypes.get(0);
-			if (primary.isAbstract()) {
-				return superTypeSpec(primary);
-			} else {
-				return dropPackage(implementationName(primary));
-			}
-		} else {
-			if (isStructure(module())) {
-				return "com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper";
-			} else {
-				return "com.top_logic.element.meta.kbbased.AttributedWrapper";
-			}
+		if (superTypes.isEmpty()) {
+			return AttributedWrapper.class.getName();
 		}
+		TLClass primary = superTypes.get(0);
+		String name = implementationName(primary);
+		if (name != null) {
+			return dropPackage(name);
+		}
+		return superTypeSpec(primary);
 	}
 
 	private void writeImports() {

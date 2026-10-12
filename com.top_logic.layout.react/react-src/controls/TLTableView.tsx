@@ -661,6 +661,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [rowHeight, totalRowCount]);
   React.useLayoutEffect(measureWindow, [measureWindow]);
 
+  // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
+  // a sort or filter button beyond the edge); the body follows, and its scroll event aligns both again.
+  const handleHeaderScroll = React.useCallback(() => {
+    const header = headerRef.current;
+    const body = scrollContainerRef.current;
+    if (header && body && body.scrollLeft !== header.scrollLeft) {
+      body.scrollLeft = header.scrollLeft;
+    }
+  }, []);
+
   // -- Scroll handler --
   const handleScroll = React.useCallback(() => {
     // Sync header horizontal scroll immediately.
@@ -1514,7 +1524,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         aria-activedescendant={cursorRendered ? rowId(cursorIndex) : undefined}
         tabIndex={0}
       >
-      <div className="tl-table__header" ref={headerRef} role="rowgroup">
+      <div className="tl-table__header" ref={headerRef} role="rowgroup" onScroll={handleHeaderScroll}>
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}

@@ -4,6 +4,8 @@
 	<channels>
 		<channel name="selectedSplit"/>
 		<channel name="selectedDrawer"/>
+		<channel name="selectedSized"/>
+		<channel name="selectedRemainder"/>
 	</channels>
 
 	<panel title="Adaptive Detail Test">
@@ -20,10 +22,38 @@
 		<!-- The detail overlays the selector in a drawer 360 pixels wide. -->
 		<adaptive-detail
 			detail-display="drawer"
-			detail-size="360"
+			drawer-size="360"
 			selection="selectedDrawer"
 		>
 			<selector>
+				<panel title="Selector"/>
+			</selector>
+			<detail>
+				<panel title="Detail"/>
+			</detail>
+		</adaptive-detail>
+
+		<!-- Both sides sized explicitly: taken as given. -->
+		<adaptive-detail selection="selectedSized">
+			<selector
+				min-size="200"
+				size="300"
+				unit="px"
+			>
+				<panel title="Selector"/>
+			</selector>
+			<detail
+				min-size="400"
+				size="70"
+				unit="%"
+			>
+				<panel title="Detail"/>
+			</detail>
+		</adaptive-detail>
+
+		<!-- Only the selector sized: the detail takes the rest of the 100 percent. -->
+		<adaptive-detail selection="selectedRemainder">
+			<selector size="55">
 				<panel title="Selector"/>
 			</selector>
 			<detail>

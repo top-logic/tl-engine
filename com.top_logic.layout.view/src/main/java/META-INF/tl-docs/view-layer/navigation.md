@@ -12,13 +12,13 @@ order: 70
 | Viewport | `detail-display` | Presentation |
 | --- | --- | --- |
 | `REGULAR` (wide) | `split` (the default) | Selector and detail side by side in a draggable `ReactSplitPanelControl`. |
-| `REGULAR` (wide) | `drawer` | The selector keeps the full width; the detail overlays it from the right edge in a drawer of `detail-size` pixels. |
+| `REGULAR` (wide) | `drawer` | The selector keeps the full width; the detail overlays it from the right edge in a drawer of `drawer-size` pixels. |
 | `COMPACT` (narrow) | either | Drill-in: the selector full-bleed, replaced by the detail while something is selected, with a breadcrumb back to it. |
 
 ```xml
 <adaptive-detail
 	detail-display="drawer"
-	detail-size="420"
+	drawer-size="420"
 	selection="selectedTicket"
 >
 	<selector><table selection="selectedTicket" types="…:Ticket">…</table></selector>
@@ -26,7 +26,17 @@ order: 70
 </adaptive-detail>
 ```
 
-- **The two properties.** `detail-display` picks the wide-viewport presentation (`split` | `drawer`); `detail-size` is the width in pixels of the drawer (420 by default) and has no effect without `drawer`. The drawer never grows wider than the element it overlays, so a value exceeding the available width covers the selector completely.
+- **The two presentation properties.** `detail-display` picks the wide-viewport presentation (`split` | `drawer`); `drawer-size` is the width in pixels of the drawer (420 by default) and has no effect without `drawer`. The drawer never grows wider than the element it overlays, so a value exceeding the available width covers the selector completely.
+- **Sizing the sides of the split.** `<selector>` and `<detail>` carry `size`, `unit` (`%` by default, or `px`) and `min-size` (pixels) like the `<pane>`s of a `<split-panel>`, with their content inside. Without them the selector takes 32 % (at least 240 px) and the detail 68 % (at least 320 px). When only one side gives its `size` and both sides measure in percent, the other side takes the rest of the 100 %: the split uses the sizes as weights, so a selector of 55 beside the default detail of 68 would otherwise end up at 45 %. Sizes given on both sides, or in pixels, are taken as given.
+
+  ```xml
+  <adaptive-detail selection="selectedTicket">
+  	<selector min-size="320" size="55"><table selection="selectedTicket" types="…:Ticket">…</table></selector>
+  	<detail><form input="selectedTicket">…</form></detail>
+  </adaptive-detail>
+  ```
+
+  Here the detail takes 45 %. The sizes apply to the `split` presentation only; the drawer is sized by `drawer-size`.
 - **The drawer follows the selection channel, and only that.** It opens when the channel takes a value, carries that value's label as its title, and closes when the channel is cleared. Selecting another row swaps what the drawer shows without closing it: the detail is built once and follows the channel itself, opening and closing being a transform of the panel rather than an exchange of its contents.
 - **Dismissing clears the selection.** The drawer's close button and Escape write `null` to the selection channel, and *that* is what closes the drawer — which is also what lets the same row be selected again to bring it back. A detail with unsaved changes vetoes that channel write (see "Unsaved changes are asked before a channel write"), and the drawer stays open.
 - **The drawer is anchored inside the element** (`ReactDrawerControl.Anchor.CONTAINER`), not in the viewport: it slides in over the selector within the element's own area, so the enclosing panel's title bar, toolbar and the rest of the page chrome stay visible and interactive. There is no backdrop; the selector underneath keeps taking input.

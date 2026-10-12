@@ -22,8 +22,6 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.FloatDefault;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.react.control.ReactControl;
@@ -91,39 +89,10 @@ public class SplitPanelElement implements UIElement {
 	 * Configuration for a single pane in the split panel.
 	 */
 	@TagName("pane")
-	public interface PaneConfig extends com.top_logic.basic.config.ConfigurationItem {
-
-		/** Configuration name for {@link #getSize()}. */
-		String SIZE = "size";
-
-		/** Configuration name for {@link #getUnit()}. */
-		String UNIT = "unit";
-
-		/** Configuration name for {@link #getMinSize()}. */
-		String MIN_SIZE = "min-size";
+	public interface PaneConfig extends PaneSizeConfig {
 
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
-
-		/**
-		 * The pane size in the given unit.
-		 */
-		@Name(SIZE)
-		@FloatDefault(50f)
-		float getSize();
-
-		/**
-		 * The size unit.
-		 */
-		@Name(UNIT)
-		DisplayUnit getUnit();
-
-		/**
-		 * The minimum size in pixels (0 for no minimum).
-		 */
-		@Name(MIN_SIZE)
-		@IntDefault(0)
-		int getMinSize();
 
 		/**
 		 * The content elements in this pane.

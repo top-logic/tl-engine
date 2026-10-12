@@ -41,7 +41,8 @@ interface ColumnEntry {
  *
  * Both the order and the checked state live on the server (see ReactColumnSelectControl), so a
  * gesture sends a command and the re-pushed list is what renders. Each row also offers to group
- * the table's rows by that column; the choice applies with the columns.
+ * the table's rows by that column; the choice applies with the columns. A table whose rows cannot
+ * be grouped - a tree table - offers no grouping (state.groupable).
  */
 const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -49,6 +50,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
+  const groupable = state.groupable !== false;
   const visibleCount = entries.filter((entry) => entry.visible).length;
 
   // A table over a large type offers a column per attribute, which is a long list to scroll. The
@@ -122,16 +124,18 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               >
                 <ThemeIcon encoded={ICON_HANDLE} className="tl-button__icon tl-icon-sm" />
               </button>
-              <button
-                type="button"
-                className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
-                aria-label={groupByLabel}
-                {...tooltipProps(groupByLabel)}
-                aria-pressed={entry.grouped}
-                onClick={() => handleGroupBy(entry.name)}
-              >
-                <ThemeIcon encoded={ICON_GROUP} className="tl-button__icon tl-icon-sm" />
-              </button>
+              {groupable && (
+                <button
+                  type="button"
+                  className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+                  aria-label={groupByLabel}
+                  {...tooltipProps(groupByLabel)}
+                  aria-pressed={entry.grouped}
+                  onClick={() => handleGroupBy(entry.name)}
+                >
+                  <ThemeIcon encoded={ICON_GROUP} className="tl-button__icon tl-icon-sm" />
+                </button>
+              )}
               <label className="tl-choice">
                 <input
                   type="checkbox"

@@ -43,7 +43,7 @@ import com.top_logic.model.listen.ModelScope;
 public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 
 	/** The channel the observed objects are written to. */
-	private ViewChannel _input;
+	private DefaultViewChannel _input;
 
 	/** The scope delivering the changes committed to the knowledge base. */
 	private GlobalModelEventForwarder _scope;
@@ -215,40 +215,49 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
-	 * Tests that deleting the object on a channel nobody attached is reported as a change, and that
-	 * delivering it fails nothing.
+	 * Tests that an event arriving while the object on the channel is deleted is not delivered: the
+	 * channel here is attached by nobody, so nobody drops the deleted object, and the holder must not
+	 * read it. Once the channel holds a valid object again, its changes are delivered again.
 	 */
-	public void testDeletionIsReportedAsChange() throws Exception {
+	public void testDeletionOnUnattachedChannelIsSkipped() throws Exception {
 		BObj b1 = create("b1");
+		BObj b2 = create("b2");
 		_input.set(b1);
 		ChannelObjectObserver observer = observer();
 		observer.attach(_scope);
 
 		delete(b1);
 
-		assertEquals("Deleting the object on the channel is a change of it.", 1, _reported);
+		assertEquals("No event is delivered while the channel holds a deleted object.", 0, _reported);
 		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
+
+		_input.set(b2);
+		change(b2, "b2 updated");
+
+		assertEquals("The object the channel holds next is observed again.", 1, _reported);
 	}
 
 	/**
-	 * Tests that the {@link LiveExecutability} of a command over the channel reports the deletion
-	 * of the object on it as a change, and then refuses the command: the deleted object counts as no
-	 * input.
+	 * Tests that the {@link LiveExecutability} of a command over an attached channel reports the
+	 * deletion of the object on it as a change, and then refuses the command: the channel drops the
+	 * deleted object, whatever the order the model listeners are called in.
 	 */
 	public void testLiveExecutabilityReportsDeletionAsChange() throws Exception {
 		BObj b1 = create("b1");
 		_input.set(b1);
+		_input.attach(_scope);
 		LiveExecutability live = new LiveExecutability(NullInputDisabled.INSTANCE, _input, Set.of(), () -> _reported++);
 		live.attach(_scope);
 		assertTrue("The command is executable over the object.", live.getState().isExecutable());
 
 		delete(b1);
 
-		assertEquals("Deleting the input object is reported as a change.", 1, _reported);
+		assertTrue("Deleting the input object is reported as a change.", _reported > 0);
 		assertFalse("The deleted input object counts as no input.", live.getState().isExecutable());
 		assertNull("The command is handed no deleted object.", live.getInput());
 		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
 		live.detach();
+		_input.detach();
 	}
 
 	/**

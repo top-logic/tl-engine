@@ -40,9 +40,9 @@ import com.top_logic.tool.execution.ExecutableState;
  * differently runs the change callback given at construction:
  * </p>
  * <ul>
- * <li>the input channel taking a new value,</li>
- * <li>the object that value holds being changed or deleted - a deletion disables what the rule
- * decides for, since the deleted object then counts as no input -, or an object of one of the
+ * <li>the input channel taking a new value - also the value an attached channel announces when it
+ * drops a deleted object, which disables what the rule decides for,</li>
+ * <li>the object that value holds being changed, or an object of one of the
  * {@link ExecutabilityConfig#getObservedTypes() observed types} being created, changed or deleted
  * (see {@link ChannelObjectObserver}),</li>
  * <li>a rule deciding by more than its input reporting a change of its own

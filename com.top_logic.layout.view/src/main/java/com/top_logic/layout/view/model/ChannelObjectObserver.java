@@ -53,12 +53,13 @@ import com.top_logic.model.listen.ObservedObjects;
  * </p>
  *
  * <p>
- * The deletion of an object on a channel is reported like any other change. A channel declared by
- * a view drops a deleted object itself - while the view is displayed, and on being displayed again
- * (see {@link DefaultViewChannel}) - and announces that as a new
- * value, which the holder's channel listener displays. A holder evaluating an expression over the
- * channel may still meet a deleted object on a channel nobody attached; TL-Script treats such an
- * object as a missing value.
+ * An event arriving while one of the objects the channels hold is not {@link TLObject#tValid()
+ * valid} is not delivered to the callback. The channel holding a deleted object observes that
+ * object too and drops it with an ordinary change (see {@link DefaultViewChannel}), which reaches
+ * the holder through its channel listener. The model listeners of the channel and of this observer
+ * are called in no defined order, so an event may arrive here before the channel had its turn;
+ * delivering it would make the holder read the deleted object. A channel nobody attached keeps a
+ * deleted object, and the holder keeps its display until that channel delivers its next value.
  * </p>
  *
  * @see RowSourceObserver
@@ -215,11 +216,34 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	}
 
 	/**
-	 * Reports the event as a change.
+	 * Reports the event as a change, unless one of the objects the channels hold is deleted.
 	 */
 	@Override
 	public void notifyChange(ModelChangeEvent event) {
+		if (holdsDeletedObject()) {
+			return;
+		}
 		_onChange.accept(event);
+	}
+
+	/**
+	 * Whether one of the objects the channels currently hold is deleted.
+	 *
+	 * <p>
+	 * The objects themselves are inspected, not what the event reports: an event that names other
+	 * objects - the change of another object of an {@link ObservedTypes observed type}, say -
+	 * arrives at a channel still pointing to the deleted object just as the deletion event does.
+	 * </p>
+	 */
+	private boolean holdsDeletedObject() {
+		for (ViewChannel channel : _channels) {
+			for (TLObject object : objects(channel.get())) {
+				if (!object.tValid()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

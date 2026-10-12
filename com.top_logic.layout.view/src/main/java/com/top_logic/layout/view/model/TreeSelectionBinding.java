@@ -5,9 +5,12 @@
  */
 package com.top_logic.layout.view.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -20,6 +23,7 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TLTreeModelUtil;
 import com.top_logic.layout.tree.model.TLTreeNode;
+import com.top_logic.layout.tree.model.TreeNodeComparator;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.model.TLObject;
@@ -44,8 +48,12 @@ import com.top_logic.model.TLObject;
  * set.</li>
  * <li>A node this tree displayed as selected is gone after a change of the tree - its object was
  * deleted, or taken out of the child list it hung in. The value names something nobody can see any
- * more, so the surviving selection is written in its place, <code>null</code> where nothing of it
- * is left.</li>
+ * more, so the surviving selection is written in its place. Where nothing of the selection is left,
+ * the node the vanished node hung in becomes the selection and its object is written - the nearest
+ * node above it the tree still holds, where its parent is gone too, and of several vanished nodes
+ * the first in display order that still has one. The root counts only where the tree
+ * {@link DefaultTreeUINodeModel#isRootVisible() displays it}; without such a node, the channel is
+ * cleared.</li>
  * </ul>
  *
  * <p>
@@ -97,8 +105,18 @@ public class TreeSelectionBinding {
 	/** Whether a channel value is currently being applied, so the tree's echo is not written back. */
 	private boolean _applyingFromChannel;
 
-	/** The business objects of the nodes the tree last displayed as selected. */
-	private Set<Object> _displayedObjects = Set.of();
+	/**
+	 * The business objects of the nodes the tree last displayed as selected, in display order, each
+	 * with the business objects of the nodes above its node at that time, from its parent up to the
+	 * root.
+	 *
+	 * <p>
+	 * The nodes above are remembered because a vanished node is already taken out of the tree when
+	 * {@link #structureChanged()} learns about it, so the node it hung in can no longer be asked
+	 * for.
+	 * </p>
+	 */
+	private Map<Object, List<Object>> _displayed = Map.of();
 
 	/**
 	 * Creates a {@link TreeSelectionBinding} and applies the channel's current value to the tree.
@@ -136,33 +154,73 @@ public class TreeSelectionBinding {
 	 * {@link ObservableTreeModel#addStructureListener(Runnable)} announces: the selection is
 	 * expressed on the nodes the tree has now, the channel value is applied again - so an object
 	 * that gets a node only now is selected and revealed - and when a node this tree displayed as
-	 * selected is gone, the surviving selection is written to the channel, <code>null</code> where
-	 * nothing of it is left.
+	 * selected is gone, the surviving selection is written to the channel. Where nothing of the
+	 * selection survives, the node the first vanished node hung in is selected, revealed and written
+	 * instead - or the nearest node above it the tree still holds and displays -, and
+	 * <code>null</code> where there is no such node.
 	 * </p>
 	 */
 	public void structureChanged() {
-		Map<Object, DefaultTreeUINode> survivors = new LinkedHashMap<>();
-		for (Object businessObject : _displayedObjects) {
-			DefaultTreeUINode node = locate(businessObject);
+		Set<DefaultTreeUINode> survivors = new LinkedHashSet<>();
+		List<List<Object>> vanishedAncestors = new ArrayList<>();
+		for (Map.Entry<Object, List<Object>> entry : _displayed.entrySet()) {
+			DefaultTreeUINode node = locate(entry.getKey());
 			if (node != null) {
-				survivors.put(businessObject, node);
+				survivors.add(node);
+			} else {
+				vanishedAncestors.add(entry.getValue());
 			}
 		}
-		boolean displayedNodeGone = survivors.size() < _displayedObjects.size();
+		boolean displayedNodeGone = !vanishedAncestors.isEmpty();
+
+		Set<DefaultTreeUINode> selection;
+		boolean reveal;
+		if (survivors.isEmpty() && displayedNodeGone) {
+			// The user's place in the tree is the node the selection hung in, not its root.
+			selection = nearestDisplayedAncestor(vanishedAncestors);
+			reveal = true;
+		} else {
+			selection = survivors;
+			reveal = false;
+		}
 
 		// A tree built anew has other nodes, so what survived is selected on the nodes of the tree
 		// displayed now - the selection holding nodes of a tree nobody displays any more would be
 		// shown nowhere.
-		showSelection(new LinkedHashSet<>(survivors.values()), false);
-		_displayedObjects = new LinkedHashSet<>(survivors.keySet());
+		showSelection(selection, reveal);
+		recordDisplayed(selection);
 
 		applyChannelValue();
 
 		if (displayedNodeGone) {
-			// The value names nodes nobody can see any more, so it is replaced by what is left of
-			// the selection - which is no selection at all when every displayed node vanished.
-			writeSelection(_displayedObjects);
+			// The value names nodes nobody can see any more, so it is replaced by what the tree
+			// selects now - which is no selection at all when no node is left to select.
+			writeSelection(_displayed.keySet());
 		}
+	}
+
+	/**
+	 * The node the tree still holds and displays that is nearest above a vanished node.
+	 *
+	 * @param vanishedAncestors
+	 *        For each vanished node in display order, the business objects of the nodes above it,
+	 *        from its parent up to the root.
+	 * @return The node above the first vanished node that has one, empty where none has.
+	 */
+	private Set<DefaultTreeUINode> nearestDisplayedAncestor(List<List<Object>> vanishedAncestors) {
+		DefaultTreeUINodeModel treeModel = _treeModel.get();
+		if (treeModel == null) {
+			return Set.of();
+		}
+		for (List<Object> ancestors : vanishedAncestors) {
+			for (Object ancestor : ancestors) {
+				DefaultTreeUINode node = locate(ancestor);
+				if (node != null && (node != treeModel.getRoot() || treeModel.isRootVisible())) {
+					return Set.of(node);
+				}
+			}
+		}
+		return Set.of();
 	}
 
 	/**
@@ -183,18 +241,48 @@ public class TreeSelectionBinding {
 	 * Writes a selection made in the tree to the channel.
 	 */
 	private void handleSelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
-		Set<Object> objects = businessObjects(event.getNewSelection());
+		Set<? extends Object> newSelection = event.getNewSelection();
 		if (!_applyingFromChannel) {
-			writeSelection(objects);
+			writeSelection(businessObjects(newSelection));
 		}
-		_displayedObjects = objects;
+		recordDisplayed(newSelection);
+	}
+
+	/**
+	 * Remembers the given selected nodes as {@link #_displayed}.
+	 */
+	private void recordDisplayed(Collection<?> selectedNodes) {
+		List<DefaultTreeUINode> nodes = new ArrayList<>();
+		for (Object node : selectedNodes) {
+			nodes.add((DefaultTreeUINode) node);
+		}
+		if (nodes.size() > 1) {
+			nodes.sort(displayOrder(nodes.get(0)));
+		}
+
+		Map<Object, List<Object>> displayed = new LinkedHashMap<>();
+		for (DefaultTreeUINode node : nodes) {
+			List<Object> path = TLTreeModelUtil.createPathToRootUserObject(node);
+			List<Object> ancestors = new ArrayList<>(path.subList(1, path.size()));
+			displayed.put(TLTreeModelUtil.getInnerBusinessObject(node), ancestors);
+		}
+		_displayed = displayed;
+	}
+
+	/**
+	 * The order in which the tree of the given node displays its nodes.
+	 */
+	@SuppressWarnings("unchecked")
+	private static Comparator<DefaultTreeUINode> displayOrder(DefaultTreeUINode node) {
+		Comparator<DefaultTreeUINode> siblingOrder = Comparator.comparingInt(n -> n.getParent().getIndex(n));
+		return new TreeNodeComparator(node.getModel(), siblingOrder);
 	}
 
 	/**
 	 * Writes the given business objects to the channel: one as that object, several as their
 	 * {@link Set}, none as <code>null</code>.
 	 */
-	private void writeSelection(Set<Object> objects) {
+	private void writeSelection(Collection<Object> objects) {
 		if (objects.size() == 1) {
 			_channel.set(objects.iterator().next());
 		} else if (objects.isEmpty()) {
@@ -299,7 +387,7 @@ public class TreeSelectionBinding {
 	 * A deleted object is nowhere in the tree, and it is not handed to the {@link NodeLocator}:
 	 * nothing can be computed over an object that is gone, so a locator walking up from it - asking
 	 * what holds it - fails on the spot. It is therefore no survivor of a change, and the selection
-	 * that is left takes its place on the channel.
+	 * that is left, or the node above it, takes its place on the channel.
 	 * </p>
 	 */
 	private DefaultTreeUINode locate(Object businessObject) {

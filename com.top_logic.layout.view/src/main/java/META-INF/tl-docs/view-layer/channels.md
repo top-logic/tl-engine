@@ -96,6 +96,12 @@ Several elements sharing one channel is all a master-detail needs. A table and a
 </form>
 ```
 
+## Deleted objects on a channel
+
+A channel may hold a persistent object that was deleted elsewhere - in another view, by another user - until the element that writes it chooses the next value. The channel itself stays passive: which value comes next is up to the selector displaying the object, since only it knows a sensible next selection. A `<tree>` selects the node the deleted object hung in, a `<table>` writes what is left of its selection (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
+
+Everything reading the channel in between treats the deleted object as a missing value: in TL-Script `instanceOf` answers `false` and an attribute access answers the empty value, so a `<derived-channel>` or a `<visible-if>` evaluates to its "nothing" branch. A command counts a deleted input object as no input: `<null-input-disabled/>` disables it as soon as the deletion arrives, and the model access rule an action brings asks nothing of the object.
+
 ## Embedding a view: `<view-ref>` and `<bind>`
 
 `<view-ref view="…"/>` (`ReferenceElement`) displays another `.view.xml` in place; the path is relative to `/WEB-INF/views/`. Every `<view-ref>` creates an instance of the referenced view with a channel scope of its own: the channels it declares belong to this instance, and none of the channels of the enclosing view are visible in it. The same view referenced twice - the card of a repeater, once per element - gets separate channels per instance.

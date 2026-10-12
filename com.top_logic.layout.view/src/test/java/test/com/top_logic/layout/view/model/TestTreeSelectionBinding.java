@@ -267,9 +267,10 @@ public class TestTreeSelectionBinding extends TestCase {
 	}
 
 	/**
-	 * Tests that a selection of which nothing is left clears the channel.
+	 * Tests that a selection of which nothing is left, and whose node hung in the root the tree
+	 * does not display, clears the channel.
 	 */
-	public void testVanishedSelectionClearsTheChannel() {
+	public void testVanishedSelectionBelowAHiddenRootClearsTheChannel() {
 		bind(false, NodeLocator.SEARCHING);
 		_selectionModel.setSelected(node(A), true);
 		assertEquals(A, _channel.get());
@@ -277,8 +278,91 @@ public class TestTreeSelectionBinding extends TestCase {
 		removeChild(root(), A);
 		_binding.structureChanged();
 
-		assertNull("Nothing of the selection is left.", _channel.get());
+		assertNull("Nothing of the selection is left, and the root is not displayed.", _channel.get());
 		assertTrue(_selectionModel.getSelection().isEmpty());
+	}
+
+	/**
+	 * Tests that the node a vanished selected node hung in becomes the selection, and its object
+	 * the value of the channel.
+	 */
+	public void testVanishedNodeSelectsItsParent() {
+		bind(false, NodeLocator.SEARCHING);
+		_selectionModel.setSelected(node(A1), true);
+		assertEquals(A1, _channel.get());
+
+		removeChild(node(A), A1);
+		_binding.structureChanged();
+
+		assertEquals("The node the vanished node hung in is the selection.", Set.of(node(A)),
+			_selectionModel.getSelection());
+		assertEquals("The object of that node replaces the value naming a node nobody sees.", A, _channel.get());
+	}
+
+	/**
+	 * Tests that the nearest node above a vanished node the tree still holds becomes the selection
+	 * where the node it hung in is gone too.
+	 */
+	public void testVanishedParentSelectsTheNearestAncestor() {
+		bind(false, NodeLocator.SEARCHING);
+		_selectionModel.setSelected(node("b1a"), true);
+
+		removeChild(node(B), B1);
+		_binding.structureChanged();
+
+		assertEquals("The nearest node left above the vanished one is the selection.", Set.of(node(B)),
+			_selectionModel.getSelection());
+		assertEquals(B, _channel.get());
+	}
+
+	/**
+	 * Tests that a root the tree does not display is not selected in place of a vanished node and
+	 * the node it hung in.
+	 */
+	public void testVanishedParentDoesNotSelectAHiddenRoot() {
+		bind(false, NodeLocator.SEARCHING);
+		_selectionModel.setSelected(node(A1), true);
+
+		removeChild(root(), A);
+		_binding.structureChanged();
+
+		assertTrue("A root nobody sees is no selection.", _selectionModel.getSelection().isEmpty());
+		assertNull(_channel.get());
+	}
+
+	/**
+	 * Tests that a root the tree displays is selected in place of a vanished node and the node it
+	 * hung in.
+	 */
+	public void testVanishedParentSelectsAVisibleRoot() {
+		bind(false, NodeLocator.SEARCHING);
+		_tree.setRootVisible(true);
+		_selectionModel.setSelected(node(A1), true);
+
+		removeChild(root(), A);
+		_binding.structureChanged();
+
+		assertEquals("The displayed root is the nearest node left above the vanished one.", Set.of(root()),
+			_selectionModel.getSelection());
+		assertEquals(ROOT, _channel.get());
+	}
+
+	/**
+	 * Tests that of several vanished selected nodes, the node above the first one in display order
+	 * becomes the selection.
+	 */
+	public void testVanishedMultiSelectionSelectsTheParentOfTheFirst() {
+		bind(true, NodeLocator.SEARCHING);
+		_selectionModel.setSelection(Set.of(node(B1), node(A1)));
+		assertEquals(Set.of(A1, B1), _channel.get());
+
+		removeChild(node(B), B1);
+		removeChild(node(A), A1);
+		_binding.structureChanged();
+
+		assertEquals("The node the first displayed of the vanished nodes hung in is the selection.",
+			Set.of(node(A)), _selectionModel.getSelection());
+		assertEquals(A, _channel.get());
 	}
 
 	/**
@@ -371,22 +455,28 @@ public class TestTreeSelectionBinding extends TestCase {
 	}
 
 	/**
-	 * Tests that a selection of which nothing but a deleted object is left clears the channel,
-	 * instead of leaving the deleted object on it for everybody reading it to fail over.
+	 * Tests that a selection of which nothing but a deleted object is left selects the node the
+	 * object hung in, instead of leaving the deleted object on the channel, and that the deleted
+	 * object is not handed to the locator.
 	 */
-	public void testDeletedSelectionClearsTheChannel() {
+	public void testDeletedSelectionSelectsItsParent() {
 		DeletableItem item = new DeletableItem("item");
-		_children.put(ROOT, new ArrayList<>(List.of(item)));
-		bind(false, recordingLocator(new ArrayList<>()));
+		_children.put(A, new ArrayList<>(List.of(item)));
+		List<Object> lookedFor = new ArrayList<>();
+		bind(false, recordingLocator(lookedFor));
 		_selectionModel.setSelected(node(item), true);
 		assertEquals(item, _channel.get());
 
 		item.markDeleted();
-		removeChild(root(), item);
+		removeChild(node(A), item);
+		lookedFor.clear();
 		_binding.structureChanged();
 
-		assertNull("Nothing of the selection is left.", _channel.get());
-		assertTrue(_selectionModel.getSelection().isEmpty());
+		assertFalse("A deleted object is nowhere in the tree and is not computed over.",
+			lookedFor.contains(item));
+		assertEquals("The node the deleted object hung in is the selection.", Set.of(node(A)),
+			_selectionModel.getSelection());
+		assertEquals(A, _channel.get());
 	}
 
 	/**

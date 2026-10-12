@@ -5,11 +5,17 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracedValueComputation;
 
 /**
  * {@link com.top_logic.layout.form.model.FieldModel} that reads and writes a single attribute of a
@@ -20,6 +26,16 @@ import com.top_logic.model.TLStructuredTypePart;
  * Dirty tracking is handled by the inherited {@link BoundFieldModel} logic which compares the
  * current value to the default value.
  * </p>
+ *
+ * <p>
+ * A {@link TLStructuredTypePart#isDerived() derived} attribute whose storage is a
+ * {@link TracedValueComputation} follows the edits of the form it is displayed in: while the form
+ * is edited, its value is computed over the form's overlays, and the attributes read by that
+ * computation are recorded. When the field of one of those attributes changes, the value is
+ * computed again and {@link #followObject() taken} as the field's value and as the value it is
+ * dirty against. A derived field is therefore never dirty, while its value change is announced to
+ * its listeners like any other, so that fields depending on the derived attribute follow in turn.
+ * </p>
  */
 public class AttributeFieldModel extends BoundFieldModel {
 
@@ -27,8 +43,16 @@ public class AttributeFieldModel extends BoundFieldModel {
 
 	private TLStructuredTypePart _part;
 
+	private final FormControl _form;
+
+	private Set<TLStructuredTypePart> _dependencies = Collections.emptySet();
+
+	private final FormControl.FieldChangeListener _dependencyListener = this::onFieldChanged;
+
+	private boolean _listening;
+
 	/**
-	 * Creates a new model for the given attribute.
+	 * Creates a new model for the given attribute, outside of a form.
 	 *
 	 * @param object
 	 *        The object to read/write values from.
@@ -36,15 +60,99 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 *        The attribute to bind to.
 	 */
 	public AttributeFieldModel(TLObject object, TLStructuredTypePart part) {
+		this(object, part, null);
+	}
+
+	/**
+	 * Creates a new model for the given attribute, displayed in the given form.
+	 *
+	 * @param object
+	 *        The object to read/write values from.
+	 * @param part
+	 *        The attribute to bind to.
+	 * @param form
+	 *        The form the field is displayed in, providing the overlays a derived value is computed
+	 *        over and the notifications about changed fields. {@code null} for a field outside of
+	 *        a form.
+	 */
+	public AttributeFieldModel(TLObject object, TLStructuredTypePart part, FormControl form) {
 		super(object.tValue(part));
 		_object = object;
 		_part = part;
+		_form = form;
 		setMandatory(part.isMandatory());
+		if (tracedComputation() != null) {
+			Object value = readValue();
+			setDefaultValue(value);
+			setValueInternal(value);
+		}
+		updateDependencyListener();
 	}
 
+	/**
+	 * The value of the attribute, computed over the form's overlays for a derived attribute of a
+	 * form being edited.
+	 *
+	 * <p>
+	 * Reading a computed value records the attributes the computation reads, whose changes make
+	 * the field compute its value again.
+	 * </p>
+	 */
 	@Override
 	protected Object readValue() {
-		return _object.tValue(_part);
+		TracedValueComputation computation = tracedComputation();
+		OverlayLookup overlays = _form == null ? null : _form.getValidationModel();
+		if (computation == null || overlays == null) {
+			_dependencies = Collections.emptySet();
+			return _object.tValue(_part);
+		}
+		Set<TLStructuredTypePart> dependencies = new HashSet<>();
+		Object value =
+			computation.computeTraced(_object, _part, pointer -> dependencies.add(pointer.attribute()), overlays);
+		_dependencies = dependencies;
+		return value;
+	}
+
+	/**
+	 * The computation of the attribute's value when the attribute is derived and its value is
+	 * computed traceably, {@code null} otherwise.
+	 */
+	private TracedValueComputation tracedComputation() {
+		if (!_part.isDerived()) {
+			return null;
+		}
+		StorageDetail storage = _part.getStorageImplementation();
+		return storage instanceof TracedValueComputation computation ? computation : null;
+	}
+
+	/**
+	 * Registers for the changes of the form's fields while the attribute is computed traceably,
+	 * and deregisters otherwise.
+	 */
+	private void updateDependencyListener() {
+		boolean listen = _form != null && tracedComputation() != null;
+		if (listen == _listening) {
+			return;
+		}
+		if (listen) {
+			_form.addFieldChangeListener(_dependencyListener);
+		} else {
+			_form.removeFieldChangeListener(_dependencyListener);
+		}
+		_listening = listen;
+	}
+
+	/**
+	 * Computes the value again when an attribute the last computation read has changed.
+	 */
+	private void onFieldChanged(TLStructuredTypePart changedPart) {
+		if (changedPart == _part) {
+			// The own change of a derived field is no reason to compute it again.
+			return;
+		}
+		if (_dependencies.contains(changedPart)) {
+			followObject();
+		}
 	}
 
 	@Override
@@ -76,6 +184,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 		boolean hadInputError = getInputError() != null;
 		_object = newObject;
 		_part = resolvePart(newObject);
+		updateDependencyListener();
 		setMandatory(_part.isMandatory());
 		Object newValue = getValue();
 		setDefaultValue(newValue);
@@ -92,6 +201,17 @@ public class AttributeFieldModel extends BoundFieldModel {
 		// Push the value even though it did not change, to replace that text.
 		if (hadInputError || !Objects.equals(oldValue, newValue)) {
 			fireValueChanged(oldValue, newValue);
+		}
+	}
+
+	/**
+	 * Detaches this model from the form's field-change notifications.
+	 */
+	@Override
+	public void dispose() {
+		if (_listening) {
+			_form.removeFieldChangeListener(_dependencyListener);
+			_listening = false;
 		}
 	}
 

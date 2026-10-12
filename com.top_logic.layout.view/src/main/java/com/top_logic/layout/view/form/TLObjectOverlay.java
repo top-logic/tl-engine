@@ -16,6 +16,7 @@ import java.util.Set;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -135,10 +136,23 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		return _base.tReferers(ref);
 	}
 
+	/**
+	 * The value of the given attribute as edited in this overlay.
+	 *
+	 * <p>
+	 * A changed attribute delivers the buffered value, an unchanged one the value of the base
+	 * object. A {@link TLStructuredTypePart#isDerived() derived} attribute is computed over this
+	 * overlay by its {@link StorageDetail#getFormValue(TLFormObjectBase, TLStructuredTypePart)
+	 * storage}, so that it reflects the edits buffered here.
+	 * </p>
+	 */
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
 		if (_changes.containsKey(part)) {
 			return _changes.get(part);
+		}
+		if (part.isDerived()) {
+			return part.getStorageImplementation().getFormValue(this, part);
 		}
 		return _base.tValue(part);
 	}
@@ -148,11 +162,22 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		_changes.put(part, value);
 	}
 
+	/**
+	 * The value this overlay holds for the given attribute: the buffered value of a changed
+	 * attribute, the value of the base object otherwise.
+	 *
+	 * @implNote A derived attribute is not computed here: a storage answers the
+	 *           {@link StorageDetail#getFormValue(TLFormObjectBase, TLStructuredTypePart) form
+	 *           value} with this field value unless it computes the value itself, and
+	 *           {@link #tValue(TLStructuredTypePart)} asks the storage of a derived attribute for
+	 *           its form value.
+	 */
 	@Override
 	public Object getFieldValue(TLStructuredTypePart attribute) {
-		// All values displayed in the form are read through this overlay, so the buffered value is
-		// the value being displayed.
-		return tValue(attribute);
+		if (_changes.containsKey(attribute)) {
+			return _changes.get(attribute);
+		}
+		return _base.tValue(attribute);
 	}
 
 	/**

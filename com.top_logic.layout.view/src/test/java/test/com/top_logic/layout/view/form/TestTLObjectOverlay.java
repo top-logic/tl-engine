@@ -286,7 +286,7 @@ public class TestTLObjectOverlay extends TestCase {
 	 * Creates a mock {@link TLStructuredTypePart} using a dynamic proxy.
 	 *
 	 * <p>
-	 * The proxy uses identity equality and supports {@code getName()} and {@code toString()}.
+	 * The proxy uses identity equality and supports {@code getName()} and {@code toString()}; it is not derived.
 	 * </p>
 	 */
 	private static TLStructuredTypePart mockPart(String name) {
@@ -318,6 +318,9 @@ public class TestTLObjectOverlay extends TestCase {
 					return System.identityHashCode(proxy);
 				case "equals":
 					return proxy == args[0];
+				case "isDerived":
+					// A mock part stores its values.
+					return Boolean.FALSE;
 				default:
 					return null;
 			}

@@ -40,7 +40,8 @@
 # do not propagate staleness to inheriting modules.
 #
 # The reactor is enumerated by walking the <modules> lists of the aggregator
-# POMs (including <modules> in active-by-default profiles), starting at the
+# POMs (including <modules> in profiles that a plain `mvn` run activates:
+# activeByDefault, or activated by an absent property), starting at the
 # root POM. This deliberately avoids running a Maven goal per reactor module:
 # any such goal (e.g. exec:exec) requires each module's dependencies to be
 # resolvable, so a single missing reactor jar -- exactly the situation this
@@ -124,9 +125,24 @@ def fail(msg):
     print(f"!!! {msg}", file=sys.stderr)
     sys.exit(1)
 
+def active_in_plain_build(activation):
+    """Whether a profile with the given <activation> is active in a plain
+    `mvn` invocation without -P or -D: declared activeByDefault, or
+    activated by the absence of a property (`<name>!prop</name>`), which
+    is how the root POM switches the engine aggregator on."""
+    if activation is None:
+        return False
+    if text(activation, "activeByDefault") == "true":
+        return True
+    prop = child(activation, "property")
+    if prop is not None:
+        name = text(prop, "name")
+        return name is not None and name.startswith("!")
+    return False
+
 def module_dirs(proj):
-    """Directories listed in <modules> of the project and of its
-    active-by-default profiles (matching Maven's default reactor)."""
+    """Directories listed in <modules> of the project and of its profiles
+    that are active in a plain build (matching Maven's default reactor)."""
     lists = []
     top = child(proj, "modules")
     if top is not None:
@@ -136,10 +152,8 @@ def module_dirs(proj):
         for prof in profiles:
             if tag(prof) != "profile":
                 continue
-            activation = child(prof, "activation")
-            by_default = activation is not None and text(activation, "activeByDefault") == "true"
             mm = child(prof, "modules")
-            if by_default and mm is not None:
+            if mm is not None and active_in_plain_build(child(prof, "activation")):
                 lists.append(mm)
     for mm in lists:
         for m in mm:

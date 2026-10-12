@@ -1282,9 +1282,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * The names of the columns the table freezes now.
+	 * The names of the columns the table freezes now - the locks the column selection opens with.
 	 */
-	private Set<String> lockedColumnNames() {
+	protected Set<String> lockedColumnNames() {
 		Set<String> result = new HashSet<>();
 		List<ColumnView> displayed = _view.columns();
 		for (int n = 0; n < Math.min(_view.frozenColumnCount(), displayed.size()); n++) {

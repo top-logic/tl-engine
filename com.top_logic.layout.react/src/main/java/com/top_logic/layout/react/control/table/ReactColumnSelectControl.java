@@ -193,11 +193,19 @@ public class ReactColumnSelectControl extends ReactControl {
 
 	/**
 	 * Handles a click on the lock: locking puts the column at the end of the block, releasing it directly behind.
+	 *
+	 * <p>
+	 * A command that does not change the lock leaves the order alone - locking a locked column or releasing a released
+	 * one must not move it.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_COLUMN_LOCK)
 	void handleLock(ColumnLockArguments args) {
 		int index = indexOf(args.getColumn());
 		if (index < 0) {
+			return;
+		}
+		if (_entries.get(index).locked() == args.isLocked()) {
 			return;
 		}
 		Entry entry = _entries.remove(index);

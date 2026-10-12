@@ -59,6 +59,24 @@ public class TestReactColumnSelect extends TestCase {
 		assertEquals(List.of("b"), control.lockedColumns());
 	}
 
+	public void testReleasingAReleasedColumnKeepsTheOrder() {
+		ReactColumnSelectControl control = control(Set.of("a"));
+
+		assertTrue(lock(control, "d", false));
+
+		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
+		assertEquals(List.of("a"), control.lockedColumns());
+	}
+
+	public void testLockingALockedColumnKeepsTheOrder() {
+		ReactColumnSelectControl control = control(Set.of("a", "b"));
+
+		assertTrue(lock(control, "a", true));
+
+		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
+		assertEquals(List.of("a", "b"), control.lockedColumns());
+	}
+
 	public void testReorderIntoTheBlockLocks() {
 		ReactColumnSelectControl control = control(Set.of("a", "b"));
 

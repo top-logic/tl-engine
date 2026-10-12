@@ -53,7 +53,8 @@ public class RevokeAccessTokenAction extends AbstractConfiguredInstance<RevokeAc
 		}
 
 		String sessionKey = (String) token.tValue(AccessTokens.part(AccessTokens.SESSION_KEY));
-		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = token.tKnowledgeBase()
+			.beginTransaction(AccessTokens.commitMessage(I18NConstants.ACCESS_TOKEN_WITHDRAWN__LABEL_ACCOUNT, token))) {
 			AccessTokens.withdraw(token);
 			tx.commit();
 		}

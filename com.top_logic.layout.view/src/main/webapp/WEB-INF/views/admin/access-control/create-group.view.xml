@@ -29,6 +29,10 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
+						<commitMessage>
+							<en>Created group {0}.</en>
+							<de>Gruppe {0} angelegt.</de>
+						</commitMessage>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>
 					</with-transaction>
 					<write-channel name="selection"/>

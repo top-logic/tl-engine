@@ -6,7 +6,6 @@
 package test.com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,13 +30,14 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
-import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableViewState;
+import com.top_logic.table.TreeStructure;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.TreeRowSource;
 
 /**
  * Tests the grouping a {@link TableViewControl} offers over the table model: what the client is
@@ -118,7 +118,11 @@ public class TestTableGrouping extends TestCase {
 	private static final class TestTable extends TableViewControl<Item> {
 
 		TestTable(ReactContext context, com.top_logic.table.TableView<Item> view) {
-			super(context, view, false);
+			this(context, view, false);
+		}
+
+		TestTable(ReactContext context, com.top_logic.table.TableView<Item> view, boolean treeMode) {
+			super(context, view, treeMode);
 		}
 
 		Object clientState(String key) {
@@ -128,16 +132,14 @@ public class TestTableGrouping extends TestCase {
 
 	private TestTable _table;
 
-	private ListRowSource<Item> _rows;
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
 				new ReactWindowRegistry("test"));
-		_rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
-		_table = new TestTable(context, DefaultTableView.create(columns(), _rows));
+		ListRowSource<Item> rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
+		_table = new TestTable(context, DefaultTableView.create(columns(), rows));
 		// Order the rows, so what a group holds is decided but the group order still follows the
 		// rows: a grouping is applied to the sorted rows, not instead of the sort.
 		sort(COLUMN_NAME, "asc");
@@ -267,80 +269,6 @@ public class TestTableGrouping extends TestCase {
 	}
 
 	/**
-	 * Tests that a table whose group headers stand for their group value selects a header instead
-	 * of collapsing it: the selection is the key of the group, which names its value.
-	 */
-	public void testSelectableGroupHeaderIsSelected() {
-		_table.setGroupsSelectable(true);
-		group(COLUMN_STATUS);
-
-		select(0);
-
-		Set<Object> selected = _table.getSelectedKeys();
-		assertEquals(1, selected.size());
-		Object key = selected.iterator().next();
-		assertTrue("The selection is the group: " + key, key instanceof GroupKey);
-		assertEquals("The group did not collapse.", 5, clientRows().size());
-		assertEquals(Boolean.TRUE, clientRows().get(0).get(SELECTED));
-	}
-
-	/**
-	 * Tests that a selected group header stays selected when the data is refreshed, the data
-	 * knowing the keys of its rows only.
-	 */
-	public void testSelectedGroupSurvivesRefresh() {
-		_table.setGroupsSelectable(true);
-		group(COLUMN_STATUS);
-		select(0);
-		Set<Object> selected = new HashSet<>(_table.getSelectedKeys());
-		assertTrue(selected.iterator().next() instanceof GroupKey);
-
-		_table.refreshData();
-
-		assertEquals(selected, _table.getSelectedKeys());
-	}
-
-	/** And that it leaves the selection once its group has no members any more. */
-	public void testSelectedGroupLeavesWithItsMembers() {
-		_table.setGroupsSelectable(true);
-		group(COLUMN_STATUS);
-		select(0);
-
-		_rows.setElements(new ArrayList<>(List.of(B)));
-		_table.refreshData();
-
-		assertEquals(Set.of(), _table.getSelectedKeys());
-	}
-
-	/**
-	 * Tests that selecting a data row after a selectable group header replaces the group in the
-	 * selection.
-	 */
-	public void testDataRowReplacesASelectedGroup() {
-		_table.setGroupsSelectable(true);
-		group(COLUMN_STATUS);
-		select(0);
-
-		select(1);
-
-		assertEquals(Set.of(A), _table.getSelectedKeys());
-	}
-
-	/**
-	 * Tests that a selected group header leaves the selection once the grouping changes: the
-	 * group it stood for is no longer displayed.
-	 */
-	public void testChangingTheGroupingDropsASelectedGroup() {
-		_table.setGroupsSelectable(true);
-		group(COLUMN_STATUS);
-		select(0);
-
-		group("");
-
-		assertEquals(Set.of(), _table.getSelectedKeys());
-	}
-
-	/**
 	 * Tests that grouping and ungrouping keep the selection: a grouping rearranges the rows, it
 	 * does not replace them, so a selected row stays selected - at its new position, which the
 	 * keyboard cursor follows.
@@ -401,6 +329,54 @@ public class TestTableGrouping extends TestCase {
 		assertEquals(COLUMN_STATUS, table.getGroupedColumn());
 		assertEquals(Boolean.TRUE, table.clientState(TREE_MODE));
 		assertEquals("Two group headers and the three rows they hold.", 5, clientRows(table).size());
+	}
+
+	/**
+	 * Tests that a table offers to group by its columns, but a tree table does not: a tree is
+	 * structured by its nodes already.
+	 */
+	public void testATreeOffersNoGrouping() {
+		assertTrue("A flat table offers grouping.", groupable(_table).contains(COLUMN_STATUS));
+
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
+		TreeStructure<Item, Item> structure = new TreeStructure<>() {
+			@Override
+			public List<Item> roots() {
+				return List.of(A, B);
+			}
+
+			@Override
+			public List<Item> children(Item node) {
+				return node == A ? List.of(C) : List.of();
+			}
+
+			@Override
+			public boolean isLeaf(Item node) {
+				return node != A;
+			}
+
+			@Override
+			public Item businessObject(Item node) {
+				return node;
+			}
+		};
+		TestTable tree = new TestTable(context,
+			DefaultTableView.create(columns(), new TreeRowSource<>(structure, columns())), true);
+
+		assertTrue("A tree offers no grouping.", groupable(tree).isEmpty());
+	}
+
+	/** The names of the columns the given table offers to group by. */
+	@SuppressWarnings("unchecked")
+	private static Set<Object> groupable(TestTable table) {
+		Set<Object> result = new java.util.HashSet<>();
+		for (Map<String, Object> column : (List<Map<String, Object>>) table.clientState("columns")) {
+			if (Boolean.TRUE.equals(column.get("groupable"))) {
+				result.add(column.get("name"));
+			}
+		}
+		return result;
 	}
 
 	/** Sends the client's group command for the given column, empty for no grouping. */

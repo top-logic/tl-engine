@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Security coverage: the completeness of the model based access definition, one row per analyzed
-	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
-	rebuilds from the rows channel after a command; it writes the selected row to the selection
-	channel, the type of it to the selectedType channel and the parts of it the detail shows to the
-	selectedFindings and selectedRules channels and its two marks to the selectedInternal and
-	selectedWithoutSecurity channels (the module and findings columns start hidden, the table being
-	grouped by module). Those channels are written again whenever the rows are, so the detail
-	describes the analysis the table shows. The header of the group of a module can be selected,
-	too: the module is written to the selectedModule channel then, and the channels of a type are
-	empty.
+	Security coverage: the completeness of the model based access definition, as a tree of the
+	modules and their analyzed types. The SecurityCoverageTable analyses the definition itself when
+	the view is opened and rebuilds from the rows channel after a command; for a selected type it
+	writes the row to the selection channel, the type of it to the selectedType channel and the
+	parts of it the detail shows to the selectedFindings and selectedRules channels and its two marks
+	to the selectedInternal and selectedWithoutSecurity channels (the findings column starts hidden).
+	Those channels are written again whenever the rows are, so the detail describes the analysis
+	the table shows. A selected module is written to the selectedModule channel, and the channels of
+	a type are empty then.
 	
 	The detail side holds two panels, one above the other: the findings of the selected type, and
 	the rules in effect for it. Each is a panel of its own because the rule table is a filling

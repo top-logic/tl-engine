@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.view.UIElement;
@@ -82,8 +83,8 @@ public class MaintenanceStatusView implements UIElement {
 			// Seed the gating channel before listening, so the initial set does not re-render redundantly.
 			state.set(MaintenanceModeAction.token(MaintenanceWindowManager.getInstance().getMaintenanceModeState()));
 			ChannelListener listener = (sender, oldValue, newValue) -> control.setText(statusText());
-			state.addListener(listener);
-			control.addCleanupAction(() -> state.removeListener(listener));
+			Registration registration = state.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 		control.setCssClass(_cssClass);
 		return control;

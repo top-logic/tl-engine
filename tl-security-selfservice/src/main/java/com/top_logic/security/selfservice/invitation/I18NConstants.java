@@ -27,7 +27,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Create account */
 	public static ResKey CREATE_LOGIN_DIALOG_TITLE;
 
-	/** @en Invitation code updated. */
+	/** @en Updated invitation code. */
 	public static ResKey UPDATED_INVITATION_CODE;
 
 	/** @en Deleted invitation. */
@@ -121,7 +121,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Code */
 	public static ResKey RESET_MFA_CODE_FIELD;
 
-	/** @en Multi-factor authentication code reset */
+	/** @en Reset multi-factor authentication code. */
 	public static ResKey RESET_MFA_CODE;
 
 	/**

@@ -8,9 +8,11 @@ package test.com.top_logic.mig.html.layout;
 import static com.top_logic.mig.html.layout.ModelEventListener.*;
 import static test.com.top_logic.mig.html.layout.TestGlobalModelEventForwarder.Evt.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -33,6 +35,7 @@ import com.top_logic.basic.config.EnabledConfiguration;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -385,6 +388,179 @@ public class TestGlobalModelEventForwarder extends AbstractDBKnowledgeBaseCluste
 		kbNode2().refetch();
 
 		assertEvents2(set(evt2(b1, MODEL_CREATED), evt2(b2, MODEL_CREATED)));
+	}
+
+	/**
+	 * A listener whose registration is disposed by another listener during the delivery of an
+	 * event is not notified anymore.
+	 */
+	public void testDisposedDuringDeliveryNotNotified() throws KnowledgeBaseException {
+		BObj b1;
+		BObj b2;
+		Transaction tx1 = begin();
+		{
+			b1 = BObj.newBObj("b1");
+			b2 = BObj.newBObj("b2");
+			tx1.commit();
+		}
+
+		GlobalModelEventForwarder forwarder = newForwarder();
+		forwarder.synthesizeModelEvents();
+
+		List<String> calls = new ArrayList<>();
+		Registration[] second = new Registration[1];
+		forwarder.addModelListener(b1, change -> {
+			calls.add("first");
+			second[0].dispose();
+		});
+		second[0] = forwarder.addModelListener(b1, change -> calls.add("second"));
+
+		Registration[] globalSecond = new Registration[1];
+		forwarder.addModelListener(change -> {
+			calls.add("global");
+			globalSecond[0].dispose();
+		});
+		globalSecond[0] = forwarder.addModelListener(b1, change -> calls.add("globalSecond"));
+
+		Transaction tx2 = begin();
+		{
+			b1.addAB(b2);
+			tx2.commit();
+		}
+		forwarder.synthesizeModelEvents();
+
+		assertEquals(List.of("global", "first"), calls);
+		assertFalse(second[0].isActive());
+		assertFalse(globalSecond[0].isActive());
+	}
+
+	/**
+	 * A listener registered for multiple changed objects is notified once.
+	 */
+	public void testNotifiedOnceForMultipleRegistrations() throws KnowledgeBaseException {
+		BObj b1;
+		BObj b2;
+		BObj b3;
+		Transaction tx1 = begin();
+		{
+			b1 = BObj.newBObj("b1");
+			b2 = BObj.newBObj("b2");
+			b3 = BObj.newBObj("b3");
+			tx1.commit();
+		}
+
+		GlobalModelEventForwarder forwarder = newForwarder();
+		forwarder.synthesizeModelEvents();
+
+		List<ModelChangeEvent> events = new ArrayList<>();
+		ModelListener listener = events::add;
+		forwarder.addModelListener(b1, listener);
+		forwarder.addModelListener(b2, listener);
+		forwarder.addModelListener(listener);
+
+		Transaction tx2 = begin();
+		{
+			b1.addAB(b3);
+			b2.addAB(b3);
+			tx2.commit();
+		}
+		forwarder.synthesizeModelEvents();
+
+		assertEquals(1, events.size());
+		assertEquals(Set.of(b1, b2), events.get(0).getUpdated().collect(Collectors.toSet()));
+	}
+
+	/**
+	 * Disposing the last registration of an object ends the observation, a later registration
+	 * observes the object again.
+	 */
+	public void testReRegisterAfterDispose() throws KnowledgeBaseException {
+		BObj b1;
+		BObj b2;
+		Transaction tx1 = begin();
+		{
+			b1 = BObj.newBObj("b1");
+			b2 = BObj.newBObj("b2");
+			tx1.commit();
+		}
+
+		GlobalModelEventForwarder forwarder = newForwarder();
+		forwarder.synthesizeModelEvents();
+
+		List<String> calls = new ArrayList<>();
+		Registration registration = forwarder.addModelListener(b1, change -> calls.add("disposed"));
+		assertTrue(registration.isActive());
+		registration.dispose();
+		assertFalse(registration.isActive());
+
+		// Disposing again has no effect.
+		registration.dispose();
+
+		Transaction tx2 = begin();
+		{
+			b1.addAB(b2);
+			tx2.commit();
+		}
+		forwarder.synthesizeModelEvents();
+		assertEquals(List.of(), calls);
+
+		Registration reRegistration = forwarder.addModelListener(b1, change -> calls.add("re-registered"));
+
+		// Disposing an outdated registration does not affect the registration made later on.
+		registration.dispose();
+		assertTrue(reRegistration.isActive());
+
+		Transaction tx3 = begin();
+		{
+			b1.removeAB(b2);
+			tx3.commit();
+		}
+		forwarder.synthesizeModelEvents();
+		assertEquals(List.of("re-registered"), calls);
+	}
+
+	/**
+	 * Removing a listener ends all its registrations for the removed object.
+	 */
+	@SuppressWarnings("deprecation")
+	public void testRemoveListener() throws KnowledgeBaseException {
+		BObj b1;
+		BObj b2;
+		Transaction tx1 = begin();
+		{
+			b1 = BObj.newBObj("b1");
+			b2 = BObj.newBObj("b2");
+			tx1.commit();
+		}
+
+		GlobalModelEventForwarder forwarder = newForwarder();
+		forwarder.synthesizeModelEvents();
+
+		List<String> calls = new ArrayList<>();
+		ModelListener listener = change -> calls.add("removed");
+		Registration first = forwarder.addModelListener(b1, listener);
+		Registration second = forwarder.addModelListener(b1, listener);
+		assertTrue(forwarder.removeModelListener(b1, listener));
+		assertFalse(first.isActive());
+		assertFalse(second.isActive());
+		assertFalse(forwarder.removeModelListener(b1, listener));
+
+		Transaction tx2 = begin();
+		{
+			b1.addAB(b2);
+			tx2.commit();
+		}
+		forwarder.synthesizeModelEvents();
+		assertEquals(List.of(), calls);
+	}
+
+	private GlobalModelEventForwarder newForwarder() {
+		Protocol log = new AssertProtocol();
+		AssociationEndRelevance endRelevance =
+			MapBasedAssociationEndRelevance.newAssociationEndRelevance(log, defaultRelevance(),
+				kb().getMORepository());
+		log.checkErrors();
+		return new GlobalModelEventForwarder(kb(), _updates1, endRelevance);
 	}
 
 	void assertEvents1(Set<?>... events) {

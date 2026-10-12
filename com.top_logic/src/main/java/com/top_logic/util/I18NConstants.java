@@ -28,7 +28,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey INTERNAL_ERROR;
 
-	/** @en Application startup: {0} {1} */
+	/** @en Started application: {0} {1} */
 	public static ResKey2 APPLICATION_STARTUP__NAME_VERSION;
 
 	/** @en Initialized view permissions. */

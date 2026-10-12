@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -104,7 +105,10 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	 */
 	private final ObservedObjects _observedObjects = new ObservedObjects(this);
 
-	private ModelScope _scope;
+	/**
+	 * The registrations on the channels and on the {@link #_observedTypes}, while attached.
+	 */
+	private final List<Registration> _registrations = new ArrayList<>();
 
 	private boolean _attached;
 
@@ -221,12 +225,11 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 			return;
 		}
 		_attached = true;
-		_scope = scope;
-		registerTypeListeners();
+		registerTypeListeners(scope);
 		_observedObjects.attach(scope);
 		updateObservedObjects();
 		for (ViewChannel channel : _channels) {
-			channel.addListener(this);
+			_registrations.add(channel.addListener(this));
 		}
 		if (_suspended) {
 			_suspended = false;
@@ -247,12 +250,11 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 		}
 		_attached = false;
 		_suspended = true;
-		for (ViewChannel channel : _channels) {
-			channel.removeListener(this);
+		for (Registration registration : _registrations) {
+			registration.dispose();
 		}
+		_registrations.clear();
 		_observedObjects.detach();
-		deregisterTypeListeners();
-		_scope = null;
 	}
 
 	/**
@@ -307,21 +309,12 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 		_observedObjects.observe(objects);
 	}
 
-	private void registerTypeListeners() {
-		if (_scope == null) {
+	private void registerTypeListeners(ModelScope scope) {
+		if (scope == null) {
 			return;
 		}
 		for (TLStructuredType type : _observedTypes) {
-			_scope.addModelListener(type, this);
-		}
-	}
-
-	private void deregisterTypeListeners() {
-		if (_scope == null) {
-			return;
-		}
-		for (TLStructuredType type : _observedTypes) {
-			_scope.removeModelListener(type, this);
+			_registrations.add(scope.addModelListener(type, this));
 		}
 	}
 

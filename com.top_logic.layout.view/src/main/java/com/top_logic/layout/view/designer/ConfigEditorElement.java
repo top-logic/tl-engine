@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
@@ -130,8 +131,8 @@ public class ConfigEditorElement implements UIElement {
 				wrapper.setChild(null);
 			}
 		};
-		inputChannel.addListener(selectionListener);
-		wrapper.addCleanupAction(() -> inputChannel.removeListener(selectionListener));
+		Registration selectionRegistration = inputChannel.addListener(selectionListener);
+		wrapper.addCleanupAction(selectionRegistration::dispose);
 
 		return wrapper;
 	}

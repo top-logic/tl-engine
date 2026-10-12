@@ -54,6 +54,10 @@
 							</executability>
 							<confirm expr="g -> #('Delete group {0}?'@en, 'Gruppe {0} löschen?'@de).fill($g.get(`tl.accounts:Group#name`))"/>
 							<with-transaction>
+								<commitMessage>
+									<en>Deleted group {0}.</en>
+									<de>Gruppe {0} gelöscht.</de>
+								</commitMessage>
 								<execute-script function="obj -> $obj.delete()"/>
 							</with-transaction>
 							<write-channel name="selectedGroup"/>

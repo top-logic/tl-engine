@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.listen;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.ControlScope;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
@@ -17,6 +18,11 @@ import com.top_logic.model.TLStructuredType;
  * If a {@link ModelListener} is registered in multiple ways which match, it is still notified only
  * once. Example: A listener which is registered for a specific object and for its type, or if it is
  * registered for multiple types which match.
+ * </p>
+ * <p>
+ * Each registration is represented by a {@link Registration} handle. A listener whose
+ * registrations are all {@link Registration#dispose() disposed} is no longer notified, also not by a
+ * notification that is currently delivered and has not yet reached the listener.
  * </p>
  * 
  * @implNote You may get a {@link ModelScope} through {@link FrameScope#getModelScope()}.
@@ -32,9 +38,9 @@ public interface ModelScope {
 	 *
 	 * @param listener
 	 *        The listener to inform, if a change occurs.
-	 * @return Whether the given listener was (newly) added.
+	 * @return The handle that ends the observation when {@link Registration#dispose() disposed}.
 	 */
-	boolean addModelListener(ModelListener listener);
+	Registration addModelListener(ModelListener listener);
 
 	/**
 	 * Observes all objects of the given type for all kinds of changes.
@@ -46,9 +52,9 @@ public interface ModelScope {
 	 *        The type of objects to observe.
 	 * @param listener
 	 *        The listener to inform, if a change occurs.
-	 * @return Whether the given listener was (newly) added.
+	 * @return The handle that ends the observation when {@link Registration#dispose() disposed}.
 	 */
-	boolean addModelListener(TLStructuredType type, ModelListener listener);
+	Registration addModelListener(TLStructuredType type, ModelListener listener);
 
 	/**
 	 * Observes the given object for changes (updates and deletion).
@@ -57,22 +63,26 @@ public interface ModelScope {
 	 *        The observed object.
 	 * @param listener
 	 *        The listener to inform, if the given object is changed.
-	 * @return Whether the given listener was (newly) added.
+	 * @return The handle that ends the observation when {@link Registration#dispose() disposed}.
 	 */
-	boolean addModelListener(TLObject object, ModelListener listener);
+	Registration addModelListener(TLObject object, ModelListener listener);
 
 	/**
-	 * Removes the given listener that was added with {@link #addModelListener(ModelListener)}
-	 * before.
+	 * Removes all registrations of the given listener that were added with
+	 * {@link #addModelListener(ModelListener)} before.
 	 *
 	 * @param listener
 	 *        The listener to remove.
 	 * @return Whether the given listener was added with {@link #addModelListener(ModelListener)}.
+	 * 
+	 * @deprecated Use {@link Registration#dispose()} on the result of
+	 *             {@link #addModelListener(ModelListener)}.
 	 */
+	@Deprecated
 	boolean removeModelListener(ModelListener listener);
 
 	/**
-	 * Removes the given listener that was added with
+	 * Removes all registrations of the given listener that were added with
 	 * {@link #addModelListener(TLStructuredType, ModelListener)} before.
 	 * <p>
 	 * It is not possible to register a listener for a type and than use this method to unregister
@@ -84,11 +94,15 @@ public interface ModelScope {
 	 * @param listener
 	 *        The listener to remove.
 	 * @return Whether the given listener was observing the given type.
+	 * 
+	 * @deprecated Use {@link Registration#dispose()} on the result of
+	 *             {@link #addModelListener(TLStructuredType, ModelListener)}.
 	 */
+	@Deprecated
 	boolean removeModelListener(TLStructuredType type, ModelListener listener);
 
 	/**
-	 * Removes the given listener that was added with
+	 * Removes all registrations of the given listener that were added with
 	 * {@link #addModelListener(TLObject, ModelListener)} before.
 	 *
 	 * @param object
@@ -96,7 +110,11 @@ public interface ModelScope {
 	 * @param listener
 	 *        The listener to remove.
 	 * @return Whether the given listener was observing this model before.
+	 * 
+	 * @deprecated Use {@link Registration#dispose()} on the result of
+	 *             {@link #addModelListener(TLObject, ModelListener)}.
 	 */
+	@Deprecated
 	boolean removeModelListener(TLObject object, ModelListener listener);
 
 }

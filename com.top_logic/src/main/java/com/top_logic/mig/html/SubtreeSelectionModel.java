@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.util.AbstractListeners;
+import com.top_logic.basic.util.AbstractObservable;
 import com.top_logic.layout.tree.model.TLTreeModel;
 
 /**
@@ -126,11 +126,27 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 
 	}
 
-	private static class Listeners<N> extends AbstractListeners<TreeSelectionListener<N>, StateChanged<N>> {
+	private static class Listeners<N> extends AbstractObservable<TreeSelectionListener<N>, StateChanged<N>> {
 
 		@Override
 		protected void sendEvent(TreeSelectionListener<N> listener, StateChanged<N> event) {
 			listener.handleStateChanged(event);
+		}
+
+		boolean add(TreeSelectionListener<N> listener) {
+			return addListener(listener);
+		}
+
+		boolean remove(TreeSelectionListener<N> listener) {
+			return removeListener(listener);
+		}
+
+		boolean hasRegisteredListeners() {
+			return hasListeners();
+		}
+
+		void fire(StateChanged<N> event) {
+			notifyListeners(event);
 		}
 
 	}
@@ -188,7 +204,7 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 				fireSelectionChanged(oldSelection);
 			}
 			if (_listeners.hasRegisteredListeners()) {
-				_listeners.notifyListeners(new StateChanged<>(this, oldStates));
+				_listeners.fire(new StateChanged<>(this, oldStates));
 			}
 		}
 	}
@@ -236,7 +252,7 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 						fireSelectionChanged(oldSelection);
 					}
 					if (_listeners.hasRegisteredListeners()) {
-						_listeners.notifyListeners(new StateChanged<>(this, oldStates));
+						_listeners.fire(new StateChanged<>(this, oldStates));
 					}
 				}
 				break;
@@ -269,7 +285,7 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 						fireSelectionChanged(oldSelection);
 					}
 					if (_listeners.hasRegisteredListeners()) {
-						_listeners.notifyListeners(new StateChanged<>(this, oldStates));
+						_listeners.fire(new StateChanged<>(this, oldStates));
 					}
 				}
 				break;
@@ -304,7 +320,7 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 				fireSelectionChanged(oldSelection);
 			}
 			if (_listeners.hasRegisteredListeners()) {
-				_listeners.notifyListeners(new StateChanged<>(this, oldStates));
+				_listeners.fire(new StateChanged<>(this, oldStates));
 			}
 		}
 	}
@@ -322,7 +338,7 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 	 * @return Whether the given listener was not registered before (newly registered).
 	 */
 	public boolean addTreeSelectionListener(TreeSelectionListener<N> listener) {
-		return _listeners.addListener(listener);
+		return _listeners.add(listener);
 	}
 
 	/**
@@ -333,7 +349,7 @@ public abstract class SubtreeSelectionModel<N> extends AbstractMultiSelectionMod
 	 * @return Whether the listener was registered before removal (something changed).
 	 */
 	public boolean removeTreeSelectionListener(TreeSelectionListener<N> listener) {
-		return _listeners.removeListener(listener);
+		return _listeners.remove(listener);
 	}
 
 	/**

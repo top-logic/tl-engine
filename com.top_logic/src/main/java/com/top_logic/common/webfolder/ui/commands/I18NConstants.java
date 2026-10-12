@@ -104,7 +104,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CREATED_FOLDER__NAME;
 
 	/**
-	 * @en Updated documnet "{0}".
+	 * @en Updated document "{0}".
 	 */
 	public static ResKey1 UPDATED_DOCUMENT__NAME;
 

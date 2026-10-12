@@ -2071,6 +2071,24 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(a3, a3x);
 	}
 
+	/**
+	 * Test for Ticket #29766: Adding to an empty multi-reference of a transient object.
+	 */
+	public void testAddToEmptyTransient() throws ParseException {
+		TLObject a = (TLObject) executeCompiled(search("new(`TestSearchExpression:A`, transient: true)"));
+		assertTrue(a.tTransient());
+
+		executeCompiled(search(
+			"a -> $a.add(`TestSearchExpression:A#others`, new(`TestSearchExpression:A`, transient: true))"),
+			a);
+		assertEquals(1, ((Collection<?>) value(a, "others")).size());
+
+		executeCompiled(search(
+			"a -> $a.add(`TestSearchExpression:A#list`, new(`TestSearchExpression:A`, transient: true))"),
+			a);
+		assertEquals(1, ((Collection<?>) value(a, "list")).size());
+	}
+
 	public void testAssign() throws ParseException {
 		Object search1 = execute(
 			search(

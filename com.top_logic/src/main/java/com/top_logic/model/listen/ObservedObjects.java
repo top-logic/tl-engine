@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.model.TLObject;
 
@@ -54,6 +55,12 @@ public class ObservedObjects {
 	 */
 	private final Map<ObjectKey, TLObject> _observed = new LinkedHashMap<>();
 
+	/**
+	 * The {@link Registration}s of the listener for the observed objects by their identity, while
+	 * {@link #isAttached() attached} to a scope.
+	 */
+	private final Map<ObjectKey, Registration> _registrations = new LinkedHashMap<>();
+
 	private ModelScope _scope;
 
 	private boolean _attached;
@@ -88,8 +95,8 @@ public class ObservedObjects {
 		_attached = true;
 		_scope = scope;
 		if (_scope != null) {
-			for (TLObject object : _observed.values()) {
-				_scope.addModelListener(object, _listener);
+			for (Map.Entry<ObjectKey, TLObject> entry : _observed.entrySet()) {
+				register(entry.getKey(), entry.getValue());
 			}
 		}
 	}
@@ -105,11 +112,8 @@ public class ObservedObjects {
 		if (!_attached) {
 			return;
 		}
-		if (_scope != null) {
-			for (TLObject object : _observed.values()) {
-				_scope.removeModelListener(object, _listener);
-			}
-		}
+		_registrations.values().forEach(Registration::dispose);
+		_registrations.clear();
 		_attached = false;
 		_scope = null;
 	}
@@ -145,20 +149,27 @@ public class ObservedObjects {
 		}
 
 		if (_attached && _scope != null) {
-			for (Map.Entry<ObjectKey, TLObject> entry : _observed.entrySet()) {
-				if (!observed.containsKey(entry.getKey())) {
-					_scope.removeModelListener(entry.getValue(), _listener);
+			for (ObjectKey key : _observed.keySet()) {
+				if (!observed.containsKey(key)) {
+					Registration registration = _registrations.remove(key);
+					if (registration != null) {
+						registration.dispose();
+					}
 				}
 			}
 			for (Map.Entry<ObjectKey, TLObject> entry : observed.entrySet()) {
 				if (!_observed.containsKey(entry.getKey())) {
-					_scope.addModelListener(entry.getValue(), _listener);
+					register(entry.getKey(), entry.getValue());
 				}
 			}
 		}
 
 		_observed.clear();
 		_observed.putAll(observed);
+	}
+
+	private void register(ObjectKey key, TLObject object) {
+		_registrations.put(key, _scope.addModelListener(object, _listener));
 	}
 
 	/**

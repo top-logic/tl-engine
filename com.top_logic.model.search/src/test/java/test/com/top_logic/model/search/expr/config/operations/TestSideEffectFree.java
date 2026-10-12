@@ -82,6 +82,24 @@ public class TestSideEffectFree extends AbstractSearchExpressionTest {
 		assertInstanceof(execute(compiled), Double.class);
 	}
 
+	/**
+	 * The change log grows with every commit, so a call with literal arguments must be evaluated
+	 * anew each time rather than replaced by the log at compile time.
+	 */
+	public void testChangeLogIsNotFolded() throws Exception {
+		SearchExpression compiled = compileExpr(search("changeLog(null, 50)"));
+		assertFalse(compiled instanceof Literal);
+	}
+
+	/**
+	 * Reverting changes modifies the model, so it is neither reordered nor evaluated at compile
+	 * time.
+	 */
+	public void testRevertChangesIsNotFolded() throws Exception {
+		SearchExpression compiled = compileExpr(search("revertChanges(null)"));
+		assertFalse(compiled instanceof Literal);
+	}
+
 	private void assertFolded(Object expected, String script) throws Exception {
 		SearchExpression compiled = compileExpr(search(script));
 		assertInstanceof(compiled, Literal.class);

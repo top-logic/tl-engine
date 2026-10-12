@@ -8,11 +8,11 @@ package com.top_logic.layout.view.element;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.element.SwitchElement.SwitchCase;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLStructuredType;
@@ -59,8 +59,6 @@ public class ReactSwitchControl extends ReactControl {
 
 	private final List<UIElement> _default;
 
-	private final ChannelListener _inputListener;
-
 	private final ChannelObjectObserver _inputObserver;
 
 	private ReactControl _current;
@@ -93,9 +91,8 @@ public class ReactSwitchControl extends ReactControl {
 		_default = defaultContent;
 		_inputObserver = new ChannelObjectObserver(List.of(input), observedTypes, this::renderActive);
 
-		_inputListener = (sender, oldValue, newValue) -> renderActive();
-		_input.addListener(_inputListener);
-		addCleanupAction(() -> _input.removeListener(_inputListener));
+		Registration inputRegistration = _input.addListener((sender, oldValue, newValue) -> renderActive());
+		addCleanupAction(inputRegistration::dispose);
 
 		addAttachListener(() -> _inputObserver.attach(_context.getModelScope()));
 		addDetachListener(_inputObserver::detach);

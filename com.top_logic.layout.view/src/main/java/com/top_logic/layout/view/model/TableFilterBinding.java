@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.view.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.table.NamedFilter;
@@ -80,8 +84,8 @@ public class TableFilterBinding {
 	/** The channel holding the search term, {@code null} without one. */
 	private final ViewChannel _searchTerm;
 
-	private final ViewChannel.ChannelListener _channelListener =
-		(sender, oldValue, newValue) -> handleChannelWrite();
+	/** The registrations on the {@link #_activeFilter} and {@link #_searchTerm} channels. */
+	private final List<Registration> _channelRegistrations = new ArrayList<>(2);
 
 	private final TableViewListener _viewListener = new TableViewListener() {
 		@Override
@@ -114,11 +118,12 @@ public class TableFilterBinding {
 		_searchTerm = searchTerm;
 
 		table.getView().addListener(_viewListener);
+		ViewChannel.ChannelListener channelListener = (sender, oldValue, newValue) -> handleChannelWrite();
 		if (activeFilter != null) {
-			activeFilter.addListener(_channelListener);
+			_channelRegistrations.add(activeFilter.addListener(channelListener));
 		}
 		if (searchTerm != null) {
-			searchTerm.addListener(_channelListener);
+			_channelRegistrations.add(searchTerm.addListener(channelListener));
 		}
 
 		initialize();
@@ -135,12 +140,10 @@ public class TableFilterBinding {
 	 */
 	public void dispose() {
 		_table.getView().removeListener(_viewListener);
-		if (_activeFilter != null) {
-			_activeFilter.removeListener(_channelListener);
+		for (Registration registration : _channelRegistrations) {
+			registration.dispose();
 		}
-		if (_searchTerm != null) {
-			_searchTerm.removeListener(_channelListener);
-		}
+		_channelRegistrations.clear();
 	}
 
 	/**

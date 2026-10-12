@@ -11,7 +11,11 @@ import java.util.Collections;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -20,6 +24,7 @@ import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.parser.TokenMgrError;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.WithTransaction;
+import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -34,6 +39,11 @@ import com.top_logic.util.error.TopLogicException;
  * arriving as data.
  * </p>
  *
+ * <p>
+ * The changes are committed with the configured commit message, by default with a message naming
+ * the executed script.
+ * </p>
+ *
  * @implNote The source is parsed per invocation by a {@link SearchExpressionParser}, since it
  *           changes with every entry; syntax errors are reported to the developer entering them.
  */
@@ -42,11 +52,28 @@ public class EvaluateDynamicScriptAction extends AbstractScriptAction {
 	/**
 	 * Configuration for {@link EvaluateDynamicScriptAction}.
 	 */
-	public interface Config extends PolymorphicConfiguration<EvaluateDynamicScriptAction>, WithTransaction.Config {
+	public interface Config extends PolymorphicConfiguration<EvaluateDynamicScriptAction>, WithTransaction.Config,
+			WithCommitMessage {
 
 		@Override
 		@ClassDefault(EvaluateDynamicScriptAction.class)
 		Class<? extends EvaluateDynamicScriptAction> getImplementationClass();
+
+		/**
+		 * The message to annotate to the changes the script performs.
+		 *
+		 * <p>
+		 * If not set, the message names the executed script.
+		 * </p>
+		 *
+		 * <p>
+		 * A message may contain the placeholder '{0}' that is replaced with the source of the
+		 * script. Only used when the evaluation runs in a transaction.
+		 * </p>
+		 */
+		@Override
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(TRANSACTION))
+		ResKey1 getCommitMessage();
 	}
 
 	/**
@@ -54,7 +81,7 @@ public class EvaluateDynamicScriptAction extends AbstractScriptAction {
 	 */
 	@CalledByReflection
 	public EvaluateDynamicScriptAction(InstantiationContext context, Config config) {
-		super(config);
+		super(context, config, com.top_logic.model.search.ui.I18NConstants.EXECUTED_CUSTOM_SCRIPT__SCRIPT);
 	}
 
 	@Override
@@ -63,7 +90,7 @@ public class EvaluateDynamicScriptAction extends AbstractScriptAction {
 		if (source.isBlank()) {
 			return Collections.emptyList();
 		}
-		return evaluate(QueryExecutor.compile(parse(source)), null);
+		return evaluate(QueryExecutor.compile(parse(source)), null, source);
 	}
 
 	private Expr parse(String source) {

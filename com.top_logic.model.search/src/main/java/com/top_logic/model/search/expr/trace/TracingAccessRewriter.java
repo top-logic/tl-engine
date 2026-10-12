@@ -79,6 +79,39 @@ public final class TracingAccessRewriter extends Rewriter<Void> {
 	}
 
 	/**
+	 * Reads an attribute of an object the way a script access does in the given evaluation.
+	 *
+	 * <p>
+	 * In a tracing evaluation (the given context defines {@link #TRACE}), the access is reported
+	 * and the value is looked up with
+	 * {@link #lookupTraced(EvalContext, TLObject, TLStructuredTypePart, boolean)}. Otherwise, the
+	 * value is looked up with {@link AccessLike#lookupValue(TLObject, TLStructuredTypePart, boolean)}.
+	 * </p>
+	 *
+	 * @param definitions
+	 *        The context of the current evaluation.
+	 * @param self
+	 *        The object to access, <code>null</code> results in <code>null</code>.
+	 * @param part
+	 *        The attribute to look up.
+	 * @param withSecurity
+	 *        Whether the read access to the attribute must be checked.
+	 * @return The value of the given attribute.
+	 *
+	 * @see EvalContext#access(TLObject, TLStructuredTypePart, boolean)
+	 */
+	public static Object access(EvalContext definitions, TLObject self, TLStructuredTypePart part,
+			boolean withSecurity) {
+		if (self == null) {
+			return null;
+		}
+		if (definitions.hasVar(TRACE)) {
+			return lookupTraced(definitions, self, part, withSecurity);
+		}
+		return AccessLike.lookupValue(self, part, withSecurity);
+	}
+
+	/**
 	 * Looks up the value of an attribute in a tracing evaluation.
 	 *
 	 * <p>

@@ -55,7 +55,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * <p>
  * A parameter of the Java method annotated with {@link UsesSecurity} is not a script argument, but
- * receives the {@link #usesSecurity() security flag} of this expression.
+ * receives the {@link #usesSecurity() security flag} of this expression. A parameter of type
+ * {@link EvalContext} is not a script argument either, but receives the context of the evaluation.
  * </p>
  *
  * <p>
@@ -66,20 +67,15 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class TLScriptMethod extends GenericMethodWithSecurity {
 
-	/**
-	 * Marker for {@link #_securityIndex}, if the Java method has no {@link UsesSecurity} parameter.
-	 */
-	private static final int NO_SECURITY_PARAMETER = -1;
-
 	private final Method _java;
 
 	private final Converter[] _conversions;
 
 	/**
-	 * Index of the {@link UsesSecurity} parameter in the parameter list of {@link #_java}, or
-	 * {@link #NO_SECURITY_PARAMETER}.
+	 * The source of each parameter of {@link #_java}, or <code>null</code>, if the parameters are
+	 * exactly the script arguments.
 	 */
-	private final int _securityIndex;
+	private final ParameterSource[] _parameterSources;
 
 	private final boolean _sideEffectFree;
 
@@ -94,21 +90,21 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 	 * Creates a {@link TLScriptMethod}.
 	 */
 	protected TLScriptMethod(String name, Method java, boolean sideEffectFree, boolean canEvaluateAtCompileTime,
-			boolean adminOnly, Converter[] conversions, int securityIndex, SearchExpression[] arguments,
-			boolean usesSecurity) {
+			boolean adminOnly, Converter[] conversions, ParameterSource[] parameterSources,
+			SearchExpression[] arguments, boolean usesSecurity) {
 		super(name, arguments, usesSecurity);
 		_java = java;
 		_adminOnly = adminOnly;
 		_canEvaluateAtCompileTime = canEvaluateAtCompileTime;
 		_conversions = conversions;
-		_securityIndex = securityIndex;
+		_parameterSources = parameterSources;
 		_sideEffectFree = sideEffectFree;
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
 		return new TLScriptMethod(getName(), _java, _sideEffectFree, _canEvaluateAtCompileTime, _adminOnly,
-			_conversions, _securityIndex, arguments, usesSecurity());
+			_conversions, _parameterSources, arguments, usesSecurity());
 	}
 
 	@Override
@@ -135,7 +131,7 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 			conversion.convert(arguments);
 		}
 		try {
-			return _java.invoke(null, parameters(arguments));
+			return _java.invoke(null, parameters(arguments, definitions));
 		} catch (InvocationTargetException ex) {
 			// The function itself failed: report its failure, not the reflective call.
 			Throwable cause = ex.getCause();
@@ -154,16 +150,52 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 	/**
 	 * The parameters of the Java method call for the given (converted) script arguments.
 	 */
-	private Object[] parameters(Object[] arguments) {
-		if (_securityIndex == NO_SECURITY_PARAMETER) {
+	private Object[] parameters(Object[] arguments, EvalContext definitions) {
+		if (_parameterSources == null) {
 			return arguments;
 		}
-		Object[] parameters = new Object[arguments.length + 1];
-		System.arraycopy(arguments, 0, parameters, 0, _securityIndex);
-		parameters[_securityIndex] = Boolean.valueOf(usesSecurity());
-		System.arraycopy(arguments, _securityIndex, parameters, _securityIndex + 1,
-			arguments.length - _securityIndex);
+		Object[] parameters = new Object[_parameterSources.length];
+		for (int n = 0; n < parameters.length; n++) {
+			parameters[n] = _parameterSources[n].value(this, arguments, definitions);
+		}
 		return parameters;
+	}
+
+	/**
+	 * Source of the value of a parameter of the Java method.
+	 */
+	private interface ParameterSource {
+
+		/**
+		 * The value of the parameter in a call.
+		 *
+		 * @param method
+		 *        The called expression.
+		 * @param arguments
+		 *        The (converted) script arguments of the call.
+		 * @param definitions
+		 *        The context of the evaluation.
+		 */
+		Object value(TLScriptMethod method, Object[] arguments, EvalContext definitions);
+
+		/**
+		 * The {@link ParameterSource} delivering the script argument with the given index.
+		 */
+		static ParameterSource argument(int index) {
+			return (method, arguments, definitions) -> arguments[index];
+		}
+
+		/**
+		 * The {@link ParameterSource} delivering the {@link TLScriptMethod#usesSecurity() security
+		 * flag} of the call.
+		 */
+		ParameterSource SECURITY = (method, arguments, definitions) -> Boolean.valueOf(method.usesSecurity());
+
+		/**
+		 * The {@link ParameterSource} delivering the {@link EvalContext} of the call.
+		 */
+		ParameterSource CONTEXT = (method, arguments, definitions) -> definitions;
+
 	}
 
 	/**
@@ -180,7 +212,7 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 
 		private final Converter[] _conversions;
 
-		private final int _securityIndex;
+		private final ParameterSource[] _parameterSources;
 
 		private final boolean _sideEffectFree;
 
@@ -227,7 +259,11 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 				ArgumentDescriptorBuilder descriptor = ArgumentDescriptor.builder();
 				Parameter[] parameters = _method.getParameters();
 				List<Converter> conversions = new ArrayList<>();
-				int securityIndex = NO_SECURITY_PARAMETER;
+				ParameterSource[] parameterSources = new ParameterSource[parameters.length];
+				boolean usesSecurity = false;
+				boolean usesContext = false;
+				// Index of the next parameter in the script arguments.
+				int argIndex = 0;
 				for (int n = 0; n < parameters.length; n++) {
 					Parameter p = parameters[n];
 					if (p.getAnnotation(UsesSecurity.class) != null) {
@@ -236,16 +272,24 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 								+ "' annotated with @" + UsesSecurity.class.getSimpleName()
 								+ " must be of type boolean, not '" + p.getType().getName() + "'.");
 						}
-						if (securityIndex != NO_SECURITY_PARAMETER) {
+						if (usesSecurity) {
 							throw new IllegalArgumentException("Method '" + method + "' has more than one parameter"
 								+ " annotated with @" + UsesSecurity.class.getSimpleName() + ".");
 						}
-						securityIndex = n;
+						usesSecurity = true;
+						parameterSources[n] = ParameterSource.SECURITY;
 						continue;
 					}
-
-					// Index of the parameter in the script arguments.
-					int argIndex = securityIndex == NO_SECURITY_PARAMETER ? n : n - 1;
+					if (p.getType() == EvalContext.class) {
+						if (usesContext) {
+							throw new IllegalArgumentException("Method '" + method + "' has more than one parameter"
+								+ " of type " + EvalContext.class.getSimpleName() + ".");
+						}
+						usesContext = true;
+						parameterSources[n] = ParameterSource.CONTEXT;
+						continue;
+					}
+					parameterSources[n] = ParameterSource.argument(argIndex);
 					DocumentationParameter docuParam = new DocumentationParameter(p.getName());
 					docuParam.setDescription(parameterDescription(p));
 					docuParam.setType(typeString(p.getParameterizedType()));
@@ -267,10 +311,11 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 						}
 					}
 					_documentationParams.add(docuParam);
+					argIndex++;
 				}
 				_descriptor = descriptor.build();
 				_conversions = conversions.toArray(new Converter[0]);
-				_securityIndex = securityIndex;
+				_parameterSources = usesSecurity || usesContext ? parameterSources : null;
 
 				_adminOnly = _method.getAnnotation(AdminOnly.class) != null
 					|| _method.getDeclaringClass().getAnnotation(AdminOnly.class) != null;
@@ -279,9 +324,10 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 				if (sideEffectFree != null) {
 					_sideEffectFree = true;
 					// The result of a function receiving the security flag or checking the user's
-					// admin rights depends on the current user.
+					// admin rights depends on the current user, a function receiving the evaluation
+					// context reads through it what must be observed in a tracing evaluation.
 					_canEvaluateAtCompileTime = sideEffectFree.canEvaluateAtCompileTime()
-						&& securityIndex == NO_SECURITY_PARAMETER && !_adminOnly;
+						&& !usesSecurity && !usesContext && !_adminOnly;
 				} else {
 					_sideEffectFree = false;
 					_canEvaluateAtCompileTime = false;
@@ -612,7 +658,7 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 		@Override
 		public TLScriptMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new TLScriptMethod(getName(), _method, _sideEffectFree, _canEvaluateAtCompileTime, _adminOnly,
-				_conversions, _securityIndex, args, true);
+				_conversions, _parameterSources, args, true);
 		}
 
 		@Override

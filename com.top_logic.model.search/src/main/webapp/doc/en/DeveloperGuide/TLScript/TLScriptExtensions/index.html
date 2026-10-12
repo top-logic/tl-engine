@@ -23,6 +23,33 @@ public class MathFunctions extends TLScriptFunctions {
 </code></pre>
 <p>The function name is the prefix followed by the capitalized method name, joined with <em>no</em> separator (e.g. <code class="hljs inlineCode">math</code> + <code class="hljs inlineCode">abs</code> &rarr; <code class="hljs inlineCode">mathAbs()</code>). <strong>Always annotate the class with <code class="hljs inlineCode">@ScriptPrefix</code></strong> to define this prefix: it groups the functions under a common namespace, prevents name conflicts with built-in or future functions, and lets users find them by prefix in the editor's auto-completion. Without the annotation the prefix defaults to the class's simple name, which is discouraged. The suffix of an individual function can be overridden with <code class="hljs inlineCode">@Name</code> on the method.</p>
 <p>Each method parameter becomes a TL-Script parameter (positionally). Mark required parameters with <code class="hljs inlineCode">@Mandatory</code>; provide a default for a primitive parameter via the matching annotation (<code class="hljs inlineCode">@StringDefault</code>, <code class="hljs inlineCode">@LongDefault</code>, &hellip;); for a type that TL-Script cannot convert natively, annotate the parameter with <code class="hljs inlineCode">@ScriptConversion</code> naming a <code class="hljs inlineCode">ValueConverter</code>. The method's JavaDoc becomes the function description and each parameter is described by its <code class="hljs inlineCode">@param</code> tag; <code class="hljs inlineCode">@Label</code> overrides the generated UI label, and <code class="hljs inlineCode">@SideEffectFree</code> declares a side-effect-free function. Function names must be globally unique across all subclasses; a clash is reported as a configuration error at start-up. Functions defined this way need no separate documentation page &ndash; their description is generated from the JavaDoc.</p>
+<p>Two kinds of method parameters are not TL-Script parameters, but receive a value from the call; they may be placed at any position, the remaining parameters are the TL-Script parameters in their order:</p>
+<ul>
+	<li>A <code class="hljs inlineCode">boolean</code> parameter annotated with <code class="hljs inlineCode">@UsesSecurity</code> receives whether the script is evaluated with the current user's access rights.</li>
+	<li>A parameter of type <code class="hljs inlineCode">com.top_logic.model.search.expr.EvalContext</code> receives the context of the evaluation. A function that reads attributes of its arguments, or of objects reached from them, reads them through <code class="hljs inlineCode">EvalContext.access(TLObject, TLStructuredTypePart, boolean)</code>, see the section <em>Reading attributes</em> below. Such a function is never evaluated at compile time.</li>
+</ul>
+<p>The following function is called as <code class="hljs inlineCode">myParameterType($obj)</code> with a single argument:</p>
+<pre><code class="language-java">@ScriptPrefix("my")
+public class MyFunctions extends TLScriptFunctions {
+   /**
+    * The type of the parameter of the given object.
+    *
+    * @param obj
+    *        The object whose parameter type is to be determined.
+    * @return The type of the parameter of the given object.
+    */
+   public static Object parameterType(EvalContext definitions, @Mandatory TLObject obj,
+         @UsesSecurity boolean withSecurity) {
+      TLStructuredTypePart parameterRef = obj.tType().getPartOrFail("parameter");
+      TLObject parameter = (TLObject) definitions.access(obj, parameterRef, withSecurity);
+      if (parameter == null) {
+         return null;
+      }
+      TLStructuredTypePart typeRef = parameter.tType().getPartOrFail("type");
+      return definitions.access(parameter, typeRef, withSecurity);
+   }
+}
+</code></pre>
 <h2>Functions with full control</h2>
 <p>The TL-Script function is implemented in a derivative of <code class="hljs inlineCode">com.top_logic.model.search.expr.GenericMethod</code>. The actual function is implemented in the overridden method <code class="hljs inlineCode">com.top_logic.model.search.expr.Info.eval(Object, Object[], EvalContext)</code>. The method gets the self argument as first parameter and all other arguments in the arguments array. As a result, the method must return the function result of the TL-Script function.</p>
 <p>Additionally, a builder for the function class must be created. This is created as a derivative of <code class="hljs inlineCode">com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder&lt;I&gt;</code>. This builder creates an instance of the function implementation from above. The builder implementation is registered in the application configuration.</p>
@@ -58,6 +85,15 @@ public class MathFunctions extends TLScriptFunctions {
          return new Floor(getConfig().getName(), self, args);
       }
    }
+}
+</code></pre>
+<h2>Reading attributes</h2>
+<p>A function implemented in Java that reads an attribute of one of its arguments, or of an object reached from them, reads it through <code class="hljs inlineCode">EvalContext.access(TLObject, TLStructuredTypePart, boolean)</code>. A form tracks which attributes a script reads (e.g. the selector of a dynamic visibility, an options expression or a constraint) and evaluates the script again when one of them is edited; it evaluates the script over the values being edited, not over the stored ones. Only a read through <code class="hljs inlineCode">access</code> takes part in this: in a form, it reports the attribute as a dependency of the script and delivers the edited value. A read through a generated wrapper getter or through <code class="hljs inlineCode">tValue</code> is invisible to the form, so the script is not evaluated again when that attribute is edited. Outside of a form, <code class="hljs inlineCode">access</code> is a plain read of the attribute.</p>
+<p>The last argument tells whether the read access of the current user is checked. A <code class="hljs inlineCode">GenericMethodWithSecurity</code> passes its <code class="hljs inlineCode">usesSecurity()</code> flag, a function that applies no security passes <code class="hljs inlineCode">false</code>:</p>
+<pre><code class="language-java">@Override
+protected Object eval(Object[] arguments, EvalContext definitions) {
+   TLObject obj = asTLObject(arguments[0]);
+   return definitions.access(obj, _valueAttribute, usesSecurity());
 }
 </code></pre>
 <h2>Naming the arguments</h2>

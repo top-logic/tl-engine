@@ -21,8 +21,8 @@ public interface TypingFieldState extends com.top_logic.layout.react.state.Field
 	/** @see #isSendValueOnBlur() */
 	String SEND_VALUE_ON_BLUR__PROP = "sendValueOnBlur";
 
-	/** @see #isCommitOnBlur() */
-	String COMMIT_ON_BLUR__PROP = "commitOnBlur";
+	/** @see #isCommitEdits() */
+	String COMMIT_EDITS__PROP = "commitEdits";
 
 	/**
 	 * How long a typed value is held back before it is sent, in milliseconds. Absent: the default
@@ -47,14 +47,15 @@ public interface TypingFieldState extends com.top_logic.layout.react.state.Field
 	com.top_logic.layout.react.state.TypingFieldState setSendValueOnBlur(boolean value);
 
 	/**
-	 * Whether the field sends the command {@code commit} when it loses focus.
+	 * Whether a finished edit sends the command {@code commit}: leaving the field after a change,
+	 * and Enter in a single-line input, once per edit. A value still held back is sent first.
 	 */
-	boolean isCommitOnBlur();
+	boolean isCommitEdits();
 
 	/**
-	 * @see #isCommitOnBlur()
+	 * @see #isCommitEdits()
 	 */
-	com.top_logic.layout.react.state.TypingFieldState setCommitOnBlur(boolean value);
+	com.top_logic.layout.react.state.TypingFieldState setCommitEdits(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.TypingFieldState setValue(Object value);

@@ -1,7 +1,7 @@
-import { React, useTLState, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLTypingField, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, PasswordInputStateJson } from 'tl-react-bridge';
 import TextField from '@mui/material/TextField';
-import { FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly, useTypingField } from './field';
+import { FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly } from './field';
 
 /** What a read-only password field shows in place of the password. */
 const MASK = '••••••••';
@@ -10,7 +10,7 @@ const MASK = '••••••••';
  * Renders the state of a TopLogic password field (module name `TLPasswordInput`) with the MUI
  * `TextField` of type `password`.
  *
- * <p>The typing behaviour is the one of the `TypingFieldState` (see {@link useTypingField}).
+ * <p>The typing behaviour is the one of the `TypingFieldState` (see {@link useTLTypingField}).
  * Mapping from the control state: value → the password; placeholder → placeholder; hasError →
  * `error`, `aria-invalid` and the error message as tooltip; hasWarnings → color `warning`;
  * mandatory → `aria-required`; a field that is not editable shows a mask instead of the password,
@@ -25,7 +25,7 @@ const MuiPasswordInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<PasswordInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const { text, setText, onBlur, onSubmitKey } = useTypingField('');
+  const { text, setText, onBlur, onKeyDown } = useTLTypingField();
 
   if (state.hidden === true) {
     return null;
@@ -55,7 +55,7 @@ const MuiPasswordInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             ...labelProps,
             ...fieldAriaProps(state),
             ...tooltipProps(hasError ? state.errorMessage : undefined),
-            onKeyDown: onSubmitKey,
+            onKeyDown,
           },
         }}
       />

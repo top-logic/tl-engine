@@ -98,7 +98,7 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 	com.top_logic.layout.react.state.NumberInputState setSendValueOnBlur(boolean value);
 
 	@Override
-	com.top_logic.layout.react.state.NumberInputState setCommitOnBlur(boolean value);
+	com.top_logic.layout.react.state.NumberInputState setCommitEdits(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.NumberInputState setValue(Object value);

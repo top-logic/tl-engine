@@ -35,4 +35,12 @@ public class ReactPasswordInputControl extends ReactFormFieldControl {
 		return rawValue != null ? rawValue.toString() : null;
 	}
 
+	/**
+	 * A typed password is committed when the field is left or Enter is pressed.
+	 */
+	@Override
+	public boolean commitsEdits() {
+		return true;
+	}
+
 }

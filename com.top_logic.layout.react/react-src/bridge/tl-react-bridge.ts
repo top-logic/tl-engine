@@ -9,7 +9,7 @@ import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
-import { CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -538,34 +538,149 @@ export function useTLFieldValue(
 }
 
 /**
- * Returns the `onKeyDown` handler that reports the value of a single-line input as finished when
- * the user presses Enter, or `undefined` while the enclosing control does not ask for it
- * (`state.submitOnEnter`).
- *
- * <p>Attach it to the input the user types in - never to a text area, where Enter is part of the
- * text. The command carries the value as typed, so one step both stores and submits it; a value
- * still within the debounce window is flushed first by the command chain (see
- * {@link enqueueCommand}), and the duplicate reaching the server is the value it already has.</p>
+ * Options for {@link useTLTypingField}.
  */
-export function useTLSubmitOnEnter():
-    ((e: React.KeyboardEvent<HTMLInputElement>) => void) | undefined {
-  const state = useTLState();
+export interface TLTypingFieldOptions {
+  /** The value an empty text is sent as: `''` for a text (the default), `null` for a number. */
+  emptyValue?: '' | null;
+
+  /**
+   * Rewrites a text into the form it is stored in - a web address completed with its scheme, say.
+   * Applied when the field is left and when an edit is finished with Enter, never while the user
+   * is still typing, where it would fight the cursor.
+   */
+  normalize?: (text: string) => string;
+}
+
+/**
+ * The value and handlers a typed field puts on its input, see {@link useTLTypingField}.
+ */
+export interface TLTypingField {
+  /** The text the field shows, `''` for no value. */
+  text: string;
+
+  /** Sets the text typed: shown at once, sent as the state's typing behaviour says, and marks an edit. */
+  setText: (text: string) => void;
+
+  /** Sends a value held back at once, see {@link useTLFieldValue}. */
+  flush: () => Promise<void>;
+
+  /**
+   * Finishes the edit: sends a value held back, then - with `state.commitEdits` and only after a
+   * change - the {@link CMD_COMMIT} command. For a gesture that is a whole edit by itself, such as
+   * the button emptying the input.
+   */
+  commit: () => Promise<void>;
+
+  /** The blur handler of the input: normalizes the text and {@link TLTypingField.commit commits}. */
+  onBlur: () => Promise<void>;
+
+  /**
+   * The key handler of a single-line input, `undefined` while the state asks for nothing on Enter.
+   * Never attach it to a text area, where Enter is part of the text.
+   */
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}
+
+/**
+ * The typing behaviour of a field with a `TypingFieldState`, shared by every typed input.
+ *
+ * <p>The text typed is shown at once. It is sent as {@link CMD_VALUE_CHANGED} after
+ * `state.debounceMs` (default {@link VALUE_DEBOUNCE_MS}), or - with `state.sendValueOnBlur` - only
+ * when the field is left; leaving the field always sends a value still held back.</p>
+ *
+ * <p>With `state.commitEdits` each finished edit sends {@link CMD_COMMIT} once: leaving the field
+ * after a change, or plain Enter in a single-line input after a change. A field left right after
+ * such an Enter, without typing in between, sends no second commit; Enter or leaving the field
+ * without a change sends none.</p>
+ *
+ * <p>With `state.submitOnEnter` plain Enter in a single-line input sends {@link CMD_SUBMIT} with
+ * the text as typed, after the commit; only then is the key's default action prevented, so that
+ * Enter otherwise still reaches what binds it around the field (a dialog's default button).</p>
+ *
+ * <p>All commands go through the FIFO chain of {@link enqueueCommand}, so the value reaches the
+ * server before the commit, and the commit before the submit.</p>
+ */
+export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField {
+  const state = useTLState<{
+    debounceMs?: number;
+    sendValueOnBlur?: boolean;
+    commitEdits?: boolean;
+    submitOnEnter?: boolean;
+  }>();
   const sendCommand = useTLCommand();
+  const [value, setValue, flush] = useTLFieldValue({
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
+    sendOnBlur: state.sendValueOnBlur === true,
+  });
+  // Not `??`: a `null` given is the value asked for.
+  const emptyValue = options?.emptyValue === null ? null : '';
+  const normalize = options?.normalize;
+  const commitEdits = state.commitEdits === true;
+  const submitOnEnter = state.submitOnEnter === true;
+  const dirtyRef = useRef(false);
+
+  const text = value == null ? '' : String(value);
+
+  const toValue = useCallback((t: string) => (t === '' ? emptyValue : t), [emptyValue]);
+
+  const setText = useCallback((t: string) => {
+    dirtyRef.current = true;
+    setValue(toValue(t));
+  }, [setValue, toValue]);
+
+  // Sends the commit of a finished edit after a value still held back, once per edit.
+  const commitEdit = useCallback((): Promise<void> => {
+    const flushed = flush();
+    if (!commitEdits || !dirtyRef.current) {
+      return flushed;
+    }
+    dirtyRef.current = false;
+    return sendCommand(CMD_COMMIT);
+  }, [flush, commitEdits, sendCommand]);
+
+  const onBlur = useCallback(async () => {
+    if (normalize !== undefined) {
+      const normalized = normalize(text);
+      if (normalized !== text) {
+        setValue(toValue(normalized));
+      }
+    }
+    await commitEdit();
+  }, [normalize, text, setValue, toValue, commitEdit]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
         return;
       }
+      const input = e.currentTarget;
+      if (normalize !== undefined) {
+        const normalized = normalize(input.value);
+        if (normalized !== input.value) {
+          input.value = normalized;
+          setValue(toValue(normalized));
+        }
+      }
       // Read the value before dispatching: the event is no longer available afterwards.
-      const value = e.currentTarget.value;
-      e.preventDefault();
-      void sendCommand(CMD_SUBMIT, { value });
+      const typed = input.value;
+      void commitEdit();
+      if (submitOnEnter) {
+        e.preventDefault();
+        void sendCommand(CMD_SUBMIT, { value: typed });
+      }
     },
-    [sendCommand]
+    [normalize, setValue, toValue, commitEdit, submitOnEnter, sendCommand]
   );
 
-  return state.submitOnEnter === true ? handleKeyDown : undefined;
+  return {
+    text,
+    setText,
+    flush,
+    commit: commitEdit,
+    onBlur,
+    onKeyDown: commitEdits || submitOnEnter ? handleKeyDown : undefined,
+  };
 }
 
 // --- Keyboard scopes & gesture bindings ---

@@ -80,6 +80,12 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 
 	private static final String DEFAULT_HOME_LABEL = "‹";
 
+	/**
+	 * Segment appended to the personalization key of the context to form the key the
+	 * {@link SplitSizePersonalization} of the split presentation is stored under.
+	 */
+	private static final String KEY_SEGMENT = ".adaptive-detail";
+
 	private final ViewContext _context;
 
 	private final ViewContext _selectorContext;
@@ -160,8 +166,12 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		super(context, null, REACT_MODULE);
 		_context = context;
 		RevealPath here = RevealPath.of(context);
-		_selectorContext = context.withScope(RevealPath.class, here.append(element, Config.SELECTOR));
-		_detailContext = context.withScope(RevealPath.class, here.append(element, Config.DETAIL));
+		// Descend the personalization path per side, so that an element nested in the detail gets a
+		// personalization key of its own.
+		_selectorContext =
+			context.childContext(Config.SELECTOR).withScope(RevealPath.class, here.append(element, Config.SELECTOR));
+		_detailContext =
+			context.childContext(Config.DETAIL).withScope(RevealPath.class, here.append(element, Config.DETAIL));
 		_selector = selector;
 		_detail = detail;
 		_selectionChannel = selectionChannel;
@@ -349,9 +359,12 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	}
 
 	private ReactControl buildRegularSplit() {
-		ReactSplitPanelControl split = new ReactSplitPanelControl(_context, Orientation.HORIZONTAL, true);
-		split.addChild(buildSelector(), _selectorConstraint);
-		split.addChild(buildDetail(), _detailConstraint);
+		// Read on each build: the sizes may have been dragged since the last split was built.
+		SplitSizePersonalization personalization = new SplitSizePersonalization(
+			_context.getPersonalizationKey() + KEY_SEGMENT, List.of(_selectorConstraint, _detailConstraint));
+		ReactSplitPanelControl split = personalization.createSplitPanel(_context, Orientation.HORIZONTAL, true);
+		personalization.addPane(split, 0, buildSelector());
+		personalization.addPane(split, 1, buildDetail());
 		return split;
 	}
 

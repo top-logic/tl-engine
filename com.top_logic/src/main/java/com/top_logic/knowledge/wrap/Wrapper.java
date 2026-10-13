@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.wrap;
 
 import java.util.Date;
+import java.util.Set;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Mapping;
@@ -21,6 +22,7 @@ import com.top_logic.knowledge.service.KnowledgeBaseRefetch;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.TLContext;
 
@@ -58,6 +60,35 @@ public interface Wrapper extends TLNamed, Comparable<Wrapper>, ValueProvider, Fu
     @Override
 	default void setValue(String attributeName, Object aValue) {
 		tSetData(attributeName, aValue);
+	}
+
+	/**
+	 * Reads the value through {@link #getValue(String)} with the part's name.
+	 */
+	@Override
+	default Object tValue(TLStructuredTypePart part) {
+		return getValue(part.getName());
+	}
+
+	/**
+	 * Updates the value through {@link #setValue(String, Object)} with the part's name.
+	 */
+	@Override
+	default void tUpdate(TLStructuredTypePart part, Object value) {
+		setValue(part.getName(), value);
+	}
+
+	/**
+	 * Returns a list with the names of all attributes of this {@link Wrapper}.
+	 * 
+	 * <p>
+	 * These are the names of the attributes of the {@link #tHandle() underlying knowledge object}.
+	 * </p>
+	 * 
+	 * @return The list of attribute names.
+	 */
+	default Set<String> getAllAttributeNames() {
+		return tHandle().getAllAttributeNames();
 	}
     
     /**

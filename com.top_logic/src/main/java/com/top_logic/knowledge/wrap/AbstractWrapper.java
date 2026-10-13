@@ -46,7 +46,6 @@ import com.top_logic.knowledge.util.ReferenceAccess;
 import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Basic class for all wrappers.
@@ -142,16 +141,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
     private void resetDAP() {
         dap              = null;
     }
-
-	@Override
-	public Object tValue(TLStructuredTypePart part) {
-		return getValue(part.getName());
-	}
-
-	@Override
-	public void tUpdate(TLStructuredTypePart part, Object value) {
-		setValue(part.getName(), value);
-	}
 
 	@Override
 	public Object tSetData(String property, Object newValue) {
@@ -796,18 +785,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	        return result;
 	    }
 	    return null;
-	}
-
-	/**
-	 * Returns a list with the names of all attributes of this FlexWrapper.
-	 * 
-	 * These are the names of the attributes from the data object plus the names of the attributes
-	 * of the KnowledgeObject of this FlexWrapper.
-	 * 
-	 * @return The list of attribute names.
-	 */
-	public Set<String> getAllAttributeNames() {
-		return tHandle().getAllAttributeNames();
 	}
 
 	/**

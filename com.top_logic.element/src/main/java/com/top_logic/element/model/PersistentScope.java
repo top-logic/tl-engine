@@ -21,6 +21,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.element.meta.MetaElementException;
 import com.top_logic.element.meta.MetaElementHolder;
 import com.top_logic.element.meta.kbbased.KBBasedMetaElement;
+import com.top_logic.element.meta.kbbased.PersistentTLScope;
 import com.top_logic.element.util.model.ElementModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -44,7 +45,7 @@ import com.top_logic.model.internal.PersistentType;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class PersistentScope extends DynamicModelPart implements MetaElementHolder {
+public abstract class PersistentScope extends DynamicModelPart implements PersistentTLScope {
 
 	/**
 	 * Query to find all {@link TLClass}s and {@link TLAssociation} defined in some scope.
@@ -92,46 +93,6 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 	}
 
 	@Override
-	public void addMetaElement(TLClass aMetaElement) throws IllegalArgumentException {
-		PersistentScope.addMetaElement(this, aMetaElement);
-	}
-
-	@Override
-	public void removeMetaElement(TLClass aMetaElement) throws IllegalArgumentException {
-		PersistentScope.removeMetaElement(this, aMetaElement);
-	}
-
-	@Override
-	public TLClass getMetaElement(String aMetaElementType) throws IllegalArgumentException {
-		return PersistentScope.getMetaElement(this, aMetaElementType);
-	}
-
-	@Override
-	public Set<TLClass> getMetaElements() {
-		return PersistentScope.getMetaElements(this);
-	}
-
-	@Override
-	public Collection<TLAssociation> getAssociations() {
-		return PersistentScope.getAssociations(this);
-	}
-
-	@Override
-	public Collection<TLEnumeration> getEnumerations() {
-		return PersistentScope.getEnumerations(this);
-	}
-
-	@Override
-	public Collection<TLPrimitive> getDatatypes() {
-		return PersistentScope.getDatatypes(this);
-	}
-
-	@Override
-	public Collection<TLClass> getClasses() {
-		return PersistentScope.getClasses(this);
-	}
-
-	@Override
 	public Collection<TLType> getTypes() {
 		Collection<TLType> types = _types;
 		if (types == null) {
@@ -139,11 +100,6 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 			_types = types;
 		}
 		return types;
-	}
-
-	@Override
-	public TLType getType(String name) {
-		return PersistentScope.getType(this, name);
 	}
 
 	/**

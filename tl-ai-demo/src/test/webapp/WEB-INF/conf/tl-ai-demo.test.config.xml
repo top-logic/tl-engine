@@ -32,7 +32,7 @@
 						models="claude-sonnet-4-5-20250929"
 					/>
 				</providers>
-				<model-catalog>
+				<model-catalog fetch-remote-catalog="false">
 					<llm-configuration>
 						<model name="mistral-large-latest"
 							context-window="131072"

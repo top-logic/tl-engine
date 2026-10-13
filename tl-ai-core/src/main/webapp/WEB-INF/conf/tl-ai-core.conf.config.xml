@@ -364,7 +364,9 @@
 					Which models exist and how to reach them. An application names its providers in
 					<providers>, the metadata of a model models.dev does not know in
 					<model-catalog><model-overrides>, and where a run goes when its model cannot answer in
-					<failover>. The empty catalog element switches the models.dev fetch on.
+					<failover>. The empty catalog element switches the catalog on: the bundled copy of
+					models.dev at the start, the current one loaded in the background after it.
+					fetch-remote-catalog="false" keeps the bundled copy and sends no request.
 				-->
 				<model-catalog/>
 			</instance>

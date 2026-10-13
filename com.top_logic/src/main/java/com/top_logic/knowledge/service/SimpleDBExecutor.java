@@ -8,7 +8,6 @@ package com.top_logic.knowledge.service;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
@@ -21,13 +20,10 @@ import com.top_logic.util.db.DBUtil;
  * methods in DBUtil. The method {@link #getTransactionConnection()} gets the connection of
  * the transaction, so that read operations can see the changes already done
  *
- * Before executing the first update statement, the {@link #beginTransaction()} or
- * {@link #beginTransaction(CommitHandler)} method must be called. Commit and rollback must
- * be done manually by the {@link #commitTransaction()} or {@link #rollbackTransaction()}
- * method if used {@link #beginTransaction()} or by the CommitHandler if used
- * {@link #beginTransaction(CommitHandler)}. After all operations have finished,
- * {@link #closeTransaction()} or {@link #releaseCommitContext()} must be called, usually in
- * a finally block. You may use the {@link #beginWithDefaultKB()} as convenience method.
+ * Before executing the first update statement, the {@link #beginTransaction()} method must be
+ * called. Commit and rollback must be done manually by the {@link #commitTransaction()} or
+ * {@link #rollbackTransaction()} method. After all operations have finished,
+ * {@link #closeTransaction()} must be called, usually in a finally block.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -38,9 +34,6 @@ public class SimpleDBExecutor {
 
     /** Current transaction connection. */
     private PooledConnection connection;
-
-    /** Current commit handler. */
-    private CommitContext commitContext;
 
 	/**
 	 * Whether the transaction started with {@link #beginTransaction()} was completed by
@@ -62,7 +55,6 @@ public class SimpleDBExecutor {
     public SimpleDBExecutor(ConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
         this.connection = null;
-        this.commitContext = null;
     }
 
     /**
@@ -86,10 +78,7 @@ public class SimpleDBExecutor {
      */
     public void beginTransaction() {
         if (connection != null) {
-            throw new IllegalArgumentException("beginTransaction() was already called.");
-        }
-        if (commitContext != null) {
-            throw new IllegalArgumentException("beginTransaction(CommitHandler) was already called.");
+            throw new IllegalArgumentException("beginTransaction() has already been called.");
         }
         connection = connectionPool.borrowWriteConnection();
 		_completed = false;
@@ -100,7 +89,7 @@ public class SimpleDBExecutor {
      */
     public void commitTransaction() throws SQLException {
         if (connection == null) {
-            throw new IllegalArgumentException("beginTransaction() was not callen yet.");
+            throw new IllegalArgumentException("beginTransaction() has not been called yet.");
         }
         connection.commit();
 		_completed = true;
@@ -112,7 +101,7 @@ public class SimpleDBExecutor {
      */
     public void rollbackTransaction() throws SQLException {
         if (connection == null) {
-            throw new IllegalArgumentException("beginTransaction() was not callen yet.");
+            throw new IllegalArgumentException("beginTransaction() has not been called yet.");
         }
         connection.rollback();
 		_completed = true;
@@ -149,80 +138,11 @@ public class SimpleDBExecutor {
 
 
     /**
-     * Uses the given CommitHandler to begin a database transaction. Each database query and
-     * update uses the connection of the CommitHandler, until the
-     * {@link #releaseCommitContext()} method is called.
-     *
-     * Note: After the operations are finished, {@link #releaseCommitContext()} must be
-     * called to release the connection to the CommitHandler. So this method should be used
-     * with the following pattern:
-     *
-     * <pre>
-     * dbExecutor.beginTransaction(aHandler);
-     * try {
-     *     // perform DB queries and updates
-     *     // perform a commit of the handler
-     * }
-     * finally {
-     *     dbExecutor.releaseCommitContext();
-     * }
-     * </pre>
-     *
-     * Note: A commit or rollback of the CommitHandler will trigger a releaseCommitContext()
-     * also.
-     */
-    public void beginTransaction(CommitHandler aHandler) {
-        if (connection != null) {
-            throw new IllegalArgumentException("beginTransaction() was already called.");
-        }
-        if (commitContext != null) {
-            if (commitContext == aHandler.getCurrentContext()) {
-                return;
-            }
-            throw new IllegalArgumentException("beginTransaction(CommitHandler) was already called with a different CommitHandler.");
-        }
-        commitContext = aHandler.createCommitContext();
-        aHandler.addCommittable(new CommittableAdapter() {
-            @Override
-            public boolean commit(CommitContext context) {
-                if (commitContext == context) releaseCommitContext();
-                return true;
-            }
-            @Override
-            public boolean rollback(CommitContext context) {
-                if (commitContext == context) releaseCommitContext();
-                return true;
-            }
-        });
-    }
-
-    /**
-     * Releases the CommitHandler which was set before with the
-     * {@link #beginTransaction(CommitHandler)} method. Not committed changes remain pending until the
-     * commit handler commits them or rolls them back.
-     */
-    public void releaseCommitContext() {
-        commitContext = null;
-    }
-
-    /**
-     * Convenience method to call begin with the default knowledge base as commit handler.
-     */
-    public void beginWithDefaultKB() {
-        beginTransaction((CommitHandler)PersistencyLayer.getKnowledgeBase());
-    }
-
-
-
-    /**
-     * Gets the connection of the current transaction started with
-     * {@link #beginTransaction()} or {@link #beginTransaction(CommitHandler)}. May be
-     * <code>null</code>, if not transaction has started yet or was already finished.
+     * Gets the connection of the current transaction started with {@link #beginTransaction()}. May
+     * be <code>null</code>, if not transaction has started yet or was already finished.
      */
     public Connection getTransactionConnection() {
-        if (connection != null) return connection;
-        if (commitContext != null) return commitContext.getConnection();
-        return null;
+        return connection;
     }
 
 
@@ -240,7 +160,7 @@ public class SimpleDBExecutor {
     public int executeUpdate(String aStatement, Object[] params) throws SQLException {
         Connection con = getTransactionConnection();
         if (con == null) {
-            throw new IllegalArgumentException("Either begin() or begin(CommitHandler) must be called before any write operations.");
+            throw new IllegalArgumentException("beginTransaction() must be called before any write operations.");
         }
         return DBUtil.executeUpdate(con, aStatement, params);
     }

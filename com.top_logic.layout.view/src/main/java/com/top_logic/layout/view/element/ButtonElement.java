@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
-import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.view.UIElement;
@@ -35,6 +34,15 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * its executability rules built - comes from the construction path every command-hosting element
  * shares.
  * </p>
+ *
+ * <p>
+ * Whether the button shows the icon of its {@link ViewCommand}, its label or both is the display
+ * mode configured for the command: a command with an image that requests no mode shows icon and
+ * label, an icon-only command shows its label as tooltip.
+ * </p>
+ *
+ * @implNote The mode is {@link ViewCommand.Config#getDisplay()}, applied by
+ *           {@link ReactButtonControl#ReactButtonControl(com.top_logic.layout.react.ReactContext, com.top_logic.layout.react.control.button.CommandModel)}.
  */
 @InApp
 public class ButtonElement implements UIElement {
@@ -117,9 +125,6 @@ public class ButtonElement implements UIElement {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _command, _commandConfig);
 
 		ReactButtonControl control = new ReactButtonControl(context, model);
-		if (_commandConfig.getImage() != null) {
-			control.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
-		}
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
 		control.setCssClass(_config.getCssClass());

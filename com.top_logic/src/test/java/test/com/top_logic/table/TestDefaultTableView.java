@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import junit.framework.TestCase;
@@ -22,10 +23,12 @@ import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterCodec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
@@ -347,10 +350,11 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals("The frozen prefix cannot reach beyond the remaining columns.", 1, view.frozenColumnCount());
 	}
 
-	public void testDefaultColumnOrderIsDeclarationOrder() {
+	public void testResetRestoresDeclarationOrder() {
 		TableView<Person> view = newView();
 		view.setColumnOrder(List.of("age"));
-		assertEquals(List.of("name", "age"), view.defaultColumnOrder());
+		view.resetToDefaults();
+		assertEquals(List.of("name", "age"), view.columns().stream().map(ColumnView::name).toList());
 	}
 
 	public void testColumnSelectionPersistedAndRestored() {
@@ -379,8 +383,11 @@ public class TestDefaultTableView extends TestCase {
 		List<ColumnOption> options = view.columnOptions();
 		assertEquals(List.of("name", "age"), options.stream().map(ColumnOption::name).toList());
 		assertFalse(options.get(1).visible());
+
+		view.setColumnOrder(List.of("age", "name"));
+		view.resetToDefaults();
 		assertEquals("Resetting must not show what the table only offers.", List.of("name"),
-			view.defaultColumnOrder());
+			view.columns().stream().map(ColumnView::name).toList());
 	}
 
 	public void testColumnHiddenByDefaultStaysHiddenOnRestore() {
@@ -584,6 +591,132 @@ public class TestDefaultTableView extends TestCase {
 		assertFalse(view.columns().get(1).frozen());
 	}
 
+
+	// ---- reset to defaults ----
+
+	/**
+	 * A table declared with an action column pinned to the end (listed first), a column hidden by
+	 * default that it is grouped by, a sort and one frozen column.
+	 */
+	private TableView<Person> newDeclaredView(ViewStateStore store, TableId id) {
+		List<Column<Person, ?>> columns = new ArrayList<>();
+		columns.add(DefaultColumn.<Person, Person> builder("_delete", row -> row)
+			.label(ResKey.text(""))
+			.pinnedEnd(true)
+			.build());
+		columns.add(DefaultColumn.<Person, String> builder("name", Person::name)
+			.sort(() -> Comparator.naturalOrder())
+			.filter(TextColumnFilter.forStrings())
+			.width(200)
+			.build());
+		columns.add(DefaultColumn.<Person, Integer> builder("age", Person::age)
+			.sort(() -> Comparator.naturalOrder())
+			.width(100)
+			.build());
+		columns.add(DefaultColumn.<Person, String> builder("initial", p -> p.name().substring(0, 1).toUpperCase())
+			.sort(() -> Comparator.naturalOrder())
+			.build());
+		TableViewState initial = DefaultTableView.initialState(columns, SortSpec.ascending("name"), List.of("initial"));
+		initial.setFrozenCount(1);
+		initial.setGrouping(new GroupSpec(List.of("initial")));
+		return new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial, store, id,
+			List.of("initial"));
+	}
+
+	private static List<String> columnNames(TableView<?> view) {
+		return view.columns().stream().map(ColumnView::name).toList();
+	}
+
+	private static int width(TableView<?> view, String column) {
+		return view.columns().stream().filter(c -> c.name().equals(column)).findFirst().get().width();
+	}
+
+	/** The values of the group headers, in display order. */
+	private static List<Object> groupValues(TableView<Person> view) {
+		return view.rows(0, view.rowCount()).stream()
+			.filter(row -> row.kind() == RowKind.GROUP_HEADER)
+			.map(row -> row.group().key().values().get(0))
+			.toList();
+	}
+
+	/** The names of the displayed data rows, in display order. */
+	private static List<String> dataNames(TableView<Person> view) {
+		return view.rows(0, view.rowCount()).stream()
+			.filter(row -> row.kind() == RowKind.DATA)
+			.map(row -> row.data().name())
+			.toList();
+	}
+
+	/** Checks that the given view shows the arrangement {@link #newDeclaredView} declares. */
+	private static void assertDeclaredArrangement(TableView<Person> view) {
+		assertEquals("The pinned column trails the declared order.", List.of("name", "age", "_delete"),
+			columnNames(view));
+		assertEquals(Set.of("initial"), view.state().getHiddenColumns());
+		assertEquals(200, width(view, "name"));
+		assertEquals(100, width(view, "age"));
+		assertEquals(1, view.frozenColumnCount());
+		assertEquals(List.of(new SortColumn("name", true)), view.state().getSort());
+		assertEquals(new GroupSpec(List.of("initial")), view.state().getGrouping());
+	}
+
+	public void testResetRestoresTheDeclaredArrangement() {
+		MapViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-reset");
+		TableView<Person> view = newDeclaredView(store, id);
+		assertDeclaredArrangement(view);
+
+		view.group(new GroupSpec(List.of("age")));
+		view.sort(new SortSpec(List.of(new SortColumn("age", false))));
+		view.setColumnOrder(List.of("initial", "age"));
+		view.moveColumn("age", 0);
+		view.resizeColumn("age", 333);
+		view.setFrozenColumnCount(2);
+		view.filter("name", TextFilterState.contains("li"));
+		assertEquals(List.of("age", "initial", "_delete"), columnNames(view));
+		assertEquals(List.of(30, 25), groupValues(view));
+
+		int[] columnsChanged = { 0 };
+		view.addListener(new TableViewListener() {
+			@Override
+			public void columnsChanged() {
+				columnsChanged[0]++;
+			}
+		});
+		view.resetToDefaults();
+
+		assertDeclaredArrangement(view);
+		assertEquals(1, columnsChanged[0]);
+		assertEquals("The filter is no part of the arrangement.",
+			Map.of("name", TextFilterState.contains("li")), view.state().getFilters());
+		assertEquals("The declared grouping and sort are applied to the rows.", List.of("A", "C"),
+			groupValues(view));
+		assertEquals(List.of("alice", "Charlie"), dataNames(view));
+
+		TableViewState persisted = store.load(id, FilterCodec.NONE);
+		assertEquals(view.state().getColumnOrder(), persisted.getColumnOrder());
+		assertEquals(view.state().getHiddenColumns(), persisted.getHiddenColumns());
+		assertEquals(view.state().getWidths(), persisted.getWidths());
+		assertEquals(view.state().getFrozenCount(), persisted.getFrozenCount());
+		assertEquals(view.state().getSort(), persisted.getSort());
+		assertEquals(view.state().getGrouping(), persisted.getGrouping());
+
+		// The next visit starts from the reset arrangement, with the filter still in effect.
+		TableView<Person> restored = newDeclaredView(store, id);
+		assertDeclaredArrangement(restored);
+		assertEquals(List.of("alice", "Charlie"), dataNames(restored));
+	}
+
+	public void testResetRemovesTheUsersGroupingFromAnUngroupedTable() {
+		TableView<Person> view = newView();
+		view.group(new GroupSpec(List.of("age")));
+		assertEquals(3, groupValues(view).size());
+
+		view.resetToDefaults();
+		assertEquals(GroupSpec.NONE, view.state().getGrouping());
+		assertEquals("A table declared without grouping displays no group headers.", List.of(),
+			groupValues(view));
+		assertEquals(List.of("Charlie", "alice", "Bob"), names(view));
+	}
 
 	// ---- named filters ----
 
@@ -1135,6 +1268,85 @@ public class TestDefaultTableView extends TestCase {
 		view.setDeclaredFilters(List.of());
 		assertEquals(List.of(HOLDS_LI, HOLDS_LI, NO_FILTER), recorder._activeFilters);
 		assertEquals("The criteria of a withdrawn filter stay in effect.", List.of("Bob"), names(view));
+	}
+
+	/**
+	 * Tests that the data rows answer the row class function installed on the view, and that a
+	 * view without one answers none.
+	 */
+	public void testRowCssClass() {
+		List<Column<Person, ?>> columns = personColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("A view without a row class function marks no row.", view.rowCssClass(row));
+		}
+
+		view.setRowCssClass(person -> person.age() > 35 ? "tl-status-warning" : null);
+		Map<String, String> classes = new java.util.HashMap<>();
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			classes.put(row.data().name(), view.rowCssClass(row));
+		}
+		assertEquals("tl-status-warning", classes.get("Bob"));
+		assertNull(classes.get("alice"));
+		assertNull(classes.get("Charlie"));
+
+		view.setRowCssClass(null);
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("Removing the function removes the marks.", view.rowCssClass(row));
+		}
+	}
+
+	/**
+	 * Tests that the cells of a data row answer their column's class for the row object, and the
+	 * cells of a column without one answer none.
+	 */
+	public void testCellCssClass() {
+		List<Column<Person, ?>> columns = cssColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			String expected = row.data().age() < 30 ? "tl-status-info" : null;
+			assertEquals(expected, view.cellCssClass(row, "age"));
+			assertNull("A column without a cell class marks no cell.", view.cellCssClass(row, "name"));
+			assertNull("An unknown column marks no cell.", view.cellCssClass(row, "unknown"));
+		}
+	}
+
+	/**
+	 * Tests that a group header row is marked neither as a row nor in its cells, whatever the
+	 * functions say about the row objects.
+	 */
+	public void testGroupRowsCarryNoCssClass() {
+		List<Column<Person, ?>> columns = cssColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setRowCssClass(person -> "tl-status-error");
+		view.group(new GroupSpec(List.of("name")));
+
+		int headers = 0;
+		int data = 0;
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				headers++;
+				assertNull(view.rowCssClass(row));
+				assertNull(view.cellCssClass(row, "age"));
+			} else if (row.kind() == RowKind.DATA) {
+				data++;
+				assertEquals("tl-status-error", view.rowCssClass(row));
+			}
+		}
+		assertTrue("The table shows group headers.", headers > 0);
+		assertTrue("The table shows data rows.", data > 0);
+	}
+
+	/** The {@link #personColumns()} with a cell class on the age of a person younger than 30. */
+	private List<Column<Person, ?>> cssColumns() {
+		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
+			.sort(() -> Comparator.naturalOrder())
+			.build();
+		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
+			.sort(() -> Comparator.naturalOrder())
+			.css(person -> person.age() < 30 ? "tl-status-info" : null)
+			.build();
+		return List.of(name, age);
 	}
 
 }

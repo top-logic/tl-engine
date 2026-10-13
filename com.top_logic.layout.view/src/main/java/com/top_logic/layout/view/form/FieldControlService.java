@@ -79,7 +79,8 @@ import com.top_logic.util.model.ModelService;
  * </p>
  * <ol>
  * <li>The control the display asks for.</li>
- * <li>{@link TLInputControl} annotation on the attribute or its type (via
+ * <li>{@link TLInputControl} annotation on the attribute - or on the declaration of a value no
+ * attribute holds - or on its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
@@ -364,27 +365,19 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	private ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldSpec field,
 			FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
-		// 0. The control the display asks for.
-		if (control != null) {
-			return createControl(context, field, model, _context.getInstance(control));
-		}
-
-		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
-		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
-		if (annotation != null) {
-			return createControl(context, field, model, _context.getInstance(annotation.getImpl()));
-		}
-
-		return createFieldControl(context, part.getType(), field, model);
+		// The attribute's annotations include the type-level default via the VALUE_TYPE strategy.
+		return createFieldControl(context, part.getType(), part, field, model, control);
 	}
 
 	/**
 	 * Resolves and creates the input control for a value of the given model type.
 	 *
 	 * <p>
-	 * The entry point for a value that no attribute holds - a value belonging to the view itself.
-	 * The attribute-based resolution adds only the lookup of an attribute's own control annotation
-	 * and continues here, so both are edited by the same control.
+	 * The entry point for a value that no attribute holds and that carries no annotations of its
+	 * own. The attribute-based resolution and a value declared with annotations continue in
+	 * {@link #createFieldControl(ReactContext, TLType, AnnotationLookup, FieldSpec, FieldModel, PolymorphicConfiguration)},
+	 * which adds only the lookup of a control annotation, so all of them are edited by the same
+	 * control.
 	 * </p>
 	 *
 	 * @param context
@@ -429,23 +422,65 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model,
 			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		return createFieldControl(context, type, null, field, model, control);
+	}
+
+	/**
+	 * Creates the input control for a value of the given model type, described by the given
+	 * annotations, with the display deciding which control that is.
+	 *
+	 * <p>
+	 * A display naming a control gets that control. Where the display names none, a
+	 * {@link TLInputControl} annotation found in the given annotations - or, where they have none,
+	 * at the type - decides. Without either, the control is resolved from the type as it is for
+	 * every other value.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param type
+	 *        The model type of the edited value.
+	 * @param annotations
+	 *        Where the {@link TLInputControl} annotation is read from: the attribute holding the
+	 *        value, or the declaration of a value no attribute holds. {@code null} to consult no
+	 *        annotation at all, not even the one of the type.
+	 * @param field
+	 *        The description of what is edited, see
+	 *        {@link #fieldSpec(TLType, AnnotationLookup, String, boolean, FieldModel)}.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications. A
+	 *        {@link SelectFieldModel} makes the value one chosen from its options.
+	 * @param control
+	 *        The control the display asks for, or {@code null} to let the annotations and the type
+	 *        decide.
+	 * @return A React control for the field input widget.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLType type, AnnotationLookup annotations,
+			FieldSpec field, FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
 		// 0. The control the display asks for.
 		if (control != null) {
 			return createControl(context, field, model, _context.getInstance(control));
 		}
 
-		// 1. Option-based values use a select control.
+		// 1. The control annotated at the value, or at its type.
+		TLInputControl annotation =
+			annotations == null ? null : annotation(annotations, type, TLInputControl.class);
+		if (annotation != null) {
+			return createControl(context, field, model, _context.getInstance(annotation.getImpl()));
+		}
+
+		// 2. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
 			return createControl(context, field, model, _selectProvider);
 		}
 
-		// 2. Configured control by type.
+		// 3. Configured control by type.
 		ReactFieldControlProvider mapped = byType(type);
 		if (mapped != null) {
 			return createControl(context, field, model, mapped);
 		}
 
-		// 3. The control registered for the kind of value the type holds. The same registry
+		// 4. The control registered for the kind of value the type holds. The same registry
 		// serves configuration properties, so both are edited alike.
 		return FieldControlRegistry.getInstance().createControl(context, field, model);
 	}

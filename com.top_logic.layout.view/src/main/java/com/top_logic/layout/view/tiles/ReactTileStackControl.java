@@ -27,6 +27,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.element.ContentControls;
@@ -384,14 +385,21 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 			// The stack's own channel, so the frame sees the path it sits on change.
 			frameContext.registerChannel(_bindPathTo, _pathChannel);
 		}
+		List<ViewChannel> paramChannels = new ArrayList<>();
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			DefaultViewChannel paramChannel = new DefaultViewChannel(entry.getKey());
 			paramChannel.set(entry.getValue());
 			frameContext.registerChannel(entry.getKey(), paramChannel);
+			paramChannels.add(paramChannel);
 		}
 
-		return new ReloadableControl(viewPath, frameContext,
+		ReactControl frame = new ReloadableControl(viewPath, frameContext,
 			(ReactControl) frameView.createControl(frameContext));
+
+		// The params are the frame's own channels and outlive a reload of its view; the path channel
+		// is the stack's.
+		ObservingChannels.observeWhileDisplayed(frame, paramChannels, frameContext);
+		return frame;
 	}
 
 	/**

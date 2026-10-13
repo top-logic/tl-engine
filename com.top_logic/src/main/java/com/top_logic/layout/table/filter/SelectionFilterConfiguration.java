@@ -15,6 +15,7 @@ import com.top_logic.basic.col.MutableInteger;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableViewModel;
+import com.top_logic.util.TLCollator;
 
 /**
  * {@link FilterConfiguration}, that is uses by filters, that support separate selectable options.
@@ -27,6 +28,7 @@ public class SelectionFilterConfiguration extends FilterConfiguration {
 	private JSONTransformer jsonTransformer;
 	
 	private Map<Object, MutableInteger> options;
+	private Map<Object, Object> _optionValues = Collections.emptyMap();
 	private TableViewModel tableModel;
 	private String columnName;
 	private List<Class<?>> supportedObjectTypes;
@@ -103,6 +105,30 @@ public class SelectionFilterConfiguration extends FilterConfiguration {
 		}
 	}
 
+	/**
+	 * {@link Comparator} for the {@link #getOptions() options} of this filter, if they are labels
+	 * of the column values (not {@link #isUseRawOptions()}).
+	 * 
+	 * <p>
+	 * The options are sorted in the same order as the column values they represent, i.e. the
+	 * {@link #getOptionComparator() comparator of the column} is applied to the
+	 * {@link #setOptionValues(Map) values} the labels were created from. Options with equal values
+	 * and options without known value are sorted by their label.
+	 * </p>
+	 */
+	public Comparator<Object> getLabelOptionComparator() {
+		return new LabelOptionComparator(getOptionComparator());
+	}
+
+	/**
+	 * Sets for each option of this filter some column value it was created from.
+	 * 
+	 * @see #getLabelOptionComparator()
+	 */
+	void setOptionValues(Map<Object, Object> optionValues) {
+		_optionValues = optionValues;
+	}
+
 	/** label provider used for displaying options of the column this filter belongs to. */
 	public LabelProvider getOptionLabelProvider() {
 		if (!columnName.equals(TableViewModel.GLOBAL_TABLE_FILTER_ID)) {
@@ -174,5 +200,51 @@ public class SelectionFilterConfiguration extends FilterConfiguration {
 	 */
 	public void setUseRawOptions(boolean useRawOptions) {
 		this.useRawOptions = useRawOptions;
+	}
+
+	private class LabelOptionComparator implements Comparator<Object> {
+
+		private final Comparator<Object> _valueComparator;
+
+		private final TLCollator _labelComparator = new TLCollator();
+
+		@SuppressWarnings("unchecked")
+		LabelOptionComparator(Comparator<?> valueComparator) {
+			_valueComparator = (Comparator<Object>) valueComparator;
+		}
+
+		@Override
+		public int compare(Object option1, Object option2) {
+			if (_valueComparator != null) {
+				int valueResult = compareValues(option1, option2);
+				if (valueResult != 0) {
+					return valueResult;
+				}
+			}
+			return _labelComparator.compare(String.valueOf(option1), String.valueOf(option2));
+		}
+
+		private int compareValues(Object option1, Object option2) {
+			boolean hasValue1 = _optionValues.containsKey(option1);
+			boolean hasValue2 = _optionValues.containsKey(option2);
+			if (!hasValue1) {
+				// Options without value are sorted after options with value.
+				return hasValue2 ? 1 : 0;
+			}
+			if (!hasValue2) {
+				return -1;
+			}
+			return _valueComparator.compare(columnValue(option1), columnValue(option2));
+		}
+
+		private Object columnValue(Object option) {
+			Object value = _optionValues.get(option);
+			if (hasCollectionValues) {
+				// The options are created from the elements of the collection values, but the
+				// column comparator compares whole collections.
+				return Collections.singletonList(value);
+			}
+			return value;
+		}
 	}
 }

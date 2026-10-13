@@ -5,7 +5,11 @@
  */
 package test.com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -30,6 +34,7 @@ import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.layout.view.table.ScriptedFilter;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
@@ -39,9 +44,14 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.util.AttributeSettings;
+import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupSpec;
+import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
+import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -59,6 +69,12 @@ public class TestColumnProviderService extends TestCase {
 	/** The type the columns under test show attributes of. */
 	private TLClass _rowType;
 
+	/** An enumeration in its default order, whose classifiers are not declared alphabetically. */
+	private TLEnumeration _level;
+
+	/** An enumeration like {@link #_level}, annotated as {@link UnorderedEnum unordered}. */
+	private TLEnumeration _unorderedLevel;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -70,6 +86,10 @@ public class TestColumnProviderService extends TestCase {
 		TLEnumeration priority = TLModelUtil.addEnumeration(module, "Priority");
 		TLModelUtil.addClassifier(priority, "low");
 		TLModelUtil.addClassifier(priority, "high");
+
+		_level = levels(module, "Level");
+		_unorderedLevel = levels(module, "UnorderedLevel");
+		_unorderedLevel.setAnnotation(TypedConfiguration.newConfigItem(UnorderedEnum.class));
 
 		addProperty("flag", datatype(module, "Boolean", Kind.BOOLEAN, BooleanMapping.INSTANCE));
 		addProperty("state", datatype(module, "Tristate", Kind.TRISTATE, directMapping(Boolean.class)));
@@ -113,6 +133,48 @@ public class TestColumnProviderService extends TestCase {
 
 	public void testStringWidth() {
 		assertWidth("A text is shown in the string width.", config().getStringWidth(), "name");
+	}
+
+	/**
+	 * A column over an enumeration sorts in the declaration order of its classifiers, not by their
+	 * labels, and a value that is no classifier of it comes last.
+	 */
+	public void testEnumerationSortsInDeclarationOrder() {
+		Comparator<Object> order = valueOrder(enumerationColumn(_level));
+
+		assertEquals(List.of("medium", "high", "low"), names(sorted(order, _level)));
+		assertTrue("A value that is no classifier comes after every classifier.",
+			order.compare("medium", classifier(_level, "low")) > 0);
+	}
+
+	/**
+	 * A column over an enumeration annotated as unordered sorts its classifiers by their labels.
+	 */
+	public void testUnorderedEnumerationSortsByLabel() {
+		Comparator<Object> order = valueOrder(enumerationColumn(_unorderedLevel));
+
+		assertEquals(List.of("high", "low", "medium"), names(sorted(order, _unorderedLevel)));
+	}
+
+	/**
+	 * A table grouped by a column over an enumeration orders its groups in the enumeration's order.
+	 */
+	public void testEnumerationGroupsInDeclarationOrder() {
+		List<Object> rows = new ArrayList<>();
+		for (String name : List.of("low", "medium", "high", "low")) {
+			rows.add(Map.of(LEVEL, classifier(_level, name)));
+		}
+		ListRowSource<Object> source = new ListRowSource<>(rows, List.of(enumerationColumn(_level)));
+		source.withGrouping(new GroupSpec(List.of(LEVEL)));
+
+		List<String> groups = new ArrayList<>();
+		for (Row<Object> row : source.window(0, source.size())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				Object value = ((Map<?, ?>) row.group().members().get(0)).get(LEVEL);
+				groups.add(((TLClassifier) value).getName());
+			}
+		}
+		assertEquals(List.of("medium", "high", "low"), groups);
 	}
 
 	public void testEnumerationWidth() {
@@ -216,6 +278,55 @@ public class TestColumnProviderService extends TestCase {
 		assertEquals(120, config().getEnumerationWidth());
 		assertEquals(150, config().getStringWidth());
 		assertEquals(150, config().getLabelWidth());
+	}
+
+	/** The name of the column over an enumeration, and the key of its value in a row. */
+	private static final String LEVEL = "level";
+
+	/**
+	 * An enumeration whose classifiers are declared in an order differing from the alphabetic one.
+	 */
+	private static TLEnumeration levels(TLModule module, String name) {
+		TLEnumeration result = TLModelUtil.addEnumeration(module, name);
+		TLModelUtil.addClassifier(result, "medium");
+		TLModelUtil.addClassifier(result, "high");
+		TLModelUtil.addClassifier(result, "low");
+		return result;
+	}
+
+	/** The type-derived column over classifiers of the given enumeration, read from a row map. */
+	private static Column<Object, ?> enumerationColumn(TLEnumeration enumeration) {
+		return ColumnProviderService.getInstance().createColumn(LEVEL, ResKey.text(LEVEL),
+			ColumnType.of(enumeration, false), row -> ((Map<?, ?>) row).get(LEVEL));
+	}
+
+	/** The order the sort capability of the given column establishes on its values. */
+	@SuppressWarnings("unchecked")
+	private static Comparator<Object> valueOrder(Column<Object, ?> column) {
+		return (Comparator<Object>) column.sort().get().comparator();
+	}
+
+	/** The classifiers of the given enumeration, in reverse declaration order, sorted by the order. */
+	private static List<Object> sorted(Comparator<Object> order, TLEnumeration enumeration) {
+		List<Object> result = new ArrayList<>(enumeration.getClassifiers());
+		Collections.reverse(result);
+		result.sort(order);
+		return result;
+	}
+
+	/** The names of the given classifiers. */
+	private static List<String> names(List<Object> classifiers) {
+		List<String> result = new ArrayList<>();
+		for (Object classifier : classifiers) {
+			result.add(((TLClassifier) classifier).getName());
+		}
+		return result;
+	}
+
+	private static TLClassifier classifier(TLEnumeration enumeration, String name) {
+		TLClassifier result = enumeration.getClassifier(name);
+		assertNotNull("No classifier '" + name + "' in " + enumeration.getName() + ".", result);
+		return result;
 	}
 
 	private void assertWidth(String message, int expectedWidth, String attribute) {

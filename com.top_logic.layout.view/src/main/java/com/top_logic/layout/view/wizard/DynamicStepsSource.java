@@ -36,6 +36,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -287,8 +288,10 @@ public class DynamicStepsSource implements WizardStepSource {
 	private ReactControl content(ViewContext stepContext, Object element) {
 		DefaultViewChannel elementChannel = new DefaultViewChannel(_elementChannelName);
 		elementChannel.set(element);
-		return ContentControls.toControl(_content,
-			stepContext.withLocalChannel(_elementChannelName, elementChannel));
+		ViewContext contentContext = stepContext.withLocalChannel(_elementChannelName, elementChannel);
+		ReactControl content = ContentControls.toControl(_content, contentContext);
+		ObservingChannels.observeWhileDisplayed(content, List.of(elementChannel), contentContext);
+		return content;
 	}
 
 	/**

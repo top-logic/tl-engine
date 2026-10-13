@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.listener.Registration;
-import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -26,7 +25,6 @@ import com.top_logic.layout.responsive.DisplayClass;
 import com.top_logic.layout.responsive.DisplayClassModel;
 import com.top_logic.layout.responsive.DisplayClassModel.DisplayClassListener;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
-import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.VetoForwarder;
@@ -82,6 +80,12 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 
 	private static final String DEFAULT_HOME_LABEL = "‹";
 
+	/**
+	 * Segment appended to the personalization key of the context to form the key the
+	 * {@link SplitSizePersonalization} of the split presentation is stored under.
+	 */
+	private static final String KEY_SEGMENT = ".adaptive-detail";
+
 	private final ViewContext _context;
 
 	private final ViewContext _selectorContext;
@@ -108,7 +112,11 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 
 	private final DetailDisplay _detailDisplay;
 
-	private final int _detailSize;
+	private final int _drawerSize;
+
+	private final ChildConstraint _selectorConstraint;
+
+	private final ChildConstraint _detailConstraint;
 
 	private ReactControl _currentChild;
 
@@ -143,18 +151,27 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	 *        Label of the breadcrumb's home crumb, or {@code null} for a default.
 	 * @param detailDisplay
 	 *        How the detail is presented beside the selector on a wide viewport.
-	 * @param detailSize
+	 * @param drawerSize
 	 *        The width in pixels of the drawer the detail is displayed in.
+	 * @param selectorConstraint
+	 *        The size of the selector in the split beside the detail.
+	 * @param detailConstraint
+	 *        The size of the detail in the split beside the selector.
 	 */
 	public ReactAdaptiveDetailControl(ViewContext context, AdaptiveDetailElement element,
 			List<UIElement> selector, List<UIElement> detail,
 			ViewChannel selectionChannel, List<ViewChannel> resetOn, boolean coordinator, List<ViewChannel> chain,
-			String homeLabel, DetailDisplay detailDisplay, int detailSize) {
+			String homeLabel, DetailDisplay detailDisplay, int drawerSize,
+			ChildConstraint selectorConstraint, ChildConstraint detailConstraint) {
 		super(context, null, REACT_MODULE);
 		_context = context;
 		RevealPath here = RevealPath.of(context);
-		_selectorContext = context.withScope(RevealPath.class, here.append(element, Config.SELECTOR));
-		_detailContext = context.withScope(RevealPath.class, here.append(element, Config.DETAIL));
+		// Descend the personalization path per side, so that an element nested in the detail gets a
+		// personalization key of its own.
+		_selectorContext =
+			context.childContext(Config.SELECTOR).withScope(RevealPath.class, here.append(element, Config.SELECTOR));
+		_detailContext =
+			context.childContext(Config.DETAIL).withScope(RevealPath.class, here.append(element, Config.DETAIL));
 		_selector = selector;
 		_detail = detail;
 		_selectionChannel = selectionChannel;
@@ -162,7 +179,9 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		_chain = chain;
 		_homeLabel = homeLabel;
 		_detailDisplay = detailDisplay;
-		_detailSize = detailSize;
+		_drawerSize = drawerSize;
+		_selectorConstraint = selectorConstraint;
+		_detailConstraint = detailConstraint;
 		_displayModel = DisplayClassModel.forCurrentSubSession();
 
 		_displayListener = (sender, oldValue, newValue) -> renderPresentation();
@@ -340,9 +359,12 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	}
 
 	private ReactControl buildRegularSplit() {
-		ReactSplitPanelControl split = new ReactSplitPanelControl(_context, Orientation.HORIZONTAL, true);
-		split.addChild(buildSelector(), new ChildConstraint(32f, DisplayUnit.PERCENT, 240, Scrolling.AUTO));
-		split.addChild(buildDetail(), new ChildConstraint(68f, DisplayUnit.PERCENT, 320, Scrolling.AUTO));
+		// Read on each build: the sizes may have been dragged since the last split was built.
+		SplitSizePersonalization personalization = new SplitSizePersonalization(
+			_context.getPersonalizationKey() + KEY_SEGMENT, List.of(_selectorConstraint, _detailConstraint));
+		ReactSplitPanelControl split = personalization.createSplitPanel(_context, Orientation.HORIZONTAL, true);
+		personalization.addPane(split, 0, buildSelector());
+		personalization.addPane(split, 1, buildDetail());
 		return split;
 	}
 
@@ -358,7 +380,7 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	private ReactDrawerControl buildDetailDrawer() {
 		ReactDrawerControl drawer = new ReactDrawerControl(_context, null, Position.RIGHT, Size.MEDIUM,
 			Anchor.CONTAINER, () -> _selectionChannel.set(null));
-		drawer.setWidth(_detailSize);
+		drawer.setWidth(_drawerSize);
 		drawer.setChild(buildDetail());
 		updateDrawer(drawer);
 		return drawer;

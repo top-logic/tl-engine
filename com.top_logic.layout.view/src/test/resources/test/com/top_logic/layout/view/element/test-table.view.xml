@@ -20,12 +20,12 @@
 		selection-mode="multi"
 		types="demo.test:Row"
 	>
-		<drag/>
-		<drop accept="demo.test:Row">
+		<drag kind="row"/>
+		<drop>
 			<execute-script function="rows -> $rows"/>
 		</drop>
 		<drop
-			accept="demo.test:Row, demo.test:Other"
+			accept="row, other"
 			target="row"
 			target-channel="dropTarget"
 		>
@@ -81,6 +81,7 @@
 					<en>Row name</en>
 					<de>Zeilenname</de>
 				</label>
+				<comparator>comparator(name -&gt; $name.toLowerCase())</comparator>
 			</column>
 			<column attribute="active"/>
 			<column
@@ -97,6 +98,7 @@
 				<update>factor -&gt; row -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value / $factor)</update>
 				<can-update>factor -&gt; row -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
 				<aggregate>rows -&gt; $rows.size()</aggregate>
+				<comparator>total1 -&gt; total2 -&gt; $total2 - $total1</comparator>
 			</computed-column>
 			<embedded-columns reference="owner.contact">
 				<column attribute="name"/>
@@ -126,6 +128,7 @@
 				<can-update>factor -&gt; row -&gt; col -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
 				<column-label>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-label>
 				<column-name>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-name>
+				<comparator>factor -&gt; value1 -&gt; value2 -&gt; $value2 - $value1</comparator>
 				<columns>factor -&gt; all(`demo.test:Milestone`)</columns>
 				<inputs>
 					<input channel="testInput"/>

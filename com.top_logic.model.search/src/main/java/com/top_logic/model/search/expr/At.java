@@ -117,11 +117,32 @@ public class At extends SearchExpressionWithSecurity {
 		return SearchExpression.normalizeValue(map.get(indexArg));
 	}
 
+	/**
+	 * Reads the attribute given by the index from the given object.
+	 *
+	 * <p>
+	 * An object that is no longer {@link TLObject#tValid() valid} (a persistent object deleted in
+	 * the meantime) counts as a missing value: an attribute given as {@link TLStructuredTypePart}
+	 * reads as its empty value (see
+	 * {@link AccessLike#lookupValue(TLObject, TLStructuredTypePart, boolean)}), an attribute given
+	 * by name reads as <code>null</code>, since the type of a deleted object that resolves the
+	 * name is no longer available.
+	 * </p>
+	 *
+	 * @param obj
+	 *        The object to read from.
+	 * @param indexArg
+	 *        The attribute or the name of the attribute.
+	 * @return The value of the attribute.
+	 */
 	private Object evalForTLObject(TLObject obj, Object indexArg) {
 		TLStructuredTypePart property;
 		if (indexArg instanceof TLStructuredTypePart) {
 			property = (TLStructuredTypePart) indexArg;
 		} else {
+			if (!obj.tValid()) {
+				return null;
+			}
 			String propertyName = asString(indexArg);
 			property = obj.tType().getPart(propertyName);
 			if (property == null) {

@@ -26,6 +26,8 @@ import com.top_logic.model.listen.ModelScope;
  * reached no listener, so a derived value is recomputed when the observation resumes, and a source
  * publishes its current state when subscribed again.
  * </p>
+ *
+ * @see ObservingChannels
  */
 public interface ObservingChannel extends ViewChannel {
 

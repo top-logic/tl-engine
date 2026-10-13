@@ -50,7 +50,7 @@ class JspCompileTask {
 	 * This constructor creates a new CompileJspTest.
 	 * 
 	 * @param jspFiles
-	 *        the tested jsp file must be a descendant of {@link CompileJspConfig#getWebapp()}
+	 *        the tested jsp files, descendants of the web application the translate command compiles in
 	 * @param translateCommand
 	 *        the command to trigger the translator
 	 * @param config

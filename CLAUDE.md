@@ -376,7 +376,11 @@ Commit messages in this project must follow a specific format:
 - Example: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
 - To get the correct issue/ticket for a PR it must be determined from the PR title. In rare cases, when the title is wrong, the correct issue can be determined from the commit messages.
 
-**CI:** Jenkins automatically builds each PR and posts the result as a review (APPROVED on success, REQUEST_CHANGES on failure).
+**CI:** Jenkins builds a PR only when a review is requested from the Gitea user `jenkins` — opening a PR or pushing to it
+starts nothing. Request it right after creating the PR and again after every push to its branch (Gitea MCP
+`pull_request_write method=add_reviewers reviewers=["jenkins"]`). Only a *new* request triggers a build: if a `jenkins`
+request is still pending, remove it (`remove_reviewers`) and add it again. Jenkins posts the result as a review
+(APPROVED on success, REQUEST_CHANGES on failure).
 
 **After merge:** The source branch is deleted automatically.
 

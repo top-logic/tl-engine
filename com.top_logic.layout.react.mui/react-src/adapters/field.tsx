@@ -1,14 +1,7 @@
-import {
-  React, useTLState, useTLFieldValue, useTLCommand, useTLSubmitOnEnter, VALUE_DEBOUNCE_MS,
-} from 'tl-react-bridge';
-import type { FieldStateJson, TypingFieldStateJson } from 'tl-react-bridge';
+import { React } from 'tl-react-bridge';
+import type { FieldStateJson } from 'tl-react-bridge';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-
-const { useCallback, useRef } = React;
-
-/** Command a typing field sends when it is left after an edit, see `TypingFieldState.commitOnBlur`. */
-const CMD_COMMIT = 'commit';
 
 /** What stands in an empty line of a multi-line value, so that the line keeps its height. */
 const EMPTY_LINE = ' ';
@@ -77,67 +70,4 @@ export function MuiFieldValue({ id, className, text, href, multiline = false }: 
       {text}
     </Typography>
   );
-}
-
-/** The value and handlers a typing field puts on its input, see {@link useTypingField}. */
-export interface TypingField {
-  /** The text the field shows, `''` for no value. */
-  text: string;
-
-  /** Sets the text typed: shown at once, sent as the state's typing behaviour says. */
-  setText: (text: string) => void;
-
-  /** Sends a value held back at once, see {@link useTLFieldValue}. */
-  flush: () => Promise<void>;
-
-  /** The blur handler of the input: sends a value held back, then the commit command if asked for. */
-  onBlur: () => Promise<void>;
-
-  /** The key handler of a single-line input sending the submit command on Enter, if asked for. */
-  onSubmitKey?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-}
-
-/**
- * The typing behaviour of a field with a `TypingFieldState`, shared by the text, password and
- * number adapters.
- *
- * <p>The text typed is shown at once. It is sent as `valueChanged` after `debounceMs` (default
- * {@link VALUE_DEBOUNCE_MS}), or - with `sendValueOnBlur` - only when the field is left; leaving
- * the field always sends a value still held back. With `commitOnBlur` leaving the field after an
- * edit also sends `commit`. With `submitOnEnter` Enter in a single-line input sends `submit` with
- * the text.</p>
- *
- * @param emptyValue the value an empty text is sent as (`''` for a text, `null` for a number)
- */
-export function useTypingField(emptyValue: '' | null): TypingField {
-  const state = useTLState<Partial<TypingFieldStateJson>>();
-  const sendCommand = useTLCommand();
-  const [value, setValue, flush] = useTLFieldValue({
-    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
-    sendOnBlur: state.sendValueOnBlur === true,
-  });
-  const dirtyRef = useRef(false);
-  const commitOnBlur = state.commitOnBlur === true;
-
-  const setText = useCallback((text: string) => {
-    dirtyRef.current = true;
-    setValue(text === '' ? emptyValue : text);
-  }, [setValue, emptyValue]);
-
-  const onBlur = useCallback(async () => {
-    // Await the value, so that a following commit runs after the value is applied on the server.
-    await flush();
-    if (commitOnBlur && dirtyRef.current) {
-      dirtyRef.current = false;
-      sendCommand(CMD_COMMIT);
-    }
-  }, [flush, commitOnBlur, sendCommand]);
-
-  return {
-    text: value == null ? '' : String(value),
-    setText,
-    flush,
-    onBlur,
-    onSubmitKey: useTLSubmitOnEnter(),
-  };
 }

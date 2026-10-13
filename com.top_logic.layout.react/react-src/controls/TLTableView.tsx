@@ -377,6 +377,36 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
 
+  // Whether the pointer pressed on the body and has not been released yet.
+  const bodyPressRef = React.useRef(false);
+
+  // Hands a focus that landed on the body on to the grid. A focus a press put there moves on only
+  // once the press is over (released, or ended as a drag): Chromium starts no drag from a press
+  // during which the focus moved away from where the press put it, so no row could be dragged.
+  const bodyFocusToGrid = React.useCallback(() => {
+    if (document.activeElement === scrollContainerRef.current) {
+      gridRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  const handleBodyPress = React.useCallback(() => {
+    bodyPressRef.current = true;
+    const pressOver = () => {
+      window.removeEventListener('pointerup', pressOver, true);
+      window.removeEventListener('dragend', pressOver, true);
+      bodyPressRef.current = false;
+      bodyFocusToGrid();
+    };
+    window.addEventListener('pointerup', pressOver, true);
+    window.addEventListener('dragend', pressOver, true);
+  }, [bodyFocusToGrid]);
+
+  const handleBodyFocus = React.useCallback(() => {
+    if (!bodyPressRef.current) {
+      bodyFocusToGrid();
+    }
+  }, [bodyFocusToGrid]);
+
   // A cell whose editable input should receive the caret once the server has re-rendered its row
   // as editable. Set on a selecting cell-click (edit the clicked cell) and on Tab-wrap to a
   // neighbouring row; consumed by the focus effect below. Addressed by row index (stable across
@@ -1655,9 +1685,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         // A press on the body or a part of it that takes no focus - the empty area below the rows,
         // the selection cell beside its box - focuses the body (it carries a tabindex); the focus
         // belongs to the grid, which holds the keyboard and shows the ring.
+        onPointerDown={handleBodyPress}
         onFocus={(e) => {
           if (e.target === e.currentTarget) {
-            gridRef.current?.focus({ preventScroll: true });
+            handleBodyFocus();
           }
         }}
         onScroll={handleScroll}

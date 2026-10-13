@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -61,6 +61,13 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 	 */
 	public static com.top_logic.model.TLClass getUsageType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_STRUCTURE).getType(Usage.USAGE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Usage#NAME_ATTR} of {@link Usage}.
+	 */
+	public static com.top_logic.model.TLProperty getNameUsageAttr() {
+		return (com.top_logic.model.TLProperty) getUsageType().getPart(Usage.NAME_ATTR);
 	}
 
 	/**

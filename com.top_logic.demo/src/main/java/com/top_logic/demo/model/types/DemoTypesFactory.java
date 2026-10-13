@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -219,6 +219,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getBinaryDemoTypesAAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.BINARY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#BINARY2_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getBinary2DemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.BINARY2_ATTR);
 	}
 
 	/**
@@ -537,6 +544,20 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#DURATION_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getDurationDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.DURATION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#DURATION_SHORT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getDurationShortDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.DURATION_SHORT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#ENCRYPTED_LONG_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getEncryptedLongDemoTypesAAttr() {
@@ -614,6 +635,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#HTML_DESCRIPTION_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getHtmlDescriptionDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.HTML_DESCRIPTION_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#I18NHTML_NORMAL_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getI18NHTMLNormalDemoTypesAAttr() {
@@ -674,6 +702,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getInlineReferenceReverseDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.INLINE_REFERENCE_REVERSE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#INT_CONSTRAINT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getIntConstraintDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.INT_CONSTRAINT_ATTR);
 	}
 
 	/**
@@ -775,6 +810,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#RESPONSIBLE_CONTACT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getResponsibleContactDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.RESPONSIBLE_CONTACT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#SINGLE_STRUCTURE_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLReference getSingleStructureDemoTypesAAttr() {
@@ -821,6 +863,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getStructureDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.STRUCTURE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#STYLE_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getStyleDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.STYLE_ATTR);
 	}
 
 	/**
@@ -1514,6 +1563,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getInlineReferenceDemoTypesXAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.INLINE_REFERENCE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesX#INT_CONSTRAINT_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLProperty getIntConstraintDemoTypesXAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.INT_CONSTRAINT_ATTR);
 	}
 
 	/**

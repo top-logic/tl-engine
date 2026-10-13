@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -204,6 +204,20 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 */
 	public static com.top_logic.model.TLProperty getDateChangeSetAttr() {
 		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.DATE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ChangeSet#IS_REDO_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLProperty getIsRedoChangeSetAttr() {
+		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.IS_REDO_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ChangeSet#IS_REVERT_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLProperty getIsRevertChangeSetAttr() {
+		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.IS_REVERT_ATTR);
 	}
 
 	/**

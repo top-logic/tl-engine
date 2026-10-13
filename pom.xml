@@ -195,65 +195,6 @@
 
 		<profile>
 			<!--
-				Fails the build of an engine module on an unused or duplicate import, which javac does not
-				report but Eclipse flags as an error. Active for the modules of the engine workspace only
-				(recognized by the sibling tl-parent-engine), not for applications inheriting this POM.
-			-->
-			<id>engine-import-check</id>
-			<activation>
-				<file>
-					<exists>${basedir}/../tl-parent-engine/pom.xml</exists>
-				</file>
-			</activation>
-
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-checkstyle-plugin</artifactId>
-						<version>3.6.0</version>
-						<dependencies>
-							<dependency>
-								<groupId>com.puppycrawl.tools</groupId>
-								<artifactId>checkstyle</artifactId>
-								<version>10.21.4</version>
-							</dependency>
-						</dependencies>
-						<configuration>
-							<checkstyleRules>
-								<module name="Checker">
-									<module name="TreeWalker">
-										<module name="UnusedImports">
-											<!-- A {@link} in JavaDoc counts as a use, as in Eclipse. -->
-											<property name="processJavadoc" value="true" />
-										</module>
-										<module name="RedundantImport" />
-									</module>
-								</module>
-							</checkstyleRules>
-							<includeTestSourceDirectory>true</includeTestSourceDirectory>
-							<!-- The Checkstyle parser does not accept imports in a module declaration. -->
-							<excludes>**/module-info.java</excludes>
-							<consoleOutput>true</consoleOutput>
-							<failOnViolation>true</failOnViolation>
-							<violationSeverity>warning</violationSeverity>
-						</configuration>
-						<executions>
-							<execution>
-								<id>check-imports</id>
-								<phase>validate</phase>
-								<goals>
-									<goal>check</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-		<profile>
-			<!--
 				The property maven.multiModuleProjectDirectory is set by the mvn launcher script, but not by
 				every embedded Maven (e.g. Eclipse m2e without a .mvn directory). Unresolved, the expression
 				ends up literally in the Node install path and creates a directory named
@@ -1694,6 +1635,51 @@
 	  			<artifactId>maven-resources-plugin</artifactId>
 	  		</plugin>
 
+			<!--
+				Fails the build on an unused or duplicate import, which javac does not report but Eclipse
+				flags as an error. A module opts out with the property checkstyle.skip.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.6.0</version>
+				<dependencies>
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>10.21.4</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<checkstyleRules>
+						<module name="Checker">
+							<module name="TreeWalker">
+								<module name="UnusedImports">
+									<!-- A {@link} in JavaDoc counts as a use, as in Eclipse. -->
+									<property name="processJavadoc" value="true" />
+								</module>
+								<module name="RedundantImport" />
+							</module>
+						</module>
+					</checkstyleRules>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<!-- The Checkstyle parser does not accept imports in a module declaration. -->
+					<excludes>**/module-info.java</excludes>
+					<consoleOutput>true</consoleOutput>
+					<failOnViolation>true</failOnViolation>
+					<violationSeverity>warning</violationSeverity>
+				</configuration>
+				<executions>
+					<execution>
+						<id>check-imports</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
@@ -2295,6 +2281,19 @@
 										</versionRange>
 										<goals>
 											<goal>war</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-checkstyle-plugin</artifactId>
+										<versionRange>[3.6.0,)</versionRange>
+										<goals>
+											<goal>check</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>

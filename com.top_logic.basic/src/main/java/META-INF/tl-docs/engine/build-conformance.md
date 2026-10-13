@@ -14,17 +14,17 @@ Every new `.java` file needs an SPDX copyright header **and** a class-level `/**
 ## Unused and duplicate imports: Checkstyle in `validate`
 
 Unlike the gates below, this one fails every local build too. javac does not report an unused import, but Eclipse flags
-it as an error, so the profile `engine-import-check` of `tl-parent-all` runs the `maven-checkstyle-plugin` in the
-`validate` phase of each engine module (main and test sources) with the checks `UnusedImports` and `RedundantImport`.
+it as an error, so `tl-parent-all` runs the `maven-checkstyle-plugin` in the `validate` phase of each module (main
+and test sources) with the checks `UnusedImports` and `RedundantImport` - in the engine and in every application
+inheriting the TopLogic parent POMs.
 It fails the build with the file, line and import, e.g.
 *"Unused import - java.util.Map. [UnusedImports]"*. Remove the reported import.
 
 - A use in JavaDoc counts (`{@link}`, `@see`, `@throws`), but only in a JavaDoc comment that Checkstyle attaches to a
   declaration: a block comment between the JavaDoc and the declaration detaches it, and a method reference in `@see`
   must stay on one line. Arrange the comment that way instead of dropping the reference.
-- The profile is active only for a module whose sibling folder `tl-parent-engine` exists, so applications inheriting
-  the TopLogic parent POMs are not checked. A module of repackaged external sources opts out with the property
-  `checkstyle.skip` (as `ext.com.meterware.httpunit` does).
+- A module opts out with the property `checkstyle.skip` set to `true` - a module of repackaged external sources (as
+  `ext.com.meterware.httpunit` does), or an application that is not yet cleaned up.
 
 ## New / edited layouts: must be normalized
 

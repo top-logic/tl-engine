@@ -400,6 +400,7 @@
 					<!-- Enumeration / classification -->
 					<reference name="priority"
 						kind="forwards"
+						mandatory="true"
 						type="Priority"
 					>
 						<annotations>

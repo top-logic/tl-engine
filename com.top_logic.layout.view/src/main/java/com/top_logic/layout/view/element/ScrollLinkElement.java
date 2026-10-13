@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.List;
-import java.util.Set;
-
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -26,8 +23,6 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
-import com.top_logic.layout.view.model.ChannelObjectObserver;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -43,8 +38,9 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * <p>
  * The link is also hidden once its target object is deleted: its anchor is then no longer rendered,
- * so scrolling to it would go nowhere. This keeps a citation link consistent with the model when the
- * cited object is removed, even while the channel still holds the now-deleted object.
+ * so scrolling to it would go nowhere. A channel drops a deleted object it holds (see
+ * {@link com.top_logic.layout.view.channel.DefaultViewChannel}), and the link hides itself on that
+ * {@code null} value like on any other.
  * </p>
  */
 @InApp
@@ -109,25 +105,7 @@ public class ScrollLinkElement implements UIElement {
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setValue(newValue, label(newValue));
 		Registration registration = channel.addListener(listener);
 		control.addCleanupAction(registration::dispose);
-
-		ChannelObjectObserver observer = new ChannelObjectObserver(List.of(channel), Set.of(),
-			ChannelObjectObserver.IGNORE_CHANGE, event -> hideDeletedTarget(control, channel));
-		control.addAttachListener(() -> observer.attach(context.getModelScope()));
-		control.addDetachListener(observer::detach);
 		return control;
-	}
-
-	/**
-	 * Hides the link when its target object is deleted: the anchor to scroll to is then no longer
-	 * rendered, so the link would go nowhere.
-	 */
-	private static void hideDeletedTarget(ScrollLinkControl control, ViewChannel channel) {
-		for (TLObject target : ChannelObjectObserver.objects(channel.get())) {
-			if (!target.tValid()) {
-				control.setValue(null, "");
-				return;
-			}
-		}
 	}
 
 	private String label(Object target) {

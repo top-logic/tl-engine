@@ -5,9 +5,13 @@
  */
 package test.com.top_logic.layout.view.command;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import junit.framework.TestCase;
+
+import test.com.top_logic.layout.view.model.DeletableItem;
 
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -102,8 +106,72 @@ public class TestLiveExecutability extends TestCase {
 		assertNull("The observation of the rule is stopped on detach.", rule._revalidate);
 	}
 
+	/**
+	 * Tests that a deleted object on the channel counts as no input, so that a rule refusing the
+	 * empty input refuses it, while a valid object is still accepted.
+	 */
+	public void testDeletedInputCountsAsNoInput() {
+		LiveExecutability live = live(NullInputDisabled.INSTANCE);
+		DeletableItem item = new DeletableItem("item");
+		_input.set(item);
+		assertTrue("A valid object is accepted.", live.getState().isExecutable());
+
+		item.markDeleted();
+
+		assertFalse("A deleted object counts as no input.", live.getState().isExecutable());
+		assertNull("The command is handed no deleted object.", live.getInput());
+	}
+
+	/**
+	 * Tests that the deleted members of a collection input are left out of what the rule decides
+	 * over, and that a collection of which nothing is left stays an empty collection.
+	 */
+	public void testDeletedMembersLeftOutOfCollectionInput() {
+		CapturingRule rule = new CapturingRule();
+		LiveExecutability live = live(rule);
+		DeletableItem valid = new DeletableItem("valid");
+		DeletableItem deleted = new DeletableItem("deleted");
+		_input.set(new LinkedHashSet<>(List.of(valid, deleted)));
+		deleted.markDeleted();
+
+		live.getState();
+		assertEquals("The rule sees the valid member only.", Set.of(valid), rule._input);
+		assertEquals("The command is handed the valid member only.", Set.of(valid), live.getInput());
+
+		valid.markDeleted();
+		live.getState();
+		assertEquals("Nothing is left, an empty collection.", Set.of(), rule._input);
+	}
+
+	/**
+	 * Tests that a supplied input is cleared of a deleted object as the channel value is.
+	 */
+	public void testDeletedSuppliedInputCountsAsNoInput() {
+		LiveExecutability live = live(NullInputDisabled.INSTANCE);
+		DeletableItem item = new DeletableItem("item");
+		assertTrue("A valid supplied object is accepted.", live.getState(item).isExecutable());
+
+		item.markDeleted();
+
+		assertFalse("A deleted supplied object counts as no input.", live.getState(item).isExecutable());
+	}
+
 	private LiveExecutability live(ViewExecutabilityRule rule) {
 		return new LiveExecutability(rule, _input, Set.of(), () -> _changes++);
+	}
+
+	/**
+	 * Rule remembering the input it last decided over, accepting everything.
+	 */
+	private static class CapturingRule implements ViewExecutabilityRule {
+
+		Object _input;
+
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			_input = input;
+			return ExecutableState.EXECUTABLE;
+		}
 	}
 
 	/**

@@ -75,11 +75,30 @@ public class Referers extends SearchExpressionWithSecurity implements WithFlatMa
 
 	}
 
+	/**
+	 * The objects referring to the given target through the given reference.
+	 *
+	 * <p>
+	 * An object that is no longer {@link TLObject#tValid() valid} (a persistent object deleted in
+	 * the meantime) counts as a missing value and has no referrers.
+	 * </p>
+	 *
+	 * @param usesSecurity
+	 *        Whether the read access to the target must be checked.
+	 * @param targetValue
+	 *        The object whose referrers are looked up.
+	 * @param reference
+	 *        The reference pointing to the target.
+	 * @return The referrers, <code>null</code> if the target is not a {@link TLObject}.
+	 */
 	static Set<? extends TLObject> lookupReferrers(boolean usesSecurity, Object targetValue, TLReference reference) {
 		if (!(targetValue instanceof TLObject)) {
 			return null;
 		}
 		TLObject self = (TLObject) targetValue;
+		if (!self.tValid()) {
+			return Collections.emptySet();
+		}
 		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(self)) {
 			// No read access to the base object - cannot look up its referrers. The referrers are
 			// returned unfiltered; the final result of a script must be secured by the caller.

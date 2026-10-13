@@ -25,13 +25,13 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
  * {@link AbstractScriptTracerTest#OTHER} reference of its first argument.
  *
  * <p>
- * The second argument is the name of the attribute to read. Each read is done by
- * {@link #read(EvalContext, TLObject, TLStructuredTypePart)}.
+ * The second argument is the name of the attribute to read. Each read is done through
+ * {@link TLObject#tValue(TLStructuredTypePart)}.
  * </p>
  *
  * @see TestScriptTracerJavaFunctions
  */
-public abstract class OtherValueMethod extends GenericMethodWithSecurity {
+public class OtherValueMethod extends GenericMethodWithSecurity {
 
 	/**
 	 * The {@link ArgumentDescriptor} of an {@link OtherValueMethod}.
@@ -49,6 +49,11 @@ public abstract class OtherValueMethod extends GenericMethodWithSecurity {
 	}
 
 	@Override
+	public GenericMethod copy(SearchExpression[] arguments) {
+		return new OtherValueMethod(getName(), arguments, usesSecurity());
+	}
+
+	@Override
 	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
@@ -60,107 +65,33 @@ public abstract class OtherValueMethod extends GenericMethodWithSecurity {
 			return null;
 		}
 		String attribute = asString(arguments[1]);
-		TLObject other = (TLObject) read(definitions, self, self.tType().getPartOrFail(AbstractScriptTracerTest.OTHER));
+		TLObject other = (TLObject) self.tValue(self.tType().getPartOrFail(AbstractScriptTracerTest.OTHER));
 		if (other == null) {
 			return null;
 		}
-		return read(definitions, other, other.tType().getPartOrFail(attribute));
+		return other.tValue(other.tType().getPartOrFail(attribute));
 	}
 
 	/**
-	 * Reads the given attribute of the given object.
+	 * Builder for {@link OtherValueMethod}.
 	 */
-	protected abstract Object read(EvalContext definitions, TLObject self, TLStructuredTypePart part);
-
-	/**
-	 * {@link OtherValueMethod} reading through {@link EvalContext#access(TLObject, TLStructuredTypePart, boolean)}.
-	 */
-	public static class Traced extends OtherValueMethod {
+	public static class Builder extends AbstractSimpleMethodBuilder<OtherValueMethod> {
 
 		/**
-		 * Creates a {@link Traced}.
+		 * Creates a {@link Builder}.
 		 */
-		protected Traced(String name, SearchExpression[] arguments, boolean usesSecurity) {
-			super(name, arguments, usesSecurity);
+		public Builder(InstantiationContext context, Config<?> config) {
+			super(context, config);
 		}
 
 		@Override
-		public GenericMethod copy(SearchExpression[] arguments) {
-			return new Traced(getName(), arguments, usesSecurity());
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 
 		@Override
-		protected Object read(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-			return definitions.access(self, part, usesSecurity());
-		}
-
-		/**
-		 * Builder for {@link Traced}.
-		 */
-		public static class Builder extends AbstractSimpleMethodBuilder<Traced> {
-
-			/**
-			 * Creates a {@link Builder}.
-			 */
-			public Builder(InstantiationContext context, Config<?> config) {
-				super(context, config);
-			}
-
-			@Override
-			public ArgumentDescriptor descriptor() {
-				return DESCRIPTOR;
-			}
-
-			@Override
-			public Traced build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-				return new Traced(getName(), args, true);
-			}
-		}
-	}
-
-	/**
-	 * {@link OtherValueMethod} reading through {@link TLObject#tValue(TLStructuredTypePart)}.
-	 */
-	public static class Plain extends OtherValueMethod {
-
-		/**
-		 * Creates a {@link Plain}.
-		 */
-		protected Plain(String name, SearchExpression[] arguments, boolean usesSecurity) {
-			super(name, arguments, usesSecurity);
-		}
-
-		@Override
-		public GenericMethod copy(SearchExpression[] arguments) {
-			return new Plain(getName(), arguments, usesSecurity());
-		}
-
-		@Override
-		protected Object read(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-			return self.tValue(part);
-		}
-
-		/**
-		 * Builder for {@link Plain}.
-		 */
-		public static class Builder extends AbstractSimpleMethodBuilder<Plain> {
-
-			/**
-			 * Creates a {@link Builder}.
-			 */
-			public Builder(InstantiationContext context, Config<?> config) {
-				super(context, config);
-			}
-
-			@Override
-			public ArgumentDescriptor descriptor() {
-				return DESCRIPTOR;
-			}
-
-			@Override
-			public Plain build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-				return new Plain(getName(), args, true);
-			}
+		public OtherValueMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new OtherValueMethod(getName(), args, true);
 		}
 	}
 

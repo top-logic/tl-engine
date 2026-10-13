@@ -20,8 +20,6 @@ import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.search.expr.trace.ScriptTracer;
-import com.top_logic.model.search.expr.trace.TracingAccessRewriter;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -218,40 +216,21 @@ public final class EvalContext {
 	}
 
 	/**
-	 * Reads an attribute of an object on behalf of a function implemented in Java the way a script
-	 * access does.
-	 *
-	 * <p>
-	 * A function implemented in Java (a {@link GenericMethod} or a method of a
-	 * {@link com.top_logic.model.search.expr.config.operations.TLScriptFunctions} class) reads each
-	 * attribute of one of its arguments, or of an object reached from them, through this method, if
-	 * the attribute is a dependency of the script calling the function. In a
-	 * {@link ScriptTracer tracing evaluation}, the access is reported to the trace and the value is
-	 * read from the edited state of the object, if there is one. A form uses this to evaluate a
-	 * script over the values being edited and to evaluate it again when one of the attributes it
-	 * read changes. In all other evaluations, this is a plain read of the attribute.
-	 * </p>
-	 *
-	 * <p>
-	 * Reading the attribute through a generated wrapper getter or through
-	 * {@link TLObject#tValue(TLStructuredTypePart)} bypasses the trace: the script does not depend
-	 * on the attribute, and the edited value is not seen.
-	 * </p>
+	 * Reads an attribute of an object the way a script access does.
 	 *
 	 * @param self
 	 *        The object to access, <code>null</code> results in <code>null</code>.
 	 * @param part
 	 *        The attribute to look up.
 	 * @param withSecurity
-	 *        Whether the read access of the current user to the attribute must be checked. A
-	 *        function that is a {@link com.top_logic.model.search.WithSecurityCheck} passes its
-	 *        security flag.
+	 *        Whether the read access of the current user to the attribute must be checked.
 	 * @return The value of the given attribute, an empty value, if the read access is denied.
-	 *
-	 * @see TracingAccessRewriter#access(EvalContext, TLObject, TLStructuredTypePart, boolean)
 	 */
 	public Object access(TLObject self, TLStructuredTypePart part, boolean withSecurity) {
-		return TracingAccessRewriter.access(this, self, part, withSecurity);
+		if (self == null) {
+			return null;
+		}
+		return AccessLike.lookupValue(self, part, withSecurity);
 	}
 
 	/**

@@ -50,6 +50,7 @@ import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 
 /**
@@ -168,8 +169,22 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 		tHandle().touch(); // Touch Object to provoke modification
     }
     
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the read is traced and resolved through the scope's overlays.
+	 * </p>
+	 */
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
+		TracingScope scope = TracingScope.current();
+		if (scope != null) {
+			Object overlayValue = scope.read(this, part);
+			if (overlayValue != TracingScope.PLAIN) {
+				return overlayValue;
+			}
+		}
 		return getValue(part.getName());
 	}
 

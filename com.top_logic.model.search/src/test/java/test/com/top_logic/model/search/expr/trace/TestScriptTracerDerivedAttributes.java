@@ -14,19 +14,18 @@ import junit.framework.Test;
 
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.form.TracedValueComputation;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
-import com.top_logic.model.search.expr.trace.TracingAccessRewriter;
 import com.top_logic.model.util.Pointer;
 
 /**
- * Test for {@link ScriptTracer} reading attributes whose storage is a
- * {@link TracedValueComputation}.
+ * Test for {@link ScriptTracer} reading derived attributes computed by a script.
  *
- * @see TracingAccessRewriter#lookupTraced(com.top_logic.model.search.expr.EvalContext, TLObject,
- *      TLStructuredTypePart, boolean)
+ * <p>
+ * The reads of the derived attribute's computation are traced in the {@link TracingScope} of the
+ * evaluation and resolved through its overlays.
+ * </p>
  */
 @SuppressWarnings("javadoc")
 public class TestScriptTracerDerivedAttributes extends AbstractScriptTracerTest {

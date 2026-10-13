@@ -27,8 +27,7 @@
 			<instance>
 				<methods>
 					<!-- Test functions of TestScriptTracerJavaFunctions. -->
-					<method name="testTracedOtherValue" class="test.com.top_logic.model.search.expr.trace.OtherValueMethod$Traced$Builder"/>
-					<method name="testPlainOtherValue" class="test.com.top_logic.model.search.expr.trace.OtherValueMethod$Plain$Builder"/>
+					<method name="testOtherValueMethod" class="test.com.top_logic.model.search.expr.trace.OtherValueMethod$Builder"/>
 				</methods>
 			</instance>
 		</config>

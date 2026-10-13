@@ -53,6 +53,13 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 	 * Looks up the given attribute from the given object.
 	 *
 	 * <p>
+	 * An object that is no longer {@link TLObject#tValid() valid} (a persistent object deleted in
+	 * the meantime) counts as a missing value: its attributes read as the empty value of the
+	 * attribute ({@link TLModelUtil#getEmptyValue(TLStructuredTypePart)}), the same as a denied
+	 * read.
+	 * </p>
+	 *
+	 * <p>
 	 * When <code>withSecurity</code> is requested, the access is denied (an empty value is returned)
 	 * if the user must not read the attribute on the base object {@code self}.
 	 * </p>
@@ -77,6 +84,9 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 	 * @return The value of the given attribute.
 	 */
 	static Object lookupValue(TLObject self, TLStructuredTypePart part, boolean withSecurity) {
+		if (!self.tValid()) {
+			return TLModelUtil.getEmptyValue(part);
+		}
 		if (withSecurity) {
 			boolean hasReadRights = ModelAccessRights.getInstance().isReadAllowed(self, part);
 			if (!hasReadRights) {

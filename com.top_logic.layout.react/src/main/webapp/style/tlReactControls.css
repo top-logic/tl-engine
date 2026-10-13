@@ -4834,7 +4834,7 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* Why the target under the running drag refuses it, next to the pointer (left/top set by the
-   board), above every other layer like a tooltip. The table draws its hint as a tl-popover
+   board), above every other layer like a tooltip. Table and tree draw their hint as a tl-popover
    (design system, wave 3b); the board keeps this rule until its own wave. */
 .tlKanbanBoard__dropHint {
 	position: fixed;

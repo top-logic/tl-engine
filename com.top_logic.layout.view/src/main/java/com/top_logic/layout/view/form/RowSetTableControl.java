@@ -35,6 +35,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
@@ -838,6 +839,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		// Create a fresh ViewContext for the dialog scope.
 		ViewContext dialogContext = new DefaultViewContext(_context);
+		List<ViewChannel> dialogChannels = new ArrayList<>();
 
 		// Inject the row object into the configured input channel.
 		String inputChannelName = _detailDialogConfig.getInputChannel();
@@ -845,6 +847,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			DefaultViewChannel inputChannel = new DefaultViewChannel(inputChannelName);
 			inputChannel.set(rowObject);
 			dialogContext.registerChannel(inputChannelName, inputChannel);
+			dialogChannels.add(inputChannel);
 		}
 
 		// Inject the edit mode state into the configured edit-mode channel.
@@ -853,10 +856,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			DefaultViewChannel editModeChannel = new DefaultViewChannel(editModeChannelName);
 			editModeChannel.set(Boolean.valueOf(formControl().isEditMode()));
 			dialogContext.registerChannel(editModeChannelName, editModeChannel);
+			dialogChannels.add(editModeChannel);
 		}
 
 		// Create the dialog control tree from the view definition.
 		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
+		ObservingChannels.observeWhileDisplayed(dialogControl, dialogChannels, dialogContext);
 
 		// Open the dialog.
 		mgr.openDialog(false, dialogControl, result -> {

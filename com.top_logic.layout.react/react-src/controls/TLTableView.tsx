@@ -1,7 +1,9 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { NO_DRAG_IMAGE } from './drop-hint';
+import { DropHint } from './DropHint';
+import type { HintAnchor } from './DropHint';
 import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
 import { buttonClassName } from './button/buttonClassName';
@@ -155,48 +157,24 @@ interface RowState {
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
-/** Where a running drag hovers the table: a row and the position within it, or the table itself. */
+/** Command applying a drop (DropSupport.CMD_DROP). */
+const CMD_DROP = 'drop';
+
+/** State word (drag.css) of each marker drawn at a row. */
+const ROW_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
+  before: 'drop-before',
+  after: 'drop-after',
+  into: 'drop-onto',
+};
+
+/** Where a running drag hovers the table: a row and the zone within it, or beside the rows. */
 interface DropState {
-  /** The hovered row, `null` for the table as a whole. */
+  /** The hovered row, `null` beside the rows. */
   row: string | null;
-  position: TLDropPosition;
+  zone: TLDropZone;
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
 }
-
-/**
- * Where the hint on a refused drop target stands: at the pointer's `x`, beside the drag image, which
- * spans `height` pixels down from `y` (see {@link TLRunningDrag.image}).
- */
-interface HintAnchor {
-  x: number;
-  y: number;
-  height: number;
-}
-
-/**
- * Why the target under the running drag refuses it: a tl-popover at the pointer, below the drag image
- * or, where the viewport has no room there, above it - never on it, since the browser draws the drag
- * image over everything (a native tooltip is not shown while a drag runs). The table moves it through
- * `moveRef` on every dragover, so only the hint renders while the pointer moves, not the table.
- */
-const DropHint: React.FC<{
-  reason: string;
-  start: HintAnchor;
-  moveRef: React.MutableRefObject<((at: HintAnchor) => void) | null>;
-}> = ({ reason, start, moveRef }) => {
-  const [at, setAt] = React.useState(start);
-  React.useEffect(() => {
-    moveRef.current = (next) => setAt((p) => (p.x === next.x && p.y === next.y && p.height === next.height ? p : next));
-    return () => { moveRef.current = null; };
-  }, [moveRef]);
-  const { setFloating, style } = usePopover({ open: true, anchor: at, placement: 'bottom-start' });
-  return createPortal(
-    <div ref={setFloating} className="tl-popover tl-table__hint tl-type-body" role="status" style={style}>
-      {reason}
-    </div>,
-    document.body);
-};
 
 const MIN_COL_WIDTH = 50;
 
@@ -371,9 +349,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const serverSearch = (state.search as string) ?? '';
   const filterSaving = (state.filterSaving as boolean) ?? false;
   const dragEnabled = (state.dragEnabled as boolean) ?? false;
-  const dragType = (state.dragType as string) ?? '';
+  const dragKind = (state.dragKind as string | null) ?? undefined;
+  const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
-  const dropOnRows = (state.dropOnRows as boolean) ?? false;
+  const dropModes = (state.dropModes as string[]) ?? [];
+  // Rows forming a tree are split as tree nodes: an insertion has a middle part going into the row.
+  const dropTreeZones = (state.dropTreeZones as boolean) ?? false;
+  const zoneSplit = dropTreeZones ? treeZoneSplit(dropModes) : flatZoneSplit(dropModes);
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const sortedColumnCount = React.useMemo(
@@ -432,6 +414,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const [draggedRow, setDraggedRow] = React.useState<{ id: string; selection: boolean } | null>(null);
   // The grabbed row may scroll out of the rendered window and take its dragend handler with it.
   React.useEffect(() => (draggedRow ? onDragEnd(() => setDraggedRow(null)) : undefined), [draggedRow]);
+
+  // The marker of the drop accepted at the hovered place. Until the verdict on a newly hovered place
+  // arrives, the marker of the place hovered before stays, so the marker does not flicker.
+  const lastAcceptedRef = React.useRef<DropVerdict | null>(null);
+  if (dropState === null || dropRefused) {
+    lastAcceptedRef.current = null;
+  } else if (dropVerdict !== undefined) {
+    lastAcceptedRef.current = dropVerdict;
+  }
+  const dropMarker = lastAcceptedRef.current?.marker;
+  const dropMarkerKey = lastAcceptedRef.current?.markerKey;
 
   // A drag hovering this table may end without any event reaching it: a refused drop is not
   // dispatched here, and the source's dragend reaches the source's control only.
@@ -742,25 +735,28 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       source: controlId,
       keys: [row.id],
       selection: row.selected,
-      type: dragType,
+      kind: dragKind,
     });
     const dragged = { id: row.id, selection: row.selected };
     // A drag cancelled before the image was taken has already ended: no row stays marked dragging.
     afterDragImage(() => { if (runningDrag()) setDraggedRow(dragged); });
-  }, [controlId, dragType]);
+  }, [controlId, dragKind]);
 
-  /** Which row an event points at, and where within it, or the table itself. */
+  /**
+   * Which row an event points at and the zone within it, split as the announced drop modes need,
+   * or no row where the pointer is beside the rows or the rows have no zones.
+   */
   const dropTargetAt = React.useCallback(
-    (event: React.DragEvent): { row: string | null; position: TLDropPosition } => {
-      if (dropOnRows && event.target instanceof Element) {
+    (event: React.DragEvent): { row: string | null; zone: TLDropZone } => {
+      if (zoneSplit !== 'none' && event.target instanceof Element) {
         const rowElement = event.target.closest('.tl-table__row') as HTMLElement | null;
         const key = rowElement?.dataset.dropRow;
         if (rowElement && key) {
-          return { row: key, position: dropPositionAt(event.clientY, rowElement) };
+          return { row: key, zone: dropZoneAt(event.clientY, rowElement, zoneSplit) };
         }
       }
-      return { row: null, position: 'none' };
-    }, [dropOnRows]);
+      return { row: null, zone: 'none' };
+    }, [zoneSplit]);
 
   const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
     if (columnDragging) {
@@ -780,10 +776,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (header) header.scrollLeft = body.scrollLeft;
       return;
     }
-    // Coarse acceptance from the payload's type tag alone: during a drag the payload itself is
-    // unreadable, and the tag is what the table declares its accepted types against. Whether this
+    // Coarse acceptance from the payload's kind alone: during a drag the payload itself is
+    // unreadable, and the kind is what the table declares its accepted drags against. Whether this
     // particular drop is possible is the server's answer, given once it arrives.
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
     const drag = runningDrag();
@@ -796,7 +792,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (drag) {
       // The payload is unreadable here, but a drag started in this document is known: ask the
       // server once per drag and target whether a drop there would be accepted.
-      probe = drag.id + '|' + (target.row ?? '') + '|' + target.position;
+      probe = drag.id + '|' + (target.row ?? '') + '|' + target.zone;
       let probes = probesRef.current;
       if (!probes || probes.drag !== drag.id) {
         probes = { drag: drag.id, sent: new Set() };
@@ -808,7 +804,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           source: drag.payload.source,
           keys: drag.payload.keys.join(','),
           selection: drag.payload.selection,
-          position: target.position,
+          zone: target.zone,
           drag: drag.id,
           probe,
         };
@@ -819,7 +815,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
     }
     setDropState((previous) =>
-      previous && previous.row === target.row && previous.position === target.position
+      previous && previous.row === target.row && previous.zone === target.zone
           && previous.probe === probe
         ? previous
         : { ...target, probe });
@@ -831,7 +827,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, [columnDragging, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
+  }, [columnDragging, dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the table's own descendants fires a leave on each one left behind; only leaving
@@ -842,7 +838,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleRootDrop = React.useCallback((event: React.DragEvent) => {
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       // Not a row drag: a column heading released anywhere in the table lands where its mark shows
       // (useListReorder).
       if (columnDragging) columnReorder.containerProps.onDrop?.(event);
@@ -860,15 +856,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         // no comma.
         keys: payload.keys.join(','),
         selection: payload.selection,
-        position: target.position,
+        zone: target.zone,
       };
       if (target.row) {
-        // Named only for a drop on a row; a drop on the table as a whole names none.
+        // Named only for a drop on a row; a drop beside the rows names none.
         args.targetKey = target.row;
       }
-      sendCommand('drop', args);
+      sendCommand(CMD_DROP, args);
     }
-  }, [columnDragging, columnReorder.containerProps, dropAccepts, dropTargetAt, sendCommand]);
+  }, [columnDragging, columnReorder.containerProps, dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
@@ -1380,8 +1376,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return col.sortDirection === 'asc' ? 'ascending' : 'descending';
   };
 
-  const dropWord = (row: RowState) =>
-    dropState && dropState.row === row.id ? (dropRefused ? 'drop-refused' : 'drop-' + dropState.position) : undefined;
+  // The marker the server's verdict names, at the row it names; a refusal at the hovered row.
+  const dropWord = (row: RowState) => {
+    if (!dropState) return undefined;
+    if (dropRefused) return dropState.row === row.id ? 'drop-refused' : undefined;
+    return dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id ? ROW_MARKER_STATE[dropMarker] : undefined;
+  };
   const draggedWord = (row: RowState) =>
     draggedRow && (row.id === draggedRow.id || (draggedRow.selection && row.selected)) ? 'dragging' : undefined;
 
@@ -1400,7 +1400,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tl-table', fillClass)}
-      data-tl-state={dropState && dropState.row === null ? (dropRefused ? 'drop-refused' : 'drop-onto') : undefined}
+      data-tl-state={dropState ? (dropRefused
+          ? (dropState.row === null ? 'drop-refused' : undefined)
+          : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}

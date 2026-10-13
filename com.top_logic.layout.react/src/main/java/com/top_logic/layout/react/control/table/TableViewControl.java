@@ -24,7 +24,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -35,13 +34,18 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
-import com.top_logic.layout.react.control.dnd.DropEvent;
+import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMarker;
+import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropPlace;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
-import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
+import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
-import com.top_logic.layout.react.control.dnd.DropVerdict;
+import com.top_logic.layout.react.control.dnd.DropTreeNavigation;
+import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.dnd.TreeDropPlace;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -62,6 +66,7 @@ import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowHierarchy;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NamedFilter;
@@ -93,11 +98,27 @@ import com.top_logic.util.Resources;
  * <p>
  * Rows are dragged and dropped through the seam of
  * {@link com.top_logic.layout.react.control.dnd}: {@link #setDragSource(String, Predicate)} makes
- * the rows draggable under a type tag, {@link #setDropTarget(DropTarget)} accepts a drop of such
- * objects and applies it. A drag names client-side row keys only, and each control resolves the keys
- * it owns, so the two ends of a drag between two tables need know nothing of each other. While a drag
- * hovers the table, the client probes each row and position it passes for the
- * {@link DropTarget#check(DropEvent) verdict} of a drop there, and shows a refusal with its reason.
+ * the rows draggable as drags of a kind, {@link #setDropTarget(DropTarget)} accepts a drop of the
+ * kinds its target accepts and applies it. A drag names client-side row keys only, and each control
+ * resolves the keys it owns, so the two ends of a drag between two tables need know nothing of each
+ * other. While a drag hovers the table, the client probes each row and {@link DropZone zone} it
+ * passes for the {@link DropTarget#check(DropRequest) verdict} of a drop there, draws the
+ * {@link DropMarker marker} of an accepted drop and shows a refusal with its reason.
+ * </p>
+ *
+ * <p>
+ * The table resolves a row and a zone into the {@link DropLocation} of each {@link DropMode} as a
+ * flat list: a drop {@link DropMode#ONTO onto} a row in any of its zones is made onto that row; an
+ * {@link DropMode#ORDERED insertion} in the upper part of a row inserts before it, in the lower part
+ * before the next data row (at the end below the last one), and beside the rows at the end; a drop
+ * on the {@link DropMode#CONTROL table as a whole} is one wherever it is made.
+ * </p>
+ *
+ * <p>
+ * A table whose rows form a tree - a {@link TableView#hierarchy() hierarchy} - resolves them by the
+ * rules of a {@link TreeDropPlace} instead, as a tree does: an insertion is made under a parent row
+ * before one of its children, and the client splits a row as a tree node (see
+ * {@link #DROP_TREE_ZONES}).
  * </p>
  *
  * <p>
@@ -178,6 +199,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
 	private static final String TREE_MODE = "treeMode";
+
+	/**
+	 * State key telling the client to split a row into the {@link DropZone zones} of a tree node
+	 * rather than those of an item of a flat list: a row whose drops are resolved by the rules of a
+	 * {@link TreeDropPlace} has a middle third for an insertion into it.
+	 */
+	public static final String DROP_TREE_ZONES = "dropTreeZones";
 
 	/**
 	 * State key holding the name of the column the rows are grouped by, {@link #NOTHING} when they
@@ -310,14 +338,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** State key telling the client whether the rows may be dragged. */
 	private static final String DRAG_ENABLED = DropSupport.DRAG_ENABLED;
 
-	/** State key holding the {@link #dragType() type tag} the client tags a drag payload with. */
-	private static final String DRAG_TYPE = DropSupport.DRAG_TYPE;
-
-	/** State key holding the {@link DropTarget#acceptedTypes() type tags} a drop is accepted of. */
-	private static final String DROP_ACCEPTS = DropSupport.DROP_ACCEPTS;
-
-	/** State key telling the client whether a single row is a drop target of its own. */
-	private static final String DROP_ON_ROWS = "dropOnRows";
+	/** @see DropSupport#DRAG_KIND */
+	private static final String DRAG_KIND = DropSupport.DRAG_KIND;
 
 	/** @see DropSupport#DROP_VERDICTS */
 	private static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
@@ -477,20 +499,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
 
-	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
-	private String _dragType;
+	/** Whether rows may be dragged at all. */
+	private boolean _dragEnabled;
+
+	/** The kind of a drag of rows, {@code null} for a drag without a kind. */
+	private String _dragKind;
 
 	/**
-	 * Which rows may be dragged while {@link #_dragType} is set, {@code null} when every data row may
-	 * be.
+	 * Which rows may be dragged while {@link #_dragEnabled} is set, {@code null} when every data row
+	 * may be.
 	 */
 	private Predicate<? super R> _draggable;
 
 	/** The drop protocol shared with every control accepting drops. */
 	private final DropSupport _dropSupport = new DropSupport(this);
-
-	/** What dropped objects are done with, or {@code null} while the table accepts no drop. */
-	private DropTarget _dropTarget;
 
 	/**
 	 * Creates a {@link TableViewControl}.
@@ -590,24 +612,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Makes all data rows draggable, announcing them under the given type tag.
+	 * Makes all data rows draggable as drags of the given kind.
 	 *
-	 * @param dragType
-	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
 	 *
 	 * @see #setDragSource(String, Predicate)
 	 */
-	public void setDragSource(String dragType) {
-		setDragSource(dragType, null);
+	public void setDragSource(String dragKind) {
+		setDragSource(dragKind, null);
 	}
 
 	/**
-	 * Makes the rows draggable, announcing them under the given type tag.
+	 * Makes the rows draggable as drags of the given kind.
 	 *
 	 * <p>
 	 * Dragging a selected row drags the whole {@link #getSelectedKeys() selection}, an unselected row
-	 * drags itself. What a receiving {@link DropTarget} gets are the row business objects; the tag is
-	 * what it accepts the drop by.
+	 * drags itself. What a receiving {@link DropTarget} gets are the row business objects; the kind
+	 * is what it accepts the drop by.
 	 * </p>
 	 *
 	 * <p>
@@ -616,20 +638,36 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * never draggable.
 	 * </p>
 	 *
-	 * @param dragType
-	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
 	 * @param draggable
 	 *        Which row business objects may be dragged, {@code null} for all of them. Asked whenever
 	 *        rows are rendered; when its answer changes for other reasons, call
 	 *        {@link #refreshDragSource()}.
+	 *
+	 * @see #setDragEnabled(boolean)
 	 */
-	public void setDragSource(String dragType, Predicate<? super R> draggable) {
+	public void setDragSource(String dragKind, Predicate<? super R> draggable) {
 		Object update = beginUpdate();
 		try {
-			_dragType = dragType;
+			_dragKind = dragKind;
 			_draggable = draggable;
-			putState(DRAG_ENABLED, Boolean.valueOf(dragType != null));
-			putState(DRAG_TYPE, dragType == null ? NOTHING : dragType);
+			putState(DRAG_KIND, dragKind);
+			setDragEnabled(true);
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Switches dragging of rows on or off, keeping the kind and the predicate given to
+	 * {@link #setDragSource(String, Predicate)}.
+	 */
+	public void setDragEnabled(boolean enabled) {
+		Object update = beginUpdate();
+		try {
+			_dragEnabled = enabled;
+			putState(DRAG_ENABLED, Boolean.valueOf(enabled));
 			updateViewport(_viewportStart, _viewportCount);
 		} finally {
 			commitUpdate(update);
@@ -652,22 +690,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        What dropped objects are done with, or {@code null} to accept no drop again.
 	 */
 	public void setDropTarget(DropTarget dropTarget) {
-		_dropTarget = dropTarget;
+		_dropSupport.setTarget(dropTarget);
 		refreshDropTarget();
 	}
 
 	/**
-	 * Announces the {@link DropTarget#acceptedTypes() accepted type tags} and whether
-	 * {@link DropTarget#dropOnRows() rows are drop targets} to the client again, after the
+	 * Announces the {@link DropTarget#acceptedKinds() accepted kinds} and the
+	 * {@link DropTarget#dropModes() modes} of the drop operations to the client again, after the
 	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
 	 */
 	public void refreshDropTarget() {
-		DropTarget dropTarget = _dropTarget;
 		Object update = beginUpdate();
 		try {
-			putState(DROP_ACCEPTS,
-				dropTarget == null ? List.of() : List.copyOf(dropTarget.acceptedTypes()));
-			putState(DROP_ON_ROWS, Boolean.valueOf(dropTarget != null && dropTarget.dropOnRows()));
+			_dropSupport.targetState().forEach(this::putState);
 		} finally {
 			commitUpdate(update);
 		}
@@ -937,7 +972,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
-			if (_dragType != null) {
+			if (_dragEnabled) {
 				rowState.put(ROW_DRAGGABLE, Boolean.valueOf(isDraggableRow(row)));
 			}
 			if (treeMode()) {
@@ -1440,6 +1475,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		String grouped = getGroupedColumn();
 		putState(GROUPING, grouped == null ? NOTHING : grouped);
 		putState(TREE_MODE, Boolean.valueOf(treeMode()));
+		putState(DROP_TREE_ZONES, Boolean.valueOf(rowTree() != null));
+	}
+
+	/**
+	 * The tree the rows form, {@code null} while they form none - a flat table, and a grouped one,
+	 * whose group headers stand for no object.
+	 */
+	private RowHierarchy<R> rowTree() {
+		return getGroupedColumn() != null ? null : _view.hierarchy();
 	}
 
 	/**
@@ -1642,7 +1686,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * A plain (unmodified) row selection — a {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} — becomes
 	 * a {@link #CMD_SELECT_BY_KEY} of the row's business identity, a {@link #CMD_ACTIVATE} becomes a
 	 * {@link #CMD_ACTIVATE_BY_KEY} of the same, and a {@link #CMD_DROP} becomes a
-	 * {@link #CMD_DROP_OBJECTS} naming the dragged objects and the target row, so the recording
+	 * {@link #CMD_DROP_OBJECTS} naming the dragged objects and the location of the drop, so the recording
 	 * survives sorting and a fresh session. Modifier selections (ctrl/shift range/toggle) are recorded
 	 * verbatim — their semantics are index/anchor based.
 	 * </p>
@@ -1959,14 +2003,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	// -- Drag and drop --
 
 	@Override
-	public String dragType() {
-		return _dragType;
+	public boolean isDragEnabled() {
+		return _dragEnabled;
+	}
+
+	@Override
+	public String dragKind() {
+		return _dragKind;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean isDraggable(Object object) {
-		return _dragType != null && (_draggable == null || _draggable.test((R) object));
+		return _dragEnabled && (_draggable == null || _draggable.test((R) object));
 	}
 
 	/** Whether the given row offers a drag, see {@link #setDragSource(String, Predicate)}. */
@@ -2004,113 +2053,255 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * Applies a drop the client made on this table.
 	 *
 	 * <p>
-	 * The arguments name client-side identities only, so both ends of the gesture are resolved by the
-	 * control that owns them (see {@link #resolveDrop(DropArguments)}). A drop the resolution or the
-	 * {@link DropTarget#check(DropEvent) drop target's check} refuses is answered with a warning
-	 * naming the reason and not applied - the client-side acceptance check that precedes it narrows
-	 * the gesture for the user, it does not decide it.
+	 * The row the drop names is resolved into the place the drop was made at (see
+	 * {@link #dropPlace(String, DropZone)}), everything else is
+	 * {@link DropSupport#drop(DropArguments, DropPlace.Resolver) shared} with every control accepting
+	 * drops.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
 	HandlerResult handleDrop(DropArguments args) {
-		ResolvedDrop resolved = resolveDrop(args);
-		if (resolved.refusal() != null) {
-			return DropSupport.refused(resolved.refusal());
-		}
-		return applyDrop(resolved.event());
+		return _dropSupport.drop(args, this::dropPlace);
 	}
 
 	/**
 	 * Answers whether a drop right where a drag hovers would be accepted, without applying it.
 	 *
 	 * <p>
-	 * The drop is resolved exactly like {@link #handleDrop(DropArguments) a drop} and then put to the
-	 * {@link DropTarget#check(DropEvent) drop target's check}. The verdict is added to
-	 * {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe() probe's identifier},
-	 * refusal reasons resolved to the user's language. The probe is technical: it is neither
-	 * recorded nor offered as an action, and it never fails, since a refusal is its answer.
+	 * The verdict is added to {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe()
+	 * probe's identifier}, see {@link DropSupport#probe(DropProbeArguments, DropPlace.Resolver)}. The
+	 * probe is technical: it is neither recorded nor offered as an action, and it never fails, since
+	 * a refusal is its answer.
 	 * </p>
 	 */
 	@ReactCommandHandler(value = CMD_DROP_PROBE, technical = true)
 	void handleDropProbe(DropProbeArguments args) {
-		ResolvedDrop resolved = resolveDrop(args);
-		ResKey refusal = resolved.refusal();
-		if (refusal == null) {
-			refusal = _dropTarget.check(resolved.event()).reason();
-		}
-		putState(DROP_VERDICTS, _dropSupport.answerProbe(args, refusal));
+		putState(DROP_VERDICTS, _dropSupport.probe(args, this::dropPlace));
 	}
 
 	/**
-	 * A drop resolved from its client-side identities: either the {@link DropEvent} to announce, or
-	 * the reason it cannot be made.
+	 * The place of a drop made in the given zone of the row with the given client-side key, or
+	 * beside the rows.
 	 *
-	 * @param event
-	 *        The drop to announce, {@code null} if it is refused.
-	 * @param refusal
-	 *        Why the drop cannot be made, {@code null} if it can.
+	 * @return The place, {@code null} if the key names a row this table no longer displays.
+	 *
+	 * @see DropPlace.Resolver#place(String, DropZone)
 	 */
-	private record ResolvedDrop(DropEvent event, ResKey refusal) {
+	private DropPlace dropPlace(String rowKey, DropZone zone) {
+		RowHierarchy<R> tree = rowTree();
+		if (tree != null) {
+			return treePlace(tree, rowKey, zone);
+		}
+		if (rowKey == null) {
+			return new RowPlace(-1, DropZone.NONE);
+		}
+		int rowIndex = rowIndex(rowKey);
+		if (rowAt(rowIndex) == null) {
+			return null;
+		}
+		return new RowPlace(rowIndex, zone);
+	}
 
-		static ResolvedDrop refused(ResKey reason) {
-			return new ResolvedDrop(null, reason);
+	/**
+	 * The place of a drop on the rows of a tree, see {@link #dropPlace(String, DropZone)}.
+	 */
+	private DropPlace treePlace(RowHierarchy<R> tree, String rowKey, DropZone zone) {
+		RowNavigation navigation = new RowNavigation(tree);
+		if (rowKey == null) {
+			return TreeDropPlace.beside(navigation);
+		}
+		Row<R> row = rowById(rowKey);
+		if (!isDataRow(row)) {
+			return null;
+		}
+		return new TreeDropPlace<>(navigation, row, rowKey, zone);
+	}
+
+	/**
+	 * The rows of a tree as the {@link TreeDropPlace drop rules} see them.
+	 */
+	private static final class RowNavigation implements DropTreeNavigation<Row<?>> {
+
+		private final RowHierarchy<?> _tree;
+
+		RowNavigation(RowHierarchy<?> tree) {
+			_tree = tree;
+		}
+
+		@Override
+		public List<? extends Row<?>> topLevel() {
+			return _tree.roots();
+		}
+
+		@Override
+		public Object topLevelParent() {
+			return _tree.rootParent();
+		}
+
+		@Override
+		public Row<?> parent(Row<?> row) {
+			return parentOf(_tree, row);
+		}
+
+		@Override
+		public List<? extends Row<?>> children(Row<?> row) {
+			return childrenOf(_tree, row);
+		}
+
+		@Override
+		public boolean isExpanded(Row<?> row) {
+			return row.expanded();
+		}
+
+		@Override
+		public Object businessObject(Row<?> row) {
+			return row.data();
+		}
+
+		@SuppressWarnings("unchecked")
+		private static <T> Row<?> parentOf(RowHierarchy<T> tree, Row<?> row) {
+			return tree.parent((Row<T>) row);
+		}
+
+		@SuppressWarnings("unchecked")
+		private static <T> List<Row<T>> childrenOf(RowHierarchy<T> tree, Row<?> row) {
+			return tree.children((Row<T>) row);
 		}
 
 	}
 
 	/**
-	 * Resolves the client-side identities a drop names.
+	 * A place of a drop in this table, resolved as in a flat list.
 	 *
 	 * <p>
-	 * The dragged objects are resolved by the {@link DragSourceControl} the
-	 * {@link DropArguments#getSource() source id} designates, the target by this table. A drop of a
-	 * type the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
-	 * no drag source, including an object the source does not let be
-	 * {@link DragSourceControl#isDraggable(Object) dragged}, or naming a row this table no longer
-	 * displays is refused.
+	 * An insertion from the upper part of a row is marked before that row, one from its lower part
+	 * after it, one beside the rows after the last data row - or on the table as a whole, if it has
+	 * none.
 	 * </p>
 	 */
-	private ResolvedDrop resolveDrop(DropArguments args) {
-		DropTarget dropTarget = _dropTarget;
-		if (dropTarget == null) {
-			return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		DropSupport.Dragged dragged = _dropSupport.dragged(dropTarget.acceptedTypes(), args);
-		if (dragged.refusal() != null) {
-			return ResolvedDrop.refused(dragged.refusal());
+	private final class RowPlace implements DropPlace {
+
+		/** The index of the row the drop was made on, {@code -1} for a drop beside the rows. */
+		private final int _rowIndex;
+
+		/** The zone of the row the drop was made in, {@link DropZone#NONE} without a row. */
+		private final DropZone _zone;
+
+		RowPlace(int rowIndex, DropZone zone) {
+			_rowIndex = rowIndex;
+			_zone = rowIndex < 0 ? DropZone.NONE : zone;
 		}
 
-		Row<R> targetRow = null;
-		DropPosition position = DropPosition.NONE;
-		if (dropTarget.dropOnRows()) {
-			position = DropPosition.fromWire(args.getPosition());
-			if (position == null) {
-				return ResolvedDrop.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-			}
-			String targetKey = args.getTargetKey();
-			if (targetKey != null && !targetKey.isEmpty()) {
-				targetRow = rowById(targetKey);
-				if (targetRow == null) {
-					return ResolvedDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
-				}
-			}
+		@Override
+		public DropLocation location(DropMode mode) {
+			return locationOf(mode, _rowIndex, _zone);
 		}
 
-		return new ResolvedDrop(new DropEvent(dragged.source(), dragged.objects(),
-			targetRow == null ? null : targetRow.data(), position), null);
+		@Override
+		public DropMarker marker(DropLocation location) {
+			return markerOf(location, _rowIndex, _zone, markerRow());
+		}
+
+		@Override
+		public String markerKey(DropMarker marker) {
+			return marker == DropMarker.CONTROL ? null : ROW_ID_PREFIX + markerRow();
+		}
+
+		/** The index of the row a marker of an item is drawn at, {@code -1} if there is none. */
+		private int markerRow() {
+			return _rowIndex >= 0 ? _rowIndex : lastDataRowIndex();
+		}
+
 	}
 
 	/**
-	 * Applies the given drop through the {@link #setDropTarget(DropTarget) drop target}, unless its
-	 * {@link DropTarget#check(DropEvent) check} refuses it.
+	 * The location of a drop of the given mode made in the given zone of the given row, as in a flat
+	 * list.
+	 *
+	 * @param rowIndex
+	 *        The index of the row the drop was made on, {@code -1} for a drop beside the rows.
+	 * @param zone
+	 *        The zone of the row the drop was made in.
+	 * @return The location, {@code null} if the place yields none for the mode.
 	 */
-	private HandlerResult applyDrop(DropEvent event) {
-		DropVerdict verdict = _dropTarget.check(event);
-		if (!verdict.isAccepted()) {
-			return DropSupport.refused(verdict.reason());
+	private DropLocation locationOf(DropMode mode, int rowIndex, DropZone zone) {
+		switch (mode) {
+			case CONTROL:
+				return new DropLocation.Control();
+			case ONTO: {
+				Row<R> row = rowAt(rowIndex);
+				if (row == null || zone == DropZone.NONE || row.kind() != RowKind.DATA || row.data() == null) {
+					return null;
+				}
+				return new DropLocation.Onto(row.data());
+			}
+			case ORDERED:
+				if (rowIndex < 0 || zone == DropZone.NONE) {
+					return new DropLocation.Insert(null, null);
+				}
+				switch (zone) {
+					case UPPER:
+						return new DropLocation.Insert(null, dataAtOrAfter(rowIndex));
+					case LOWER:
+						return new DropLocation.Insert(null, dataAtOrAfter(rowIndex + 1));
+					default:
+						return null;
+				}
 		}
-		_dropTarget.onDrop(event);
-		return HandlerResult.DEFAULT_RESULT;
+		throw new IllegalArgumentException("Unknown drop mode: " + mode);
+	}
+
+	/**
+	 * The business object of the first data row at or after the given index, {@code null} if there
+	 * is none.
+	 */
+	private R dataAtOrAfter(int index) {
+		int count = _view.rowCount();
+		for (int n = Math.max(0, index); n < count; n++) {
+			Row<R> row = rowAt(n);
+			if (isDataRow(row)) {
+				return row.data();
+			}
+		}
+		return null;
+	}
+
+	/** The index of the last data row, {@code -1} if there is none. */
+	private int lastDataRowIndex() {
+		for (int n = _view.rowCount() - 1; n >= 0; n--) {
+			if (isDataRow(rowAt(n))) {
+				return n;
+			}
+		}
+		return -1;
+	}
+
+	private static boolean isDataRow(Row<?> row) {
+		return row != null && row.kind() == RowKind.DATA && row.data() != null;
+	}
+
+	/**
+	 * The marker the client draws for a drop accepted at the given location, made in the given zone
+	 * of the row with the given index.
+	 *
+	 * @param rowIndex
+	 *        The index of the row the drop was made on, {@code -1} for a drop beside the rows.
+	 * @param markerRow
+	 *        The index of the row a marker of an item is drawn at, {@code -1} if there is none.
+	 */
+	private static DropMarker markerOf(DropLocation location, int rowIndex, DropZone zone, int markerRow) {
+		if (location instanceof DropLocation.Onto) {
+			return DropMarker.INTO;
+		}
+		if (location instanceof DropLocation.Insert) {
+			if (rowIndex >= 0 && zone == DropZone.UPPER) {
+				return DropMarker.BEFORE;
+			}
+			if (markerRow >= 0) {
+				return DropMarker.AFTER;
+			}
+		}
+		return DropMarker.CONTROL;
 	}
 
 	/**
@@ -2118,59 +2309,40 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * replay-stable counterpart of {@link #handleDrop} by client-side keys, which a recorded drop is
 	 * captured as so it survives sorting, filtering and a fresh session.
 	 *
-	 * @param args
-	 *        Carries the identities of the dropped objects and of the target row.
+	 * @see DropSupport#dropObjects(DropObjectsArguments, java.util.function.Predicate)
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
-		DropTarget dropTarget = _dropTarget;
-		if (dropTarget == null) {
-			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		DropPosition position = DropPosition.fromWire(args.getPosition());
-		if (position == null) {
-			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
-
-		List<ModelName> unresolved = new ArrayList<>();
-		List<Object> objects = DropSupport.locateAll(actionContext, args.getObjects(), unresolved);
-		Object target = null;
-		ModelName targetName = args.getTargetObject();
-		if (targetName != null) {
-			Object object = ScriptingModelKey.locate(actionContext, null, targetName);
-			// The target must be a row of this table: a recorded drop that lands somewhere else is a
-			// drift, not a drop.
-			Row<R> targetRow = object == null ? null : rowFor(object);
-			if (targetRow == null) {
-				unresolved.add(targetName);
-			} else {
-				target = targetRow.data();
-			}
-		}
-		// Drift contract: a recorded identity that no longer designates a present object is an
-		// explicit failure (replay reports success:false), never a partially applied drop. Unlike a
-		// refusal, a drift means the replayed script no longer matches the application, hence an
-		// error rather than a warning.
-		if (!unresolved.isEmpty() || objects.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
-		}
-
-		return applyDrop(new DropEvent(null, objects, target,
-			dropTarget.dropOnRows() ? position : DropPosition.NONE));
+		return _dropSupport.dropObjects(args, this::displaysLocation);
 	}
 
 	/**
-	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form, naming the target
-	 * row by its business object.
+	 * Whether the reference objects of the given location are rows of this table; a flat table has
+	 * no parent to insert under, the rows of a tree are checked as a tree's nodes are (see
+	 * {@link TreeDropPlace#displays(DropTreeNavigation, java.util.function.Function, DropLocation)}).
+	 */
+	private boolean displaysLocation(DropLocation location) {
+		RowHierarchy<R> tree = rowTree();
+		if (tree != null) {
+			return TreeDropPlace.displays(new RowNavigation(tree), this::rowFor, location);
+		}
+		if (location instanceof DropLocation.Onto onto) {
+			return onto.target() == null || rowFor(onto.target()) != null;
+		}
+		if (location instanceof DropLocation.Insert insert) {
+			return insert.parent() == null && (insert.before() == null || rowFor(insert.before()) != null);
+		}
+		return true;
+	}
+
+	/**
+	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form, naming the
+	 * location the drop target accepts the drop at.
 	 *
-	 * @see DropSupport#recordDrop(Map, java.util.function.Function)
+	 * @see DropSupport#recordDrop(Map, DropPlace.Resolver)
 	 */
 	private RecordedCommand recordDrop(Map<String, Object> arguments) {
-		return _dropSupport.recordDrop(arguments, key -> {
-			Row<R> row = rowById(key);
-			return row == null ? null : row.data();
-		});
+		return _dropSupport.recordDrop(arguments, this::dropPlace);
 	}
 
 	private Object keyAt(int rowIndex) {

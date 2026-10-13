@@ -1712,7 +1712,7 @@ a.tl-field-value:hover {
   margin-inline-start: auto;
 }
 
-/* Die Knöpfe erscheinen beim Zeigen oder wenn ein Element der Zeile den Fokus hat (der Griff ebenso, seine opacity
+/* Die Knöpfe erscheinen beim Zeigen oder wenn ein Element der Zeile den Tastaturfokus hat (der Griff ebenso, seine opacity
    steht in seiner Grundregel oben). opacity, nicht visibility: ein unsichtbarer Knopf bleibt mit Tab erreichbar und
    erscheint, sobald er den Fokus hat. */
 .tl-reorder-list__actions > .tl-button {
@@ -1724,10 +1724,12 @@ a.tl-field-value:hover {
     color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
+/* Fokus heißt hier Tastaturfokus (:focus-visible), nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf,
+   und die Zeile hielte Auge und Schloss sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). */
 .tl-reorder-list__item:hover > .tl-reorder-list__handle,
-.tl-reorder-list__item:focus-within > .tl-reorder-list__handle,
+.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__handle,
 .tl-reorder-list__item:hover > .tl-reorder-list__actions > .tl-button,
-.tl-reorder-list__item:focus-within > .tl-reorder-list__actions > .tl-button {
+.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__actions > .tl-button {
   opacity: 1;
 }
 

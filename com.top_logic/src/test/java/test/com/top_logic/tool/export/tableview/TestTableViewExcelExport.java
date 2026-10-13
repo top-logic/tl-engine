@@ -28,6 +28,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.PaneInformation;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import test.com.top_logic.base.office.ZipGaps;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
@@ -297,6 +298,20 @@ public class TestTableViewExcelExport extends BasicTestCase {
 		assertEquals("tickets.xls", data.getName());
 		try (InputStream in = data.getStream(); Workbook workbook = WorkbookFactory.create(in)) {
 			assertEquals("Login fails", workbook.getSheetAt(0).getRow(1).getCell(0).getStringCellValue());
+		}
+	}
+
+	/**
+	 * Writes a streaming export as a ZIP archive without gaps between its entries, which
+	 * LibreOffice would report as corrupt.
+	 */
+	public void testStreamingArchiveWithoutGaps() throws IOException {
+		DefaultTableView<Ticket> view = view();
+		TableViewExcelExport export = export().setStreaming(true);
+		BinaryData data = export.write(export.snapshot(view), "tickets", ExportMonitor.NONE).data();
+
+		try (InputStream in = data.getStream()) {
+			assertNull(ZipGaps.findGap(in.readAllBytes()));
 		}
 	}
 

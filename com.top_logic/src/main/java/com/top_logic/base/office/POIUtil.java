@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
@@ -355,6 +356,27 @@ public class POIUtil {
 		else {
 			return new HSSFWorkbook();
 		}
+	}
+
+	/**
+	 * Creates a streaming workbook that keeps only the given number of rows in memory.
+	 *
+	 * <p>
+	 * Always use this method instead of {@link SXSSFWorkbook#SXSSFWorkbook(int)}. The workbook is
+	 * written with {@link Zip64Mode#AsNeeded}, which gives a plain ZIP archive as
+	 * {@link XSSFWorkbook} writes it. POI's default {@link Zip64Mode#Always} writes ZIP64 data
+	 * descriptors without the ZIP64 extra field that announces them. LibreOffice then finds gaps
+	 * between the entries and reports the file as corrupt. The cost: a single sheet of more than 4
+	 * GB cannot be written, which is far beyond the size of a sheet Excel can open.
+	 * </p>
+	 *
+	 * @param rowAccessWindowSize
+	 *        The number of rows kept in memory, see {@link SXSSFWorkbook#SXSSFWorkbook(int)}.
+	 */
+	public static SXSSFWorkbook newStreamingWorkbook(int rowAccessWindowSize) {
+		SXSSFWorkbook workbook = new SXSSFWorkbook(rowAccessWindowSize);
+		workbook.setZip64Mode(Zip64Mode.AsNeeded);
+		return workbook;
 	}
 
 	/**

@@ -21,7 +21,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.streaming.SXSSFRow;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -398,7 +397,7 @@ public class TableViewExcelExport {
 		if (downloadName.toLowerCase(Locale.ROOT).endsWith(POIUtil.XLS_SUFFIX)) {
 			return new HSSFWorkbook();
 		}
-		return _streaming ? new SXSSFWorkbook(10) : new XSSFWorkbook();
+		return _streaming ? POIUtil.newStreamingWorkbook(10) : new XSSFWorkbook();
 	}
 
 	private String sheetName(Workbook workbook) {

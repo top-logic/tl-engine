@@ -17,7 +17,6 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.top_logic.base.office.POIUtil;
@@ -53,7 +52,7 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 	 * </p>
 	 */
 	public static ExcelWriter createStreamingWriter() {
-		return new ExcelWriter(new SXSSFWorkbook(10));
+		return new ExcelWriter(POIUtil.newStreamingWorkbook(10));
 	}
 
 	/**

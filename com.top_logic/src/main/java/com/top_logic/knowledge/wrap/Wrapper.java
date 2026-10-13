@@ -28,7 +28,6 @@ import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.searching.FullTextSearchable;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseRefetch;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -43,7 +42,7 @@ import com.top_logic.util.TLContext;
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public interface Wrapper extends TLNamed, Comparable<Wrapper>, ValueProvider, FullTextSearchable {
+public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>, ValueProvider, FullTextSearchable {
 
 	@Override
 	KnowledgeObject tHandle();
@@ -198,18 +197,6 @@ public interface Wrapper extends TLNamed, Comparable<Wrapper>, ValueProvider, Fu
      */
 	default KnowledgeBase getKnowledgeBase() {
 		return tKnowledgeBase();
-	}
-    
-    /**
-	 * Force the wrapper to refetch the cached values.
-	 * 
-	 * This method will be called (indirectly) by the {@link KnowledgeBaseRefetch}, which
-	 * synchronizes the content between different VMs (in a cluster).
-	 * 
-	 * @implNote The default implementation is a no-op.
-	 */
-	default void refetchWrapper() {
-		// Noithing to do here
 	}
     
 	@Override

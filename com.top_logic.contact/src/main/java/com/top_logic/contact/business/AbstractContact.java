@@ -36,7 +36,7 @@ import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.service.CompiledQueryCache;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
@@ -169,7 +169,7 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
 		}
 
 		@Override
-		protected AbstractWrapper getWrapper() {
+		protected Wrapper getWrapper() {
 			return AbstractContact.this;
 		}
 	}

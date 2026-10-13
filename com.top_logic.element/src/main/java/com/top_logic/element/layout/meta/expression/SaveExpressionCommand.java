@@ -16,7 +16,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.element.layout.meta.search.QueryUtils;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
 import com.top_logic.layout.form.FormContainer;
@@ -64,7 +63,7 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		super(context, config);
 	}
 
-	protected void publish(AbstractWrapper expression, FormContext parent) {
+	protected void publish(Wrapper expression, FormContext parent) {
 		FormGroup publishGroup = getPublishGroup(parent);
 		if (!publishGroup.isVisible()) {
 			return;
@@ -79,7 +78,7 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		}
 	}
 
-	protected void updateGroups(AbstractWrapper expression, List<Group> currentGroups, List<Group> selectedGroups) {
+	protected void updateGroups(Wrapper expression, List<Group> currentGroups, List<Group> selectedGroups) {
 		List<Group> selected = CollectionUtil.modifiableList(selectedGroups);
 		List<Group> current = CollectionUtil.modifiableList(currentGroups);
 
@@ -95,7 +94,7 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		deleteGroups(expression, current);
 	}
 
-	protected List<Group> getAssociatedGroups(AbstractWrapper expression) {
+	protected List<Group> getAssociatedGroups(Wrapper expression) {
 		return asGroups(MapBasedPersistancySupport.getGroupAssociation(expression));
 	}
 
@@ -106,7 +105,7 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		}
 	}
 
-	public static void deleteGroups(AbstractWrapper expression, List<Group> groups) {
+	public static void deleteGroups(Wrapper expression, List<Group> groups) {
 		for (int i = 0; i < groups.size(); i++) {
 			Group theGroup = groups.get(i);
 			MapBasedPersistancySupport.deleteGroupAssociation(expression, theGroup);

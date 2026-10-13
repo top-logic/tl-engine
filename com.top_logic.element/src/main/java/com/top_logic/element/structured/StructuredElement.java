@@ -22,7 +22,6 @@ import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.config.annotation.TLSingletons;
 import com.top_logic.element.core.CreateElementException;
 import com.top_logic.element.core.TraversalFactory;
-import com.top_logic.element.core.wrap.WrapperTLElement;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.model.DynamicModelService;
@@ -329,9 +328,8 @@ public interface StructuredElement extends Wrapper, TLScope {
 		if (Utils.equals(child, before)) {
 			throw new IllegalArgumentException("An element cannot be moved before itself. Element: " + debug(child));
 		}
-		if (!(child instanceof WrapperTLElement)) {
-			throw new IllegalArgumentException(
-				"Child to be moved is null or no WrapperTLElement. Child: " + debug(child));
+		if (child == null) {
+			throw new IllegalArgumentException("Child to be moved is null.");
 		}
 
 		List<? extends StructuredElement> oldChildren = getChildren();

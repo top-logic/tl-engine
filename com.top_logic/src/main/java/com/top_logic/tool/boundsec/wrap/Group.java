@@ -600,16 +600,15 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     /**
      * Bind the group to a BoundObject.
      *
-     * @param aBoundObject  the BoundObject has to be an AbstractBoundWrapper
-     * @throws IllegalStateException if the BoundObject is not an AbstractBoundWrapper
+     * @param aBoundObject  the BoundObject has to be a {@link BoundWrapper}
+     * @throws IllegalStateException if the BoundObject is not a {@link BoundWrapper}
      * @throws IllegalArgumentException if the Group is already bound
      */
     public void bind(BoundObject aBoundObject) throws IllegalStateException, IllegalArgumentException {
-        if (!(aBoundObject instanceof AbstractBoundWrapper)) {
-            throw new IllegalArgumentException("Can only bind to AbstractBoundWrappers!");
+        if (!(aBoundObject instanceof BoundWrapper theABW)) {
+            throw new IllegalArgumentException("Can only bind to BoundWrappers!");
         }
 
-        AbstractBoundWrapper theABW = (AbstractBoundWrapper) aBoundObject;
 		{
             KnowledgeObject theGroupKO = this.tHandle();
             KnowledgeObject theABW_KO = theABW.tHandle();

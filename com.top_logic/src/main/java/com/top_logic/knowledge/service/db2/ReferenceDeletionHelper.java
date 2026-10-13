@@ -35,6 +35,7 @@ import com.top_logic.knowledge.service.BulkIdLoad;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.event.Modification;
+import com.top_logic.knowledge.wrap.WrapperLifecycle;
 import com.top_logic.model.TLObject;
 
 /**
@@ -385,8 +386,8 @@ public class ReferenceDeletionHelper {
 		for (Set<DBKnowledgeItem> deletedForType : allDeletions.values()) {
 			for (DBKnowledgeItem deleted : deletedForType) {
 				TLObject wrapper = deleted.getWrapper();
-				if (wrapper instanceof PersistentObject) {
-					Modification mod = ((PersistentObject) wrapper).notifyUpcomingDeletion();
+				if (wrapper instanceof WrapperLifecycle lifecycle) {
+					Modification mod = lifecycle.notifyUpcomingDeletion();
 					if (mod != Modification.NONE) {
 						modifications = mkModifiable(modifications);
 						modifications.add(mod);

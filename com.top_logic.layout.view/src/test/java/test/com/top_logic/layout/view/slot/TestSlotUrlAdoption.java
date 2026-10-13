@@ -46,6 +46,7 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.slot.SlotContribution;
 import com.top_logic.layout.view.slot.SlotRegistry;
+import com.top_logic.model.listen.ModelScope;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletResponse;
@@ -109,8 +110,15 @@ public class TestSlotUrlAdoption extends TestCase {
 		FileManager.setInstance(new DefaultFileManager(_webapp));
 
 		_sseQueue = new SSEUpdateQueue();
+		// The page shows no persistent object, so it reports no ModelScope - which spares the test the
+		// knowledge base one is built from.
 		ReactContext reactContext =
-			new DefaultReactContext("", "test", _sseQueue, new ReactWindowRegistry("test"));
+			new DefaultReactContext("", "test", _sseQueue, new ReactWindowRegistry("test")) {
+				@Override
+				public ModelScope getModelScope() {
+					return null;
+				}
+			};
 		_routeManager = reactContext.getRouteManager();
 		ViewElement rootView = ViewLoader.getOrLoadView(ViewLoader.fullPath(ROOT_VIEW));
 		_viewContext = new DefaultViewContext(reactContext, ViewLoader.fullPath(ROOT_VIEW));

@@ -27,14 +27,19 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
+import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
-import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
+import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropVerdict;
+import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.table.SelectionMode;
@@ -74,23 +79,28 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * and {@link #CARD_CONTENT} (the card's child control).</li>
  * <li>{@link #SELECTED}: the keys of the displayed selected cards.</li>
  * <li>{@link #MULTI_SELECT}: whether several cards may be selected.</li>
- * <li>{@link #DRAG_ENABLED}, {@link #DRAG_TYPE}: whether and under which type tag cards are
- * dragged; while they are, each card descriptor tells by {@link #CARD_DRAGGABLE} whether that
- * card may be dragged.</li>
- * <li>{@link #DROP_ACCEPTS}: the type tags a drop on the board is accepted of;
+ * <li>{@link #DRAG_ENABLED}, {@link #DRAG_KIND}: whether cards are dragged, and the kind of such a
+ * drag; while they are, each card descriptor tells by {@link #CARD_DRAGGABLE} whether that card
+ * may be dragged.</li>
+ * <li>{@link #DROP_ACCEPTS_ANY}, {@link #DROP_ACCEPTS}: whether a drop on the board is accepted of
+ * any drag, and otherwise the kinds a drop is accepted of;
  * {@link #REORDER}: whether a drop within a column reorders it; {@link #DROP_VERDICTS}: the
  * answers to the probes of the running drag.</li>
  * </ul>
  *
  * <p>
  * Cards are dragged like the rows of a table (the board is a {@link DragSourceControl}), and a
- * column is a drop target: a drop names either the column (appending to it) or a card of it and the
- * position before or after that card. A drop of objects coming from another column, or from
- * elsewhere, is applied by the {@link #setDropTarget(DropTarget) drop target} with the column value
- * as its {@link DropEvent#target() target}. Where the board has a {@link #setReorder(Reorder)
- * reorder function}, it then receives the column's objects in their new order, the dropped objects
- * placed where they were dropped; a drop within the column the objects are already in is applied by
- * the reorder function alone, and is not accepted without one.
+ * column is a drop target: a drop names either the column (the {@link DropZone#NONE zone beside the
+ * cards}, appending to it) or a card of it and its {@link DropZone#UPPER upper} or
+ * {@link DropZone#LOWER lower} part (inserting before or after that card). A drop of objects coming
+ * from another column, or from elsewhere, is applied by the {@link #setDropTarget(DropTarget) drop
+ * target}: an operation {@link DropMode#ONTO onto an item} receives the column value as its
+ * {@link DropLocation.Onto target}, an {@link DropMode#ORDERED insertion} the column value as
+ * {@link DropLocation.Insert#parent() parent} and the card the objects are inserted before, an
+ * operation on the {@link DropMode#CONTROL board as a whole} no reference object. Where the board
+ * has a {@link #setReorder(Reorder) reorder function}, it then receives the column's objects in
+ * their new order, the dropped objects placed where they were dropped; a drop within the column the
+ * objects are already in is applied by the reorder function alone, and is not accepted without one.
  * </p>
  */
 public class ReactKanbanBoardControl extends ReactControl implements DragSourceControl {
@@ -131,8 +141,11 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** @see DropSupport#DRAG_ENABLED */
 	public static final String DRAG_ENABLED = DropSupport.DRAG_ENABLED;
 
-	/** @see DropSupport#DRAG_TYPE */
-	public static final String DRAG_TYPE = DropSupport.DRAG_TYPE;
+	/** @see DropSupport#DRAG_KIND */
+	public static final String DRAG_KIND = DropSupport.DRAG_KIND;
+
+	/** @see DropSupport#DROP_ACCEPTS_ANY */
+	public static final String DROP_ACCEPTS_ANY = DropSupport.DROP_ACCEPTS_ANY;
 
 	/** @see DropSupport#DROP_ACCEPTS */
 	public static final String DROP_ACCEPTS = DropSupport.DROP_ACCEPTS;
@@ -210,21 +223,29 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * A drop resolved to what it does on the board: either the event to hand to the drop target
-	 * together with the new order of the target column, or the reason it cannot be made.
+	 * A drop resolved to what it does on the board: either the request to put to the drop target
+	 * together with the target column and its new order, or the reason it cannot be made.
 	 *
-	 * @param event
-	 *        The drop with the column value as its target, {@code null} if it is refused.
+	 * @param request
+	 *        The drop as put to the drop target, {@code null} if it is refused.
+	 * @param place
+	 *        Where on the board the drop is made: the target column as parent and the card the
+	 *        objects are inserted before, {@code null} if it is refused.
 	 * @param order
 	 *        The objects of the target column in the order the drop gives them, {@code null} if it is
 	 *        refused.
 	 * @param refusal
 	 *        Why the drop cannot be made, {@code null} if it can.
 	 */
-	private record BoardDrop(DropEvent event, List<Object> order, ResKey refusal) {
+	private record BoardDrop(DropRequest request, DropLocation.Insert place, List<Object> order, ResKey refusal) {
 
 		static BoardDrop refused(ResKey reason) {
-			return new BoardDrop(null, null, reason);
+			return new BoardDrop(null, null, null, reason);
+		}
+
+		/** The value of the column the drop is made in. */
+		Object column() {
+			return place.parent();
 		}
 
 	}
@@ -250,10 +271,13 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** The displayed columns, see {@link #setColumns(List)}. */
 	private List<Column> _columns = List.of();
 
-	/** The type tag cards are dragged under, {@code null} while they are not draggable. */
-	private String _dragType;
+	/** Whether cards may be dragged at all. */
+	private boolean _dragEnabled;
 
-	/** Which objects may be dragged while {@link #_dragType} is set, {@code null} for all. */
+	/** The kind of a drag of cards, {@code null} for a drag without a kind. */
+	private String _dragKind;
+
+	/** Which objects may be dragged while {@link #_dragEnabled} is set, {@code null} for all. */
 	private Predicate<Object> _draggable;
 
 	/** What a drop of objects from another column is done with, {@code null} for nothing. */
@@ -291,6 +315,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		putState(SELECTED, List.of());
 		putState(MULTI_SELECT, Boolean.FALSE);
 		putState(DRAG_ENABLED, Boolean.FALSE);
+		putState(DROP_ACCEPTS_ANY, Boolean.FALSE);
 		putState(DROP_ACCEPTS, List.of());
 		putState(REORDER, Boolean.FALSE);
 	}
@@ -341,7 +366,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 				Map<String, Object> cardDescriptor = new LinkedHashMap<>();
 				cardDescriptor.put(CARD_KEY, cardKey);
 				cardDescriptor.put(CARD_CONTENT, card.content());
-				if (_dragType != null) {
+				if (_dragEnabled) {
 					cardDescriptor.put(CARD_DRAGGABLE, Boolean.valueOf(isDraggable(card.item())));
 				}
 				cardDescriptors.add(cardDescriptor);
@@ -579,8 +604,9 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 
 	/**
 	 * Records a card selection by the business identity of the card's object, and a drop as a
-	 * {@link #CMD_DROP_OBJECTS} naming the dropped objects and the column value or card object it was
-	 * made on, since the client keys are allocated per session.
+	 * {@link #CMD_DROP_OBJECTS} naming the dropped objects and the place on the board it was made at
+	 * - an {@link DropLocation.Insert insertion} into the column before a card -, since the client
+	 * keys are allocated per session.
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
@@ -598,7 +624,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			}
 		}
 		if (CMD_DROP.equals(command) && arguments != null) {
-			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::targetOf);
+			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::placeOf);
 			if (recorded != null) {
 				return recorded;
 			}
@@ -609,25 +635,36 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	// -- Drag and drop --
 
 	/**
-	 * Makes the cards draggable, announcing them under the given type tag.
+	 * Makes the cards draggable as drags of the given kind.
 	 *
 	 * <p>
 	 * A card the given predicate refuses offers no drag (see
 	 * {@link DragSourceControl#isDraggable(Object)}).
 	 * </p>
 	 *
-	 * @param dragType
-	 *        The {@link #dragType() type tag}, or {@code null} to make the cards undraggable again.
+	 * @param dragKind
+	 *        The {@link #dragKind() kind} of a drag, {@code null} for a drag without a kind.
 	 * @param draggable
 	 *        Which objects may be dragged, {@code null} for all of them. Asked whenever the columns
 	 *        are published; when its answer changes for other reasons, call
 	 *        {@link #refreshDragSource()}.
+	 *
+	 * @see #setDragEnabled(boolean)
 	 */
-	public void setDragSource(String dragType, Predicate<Object> draggable) {
-		_dragType = dragType;
+	public void setDragSource(String dragKind, Predicate<Object> draggable) {
+		_dragKind = dragKind;
 		_draggable = draggable;
-		putState(DRAG_ENABLED, Boolean.valueOf(dragType != null));
-		putState(DRAG_TYPE, dragType);
+		putState(DRAG_KIND, dragKind);
+		setDragEnabled(true);
+	}
+
+	/**
+	 * Switches dragging of cards on or off, keeping the kind and the predicate given to
+	 * {@link #setDragSource(String, Predicate)}.
+	 */
+	public void setDragEnabled(boolean enabled) {
+		_dragEnabled = enabled;
+		putState(DRAG_ENABLED, Boolean.valueOf(enabled));
 		pushColumns();
 		refreshDropTarget();
 	}
@@ -668,37 +705,46 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * Announces the {@link #acceptedTypes() accepted type tags} to the client again, after the
+	 * Announces the {@link #acceptedKinds() accepted kinds} to the client again, after the
 	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
 	 */
 	public void refreshDropTarget() {
-		putState(DROP_ACCEPTS, List.copyOf(acceptedTypes()));
+		AcceptedKinds accepted = acceptedKinds();
+		putState(DROP_ACCEPTS_ANY, Boolean.valueOf(accepted.any()));
+		putState(DROP_ACCEPTS, List.copyOf(accepted.kinds()));
 	}
 
 	/**
-	 * The type tags a drop on the board is accepted of: those of the
-	 * {@link #setDropTarget(DropTarget) drop target}, and the board's own {@link #dragType()} where
-	 * a drop reorders a column.
+	 * The kinds a drop on the board is accepted of: those of the {@link #setDropTarget(DropTarget)
+	 * drop target}, and the kind of the board's own drags where a drop reorders a column.
+	 *
+	 * <p>
+	 * The board's own drags have no kind to be named by where the board drags without one; a board
+	 * reordering its columns then accepts any drag, and the drop target decides over a drag from
+	 * elsewhere.
+	 * </p>
 	 */
-	private Collection<String> acceptedTypes() {
-		Set<String> result = new LinkedHashSet<>();
-		if (_dropTarget != null) {
-			result.addAll(_dropTarget.acceptedTypes());
-		}
-		if (_reorder != null && _dragType != null) {
-			result.add(_dragType);
+	private AcceptedKinds acceptedKinds() {
+		AcceptedKinds result = _dropTarget == null ? AcceptedKinds.NONE : _dropTarget.acceptedKinds();
+		if (_reorder != null && _dragEnabled) {
+			result = result.union(_dragKind == null ? AcceptedKinds.ANY : AcceptedKinds.of(List.of(_dragKind)));
 		}
 		return result;
 	}
 
 	@Override
-	public String dragType() {
-		return _dragType;
+	public boolean isDragEnabled() {
+		return _dragEnabled;
+	}
+
+	@Override
+	public String dragKind() {
+		return _dragKind;
 	}
 
 	@Override
 	public boolean isDraggable(Object object) {
-		return _dragType != null && (_draggable == null || _draggable.test(object));
+		return _dragEnabled && (_draggable == null || _draggable.test(object));
 	}
 
 	@Override
@@ -754,115 +800,150 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	@ReactCommandHandler(value = CMD_DROP_PROBE, technical = true)
 	void handleDropProbe(DropProbeArguments args) {
 		BoardDrop drop = resolveDrop(args);
-		ResKey refusal = drop.refusal() != null ? drop.refusal() : refusal(drop);
+		ResKey refusal = drop.refusal() != null ? drop.refusal() : verdict(drop).reason();
 		putState(DROP_VERDICTS, _dropSupport.answerProbe(args, refusal));
 	}
 
 	/**
-	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} on the
-	 * column value or the card object named the same way - the form a drop is recorded in.
+	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} at the
+	 * place on the board named the same way - the form a drop is recorded in.
+	 *
+	 * <p>
+	 * The recorded place is an {@link DropLocation.Insert insertion} into a column before a card, or
+	 * at its end; the drop is resolved from it exactly like a drop made there.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
-		DropPosition position = DropPosition.fromWire(args.getPosition());
-		if (position == null) {
+		if (!acceptedKinds().accepts(args.getKind())) {
 			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
 		List<ModelName> unresolved = new ArrayList<>();
 		List<Object> objects = DropSupport.locateAll(actionContext, args.getObjects(), unresolved);
-		ModelName targetName = args.getTargetObject();
-		Object target = ScriptingModelKey.locate(actionContext, null, targetName);
-		if (target == null || !(displays(target) || _columnKeys.containsKey(target))) {
-			// The target must be a column or a card of this board: a recorded drop that lands
-			// somewhere else is a drift, not a drop.
-			unresolved.add(targetName);
+		DropLocation location = DropSupport.recordedLocation(actionContext, args, unresolved);
+		if (!(location instanceof DropLocation.Insert place)) {
+			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		// The place must be a column and a card of this board: a recorded drop that lands somewhere
+		// else is a drift, not a drop.
+		if (place.parent() == null || !_columnKeys.containsKey(place.parent())) {
+			unresolved.add(args.getParent());
+		}
+		if (place.before() != null && !displays(place.before())) {
+			unresolved.add(args.getBefore());
 		}
 		if (!unresolved.isEmpty() || objects.isEmpty()) {
 			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}
-		return applyDrop(boardDrop(null, objects, target, position));
+		return applyDrop(boardDrop(null, args.getKind(), objects, place));
 	}
 
 	/**
 	 * Resolves the client-side identities a drop names: the dragged objects through the source
-	 * control, the target through this board.
+	 * control, the place through this board.
 	 */
 	private BoardDrop resolveDrop(DropArguments args) {
-		DropSupport.Dragged dragged = _dropSupport.dragged(acceptedTypes(), args);
+		DropSupport.Dragged dragged = _dropSupport.dragged(acceptedKinds(), args);
 		if (dragged.refusal() != null) {
 			return BoardDrop.refused(dragged.refusal());
 		}
-		DropPosition position = DropPosition.fromWire(args.getPosition());
-		String targetKey = args.getTargetKey();
-		Object target = targetKey == null ? null : targetOf(targetKey);
-		if (position == null || target == null) {
-			return BoardDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
+		DropLocation.Insert place = placeOf(args);
+		if (place == null) {
+			return BoardDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(args.getTargetKey()));
 		}
-		return boardDrop(dragged.source(), dragged.objects(), target, position);
+		return boardDrop(dragged.source(), dragged.kind(), dragged.objects(), place);
 	}
 
 	/**
-	 * The object the board displays under the given client-side target key: the object of a card,
-	 * or the value of a column; {@code null} if the key designates neither.
-	 */
-	private Object targetOf(String targetKey) {
-		Object item = _itemsByKey.get(targetKey);
-		return item != null ? item : _columnsByKey.get(targetKey);
-	}
-
-	/**
-	 * The drop of the given objects on the given target.
+	 * The place on the board a client drop names: the column it is made in and the card the dropped
+	 * objects are inserted before.
 	 *
-	 * @param target
-	 *        The object of a card - the drop is made beside it, in the card's column - or a column
-	 *        value - the drop appends to the column.
-	 * @param position
-	 *        For a card target, whether the drop is made {@link DropPosition#BEFORE before} or after
-	 *        the card.
+	 * <p>
+	 * The upper part of a card inserts before the card, its lower part before the card following it
+	 * (at the end below the last one); a drop on the column beside its cards appends to it.
+	 * </p>
+	 *
+	 * @return The place, {@code null} if the target key designates neither a card nor a column, or
+	 *         the zone is none the board splits a card into.
 	 */
-	private BoardDrop boardDrop(ReactControl source, List<?> objects, Object target, DropPosition position) {
-		Object column;
-		Object reference;
-		if (displays(target)) {
-			column = columnOf(target);
-			reference = target;
-		} else if (_columnKeys.containsKey(target)) {
-			column = target;
-			reference = null;
-		} else {
-			return BoardDrop.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(target));
+	private DropLocation.Insert placeOf(DropArguments args) {
+		String targetKey = args.getTargetKey();
+		DropZone zone = DropZone.fromWire(args.getZone());
+		if (targetKey == null || zone == null) {
+			return null;
 		}
-		List<Object> order = newOrder(column, objects, reference, position == DropPosition.BEFORE);
-		return new BoardDrop(new DropEvent(source, objects, column, DropPosition.NONE), order, null);
+		Object item = _itemsByKey.get(targetKey);
+		if (item != null) {
+			Object column = columnOf(item);
+			switch (zone) {
+				case UPPER:
+					return new DropLocation.Insert(column, item);
+				case LOWER:
+					return new DropLocation.Insert(column, cardAfter(column, item));
+				default:
+					return null;
+			}
+		}
+		Object column = _columnsByKey.get(targetKey);
+		if (column == null || zone != DropZone.NONE) {
+			return null;
+		}
+		return new DropLocation.Insert(column, null);
+	}
+
+	/**
+	 * The object of the card displayed right after the card of the given object in the given column,
+	 * {@code null} for the last card.
+	 */
+	private Object cardAfter(Object column, Object item) {
+		List<Object> items = _itemsOfColumn.getOrDefault(column, List.of());
+		int index = items.indexOf(item);
+		return index >= 0 && index + 1 < items.size() ? items.get(index + 1) : null;
+	}
+
+	/**
+	 * The drop of the given objects at the given place.
+	 *
+	 * @param kind
+	 *        The {@link DragSourceControl#dragKind() kind} of the drag.
+	 * @param place
+	 *        The column the drop is made in, and the card the objects are inserted before.
+	 */
+	private BoardDrop boardDrop(ReactControl source, String kind, List<?> objects, DropLocation.Insert place) {
+		Object column = place.parent();
+		DropLocation onto = new DropLocation.Onto(column);
+		DropLocation control = new DropLocation.Control();
+		DropRequest request = new DropRequest(source, kind, objects, mode -> switch (mode) {
+			case CONTROL -> control;
+			case ONTO -> onto;
+			case ORDERED -> place;
+		});
+		return new BoardDrop(request, place, newOrder(column, objects, place.before()), null);
 	}
 
 	/**
 	 * The objects of the given column in the order a drop gives them: the displayed objects without
-	 * the dropped ones, with the dropped ones inserted beside the reference card, or appended
-	 * without one.
+	 * the dropped ones, with the dropped ones inserted before the first object that is not dropped,
+	 * starting at the given one, or appended where there is none.
 	 *
-	 * @param reference
-	 *        The object of the card the drop was made beside, {@code null} for a drop on the column.
 	 * @param before
-	 *        Whether the drop was made before the reference card rather than after it.
+	 *        The object of the card the drop inserts before, {@code null} for appending.
 	 */
-	private List<Object> newOrder(Object column, List<?> objects, Object reference, boolean before) {
+	private List<Object> newOrder(Object column, List<?> objects, Object before) {
 		Set<Object> dropped = new HashSet<>(objects);
 		List<Object> result = new ArrayList<>();
 		int index = -1;
+		boolean reached = false;
 		for (Object item : _itemsOfColumn.getOrDefault(column, List.of())) {
-			boolean isReference = reference != null && reference.equals(item);
-			boolean moved = dropped.contains(item);
-			if (isReference && (before || moved)) {
+			reached |= before != null && before.equals(item);
+			if (dropped.contains(item)) {
+				continue;
+			}
+			if (reached && index < 0) {
 				index = result.size();
 			}
-			if (!moved) {
-				result.add(item);
-			}
-			if (isReference && !before && !moved) {
-				index = result.size();
-			}
+			result.add(item);
 		}
 		result.addAll(index < 0 ? result.size() : index, objects);
 		return result;
@@ -872,8 +953,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * Whether the given drop moves only objects that are displayed in its target column already.
 	 */
 	private boolean withinColumn(BoardDrop drop) {
-		Object column = drop.event().target();
-		for (Object object : drop.event().objects()) {
+		Object column = drop.column();
+		for (Object object : drop.request().objects()) {
 			if (!displays(object) || !Objects.equals(columnOf(object), column)) {
 				return false;
 			}
@@ -882,21 +963,23 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * Why the given resolved drop cannot be made, {@code null} if it can.
+	 * The verdict on the given resolved drop.
 	 *
 	 * <p>
-	 * A drop within a column is accepted exactly when the board reorders its columns; any other drop
-	 * is decided by the {@link #setDropTarget(DropTarget) drop target}.
+	 * A drop within a column is accepted exactly when the board reorders its columns, at the place
+	 * it was made at; any other drop is decided by the {@link #setDropTarget(DropTarget) drop
+	 * target}.
 	 * </p>
 	 */
-	private ResKey refusal(BoardDrop drop) {
+	private DropVerdict verdict(BoardDrop drop) {
 		if (withinColumn(drop)) {
-			return _reorder != null ? null : I18NConstants.ERROR_DROP_NOT_ACCEPTED;
+			return _reorder != null ? DropVerdict.accepted(drop.place())
+				: DropVerdict.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		if (_dropTarget == null) {
-			return I18NConstants.ERROR_DROP_NOT_ACCEPTED;
+			return DropVerdict.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
-		return _dropTarget.check(drop.event()).reason();
+		return _dropTarget.check(drop.request());
 	}
 
 	/**
@@ -905,26 +988,32 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * <p>
 	 * Order of application: a drop within a column runs the {@link #setReorder(Reorder) reorder
 	 * function} alone. Any other drop is applied by the {@link #setDropTarget(DropTarget) drop
-	 * target} first; once that is applied, the reorder function - where there is one - receives the
-	 * target column in its new order.
+	 * target} first, at the location its check accepts the drop at; once that is applied, the
+	 * reorder function - where there is one - receives the target column in its new order.
 	 * </p>
 	 */
 	private HandlerResult applyDrop(BoardDrop drop) {
-		ResKey refusal = drop.refusal() != null ? drop.refusal() : refusal(drop);
-		if (refusal != null) {
-			return DropSupport.refused(refusal);
+		if (drop.refusal() != null) {
+			return DropSupport.refused(drop.refusal());
 		}
-		Object column = drop.event().target();
+		DropVerdict verdict = verdict(drop);
+		if (!verdict.isAccepted()) {
+			return DropSupport.refused(verdict.reason());
+		}
+		Object column = drop.column();
 		Reorder reorder = _reorder;
 		if (withinColumn(drop)) {
 			if (!drop.order().equals(_itemsOfColumn.get(column))) {
 				reorder.reorder(column, drop.order());
 			}
-		} else if (reorder == null) {
-			_dropTarget.onDrop(drop.event());
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		DropEvent event = drop.request().event(verdict.location());
+		if (reorder == null) {
+			_dropTarget.onDrop(event);
 		} else {
 			List<Object> order = drop.order();
-			_dropTarget.onDrop(drop.event(), () -> reorder.reorder(column, order));
+			_dropTarget.onDrop(event, () -> reorder.reorder(column, order));
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

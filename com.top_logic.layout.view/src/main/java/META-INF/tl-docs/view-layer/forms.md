@@ -162,6 +162,8 @@ A check reads the values entered in the form, not the stored ones: it receives t
 
 The rule counts only errors on display: an error the user cannot see yet leaves the command enabled, and the attempt to execute it is what reveals the error.
 
+**A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
+
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
 ## Derived fields

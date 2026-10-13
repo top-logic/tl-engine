@@ -90,6 +90,18 @@ public interface RowSource<R> {
 	void setExpanded(Object rowKey, boolean expanded);
 
 	/**
+	 * The tree the rows of this source form, {@code null} for a source whose rows form none.
+	 *
+	 * <p>
+	 * A flat list and a grouped one have no hierarchy of their own: a group header row stands for
+	 * no object its members are the children of.
+	 * </p>
+	 */
+	default RowHierarchy<R> hierarchy() {
+		return null;
+	}
+
+	/**
 	 * Registers a listener notified when the displayed rows change.
 	 */
 	void addListener(RowSourceListener listener);

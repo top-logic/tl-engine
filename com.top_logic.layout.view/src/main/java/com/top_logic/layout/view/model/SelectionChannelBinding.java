@@ -9,8 +9,9 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.model.TLObject;
 
 /**
  * Two-way binding between the selection a selector displays and a {@link ViewChannel}.
@@ -66,6 +67,15 @@ import com.top_logic.model.TLObject;
  * </p>
  *
  * <p>
+ * A channel drops an object it holds once that object is deleted (see
+ * {@link com.top_logic.layout.view.channel.DefaultViewChannel}): the value then is the displayed
+ * selection without the deleted keys - <code>null</code> where nothing else was selected. That value
+ * announces the deletion, it asks for no selection: the selector keeps its selection and the
+ * memory of the keys it displayed (see {@link DeletedObjects#dropsDeletedOnly(Collection, Object)}),
+ * and the {@link #refreshed() refresh} removing the deleted elements writes what survives.
+ * </p>
+ *
+ * <p>
  * The selector's own echo of an applied channel value never writes the channel back: a
  * {@link #selectionChanged(Set)} reported while the value is being applied is not a selection made
  * in the selector.
@@ -89,7 +99,8 @@ public abstract class SelectionChannelBinding {
 
 	private final ViewChannel _channel;
 
-	private final ViewChannel.ChannelListener _channelListener = (sender, oldValue, newValue) -> applyChannelValue();
+	/** The registration on the {@link #_channel}, while {@link #attach() attached}. */
+	private Registration _channelRegistration = Registration.NONE;
 
 	/**
 	 * Whether a channel value is currently being applied, so the selector's echo is not written
@@ -120,7 +131,7 @@ public abstract class SelectionChannelBinding {
 	 * </p>
 	 */
 	protected final void attach() {
-		_channel.addListener(_channelListener);
+		_channelRegistration = _channel.addListener((sender, oldValue, newValue) -> applyChannelValue());
 
 		applyChannelValue();
 	}
@@ -155,7 +166,7 @@ public abstract class SelectionChannelBinding {
 				if (displayedBefore.contains(key)) {
 					continue;
 				}
-				if (isDeleted(key)) {
+				if (DeletedObjects.isDeleted(key)) {
 					deletedKept = true;
 				} else {
 					undisplayed.add(key);
@@ -182,7 +193,7 @@ public abstract class SelectionChannelBinding {
 	 * </p>
 	 */
 	public final void dispose() {
-		_channel.removeListener(_channelListener);
+		_channelRegistration.dispose();
 
 		detach();
 	}
@@ -245,7 +256,7 @@ public abstract class SelectionChannelBinding {
 		Set<Object> result = new LinkedHashSet<>();
 		if (canDisplaySeveral() || selectedKeys.isEmpty()) {
 			for (Object key : channelKeys()) {
-				if (!hasElement(key) && !isDeleted(key)) {
+				if (!hasElement(key) && !DeletedObjects.isDeleted(key)) {
 					result.add(key);
 				}
 			}
@@ -264,10 +275,6 @@ public abstract class SelectionChannelBinding {
 			return new LinkedHashSet<>(keys);
 		}
 		return value == null ? Set.of() : Set.of(value);
-	}
-
-	private static boolean isDeleted(Object key) {
-		return key instanceof TLObject obj && !obj.tValid();
 	}
 
 	/**
@@ -290,6 +297,11 @@ public abstract class SelectionChannelBinding {
 	 */
 	private void applyChannelValue() {
 		Object value = _channel.get();
+		if (DeletedObjects.dropsDeletedOnly(_displayedKeys, value)) {
+			// The channel announces the deletion of displayed elements. The refresh removing them
+			// writes what is left of the selection; until then, the selector keeps showing it.
+			return;
+		}
 		if (isDisplayed(value)) {
 			// The selector already shows this selection: it is the selector's own, echoed back
 			// through the channel. Re-applying it would reduce a multiple selection to nothing and

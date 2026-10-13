@@ -8,12 +8,15 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.execution.ExecutableState;
@@ -24,12 +27,22 @@ import com.top_logic.tool.execution.ExecutableState;
  *
  * <p>
  * The {@link #getState() state} is the rule's answer for the value the input channel holds now.
+ * The rule never sees a deleted object: an input object that is no longer
+ * {@link TLObject#tValid() valid} counts as no input at all, and the deleted members of a
+ * collection input are left out (see {@link DeletedObjects#withoutDeleted(Object)}). A channel
+ * declared by a view drops a deleted object itself while the view is displayed, but an input
+ * supplied by the caller, or a channel nobody attached, may still hold one - and nothing can be
+ * decided over an object that is gone.
+ * </p>
+ *
+ * <p>
  * While {@link #attach(ModelScope) attached}, every event after which the rule may answer
  * differently runs the change callback given at construction:
  * </p>
  * <ul>
- * <li>the input channel taking a new value,</li>
- * <li>the object that value holds being changed or deleted, or an object of one of the
+ * <li>the input channel taking a new value - also the value an attached channel announces when it
+ * drops a deleted object, which disables what the rule decides for,</li>
+ * <li>the object that value holds being changed, or an object of one of the
  * {@link ExecutabilityConfig#getObservedTypes() observed types} being created, changed or deleted
  * (see {@link ChannelObjectObserver}),</li>
  * <li>a rule deciding by more than its input reporting a change of its own
@@ -55,9 +68,10 @@ public class LiveExecutability {
 	private final Runnable _onChange;
 
 	/**
-	 * Reports a new value of the {@link #_inputChannel input channel} to the change callback.
+	 * The registration reporting a new value of the {@link #_inputChannel input channel} to the
+	 * change callback, while attached.
 	 */
-	private final ViewChannel.ChannelListener _inputListener;
+	private Registration _inputRegistration = Registration.NONE;
 
 	private final ChannelObjectObserver _inputObserver;
 
@@ -88,7 +102,6 @@ public class LiveExecutability {
 		_rule = rule;
 		_inputChannel = inputChannel;
 		_onChange = onChange;
-		_inputListener = (sender, oldValue, newValue) -> onChange.run();
 
 		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
 		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, onChange);
@@ -130,10 +143,11 @@ public class LiveExecutability {
 	}
 
 	/**
-	 * The current value of the {@link #getInputChannel() input channel}, {@code null} without one.
+	 * The current value of the {@link #getInputChannel() input channel} without the objects deleted
+	 * meanwhile (see {@link DeletedObjects#withoutDeleted(Object)}), {@code null} without a channel.
 	 */
 	public Object getInput() {
-		return _inputChannel != null ? _inputChannel.get() : null;
+		return _inputChannel != null ? DeletedObjects.withoutDeleted(_inputChannel.get()) : null;
 	}
 
 	/**
@@ -149,10 +163,11 @@ public class LiveExecutability {
 	 * {@link #getInput() channel value} - a single row of a table, say.
 	 *
 	 * @param input
-	 *        The value the rule decides over.
+	 *        The value the rule decides over, after leaving out what is deleted (see
+	 *        {@link DeletedObjects#withoutDeleted(Object)}).
 	 */
 	public ExecutableState getState(Object input) {
-		return _rule.isExecutable(input);
+		return _rule.isExecutable(DeletedObjects.withoutDeleted(input));
 	}
 
 	/**
@@ -182,7 +197,7 @@ public class LiveExecutability {
 		}
 		_attached = true;
 		if (_inputChannel != null) {
-			_inputChannel.addListener(_inputListener);
+			_inputRegistration = _inputChannel.addListener((sender, oldValue, newValue) -> _onChange.run());
 		}
 		if (_rule instanceof ObservableRule observable) {
 			_ruleObservation = observable.observe(_onChange);
@@ -202,9 +217,8 @@ public class LiveExecutability {
 			return;
 		}
 		_attached = false;
-		if (_inputChannel != null) {
-			_inputChannel.removeListener(_inputListener);
-		}
+		_inputRegistration.dispose();
+		_inputRegistration = Registration.NONE;
 		if (_ruleObservation != null) {
 			_ruleObservation.run();
 			_ruleObservation = null;

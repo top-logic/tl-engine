@@ -21,6 +21,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.LongID;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.identifier.DefaultObjectKey;
@@ -369,7 +370,7 @@ public class TestObservableTreeModel extends TestCase {
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER),
 			(context, model) -> new ReactTextControl(context, String.valueOf(model)));
 
-		_observer = new ObservableTreeModel(_treeControl, treeModel, args -> args[0], builder,
+		_observer = new ObservableTreeModel(ObservableTreeModel.Display.of(_treeControl), treeModel, args -> args[0], builder,
 			parentFunction, observedTypes, List.of(_input));
 		_observer.attach(_scope);
 	}
@@ -512,30 +513,36 @@ public class TestObservableTreeModel extends TestCase {
 		private final Set<ModelListener> _listeners = new LinkedHashSet<>();
 
 		@Override
-		public boolean addModelListener(ModelListener listener) {
-			return _listeners.add(listener);
+		public Registration addModelListener(ModelListener listener) {
+			_listeners.add(listener);
+			return Registration.onDispose(() -> removeModelListener(listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLStructuredType type, ModelListener listener) {
-			return _listeners.add(listener);
+		public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+			_listeners.add(listener);
+			return Registration.onDispose(() -> removeModelListener(type, listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLObject object, ModelListener listener) {
-			return _listeners.add(listener);
+		public Registration addModelListener(TLObject object, ModelListener listener) {
+			_listeners.add(listener);
+			return Registration.onDispose(() -> removeModelListener(object, listener));
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(ModelListener listener) {
 			return _listeners.remove(listener);
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 			return true;
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLObject object, ModelListener listener) {
 			return true;

@@ -22,6 +22,7 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClassImpl;
@@ -36,7 +37,6 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.TextElement;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
@@ -94,7 +94,7 @@ public class TestTextElementObservation extends BasicTestCase {
 
 	private TLClass _ticketType;
 
-	private ViewChannel _ticket;
+	private DefaultViewChannel _ticket;
 
 	private RecordingScope _scope;
 
@@ -240,25 +240,27 @@ public class TestTextElementObservation extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that the deletion of the displayed object leaves the display alone: the channel still
-	 * points to the deleted object, which must not be read, and the next channel value is what the
-	 * display shows next.
+	 * Tests that the deletion of the displayed object empties the display: the channel, attached as
+	 * the view declaring it attaches it, drops the deleted object, and the display shows that
+	 * {@code null} value without reading the deleted object.
 	 */
-	public void testDeletedObjectKeepsTheDisplay() {
+	public void testDeletedObjectEmptiesTheDisplay() {
 		IdentifiedObject ticket = ticket(_open);
 		_ticket.set(ticket);
+		_ticket.attach(_scope);
 		ReactTextControl control = attachedControl();
 
 		ticket.delete();
 		_scope.reportDeletion(ticket);
 
-		assertEquals("A deleted object is not read, so the display keeps what it showed.",
-			role(OPEN_ROLE), displayedColor(control));
+		assertNull("The channel drops the deleted object.", _ticket.get());
+		assertNull("The display shows the empty value.", displayedColor(control));
 
 		_ticket.set(ticket(_closed));
 
 		assertEquals("The value the channel delivers next is displayed.",
 			role(CLOSED_ROLE), displayedColor(control));
+		_ticket.detach();
 	}
 
 	/**
@@ -389,31 +391,37 @@ public class TestTextElementObservation extends BasicTestCase {
 		private final Set<ModelListener> _globalListeners = new LinkedHashSet<>();
 
 		@Override
-		public boolean addModelListener(ModelListener listener) {
-			return _globalListeners.add(listener);
+		public Registration addModelListener(ModelListener listener) {
+			_globalListeners.add(listener);
+			return Registration.onDispose(() -> removeModelListener(listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLStructuredType type, ModelListener listener) {
-			return _typeListeners.computeIfAbsent(type, x -> new LinkedHashSet<>()).add(listener);
+		public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+			_typeListeners.computeIfAbsent(type, x -> new LinkedHashSet<>()).add(listener);
+			return Registration.onDispose(() -> removeModelListener(type, listener));
 		}
 
 		@Override
-		public boolean addModelListener(TLObject object, ModelListener listener) {
-			return _objectListeners.computeIfAbsent(object.tId(), x -> new LinkedHashSet<>()).add(listener);
+		public Registration addModelListener(TLObject object, ModelListener listener) {
+			_objectListeners.computeIfAbsent(object.tId(), x -> new LinkedHashSet<>()).add(listener);
+			return Registration.onDispose(() -> removeModelListener(object, listener));
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(ModelListener listener) {
 			return _globalListeners.remove(listener);
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 			Set<ModelListener> listeners = _typeListeners.get(type);
 			return listeners != null && listeners.remove(listener);
 		}
 
+		@Deprecated
 		@Override
 		public boolean removeModelListener(TLObject object, ModelListener listener) {
 			Set<ModelListener> listeners = _objectListeners.get(object.tId());

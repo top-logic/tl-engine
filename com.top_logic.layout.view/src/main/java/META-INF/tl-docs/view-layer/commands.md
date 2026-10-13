@@ -88,6 +88,23 @@ An application adds or relabels a clique in its own configuration; entries are k
 
 A clique that is not configured is not an error: its commands form an inline group without label after the groups of all configured cliques.
 
+## Icon, label or both: the display mode
+
+Whether a button shows the command's icon, its label or both is the command's `display="icon-only|icon-label|label-only"` (on any view command, `ViewCommand.Config#getDisplay`). An icon-only button shows its label as tooltip. `icon-only` on a command without an `image` is refused with a warning, and the button shows its label; a command with an image that requests nothing shows icon and label. A command scope sets the default for every button it renders whose command requests no mode: `command-display` on `<panel>`, `<window>` and `<full-page>` (`CommandScopeElement`) applies to the configured commands and to those contributed by child elements (e.g. a form's edit and save buttons), and `command-display` on `<accordion>` (default `icon-only`) to the buttons of its section headers; the command's own `display` always wins.
+
+A `<button>` (`ButtonElement`) shows its one command the same way, so its mode is set on its `<action>`:
+
+```xml
+<button appearance="ghost" size="small">
+	<action class="com.top_logic.layout.view.command.GenericViewCommand"
+		display="icon-only"
+		image="css:bi bi-x"
+	>
+		<label><en>Close</en><de>Schließen</de></label>
+	</action>
+</button>
+```
+
 ## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
 
 Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* input, not on the value the chain hands to the action (see `ModelAccessRule` and `ModelAccessPolicy` for hide vs. disable).

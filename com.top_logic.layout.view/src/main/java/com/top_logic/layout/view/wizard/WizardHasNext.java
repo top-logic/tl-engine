@@ -9,9 +9,9 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.ObservableRule;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -72,9 +72,8 @@ public class WizardHasNext implements ViewExecutabilityRule, ContextDependentRul
 			};
 		}
 		ViewChannel stepChannel = _scope.stepChannel();
-		ChannelListener listener = (sender, oldValue, newValue) -> revalidate.run();
-		stepChannel.addListener(listener);
-		return () -> stepChannel.removeListener(listener);
+		Registration registration = stepChannel.addListener((sender, oldValue, newValue) -> revalidate.run());
+		return registration::dispose;
 	}
 
 	@Override

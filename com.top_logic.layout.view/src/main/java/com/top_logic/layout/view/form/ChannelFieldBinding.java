@@ -11,11 +11,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
 /**
  * Two-way binding between a {@link ViewChannel} and the {@link FieldModel} of an input control.
@@ -47,7 +47,8 @@ public class ChannelFieldBinding {
 
 	private Consumer<Object> _commitListener;
 
-	private final ChannelListener _channelListener = (sender, oldValue, newValue) -> toField(newValue);
+	/** The registration on the {@link #_channel}, after {@link #start() starting}. */
+	private Registration _channelRegistration = Registration.NONE;
 
 	private final FieldModelListener _fieldListener = new FieldModelListener() {
 		@Override
@@ -107,7 +108,7 @@ public class ChannelFieldBinding {
 		// an input that was never touched does not report itself as changed.
 		_field.setDefaultValue(initial);
 		_field.addListener(_fieldListener);
-		_channel.addListener(_channelListener);
+		_channelRegistration = _channel.addListener((sender, oldValue, newValue) -> toField(newValue));
 	}
 
 	/**
@@ -132,7 +133,7 @@ public class ChannelFieldBinding {
 	 * Detaches this binding from the channel and the field.
 	 */
 	public void dispose() {
-		_channel.removeListener(_channelListener);
+		_channelRegistration.dispose();
 		_field.removeListener(_fieldListener);
 	}
 

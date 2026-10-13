@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.layout.DisplayDimension;
@@ -444,8 +445,8 @@ public class TableExportCommand implements ViewCommand {
 		ViewChannel progress = new DefaultViewChannel("export");
 		ReactJobStatusControl status = new ReactJobStatusControl(context, null);
 		ChannelListener listener = (sender, oldValue, newValue) -> status.setJob(JobStatusElement.display(newValue));
-		progress.addListener(listener);
-		status.addCleanupAction(() -> progress.removeListener(listener));
+		Registration registration = progress.addListener(listener);
+		status.addCleanupAction(registration::dispose);
 
 		DialogHandle[] dialog = new DialogHandle[1];
 		// The file the job wrote, also when the job ends as cancelled after writing it, so that its

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.AvatarSize;
@@ -105,16 +106,16 @@ public class AvatarElement implements UIElement {
 		control.setCssClass(_config.getCssClass());
 
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setName(label(newValue));
-		channel.addListener(listener);
-		control.addCleanupAction(() -> channel.removeListener(listener));
+		Registration registration = channel.addListener(listener);
+		control.addCleanupAction(registration::dispose);
 
 		ChannelRef imageRef = _config.getImage();
 		if (imageRef != null) {
 			ViewChannel imageChannel = context.resolveChannel(imageRef);
 			control.setImage(imageChannel.get());
 			ChannelListener imageListener = (sender, oldValue, newValue) -> control.setImage(newValue);
-			imageChannel.addListener(imageListener);
-			control.addCleanupAction(() -> imageChannel.removeListener(imageListener));
+			Registration imageRegistration = imageChannel.addListener(imageListener);
+			control.addCleanupAction(imageRegistration::dispose);
 		}
 		return control;
 	}

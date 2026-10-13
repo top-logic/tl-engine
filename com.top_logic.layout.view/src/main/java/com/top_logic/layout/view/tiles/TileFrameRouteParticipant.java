@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -17,7 +18,6 @@ import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
 /**
  * The {@link RoutingParticipant} of a mounted frame of a {@link TileStackElement tile stack}: it
@@ -46,7 +46,7 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 
 	private final ViewChannel _pathChannel;
 
-	private final ChannelListener _pathListener;
+	private final Registration _pathRegistration;
 
 	private final List<RouteChangeListener> _listeners = new ArrayList<>();
 
@@ -65,15 +65,14 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 		_pathChannel = scope.pathChannel();
 		_routeManager = routeManager;
 
-		_pathListener = (sender, oldValue, newValue) -> notifyRouteChange();
-		_pathChannel.addListener(_pathListener);
+		_pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> notifyRouteChange());
 	}
 
 	/**
 	 * Stops watching the path, called when the frame this participant belongs to is disposed.
 	 */
 	public void dispose() {
-		_pathChannel.removeListener(_pathListener);
+		_pathRegistration.dispose();
 	}
 
 	@Override

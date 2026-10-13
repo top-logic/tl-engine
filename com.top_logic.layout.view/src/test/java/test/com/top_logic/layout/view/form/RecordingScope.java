@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -32,30 +33,34 @@ public class RecordingScope implements ModelScope {
 	private final Map<ObjectKey, List<ModelListener>> _objectListeners = new LinkedHashMap<>();
 
 	@Override
-	public boolean addModelListener(ModelListener listener) {
+	public Registration addModelListener(ModelListener listener) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addModelListener(TLStructuredType type, ModelListener listener) {
+	public Registration addModelListener(TLStructuredType type, ModelListener listener) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addModelListener(TLObject object, ModelListener listener) {
-		return _objectListeners.computeIfAbsent(object.tId(), x -> new ArrayList<>()).add(listener);
+	public Registration addModelListener(TLObject object, ModelListener listener) {
+		_objectListeners.computeIfAbsent(object.tId(), x -> new ArrayList<>()).add(listener);
+		return Registration.onDispose(() -> removeModelListener(object, listener));
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(ModelListener listener) {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public boolean removeModelListener(TLObject object, ModelListener listener) {
 		List<ModelListener> listeners = _objectListeners.get(object.tId());

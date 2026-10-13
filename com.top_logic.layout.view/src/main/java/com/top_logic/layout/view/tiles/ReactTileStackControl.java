@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingControl;
@@ -26,8 +27,8 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.layout.view.form.StateHandler;
@@ -106,8 +107,6 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 	private final String _bindPathTo;
 
-	private final ChannelListener _pathListener;
-
 	private final VetoListener _pathVeto;
 
 	/**
@@ -157,9 +156,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
 		_bindPathTo = bindPathTo;
 
-		_pathListener = (sender, oldValue, newValue) -> exchangeFrames();
-		_pathChannel.addListener(_pathListener);
-		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
+		Registration pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> exchangeFrames());
+		addCleanupAction(pathRegistration::dispose);
 
 		_pathVeto = new VetoListener() {
 			@Override
@@ -387,14 +385,21 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 			// The stack's own channel, so the frame sees the path it sits on change.
 			frameContext.registerChannel(_bindPathTo, _pathChannel);
 		}
+		List<ViewChannel> paramChannels = new ArrayList<>();
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			DefaultViewChannel paramChannel = new DefaultViewChannel(entry.getKey());
 			paramChannel.set(entry.getValue());
 			frameContext.registerChannel(entry.getKey(), paramChannel);
+			paramChannels.add(paramChannel);
 		}
 
-		return new ReloadableControl(viewPath, frameContext,
+		ReactControl frame = new ReloadableControl(viewPath, frameContext,
 			(ReactControl) frameView.createControl(frameContext));
+
+		// The params are the frame's own channels and outlive a reload of its view; the path channel
+		// is the stack's.
+		ObservingChannels.observeWhileDisplayed(frame, paramChannels, frameContext);
+		return frame;
 	}
 
 	/**

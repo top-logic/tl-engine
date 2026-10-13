@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.view.UIElement;
@@ -259,8 +260,8 @@ public class ProgressElement implements UIElement {
 
 		if (input != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> update.run();
-			input.addListener(listener);
-			control.addCleanupAction(() -> input.removeListener(listener));
+			Registration registration = input.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 
 		ChannelObjectObserver observer = new ChannelObjectObserver(

@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.InstantiationContext;
@@ -29,8 +31,8 @@ import com.top_logic.table.SortDirection;
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
  * such column has: its label, its filter, its width, whether it can be edited, the order it sorts
- * the table in, what it aggregates over a group of rows, and the display annotations it states
- * over the ones of its values' attribute or type.
+ * the table in, the order of its values, what it aggregates over a group of rows, and the display
+ * annotations it states over the ones of its values' attribute or type.
  *
  * <p>
  * A subclass says what the column is named and what its cells hold; everything the table does with
@@ -65,6 +67,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
+
+		/** Configuration name for {@link #getComparator()}. */
+		String COMPARATOR = "comparator";
 
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
@@ -128,6 +133,24 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@Name(AGGREGATE)
 		Expr getAggregate();
 
+		/**
+		 * The order of this column's values: a function comparing two cell values, by which the
+		 * column sorts the rows and orders the groups it forms.
+		 *
+		 * <p>
+		 * The function receives two values of the column and yields a negative number, zero, or a
+		 * positive number, as the first value comes before, together with, or after the second one
+		 * - the contract of the comparator of TL-Script's <code>sort</code> function. An order by
+		 * a key of the values is written
+		 * <code>comparator(p -&gt; $p.get(`m:Page#position`))</code>. The function is never passed
+		 * an empty value; rows without a value are ordered apart from it, a group without a value
+		 * comes last. Unset (the default) keeps the order derived from the type of the column's
+		 * values.
+		 * </p>
+		 */
+		@Name(COMPARATOR)
+		Expr getComparator();
+
 	}
 
 	private final ResKey _label;
@@ -141,6 +164,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final int _width;
 
 	private final Function<List<Object>, Object> _aggregate;
+
+	private final Comparator<Object> _comparator;
 
 	private final boolean _hiddenByDefault;
 
@@ -164,6 +189,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_sort = config.getSort();
 		_width = config.getWidth();
 		_aggregate = aggregate(config.getAggregate());
+		_comparator = comparator(config.getComparator());
 		_hiddenByDefault = false;
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
@@ -172,7 +198,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	/**
 	 * Creates the plain {@link AbstractColumnDeclaration} a table derives for a column no
 	 * declaration of its own describes: the type-derived display, the label and width the column
-	 * brings itself, no sorting and no aggregate.
+	 * brings itself, no sorting, the type-derived order and no aggregate.
 	 *
 	 * @param readonly
 	 *        Whether the column stays read-only while the rows of the table are edited.
@@ -186,6 +212,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_sort = null;
 		_width = 0;
 		_aggregate = null;
+		_comparator = null;
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
@@ -234,7 +261,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, _aggregate, _hiddenByDefault, _export);
+			_width, _readonly ? null : editing, _aggregate, _comparator, _hiddenByDefault, _export);
 	}
 
 	/**
@@ -272,6 +299,40 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		}
 		QueryExecutor executor = QueryExecutor.compile(expr);
 		return members -> executor.execute(members);
+	}
+
+	/**
+	 * The order the given comparison function establishes, {@code null} for a column keeping its
+	 * type-derived order.
+	 *
+	 * <p>
+	 * The expression is compiled once here and applied to every pair of values compared.
+	 * </p>
+	 */
+	private static Comparator<Object> comparator(Expr expr) {
+		if (expr == null) {
+			return null;
+		}
+		QueryExecutor executor = QueryExecutor.compile(expr);
+		return order((value1, value2) -> executor.execute(value1, value2));
+	}
+
+	/**
+	 * The order a TL-Script comparison function establishes, in the contract of the comparator of
+	 * TL-Script's <code>sort</code> function: the number it yields, taken as an integer, decides,
+	 * and no result counts as equal.
+	 *
+	 * @param comparison
+	 *        Applies the comparison function to two values.
+	 */
+	static Comparator<Object> order(BiFunction<Object, Object, Object> comparison) {
+		return (value1, value2) -> {
+			Object result = comparison.apply(value1, value2);
+			if (result == null) {
+				return 0;
+			}
+			return ((Number) result).intValue();
+		};
 	}
 
 }

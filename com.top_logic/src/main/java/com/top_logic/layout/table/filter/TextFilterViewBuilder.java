@@ -21,7 +21,6 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.provider.DefaultLabelProvider;
-import com.top_logic.util.TLCollator;
 
 /**
  * {@link FilterViewBuilder} of a {@link TextFilterView}.
@@ -123,7 +122,7 @@ public class TextFilterViewBuilder implements FilterViewBuilder<TextFilterConfig
 		List<?> options = SelectionFilterViewBuilder.getOptions(filterConfiguration);
 		SelectField optionsField =
 			FormFactory.newSelectField(TextFilterView.SELECTABLE_VALUES_FIELD, options, true, false);
-		optionsField.setOptionComparator(new TLCollator());
+		optionsField.setOptionComparator(filterConfiguration.getLabelOptionComparator());
 		optionsField.setOptionLabelProvider(DefaultLabelProvider.INSTANCE);
 		optionsField.setLabel(I18NConstants.FILTER_VALUES);
 		return optionsField;

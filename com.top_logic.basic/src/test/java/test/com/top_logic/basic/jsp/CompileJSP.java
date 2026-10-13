@@ -96,7 +96,8 @@ public class CompileJSP {
 	 */
 	public static final boolean RECURSIVE = true;
 
-	static List<String> getTranslateCommand(CompileJspConfig config, String targetPckg, Collection<File> jspFiles)
+	static List<String> getTranslateCommand(CompileJspConfig config, File webapp, String targetPckg,
+			Collection<File> jspFiles)
 			throws IOException {
 		List<String> command = new ArrayList<>();
 		
@@ -115,7 +116,7 @@ public class CompileJSP {
 			command.add("-compile");
 		}
 		command.add("-webapp");
-		command.add(config.getWebapp().getCanonicalPath());
+		command.add(webapp.getCanonicalPath());
 
 		if (config.isVerbose()) {
 			command.add("-v");

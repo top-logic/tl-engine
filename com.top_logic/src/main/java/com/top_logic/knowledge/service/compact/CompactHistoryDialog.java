@@ -187,7 +187,7 @@ public class CompactHistoryDialog extends AbstractFormPageDialog {
 
 		private void restartPersistencyLayer() {
 			Log log = new LogProtocol(CompactHistoryDialog.class);
-			HistoryCompactionOperation.scheduleRestart(log);
+			HistoryCompactionOperation.scheduleRestart(log, false);
 
 			// Direct logout to prevent errors from being transported back to the UI.
 			HttpSession session = DefaultDisplayContext.getDisplayContext().asRequest().getSession(false);

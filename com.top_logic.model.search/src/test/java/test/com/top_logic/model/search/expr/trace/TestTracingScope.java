@@ -151,7 +151,7 @@ public class TestTracingScope extends AbstractScriptTracerTest {
 		 *
 		 * @param guarded
 		 *        Whether the base object is read through
-		 *        {@link TracingScope#readBase(TLObject, TLStructuredTypePart, java.util.function.BiFunction)}.
+		 *        {@link TracingScope#readBase(TLObject, TLStructuredTypePart)}.
 		 */
 		BaseOverlay(TLObject base, boolean guarded) {
 			_base = base;
@@ -176,9 +176,9 @@ public class TestTracingScope extends AbstractScriptTracerTest {
 				return _base.tValue(part);
 			}
 			if (part.isDerived()) {
-				return TracingScope.computeOnOverlay(_base, this, part, TLObject::tValue);
+				return TracingScope.computeOnOverlay(_base, this, part);
 			}
-			return TracingScope.readBase(_base, part, TLObject::tValue);
+			return TracingScope.readBase(_base, part);
 		}
 	}
 

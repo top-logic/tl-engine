@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.model.TLObject;
@@ -59,7 +58,7 @@ import com.top_logic.model.util.Pointer;
  *
  * <p>
  * An overlay that reads the value of its base object must do this through
- * {@link #readBase(TLObject, TLStructuredTypePart, BiFunction)}. Otherwise, the base read would be
+ * {@link #readBase(TLObject, TLStructuredTypePart)}. Otherwise, the base read would be
  * redirected to the overlay again. A read of an attribute of an object that is currently redirected
  * to its overlay is served plainly by the object itself (without being reported) for the same
  * reason.
@@ -217,30 +216,27 @@ public final class TracingScope implements AutoCloseable {
 	 * Reads an attribute value of the base object of an overlay.
 	 *
 	 * <p>
-	 * The read is performed plainly by the base object: neither reported, nor redirected to an
-	 * overlay of the base object.
+	 * The {@link TLObject#tValue(TLStructuredTypePart) read} is performed plainly by the base object:
+	 * neither reported, nor redirected to an overlay of the base object.
 	 * </p>
 	 *
 	 * @param base
 	 *        The object the overlay is based on.
 	 * @param part
 	 *        The attribute to read.
-	 * @param read
-	 *        The plain read of the attribute value, e.g. {@link TLObject#tValue(TLStructuredTypePart)}.
 	 * @return The value of the given attribute of the base object.
 	 */
-	public static Object readBase(TLObject base, TLStructuredTypePart part,
-			BiFunction<? super TLObject, ? super TLStructuredTypePart, ?> read) {
+	public static Object readBase(TLObject base, TLStructuredTypePart part) {
 		TracingScope current = CURRENT.get();
 		if (current == null) {
-			return read.apply(base, part);
+			return base.tValue(part);
 		}
 		Pointer pointer = Pointer.create(base, part);
 		if (!current._guard.add(pointer)) {
-			return read.apply(base, part);
+			return base.tValue(part);
 		}
 		try {
-			return read.apply(base, part);
+			return base.tValue(part);
 		} finally {
 			current._guard.remove(pointer);
 		}
@@ -262,19 +258,16 @@ public final class TracingScope implements AutoCloseable {
 	 * @param overlay
 	 *        The overlay of the base object.
 	 * @param part
-	 *        The attribute to compute.
-	 * @param computation
-	 *        The computation of the attribute value of the base object, e.g.
-	 *        {@link TLObject#tValue(TLStructuredTypePart)}.
+	 *        The attribute to compute by {@link TLObject#tValue(TLStructuredTypePart) reading} it
+	 *        from the base object.
 	 * @return The attribute value computed on the values of the overlay.
 	 */
-	public static Object computeOnOverlay(TLObject base, TLObject overlay, TLStructuredTypePart part,
-			BiFunction<? super TLObject, ? super TLStructuredTypePart, ?> computation) {
+	public static Object computeOnOverlay(TLObject base, TLObject overlay, TLStructuredTypePart part) {
 		TracingScope outer = CURRENT.get();
 		Sink<Pointer> trace = outer == null ? null : outer._trace;
 		OverlayLookup outerOverlays = outer == null ? null : outer._overlays;
 		try (TracingScope scope = open(trace, new BaseOverlay(base, overlay, outerOverlays))) {
-			return readBase(base, part, computation);
+			return readBase(base, part);
 		}
 	}
 

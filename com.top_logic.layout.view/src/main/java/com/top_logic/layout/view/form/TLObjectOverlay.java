@@ -143,9 +143,8 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * A changed attribute delivers the buffered value, an unchanged one the value of the base
 	 * object. A {@link TLStructuredTypePart#isDerived() derived} attribute is computed by its
 	 * storage on the base object in a {@link TracingScope} that resolves the base object to this
-	 * overlay (see {@link TracingScope#computeOnOverlay(TLObject, TLObject, TLStructuredTypePart,
-	 * java.util.function.BiFunction)}), so that the storage receives the base object and still
-	 * reflects the edits buffered here.
+	 * overlay (see {@link TracingScope#computeOnOverlay(TLObject, TLObject, TLStructuredTypePart)}),
+	 * so that the storage receives the base object and still reflects the edits buffered here.
 	 * </p>
 	 *
 	 * <p>
@@ -183,7 +182,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 			return _changes.get(attribute);
 		}
 		if (attribute.isDerived()) {
-			return TracingScope.computeOnOverlay(_base, this, attribute, TLObject::tValue);
+			return TracingScope.computeOnOverlay(_base, this, attribute);
 		}
 		return baseValue(attribute);
 	}
@@ -211,13 +210,12 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * The value of the given attribute of the base object.
 	 *
 	 * <p>
-	 * Read through {@link TracingScope#readBase(TLObject, TLStructuredTypePart,
-	 * java.util.function.BiFunction)}, so that the read is neither reported to a
-	 * {@link TracingScope} nor redirected back to this overlay.
+	 * Read through {@link TracingScope#readBase(TLObject, TLStructuredTypePart)}, so that the read
+	 * is neither reported to a {@link TracingScope} nor redirected back to this overlay.
 	 * </p>
 	 */
 	private Object baseValue(TLStructuredTypePart part) {
-		return TracingScope.readBase(_base, part, TLObject::tValue);
+		return TracingScope.readBase(_base, part);
 	}
 
 	/**

@@ -63,7 +63,7 @@ public class ObjectEditing extends FormObjectOverlay {
 
 	@Override
 	public Object defaultValue(TLStructuredTypePart part) {
-		return TracingScope.readBase(_base, part, TLObject::tValue);
+		return TracingScope.readBase(_base, part);
 	}
 
 	@Override

@@ -613,7 +613,7 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 		Transaction transaction =
 			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.TASK_CANCELED__TASK.fill(getName()));
 		try {
-			touch();
+			tTouch();
 			if (getState().equals(TaskState.RUNNING)) {
 				setState(TaskState.CANCELING);
 				transaction.commit();
@@ -889,14 +889,14 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 		 * committed) is drastically reduced. By checking again after locking, race conditions are
 		 * prevented. */
 		if ((!task.isNodeLocal()) && isClusterLockSet()) {
-			touch();
+			tTouch();
 			if (isClusterLockSet()) {
 				logErroneousLock();
 				clearClusterLock();
 			}
 		}
 		if (getState() != TaskState.INACTIVE) {
-			touch();
+			tTouch();
 			if (getState() != TaskState.INACTIVE) {
 				logErroneousState();
 				setState(TaskState.INACTIVE);
@@ -904,7 +904,7 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 		}
 		for (TaskResultWrapper result : getOwnResults()) {
 			if (isInWrongState(result)) {
-				result.touch();
+				result.tTouch();
 				if (isInWrongState(result)) {
 					logErroneousResult(result);
 					fixWrongState(result, taskResultI18n);

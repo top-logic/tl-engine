@@ -240,30 +240,6 @@ public interface StructuredElement extends Wrapper, TLScope {
 	}
 
 	/**
-	 * Adds an element to the {@link #getChildren()} list.
-	 */
-	default void addChild(StructuredElement newChild) {
-		if (getChildrenTypes().isEmpty()) {
-			throw new UnsupportedOperationException("No children supported.");
-		}
-		TLStructuredTypePart attribute = tType().getPart(CHILDREN_ATTR);
-		StorageImplementation storage = AttributeOperations.getStorageImplementation(this, attribute);
-		storage.addAttributeValue(this, attribute, newChild);
-	}
-
-	/**
-	 * Removes an element from the {@link #getChildren()} list.
-	 */
-	default void removeChild(Object oldChild) {
-		if (getChildrenTypes().isEmpty()) {
-			return;
-		}
-		TLStructuredTypePart attribute = tType().getPart(CHILDREN_ATTR);
-		StorageImplementation storage = AttributeOperations.getStorageImplementation(this, attribute);
-		storage.removeAttributeValue(this, attribute, oldChild);
-	}
-
-	/**
 	 * Convenience short-cut for {@link #createChild(String, TLClass)}, for an unresolved local type
 	 * name instead of the {@link TLClass} object.
 	 * <p>

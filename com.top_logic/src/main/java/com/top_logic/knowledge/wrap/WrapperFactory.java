@@ -12,9 +12,7 @@ import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
-import com.top_logic.basic.col.Mapping;
 import com.top_logic.dob.ex.UnknownTypeException;
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.Branch;
@@ -55,33 +53,6 @@ public final class WrapperFactory {
         else
             return null;
     }
-
-    /**
-     * Get the wrapper for a knowledge object with the given id and potential types
-     * in the default knowledge base.
-     *
-     * @param    anID       The id of the knowledge object
-     * @param    someTypes  The types of the knowledge object to consider
-	 * @return The {@link TLObject} with the given {@link TLID}. Null when there is none.
-     */
-	public static <T extends TLObject> T getWrapper(TLID anID, String someTypes[]) {
-		return getWrapper(anID, someTypes, getDefaultKB());
-    }
-
-    /**
-     * Get the wrapper for a knowledge object with the given id and potential types
-     * in the default knowledge base.
-     *
-     * @param	 aBranch	the Branch. May be <code>null</code> (current branch)
-     * @param	 aRevision	the Revision. May be <code>null</code> (current revision)
-     * @param    anID       The id of the knowledge object
-     * @param    someTypes  The types of the knowledge object to consider
-	 * @return The {@link TLObject} with the given {@link TLID}. Null when there is none.
-     */
-	public static <T extends TLObject> T getWrapper(Branch aBranch, Revision aRevision, TLID anID, String someTypes[]) {
-		return getWrapper(aBranch, aRevision, anID, someTypes, getDefaultKB());
-    }
-
 
     /**
      * Get the wrapper for a knowledge object with the given id and potential types
@@ -265,35 +236,6 @@ public final class WrapperFactory {
     }
 
     /**
-     * Check, if there is a wrapper for a KOwith the given ID in the default KBase.
-     *
-     * @param objectKey The ID of the knowledge object.
-     * @return <code>true</code>, if there is a wrapper for the knowledge object.
-     * @see #getDefaultKB()
-     */
-	public static boolean hasWrapper(ObjectKey objectKey) {
-		return (hasWrapper(objectKey, getDefaultKB()));
-    }
-
-	/**
-	 * Check, if there is a wrapper for a KO with the given ID.
-	 * 
-	 * @param objectKey
-	 *        The ID of the knowledge object.
-	 * @param aBase
-	 *        The {@link KnowledgeBase} to be used for searching the KO.
-	 * @return <code>true</code>, if there is a wrapper for the knowledge object.
-	 */
-	public static boolean hasWrapper(ObjectKey objectKey, KnowledgeBase aBase) {
-		KnowledgeItem item = aBase.resolveCachedObjectKey(objectKey);
-		if (item == null) {
-			return false;
-		}
-
-		return item.getWrapper() != null;
-    }
-
-    /**
      * Return the default knowledgebase to be used for searching
      * knowledge objects.
      *
@@ -351,36 +293,6 @@ public final class WrapperFactory {
 			Collection<? extends KnowledgeItem> koList) {
 		for (KnowledgeItem ko : koList) {
 			out.add(CollectionUtil.dynamicCast(expectedType, getWrapper(ko)));
-		}
-	}
-
-	/**
-	 * {@link Mapping} of {@link KnowledgeItem}s to {@link TLObject}s using the
-	 * {@link WrapperFactory}.
-	 */
-	public static Mapping<KnowledgeItem, TLObject> getWrapperMapping() {
-		return WrapperMapping.INSTANCE;
-	}
-	
-	/**
-	 * {@link Mapping} converting {@link KnowledgeItem}s to {@link TLObject}s.
-	 * 
-	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
-	 */
-	private static final class WrapperMapping implements Mapping<KnowledgeItem, TLObject> {
-
-		/**
-		 * Singleton {@link WrapperFactory.WrapperMapping} instance.
-		 */
-		public static final WrapperFactory.WrapperMapping INSTANCE = new WrapperFactory.WrapperMapping();
-
-		private WrapperMapping() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public TLObject map(KnowledgeItem input) {
-			return WrapperFactory.getWrapper(input);
 		}
 	}
 

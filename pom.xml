@@ -40,7 +40,7 @@
 		<msgbuf.version>1.3.0</msgbuf.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
-		<commonmark.version>0.30.0</commonmark.version>
+		<commonmark.version>0.30.1</commonmark.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		<!-- renovate: datasource=node-version depName=node -->
 		<node.version>24.21.0</node.version>
@@ -2080,7 +2080,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.10.4.1</version>
+				<version>4.10.5.0</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>

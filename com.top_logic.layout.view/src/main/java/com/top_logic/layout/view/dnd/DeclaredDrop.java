@@ -6,25 +6,28 @@
 package com.top_logic.layout.view.dnd;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.dnd.AcceptedKinds;
+import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.LiveExecutability;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
-import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link DropConfig} instantiated for the element declaring it: its action chain instantiated,
- * its refusal function compiled, and the {@link DropScope} the element assigns it.
+ * its refusal function compiled, and the {@link DropSignature} the element assigns it.
  *
  * <p>
  * An element compiles its drops once, when it is instantiated, and {@link #bind(ViewContext,
@@ -32,40 +35,76 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * @param config
- *        What the drop accepts, when it applies and where it publishes its target.
- * @param scope
- *        Whether the drop is made on the control as a whole or on a single item of it.
+ *        What the drop accepts, when it applies and where it publishes the objects it refers to.
+ * @param signature
+ *        Whether the drop is made on the control as a whole, onto a single item of it or at a place
+ *        in the order of its items, and which objects it refers to there.
  * @param actions
  *        The instantiated action chain applying the drop.
  * @param refuseIf
  *        The compiled {@link DropConfig#getRefuseIf()}, {@code null} without one.
  */
-public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> actions, QueryExecutor refuseIf) {
+public record DeclaredDrop(DropConfig config, DropSignature signature, List<ViewAction> actions,
+		QueryExecutor refuseIf) {
 
 	/**
 	 * Instantiates the action chain of the given drop and compiles its refusal function, so that
 	 * applying the drop only has to run them.
 	 *
+	 * <p>
+	 * Options the drop cannot use with the given signature are reported as configuration errors: a
+	 * channel for a {@link DropReference} the signature does not have, and target rules on a drop
+	 * other than one onto a single item.
+	 * </p>
+	 *
 	 * @param context
 	 *        The context the actions are instantiated in, and where problems are reported.
 	 * @param config
 	 *        The declared drop.
-	 * @param scope
-	 *        Whether the element makes the drop on the control as a whole or on a single item.
+	 * @param signature
+	 *        What the element makes the drop on, and the objects the drop refers to there.
 	 */
-	public static DeclaredDrop compile(InstantiationContext context, DropConfig config, DropScope scope) {
+	public static DeclaredDrop compile(InstantiationContext context, DropConfig config,
+			DropSignature signature) {
+		checkOptions(context, config, signature);
 		List<ViewAction> actions = config.getActions().stream()
 			.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
 			.filter(action -> action != null)
 			.toList();
 		Expr refuseIf = config.getRefuseIf();
-		return new DeclaredDrop(config, scope, actions, refuseIf == null ? null : QueryExecutor.compile(refuseIf));
+		return new DeclaredDrop(config, signature, actions,
+			refuseIf == null ? null : QueryExecutor.compile(refuseIf));
+	}
+
+	/**
+	 * Reports the options of the given drop its signature gives no meaning.
+	 */
+	private static void checkOptions(InstantiationContext context, DropConfig config, DropSignature signature) {
+		String mode = signature.mode().wireName();
+		for (DropReference reference : DropReference.ALL) {
+			if (reference.channel().apply(config) != null && !signature.references().contains(reference)) {
+				context.error("A <" + DropConfig.TAG_NAME + "> of mode '" + mode + "' declares '"
+					+ reference.channelProperty() + "', but refers to no such object; it publishes "
+					+ describeChannels(signature) + " (at " + config.location() + ").");
+			}
+		}
+		if (!config.getTargetExecutability().isEmpty() && signature.mode() != DropMode.ONTO) {
+			context.error("A <" + DropConfig.TAG_NAME + "> of mode '" + mode + "' has no target item its '"
+				+ DropConfig.TARGET_EXECUTABILITY + "' could decide over; only a drop onto a single item declares one"
+				+ " (at " + config.location() + ").");
+		}
+	}
+
+	private static String describeChannels(DropSignature signature) {
+		List<String> properties =
+			signature.references().stream().map(DropReference::channelProperty).toList();
+		return properties.isEmpty() ? "nothing" : "only through " + String.join(", ", properties);
 	}
 
 	/**
 	 * The {@link DropBinding} applying the given drops to the given control, resolved for the
-	 * session of the given context: the accepted types against the application model, the target
-	 * channels against the view, the rules against the context.
+	 * session of the given context: the channels of the references against the view, the rules
+	 * against the context.
 	 *
 	 * <p>
 	 * The control-wide {@link DropConfig#getExecutability() executability} of each drop is followed
@@ -77,8 +116,8 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 	 * @param control
 	 *        The control accepting the drops.
 	 * @param refresh
-	 *        Announces the {@link DropBinding#acceptedTypes() accepted types} and the item targeting
-	 *        of the binding to the client again.
+	 *        Announces the {@link DropBinding#acceptedKinds() accepted kinds} and the
+	 *        {@link DropBinding#dropModes() modes} of the binding to the client again.
 	 * @param drops
 	 *        The compiled drops, in declaration order.
 	 */
@@ -92,21 +131,27 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 	}
 
 	/**
+	 * The kinds this drop accepts: those {@link DropConfig#getAccept() declared}, every drag where
+	 * none is.
+	 */
+	public AcceptedKinds acceptedKinds() {
+		List<String> accept = config.getAccept();
+		return accept.isEmpty() ? AcceptedKinds.ANY : AcceptedKinds.of(accept);
+	}
+
+	/**
 	 * This drop resolved for the session of the given context.
 	 *
 	 * @see #bind(ViewContext, ReactControl, Runnable, List)
 	 */
 	private DropBinding.Drop resolve(ViewContext context, ReactControl control, Runnable refresh) {
-		List<TLType> accepted = new ArrayList<>(config.getAccept().size());
-		for (TLModelPartRef ref : config.getAccept()) {
-			TLType type = ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("A <" + DropConfig.TAG_NAME + "> accepts an unknown type: "
-					+ ref.qualifiedName());
+		Map<DropReference, ViewChannel> channels = new HashMap<>();
+		for (DropReference reference : signature.references()) {
+			ChannelRef channelRef = reference.channel().apply(config);
+			if (channelRef != null) {
+				channels.put(reference, context.resolveChannel(channelRef));
 			}
-			accepted.add(type);
 		}
-		ChannelRef targetChannelRef = config.getTargetChannel();
 
 		Supplier<ExecutableState> executability;
 		if (config.getExecutability().isEmpty()) {
@@ -118,12 +163,24 @@ public record DeclaredDrop(DropConfig config, DropScope scope, List<ViewAction> 
 		}
 
 		QueryExecutor compiledRefuseIf = refuseIf;
-		return new DropBinding.Drop(DropBinding.tagsOf(accepted), scope,
-			targetChannelRef == null ? null : context.resolveChannel(targetChannelRef),
+		return new DropBinding.Drop(acceptedKinds(), signature, channels,
 			actions,
 			executability,
 			ViewExecutabilityRules.build(config.getTargetExecutability(), context),
-			compiledRefuseIf == null ? null : (target, objects) -> compiledRefuseIf.execute(target, objects));
+			compiledRefuseIf == null ? null
+				: (objects, references) -> compiledRefuseIf.execute(arguments(objects, references)));
+	}
+
+	/**
+	 * The arguments of the refusal function: the dropped objects, followed by the referenced ones.
+	 */
+	private static Object[] arguments(List<?> objects, List<?> references) {
+		Object[] result = new Object[references.size() + 1];
+		result[0] = objects;
+		for (int n = 0; n < references.size(); n++) {
+			result[n + 1] = references.get(n);
+		}
+		return result;
 	}
 
 }

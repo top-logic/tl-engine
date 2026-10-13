@@ -38,6 +38,7 @@ import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
@@ -192,6 +193,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		_insertChannel = insertChannel == null ? null : new DefaultViewChannel(insertChannel);
 		if (_insertChannel != null) {
 			_insertChannel.addListener((sender, oldValue, newValue) -> textWritten(newValue));
+			ObservingChannels.observeWhileDisplayed(this, List.of(_insertChannel), context);
 		}
 
 		if (commands.isEmpty()) {

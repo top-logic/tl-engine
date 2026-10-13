@@ -335,25 +335,47 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
-	 * The delete advances in windows; a tiny window must produce the same result as a single one.
+	 * Every large step advances in windows; a tiny window must produce the same result as a single
+	 * one.
 	 */
-	public void testSmallDeleteWindow() throws Exception {
+	public void testSmallWindow() throws Exception {
 		Scenario scenario = setupScenario();
 		long cut = scenario._compactionRevision;
 		assertTrue("The scenario must span more than two revisions.", cut > 4);
 
 		ObjectKey targetKey = scenario._target.tId();
+		ObjectKey holderKey = scenario._holder.tId();
 
 		HistoryCompaction compaction = newCompaction();
-		compaction.setDeleteWindowSize(2);
+		compaction.setWindowSize(2);
+		Report analysis = compaction.analyzeRevisions(0, cut, _log);
 		Report result = compaction.compactRevisions(0, cut, _log);
 		assertFalse(result.isEmpty());
+		assertEquals("Dry run must predict the deletions.", analysis.getDeletedRows(), result.getDeletedRows());
+		assertEquals("Dry run must predict the rewrites.", analysis.getRewrittenRows(), result.getRewrittenRows());
+		assertEquals("Dry run must predict the re-pinned references.", analysis.getRewrittenPins(),
+			result.getRewrittenPins());
+		assertEquals("Dry run must predict the cleared references.", analysis.getClearedPins(),
+			result.getClearedPins());
+		assertEquals("Dry run must predict the rows deleted for dangling pins.",
+			analysis.getRowsDeletedForDanglingPins(), result.getRowsDeletedForDanglingPins());
 
 		KBTestUtils.clearCache(kb());
 		KnowledgeItem target = kb().resolveObjectKey(targetKey);
 		assertEquals("target-current", target.getAttributeValue(A1_NAME));
 		assertEquals("target-at-cut", inRevision(kb().getRevision(cut), target).getAttributeValue(A1_NAME));
 		assertEquals("No rows are valid before the cut.", 0, countRowsEndingBefore(type(D_NAME), cut));
+		assertEquals("Revisions below the cut are deleted.", 0, countRevisionsBelow(cut));
+		assertEquals("Cross references below the cut are deleted.", 0, countXrefBelow(cut));
+		assertTrue("Objects of the changed type are registered in the compaction revision.",
+			countXrefAt(cut, D_NAME) > 0);
+		assertEquals(cut, kb().getCreateRevision(target));
+		String survivingPin = getReferenceAttr(MONOMORPHIC, HistoryType.HISTORIC, !BRANCH_GLOBAL);
+		assertEquals(cut, readPinColumn(holderKey, survivingPin, ReferencePart.revision));
+		assertEquals("No row is left pinned to a discarded revision.", 0, countPinsBelow(type(D_NAME), cut));
+
+		Report second = compaction.compactRevisions(0, cut, _log);
+		assertTrue("A second run must not change anything: " + second, second.isEmpty());
 	}
 
 	/**
@@ -393,6 +415,13 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		Report result = newCompaction().compactRevisions(lower, upper, _log);
 		assertFalse(result.isEmpty());
 		assertEquals(lower, result.getLowerRevision());
+
+		/* The row of the object deleted inside the range ends at upper - 1, which is its final
+		 * state and must not be counted again. */
+		Report analysis = newCompaction().analyzeRevisions(lower, upper, _log);
+		assertTrue("A dry run after the compaction finds nothing to do: " + analysis, analysis.isEmpty());
+		Report second = newCompaction().compactRevisions(lower, upper, _log);
+		assertTrue("A second run must not change anything: " + second, second.isEmpty());
 
 		KBTestUtils.clearCache(kb());
 		KnowledgeItem reloaded = kb().resolveObjectKey(changingKey);

@@ -23,6 +23,8 @@ import com.top_logic.model.listen.ModelScope;
  * Attaching catches up with what happened in between: a change made while the channel was detached
  * reached no listener, so the value is recomputed when the observation resumes.
  * </p>
+ *
+ * @see ObservingChannels
  */
 public interface ObservingChannel extends ViewChannel {
 

@@ -148,13 +148,15 @@ Checklist: content glued to the border of its container → `with-inset="true"` 
 
 ## Filling the available height: the fill contract
 
-A control that should span the height its container offers - instead of growing with its content - carries the CSS class `tlFill`, which the layout CSS turns into `flex: 1; min-height: 0`. That bounds the control only while its container has a definite height itself, so the decision is not local: a container hosting a filling child has to fill in turn, up to the first box that is bounded anyway (the viewport-high mount point, a tab-content region, a scrolling panel body). This chain is a property of the path through the control tree, which is why it lives in the React bridge (`react-src/bridge/fill.ts`) rather than in a CSS selector enumerating the child types allowed to grow.
+A control that should span the height its container offers - instead of growing with its content - carries the CSS class `tlFill`, which the layout CSS turns into `flex: 1; min-height: 0`. That bounds the control only while its container has a definite height itself, so the decision is not local: a container hosting a filling child has to fill in turn, up to the first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split pane). This chain is a property of the path through the control tree, which is why it lives in the React bridge (`react-src/bridge/fill.ts`) rather than in a CSS selector enumerating the child types allowed to grow.
 
 A container component therefore declares how it takes part:
 
-- `useFill(fills)` — a fixed decision by the control's own configuration: `<panel fill="true">` reports filling, a plain panel does not. Returns the class for the root element.
+- `useFill(fills)` — a fixed decision by the control's own configuration: a table always reports filling. Returns the class for the root element.
 - `useFillHost(alwaysFills?)` — a container: it fills while it always does (a split panel, whose panes are sized proportionally; a tab bar, whose strip stays pinned) or while one of its children reports filling, and reports that on to its own container. Returns the class plus the host to provide to the children (`<FillProvider host={…}>`).
-- `<FillBarrier>` — ends the chain: a region bounded on its own that scrolls what does not fit (a panel body, a tab content area), or a surface laid out apart from the page (a dialog, a window, a drawer). A filling control inside resolves its height against that region, and nothing outside reacts to it.
+- `<FillBarrier>` — ends the chain: a region bounded on its own that scrolls what does not fit (a tab content area, the body of a `<panel fill="false">`), or a surface laid out apart from the page (a dialog, a window, a drawer). A filling control inside resolves its height against that region, and nothing outside reacts to it.
+
+**A `<panel>` follows its content.** It is a fill host for its body: a panel around a table, a split or another filling panel fills, so the same panel with a table spans the height in a tab, a split pane, a frame of a tile stack and a stack alike, and the table scrolls its rows itself. `fill="true"` makes the panel fill around content of its own size as well. `fill="false"` ends the chain at the panel body: where nothing else gives the panel a height - several panels listed one below the other in a scrolling panel body - it stays as high as its content and a table inside shows all of its rows.
 
 A container that declares nothing is opaque: a filling control inside it does not grow it, so a new container element that lays out vertical space adds its declaration.
 

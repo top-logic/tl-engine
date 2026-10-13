@@ -4,8 +4,8 @@
 // A control that fills carries FILL_CLASS on its root element, which the layout CSS turns into
 // `flex: 1; min-height: 0`. That alone bounds a control only as long as its container has a
 // definite height itself, so a container hosting a filling child has to fill in turn - up to the
-// first box that is bounded anyway (the viewport-high mount point, a tab-content region, a
-// scrolling panel body). The chain is therefore not a property of a single control but of the path
+// first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split
+// pane). The chain is therefore not a property of a single control but of the path
 // through the control tree, which is why it is decided here rather than in a CSS selector
 // enumerating the child types allowed to grow.
 
@@ -58,9 +58,9 @@ function useFillReport(fills: boolean): void {
  * Takes part in the fill contract with a fixed decision: reports it to the enclosing container and
  * returns the CSS class for this control's root element.
  *
- * For a control that either fills or does not by its own configuration - a `<panel fill="true">`,
- * a control that always spans its container - rather than depending on what it contains. A
- * container whose fill follows its children uses {@link useFillHost} instead.
+ * For a control that either fills or does not by its own configuration - a table, a control that
+ * always spans its container - rather than depending on what it contains. A container whose fill
+ * follows its children uses {@link useFillHost} instead.
  *
  * @param fills
  *        Whether this control fills the space its container offers.
@@ -121,8 +121,8 @@ export const FillProvider: React.FC<{ host: FillHost; children?: React.ReactNode
  * Ends the fill chain for the children rendered inside: their fill request reaches no container,
  * so it neither grows this control nor leaks to one further out.
  *
- * For a region that is bounded on its own and scrolls what does not fit (a panel body, a tab
- * content area) and for a surface that is laid out apart from the page (a dialog, a window, a
+ * For a region that is bounded on its own and scrolls what does not fit (a tab content area, the
+ * body of a panel configured not to fill) and for a surface that is laid out apart from the page (a dialog, a window, a
  * drawer): a filling control inside it resolves its height against that region, and the page
  * behind must not react to it.
  */

@@ -15,7 +15,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -41,8 +40,6 @@ public class WellKnownTypes {
 
 	private static final String USES_SECURITY_ANNOTATION =
 		"com.top_logic.model.search.expr.config.operations.UsesSecurity";
-
-	private static final String EVAL_CONTEXT_TYPE = "com.top_logic.model.search.expr.EvalContext";
 
 	TypeMirror _tlScriptFunctionsType;
 
@@ -98,8 +95,6 @@ public class WellKnownTypes {
 
 	TypeMirror _usesSecurityAnnotation;
 
-	TypeMirror _evalContextType;
-
 	/**
 	 * Creates a new {@link WellKnownTypes}.
 	 */
@@ -128,7 +123,6 @@ public class WellKnownTypes {
 		_instantiationContext = typeMirror("com.top_logic.basic.config.InstantiationContext");
 		_inAppAnnotation = typeMirror(IN_APP_ANNOTATION);
 		_usesSecurityAnnotation = typeMirror(USES_SECURITY_ANNOTATION);
-		_evalContextType = typeMirror(EVAL_CONTEXT_TYPE);
 		_abstractAnnotation = typeMirror(ABSTRACT_ANNOTATION);
 		TypeElement name = typeElement(NAME_ANNOTATION);
 		if (name != null) {
@@ -290,17 +284,6 @@ public class WellKnownTypes {
 	 */
 	public boolean hasUsesSecurityAnnotation(Element elem) {
 		return hasAnnotation(elem, _usesSecurityAnnotation);
-	}
-
-	/**
-	 * Whether the given parameter of a TL-Script function has the type {@value #EVAL_CONTEXT_TYPE}.
-	 * 
-	 * <p>
-	 * Such a parameter receives the context of the evaluation and is not a script argument.
-	 * </p>
-	 */
-	public boolean isEvalContextParameter(VariableElement param) {
-		return _evalContextType != null && _types.isSameType(param.asType(), _evalContextType);
 	}
 
 	/**

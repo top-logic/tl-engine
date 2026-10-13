@@ -18,8 +18,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -213,24 +211,6 @@ public final class EvalContext {
 	 */
 	public boolean hasVar(NamedConstant key) {
 		return _vars.containsKey(key);
-	}
-
-	/**
-	 * Reads an attribute of an object the way a script access does.
-	 *
-	 * @param self
-	 *        The object to access, <code>null</code> results in <code>null</code>.
-	 * @param part
-	 *        The attribute to look up.
-	 * @param withSecurity
-	 *        Whether the read access of the current user to the attribute must be checked.
-	 * @return The value of the given attribute, an empty value, if the read access is denied.
-	 */
-	public Object access(TLObject self, TLStructuredTypePart part, boolean withSecurity) {
-		if (self == null) {
-			return null;
-		}
-		return AccessLike.lookupValue(self, part, withSecurity);
 	}
 
 	/**

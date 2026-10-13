@@ -1,7 +1,7 @@
-import { React, useTLState, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLTypingField, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
 import TextField from '@mui/material/TextField';
-import { FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly, useTypingField } from './field';
+import { FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly } from './field';
 
 /** The on-screen keyboard of a number field whose state names none. */
 const DEFAULT_INPUT_MODE: NumberInputStateJson.InputMode = 'numeric';
@@ -15,7 +15,7 @@ const DEFAULT_INPUT_MODE: NumberInputStateJson.InputMode = 'numeric';
  * `text` with the `inputMode` of the state, so that a text the browser does not read as a number
  * still reaches the server's validation. An empty text is sent as `null`.</p>
  *
- * <p>The typing behaviour is the one of the `TypingFieldState` (see {@link useTypingField}).
+ * <p>The typing behaviour is the one of the `TypingFieldState` (see {@link useTLTypingField}).
  * Mapping from the control state: placeholder → placeholder; hasError → `error`, `aria-invalid` and
  * the error message as tooltip; hasWarnings → color `warning`; mandatory → `aria-required`; a field
  * that is not editable shows the text, as TLNumberInput does; disabled → `disabled`; hidden →
@@ -29,7 +29,7 @@ const MuiNumberInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const { text, setText, onBlur, onSubmitKey } = useTypingField(null);
+  const { text, setText, onBlur, onKeyDown } = useTLTypingField({ emptyValue: null });
 
   if (state.hidden === true) {
     return null;
@@ -60,7 +60,7 @@ const MuiNumberInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             ...fieldAriaProps(state),
             ...tooltipProps(hasError ? state.errorMessage : undefined),
             inputMode: state.inputMode ?? DEFAULT_INPUT_MODE,
-            onKeyDown: onSubmitKey,
+            onKeyDown,
           },
         }}
       />

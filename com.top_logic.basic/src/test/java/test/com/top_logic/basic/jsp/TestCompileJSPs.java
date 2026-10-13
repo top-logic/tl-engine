@@ -7,7 +7,6 @@ package test.com.top_logic.basic.jsp;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,25 +48,7 @@ public class TestCompileJSPs extends TestCase {
 		tmp.mkdirs();
 	
 		BufferingProtocol log = new BufferingProtocol();
-
-		List<JspCompileTask> tasks = new ArrayList<>();
-		for (int n = 0, cnt = jspFiles.size(); n < cnt; n += 100) {
-			List<File> chunk = jspFiles.subList(n, Math.min(cnt, n + 100));
-
-			String targetPckg = "org.apache.jsp" + n;
-			List<String> translateCommand;
-			try {
-				translateCommand =
-					CompileJSP.getTranslateCommand(config, targetPckg, chunk);
-			} catch (IOException ex) {
-				log.error("Cannot create compile command for files: " + chunk, ex);
-				continue;
-			}
-			
-			File rootFolder = new File(CompileJSP.TMP_DIR + '/' + targetPckg.replace('.', '/'));
-			tasks.add(new JspCompileTask(chunk, translateCommand, config, rootFolder));
-		}
-		new JspCompiler(log, config.getWebapp(), tasks).compile();
+		new JspCompiler(log, config).compile();
 		if (log.hasErrors()) {
 			fail(log.getErrors().stream().collect(Collectors.joining("\n")));
 		}

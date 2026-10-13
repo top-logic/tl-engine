@@ -34,6 +34,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.list.KanbanBoardCards;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.table.SelectionMode;
 
 /**
@@ -61,8 +62,15 @@ public class TestKanbanBoardCards extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
+		// The tickets are no objects others observe, so the window reports no model scope - which
+		// spares the test the knowledge base one is built from.
 		ViewContext context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
-			new ReactWindowRegistry("test")));
+			new ReactWindowRegistry("test")) {
+			@Override
+			public ModelScope getModelScope() {
+				return null;
+			}
+		});
 		_template = new Template();
 		_cards = new KanbanBoardCards(context, List.of(_template), ELEMENT_CHANNEL, item -> ((Ticket) item)._status,
 			column -> "Column " + column);

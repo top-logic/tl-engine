@@ -141,4 +141,12 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 		return !isMultiline();
 	}
 
+	/**
+	 * A typed text is committed when the field is left, a single line also by Enter.
+	 */
+	@Override
+	public boolean commitsEdits() {
+		return true;
+	}
+
 }

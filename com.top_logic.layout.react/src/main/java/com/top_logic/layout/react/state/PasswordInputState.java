@@ -24,7 +24,7 @@ public interface PasswordInputState extends com.top_logic.layout.react.state.Typ
 	com.top_logic.layout.react.state.PasswordInputState setSendValueOnBlur(boolean value);
 
 	@Override
-	com.top_logic.layout.react.state.PasswordInputState setCommitOnBlur(boolean value);
+	com.top_logic.layout.react.state.PasswordInputState setCommitEdits(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.PasswordInputState setValue(Object value);

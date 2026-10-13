@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, rootClassName, fieldInputId, useFieldLabelProps,
+  React, CMD_COMMIT, useTLState, useTLCommand, useTLUpload, useTLDataUrl, rootClassName, fieldInputId, useFieldLabelProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -64,7 +64,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const editable: boolean = state.editable !== false;
   const hasError: boolean = !!state.hasError;
   const imageUrl: string | null = (state.imageUrl as string) || null;
-  const commitOnBlur: boolean = state.commitOnBlur === true;
+  const commitEdits: boolean = state.commitEdits === true;
   const toolbar: unknown = state[STATE_TOOLBAR] || null;
   const insertRequest: InsertRequest | null = (state[STATE_INSERT] as InsertRequest) || null;
 
@@ -120,9 +120,9 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       flushValue(ed);
       // Commands are dispatched FIFO, so the commit runs after the value is applied
       // server-side. Only an actual edit commits: focusing and leaving does nothing.
-      if (commitOnBlur && dirtyRef.current) {
+      if (commitEdits && dirtyRef.current) {
         dirtyRef.current = false;
-        sendCommand('commit');
+        sendCommand(CMD_COMMIT);
       }
     },
   }, [editable]);

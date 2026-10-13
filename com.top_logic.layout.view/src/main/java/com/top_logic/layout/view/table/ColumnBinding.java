@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.Comparator;
+
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
@@ -53,6 +55,23 @@ public interface ColumnBinding {
 	 */
 	default void installUI(ColumnSetup setup, TableViewControl<?> control) {
 		// No custom UI by default.
+	}
+
+	/**
+	 * The order of the values of the column this binding builds, as the given comparator orders
+	 * the cell values they stand for.
+	 *
+	 * <p>
+	 * The default is the given comparator itself, for a column whose values are the cell values
+	 * {@link ColumnSetup#value() read from the row}. A binding whose column holds other values -
+	 * e.g. a cell value combined with its row - orders them by the cell value they carry.
+	 * </p>
+	 *
+	 * @param cellOrder
+	 *        The ascending order of the cell values, never passed {@code null}.
+	 */
+	default Comparator<?> order(Comparator<Object> cellOrder) {
+		return cellOrder;
 	}
 
 	/**

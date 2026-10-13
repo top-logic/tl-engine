@@ -33,6 +33,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.list.FastListElementComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -68,6 +69,7 @@ import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.util.TLCollator;
 
 /**
  * Resolves the {@link ColumnProvider} for a kind of value, turning a datatype into a green-field
@@ -625,7 +627,12 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * A column over classifiers of an enumeration: an options filter offering the enumeration's
-	 * classifiers, sorted by their display labels.
+	 * classifiers in their declaration order, sorted in the enumeration's order - the declaration
+	 * order of its classifiers, or their display labels for an enumeration that is not
+	 * {@link TLEnumeration#isOrdered() ordered}.
+	 *
+	 * @implNote The comparator is created per sort, so that labels are compared in the locale of
+	 *           the user sorting the table. A value that is no classifier sorts as an empty one.
 	 */
 	private static Column<Object, Object> optionsColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value, TLEnumeration enumeration) {
@@ -634,7 +641,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
 		return valueColumn(name, label, type, width, value)
-			.sort(() -> Comparator.comparing(ColumnProviderService::label))
+			.sort(() -> Comparator.comparing(cellValue -> typedValue(cellValue, TLClassifier.class),
+				Comparator.nullsLast(new FastListElementComparator(new TLCollator()))))
 			.filter(new OptionsColumnFilter<>(options))
 			.build();
 	}

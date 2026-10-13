@@ -161,7 +161,7 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	com.top_logic.layout.react.state.TextInputState setSendValueOnBlur(boolean value);
 
 	@Override
-	com.top_logic.layout.react.state.TextInputState setCommitOnBlur(boolean value);
+	com.top_logic.layout.react.state.TextInputState setCommitEdits(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.TextInputState setValue(Object value);

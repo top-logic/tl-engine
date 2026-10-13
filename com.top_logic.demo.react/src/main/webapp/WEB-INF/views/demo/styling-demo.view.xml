@@ -49,6 +49,13 @@
 		<channel name="picked"/>
 		<channel name="level"/>
 		<channel name="switched"/>
+		<channel name="requiredRadio"/>
+		<channel name="optionalRadio"/>
+		<channel name="requiredPick"/>
+		<channel name="optionalPick"/>
+		<channel name="requiredText"/>
+		<channel name="submittedText"/>
+		<channel name="annotatedChoice"/>
 		<!-- The object the form of the last section edits, held by the view and stored nowhere. -->
 		<derived-channel name="obj"
 			expr="new(`demo.react:Demo`, transient: true)"
@@ -704,6 +711,141 @@
 			/>
 			<text
 				input="switched"
+				tone="helper"
+			/>
+		</stack>
+
+		<text variant="title">
+			<label>
+				<en>A value declared like an attribute</en>
+				<de>Ein Wert, deklariert wie ein Attribut</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A value-input states its value in the words of an attribute of the model: a type, whether it is mandatory, whether it holds multiple values, and the annotations shaping its display. A mandatory selection offers no empty choice - the mandatory radio group has no button for no value and the mandatory dropdown no clear button, unlike the optional ones beside them. A mandatory text that is emptied shows the missing value and does not run its command: press Enter to hand the text to the channel below it, then empty the field and press Enter again. The last input names its control by an input-control annotation, as an attribute of the model does.</en>
+				<de>Ein value-input beschreibt seinen Wert mit den Worten eines Attributs des Modells: einem Typ, ob er Pflicht ist, ob er mehrere Werte hält, und den Annotationen, die seine Darstellung bestimmen. Eine Pflichtauswahl bietet keine leere Wahl an - die Pflicht-Radio-Gruppe hat keinen Button für keinen Wert und das Pflicht-Dropdown keine Schaltfläche zum Leeren, anders als die optionalen daneben. Ein Pflichttext, der geleert wird, zeigt den fehlenden Wert an und führt sein Kommando nicht aus: Enter übergibt den Text an den Kanal darunter; danach das Feld leeren und erneut Enter drücken. Die letzte Eingabe benennt ihr Steuerelement durch eine input-control-Annotation, wie es ein Attribut des Modells tut.</de>
+			</label>
+		</text>
+		<fields>
+			<value-input
+				mandatory="true"
+				type="demo.react:Priority"
+				value="requiredRadio"
+			>
+				<label>
+					<en>Priority (radio buttons, mandatory)</en>
+					<de>Priorität (Radiobuttons, Pflicht)</de>
+				</label>
+				<annotations>
+					<classification-display value="radio"/>
+				</annotations>
+			</value-input>
+			<value-input
+				type="demo.react:Priority"
+				value="optionalRadio"
+			>
+				<label>
+					<en>Priority (radio buttons, optional)</en>
+					<de>Priorität (Radiobuttons, optional)</de>
+				</label>
+				<annotations>
+					<classification-display value="radio"/>
+				</annotations>
+			</value-input>
+			<value-input
+				mandatory="true"
+				type="demo.react:Priority"
+				value="requiredPick"
+			>
+				<label>
+					<en>Priority (dropdown, mandatory)</en>
+					<de>Priorität (Dropdown, Pflicht)</de>
+				</label>
+			</value-input>
+			<value-input
+				type="demo.react:Priority"
+				value="optionalPick"
+			>
+				<label>
+					<en>Priority (dropdown, optional)</en>
+					<de>Priorität (Dropdown, optional)</de>
+				</label>
+			</value-input>
+			<value-input
+				mandatory="true"
+				type="tl.core:String"
+				value="requiredText"
+			>
+				<label>
+					<en>Name (mandatory, submitted on Enter)</en>
+					<de>Name (Pflicht, mit Enter übergeben)</de>
+				</label>
+				<on-submit>
+					<execute-script function="text -> $text"/>
+					<write-channel name="submittedText"/>
+				</on-submit>
+			</value-input>
+			<value-input
+				type="demo.react:Priority"
+				value="annotatedChoice"
+			>
+				<label>
+					<en>Priority (segments by annotation)</en>
+					<de>Priorität (Segmente per Annotation)</de>
+				</label>
+				<annotations>
+					<input-control>
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider"
+							display="segmented"
+						/>
+					</input-control>
+				</annotations>
+			</value-input>
+		</fields>
+		<stack
+			direction="row"
+			gap="default"
+			wrap="true"
+		>
+			<text variant="label">
+				<label>
+					<en>On the channels:</en>
+					<de>Auf den Kanälen:</de>
+				</label>
+			</text>
+			<text
+				input="requiredRadio"
+				tone="helper"
+			/>
+			<text
+				input="optionalRadio"
+				tone="helper"
+			/>
+			<text
+				input="requiredPick"
+				tone="helper"
+			/>
+			<text
+				input="optionalPick"
+				tone="helper"
+			/>
+			<text
+				input="requiredText"
+				tone="helper"
+			/>
+			<text variant="label">
+				<label>
+					<en>Submitted:</en>
+					<de>Übergeben:</de>
+				</label>
+			</text>
+			<text
+				input="submittedText"
+				tone="helper"
+			/>
+			<text
+				input="annotatedChoice"
 				tone="helper"
 			/>
 		</stack>

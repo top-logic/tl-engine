@@ -1812,6 +1812,60 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				execute(search("`TestSearchExpression:C`")))));
 	}
 
+	/**
+	 * A deleted object read through TL-Script counts as a missing value: it is an instance of no
+	 * type, its attributes read as empty values, and it has no referrers.
+	 */
+	public void testDeletedObjectAsMissingValue() throws ParseException {
+		TLObject deleted = newObject("TestSearchExpression:A", "a1");
+		TLObject valid = newObject("TestSearchExpression:A", "a2");
+		try (Transaction tx =
+			kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			deleted.tUpdateByName("others", Collections.singleton(valid));
+			valid.tUpdateByName("other", deleted);
+			tx.commit();
+		}
+
+		SearchExpression instanceOf = search("x -> $x.instanceOf(`TestSearchExpression:A`)");
+		SearchExpression dynamicInstanceOf = search("x -> t -> $x.instanceOf($t)");
+		SearchExpression getName = search("x -> $x.get(`TestSearchExpression:A#name`)");
+		SearchExpression dynamicGet = search("x -> p -> $x.get($p)");
+		SearchExpression atName = search("x -> $x[\"name\"]");
+		SearchExpression getOthers = search("x -> $x.get(`TestSearchExpression:A#others`)");
+		SearchExpression referers = search("x -> $x.referers(`TestSearchExpression:A#other`)");
+		SearchExpression dynamicReferers = search("x -> r -> $x.referers($r)");
+		Object typeA = execute(search("`TestSearchExpression:A`"));
+		Object nameAttr = execute(search("`TestSearchExpression:A#name`"));
+		Object otherRef = execute(search("`TestSearchExpression:A#other`"));
+
+		// A valid object answers with its type, values and referrers.
+		assertTrue(SearchExpression.asBoolean(execute(instanceOf, deleted)));
+		assertEquals("a1", execute(getName, deleted));
+		assertEquals(Collections.singleton(valid), asSet(execute(getOthers, deleted)));
+		assertEquals(Collections.singleton(valid), asSet(execute(referers, deleted)));
+
+		delete(deleted);
+		assertFalse(deleted.tValid());
+
+		assertFalse(SearchExpression.asBoolean(execute(instanceOf, deleted)));
+		assertFalse(SearchExpression.asBoolean(execute(dynamicInstanceOf, deleted, typeA)));
+		assertNull(execute(getName, deleted));
+		assertNull(execute(dynamicGet, deleted, nameAttr));
+		assertNull(execute(atName, deleted));
+		Object others = execute(getOthers, deleted);
+		assertTrue(others instanceof Collection<?>);
+		assertTrue(((Collection<?>) others).isEmpty());
+		assertEquals(Collections.emptySet(), asSet(execute(referers, deleted)));
+		assertEquals(Collections.emptySet(), asSet(execute(dynamicReferers, deleted, otherRef)));
+
+		// The valid object is unaffected.
+		assertTrue(SearchExpression.asBoolean(execute(instanceOf, valid)));
+		assertTrue(SearchExpression.asBoolean(execute(dynamicInstanceOf, valid, typeA)));
+		assertEquals("a2", execute(getName, valid));
+		assertEquals("a2", execute(dynamicGet, valid, nameAttr));
+		assertEquals("a2", execute(atName, valid));
+	}
+
 	public void testBulkDelete() throws ParseException {
 		List<?> search = (List<?>) execute(search(
 			"list('a1', 'a2').map(n -> new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, $n))"));

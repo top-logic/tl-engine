@@ -76,7 +76,8 @@ public class HistoryCompactionOperation {
 	 *
 	 * <p>
 	 * The compaction runs on the calling thread. The caches of the running knowledge base still
-	 * describe the discarded history afterwards and are dropped by {@link #scheduleRestart(Log)}.
+	 * describe the discarded history afterwards and are dropped by
+	 * {@link #scheduleRestart(Log, boolean)}.
 	 * </p>
 	 *
 	 * @param beforeDate
@@ -112,29 +113,16 @@ public class HistoryCompactionOperation {
 	 *
 	 * @param log
 	 *        Receives the outcome of the restart.
+	 * @param leaveMaintenanceWindow
+	 *        Whether the maintenance window is left after the persistency layer is up and running
+	 *        again; <code>true</code> only for a maintenance window that was entered for the
+	 *        compaction, never for one an administrator entered manually. After a failed restart the
+	 *        maintenance window stays active.
 	 *
-	 * @see PersistencyMaintenance#scheduleRestart(Log)
+	 * @see PersistencyMaintenance#scheduleRestart(Log, boolean)
 	 */
-	public static void scheduleRestart(Log log) {
-		PersistencyMaintenance.scheduleRestart(log);
-	}
-
-	/**
-	 * Compacts the history and drops the outdated caches afterwards.
-	 *
-	 * @param beforeDate
-	 *        Point in time in milliseconds since the epoch.
-	 * @param log
-	 *        Receives progress information, the resulting report and the outcome of the restart.
-	 * @return What was changed.
-	 *
-	 * @see #compact(long, Log)
-	 * @see #scheduleRestart(Log)
-	 */
-	public static Report compactAndRestart(long beforeDate, Log log) {
-		Report report = compact(beforeDate, log);
-		scheduleRestart(log);
-		return report;
+	public static void scheduleRestart(Log log, boolean leaveMaintenanceWindow) {
+		PersistencyMaintenance.scheduleRestart(log, leaveMaintenanceWindow);
 	}
 
 	/**

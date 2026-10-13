@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -15,23 +16,29 @@ import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.meta.form.constraint.I18NConstants;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -39,27 +46,36 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.FormFieldState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.GenericViewCommand;
-import com.top_logic.layout.view.element.ValueInputElement;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.element.SubmitOn;
+import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BooleanControlProvider;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.NumberInputControlProvider;
 import com.top_logic.layout.view.form.SelectControlProvider;
+import com.top_logic.layout.view.form.TLInputControl;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -75,11 +91,13 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPrese
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.model.CompatibilityService;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests for {@link ValueInputElement} - the {@code <value-input>} element binding a channel to an input
@@ -97,7 +115,8 @@ import com.top_logic.util.model.CompatibilityService;
  * <p>
  * Third, the submit hook: which controls report a submit of their own, that the submit a client
  * sends both stores the value and reports it, and that only a value the user produced counts as
- * committed.
+ * committed. The {@link ValueInputElement.Config#getSubmitOn() submit gesture} decides for a typed
+ * value whether Enter or every finished edit runs the command, and leaves a picked value alone.
  * </p>
  *
  * <p>
@@ -157,6 +176,63 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final String DEBOUNCE_MS = "debounceMs";
 
+	/** Position of the text input of the test view running its command on every finished edit. */
+	private static final int TEXT_ON_CHANGE = 8;
+
+	/** Position of the text input of the test view running its command on Enter. */
+	private static final int TEXT_ON_ENTER = 9;
+
+	/** Position of the checkbox of the test view stating that its command runs on every edit. */
+	private static final int FLAG_ON_CHANGE = 10;
+
+	/** Position of the checkbox of the test view stating no submit gesture. */
+	private static final int FLAG_ON_ENTER = 11;
+
+	/** Position of the labelled enumeration input of the test view whose value is mandatory. */
+	private static final int MANDATORY_CHOICE = 12;
+
+	/** Position of the labelled enumeration input of the test view whose value may be empty. */
+	private static final int OPTIONAL_CHOICE = 13;
+
+	/** Position of the enumeration input of the test view annotated to be displayed as radios. */
+	private static final int RADIO_CHOICE = 14;
+
+	/** Position of the enumeration input of the test view annotated with a control. */
+	private static final int ANNOTATED_CONTROL = 15;
+
+	/**
+	 * Position of the enumeration input of the test view naming a control of its own besides the
+	 * annotated one.
+	 */
+	private static final int NAMED_OVER_ANNOTATED = 16;
+
+	/** Position of the mandatory text input of the test view running its command on Enter. */
+	private static final int MANDATORY_TEXT_ON_ENTER = 17;
+
+	/**
+	 * Position of the mandatory text input of the test view running its command on every finished
+	 * edit.
+	 */
+	private static final int MANDATORY_TEXT_ON_CHANGE = 18;
+
+	/** The number of inputs in the test view. */
+	private static final int INPUT_COUNT = 19;
+
+	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
+	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
+
+	/** The channel the choice inputs of the test view write to. */
+	private static final String CHANGE = "change";
+
+	/** The channel the text inputs of the test view write to. */
+	private static final String TERM = "term";
+
+	/** The channel the checkboxes of the test view write to. */
+	private static final String FLAG = "flag";
+
+	/** The value a test enters in a text input. */
+	private static final String ENTERED = "DEMO-1";
+
 	/** The icon a search box carries, as the test view states it. */
 	private static final String SEARCH_ICON = "css:fa-solid fa-magnifying-glass";
 
@@ -168,6 +244,14 @@ public class TestValueInputElement extends TestCase {
 
 	private ReactContext _context;
 
+	private ViewContext _viewContext;
+
+	/** The channel the text inputs of the test view write to. */
+	private ViewChannel _term;
+
+	/** The channel the checkboxes of the test view write to. */
+	private ViewChannel _flag;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -176,10 +260,34 @@ public class TestValueInputElement extends TestCase {
 		_module = TLModelUtil.addModule(_model, MODULE);
 		_row = _model.addClass(_module, _module, "Row");
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		_viewContext = new DefaultViewContext(new HeadlessReactContext());
+		_term = new DefaultViewChannel(TERM);
+		_viewContext.registerChannel(TERM, _term);
+		_flag = new DefaultViewChannel(FLAG);
+		_viewContext.registerChannel(FLAG, _flag);
+		_viewContext.registerChannel(CHANGE, new DefaultViewChannel(CHANGE));
+		RecordingCommand.EXECUTED.clear();
+	}
+
+	/**
+	 * Runs the test in an interaction: an input resolves the type of its value in the application
+	 * model, which reads the knowledge base.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestValueInputElement.class,
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
+		RecordingCommand.EXECUTED.clear();
+		_flag = null;
+		_term = null;
+		_viewContext = null;
 		_context = null;
 		_row = null;
 		_module = null;
@@ -194,7 +302,7 @@ public class TestValueInputElement extends TestCase {
 	 */
 	public void testParseInputs() throws Exception {
 		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
-		assertEquals("Every input of the test view must be parsed.", 8, inputs.size());
+		assertEquals("Every input of the test view must be parsed.", INPUT_COUNT, inputs.size());
 
 		ValueInputElement.Config text = config(inputs, 0);
 		assertEquals("term", text.getValue().getChannelName());
@@ -212,6 +320,10 @@ public class TestValueInputElement extends TestCase {
 			text.getOnSubmit() instanceof GenericViewCommand.Config);
 		assertEquals("The actions to run on the submitted value stand inside the element.",
 			2, ((GenericViewCommand.Config) text.getOnSubmit()).getActions().size());
+		assertEquals("Without a word, a typed value runs the command on Enter.", SubmitOn.ENTER, text.getSubmitOn());
+		assertEquals("A stated submit gesture must reach the configuration.",
+			SubmitOn.CHANGE, config(inputs, TEXT_ON_CHANGE).getSubmitOn());
+		assertEquals(SubmitOn.ENTER, config(inputs, TEXT_ON_ENTER).getSubmitOn());
 
 		assertEquals("tl.core:Boolean", config(inputs, 1).getType().qualifiedName());
 		assertEquals("tl.core:Date", config(inputs, 2).getType().qualifiedName());
@@ -529,6 +641,435 @@ public class TestValueInputElement extends TestCase {
 		assertFalse("The delay is rendering-only.", projection.containsKey(DEBOUNCE_MS));
 		assertEquals("The text a label-less input names itself by stays observable.",
 			"Search", projection.get(PLACEHOLDER));
+	}
+
+	/**
+	 * A text input running its command on every finished edit asks the client for the commits of
+	 * its edits, not for submits on Enter.
+	 */
+	public void testATextSubmittedOnChangeAsksForCommits() throws Exception {
+		Map<String, Object> state = input(TEXT_ON_CHANGE).scriptingScalarState();
+
+		assertEquals("The client must report each finished edit.",
+			Boolean.TRUE, state.get(TypingFieldState.COMMIT_EDITS__PROP));
+		assertFalse("Enter is no gesture of its own here, it finishes an edit like leaving the input does.",
+			Boolean.TRUE.equals(state.get(FieldState.SUBMIT_ON_ENTER__PROP)));
+	}
+
+	/**
+	 * A finished edit of a text input running its command on every finished edit runs the command
+	 * over the entered value, which has reached the channel before, and what the command returns is
+	 * the result of the commit.
+	 */
+	public void testAFinishedEditRunsTheCommand() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_CHANGE);
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ENTERED));
+		assertEquals("The entered value reaches the channel while the edit is still going on.",
+			ENTERED, _term.get());
+		assertEquals("A value still being edited runs no command.", List.of(), RecordingCommand.EXECUTED);
+
+		HandlerResult result = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+
+		assertEquals("The finished edit runs the command over the entered value.",
+			List.of(ENTERED), RecordingCommand.EXECUTED);
+		assertSame("What the command returns is the result of the commit.", RecordingCommand.RESULT, result);
+	}
+
+	/**
+	 * Enter in a text input running its command on every finished edit is no submit: the client
+	 * reports it as the commit of the edit, and a submit on its own stores the value only.
+	 */
+	public void testASubmitRunsNoCommandOnChange() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_CHANGE);
+
+		control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+
+		assertEquals("The value is stored.", ENTERED, _term.get());
+		assertEquals("...but no command runs on a submit.", List.of(), RecordingCommand.EXECUTED);
+	}
+
+	/**
+	 * A text input running its command on Enter asks the client for submits, not for the commits
+	 * of its edits.
+	 */
+	public void testATextSubmittedOnEnterAsksForSubmits() throws Exception {
+		Map<String, Object> state = input(TEXT_ON_ENTER).scriptingScalarState();
+
+		assertEquals("The client must submit on Enter.",
+			Boolean.TRUE, state.get(FieldState.SUBMIT_ON_ENTER__PROP));
+		assertFalse("Leaving the input after an edit runs nothing, so the client need not report it.",
+			Boolean.TRUE.equals(state.get(TypingFieldState.COMMIT_EDITS__PROP)));
+	}
+
+	/**
+	 * In a text input running its command on Enter, the submit runs the command and a finished
+	 * edit does not.
+	 */
+	public void testOnlyEnterRunsTheCommandOnEnter() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_ENTER);
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", "typed"));
+		control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+		assertEquals("The typed value reaches the channel when the input is left.",
+			"typed", _term.get());
+		assertEquals("...but leaving the input runs no command.", List.of(), RecordingCommand.EXECUTED);
+
+		HandlerResult result =
+			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+
+		assertEquals("Enter runs the command over the submitted value.", List.of(ENTERED), RecordingCommand.EXECUTED);
+		assertSame("What the command returns is the result of the submit.", RecordingCommand.RESULT, result);
+	}
+
+	/**
+	 * A picked value runs the command with every choice, whatever submit gesture the input states.
+	 */
+	public void testAPickedValueIgnoresTheSubmitGesture() throws Exception {
+		for (int index : new int[] { FLAG_ON_CHANGE, FLAG_ON_ENTER }) {
+			_flag.set(null);
+			RecordingCommand.EXECUTED.clear();
+			ReactFormFieldControl control = input(index);
+
+			Map<String, Object> state = control.scriptingScalarState();
+			assertFalse("A choice is no edit to report: " + index,
+				Boolean.TRUE.equals(state.get(TypingFieldState.COMMIT_EDITS__PROP)));
+			assertFalse("A choice has no Enter to submit with: " + index,
+				Boolean.TRUE.equals(state.get(FieldState.SUBMIT_ON_ENTER__PROP)));
+
+			control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", Boolean.TRUE));
+
+			assertEquals("The choice reaches the channel: " + index,
+				Boolean.TRUE, _flag.get());
+			assertEquals("...and runs the command: " + index, List.of(Boolean.TRUE), RecordingCommand.EXECUTED);
+		}
+	}
+
+	/**
+	 * An input declares its value in the words of an attribute: whether it is mandatory, and the
+	 * annotations shaping its display.
+	 */
+	public void testParseValueDeclaration() throws Exception {
+		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+
+		assertTrue("A stated mandatory flag must reach the configuration.",
+			config(inputs, MANDATORY_CHOICE).getMandatory());
+		assertFalse("A value may be empty unless stated otherwise.",
+			config(inputs, OPTIONAL_CHOICE).getMandatory());
+
+		ClassificationDisplay radio = config(inputs, RADIO_CHOICE).getAnnotation(ClassificationDisplay.class);
+		assertNotNull("A stated display annotation must reach the configuration.", radio);
+		assertEquals(ClassificationPresentation.RADIO, radio.getValue());
+		assertNull("An input without annotations states none.",
+			config(inputs, OPTIONAL_CHOICE).getAnnotation(ClassificationDisplay.class));
+
+		TLInputControl annotated = config(inputs, ANNOTATED_CONTROL).getAnnotation(TLInputControl.class);
+		assertNotNull("A stated control annotation must reach the configuration.", annotated);
+		assertTrue("The annotation names a select control: " + annotated.getImpl(),
+			annotated.getImpl() instanceof SelectControlProvider.Config);
+		assertEquals(SelectDisplay.SEGMENTED, ((SelectControlProvider.Config) annotated.getImpl()).getDisplay());
+		assertNull("An annotated control is no control named by the input.",
+			config(inputs, ANNOTATED_CONTROL).getInputControl());
+	}
+
+	/**
+	 * A mandatory choice tells its select control and its label that it may not be empty, which
+	 * is what makes the client offer no empty choice and mark the label as required.
+	 */
+	public void testAMandatoryChoiceIsMarkedRequired() throws Exception {
+		ReactFormFieldChromeControl chrome = chrome(MANDATORY_CHOICE);
+		assertEquals("The label of a mandatory value is marked as required.",
+			Boolean.TRUE, chrome.scriptingScalarState().get(FormFieldState.REQUIRED__PROP));
+
+		ReactFormFieldControl field = field(chrome);
+		assertTrue("The field model of a mandatory value is mandatory.", field.getFieldModel().isMandatory());
+		assertEquals("The client must learn that the selection may not be emptied.",
+			Boolean.TRUE, field.scriptingScalarState().get(FieldState.MANDATORY__PROP));
+	}
+
+	/** A choice that does not say it is mandatory may be emptied. */
+	public void testAnOptionalChoiceIsNotRequired() throws Exception {
+		ReactFormFieldChromeControl chrome = chrome(OPTIONAL_CHOICE);
+		assertFalse("The label of an optional value is not marked as required.",
+			Boolean.TRUE.equals(chrome.scriptingScalarState().get(FormFieldState.REQUIRED__PROP)));
+
+		ReactFormFieldControl field = field(chrome);
+		assertFalse(field.getFieldModel().isMandatory());
+		assertFalse("The client must offer the empty choice.",
+			Boolean.TRUE.equals(field.scriptingScalarState().get(FieldState.MANDATORY__PROP)));
+	}
+
+	/**
+	 * A choice annotated to be displayed as radio buttons is displayed exactly as a field of an
+	 * attribute carrying the same annotation; without the annotation, it stays a list that opens
+	 * on demand.
+	 */
+	public void testAnAnnotatedChoiceIsDisplayedLikeTheAttribute() throws Exception {
+		ReactDropdownSelectControl input = select(input(RADIO_CHOICE));
+
+		TLType type = TLModelUtil.findType(CHANGE_TYPE);
+		TLStructuredTypePart part = _model.addClassProperty(_row, "radio", type);
+		part.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.RADIO));
+		SimpleSelectFieldModel field = new SimpleSelectFieldModel(null, AttributeOptions.optionsFor(type), false);
+		ReactDropdownSelectControl attribute =
+			select(FieldControlService.getInstance().createFieldControl(_context, part, field));
+
+		assertEquals(SelectDisplay.RADIO, input.getDisplay());
+		assertEquals("The input is displayed as the attribute is.", attribute.getDisplay(), input.getDisplay());
+		assertEquals(attribute.getOrientation(), input.getOrientation());
+		assertEquals(attribute.getClass(), input.getClass());
+
+		assertEquals("Without an annotation, the options are offered in a list that opens on demand.",
+			SelectDisplay.DROPDOWN, select(field(chrome(OPTIONAL_CHOICE))).getDisplay());
+	}
+
+	/**
+	 * An annotation the input does not state is taken from the type; one it states wins over the
+	 * type.
+	 */
+	public void testTheDeclarationFallsBackToTheType() {
+		TLEnumeration status = enumeration("Fallback");
+		status.setAnnotation(ClassificationDisplay.display(ClassificationPresentation.RADIO_INLINE));
+		SimpleSelectFieldModel field = choice(status, false);
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+
+		FieldSpec fromType = FieldControlService.fieldSpec(status, declared, LABEL, false, field);
+		assertEquals("The input says nothing, so the type decides.", SelectDisplay.RADIO, fromType.getSelectDisplay());
+		assertEquals(Orientation.HORIZONTAL, fromType.getSelectOrientation());
+
+		declared.getAnnotations().add(ClassificationDisplay.display(ClassificationPresentation.DROP_DOWN));
+		FieldSpec fromInput = FieldControlService.fieldSpec(status, declared, LABEL, false, field);
+		assertEquals("The annotation of the input wins over the one of the type.",
+			SelectDisplay.DROPDOWN, fromInput.getSelectDisplay());
+	}
+
+	/**
+	 * A control annotation of the input selects the control; a control the input names itself wins
+	 * over the annotation.
+	 */
+	public void testAControlAnnotationOfTheInputSelectsTheControl() throws Exception {
+		assertEquals("The annotated control edits the value.",
+			SelectDisplay.SEGMENTED, select(input(ANNOTATED_CONTROL)).getDisplay());
+		assertEquals("The control named by the input wins over the annotated one.",
+			SelectDisplay.CHIPS, select(input(NAMED_OVER_ANNOTATED)).getDisplay());
+	}
+
+	/**
+	 * The control annotation is resolved from the declaration of the value, falling back to the
+	 * type, behind a control named by the display - the order the resolution of an attribute
+	 * follows.
+	 */
+	public void testTheControlAnnotationIsResolvedInOrder() {
+		TLEnumeration status = enumeration("Controlled");
+		SimpleSelectFieldModel field = choice(status, false);
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		FieldSpec spec = FieldControlService.fieldSpec(status, declared, LABEL, false, field);
+		FieldControlService service = controlService();
+
+		assertEquals("Without an annotation, the type leads to a list that opens on demand.",
+			SelectDisplay.DROPDOWN,
+			select(service.createFieldControl(_context, status, declared, spec, field, null)).getDisplay());
+
+		status.setAnnotation(inputControl(SelectDisplay.CHIPS));
+		assertEquals("The control annotated at the type applies where the input states none.",
+			SelectDisplay.CHIPS,
+			select(service.createFieldControl(_context, status, declared, spec, field, null)).getDisplay());
+
+		declared.getAnnotations().add(inputControl(SelectDisplay.SEGMENTED));
+		assertEquals("The control annotated at the input wins over the type.",
+			SelectDisplay.SEGMENTED,
+			select(service.createFieldControl(_context, status, declared, spec, field, null)).getDisplay());
+
+		assertEquals("A control named by the display wins over every annotation.",
+			SelectDisplay.RADIO,
+			select(service.createFieldControl(_context, status, declared, spec, field,
+				selectDisplay(SelectDisplay.RADIO))).getDisplay());
+	}
+
+	/**
+	 * A mandatory text input that is submitted empty reports the missing value and runs no
+	 * command, while the empty value still reaches the channel; a given value runs the command.
+	 */
+	public void testAMandatoryTextRefusesAnEmptySubmit() throws Exception {
+		ReactFormFieldControl control = input(MANDATORY_TEXT_ON_ENTER);
+		AbstractFieldModel field = (AbstractFieldModel) control.getFieldModel();
+
+		assertTrue(field.isMandatory());
+		assertFalse("An input that appears empty does not complain before it is touched.", field.hasError());
+		assertHasError(control, false);
+
+		HandlerResult empty = control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ""));
+
+		assertNull("The empty value reaches the channel like any other, as no value.", _term.get());
+		assertMissing(field);
+		assertHasError(control, true);
+		assertTrue("An empty mandatory value is reported at the field alone; the submit itself succeeds.",
+			empty.isSuccess());
+		assertEquals("No command runs on an empty mandatory value.", List.of(), RecordingCommand.EXECUTED);
+
+		HandlerResult result =
+			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+
+		assertFalse("A given value is no longer missing.", field.hasError());
+		assertHasError(control, false);
+		assertEquals("A given value runs the command.", List.of(ENTERED), RecordingCommand.EXECUTED);
+		assertSame(RecordingCommand.RESULT, result);
+	}
+
+	/**
+	 * A mandatory text input that is emptied while editing reports the missing value at once, and
+	 * finishing the edit runs no command.
+	 */
+	public void testAMandatoryTextRefusesAnEmptyCommit() throws Exception {
+		ReactFormFieldControl control = input(MANDATORY_TEXT_ON_CHANGE);
+		AbstractFieldModel field = (AbstractFieldModel) control.getFieldModel();
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ENTERED));
+		assertFalse(field.hasError());
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ""));
+
+		assertNull("The emptied value reaches the channel, as no value.", _term.get());
+		assertMissing(field);
+
+		HandlerResult empty = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+		assertTrue("An empty mandatory value is reported at the field alone; the commit itself succeeds.",
+			empty.isSuccess());
+		assertEquals("No command runs on an empty mandatory value.", List.of(), RecordingCommand.EXECUTED);
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ENTERED));
+		HandlerResult result = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+
+		assertFalse(field.hasError());
+		assertEquals("A given value runs the command.", List.of(ENTERED), RecordingCommand.EXECUTED);
+		assertSame(RecordingCommand.RESULT, result);
+	}
+
+	/** A text input that may be empty runs its command on the empty value and reports nothing. */
+	public void testAnOptionalTextSubmitsAnEmptyValue() throws Exception {
+		ReactFormFieldControl control = input(TEXT_ON_ENTER);
+		AbstractFieldModel field = (AbstractFieldModel) control.getFieldModel();
+
+		HandlerResult result = control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ""));
+
+		assertFalse(field.isMandatory());
+		assertFalse("An empty value may be given.", field.hasError());
+		assertHasError(control, false);
+		assertEquals("The empty value runs the command.", Collections.singletonList(null), RecordingCommand.EXECUTED);
+		assertSame(RecordingCommand.RESULT, result);
+	}
+
+	/** Checks that the given field reports its value as missing. */
+	private static void assertMissing(AbstractFieldModel field) {
+		assertTrue("An emptied mandatory value is reported.", field.hasError());
+		assertEquals(I18NConstants.ERROR_MANDATORY_FIELD_EMPTY, field.getError());
+	}
+
+	/** Checks whether the client is told about an error of the given control. */
+	private static void assertHasError(ReactFormFieldControl control, boolean expected) {
+		assertEquals("The client must learn whether the field has an error.",
+			expected, Boolean.TRUE.equals(control.scriptingScalarState().get(FieldState.HAS_ERROR__PROP)));
+	}
+
+	/** A control annotation naming a select control offering its options in the given shape. */
+	private static TLInputControl inputControl(SelectDisplay display) {
+		TLInputControl annotation = TypedConfiguration.newConfigItem(TLInputControl.class);
+		annotation.setImpl(selectDisplay(display));
+		return annotation;
+	}
+
+	/**
+	 * The input control built by the {@code <value-input>} at the given position of the test view.
+	 */
+	private ReactFormFieldControl input(int index) throws Exception {
+		IReactControl control = element(index);
+		assertTrue("An input without a label is the field control itself, but is " + control,
+			control instanceof ReactFormFieldControl);
+		return (ReactFormFieldControl) control;
+	}
+
+	/**
+	 * The label around the input control built by the labelled {@code <value-input>} at the given
+	 * position of the test view.
+	 */
+	private ReactFormFieldChromeControl chrome(int index) throws Exception {
+		IReactControl control = element(index);
+		assertTrue("An input with a label is wrapped in a chrome, but is " + control,
+			control instanceof ReactFormFieldChromeControl);
+		return (ReactFormFieldChromeControl) control;
+	}
+
+	/** The input control the given chrome labels. */
+	private static ReactFormFieldControl field(ReactFormFieldChromeControl chrome) {
+		List<ReactControl> children = chrome.displayedChildren();
+		assertEquals("The chrome labels exactly one field: " + children, 1, children.size());
+		assertTrue("The chrome labels a field control, but labels " + children.get(0),
+			children.get(0) instanceof ReactFormFieldControl);
+		return (ReactFormFieldControl) children.get(0);
+	}
+
+	/**
+	 * The control built by the {@code <value-input>} at the given position of the test view.
+	 */
+	private IReactControl element(int index) throws Exception {
+		ValueInputElement.Config config = config(parseInputs(), index);
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputElement.class);
+		UIElement element = context.getInstance(config);
+		context.checkErrors();
+
+		return element.createControl(_viewContext);
+	}
+
+	/**
+	 * {@link ViewCommand} recording the inputs it is run on, the submit command of the inputs of the
+	 * test view testing the submit gesture.
+	 */
+	public static class RecordingCommand implements ViewCommand {
+
+		/** The inputs the command was run on, in the order of the runs. */
+		static final List<Object> EXECUTED = new ArrayList<>();
+
+		/** The result of every run, distinguishable from the result of a run of no command. */
+		static final HandlerResult RESULT = HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+
+		/**
+		 * Configuration for {@link RecordingCommand}.
+		 */
+		public interface Config extends ViewCommand.Config {
+
+			@Override
+			@ClassDefault(RecordingCommand.class)
+			Class<? extends ViewCommand> getImplementationClass();
+		}
+
+		/**
+		 * Creates a {@link RecordingCommand} from configuration.
+		 */
+		@CalledByReflection
+		public RecordingCommand(InstantiationContext context, Config config) {
+			// Nothing to configure.
+		}
+
+		@Override
+		public HandlerResult execute(ReactContext context, Object input) {
+			EXECUTED.add(input);
+			return RESULT;
+		}
+	}
+
+	/**
+	 * React context of a test that displays no persistent object, and therefore has no
+	 * {@link ModelScope} to observe one in.
+	 */
+	private static final class HeadlessReactContext extends DefaultReactContext {
+
+		HeadlessReactContext() {
+			super("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		}
+
+		@Override
+		public ModelScope getModelScope() {
+			return null;
+		}
 	}
 
 	/** A text field described as a search box: an icon, a clear button and a delay of its own. */
@@ -916,13 +1457,15 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module for resolving the element tags, and the
-	 * services a model part consults while answering for an annotation.
+	 * Test suite requiring the {@link TypeIndex} module for resolving the element tags, the services
+	 * a model part consults while answering for an annotation, and the model and the
+	 * {@link FieldControlService} an input resolves its type and its control with.
 	 */
 	public static Test suite() {
-		return ModuleLicenceTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestValueInputElement.class,
-				TypeIndex.Module.INSTANCE, CompatibilityService.Module.INSTANCE,
-				AttributeSettings.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(TestValueInputElement.class,
+			ServiceTestSetup.createStarterFactoryForModules(
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
+				CompatibilityService.Module.INSTANCE, AttributeSettings.Module.INSTANCE,
+				ModelService.Module.INSTANCE, FieldControlService.Module.INSTANCE));
 	}
 }

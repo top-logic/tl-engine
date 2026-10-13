@@ -52,23 +52,11 @@ public interface TableView<R> {
 	 *
 	 * <p>
 	 * This is what a column selection UI offers; the choice it produces is applied through
-	 * {@link #setColumnOrder(List)}.
+	 * {@link #setColumnOrder(List)}, and {@link #resetToDefaults()} returns to the arrangement the
+	 * table is defined with.
 	 * </p>
 	 */
 	List<ColumnOption> columnOptions();
-
-	/**
-	 * The columns as the table was defined: those displayed without any personalization, in
-	 * declaration order.
-	 *
-	 * <p>
-	 * This is the arrangement a column selection UI restores when the user resets their
-	 * personalization, and the state a table starts from before anything is persisted. It does not
-	 * cover columns a table only offers - those stay hidden until the user selects them, exactly as
-	 * on a first visit.
-	 * </p>
-	 */
-	List<String> defaultColumnOrder();
 
 	// ---- data window ----
 
@@ -81,6 +69,15 @@ public interface TableView<R> {
 	 * The displayed rows in the half-open index range {@code [from, to)}.
 	 */
 	List<Row<R>> rows(int from, int to);
+
+	/**
+	 * The tree the rows of this table form, {@code null} for a table whose rows form none.
+	 *
+	 * @see RowSource#hierarchy()
+	 */
+	default RowHierarchy<R> hierarchy() {
+		return null;
+	}
 
 	/**
 	 * The given row keys that belong to a data row of this table, whether that row is displayed or
@@ -99,6 +96,36 @@ public interface TableView<R> {
 	 * The content of the given row's cell in the named column.
 	 */
 	CellContent cell(Row<R> row, String column);
+
+	/**
+	 * The CSS class marking the given row as a whole, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier puts it on the row's element, so that a row can be highlighted by what its row
+	 * object is (e.g. by its state). The cells keep the column-level class
+	 * {@link Column#cssClass()} and their own {@link #cellCssClass(Row, String) cell class}.
+	 * </p>
+	 *
+	 * @see #cellCssClass(Row, String)
+	 */
+	default String rowCssClass(Row<R> row) {
+		return null;
+	}
+
+	/**
+	 * The CSS class marking the given row's cell in the named column, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier puts it on the cell's element, so that a single cell can be highlighted by the row
+	 * it is in, see {@link Column#cssClass(Object)}. It is added to the column-level class
+	 * {@link Column#cssClass()}, it does not replace it.
+	 * </p>
+	 *
+	 * @see #rowCssClass(Row)
+	 */
+	default String cellCssClass(Row<R> row, String column) {
+		return null;
+	}
 
 	/**
 	 * The filter of the named column, or {@code null} if the column is not filterable. Used
@@ -264,6 +291,21 @@ public interface TableView<R> {
 	 * Sets the number of leading frozen (fixed) columns.
 	 */
 	void setFrozenColumnCount(int count);
+
+	/**
+	 * Restores the arrangement the table is defined with, discarding the user's personalization of
+	 * it.
+	 *
+	 * <p>
+	 * The arrangement consists of the displayed columns and their order - columns the table only
+	 * offers are hidden again -, the column widths, the number of {@link #frozenColumnCount()
+	 * frozen} columns, the {@link #sort(SortSpec) sort} and the {@link #group(GroupSpec)
+	 * grouping}. The rows the user is looking at stay the same: the column filters, the
+	 * {@link #search(TextFilterState) search}, the {@link #select(Selection) selection} and the
+	 * {@link #setExpanded(Object, boolean) expansion} are kept.
+	 * </p>
+	 */
+	void resetToDefaults();
 
 	/**
 	 * Expands or collapses the row with the given {@link Row#key() key}.

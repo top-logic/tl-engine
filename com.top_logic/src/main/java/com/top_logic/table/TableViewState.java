@@ -238,4 +238,28 @@ public class TableViewState {
 		_page = page;
 	}
 
+	/**
+	 * A copy of this state that changes independently of it.
+	 *
+	 * <p>
+	 * The collections are copied, the values they hold are shared: those are immutable.
+	 * </p>
+	 */
+	public TableViewState copy() {
+		TableViewState result = new TableViewState();
+		result.setColumnOrder(new ArrayList<>(_columnOrder));
+		result.setHiddenColumns(new LinkedHashSet<>(_hiddenColumns));
+		result.setWidths(new LinkedHashMap<>(_widths));
+		result.setFrozenCount(_frozenCount);
+		result.setSort(new ArrayList<>(_sort));
+		result.setFilters(new LinkedHashMap<>(_filters));
+		result.setSearch(_search);
+		result.setGrouping(_grouping);
+		result.setExpanded(new LinkedHashSet<>(_expanded));
+		result.setSelection(_selection);
+		result.setPageSize(_pageSize);
+		result.setPage(_page);
+		return result;
+	}
+
 }

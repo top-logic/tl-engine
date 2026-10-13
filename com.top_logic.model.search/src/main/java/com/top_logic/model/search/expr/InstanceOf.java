@@ -39,8 +39,19 @@ public class InstanceOf extends TypeCheck implements BooleanExpression {
 		return isInstanceOf(value, getCheckType());
 	}
 
+	/**
+	 * Whether the given value is an instance of the given type.
+	 *
+	 * <p>
+	 * An object that is no longer {@link TLObject#tValid() valid} (a persistent object deleted in
+	 * the meantime) counts as a missing value and is an instance of no type.
+	 * </p>
+	 */
 	static Object isInstanceOf(Object input, TLStructuredType expectedType) {
 		if (!(input instanceof TLObject item)) {
+			return false;
+		}
+		if (!item.tValid()) {
 			return false;
 		}
 	

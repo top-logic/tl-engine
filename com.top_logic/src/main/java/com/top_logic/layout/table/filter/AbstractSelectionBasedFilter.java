@@ -8,8 +8,10 @@ package com.top_logic.layout.table.filter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import com.top_logic.basic.StringServices;
@@ -43,6 +45,16 @@ public abstract class AbstractSelectionBasedFilter<T extends SelectionFilterConf
 
 	private boolean _supportsBlockedValues = false;
 	private Mapping<Object, ?> _valueMapping;
+
+	/**
+	 * Some raw value for each option collected during the current revalidation.
+	 * 
+	 * <p>
+	 * Only filled, when options are labels of the raw values, i.e. not
+	 * {@link SelectionFilterConfiguration#isUseRawOptions()}.
+	 * </p>
+	 */
+	private Map<Object, Object> _optionValues = new HashMap<>();
 
 	/**
 	 * Create a new {@link AbstractSelectionBasedFilter}.
@@ -122,6 +134,7 @@ public abstract class AbstractSelectionBasedFilter<T extends SelectionFilterConf
 				_counter = new EmptyValueOptionCollectionMatchCounter();
 			}
 		}
+		_optionValues = new HashMap<>();
 	}
 
 	private boolean doCount(boolean countableRevalidation) {
@@ -131,6 +144,7 @@ public abstract class AbstractSelectionBasedFilter<T extends SelectionFilterConf
 	@Override
 	public void stopFilterRevalidation() {
 		_combinedEvaluationFilter = _defaultCombinedEvaluationFilter;
+		_config.setOptionValues(_optionValues);
 		_config.setOptions(_counter.getMatchCount());
 		_counter = DummyMultiOptionMatchCounter.INSTANCE;
 	}
@@ -139,8 +153,10 @@ public abstract class AbstractSelectionBasedFilter<T extends SelectionFilterConf
 	public void count(Object value) {
 		_valueIterator.setIterableValue(value);
 		while (_valueIterator.hasNext()) {
-			Object mappedValue = _valueMapping.map(_valueIterator.next());
+			Object rawValue = _valueIterator.next();
+			Object mappedValue = _valueMapping.map(rawValue);
 			if (!StringServices.isEmpty(mappedValue)) {
+				recordOptionValue(mappedValue, rawValue);
 				_counter.increaseCounter(mappedValue);
 			}
 		}
@@ -163,16 +179,24 @@ public abstract class AbstractSelectionBasedFilter<T extends SelectionFilterConf
 		boolean accept = false;
 		_valueIterator.setIterableValue(anObject);
 		while (_valueIterator.hasNext()) {
-			Object mappedValue = _valueMapping.map(_valueIterator.next());
+			Object rawValue = _valueIterator.next();
+			Object mappedValue = _valueMapping.map(rawValue);
 			if (StringServices.isEmpty(mappedValue)) {
 				accept |= false;
 			} else {
+				recordOptionValue(mappedValue, rawValue);
 				_counter.markOption(mappedValue);
 				accept |= _combinedEvaluationFilter.accept(mappedValue);
 			}
 		}
 
 		return accept;
+	}
+
+	private void recordOptionValue(Object option, Object rawValue) {
+		if (!_config.isUseRawOptions()) {
+			_optionValues.putIfAbsent(option, rawValue);
+		}
 	}
 
 	@Override

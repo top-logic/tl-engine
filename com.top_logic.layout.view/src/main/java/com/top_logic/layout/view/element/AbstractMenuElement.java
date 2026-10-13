@@ -33,6 +33,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.MenuRegionControl;
 import com.top_logic.layout.view.command.MenuTrigger;
@@ -282,6 +283,12 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		List<ViewCommandModel> allModels = new ArrayList<>(commandModels);
 		allModels.addAll(groupModels);
 		registerLifecycle(context, allModels, region);
+
+		if (_config.getInput() == null) {
+			// The default target channel is the menu's own; a configured input belongs to the view
+			// declaring it.
+			ObservingChannels.observeWhileDisplayed(region, List.of(targetChannel), context);
+		}
 
 		return region;
 	}

@@ -38,9 +38,10 @@
 	- "New ticket" creates a ticket in the selected milestone without a dialog and writes it to
 	"selected", so the node appears under the still-open milestone and is selected.
 	- "Detach from milestone" takes the milestone off the selected ticket. Nothing is deleted, yet
-	the ticket leaves the child list it hung in: its node goes, the milestone stays open, and the
-	tree writes what is left of the selection back to the channel.
-	- "Delete" deletes whatever is selected, one object or several.
+	the ticket leaves the child list it hung in: its node goes, the milestone stays open and
+	becomes the selection in its place.
+	- "Delete" deletes whatever is selected, one object or several; where nothing of the selection
+	is left, the node the first deleted object hung in becomes the selection.
 	
 	A command works on the selection through a derived channel naming what it can process: the
 	selection while it is a single object, and that object while it is a scope, a milestone or a

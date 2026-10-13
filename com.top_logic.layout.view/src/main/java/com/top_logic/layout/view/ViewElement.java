@@ -32,7 +32,7 @@ import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ObservingChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
@@ -40,7 +40,6 @@ import com.top_logic.layout.view.routing.ParamBindingConfig;
 import com.top_logic.layout.view.routing.ParamBindingParticipant;
 import com.top_logic.layout.view.routing.QueryBindingConfig;
 import com.top_logic.layout.view.routing.QueryBindingParticipant;
-import com.top_logic.model.listen.ModelScope;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -211,7 +210,6 @@ public class ViewElement implements UIElement {
 		// Phase 2a: Create and register channels via factories. The channels created here are owned
 		// by this instance of the view; the ones a parent pre-bound belong to the parent.
 		Map<String, ViewChannel> ownChannels = new LinkedHashMap<>();
-		List<ObservingChannel> observingChannels = new ArrayList<>();
 		for (Map.Entry<String, ChannelFactory> entry : _channelEntries) {
 			String name = entry.getKey();
 			if (context.hasChannel(name)) {
@@ -222,9 +220,6 @@ public class ViewElement implements UIElement {
 			ViewChannel channel = factory.createChannel(context);
 			context.registerChannel(name, channel);
 			ownChannels.put(name, channel);
-			if (channel instanceof ObservingChannel observing) {
-				observingChannels.add(observing);
-			}
 		}
 
 		// Phase 2b: Create the routing participants of the bindings (registered on attach, not here).
@@ -269,20 +264,8 @@ public class ViewElement implements UIElement {
 					}
 				});
 			}
-			if (!observingChannels.isEmpty()) {
-				rc.addAttachListener(() -> {
-					ModelScope scope = context.getModelScope();
-					for (ObservingChannel channel : observingChannels) {
-						channel.attach(scope);
-					}
-				});
-				rc.addDetachListener(() -> {
-					for (ObservingChannel channel : observingChannels) {
-						channel.detach();
-					}
-				});
-			}
 		}
+		ObservingChannels.observeWhileDisplayed(rootControl, ownChannels.values(), context);
 
 		return rootControl;
 	}

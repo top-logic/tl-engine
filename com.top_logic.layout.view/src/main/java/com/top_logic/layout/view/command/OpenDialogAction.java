@@ -36,6 +36,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.navigation.DialogRevealer;
@@ -271,14 +272,20 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		}
 
 		// Seed the dialog with the requested channel values.
+		List<ViewChannel> parameterChannels = new ArrayList<>();
 		for (Map.Entry<String, ?> entry : channelValues.entrySet()) {
 			DefaultViewChannel channel = new DefaultViewChannel(entry.getKey());
 			channel.set(entry.getValue());
 			dialogContext.registerChannel(entry.getKey(), channel);
+			parameterChannels.add(channel);
 		}
 
 		ReactControl dialogControl = new ReloadableControl(dialogViewPath, dialogContext,
 			(ReactControl) dialogView.createControl(dialogContext));
+
+		// The parameters are the dialog's own channels and outlive a reload of its view; the bound
+		// channels of the opener are observed while the opener is displayed.
+		ObservingChannels.observeWhileDisplayed(dialogControl, parameterChannels, dialogContext);
 
 		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
 			// Dialog closed.

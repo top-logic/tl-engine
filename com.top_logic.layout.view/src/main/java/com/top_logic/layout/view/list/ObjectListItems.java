@@ -18,6 +18,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirectio
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.GridOptions;
@@ -171,6 +172,10 @@ public class ObjectListItems {
 		// a reply button) can reference the draft being composed via the new-element channel - not
 		// only the new-element content itself.
 		_templateContext = _templateContext.withLocalChannel(_newElementChannelName, _newElementChannel);
+
+		// The channel serves the whole list, not only the new-element content, which leaves the
+		// display while an input is missing: it observes while the list is displayed.
+		ObservingChannels.observeWhileDisplayed(_display, List.of(_newElementChannel), _templateContext);
 		for (int i = 0; i < _newElementContent.size(); i++) {
 			ViewContext childContext = _templateContext.withChildSlotPath("new-element-" + i);
 			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);

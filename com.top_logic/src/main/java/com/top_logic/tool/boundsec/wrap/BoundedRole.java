@@ -151,6 +151,11 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
         super(ko);
     }
 
+	@Override
+	public TLID getID() {
+		return KBUtils.getWrappedObjectName(this);
+	}
+
 	/**
 	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} for the given context.
 	 */

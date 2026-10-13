@@ -55,7 +55,7 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
     /**
      * Do NOT inherit roles from security parents.
      * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
+     * @see com.top_logic.tool.boundsec.wrap.BoundWrapper#getSecurityParents()
      */
     @Override
 	public Collection<? extends BoundObject> getSecurityParents() {

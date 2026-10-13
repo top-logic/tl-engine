@@ -144,6 +144,11 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         super(ko);
     }
 
+	@Override
+	public TLID getID() {
+		return KBUtils.getWrappedObjectName(this);
+	}
+
 	/**
 	 * Whether the given {@link Person} is a member of this {@link Group} (either directly,
 	 * recursively, or via {@link #isRepresentativeGroup()}).

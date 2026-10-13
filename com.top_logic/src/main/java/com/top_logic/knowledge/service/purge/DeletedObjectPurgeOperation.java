@@ -61,7 +61,7 @@ public class DeletedObjectPurgeOperation {
 	 * <p>
 	 * The purge runs on the calling thread. The caches of the running knowledge base still hold the
 	 * removed objects afterwards and are dropped by
-	 * {@link PersistencyMaintenance#scheduleRestart(Log)}.
+	 * {@link PersistencyMaintenance#scheduleRestart(Log, boolean)}.
 	 * </p>
 	 *
 	 * @param seeds
@@ -100,12 +100,12 @@ public class DeletedObjectPurgeOperation {
 	 * @return What was removed, or what blocks the removal.
 	 *
 	 * @see #purge(Collection, Log)
-	 * @see PersistencyMaintenance#scheduleRestart(Log)
+	 * @see PersistencyMaintenance#scheduleRestart(Log, boolean)
 	 */
 	public static Report purgeAndRestart(Collection<ObjectKey> seeds, Log log) {
 		Report report = purge(seeds, log);
 		if (!report.isBlocked() && !report.isEmpty()) {
-			PersistencyMaintenance.scheduleRestart(log);
+			PersistencyMaintenance.scheduleRestart(log, false);
 		}
 		return report;
 	}

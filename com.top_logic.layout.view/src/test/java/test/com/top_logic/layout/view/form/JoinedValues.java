@@ -8,7 +8,6 @@ package test.com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -18,21 +17,19 @@ import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.kbbased.storage.AbstractDerivedStorage;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.form.OverlayLookup;
-import com.top_logic.model.form.TracedValueComputation;
-import com.top_logic.model.util.Pointer;
+import com.top_logic.model.form.TracingScope;
 
 /**
  * Derived attribute joining the values of other attributes of the same object, separated by a
  * blank.
  *
  * <p>
- * The traced computation reports the attributes it reads directly. An attribute it reads that is
- * derived itself is read as the object delivers it, without tracing into its computation.
+ * The values are read through {@link TLObject#tValue(TLStructuredTypePart)} like in any other Java
+ * storage. In a {@link TracingScope}, these reads are reported and answered from the overlay of the
+ * object.
  * </p>
  */
-public class JoinedValues<C extends JoinedValues.Config<?>> extends AbstractDerivedStorage<C>
-		implements TracedValueComputation {
+public class JoinedValues<C extends JoinedValues.Config<?>> extends AbstractDerivedStorage<C> {
 
 	/**
 	 * Configuration options for {@link JoinedValues}.
@@ -80,29 +77,9 @@ public class JoinedValues<C extends JoinedValues.Config<?>> extends AbstractDeri
 
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) {
-		return join(object, attribute, null);
-	}
-
-	@Override
-	public Object computeTraced(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-			OverlayLookup overlays) {
-		TLObject self = object;
-		if (overlays != null) {
-			TLObject overlay = overlays.getExistingOverlay(object);
-			if (overlay != null) {
-				self = overlay;
-			}
-		}
-		return join(self, attribute, trace);
-	}
-
-	private Object join(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace) {
 		List<String> values = new ArrayList<>();
 		for (String name : getConfig().getAttributes()) {
 			TLStructuredTypePart part = attribute.getOwner().getPart(name);
-			if (trace != null) {
-				trace.add(Pointer.create(object, part));
-			}
 			values.add(String.valueOf(object.tValue(part)));
 		}
 		return String.join(" ", values);

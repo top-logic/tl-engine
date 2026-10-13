@@ -77,6 +77,23 @@ public class TestTracingScope extends AbstractScriptTracerTest {
 		assertNull(TracingScope.current());
 	}
 
+	public void testTransientBaseRedirectedToOverlay() {
+		TLObject base = overlay(3.0, null);
+		BaseOverlay overlay = new BaseOverlay(base, true);
+		overlay.change(part(BASE), 10.0);
+
+		List<Pointer> trace = new ArrayList<>();
+		try (TracingScope scope = TracingScope.open(trace::add, overlays(Map.of(base, overlay)))) {
+			assertEquals("Unchanged value read from the base object.", "overlay", base.tValue(part(NAME)));
+			assertEquals("Changed value read from the overlay.", 10.0, base.tValue(part(BASE)));
+			assertEquals("Derived value computed over the overlay.", 20.0, base.tValue(part(DOUBLED)));
+		}
+		assertTrace(trace, base, NAME, base, BASE, base, DOUBLED);
+
+		assertEquals("Outside of a scope, the base object is read plainly.", 6.0, base.tValue(part(DOUBLED)));
+		assertNull(TracingScope.current());
+	}
+
 	public void testNestedScopes() {
 		TLObject f1 = newF("f1", 3.0, null);
 		TLObject overlay = overlay(10.0, null);

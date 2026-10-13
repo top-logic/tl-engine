@@ -10,12 +10,11 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.OverlayLookup;
-import com.top_logic.model.form.TracedValueComputation;
+import com.top_logic.model.form.TracingScope;
 
 /**
  * {@link com.top_logic.layout.form.model.FieldModel} that reads and writes a single attribute of a
@@ -28,10 +27,9 @@ import com.top_logic.model.form.TracedValueComputation;
  * </p>
  *
  * <p>
- * A {@link TLStructuredTypePart#isDerived() derived} attribute whose storage is a
- * {@link TracedValueComputation} follows the edits of the form it is displayed in: while the form
- * is edited, its value is computed over the form's overlays, and the attributes read by that
- * computation are recorded. When the field of one of those attributes changes, the value is
+ * A {@link TLStructuredTypePart#isDerived() derived} attribute follows the edits of the form it is
+ * displayed in: while the form is edited, its value is computed in a {@link TracingScope} over the
+ * form's overlays, and the attributes read by that computation are recorded. When the field of one of those attributes changes, the value is
  * computed again and {@link #followObject() taken} as the field's value and as the value it is
  * dirty against. A derived field is therefore never dirty, while its value change is announced to
  * its listeners like any other, so that fields depending on the derived attribute follow in turn.
@@ -81,7 +79,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 		_part = part;
 		_form = form;
 		setMandatory(part.isMandatory());
-		if (tracedComputation() != null) {
+		if (isTraced()) {
 			Object value = readValue();
 			setDefaultValue(value);
 			setValueInternal(value);
@@ -100,37 +98,34 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 */
 	@Override
 	protected Object readValue() {
-		TracedValueComputation computation = tracedComputation();
 		OverlayLookup overlays = _form == null ? null : _form.getValidationModel();
-		if (computation == null || overlays == null) {
+		if (!isTraced() || overlays == null) {
 			_dependencies = Collections.emptySet();
 			return _object.tValue(_part);
 		}
 		Set<TLStructuredTypePart> dependencies = new HashSet<>();
-		Object value =
-			computation.computeTraced(_object, _part, pointer -> dependencies.add(pointer.attribute()), overlays);
+		Object value;
+		try (TracingScope scope = TracingScope.open(pointer -> dependencies.add(pointer.attribute()), overlays)) {
+			value = _object.tValue(_part);
+		}
 		_dependencies = dependencies;
 		return value;
 	}
 
 	/**
-	 * The computation of the attribute's value when the attribute is derived and its value is
-	 * computed traceably, {@code null} otherwise.
+	 * Whether the value of the attribute is computed and the attributes the computation reads are
+	 * traced, which is the case for a {@link TLStructuredTypePart#isDerived() derived} attribute.
 	 */
-	private TracedValueComputation tracedComputation() {
-		if (!_part.isDerived()) {
-			return null;
-		}
-		StorageDetail storage = _part.getStorageImplementation();
-		return storage instanceof TracedValueComputation computation ? computation : null;
+	private boolean isTraced() {
+		return _part.isDerived();
 	}
 
 	/**
-	 * Registers for the changes of the form's fields while the attribute is computed traceably,
-	 * and deregisters otherwise.
+	 * Registers for the changes of the form's fields while the attribute is
+	 * {@link #isTraced() traced}, and deregisters otherwise.
 	 */
 	private void updateDependencyListener() {
-		boolean listen = _form != null && tracedComputation() != null;
+		boolean listen = _form != null && isTraced();
 		if (listen == _listening) {
 			return;
 		}

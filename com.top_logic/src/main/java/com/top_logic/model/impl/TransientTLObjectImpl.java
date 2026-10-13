@@ -93,14 +93,17 @@ public class TransientTLObjectImpl extends TransientObject {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * In a {@link TracingScope}, the read is reported to the scope's trace.
+	 * In a {@link TracingScope}, the read is traced and resolved through the scope's overlays.
 	 * </p>
 	 */
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
 		TracingScope scope = TracingScope.current();
 		if (scope != null) {
-			scope.record(this, part);
+			Object overlayValue = scope.read(this, part);
+			if (overlayValue != TracingScope.PLAIN) {
+				return overlayValue;
+			}
 		}
 		Object directValue = directValue(part);
 		if (directValue == null) {

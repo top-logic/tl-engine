@@ -42,6 +42,11 @@ public class SimpleDBExecutor {
     /** Current commit handler. */
     private CommitContext commitContext;
 
+	/**
+	 * Whether the transaction started with {@link #beginTransaction()} was completed by
+	 * {@link #commitTransaction()} or {@link #rollbackTransaction()}.
+	 */
+	private boolean _completed;
 
 
     /**
@@ -87,6 +92,7 @@ public class SimpleDBExecutor {
             throw new IllegalArgumentException("beginTransaction(CommitHandler) was already called.");
         }
         connection = connectionPool.borrowWriteConnection();
+		_completed = false;
     }
 
     /**
@@ -97,6 +103,7 @@ public class SimpleDBExecutor {
             throw new IllegalArgumentException("beginTransaction() was not callen yet.");
         }
         connection.commit();
+		_completed = true;
     }
 
     /**
@@ -108,16 +115,29 @@ public class SimpleDBExecutor {
             throw new IllegalArgumentException("beginTransaction() was not callen yet.");
         }
         connection.rollback();
+		_completed = true;
     }
 
     /**
      * Ends the transaction started before with {@link #beginTransaction()} and releases the database
      * connection. Rolls all uncommitted changes back.
+     * 
+     * <p>
+     * If the transaction was neither completed by {@link #commitTransaction()} nor by
+     * {@link #rollbackTransaction()}, it was aborted by a failure. Then the connection is dropped
+     * from the pool instead of being reused: The failure may be caused by a state of the physical
+     * connection that the pool cannot detect (e.g. a session that the database server only allows
+     * to read), and would otherwise make every following transaction fail as well.
+     * </p>
      */
     public void closeTransaction() {
         if (connection != null) {
 			try {
-				connectionPool.releaseWriteConnection(connection);
+				if (_completed) {
+					connectionPool.releaseWriteConnection(connection);
+				} else {
+					connectionPool.invalidateWriteConnection(connection);
+				}
 			} finally {
 				// make sure to reset the connection no matter
 				// if releasing was successful or not.

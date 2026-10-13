@@ -1,5 +1,5 @@
 ---
-description: Read before pushing an engine branch that adds or edits source or layouts - the CI gates a local mvn install misses - SPDX header and class comment (TestComment), XMLPrettyPrinter-normalized layouts (TestLayoutsNormalized), and -DskipTests=true skipping test compilation.
+description: Read before pushing an engine branch that adds or edits source or layouts - the CI gates a local mvn install misses - SPDX header and class comment (TestComment), XMLPrettyPrinter-normalized layouts (TestLayoutsNormalized), and -DskipTests=true skipping test compilation - and when the build fails with an UnusedImports or RedundantImport Checkstyle violation.
 order: 20
 ---
 
@@ -10,6 +10,21 @@ A green local `mvn install` does **not** prove a branch will pass CI. Tests are 
 ## New `.java` files: SPDX header + class comment
 
 Every new `.java` file needs an SPDX copyright header **and** a class-level `/** … */` doc comment, or `test.com.top_logic.basic.TestComment.testSourceFiles` fails with *"Could not find class comment."* Its `classPattern` matches `class` / `interface` / `enum` / `record` / `@interface`.
+
+## Unused and duplicate imports: Checkstyle in `validate`
+
+Unlike the gates below, this one fails every local build too. javac does not report an unused import, but Eclipse flags
+it as an error, so the profile `engine-import-check` of `tl-parent-all` runs the `maven-checkstyle-plugin` in the
+`validate` phase of each engine module (main and test sources) with the checks `UnusedImports` and `RedundantImport`.
+It fails the build with the file, line and import, e.g.
+*"Unused import - java.util.Map. [UnusedImports]"*. Remove the reported import.
+
+- A use in JavaDoc counts (`{@link}`, `@see`, `@throws`), but only in a JavaDoc comment that Checkstyle attaches to a
+  declaration: a block comment between the JavaDoc and the declaration detaches it, and a method reference in `@see`
+  must stay on one line. Arrange the comment that way instead of dropping the reference.
+- The profile is active only for a module whose sibling folder `tl-parent-engine` exists, so applications inheriting
+  the TopLogic parent POMs are not checked. A module of repackaged external sources opts out with the property
+  `checkstyle.skip` (as `ext.com.meterware.httpunit` does).
 
 ## New / edited layouts: must be normalized
 

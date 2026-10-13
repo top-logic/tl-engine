@@ -11,6 +11,12 @@
   <artifactId>ext-com-meterware-httpunit</artifactId>
 	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<properties>
+		<!-- Repackaged external sources, kept close to upstream: no import check. -->
+		<checkstyle.skip>true</checkstyle.skip>
+	</properties>
+
   <dependencies>
 	<dependency>
 		<groupId>jakarta.servlet</groupId>

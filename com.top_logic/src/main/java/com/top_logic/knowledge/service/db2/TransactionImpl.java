@@ -18,7 +18,6 @@ import com.top_logic.knowledge.service.Transaction;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-/*package protected*/
 class TransactionImpl extends AbstractTransaction {
 
 	/**

@@ -19,8 +19,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
  * {@link ApplicationAction} invoking a {@link CommandHandler} by internal name.
  * 
  * @see CommandActionOp
- * @see CommandHandler#handleCommand(com.top_logic.layout.DisplayContext,
- *      com.top_logic.mig.html.layout.LayoutComponent, Object, Map)
+ * @see CommandHandler#handleCommand(com.top_logic.layout.DisplayContext, com.top_logic.mig.html.layout.LayoutComponent, Object, Map)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

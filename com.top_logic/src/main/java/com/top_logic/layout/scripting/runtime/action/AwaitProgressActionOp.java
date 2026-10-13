@@ -35,8 +35,7 @@ public class AwaitProgressActionOp extends ComponentActionOp<AwaitProgressAction
 	/**
 	 * Creates a {@link AwaitProgressActionOp}.
 	 * 
-	 * @see AbstractApplicationActionOp#AbstractApplicationActionOp(InstantiationContext,
-	 *      ApplicationAction)
+	 * @see AbstractApplicationActionOp#AbstractApplicationActionOp(InstantiationContext, ApplicationAction)
 	 */
     public AwaitProgressActionOp(InstantiationContext context, AwaitProgressAction config) {
         super(context, config);

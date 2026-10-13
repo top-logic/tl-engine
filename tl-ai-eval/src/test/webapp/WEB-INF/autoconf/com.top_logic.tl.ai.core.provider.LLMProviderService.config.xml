@@ -67,7 +67,7 @@
 						name="qwen"
 					/>
 				</providers>
-				<model-catalog>
+				<model-catalog fetch-remote-catalog="false">
 					<model-overrides>
 						<model name="eval-scripted"
 							context-window="200000"

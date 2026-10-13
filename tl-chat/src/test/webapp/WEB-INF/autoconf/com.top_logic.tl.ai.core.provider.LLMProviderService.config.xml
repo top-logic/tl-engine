@@ -33,7 +33,7 @@
 						name="scripted"
 					/>
 				</providers>
-				<model-catalog>
+				<model-catalog fetch-remote-catalog="false">
 					<model-overrides>
 						<model name="test-scripted-model"
 							context-window="200000"

@@ -18,6 +18,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.InterleavedConfig;
@@ -37,7 +41,8 @@ import de.haumacher.msgbuf.json.JsonToken;
  *
  * <p>
  * Given a map of catalog provider IDs to requested model IDs, this class fetches
- * the JSON catalog and extracts only the requested entries into {@link ModelInfo} records.
+ * the JSON catalog - or reads the bundled snapshot of it - and extracts only the requested entries
+ * into {@link ModelInfo} records.
  * </p>
  */
 public final class ModelsDevFetcher {
@@ -49,57 +54,85 @@ public final class ModelsDevFetcher {
 	}
 
 	/**
-	 * Fetches model metadata from the given catalog URL, falling back to a bundled snapshot on
-	 * failure.
+	 * Fetches model metadata from the given catalog URL.
+	 *
+	 * <p>
+	 * The whole exchange - name resolution, connect, headers and body - must complete within the
+	 * given deadline. The JDK's request timeout ends when the headers arrive, so a server that
+	 * answers at once and then sends its body slowly would otherwise hold the caller for as long as
+	 * it likes. When the deadline passes, the request is cancelled.
+	 * </p>
 	 *
 	 * @param catalogUrl
 	 *        The URL to fetch (e.g. "https://models.dev/api.json").
 	 * @param requestedModels
 	 *        Map of catalog provider ID to the set of model IDs to extract.
+	 * @param deadline
+	 *        The time the whole fetch may take.
 	 * @return Map of model ID to parsed {@link ModelInfo}, for all successfully resolved models.
+	 * @throws IOException
+	 *         If the catalog could not be fetched within the deadline; the message says why.
+	 * @throws InterruptedException
+	 *         If the calling thread was interrupted while waiting; the request is cancelled.
 	 */
-	public static Map<String, ModelInfo> fetch(String catalogUrl, Map<String, Set<String>> requestedModels) {
+	public static Map<String, ModelInfo> fetch(String catalogUrl, Map<String, Set<String>> requestedModels,
+			Duration deadline) throws IOException, InterruptedException {
+		HttpRequest request;
 		try {
-			HttpClient client = HttpClient.newBuilder()
-				.connectTimeout(Duration.ofSeconds(3))
-				.build();
-			HttpRequest request = HttpRequest.newBuilder()
+			request = HttpRequest.newBuilder()
 				.uri(URI.create(catalogUrl))
 				.GET()
-				.timeout(Duration.ofSeconds(5))
+				.timeout(deadline)
 				.build();
-
-			HttpResponse<String> response = client.send(
-				request,
-				HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-			if (response.statusCode() != 200) {
-				Logger.warn("Models.dev fetch failed: HTTP " + response.statusCode()
-					+ ", falling back to bundled snapshot.", ModelsDevFetcher.class);
-				return loadSnapshot(requestedModels);
-			}
-
-			return parseJson(response.body(), requestedModels);
+		} catch (IllegalArgumentException ex) {
+			throw new IOException("invalid catalog URL '" + catalogUrl + "'", ex);
+		}
+		HttpClient client = HttpClient.newBuilder()
+			.connectTimeout(deadline)
+			.build();
+		CompletableFuture<HttpResponse<String>> exchange =
+			client.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+		HttpResponse<String> response;
+		try {
+			response = exchange.get(deadline.toMillis(), TimeUnit.MILLISECONDS);
+		} catch (TimeoutException ex) {
+			throw new IOException("no complete answer within " + deadline.toSeconds() + " s", ex);
+		} catch (ExecutionException ex) {
+			Throwable cause = ex.getCause();
+			throw new IOException(cause.getMessage() != null ? cause.getMessage() : cause.toString(), cause);
+		} finally {
+			// Aborts the exchange when it did not complete - also its body read.
+			exchange.cancel(true);
+		}
+		if (response.statusCode() != 200) {
+			throw new IOException("HTTP " + response.statusCode());
+		}
+		Map<String, ModelInfo> result = new HashMap<>();
+		try {
+			parse(response.body(), requestedModels, result);
+			return result;
 		} catch (Exception ex) {
-			Logger.warn("Models.dev fetch failed: " + ex.getMessage()
-				+ ", falling back to bundled snapshot.", ModelsDevFetcher.class);
-			return loadSnapshot(requestedModels);
+			// Not swallowed as in parseJson(): an unreadable answer - a proxy's login page served
+			// with 200 - must not replace a catalog that is known to be good.
+			throw new IOException("unreadable catalog: " + ex.getMessage(), ex);
 		}
 	}
 
 	/**
 	 * Loads model metadata from the bundled snapshot resource.
+	 *
+	 * @param requestedModels
+	 *        Map of catalog provider ID to the set of model IDs to extract.
+	 * @return Map of model ID to parsed {@link ModelInfo}, for all models the snapshot knows.
 	 */
-	private static Map<String, ModelInfo> loadSnapshot(Map<String, Set<String>> requestedModels) {
+	public static Map<String, ModelInfo> loadSnapshot(Map<String, Set<String>> requestedModels) {
 		try (InputStream in = ModelsDevFetcher.class.getResourceAsStream(SNAPSHOT_RESOURCE)) {
 			if (in == null) {
 				Logger.error("Bundled models.dev snapshot not found on classpath.", ModelsDevFetcher.class);
 				return Map.of();
 			}
 			String json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-			Map<String, ModelInfo> result = parseJson(json, requestedModels);
-			Logger.info("Loaded " + result.size() + " model(s) from bundled snapshot.", ModelsDevFetcher.class);
-			return result;
+			return parseJson(json, requestedModels);
 		} catch (IOException ex) {
 			Logger.error("Failed to load bundled models.dev snapshot: " + ex.getMessage(), ModelsDevFetcher.class);
 			return Map.of();
@@ -117,6 +150,16 @@ public final class ModelsDevFetcher {
 	 */
 	public static Map<String, ModelInfo> parseJson(String json, Map<String, Set<String>> requestedModels) {
 		Map<String, ModelInfo> result = new HashMap<>();
+		try {
+			parse(json, requestedModels, result);
+		} catch (Exception ex) {
+			Logger.warn("Failed to parse models.dev JSON: " + ex.getMessage(), ModelsDevFetcher.class);
+		}
+		return result;
+	}
+
+	private static void parse(String json, Map<String, Set<String>> requestedModels, Map<String, ModelInfo> result)
+			throws Exception {
 		try (JsonReader reader = new JsonReader(new StringR(json))) {
 			reader.beginObject();
 			while (reader.hasNext()) {
@@ -129,10 +172,7 @@ public final class ModelsDevFetcher {
 				parseProvider(reader, wantedModels, result);
 			}
 			reader.endObject();
-		} catch (Exception ex) {
-			Logger.warn("Failed to parse models.dev JSON: " + ex.getMessage(), ModelsDevFetcher.class);
 		}
-		return result;
 	}
 
 	private static void parseProvider(JsonReader reader, Set<String> wantedModels, Map<String, ModelInfo> result)

@@ -5,7 +5,9 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
+import java.io.IOException;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,6 +27,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.ReadOnly;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
@@ -56,8 +59,9 @@ import com.top_logic.tl.ai.core.provider.health.ModelTarget;
  * <li><b>Failover</b> - where a run goes when the model it was configured with cannot answer.</li>
  * <li><b>Model Catalog</b> - read-only metadata describing each model's capabilities (tool
  * calling, reasoning, temperature support) and limits (context window, max output tokens).
- * Populated automatically from the <a href="https://models.dev">models.dev</a> remote catalog on
- * startup, with optional manual overrides for local or unlisted models.</li>
+ * Taken from the catalog bundled with the application at startup and from the
+ * <a href="https://models.dev">models.dev</a> remote catalog in the background after it, with
+ * optional manual overrides for local or unlisted models.</li>
  * </ol>
  *
  * <p>
@@ -189,10 +193,12 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 *
 	 * <p>
 	 * Provides read-only metadata about each model's capabilities (tool calling, reasoning,
-	 * temperature support) and limits (context window, max output tokens). The catalog is fetched
-	 * from <a href="https://models.dev">models.dev</a> on startup for all models configured in
-	 * the provider section. Models not found in the remote catalog (e.g. locally hosted models)
-	 * can be defined manually in the {@link #getModelOverrides() model overrides}.
+	 * temperature support) and limits (context window, max output tokens) for all models
+	 * configured in the provider section. The service starts with the copy of the
+	 * <a href="https://models.dev">models.dev</a> catalog bundled with the application and loads
+	 * the current catalog in the background after its start. Models not found in the catalog
+	 * (e.g. locally hosted models) can be defined manually in the
+	 * {@link #getModelOverrides() model overrides}.
 	 * </p>
 	 */
 	public interface ModelCatalogConfig extends ConfigurationItem {
@@ -202,6 +208,9 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 
 		/** @see #getCatalogUrl() */
 		String CATALOG_URL = "catalog-url";
+
+		/** @see #getFetchRemoteCatalog() */
+		String FETCH_REMOTE_CATALOG = "fetch-remote-catalog";
 
 		/** @see #getModelConfiguration() */
 		String MODEL_CONFIGURATION = "llm-configuration";
@@ -220,11 +229,26 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		String getCatalogUrl();
 
 		/**
+		 * Whether the current catalog is loaded from the catalog URL.
+		 *
+		 * <p>
+		 * The service never waits for it: it starts with the catalog bundled with the application
+		 * and loads the current one in the background. Switched off, no request is made at all and
+		 * the bundled catalog is used alone - for an installation without access to the internet.
+		 * </p>
+		 *
+		 * @see #FETCH_REMOTE_CATALOG
+		 */
+		@Name(FETCH_REMOTE_CATALOG)
+		@BooleanDefault(true)
+		boolean getFetchRemoteCatalog();
+
+		/**
 		 * Per-model metadata (limits, capabilities).
 		 *
 		 * <p>
-		 * Populated automatically from the remote catalog on startup. Read-only — do not
-		 * modify manually.
+		 * Populated automatically from the bundled catalog on startup and from the remote catalog
+		 * when it has been loaded. Read-only - do not modify manually.
 		 * </p>
 		 *
 		 * @see #MODEL_CONFIGURATION
@@ -258,6 +282,16 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		Map<String, ModelCatalogEntry.OverrideConfig> getModelOverrides();
 	}
 
+	/**
+	 * The time the remote catalog may take to load, from name resolution to the last byte.
+	 *
+	 * <p>
+	 * Nobody waits for it, so it only bounds how long a stalled server holds a connection. The
+	 * catalog is about 6 MB, which a link of 1 Mbit/s still transfers within this time.
+	 * </p>
+	 */
+	private static final Duration CATALOG_DEADLINE = Duration.ofSeconds(60);
+
 	private static volatile LLMProviderService _instance;
 
 	private final InstantiationContext _context;
@@ -283,7 +317,13 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	/**
 	 * Index mapping model IDs to their resolved {@link ModelInfo} metadata.
 	 */
-	private Map<String, ModelInfo> _models;
+	private volatile Map<String, ModelInfo> _models;
+
+	/**
+	 * The thread loading the remote catalog, or <code>null</code> when none is loading for this
+	 * start. A loader that is no longer this thread installs nothing.
+	 */
+	private Thread _catalogLoader;
 
 	/**
 	 * What every model is currently known to be good for.
@@ -416,13 +456,70 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
 		Map<String, Set<String>> catalogRequested = buildCatalogProviderModels();
 
-		Map<String, ModelInfo> fetched;
+		Map<String, ModelInfo> bundled;
 		if (catalogConfig == null || catalogRequested.isEmpty()) {
-			fetched = Map.of();
+			bundled = Map.of();
 		} else {
-			fetched = ModelsDevFetcher.fetch(catalogConfig.getCatalogUrl(), catalogRequested);
+			bundled = ModelsDevFetcher.loadSnapshot(catalogRequested);
+		}
+		installCatalog(bundled);
+
+		int overrideCount = catalogConfig == null ? 0 : catalogConfig.getModelOverrides().size();
+		Logger.info("LLMProviderService started with " +
+			getConfig().getProviders().size() + " provider(s), " +
+			bundled.size() + " model(s) from the bundled catalog" +
+			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
+			LLMProviderService.class);
+
+		if (catalogConfig != null && !catalogRequested.isEmpty() && catalogConfig.getFetchRemoteCatalog()) {
+			String url = catalogConfig.getCatalogUrl();
+			Thread loader = new Thread(() -> loadRemoteCatalog(url, catalogRequested, bundled), "Model catalog");
+			loader.setDaemon(true);
+			synchronized (this) {
+				_catalogLoader = loader;
+			}
+			loader.start();
+		}
+	}
+
+	/**
+	 * Loads the remote catalog and installs it over the bundled one, on the
+	 * {@link #_catalogLoader} thread.
+	 */
+	private void loadRemoteCatalog(String url, Map<String, Set<String>> requested, Map<String, ModelInfo> bundled) {
+		Map<String, ModelInfo> remote;
+		try {
+			remote = ModelsDevFetcher.fetch(url, requested, CATALOG_DEADLINE);
+		} catch (InterruptedException ex) {
+			// The service stopped.
+			return;
+		} catch (IOException ex) {
+			Logger.warn("Could not load the model catalog from " + url + " (" + ex.getMessage()
+				+ "); the bundled catalog stays in use.", LLMProviderService.class);
+			return;
 		}
 
+		// A model the remote catalog does not list keeps what the bundled one knows about it.
+		Map<String, ModelInfo> combined = new LinkedHashMap<>(bundled);
+		combined.putAll(remote);
+		synchronized (this) {
+			if (_catalogLoader != Thread.currentThread()) {
+				// Stopped or restarted meanwhile.
+				return;
+			}
+			_catalogLoader = null;
+			installCatalog(combined);
+		}
+		Logger.info("Loaded " + remote.size() + " model(s) from the model catalog at " + url + ".",
+			LLMProviderService.class);
+	}
+
+	/**
+	 * Makes the given catalog the one {@link #getModel(String)} answers from, with the manual
+	 * overrides applied over it.
+	 */
+	private synchronized void installCatalog(Map<String, ModelInfo> catalog) {
+		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
 		Map<String, ModelCatalogEntry.OverrideConfig> overrides;
 		if (catalogConfig == null) {
 			overrides = Map.of();
@@ -430,32 +527,33 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			// Populate read-only config entries for admin UI visibility
 			Map<String, ModelCatalogEntry.Config> catalogEntries = catalogConfig.getModelConfiguration();
 			catalogEntries.clear();
-			for (Map.Entry<String, ModelInfo> entry : fetched.entrySet()) {
+			for (Map.Entry<String, ModelInfo> entry : catalog.entrySet()) {
 				catalogEntries.put(entry.getKey(), ModelCatalogEntry.toConfig(entry.getKey(), entry.getValue()));
 			}
 			overrides = catalogConfig.getModelOverrides();
 		}
 
 		// Merge manual overrides (take precedence over catalog)
-		Map<String, ModelInfo> merged = new LinkedHashMap<>(fetched);
+		Map<String, ModelInfo> merged = new LinkedHashMap<>(catalog);
 		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
 			merged.put(entry.getKey(),
-				ModelCatalogEntry.overrideToModelInfo(entry.getValue(), fetched.get(entry.getKey())));
+				ModelCatalogEntry.overrideToModelInfo(entry.getValue(), catalog.get(entry.getKey())));
 		}
 
 		_models = Map.copyOf(merged);
-
-		int overrideCount = overrides.size();
-		Logger.info("LLMProviderService started with " +
-			getConfig().getProviders().size() + " provider(s), " +
-			fetched.size() + " model(s) from catalog" +
-			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
-			LLMProviderService.class);
 	}
 
 	@Override
 	protected void shutDown() {
 		try {
+			Thread loader;
+			synchronized (this) {
+				loader = _catalogLoader;
+				_catalogLoader = null;
+			}
+			if (loader != null) {
+				loader.interrupt();
+			}
 			_instance = null;
 			_modelProviders = null;
 			_providerConfigs = null;
@@ -744,10 +842,11 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * Returns metadata for the given model, or {@code null} if unknown.
 	 */
 	public ModelInfo getModel(String modelId) {
-		if (_models == null) {
+		Map<String, ModelInfo> models = _models;
+		if (models == null) {
 			return null;
 		}
-		return _models.get(modelId);
+		return models.get(modelId);
 	}
 
 	/**

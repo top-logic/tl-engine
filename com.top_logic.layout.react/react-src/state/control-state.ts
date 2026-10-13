@@ -398,9 +398,10 @@ export interface TypingFieldStateJson extends FieldStateJson {
 	sendValueOnBlur: boolean;
 
 	/**
-	 * Whether the field sends the command `commit` when it loses focus.
+	 * Whether a finished edit sends the command `commit`: leaving the field after a change,
+	 * and Enter in a single-line input, once per edit. A value still held back is sent first.
 	 */
-	commitOnBlur: boolean;
+	commitEdits: boolean;
 }
 
 /**

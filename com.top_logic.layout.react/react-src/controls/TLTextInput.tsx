@@ -1,12 +1,9 @@
 import {
   React,
   useTLState,
-  useTLFieldValue,
-  useTLCommand,
-  useTLSubmitOnEnter,
+  useTLTypingField,
   useI18N,
   rootClassName,
-  VALUE_DEBOUNCE_MS,
   tooltipProps,
   useFieldLabelProps,
   fieldInputId,
@@ -70,11 +67,13 @@ const normalizeUrl = (value: string): string => {
  * always flushed on blur), so a field is not round-tripped on every keystroke. When
  * state.sendValueOnBlur is set, nothing is sent while the user is still in the field at all - for a
  * field whose model rewrites the text it is given, where any mid-edit round-trip would re-render
- * the field from the normalized value and throw away what was being typed. When state.commitOnBlur
- * is set, losing focus after an actual edit also sends a 'commit' command so the server can run
- * deferred per-field work (e.g. i18n auto-translation) once. When state.submitOnEnter is set,
- * Enter in the single-line input sends a 'submit' command carrying the text, so the server can run
- * a command over what was entered; a text area takes no such handler, where Enter is text.
+ * the field from the normalized value and throw away what was being typed. When state.commitEdits
+ * is set, each finished edit - leaving the field after a change, or Enter in the single-line input
+ * after a change - sends a 'commit' command once, so the server can run per-edit work (e.g. i18n
+ * auto-translation, a command bound to the field). When state.submitOnEnter is set, Enter in the
+ * single-line input sends a 'submit' command carrying the text, so the server can run a command
+ * over what was entered; a text area takes no Enter handler, where Enter is text and the edit is
+ * finished by leaving the field only. The typing behaviour is that of useTLTypingField.
  *
  * state.inputType says what the text means and becomes the `type` of the single-line input
  * ('text' when absent; a text area has no type). A value of a type that points somewhere - 'url'
@@ -112,71 +111,28 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
-    sendOnBlur: state.sendValueOnBlur === true,
+  const inputType = state.inputType ?? 'text';
+  // A web address is stored the way it is followed: completed when the field is left or the edit
+  // is finished with Enter, never mid-word, where completing a scheme would fight the cursor.
+  const { text, setText, commit, onBlur, onKeyDown } = useTLTypingField({
+    normalize: inputType === 'url' ? normalizeUrl : undefined,
   });
-  const sendCommand = useTLCommand();
   const t = useI18N(I18N_KEYS);
-  const dirtyRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      dirtyRef.current = true;
-      setValue(e.target.value);
+      setText(e.target.value);
     },
-    [setValue]
-  );
-
-  const text = (value as string) ?? '';
-  const inputType = state.inputType ?? 'text';
-
-  const commitOnBlur = state.commitOnBlur === true;
-  const handleBlur = useCallback(async () => {
-    if (inputType === 'url') {
-      // Store the address the way it is followed, but only once the user has stopped typing:
-      // completing a scheme mid-word would fight the cursor.
-      const normalized = normalizeUrl(text);
-      if (normalized !== text) {
-        setValue(normalized);
-      }
-    }
-    // Always send the final value when leaving the field, even if a keystroke is still within the
-    // debounce window; await it so a follow-up 'commit' runs after the value is applied server-side.
-    await flushValue();
-    if (commitOnBlur && dirtyRef.current) {
-      dirtyRef.current = false;
-      sendCommand('commit');
-    }
-  }, [flushValue, commitOnBlur, sendCommand, inputType, text, setValue]);
-
-  const submitKey = useTLSubmitOnEnter();
-  const handleSubmitKey = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (submitKey === undefined) {
-        return;
-      }
-      if (inputType === 'url' && e.key === 'Enter') {
-        // What is submitted is the address as it is stored, so complete the scheme before the
-        // handler reads the input.
-        const normalized = normalizeUrl(e.currentTarget.value);
-        if (normalized !== e.currentTarget.value) {
-          e.currentTarget.value = normalized;
-          setValue(normalized);
-        }
-      }
-      submitKey(e);
-    },
-    [submitKey, inputType, setValue]
+    [setText]
   );
 
   const handleClear = useCallback(async () => {
-    setValue('');
+    setText('');
     // The gesture is the whole edit, so it is reported at once rather than after the debounce.
-    await flushValue();
+    await commit();
     inputRef.current?.focus();
-  }, [setValue, flushValue]);
+  }, [setText, commit]);
 
   const multiline = state.multiline === true;
   const hasError = state.hasError === true;
@@ -202,7 +158,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
           value={text}
           placeholder={state.placeholder}
           onChange={handleChange}
-          onBlur={handleBlur}
+          onBlur={onBlur}
           disabled={disabled}
           className={rootClassName(state, 'tl-field tl-field--multiline tl-type-body')}
           {...fieldStateAttrs(state)}
@@ -221,8 +177,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
       value={text}
       placeholder={state.placeholder}
       onChange={handleChange}
-      onBlur={handleBlur}
-      onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
       disabled={disabled}
       className={rootClassName(state, 'tl-field tl-type-body')}
       {...fieldStateAttrs(state)}

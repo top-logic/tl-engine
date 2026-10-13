@@ -67,10 +67,12 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * The operation works with plain SQL on the connection pool of the {@link KnowledgeBase}, not
- * through a {@link KnowledgeBase} transaction. Each step commits on its own and each step is
- * idempotent, so an aborted run can simply be repeated. A {@link KnowledgeBase} instance that was
- * running while its database was compacted keeps outdated revisions in its caches and must be
- * restarted.
+ * through a {@link KnowledgeBase} transaction. Every step that touches a number of rows
+ * proportional to the compacted range advances in {@link #setWindowSize(long) windows} of revisions
+ * and commits after each window; the remaining steps touch a handful of rows and commit on their
+ * own. Each step is idempotent, so an aborted run can simply be repeated. A {@link KnowledgeBase}
+ * instance that was running while its database was compacted keeps outdated revisions in its caches
+ * and must be restarted.
  * </p>
  *
  * <p>
@@ -93,11 +95,11 @@ import com.top_logic.util.TLContext;
 public class HistoryCompaction {
 
 	/**
-	 * Default number of revisions whose rows are deleted within a single transaction.
+	 * Default number of revisions a single transaction covers.
 	 *
-	 * @see #setDeleteWindowSize(long)
+	 * @see #setWindowSize(long)
 	 */
-	public static final long DEFAULT_DELETE_WINDOW_SIZE = 5000;
+	public static final long DEFAULT_WINDOW_SIZE = 5000;
 
 	/**
 	 * The author written to the compaction revision.
@@ -219,7 +221,7 @@ public class HistoryCompaction {
 
 	private final CompiledStatement _revisionExists;
 
-	private final CompiledStatement _deleteRevisions;
+	private final WindowedStatement _deleteRevisions;
 
 	private final CompiledStatement _countRevisions;
 
@@ -227,7 +229,7 @@ public class HistoryCompaction {
 
 	private final CompiledStatement _updateRevisionLog;
 
-	private final CompiledStatement _deleteXrefBelow;
+	private final WindowedStatement _deleteXrefBelow;
 
 	private final CompiledStatement _countXrefBelow;
 
@@ -241,7 +243,7 @@ public class HistoryCompaction {
 
 	private final CompiledStatement _countBranchCreateRev;
 
-	private long _deleteWindowSize = DEFAULT_DELETE_WINDOW_SIZE;
+	private long _windowSize = DEFAULT_WINDOW_SIZE;
 
 	/**
 	 * Creates a {@link HistoryCompaction}.
@@ -288,16 +290,18 @@ public class HistoryCompaction {
 
 		_resolveRevision = createResolveRevision();
 		_revisionExists = createRevisionExists();
-		_deleteRevisions = createDeleteRevisions();
+		_deleteRevisions = new WindowedStatement(createDeleteRevisions(),
+			"Deleted revisions of '" + ((DBTableMetaObject) _revisionType).getDBName() + "'");
 		_countRevisions = createCountRevisions();
 		_fetchAuthor = createFetchAuthor();
 		_updateRevisionLog = createUpdateRevisionLog();
-		_deleteXrefBelow = createDeleteXrefBelow();
+		_deleteXrefBelow = new WindowedStatement(createDeleteXrefBelow(),
+			"Deleted rows of '" + _xrefType.getDBName() + "'");
 		_countXrefBelow = createCountXrefBelow();
 		_deleteXrefAt = createDeleteXrefAt();
-		_updateBranchBaseRev = createRaiseRevision((DBTableMetaObject) _branchType, _branchBaseRev);
+		_updateBranchBaseRev = createRaiseRevisionInRange((DBTableMetaObject) _branchType, _branchBaseRev);
 		_countBranchBaseRev = createCountInRange((DBTableMetaObject) _branchType, _branchBaseRev);
-		_updateBranchCreateRev = createRaiseRevision((DBTableMetaObject) _branchType, _branchCreateRev);
+		_updateBranchCreateRev = createRaiseRevisionInRange((DBTableMetaObject) _branchType, _branchCreateRev);
 		_countBranchCreateRev = createCountInRange((DBTableMetaObject) _branchType, _branchCreateRev);
 	}
 
@@ -317,31 +321,34 @@ public class HistoryCompaction {
 	}
 
 	/**
-	 * Number of revisions whose rows are deleted within a single transaction.
+	 * Number of revisions a single transaction covers.
 	 *
-	 * @see #DEFAULT_DELETE_WINDOW_SIZE
+	 * @see #DEFAULT_WINDOW_SIZE
 	 */
-	public long getDeleteWindowSize() {
-		return _deleteWindowSize;
+	public long getWindowSize() {
+		return _windowSize;
 	}
 
 	/**
-	 * Setter for {@link #getDeleteWindowSize()}.
+	 * Setter for {@link #getWindowSize()}.
 	 *
 	 * <p>
-	 * Deleting the rows of a long history in a single statement can make the commit of the deleting
-	 * transaction run for hours. The delete therefore advances in windows over the last revision a
-	 * row is valid in, committing after each window.
+	 * Every step that touches a number of rows proportional to the compacted range (deleting rows of
+	 * discarded revisions, rewriting revision bounds, moving reference pins, deleting revisions and
+	 * their cross reference entries) advances in windows over the revision column it deletes by or
+	 * rewrites and commits after each window. A single statement over a long history makes the
+	 * commit run for hours and, on the MVStore of H2, rewrites and retains every touched page until
+	 * the commit, so that the database file doubles.
 	 * </p>
 	 *
 	 * @param windowSize
 	 *        The number of revisions to process per transaction, must be positive.
 	 */
-	public void setDeleteWindowSize(long windowSize) {
+	public void setWindowSize(long windowSize) {
 		if (windowSize < 1) {
-			throw new IllegalArgumentException("A delete window must span at least one revision: " + windowSize);
+			throw new IllegalArgumentException("A window must span at least one revision: " + windowSize);
 		}
-		_deleteWindowSize = windowSize;
+		_windowSize = windowSize;
 	}
 
 	/**
@@ -459,8 +466,8 @@ public class HistoryCompaction {
 				_flexDataAccess.compact(connection, report, lower, upper, dryRun, log);
 			}
 			compactBranches(connection, report, lower, upper, dryRun);
-			compactRevisionTable(connection, report, lower, upper, dryRun);
-			rebuildXref(connection, report, lower, upper, dryRun);
+			compactRevisionTable(connection, report, lower, upper, dryRun, log);
+			rebuildXref(connection, report, lower, upper, dryRun, log);
 			log.info(report.toString());
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -481,7 +488,8 @@ public class HistoryCompaction {
 	 * 
 	 * <p>
 	 * The columns of the branch table are single revisions, not a revision range, so this table
-	 * needs a step of its own.
+	 * needs a step of its own. The table has one row per branch, so each column is rewritten with a
+	 * single statement.
 	 * </p>
 	 */
 	private void compactBranches(PooledConnection connection, Report report, long lower, long upper, boolean dryRun)
@@ -500,7 +508,7 @@ public class HistoryCompaction {
 	}
 
 	private void compactRevisionTable(PooledConnection connection, Report report, long lower, long upper,
-			boolean dryRun) throws SQLException {
+			boolean dryRun, Log log) throws SQLException {
 		TableReport tableReport = report.table(((DBTableMetaObject) _revisionType).getDBName());
 		Long lowerArg = Long.valueOf(lower);
 		Long upperArg = Long.valueOf(upper);
@@ -510,7 +518,8 @@ public class HistoryCompaction {
 				tableReport.addRewrittenRows(1);
 			}
 		} else {
-			tableReport.addDeletedRows(_deleteRevisions.executeUpdate(connection, lowerArg, upperArg));
+			tableReport.addDeletedRows(_deleteRevisions.execute(connection, lower + 1, upper, log));
+			// A single row, rewritten with a single statement.
 			if (!COMPACTION_AUTHOR.equals(fetchAuthor(connection, upper))) {
 				String encodedLog = ResKey.encode(I18NConstants.HISTORY_COMPACTED);
 				tableReport
@@ -540,8 +549,8 @@ public class HistoryCompaction {
 	 * revision as its flexible data.
 	 * </p>
 	 */
-	private void rebuildXref(PooledConnection connection, Report report, long lower, long upper, boolean dryRun)
-			throws SQLException {
+	private void rebuildXref(PooledConnection connection, Report report, long lower, long upper, boolean dryRun,
+			Log log) throws SQLException {
 		TableReport tableReport = report.table(_xrefType.getDBName());
 		Long lowerArg = Long.valueOf(lower);
 		Long upperArg = Long.valueOf(upper);
@@ -549,7 +558,9 @@ public class HistoryCompaction {
 			tableReport.addDeletedRows(countRows(connection, _countXrefBelow, lowerArg, upperArg));
 			return;
 		}
-		tableReport.addDeletedRows(_deleteXrefBelow.executeUpdate(connection, lowerArg, upperArg));
+		tableReport.addDeletedRows(_deleteXrefBelow.execute(connection, lower + 1, upper, log));
+		// The entries of the compaction revision are a handful of rows per table, rebuilt in a single
+		// transaction.
 		_deleteXrefAt.executeUpdate(connection, upperArg);
 		int inserted = 0;
 		for (TableAccess table : _itemTableAccess) {
@@ -570,6 +581,68 @@ public class HistoryCompaction {
 	}
 
 	/**
+	 * A statement that addresses the rows of a revision window and is executed window by window
+	 * over a revision range, with a commit after each window.
+	 *
+	 * <p>
+	 * The last two parameters of the statement are the inclusive start {@link #PARAM_WINDOW_START}
+	 * and the exclusive end {@link #PARAM_WINDOW_STOP} of the window, all parameters before them
+	 * have the same value for every window. A statement either deletes the rows of its window or
+	 * moves the revision column it is windowed over to a value outside of every later window, so
+	 * that each window hits different rows and a repeated execution finds nothing left to do.
+	 * </p>
+	 *
+	 * @see HistoryCompaction#setWindowSize(long)
+	 */
+	private final class WindowedStatement {
+
+		private final CompiledStatement _statement;
+
+		private final String _action;
+
+		/**
+		 * Creates a {@link WindowedStatement}.
+		 *
+		 * @param statement
+		 *        The statement whose last two parameters are the window bounds.
+		 * @param action
+		 *        Description of what the statement does, used in progress messages.
+		 */
+		WindowedStatement(CompiledStatement statement, String action) {
+			_statement = statement;
+			_action = action;
+		}
+
+		/**
+		 * Executes the statement for all windows of the range {@code [from, to)} and commits after
+		 * each window.
+		 *
+		 * @param fixedArguments
+		 *        The values of the parameters before the window bounds.
+		 * @return The number of rows changed in all windows.
+		 */
+		long execute(PooledConnection connection, long from, long to, Log log, Object... fixedArguments)
+				throws SQLException {
+			Object[] arguments = new Object[fixedArguments.length + 2];
+			System.arraycopy(fixedArguments, 0, arguments, 0, fixedArguments.length);
+			long result = 0;
+			for (long windowStart = from; windowStart < to; windowStart += _windowSize) {
+				long windowStop = Math.min(windowStart + _windowSize, to);
+				arguments[fixedArguments.length] = Long.valueOf(windowStart);
+				arguments[fixedArguments.length + 1] = Long.valueOf(windowStop);
+				int changed = _statement.executeUpdate(connection, arguments);
+				connection.commit();
+				if (changed > 0) {
+					result += changed;
+					log.info(_action + ": " + changed + " rows in revisions [" + windowStart + ", " + windowStop
+						+ ").", Log.VERBOSE);
+				}
+			}
+			return result;
+		}
+	}
+
+	/**
 	 * Access to a single table of the {@link ItemTables}, with all statements compiled once.
 	 */
 	private final class TableAccess {
@@ -580,19 +653,19 @@ public class HistoryCompaction {
 
 		private final CompiledStatement _targetExists;
 
-		private final CompiledStatement _deleteWindow;
+		private final WindowedStatement _deleteWindow;
 
 		private final CompiledStatement _countDeleted;
 
-		private final CompiledStatement _raiseRevMin;
+		private final WindowedStatement _raiseRevMin;
 
 		private final CompiledStatement _countRevMin;
 
-		private final CompiledStatement _lowerRevMax;
+		private final WindowedStatement _lowerRevMax;
 
 		private final CompiledStatement _countRevMax;
 
-		private final CompiledStatement _raiseRevCreate;
+		private final WindowedStatement _raiseRevCreate;
 
 		private final CompiledStatement _countRevCreate;
 
@@ -606,14 +679,19 @@ public class HistoryCompaction {
 				_pins[n] = new PinAccess(table, references.get(n), deleteRow);
 			}
 			_targetExists = createTargetExists(table);
-			_deleteWindow = createDeleteWindow(table);
+			String tableName = table.getDBName();
+			_deleteWindow = new WindowedStatement(createDeleteWindow(table), "Deleted rows of '" + tableName + "'");
 			_countDeleted = createCountDeleted(table);
-			_raiseRevMin = createRaiseRevMin(table);
+			_raiseRevMin = new WindowedStatement(createRaiseRevMin(table),
+				"Raised the first revision of rows of '" + tableName + "'");
 			_countRevMin = createCountRevMin(table);
-			_lowerRevMax = createLowerRevMax(table);
+			_lowerRevMax = new WindowedStatement(createLowerRevMax(table),
+				"Lowered the last revision of rows of '" + tableName + "'");
 			_countRevMax = createCountRevMax(table);
 			DBAttribute revCreate = table.getRevCreate();
-			_raiseRevCreate = revCreate == null ? null : createRaiseRevision(type, revCreate);
+			_raiseRevCreate = revCreate == null ? null
+				: new WindowedStatement(createRaiseRevision(type, revCreate),
+					"Raised the create revision of rows of '" + tableName + "'");
 			_countRevCreate = revCreate == null ? null : createCountRevCreate(table);
 		}
 
@@ -661,7 +739,7 @@ public class HistoryCompaction {
 				if (dryRun) {
 					tableReport.addRewrittenPins(countRows(connection, pin.countRaise(), lowerArg, upperArg));
 				} else {
-					tableReport.addRewrittenPins(pin.raise().executeUpdate(connection, lowerArg, upperArg));
+					tableReport.addRewrittenPins(pin.raise().execute(connection, lower + 1, upper, log, upperArg));
 				}
 			}
 			Set<RowKey> deletedRows = new HashSet<>();
@@ -712,33 +790,20 @@ public class HistoryCompaction {
 			if (dryRun) {
 				tableReport.addDeletedRows(countRows(connection, _countDeleted, lowerArg, upperArg));
 				tableReport.addRewrittenRows(countRows(connection, _countRevMin, lowerArg, upperArg));
-				tableReport.addRewrittenRows(countRows(connection, _countRevMax, lowerArg, upperArg));
+				tableReport.addRewrittenRows(countRows(connection, _countRevMax, lowerArg, upperLastArg));
 				if (_countRevCreate != null) {
 					tableReport.addRewrittenRows(countRows(connection, _countRevCreate, lowerArg, upperArg));
 				}
 				return;
 			}
 
-			// Delete in windows over the last revision a row is valid in, committing after each
-			// window: a single delete over a long history can make the commit run for hours.
-			for (long windowStart = lower + 1; windowStart < upper; windowStart += _deleteWindowSize) {
-				long windowStop = Math.min(windowStart + _deleteWindowSize, upper);
-				int deleted = _deleteWindow.executeUpdate(connection, lowerArg,
-					Long.valueOf(windowStart), Long.valueOf(windowStop));
-				connection.commit();
-				if (deleted > 0) {
-					tableReport.addDeletedRows(deleted);
-					log.info("Deleted " + deleted + " rows of '" + _table.getDBName() + "' in revisions ["
-						+ windowStart + ", " + windowStop + ").", Log.VERBOSE);
-				}
-			}
-
-			tableReport.addRewrittenRows(_raiseRevMin.executeUpdate(connection, lowerArg, upperArg));
-			tableReport.addRewrittenRows(_lowerRevMax.executeUpdate(connection, lowerArg, upperArg, upperLastArg));
+			tableReport.addDeletedRows(_deleteWindow.execute(connection, lower + 1, upper, log, lowerArg));
+			tableReport.addRewrittenRows(_raiseRevMin.execute(connection, lower + 1, upper, log, upperArg));
+			// A row ending at upper - 1 is already in its final state.
+			tableReport.addRewrittenRows(_lowerRevMax.execute(connection, lower + 1, upper - 1, log, upperLastArg));
 			if (_raiseRevCreate != null) {
-				tableReport.addRewrittenRows(_raiseRevCreate.executeUpdate(connection, lowerArg, upperArg));
+				tableReport.addRewrittenRows(_raiseRevCreate.execute(connection, lower + 1, upper, log, upperArg));
 			}
-			connection.commit();
 		}
 	}
 
@@ -755,7 +820,7 @@ public class HistoryCompaction {
 
 		private final String _monomorphicTarget;
 
-		private final CompiledStatement _raise;
+		private final WindowedStatement _raise;
 
 		private final CompiledStatement _countRaise;
 
@@ -770,14 +835,15 @@ public class HistoryCompaction {
 			_reference = reference;
 			_monomorphicTarget = reference.getMonomorphicTargetType();
 			DBAttribute revColumn = reference.getRevisionColumn();
-			_raise = createRaiseRevision(table.getType(), revColumn);
+			_raise = new WindowedStatement(createRaiseRevision(table.getType(), revColumn),
+				"Moved pins of '" + reference.getName() + "' in '" + table.getDBName() + "'");
 			_countRaise = createCountInRange(table.getType(), revColumn);
 			_selectCandidates = createSelectPinCandidates(table, reference);
 			_clear = createClearPin(table, reference);
 			_deleteRow = deleteRow;
 		}
 
-		CompiledStatement raise() {
+		WindowedStatement raise() {
 			return _raise;
 		}
 
@@ -1156,9 +1222,31 @@ public class HistoryCompaction {
 	}
 
 	/**
-	 * {@code UPDATE t SET col = upper WHERE col > lower AND col < upper}
+	 * {@code UPDATE t SET col = upper WHERE col >= windowStart AND col < windowStop}
+	 *
+	 * @see WindowedStatement
 	 */
 	private CompiledStatement createRaiseRevision(DBTableMetaObject table, DBAttribute column) {
+		List<Parameter> parameters = new ArrayList<>();
+		parameters.add(parameterDef(column, PARAM_UPPER));
+		parameters.addAll(windowParameters(column));
+		return query(
+			parameters,
+			update(
+				table(table, NO_TABLE_ALIAS),
+				inWindow(column),
+				Collections.singletonList(column.getDBName()),
+				Collections.<SQLExpression> singletonList(parameter(column, PARAM_UPPER)))).toSql(_sqlDialect);
+	}
+
+	/**
+	 * {@code UPDATE t SET col = upper WHERE col > lower AND col < upper}
+	 *
+	 * <p>
+	 * For a table with a handful of rows, which needs no {@link WindowedStatement windows}.
+	 * </p>
+	 */
+	private CompiledStatement createRaiseRevisionInRange(DBTableMetaObject table, DBAttribute column) {
 		return query(
 			rangeParameters(column),
 			update(
@@ -1181,19 +1269,15 @@ public class HistoryCompaction {
 	private CompiledStatement createDeleteWindow(ItemTables.Table table) {
 		DBAttribute revMin = table.getRevMin();
 		DBAttribute revMax = table.getRevMax();
-		List<Parameter> parameters = parameters(
-			parameterDef(revMin, PARAM_LOWER),
-			parameterDef(revMax, PARAM_WINDOW_START),
-			parameterDef(revMax, PARAM_WINDOW_STOP));
+		List<Parameter> parameters = new ArrayList<>();
+		parameters.add(parameterDef(revMin, PARAM_LOWER));
+		parameters.addAll(windowParameters(revMax));
 		return query(parameters,
 			delete(
 				table(table.getType(), NO_TABLE_ALIAS),
 				and(
 					gt(column(NO_TABLE_ALIAS, revMin, NOT_NULL), parameter(revMin, PARAM_LOWER)),
-					and(
-						ge(column(NO_TABLE_ALIAS, revMax, NOT_NULL), parameter(revMax, PARAM_WINDOW_START)),
-						lt(column(NO_TABLE_ALIAS, revMax, NOT_NULL), parameter(revMax, PARAM_WINDOW_STOP))))))
-									.toSql(_sqlDialect);
+					inWindow(revMax)))).toSql(_sqlDialect);
 	}
 
 	/**
@@ -1209,7 +1293,7 @@ public class HistoryCompaction {
 	}
 
 	/**
-	 * {@code UPDATE t SET REV_MIN = upper WHERE REV_MIN > lower AND REV_MIN < upper}
+	 * {@code UPDATE t SET REV_MIN = upper WHERE REV_MIN >= windowStart AND REV_MIN < windowStop}
 	 */
 	private CompiledStatement createRaiseRevMin(ItemTables.Table table) {
 		return createRaiseRevision(table.getType(), table.getRevMin());
@@ -1228,37 +1312,47 @@ public class HistoryCompaction {
 	}
 
 	/**
-	 * {@code UPDATE t SET REV_MAX = upperLast WHERE REV_MAX > lower AND REV_MAX < upper}
+	 * {@code UPDATE t SET REV_MAX = upperLast WHERE REV_MAX >= windowStart AND REV_MAX < windowStop}
 	 *
 	 * <p>
-	 * After the delete, the only rows left in that range are the ones that were already visible at
-	 * the lower bound. Those objects must disappear at the compaction revision, hence the row ends
-	 * one revision earlier.
+	 * The windows cover the range from {@code lower + 1} to {@code upperLast}, exclusive: a row
+	 * ending at {@code upperLast} is already in its final state. After the delete, the only rows
+	 * left in that range are the ones that were already visible at the lower bound. Those objects
+	 * must disappear at the compaction revision, hence the row ends one revision earlier.
 	 * </p>
 	 */
 	private CompiledStatement createLowerRevMax(ItemTables.Table table) {
 		DBAttribute revMax = table.getRevMax();
-		List<Parameter> parameters = parameters(
-			parameterDef(revMax, PARAM_LOWER),
-			parameterDef(revMax, PARAM_UPPER),
-			parameterDef(revMax, PARAM_UPPER_LAST));
+		List<Parameter> parameters = new ArrayList<>();
+		parameters.add(parameterDef(revMax, PARAM_UPPER_LAST));
+		parameters.addAll(windowParameters(revMax));
 		return query(parameters,
 			update(
 				table(table.getType(), NO_TABLE_ALIAS),
-				inRange(revMax),
+				inWindow(revMax),
 				Collections.singletonList(revMax.getDBName()),
 				Collections.<SQLExpression> singletonList(parameter(revMax, PARAM_UPPER_LAST)))).toSql(_sqlDialect);
 	}
 
 	/**
+	 * {@code SELECT count(1) FROM t WHERE REV_MAX > lower AND REV_MAX < upperLast AND REV_MIN <=
+	 * lower}
+	 *
+	 * <p>
 	 * The rows {@link #createLowerRevMax(ItemTables.Table)} hits after the delete.
+	 * </p>
 	 */
 	private CompiledStatement createCountRevMax(ItemTables.Table table) {
 		DBAttribute revMin = table.getRevMin();
 		DBAttribute revMax = table.getRevMax();
-		return createCount(table.getType(), rangeParameters(revMax),
+		return createCount(table.getType(),
+			parameters(
+				parameterDef(revMax, PARAM_LOWER),
+				parameterDef(revMax, PARAM_UPPER_LAST)),
 			and(
-				inRange(revMax),
+				and(
+					gt(column(NO_TABLE_ALIAS, revMax, NOT_NULL), parameter(revMax, PARAM_LOWER)),
+					lt(column(NO_TABLE_ALIAS, revMax, NOT_NULL), parameter(revMax, PARAM_UPPER_LAST))),
 				le(column(NO_TABLE_ALIAS, revMin, NOT_NULL), parameter(revMax, PARAM_LOWER))));
 	}
 
@@ -1305,17 +1399,23 @@ public class HistoryCompaction {
 	}
 
 	/**
-	 * {@code DELETE FROM REVISION WHERE rev > lower AND rev < upper}
+	 * {@code DELETE FROM REVISION WHERE rev >= windowStart AND rev < windowStop}
+	 *
+	 * @see WindowedStatement
 	 */
 	private CompiledStatement createDeleteRevisions() {
 		return query(
-			rangeParameters(_revisionRev),
+			windowParameters(_revisionRev),
 			delete(
 				table((DBTableMetaObject) _revisionType, NO_TABLE_ALIAS),
-				inRange(_revisionRev))).toSql(_sqlDialect);
+				inWindow(_revisionRev))).toSql(_sqlDialect);
 	}
 
-	/** @see #createDeleteRevisions() */
+	/**
+	 * {@code SELECT count(1) FROM REVISION WHERE rev > lower AND rev < upper}
+	 *
+	 * @see #createDeleteRevisions()
+	 */
 	private CompiledStatement createCountRevisions() {
 		return createCountInRange((DBTableMetaObject) _revisionType, _revisionRev);
 	}
@@ -1351,17 +1451,23 @@ public class HistoryCompaction {
 	}
 
 	/**
-	 * {@code DELETE FROM XREF WHERE rev > lower AND rev < upper}
+	 * {@code DELETE FROM XREF WHERE rev >= windowStart AND rev < windowStop}
+	 *
+	 * @see WindowedStatement
 	 */
 	private CompiledStatement createDeleteXrefBelow() {
 		return query(
-			rangeParameters(_xrefRev),
+			windowParameters(_xrefRev),
 			delete(
 				table(_xrefType, NO_TABLE_ALIAS),
-				inRange(_xrefRev))).toSql(_sqlDialect);
+				inWindow(_xrefRev))).toSql(_sqlDialect);
 	}
 
-	/** @see #createDeleteXrefBelow() */
+	/**
+	 * {@code SELECT count(1) FROM XREF WHERE rev > lower AND rev < upper}
+	 *
+	 * @see #createDeleteXrefBelow()
+	 */
 	private CompiledStatement createCountXrefBelow() {
 		return createCountInRange(_xrefType, _xrefRev);
 	}
@@ -1432,6 +1538,24 @@ public class HistoryCompaction {
 		return and(
 			gt(column(NO_TABLE_ALIAS, column, NOT_NULL), parameter(column, PARAM_LOWER)),
 			lt(column(NO_TABLE_ALIAS, column, NOT_NULL), parameter(column, PARAM_UPPER)));
+	}
+
+	/**
+	 * The trailing parameter declaration of a statement executed as {@link WindowedStatement}.
+	 */
+	private static List<Parameter> windowParameters(DBAttribute column) {
+		return parameters(
+			parameterDef(column, PARAM_WINDOW_START),
+			parameterDef(column, PARAM_WINDOW_STOP));
+	}
+
+	/**
+	 * {@code col >= windowStart AND col < windowStop}
+	 */
+	private static SQLExpression inWindow(DBAttribute column) {
+		return and(
+			ge(column(NO_TABLE_ALIAS, column, NOT_NULL), parameter(column, PARAM_WINDOW_START)),
+			lt(column(NO_TABLE_ALIAS, column, NOT_NULL), parameter(column, PARAM_WINDOW_STOP)));
 	}
 
 	/**

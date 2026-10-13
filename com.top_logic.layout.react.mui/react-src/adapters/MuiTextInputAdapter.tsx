@@ -1,12 +1,12 @@
 import {
-  React, useTLState, useI18N, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps, ThemeIcon,
+  React, useTLState, useTLTypingField, useI18N, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps, ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import {
-  FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly, useTypingField,
+  FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly,
 } from './field';
 
 const { useCallback, useRef } = React;
@@ -60,8 +60,8 @@ function normalizeUrl(value: string): string {
 /**
  * Renders the state of a TopLogic text field (module name `TLTextInput`) with the MUI `TextField`.
  *
- * <p>The typing behaviour is that of TLTextInput (see {@link useTypingField}): debounce, send on
- * blur, commit on blur, submit on Enter. Mapping from the control state:</p>
+ * <p>The typing behaviour is that of TLTextInput (see {@link useTLTypingField}): debounce, send on
+ * blur, commit of each finished edit, submit on Enter. Mapping from the control state:</p>
  * <ul>
  * <li>value → the text; inputType → the `type` of the input; placeholder → placeholder;</li>
  * <li>multiline, rows → a multi-line `TextField` (Enter is text there, so nothing is submitted);</li>
@@ -86,42 +86,20 @@ const MuiTextInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const field = useTypingField('');
-  const t = useI18N(I18N_KEYS);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const { text, setText, flush, onBlur, onSubmitKey } = field;
   const inputType = state.inputType ?? 'text';
   const multiline = state.multiline === true;
-
-  const handleBlur = useCallback(async () => {
-    if (inputType === 'url') {
-      const normalized = normalizeUrl(text);
-      if (normalized !== text) {
-        setText(normalized);
-      }
-    }
-    await onBlur();
-  }, [inputType, text, setText, onBlur]);
-
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (onSubmitKey === undefined) return;
-    if (inputType === 'url' && event.key === 'Enter') {
-      const normalized = normalizeUrl(event.currentTarget.value);
-      if (normalized !== event.currentTarget.value) {
-        event.currentTarget.value = normalized;
-        setText(normalized);
-      }
-    }
-    onSubmitKey(event);
-  }, [onSubmitKey, inputType, setText]);
+  const { text, setText, commit, onBlur, onKeyDown } = useTLTypingField({
+    normalize: inputType === 'url' ? normalizeUrl : undefined,
+  });
+  const t = useI18N(I18N_KEYS);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleClear = useCallback(async () => {
     setText('');
     // The gesture is the whole edit, so it is reported at once rather than after the debounce.
-    await flush();
+    await commit();
     inputRef.current?.focus();
-  }, [setText, flush]);
+  }, [setText, commit]);
 
   if (state.hidden === true) {
     return null;
@@ -174,7 +152,7 @@ const MuiTextInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         value={text}
         placeholder={state.placeholder}
         onChange={event => setText(event.target.value)}
-        onBlur={handleBlur}
+        onBlur={onBlur}
         disabled={disabled}
         error={hasError}
         color={fieldColor(state)}
@@ -192,7 +170,7 @@ const MuiTextInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             ...labelProps,
             ...fieldAriaProps(state),
             // On the input itself: the handler reads the text from the element it is bound to.
-            onKeyDown: multiline || onSubmitKey === undefined ? undefined : handleKeyDown,
+            onKeyDown: multiline ? undefined : onKeyDown,
             ...tooltipProps(hasError ? state.errorMessage : undefined),
           },
         }}

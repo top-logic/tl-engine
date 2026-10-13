@@ -1,10 +1,8 @@
 import {
   React,
   useTLState,
-  useTLFieldValue,
-  useTLSubmitOnEnter,
+  useTLTypingField,
   rootClassName,
-  VALUE_DEBOUNCE_MS,
   tooltipProps,
   useFieldLabelProps,
   fieldInputId,
@@ -12,8 +10,6 @@ import {
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
-
-const { useCallback } = React;
 
 /**
  * A number input field rendered via React.
@@ -33,8 +29,10 @@ const { useCallback } = React;
  * comes back as 12,50), state.sendValueOnBlur holds the value back until the field is left, so a
  * mid-edit round-trip cannot re-render the input from the normalized text.
  *
- * When state.submitOnEnter is set, Enter sends a 'submit' command carrying the text, so the server
- * can run a command over the number that was entered.
+ * When state.commitEdits is set, each finished edit - leaving the field or pressing Enter after a
+ * change - sends a 'commit' command once. When state.submitOnEnter is set, Enter sends a 'submit'
+ * command carrying the text, so the server can run a command over the number that was entered. An
+ * empty text is sent as no value. The typing behaviour is that of useTLTypingField.
  *
  * state.placeholder holds the text shown while the field is empty, stating what the field is for
  * where no label does. state.debounceMs names the span a typed value is held back before it is
@@ -48,24 +46,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
-    sendOnBlur: state.sendValueOnBlur === true,
-  });
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value;
-      setValue(raw === '' ? null : raw);
-    },
-    [setValue]
-  );
-
-  const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
-
-  const handleSubmitKey = useTLSubmitOnEnter();
-
-  const text = value == null ? '' : String(value);
+  const { text, setText, onBlur, onKeyDown } = useTLTypingField({ emptyValue: null });
 
   if (showsValueOnly(state)) {
     return <FieldValue id={controlId} className={rootClassName(state)} text={text} />;
@@ -80,9 +61,9 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
         type="text"
         inputMode={state.inputMode ?? 'numeric'}
         value={text}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onKeyDown={handleSubmitKey}
+        onChange={e => setText(e.target.value)}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
         placeholder={state.placeholder}
         disabled={state.disabled === true}
         className={rootClassName(state, 'tl-field tl-type-body')}

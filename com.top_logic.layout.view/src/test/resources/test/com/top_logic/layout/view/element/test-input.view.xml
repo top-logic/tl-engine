@@ -84,6 +84,28 @@
 					display="switch"
 				/>
 			</value-input>
+			<value-input
+				submit-on="change"
+				value="term"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input value="term">
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				submit-on="change"
+				type="tl.core:Boolean"
+				value="flag"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				type="tl.core:Boolean"
+				value="flag"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
 		</children>
 	</panel>
 </view>

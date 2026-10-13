@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.format.configured.Formatter;
-import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -107,7 +107,9 @@ public class FieldControlRegistry {
 		register(Date.class,
 			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind(),
 				field.getDateFormat()));
-		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
+		// The application type of the platform's binary datatype; a BinaryData value is covered
+		// through the supertype lookup.
+		register(BinaryDataSource.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
 		register(ResKey.class, new ReactFieldControlProvider() {

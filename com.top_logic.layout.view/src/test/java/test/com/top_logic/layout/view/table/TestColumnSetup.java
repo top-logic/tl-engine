@@ -5,6 +5,10 @@
  */
 package test.com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,10 +28,17 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
+import com.top_logic.table.GroupSpec;
+import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
+import com.top_logic.table.SortColumn;
+import com.top_logic.table.SortSpec;
+import com.top_logic.table.impl.ListRowSource;
 
 /**
  * Test for {@link ColumnSetup}: the column it builds is displayed in the width it configures, and
- * keeps the width of the column its {@link ColumnBinding} built when it configures none.
+ * keeps the width of the column its {@link ColumnBinding} built when it configures none; it sorts
+ * by the comparator it declares, and in the order its binding derives when it declares none.
  */
 public class TestColumnSetup extends TestCase {
 
@@ -86,6 +97,137 @@ public class TestColumnSetup extends TestCase {
 	}
 
 	/**
+	 * A column declaring a comparator sorts its values by it, a column declaring none keeps the
+	 * order of the column its binding built.
+	 */
+	public void testComparatorDecidesTheValueOrder() {
+		Column<Object, ?> declared = ordered(BY_LENGTH).buildColumn();
+		assertTrue("The column is sortable.", declared.sort().isPresent());
+		assertTrue("A shorter value comes first, although it is alphabetically later.",
+			compare(declared, "zz", "aaa") < 0);
+
+		Column<Object, ?> derived = ordered(null).buildColumn();
+		assertTrue("Without a comparator, the values are ordered by their label.",
+			compare(derived, "zz", "aaa") > 0);
+	}
+
+	/**
+	 * A row source sorts by the declared comparator in both directions, with a row without a value
+	 * last when sorting ascending.
+	 */
+	public void testRowSourceSortsByTheComparator() {
+		ListRowSource<Object> source = source("zz", null, "a", "yyyy", "bbb");
+
+		source.withOrder(SortSpec.ascending(ATTRIBUTE));
+		assertEquals(Arrays.asList("a", "zz", "bbb", "yyyy", null), values(source));
+
+		source.withOrder(new SortSpec(List.of(new SortColumn(ATTRIBUTE, false))));
+		List<Object> descending = values(source);
+		assertEquals("Descending reverses the declared order of the values.",
+			List.of("yyyy", "bbb", "zz", "a"), nonNull(descending));
+		assertEquals("Every row is shown.", 5, descending.size());
+	}
+
+	/**
+	 * A table grouped by a column declaring a comparator orders its groups by it, with the group
+	 * of the rows without a value last.
+	 */
+	public void testGroupsFollowTheComparator() {
+		ListRowSource<Object> source = source("zz", null, "a", "yyyy", "zz", "bbb");
+
+		source.withGrouping(new GroupSpec(List.of(ATTRIBUTE)));
+		assertEquals(Arrays.asList("a", "zz", "bbb", "yyyy", null), groupValues(source));
+
+		source.withOrder(new SortSpec(List.of(new SortColumn(ATTRIBUTE, false))));
+		assertEquals("Sorting the grouping column descending reverses the group order, empty last.",
+			Arrays.asList("yyyy", "bbb", "zz", "a", null), groupValues(source));
+	}
+
+	/**
+	 * Collections of values are ordered element by element by the order of their elements: the
+	 * first differing element decides, a collection that is the start of a longer one comes first,
+	 * an empty collection before every other one, and an empty element after every other one.
+	 */
+	public void testElementwiseOrder() {
+		Comparator<Object> order = ColumnSetup.elementwise(BY_LENGTH);
+
+		assertTrue("The first differing element decides, not the length of the collections.",
+			order.compare(List.of("a", "zz", "x"), List.of("a", "yyy")) < 0);
+		assertTrue("Of two collections differing only in length, the shorter comes first.",
+			order.compare(List.of("a", "zz"), List.of("a", "zz", "y")) < 0);
+		assertTrue(order.compare(List.of("a", "zz", "y"), List.of("a", "zz")) > 0);
+		assertTrue("An empty collection comes first.", order.compare(List.of(), List.of("a")) < 0);
+		assertEquals("Collections of equally ordered elements are equal.", 0,
+			order.compare(List.of("a", "zz"), List.of("b", "yy")));
+		assertTrue("An empty element comes after every value.",
+			order.compare(Arrays.asList("a", null), Arrays.asList("a", "yyyy")) > 0);
+		assertTrue("A single value is ordered as a collection holding only that value.",
+			order.compare("zz", List.of("zz", "a")) < 0);
+	}
+
+	/** Orders texts by their length, unlike the alphabetic order of their labels. */
+	private static final Comparator<Object> BY_LENGTH =
+		Comparator.comparingInt(value -> ((String) value).length());
+
+	/** Compares the given values by the sort capability of the given column. */
+	@SuppressWarnings("unchecked")
+	private static int compare(Column<Object, ?> column, Object value1, Object value2) {
+		return ((Comparator<Object>) column.sort().get().comparator()).compare(value1, value2);
+	}
+
+	/** A row source over rows holding the given values, in a column ordered {@link #BY_LENGTH}. */
+	private static ListRowSource<Object> source(String... values) {
+		List<Object> rows = new ArrayList<>();
+		for (String value : values) {
+			Map<String, Object> row = new HashMap<>();
+			row.put(ATTRIBUTE, value);
+			rows.add(row);
+		}
+		return new ListRowSource<>(rows, List.of(ordered(BY_LENGTH).buildColumn()));
+	}
+
+	/** The values of the data rows the given source shows, in display order. */
+	private static List<Object> values(ListRowSource<Object> source) {
+		List<Object> result = new ArrayList<>();
+		for (Row<Object> row : source.window(0, source.size())) {
+			if (row.kind() == RowKind.DATA) {
+				result.add(((Map<?, ?>) row.data()).get(ATTRIBUTE));
+			}
+		}
+		return result;
+	}
+
+	/** The value each group of the given source stands for, in display order. */
+	private static List<Object> groupValues(ListRowSource<Object> source) {
+		List<Object> result = new ArrayList<>();
+		for (Row<Object> row : source.window(0, source.size())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				result.add(((Map<?, ?>) row.group().members().get(0)).get(ATTRIBUTE));
+			}
+		}
+		return result;
+	}
+
+	/** The given values without the empty ones. */
+	private static List<Object> nonNull(List<Object> values) {
+		List<Object> result = new ArrayList<>(values);
+		result.removeIf(value -> value == null);
+		return result;
+	}
+
+	/**
+	 * A descriptor over a value read from the row map, ordered by the given comparator.
+	 *
+	 * @param comparator
+	 *        The order of the column's values, or {@code null} for the order its binding derives.
+	 */
+	private static ColumnSetup ordered(Comparator<Object> comparator) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, comparator,
+			false);
+	}
+
+	/**
 	 * A descriptor over a value read from the row map, aggregating with the given function.
 	 *
 	 * @param aggregate
@@ -94,7 +236,7 @@ public class TestColumnSetup extends TestCase {
 	 */
 	private static ColumnSetup computed(Function<List<Object>, Object> aggregate) {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
-			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, aggregate,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, aggregate, null,
 			false);
 	}
 

@@ -6,13 +6,17 @@
 	
 	The view sits behind a tile of the cockpit and is reachable from no root view, so it is shown
 	within the frame the tile pushed.
+	
+	The panel fills the frame, so the table spans the height of the page and scrolls its rows
+	internally: a frame of the drill-down stack is only as high as its content unless that content
+	fills.
 -->
 <view>
 	<channels>
 		<channel name="project"/>
 	</channels>
 
-	<panel>
+	<panel fill="true">
 		<title>
 			<en>Notes</en>
 			<de>Notizen</de>

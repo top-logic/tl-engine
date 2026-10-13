@@ -46,6 +46,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** Per-entry state key of whether the rows are grouped by the column. */
 	private static final String ENTRY_GROUPED = "grouped";
 
+	/** State key of whether the rows can be grouped at all. */
+	private static final String GROUPABLE = "groupable";
+
 	/** Command reordering the list (drag and drop). */
 	private static final String CMD_COLUMN_REORDER = "columnReorder";
 
@@ -61,6 +64,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** The edited grouping: the column to group the rows by, {@code null} for none. */
 	private String _groupedColumn;
 
+	/** Whether the rows can be grouped at all. */
+	private final boolean _groupable;
+
 	/**
 	 * Creates a {@link ReactColumnSelectControl}.
 	 *
@@ -71,11 +77,17 @@ public class ReactColumnSelectControl extends ReactControl {
 	 *        {@link com.top_logic.table.TableView#columnOptions()}).
 	 * @param groupedColumn
 	 *        The column the rows are grouped by when the dialog opens, {@code null} for none.
+	 * @param groupable
+	 *        Whether the rows can be grouped at all. A tree table cannot: its rows are structured by
+	 *        their nodes already, so no column offers grouping then.
 	 */
-	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options, String groupedColumn) {
+	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options, String groupedColumn,
+			boolean groupable) {
 		super(context, null, "TLColumnSelect");
 		_entries = new ArrayList<>(options);
 		_groupedColumn = groupedColumn;
+		_groupable = groupable;
+		putState(GROUPABLE, Boolean.valueOf(groupable));
 		pushEntries();
 	}
 
@@ -155,6 +167,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	 */
 	@ReactCommandHandler(CMD_GROUP_BY)
 	void handleGroupBy(GroupByArguments args) {
+		if (!_groupable) {
+			return;
+		}
 		String column = args.getColumn();
 		_groupedColumn = column != null && column.equals(_groupedColumn) ? null : column;
 		pushEntries();

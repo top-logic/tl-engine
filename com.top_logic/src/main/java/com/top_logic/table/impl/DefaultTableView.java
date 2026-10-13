@@ -31,6 +31,7 @@ import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowHierarchy;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
@@ -483,6 +484,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public Set<Object> containedKeys(Collection<?> keys) {
 		return _source.containedKeys(keys);
+	}
+
+	@Override
+	public RowHierarchy<R> hierarchy() {
+		return _source.hierarchy();
 	}
 
 	@Override

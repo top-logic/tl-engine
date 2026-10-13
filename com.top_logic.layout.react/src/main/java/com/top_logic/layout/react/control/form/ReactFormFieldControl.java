@@ -42,8 +42,11 @@ public class ReactFormFieldControl extends ReactControl {
 	/** Command sent by the client when the field value changes. */
 	public static final String CMD_VALUE_CHANGED = "valueChanged";
 
-	/** Command sent by the client when an edited field is committed (loses focus). */
-	protected static final String COMMIT_COMMAND = "commit";
+	/**
+	 * Command sent by the client when the user has finished an edit of a field that
+	 * {@link #commitsEdits() commits edits}.
+	 */
+	public static final String COMMIT_COMMAND = "commit";
 
 	/** Command sent by the client when the user has finished entering a value. */
 	public static final String SUBMIT_COMMAND = "submit";
@@ -55,6 +58,8 @@ public class ReactFormFieldControl extends ReactControl {
 	private ReactControl _editModeAdornment;
 
 	private Function<Object, HandlerResult> _submitListener;
+
+	private Function<Object, HandlerResult> _commitListener;
 
 	private boolean _multiline;
 
@@ -348,6 +353,58 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Whether the user finishes an edit of this field with a gesture of its own, and the client
+	 * reports each finished edit with the {@link #COMMIT_COMMAND}.
+	 *
+	 * <p>
+	 * True for a field whose value is typed: an edit is finished when the field is left after a
+	 * change, and by Enter in a single-line input. A field that is clicked or picked from has no such
+	 * gesture; there every value the user produces is a finished edit of its own.
+	 * </p>
+	 */
+	public boolean commitsEdits() {
+		return false;
+	}
+
+	/**
+	 * Registers the listener reporting each edit the user has finished.
+	 *
+	 * <p>
+	 * Only a field that {@link #commitsEdits() commits edits} reports here: the client is asked to
+	 * send the {@link #COMMIT_COMMAND} once a listener is set. The value of the edit has reached the
+	 * {@link #getFieldModel() field model} before the listener runs.
+	 * </p>
+	 *
+	 * @param listener
+	 *        Receives the value of the field and returns the result of what the finished edit
+	 *        triggers, which is reported as the result of the client's commit; {@code null} to stop
+	 *        reporting finished edits.
+	 */
+	public void setCommitListener(Function<Object, HandlerResult> listener) {
+		_commitListener = listener;
+		updateCommitEdits();
+	}
+
+	/**
+	 * Whether the field needs the {@link #COMMIT_COMMAND} for work of its own in
+	 * {@link #onCommit()}, whether or not a {@link #setCommitListener(Function) commit listener} is
+	 * set.
+	 */
+	protected boolean needsCommits() {
+		return false;
+	}
+
+	/**
+	 * Tells the client whether to send the {@link #COMMIT_COMMAND}: for a field that
+	 * {@link #commitsEdits() commits edits}, as long as a {@link #setCommitListener(Function) commit
+	 * listener} is set or the field {@link #needsCommits() needs commits} itself.
+	 */
+	protected final void updateCommitEdits() {
+		putState(TypingFieldState.COMMIT_EDITS__PROP,
+			Boolean.valueOf(commitsEdits() && (_commitListener != null || needsCommits())));
+	}
+
+	/**
 	 * Holds a typed value back until the field loses focus, instead of sending it while the user is
 	 * still typing.
 	 *
@@ -433,16 +490,27 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
-	 * Handles the commit the client sends when an edited field loses focus.
+	 * Handles the commit the client sends when the user has finished an edit: runs
+	 * {@link #onCommit()}, then reports the value to the {@link #setCommitListener(Function) commit
+	 * listener}.
 	 *
-	 * @see #onCommit()
+	 * <p>
+	 * The value of the edit has already reached the {@link #getFieldModel() field model}: the client
+	 * sends a value still held back before the commit. The listener's result is the result of the
+	 * commit, so that a refusal is shown to the user.
+	 * </p>
 	 */
 	@ReactCommandHandler(COMMIT_COMMAND)
-	final void handleCommit() {
+	final HandlerResult handleCommit() {
 		if (!acceptsClientValue()) {
-			return;
+			return HandlerResult.DEFAULT_RESULT;
 		}
 		onCommit();
+		Function<Object, HandlerResult> listener = _commitListener;
+		if (listener == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return listener.apply(_fieldModel.getValue());
 	}
 
 	/**

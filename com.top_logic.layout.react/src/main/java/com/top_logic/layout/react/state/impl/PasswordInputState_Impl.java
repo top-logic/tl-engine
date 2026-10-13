@@ -27,8 +27,8 @@ public class PasswordInputState_Impl extends com.top_logic.layout.react.state.im
 	}
 
 	@Override
-	public com.top_logic.layout.react.state.PasswordInputState setCommitOnBlur(boolean value) {
-		internalSetCommitOnBlur(value);
+	public com.top_logic.layout.react.state.PasswordInputState setCommitEdits(boolean value) {
+		internalSetCommitEdits(value);
 		return this;
 	}
 

@@ -9,7 +9,7 @@
 	<table>
 		<drag
 			input="dragAllowed"
-			type="tl.core:String"
+			kind="value"
 		>
 			<executability>
 				<null-input-disabled/>
@@ -19,7 +19,7 @@
 			</row-executability>
 		</drag>
 		<drop
-			accept="tl.core:String"
+			accept="value"
 			input="dropAllowed"
 			target="row"
 		>

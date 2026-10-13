@@ -10,10 +10,6 @@
 	
 	This view is reachable from no root view, so a display target revealing a milestone finds it
 	within the frame the target pushed before it.
-	
-	The panel fills the frame, so the table spans the height of the page and scrolls its rows
-	internally: a frame of the drill-down stack is only as high as its content unless that content
-	fills.
 -->
 <view>
 	<channels>
@@ -21,7 +17,7 @@
 		<channel name="milestone"/>
 	</channels>
 
-	<panel fill="true">
+	<panel>
 		<title>
 			<en>Milestones</en>
 			<de>Meilensteine</de>

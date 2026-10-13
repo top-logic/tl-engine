@@ -13,10 +13,6 @@
 	finishes - Enter, or leaving the input after a change - stores the entered budget
 	(submit-on="change"), which the budget column then shows. A negative budget is refused with an
 	error message.
-	
-	The panel fills the frame, so the table spans the height of the page and scrolls its rows
-	internally: a frame of the drill-down stack is only as high as its content unless that content
-	fills.
 -->
 <view>
 	<channels>
@@ -24,7 +20,7 @@
 		<channel name="budget"/>
 	</channels>
 
-	<panel fill="true">
+	<panel>
 		<title>
 			<en>Projects</en>
 			<de>Projekte</de>

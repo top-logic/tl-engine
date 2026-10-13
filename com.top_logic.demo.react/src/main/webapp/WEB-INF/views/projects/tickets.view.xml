@@ -6,10 +6,6 @@
 	target for contributors. Activating a row - a double-click, Enter on the row carrying the
 	keyboard cursor, or its chevron button - pushes the ticket's detail, announced with the
 	ticket's title.
-	
-	The panel fills the frame, so the table spans the height of the page and scrolls its rows
-	internally: a frame of the drill-down stack is only as high as its content unless that content
-	fills.
 -->
 <view>
 	<channels>
@@ -17,7 +13,7 @@
 		<channel name="ticket"/>
 	</channels>
 
-	<panel fill="true">
+	<panel>
 		<title>
 			<en>Tickets</en>
 			<de>Tickets</de>

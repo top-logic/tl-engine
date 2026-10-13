@@ -1299,10 +1299,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		applyButton.markAsDefault();
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
-				// Resetting restores the table as it is defined, which includes showing its rows
-				// ungrouped again.
-				setGroupedColumn(null);
-				applyColumns(_view.defaultColumnOrder());
+				// Resetting restores the arrangement the table is defined with - its columns, their
+				// widths, the frozen columns, the sort and the grouping -, the filters stay.
+				rearrange(_view::resetToDefaults);
 				dialogs.closeTopDialog(DialogResult.ok(null));
 				return HandlerResult.DEFAULT_RESULT;
 			}),
@@ -1317,21 +1316,45 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Applies a new set of displayed columns and re-renders: the cell controls of the buffered rows
-	 * belong to the previous columns, so they are rebuilt for the new ones.
+	 * Applies a new set of displayed columns and re-renders.
+	 *
+	 * @see #rearrange(Runnable)
+	 */
+	private void applyColumns(List<String> columns) {
+		rearrange(() -> _view.setColumnOrder(columns));
+	}
+
+	/**
+	 * Performs a change of the table's arrangement - its columns, its sort, its grouping - and
+	 * re-renders: the cell controls of the buffered rows belong to the previous arrangement, so they
+	 * are rebuilt for the new one.
 	 *
 	 * <p>
 	 * Columns and rows must reach the client as one patch: a client that already knows a newly shown
 	 * column but still holds the rows of the previous column set would render a cell that has no
 	 * control yet.
 	 * </p>
+	 *
+	 * <p>
+	 * A change of the grouping rearranges the rows, it does not replace them: the selected rows are
+	 * the same objects under the same keys, at other positions. Only the cursor and the range
+	 * anchor, which are positions, have to be found again.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change, performed through the {@link TableView}.
 	 */
-	private void applyColumns(List<String> columns) {
+	private void rearrange(Runnable change) {
+		GroupSpec grouping = _view.state().getGrouping();
 		Object update = beginUpdate();
 		try {
-			_view.setColumnOrder(columns);
-			clearCells();
-			buildFullState();
+			change.run();
+			if (!_view.state().getGrouping().equals(grouping)) {
+				relocateSelection();
+				pushGrouping();
+				pushSelection();
+			}
+			rebuildAfterRowChange();
 		} finally {
 			commitUpdate(update);
 		}
@@ -1445,19 +1468,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
 			return;
 		}
-		_view.group(grouping);
-		Object update = beginUpdate();
-		try {
-			// A grouping rearranges the rows, it does not replace them: the selected rows are the
-			// same objects under the same keys, at other positions. Only the cursor and the range
-			// anchor, which are positions, have to be found again.
-			relocateSelection();
-			pushGrouping();
-			pushSelection();
-			rebuildAfterRowChange();
-		} finally {
-			commitUpdate(update);
-		}
+		rearrange(() -> _view.group(grouping));
 	}
 
 	/**

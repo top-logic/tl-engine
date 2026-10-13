@@ -3,6 +3,12 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
 		<module name="demo.tickets">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.demo.react.model.tickets.impl"
+					interface-package="com.top_logic.demo.react.model.tickets"
+				/>
+			</annotations>
 			<enum name="TicketStatus">
 				<classifier name="open">
 					<annotations>
@@ -61,9 +67,7 @@
 					>
 						<annotations>
 							<storage-algorithm>
-								<query>
-									<expr>t -&gt; $t.get(`demo.tickets:Ticket#name`) + ' (' + $t.get(`demo.tickets:Ticket#statusLabel`) + ')'</expr>
-								</query>
+								<implementation class="com.top_logic.demo.react.model.tickets.HeadlineStorage"/>
 							</storage-algorithm>
 						</annotations>
 					</property>

@@ -184,7 +184,7 @@ public final class FrameRoute {
 	 * The label of a frame is computed before the frame exists, so the parameters it will be mounted
 	 * with are all there is to compute it from. Reading them as channels of their names is what makes
 	 * every {@link TileLabelProvider} usable here, the {@link ScriptedTileLabel scripted} one
-	 * included.
+	 * included. The channels of this context are read once for the label and observe nothing.
 	 * </p>
 	 */
 	private static ViewContext paramContext(Map<String, Object> params) {

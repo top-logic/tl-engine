@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.designer;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -22,6 +24,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -109,7 +112,10 @@ public class OpenDesignerCommand implements ViewCommand {
 			designerContext.registerChannel("appContext", appContextChannel);
 
 			// Build the control tree from the designer view.
-			return (ReactControl) designerView.createControl(designerContext);
+			ReactControl designer = (ReactControl) designerView.createControl(designerContext);
+			ObservingChannels.observeWhileDisplayed(designer, List.of(designTreeChannel, appContextChannel),
+				designerContext);
+			return designer;
 		};
 
 		registry.openWindow(context, controlProvider, null, options);

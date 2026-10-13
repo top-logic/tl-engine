@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="ch"/>
+	</channels>
+
+	<tree-table
+		children="node -> []"
+		root="'root'"
+	>
+		<drop
+			accept="item"
+			parent-channel="ch"
+			target="table"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<drop
+			accept="item"
+			parent-channel="ch"
+			target="row"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<drop
+			accept="item"
+			target="ordered"
+			target-channel="ch"
+		>
+			<execute-script function="objects -> $objects"/>
+		</drop>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>row -&gt; $row</value>
+			</computed-column>
+		</columns>
+	</tree-table>
+</view>

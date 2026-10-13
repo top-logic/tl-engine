@@ -14,6 +14,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.binding.DynamicBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLType;
+import com.top_logic.model.config.JavaClass;
 import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
@@ -50,7 +51,11 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 		writeCvsTags();
 		javadocStop();
 
-		line("public " + classModifier() + "class " + className() + " extends " + getExtends() + " implements "
+		/* The implementation class is non-abstract, even for an abstract type (whose class is
+		 * generated only when the type carries an implementation binding): An object of a concrete
+		 * subtype that is defined dynamically, without a generated class of its own, is implemented
+		 * by it, see DynamicBinding. */
+		line("public class " + className() + " extends " + getExtends() + " implements "
 			+ interfaceSpec + " {");
 		{
 			nl();
@@ -67,23 +72,6 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 		line("}");
 	}
 
-	/**
-	 * The modifier of the generated class declaration: {@code abstract} for an abstract type, empty
-	 * otherwise.
-	 *
-	 * <p>
-	 * An abstract type (an abstract class or an interface of the model) gets an abstract
-	 * implementation class, so that abstract methods of its business interface need an
-	 * implementation only in the classes of its concrete subtypes. An object of a subtype that is
-	 * defined dynamically, without a generated class of its own, is implemented by the nearest
-	 * non-abstract implementation class along its primary generalizations, see
-	 * {@link DynamicBinding}.
-	 * </p>
-	 */
-	private String classModifier() {
-		return type() instanceof TLClass clazz && clazz.isAbstract() ? "abstract " : "";
-	}
-
 	private String getExtends() {
 		return superTypeSpec(type());
 
@@ -95,13 +83,10 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 	 * a type without generalizations.
 	 *
 	 * <p>
-	 * The implementation class of a type is the class of its implementation binding, or the class
-	 * generated for it by naming convention (see
-	 * {@link TLModelNamingConvention#implementationName(TLType)}). A type without such a class
-	 * uses the implementation class of its own primary generalization. This is the rule
-	 * {@link DynamicBinding} applies when it chooses the class implementing an object at runtime,
-	 * except that an abstract class is a valid base class here, whereas {@link DynamicBinding}
-	 * skips it, because it cannot implement an object.
+	 * A generalization without an implementation class of its own (see
+	 * {@link #hasImplementationClass(TLClass)}) contributes the implementation class of its own
+	 * primary generalization. This is the rule {@link DynamicBinding} applies when it chooses the
+	 * class implementing an object at runtime.
 	 * </p>
 	 */
 	private String superTypeSpec(TLType type) {
@@ -110,11 +95,25 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 			return AttributedWrapper.class.getName();
 		}
 		TLClass primary = superTypes.get(0);
-		String name = implementationName(primary);
-		if (name != null) {
-			return dropPackage(name);
+		if (hasImplementationClass(primary)) {
+			return dropPackage(implementationName(primary));
 		}
 		return superTypeSpec(primary);
+	}
+
+	/**
+	 * Whether the given type has an implementation class: the class of its {@link JavaClass}
+	 * annotation, or the class generated for it by naming convention (see
+	 * {@link TLModelNamingConvention#implementationName(TLType)}).
+	 *
+	 * <p>
+	 * A class is generated for a concrete type and for an abstract type with a {@link JavaClass}
+	 * annotation, but not for an abstract type without one.
+	 * </p>
+	 */
+	private static boolean hasImplementationClass(TLClass type) {
+		return implementationName(type) != null
+			&& (!type.isAbstract() || type.getAnnotation(JavaClass.class) != null);
 	}
 
 	private void writeImports() {

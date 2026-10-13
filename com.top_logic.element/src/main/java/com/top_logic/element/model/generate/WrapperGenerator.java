@@ -42,6 +42,7 @@ import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.config.JavaClass;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.tools.resources.ResourceFile;
@@ -485,6 +486,14 @@ public class WrapperGenerator {
 		}
 		ImplementationTemplateGenerator generator = new ImplementationTemplateGenerator(type);
 		generator.setNoElementClasses(_noElementClasses);
+		if (type.isAbstract() && type.getAnnotation(JavaClass.class) == null) {
+			// No need for empty implementations.
+			File targetFile = targetFile(generator);
+			if (targetFile.exists()) {
+				targetFile.delete();
+			}
+			return;
+		}
 		_log.info("Generate implementation for type '" + type.getName() + "' in module '"
 			+ type.getModule().getName() + "'.");
 		generate(generator);

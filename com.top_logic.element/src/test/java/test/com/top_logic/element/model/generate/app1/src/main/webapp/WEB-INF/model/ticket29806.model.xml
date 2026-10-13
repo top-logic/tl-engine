@@ -23,6 +23,16 @@
 				</class>
 				<class name="Plain"/>
 				<interface name="Marker"/>
+				<interface name="Bound">
+					<annotations>
+						<implementation-binding class-name="test.ticket29806.singleton.impl.BoundImpl"/>
+					</annotations>
+				</interface>
+				<class name="BoundChild">
+					<generalizations>
+						<generalization type="Bound"/>
+					</generalizations>
+				</class>
 				<class name="Node">
 					<attributes>
 						<reference name="children"

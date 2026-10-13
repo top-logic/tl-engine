@@ -5,7 +5,6 @@
  */
 package com.top_logic.knowledge.wrap.binding;
 
-import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,17 +33,6 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link ImplementationBinding} that determines the application type based on the {@link JavaClass}
  * annotation of the {@link Config#getTypeRef() specified} type reference of the object.
- *
- * <p>
- * The implementation class of a type is the class named in its {@link JavaClass} annotation. A type
- * without such annotation is implemented by the non-abstract class named by the
- * {@link TLModelNamingConvention}, if it exists. Otherwise, the type is implemented by the
- * implementation class of its primary generalization, or by the
- * {@link Config#getDefaultApplicationType() default application type}, if it has none.
- * </p>
- *
- * @implNote The class named by the naming convention is
- *           {@link TLModelNamingConvention#implementationName(TLType)}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -169,19 +157,13 @@ public class DynamicBinding extends AbstractImplementationBinding implements Con
 					@SuppressWarnings("unchecked")
 					Class<? extends TLObject> guessedImplClass = (Class<? extends TLObject>) Class.forName(className);
 					if (TLObject.class.isAssignableFrom(guessedImplClass)) {
-						/* An abstract class cannot implement an object: The generated implementation
-						 * class of an abstract model type is abstract. An object of a concrete subtype
-						 * without a class of its own is implemented by the class of the primary
-						 * generalization. */
-						if (!Modifier.isAbstract(guessedImplClass.getModifiers())) {
-							return guessedImplClass;
-						}
-					} else {
-						Logger.error(
-							"Implementation class '" + className + "' for '" + type + "' must be a subtype of '"
-									+ TLObject.class + "'.",
-							DynamicBinding.class);
+						return guessedImplClass;
 					}
+
+					Logger.error(
+						"Implementation class '" + className + "' for '" + type + "' must be a subtype of '"
+								+ TLObject.class + "'.",
+						DynamicBinding.class);
 				} catch (ClassNotFoundException ex) {
 					// Ignore.
 				}

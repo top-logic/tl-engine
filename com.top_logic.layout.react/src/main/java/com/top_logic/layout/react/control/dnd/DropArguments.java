@@ -18,7 +18,7 @@ import com.top_logic.layout.react.control.ReactCommand;
 /**
  * Typed arguments of the {@code drop} command a client sends when a drag is released over a
  * {@link DropTarget}: which control the drag started in, which of its rows were dragged, and which
- * row of the receiving control the drop was made on.
+ * row of the receiving control the drop was made on, in which of its {@link DropZone zones}.
  *
  * <p>
  * The arguments name nothing but client-side identities. The dragged objects are resolved by the
@@ -48,8 +48,8 @@ public interface DropArguments extends ReactCommand {
 	/** @see #getTargetKey() */
 	String TARGET_KEY = "targetKey";
 
-	/** @see #getPosition() */
-	String POSITION = "position";
+	/** @see #getZone() */
+	String ZONE = "zone";
 
 	/**
 	 * The id of the control the drag started in.
@@ -84,19 +84,18 @@ public interface DropArguments extends ReactCommand {
 	boolean isSelection();
 
 	/**
-	 * The client-side key of the row the drop was made on, absent when it was made on the control as
-	 * a whole.
+	 * The client-side key of the row the drop was made on, absent when it was made beside the rows.
 	 */
 	@Name(TARGET_KEY)
 	@Nullable
 	String getTargetKey();
 
 	/**
-	 * Where the drop happened relative to the target row.
+	 * Where within the target row the drop was made, absent for a drop beside the rows.
 	 *
-	 * @implNote One of the names {@link DropPosition#wireName()} transmits a position under.
+	 * @implNote One of the names {@link DropZone#wireName()} transmits a zone under.
 	 */
-	@Name(POSITION)
-	String getPosition();
+	@Name(ZONE)
+	String getZone();
 
 }

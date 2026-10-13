@@ -227,10 +227,11 @@ public interface ViewChannel {
 	 * <p>
 	 * The owner of a channel declared in a {@code .view.xml} is the view instance creating it: the
 	 * channel is released when the root control of that instance is disposed. A channel holding a
-	 * value of its own registers nothing elsewhere and has nothing to release.
+	 * value of its own subscribes to no other channel; it only stops observing the objects of its
+	 * value.
 	 * </p>
 	 */
 	default void release() {
-		// A channel holding its own value subscribes to nothing.
+		// A channel without observation subscribes to nothing.
 	}
 }

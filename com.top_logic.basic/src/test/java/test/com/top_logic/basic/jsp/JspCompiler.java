@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2011 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 
@@ -10,9 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -23,76 +22,157 @@ import org.xml.sax.SAXException;
 import test.com.top_logic.basic.ConfigLoaderTestUtil;
 
 import com.top_logic.basic.Log;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.core.workspace.Workspace;
-import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.tooling.WebXmlBuilder;
 
 /**
- * Setup for running {@link JspCompileTask}s.
- * 
- * @see JspCompiler#JspCompiler(Log, File, List)
+ * Compiles the JSPs of a {@link CompileJspConfig} in a web application assembled in the scratch
+ * directory.
+ *
+ * <p>
+ * The JSP compiler needs the tag library descriptors and statically included files of all modules
+ * of the application, and a <code>web.xml</code> mapping the tag library URIs. These are collected
+ * from the application's resource path ({@link Workspace#applicationModules(String...)}) into a
+ * separate web application below {@link CompileJSP#TMP_DIR}, together with the JSPs to compile.
+ * The source web application of the module is only read, so that processes using it concurrently
+ * (e.g. an application started by scripted tests of the same module) are not affected.
+ * </p>
+ *
  * @see #compile()
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 class JspCompiler {
 
-	private static final String WEB_XML_PATH = "WEB-INF/web.xml";
-
-	private static final String WEB_XML_BACKUP_PATH = "WEB-INF/web.xml.bak";
-
-	private final File webapp;
+	/**
+	 * Name of the directory within {@link CompileJSP#TMP_DIR} holding the assembled web
+	 * application.
+	 */
+	private static final String WEBAPP_DIR = "webapp";
 
 	/**
-	 * List of creates files. The files are created from 0..size, so deletion
-	 * must happens from size...0
-	 * 
-	 * @see #removeCreatedFiles()
+	 * Number of JSPs translated by a single {@link JspCompileTask}.
 	 */
-	private List<Path> createdFiles = new ArrayList<>();
+	private static final int CHUNK_SIZE = 100;
 
-	private List<JspCompileTask> _tasks;
+	private static final String WEB_XML_PATH = "WEB-INF/web.xml";
 
-	private Log _log;
+	private final CompileJspConfig _config;
 
-	JspCompiler(Log log, File webapp, List<JspCompileTask> tasks) {
+	private final Log _log;
+
+	private final File _webapp;
+
+	/**
+	 * Creates a {@link JspCompiler}.
+	 *
+	 * @param log
+	 *        The {@link Log} to report compile errors to.
+	 * @param config
+	 *        The JSPs to compile.
+	 */
+	JspCompiler(Log log, CompileJspConfig config) {
 		_log = log;
-		_tasks = tasks;
-		this.webapp = webapp;
+		_config = config;
+		_webapp = new File(CompileJSP.TMP_DIR, WEBAPP_DIR);
 	}
 
-	private void setUp() throws IOException, ParserConfigurationException, SAXException {
-		List<Path> dependencies =
-			Workspace.applicationModules();
-
+	/**
+	 * Assembles the web application and compiles the JSPs of the {@link CompileJspConfig} in it.
+	 */
+	public void compile() {
+		List<File> jspFiles;
 		try {
-			// ensure existence of web xml.Otherwise compiling fails.
-			ensureWebXML();
-			// copy needed files from depending modules to target webapp
-			for (Path dependency : dependencies) {
-				Path normalizedDependency = dependency.normalize();
-				copyDependentFiles(normalizedDependency, normalizedDependency.getNameCount(), webapp.toPath());
-			}
+			jspFiles = setUp();
 		} catch (Exception ex) {
-			removeCreatedFiles();
-			throw ex;
+			reportFailure("Cannot set up compiler.", ex);
+			return;
+		}
+
+		for (int n = 0, cnt = jspFiles.size(); n < cnt; n += CHUNK_SIZE) {
+			List<File> chunk = jspFiles.subList(n, Math.min(cnt, n + CHUNK_SIZE));
+
+			String targetPckg = "org.apache.jsp" + n;
+			List<String> translateCommand;
+			try {
+				translateCommand = CompileJSP.getTranslateCommand(_config, _webapp, targetPckg, chunk);
+			} catch (IOException ex) {
+				reportFailure("Cannot create compile command for files: " + chunk, ex);
+				continue;
+			}
+
+			File rootFolder = new File(CompileJSP.TMP_DIR + '/' + targetPckg.replace('.', '/'));
+			new JspCompileTask(chunk, translateCommand, _config, rootFolder).run(_log);
 		}
 	}
 
-	private void ensureWebXML() throws IOException, ParserConfigurationException, SAXException {
-		WebXmlBuilder builder = new WebXmlBuilder();
+	/**
+	 * Assembles the web application to compile in.
+	 *
+	 * @return The JSPs to compile, resolved in the assembled web application.
+	 */
+	private List<File> setUp() throws IOException, ParserConfigurationException, SAXException {
+		Path webapp = _webapp.toPath();
+		Files.createDirectories(webapp);
 
+		for (Path resourceDir : Workspace.applicationModules()) {
+			copyCompileResources(resourceDir, webapp);
+		}
+
+		Path sourceWebapp = _config.getWebapp().getCanonicalFile().toPath();
+		List<File> result = new ArrayList<>();
+		for (File jspFile : _config.getJspFiles()) {
+			Path source = jspFile.getCanonicalFile().toPath();
+			Path target = webapp.resolve(sourceWebapp.relativize(source).toString());
+			Files.createDirectories(target.getParent());
+			Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+			result.add(target.toFile());
+		}
+
+		createWebXml();
+
+		return result;
+	}
+
+	/**
+	 * Copies the files the JSP compiler needs from the given resource directory into the assembled
+	 * web application.
+	 *
+	 * <p>
+	 * The resource directories are visited in overlay order, the overriding module first. A file
+	 * already copied from a previous resource directory is therefore kept.
+	 * </p>
+	 */
+	private static void copyCompileResources(Path resourceDir, Path webapp) throws IOException {
+		if (!Files.isDirectory(resourceDir)) {
+			return;
+		}
+		List<Path> files;
+		try (Stream<Path> paths = Files.walk(resourceDir)) {
+			files = paths.filter(Files::isRegularFile).filter(JspCompiler::isCompileResource).toList();
+		}
+		for (Path file : files) {
+			Path target = webapp.resolve(resourceDir.relativize(file).toString());
+			if (Files.exists(target)) {
+				continue;
+			}
+			Files.createDirectories(target.getParent());
+			Files.copy(file, target);
+		}
+	}
+
+	private static boolean isCompileResource(Path file) {
+		String fileName = file.getFileName().toString();
+		return fileName.endsWith(".jsp") || fileName.endsWith(".jspf") || fileName.endsWith(".inc")
+			|| fileName.endsWith(".tld");
+	}
+
+	private void createWebXml() throws IOException, ParserConfigurationException, SAXException {
+		WebXmlBuilder builder = new WebXmlBuilder();
 		addWebXml(builder);
 		builder.addClassPathFragments();
-		
-		File targetWebXml = targetWebXml();
-		if (targetWebXml.exists()) {
-			targetWebXml.renameTo(backupWebXml());
-		}
-
-		builder.dumpTo(targetWebXml);
+		builder.dumpTo(new File(_webapp, WEB_XML_PATH));
 	}
 
 	private void addWebXml(WebXmlBuilder builder) throws SAXException, IOException {
@@ -106,122 +186,13 @@ class JspCompiler {
 			}
 		}
 
-		File webXml = targetWebXml();
-		if (webXml.exists()) {
-			builder.addFromWebApp(webapp);
+		File sourceWebapp = _config.getWebapp();
+		if (new File(sourceWebapp, WEB_XML_PATH).exists()) {
+			builder.addFromWebApp(sourceWebapp);
 			return;
 		}
 
 		// No web.xml.
-	}
-
-	private File targetWebXml() {
-		return new File(webapp, WEB_XML_PATH);
-	}
-
-	private File backupWebXml() {
-		return new File(webapp, WEB_XML_BACKUP_PATH);
-	}
-
-	private void copyDependentFiles(Path dependentRoot, int webappRootLength, Path targetFolder) throws IOException {
-		try (Stream<Path> paths = Files.list(dependentRoot)) {
-			paths.forEach(potentialDependent -> {
-				try {
-					if (Files.isDirectory(potentialDependent)) {
-						copyDependentFiles(potentialDependent, webappRootLength, targetFolder);
-					} else {
-						if (isDependentFile(potentialDependent)) {
-							final Path fileName =
-								potentialDependent.subpath(webappRootLength, potentialDependent.getNameCount());
-
-							final Path dest = targetFolder.resolve(fileName.toString());
-							if (Files.exists(dest) && !createdFiles.contains(dest)) {
-								// dest is an original file
-								return;
-							}
-
-							// create missing folders
-							createFolders(dest.getParent());
-
-							copyDependentFile(potentialDependent, dest);
-						}
-					}
-				} catch (IOException ex) {
-					Logger.error("Cannot copy '" + potentialDependent + "' to '" + dependentRoot + "'.", ex);
-				}
-			});
-		}
-	}
-
-	private void copyDependentFile(Path source, Path dest) throws IOException {
-		if (!Files.exists(dest)) {
-			Files.createFile(dest);
-			createdFiles.add(dest);
-		}
-		FileUtilities.copyFile(source, dest);
-	}
-
-	private boolean isDependentFile(Path potentialDependent) {
-		final String fileName = potentialDependent.getFileName().toString();
-		return fileName.endsWith(".tld") || fileName.endsWith(".inc") || fileName.endsWith(".jspf");
-	}
-
-	private void createFolders(Path dest) throws IOException {
-		if (!Files.exists(dest)) {
-			createFolders(dest.getParent());
-			Files.createDirectory(dest);
-			createdFiles.add(dest);
-		}
-	}
-
-	private void tearDown() {
-		removeCreatedFiles();
-	}
-
-	private void removeCreatedFiles() {
-		File targetWebXml = targetWebXml();
-		targetWebXml.delete();
-		File backupWebXml = backupWebXml();
-		if (backupWebXml.exists()) {
-			backupWebXml.renameTo(targetWebXml);
-		}
-
-		Collection<Path> missingDeletions = new HashSet<>();
-		for (int index = createdFiles.size() - 1; index >= 0; index--) {
-			Path toDelete = createdFiles.get(index);
-			try {
-				final boolean success = Files.deleteIfExists(toDelete);
-				if (!success) {
-					missingDeletions.add(toDelete);
-				}
-			} catch (IOException ex) {
-				Logger.error("Cannot delete: " + toDelete, ex);
-			}
-		}
-
-		if (!missingDeletions.isEmpty()) {
-			reportFailure("Unable to delete temp files: " + missingDeletions);
-		}
-	}
-
-	public void compile() {
-		try {
-			setUp();
-		} catch (Exception ex) {
-			reportFailure("Cannot set up compiler.", ex);
-			return;
-		}
-		try {
-			for (JspCompileTask task : _tasks) {
-				task.run(_log);
-			}
-		} finally {
-			tearDown();
-		}
-	}
-
-	private void reportFailure(String message) {
-		_log.error(message);
 	}
 
 	private void reportFailure(String message, Throwable ex) {

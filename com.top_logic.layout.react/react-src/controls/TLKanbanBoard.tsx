@@ -1,5 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
@@ -49,6 +49,22 @@ interface ColumnDescriptor {
   cards: CardDescriptor[];
 }
 
+/**
+ * Where a drop is made relative to the card it names: before or after it, or `none` for a drop on
+ * the column beside its cards.
+ */
+type CardPosition = 'before' | 'after' | 'none';
+
+/**
+ * The zone a drop at a position is reported in: the upper part of the card it is made before, the
+ * lower part of the card it is made after, none on the column beside its cards.
+ */
+const ZONE_OF_POSITION: Record<CardPosition, TLDropZone> = {
+  before: 'upper',
+  after: 'lower',
+  none: 'none',
+};
+
 /** Where a running drag hovers the board. */
 interface DropState {
   /** Key of the hovered column. */
@@ -58,7 +74,7 @@ interface DropState {
   target: string;
 
   /** Where the drop is made relative to the card, `none` for a drop on the column. */
-  position: TLDropPosition;
+  position: CardPosition;
 
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
@@ -71,8 +87,10 @@ interface DropState {
  * - columns: ColumnDescriptor[] - the columns, in display order
  * - selected: string[] - the keys of the selected cards
  * - multiSelect: boolean - whether several cards may be selected
- * - dragEnabled: boolean, dragType: string - whether and under which type tag cards are dragged
- * - dropAccepts: string[] - the type tags a drop on a column is accepted of
+ * - dragEnabled: boolean, dragKind: string | null - whether cards are dragged, and the kind of such a
+ *   drag (none without a kind)
+ * - dropAcceptsAny: boolean, dropAccepts: string[] - whether a drop on a column is accepted of any
+ *   drag, and otherwise the kinds a drop is accepted of
  * - reorder: boolean - whether a drop within a column reorders it
  * - dropVerdicts: Record<string, DropVerdict> - the answers to the probes of the running drag
  *
@@ -101,7 +119,8 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   const selected = React.useMemo(() => new Set((state.selected as string[] | null) ?? []), [state.selected]);
   const multiSelect = state.multiSelect === true;
   const dragEnabled = state.dragEnabled === true;
-  const dragType = (state.dragType as string | null) ?? '';
+  const dragKind = (state.dragKind as string | null) ?? undefined;
+  const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const reorder = state.reorder === true;
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
@@ -170,15 +189,15 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     const keys = selected.has(card.key)
       ? columns.flatMap((column) => column.cards.map((c) => c.key).filter((key) => selected.has(key)))
       : [card.key];
-    writeDragPayload(event, { source: controlId, keys, selection: false, type: dragType });
-  }, [controlId, dragType, columns, selected]);
+    writeDragPayload(event, { source: controlId, keys, selection: false, kind: dragKind });
+  }, [controlId, dragKind, columns, selected]);
 
   /**
    * The target a drag event over the given column points at, or `null` where the column accepts
    * no drop of the running drag.
    */
   const dropTargetAt = React.useCallback(
-    (column: ColumnDescriptor, event: React.DragEvent): { target: string; position: TLDropPosition } | null => {
+    (column: ColumnDescriptor, event: React.DragEvent): { target: string; position: CardPosition } | null => {
       const drag = runningDrag();
       const withinColumn = drag !== null && drag.payload.source === controlId
         && drag.payload.keys.every((key) => column.cards.some((card) => card.key === key));
@@ -211,9 +230,9 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     }, [controlId, reorder]);
 
   const handleColumnDragOver = React.useCallback((column: ColumnDescriptor, event: React.DragEvent) => {
-    // Coarse acceptance from the payload's type tag alone; whether this particular drop is possible
+    // Coarse acceptance from the payload's kind alone; whether this particular drop is possible
     // is the server's answer, given once it arrives.
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
     const target = dropTargetAt(column, event);
@@ -242,7 +261,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
           keys: drag.payload.keys.join(','),
           selection: drag.payload.selection,
           targetKey: target.target,
-          position: target.position,
+          zone: ZONE_OF_POSITION[target.position],
           drag: drag.id,
           probe,
         });
@@ -261,10 +280,10 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     }
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, [dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
+  }, [dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleColumnDrop = React.useCallback((column: ColumnDescriptor, event: React.DragEvent) => {
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
     const target = dropTargetAt(column, event);
@@ -282,10 +301,10 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
         keys: payload.keys.join(','),
         selection: payload.selection,
         targetKey: target.target,
-        position: target.position,
+        zone: ZONE_OF_POSITION[target.position],
       });
     }
-  }, [dropAccepts, dropTargetAt, sendCommand]);
+  }, [dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the board's own descendants fires a leave on each one left behind; only leaving

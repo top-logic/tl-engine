@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, fireEvent } from '@testing-library/react';
-import { CMD_SUBMIT, CMD_VALUE_CHANGED } from 'tl-react-bridge';
+import { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from 'tl-react-bridge';
 import MuiNumberInputAdapter from './MuiNumberInputAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 
@@ -56,6 +56,20 @@ describe('TLNumberInput as MUI TextField', () => {
     await settle();
 
     expect(sent.mock.calls).toEqual([[CMD_SUBMIT, { [ARG_VALUE]: '42' }]]);
+  });
+
+  it('commits an edit on Enter after the value held back, then submits it', async () => {
+    const sent = mountAdapter(MuiNumberInputAdapter,
+      { value: '1', sendValueOnBlur: true, commitEdits: true, submitOnEnter: true });
+
+    fireEvent.change(inputById(), { target: { value: '42' } });
+    fireEvent.keyDown(inputById(), { key: 'Enter' });
+    fireEvent.blur(inputById());
+    await settle();
+
+    expect(sent.mock.calls).toEqual([
+      changedTo('42'), [CMD_COMMIT, {}], [CMD_SUBMIT, { [ARG_VALUE]: '42' }],
+    ]);
   });
 
   it('shows the text while read-only and sends nothing', async () => {

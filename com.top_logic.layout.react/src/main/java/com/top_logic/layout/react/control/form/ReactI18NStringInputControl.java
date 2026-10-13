@@ -15,7 +15,6 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.state.FieldState;
-import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -29,9 +28,10 @@ import com.top_logic.util.TLContext;
  * <b>current user's locale</b>. On input the typed string is folded into a {@link ResKey}, so the
  * model receives a typed {@link ResKey} (a plain {@link String} would be rejected by the I18N
  * storage mapping). When the user-locale value is edited and a {@link TranslationService} is active,
- * the other locales are <b>auto-translated</b> from it when the field is committed (loses focus),
- * overwriting their previous values; otherwise they are preserved. Translation runs on commit
- * rather than per keystroke, since it is a blocking remote call.
+ * the other locales are <b>auto-translated</b> from it when the edit is committed (the field is
+ * left, or Enter is pressed in a single line), overwriting their previous values; otherwise they
+ * are preserved. Translation runs on commit rather than per keystroke, since it is a blocking
+ * remote call.
  * </p>
  *
  * <p>
@@ -58,10 +58,25 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	public ReactI18NStringInputControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLTextInput");
 		refresh();
-		if (TranslationService.isActive()) {
-			// Defer auto-translation to field commit (blur); see #onCommit.
-			putState(TypingFieldState.COMMIT_ON_BLUR__PROP, Boolean.TRUE);
-		}
+		updateCommitEdits();
+	}
+
+	/**
+	 * A typed text is committed when the field is left, and by Enter in a single line.
+	 */
+	@Override
+	public boolean commitsEdits() {
+		return true;
+	}
+
+	/**
+	 * The auto-translation runs on the commit of an edit (see {@link #onCommit()}), so the field
+	 * asks for commits while a {@link TranslationService} is active, with or without a
+	 * {@link #setCommitListener(java.util.function.Function) commit listener}.
+	 */
+	@Override
+	protected boolean needsCommits() {
+		return TranslationService.isActive();
 	}
 
 	/**
@@ -145,8 +160,8 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * Translates the current-locale value into the other locales, overwriting their previous values.
 	 *
 	 * <p>
-	 * Sent by the client when an edited field is committed (loses focus), so the blocking
-	 * translation runs once per edit rather than on every keystroke. The client only sends this
+	 * Sent by the client when the user has finished an edit, so the blocking translation runs once
+	 * per edit rather than on every keystroke. The client only sends this
 	 * after an actual edit, so merely focusing and leaving the field translates nothing.
 	 * </p>
 	 */

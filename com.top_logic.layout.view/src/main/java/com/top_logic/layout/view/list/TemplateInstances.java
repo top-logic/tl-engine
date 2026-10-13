@@ -16,6 +16,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 
 /**
  * The instances of a content template, one per element of a displayed list, kept by element.
@@ -121,7 +122,9 @@ public class TemplateInstances {
 			controls.add((ReactControl) control);
 		}
 
-		return controls.size() == 1 ? controls.get(0) : new ReactStackControl(instanceContext, controls);
+		ReactControl instance = controls.size() == 1 ? controls.get(0) : new ReactStackControl(instanceContext, controls);
+		ObservingChannels.observeWhileDisplayed(instance, List.of(elementChannel), instanceContext);
+		return instance;
 	}
 
 }

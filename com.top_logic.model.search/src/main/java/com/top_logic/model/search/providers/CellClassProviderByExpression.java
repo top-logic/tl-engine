@@ -147,7 +147,15 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 		return toCssClass(result);
 	}
 
-	static String toCssClass(Object result) {
+	/**
+	 * Converts the result of a CSS class function to the CSS class it denotes.
+	 *
+	 * @param result
+	 *        The function result.
+	 * @return {@code null} for a {@code null} or empty result, the space-separated classes of the
+	 *         members of a {@link Collection}, the text of any other value.
+	 */
+	public static String toCssClass(Object result) {
 		if (StringServices.isEmpty(result)) {
 			return null;
 		}

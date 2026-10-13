@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -326,6 +327,17 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private final Object _maintenanceModeLockObject = new Object();
 
+	/**
+	 * Actions to run once the end of the current run of a {@link Task} has been processed.
+	 * 
+	 * <p>
+	 * Guarded by synchronizing on the map itself.
+	 * </p>
+	 * 
+	 * @see #runAfterTaskDone(Task, Runnable)
+	 */
+	private final Map<Task, List<Runnable>> _afterTaskDoneActions = new HashMap<>();
+
 	private final GCQueue<TaskListenerNotification> taskListenerRegistry = new GCQueue<>();
 
 	private final List<Task> _clusterLocksToFix = new ArrayList<>();
@@ -529,6 +541,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		}
 		disable(entry.get());
 		getEntries().remove(aTask);
+		removeAfterTaskDoneActions(aTask);
 		if (entry.get().isAttached()) {
 			aTask.detachFromScheduler();
 		}
@@ -962,6 +975,66 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		cleanupMaintenanceMode(task);
 		entry.removeThread();
 		entry.setState(SchedulerEntry.State.WAITING);
+		runAfterTaskDoneActions(task);
+	}
+
+	/**
+	 * Registers an action that runs once this {@link Scheduler} has processed the end of the
+	 * current run of the given {@link Task}.
+	 * 
+	 * <p>
+	 * Intended for the running {@link Task} to register work that must happen only after the end of
+	 * its run is completely processed: The task end result has been checked, the cluster lock has
+	 * been released and the maintenance mode has been cleaned up. The end of a run is processed on
+	 * the next round of the dispatch thread, i.e. up to the {@link #getPollingInterval() polling
+	 * interval} after the thread of the task has ended.
+	 * </p>
+	 * 
+	 * <p>
+	 * The action runs once on the dispatch thread of this {@link Scheduler}. It therefore must not
+	 * block (long running work has to be scheduled elsewhere, e.g. on the {@link SchedulerService})
+	 * and must not restart this {@link Scheduler} synchronously. A failing action is logged and does
+	 * not prevent the remaining actions from running.
+	 * </p>
+	 * 
+	 * <p>
+	 * Actions registered for a {@link Task} are discarded when the task is
+	 * {@link #removeTask(Task) removed} from this {@link Scheduler}.
+	 * </p>
+	 * 
+	 * @param task
+	 *        The running {@link Task} after whose end the action runs.
+	 * @param action
+	 *        The action to run.
+	 */
+	public void runAfterTaskDone(Task task, Runnable action) {
+		synchronized (_afterTaskDoneActions) {
+			_afterTaskDoneActions.computeIfAbsent(task, key -> new ArrayList<>()).add(action);
+		}
+	}
+
+	private void removeAfterTaskDoneActions(Task task) {
+		synchronized (_afterTaskDoneActions) {
+			_afterTaskDoneActions.remove(task);
+		}
+	}
+
+	private void runAfterTaskDoneActions(Task task) {
+		List<Runnable> actions;
+		synchronized (_afterTaskDoneActions) {
+			actions = _afterTaskDoneActions.remove(task);
+		}
+		if (actions == null) {
+			return;
+		}
+		for (Runnable action : actions) {
+			try {
+				action.run();
+			} catch (Throwable ex) {
+				Logger.error("Action registered to run after the end of task '" + task.getName() + "' failed.", ex,
+					Scheduler.class);
+			}
+		}
 	}
 
 	private void checkForTaskEndResult(Task task) {
@@ -982,6 +1055,38 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 */
 	public void waiveMaintenanceMode(Task waivingTask) {
 		cleanupMaintenanceMode(waivingTask);
+	}
+
+	/**
+	 * Can be called by a running {@link Task} that ends the maintenance mode itself, e.g. after a
+	 * restart it triggers, to take over the maintenance mode this {@link Scheduler} entered for it.
+	 * 
+	 * <p>
+	 * The maintenance mode is not left. When the {@link Task} is done, this {@link Scheduler} no
+	 * longer leaves it. A maintenance mode this {@link Scheduler} did not enter for the given task
+	 * (e.g. one that was entered manually before a forced run) is never taken over.
+	 * </p>
+	 * 
+	 * <p>
+	 * The counterpart that leaves the maintenance mode immediately is
+	 * {@link #waiveMaintenanceMode(Task)}.
+	 * </p>
+	 * 
+	 * @param task
+	 *        Has to be the {@link Task} calling this method.
+	 * @return Whether this {@link Scheduler} had entered the maintenance mode for the given task.
+	 *         Only then, the task is responsible for leaving it.
+	 */
+	public boolean takeOverMaintenanceMode(Task task) {
+		synchronized (_maintenanceModeLockObject) {
+			if (_maintenanceModeRequester != task) {
+				return false;
+			}
+			_maintenanceModeRequester = null;
+		}
+		Logger.info("Task '" + task.getName()
+			+ "' took over the maintenance mode and is responsible for leaving it.", Scheduler.class);
+		return true;
 	}
 
 	private void cleanupMaintenanceMode(Task task) {
@@ -1686,6 +1791,9 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
         
         status.append(" Tasks");
 		signalShutdown();
+		// Process tasks that have already ended, before waiting for the others.
+		checkRunning();
+		runCount = getActiveEntries().size();
         
 		int countdown = getConfig().getShutdownCountdown();
         long sleep     = timeToKill / countdown;

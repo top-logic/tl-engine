@@ -9,7 +9,7 @@ public class TypingFieldState_Impl extends com.top_logic.layout.react.state.impl
 
 	private boolean _sendValueOnBlur = false;
 
-	private boolean _commitOnBlur = false;
+	private boolean _commitEdits = false;
 
 	/**
 	 * Creates a {@link TypingFieldState_Impl} instance.
@@ -53,19 +53,19 @@ public class TypingFieldState_Impl extends com.top_logic.layout.react.state.impl
 	}
 
 	@Override
-	public final boolean isCommitOnBlur() {
-		return _commitOnBlur;
+	public final boolean isCommitEdits() {
+		return _commitEdits;
 	}
 
 	@Override
-	public com.top_logic.layout.react.state.TypingFieldState setCommitOnBlur(boolean value) {
-		internalSetCommitOnBlur(value);
+	public com.top_logic.layout.react.state.TypingFieldState setCommitEdits(boolean value) {
+		internalSetCommitEdits(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #isCommitOnBlur()} without chain call utility. */
-	protected final void internalSetCommitOnBlur(boolean value) {
-		_commitOnBlur = value;
+	/** Internal setter for {@link #isCommitEdits()} without chain call utility. */
+	protected final void internalSetCommitEdits(boolean value) {
+		_commitEdits = value;
 	}
 
 	@Override
@@ -164,8 +164,8 @@ public class TypingFieldState_Impl extends com.top_logic.layout.react.state.impl
 		out.value(getDebounceMs());
 		out.name(SEND_VALUE_ON_BLUR__PROP);
 		out.value(isSendValueOnBlur());
-		out.name(COMMIT_ON_BLUR__PROP);
-		out.value(isCommitOnBlur());
+		out.name(COMMIT_EDITS__PROP);
+		out.value(isCommitEdits());
 	}
 
 	@Override
@@ -173,7 +173,7 @@ public class TypingFieldState_Impl extends com.top_logic.layout.react.state.impl
 		switch (field) {
 			case DEBOUNCE_MS__PROP: setDebounceMs(in.nextLong()); break;
 			case SEND_VALUE_ON_BLUR__PROP: setSendValueOnBlur(in.nextBoolean()); break;
-			case COMMIT_ON_BLUR__PROP: setCommitOnBlur(in.nextBoolean()); break;
+			case COMMIT_EDITS__PROP: setCommitEdits(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}
 	}

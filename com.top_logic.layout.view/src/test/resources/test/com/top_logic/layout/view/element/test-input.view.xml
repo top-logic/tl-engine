@@ -11,6 +11,7 @@
 		<channel name="choice"/>
 		<channel name="amount"/>
 		<channel name="switched"/>
+		<channel name="change"/>
 	</channels>
 
 	<panel>
@@ -83,6 +84,93 @@
 				<input-control class="com.top_logic.layout.view.form.BooleanControlProvider"
 					display="switch"
 				/>
+			</value-input>
+			<value-input
+				submit-on="change"
+				value="term"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input value="term">
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				submit-on="change"
+				type="tl.core:Boolean"
+				value="flag"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				type="tl.core:Boolean"
+				value="flag"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				mandatory="true"
+				type="tl.changelog:ChangeType"
+				value="change"
+			>
+				<label>
+					<en>Change</en>
+				</label>
+			</value-input>
+			<value-input
+				type="tl.changelog:ChangeType"
+				value="change"
+			>
+				<label>
+					<en>Change</en>
+				</label>
+			</value-input>
+			<value-input
+				type="tl.changelog:ChangeType"
+				value="change"
+			>
+				<annotations>
+					<classification-display value="radio"/>
+				</annotations>
+			</value-input>
+			<value-input
+				type="tl.changelog:ChangeType"
+				value="change"
+			>
+				<annotations>
+					<input-control>
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider"
+							display="segmented"
+						/>
+					</input-control>
+				</annotations>
+			</value-input>
+			<value-input
+				type="tl.changelog:ChangeType"
+				value="change"
+			>
+				<annotations>
+					<input-control>
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider"
+							display="segmented"
+						/>
+					</input-control>
+				</annotations>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				mandatory="true"
+				value="term"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				mandatory="true"
+				submit-on="change"
+				value="term"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
 			</value-input>
 		</children>
 	</panel>

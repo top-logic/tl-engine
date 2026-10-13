@@ -394,15 +394,13 @@
 									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
 								/>
 							</dynamic-visibility>
-							<input-control>
-								<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
-							</input-control>
 						</annotations>
 					</property>
 
 					<!-- Enumeration / classification -->
 					<reference name="priority"
 						kind="forwards"
+						mandatory="true"
 						type="Priority"
 					>
 						<annotations>

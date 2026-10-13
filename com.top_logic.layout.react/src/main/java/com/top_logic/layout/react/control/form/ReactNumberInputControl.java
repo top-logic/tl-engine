@@ -139,6 +139,14 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 		return true;
 	}
 
+	/**
+	 * A typed number is committed when the field is left or Enter is pressed.
+	 */
+	@Override
+	public boolean commitsEdits() {
+		return true;
+	}
+
 	private String format(Object value) {
 		return value instanceof Number ? _format.format(value) : null;
 	}

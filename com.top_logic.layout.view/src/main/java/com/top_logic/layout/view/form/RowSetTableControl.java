@@ -198,6 +198,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
 	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
 
+	/** @see #setRowCssClass(Function) */
+	private Function<? super TLObject, String> _rowCssClass;
+
 	private ListRowSource<TLObject> _rowSource;
 
 	private RowSourceObserver<TLObject> _observer;
@@ -504,6 +507,24 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets the function computing the CSS class of a data row from its row object.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the function is installed on each
+	 * {@link DefaultTableView} this control builds, so it survives the switch between view and
+	 * edit mode.
+	 * </p>
+	 *
+	 * @param rowCssClass
+	 *        The function answering the class of a row object, or {@code null} for none.
+	 *
+	 * @see DefaultTableView#setRowCssClass(Function)
+	 */
+	public void setRowCssClass(Function<? super TLObject, String> rowCssClass) {
+		_rowCssClass = rowCssClass;
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -616,6 +637,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
+		view.setRowCssClass(_rowCssClass);
 
 		disposeSelectionBinding();
 		disposeFilterBinding();

@@ -254,6 +254,34 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private static final String ROW_TOOLTIPS = "tooltips";
 
+	/**
+	 * Per-row state key holding the CSS class the client puts on the row's element.
+	 *
+	 * <p>
+	 * Holds the {@link TableView#rowCssClass(Row) row class} of the table view; a row without one
+	 * is sent without the key. The class is evaluated with every push of the rows, so it follows
+	 * the row object's state.
+	 * </p>
+	 *
+	 * @see #ROW_CELL_CLASSES
+	 */
+	private static final String ROW_CSS_CLASS = "cssClass";
+
+	/**
+	 * Per-row state key holding the CSS class of the row's cells, by column name.
+	 *
+	 * <p>
+	 * Holds an entry for the cells that have a {@link TableView#cellCssClass(Row, String) cell
+	 * class}; the client puts it on the cell's element next to the column's own class. A row none
+	 * of whose cells has one is sent without the key. The classes are computed together with the
+	 * row's {@link #ROW_CELLS cells}, so they follow the row's data whenever its cells are built
+	 * again.
+	 * </p>
+	 *
+	 * @see #ROW_CSS_CLASS
+	 */
+	private static final String ROW_CELL_CLASSES = "cellClasses";
+
 	private static final String TREE_DEPTH = "treeDepth";
 
 	private static final String TREE_EXPANDABLE = "expandable";
@@ -985,6 +1013,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!cells.tooltips().isEmpty()) {
 				rowState.put(ROW_TOOLTIPS, cells.tooltips());
 			}
+			if (!cells.cssClasses().isEmpty()) {
+				rowState.put(ROW_CELL_CLASSES, cells.cssClasses());
+			}
+			String rowCssClass = _view.rowCssClass(row);
+			if (!StringServices.isEmpty(rowCssClass)) {
+				rowState.put(ROW_CSS_CLASS, rowCssClass);
+			}
 			rowStates.add(rowState);
 			index++;
 		}
@@ -1074,6 +1109,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private RowCells createCells(Row<R> row) {
 		Map<String, ReactControl> controls = new LinkedHashMap<>();
 		Map<String, String> tooltips = new LinkedHashMap<>();
+		Map<String, String> cssClasses = new LinkedHashMap<>();
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
 			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
@@ -1082,17 +1118,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!StringServices.isEmpty(tooltip)) {
 				tooltips.put(column.name(), tooltip);
 			}
+			String cssClass = _view.cellCssClass(row, column.name());
+			if (!StringServices.isEmpty(cssClass)) {
+				cssClasses.put(column.name(), cssClass);
+			}
 		}
-		return new RowCells(controls, tooltips);
+		return new RowCells(controls, tooltips, cssClasses);
 	}
 
 	/**
-	 * What is rendered in the cells of one row: the cell controls and, for the cells that say more
-	 * than they display, their tooltips.
+	 * What is rendered in the cells of one row: the cell controls, for the cells that say more than
+	 * they display their tooltips, and for the cells that are marked their CSS classes.
 	 *
 	 * <p>
-	 * Both are built from the same {@link CellContent}, so the row is rendered once however often
-	 * its state is pushed.
+	 * All are built once per row, so the row is rendered once however often its state is pushed.
+	 * They are built again when the row's cells are invalidated - by
+	 * {@link #invalidateRowCells(Collection)}, {@link #refreshData()}, or the row leaving the
+	 * buffered window. The {@link TableView#rowCssClass(Row) row class}, in contrast, is evaluated
+	 * with every push.
 	 * </p>
 	 *
 	 * @param controls
@@ -1100,8 +1143,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @param tooltips
 	 *        The {@link CellContent#tooltip() tooltip} of a cell that has one, by column name;
 	 *        empty when no cell of the row has one.
+	 * @param cssClasses
+	 *        The {@link TableView#cellCssClass(Row, String) CSS class} of a cell that has one, by
+	 *        column name; empty when no cell of the row has one.
 	 */
-	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips) {
+	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips,
+			Map<String, String> cssClasses) {
 
 		/** Disposes the cell controls. */
 		void dispose() {

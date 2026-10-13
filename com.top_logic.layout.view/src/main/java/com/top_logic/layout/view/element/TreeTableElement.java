@@ -131,7 +131,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>> table = createTable(context,
 			resolveRowType(structure.topLevelObjects()), ChannelInputs.arguments(inputChannels),
-			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops);
+			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, null);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 

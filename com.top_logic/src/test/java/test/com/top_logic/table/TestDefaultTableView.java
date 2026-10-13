@@ -22,10 +22,12 @@ import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterCodec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
@@ -1135,6 +1137,85 @@ public class TestDefaultTableView extends TestCase {
 		view.setDeclaredFilters(List.of());
 		assertEquals(List.of(HOLDS_LI, HOLDS_LI, NO_FILTER), recorder._activeFilters);
 		assertEquals("The criteria of a withdrawn filter stay in effect.", List.of("Bob"), names(view));
+	}
+
+	/**
+	 * Tests that the data rows answer the row class function installed on the view, and that a
+	 * view without one answers none.
+	 */
+	public void testRowCssClass() {
+		List<Column<Person, ?>> columns = personColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("A view without a row class function marks no row.", view.rowCssClass(row));
+		}
+
+		view.setRowCssClass(person -> person.age() > 35 ? "tl-status-warning" : null);
+		Map<String, String> classes = new java.util.HashMap<>();
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			classes.put(row.data().name(), view.rowCssClass(row));
+		}
+		assertEquals("tl-status-warning", classes.get("Bob"));
+		assertNull(classes.get("alice"));
+		assertNull(classes.get("Charlie"));
+
+		view.setRowCssClass(null);
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("Removing the function removes the marks.", view.rowCssClass(row));
+		}
+	}
+
+	/**
+	 * Tests that the cells of a data row answer their column's class for the row object, and the
+	 * cells of a column without one answer none.
+	 */
+	public void testCellCssClass() {
+		List<Column<Person, ?>> columns = cssColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			String expected = row.data().age() < 30 ? "tl-status-info" : null;
+			assertEquals(expected, view.cellCssClass(row, "age"));
+			assertNull("A column without a cell class marks no cell.", view.cellCssClass(row, "name"));
+			assertNull("An unknown column marks no cell.", view.cellCssClass(row, "unknown"));
+		}
+	}
+
+	/**
+	 * Tests that a group header row is marked neither as a row nor in its cells, whatever the
+	 * functions say about the row objects.
+	 */
+	public void testGroupRowsCarryNoCssClass() {
+		List<Column<Person, ?>> columns = cssColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setRowCssClass(person -> "tl-status-error");
+		view.group(new GroupSpec(List.of("name")));
+
+		int headers = 0;
+		int data = 0;
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				headers++;
+				assertNull(view.rowCssClass(row));
+				assertNull(view.cellCssClass(row, "age"));
+			} else if (row.kind() == RowKind.DATA) {
+				data++;
+				assertEquals("tl-status-error", view.rowCssClass(row));
+			}
+		}
+		assertTrue("The table shows group headers.", headers > 0);
+		assertTrue("The table shows data rows.", data > 0);
+	}
+
+	/** The {@link #personColumns()} with a cell class on the age of a person younger than 30. */
+	private List<Column<Person, ?>> cssColumns() {
+		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
+			.sort(() -> Comparator.naturalOrder())
+			.build();
+		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
+			.sort(() -> Comparator.naturalOrder())
+			.css(person -> person.age() < 30 ? "tl-status-info" : null)
+			.build();
+		return List.of(name, age);
 	}
 
 }

@@ -6,6 +6,7 @@
 			<instance>
 				<declarations>
 					<declaration file="/WEB-INF/model/foo.model.xml"/>
+					<declaration file="/WEB-INF/model/ticket29806.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

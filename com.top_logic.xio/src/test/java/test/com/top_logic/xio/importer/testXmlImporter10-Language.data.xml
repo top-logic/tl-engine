@@ -1,0 +1,8 @@
+<root DefaultLanguage="de-DE">
+	<a name="a1" label="Eins" fixed="Fest" other="Nur deutsch">
+		<text lang="fr-FR">Texte</text>
+		<text lang="en">Text</text>
+	</a>
+	<a name="a2" DefaultLanguage="en-US" label="Two" other="Only English"/>
+	<a name="a3" label="Drei" otherEn="English" other="Deutsch"/>
+</root>

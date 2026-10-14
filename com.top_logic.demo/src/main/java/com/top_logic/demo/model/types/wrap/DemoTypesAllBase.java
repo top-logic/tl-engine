@@ -21,7 +21,7 @@ public interface DemoTypesAllBase extends com.top_logic.element.structured.Struc
 	 * Part <code>name</code> of <code>DemoTypes.All</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
+	 * Declared as <code>tl.core:Name</code> in configuration.
 	 * </p>
 	 */
 	String NAME_ATTR = "name";

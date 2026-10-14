@@ -17,4 +17,9 @@ public interface ABase extends com.top_logic.demo.model.plain.DemoPlainA {
 	 */
 	String A_TYPE = "A";
 
+	/**
+	 * Name of the table storing {@link #A_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

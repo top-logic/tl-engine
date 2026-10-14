@@ -90,12 +90,17 @@
 							</path>
 						</inheritance-rule>
 
+						<!--
+							A user holding any role of the demo types on an object navigates to it, and to its
+							containers (see the rule below). The navigation role grants Discover only: the
+							containers appear in the structure tree, but their attributes stay unreadable.
+						-->
 						<inheritance-rule
 							id="DemoTypes.All_navigation"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
 							role="navigation"
-							source-role="selection"
+							source-role="DemoTypes.Administrator,DemoTypes.Responsible,DemoTypes.BAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.StringAdministrator"
 						/>
 
 						<inheritance-rule
@@ -122,14 +127,6 @@
 								/>
 							</path>
 						</inheritance-rule>
-
-						<inheritance-rule
-							id="DemoTypes.All_selection"
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="selection"
-							source-role="DemoTypes.Administrator,DemoTypes.Responsible,DemoTypes.BAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.StringAdministrator"
-						/>
 
 						<rule
 							id="DemoTypes.A_Responsible"

@@ -177,9 +177,10 @@ export interface KeyedTransitionOptions {
  * An element whose key appears carries {@link KeyedTransitionOptions#enterClass} until its
  * animation ends; an element whose key disappears is replaced by an inert copy of itself carrying
  * {@link KeyedTransitionOptions#exitClass} until its animation ends, or until the same key is
- * displayed again. Where the stylesheet animates nothing, class or copy is taken away at once,
- * before the browser paints; an animation that never reports its end is cut off after
- * {@link TRANSITION_FALLBACK_MS}.
+ * displayed again. The enter class stays while the element arrives even if the element's own
+ * renderer rewrites its class attribute in the meantime. Where the stylesheet animates nothing,
+ * class or copy is taken away at once, before the browser paints; an animation that never reports
+ * its end is cut off after {@link TRANSITION_FALLBACK_MS}.
  *
  * Two things do not count as a change: the first display of a control - what a wizard opens on or
  * a stack starts with was not moved to - and any change at all for a viewer who asked for reduced
@@ -251,11 +252,21 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
           continue;
         }
         arrived.classList.add(enterClass);
+        // The renderer of the element may write its class attribute anew while it arrives; the
+        // class is put back before the browser recalculates styles, so the animation runs on. Adding
+        // a class writes the attribute even when it is present, hence the check.
+        const keep = new MutationObserver(() => {
+          if (!arrived.classList.contains(enterClass)) {
+            arrived.classList.add(enterClass);
+          }
+        });
         const end = whenFinished(arrived, () => {
+          keep.disconnect();
           arriving.delete(key);
           arrived.classList.remove(enterClass);
         });
         if (end) {
+          keep.observe(arrived, { attributes: true, attributeFilter: ['class'] });
           arriving.set(key, end);
         }
       }

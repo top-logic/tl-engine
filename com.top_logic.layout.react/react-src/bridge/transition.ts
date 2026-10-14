@@ -2,10 +2,10 @@
 // pushed onto a drill-down stack - as something a stylesheet can animate.
 //
 // What all three have in common is a list of keys: one key per element displayed, and a change of
-// that list is the moment to animate. The hook here marks the DOM for such a change - a class on
-// the element that arrived, a copy of the element that left - and takes the marks away again once
+// that list is the moment to animate. The hook here marks the DOM for such a change - a class or a word in
+// data-tl-state on the element that arrived, a copy of the element that left - and takes the marks away again once
 // the animation is over. Which animation runs, and whether one runs at all, is the stylesheet's
-// decision; the classes are the contract between the two.
+// decision; the marks are the contract between the two.
 
 import { useLayoutEffect, useRef } from 'react';
 
@@ -59,6 +59,48 @@ function whenFinished(element: HTMLElement, done: () => void): () => void {
   return end;
 }
 
+/** The attribute the package reads states from. */
+const STATE_ATTR = 'data-tl-state';
+
+/** How a change is marked on the DOM. */
+interface Marks {
+  enter: string;
+  exit: string;
+  add(element: HTMLElement, mark: string): void;
+  remove(element: HTMLElement, mark: string): void;
+}
+
+const CLASS_MARKS = (enter: string, exit: string): Marks => ({
+  enter,
+  exit,
+  add: (element, mark) => element.classList.add(mark),
+  remove: (element, mark) => element.classList.remove(mark),
+});
+
+const STATE_MARKS: Marks = {
+  enter: 'entering',
+  exit: 'exiting',
+  add: (element, mark) => {
+    const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter(Boolean);
+    if (!words.includes(mark)) {
+      words.push(mark);
+    }
+    element.setAttribute(STATE_ATTR, words.join(' '));
+  },
+  remove: (element, mark) => {
+    const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter((word) => word && word !== mark);
+    if (words.length > 0) {
+      element.setAttribute(STATE_ATTR, words.join(' '));
+    } else {
+      element.removeAttribute(STATE_ATTR);
+    }
+  },
+};
+
+function marksOf(options: KeyedTransitionOptions): Marks {
+  return 'state' in options ? STATE_MARKS : CLASS_MARKS(options.enterClass, options.exitClass);
+}
+
 /**
  * An inert copy of the given element, to be shown in its place while it leaves.
  *
@@ -66,21 +108,19 @@ function whenFinished(element: HTMLElement, done: () => void): () => void {
  * is nothing left to render. It is hidden from assistive technology, takes no input and carries no
  * ids, so that nothing addresses it by the ids of what it copies.
  */
-function snapshot(element: HTMLElement, enterClass: string, exitClass: string): HTMLElement {
+function snapshot(element: HTMLElement, marks: Marks): HTMLElement {
   const copy = element.cloneNode(true) as HTMLElement;
   copy.removeAttribute('id');
   copy.querySelectorAll('[id]').forEach((inner) => inner.removeAttribute('id'));
-  copy.classList.remove(enterClass);
-  copy.classList.add(exitClass);
+  marks.remove(copy, marks.enter);
+  marks.add(copy, marks.exit);
   copy.setAttribute('aria-hidden', 'true');
   copy.setAttribute('inert', '');
   return copy;
 }
 
-/**
- * What a control displays, and the classes its change is animated with.
- */
-export interface KeyedTransitionOptions {
+/** What a control displays: the keys, where each is shown, and where the copies of what left go. */
+interface KeyedTransitionBase {
 
   /**
    * The keys of the elements displayed now, one per element, in no particular order.
@@ -103,25 +143,26 @@ export interface KeyedTransitionOptions {
   /**
    * The element the copies of what left are shown in, or `null` while there is none.
    *
-   * A copy is placed by the stylesheet, which reaches it through {@link #exitClass}; the container
+   * A copy is placed by the stylesheet, which reaches it through the exit mark; the container
    * only has to outlive the element it holds the copy of.
    */
   container(): HTMLElement | null;
-
-  /** The class an element carries while it arrives. */
-  enterClass: string;
-
-  /** The class the copy of an element carries while it leaves. */
-  exitClass: string;
 }
+
+/**
+ * How the change is marked: by two classes (the wizard and the tile stack, until wave 4b), or by the
+ * words `entering` and `exiting` in `data-tl-state` (`state: true`, the design system package).
+ */
+export type KeyedTransitionOptions = KeyedTransitionBase
+  & ({ enterClass: string; exitClass: string } | { state: true });
 
 /**
  * Marks the change of what a control displays with the state classes an application stylesheet
  * animates against.
  *
- * An element whose key appears carries {@link KeyedTransitionOptions#enterClass} until its
+ * An element whose key appears carries the enter mark until its
  * animation ends; an element whose key disappears is replaced by an inert copy of itself carrying
- * {@link KeyedTransitionOptions#exitClass} until its animation ends, or until the same key is
+ * the exit mark until its animation ends, or until the same key is
  * displayed again. Where no animation runs, both are taken away after
  * {@link TRANSITION_FALLBACK_MS}.
  *
@@ -152,7 +193,8 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
   // Runs before the browser paints what has changed, so that the classes and the copies are in
   // place by the time either the element arriving or the one leaving is seen.
   useLayoutEffect(() => {
-    const { keys, node, container, enterClass, exitClass } = latest.current;
+    const { keys, node, container } = latest.current;
+    const marks = marksOf(latest.current);
     const previous = displayed.current;
     displayed.current = [...keys];
     const quiet = reducedMotion();
@@ -173,7 +215,7 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
       if (quiet || !left || !host) {
         continue;
       }
-      const copy = snapshot(left, enterClass, exitClass);
+      const copy = snapshot(left, marks);
       host.appendChild(copy);
       leaving.set(key, whenFinished(copy, () => {
         leaving.delete(key);
@@ -191,10 +233,10 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
         if (!arrived) {
           continue;
         }
-        arrived.classList.add(enterClass);
+        marks.add(arrived, marks.enter);
         arriving.set(key, whenFinished(arrived, () => {
           arriving.delete(key);
-          arrived.classList.remove(enterClass);
+          marks.remove(arrived, marks.enter);
         }));
       }
     }

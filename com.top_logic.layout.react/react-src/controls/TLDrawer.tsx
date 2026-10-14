@@ -1,10 +1,11 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  rootClassName, firstFocusable, tooltipProps,
+  rootClassName, tooltipProps, useFocusTrap, ThemeIcon, ICON_CLOSE,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { buttonClassName } from './button/buttonClassName';
 
-const { useCallback, useEffect, useRef } = React;
+const { useCallback, useRef } = React;
 
 const I18N_KEYS = {
   'js.drawer.close': 'Close',
@@ -31,7 +32,6 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const rootRef = useRef<HTMLElement | null>(null);
-  const restoreRef = useRef<HTMLElement | null>(null);
 
   const open = state.open === true;
   const position = (state.position as string) ?? 'right';
@@ -48,37 +48,19 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   // Escape key closes the drawer (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(open, { ESCAPE: handleClose });
 
-  // Opening hands the keyboard to the drawer, closing gives it back to wherever it came from
-  // (typically the list the drawer details). Without a trap: what lies underneath stays reachable.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!open || !root) {
-      return undefined;
-    }
-    const previous = document.activeElement as HTMLElement | null;
-    restoreRef.current = previous && previous !== document.body ? previous : null;
-    const target = firstFocusable(root) ?? root;
-    if (target !== document.activeElement) {
-      // The drawer is still parked outside the clipped box of the area it is anchored in while it
-      // slides in, so a scrolling focus would drag the whole area sideways to reveal it.
-      target.focus({ preventScroll: true });
-    }
-    return () => {
-      const back = restoreRef.current;
-      restoreRef.current = null;
-      if (back && back.isConnected && typeof back.focus === 'function') {
-        back.focus();
-      }
-    };
-  }, [open]);
+  // Opening hands the keyboard to the drawer, closing gives it back to wherever it came from (typically
+  // the list the drawer details). Without a trap: what lies underneath stays reachable. Without
+  // scrolling: the drawer is still parked outside the clipped box of its area while it slides in.
+  useFocusTrap(open, rootRef, 'first', { trap: false, preventScroll: true });
 
+  const side = position === 'left' ? 'start' : position === 'bottom' ? 'bottom' : 'end';
   const className = [
-    'tlDrawer',
-    `tlDrawer--${position}`,
-    `tlDrawer--${size}`,
-    `tlDrawer--${anchor}`,
-    open ? 'tlDrawer--open' : '',
+    'tl-drawer',
+    `tl-drawer--${side}`,
+    `tl-drawer--${size}`,
+    anchor === 'container' ? 'tl-drawer--container' : '',
   ].filter(Boolean).join(' ');
+  const titleId = controlId + '-title';
 
   // A bottom drawer's extent is its height, a side drawer's its width; the stylesheet caps both at
   // the extent of the area the drawer is anchored in.
@@ -89,31 +71,28 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
     <aside
       id={controlId}
       className={rootClassName(state, className)}
-      aria-hidden={!open}
+      data-tl-state={open ? 'open' : undefined}
+      inert={!open}
+      aria-labelledby={title !== null ? titleId : undefined}
       tabIndex={-1}
       ref={rootRef}
       style={style}
     >
       {title !== null && (
-        <div className="tlDrawer__header">
-          <span className="tlDrawer__title">{title}</span>
+        <div className="tl-titlebar">
+          <h2 className="tl-titlebar__title tl-type-heading-sm" id={titleId}>{title}</h2>
           <button
             type="button"
-            className="tlDrawer__closeBtn"
+            className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
             onClick={handleClose}
             aria-label={i18n['js.drawer.close']}
             {...tooltipProps(i18n['js.drawer.close'])}
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" />
-              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" />
-            </svg>
+            <ThemeIcon encoded={ICON_CLOSE} className="tl-button__icon tl-icon-sm" />
           </button>
         </div>
       )}
-      <div className="tlDrawer__body">
+      <div className="tl-drawer__body">
         <FillBarrier>
           {!!child && <TLChild control={child} />}
         </FillBarrier>

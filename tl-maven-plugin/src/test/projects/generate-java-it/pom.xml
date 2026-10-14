@@ -28,8 +28,8 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>@project.groupId@</groupId>
-        <artifactId>@project.artifactId@</artifactId>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-maven-plugin</artifactId>
         <version>@project.version@</version>
         <executions>
           <execution>

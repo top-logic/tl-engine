@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.server.authentication.http.basic;
 
 import java.util.Collection;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -27,7 +28,7 @@ public class BasicTechnicalAuthenticator extends BasicAuthenticator {
 
 	@Override
 	protected Person authenticateUser(LoginCredentials sentCredentials) throws AuthenticationFailure {
-		if (!_allowedUsers.contains(sentCredentials)) {
+		if (StringServices.isEmpty(sentCredentials.getPassword()) || !_allowedUsers.contains(sentCredentials)) {
 			throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 		}
 

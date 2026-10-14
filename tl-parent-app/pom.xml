@@ -227,6 +227,7 @@
 				<executions>
 					<execution>
 						<id>build-version-info</id>
+						<phase>prepare-package</phase>
 						<goals>
 							<goal>create-version-info</goal>
 						</goals>
@@ -238,6 +239,7 @@
 					
 					<execution>
 						<id>build-app</id>
+						<phase>package</phase>
 						<goals>
 							<goal>app</goal>
 						</goals>

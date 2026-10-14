@@ -72,6 +72,21 @@ public class TestHybridQuery extends TestCase {
 	}
 
 	/**
+	 * The meaning side answers what is near the query, not the nearest of what is far: with a floor,
+	 * the far filler is not found by meaning, and the search is done.
+	 */
+	public void testFarChunksAreNotFoundByMeaning() throws IOException {
+		put("Meaning:1", "A", "Anodised base plate.", near(0.05));
+
+		HybridSearch.Result open = meaningOnly(0f);
+		HybridSearch.Result floored = meaningOnly(0.5f);
+
+		assertTrue("Without a floor, the far filler fills the page.", open.hits().size() > 1);
+		assertEquals(List.of("Meaning:1"), floored.hits().stream().map(HybridSearch.ObjectHit::object).toList());
+		assertTrue("Nothing deeper is nearer, so the search is done.", floored.exhausted());
+	}
+
+	/**
 	 * An object both sides find ranks above objects only one side finds.
 	 */
 	public void testAgreementRanksFirst() throws IOException {
@@ -153,7 +168,7 @@ public class TestHybridQuery extends TestCase {
 			Query like = HybridSearch.like(searcher, _index.analyzer(),
 				List.of("Hydraulic pump with pressure relief valve."));
 			return HybridSearch.search(searcher, new HybridSearch.Request(like, null,
-				IndexFilter.NONE.excluding(Set.of("Seed:1")), 10, 4, Rrf.DEFAULT)).hits();
+				IndexFilter.NONE.excluding(Set.of("Seed:1")), 10, 4, Rrf.DEFAULT, 0f)).hits();
 		});
 		assertEquals("Twin:1", hits.get(0).object());
 		assertNull(find(hits, "Seed:1"));
@@ -170,7 +185,12 @@ public class TestHybridQuery extends TestCase {
 
 	private List<HybridSearch.ObjectHit> search(String words, IndexFilter filter, float[] vector) throws IOException {
 		return _index.search(searcher -> new ArrayList<>(HybridSearch.search(searcher, new HybridSearch.Request(
-			HybridSearch.words(_index.analyzer(), words), vector, filter, 50, 4, Rrf.DEFAULT)).hits()));
+			HybridSearch.words(_index.analyzer(), words), vector, filter, 50, 4, Rrf.DEFAULT, 0f)).hits()));
+	}
+
+	private HybridSearch.Result meaningOnly(float minSimilarity) throws IOException {
+		return _index.search(searcher -> HybridSearch.search(searcher,
+			new HybridSearch.Request(null, _query, IndexFilter.NONE, 50, 4, Rrf.DEFAULT, minSimilarity)));
 	}
 
 	/** A vector close to the query: the smaller the noise, the closer. */

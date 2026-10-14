@@ -311,7 +311,7 @@ public class TestIndexSync extends BasicTestCase {
 	private static List<String> search(AiIndex index, String words, IndexFilter filter) throws IOException {
 		return index.sync().withServing(serving -> serving.index().search(searcher -> {
 			HybridSearch.Result result = HybridSearch.search(searcher, new HybridSearch.Request(
-				HybridSearch.words(serving.index().analyzer(), words), null, filter, 50, 4, Rrf.DEFAULT));
+				HybridSearch.words(serving.index().analyzer(), words), null, filter, 50, 4, Rrf.DEFAULT, 0f));
 			return result.hits().stream().map(HybridSearch.ObjectHit::object).toList();
 		}));
 	}

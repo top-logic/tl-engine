@@ -43,6 +43,12 @@ import org.apache.lucene.util.QueryBuilder;
  * candidates by the exact dot product of the raw float vectors, which the quantized format keeps.
  * With 4 times, recall@10 against exact search was 1.0 in the scout's measurement.
  * </p>
+ *
+ * <p>
+ * <b>Near, not only nearest.</b> The graph answers the nearest chunks however far they are, so a
+ * query that nothing means answers unrelated text by meaning. A chunk whose exact cosine is below
+ * {@link Request#minSimilarity()} is not found by meaning; words can still find it.
+ * </p>
  */
 public final class HybridSearch {
 
@@ -72,8 +78,12 @@ public final class HybridSearch {
 	 *        How many times the depth the vector graph is asked for, before the exact re-score.
 	 * @param fusion
 	 *        How the two rankings are fused.
+	 * @param minSimilarity
+	 *        The lowest cosine to the query vector a chunk of the meaning side needs; a chunk below it
+	 *        is not found by meaning. 0 or less finds the nearest chunks however far they are.
 	 */
-	public record Request(Query words, float[] vector, IndexFilter filter, int depth, int overfetch, Rrf fusion) {
+	public record Request(Query words, float[] vector, IndexFilter filter, int depth, int overfetch, Rrf fusion,
+			float minSimilarity) {
 		// A plain carrier.
 	}
 
@@ -188,12 +198,23 @@ public final class HybridSearch {
 
 		List<ScoreDoc> meaningChunks = List.of();
 		int knnRead = 0;
+		boolean farReached = false;
 		if (request.vector() != null) {
 			float[] vector = Vectors.normalized(request.vector());
 			int k = Math.min(MAX_KNN, Math.max(depth, depth * request.overfetch()));
 			TopDocs candidates = searcher.search(new KnnFloatVectorQuery(IndexSchema.VECTOR, vector, k, filter), k);
 			knnRead = candidates.scoreDocs.length;
 			meaningChunks = rescore(searcher, vector, candidates.scoreDocs, depth);
+			int near = 0;
+			while (near < meaningChunks.size() && meaningChunks.get(near).score >= request.minSimilarity()) {
+				near++;
+			}
+			if (request.minSimilarity() > 0 && near < meaningChunks.size()) {
+				// The rest is ordered by the exact cosine, so nothing deeper in the graph is nearer:
+				// the meaning side is done.
+				meaningChunks = meaningChunks.subList(0, near);
+				farReached = true;
+			}
 		}
 
 		Map<String, Side> words = collapse(stored, wordChunks);
@@ -223,7 +244,8 @@ public final class HybridSearch {
 		List<ObjectHit> hits = new ArrayList<>(fused.values());
 		hits.sort(Comparator.comparingDouble(ObjectHit::score).reversed().thenComparing(ObjectHit::object));
 		boolean exhausted = wordChunks.size() < depth
-			&& (request.vector() == null || knnRead < Math.min(MAX_KNN, Math.max(depth, depth * request.overfetch())));
+			&& (request.vector() == null || farReached
+				|| knnRead < Math.min(MAX_KNN, Math.max(depth, depth * request.overfetch())));
 		return new Result(hits, wordChunks.size() + knnRead, exhausted);
 	}
 

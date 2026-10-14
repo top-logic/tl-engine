@@ -143,7 +143,7 @@ public class TestIndexRecall extends TestCase {
 		for (float[] query : _queries) {
 			List<String> found = _index.search(searcher -> {
 				HybridSearch.Result result = HybridSearch.search(searcher,
-					new HybridSearch.Request(null, query, filter, TOP, 4, Rrf.DEFAULT));
+					new HybridSearch.Request(null, query, filter, TOP, 4, Rrf.DEFAULT, 0f));
 				List<String> objects = new ArrayList<>();
 				for (HybridSearch.ObjectHit hit : result.hits()) {
 					assertTrue("A hit passes the filter.", passes.test(index(hit.object())));

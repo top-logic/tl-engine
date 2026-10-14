@@ -65,7 +65,7 @@ public final class AiIndex {
 			config.getChunking().getMaxTextChars(), embedder, fingerprint(config, embedder), config.getBatchSize(),
 			config.getRevisionSlice(), config.getBuildStepMillis()));
 		_search = new IndexSearch(_sync, _types, embedder, new ReadableScopes(config.getReadableScopes()), kb,
-			config.getMaxCandidates());
+			config.getMaxCandidates(), config.getMinSimilarity());
 	}
 
 	/**

@@ -41,6 +41,9 @@ public interface AiIndexConfig extends ConfigurationItem {
 	/** Configuration name of {@link #getReadableScopes()}. */
 	String READABLE_SCOPES = "readable-scopes";
 
+	/** Configuration name of {@link #getMinSimilarity()}. */
+	String MIN_SIMILARITY = "min-similarity";
+
 	/** Configuration name of {@link #getMaxCandidates()}. */
 	String MAX_CANDIDATES = "max-candidates";
 
@@ -112,6 +115,21 @@ public interface AiIndexConfig extends ConfigurationItem {
 	@Name(READABLE_SCOPES)
 	@Nullable
 	Expr getReadableScopes();
+
+	/**
+	 * The lowest cosine between the query and a chunk that finds the chunk by meaning.
+	 *
+	 * <p>
+	 * Without it, a search answers the nearest chunks also when none of them is near: a query that
+	 * nothing in the index means gets unrelated objects. The value depends on the model: measure the
+	 * cosine of related and of unrelated texts of the application and put it between. 0 switches it
+	 * off.
+	 * </p>
+	 *
+	 * @see #MIN_SIMILARITY
+	 */
+	@Name(MIN_SIMILARITY)
+	float getMinSimilarity();
 
 	/**
 	 * How many chunks each side of a search reads at most, when it searches deeper because the

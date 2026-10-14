@@ -116,6 +116,8 @@ public final class IndexSearch {
 
 	private final int _maxCandidates;
 
+	private final float _minSimilarity;
+
 	private final Rrf _fusion;
 
 	private Resolver _resolver = CHECKED;
@@ -126,13 +128,14 @@ public final class IndexSearch {
 	 * Creates an {@link IndexSearch}.
 	 */
 	public IndexSearch(IndexSync sync, IndexedTypes types, Embedder embedder, ReadableScopes scopes, KnowledgeBase kb,
-			int maxCandidates) {
+			int maxCandidates, float minSimilarity) {
 		_sync = sync;
 		_types = types;
 		_embedder = embedder;
 		_scopes = scopes;
 		_kb = kb;
 		_maxCandidates = maxCandidates;
+		_minSimilarity = minSimilarity;
 		_fusion = Rrf.DEFAULT;
 	}
 
@@ -374,7 +377,7 @@ public final class IndexSearch {
 		while (true) {
 			int fixedDepth = depth;
 			HybridSearch.Result result = index.search(searcher -> HybridSearch.search(searcher,
-				new HybridSearch.Request(words, vector, filter, fixedDepth, OVERFETCH, _fusion)));
+				new HybridSearch.Request(words, vector, filter, fixedDepth, OVERFETCH, _fusion, _minSimilarity)));
 			chunksRead += result.chunksRead();
 			List<Hit> page = new ArrayList<>(limit);
 			boolean unchecked = false;

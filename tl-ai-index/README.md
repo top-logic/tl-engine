@@ -59,6 +59,7 @@ Then give an agent the tools `index.search` and `index.similar`.
 | `chunking` | `max-chars` (default 1200), `overlap-sentences` (1), `page-marker` (a regex for a line that starts a page, the page number as group 1), `max-text-chars` (2,000,000 per text). |
 | `types/type` | `name` (qualified class; applies to sub classes without their own entry), `<text attribute=".."/>` or `<text name=".." script=".." reads="a,b"/>`, `scope` (script: object -> scope objects), `<keywords>`, `label-prefix` (default true: the object's label goes in front of each chunk when it is embedded). |
 | `readable-scopes` | Script without arguments: every scope object a reader may search in. Run as the reader, filtered by the reader's rights. Without it, scoped types are filtered by type only. |
+| `min-similarity` | The lowest cosine to the query that finds a chunk by meaning (default 0: off). Without it, a query that nothing means still gets the nearest, unrelated chunks. Model-dependent: measure related and unrelated texts of the application and set it between. |
 | `max-candidates` | How deep a search goes when the reader may not read the best hits (2000). |
 | `batch-size`, `revision-slice`, `build-step-millis` | Worker tuning: objects per batch (64), revisions per commit (1000), length of a build step (10 s). |
 

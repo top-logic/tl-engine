@@ -5,6 +5,7 @@
  */
 package com.top_logic.xio.importer.binding;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -126,10 +127,22 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	 */
 	protected abstract TLObject createObject(TLClass type);
 
+	/**
+	 * Adds the given element to the given multiple reference, if it is not yet contained.
+	 *
+	 * <p>
+	 * Linking is idempotent: An object that is imported multiple times (e.g. an object that joins a
+	 * duplicate) is linked only once.
+	 * </p>
+	 */
 	@Override
 	public void addValue(ImportPart handler, Object obj, String part, Object element) {
 		TLObject self = (TLObject) obj;
 		TLStructuredTypePart referencePart = self.tType().getPartOrFail(part);
+		Object currentValue = self.tValue(referencePart);
+		if (currentValue instanceof Collection<?> collection && collection.contains(element)) {
+			return;
+		}
 		self.tAdd(referencePart, element);
 	}
 

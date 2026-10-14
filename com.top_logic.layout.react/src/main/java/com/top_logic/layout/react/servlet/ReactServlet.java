@@ -66,6 +66,8 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue.PendingDownload;
+import com.top_logic.layout.servlet.ContentDisposition;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
@@ -240,6 +242,8 @@ public class ReactServlet extends TopLogicServlet {
 		String pathInfo = request.getPathInfo();
 		if ("/data".equals(pathInfo)) {
 			handleDataDownload(request, response, session);
+		} else if ("/download".equals(pathInfo)) {
+			handleDownload(request, response, session);
 		} else if ("/tooltip".equals(pathInfo)) {
 			handleTooltipRequest(request, response, session);
 		} else if ("/i18n".equals(pathInfo)) {
@@ -277,14 +281,53 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
+		sendData(response, data);
+	}
+
+	/**
+	 * Sends the content of the given file as the response, with its content type and - where it is
+	 * known - its size.
+	 */
+	private static void sendData(HttpServletResponse response, BinaryData data) throws IOException {
 		response.setContentType(data.getContentType());
 		long size = data.getSize();
 		if (size >= 0) {
 			response.setContentLengthLong(size);
 		}
-
 		try (OutputStream out = response.getOutputStream()) {
 			data.deliverTo(out);
+		}
+	}
+
+	/**
+	 * Sends a file a command {@link SSEUpdateQueue#deliverDownload(BinaryData) delivered} to the
+	 * window as an attachment, so that the browser saves it instead of displaying it.
+	 *
+	 * <p>
+	 * A delivered file is sent once: a second request for the same key, like a request for a key
+	 * that was never delivered, is answered as not found.
+	 * </p>
+	 */
+	private void handleDownload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		String windowName = request.getParameter("windowName");
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		PendingDownload download = window.queue().takeDownload(request.getParameter("key"));
+		if (download == null) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "No such download.");
+			return;
+		}
+		try {
+			BinaryData data = download.data();
+			ContentDisposition.setAttachment(response, data.getName());
+			response.setHeader("Cache-Control", "no-store");
+			sendData(response, data);
+		} finally {
+			download.discard();
 		}
 	}
 

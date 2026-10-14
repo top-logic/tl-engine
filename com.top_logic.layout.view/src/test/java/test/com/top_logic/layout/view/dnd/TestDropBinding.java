@@ -221,6 +221,21 @@ public class TestDropBinding extends TestCase {
 	}
 
 	/**
+	 * The modes for a kind are those of the drops accepting it: a table inserting the rows of one kind
+	 * among its rows and dropping another kind onto a row lets the client split a row in halves for
+	 * the first kind and take it as a whole for the second - in thirds, the middle of a row would
+	 * refuse an insertion (review of !1838).
+	 */
+	public void testModesPerKind() {
+		DropBinding binding = new DropBinding(_context,
+			List.of(orderedDrop(ROW_KIND, _onTable, null), rowDrop(OTHER_KIND, _onRow)));
+
+		assertEquals(List.of(DropMode.ORDERED, DropMode.ONTO), List.copyOf(binding.dropModes()));
+		assertEquals(Set.of(DropMode.ORDERED), binding.dropModes(ROW_KIND));
+		assertEquals(Set.of(DropMode.ONTO), binding.dropModes(OTHER_KIND));
+	}
+
+	/**
 	 * A drop accepting any drag takes a drag of a kind as well as one without a kind.
 	 */
 	public void testDropAcceptingAnyTakesKindedAndUnkindedDrags() {

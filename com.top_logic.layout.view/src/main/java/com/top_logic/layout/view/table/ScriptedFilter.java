@@ -144,6 +144,8 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 			.label(setup.label())
 			.width(ColumnProviderService.getInstance().defaultWidth(setup.type()))
 			.renderer(cell -> CellContent.text(ColumnProviderService.label(cell.value())))
+			// The cell pairs the value with its row for the filter; an export writes the value.
+			.exportValue(ScriptedCell::value)
 			.sort(() -> Comparator.comparing((ScriptedCell cell) -> ColumnProviderService.label(cell.value())))
 			.filter(this)
 			.build();

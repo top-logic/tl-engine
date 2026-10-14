@@ -25,9 +25,16 @@ function formatRelative(ts: number, locale: string): string {
   return new Date(ts).toLocaleDateString(locale);
 }
 
+/** The classes of the displayed time: a design-system text (tl-text) in the label typography. */
+const TEXT_CLASSES = ['tl-text', 'tl-type-label'];
+
 /**
  * Displays a timestamp as periodically refreshed relative time ("5 minutes ago"); the exact
  * server-formatted timestamp is shown as tooltip.
+ *
+ * The time is a design-system text (tl-text) in the secondary tone: in a table cell it fills the
+ * cell and ends in an ellipsis like any other read value, and without a timestamp it is empty and
+ * takes no room.
  *
  * State:
  * - timestamp: number | null (epoch milliseconds)
@@ -47,11 +54,11 @@ const TLRelativeTime: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   if (timestamp == null) {
-    return <span id={controlId} className={rootClassName(state, 'tlRelativeTime tlRelativeTime--empty')} />;
+    return <span id={controlId} className={rootClassName(state, ...TEXT_CLASSES)} data-tl-tone="secondary" />;
   }
 
   return (
-    <span id={controlId} className={rootClassName(state, 'tlRelativeTime')} {...tooltipProps(label)}>
+    <span id={controlId} className={rootClassName(state, ...TEXT_CLASSES)} data-tl-tone="secondary" {...tooltipProps(label)}>
       {formatRelative(timestamp, locale)}
     </span>
   );

@@ -80,8 +80,8 @@ public class InspectedNodeElement implements UIElement {
 	 */
 	private static final String DESCRIPTION_SEPARATOR = " · ";
 
-	/** Display of the address: emphasized. */
-	private static final String ADDRESS_CSS_CLASS = "tlText--strong";
+	/** The type class of the strong body text. */
+	private static final String ADDRESS_CSS_CLASS = "tl-type-body-strong";
 
 	/**
 	 * Configuration for {@link InspectedNodeElement}.

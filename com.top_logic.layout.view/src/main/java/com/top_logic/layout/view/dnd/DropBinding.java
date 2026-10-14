@@ -222,6 +222,21 @@ public class DropBinding implements DropTarget {
 	}
 
 	/**
+	 * The modes of the declared drops that are currently {@link Drop#isEnabled() enabled} and accept
+	 * a drag of the given kind, in declaration order.
+	 */
+	@Override
+	public Set<DropMode> dropModes(String kind) {
+		Set<DropMode> result = new LinkedHashSet<>();
+		for (Drop drop : _drops) {
+			if (drop.isEnabled() && drop.accepted().accepts(kind)) {
+				result.add(drop.mode());
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Decides which declared drop applies the given drop, and where.
 	 *
 	 * <p>

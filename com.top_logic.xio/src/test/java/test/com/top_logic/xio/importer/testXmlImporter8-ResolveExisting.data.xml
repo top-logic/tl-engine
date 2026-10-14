@@ -1,0 +1,10 @@
+<data>
+	<items>
+		<item id="e1" name="updated"/>
+		<item id="n1" name="new1" other="e2"/>
+		<item id="n2" name="new2" other="n1"/>
+	</items>
+	<plain>
+		<item id="e3" name="duplicate"/>
+	</plain>
+</data>

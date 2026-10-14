@@ -313,7 +313,7 @@ public class XMLProperties extends ManagedClass {
 	 * The attribute name for the value stored in the entry (is "encrypt"). The value must be "true"
 	 * or "false".
 	 */
-	private static final String ENCRYPT_ATTR = "encrypt";
+	public static final String ENCRYPT_ATTR = "encrypt";
 
     /** The Document containig the actual properties */
     private Document  document;
@@ -514,7 +514,7 @@ public class XMLProperties extends ManagedClass {
 			}
 			String encryptAttr = reader.getAttributeValue(null, ENCRYPT_ATTR);
 			if (Boolean.TRUE.toString().equals(encryptAttr)) {
-				value = decryptValue(key, value);
+				value = decryptValue(reader, key, value);
 			}
 			config.put(key, value);
 			XMLStreamUtil.skipToMatchingEndTag(reader);
@@ -598,18 +598,22 @@ public class XMLProperties extends ManagedClass {
 		return properties;
     }
 
-	private String decryptValue(String key, String value) {
+	private String decryptValue(XMLStreamReader reader, String key, String value) {
 		if (!StringServices.isEmpty(value)) {
 			// do not decrypt empty values, just leave them empty
 			try {
 				value = ConfigurationEncryption.decrypt(value);
 			} catch (RuntimeException ex) {
+				// The value is not part of the error: a value that cannot be decrypted is in most
+				// cases a secret configured in plain text.
 				StringBuilder msg = new StringBuilder();
-				msg.append("Unable to decode '");
-				msg.append(value);
-				msg.append("' as value for key '");
+				msg.append("Unable to decrypt the value of key '");
 				msg.append(key);
-				msg.append("'.");
+				msg.append("' marked with ");
+				msg.append(ENCRYPT_ATTR);
+				msg.append("='true' ");
+				msg.append(XMLStreamUtil.atLocation(reader));
+				msg.append(".");
 				throw new ConfigurationError(msg.toString(), ex);
 			}
 		}

@@ -1,5 +1,7 @@
 # React Tree Table Support Implementation Plan
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` are now `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add tree table support to ReactTableControl — detect TreeTableModel, enrich row state with depth/expansion, add expand/collapse command, render tree indentation and chevrons on the client.

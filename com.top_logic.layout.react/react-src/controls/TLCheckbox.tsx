@@ -75,7 +75,6 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
       aria-readonly={readOnly || undefined}
       className={rootClassName(state, cls)}
       {...(readOnly ? {} : fieldStateAttrs(state))}
-      aria-checked={triState && value !== true && value !== false ? 'mixed' : value === true}
     />
   );
 };

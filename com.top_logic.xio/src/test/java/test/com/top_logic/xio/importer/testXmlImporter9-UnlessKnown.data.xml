@@ -1,0 +1,14 @@
+<data>
+	<item id="e1" name="skipped">
+		<child id="c1"/>
+	</item>
+	<update ref="n2" note="forward"/>
+	<item id="n1" name="new1" other="missing1" others="e1 missing3 n2">
+		<child id="c2"/>
+	</item>
+	<item id="n1" name="again">
+		<child id="c3"/>
+	</item>
+	<item id="n2" name="new2" other="n1"/>
+	<update ref="missing2" note="lost"/>
+</data>

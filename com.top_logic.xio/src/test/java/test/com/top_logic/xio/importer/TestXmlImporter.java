@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.stream.StreamSource;
@@ -21,14 +22,21 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey.LiteralKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
@@ -62,6 +70,10 @@ public class TestXmlImporter extends TestCase {
 		TLObject b2 = (TLObject) result.tValueByName("defaultValue");
 		assertSame(bs.get(1), b2);
 		assertEquals("b2", b2.tValueByName("name"));
+
+		// Forward references in a multi-reference.
+		assertEquals(List.of(bs.get(1), bs.get(2)), bs.get(0).tValueByName("next"));
+		assertEquals(List.of(bs.get(0)), bs.get(2).tValueByName("next"));
 	}
 
 	public void testImport2() throws XMLStreamException, IOException {
@@ -128,7 +140,28 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("a5", a7others.get(4).tValueByName("name"));
 	}
 
-	public void testI18NImport() throws XMLStreamException, IOException {
+	public void testJoinDuplicatesLinksOnce() throws XMLStreamException, IOException {
+		TLObject result = importXml(
+			"testXmlImporter7-JoinDuplicates.model.xml",
+			"testXmlImporter7-JoinDuplicates.importer.xml",
+			"testXmlImporter7-JoinDuplicates.data.xml");
+		assertNotNull(result);
+
+		Collection<? extends TLObject> set = collection(result.tValueByName("set"));
+		assertEquals(2, set.size());
+
+		List<? extends TLObject> list = list(result.tValueByName("list"));
+		assertEquals(2, list.size());
+
+		TLObject a1 = list.get(0);
+		assertEquals("a1", a1.tValueByName("name"));
+		assertEquals("second", a1.tValueByName("value"));
+		assertEquals("a2", list.get(1).tValueByName("name"));
+		assertTrue(set.contains(a1));
+		assertTrue(set.contains(list.get(1)));
+	}
+
+	public void testI18NImport()throws XMLStreamException, IOException {
 		TLObject result = importXml(
 			"testXmlImporter5-i18n.model.xml",
 			"testXmlImporter5-i18n.importer.xml",
@@ -144,13 +177,7 @@ public class TestXmlImporter extends TestCase {
 		I18NBundle logResources = Resources.getLogInstance();
 		XmlImporter importer =
 			XmlImporter.newInstance(log.asI18NLog(logResources), resource("testXmlImporter6-context.importer.xml"));
-		TLModel model = new TLModelImpl();
-		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
-			FileManager.getInstance().getData("/WEB-INF/model/tl.core.model.xml"));
-		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
-			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
-		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
-			resource("testXmlImporter6-context.model.xml"));
+		TLModel model = loadModel(log, "testXmlImporter6-context.model.xml");
 
 		TLClass containerType =
 			(TLClass) model.getModule("test.com.top_logic.xio.importer.context").getType("Container");
@@ -170,6 +197,192 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("z", elements.get(2).tValueByName("name"));
 	}
 
+	public void testResolveExisting() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		I18NBundle logResources = Resources.getLogInstance();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(logResources),
+			resource("testXmlImporter8-ResolveExisting.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter8-ResolveExisting.model.xml");
+
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test8");
+		TLClass containerType = (TLClass) module.getType("Container");
+		TLClass itemType = (TLClass) module.getType("Item");
+
+		TLObject container = TransientObjectFactory.INSTANCE.createObject(containerType, null, null, null);
+		container.tUpdateByName("evaluations", 0);
+		TLObject e1 = existingItem(container, itemType, "e1");
+		TLObject e2 = existingItem(container, itemType, "e2");
+		TLObject e3 = existingItem(container, itemType, "e3");
+
+		ModelBinding binding = new TransientModelBinding(model, false);
+		importer.importModel(binding,
+			new StreamSource(resource("testXmlImporter8-ResolveExisting.data.xml").getStream()), container);
+
+		// The existing objects are computed once, although the handler is applied to each item and
+		// several IDs are not found.
+		assertEquals(1, ((Number) container.tValueByName("evaluations")).intValue());
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(6, elements.size());
+
+		// Joined with the existing object instead of creating a new one.
+		assertSame(e1, elements.get(0));
+		assertEquals("updated", e1.tValueByName("name"));
+		assertSame(e2, elements.get(1));
+		assertEquals("old-e2", e2.tValueByName("name"));
+
+		// An unknown ID creates a new object, a reference resolves to an existing object.
+		TLObject n1 = elements.get(3);
+		assertEquals("new1", n1.tValueByName("name"));
+		assertSame(e2, n1.tValueByName("other"));
+
+		TLObject n2 = elements.get(4);
+		assertEquals("new2", n2.tValueByName("name"));
+		assertSame(n1, n2.tValueByName("other"));
+
+		// Outside the scope of the lookup, the existing object is not found.
+		TLObject duplicate = elements.get(5);
+		assertNotSame(e3, duplicate);
+		assertEquals("e3", duplicate.tValueByName("extId"));
+		assertEquals("duplicate", duplicate.tValueByName("name"));
+		assertEquals("old-e3", e3.tValueByName("name"));
+	}
+
+	public void testUnlessKnownAndIgnoreUnresolved() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter9-UnlessKnown.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter9-UnlessKnown.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test9");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+		TLObject e1 = existingItem(container, (TLClass) module.getType("Item"), "e1");
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter9-UnlessKnown.data.xml").getStream()), container);
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(3, elements.size());
+
+		// Known through the resolve-existing lookup: skipped with its content.
+		assertSame(e1, elements.get(0));
+		assertEquals("old-e1", e1.tValueByName("name"));
+		assertEquals(0, list(e1.tValueByName("children")).size());
+
+		// Unknown: imported with its content. The second occurrence is known and skipped.
+		TLObject n1 = elements.get(1);
+		assertEquals("new1", n1.tValueByName("name"));
+		List<? extends TLObject> n1Children = list(n1.tValueByName("children"));
+		assertEquals(1, n1Children.size());
+		assertEquals("c2", n1Children.get(0).tValueByName("extId"));
+
+		// An ignored unresolved reference stays unset.
+		assertNull(n1.tValueByName("other"));
+		assertNull(n1.tValueByName("note"));
+
+		// An ignored unresolved ID is left out of a multi-reference, the others (including a
+		// forward reference) are stored in order.
+		assertEquals(List.of(e1, elements.get(2)), n1.tValueByName("others"));
+
+		// An ignorable reference to an ID defined later is resolved.
+		TLObject n2 = elements.get(2);
+		assertEquals("new2", n2.tValueByName("name"));
+		assertSame(n1, n2.tValueByName("other"));
+		assertEquals("forward", n2.tValueByName("note"));
+	}
+
+	public void testUnresolvedReported() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter9-UnlessKnown.importer.xml"));
+		TLModel model = loadModel(new AssertProtocol(), "testXmlImporter9-UnlessKnown.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test9");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter9-UnlessKnown-errors.data.xml").getStream()), container);
+
+		String errors = String.join("\n", importLog.getErrors());
+		assertEquals(errors, 4, importLog.getErrors().size());
+		assertTrue(errors, errors.contains("\"missing1\""));
+		assertTrue(errors, errors.contains("\"missing2\""));
+		assertTrue(errors, errors.contains("\"missing5\""));
+		assertTrue(errors, errors.contains("\"missing6\""));
+
+		// A required unresolved ID is reported and left out of a multi-reference.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		TLObject strictItem = elements.get(0);
+		TLObject n1 = elements.get(1);
+		assertEquals("n1", n1.tValueByName("extId"));
+		assertEquals(List.of(n1), strictItem.tValueByName("others"));
+	}
+
+	public void testLanguageFromInput() throws XMLStreamException, IOException {
+		assertEquals("Test expects English as fallback language.", Locale.ENGLISH,
+			ResourcesModule.getInstance().getFallbackLocale());
+
+		TLObject root = importXml(
+			"testXmlImporter10-Language.model.xml",
+			"testXmlImporter10-Language.importer.xml",
+			"testXmlImporter10-Language.data.xml");
+
+		List<? extends TLObject> as = list(root.tValueByName("as"));
+		assertEquals(3, as.size());
+
+		// Language from the variable bound by the outer element, reduced to the language.
+		TLObject a1 = as.get(0);
+		assertTranslations(Map.of(Locale.GERMAN, "Eins"), a1.tValueByName("label"));
+		// Fixed language tag, reduced to the language.
+		assertTranslations(Map.of(Locale.GERMAN, "Fest"), a1.tValueByName("fixed"));
+		// Language from an attribute.
+		assertTranslations(Map.of(Locale.FRENCH, "Texte", Locale.ENGLISH, "Text"), a1.tValueByName("text"));
+		// The missing fallback translation is filled.
+		assertTranslations(Map.of(Locale.GERMAN, "Nur deutsch", Locale.ENGLISH, "Nur deutsch"),
+			a1.tValueByName("other"));
+
+		// An inner element overrides the language for its subtree.
+		TLObject a2 = as.get(1);
+		assertTranslations(Map.of(Locale.ENGLISH, "Two"), a2.tValueByName("label"));
+		assertTranslations(Map.of(Locale.ENGLISH, "Only English"), a2.tValueByName("other"));
+
+		// Without an own language, the outer language stays in effect. An existing fallback
+		// translation is not overwritten.
+		TLObject a3 = as.get(2);
+		assertTranslations(Map.of(Locale.GERMAN, "Drei"), a3.tValueByName("label"));
+		assertTranslations(Map.of(Locale.ENGLISH, "English", Locale.GERMAN, "Deutsch"), a3.tValueByName("other"));
+	}
+
+	private static void assertTranslations(Map<Locale, String> expected, Object resKey) {
+		assertEquals(expected, ((LiteralKey) resKey).getTranslations());
+	}
+
+	public void testLanguageOptionsExclusive() {
+		assertInvalidImporter("testXmlImporter10-Language-none.importer.xml");
+		assertInvalidImporter("testXmlImporter10-Language-two.importer.xml");
+	}
+
+	private void assertInvalidImporter(String importerResource) {
+		BufferingProtocol log = new BufferingProtocol();
+		try {
+			XmlImporter.readImportConfig(new DefaultInstantiationContext(log), resource(importerResource));
+			fail("Invalid language options not detected: " + importerResource);
+		} catch (AbortExecutionException | ConfigurationError ex) {
+			// Expected.
+		}
+		String errors = String.join("\n", log.getErrors());
+		assertTrue(errors, errors.contains("Exactly one of"));
+	}
+
+	private TLObject existingItem(TLObject container, TLClass itemType, String extId) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(itemType, null, null, null);
+		result.tUpdateByName("extId", extId);
+		result.tUpdateByName("name", "old-" + extId);
+		container.tAddByName("elements", result);
+		return result;
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> collection(Object v) {
 		return v == null ? Collections.emptyList() : (Collection<TLObject>) v;
@@ -186,14 +399,19 @@ public class TestXmlImporter extends TestCase {
 		I18NBundle logResources = Resources.getLogInstance();
 		XmlImporter importer =
 			XmlImporter.newInstance(log.asI18NLog(logResources), resource(importerResource));
+		TLModel model = loadModel(log, modelResource);
+		ModelBinding binding = new TransientModelBinding(model, false);
+		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));
+	}
+
+	private TLModel loadModel(Protocol log, String modelResource) {
 		TLModel model = new TLModelImpl();
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.core.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE, resource(modelResource));
-		ModelBinding binding = new TransientModelBinding(model, false);
-		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));
+		return model;
 	}
 
 	private ClassRelativeBinaryContent resource(String importerResource) {

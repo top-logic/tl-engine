@@ -198,7 +198,7 @@ element of the control displaying that element, beside the classes the control's
 
 ```html
 <div class="tlStack tlStack--column tlStack--gap-normal tlDemoHero">
-  <span class="tlText tlDemoHeroTitle">Welcome</span>
+  <span class="tl-text tl-type-body tlDemoHeroTitle">Welcome</span>
 </div>
 ```
 
@@ -225,7 +225,7 @@ element, e.g. Material UI (layer `mui`), whatever the specificity and the positi
 rule `.tlDemoGlass { background: … }` therefore beats the background of the MUI `Card` the element
 is rendered with. See [Cascade layers](doc:view-layer/theme-tokens#cascade-layers).
 
-A modifier class of a kind — `tlText--ellipsis`, `tlCard--outlined` — is not the way to reach one
+A modifier class of a kind — `tl-text--truncate`, `tlCard--outlined` — is not the way to reach one
 element. Those classes are what a control writes for the display options of its own kind, so writing
 one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the
 one element only by accident, since the engine writes the same class on every element that carries

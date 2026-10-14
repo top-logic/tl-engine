@@ -307,22 +307,49 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 		_nodes.clear();
 		_parents.clear();
 
-		List<Row<R>> displayed = new ArrayList<>();
-		for (N root : sortedSiblings(_structure.roots(), _nodeOrder)) {
-			visit(null, root, 0, displayed);
-		}
-		_displayed = displayed;
+		_displayed = treeRows(false);
 	}
 
-	private void visit(N parent, N node, int depth, List<Row<R>> out) {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The descendants of a collapsed node follow it, as those of an expanded one do. Of a tree that
+	 * is not {@link TreeStructure#isFinite() finite} only the displayed nodes are answered, since
+	 * its complete node set cannot be enumerated.
+	 * </p>
+	 */
+	@Override
+	public List<Row<R>> allRows() {
+		if (!_structure.isFinite()) {
+			return List.copyOf(_displayed);
+		}
+		return treeRows(true);
+	}
+
+	/**
+	 * The rows of the tree in display order.
+	 *
+	 * @param all
+	 *        Whether the descendants of collapsed nodes are included.
+	 */
+	private List<Row<R>> treeRows(boolean all) {
+		List<Row<R>> result = new ArrayList<>();
+		for (N root : sortedSiblings(_structure.roots(), _nodeOrder)) {
+			visit(null, root, 0, result, all);
+		}
+		return result;
+	}
+
+	private void visit(N parent, N node, int depth, List<Row<R>> out, boolean all) {
 		if (_predicate != null && !isVisible(node, _predicate)) {
 			return;
 		}
 		Row<R> row = row(parent, node, depth);
 		out.add(row);
-		if (row.expanded()) {
+		if (row.expanded() || (all && !_structure.isLeaf(node))) {
 			for (N child : sortedSiblings(_structure.children(node), _nodeOrder)) {
-				visit(node, child, depth + 1, out);
+				visit(node, child, depth + 1, out, all);
 			}
 		}
 	}

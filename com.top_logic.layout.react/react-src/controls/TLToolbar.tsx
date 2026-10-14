@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, tokenPx } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
 import { useRovingMenu } from './menu/Menu';
@@ -584,15 +584,7 @@ function metricsOf(root: HTMLElement, full: number[], compact: number[]): Metric
   const separator = separatorElement ? separatorElement.getBoundingClientRect().width : 1;
   // The trigger is rendered only once something overflows; it is an icon button, whose width is the
   // size-control token - read, not guessed.
-  return { full, compact, gap, itemGap, separator, trigger: tokenPx(rootStyle, '--tl-size-control') };
-}
-
-/** A length token in pixels; a token stated in rem is converted by the root font size. */
-function tokenPx(style: CSSStyleDeclaration, name: string): number {
-  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const v = style.getPropertyValue(name).trim();
-  const n = parseFloat(v);
-  return isNaN(n) ? 2 * rem : v.endsWith('rem') ? n * rem : n;
+  return { full, compact, gap, itemGap, separator, trigger: tokenPx(root, '--tl-size-control', 32) };
 }
 
 export default TLToolbar;

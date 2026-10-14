@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.table;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -36,11 +37,24 @@ public final class CellContentReactAdapter {
 	 * Creates a cell control for the given content.
 	 */
 	public static ReactControl toControl(ReactContext context, CellContent content) {
+		return toControl(context, content, null);
+	}
+
+	/**
+	 * Creates a cell control for the given content, its text drawn in the given type class.
+	 *
+	 * @param typeClass
+	 *        The type class of the design system (e.g. {@code tl-type-body-strong}) a text cell
+	 *        carries beside its own CSS class, or {@code null} for the type of the table. A cell
+	 *        that is no text - a checkbox, a control built by a {@link CellControlFactory} - keeps
+	 *        its own type.
+	 */
+	public static ReactControl toControl(ReactContext context, CellContent content, String typeClass) {
 		if (content instanceof CellContent.Text text) {
-			return new ReactTextControl(context, text.text());
+			return new ReactTextControl(context, text.text(), typeClass);
 		}
 		if (content instanceof CellContent.Labeled labeled) {
-			return new ReactTextControl(context, labeled.text(), labeled.cssClass());
+			return new ReactTextControl(context, labeled.text(), joinClasses(labeled.cssClass(), typeClass));
 		}
 		if (content instanceof CellContent.Editable editable) {
 			FieldModel field = editable.field();
@@ -49,16 +63,26 @@ public final class CellContentReactAdapter {
 			}
 			// Non-boolean inline editors are not wired yet; show the value read-only.
 			Object value = field.getValue();
-			return new ReactTextControl(context, value == null ? "" : String.valueOf(value));
+			return new ReactTextControl(context, value == null ? "" : String.valueOf(value), typeClass);
 		}
 		if (content instanceof CellContent.Raw raw) {
 			Object payload = raw.payload();
 			if (payload instanceof CellControlFactory factory) {
 				return factory.create(context);
 			}
-			return new ReactTextControl(context, payload == null ? "" : String.valueOf(payload));
+			return new ReactTextControl(context, payload == null ? "" : String.valueOf(payload), typeClass);
 		}
-		return new ReactTextControl(context, "");
+		return new ReactTextControl(context, "", typeClass);
+	}
+
+	private static String joinClasses(String cssClass, String typeClass) {
+		if (StringServices.isEmpty(cssClass)) {
+			return typeClass;
+		}
+		if (StringServices.isEmpty(typeClass)) {
+			return cssClass;
+		}
+		return cssClass + " " + typeClass;
 	}
 
 }

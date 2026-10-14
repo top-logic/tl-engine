@@ -30,3 +30,13 @@ export function rootClassName(
   const all = typeof configured === 'string' ? [...classes, configured] : classes;
   return all.filter(Boolean).join(' ');
 }
+
+/**
+ * The value of a `data-tl-state` attribute: the state words that apply, separated by spaces, or
+ * `undefined` - which leaves the attribute out - when none does. The design system reads each word
+ * with `[data-tl-state~="word"]`.
+ */
+export function stateAttr(...words: (string | false | null | undefined)[]): string | undefined {
+  const all = words.filter(Boolean).join(' ');
+  return all === '' ? undefined : all;
+}

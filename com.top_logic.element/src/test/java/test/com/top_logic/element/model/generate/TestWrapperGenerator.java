@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -36,7 +38,11 @@ import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.tooling.Workspace;
+import com.top_logic.element.meta.kbbased.AbstractElementFactory;
+import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.model.generate.WrapperGenerator;
+import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
+import com.top_logic.element.structured.wrap.StructuredElementWrapperFactory;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -51,6 +57,28 @@ public class TestWrapperGenerator extends TestCase {
 
 	private static final String MESSAGE_VALUE_INPUT = "This is \n a text with \r\n new lines";
 	private static final String MESSAGE_VALUE = "This is \n a text with \n new lines";
+
+	private static final String ATTRIBUTED_WRAPPER = AttributedWrapper.class.getName();
+
+	private static final String STRUCTURED_WRAPPER = AttributedStructuredElementWrapper.class.getName();
+
+	private static final String STRUCTURED_FACTORY = StructuredElementWrapperFactory.class.getName();
+
+	private static final String ELEMENT_FACTORY = AbstractElementFactory.class.getName();
+
+	private static final String MODULE_WITH_SINGLETON = "ticket29806.withSingleton";
+
+	private static final String MODULE_WITHOUT_SINGLETON = "ticket29806.withoutSingleton";
+
+	private static final String PACKAGE_WITH_SINGLETON = "test/ticket29806/singleton";
+
+	private static final String PACKAGE_WITHOUT_SINGLETON = "test/ticket29806/plain";
+
+	/**
+	 * Matches the class declaration of a generated class and captures its super class.
+	 */
+	private static final Pattern EXTENDS_PATTERN =
+		Pattern.compile("^public (?:abstract )?class \\w+ extends ([\\w.]+)", Pattern.MULTILINE);
 
 	public void testGenerate() throws Exception {
 		File root = BasicTestCase.createdCleanTestDir("TestWrapperGenerator");
@@ -125,6 +153,72 @@ public class TestWrapperGenerator extends TestCase {
 			WrapperGenerator.MODULE_OPTION, moduleName,
 			WrapperGenerator.LANG_OPTION, "de"
 		};
+	}
+
+	/**
+	 * The implementation class of a type extends the implementation class of the primary
+	 * generalization, independent of whether the module declares singletons (Ticket #29806).
+	 */
+	public void testImplementationBaseFollowsModelType() throws Exception {
+		File root = BasicTestCase.createdCleanTestDir("TestWrapperGeneratorImplementationBase");
+		File app1 = app1();
+
+		generate(root, app1, MODULE_WITH_SINGLETON);
+		generate(root, app1, MODULE_WITHOUT_SINGLETON);
+		compileSources(root);
+
+		String singletonImpl = PACKAGE_WITH_SINGLETON + "/impl/";
+		assertEquals(ATTRIBUTED_WRAPPER, superClass(root, singletonImpl + "PlainImpl"));
+		assertEquals(ATTRIBUTED_WRAPPER, superClass(root, singletonImpl + "RootImpl"));
+		assertEquals(STRUCTURED_WRAPPER, superClass(root, singletonImpl + "NodeImpl"));
+		assertEquals("NodeImpl", superClass(root, singletonImpl + "MarkedNodeImpl"));
+		assertFalse("No implementation for an abstract type without implementation binding.",
+			new File(root, singletonImpl + "MarkerImpl.java").exists());
+		assertEquals(ATTRIBUTED_WRAPPER, superClass(root, singletonImpl + "BoundImpl"));
+		assertEquals("BoundImpl", superClass(root, singletonImpl + "BoundChildImpl"));
+
+		String plainImpl = PACKAGE_WITHOUT_SINGLETON + "/impl/";
+		assertEquals(STRUCTURED_WRAPPER, superClass(root, plainImpl + "LeafImpl"));
+		assertEquals(ATTRIBUTED_WRAPPER, superClass(root, plainImpl + "OtherImpl"));
+
+		String singletonFactory = source(factoryFile(root, PACKAGE_WITH_SINGLETON));
+		assertEquals(STRUCTURED_FACTORY, superClassOf(singletonFactory));
+		assertTrue("Missing singleton lookup in factory.", singletonFactory.contains(" getRootSingleton("));
+
+		assertEquals(ELEMENT_FACTORY, superClassOf(source(factoryFile(root, PACKAGE_WITHOUT_SINGLETON))));
+	}
+
+	private void generate(File root, File app, String moduleName) throws Exception {
+		String[] args = {
+			WrapperGenerator.DEPLOY_OPTION, app.getAbsolutePath(),
+			WrapperGenerator.OUTPUT_DIR_OPTION, root.getAbsolutePath(),
+			WrapperGenerator.MODULE_OPTION, moduleName,
+			WrapperGenerator.LANG_OPTION, ""
+		};
+		WrapperGenerator.main(args);
+	}
+
+	private static File factoryFile(File root, String packagePath) {
+		File[] factories = new File(root, packagePath).listFiles((dir, name) -> name.endsWith("Factory.java"));
+		assertNotNull("No package generated: " + packagePath, factories);
+		assertEquals("Expected exactly one factory in " + packagePath, 1, factories.length);
+		return factories[0];
+	}
+
+	private static String superClass(File root, String classPath) throws IOException {
+		File file = new File(root, classPath + ".java");
+		assertTrue("Not generated: " + file, file.exists());
+		return superClassOf(source(file));
+	}
+
+	private static String source(File file) throws IOException {
+		return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+	}
+
+	private static String superClassOf(String source) {
+		Matcher matcher = EXTENDS_PATTERN.matcher(source);
+		assertTrue("No class declaration with super class found.", matcher.find());
+		return matcher.group(1);
 	}
 
 	private void generateWrappers(File root, File app, TLModule module) throws Exception, IOException {

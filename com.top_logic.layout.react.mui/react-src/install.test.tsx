@@ -96,7 +96,7 @@ describe('installMui', () => {
 
     installMui({ theme: {} });
 
-    expect(COMPONENT_NAMES).toHaveLength(25);
+    expect(COMPONENT_NAMES).toHaveLength(26);
     expect(replacedNames(replace)).toEqual([...COMPONENT_NAMES]);
     replace.mock.calls.forEach(([, adapter]) => expect(adapter).toBeTypeOf('function'));
   });

@@ -31,6 +31,7 @@ import MuiCardAdapter from './adapters/MuiCardAdapter';
 import MuiAppBarAdapter from './adapters/MuiAppBarAdapter';
 import MuiBreadcrumbAdapter from './adapters/MuiBreadcrumbAdapter';
 import MuiProgressAdapter from './adapters/MuiProgressAdapter';
+import MuiAvatarAdapter from './adapters/MuiAvatarAdapter';
 import MuiSliderAdapter from './adapters/MuiSliderAdapter';
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */
@@ -59,6 +60,7 @@ const ADAPTERS = {
   TLAppBar: MuiAppBarAdapter,
   TLBreadcrumb: MuiBreadcrumbAdapter,
   TLProgress: MuiProgressAdapter,
+  TLAvatar: MuiAvatarAdapter,
   TLSlider: MuiSliderAdapter,
 } as const satisfies Record<string, React.ComponentType<TLCellProps>>;
 

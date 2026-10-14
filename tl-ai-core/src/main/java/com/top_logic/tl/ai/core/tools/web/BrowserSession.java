@@ -34,6 +34,7 @@ import com.microsoft.playwright.options.Proxy;
 import com.microsoft.playwright.options.WaitUntilState;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.citation.SeenUrls;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
@@ -2314,7 +2315,9 @@ final class BrowserSession {
 			}
 		});
 		try {
-			return future.get(deadlineMillis, TimeUnit.MILLISECONDS);
+			// Stopping the run ends this wait; the operation itself ends on the browser thread within
+			// its deadline, and the next one queues behind it.
+			return RunCancellationBinding.await(future, deadlineMillis, TimeUnit.MILLISECONDS);
 		} catch (TimeoutException ex) {
 			future.cancel(true);
 			throw new BrowserSessionBrokenException(

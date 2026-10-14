@@ -21,6 +21,7 @@ import java.util.function.Function;
 import java.util.function.LongSupplier;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 
 /**
  * Bounded pool of keyed, reusable heavy resources (browser sessions) with fail-fast admission
@@ -334,7 +335,7 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 			try {
 				// Woken by releaseSlot() as soon as a resource is really gone, and by release() as
 				// soon as a session becomes idle and therefore evictable.
-				_slotFreed.awaitNanos(remaining);
+				RunCancellationBinding.whileBlocked(() -> _slotFreed.awaitNanos(remaining));
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
 				throw new BrowserBusyException("Interrupted while waiting for a free browser session.");

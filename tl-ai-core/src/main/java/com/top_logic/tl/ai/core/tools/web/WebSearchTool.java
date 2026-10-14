@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
@@ -197,6 +198,8 @@ public class WebSearchTool {
 			}
 			String answer = format(query, results);
 			return notes.isEmpty() ? answer : answer + "\n\n" + String.join("\n", notes);
+		} catch (CancellationException ex) {
+			return "Error: web search was cancelled.";
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			return "Error: web search was interrupted.";

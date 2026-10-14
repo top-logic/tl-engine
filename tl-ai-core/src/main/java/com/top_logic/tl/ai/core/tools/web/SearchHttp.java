@@ -17,9 +17,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 
 /**
  * Sends the requests of a {@link WebSearchEngine} and waits out a rate limit.
@@ -130,13 +132,18 @@ final class SearchHttp {
 			}
 			if (!untilSlot.isZero() && !untilSlot.isNegative()) {
 				try {
-					_sleeper.sleep(untilSlot);
-				} catch (InterruptedException ex) {
+					// Stopping the run ends the wait for the slot.
+					RunCancellationBinding.whileBlocked(() -> {
+						_sleeper.sleep(untilSlot);
+						return null;
+					});
+				} catch (InterruptedException | CancellationException ex) {
 					releaseSlot(slot);
 					throw ex;
 				}
 			}
-			HttpResponse<String> response = _client.send(request, BodyHandlers.ofString());
+			HttpResponse<String> response =
+				RunCancellationBinding.whileBlocked(() -> _client.send(request, BodyHandlers.ofString()));
 			learnPace(response);
 			int status = response.statusCode();
 			if (!retryable(status)) {

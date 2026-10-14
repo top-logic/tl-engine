@@ -12,8 +12,10 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.util.concurrent.CancellationException;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.tools.integration.messages.CreateIssueRequest;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
@@ -153,7 +155,9 @@ public class GiteaIssueTool {
 				.POST(BodyPublishers.ofString(jsonPayload))
 				.build();
 
-			HttpResponse<String> response = HTTP_CLIENT.send(request, BodyHandlers.ofString());
+			// Stopping the run ends the wait for the server.
+			HttpResponse<String> response =
+				RunCancellationBinding.whileBlocked(() -> HTTP_CLIENT.send(request, BodyHandlers.ofString()));
 
 			int statusCode = response.statusCode();
 			if (statusCode == 201) {
@@ -164,6 +168,8 @@ public class GiteaIssueTool {
 				Logger.error(errorMsg, GiteaIssueTool.class);
 				return "Error: " + errorMsg;
 			}
+		} catch (CancellationException ex) {
+			return "Error: creating the Gitea issue was cancelled; it may have been created anyway.";
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			String errorMsg = "Interrupted while creating Gitea issue: " + ex.getMessage();

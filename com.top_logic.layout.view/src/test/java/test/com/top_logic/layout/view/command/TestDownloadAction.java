@@ -13,8 +13,8 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -209,11 +209,12 @@ public class TestDownloadAction extends TestCase {
 	}
 
 	/**
-	 * Suite with the {@link LabelProviderService} the message of a refused value is labelled by.
+	 * Suite with the {@link LabelProviderService} the message of a refused value is labelled by,
+	 * started on a knowledge base the service depends on.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestDownloadAction.class, LabelProviderService.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(TestDownloadAction.class,
+			ServiceTestSetup.createStarterFactoryForModules(LabelProviderService.Module.INSTANCE));
 	}
 
 }

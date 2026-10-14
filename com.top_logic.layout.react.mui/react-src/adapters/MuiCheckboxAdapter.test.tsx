@@ -155,4 +155,23 @@ describe('the part Checkbox as MUI Checkbox', () => {
     redraw({ small: false });
     expect(box().closest('.MuiCheckbox-root')!.classList).not.toContain('MuiCheckbox-sizeSmall');
   });
+  it('lets the touch area of a box aligned at the start hang over the start edge', () => {
+    const { redraw } = draw({ alignStart: true });
+    expect(getComputedStyle(box().closest('.MuiCheckbox-root')!).marginLeft).toBe('-12px');
+
+    redraw({ alignStart: false });
+    expect(getComputedStyle(box().closest('.MuiCheckbox-root')!).marginLeft).not.toBe('-12px');
+  });
+
+  it('leaves the alignment of a box with a label to its form control label', () => {
+    draw({ alignStart: true, label: 'Name' });
+
+    expect(getComputedStyle(box().closest('.MuiCheckbox-root')!).marginLeft).not.toBe('-12px');
+  });
+
+  it('aligns a switch at the start as well', () => {
+    draw({ alignStart: true, display: 'switch' });
+
+    expect(getComputedStyle(screen.getByRole('switch').closest('.MuiSwitch-root')!).marginLeft).toMatch(/^-/);
+  });
 });

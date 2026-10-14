@@ -55,6 +55,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
       checked={value === true}
       indeterminate={triState && value !== true && value !== false}
       display={state.display === DISPLAY_SWITCH ? PART_SWITCH : undefined}
+      alignStart
       onChange={handleChange}
       disabled={state.disabled === true}
       readOnly={readOnly}

@@ -78,6 +78,8 @@ describe('a boolean field as MUI checkbox', () => {
     expectMuiBox(box);
     expect(box.id).toBe(CONTROL_ID);
     expect(box).toHaveProperty('checked', true);
+    // The box of a field lines up with the field's label: its touch area hangs over the start edge.
+    expect(getComputedStyle(box.closest('.MuiCheckbox-root')!).marginLeft).toBe('-12px');
     expect(box.closest('.MuiCheckbox-root')!.classList).toContain('my-class');
   });
 

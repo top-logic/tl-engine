@@ -325,6 +325,14 @@ export interface CheckboxPartProps extends PartAttributes {
   /** Whether the box is drawn small, e.g. in the narrow selection column of a table. */
   small?: boolean;
 
+  /**
+   * Whether a box drawn without {@link label} starts at the start edge of the space it is given, in
+   * line with the content above and below it, e.g. the box of a boolean field below its label. A
+   * library drawing a padded touch area around the box lets that padding hang over the start edge.
+   * A box with a label is always drawn so.
+   */
+  alignStart?: boolean;
+
   /** Whether the checkbox cannot be pressed; it is drawn inactive. */
   disabled?: boolean;
 

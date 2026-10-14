@@ -22,6 +22,9 @@ const COLOR: Record<FieldValidation, 'error' | 'warning'> = {
  *     input keeps its state; disabled → `disabled`;</li>
  * <li>small → size `small`: a box of 38 pixels with its padding, which fits the selection column of
  *     a table;</li>
+ * <li>alignStart → edge `start`: the padding of the touch area hangs over the start edge, so that
+ *     the box lines up with the label of its field, as the box beside a label of a
+ *     `FormControlLabel` does;</li>
  * <li>validation → color `error` (with `aria-invalid`) or `warning`; required →
  *     `aria-required`;</li>
  * <li>id, ref, name, tabIndex and the passed-through attributes → the input; className → the
@@ -29,7 +32,7 @@ const COLOR: Record<FieldValidation, 'error' | 'warning'> = {
  * </ul>
  */
 const MuiCheckboxAdapter: React.FC<CheckboxPartProps> = ({
-  id, ref, checked, indeterminate, display, label, small, disabled, readOnly, required, validation, name, tabIndex,
+  id, ref, checked, indeterminate, display, label, small, alignStart, disabled, readOnly, required, validation, name, tabIndex,
   className, onChange, ...attributes
 }) => {
   const asSwitch = display === 'switch';
@@ -57,6 +60,7 @@ const MuiCheckboxAdapter: React.FC<CheckboxPartProps> = ({
     disabled,
     readOnly,
     size: small ? 'small' as const : undefined,
+    edge: alignStart && label === undefined ? 'start' as const : undefined,
     color: validation === undefined ? 'primary' as const : COLOR[validation],
     className: label === undefined ? className : undefined,
     slotProps: { input: inputProps },

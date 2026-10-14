@@ -23,7 +23,8 @@ function classes(...names: (string | false | undefined)[]): string {
  * the design system (tl-checkbox), a switch with `tl-checkbox--switch` and the role `switch`. A box
  * with a label stands in the label of the design system (tl-choice), the label after it: a text in a
  * `span` of its own, other content as it is given. The design system has a single size of the box,
- * which a small box keeps.
+ * which a small box keeps. The native box has no padded touch area, so it starts at the start edge
+ * of its space whether it is aligned there or not.
  *
  * <p>The design system reads the state from the input itself: `:checked`, `:indeterminate`,
  * `:disabled`, `aria-readonly`, `aria-invalid` and `data-tl-state` (see fieldStateAttrs). An
@@ -34,7 +35,7 @@ function classes(...names: (string | false | undefined)[]): string {
  * keeps the state it is given.</p>
  */
 const CheckboxPart: React.FC<CheckboxPartProps> = ({
-  id, ref, checked, indeterminate, display, label, small: _small, disabled, readOnly, required, validation, name,
+  id, ref, checked, indeterminate, display, label, small: _small, alignStart: _alignStart, disabled, readOnly, required, validation, name,
   tabIndex, className, onChange, ...attributes
 }) => {
   const asSwitch = display === 'switch';

@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
@@ -97,6 +98,9 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		return thread;
 	});
 
+	/** The tokens of the runs in progress, which {@link #shutDown()} cancels. */
+	private final Set<CancellationToken> _running = ConcurrentHashMap.newKeySet();
+
 	private final Map<String, Context> _contexts = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<String, Context> eldest) {
@@ -147,10 +151,16 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 	}
 
 	/**
-	 * Stops accepting runs.
+	 * Stops accepting runs, and cancels the runs in progress.
+	 *
+	 * <p>
+	 * Through their tokens, not by interrupting their threads: a run may be reading the database, and
+	 * an interrupt during a read closes H2's file for the whole application.
+	 * </p>
 	 */
 	public void shutDown() {
-		_executor.shutdownNow();
+		_executor.shutdown();
+		_running.forEach(CancellationToken::cancel);
 	}
 
 	@Override
@@ -172,6 +182,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				}
 			}
 		});
+		_running.add(token);
 		_executor.execute(() -> {
 			try {
 				Person person = ThreadContextManager.<Person, RuntimeException, RuntimeException> inSystemInteraction(
@@ -188,6 +199,8 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			} catch (Throwable ex) {
 				Logger.error("A2A run of task " + task.id() + " failed: " + ex.getMessage(), ex, AgentRunBackend.class);
 				fail(task, "The run failed: " + (ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage()));
+			} finally {
+				_running.remove(token);
 			}
 		});
 	}

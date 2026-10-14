@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -234,15 +235,18 @@ public class TestScheduledAgentRun extends BasicTestCase {
 	}
 
 	/**
-	 * Being stopped ends the run rather than waiting it out.
+	 * Being stopped ends the run rather than waiting it out - through the run's cancellation token,
+	 * never by interrupting the agent thread.
 	 *
 	 * <p>
 	 * The scheduler asks a task to stop and then waits for it; this task has handed its work to
-	 * another thread, so it has to pass the signal on. Driven with a run that is simply parked,
-	 * because what the agent thread is doing when it is interrupted does not matter here.
+	 * another thread, so it has to pass the signal on. An interrupt is the wrong signal: the agent
+	 * thread may be reading the database, and an interrupt during a read closes H2's file for the
+	 * whole application (Gitea #901). Driven with a run that watches its token the way the agent
+	 * loop does.
 	 * </p>
 	 */
-	public void testStopInterruptsTheAgentThread() throws Exception {
+	public void testStopCancelsTheRunWithoutInterruptingIt() throws Exception {
 		ProbeTask task = task("<task %s name='Nightly'><prompt>Summarise today.</prompt></task>");
 		task.stop();
 
@@ -252,24 +256,30 @@ public class TestScheduledAgentRun extends BasicTestCase {
 		run.startProcessing();
 		tracker.addProcessingState(run.getCurrentTaskId(), run);
 
-		CountDownLatch interrupted = new CountDownLatch(1);
+		CountDownLatch stopped = new CountDownLatch(1);
+		AtomicBoolean interrupted = new AtomicBoolean();
 		Thread agent = new Thread(() -> {
-			try {
-				Thread.sleep(TimeUnit.MINUTES.toMillis(5));
-			} catch (InterruptedException ex) {
-				interrupted.countDown();
+			long deadline = System.nanoTime() + TimeUnit.MINUTES.toNanos(5);
+			while (!run.getCancellationToken().isCancelled() && System.nanoTime() < deadline) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException ex) {
+					interrupted.set(true);
+					return;
+				}
 			}
+			stopped.countDown();
 		}, "TestScheduledAgentRun-agent");
 		agent.setDaemon(true);
 		agent.start();
-		run.setAgentThread(agent);
 		try {
 			assertFalse("A stopped task must report that the run did not finish.",
 				task.awaitCompletion(tracker));
-			assertTrue("The agent thread has to be interrupted; nothing else ends the run.",
-				interrupted.await(10, TimeUnit.SECONDS));
+			assertTrue("The run's token has to be cancelled; nothing else ends the run.",
+				stopped.await(10, TimeUnit.SECONDS));
+			assertFalse("The agent thread must not be interrupted.", interrupted.get());
 		} finally {
-			agent.interrupt();
+			run.getCancellationToken().cancel();
 		}
 	}
 

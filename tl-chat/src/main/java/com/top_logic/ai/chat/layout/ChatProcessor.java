@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -38,6 +39,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -244,11 +246,10 @@ public class ChatProcessor {
 		loadedSkills.addAll(chatState.loadedSkills());
 
 		// One token per run, shared by the tool context, the transaction scope and the run's
-		// thread-local environment. Created here rather than in buildToolContext so that the
-		// environment below already binds it: everything the run does afterwards - including the
-		// recording writes after the loop returned - can then tell an interrupt caused by
-		// /chat/cancel apart from an interrupt with any other cause.
-		CancellationToken cancellationToken = new CancellationToken();
+		// thread-local environment. The state owns it from the moment the run is registered, so a
+		// stop that comes before this thread got here - the run still queued, or just starting -
+		// is not lost: the loop finds the token cancelled before its first turn.
+		CancellationToken cancellationToken = state.getCancellationToken();
 
 		// The turn this run answers, for the per-turn context block: the framework states it beside
 		// the page's facts, and nothing between here and AgentFactory.buildConfig would carry it.
@@ -300,9 +301,6 @@ public class ChatProcessor {
 
 			// Build ToolContext with real security, approval, and transaction scope
 			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, chatState, cancellationToken);
-			// Expose the run's cancellation token so /chat/cancel can fire cooperative-cancellation
-			// listeners in addition to interrupting the agent thread.
-			state.setCancellationToken(cancellationToken);
 
 			// Run the agent chosen in the chat UI, or - when the request names none - the one this
 			// account may run. Resolved exactly as /chat/capabilities reports it and as the pre-check
@@ -955,7 +953,9 @@ public class ChatProcessor {
 				UserInteractionStore store = bound != null ? bound : interactionStore;
 				CompletableFuture<String> future = store.registerApproval(request);
 				try {
-					String response = future.get(
+					// Stopping the asking run ends this wait - the lead, or the background subagent
+					// that asks on its own thread with its own token.
+					String response = RunCancellationBinding.await(future,
 						request.timeout().toMillis(), TimeUnit.MILLISECONDS);
 					Logger.info("Approval response for '" + request.toolName()
 						+ "': " + response, ChatProcessor.class);
@@ -963,6 +963,9 @@ public class ChatProcessor {
 				} catch (TimeoutException e) {
 					Logger.warn("Approval timed out for tool '" + request.toolName() + "'.",
 						ChatProcessor.class);
+					return new ApprovalResult.TimedOut();
+				} catch (CancellationException e) {
+					// The run was stopped; the loop sees its token and ends the turn.
 					return new ApprovalResult.TimedOut();
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
@@ -1197,7 +1200,6 @@ public class ChatProcessor {
 		@Override
 		public void run() {
 			AIProcessingState state = _state;
-			state.setAgentThread(Thread.currentThread());
 			try {
 				ThreadContextManager.inContext(_userSession, () -> {
 					try {
@@ -1241,7 +1243,6 @@ public class ChatProcessor {
 				state.completeWithError(ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 				notifyError(state, ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 			} finally {
-				state.setAgentThread(null);
 				// News that arrived too late for this turn to read waits for the next one.
 				SubagentWaker waker = _taskTracker.getSessionManager().getSubagentWaker(state.getSessionId());
 				if (waker != null) {
@@ -1404,10 +1405,14 @@ public class ChatProcessor {
 		// Result accumulation
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
 
-		// SSE handler and thread tracking for push-based updates and cancellation
+		// SSE handler for push-based updates
 		private volatile ChatEventHandler _sseHandler;
-		private volatile Thread _agentThread;
-		private volatile CancellationToken _cancellationToken;
+
+		/**
+		 * How the run is stopped. Never by interrupting its thread: that thread may be reading the
+		 * database, and an interrupt during a read closes H2's file for the whole application.
+		 */
+		private final CancellationToken _cancellationToken = new CancellationToken();
 		private volatile String _lastAgentResponse;
 		private volatile List<Citation> _lastCitations = List.of();
 
@@ -1659,35 +1664,12 @@ public class ChatProcessor {
 			_memories = memories == null ? List.of() : List.copyOf(memories);
 		}
 
-		/** The thread running the agent; may be null when not executing. */
-		public Thread getAgentThread() {
-			return _agentThread;
-		}
-
 		/**
-		 * Sets the agent thread reference for cancellation support.
-		 *
-		 * @param thread
-		 *        The thread; null to clear.
+		 * The run's cancellation token: cancelling it is how the run is stopped, at any time from
+		 * its registration on.
 		 */
-		public void setAgentThread(Thread thread) {
-			_agentThread = thread;
-		}
-
-		/** The run's cancellation token, used to signal cooperative cancellation; may be null. */
 		public CancellationToken getCancellationToken() {
 			return _cancellationToken;
-		}
-
-		/**
-		 * Sets the run's cancellation token so a cancel request can fire cooperative-cancellation
-		 * listeners, not just interrupt the thread.
-		 *
-		 * @param token
-		 *        The token; null to clear.
-		 */
-		public void setCancellationToken(CancellationToken token) {
-			_cancellationToken = token;
 		}
 
 		/** The last agent response text; may be null. */

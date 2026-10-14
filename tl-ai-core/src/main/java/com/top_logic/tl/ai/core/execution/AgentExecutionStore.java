@@ -561,8 +561,6 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				}
 				return null;
 			});
-		} catch (CancelledWriteException ex) {
-			// Interrupted while waiting; the write itself still commits.
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to update part " + part.id() + " in the transcript of run "
 				+ execution.getRunId() + ": " + ex.getMessage(), ex, AgentExecutionStore.class);
@@ -572,15 +570,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	@Override
 	protected void shutDown() {
 		if (_writer != null) {
-			_writer.shutdown();
-			try {
-				if (!_writer.awaitTermination(10, TimeUnit.SECONDS)) {
-					_writer.shutdownNow();
-				}
-			} catch (InterruptedException ex) {
-				_writer.shutdownNow();
-				Thread.currentThread().interrupt();
-			}
+			WriterShutdown.stop(_writer, "agent-data");
 			_writer = null;
 			_writerThread = null;
 		}
@@ -599,11 +589,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 *
 	 * <p>
-	 * Cancelling an agent run interrupts its thread, which ends this wait. That is expected and
-	 * reported as a {@link CancelledWriteException} so that callers can trace it instead of
-	 * logging it as a failure; an interrupt with any other cause stays a plain
-	 * {@link RuntimeException}. Either way the mutation is already queued and still commits on the
-	 * writer thread - only the wait for its result is given up.
+	 * Cancelling an agent run does not end this wait: a cancellation interrupts no thread (see
+	 * {@link RunCancellationBinding}), and a write takes milliseconds. An interrupt from elsewhere
+	 * ends it with a {@link RuntimeException}; the mutation is already queued then and still commits
+	 * on the writer thread - only the wait for its result is given up.
 	 * </p>
 	 */
 	private <T> T write(Supplier<T> mutation) {
@@ -645,12 +634,6 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			// further up the stack (the agent loop's abort checks, later blocking calls) still has
 			// to see it.
 			Thread.currentThread().interrupt();
-			if (RunCancellationBinding.isRunCancelled()) {
-				// Expected: the user cancelled this run, which interrupts its thread. The mutation
-				// is queued and still commits on the writer thread; only this wait ends early.
-				throw new CancelledWriteException(
-					"Stopped waiting for the agent-data write: the run was cancelled.", ex);
-			}
 			throw new RuntimeException("Interrupted while writing agent execution data.", ex);
 		} catch (TimeoutException ex) {
 			throw new RuntimeException("Timed out after " + WRITE_TIMEOUT_SECONDS

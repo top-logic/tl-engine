@@ -60,8 +60,7 @@ import com.top_logic.util.model.ModelService;
  * cancellation token and the registration that names the owner - because starting a real agent
  * would need a provider, a model and a tool catalog to ask about something the servlet decides on
  * its own. What the stop does to the run is asserted on the token: it is what
- * {@code AgentLoop} and every tool of the run watch, and it is fired before the thread interrupt
- * the agent thread would otherwise get.
+ * {@code AgentLoop} and every tool of the run watch, and the only thing a stop does to the run.
  * </p>
  *
  * @see TestChatPendingInteraction The other half of the same rule: answering what a run asks.
@@ -107,8 +106,8 @@ public class TestChatCancelOwnership extends BasicTestCase {
 
 		_windowA = newWindow();
 		_taskId = UUID.randomUUID().toString();
-		_token = new CancellationToken();
-		_run = runIn(_windowA, _taskId, chatId(), _token);
+		_run = runIn(_windowA, _taskId, chatId());
+		_token = _run.getCancellationToken();
 
 		// Every handler resolves its window's tracker before it does anything else; which window
 		// that is, is what each test decides.
@@ -203,8 +202,7 @@ public class TestChatCancelOwnership extends BasicTestCase {
 	public void testTheNamedChatIsStoppedAndNotTheOtherOne() throws Exception {
 		TaskProgressTracker windowB = newWindow();
 		String otherTaskId = UUID.randomUUID().toString();
-		CancellationToken otherToken = new CancellationToken();
-		runIn(windowB, otherTaskId, otherChatId(), otherToken);
+		CancellationToken otherToken = runIn(windowB, otherTaskId, otherChatId()).getCancellationToken();
 		inWindow(windowB);
 		try {
 			assertEquals("{\"cancelled\":true}", cancel(anna, chatId()));
@@ -220,8 +218,7 @@ public class TestChatCancelOwnership extends BasicTestCase {
 	public void testAStopForAChatThatIsNotRunningStopsNothing() throws Exception {
 		TaskProgressTracker windowB = newWindow();
 		String otherTaskId = UUID.randomUUID().toString();
-		CancellationToken otherToken = new CancellationToken();
-		runIn(windowB, otherTaskId, otherChatId(), otherToken);
+		CancellationToken otherToken = runIn(windowB, otherTaskId, otherChatId()).getCancellationToken();
 		inWindow(windowB);
 		try {
 			// A third chat of Anna's would do as well; what matters is that nothing runs there.
@@ -244,12 +241,10 @@ public class TestChatCancelOwnership extends BasicTestCase {
 	}
 
 	/** A run of the given chat, in the given window, registered as {@code ChatProcessor} does. */
-	private static AIProcessingState runIn(TaskProgressTracker window, String taskId, String sessionId,
-			CancellationToken token) {
+	private static AIProcessingState runIn(TaskProgressTracker window, String taskId, String sessionId) {
 		AIProcessingState state = new AIProcessingState();
 		state.setCurrentTaskId(taskId);
 		state.setSessionId(sessionId);
-		state.setCancellationToken(token);
 		state.startProcessing();
 		window.addProcessingState(taskId, state);
 		PendingInteractionRegistry.register(taskId, anna, window, state);

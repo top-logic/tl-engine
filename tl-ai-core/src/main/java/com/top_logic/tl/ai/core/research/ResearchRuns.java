@@ -36,6 +36,7 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.PageArchive;
+import com.top_logic.tl.ai.core.execution.WriterShutdown;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
 import com.top_logic.tl.ai.core.execution.model.ResearchFinding;
@@ -133,7 +134,7 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 	@Override
 	protected void shutDown() {
 		if (_worker != null) {
-			_worker.shutdownNow();
+			WriterShutdown.stop(_worker, "research run");
 			_worker = null;
 		}
 		super.shutDown();

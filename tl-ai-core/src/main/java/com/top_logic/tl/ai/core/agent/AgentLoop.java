@@ -689,7 +689,10 @@ public class AgentLoop {
 		emitTurnContext(serialized, runId);
 
 		try (MemoryConsentBinding.Binding consent =
-			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(conversation))) {
+			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(conversation));
+			// This run's token on its thread, for the waits of code that is handed no context; a
+			// subagent's worker thread carries its lead's binding otherwise.
+			RunCancellationBinding.Binding cancellation = RunCancellationBinding.bind(context.cancellationToken())) {
 			return memory == null
 				? runLoop(conversation, runContext, serialized, runId)
 				: runWithMemory(memory, runContext, serialized, runId);
@@ -916,7 +919,10 @@ public class AgentLoop {
 		emitTurnContext(serialized, runId);
 
 		try (MemoryConsentBinding.Binding consent =
-			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(_memory.conversation()))) {
+			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(_memory.conversation()));
+			// This run's token on its thread, for the waits of code that is handed no context; a
+			// subagent's worker thread carries its lead's binding otherwise.
+			RunCancellationBinding.Binding cancellation = RunCancellationBinding.bind(context.cancellationToken())) {
 			return runWithMemory(_memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
@@ -1301,9 +1307,14 @@ public class AgentLoop {
 		int messagesBefore = conversation.size();
 
 		for (List<ToolCall> batch : batches) {
-			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
-				Thread.currentThread().interrupt();
+			boolean interrupted = Thread.interrupted();
+			if (interrupted || context.cancellationToken().isCancelled()) {
+				// The rollback may touch the database, so it runs without the interrupt: one that
+				// reaches a file read closes H2's database file for the whole application.
 				rollbackTransaction(context, listener, runId, turn, "Interrupted");
+				if (interrupted) {
+					Thread.currentThread().interrupt();
+				}
 				return false;
 			}
 
@@ -1762,9 +1773,8 @@ public class AgentLoop {
 			// system interaction only when the caller had no bound context.
 			//
 			// Submitted directly to the ExecutorService (not via CompletableFuture.supplyAsync)
-			// so the returned Future is backed by FutureTask: its cancel(true) actually
-			// interrupts the worker thread if the job is running. CompletableFuture.cancel()
-			// never interrupts the underlying task regardless of mayInterruptIfRunning.
+			// so the returned Future is backed by FutureTask: its cancel(false) takes a job that
+			// has not started off the queue, so it never runs.
 			futures.add(TOOL_WORKERS.submit(
 				() -> userSession != null
 					? ThreadContextManager.inContext(userSession, job)
@@ -1788,6 +1798,12 @@ public class AgentLoop {
 	 * the end-of-turn rollback. Polls every not-yet-done future once per tick instead of
 	 * exhausting one future's timeout before moving to the next, so cancellation is noticed
 	 * within one poll slice regardless of the batch size.</p>
+	 *
+	 * <p>A job that is already running is given up, not interrupted: a batch holds only reading
+	 * tools, and a reading tool is likely inside the knowledge base, where an interrupt during a
+	 * file read closes H2's database file for the whole application. The job sees the cancelled
+	 * token in its own waits ({@link RunCancellationBinding#whileBlocked}) and its result is
+	 * dropped.</p>
 	 */
 	private static List<ToolResultMessage> collectBatchResults(List<ToolCall> batch,
 			List<Future<ToolResultMessage>> futures, ToolContext context) {
@@ -1804,7 +1820,7 @@ public class AgentLoop {
 				}
 				Future<ToolResultMessage> future = futures.get(i);
 				if (abort) {
-					future.cancel(true);
+					future.cancel(false);
 					results[i] = errorResult(batch.get(i), "Cancelled.");
 					remaining--;
 					continue;
@@ -1817,7 +1833,7 @@ public class AgentLoop {
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 					abort = true;
-					future.cancel(true);
+					future.cancel(false);
 					results[i] = errorResult(batch.get(i), "Cancelled.");
 					remaining--;
 				} catch (CancellationException e) {
@@ -1852,9 +1868,9 @@ public class AgentLoop {
 			// A concurrent batch's worker may not start running this job until well after
 			// the loop thread already gave up on it (thread-pool queueing, or another job in
 			// the same batch is slow). Bail out before emitting any lifecycle event or
-			// touching the tool. This covers jobs that haven't started yet; jobs already
-			// mid-execution rely on future.cancel(true) interrupting the worker thread (see
-			// collectBatchResults) plus the tool itself cooperatively checking this token.
+			// touching the tool. This covers jobs that haven't started yet; a job already
+			// mid-execution is given up by collectBatchResults and ends by itself, its tool
+			// cooperatively checking this token.
 			return errorResult(toolCall, "Cancelled.");
 		}
 

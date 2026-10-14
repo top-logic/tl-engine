@@ -276,9 +276,12 @@ public class ChangeDataTool {
 		ModelSecurity security = context.modelSecurity();
 		Future<String> future =
 			DRY_RUNS.submit(() -> ThreadContextManager.inContext(session, () -> sandbox(change, security)));
+		// A cancelled dry run is given up, not interrupted: it works in the knowledge base, where an
+		// interrupt during a file read closes H2's database file for the whole application. Its
+		// transaction is rolled back whenever it ends.
 		while (true) {
 			if (context.cancellationToken().isCancelled()) {
-				future.cancel(true);
+				future.cancel(false);
 				throw new CancellationException("The dry run was cancelled.");
 			}
 			try {
@@ -286,7 +289,7 @@ public class ChangeDataTool {
 			} catch (TimeoutException ex) {
 				// Still running - look at the cancellation again.
 			} catch (InterruptedException ex) {
-				future.cancel(true);
+				future.cancel(false);
 				Thread.currentThread().interrupt();
 				throw new CancellationException("The dry run was interrupted.");
 			} catch (ExecutionException ex) {

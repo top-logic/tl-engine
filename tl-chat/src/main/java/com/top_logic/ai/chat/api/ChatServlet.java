@@ -1305,16 +1305,12 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
-		// Fire cooperative cancellation before interrupting: this notifies onCancel listeners so
-		// teardown happens deterministically on abort, not only via the thread interrupt below.
+		// Cooperative cancellation only, never an interrupt of the agent thread: that thread may be
+		// reading the database, and an interrupt during a read closes H2's file for the whole
+		// application. The token ends the stream, every wait of the run and the loop itself.
 		com.top_logic.tl.ai.tool.api.CancellationToken cancellationToken = state.getCancellationToken();
 		if (cancellationToken != null) {
 			cancellationToken.cancel();
-		}
-
-		Thread agentThread = state.getAgentThread();
-		if (agentThread != null) {
-			agentThread.interrupt();
 		}
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());

@@ -355,10 +355,6 @@ public final class ExecutionRecorder implements AgentEventListener {
 			AgentExecutionStore.getInstance().finishExecutionWithLatestTranscript(execution,
 				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, cost, transcript,
 				response);
-		} catch (CancelledWriteException ex) {
-			// Expected on cancellation: the interrupt ends the wait, the write still commits.
-			Logger.info("Agent run " + _runId + " was cancelled; its final record is written"
-				+ " without waiting for it.", ExecutionRecorder.class);
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to record end of agent run " + _runId + ": " + ex.getMessage(),
 				ex, ExecutionRecorder.class);

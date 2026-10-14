@@ -8,10 +8,14 @@ package test.com.top_logic.layout.view.form;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import junit.framework.TestCase;
 
@@ -26,6 +30,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.security.ModelAccessRights;
 
 /**
@@ -275,6 +280,75 @@ public class TestTLObjectOverlay extends TestCase {
 	}
 
 	/**
+	 * Tests that a derived attribute of an overlay is computed over the overlay's edits, while the
+	 * base object keeps its value.
+	 */
+	public void testDerivedComputedOverEdits() {
+		TLStructuredTypePart namePart = mockPart("name");
+		TLStructuredTypePart greetingPart = mockDerivedPart("greeting");
+		MockTLObject base = new MockTLObject();
+		base.set(namePart, "Alice");
+		base.derive(greetingPart, (object, part) -> "Hello " + object.tValue(namePart));
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		assertEquals("Hello Alice", overlay.tValue(greetingPart));
+
+		overlay.tUpdate(namePart, "Bob");
+
+		assertEquals("Hello Bob", overlay.tValue(greetingPart));
+		assertEquals("Hello Bob", overlay.getFieldValue(greetingPart));
+		assertEquals("The base object is not changed.", "Hello Alice", base.tValue(greetingPart));
+		assertFalse("A computed value is no edit.", overlay.isChanged(greetingPart));
+		assertFalse(overlay.isModified(greetingPart));
+	}
+
+	/**
+	 * Tests that the storage of a derived attribute receives the base object of the overlay, and
+	 * sees the edited values when reading through {@link TLObject#tValue(TLStructuredTypePart)}.
+	 */
+	public void testDerivedStorageReceivesBase() {
+		TLStructuredTypePart namePart = mockPart("name");
+		TLStructuredTypePart greetingPart = mockDerivedPart("greeting");
+		MockTLObject base = new MockTLObject();
+		base.set(namePart, "Alice");
+		List<TLObject> computedOn = new ArrayList<>();
+		base.derive(greetingPart, (object, part) -> {
+			computedOn.add(object);
+			return "Hello " + object.tValue(namePart);
+		});
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(namePart, "Bob");
+
+		assertEquals("Hello Bob", overlay.tValue(greetingPart));
+		assertEquals(1, computedOn.size());
+		assertSame("The storage computes on the base object.", base, computedOn.get(0));
+	}
+
+	/**
+	 * Tests that the reads of an overlay and of the computation of its derived attribute are
+	 * reported to the current {@link TracingScope}.
+	 */
+	public void testReadsReported() {
+		TLStructuredTypePart namePart = mockPart("name");
+		TLStructuredTypePart greetingPart = mockDerivedPart("greeting");
+		MockTLObject base = new MockTLObject();
+		base.set(namePart, "Alice");
+		base.derive(greetingPart, (object, part) -> "Hello " + object.tValue(namePart));
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(namePart, "Bob");
+
+		Set<TLStructuredTypePart> read = new HashSet<>();
+		Object value;
+		try (TracingScope scope = TracingScope.open(pointer -> read.add(pointer.attribute()), null)) {
+			value = overlay.tValue(greetingPart);
+		}
+
+		assertEquals("Hello Bob", value);
+		assertEquals(Set.of(namePart, greetingPart), read);
+	}
+
+	/**
 	 * Creates an {@link ObjectKey} identifying a mock object.
 	 */
 	private static ObjectKey objectKey(String id) {
@@ -286,14 +360,27 @@ public class TestTLObjectOverlay extends TestCase {
 	 * Creates a mock {@link TLStructuredTypePart} using a dynamic proxy.
 	 *
 	 * <p>
-	 * The proxy uses identity equality and supports {@code getName()} and {@code toString()}.
+	 * The proxy uses identity equality and supports {@code getName()} and {@code toString()}; it is
+	 * not derived.
 	 * </p>
 	 */
 	private static TLStructuredTypePart mockPart(String name) {
+		return mockPart(name, false);
+	}
+
+	/**
+	 * Creates a mock {@link TLStructuredTypePart} that is {@link TLStructuredTypePart#isDerived()
+	 * derived}, see {@link MockTLObject#derive(TLStructuredTypePart, BiFunction)}.
+	 */
+	private static TLStructuredTypePart mockDerivedPart(String name) {
+		return mockPart(name, true);
+	}
+
+	private static TLStructuredTypePart mockPart(String name, boolean derived) {
 		return (TLStructuredTypePart) Proxy.newProxyInstance(
 			TLStructuredTypePart.class.getClassLoader(),
 			new Class<?>[] { TLStructuredTypePart.class },
-			new PartHandler(name));
+			new PartHandler(name, derived));
 	}
 
 	/**
@@ -303,8 +390,11 @@ public class TestTLObjectOverlay extends TestCase {
 
 		private final String _name;
 
-		PartHandler(String name) {
+		private final boolean _derived;
+
+		PartHandler(String name, boolean derived) {
 			_name = name;
+			_derived = derived;
 		}
 
 		@Override
@@ -318,6 +408,8 @@ public class TestTLObjectOverlay extends TestCase {
 					return System.identityHashCode(proxy);
 				case "equals":
 					return proxy == args[0];
+				case "isDerived":
+					return Boolean.valueOf(_derived);
 				default:
 					return null;
 			}
@@ -331,12 +423,21 @@ public class TestTLObjectOverlay extends TestCase {
 	 * Uses identity-based keys (the {@link TLStructuredTypePart} proxy instances). This avoids
 	 * needing any TypeIndex or service infrastructure.
 	 * </p>
+	 *
+	 * <p>
+	 * Like a persistent object, it traces its reads in a {@link TracingScope} and computes a
+	 * derived attribute by a computation given to
+	 * {@link #derive(TLStructuredTypePart, BiFunction)}.
+	 * </p>
 	 */
 	private static class MockTLObject extends TransientObject {
 
 		private final ObjectKey _id;
 
 		private final Map<TLStructuredTypePart, Object> _values = new LinkedHashMap<>();
+
+		private final Map<TLStructuredTypePart, BiFunction<TLObject, TLStructuredTypePart, Object>> _derived =
+			new LinkedHashMap<>();
 
 		private Set<? extends TLObject> _referers = Collections.emptySet();
 
@@ -363,6 +464,17 @@ public class TestTLObjectOverlay extends TestCase {
 
 		@Override
 		public Object tValue(TLStructuredTypePart part) {
+			TracingScope scope = TracingScope.current();
+			if (scope != null) {
+				Object overlayValue = scope.read(this, part);
+				if (overlayValue != TracingScope.PLAIN) {
+					return overlayValue;
+				}
+			}
+			BiFunction<TLObject, TLStructuredTypePart, Object> computation = _derived.get(part);
+			if (computation != null) {
+				return computation.apply(this, part);
+			}
 			return _values.get(part);
 		}
 
@@ -386,6 +498,13 @@ public class TestTLObjectOverlay extends TestCase {
 		 */
 		void set(TLStructuredTypePart part, Object value) {
 			_values.put(part, value);
+		}
+
+		/**
+		 * Defines the computation of a derived attribute, playing the role of its storage.
+		 */
+		void derive(TLStructuredTypePart part, BiFunction<TLObject, TLStructuredTypePart, Object> computation) {
+			_derived.put(part, computation);
 		}
 
 		/**

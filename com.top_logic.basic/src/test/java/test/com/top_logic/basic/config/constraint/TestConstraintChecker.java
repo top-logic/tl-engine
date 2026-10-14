@@ -19,12 +19,14 @@ import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 import test.com.top_logic.basic.config.constraint.ScenarioConstraints.ScenarioTypeInstanceFormat;
 
 import com.top_logic.basic.ArrayUtil;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Container;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
@@ -37,6 +39,7 @@ import com.top_logic.basic.config.constraint.annotation.I18NConstants;
 import com.top_logic.basic.config.constraint.annotation.OverrideConstraints;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
 import com.top_logic.basic.config.constraint.impl.MandatoryIfUnset;
 import com.top_logic.basic.config.constraint.impl.Negative;
 import com.top_logic.basic.config.constraint.impl.OnlySetIfUnset;
@@ -254,6 +257,29 @@ public class TestConstraintChecker extends AbstractTypedConfigurationTestCase {
 		assertEquals("The referenced alternative is given.", list(), failures(second));
 	}
 
+	public void testMandatoryIfSet() throws ConfigurationException {
+		Dependent none = TypedConfiguration.newConfigItem(Dependent.class);
+		assertEquals("Nothing demands the annotated property.", list(), failures(none));
+
+		Dependent trigger = TypedConfiguration.newConfigItem(Dependent.class);
+		trigger.setTrigger(list("x"));
+		assertEquals("The referenced property is given, the annotated one is not.",
+			list(new ConstraintFailure(trigger, false,
+				TypedConfiguration.getConfigurationDescriptor(Dependent.class).getProperty(Dependent.REQUIRED),
+				com.top_logic.basic.config.constraint.impl.I18NConstants.MUST_BE_SET_IF_OTHERS_ARE_SET__OTHERS
+					.fill(list(ResKey.text(Dependent.TRIGGER))))),
+			failures(trigger));
+
+		Dependent empty = TypedConfiguration.newConfigItem(Dependent.class);
+		empty.setTrigger(list());
+		assertEquals("An empty list counts as not given.", list(), failures(empty));
+
+		Dependent both = TypedConfiguration.newConfigItem(Dependent.class);
+		both.setTrigger(list("x"));
+		both.setRequired("y");
+		assertEquals("The annotated property is given.", list(), failures(both));
+	}
+
 	public void testOnlyOneOfTwoAlternatives() throws ConfigurationException {
 		Alternatives both = TypedConfiguration.newConfigItem(Alternatives.class);
 		both.setFirst("x");
@@ -271,6 +297,26 @@ public class TestConstraintChecker extends AbstractTypedConfigurationTestCase {
 					.fill(ResKey.text(other(failure.getContextProperty().getPropertyName()))),
 				failure.getConstraintName());
 		}
+	}
+
+	public interface Dependent extends ConfigurationItem {
+
+		String REQUIRED = "required";
+
+		String TRIGGER = "trigger";
+
+		@Name(REQUIRED)
+		@Constraint(value = MandatoryIfSet.class, args = @Ref(TRIGGER))
+		String getRequired();
+
+		void setRequired(String value);
+
+		@Name(TRIGGER)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getTrigger();
+
+		void setTrigger(List<String> value);
+
 	}
 
 	private static String other(String propertyName) {

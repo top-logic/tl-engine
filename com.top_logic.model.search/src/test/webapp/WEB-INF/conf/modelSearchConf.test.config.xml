@@ -23,6 +23,14 @@
 				</roles>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
+				<methods>
+					<!-- Test functions of TestScriptTracerJavaFunctions. -->
+					<method name="testOtherValueMethod" class="test.com.top_logic.model.search.expr.trace.OtherValueMethod$Builder"/>
+				</methods>
+			</instance>
+		</config>
 	</services>
 	
 	<configs>

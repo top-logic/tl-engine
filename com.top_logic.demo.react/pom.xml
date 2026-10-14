@@ -80,6 +80,28 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>generate-binding</id>
+            <goals>
+              <goal>generate-java</goal>
+            </goals>
+
+            <configuration>
+              <modules>demo.tickets</modules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <!-- Renders the UI with Material UI (mvn -P mui). -->
     <profile>

@@ -153,11 +153,11 @@ public class TestObservableTreeModel extends TestCase {
 	}
 
 	/**
-	 * Tests that a created object of an observed type gets a node where the child list has it, while
-	 * the tree keeps its nodes and the subtrees the user opened.
+	 * Tests that a created object of an observed type gets a node where the child list of what
+	 * holds it has it, while the tree keeps its nodes and the subtrees the user opened.
 	 */
 	public void testCreatedObjectAppears() {
-		startTree(Set.of(_itemType));
+		startTree(Set.of(_itemType), this::parentOf);
 		DefaultTreeUINode nodeA = expand(_a);
 
 		Item c = item("c");
@@ -169,6 +169,140 @@ public class TestObservableTreeModel extends TestCase {
 		assertSame("The nodes that were there are the ones the display was working with.",
 			nodeA, node(_a));
 		assertTrue("The subtree the user opened stays open although the tree grew.", nodeA.isExpanded());
+	}
+
+	/**
+	 * Tests that a created object of an observed type is not placed by a tree that does not say
+	 * what holds an object: no child list is computed to find out where it belongs.
+	 */
+	public void testCreatedObjectWithoutAParentFunctionIsNotPlaced() {
+		startTree(Set.of(_itemType));
+		expand(_a);
+		int computedBefore = _childListsComputed.size();
+
+		Item c = item("c");
+		_children.put(_root, new ArrayList<>(List.of(_a, c, _b)));
+		_scope.report(ModelChangeEvent.ChangeType.CREATED, c);
+
+		assertEquals("The created object is not displayed.", List.of(_a, _b), childObjects(root()));
+		assertEquals("No child list was computed.", computedBefore, _childListsComputed.size());
+	}
+
+	/**
+	 * Tests that a created object of an observed type is placed under what holds it alone: the
+	 * child lists of the other open nodes are not computed again (the node of the created object
+	 * itself has its children computed to tell whether it is a leaf).
+	 */
+	public void testCreatedObjectReconcilesOnlyItsHolder() {
+		Item b1 = item("b1");
+		_children.put(_b, new ArrayList<>(List.of(b1)));
+		startTree(Set.of(_itemType), this::parentOf);
+		DefaultTreeUINode nodeA = expand(_a);
+		DefaultTreeUINode nodeB = expand(_b);
+		int computedBefore = _childListsComputed.size();
+
+		Item a3 = item("a3");
+		_children.get(_a).add(a3);
+		_scope.report(ModelChangeEvent.ChangeType.CREATED, a3);
+
+		assertEquals("The created object is displayed under what holds it.",
+			List.of(_a1, _a2, a3), childObjects(nodeA));
+		assertEquals(List.of(b1), childObjects(nodeB));
+		List<Object> computed = _childListsComputed.subList(computedBefore, _childListsComputed.size());
+		assertTrue("The child list of what holds the created object was computed.", computed.contains(_a));
+		assertFalse("The child list of the root was not computed again.", computed.contains(_root));
+		assertFalse("The child list of another open node was not computed again.", computed.contains(_b));
+	}
+
+	/**
+	 * Tests that an object of an observed type the tree has no node for appears under the open
+	 * node of what holds it, once a change makes it a child there - the object is in no displayed
+	 * child list, so nobody else reports anything the tree displays.
+	 */
+	public void testUpdatedUndisplayedObjectAppearsUnderItsHolder() {
+		Item device = item("device");
+		startTree(Set.of(_itemType), this::parentOf);
+		DefaultTreeUINode nodeA = expand(_a);
+		int[] announced = { 0 };
+		_observer.addStructureListener(() -> announced[0]++);
+
+		move(device, _a);
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, device);
+
+		assertEquals("The object is displayed under what holds it now.",
+			List.of(_a1, _a2, device), childObjects(nodeA));
+		assertTrue("The node it appeared in stays open.", nodeA.isExpanded());
+		assertEquals("The change of the tree is announced.", 1, announced[0]);
+	}
+
+	/**
+	 * Tests that an object of an observed type the tree has no node for computes nothing where the
+	 * tree has no computed node for what holds it, and appears when that node is opened.
+	 */
+	public void testUpdatedUndisplayedObjectUnderAHolderWithoutANode() {
+		Item device = item("device");
+		startTree(Set.of(_itemType), this::parentOf);
+		int computedBefore = _childListsComputed.size();
+
+		move(device, _a1);
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, device);
+
+		assertEquals("No child list was computed for a node the tree does not have.",
+			computedBefore, _childListsComputed.size());
+
+		expand(_a);
+		DefaultTreeUINode nodeA1 = expand(_a1);
+		assertEquals("The object is displayed when the node is opened.", List.of(device), childObjects(nodeA1));
+	}
+
+	/**
+	 * Tests that an object of an observed type the tree has no node for is placed under a collapsed
+	 * node of what holds it whose child list is computed already - a visible node of a finite tree
+	 * has its children computed to tell whether it is a leaf - and that the node stays collapsed.
+	 */
+	public void testUpdatedUndisplayedObjectUnderACollapsedComputedHolder() {
+		Item device = item("device");
+		startTree(Set.of(_itemType), this::parentOf);
+		DefaultTreeUINode nodeB = node(_b);
+
+		move(device, _b);
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, device);
+
+		assertEquals("The object is in the computed child list of what holds it.",
+			List.of(device), childObjects(nodeB));
+		assertFalse("The node stays collapsed.", nodeB.isExpanded());
+	}
+
+	/**
+	 * Tests that a change of an object the tree has no node for is ignored where its type is not
+	 * observed, although the tree says what holds it.
+	 */
+	public void testUpdatedUndisplayedObjectOfAnUnobservedTypeIsIgnored() {
+		Item device = item("device");
+		startTree(Set.of(), this::parentOf);
+		DefaultTreeUINode nodeA = expand(_a);
+		int computedBefore = _childListsComputed.size();
+
+		move(device, _a);
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, device);
+
+		assertEquals("Nothing was computed again.", computedBefore, _childListsComputed.size());
+		assertEquals(List.of(_a1, _a2), childObjects(nodeA));
+	}
+
+	/**
+	 * Tests that a deleted object the tree has no node for is ignored: it was in no displayed child
+	 * list.
+	 */
+	public void testDeletedUndisplayedObjectIsIgnored() {
+		startTree(Set.of(_itemType), this::parentOf);
+		expand(_a);
+		int computedBefore = _childListsComputed.size();
+
+		_scope.report(ModelChangeEvent.ChangeType.DELETED, item("gone"));
+
+		assertEquals("No child list was computed.", computedBefore, _childListsComputed.size());
+		assertEquals(List.of(_a, _b), childObjects(root()));
 	}
 
 	/**
@@ -347,7 +481,7 @@ public class TestObservableTreeModel extends TestCase {
 	 * Builds the tree over the structure the test holds and begins observing it.
 	 *
 	 * @param observedTypes
-	 *        The types whose creates the tree expects.
+	 *        The types whose objects the tree places even while it has no node for them.
 	 */
 	private void startTree(Set<TLStructuredType> observedTypes) {
 		startTree(observedTypes, null);
@@ -357,7 +491,7 @@ public class TestObservableTreeModel extends TestCase {
 	 * Builds the tree over the structure the test holds and begins observing it.
 	 *
 	 * @param observedTypes
-	 *        The types whose creates the tree expects.
+	 *        The types whose objects the tree places even while it has no node for them.
 	 * @param parentFunction
 	 *        What holds an object in the structure, {@code null} for a tree that does not say.
 	 */

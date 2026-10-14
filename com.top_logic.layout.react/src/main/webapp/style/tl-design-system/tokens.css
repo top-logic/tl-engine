@@ -40,6 +40,8 @@
   --tl-size-field-label-max: var(--tl-size-11);
   --tl-size-popover-min: var(--tl-size-11);
   --tl-size-popover-max: var(--tl-view-1);
+  --tl-size-viewport-width: var(--tl-view-2);
+  --tl-size-viewport-height: var(--tl-view-3);
   --tl-size-drawer-narrow: var(--tl-size-12);
   --tl-size-drawer-medium: var(--tl-size-13);
   --tl-size-drawer-wide: var(--tl-size-14);

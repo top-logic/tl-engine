@@ -79,6 +79,8 @@ public final class FieldSpec {
 
 	private LabelProvider _optionLabels;
 
+	private String _acceptedTypes;
+
 	private FieldSpec(Class<?> valueType, String label) {
 		_valueType = valueType;
 		_label = label;
@@ -538,6 +540,30 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The types of files a binary value may be uploaded from, or {@code null} for every file.
+	 *
+	 * <p>
+	 * A comma separated list of MIME types like <code>image/*</code> or <code>image/jpeg</code> and
+	 * file patterns like <code>*.xml</code>, the form of the accepted types annotation of a binary
+	 * attribute ({@link com.top_logic.model.annotate.ui.TLAcceptedTypes}). The file picker of the
+	 * control offers only files of these types.
+	 * </p>
+	 */
+	public String getAcceptedTypes() {
+		return _acceptedTypes;
+	}
+
+	/**
+	 * Sets the {@link #getAcceptedTypes() accepted file types}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setAcceptedTypes(String acceptedTypes) {
+		_acceptedTypes = acceptedTypes;
+		return this;
+	}
+
+	/**
 	 * This specification describing a single one of the values of a
 	 * {@link #isMultiple() multi-valued} field.
 	 *
@@ -589,6 +615,7 @@ public final class FieldSpec {
 		result._dateFormat = _dateFormat;
 		result._options = _options;
 		result._optionLabels = _optionLabels;
+		result._acceptedTypes = _acceptedTypes;
 		return result;
 	}
 

@@ -34,6 +34,7 @@ function formatSize(size: number): string {
  * State:
  * - chips: [{ key, name, size, hasData }]
  * - editable: boolean
+ * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -45,6 +46,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
 
   const chips = (state.chips as Chip[] | null) ?? [];
   const editable = state.editable === true;
+  const accept = (state.accept as string | null) ?? '';
 
   const [uploading, setUploading] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
@@ -193,6 +195,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
             ref={fileInputRef}
             type="file"
             multiple
+            accept={accept || undefined}
             onChange={handleFileChange}
             style={{ display: 'none' }}
           />

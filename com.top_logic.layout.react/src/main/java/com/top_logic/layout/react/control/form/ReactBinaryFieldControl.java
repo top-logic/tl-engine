@@ -55,9 +55,6 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 	/** State key for an upload error message. */
 	private static final String ERROR = "error";
 
-	/** State key for the accepted MIME type filter. */
-	private static final String ACCEPT = "accept";
-
 	/** State key for the maximum upload size. */
 	private static final String MAX_SIZE = "maxSize";
 
@@ -96,12 +93,24 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 	private void initDataFieldState() {
 		if (getFieldModel() instanceof DataFieldModel) {
 			DataFieldModel dataModel = (DataFieldModel) getFieldModel();
-			putState(ACCEPT, dataModel.getAcceptedTypes());
+			setAcceptedTypes(dataModel.getAcceptedTypes());
 			long maxSize = dataModel.getMaxUploadSize();
 			if (maxSize > 0) {
 				putState(MAX_SIZE, maxSize);
 			}
 		}
+	}
+
+	/**
+	 * Restricts the files the file picker offers to the given types.
+	 *
+	 * @param acceptedTypes
+	 *        Comma separated list of MIME types like <code>image/*</code> and file patterns like
+	 *        <code>*.xml</code>, see {@link UploadSupport#acceptAttribute(String)}; <code>null</code>
+	 *        to offer every file.
+	 */
+	public void setAcceptedTypes(String acceptedTypes) {
+		putState(UploadSupport.ACCEPT, UploadSupport.acceptAttribute(acceptedTypes));
 	}
 
 	private BinaryData currentData() {

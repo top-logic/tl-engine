@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.form.ListElementFieldModel;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -89,6 +90,82 @@ public class FieldControlRegistry {
 		}
 	};
 
+	/**
+	 * Edits a single binary value, a file, as a {@link ReactBinaryFieldControl}: an upload area
+	 * while the field is editable, a download link otherwise.
+	 *
+	 * <p>
+	 * It edits one value at a time, so a {@link FieldSpec#isMultiple() multi-valued} field passed to
+	 * {@link #createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)} with
+	 * this provider is a {@link ReactValueListControl} with one such control per file. The files the
+	 * file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types} of the field.
+	 * The preview of a file is its name.
+	 * </p>
+	 *
+	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
+	 *           being created.
+	 */
+	public static final ReactFieldControlProvider BINARY = new ReactFieldControlProvider() {
+		@Override
+		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+			ReactBinaryFieldControl control = new ReactBinaryFieldControl(context, model);
+			if (field.getAcceptedTypes() != null) {
+				control.setAcceptedTypes(field.getAcceptedTypes());
+			}
+			return control;
+		}
+
+		@Override
+		public String previewText(FieldSpec field, Object value) {
+			return fileNames(value);
+		}
+	};
+
+	/**
+	 * Edits binary values, files, the way the platform does by default: a single file as
+	 * {@link #BINARY} does, the files of a {@link FieldSpec#isMultiple() multi-valued} field as a
+	 * {@link ReactFileChipsControl}.
+	 *
+	 * <p>
+	 * The chips control edits the whole collection, so this provider
+	 * {@link ReactFieldControlProvider#editsCollections() edits collections}. The chips of several
+	 * files take more than a line, so a multi-valued field is {@link #isLarge(FieldSpec) large}.
+	 * The files the file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types}
+	 * of the field. The preview of the files is their names, separated by commas.
+	 * </p>
+	 *
+	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
+	 *           being created.
+	 */
+	public static final ReactFieldControlProvider FILE_CHIPS = new ReactFieldControlProvider() {
+		@Override
+		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+			if (!field.isMultiple()) {
+				return BINARY.createControl(context, field, model);
+			}
+			ReactFileChipsControl control = new ReactFileChipsControl(context, model);
+			if (field.getAcceptedTypes() != null) {
+				control.setAcceptedTypes(field.getAcceptedTypes());
+			}
+			return control;
+		}
+
+		@Override
+		public boolean editsCollections() {
+			return true;
+		}
+
+		@Override
+		public boolean isLarge(FieldSpec field) {
+			return field.isMultiple();
+		}
+
+		@Override
+		public String previewText(FieldSpec field, Object value) {
+			return fileNames(value);
+		}
+	};
+
 	/** Separates the previews of the values of a multi-valued field. */
 	private static final String PREVIEW_SEPARATOR = ", ";
 
@@ -109,7 +186,7 @@ public class FieldControlRegistry {
 				field.getDateFormat()));
 		// The application type of the platform's binary datatype; a BinaryData value is covered
 		// through the supertype lookup.
-		register(BinaryDataSource.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
+		register(BinaryDataSource.class, FILE_CHIPS);
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
 		register(ResKey.class, new ReactFieldControlProvider() {
@@ -332,6 +409,27 @@ public class FieldControlRegistry {
 			return true;
 		}
 		return provider.isEmpty(field, value);
+	}
+
+	/**
+	 * The names of the files the given binary value holds, separated by commas.
+	 *
+	 * @param value
+	 *        A single {@link BinaryDataSource}, a collection of them, or {@code null}.
+	 * @return The names, never {@code null}.
+	 */
+	public static String fileNames(Object value) {
+		StringBuilder result = new StringBuilder();
+		for (Object element : ListElementFieldModel.elementsOfValue(value)) {
+			if (!(element instanceof BinaryDataSource file)) {
+				continue;
+			}
+			if (result.length() > 0) {
+				result.append(PREVIEW_SEPARATOR);
+			}
+			result.append(file.getName());
+		}
+		return result.toString();
 	}
 
 	/**

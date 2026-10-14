@@ -8,7 +8,9 @@ package com.top_logic.layout.react.control.upload;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.servlet.http.Part;
 
@@ -16,6 +18,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.layout.form.values.edit.editor.AcceptedTypesChecker;
 import com.top_logic.layout.provider.label.FileSizeLabelProvider;
 import com.top_logic.layout.react.UploadHandler;
 
@@ -48,6 +51,62 @@ public class UploadSupport {
 			config = TypedConfiguration.newConfigItem(UploadConfig.class);
 		}
 		return config.getMaxUploadSize();
+	}
+
+	/**
+	 * State key under which an {@link UploadHandler} control publishes the file types its file
+	 * picker offers, in the form of {@link #acceptAttribute(String)}.
+	 */
+	public static final String ACCEPT = "accept";
+
+	/** File pattern accepting every file. */
+	private static final String ACCEPT_ALL_FILES = "*.*";
+
+	/** MIME type accepting every file. */
+	private static final String ACCEPT_ALL_TYPES = "*/*";
+
+	/**
+	 * The value of the HTML <code>accept</code> attribute of a file input for the given accepted
+	 * file types.
+	 *
+	 * <p>
+	 * The accepted types are given as a comma separated list of MIME types like
+	 * <code>image/*</code> or <code>image/jpeg</code> and file patterns like <code>*.xml</code>, the
+	 * form the <code>accepted-types</code> annotation of a binary attribute uses. A file input
+	 * expects a file extension as <code>.xml</code>, so a pattern loses its wildcard. A pattern
+	 * accepting every file (<code>*.*</code> or <code>*&#47;*</code>) filters nothing. The MIME
+	 * types come first, as the {@link AcceptedTypesChecker} of an upload field lists them.
+	 * </p>
+	 *
+	 * @param acceptedTypes
+	 *        The accepted file types, or <code>null</code> to accept every file.
+	 * @return The <code>accept</code> attribute value, <code>null</code> if every file is accepted.
+	 *
+	 * @see AcceptedTypesChecker
+	 */
+	public static String acceptAttribute(String acceptedTypes) {
+		if (acceptedTypes == null) {
+			return null;
+		}
+		Set<String> mimeTypes = new LinkedHashSet<>();
+		Set<String> extensions = new LinkedHashSet<>();
+		for (String entry : acceptedTypes.split(",")) {
+			String type = entry.trim();
+			if (type.isEmpty()) {
+				continue;
+			}
+			if (ACCEPT_ALL_FILES.equals(type) || ACCEPT_ALL_TYPES.equals(type)) {
+				return null;
+			}
+			if (type.indexOf('/') >= 0) {
+				mimeTypes.add(type);
+			} else {
+				extensions.add(type.replace("*", ""));
+			}
+		}
+		List<String> result = new ArrayList<>(mimeTypes);
+		result.addAll(extensions);
+		return result.isEmpty() ? null : String.join(",", result);
 	}
 
 	/**

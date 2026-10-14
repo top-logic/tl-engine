@@ -6,7 +6,6 @@
 package com.top_logic.layout.scripting.recorder.ref;
 
 import com.top_logic.basic.UnreachableAssertion;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
@@ -15,7 +14,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRe
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
- * {@link ModelNamingScheme} for the last committed revision.
+ * {@link ModelNamingScheme} for the last revision committed by the user executing the script.
  * 
  * @see LastRevisionNamingScheme.Name
  * 
@@ -24,7 +23,13 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 public class LastRevisionNamingScheme extends AbstractGlobalModelNamingScheme<Revision, LastRevisionNamingScheme.Name> {
 
 	/**
-	 * {@link ModelNamingScheme} for the last committed revision.
+	 * {@link ModelNamingScheme} for the last revision committed by the user executing the script.
+	 * 
+	 * <p>
+	 * The revision is the last one whose author is the user of the session executing the action.
+	 * Revisions committed concurrently by the system (e.g. by scheduled tasks) or by other users
+	 * are skipped, so that the result is the revision of the script's own last change.
+	 * </p>
 	 * 
 	 * <p>
 	 * Note: The result of resolving this {@link ModelName} changes over time. The results depends
@@ -37,25 +42,7 @@ public class LastRevisionNamingScheme extends AbstractGlobalModelNamingScheme<Re
 	 * @see LastRevisionNamingScheme
 	 */
 	public interface Name extends ModelName {
-
-		/**
-		 * @see #isOwn()
-		 */
-		String OWN = "own";
-
-		/**
-		 * Whether to resolve the last revision committed by the user executing the script.
-		 * 
-		 * <p>
-		 * Revisions committed concurrently by the system (e.g. by scheduled tasks) or by other
-		 * users are skipped. Without this option, the last revision of the whole system is
-		 * resolved.
-		 * </p>
-		 */
-		@com.top_logic.basic.config.annotation.Name(OWN)
-		@BooleanDefault(false)
-		boolean isOwn();
-
+		// Pure marker interface.
 	}
 
 	@Override
@@ -72,10 +59,6 @@ public class LastRevisionNamingScheme extends AbstractGlobalModelNamingScheme<Re
 	public Revision locateModel(ActionContext context, Name name) {
 		HistoryManager hm = PersistencyLayer.getKnowledgeBase().getHistoryManager();
 		long commitNumber = hm.getLastRevision();
-		if (!name.isOwn()) {
-			return hm.getRevision(commitNumber);
-		}
-
 		String author = context.getDisplayContext().getSubSessionContext().getContextId();
 		long firstRevision = Math.max(hm.getFirstRevision(), Revision.FIRST_REV);
 		for (long rev = commitNumber; rev >= firstRevision; rev--) {

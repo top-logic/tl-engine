@@ -21,9 +21,7 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
 					name="Create TestRevertRevision"
 				>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"
-						own="true"
-					/>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
@@ -118,9 +116,7 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
 					name="Changed TestRevertRevision"
 				>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"
-						own="true"
-					/>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
 				</action>
 			</actions>
 		</action>
@@ -560,9 +556,7 @@
 		<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
 			name="Deleted TestRevertRevision"
 		>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"
-				own="true"
-			/>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 			user-id="root"
@@ -842,9 +836,7 @@
 								>
 									<name>
 										<part key="revision">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"
-												own="true"
-											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
 										</part>
 									</name>
 								</node>
@@ -879,9 +871,7 @@
 								>
 									<name>
 										<part key="revision">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"
-												own="true"
-											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
 										</part>
 									</name>
 								</node>
@@ -913,9 +903,7 @@
 								>
 									<name>
 										<part key="revision">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"
-												own="true"
-											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
 										</part>
 									</name>
 								</node>

@@ -14,6 +14,21 @@
 					title="TL-Demo OpenAPI Server"
 					version="1.0"
 				/>
+				<global-schemas>
+					<schema name="Release">
+						<schema><![CDATA[{
+  "type": "object",
+  "required": ["name", "version"],
+  "properties": {
+    "name": {"type": "string"},
+    "version": {"type": "string"},
+    "state": {"type": "string", "enum": ["planned", "released"]},
+    "date": {"type": "string", "format": "date"}
+  },
+  "additionalProperties": false
+}]]></schema>
+					</schema>
+				</global-schemas>
 				<authentications>
 					<basic-authentication
 						domain="BasicAuth"
@@ -74,6 +89,37 @@ A POST request to "/ping/a/b/c?q=q1&q=q2" e.g. delivers the result:
   "path": $path,
   "body": $body
 }]]></operation>
+								</implementation>
+							</operation>
+						</operations>
+					</PathItem>
+					<PathItem path="/echo">
+						<operations>
+							<operation
+								method="POST"
+								summary="Echoes a release description that matches the declared schema."
+							>
+								<description><![CDATA[Returns the given request body unchanged. Demonstrates the validation of a request against the schema of its body parameter (#29785).
+
+The body must be an object with a "release" matching the global schema "Release" and an optional "comment" that may be null. A body that does not match the schema is rejected with status 400 before the operation is executed; the response names each violation, e.g.:
+
+Value of parameter 'body' does not match its schema: $.release: required property 'name' not found]]></description>
+								<request-body name="body"
+									format="object"
+									required="true"
+								>
+									<schema><![CDATA[{
+  "type": "object",
+  "required": ["release"],
+  "properties": {
+    "release": {"$ref": "#/components/schemas/Release"},
+    "comment": {"type": "string", "nullable": true}
+  },
+  "additionalProperties": false
+}]]></schema>
+								</request-body>
+								<implementation transaction="false">
+									<operation><![CDATA[$body]]></operation>
 								</implementation>
 							</operation>
 						</operations>

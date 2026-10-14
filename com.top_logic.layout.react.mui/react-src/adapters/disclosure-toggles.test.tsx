@@ -20,6 +20,8 @@ import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
+import MuiSpinnerAdapter from './MuiSpinnerAdapter';
+import MuiDividerAdapter from './MuiDividerAdapter';
 
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Button', MuiButtonAdapter);
@@ -30,6 +32,9 @@ replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips, the sidebar its counts as badges.
 replacePart('Chip', MuiChipAdapter);
 replacePart('Badge', MuiBadgeAdapter);
+// A toggle whose content is being loaded shows a spinner; the sidebar draws lines between its items.
+replacePart('Spinner', MuiSpinnerAdapter);
+replacePart('Divider', MuiDividerAdapter);
 
 /** The labels of the toggles: the keys, as the test stub translates each key to itself. */
 const LABEL_GROUP_EXPAND = 'js.formGroup.expand';

@@ -56,6 +56,11 @@ export type {
   ChipPartProps,
   ChipTone,
   BadgePartProps,
+  DividerPartProps,
+  DividerOrientation,
+  ProgressBarPartProps,
+  SpinnerPartProps,
+  SpinnerSize,
 } from './bridge/parts';
 export { OptionValues } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';

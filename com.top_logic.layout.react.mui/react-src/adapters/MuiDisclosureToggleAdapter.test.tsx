@@ -5,10 +5,14 @@ import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TOOLTIP_ATTR } from 'tl-react-bridge';
+import { TOOLTIP_ATTR, replacePart } from 'tl-react-bridge';
 import type { DisclosureTogglePartProps } from 'tl-react-bridge';
 import { createMuiRoot, createPageThemes } from '../MuiRoot';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
+import MuiSpinnerAdapter from './MuiSpinnerAdapter';
+
+// The toggle shows the part Spinner while its content is being loaded.
+replacePart('Spinner', MuiSpinnerAdapter);
 
 /** The root wrapper the adapter is drawn below: the one of the MUI default theme. */
 const MuiRoot = createMuiRoot(createPageThemes({}));

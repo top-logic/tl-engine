@@ -107,12 +107,18 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: FieldValuePart } = await import('../../com.top_logic.layout.react/react-src/controls/form/FieldValuePart');
     const { default: ChipPart } = await import('../../com.top_logic.layout.react/react-src/controls/chip/ChipPart');
     const { default: BadgePart } = await import('../../com.top_logic.layout.react/react-src/controls/chip/BadgePart');
-    // A chip draws its remove button with the part Button.
+    const { default: DividerPart } = await import('../../com.top_logic.layout.react/react-src/controls/divider/DividerPart');
+    const { default: ProgressBarPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/ProgressBarPart');
+    const { default: SpinnerPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/SpinnerPart');
+    // A chip draws its remove button with the part Button, a disclosure toggle its busy indicator
+    // with the part Spinner.
     const { registerPart } = await import('tl-react-bridge');
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     registerPart('Button', ButtonPart);
+    registerPart('Spinner', SpinnerPart);
     return {
       ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart, ChipPart, BadgePart,
+      DividerPart, ProgressBarPart, SpinnerPart,
     };
   }
 
@@ -247,7 +253,9 @@ describe('the TopLogic drawing of the parts', () => {
 
     const toggle = screen.getByRole('button', { name: 'Aufklappen' });
     expect(toggle.getAttribute('aria-busy')).toBe('true');
-    expect(toggle.querySelector('.tlDisclosureToggle__spinner')).not.toBeNull();
+    const spinner = toggle.querySelector('.tlSpinner')!;
+    expect(spinner.className).toBe('tlSpinner tlSpinner--small');
+    expect(spinner.getAttribute('aria-hidden')).toBe('true');
     expect(toggle.querySelector('i.fa-chevron-right')).toBeNull();
   });
 
@@ -671,5 +679,69 @@ describe('the TopLogic drawing of the parts', () => {
     expect(badge.className).toBe('tl-badge tl-type-label-strong tl-nums x');
     expect(badge.textContent).toBe('12');
     expect(badge.getAttribute('aria-label')).toBe('12 neu');
+  });
+
+  it('draws a divider as the divider of the design system, a vertical one marked so', async () => {
+    const { DividerPart } = await defaults();
+
+    const { container } = render(<>
+      <DividerPart className="x" data-testid="h" />
+      <DividerPart orientation="vertical" />
+    </>);
+
+    const [horizontal, vertical] = Array.from(container.querySelectorAll('hr'));
+    expect(horizontal.className).toBe('tl-divider x');
+    expect(horizontal.hasAttribute('aria-orientation')).toBe(false);
+    expect(horizontal.getAttribute('data-testid')).toBe('h');
+    expect(vertical.className).toBe('tl-divider tl-divider--vertical');
+    expect(vertical.getAttribute('aria-orientation')).toBe('vertical');
+    expect(screen.getAllByRole('separator')).toHaveLength(2);
+  });
+
+  it('draws a determinate progress bar as the progress bar of the design system, filled by its share', async () => {
+    const { ProgressBarPart } = await defaults();
+
+    render(<ProgressBarPart id="p1" value={0.754} label="3 / 4" className="x" aria-label="Fortschritt" />);
+
+    const bar = screen.getByRole('progressbar');
+    expect(bar.id).toBe('p1');
+    expect(bar.className).toBe('tl-progress x');
+    expect(bar.getAttribute('aria-valuenow')).toBe('75');
+    expect(bar.getAttribute('aria-valuetext')).toBe('3 / 4');
+    expect(bar.getAttribute('aria-label')).toBe('Fortschritt');
+    expect(bar.hasAttribute('aria-busy')).toBe(false);
+    expect((bar.querySelector('.tl-progress__fill') as HTMLElement).style.width).toBe('75%');
+    expect(bar.querySelector('.tl-progress__label')!.textContent).toBe('3 / 4');
+  });
+
+  it('draws a progress bar without a value as indeterminate, busy, without fill width and label', async () => {
+    const { ProgressBarPart } = await defaults();
+
+    render(<ProgressBarPart />);
+
+    const bar = screen.getByRole('progressbar');
+    expect(bar.getAttribute('aria-busy')).toBe('true');
+    expect(bar.hasAttribute('aria-valuenow')).toBe(false);
+    expect(bar.hasAttribute('aria-valuetext')).toBe(false);
+    expect((bar.querySelector('.tl-progress__fill') as HTMLElement).style.width).toBe('');
+    expect(bar.querySelector('.tl-progress__label')).toBeNull();
+  });
+
+  it('draws a spinner with a label as a progress bar named by it, one without as decoration', async () => {
+    const { SpinnerPart } = await defaults();
+
+    const { container } = render(<>
+      <SpinnerPart label="Laden…" className="x" />
+      <SpinnerPart size="small" />
+    </>);
+
+    const named = screen.getByRole('progressbar', { name: 'Laden…' });
+    expect(named.className).toBe('tlSpinner x');
+    expect(named.hasAttribute('aria-hidden')).toBe(false);
+    const decoration = container.querySelectorAll('.tlSpinner')[1];
+    expect(decoration.className).toBe('tlSpinner tlSpinner--small');
+    expect(decoration.getAttribute('aria-hidden')).toBe('true');
+    expect(decoration.hasAttribute('role')).toBe(false);
+    expect(screen.getAllByRole('progressbar')).toEqual([named]);
   });
 });

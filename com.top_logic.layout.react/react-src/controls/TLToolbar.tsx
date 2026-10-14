@@ -1,6 +1,6 @@
 import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { useRovingMenu } from './menu/Menu';
+import { MenuSeparator, useRovingMenu } from './menu/Menu';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 
@@ -8,6 +8,12 @@ const I18N_KEYS = {
   'js.toolbar.label': 'Toolbar',
   'js.toolbar.overflow': 'More actions',
 };
+
+/**
+ * The class of the divider between two groups. The toolbar reads the width of a divider by it,
+ * whichever implementation of the part draws it.
+ */
+const SEPARATOR_CLASS = 'tlToolbar__separator';
 
 /** Icon of the overflow menu trigger. */
 const OVERFLOW_ICON = 'css:bi bi-three-dots';
@@ -210,7 +216,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
             {visibleItems.map((item, i) => <TLChild key={i} control={item} />)}
             {sections.map((items, si) => (
               <React.Fragment key={`sub-${si}`}>
-                {(visibleItems.length > 0 || si > 0) && <hr className="tl-divider" />}
+                {(visibleItems.length > 0 || si > 0) && <MenuSeparator />}
                 {items.map((item, i) => <TLChild key={i} control={item} />)}
               </React.Fragment>
             ))}
@@ -248,6 +254,7 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const overflowEnd = (state.overflow as OverflowEnd) ?? 'none';
   const collapsible = overflowEnd !== 'none';
   const i18n = useI18N(I18N_KEYS);
+  const Divider = usePart('Divider');
 
   // The buttons of a toolbar are ghost unless the container the toolbar sits in has chosen
   // otherwise: a window footer or a panel button bar says secondary, an app bar says ghost.
@@ -529,7 +536,7 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
         {overflowEnd === 'leading' && trigger}
         {shownGroups.map((shown, i) => (
           <React.Fragment key={shown.group.name}>
-            {i > 0 && <hr className="tl-divider tl-divider--vertical" aria-orientation="vertical" />}
+            {i > 0 && <Divider orientation="vertical" className={SEPARATOR_CLASS} />}
             {shown.group.display === 'menu'
               ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
               : <InlineGroup units={shown.units} />
@@ -566,7 +573,7 @@ function metricsOf(root: HTMLElement, full: number[], compact: number[]): Metric
   const gap = parseFloat(rootStyle.columnGap) || 0;
   const groupElement = root.querySelector('.tl-toolbar__group');
   const itemGap = groupElement ? (parseFloat(getComputedStyle(groupElement).columnGap) || gap) : gap;
-  const separatorElement = root.querySelector('.tl-divider--vertical');
+  const separatorElement = root.querySelector('.' + SEPARATOR_CLASS);
   const separator = separatorElement ? separatorElement.getBoundingClientRect().width : 1;
   // The trigger is rendered only once something overflows; it is an icon button, whose width is the
   // size-control token - read, not guessed.

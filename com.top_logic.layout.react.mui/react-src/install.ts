@@ -15,6 +15,9 @@ import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiFieldValueAdapter from './adapters/MuiFieldValueAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
 import MuiBadgeAdapter from './adapters/MuiBadgeAdapter';
+import MuiDividerAdapter from './adapters/MuiDividerAdapter';
+import MuiProgressBarAdapter from './adapters/MuiProgressBarAdapter';
+import MuiSpinnerAdapter from './adapters/MuiSpinnerAdapter';
 import MuiDatePickerAdapter from './adapters/MuiDatePickerAdapter';
 import MuiSelectAdapter from './adapters/MuiSelectAdapter';
 import MuiDropdownSelectAdapter from './adapters/MuiDropdownSelectAdapter';
@@ -31,7 +34,6 @@ import MuiTextAdapter from './adapters/MuiTextAdapter';
 import MuiCardAdapter from './adapters/MuiCardAdapter';
 import MuiAppBarAdapter from './adapters/MuiAppBarAdapter';
 import MuiBreadcrumbAdapter from './adapters/MuiBreadcrumbAdapter';
-import MuiProgressAdapter from './adapters/MuiProgressAdapter';
 import MuiSliderAdapter from './adapters/MuiSliderAdapter';
 
 /**
@@ -48,7 +50,11 @@ import MuiSliderAdapter from './adapters/MuiSliderAdapter';
  * the part `Chip` the toggles of an option chip field (TLOptionChips), the chosen values of a
  * dropdown, the named filters of a table, the files of a file chip field, every value with a color
  * role and every text drawn as a pill, the part `Badge` the counts of the sidebar and of the bottom
- * bar.
+ * bar, the part `Divider` the lines between the groups of a toolbar, between the sections of a
+ * toolbar menu and between the items of the sidebar, the part `ProgressBar` the progress controls
+ * (TLProgress), the bar of a job status and the loading options of a dropdown, the part `Spinner`
+ * the busy indicator of a disclosure toggle whose content is being loaded and of the icon popup
+ * loading its icons.
  */
 const PART_ADAPTERS = {
   Button: MuiButtonAdapter,
@@ -59,6 +65,9 @@ const PART_ADAPTERS = {
   FieldValue: MuiFieldValueAdapter,
   Chip: MuiChipAdapter,
   Badge: MuiBadgeAdapter,
+  Divider: MuiDividerAdapter,
+  ProgressBar: MuiProgressBarAdapter,
+  Spinner: MuiSpinnerAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */
@@ -79,7 +88,6 @@ const CONTROL_ADAPTERS = {
   TLCard: MuiCardAdapter,
   TLAppBar: MuiAppBarAdapter,
   TLBreadcrumb: MuiBreadcrumbAdapter,
-  TLProgress: MuiProgressAdapter,
   TLSlider: MuiSliderAdapter,
 } as const satisfies Record<string, React.ComponentType<TLCellProps>>;
 

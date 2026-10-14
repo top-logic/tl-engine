@@ -166,9 +166,14 @@ const SidebarHeaderItem: React.FC<{
   );
 };
 
-const SidebarSeparator: React.FC = () => (
-  <hr className="tlSidebar__separator" />
-);
+/** The class of the divider between two items of the sidebar, which gives it the space around it. */
+const SEPARATOR_CLASS = 'tlSidebar__separator';
+
+/** The line between two items of the sidebar or of its flyout, drawn by the part `Divider`. */
+const SidebarSeparator: React.FC = () => {
+  const Divider = usePart('Divider');
+  return <Divider className={SEPARATOR_CLASS} />;
+};
 
 /* ---------- Group flyout (collapsed mode) ---------- */
 
@@ -244,7 +249,7 @@ const SidebarGroupFlyout: React.FC<{
           );
         }
         if (child.type === 'separator') {
-          return <hr key={child.id} className="tlSidebar__separator" />;
+          return <SidebarSeparator key={child.id} />;
         }
         return null;
       })}

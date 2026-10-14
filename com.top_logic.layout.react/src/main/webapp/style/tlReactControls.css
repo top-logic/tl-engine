@@ -1221,20 +1221,39 @@ div.tlValueList {
 	rotate: 180deg;
 }
 
-/* The busy indicator of a toggle whose content is being loaded: a spinning ring in place of the
-   chevron. */
-.tlDisclosureToggle__spinner {
+/* --- Spinner (part) ------------------------------------------------------- */
+
+/* A ring on the track of the progress bar of the design system with an arc in the color of the brand
+   turning on it. A small spinner has the size of a small icon, which it stands in for, and turns
+   its arc in the color of the text. */
+.tlSpinner {
 	display: inline-block;
-	width: 14px;
-	height: 14px;
-	border: 2px solid var(--border-subtle);
-	border-top-color: var(--interactive);
-	border-radius: 50%;
-	animation: tlDisclosureToggleSpin 0.6s linear infinite;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	width: var(--tl-size-icon-lg);
+	height: var(--tl-size-icon-lg);
+	border: var(--tl-border-width-md) solid var(--tl-surface-interactive-selected);
+	border-top-color: var(--tl-surface-brand);
+	border-radius: var(--tl-radius-full);
+	animation: tlSpinnerTurn 0.8s linear infinite;
 }
 
-@keyframes tlDisclosureToggleSpin {
+.tlSpinner--small {
+	width: var(--tl-size-icon-sm);
+	height: var(--tl-size-icon-sm);
+	border-top-color: currentColor;
+}
+
+@keyframes tlSpinnerTurn {
 	to { transform: rotate(360deg); }
+}
+
+/* --- Divider (part) in a menu ---------------------------------------------- */
+
+/* The divider between two sections of a menu: its line is the part's, the space around it the
+   menu's. */
+.tl-menu > .tlMenu__separator {
+	margin-block: var(--tl-space-2xs);
 }
 
 /* --- Chip (part) ---------------------------------------------------------- */
@@ -1432,9 +1451,9 @@ button.tlSidebar__navItem--active:hover {
 }
 
 /* Separator */
+/* The divider between two items (part Divider): its line is the part's, the space around it the
+   sidebar's. */
 .tlSidebar__separator {
-	border: none;
-	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-04);
 }
 
@@ -4972,20 +4991,6 @@ button.tlWindow__maximizeBtn:focus-visible {
   padding: 32px;
   text-align: center;
   grid-column: 1 / -1;
-}
-
-.tlIconSelect__spinner {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 3px solid var(--border-subtle);
-  border-top-color: var(--focus);
-  border-radius: 50%;
-  animation: tlIconSelectSpin 0.8s linear infinite;
-}
-
-@keyframes tlIconSelectSpin {
-  to { transform: rotate(360deg); }
 }
 
 /* Advanced tab: edit area */

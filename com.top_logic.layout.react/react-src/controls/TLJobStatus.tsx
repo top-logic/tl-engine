@@ -1,7 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
-import { ProgressBar } from './TLProgress';
 
 const { useCallback, useEffect, useMemo, useState } = React;
 
@@ -46,6 +45,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const Button = usePart('Button');
+  const ProgressBar = usePart('ProgressBar');
 
   const status = (state.status as string | null) ?? null;
   const phases = (state.phases as PhaseEntry[] | undefined) ?? [];
@@ -118,7 +118,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </ol>
       )}
-      {showBar && <ProgressBar fraction={fraction} className="tlJobStatus__bar" />}
+      {showBar && <ProgressBar value={fraction ?? undefined} className="tlJobStatus__bar" />}
       {message !== null && message !== '' && <div className="tlJobStatus__message">{message}</div>}
       {error !== null && error !== '' && <div className="tlJobStatus__error">{error}</div>}
       {error == null && result !== null && result !== '' && (

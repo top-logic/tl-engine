@@ -10,12 +10,15 @@ import ButtonPart from '../../com.top_logic.layout.react/react-src/controls/butt
 import TextInputPart from '../../com.top_logic.layout.react/react-src/controls/form/TextInputPart';
 import FieldValuePart from '../../com.top_logic.layout.react/react-src/controls/form/FieldValuePart';
 import ChipPart from '../../com.top_logic.layout.react/react-src/controls/chip/ChipPart';
+import ProgressBarPart from '../../com.top_logic.layout.react/react-src/controls/progress/ProgressBarPart';
 import { CONTROL_ID, mountAdapter, patchState, settle } from './adapters/wire-test-support';
 
 registerPart('Button', ButtonPart);
 registerPart('TextInput', TextInputPart);
 registerPart('FieldValue', FieldValuePart);
 registerPart('Chip', ChipPart);
+// The dropdown shows a bar while its options are being loaded.
+registerPart('ProgressBar', ProgressBarPart);
 
 /** The name of the remove button of a chip: the key, as the test stub translates each key to itself. */
 const LABEL_REMOVE_VALUE = 'js.dropdownSelect.removeChip';

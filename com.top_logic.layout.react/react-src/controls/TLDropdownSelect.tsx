@@ -6,7 +6,6 @@ import {
   OptionContent,
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { SEARCH_ICON } from './form/fieldIcons';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
@@ -217,6 +216,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const nothingFoundLabel = i18n['js.dropdownSelect.nothingFound'];
   const Button = usePart('Button');
   const TextInput = usePart('TextInput');
+  const ProgressBar = usePart('ProgressBar');
 
   /** Format remove-chip label by replacing {0} with the option label. */
   const removeChipLabel = useCallback(
@@ -641,7 +641,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       {/* Loading, error and empty states - a line of the popup, not an option of the list */}
       {!optionsLoaded && !loadError && (
         <div className="tl-select__status tl-type-body">
-          <ProgressBar fraction={null} label={i18n['js.dropdownSelect.loading']} />
+          <ProgressBar label={i18n['js.dropdownSelect.loading']} />
         </div>
       )}
       {loadError && (

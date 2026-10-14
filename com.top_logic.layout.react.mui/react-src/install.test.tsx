@@ -76,7 +76,7 @@ function htmlAttributes(): string[] {
 }
 
 /** The parts the MUI module draws. */
-const PART_NAMES = ['Button', 'MenuTrigger', 'DisclosureToggle', 'Checkbox', 'TextInput', 'FieldValue', 'Chip', 'Badge'];
+const PART_NAMES = ['Button', 'MenuTrigger', 'DisclosureToggle', 'Checkbox', 'TextInput', 'FieldValue', 'Chip', 'Badge', 'Divider', 'ProgressBar', 'Spinner'];
 
 /** The names the parts or components were replaced under, in the order of the calls. */
 function replacedNames(replace: { mock: { calls: unknown[][] } }): unknown[] {
@@ -101,7 +101,7 @@ describe('installMui', () => {
 
     installMui({ theme: {} });
 
-    expect(COMPONENT_NAMES).toHaveLength(26);
+    expect(COMPONENT_NAMES).toHaveLength(28);
     expect(replacedNames(replacePart)).toEqual(PART_NAMES);
     expect(replacedNames(replace)).toEqual(COMPONENT_NAMES.filter(name => !PART_NAMES.includes(name)));
     expect(replacedNames(replace)).not.toContain('TLButton');
@@ -111,6 +111,8 @@ describe('installMui', () => {
     expect(replacedNames(replace)).not.toContain('TLTextInput');
     expect(replacedNames(replace)).not.toContain('TLPasswordInput');
     expect(replacedNames(replace)).not.toContain('TLNumberInput');
+    // The progress control draws its bar through the part.
+    expect(replacedNames(replace)).not.toContain('TLProgress');
     replacePart.mock.calls.forEach(([, adapter]) => expect(adapter).toBeTypeOf('function'));
     replace.mock.calls.forEach(([, adapter]) => expect(adapter).toBeTypeOf('function'));
   });

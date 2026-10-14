@@ -59,6 +59,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   const i18n = useI18N(I18N_KEYS);
   const TextInput = usePart('TextInput');
   const Button = usePart('Button');
+  const Spinner = usePart('Spinner');
   const [tab, setTab] = useState<Tab>('simple');
   const [searchTerm, setSearchTerm] = useState('');
   const [advancedInput, setAdvancedInput] = useState(currentValue ?? '');
@@ -209,7 +210,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       >
         {!iconsLoaded && !loadError && (
           <div className="tlIconSelect__loading">
-            <span className="tlIconSelect__spinner" />
+            <Spinner label={i18n['js.iconSelect.loading']} />
           </div>
         )}
         {loadError && (

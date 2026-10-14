@@ -17,6 +17,9 @@ import TextInputPart from './controls/form/TextInputPart';
 import FieldValuePart from './controls/form/FieldValuePart';
 import ChipPart from './controls/chip/ChipPart';
 import BadgePart from './controls/chip/BadgePart';
+import DividerPart from './controls/divider/DividerPart';
+import ProgressBarPart from './controls/progress/ProgressBarPart';
+import SpinnerPart from './controls/progress/SpinnerPart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -110,6 +113,9 @@ registerPart('TextInput', TextInputPart);
 registerPart('FieldValue', FieldValuePart);
 registerPart('Chip', ChipPart);
 registerPart('Badge', BadgePart);
+registerPart('Divider', DividerPart);
+registerPart('ProgressBar', ProgressBarPart);
+registerPart('Spinner', SpinnerPart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

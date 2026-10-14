@@ -7,7 +7,7 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
 // - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
-// of a field, a chip, a badge. A part has a typed props contract and no server state: the control
+// of a field, a chip, a badge, a divider, a progress bar, a spinner. A part has a typed props contract and no server state: the control
 // maps its state to the props of the part, sends its commands and handles keyboard bindings and
 // navigation, and the part only draws. The controls bundle registers a default for every part (registerPart); a customer
 // component library replaces a part (replacePart) and so changes how the part looks wherever a
@@ -627,6 +627,97 @@ export interface BadgePartProps extends PartAttributes {
 }
 
 /**
+ * The direction of a {@link DividerPartProps divider}:
+ *
+ * <ul>
+ * <li>`horizontal`: a line across, between entries stacked one above the other - the sections of a
+ *     menu, the items of a navigation.</li>
+ * <li>`vertical`: a line standing in a row and stretching to its height - between the groups of a
+ *     toolbar.</li>
+ * </ul>
+ */
+export type DividerOrientation = 'horizontal' | 'vertical';
+
+/**
+ * The props of the part {@link PartProps.Divider}: a thin line separating the content before it from
+ * the content after it.
+ *
+ * <p>A divider only separates; it carries no content and takes no focus. Every implementation draws a
+ * separator (an `hr`, or an element of the role `separator`), marks a vertical one
+ * `aria-orientation="vertical"` and puts {@link className} and the passed-through attributes on it.
+ * The space around the line is up to the element around it, which sets it through the
+ * {@link className}.</p>
+ */
+export interface DividerPartProps extends PartAttributes {
+  /** The direction of the line; absent: `horizontal`. */
+  orientation?: DividerOrientation;
+
+  /** Classes added to the drawn element. */
+  className?: string;
+}
+
+/**
+ * The props of the part {@link PartProps.ProgressBar}: a bar showing how much of a task is done,
+ * with an optional label beside it - the progress of a job, the loading of the options of a field.
+ *
+ * <p>A bar with a {@link value} is determinate: it fills that share of its track. A bar without a
+ * value is indeterminate: it shows that something is going on without telling how much of it is
+ * done, and is marked `aria-busy`.</p>
+ *
+ * <p>Every implementation draws an element of the role `progressbar` with the share in percent as
+ * `aria-valuenow` (absent for an indeterminate bar) and the label as `aria-valuetext`, and puts
+ * {@link id}, {@link className} and the passed-through attributes on its outermost element.</p>
+ */
+export interface ProgressBarPartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
+  /**
+   * The share of the task that is done, from 0 (nothing) to 1 (all); absent: the bar is
+   * indeterminate.
+   */
+  value?: number;
+
+  /** The text shown beside the bar, e.g. "3 / 4"; absent: none. */
+  label?: string;
+
+  /** Classes added to the outermost drawn element. */
+  className?: string;
+}
+
+/**
+ * The size of a {@link SpinnerPartProps spinner}:
+ *
+ * <ul>
+ * <li>`small`: the size of a small icon, standing in for an icon, e.g. the chevron of a toggle
+ *     whose content is being loaded. It takes the color of the text around it.</li>
+ * <li>`medium`: a busy indicator standing on its own, e.g. in place of a list being loaded.</li>
+ * </ul>
+ */
+export type SpinnerSize = 'small' | 'medium';
+
+/**
+ * The props of the part {@link PartProps.Spinner}: a turning ring showing that something is going
+ * on without telling how much of it is done.
+ *
+ * <p>A spinner with a {@link label} is a busy indicator of its own: every implementation draws it
+ * as an element of the role `progressbar` named by the label. A spinner without a label is
+ * decoration, hidden from assistive technology: the element around it states that it is busy, e.g.
+ * by `aria-busy`. Every implementation puts {@link className} and the passed-through attributes on
+ * its outermost element.</p>
+ */
+export interface SpinnerPartProps extends PartAttributes {
+  /** The size; absent: `medium`. */
+  size?: SpinnerSize;
+
+  /** The accessible name, e.g. "Loading…"; absent: the spinner is decoration. */
+  label?: string;
+
+  /** Classes added to the outermost drawn element. */
+  className?: string;
+}
+
+/**
  * The parts of the React UI by name, each with its props. The name is what {@link registerPart},
  * {@link replacePart} and {@link usePart} take; the props are the contract every implementation of
  * the part fulfils.
@@ -655,6 +746,15 @@ export interface PartProps {
 
   /** A small marker carrying a count: {@link BadgePartProps}. */
   Badge: BadgePartProps;
+
+  /** A thin line separating content: {@link DividerPartProps}. */
+  Divider: DividerPartProps;
+
+  /** A bar showing how much of a task is done: {@link ProgressBarPartProps}. */
+  ProgressBar: ProgressBarPartProps;
+
+  /** A turning ring showing that something is going on: {@link SpinnerPartProps}. */
+  Spinner: SpinnerPartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

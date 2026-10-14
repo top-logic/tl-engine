@@ -9,9 +9,12 @@ import { replacePart } from 'tl-react-bridge';
 import TLToolbar from '../../../com.top_logic.layout.react/react-src/controls/TLToolbar';
 import TLMenuRegion from '../../../com.top_logic.layout.react/react-src/controls/TLMenuRegion';
 import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
+import MuiDividerAdapter from './MuiDividerAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 
 replacePart('MenuTrigger', MuiMenuTriggerAdapter);
+// The toolbar draws the lines between its groups and between the sections of its menus.
+replacePart('Divider', MuiDividerAdapter);
 
 /** The command of a menu region asking the server to open its menu. */
 const CMD_OPEN_MENU = 'openMenu';

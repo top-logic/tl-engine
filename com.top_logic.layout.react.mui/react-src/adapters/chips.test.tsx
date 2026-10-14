@@ -22,6 +22,9 @@ import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
+import MuiDividerAdapter from './MuiDividerAdapter';
+import MuiProgressBarAdapter from './MuiProgressBarAdapter';
+import MuiSpinnerAdapter from './MuiSpinnerAdapter';
 import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
 
@@ -33,6 +36,10 @@ replacePart('Button', MuiButtonAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
+// The lines of the sidebar, the bar of a dropdown loading its options, the spinner of a toggle.
+replacePart('Divider', MuiDividerAdapter);
+replacePart('ProgressBar', MuiProgressBarAdapter);
+replacePart('Spinner', MuiSpinnerAdapter);
 
 /** Argument of {@link CMD_VALUE_CHANGED}: the values of the chosen options. */
 const ARG_VALUE = 'value';

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
 order: 40
 ---
 
@@ -92,6 +92,34 @@ a switch is asked for: a switch has no third position for "no value".
    `SelectControlProvider` the same way.
 3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
    kind of value the type holds.
+
+**Files** — a value of `tl.core:Binary` is a file. A single file is one file field
+(`FieldControlRegistry.BINARY`, `ReactBinaryFieldControl`): an upload area while the field is
+editable, a download link otherwise. The files of a multi-valued binary attribute are shown as file
+chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, client `TLFileChips`):
+one chip per file, a button and a drop area adding several files at once. The model annotation
+`<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
+list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
+whose add button uploads several files at once, one value per file. `data-item` (the default) and
+`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+(`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
+single and a multi-valued value alike. Both annotations are read at the attribute, else at its type,
+and act on a `<value-input>` of type `tl.core:Binary` through its `<annotations>` as well. A
+mandatory multi-valued binary value shows the required marker at the chips and, after a refused
+save, the message of the mandatory check under them.
+
+```xml
+<property name="attachments"
+	mandatory="true"
+	multiple="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="*.pdf"/>
+		<binary-display presentation="list"/>
+	</annotations>
+</property>
+```
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.

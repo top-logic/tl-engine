@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.nio.charset.StandardCharsets;
 import java.text.Format;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +20,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.LongMapping;
@@ -29,12 +33,15 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
@@ -53,6 +60,9 @@ import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
+import com.top_logic.model.annotate.ui.TLAcceptedTypes;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
@@ -88,6 +98,9 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	/** A datatype holding a point in time. */
 	private TLPrimitive _dateType;
 
+	/** A datatype holding a file. */
+	private TLPrimitive _binaryType;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -102,6 +115,8 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 		_textType = TLModelUtil.addDatatype(module, module, "Text", Kind.STRING, directMapping(String.class));
 		_numberType = TLModelUtil.addDatatype(module, module, "Number", Kind.INT, LongMapping.INSTANCE);
 		_dateType = TLModelUtil.addDatatype(module, module, "Date", Kind.DATE, directMapping(Date.class));
+		_binaryType =
+			TLModelUtil.addDatatype(module, module, "Binary", Kind.BINARY, directMapping(BinaryDataSource.class));
 	}
 
 	@Override
@@ -245,6 +260,100 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 
 		assertEquals(format.format(values.get(0)) + ", " + format.format(values.get(1)),
 			column("numbers", _numberType, true).searchText(values));
+	}
+
+	/**
+	 * The files of a multi-valued binary attribute are edited as file chips: one control for the
+	 * whole collection.
+	 */
+	public void testSeveralFilesAreDisplayedAsChips() {
+		ReactControl control = control(property("files", _binaryType, true, false), List.of(file("a.txt")));
+
+		assertEquals(ReactFileChipsControl.class, control.getClass());
+	}
+
+	/** A single file is edited in a file field, whatever the binary display asks for. */
+	public void testASingleFileIsDisplayedAsAFileField() {
+		TLStructuredTypePart part = property("file", _binaryType, false, false);
+		assertEquals(ReactBinaryFieldControl.class, control(part, file("a.txt")).getClass());
+
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
+		assertEquals(ReactBinaryFieldControl.class, control(part, file("a.txt")).getClass());
+	}
+
+	/**
+	 * The files of a multi-valued binary attribute asking for a list are edited as a list with one
+	 * file field per file.
+	 */
+	public void testFilesAskingForAListAreDisplayedAsAList() {
+		TLStructuredTypePart part = property("files", _binaryType, true, false);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
+
+		ReactControl control = control(part, List.of(file("a.txt"), file("b.txt")));
+
+		assertEquals(ReactValueListControl.class, control.getClass());
+		assertEquals("Files are added to the list by uploading them.",
+			Boolean.TRUE, control.scriptingScalarState().get(ReactValueListControl.UPLOAD));
+	}
+
+	/** An image drop field is displayed as file chips: the React UI offers no image drop field. */
+	public void testFilesAskingForAnImageDropFieldAreDisplayedAsChips() {
+		TLStructuredTypePart part = property("files", _binaryType, true, false);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		assertEquals(ReactFileChipsControl.class, control(part, List.of()).getClass());
+	}
+
+	/** A binary display stated at the type decides for an attribute that states none. */
+	public void testTheBinaryDisplayOfTheTypeApplies() {
+		_binaryType.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
+
+		assertEquals(ReactValueListControl.class,
+			control(property("files", _binaryType, true, false), List.of()).getClass());
+	}
+
+	/**
+	 * The file picker of a binary value offers the accepted types of the attribute, for the chips,
+	 * the list and the single file field alike.
+	 */
+	public void testAcceptedTypesReachTheFilePicker() {
+		TLStructuredTypePart files = property("files", _binaryType, true, false);
+		files.setAnnotation(acceptedTypes("*.pdf, image/*"));
+		assertEquals("image/*,.pdf", control(files, List.of()).scriptingScalarState().get(UploadSupport.ACCEPT));
+
+		files.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
+		assertEquals("image/*,.pdf", control(files, List.of()).scriptingScalarState().get(UploadSupport.ACCEPT));
+
+		TLStructuredTypePart file = property("file", _binaryType, false, false);
+		assertNull("Every file is offered by default.",
+			control(file, null).scriptingScalarState().get(UploadSupport.ACCEPT));
+		_binaryType.setAnnotation(acceptedTypes("*.xml"));
+		assertEquals("The accepted types of the type apply where the attribute states none.",
+			".xml", control(file, null).scriptingScalarState().get(UploadSupport.ACCEPT));
+	}
+
+	/**
+	 * A cell showing several files gives their names in one line and opens the files in a dialog.
+	 */
+	public void testACellOfSeveralFilesShowsTheirNames() {
+		TLStructuredTypePart part = property("files", _binaryType, true, false);
+
+		ReactControl cell = display(ColumnType.of(part), List.of(file("a.txt"), file("b.txt")));
+
+		assertEquals(ReactCompactFieldControl.class, cell.getClass());
+		assertEquals("a.txt, b.txt", ((ReactCompactFieldControl) cell).getPreviewText());
+	}
+
+	/** An accepted types annotation stating the given types. */
+	private static TLAcceptedTypes acceptedTypes(String types) {
+		TLAcceptedTypes result = TypedConfiguration.newConfigItem(TLAcceptedTypes.class);
+		result.setValue(types);
+		return result;
+	}
+
+	/** A file of the given name. */
+	private static BinaryData file(String name) {
+		return BinaryDataFactory.createBinaryData(name.getBytes(StandardCharsets.UTF_8), "text/plain", name);
 	}
 
 	/**

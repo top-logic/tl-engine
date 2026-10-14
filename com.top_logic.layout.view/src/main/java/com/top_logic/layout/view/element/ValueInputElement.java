@@ -53,6 +53,8 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
@@ -109,6 +111,12 @@ import com.top_logic.util.Resources;
  * that is picked from options runs it with every choice. Whenever the command runs, the value has
  * already reached the channel.
  * </p>
+ *
+ * <p>
+ * Inside a {@code <form>}, the input follows the form's edit mode: the value can be changed only
+ * while the form is edited. An {@link Config#getEditMode() edit mode channel} decides instead of
+ * the form, and {@link Config#getReadonly() readonly} keeps the input unchangeable in any case.
+ * </p>
  */
 @InApp
 public class ValueInputElement implements UIElement {
@@ -160,6 +168,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
+
+		/** Configuration name for {@link #getEditMode()}. */
+		String EDIT_MODE = "edit-mode";
 
 		/** Configuration name for {@link #getLabelPosition()}. */
 		String LABEL_POSITION = "label-position";
@@ -330,6 +341,28 @@ public class ValueInputElement implements UIElement {
 		boolean getReadonly();
 
 		/**
+		 * The channel deciding whether the value can be changed: it can while the channel holds
+		 * {@code true}, and cannot otherwise.
+		 *
+		 * <p>
+		 * Without a channel, an input inside a {@code <form>} can be changed while the form is in
+		 * edit mode, and an input outside a form can always be changed. With a channel, the
+		 * form's mode is ignored: an input whose value belongs to the view rather than to the
+		 * edited object - a filter above a list shown in the form, a choice made while viewing -
+		 * names a channel that always holds {@code true}, or the channel of its own edit state.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link #getReadonly() Readonly} wins over this channel: a read-only input is never
+		 * changed.
+		 * </p>
+		 */
+		@Name(EDIT_MODE)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getEditMode();
+
+		/**
 		 * Where the input renders its label relative to itself, e.g. {@code hide-label} for a
 		 * label-less input.
 		 *
@@ -434,6 +467,8 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _readonly;
 
+	private final ChannelRef _editModeRef;
+
 	private final LabelPosition _labelPosition;
 
 	private final ViewCommand _submitCommand;
@@ -464,6 +499,7 @@ public class ValueInputElement implements UIElement {
 		_clearable = config.getClearable();
 		_debounce = config.getDebounce();
 		_readonly = config.getReadonly();
+		_editModeRef = config.getEditMode();
 		_labelPosition = config.getLabelPosition();
 
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
@@ -484,7 +520,9 @@ public class ValueInputElement implements UIElement {
 		AbstractFieldModel field = options == null
 			? new AbstractFieldModel(null)
 			: new SimpleSelectFieldModel(null, options, _multiple);
-		field.setEditable(!_readonly);
+		ViewChannel editModeChannel = _editModeRef == null ? null : context.resolveChannel(_editModeRef);
+		FormModel form = editModeChannel == null ? context.getFormModel() : null;
+		field.setEditable(!_readonly && editMode(editModeChannel, form));
 		field.setMandatory(_mandatory);
 
 		// Bound before the control is built, so that the control is built over the value the
@@ -517,13 +555,73 @@ public class ValueInputElement implements UIElement {
 
 		if (_label == null && _labelPosition == null) {
 			input.setCssClass(_cssClass);
+			followEditMode(editModeChannel, form, field, input, null);
 			return input;
 		}
+		boolean editable = field.isEditable();
 		ReactFormFieldChromeControl chrome =
-			new ReactFormFieldChromeControl(context, label, field.isMandatory(), false, null, null,
-				AttributeFieldControl.wirePosition(_labelPosition, !_readonly), false, true, input);
+			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, null,
+				AttributeFieldControl.wirePosition(_labelPosition, editable), false, true, input);
 		chrome.setCssClass(_cssClass);
+		followEditMode(editModeChannel, form, field, input, chrome);
 		return chrome;
+	}
+
+	/**
+	 * Whether the value can be changed, as far as the edit mode decides.
+	 *
+	 * @param editModeChannel
+	 *        The {@link Config#getEditMode() edit mode channel}, or {@code null} if none is
+	 *        configured.
+	 * @param form
+	 *        The enclosing form, or {@code null} if the input stands outside a form or the edit
+	 *        mode channel decides.
+	 */
+	private static boolean editMode(ViewChannel editModeChannel, FormModel form) {
+		if (editModeChannel != null) {
+			return Boolean.TRUE.equals(editModeChannel.get());
+		}
+		if (form != null) {
+			return form.isEditMode();
+		}
+		return true;
+	}
+
+	/**
+	 * Makes the input follow the edit mode of the {@link Config#getEditMode() edit mode channel}
+	 * respectively of the enclosing form.
+	 *
+	 * <p>
+	 * The mandatory mark and an edit-dependent label position follow the editability, as they do
+	 * for the field of an attribute. A {@link Config#getReadonly() read-only} input follows
+	 * nothing.
+	 * </p>
+	 *
+	 * @param chrome
+	 *        The chrome around the input, or {@code null} if the input stands alone.
+	 */
+	private void followEditMode(ViewChannel editModeChannel, FormModel form, AbstractFieldModel field,
+			ReactControl input, ReactFormFieldChromeControl chrome) {
+		if (_readonly) {
+			return;
+		}
+		Runnable update = () -> {
+			boolean editable = editMode(editModeChannel, form);
+			field.setEditable(editable);
+			if (chrome != null) {
+				chrome.setRequired(_mandatory && editable);
+				chrome.setLabelPosition(AttributeFieldControl.wirePosition(_labelPosition, editable));
+			}
+		};
+		if (editModeChannel != null) {
+			Registration registration =
+				editModeChannel.addListener((sender, oldValue, newValue) -> update.run());
+			input.addCleanupAction(registration::dispose);
+		} else if (form != null) {
+			FormModelListener listener = source -> update.run();
+			form.addFormModelListener(listener);
+			input.addCleanupAction(() -> form.removeFormModelListener(listener));
+		}
 	}
 
 	/**

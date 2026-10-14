@@ -59,6 +59,7 @@ public class DataFieldProvider extends AbstractFieldProvider {
 
 		switch (presentation) {
 			case DATA_ITEM:
+			case LIST:
 				field.setControlProvider((model, style) -> new DataItemControl((DataField) model));
 				break;
 			case IMAGE_UPLOAD:

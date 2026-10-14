@@ -91,12 +91,6 @@ public final class AgentTaskMirror implements TaskStore.Mirror, AutoCloseable {
 		try {
 			AgentExecutionStore.getInstance().syncTasks(_session, wanted, _handle == null ? null : _handle.get());
 			_written = wanted;
-		} catch (CancelledWriteException ex) {
-			// Expected: cancelling a run interrupts its thread, which ends the wait for the write.
-			// The sync is queued and still commits; only the wait for it is given up. The written
-			// state stays unrecorded so the next mutation syncs the whole plan again.
-			Logger.info("Run cancelled while mirroring its tasks; the change is written without"
-				+ " waiting for it.", AgentTaskMirror.class);
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to mirror the agent's tasks into the model: " + ex.getMessage(), ex,
 				AgentTaskMirror.class);

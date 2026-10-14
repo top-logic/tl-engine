@@ -284,6 +284,30 @@ A run started inside somebody else's transaction - a script in a command that op
 run inside a turn that has written - does not move its view between turns: that would merge other
 threads' commits into a transaction that is not the run's. Such a run reads what its caller reads.
 
+## When the run is stopped
+
+A run is stopped through its `CancellationToken` (`context.cancellationToken()`), never by
+interrupting a thread. H2 reads its database file through an NIO `FileChannel`, and an interrupt that
+reaches a thread while - or before - it reads one closes the channel for every thread of the
+application, for good: every later click answers "Database operation failed" until the server is
+restarted (Gitea #901).
+
+So a tool **never interrupts a thread** - no `Thread.interrupt()`, no `Future.cancel(true)`, no
+`shutdownNow()` on an executor whose tasks may touch the knowledge base. A tool that loops looks at
+`isCancelled()`. A tool that waits for something only an interrupt can end early - an HTTP request, a
+future of another thread - waits through the token, which interrupts exactly that wait and takes the
+interrupt back when it ends:
+
+```java
+HttpResponse<String> response = context.cancellationToken()
+    .whileBlocked(() -> client.send(request, BodyHandlers.ofString()));
+String answer = context.cancellationToken().await(future, 30, TimeUnit.SECONDS);
+```
+
+A stopped wait ends with a `CancellationException`. Wrap the wait alone, never code that reads the
+knowledge base. Code below a tool that is handed no context finds the run's token in
+`RunCancellationBinding` (tl-ai-core), which offers the same two methods.
+
 ## A tool written as TL-Script
 
 An administrator can configure a tool whose body is TL-Script instead of Java, with

@@ -407,35 +407,35 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	 * </p>
 	 *
 	 * @return Whether the agent finished by itself. {@code false} means the task was asked to stop
-	 *         and the agent thread was interrupted.
+	 *         and the run was cancelled.
 	 */
 	boolean awaitCompletion(TaskProgressTracker tracker) {
 		while (ChatProcessor.isProcessing(tracker)) {
 			if (getShouldStop()) {
-				// The run holds this thread's sub-session, so it has to end before this method
-				// returns and the sub-session is handed back. Interrupting is what /chat/cancel
-				// does; the loop's cancellation token is not reachable from here without the run's
-				// state, and the state is what the interrupt reaches anyway.
-				interruptAgent(tracker);
+				cancelAgent(tracker);
 				return false;
 			}
 			try {
 				Thread.sleep(POLL_INTERVAL_MILLIS);
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
-				interruptAgent(tracker);
+				cancelAgent(tracker);
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private void interruptAgent(TaskProgressTracker tracker) {
+	/**
+	 * Stops the run through its cancellation token, as {@code /chat/cancel} does - never by
+	 * interrupting the agent thread, which may be reading the database: an interrupt during a read
+	 * closes H2's file for the whole application.
+	 */
+	private void cancelAgent(TaskProgressTracker tracker) {
 		AIProcessingState state = tracker.getAnyActiveProcessingState();
-		Thread agent = state == null ? null : state.getAgentThread();
-		if (agent != null) {
-			Logger.info("Task '" + getName() + "' was stopped; interrupting its agent run.", AgentTask.class);
-			agent.interrupt();
+		if (state != null) {
+			Logger.info("Task '" + getName() + "' was stopped; cancelling its agent run.", AgentTask.class);
+			state.getCancellationToken().cancel();
 		}
 	}
 

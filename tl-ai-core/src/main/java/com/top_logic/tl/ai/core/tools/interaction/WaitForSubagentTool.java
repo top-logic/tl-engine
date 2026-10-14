@@ -143,7 +143,7 @@ public class WaitForSubagentTool implements Tool {
 
 		// The returned results are not read: what matters here is the wait and the delivery flag
 		// it sets, and the jobs themselves carry everything the answer needs.
-		registry.awaitBlocking(ids, timeoutMs);
+		registry.awaitBlocking(ids, timeoutMs, context.cancellationToken());
 		if (context instanceof ToolContext toolContext) {
 			// What a finished subagent read is now this run's to cite, like the result built on it.
 			for (String id : ids) {

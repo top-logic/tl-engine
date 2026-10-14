@@ -22,12 +22,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
@@ -251,6 +253,8 @@ public class WebFetchTool {
 			return answer;
 		} catch (Refusal ex) {
 			return ex.getMessage();
+		} catch (CancellationException ex) {
+			return "Error: web fetch was cancelled.";
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			return "Error: web fetch was interrupted.";
@@ -303,7 +307,8 @@ public class WebFetchTool {
 
 			HttpResponse<InputStream> response;
 			try {
-				response = _client.send(request, BodyHandlers.ofInputStream());
+				// Stopping the run ends the wait for the server.
+				response = RunCancellationBinding.whileBlocked(() -> _client.send(request, BodyHandlers.ofInputStream()));
 			} catch (IOException ex) {
 				// A refused HTTPS tunnel reaches the client only as an exception ("Tunnel failed,
 				// got: 403"); any other failure is reported as what it is.

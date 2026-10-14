@@ -585,20 +585,37 @@ public class SubagentJobRegistry {
 	 * </p>
 	 */
 	public List<SubagentResult> awaitBlocking(List<String> ids, long timeoutMs) {
+		return awaitBlocking(ids, timeoutMs, CancellationToken.UNCANCELLABLE);
+	}
+
+	/**
+	 * {@link #awaitBlocking(List, long)} that also ends when the waiting run is cancelled.
+	 *
+	 * <p>
+	 * The cancellation wakes the wait; it does not interrupt the waiting thread, which belongs to an
+	 * agent run and may go on to read the database.
+	 * </p>
+	 *
+	 * @param cancellation
+	 *        The waiting run's token.
+	 */
+	public List<SubagentResult> awaitBlocking(List<String> ids, long timeoutMs, CancellationToken cancellation) {
 		long deadline = System.currentTimeMillis() + timeoutMs;
-		synchronized (_completionLock) {
-			int questions = _questionsAsked;
-			while (!allTerminal(ids) && _questionsAsked == questions && !hasUndeliveredQuestion()
-					&& !waitsForLead(ids) && System.currentTimeMillis() < deadline) {
-				long wait = deadline - System.currentTimeMillis();
-				if (wait <= 0) {
-					break;
-				}
-				try {
-					_completionLock.wait(wait);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					break;
+		try (CancellationToken.Registration wake = cancellation.onCancel(this::signalCompletion)) {
+			synchronized (_completionLock) {
+				int questions = _questionsAsked;
+				while (!cancellation.isCancelled() && !allTerminal(ids) && _questionsAsked == questions
+						&& !hasUndeliveredQuestion() && !waitsForLead(ids) && System.currentTimeMillis() < deadline) {
+					long wait = deadline - System.currentTimeMillis();
+					if (wait <= 0) {
+						break;
+					}
+					try {
+						_completionLock.wait(wait);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						break;
+					}
 				}
 			}
 		}
@@ -640,13 +657,16 @@ public class SubagentJobRegistry {
 	 * Shuts down the background executor (call on session teardown).
 	 *
 	 * <p>
-	 * Running jobs are interrupted. Queued jobs, and jobs spawned afterwards, never start: they end
-	 * {@link SubagentJobStatus#CANCELLED} at once, so that nobody waits for them.
+	 * Running jobs are cancelled through their tokens and end by themselves; their threads are not
+	 * interrupted, because a subagent may be reading the database and an interrupt during a read
+	 * closes H2's file for the whole application. Queued jobs, and jobs spawned afterwards, never
+	 * start: they end {@link SubagentJobStatus#CANCELLED} at once, so that nobody waits for them.
 	 * </p>
 	 */
 	public void shutdown() {
 		SubagentSlots.forget(this);
-		_executor.shutdownNow();
+		_executor.shutdown();
+		cancelAll();
 		dispatch();
 	}
 }

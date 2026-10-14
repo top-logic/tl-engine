@@ -100,7 +100,14 @@ public class McpTool implements Tool {
 
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-		McpSchema.CallToolResult result = _registry.callTool(_serverName, _mcpToolName, args);
+		McpSchema.CallToolResult result;
+		try {
+			// Stopping the run ends the wait for the server.
+			result = context.cancellationToken().whileBlocked(() -> _registry.callTool(_serverName, _mcpToolName, args));
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			return ToolResult.failure("Error: the call to " + name() + " was interrupted.");
+		}
 		return answer(name(), result);
 	}
 

@@ -99,8 +99,10 @@ blocks for up to 30 minutes per call if nobody is in fact watching, so use it on
 - **Overlap.** An agent sitting can take longer than the interval it is scheduled at. A run started
   while the previous one is still working is skipped and reported as a warning in the scheduler's
   task table; it is not queued.
-- **Stopping.** "Stop task" reaches the task thread, which is waiting for the run. It interrupts the
-  agent thread - what `POST /chat/cancel` does - and reports the run as cancelled.
+- **Stopping.** "Stop task" reaches the task thread, which is waiting for the run. It cancels the
+  run's token - what `POST /chat/cancel` does - and reports the run as cancelled. It never interrupts
+  the agent thread: that thread may be reading the database, and an interrupt during a read closes
+  H2's database file for the whole application (#901).
 - **The cluster.** The task is not node-local (`isNodeLocal()` returns `false`), so one node runs it.
   An agent run writes, sends and costs money; running it once per node would do all of that as often
   as the cluster is wide.

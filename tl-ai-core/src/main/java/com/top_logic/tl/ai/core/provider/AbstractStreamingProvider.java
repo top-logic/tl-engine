@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -113,7 +114,12 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 
 		HttpResponse<InputStream> response;
 		try {
-			response = _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+			// Stopping the run ends the wait for the response headers, which a model can keep open
+			// for a long time; the stream itself is ended by closing it, below.
+			response = handler.cancellation()
+				.whileBlocked(() -> _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream()));
+		} catch (CancellationException e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.", e);
 		} catch (IOException e) {
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
 				"Connection failed: " + e.getMessage(), e);

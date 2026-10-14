@@ -5,22 +5,27 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.tl.ai.tool.api.CancellationToken.BlockingCall;
 
 /**
  * Thread-local binding of the {@link CancellationToken} of the agent run executing on the current
  * thread.
  *
  * <p>
- * A run is cancelled by cancelling its token and then interrupting its thread. Code interrupted
- * further down the stack sees only a bare {@link InterruptedException} and cannot tell a
- * user-requested cancellation from an interrupt with any other cause (a tool call that ran into
- * its timeout, a shutdown, a bug). This binding supplies the missing marker: while
- * {@link #isRunCancelled()} holds, an interrupt on this thread is the expected consequence of the
- * user cancelling the run and may be handled as such; otherwise it is a genuine failure and must
- * still be reported as one.
+ * A run is cancelled by cancelling its token, never by interrupting its thread: an interrupt that
+ * reaches a thread while it reads the database file closes H2's file channel, and with it the
+ * database of the whole application. Code that waits for something only an interrupt can end early
+ * - an HTTP request, a future of another thread - waits through {@link #whileBlocked(BlockingCall)},
+ * which lets a cancellation interrupt exactly that wait. Code that needs no context to be handed in
+ * finds the run's token here.
  * </p>
  *
  * <p>
@@ -55,13 +60,39 @@ public class RunCancellationBinding {
 	 *
 	 * <p>
 	 * {@code false} for a thread that runs no agent at all, and for a run that has not been
-	 * cancelled. An {@link InterruptedException} observed while this holds is expected; one
-	 * observed while it does not is a failure.
+	 * cancelled.
 	 * </p>
 	 */
 	public static boolean isRunCancelled() {
 		CancellationToken token = TOKEN.get();
 		return token != null && token.isCancelled();
+	}
+
+	/**
+	 * Runs a blocking call that the cancellation of the current thread's run is to end.
+	 *
+	 * <p>
+	 * {@link CancellationToken#whileBlocked(BlockingCall)} of the bound token; without a run on this
+	 * thread the call simply runs. The call must not touch the knowledge base.
+	 * </p>
+	 *
+	 * @see CancellationToken#whileBlocked(BlockingCall)
+	 */
+	public static <T, E extends Exception> T whileBlocked(BlockingCall<T, E> call) throws E, InterruptedException {
+		CancellationToken token = TOKEN.get();
+		return token == null ? call.call() : token.whileBlocked(call);
+	}
+
+	/**
+	 * Waits for a future of another thread, so that the cancellation of the current thread's run
+	 * ends the wait.
+	 *
+	 * @see CancellationToken#await(Future, long, TimeUnit)
+	 */
+	public static <T> T await(Future<T> future, long timeout, TimeUnit unit)
+			throws InterruptedException, ExecutionException, TimeoutException {
+		CancellationToken token = TOKEN.get();
+		return token == null ? future.get(timeout, unit) : token.await(future, timeout, unit);
 	}
 
 	/**

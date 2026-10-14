@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import com.top_logic.ai.a2a.A2AExchange;
@@ -276,6 +277,8 @@ public class A2AClientTools {
 		} catch (IOException ex) {
 			Logger.info("A2A call failed: " + ex.getMessage(), A2AClientTools.class);
 			return ToolResult.failure("The remote application cannot be reached: " + ex.getMessage());
+		} catch (CancellationException ex) {
+			return ToolResult.failure("Cancelled.");
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			return ToolResult.failure("Interrupted.");

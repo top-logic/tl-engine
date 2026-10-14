@@ -24,6 +24,7 @@ import java.util.function.BooleanSupplier;
 
 import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.Json;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.provider.SSEReader;
 
 /**
@@ -75,7 +76,8 @@ public final class A2AClient {
 		HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(url)).GET()
 			.timeout(Duration.ofSeconds(60)).header("Accept", "application/json");
 		authorize(request, token);
-		HttpResponse<String> response = _http.send(request.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+		HttpResponse<String> response = RunCancellationBinding.whileBlocked(
+			() -> _http.send(request.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)));
 		if (!(notFoundIsAnswer && response.statusCode() == 404)) {
 			checkStatus(response.statusCode(), response.body());
 		}
@@ -90,8 +92,9 @@ public final class A2AClient {
 	 */
 	public Object call(String endpoint, String token, String method, Map<String, Object> params, Duration timeout)
 			throws IOException, InterruptedException {
-		HttpResponse<String> response = _http.send(request(endpoint, token, method, params, "application/json")
-			.timeout(timeout).build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+		HttpRequest httpRequest = request(endpoint, token, method, params, "application/json").timeout(timeout).build();
+		HttpResponse<String> response = RunCancellationBinding.whileBlocked(
+			() -> _http.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)));
 		checkStatus(response.statusCode(), response.body());
 		return result(parse(response.body()));
 	}
@@ -108,8 +111,10 @@ public final class A2AClient {
 	 */
 	public void stream(String endpoint, String token, String method, Map<String, Object> params,
 			StreamListener listener, long waitMillis, BooleanSupplier cancelled) throws IOException, InterruptedException {
-		HttpResponse<InputStream> response = _http.send(request(endpoint, token, method, params, "text/event-stream")
-			.timeout(Duration.ofSeconds(60)).build(), HttpResponse.BodyHandlers.ofInputStream());
+		HttpRequest httpRequest = request(endpoint, token, method, params, "text/event-stream")
+			.timeout(Duration.ofSeconds(60)).build();
+		HttpResponse<InputStream> response = RunCancellationBinding.whileBlocked(
+			() -> _http.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream()));
 		InputStream body = response.body();
 		if (!response.headers().firstValue("Content-Type").orElse("").startsWith("text/event-stream")) {
 			// A plain JSON-RPC answer: an error, or a result without a stream.

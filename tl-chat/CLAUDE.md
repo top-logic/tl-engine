@@ -123,8 +123,8 @@ It goes through `ChatProcessor.sendMessage`, not through `AgentRunner`, and that
 what an operator wants from a nightly agent is a **sitting** they can open in their chat history, not
 an execution row. The task therefore does what a browser window would - a `TaskProgressTracker`, a
 session created by `ChatHistoryService.createSession`, the `run-as` account bound to its sub-session -
-and then waits for the run, skipping a start while the previous one is still working and interrupting
-the agent thread when the scheduler stops it. It is not node-local: one cluster node runs it, because
+and then waits for the run, skipping a start while the previous one is still working and cancelling
+the run's token when the scheduler stops it. It is not node-local: one cluster node runs it, because
 an agent run writes and costs money.
 
 **A scheduled run has nobody to ask,** and two things follow from that, set together by the task and

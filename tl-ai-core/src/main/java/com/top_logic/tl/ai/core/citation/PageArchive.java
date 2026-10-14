@@ -22,10 +22,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -51,6 +51,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.ApplicationUrl;
+import com.top_logic.tl.ai.core.execution.WriterShutdown;
 import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.tool.api.ReadSource;
@@ -251,11 +252,14 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	@Override
 	protected void startUp() {
 		super.startUp();
-		_worker = Executors.newSingleThreadScheduledExecutor(task -> {
+		ScheduledThreadPoolExecutor worker = new ScheduledThreadPoolExecutor(1, task -> {
 			Thread thread = new Thread(task, "tl-ai-page-archive");
 			thread.setDaemon(true);
 			return thread;
 		});
+		// What a delayed write would write, shutDown flushes first.
+		worker.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+		_worker = worker;
 		if (getConfig().getRetentionDays() > 0) {
 			_worker.scheduleWithFixedDelay(this::purgeQuietly, 1, 24 * 60, TimeUnit.MINUTES);
 		}
@@ -265,7 +269,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	protected void shutDown() {
 		if (_worker != null) {
 			flush(pendingHandles());
-			_worker.shutdownNow();
+			WriterShutdown.stop(_worker, "page archive");
 			_worker = null;
 		}
 		super.shutDown();

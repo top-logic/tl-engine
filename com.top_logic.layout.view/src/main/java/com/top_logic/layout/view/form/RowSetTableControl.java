@@ -544,6 +544,26 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Activates the row displaying the given object in the current inner table, as a double-click
+	 * on that row does: the row becomes the selection, then the
+	 * {@link #setActivationHandler(TableViewControl.ActivationHandler) activation handler} runs.
+	 *
+	 * @param row
+	 *        The object of the row to activate.
+	 * @return The outcome of the activation, {@link HandlerResult#DEFAULT_RESULT} before
+	 *         {@link #init()} or when no row displays the object.
+	 *
+	 * @see TableViewControl#activate(Object)
+	 */
+	public HandlerResult activate(TLObject row) {
+		TableViewControl<TLObject> table = _tableControl;
+		if (table == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return table.activate(row);
+	}
+
+	/**
 	 * Adds a new row to the table.
 	 */
 	@ReactCommandHandler(CMD_ADD_ROW)

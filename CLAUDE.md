@@ -16,10 +16,11 @@ Custom AI agent framework built on TopLogic, replacing LangChain4j with a purpos
 | **tl-chat-classic** | The React chat in a classic LayoutServlet tab - the "Albert" tab. A `LayoutComponent` that writes a React view into a classic page; a temporary bridge with documented workarounds (`tl-chat-classic/CLAUDE.md`). Opt-in: a host gets it by depending on this module. |
 | **tl-ai-views** | Living Views: agents build and change the application's `.view.xml` views - checked by the engine before anything is written, edited in the text so comments survive, recorded as change sets (`tl.ai.views`) the agent can undo - and see the user's open page, which a write rebuilds in place. Reaches the window through `RunWindow` (tl-ai-core), so it does not depend on tl-chat. See `tl-ai-views/README.md`. |
 | **tl-ai-vector-index** | Semantic search via embedding models (Mistral) and vector stores (Qdrant/JVector), background indexing daemon |
+| **tl-ai-index** | Hybrid search (#902): words (BM25, German + English) and meaning (HNSW vectors) per chunk of an object's text in a Lucene directory of its own, fused by RRF, filtered by scope inside the query and checked per hit under the reader's rights; kept in step by pulling the database history with a watermark in the Lucene commit. Tools `index.search` / `index.similar`, TL-Script `aiIndexSearch` / `aiIndexSimilar`. Off until an application switches its module on. See `tl-ai-index/README.md` |
 | **tl-ai-eval** | Model eval harness: the same business tasks put to several models through our own agent loop, graded against the database they leave behind. Its own runs are gated by `-Dtl.ai.eval=true`; its plumbing runs in every build against a scripted provider. See `tl-ai-eval/README.md` |
 | **tl-ai-demo** | Application module bundling all above for deployment |
 
-**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; `tl-ai-core` → `tl-ai-views`; all but `tl-ai-eval` → `tl-ai-demo`
+**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; `tl-ai-core` → `tl-ai-views`; all but `tl-ai-eval` and `tl-ai-index` → `tl-ai-demo`
 
 ## Build Commands
 

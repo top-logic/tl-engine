@@ -21,8 +21,11 @@ import junit.framework.TestCase;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.tl.ai.index.lucene.Vectors;
 
 import de.haumacher.msgbuf.io.StringR;
@@ -88,6 +91,27 @@ public class TestOpenAiCompatibleEmbedder extends TestCase {
 		for (int i = 0; i < texts.size(); i++) {
 			assertVector(texts.get(i), "passage: ", vectors.get(i));
 		}
+	}
+
+	/**
+	 * Read from XML as an application writes it, the prefixes keep their trailing space: the models
+	 * were trained with {@code "query: "}, not {@code "query:"}.
+	 */
+	public void testPrefixesFromXmlKeepTheirSpace() throws Exception {
+		String xml = "<embedder class=\"" + OpenAiCompatibleEmbedder.class.getName() + "\" base-url=\"http://127.0.0.1:"
+			+ _server.getAddress().getPort() + "\" model=\"m\" dimensions=\"4\" query-prefix=\"query: \""
+			+ " passage-prefix=\"passage: \"/>";
+		ConfigurationReader reader = new ConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			Collections.singletonMap("embedder",
+				TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class)));
+		reader.setSource(CharacterContents.newContent(xml));
+		PolymorphicConfiguration<?> config = (PolymorphicConfiguration<?>) reader.read();
+		Embedder embedder = (Embedder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+		embedder.embedQuery("Grundplatte");
+		embedder.embedPassages(List.of("Base plate"));
+		List<Received> requests = new ArrayList<>(_received);
+		assertEquals(List.of("query: Grundplatte"), requests.get(0).input());
+		assertEquals(List.of("passage: Base plate"), requests.get(1).input());
 	}
 
 	/** An answer whose entries come in another order is put back into the order of the texts. */

@@ -16,9 +16,11 @@ import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
@@ -56,9 +58,6 @@ public final class IndexGeneration implements Closeable {
 
 	/** Commit data: the embedding model of the generation's vectors; empty in word mode. */
 	public static final String EMBEDDING_MODEL = "embeddingModel";
-
-	/** Commit data: whether the generation has reached the history once ({@code "true"}). */
-	public static final String COMPLETE = "complete";
 
 	/** At most this many chunks of one object are read back by {@link #chunksOf(String)}. */
 	public static final int MAX_CHUNKS_PER_OBJECT = 10_000;
@@ -100,6 +99,22 @@ public final class IndexGeneration implements Closeable {
 		} catch (IOException | RuntimeException ex) {
 			directory.close();
 			throw ex;
+		}
+	}
+
+	/**
+	 * The commit data of the last commit in the given directory, without opening a writer; empty when
+	 * there is no commit.
+	 */
+	public static Map<String, String> readCommitData(Path path) throws IOException {
+		if (!Files.isDirectory(path)) {
+			return Map.of();
+		}
+		try (FSDirectory directory = FSDirectory.open(path)) {
+			if (!DirectoryReader.indexExists(directory)) {
+				return Map.of();
+			}
+			return new HashMap<>(SegmentInfos.readLatestCommit(directory).getUserData());
 		}
 	}
 

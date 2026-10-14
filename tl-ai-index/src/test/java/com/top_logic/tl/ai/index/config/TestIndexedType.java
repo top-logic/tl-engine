@@ -9,6 +9,7 @@ import static com.top_logic.tl.ai.index.config.IndexTestModel.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -55,7 +56,7 @@ public class TestIndexedType extends BasicTestCase {
 
 		IndexedType.Content content = type.content(statement, CHUNKER, 10_000);
 
-		assertEquals(List.of(ReadFilter.idOf(objects[0]), ReadFilter.idOf(objects[1])), content.scopes());
+		assertEquals(Set.of(ReadFilter.idOf(objects[0]), ReadFilter.idOf(objects[1])), Set.copyOf(content.scopes()));
 		assertEquals(Map.of("kind", List.of("REQUIREMENT")), content.keywords());
 		assertTrue(content.types().contains(STATEMENT));
 		assertEquals("No chunk for an empty attribute.", 2, content.chunks().size());

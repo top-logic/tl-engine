@@ -2,5 +2,22 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!--
+			The AI index. It holds nothing until an application configures its <types>, and it is not
+			started until the application switches its module on:
+
+				<config service-class="com.top_logic.basic.module.ModuleSystem">
+					<instance>
+						<modules>
+							<module key="com.top_logic.tl.ai.index.AiIndexService$Module" value="true"/>
+						</modules>
+					</instance>
+				</config>
+
+			See tl-ai-index/README.md.
+		-->
+		<config service-class="com.top_logic.tl.ai.index.AiIndexService">
+			<instance class="com.top_logic.tl.ai.index.AiIndexService"/>
+		</config>
 	</services>
 </application>

@@ -108,7 +108,7 @@ public final class IndexTestModel {
 	/**
 	 * Sets attribute values of an object; call inside a transaction.
 	 */
-	public static void set(TLObject object, Map<String, Object> values) {
+	public static void update(TLObject object, Map<String, Object> values) {
 		for (Map.Entry<String, Object> value : values.entrySet()) {
 			object.tUpdate(object.tType().getPart(value.getKey()), value.getValue());
 		}

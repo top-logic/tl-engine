@@ -128,7 +128,28 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("a5", a7others.get(4).tValueByName("name"));
 	}
 
-	public void testI18NImport() throws XMLStreamException, IOException {
+	public void testJoinDuplicatesLinksOnce() throws XMLStreamException, IOException {
+		TLObject result = importXml(
+			"testXmlImporter7-JoinDuplicates.model.xml",
+			"testXmlImporter7-JoinDuplicates.importer.xml",
+			"testXmlImporter7-JoinDuplicates.data.xml");
+		assertNotNull(result);
+
+		Collection<? extends TLObject> set = collection(result.tValueByName("set"));
+		assertEquals(2, set.size());
+
+		List<? extends TLObject> list = list(result.tValueByName("list"));
+		assertEquals(2, list.size());
+
+		TLObject a1 = list.get(0);
+		assertEquals("a1", a1.tValueByName("name"));
+		assertEquals("second", a1.tValueByName("value"));
+		assertEquals("a2", list.get(1).tValueByName("name"));
+		assertTrue(set.contains(a1));
+		assertTrue(set.contains(list.get(1)));
+	}
+
+	public void testI18NImport()throws XMLStreamException, IOException {
 		TLObject result = importXml(
 			"testXmlImporter5-i18n.model.xml",
 			"testXmlImporter5-i18n.importer.xml",

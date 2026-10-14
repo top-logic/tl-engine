@@ -10,11 +10,11 @@
 import { useLayoutEffect, useRef } from 'react';
 
 /**
- * How long a transition class stays when nothing ends it - a stylesheet that animates nothing, or a
- * viewer who asked for reduced motion.
+ * How long a transition class stays at most when an animation runs but never reports its end - one
+ * on an element that is hidden, for instance, or removed from the rendering.
  *
  * The classes are display state, so they must not survive the change they describe even where no
- * animation reports its end.
+ * animation reports its end. Where nothing animates at all, the classes go right away.
  */
 export const TRANSITION_FALLBACK_MS = 1000;
 
@@ -30,13 +30,68 @@ function reducedMotion(): boolean {
 }
 
 /**
- * Calls `done` once the element has finished animating, or after {@link TRANSITION_FALLBACK_MS} if
- * nothing animates at all.
- *
- * @returns A function that ends the wait right away. Calling it more than once is harmless, and so
- *          is calling it after the wait is over.
+ * A CSS time list (`0.2s, 150ms`) in milliseconds.
  */
-function whenFinished(element: HTMLElement, done: () => void): () => void {
+function parseTimes(value: string): number[] {
+  return value.split(',').map((entry) => {
+    const time = entry.trim();
+    const amount = parseFloat(time);
+    if (Number.isNaN(amount)) {
+      return 0;
+    }
+    return time.endsWith('ms') ? amount : amount * 1000;
+  });
+}
+
+/**
+ * Whether a list of durations paired with a list of delays, both repeated as CSS repeats a shorter
+ * list, takes time for any of the given indices.
+ */
+function takesTime(indices: readonly number[], durations: number[], delays: number[]): boolean {
+  return indices.some((index) =>
+    durations[index % durations.length] + delays[index % delays.length] > 0);
+}
+
+/**
+ * Whether the element runs an animation or a transition that takes time, as its stylesheet says
+ * right now.
+ *
+ * An animation counts for each name other than `none`, a transition for each property listed; each
+ * counts when its duration and delay add up to more than nothing.
+ */
+function animates(element: HTMLElement): boolean {
+  const style = window.getComputedStyle(element);
+
+  const names = style.animationName.split(',').map((name) => name.trim());
+  const animations = names
+    .map((name, index) => (name === 'none' || name === '' ? -1 : index))
+    .filter((index) => index >= 0);
+  if (animations.length > 0
+    && takesTime(animations, parseTimes(style.animationDuration), parseTimes(style.animationDelay))) {
+    return true;
+  }
+
+  const durations = parseTimes(style.transitionDuration);
+  return takesTime(durations.map((_, index) => index), durations, parseTimes(style.transitionDelay));
+}
+
+/**
+ * Calls `done` once the element has finished animating.
+ *
+ * The element must carry the classes it animates against when this is called. If its stylesheet
+ * animates nothing then, `done` is called before this returns. Otherwise the end is the first
+ * `animationend` or `transitionend` of the element itself, or {@link TRANSITION_FALLBACK_MS} for an
+ * animation that never reports its end.
+ *
+ * @returns A function that ends the wait right away, or `null` if the wait was already over before
+ *          this returned. Calling the function more than once is harmless, and so is calling it
+ *          after the wait is over.
+ */
+function whenFinished(element: HTMLElement, done: () => void): (() => void) | null {
+  if (!animates(element)) {
+    done();
+    return null;
+  }
   let timer = 0;
   let finished = false;
   const end = (event?: Event) => {
@@ -122,7 +177,8 @@ export interface KeyedTransitionOptions {
  * An element whose key appears carries {@link KeyedTransitionOptions#enterClass} until its
  * animation ends; an element whose key disappears is replaced by an inert copy of itself carrying
  * {@link KeyedTransitionOptions#exitClass} until its animation ends, or until the same key is
- * displayed again. Where no animation runs, both are taken away after
+ * displayed again. Where the stylesheet animates nothing, class or copy is taken away at once,
+ * before the browser paints; an animation that never reports its end is cut off after
  * {@link TRANSITION_FALLBACK_MS}.
  *
  * Two things do not count as a change: the first display of a control - what a wizard opens on or
@@ -175,10 +231,13 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
       }
       const copy = snapshot(left, enterClass, exitClass);
       host.appendChild(copy);
-      leaving.set(key, whenFinished(copy, () => {
+      const drop = whenFinished(copy, () => {
         leaving.delete(key);
         copy.remove();
-      }));
+      });
+      if (drop) {
+        leaving.set(key, drop);
+      }
     }
 
     // The elements displayed at the first display were not moved to, so they arrive unmarked.
@@ -192,10 +251,13 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
           continue;
         }
         arrived.classList.add(enterClass);
-        arriving.set(key, whenFinished(arrived, () => {
+        const end = whenFinished(arrived, () => {
           arriving.delete(key);
           arrived.classList.remove(enterClass);
-        }));
+        });
+        if (end) {
+          arriving.set(key, end);
+        }
       }
     }
 

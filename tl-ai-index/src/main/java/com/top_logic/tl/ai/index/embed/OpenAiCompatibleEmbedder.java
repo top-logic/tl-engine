@@ -34,17 +34,17 @@ import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * An {@link Embedder} that calls {@code POST <base-url>/v1/embeddings} of an OpenAI-compatible
- * server.
+ * An {@link Embedder} that calls {@code POST <base-url>/v1/embeddings} of an
+ * <code>OpenAI</code>-compatible server.
  *
  * <p>
- * vLLM, text-embeddings-inference, llama.cpp's server and Ollama all offer this route, so one class
- * serves a GPU endpoint of our own as well as a paid API. One request carries a whole batch. A
+ * <code>vLLM</code>, text-embeddings-inference, llama.cpp's server and Ollama all offer this route,
+ * so one class serves a GPU endpoint of our own as well as a paid API. One request carries a whole batch. A
  * request that fails with a network error, {@code 429} or a {@code 5xx} is retried with a doubling
  * delay; any other answer fails at once.
  * </p>
  */
-@Label("OpenAI-compatible endpoint")
+@Label("HTTP embedding endpoint")
 public class OpenAiCompatibleEmbedder extends AbstractEmbedder<OpenAiCompatibleEmbedder.Config<?>> {
 
 	/**
@@ -133,7 +133,7 @@ public class OpenAiCompatibleEmbedder extends AbstractEmbedder<OpenAiCompatibleE
 		 * Whether the request asks the server for the configured number of dimensions.
 		 *
 		 * <p>
-		 * The OpenAI API cuts the vector on the server when asked; many other servers refuse the
+		 * The <code>OpenAI</code> API cuts the vector on the server when asked; many other servers refuse the
 		 * parameter. Without it, a longer vector is cut here.
 		 * </p>
 		 *

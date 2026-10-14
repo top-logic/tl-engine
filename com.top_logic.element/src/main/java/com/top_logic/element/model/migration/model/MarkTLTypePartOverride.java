@@ -19,6 +19,8 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBType;
@@ -37,7 +39,8 @@ import com.top_logic.model.migration.data.Reference;
 import com.top_logic.model.migration.data.TypePart;
 
 /**
- * {@link MigrationProcessor} marks a {@link TLStructuredTypePart} as override of another part.
+ * {@link MigrationProcessor} marks a {@link TLStructuredTypePart} as override of another part, or
+ * as its own definition.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -48,6 +51,11 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 	 */
 	@TagName("mark-override")
 	public interface Config extends TLModelBaseLineMigrationProcessor.Config<MarkTLTypePartOverride> {
+
+		/**
+		 * Configuration name for {@link #getCopyValues()}.
+		 */
+		String COPY_VALUES = "copy-values";
 
 		/**
 		 * Qualified name of the overriding part.
@@ -63,6 +71,11 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 		/**
 		 * Qualified name of the definition of the overriding part, i.e. the top level part in the
 		 * override chain.
+		 *
+		 * <p>
+		 * When this is the part given in {@link #getName()} itself, the part is marked as its own
+		 * definition, i.e. as no override.
+		 * </p>
 		 */
 		@Mandatory
 		QualifiedPartName getDefinition();
@@ -71,6 +84,31 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 		 * Setter for {@link #getDefinition()}.
 		 */
 		void setDefinition(QualifiedPartName value);
+
+		/**
+		 * Whether the characteristics of the definition are copied to the overriding part.
+		 *
+		 * <p>
+		 * The copied characteristics are mandatory, multiple, ordered, and bag, and for references
+		 * and association ends additionally the values of the end (aggregate, composite, navigate,
+		 * history type, and deletion policy). A part created as override takes these from its
+		 * definition. A part that becomes an override through a changed generalization of its
+		 * owner keeps its own.
+		 * </p>
+		 *
+		 * <p>
+		 * When {@link #getName()} and {@link #getDefinition()} denote the same part, the part is no
+		 * override and nothing is copied.
+		 * </p>
+		 */
+		@Name(COPY_VALUES)
+		@BooleanDefault(true)
+		boolean getCopyValues();
+
+		/**
+		 * Setter for {@link #getCopyValues()}.
+		 */
+		void setCopyValues(boolean value);
 
 	}
 
@@ -127,13 +165,20 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 
 		sql.executeUpdate(connection, part.getBranch(), part.getID(), definitionPart.getID());
 
-		copyProperties(log, connection, partName, definition, part, definitionPart);
-
-		if (tlModel != null) {
-			MigrationUtils.setOverride(log, tlModel, partName, true);
+		boolean override = !part.getID().equals(definitionPart.getID());
+		if (override && getConfig().getCopyValues()) {
+			copyProperties(log, connection, partName, definition, part, definitionPart);
 		}
 
-		log.info("Mark " + _util.qualifiedName(partName) + " as override of " + _util.qualifiedName(definition));
+		if (tlModel != null) {
+			MigrationUtils.setOverride(log, tlModel, partName, override);
+		}
+
+		if (override) {
+			log.info("Mark " + _util.qualifiedName(partName) + " as override of " + _util.qualifiedName(definition));
+		} else {
+			log.info("Mark " + _util.qualifiedName(partName) + " as own definition.");
+		}
 	}
 
 	private void copyProperties(Log log, PooledConnection connection, QualifiedPartName partName,

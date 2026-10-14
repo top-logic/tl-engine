@@ -6,7 +6,9 @@
 	the comment being written.
 	
 	The context channel carries the ticket the comment belongs to, as the command opening the
-	dialog binds it, and the line above the table names it.
+	dialog binds it, and the line above the table names it. The window lays its content out up to
+	its border, so the line keeps the page inset by an <inset> of its own, while the table stays
+	edge to edge.
 -->
 <view>
 	<channels>
@@ -24,7 +26,9 @@
 			<en>Reference ticket</en>
 			<de>Ticket referenzieren</de>
 		</title>
-		<text input="contextLabel"/>
+		<inset>
+			<text input="contextLabel"/>
+		</inset>
 		<table
 			observed-types="tl.demo.projectManagement:Ticket"
 			selection="ticket"

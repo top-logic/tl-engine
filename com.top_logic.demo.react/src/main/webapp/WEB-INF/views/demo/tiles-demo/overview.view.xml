@@ -11,10 +11,6 @@
 	depth 0 the "Back" command is hidden, which is why the initial frame shows no way out. The
 	selected row is published on the selectedPerson channel, which is where a display target
 	leading to an account puts the account it displays.
-	
-	The panel fills, so the table inside the frame bounds its scroll viewport (and
-	virtualizes) instead of growing with its rows: the frame takes part in the fill
-	contract, so the stack and the containers above it grow with the panel.
 -->
 <view>
 	<channels>
@@ -26,7 +22,7 @@
 		/>
 	</channels>
 
-	<panel fill="true">
+	<panel>
 		<title>
 			<en>Accounts</en>
 			<de>Konten</de>

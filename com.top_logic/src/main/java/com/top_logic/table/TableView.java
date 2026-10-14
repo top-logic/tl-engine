@@ -5,7 +5,10 @@
  */
 package com.top_logic.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -64,6 +67,76 @@ public interface TableView<R> {
 	 * The total number of displayed rows.
 	 */
 	int rowCount();
+
+	/**
+	 * The number of data rows the table is filtered to - by its column filters, its search and the
+	 * named filter applied.
+	 *
+	 * <p>
+	 * Unlike the {@link #rowCount() displayed rows}, this counts business objects: a group header
+	 * is not counted, a row inside a collapsed group is.
+	 * </p>
+	 *
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} when the rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see RowSource#matchCount()
+	 */
+	default int matchCount() {
+		return RowSource.UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The number of data rows of the table, regardless of what it is filtered by.
+	 *
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} when the rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see RowSource#dataCount()
+	 */
+	default int dataCount() {
+		return RowSource.UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the data rows the table is filtered to, in sort order - the
+	 * rows {@link #matchCount()} counts, the members of a collapsed group included.
+	 *
+	 * <p>
+	 * This is the set a "select all" acts on.
+	 * </p>
+	 *
+	 * @see RowSource#matchingKeys()
+	 */
+	default List<Object> matchingKeys() {
+		List<Object> result = new ArrayList<>();
+		for (Row<R> row : rows(0, rowCount())) {
+			if (row.kind() == RowKind.DATA) {
+				result.add(row.key());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The given keys that belong to a {@link #matchingKeys() matching} row.
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The matching keys among the given ones, in the order they are given.
+	 *
+	 * @see RowSource#matchingKeys(Collection)
+	 */
+	default Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> matching = new HashSet<>(matchingKeys());
+		Set<Object> result = new LinkedHashSet<>();
+		for (Object key : keys) {
+			if (matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * The displayed rows in the half-open index range {@code [from, to)}.

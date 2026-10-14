@@ -39,6 +39,13 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 
 	private final Map<String, Ref> _resolvers = new HashMap<>();
 
+	/**
+	 * The installed {@link IdLookup}s, the innermost one last.
+	 * 
+	 * @see #withIdLookup(IdLookup, XMLStreamReader, Handler)
+	 */
+	private final List<IdLookup> _lookups = new ArrayList<>();
+
 	private int _depth = 0;
 
 	private XMLStreamLog _log;
@@ -99,6 +106,16 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		} finally {
 			_vars = _vars.drop();
 			_depth--;
+		}
+	}
+
+	@Override
+	public Object withIdLookup(IdLookup lookup, XMLStreamReader in, Handler inner) throws XMLStreamException {
+		_lookups.add(lookup);
+		try {
+			return inner.importXml(this, in);
+		} finally {
+			_lookups.remove(_lookups.size() - 1);
 		}
 	}
 
@@ -245,7 +262,18 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 
 	@Override
 	public Object resolveObjectBackwards(ImportPart handler, Location location, String id) {
-		return _binding.resolveObject(handler, location, id);
+		Object result = _binding.resolveObject(handler, location, id);
+		if (result != null) {
+			return result;
+		}
+		for (int n = _lookups.size() - 1; n >= 0; n--) {
+			Object found = _lookups.get(n).lookup(location, id);
+			if (found != null) {
+				assignId(found, id);
+				return found;
+			}
+		}
+		return null;
 	}
 
 	@Override

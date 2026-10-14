@@ -29,6 +29,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
@@ -165,13 +166,7 @@ public class TestXmlImporter extends TestCase {
 		I18NBundle logResources = Resources.getLogInstance();
 		XmlImporter importer =
 			XmlImporter.newInstance(log.asI18NLog(logResources), resource("testXmlImporter6-context.importer.xml"));
-		TLModel model = new TLModelImpl();
-		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
-			FileManager.getInstance().getData("/WEB-INF/model/tl.core.model.xml"));
-		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
-			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
-		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
-			resource("testXmlImporter6-context.model.xml"));
+		TLModel model = loadModel(log, "testXmlImporter6-context.model.xml");
 
 		TLClass containerType =
 			(TLClass) model.getModule("test.com.top_logic.xio.importer.context").getType("Container");
@@ -191,6 +186,65 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("z", elements.get(2).tValueByName("name"));
 	}
 
+	public void testResolveExisting() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		I18NBundle logResources = Resources.getLogInstance();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(logResources),
+			resource("testXmlImporter8-ResolveExisting.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter8-ResolveExisting.model.xml");
+
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test8");
+		TLClass containerType = (TLClass) module.getType("Container");
+		TLClass itemType = (TLClass) module.getType("Item");
+
+		TLObject container = TransientObjectFactory.INSTANCE.createObject(containerType, null, null, null);
+		container.tUpdateByName("evaluations", 0);
+		TLObject e1 = existingItem(container, itemType, "e1");
+		TLObject e2 = existingItem(container, itemType, "e2");
+		TLObject e3 = existingItem(container, itemType, "e3");
+
+		ModelBinding binding = new TransientModelBinding(model, false);
+		importer.importModel(binding,
+			new StreamSource(resource("testXmlImporter8-ResolveExisting.data.xml").getStream()), container);
+
+		// The existing objects are computed once, although the handler is applied to each item and
+		// several IDs are not found.
+		assertEquals(1, ((Number) container.tValueByName("evaluations")).intValue());
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(6, elements.size());
+
+		// Joined with the existing object instead of creating a new one.
+		assertSame(e1, elements.get(0));
+		assertEquals("updated", e1.tValueByName("name"));
+		assertSame(e2, elements.get(1));
+		assertEquals("old-e2", e2.tValueByName("name"));
+
+		// An unknown ID creates a new object, a reference resolves to an existing object.
+		TLObject n1 = elements.get(3);
+		assertEquals("new1", n1.tValueByName("name"));
+		assertSame(e2, n1.tValueByName("other"));
+
+		TLObject n2 = elements.get(4);
+		assertEquals("new2", n2.tValueByName("name"));
+		assertSame(n1, n2.tValueByName("other"));
+
+		// Outside the scope of the lookup, the existing object is not found.
+		TLObject duplicate = elements.get(5);
+		assertNotSame(e3, duplicate);
+		assertEquals("e3", duplicate.tValueByName("extId"));
+		assertEquals("duplicate", duplicate.tValueByName("name"));
+		assertEquals("old-e3", e3.tValueByName("name"));
+	}
+
+	private TLObject existingItem(TLObject container, TLClass itemType, String extId) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(itemType, null, null, null);
+		result.tUpdateByName("extId", extId);
+		result.tUpdateByName("name", "old-" + extId);
+		container.tAddByName("elements", result);
+		return result;
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> collection(Object v) {
 		return v == null ? Collections.emptyList() : (Collection<TLObject>) v;
@@ -207,14 +261,19 @@ public class TestXmlImporter extends TestCase {
 		I18NBundle logResources = Resources.getLogInstance();
 		XmlImporter importer =
 			XmlImporter.newInstance(log.asI18NLog(logResources), resource(importerResource));
+		TLModel model = loadModel(log, modelResource);
+		ModelBinding binding = new TransientModelBinding(model, false);
+		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));
+	}
+
+	private TLModel loadModel(Protocol log, String modelResource) {
 		TLModel model = new TLModelImpl();
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.core.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE, resource(modelResource));
-		ModelBinding binding = new TransientModelBinding(model, false);
-		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));
+		return model;
 	}
 
 	private ClassRelativeBinaryContent resource(String importerResource) {

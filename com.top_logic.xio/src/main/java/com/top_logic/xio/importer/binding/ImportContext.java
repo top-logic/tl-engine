@@ -87,6 +87,30 @@ public interface ImportContext extends ModelBindingBase, XMLStreamLog, TypedAnno
 	Object withVar(String var, Object value, XMLStreamReader in, Handler inner) throws XMLStreamException;
 
 	/**
+	 * Invokes the given {@link Handler} with the given {@link IdLookup} installed.
+	 * 
+	 * <p>
+	 * Within the given {@link Handler}, an ID that does not resolve to an object of the import is
+	 * looked up with the given {@link IdLookup}. When lookups are nested, the innermost one is asked
+	 * first. An object found by a lookup is registered with its ID, see
+	 * {@link #assignId(Object, String)}.
+	 * </p>
+	 *
+	 * @param lookup
+	 *        The {@link IdLookup} to install.
+	 * @param in
+	 *        The current state of the import passed to the given {@link Handler}.
+	 * @param inner
+	 *        The inner {@link Handler} to invoke.
+	 * @return See {@link Handler#importXml(ImportContext, XMLStreamReader)}.
+	 * @throws XMLStreamException
+	 *         The failure reported from {@link Handler#importXml(ImportContext, XMLStreamReader)}.
+	 * 
+	 * @see #resolveObjectBackwards(ImportPart, Location, String)
+	 */
+	Object withIdLookup(IdLookup lookup, XMLStreamReader in, Handler inner) throws XMLStreamException;
+
+	/**
 	 * The value of the variable with the given name.
 	 *
 	 * @param name
@@ -110,7 +134,8 @@ public interface ImportContext extends ModelBindingBase, XMLStreamLog, TypedAnno
 	void close();
 
 	/**
-	 * Resolves the object with the given ID, if it was created before.
+	 * Resolves the object with the given ID, if it was created before or is found by an
+	 * {@link IdLookup} installed with {@link #withIdLookup(IdLookup, XMLStreamReader, Handler)}.
 	 * 
 	 * @param handler
 	 *        The {@link Handler} that requests the object (for potential error reporting).
@@ -119,8 +144,8 @@ public interface ImportContext extends ModelBindingBase, XMLStreamLog, TypedAnno
 	 * @param id
 	 *        The ID of the object to resolve.
 	 *
-	 * @return The object already created with the given ID, or <code>null</code> if no such object
-	 *         was created before.
+	 * @return The object already created with the given ID, the object found by an installed
+	 *         {@link IdLookup}, or <code>null</code> if neither knows the ID.
 	 * 
 	 * @see #resolveObject(ImportPart, Location, String)
 	 */

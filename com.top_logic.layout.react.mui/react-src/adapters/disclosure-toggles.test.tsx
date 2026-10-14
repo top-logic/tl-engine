@@ -53,7 +53,7 @@ const CMD_EXPAND = 'expand';
 const CMD_COLLAPSE = 'collapse';
 
 /** A form being edited. */
-const EDIT_FORM: FormLayout = { readOnly: false, resolvedLabelPosition: 'top' };
+const EDIT_FORM: FormLayout = { readOnly: false, resolvedLabelPosition: 'top', insideForm: true };
 
 /** A resize observer that never reports: jsdom lays nothing out. */
 class NoResizeObserver {

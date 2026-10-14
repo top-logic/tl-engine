@@ -32,10 +32,10 @@ const LABEL_HELP = 'js.formField.help';
 const IMAGE_ERROR = 'css:fas fa-circle-exclamation';
 
 /** A form being edited, with the labels above the inputs. */
-const EDIT_FORM_TOP: FormLayout = { readOnly: false, resolvedLabelPosition: 'top' };
+const EDIT_FORM_TOP: FormLayout = { readOnly: false, resolvedLabelPosition: 'top', insideForm: true };
 
 /** A form showing values only. */
-const READ_ONLY_FORM: FormLayout = { readOnly: true, resolvedLabelPosition: 'side' };
+const READ_ONLY_FORM: FormLayout = { readOnly: true, resolvedLabelPosition: 'side', insideForm: true };
 
 /** The stand-in for the input control: a text input associated with the label of the field. */
 function TestInput({ controlId }: TLCellProps) {

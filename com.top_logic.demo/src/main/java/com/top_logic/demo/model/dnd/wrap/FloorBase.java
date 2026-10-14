@@ -27,6 +27,11 @@ public interface FloorBase extends com.top_logic.demo.model.dnd.NamedPlanElement
 	String LOCATIONS_ATTR = "locations";
 
 	/**
+	 * Name of the table storing {@link #FLOOR_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #LOCATIONS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

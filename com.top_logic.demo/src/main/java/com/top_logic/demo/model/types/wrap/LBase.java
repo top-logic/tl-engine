@@ -17,4 +17,9 @@ public interface LBase extends com.top_logic.demo.model.types.DemoTypesL, com.to
 	 */
 	String L_TYPE = "L";
 
+	/**
+	 * Name of the table storing {@link #L_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
 }

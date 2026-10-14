@@ -135,6 +135,11 @@ public interface TokenBase extends com.top_logic.bpe.bpml.model.Iconified, com.t
 	String USER_RELEVANT_ATTR = "userRelevant";
 
 	/**
+	 * Name of the table storing {@link #TOKEN_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPExecution";
+
+	/**
 	 * Getter for part {@link #ACTIVE_ATTR}.
 	 */
 	default boolean getActive() {

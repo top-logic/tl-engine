@@ -17,15 +17,23 @@ package com.top_logic.element.version.intf;
 public class TagFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>Tag</code> defined by {@link TagFactory}.
+	 * Name of the module <code>Tag</code> defined by {@link TagFactory}.
 	 */
-	public static final String TAG_STRUCTURE = "Tag";
+	public static final String TAG_MODULE = "Tag";
+
+	/**
+	 * Name of the structure <code>Tag</code> defined by {@link TagFactory}.
+	 * 
+	 * @deprecated Use {@link #TAG_MODULE}.
+	 */
+	@Deprecated
+	public static final String TAG_STRUCTURE = TAG_MODULE;
 
 	/**
 	 * Lookup {@link TagAll} type.
 	 */
 	public static com.top_logic.model.TLClass getTagAllType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TAG_STRUCTURE).getType(TagAll.TAG_ALL_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TAG_MODULE).getType(TagAll.TAG_ALL_TYPE);
 	}
 
 	/**
@@ -53,11 +61,11 @@ public class TagFactory extends com.top_logic.element.meta.kbbased.AbstractEleme
 	 * Lookup {@link Tag} type.
 	 */
 	public static com.top_logic.model.TLClass getTagType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TAG_STRUCTURE).getType(Tag.TAG_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TAG_MODULE).getType(Tag.TAG_TYPE);
 	}
 
 	/**
-	 * Name of type <code>Tag.all</code> in structure {@link #TAG_STRUCTURE}.
+	 * Name of type <code>Tag.all</code> in module {@link #TAG_MODULE}.
 	 * 
 	 * @deprecated Use {@link TagAll#TAG_ALL_TYPE}.
 	 */
@@ -65,7 +73,7 @@ public class TagFactory extends com.top_logic.element.meta.kbbased.AbstractEleme
 	public static final String TAG_ALL_NODE = TagAll.TAG_ALL_TYPE;
 
 	/**
-	 * Name of type <code>Tag</code> in structure {@link #TAG_STRUCTURE}.
+	 * Name of type <code>Tag</code> in module {@link #TAG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Tag#TAG_TYPE}.
 	 */
@@ -74,8 +82,11 @@ public class TagFactory extends com.top_logic.element.meta.kbbased.AbstractEleme
 
 	/**
 	 * Storage table name of {@link #TAG_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.version.TagBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TAG = "Tag";
+	@Deprecated
+	public static final String KO_NAME_TAG = com.top_logic.element.version.TagBase.TABLE_NAME;
 
 
 	/**
@@ -96,6 +107,6 @@ public class TagFactory extends com.top_logic.element.meta.kbbased.AbstractEleme
 	 * The singleton instance of {@link TagFactory}.
 	 */
 	public static TagFactory getInstance() {
-		return (TagFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TAG_STRUCTURE);
+		return (TagFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TAG_MODULE);
 	}
 }

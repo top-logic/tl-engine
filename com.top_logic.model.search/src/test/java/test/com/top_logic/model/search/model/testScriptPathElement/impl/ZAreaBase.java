@@ -17,4 +17,9 @@ public interface ZAreaBase extends test.com.top_logic.model.search.model.testScr
 	 */
 	String Z_AREA_TYPE = "ZArea";
 
+	/**
+	 * Name of the table storing {@link #Z_AREA_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

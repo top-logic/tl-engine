@@ -108,6 +108,11 @@ public interface ProcessExecutionBase extends com.top_logic.model.TLObject {
 	String USER_RELEVANT_TOKENS_ATTR = "userRelevantTokens";
 
 	/**
+	 * Name of the table storing {@link #PROCESS_EXECUTION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPExecution";
+
+	/**
 	 * Getter for part {@link #ACTIVE_TOKENS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

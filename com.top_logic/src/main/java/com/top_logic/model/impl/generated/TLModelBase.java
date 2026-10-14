@@ -26,4 +26,9 @@ public interface TLModelBase extends com.top_logic.model.TLModelPart {
 	 */
 	String MODULES_ATTR = "modules";
 
+	/**
+	 * Name of the table storing {@link #TL_MODEL_TYPE} objects.
+	 */
+	String TABLE_NAME = "TLModel";
+
 }

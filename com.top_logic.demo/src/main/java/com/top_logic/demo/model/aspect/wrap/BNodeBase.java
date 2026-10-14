@@ -17,4 +17,9 @@ public interface BNodeBase extends com.top_logic.demo.model.aspect.CommonChild, 
 	 */
 	String B_NODE_TYPE = "BNode";
 
+	/**
+	 * Name of the table storing {@link #B_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoAspect";
+
 }

@@ -27,6 +27,11 @@ public interface BNodeBase extends test.com.top_logic.element.structured.model.B
 	String HISTORIC_INLINE_REFERENCE_ATTR = "historicInlineReference";
 
 	/**
+	 * Name of the table storing {@link #B_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "BElement";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

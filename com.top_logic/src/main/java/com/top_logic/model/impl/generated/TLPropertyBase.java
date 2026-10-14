@@ -17,4 +17,9 @@ public interface TLPropertyBase extends com.top_logic.model.TLStructuredTypePart
 	 */
 	String TL_PROPERTY_TYPE = "TLProperty";
 
+	/**
+	 * Name of the table storing {@link #TL_PROPERTY_TYPE} objects.
+	 */
+	String TABLE_NAME = "MetaAttribute";
+
 }

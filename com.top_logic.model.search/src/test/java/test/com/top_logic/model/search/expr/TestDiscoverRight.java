@@ -28,7 +28,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -110,7 +109,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 
 	@Override
 	protected void tearDown() throws Exception {
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		_kb.removeUpdateListener(_creationListener);
 		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// The singletons outlive the test, their values must not keep test objects.
@@ -256,7 +255,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	public void testAdminDiscoversEverything() {
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertTrue(rights().isDiscoverAllowed(_a2));
 	}
 
@@ -391,7 +390,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		grantWrite(_pathUser, _b1);
 		becomeUser(_pathUser);
 		executeUnfiltered("b -> c -> $b.set(`TestTLScriptSecurity:PathB#cs`, list($c))", _b1, _c2);
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertEquals(Arrays.asList(_c2), _b1.tValueByName("cs"));
 	}
 
@@ -423,7 +422,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		grantWrite(_pathUser, _b1);
 		becomeUser(_pathUser);
 		eval("b -> $b.set(`TestTLScriptSecurity:PathB#cs`, list())", _b1);
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertEquals(Collections.emptyList(), _b1.tValueByName("cs"));
 	}
 
@@ -435,7 +434,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		TLObject c3 = createReadableC("c3");
 		becomeUser(_pathUser);
 		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, $c)", _b1, c3);
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertEquals(Arrays.asList(_c1, _c2, c3), _b1.tValueByName("cs"));
 	}
 
@@ -453,7 +452,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		becomeUser(_pathUser);
 		// The user sees [c1, c3]; index 1 means "between c1 and c3" in the visible list.
 		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, 1, $c)", _b1, c4);
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertEquals(Arrays.asList(_c2, _c1, c4, c3), _b1.tValueByName("cs"));
 	}
 
@@ -465,7 +464,7 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		TLObject c3 = createReadableC("c3");
 		becomeUser(_pathUser);
 		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, 0, $c)", _b1, c3);
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertEquals(Arrays.asList(c3, _c1, _c2), _b1.tValueByName("cs"));
 	}
 
@@ -660,7 +659,6 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		return suite(TestDiscoverRight.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

@@ -14,7 +14,6 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -54,7 +53,7 @@ public class TestAdminOnly extends AbstractSearchExpressionTest {
 
 	@Override
 	protected void tearDown() throws Exception {
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			_user.tDelete();
 			tx.commit();
@@ -71,7 +70,7 @@ public class TestAdminOnly extends AbstractSearchExpressionTest {
 	}
 
 	public void testAllowedInteractivelyForAdmin() throws Exception {
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		assertEquals("a", evalInteractive(call(RESTRICTED)));
 		assertEquals("a", evalInteractive(call(CLASS_RESTRICTED)));
 	}
@@ -125,7 +124,6 @@ public class TestAdminOnly extends AbstractSearchExpressionTest {
 		return suite(TestAdminOnly.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

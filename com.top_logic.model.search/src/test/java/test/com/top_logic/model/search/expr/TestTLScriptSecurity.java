@@ -1438,7 +1438,6 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		return suite(TestTLScriptSecurity.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

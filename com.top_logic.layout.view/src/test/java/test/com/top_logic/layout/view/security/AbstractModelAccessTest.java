@@ -35,7 +35,6 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -198,10 +197,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	private final List<Person> _persons = new ArrayList<>();
 
-	private Person _formerUser;
-
-	private String _formerContextId;
-
 	/** The super-user, bypassing the model access rights. */
 	protected Person _root;
 
@@ -226,9 +221,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext context = TLContext.getContext();
-		_formerUser = context.getCurrentPersonWrapper();
-		_formerContextId = context.getContextId();
 		_root = PersonManager.getManager().getRoot();
 		_responsible = newPerson("viewModelAccessResponsible");
 		_roleless = newPerson("viewModelAccessRoleless");
@@ -256,13 +248,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 			TestPerson.deletePersonAndUser(person);
 		}
 		_persons.clear();
-
-		TLContext context = TLContext.getContext();
-		context.setCurrentPerson(_formerUser);
-		if (_formerUser == null) {
-			// Without a person, the context is identified by its explicit context id.
-			context.setContextId(_formerContextId);
-		}
 	}
 
 	private Person newPerson(String name) {
@@ -323,7 +308,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 		List<BasicRuntimeModule<?>> modules = new ArrayList<>(List.of(
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE,
 			CommandApprovalService.Module.INSTANCE));

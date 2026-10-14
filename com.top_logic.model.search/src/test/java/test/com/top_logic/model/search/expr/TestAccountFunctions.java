@@ -22,6 +22,12 @@ import com.top_logic.knowledge.wrap.person.Person;
 @SuppressWarnings("javadoc")
 public class TestAccountFunctions extends AbstractSearchExpressionTest {
 
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		becomeRoot();
+	}
+
 	public void testPasswordChangeAllowed() throws Exception {
 		assertEquals(Boolean.TRUE,
 			eval("account -> $account.accountPasswordChangeAllowed()", account(new Device(true))));

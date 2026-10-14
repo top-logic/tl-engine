@@ -12,7 +12,6 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.OverlayLookup;
@@ -107,7 +106,7 @@ public class TestScriptTracerJavaFunctions extends AbstractScriptTracerTest {
 	}
 
 	public static Test suite() {
-		return suite(TestScriptTracerJavaFunctions.class, PersonManager.Module.INSTANCE);
+		return suite(TestScriptTracerJavaFunctions.class);
 	}
 
 }

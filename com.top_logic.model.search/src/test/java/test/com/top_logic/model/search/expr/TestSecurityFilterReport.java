@@ -27,7 +27,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -275,7 +274,6 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 		return suite(TestSecurityFilterReport.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

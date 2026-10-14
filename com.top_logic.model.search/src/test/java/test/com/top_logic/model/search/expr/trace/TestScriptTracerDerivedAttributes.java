@@ -12,7 +12,6 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.parser.ParseException;
@@ -113,7 +112,7 @@ public class TestScriptTracerDerivedAttributes extends AbstractScriptTracerTest 
 	}
 
 	public static Test suite() {
-		return suite(TestScriptTracerDerivedAttributes.class, PersonManager.Module.INSTANCE);
+		return suite(TestScriptTracerDerivedAttributes.class);
 	}
 
 }

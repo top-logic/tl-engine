@@ -4,6 +4,16 @@
 	Configuration options for testing tl-ai-index with JUnit.
  -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!-- The project-knowledge model the index tests write and search. -->
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/test.aiindex.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+	</services>
 	<configs>
 		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
 			test-comment="false"

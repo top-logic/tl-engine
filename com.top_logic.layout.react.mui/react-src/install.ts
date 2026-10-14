@@ -12,8 +12,7 @@ import MuiMenuTriggerAdapter from './adapters/MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
-import MuiPasswordInputAdapter from './adapters/MuiPasswordInputAdapter';
-import MuiNumberInputAdapter from './adapters/MuiNumberInputAdapter';
+import MuiFieldValueAdapter from './adapters/MuiFieldValueAdapter';
 import MuiDatePickerAdapter from './adapters/MuiDatePickerAdapter';
 import MuiSelectAdapter from './adapters/MuiSelectAdapter';
 import MuiDropdownSelectAdapter from './adapters/MuiDropdownSelectAdapter';
@@ -40,20 +39,23 @@ import MuiSliderAdapter from './adapters/MuiSliderAdapter';
  * (TLButton, TLToggleButton), the part `MenuTrigger` the trigger of a toolbar menu and of a menu
  * region, the part `DisclosureToggle` the toggles expanding a form group, a node of a tree, a row of
  * a tree table and the sidebar, the part `Checkbox` the boolean fields (TLCheckbox), the selection
- * boxes of a table and the boxes of the column selection.
+ * boxes of a table and the boxes of the column selection, the part `TextInput` the text, password
+ * and number fields (TLTextInput, TLPasswordInput, TLNumberInput), the search of a table and of its
+ * column selection and the filters of a dropdown and of the icon and color popups, the part
+ * `FieldValue` the value of every text, password, number, select, date and slider field that is
+ * not editable.
  */
 const PART_ADAPTERS = {
   Button: MuiButtonAdapter,
   MenuTrigger: MuiMenuTriggerAdapter,
   DisclosureToggle: MuiDisclosureToggleAdapter,
   Checkbox: MuiCheckboxAdapter,
+  TextInput: MuiTextInputAdapter,
+  FieldValue: MuiFieldValueAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */
 const CONTROL_ADAPTERS = {
-  TLTextInput: MuiTextInputAdapter,
-  TLPasswordInput: MuiPasswordInputAdapter,
-  TLNumberInput: MuiNumberInputAdapter,
   TLDatePicker: MuiDatePickerAdapter,
   TLSelect: MuiSelectAdapter,
   TLDropdownSelect: MuiDropdownSelectAdapter,

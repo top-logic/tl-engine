@@ -12,6 +12,7 @@ import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLChoiceGroup from '../../../com.top_logic.layout.react/react-src/controls/TLChoiceGroup';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
+import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
@@ -21,6 +22,8 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 // The table and the column selection look up their buttons and toggles as well.
 replacePart('Button', MuiButtonAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
+// The table and the column selection draw their search boxes as well.
+replacePart('TextInput', MuiTextInputAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the new value. */
 const ARG_VALUE = 'value';

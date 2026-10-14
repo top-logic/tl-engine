@@ -1,181 +1,88 @@
-import {
-  React, useTLState, useTLTypingField, useI18N, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps, ThemeIcon,
-} from 'tl-react-bridge';
-import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
+import { React, ThemeIcon, tooltipProps } from 'tl-react-bridge';
+import type { TextInputPartProps } from 'tl-react-bridge';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import {
-  FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly,
-} from './field';
-
-const { useCallback, useRef } = React;
-
-/** The labels of the buttons beside the input, with their English defaults. */
-const I18N_KEYS = {
-  'js.textInput.open': 'Open in a new tab',
-  'js.textInput.clear': 'Clear the input',
-};
-
-/** The icon of the link that opens what the field holds (the theme image TLTextInput uses). */
-const OPEN_ICON = 'css:fa-solid fa-arrow-up-right-from-square';
-
-/** The icon of the button that empties the input (the theme image TLTextInput uses). */
-const CLEAR_ICON = 'css:fa-solid fa-xmark';
 
 /** Size class of the design system for an icon inside an input. */
 const ICON_CLASS = 'tl-icon-sm';
 
-/** The number of rows of a multi-line field whose state names none. */
+/** The number of visible lines of a multi-line box that names none. */
 const DEFAULT_ROWS = 3;
 
-/** A text naming its scheme is an address a browser can follow on its own. */
-const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
-
 /**
- * The address a value of the given input type points at, or `null` where the type has no link or
- * the field is empty.
- */
-function linkHref(inputType: string, value: string): string | null {
-  if (value === '') return null;
-  switch (inputType) {
-    case 'url':
-      return value;
-    case 'email':
-      return 'mailto:' + value;
-    case 'tel':
-      return 'tel:' + value.replace(/\s+/g, '');
-    default:
-      return null;
-  }
-}
-
-/** A web address as it is stored: trimmed, and completed with `https` where a bare host was typed. */
-function normalizeUrl(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed === '' || SCHEME.test(trimmed)) return trimmed;
-  return 'https://' + trimmed;
-}
-
-/**
- * Renders the state of a TopLogic text field (module name `TLTextInput`) with the MUI `TextField`.
+ * Draws the part `TextInput` ({@link TextInputPartProps}) with Material UI: a small MUI `TextField`
+ * of full width without a label of its own - the box is named by the control, and the label of a
+ * form field is drawn by the form field.
  *
- * <p>The typing behaviour is that of TLTextInput (see {@link useTLTypingField}): debounce, send on
- * blur, commit of each finished edit, submit on Enter. Mapping from the control state:</p>
+ * <p>Mapping from the props to the MUI props:</p>
  * <ul>
- * <li>value → the text; inputType → the `type` of the input; placeholder → placeholder;</li>
- * <li>multiline, rows → a multi-line `TextField` (Enter is text there, so nothing is submitted);</li>
- * <li>icon → a start adornment ({@link ThemeIcon}); clearable → an end adornment button emptying
- *     the input while it holds a value, sending the empty value at once; a `url`, `email` or `tel`
- *     value → an end adornment link opening it, while the clear button is not shown;</li>
- * <li>a `url` is completed to an `https` address when the field is left or submitted;</li>
- * <li>hasError → `error`, `aria-invalid` and the error message as tooltip; hasWarnings → color
- *     `warning`; mandatory → `aria-required`;</li>
- * <li>a field that is not editable shows its value as text (a link where it points somewhere), as
- *     TLTextInput does; disabled → `disabled`, without clear button and link;</li>
- * <li>hidden → nothing is rendered; the configured CSS class → className of the `TextField`.</li>
+ * <li>value → `value`, onChange → `onChange` with the text of the input; type → `type`;
+ *     placeholder → `placeholder`;</li>
+ * <li>multiline, rows → a multi-line `TextField`, which takes no key handler;</li>
+ * <li>icon → a start adornment ({@link ThemeIcon}); action → an end adornment;</li>
+ * <li>disabled → `disabled`; readOnly → `readOnly` of the input;</li>
+ * <li>validation → `error` (with `aria-invalid`) or color `warning`; required →
+ *     `aria-required` - not `required`, which would mark a label the field does not have;</li>
+ * <li>tooltip → the tooltip of the input;</li>
+ * <li>id, ref, name, autoFocus, inputMode, maxLength, min, max, the key, focus and blur handlers
+ *     and the passed-through attributes → the input; className → the root of the
+ *     `TextField`.</li>
  * </ul>
- *
- * <p>The control ID is on an element around the `TextField`, as TLTextInput has it, since the
- * `id` of a `TextField` names its input. The input carries {@link fieldInputId} and is labelled by
- * the surrounding form field ({@link useFieldLabelProps}); the MUI floating label is not used.</p>
- *
- * <p>Not used: label (rendered by the form field), tooltip and nullable.</p>
  */
-const MuiTextInputAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<TextInputStateJson>>();
-  const inputId = fieldInputId(controlId);
-  const labelProps = useFieldLabelProps(controlId, inputId);
-  const inputType = state.inputType ?? 'text';
-  const multiline = state.multiline === true;
-  const { text, setText, commit, onBlur, onKeyDown } = useTLTypingField({
-    normalize: inputType === 'url' ? normalizeUrl : undefined,
-  });
-  const t = useI18N(I18N_KEYS);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleClear = useCallback(async () => {
-    setText('');
-    // The gesture is the whole edit, so it is reported at once rather than after the debounce.
-    await commit();
-    inputRef.current?.focus();
-  }, [setText, commit]);
-
-  if (state.hidden === true) {
-    return null;
-  }
-
-  const hasError = state.hasError === true;
-  const disabled = state.disabled === true;
-  const href = hasError || multiline ? null : linkHref(inputType, text);
-
-  if (showsValueOnly(state)) {
-    return (
-      <MuiFieldValue id={controlId} className={rootClassName(state)} text={text} href={href}
-        multiline={multiline} />
-    );
-  }
-
-  const icon = state.icon;
-  const hasIcon = !multiline && !!icon && icon !== 'none';
-  const clearable = !multiline && !disabled && state.clearable === true && text !== '';
-  const openHref = clearable || disabled ? null : href;
-
-  const endAdornment = clearable
-    ? (
-      <InputAdornment position="end">
-        <IconButton size="small" edge="end" onClick={handleClear} aria-label={t['js.textInput.clear']}
-          {...tooltipProps(t['js.textInput.clear'])}>
-          <ThemeIcon encoded={CLEAR_ICON} className={ICON_CLASS} />
-        </IconButton>
-      </InputAdornment>
-    )
-    : openHref !== null
-      ? (
-        <InputAdornment position="end">
-          <IconButton size="small" edge="end" href={openHref} target="_blank" rel="noopener noreferrer"
-            aria-label={t['js.textInput.open']} {...tooltipProps(text)}>
-            <ThemeIcon encoded={OPEN_ICON} className={ICON_CLASS} />
-          </IconButton>
-        </InputAdornment>
-      )
-      : undefined;
+const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
+  id, ref, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
+  validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
+  ...attributes
+}) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (readOnly || disabled) return;
+    onChange?.(event.target.value);
+  };
 
   return (
-    <span id={controlId} style={FIELD_ROOT_STYLE}>
-      <TextField
-        id={inputId}
-        inputRef={inputRef}
-        type={multiline ? undefined : inputType}
-        multiline={multiline}
-        rows={multiline ? state.rows ?? DEFAULT_ROWS : undefined}
-        value={text}
-        placeholder={state.placeholder}
-        onChange={event => setText(event.target.value)}
-        onBlur={onBlur}
-        disabled={disabled}
-        error={hasError}
-        color={fieldColor(state)}
-        size="small"
-        fullWidth
-        className={rootClassName(state)}
-        slotProps={{
-          input: {
-            startAdornment: hasIcon
-              ? <InputAdornment position="start"><ThemeIcon encoded={icon} className={ICON_CLASS} /></InputAdornment>
-              : undefined,
-            endAdornment,
-          },
-          htmlInput: {
-            ...labelProps,
-            ...fieldAriaProps(state),
-            // On the input itself: the handler reads the text from the element it is bound to.
-            onKeyDown: multiline ? undefined : onKeyDown,
-            ...tooltipProps(hasError ? state.errorMessage : undefined),
-          },
-        }}
-      />
-    </span>
+    <TextField
+      id={id}
+      inputRef={ref}
+      name={name}
+      type={multiline ? undefined : type}
+      multiline={multiline}
+      rows={multiline ? rows ?? DEFAULT_ROWS : undefined}
+      value={value}
+      placeholder={placeholder}
+      onChange={handleChange}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      disabled={disabled}
+      autoFocus={autoFocus}
+      error={validation === 'error'}
+      color={validation === 'warning' ? 'warning' : 'primary'}
+      size="small"
+      fullWidth
+      className={className}
+      slotProps={{
+        input: {
+          readOnly,
+          startAdornment: !multiline && icon
+            ? <InputAdornment position="start"><ThemeIcon encoded={icon} className={ICON_CLASS} /></InputAdornment>
+            : undefined,
+          endAdornment: !multiline && action
+            ? <InputAdornment position="end">{action}</InputAdornment>
+            : undefined,
+        },
+        htmlInput: {
+          ...attributes,
+          inputMode,
+          maxLength,
+          min,
+          max,
+          'aria-invalid': validation === 'error' ? true : undefined,
+          'aria-required': required || undefined,
+          // On the input itself: a handler reads the text from the element it is bound to.
+          onKeyDown: multiline ? undefined : onKeyDown,
+          ...tooltipProps(tooltip),
+        },
+      }}
+    />
   );
 };
 

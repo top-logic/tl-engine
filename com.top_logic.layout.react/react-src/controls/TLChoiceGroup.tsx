@@ -1,8 +1,8 @@
 import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson, CheckboxValidation } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly, validationOf } from './form/fieldState';
 
 const { useCallback, useMemo, useRef } = React;
 
@@ -100,8 +100,7 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (multiSelect) {
     // A group takes no aria-invalid: each checkbox carries the field's check state itself.
-    const validation: CheckboxValidation | undefined =
-      state.hasError === true ? 'error' : state.hasWarnings === true ? 'warning' : undefined;
+    const validation = validationOf(state);
     return (
       <div id={controlId} {...labelProps} role="group" className={rootClassName(state, groupClass)}>
         {options.map((option) => (

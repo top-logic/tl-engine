@@ -2,11 +2,15 @@
 
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
-import { CMD_VALUE_CHANGED, VALUE_DEBOUNCE_MS, fieldLabel } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, VALUE_DEBOUNCE_MS, fieldLabel, replacePart } from 'tl-react-bridge';
 import type { SliderStateJson } from 'tl-react-bridge';
 import MuiSliderAdapter from './MuiSliderAdapter';
 import { CONTROL_ID, fakeDebounceTimers, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The value of a field that is not editable is drawn by the part FieldValue.
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the value. */
 const ARG_VALUE = 'value';
@@ -157,7 +161,9 @@ describe('TLSlider as MUI Slider', () => {
     mountSlider({ editable: false });
 
     expect(screen.queryByRole('slider')).toBeNull();
-    expect(document.getElementById(CONTROL_ID)!.textContent).toBe('20 %');
+    const shown = document.getElementById(CONTROL_ID)!;
+    expect(shown.textContent).toBe('20 %');
+    expect(shown.classList).toContain('MuiTypography-body2');
   });
 
   it('accepts no input and sends nothing while disabled', async () => {

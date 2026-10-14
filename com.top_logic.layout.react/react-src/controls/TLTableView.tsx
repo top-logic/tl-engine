@@ -4,6 +4,7 @@ import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
+import { SEARCH_ICON } from './form/fieldIcons';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -318,6 +319,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const Button = usePart('Button');
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
+  const TextInput = usePart('TextInput');
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   const columns = (state.columns as ColumnState[]) ?? [];
@@ -1381,18 +1383,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               })}
             </div>
           )}
-          <div className="tlTableView__search" {...tooltipProps(i18n['js.table.searchHint'])}>
-            <i className="bi bi-search" aria-hidden="true" />
-            <input
-              type="search"
-              className="tlTableView__searchInput"
-              placeholder={i18n['js.table.search']}
-              aria-label={i18n['js.table.searchHint']}
-              value={searchDraft}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-            />
-          </div>
+          <TextInput
+            type="search"
+            className="tlTableView__search"
+            icon={SEARCH_ICON}
+            placeholder={i18n['js.table.search']}
+            aria-label={i18n['js.table.searchHint']}
+            tooltip={i18n['js.table.searchHint']}
+            value={searchDraft}
+            onChange={handleSearchChange}
+            onKeyDown={handleSearchKeyDown}
+          />
           {filterSaving && (saveName === null ? (
             <Button
               label={i18n['js.table.saveFilter']}
@@ -1403,14 +1404,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             />
           ) : (
             <div className="tlTableView__saveForm">
-              <input
-                type="text"
+              <TextInput
                 className="tlTableView__saveInput"
                 autoFocus
                 placeholder={i18n['js.table.filterName']}
                 aria-label={i18n['js.table.filterName']}
                 value={saveName}
-                onChange={(e) => setSaveName(e.target.value)}
+                onChange={setSaveName}
                 onKeyDown={handleSaveKeyDown}
               />
               <Button

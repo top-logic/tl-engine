@@ -6,12 +6,12 @@ import type { ButtonStateJson } from '../state/control-state';
 import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host';
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
-// - a button, the trigger of a menu, the toggle disclosing content. A part has a typed props
-// contract and no server state: the control maps its state to the props of the part, sends its
-// commands and handles keyboard bindings and navigation, and the part only draws. The controls
-// bundle registers a default for every part (registerPart); a customer component library replaces a
-// part (replacePart) and so changes how the part looks wherever a control draws it - as a control
-// of its own, in a toolbar or in a table.
+// - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
+// of a field. A part has a typed props contract and no server state: the control maps its state to
+// the props of the part, sends its commands and handles keyboard bindings and navigation, and the
+// part only draws. The controls bundle registers a default for every part (registerPart); a customer
+// component library replaces a part (replacePart) and so changes how the part looks wherever a
+// control draws it - as a control of its own, in a toolbar or in a table.
 //
 // A part is added by a props interface, an entry in PartProps, a default registered by the controls
 // bundle and, where a library draws it, an adapter of that library.
@@ -250,15 +250,15 @@ export interface DisclosureTogglePartProps extends PartAttributes {
 export type CheckboxDisplay = 'checkbox' | 'switch';
 
 /**
- * The state of the value a {@link CheckboxPartProps checkbox} stands for, as the checks of its form
- * field judge it:
+ * The state of the value an input part ({@link CheckboxPartProps checkbox},
+ * {@link TextInputPartProps text box}) stands for, as the checks of its form field judge it:
  *
  * <ul>
- * <li>`error`: the value is invalid; the checkbox is marked `aria-invalid`.</li>
+ * <li>`error`: the value is invalid; the input is marked `aria-invalid`.</li>
  * <li>`warning`: the value is questionable without being invalid.</li>
  * </ul>
  */
-export type CheckboxValidation = 'error' | 'warning';
+export type FieldValidation = 'error' | 'warning';
 
 /**
  * The props of the part {@link PartProps.Checkbox}: a box that is ticked, or a switch that is
@@ -317,7 +317,7 @@ export interface CheckboxPartProps extends PartAttributes {
   required?: boolean;
 
   /** The state of the value; absent: valid. */
-  validation?: CheckboxValidation;
+  validation?: FieldValidation;
 
   /** The name of the input. */
   name?: string;
@@ -340,6 +340,161 @@ export interface CheckboxPartProps extends PartAttributes {
 }
 
 /**
+ * What a {@link TextInputPartProps text box} holds, the `type` of a single-line input: plain
+ * `text`, a `search` term, a web address (`url`), an e-mail address (`email`), a telephone number
+ * (`tel`), a `password`, which the box masks, or a `number`, which the browser restricts to what it
+ * reads as a number.
+ */
+export type TextInputType = 'text' | 'search' | 'url' | 'email' | 'tel' | 'password' | 'number';
+
+/**
+ * The on-screen keyboard a {@link TextInputPartProps text box} asks for, the `inputmode` of the
+ * input.
+ */
+export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'search' | 'email' | 'tel' | 'url' | 'none';
+
+/**
+ * The props of the part {@link PartProps.TextInput}: a box text is typed into - the input of a text,
+ * password or number field, the search of a table, the filter of a list.
+ *
+ * <p>The box is controlled: it shows {@link value} as given, and each keystroke reports the text
+ * typed through {@link onChange}; it shows the new text only once the control passes it.</p>
+ *
+ * <p>A single-line box may show an {@link icon} ahead of the text - the magnifier of a search -
+ * and an {@link action} at its end - the button emptying it, the link opening what it holds. The
+ * box keeps the input in place while icon and action come and go, so that typing keeps the focus.
+ * A multi-line box ({@link multiline}) draws neither.</p>
+ *
+ * <p>Every implementation marks an invalid box `aria-invalid` and a required one
+ * `aria-required`, and puts {@link id}, {@link ref}, {@link name}, the key, focus and blur
+ * handlers and the passed-through attributes on the input. The box has no label of its own: the
+ * control names it, by an `aria-label`, or by `aria-labelledby` naming the label of its form
+ * field.</p>
+ */
+export interface TextInputPartProps extends PartAttributes {
+  /** The ID of the input. */
+  id?: string;
+
+  /** Receives the input, e.g. to give it the focus. */
+  ref?: PartRef<HTMLInputElement | HTMLTextAreaElement>;
+
+  /** The text shown. */
+  value: string;
+
+  /** What the box holds; absent: `text`. Ignored for a multi-line box. */
+  type?: TextInputType;
+
+  /** The on-screen keyboard the input asks for; absent: the one of the {@link type}. */
+  inputMode?: TextInputMode;
+
+  /** The text shown while the box is empty. */
+  placeholder?: string;
+
+  /** Whether the box is a text area of several lines, in which Enter is part of the text. */
+  multiline?: boolean;
+
+  /** The number of visible lines of a {@link multiline} box; absent: 3. */
+  rows?: number;
+
+  /**
+   * The icon shown inside a single-line box ahead of the text, a theme image in its encoded form
+   * (see `ThemeIcon`); absent: none. It is decoration, hidden from assistive technology.
+   */
+  icon?: string;
+
+  /**
+   * The action at the end of a single-line box, inside its frame: a part `Button` drawn
+   * `icon-only`, `ghost` and `small`, e.g. the button emptying the box. Absent: none.
+   */
+  action?: React.ReactNode;
+
+  /** Whether the box cannot be edited; it is drawn inactive. */
+  disabled?: boolean;
+
+  /** Whether the text can be selected and copied but not edited. */
+  readOnly?: boolean;
+
+  /** Whether a value is required. */
+  required?: boolean;
+
+  /** The state of the value; absent: valid. */
+  validation?: FieldValidation;
+
+  /** The tooltip of the input, e.g. the message of an invalid value; absent: none. */
+  tooltip?: string;
+
+  /** Whether the input takes the focus when it is drawn. */
+  autoFocus?: boolean;
+
+  /** The name of the input. */
+  name?: string;
+
+  /** The maximum number of characters the box takes. */
+  maxLength?: number;
+
+  /** The least value of a `number` box. */
+  min?: number;
+
+  /** The greatest value of a `number` box. */
+  max?: number;
+
+  /** Classes added to the outermost drawn element. */
+  className?: string;
+
+  /**
+   * Called with the text of the box after each change. Not called while {@link disabled} or
+   * {@link readOnly}.
+   */
+  onChange?: (value: string) => void;
+
+  /**
+   * Called for a key pressed in a single-line box, with the event of the input, e.g. to finish an
+   * edit with Enter or to move through a list with the arrow keys. Not called in a multi-line box,
+   * where Enter is part of the text.
+   */
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+
+  /** Called when the input takes the focus. */
+  onFocus?: (event: React.FocusEvent<HTMLElement>) => void;
+
+  /** Called when the input loses the focus. */
+  onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
+}
+
+/**
+ * The props of the part {@link PartProps.FieldValue}: the value of a form field that is not
+ * editable, shown as text instead of an input - the text of a text or number field, the mask of a
+ * password, the label of the chosen option, the written date, the label of a slider's value.
+ *
+ * <p>A single-line value stays on one line and ends with an ellipsis where it is cut off. A
+ * {@link multiline} value keeps its line breaks; an empty line keeps its height. A value with an
+ * {@link href} is a link opening the address in a window of its own, which gets no access to the
+ * page that opened it. An empty text shows nothing: the value has none.</p>
+ *
+ * <p>Every implementation puts {@link id}, {@link className} and the passed-through attributes on
+ * its outermost element.</p>
+ */
+export interface FieldValuePartProps extends PartAttributes {
+  /** The ID of the drawn element, the control ID of the field. */
+  id?: string;
+
+  /** The value as text. */
+  text: string;
+
+  /**
+   * The address the value points at; absent: the value is no link. Ignored for a multi-line
+   * value.
+   */
+  href?: string;
+
+  /** Whether the text is shown with its line breaks. */
+  multiline?: boolean;
+
+  /** Classes added to the drawn element. */
+  className?: string;
+}
+
+/**
  * The parts of the React UI by name, each with its props. The name is what {@link registerPart},
  * {@link replacePart} and {@link usePart} take; the props are the contract every implementation of
  * the part fulfils.
@@ -356,6 +511,12 @@ export interface PartProps {
 
   /** A box that is ticked, or a switch: {@link CheckboxPartProps}. */
   Checkbox: CheckboxPartProps;
+
+  /** A box text is typed into: {@link TextInputPartProps}. */
+  TextInput: TextInputPartProps;
+
+  /** The value of a field that is not editable: {@link FieldValuePartProps}. */
+  FieldValue: FieldValuePartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

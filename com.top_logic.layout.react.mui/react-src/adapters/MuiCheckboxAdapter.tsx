@@ -1,11 +1,11 @@
 import { React } from 'tl-react-bridge';
-import type { CheckboxPartProps, CheckboxValidation } from 'tl-react-bridge';
+import type { CheckboxPartProps, FieldValidation } from 'tl-react-bridge';
 import Checkbox from '@mui/material/Checkbox';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 /** The MUI color of the box for the state of its value; `primary` for a valid one. */
-const COLOR: Record<CheckboxValidation, 'error' | 'warning'> = {
+const COLOR: Record<FieldValidation, 'error' | 'warning'> = {
   error: 'error',
   warning: 'warning',
 };

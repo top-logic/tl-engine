@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps,
+  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, tooltipProps, usePart,
   VALUE_DEBOUNCE_MS,
 } from 'tl-react-bridge';
 import type { TLCellProps, SliderStateJson } from 'tl-react-bridge';
@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { MuiFieldValue, fieldAriaProps, showsValueOnly } from './field';
+import { fieldAriaProps, showsValueOnly } from './field';
 
 const { useCallback } = React;
 
@@ -55,8 +55,8 @@ const VALUE_SIZER_SX: SxProps<Theme> = { gridArea: '1 / 1', justifySelf: 'end', 
  *     changes, as with TLSlider;</li>
  * <li>hasError → color `error`, `aria-invalid` and the error message as tooltip; hasWarnings →
  *     color `warning`; mandatory → `aria-required`;</li>
- * <li>a field that is not editable shows the value label as text, as TLSlider does; disabled →
- *     `disabled`;</li>
+ * <li>a field that is not editable shows the value label as text (part `FieldValue`), as TLSlider
+ *     does; disabled → `disabled`;</li>
  * <li>hidden → nothing is rendered; the configured CSS class → className of the `Slider`.</li>
  * </ul>
  *
@@ -67,6 +67,7 @@ const VALUE_SIZER_SX: SxProps<Theme> = { gridArea: '1 / 1', justifySelf: 'end', 
  */
 const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SliderStateJson>>();
+  const FieldValue = usePart('FieldValue');
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flush] = useTLFieldValue({
@@ -86,7 +87,7 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const label = state.valueLabel ?? '';
 
   if (showsValueOnly(state)) {
-    return <MuiFieldValue id={controlId} className={rootClassName(state)} text={label} />;
+    return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={label} />;
   }
 
   const min = state.min ?? DEFAULT_MIN;

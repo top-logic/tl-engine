@@ -1,6 +1,6 @@
 import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, usePart } from 'tl-react-bridge';
-import type { TLCellProps, CheckboxStateJson, CheckboxDisplay, CheckboxValidation } from 'tl-react-bridge';
-import { showsValueOnly } from './form/fieldState';
+import type { TLCellProps, CheckboxStateJson, CheckboxDisplay } from 'tl-react-bridge';
+import { showsValueOnly, validationOf } from './form/fieldState';
 
 const { useCallback } = React;
 
@@ -9,13 +9,6 @@ const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
 
 /** The shape of the part for a switch. */
 const PART_SWITCH: CheckboxDisplay = 'switch';
-
-/** The state of the value of the field, as the part shows it; error wins over warning. */
-function validationOf(state: Partial<CheckboxStateJson>): CheckboxValidation | undefined {
-  if (state.hasError === true) return 'error';
-  if (state.hasWarnings === true) return 'warning';
-  return undefined;
-}
 
 /**
  * A boolean field rendered via React: a box that is ticked, or — with `display` set to

@@ -2923,36 +2923,12 @@ button.tlWindow__maximizeBtn:focus-visible {
 	opacity: 1;
 }
 
-/* Search and saving keep to the right end of the bar, whatever number of chips precedes them. */
+/* Search and saving keep to the right end of the bar, whatever number of chips precedes them. The
+   search box (part TextInput) draws itself; the bar only gives it its width. */
 .tlTableView__search {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
 	flex: 0 1 16rem;
 	min-width: 8rem;
 	margin-left: auto;
-	padding: 0 var(--spacing-03);
-	border: 1px solid var(--border-strong);
-	background: var(--field);
-	color: var(--text-secondary);
-	box-sizing: border-box;
-}
-
-.tlTableView__searchInput,
-.tlTableView__saveInput {
-	flex: 1 1 auto;
-	min-width: 0;
-	height: 2rem;
-	border: none;
-	background: transparent;
-	color: var(--text-primary);
-	font-family: inherit;
-	font-size: var(--body-compact-01-font-size);
-}
-
-.tlTableView__searchInput:focus,
-.tlTableView__saveInput:focus {
-	outline: none;
 }
 
 /* Naming a filter to save happens in place of the save button, so the bar keeps its height. */
@@ -2965,10 +2941,6 @@ button.tlWindow__maximizeBtn:focus-visible {
 
 .tlTableView__saveInput {
 	width: 10rem;
-	padding: 0 var(--spacing-03);
-	border: 1px solid var(--border-strong);
-	background: var(--field);
-	box-sizing: border-box;
 }
 
 
@@ -4092,30 +4064,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 	color: var(--link-primary);
 }
 
+/* The search box (part TextInput) draws itself; the list only places it. */
 .tlColumnSelect__search {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
 	margin: 0 var(--spacing-05) var(--spacing-03);
-	padding: 0 var(--spacing-03);
-	border: 1px solid var(--border-strong);
-	background: var(--field);
-	color: var(--text-secondary);
-}
-
-.tlColumnSelect__searchInput {
-	flex: 1 1 auto;
-	min-width: 0;
-	height: 2rem;
-	border: none;
-	background: transparent;
-	color: var(--text-primary);
-	font-family: inherit;
-	font-size: var(--body-compact-01-font-size);
-}
-
-.tlColumnSelect__searchInput:focus {
-	outline: none;
 }
 
 .tlColumnSelect__list {
@@ -4462,13 +4413,6 @@ button.tlWindow__maximizeBtn:focus-visible {
 /* A bound written only to give the box its width. */
 .tlSlider__valueSizer {
 	visibility: hidden;
-}
-
-/* A field that is only read shows the value alone: there is nothing to drag. */
-.tlSlider--immutable {
-	color: var(--text-primary);
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
 }
 
 /* The track: the value part as thick as the box, the open rest a thinner strip on its middle. A
@@ -4910,28 +4854,10 @@ button.tlWindow__maximizeBtn:focus-visible {
   flex-shrink: 0;
 }
 
+/* The boxes (part TextInput) draw themselves; the row only gives them its remaining width. */
 .tlColorInput__input {
   flex: 1;
   min-width: 0;
-  height: 2rem;
-  padding: 0 var(--spacing-03);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--corner-radius);
-  font-family: var(--font-family);
-  font-size: var(--body-compact-01-font-size);
-  color: var(--text-primary);
-  background: var(--layer-02);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.tlColorInput__input:focus {
-  border-color: var(--focus);
-  box-shadow: 0 0 0 1px var(--focus);
-}
-
-.tlColorInput__input--error {
-  border-color: var(--support-error);
 }
 
 .tlColorInput__actions {
@@ -5095,47 +5021,10 @@ button.tlWindow__maximizeBtn:focus-visible {
 
 /* Search */
 
+/* The filter box (part TextInput) draws itself; the section around it separates it from the grid. */
 .tlIconSelect__searchWrapper {
-  display: flex;
-  align-items: center;
   padding: var(--spacing-03);
   border-bottom: 1px solid var(--border-subtle);
-  gap: var(--spacing-03);
-}
-
-.tlIconSelect__searchIcon {
-  color: var(--text-placeholder);
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.tlIconSelect__search {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  background: transparent;
-  color: var(--text-primary);
-}
-
-.tlIconSelect__search::placeholder {
-  color: var(--text-placeholder);
-}
-
-.tlIconSelect__resetBtn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-size: 16px;
-  padding: 2px 4px;
-  border-radius: var(--corner-radius);
-  line-height: 1;
-}
-
-.tlIconSelect__resetBtn:hover {
-  color: var(--support-error);
-  background: var(--layer-hover);
 }
 
 /* Icon grid */
@@ -5244,24 +5133,10 @@ button.tlWindow__maximizeBtn:focus-visible {
   min-width: 50px;
 }
 
+/* The box (part TextInput) draws itself; the row only gives it its remaining width. */
 .tlIconSelect__editInput {
   flex: 1;
   min-width: 0;
-  height: 28px;
-  padding: 0 var(--spacing-03);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--corner-radius);
-  font-size: 13px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  color: var(--text-primary);
-  background: var(--layer-02);
-  transition: border-color 0.15s;
-}
-
-.tlIconSelect__editInput:focus {
-  border-color: var(--focus);
-  box-shadow: 0 0 0 1px var(--focus);
-  outline: none;
 }
 
 .tlIconSelect__previewArea {

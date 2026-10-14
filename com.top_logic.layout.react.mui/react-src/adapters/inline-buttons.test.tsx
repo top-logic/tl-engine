@@ -13,6 +13,7 @@ import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
+import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { childControl, mountAdapter, settle } from './wire-test-support';
 
 replacePart('Button', MuiButtonAdapter);
@@ -20,6 +21,8 @@ replacePart('Button', MuiButtonAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 // The table looks up the selection boxes of its rows as well.
 replacePart('Checkbox', MuiCheckboxAdapter);
+// The table looks up the boxes of its search as well.
+replacePart('TextInput', MuiTextInputAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';

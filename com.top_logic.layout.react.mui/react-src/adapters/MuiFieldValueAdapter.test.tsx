@@ -1,0 +1,58 @@
+// The part FieldValue drawn with Material UI: a Typography, a Link for a value pointing somewhere.
+
+import { describe, it, expect, afterEach } from 'vitest';
+import { screen, cleanup, render } from '@testing-library/react';
+import type { FieldValuePartProps } from 'tl-react-bridge';
+import { createMuiRoot, createPageThemes } from '../MuiRoot';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+/** The root wrapper the adapter is drawn below: the one of the MUI default theme. */
+const MuiRoot = createMuiRoot(createPageThemes({}));
+
+function draw(props: Partial<FieldValuePartProps>) {
+  render(<MuiRoot><MuiFieldValueAdapter id="v1" text="" {...props} /></MuiRoot>);
+  return document.getElementById('v1')!;
+}
+
+afterEach(() => {
+  cleanup();
+});
+
+describe('the part FieldValue as MUI Typography', () => {
+  it('draws a single-line value in a span that does not wrap, with class and attributes', () => {
+    const value = draw({ text: 'Hallo', className: 'x', 'aria-describedby': 'hint', 'data-role': 'value' });
+
+    expect(value.tagName).toBe('SPAN');
+    expect(value.textContent).toBe('Hallo');
+    expect(value.classList).toContain('MuiTypography-body2');
+    expect(value.classList).toContain('MuiTypography-noWrap');
+    expect(value.classList).toContain('x');
+    expect(value.getAttribute('aria-describedby')).toBe('hint');
+    expect(value.getAttribute('data-role')).toBe('value');
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('draws a value pointing somewhere as a link opening it in a window of its own', () => {
+    const value = draw({ text: 'a@b.de', href: 'mailto:a@b.de' });
+
+    expect(screen.getByRole('link', { name: 'a@b.de' })).toBe(value);
+    expect(value.classList).toContain('MuiLink-root');
+    expect(value.getAttribute('href')).toBe('mailto:a@b.de');
+    expect(value.getAttribute('target')).toBe('_blank');
+    expect(value.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('draws a multi-line value one block per line, without a link', () => {
+    const value = draw({ text: 'a\n\nc', multiline: true, href: 'https://example.org' });
+
+    expect(value.tagName).toBe('DIV');
+    expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', ' ', 'c']);
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('draws an empty value as an empty element', () => {
+    const value = draw({ text: '' });
+
+    expect(value.textContent).toBe('');
+  });
+});

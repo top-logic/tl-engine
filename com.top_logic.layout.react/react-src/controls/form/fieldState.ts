@@ -1,3 +1,5 @@
+import type { FieldValidation } from 'tl-react-bridge';
+
 /**
  * The state attributes of a form field, from the field model's state. Error wins over warning:
  * a field with an error shows no warning. The design system reads exactly these attributes
@@ -41,4 +43,16 @@ export function fieldStateAttrs(
  */
 export function showsValueOnly(state: { editable?: unknown; disabled?: unknown }): boolean {
   return state.editable === false && state.disabled !== true;
+}
+
+/**
+ * The state of the value of a form field, as an input part shows it (see FieldValidation): `error`
+ * for an invalid value, `warning` for a questionable one; error wins over warning.
+ *
+ * @param state the control state with the keys of ReactFormFieldControl
+ */
+export function validationOf(state: { hasError?: unknown; hasWarnings?: unknown }): FieldValidation | undefined {
+  if (state.hasError === true) return 'error';
+  if (state.hasWarnings === true) return 'warning';
+  return undefined;
 }

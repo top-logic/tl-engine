@@ -1,5 +1,5 @@
 import { React, useFieldLabelProps, rootClassName, usePart } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson, CheckboxValidation } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, FieldValidation } from 'tl-react-bridge';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Radio from '@mui/material/Radio';
@@ -57,7 +57,7 @@ const MuiChoiceGroupAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const chosen = new Set(value.map(option => option.value));
 
   if (state.multiSelect === true) {
-    const validation: CheckboxValidation | undefined =
+    const validation: FieldValidation | undefined =
       hasError ? 'error' : state.hasWarnings === true ? 'warning' : undefined;
     return (
       <FormGroup id={controlId} role="group" {...labelProps} row={row} className={rootClassName(state)}>

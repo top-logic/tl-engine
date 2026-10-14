@@ -13,6 +13,8 @@ import ButtonPart from './controls/button/ButtonPart';
 import MenuTriggerPart from './controls/button/MenuTriggerPart';
 import DisclosureTogglePart from './controls/button/DisclosureTogglePart';
 import CheckboxPart from './controls/form/CheckboxPart';
+import TextInputPart from './controls/form/TextInputPart';
+import FieldValuePart from './controls/form/FieldValuePart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -102,6 +104,8 @@ registerPart('Button', ButtonPart);
 registerPart('MenuTrigger', MenuTriggerPart);
 registerPart('DisclosureToggle', DisclosureTogglePart);
 registerPart('Checkbox', CheckboxPart);
+registerPart('TextInput', TextInputPart);
+registerPart('FieldValue', FieldValuePart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

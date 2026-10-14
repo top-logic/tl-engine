@@ -48,7 +48,11 @@ export type {
   DisclosureDirection,
   CheckboxPartProps,
   CheckboxDisplay,
-  CheckboxValidation,
+  FieldValidation,
+  TextInputPartProps,
+  TextInputType,
+  TextInputMode,
+  FieldValuePartProps,
 } from './bridge/parts';
 export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';

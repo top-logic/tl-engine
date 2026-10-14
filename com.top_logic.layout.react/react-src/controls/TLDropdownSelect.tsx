@@ -12,6 +12,7 @@ import { pillClassName } from './pill/TLPill';
 import { buttonClassName } from './button/buttonClassName';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { SEARCH_ICON } from './form/fieldIcons';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
@@ -198,6 +199,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   const nothingFoundLabel = i18n['js.dropdownSelect.nothingFound'];
   const Button = usePart('Button');
+  const TextInput = usePart('TextInput');
 
   /** Format remove-chip label by replacing {0} with the option label. */
   const removeChipLabel = useCallback(
@@ -392,10 +394,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     },
     [sendCommand, closeDropdown]
   );
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
 
   /** Leads to the place the given option is displayed at. */
   const goto = useCallback(
@@ -609,27 +607,22 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     >
       {/* Search field - shown when options are loaded, unless the field asks for none */}
       {!noFilter && (optionsLoaded || loadError) && (
-        <span className="tl-field-group tl-select__search-group">
-          <span className="tl-field-group__icon" aria-hidden="true">
-            <ThemeIcon encoded="css:fa-solid fa-magnifying-glass" className="tl-icon-sm" />
-          </span>
-          <input
-            ref={searchRef}
-            type="text"
-            className="tl-field tl-select__search tl-type-body"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            onKeyDown={handleKeyDown}
-            placeholder={i18n['js.dropdownSelect.filterPlaceholder']}
-            aria-label={i18n['js.dropdownSelect.filterPlaceholder']}
-            aria-activedescendant={
-              highlightedIndex >= 0
-                ? `${controlId}-opt-${highlightedIndex}`
-                : undefined
-            }
-            aria-controls={listboxId}
-          />
-        </span>
+        <TextInput
+          ref={searchRef}
+          className="tl-select__search-group"
+          icon={SEARCH_ICON}
+          value={searchTerm}
+          onChange={setSearchTerm}
+          onKeyDown={handleKeyDown}
+          placeholder={i18n['js.dropdownSelect.filterPlaceholder']}
+          aria-label={i18n['js.dropdownSelect.filterPlaceholder']}
+          aria-activedescendant={
+            highlightedIndex >= 0
+              ? `${controlId}-opt-${highlightedIndex}`
+              : undefined
+          }
+          aria-controls={listboxId}
+        />
       )}
 
       {/* Loading, error and empty states - a line of the popup, not an option of the list */}

@@ -103,7 +103,9 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: MenuTriggerPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/MenuTriggerPart');
     const { default: DisclosureTogglePart } = await import('../../com.top_logic.layout.react/react-src/controls/button/DisclosureTogglePart');
     const { default: CheckboxPart } = await import('../../com.top_logic.layout.react/react-src/controls/form/CheckboxPart');
-    return { ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart };
+    const { default: TextInputPart } = await import('../../com.top_logic.layout.react/react-src/controls/form/TextInputPart');
+    const { default: FieldValuePart } = await import('../../com.top_logic.layout.react/react-src/controls/form/FieldValuePart');
+    return { ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart };
   }
 
   it('draws a button with the classes of the design system', async () => {
@@ -360,5 +362,157 @@ describe('the TopLogic drawing of the parts', () => {
     expect(box.className).toBe('tl-checkbox');
     const label = box.closest('label')!;
     expect(Array.from(label.children).map(child => child.tagName)).toEqual(['INPUT', 'I', 'B']);
+  });
+
+  it('draws a text box as the input of the design system in its group, named by its attributes', async () => {
+    const { TextInputPart } = await defaults();
+    const ref = React.createRef<HTMLInputElement | HTMLTextAreaElement>();
+    const onChange = vi.fn();
+
+    render(<TextInputPart id="t1" ref={ref} name="n" className="x" value="ab" placeholder="Suche"
+      onChange={onChange} aria-label="Name" />);
+
+    const box = screen.getByRole('textbox', { name: 'Name' }) as HTMLInputElement;
+    expect(ref.current).toBe(box);
+    expect(box.id).toBe('t1');
+    expect(box.name).toBe('n');
+    expect(box.type).toBe('text');
+    expect(box.placeholder).toBe('Suche');
+    expect(box.className).toBe('tl-field tl-type-body');
+    expect(box.parentElement!.className).toBe('tl-field-group x');
+    expect(box.hasAttribute('aria-invalid')).toBe(false);
+    expect(box.hasAttribute('aria-required')).toBe(false);
+    expect(box.hasAttribute(TOOLTIP_ATTR)).toBe(false);
+
+    await userEvent.type(box, 'c');
+    expect(onChange.mock.calls).toEqual([['abc']]);
+    // Controlled: the box shows the text it is given.
+    expect(box.value).toBe('ab');
+  });
+
+  it('keeps the input in place while icon and action come and go', async () => {
+    const { TextInputPart } = await defaults();
+
+    const { rerender } = render(<TextInputPart value="" aria-label="Suche" />);
+    const box = screen.getByRole('textbox', { name: 'Suche' });
+    box.focus();
+
+    rerender(<TextInputPart value="a" aria-label="Suche" icon="css:my-icon"
+      action={<button type="button" className="tl-button">X</button>} />);
+
+    expect(screen.getByRole('textbox', { name: 'Suche' })).toBe(box);
+    expect(document.activeElement).toBe(box);
+    const group = box.parentElement!;
+    expect(Array.from(group.children).map(child => child.className))
+      .toEqual(['tl-field-group__icon', 'tl-field tl-type-body', 'tl-button']);
+    expect(group.querySelector('.tl-field-group__icon')!.getAttribute('aria-hidden')).toBe('true');
+    expect(group.querySelector('.tl-field-group__icon i.my-icon')).not.toBeNull();
+  });
+
+  it('marks the state of the value and the tooltip as the design system reads them', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<>
+      <TextInputPart value="" validation="error" required tooltip="Falsch" aria-label="Fehler" />
+      <TextInputPart value="" validation="warning" aria-label="Warnung" />
+    </>);
+
+    const error = screen.getByRole('textbox', { name: 'Fehler' });
+    expect(error.getAttribute('aria-invalid')).toBe('true');
+    expect(error.getAttribute('aria-required')).toBe('true');
+    expect(error.getAttribute(TOOLTIP_ATTR)).toBe('text:Falsch');
+    const warning = screen.getByRole('textbox', { name: 'Warnung' });
+    expect(warning.getAttribute('data-tl-state')).toBe('warning');
+    expect(warning.hasAttribute('aria-invalid')).toBe(false);
+  });
+
+  it('reports no input while disabled or read-only', async () => {
+    const { TextInputPart } = await defaults();
+    const onChange = vi.fn();
+
+    render(<>
+      <TextInputPart value="a" disabled onChange={onChange} aria-label="Inaktiv" />
+      <TextInputPart value="a" readOnly onChange={onChange} aria-label="Lesend" />
+    </>);
+
+    const inactive = screen.getByRole('textbox', { name: 'Inaktiv' }) as HTMLInputElement;
+    const readOnly = screen.getByRole('textbox', { name: 'Lesend' }) as HTMLInputElement;
+    expect(inactive.disabled).toBe(true);
+    expect(readOnly.readOnly).toBe(true);
+    await userEvent.setup({ pointerEventsCheck: 0 }).type(inactive, 'x');
+    await userEvent.type(readOnly, 'x');
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('draws a multi-line box as the text area of the design system, without icon, action and key handler', async () => {
+    const { TextInputPart } = await defaults();
+    const onKeyDown = vi.fn();
+
+    render(<TextInputPart value={'a\nb'} multiline icon="css:my-icon" action={<button type="button">X</button>}
+      onKeyDown={onKeyDown} aria-label="Text" />);
+
+    const area = screen.getByRole('textbox', { name: 'Text' });
+    expect(area.tagName).toBe('TEXTAREA');
+    expect(area.className).toBe('tl-field tl-field--multiline tl-type-body');
+    expect(area.getAttribute('rows')).toBe('3');
+    expect(document.querySelector('.my-icon')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    await userEvent.type(area, '{Enter}');
+    expect(onKeyDown).not.toHaveBeenCalled();
+  });
+
+  it('draws a number box with its bounds, the keyboard asked for and a password box masked', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<>
+      <TextInputPart value="1" type="number" min={0} max={255} inputMode="numeric" aria-label="Rot" />
+      <TextInputPart value="geheim" type="password" aria-label="Passwort" />
+    </>);
+
+    const number = screen.getByRole('spinbutton', { name: 'Rot' }) as HTMLInputElement;
+    expect(number.min).toBe('0');
+    expect(number.max).toBe('255');
+    expect(number.getAttribute('inputmode')).toBe('numeric');
+    expect((screen.getByLabelText('Passwort') as HTMLInputElement).type).toBe('password');
+  });
+
+  it('draws a field value as the value of the design system, with class and attributes', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text="Hallo" className="x" aria-describedby="hint" />);
+
+    const value = document.getElementById('v1')!;
+    expect(value.tagName).toBe('SPAN');
+    expect(value.className).toBe('tl-field-value tl-type-body x');
+    expect(value.getAttribute('aria-describedby')).toBe('hint');
+    expect(Array.from(value.children).map(child => child.className)).toEqual(['tl-field-value__text']);
+    expect(value.textContent).toBe('Hallo');
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('draws a field value pointing somewhere as a link opening it in a window of its own', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text="a@b.de" href="mailto:a@b.de" />);
+
+    const link = screen.getByRole('link', { name: 'a@b.de' });
+    expect(link.id).toBe('v1');
+    expect(link.className).toBe('tl-field-value tl-type-body');
+    expect(link.getAttribute('href')).toBe('mailto:a@b.de');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('draws a multi-line field value one line per text, without a link', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text={'a\n\nc'} multiline href="https://example.org" />);
+
+    const value = document.getElementById('v1')!;
+    expect(value.tagName).toBe('DIV');
+    expect(value.className).toBe('tl-field-value tl-type-body tl-field-value--multiline');
+    expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', ' ', 'c']);
+    expect(screen.queryByRole('link')).toBeNull();
   });
 });

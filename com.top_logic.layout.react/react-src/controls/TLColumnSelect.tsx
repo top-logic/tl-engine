@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { SEARCH_ICON } from './form/fieldIcons';
 
 const I18N_KEYS = {
   'js.table.columnSearch': 'Find column',
@@ -47,6 +48,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const Checkbox = usePart('Checkbox');
+  const TextInput = usePart('TextInput');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const groupable = state.groupable !== false;
@@ -89,17 +91,15 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div id={controlId} className={rootClassName(state, 'tlColumnSelect')} {...reorder.containerProps}>
       {searchable && (
-        <div className="tlColumnSelect__search">
-          <i className="bi bi-search" aria-hidden="true" />
-          <input
-            type="search"
-            className="tlColumnSelect__searchInput"
-            placeholder={i18n['js.table.columnSearch']}
-            aria-label={i18n['js.table.columnSearch']}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <TextInput
+          type="search"
+          className="tlColumnSelect__search"
+          icon={SEARCH_ICON}
+          placeholder={i18n['js.table.columnSearch']}
+          aria-label={i18n['js.table.columnSearch']}
+          value={search}
+          onChange={setSearch}
+        />
       )}
       {/* Alongside the search the list scrolls within a fixed height: a list that grows and shrinks
           with the number of matches would resize the dialog under the pointer on every keystroke. */}

@@ -7,9 +7,10 @@ package com.top_logic.model.search.expr.trace;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -28,6 +29,11 @@ import com.top_logic.util.model.ModelService;
  * side-effects and does only use deterministic functions, the script result can only change, if the
  * model values it accesses change. By observing all model values a script accesses one can observe
  * the script result for change.
+ * </p>
+ * 
+ * <p>
+ * The script is evaluated in a {@link TracingScope}, so that all model reads are traced, including
+ * those of functions implemented in Java and of derived attributes the script reads.
  * </p>
  * 
  * @see #compile(Expr)
@@ -72,7 +78,7 @@ public class ScriptTracer {
 		_model = model;
 
 		SearchExpression rawExpr = SearchBuilder.toSearchExpression(_model, expr);
-		_debugExpr = QueryExecutor.resolve(_model, rawExpr.visit(TracingAccessRewriter.INSTANCE, null));
+		_debugExpr = QueryExecutor.resolve(_model, rawExpr);
 	}
 
 	/**
@@ -99,6 +105,8 @@ public class ScriptTracer {
 	 * 
 	 * @param trace
 	 *        The callback to report all model accesses during evaluation.
+	 * @param overlays
+	 *        The overlays to read the values of edited objects from, <code>null</code> for none.
 	 * @param args
 	 *        The arguments to the script.
 	 * @return The evaluation result returned by the script.
@@ -115,21 +123,17 @@ public class ScriptTracer {
 	 *        The {@link KnowledgeBase} of the context.
 	 * @param trace
 	 *        The callback to report all model accesses during evaluation.
+	 * @param overlays
+	 *        The overlays to read the values of edited objects from, <code>null</code> for none.
 	 * @param args
 	 *        The arguments to the script.
 	 * @return The evaluation result returned by the script.
 	 */
 	public Object execute(KnowledgeBase kb, Sink<Pointer> trace, OverlayLookup overlays,
 			Object... args) {
-		return _debugExpr.evalWith(ScriptTracer.tracingContext(kb, _model, trace, overlays), Args.some(args));
-	}
-
-	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace,
-			OverlayLookup overlays) {
-		EvalContext context = new EvalContext(false, kb, model, null, null);
-		context.defineVar(TracingAccessRewriter.TRACE, trace);
-		context.defineVar(TracingAccessRewriter.UPDATE_CONTAINER, overlays);
-		return context;
+		try (TracingScope scope = TracingScope.open(trace, overlays)) {
+			return _debugExpr.evalWith(new EvalContext(false, kb, _model, null, null), Args.some(args));
+		}
 	}
 
 }

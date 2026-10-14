@@ -34,6 +34,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.TLContext;
 
@@ -75,9 +76,20 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
 
 	/**
 	 * Reads the value through {@link #getValue(String)} with the part's name.
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the read is traced and resolved through the scope's overlays.
+	 * </p>
 	 */
 	@Override
 	default Object tValue(TLStructuredTypePart part) {
+		TracingScope scope = TracingScope.current();
+		if (scope != null) {
+			Object overlayValue = scope.read(this, part);
+			if (overlayValue != TracingScope.PLAIN) {
+				return overlayValue;
+			}
+		}
 		return getValue(part.getName());
 	}
 

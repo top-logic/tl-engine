@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel>, <derived-channel> (inputs, expr, reverse, observed-types) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
 order: 15
 ---
 
@@ -11,7 +11,7 @@ A channel is a named value of one view instance. Elements read the object they d
 
 The channels of a view are declared in the `<channels>` section of its `<view>` element (`ViewElement.Config.getChannels()`). Every name is unique within the view. Three kinds exist:
 
-- **`<channel name="…"/>`** (`ValueChannelConfig`) is a writable value. It starts empty and holds whatever an element or an action writes into it last.
+- **`<channel name="…"/>`** (`ValueChannelConfig`) is a writable value. It starts empty and holds whatever an element or an action writes into it last. With an `init` function it is filled from other channels instead, see [below](#a-writable-channel-initialized-from-other-channels-init).
 - **`<derived-channel name="…" inputs="…" expr="…"/>`** (`DerivedChannelConfig`) computes its value from other channels with a TL-Script function. The values of the `inputs` channels are the positional arguments of `expr`, in the order the inputs are listed: with `inputs="a, b"` the function is written `x -> y -> …` and receives the value of `a` as `x` and the value of `b` as `y`. The value is computed when the view is built and computed again whenever one of the inputs takes a new value; listeners are told only when the result differs from the previous one. A derived channel is read-only: an element writing it fails (`UnsupportedOperationException`) unless the channel has a `reverse` function (below).
 - **`<source-channel name="…"><source class="…"/></source-channel>`** (`SourceChannelConfig`) is a writable value that additionally receives what a server-side source publishes, see [below](#channels-fed-by-a-server-side-source-source-channel).
 
@@ -28,6 +28,30 @@ The channels of a view are declared in the `<channels>` section of its `<view>` 
 The channels are created in declaration order, and a derived channel resolves its inputs when it is created. An input must therefore be declared above the derived channel reading it - a derived channel may read another derived channel declared before it - or be supplied by the view embedding this one (see [`<view-ref>`](#embedding-a-view-view-ref-and-bind) below). A reference to a channel the view does not know fails with "Unknown channel" and lists the channels that are known.
 
 `inputs` takes two notations, here as everywhere in the view layer (`Inputs`): the comma-separated attribute `inputs="selectedCustomer, editMode"` and nested elements `<inputs><input channel="selectedCustomer"/><input channel="editMode"/></inputs>`.
+
+### A writable channel initialized from other channels: `init`
+
+A `<channel>` with an `init` function is a writable value that takes its value from other channels - an input field that shows the stored value of the selected object, lets the user enter a new one, and shows the stored value again for the next selection:
+
+```xml
+<channels>
+	<channel name="project"/>
+	<channel name="budget"
+		init="p -> $p.get(`tl.demo.projectManagement:ProjectScope#budget`)"
+		inputs="project"
+	/>
+</channels>
+```
+
+`inputs` and `init` work like `inputs` and `expr` of a derived channel: the values of the inputs are the positional arguments of the function. The channel (`InitializedViewChannel`) is filled with the result
+
+- when the view is built,
+- whenever an input takes a new value - also when the result is the same as before, so a value the user entered for the previous project is replaced,
+- while the view is displayed, whenever an object an input holds (or an object of one of the `observed-types`) is changed and the change gives the function a different result. After the budget entered above is stored on the project, the channel shows the stored value; a change of the project that leaves the budget as it is keeps a value entered meanwhile. When the view is displayed again, the function is evaluated again and the channel is filled if the result changed while it was hidden.
+
+Between two fills the channel is an ordinary writable value: an element or action writes it, veto listeners are asked, and listeners hear every new value. A fill asks no veto listener of the channel itself; unsaved changes bound to it block the write of the input instead, like for a derived channel.
+
+Without `inputs`, `init` is evaluated once when the view is built and gives the channel its initial value (`init="10"`); `observed-types` evaluate it again on changes of objects of those types. `inputs` or `observed-types` without `init` are a configuration error. A `<channel>` without `init` behaves as described above: it starts empty.
 
 ### Following edits of the input objects: `observed-types`
 

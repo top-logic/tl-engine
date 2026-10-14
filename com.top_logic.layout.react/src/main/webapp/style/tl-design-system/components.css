@@ -844,7 +844,7 @@
 /* Dialog — Spec 2026-10-13 Welle 4a §3, docs/skalen.md „Scrim und Ebenen“, Konsolidierung Q1/Q2.
    Ein Paketbaustein, zwei Controls: TLDialog rendert den Scrim (.tl-dialog), TLWindow die Fläche darin
    (.tl-dialog__surface mit tl-titlebar, Körper, Fuß, Griffen). Der Scrim hat keinen Blur — die Skala kennt keinen.
-   Er hält den Rand space-lg zum Viewport; die Fläche ist höchstens so groß wie das, was er freilässt. */
+   Den Rand space-lg zum Viewport hält die Fläche selbst über ihre Höchstmaße, nicht der Scrim. */
 
 .tl-dialog {
   position: fixed;
@@ -854,7 +854,6 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding: var(--tl-space-lg);
   background: var(--tl-surface-scrim);
 }
 .tl-dialog[hidden] { display: none; }
@@ -889,8 +888,11 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  max-width: 100%;
-  max-height: 100%;
+  /* Rand über die Höchstmaße statt über Scrim-Padding: im Fluss gilt 100% für die Inhaltsbox, absolut (nach dem
+     Ziehen) für die Paddingbox — mit Padding wüchse ein begrenztes Fenster beim Anfassen um den Rand. So ist der
+     Bezug in beiden Fällen derselbe. */
+  max-width: calc(100% - 2 * var(--tl-space-lg));
+  max-height: calc(100% - 2 * var(--tl-space-lg));
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
   border-radius: var(--tl-radius-md);
   background: var(--tl-surface-overlay);
@@ -901,6 +903,8 @@
 .tl-dialog__surface[data-tl-state~="maximized"] {
   position: absolute;
   inset: 0;
+  max-width: none;
+  max-height: none;
   border-radius: 0;
 }
 

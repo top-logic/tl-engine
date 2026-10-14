@@ -116,7 +116,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   const windowRef = useRef<HTMLDivElement>(null);
 
-  // The margin the scrim keeps (--tl-space-lg); read for resizing and for checking a remembered size.
+  // The surface's margin to the viewport (--tl-space-lg): the scrim has no padding, the surface caps at the
+  // viewport minus 2 x this margin; read for resizing and for checking a remembered size.
   const margin = useTokenPx(windowRef, '--tl-space-lg', DEFAULT_MARGIN);
   const marginRef = useRef(margin);
   marginRef.current = margin;

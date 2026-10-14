@@ -17,8 +17,9 @@ const { useCallback, useEffect, useMemo, useRef, useState } = React;
  * - actionLabel: string | null  (non-null makes the bar a button; the label is its tooltip)
  * - pingGraceMs: number | null  (ask the server once, this long after the deadline passed)
  *
- * While not visible the component renders nothing, so a notice area holding only hidden notices
- * collapses to zero height.
+ * While not visible the component renders an empty live-region wrapper, so a notice area holding
+ * only hidden notices collapses to zero height. The wrapper (role alert for errors, else status) is
+ * persistent so that the notice, when it appears, is announced.
  *
  * With a deadline set, a count-down ticks once per second. It counts against server time: both
  * bounds come from the server, and the offset to the local clock is measured once per notice, so a
@@ -87,40 +88,43 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [sendCommand, actionLabel]);
 
-  if (!visible) return null;
+  const remainingMs = visible && deadline != null ? deadline - (Date.now() + clockOffset) : null;
+  // Nothing to show while hidden or while the lead time still holds the bar back.
+  const shown = visible && !(leadMs != null && remainingMs != null && remainingMs > leadMs);
 
-  const remainingMs = deadline != null ? deadline - (Date.now() + clockOffset) : null;
-  if (leadMs != null && remainingMs != null && remainingMs > leadMs) return null;
-
-  const remaining = remainingMs != null ? formatDuration(remainingMs) : null;
+  const remaining = shown && remainingMs != null ? formatDuration(remainingMs) : null;
   const clickable = actionLabel != null;
 
-  const role = clickable ? 'button' : severity === 'error' ? 'alert' : 'status';
-
+  // The live region is a persistent wrapper: a clickable bar is a button (not a live region), and a
+  // region inserted already filled is often not announced. Empty, the wrapper has no height.
   return (
-    <div id={controlId}
-      className={rootClassName(state, 'tl-alert tl-notice-bar tl-type-body')}
-      data-tl-role={severity}
-      role={role}
-      tabIndex={clickable ? 0 : undefined}
-      {...tooltipProps(actionLabel)}
-      aria-label={clickable ? `${text} ${actionLabel}` : undefined}
-      onClick={clickable ? handleAction : undefined}
-      onKeyDown={clickable
-        ? (event: React.KeyboardEvent) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              handleAction();
-            }
-          }
-        : undefined}>
-      <div className="tl-alert__body">
-        <div className="tl-alert__message">
-          {text}
-          {/* aria-live off: the role announces the notice once, the ticking is not re-read every second. */}
-          {remaining !== null && <> <span className="tl-notice-bar__countdown tl-nums tl-type-body-strong" aria-live="off">{remaining}</span></>}
+    <div id={controlId} role={severity === 'error' ? 'alert' : 'status'}>
+      {shown && (
+        <div
+          className={rootClassName(state, 'tl-alert tl-notice-bar tl-type-body')}
+          data-tl-role={severity}
+          role={clickable ? 'button' : undefined}
+          tabIndex={clickable ? 0 : undefined}
+          {...tooltipProps(actionLabel)}
+          aria-label={clickable ? `${text} ${actionLabel}` : undefined}
+          onClick={clickable ? handleAction : undefined}
+          onKeyDown={clickable
+            ? (event: React.KeyboardEvent) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleAction();
+                }
+              }
+            : undefined}>
+          <div className="tl-alert__body">
+            <div className="tl-alert__message">
+              {text}
+              {/* aria-live off: the wrapper announces the notice once, the ticking is not re-read every second. */}
+              {remaining !== null && <> <span className="tl-notice-bar__countdown tl-nums tl-type-body-strong" aria-live="off">{remaining}</span></>}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

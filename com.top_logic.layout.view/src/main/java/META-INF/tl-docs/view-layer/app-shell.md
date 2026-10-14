@@ -1,5 +1,5 @@
 ---
-description: Read before extending app.view.xml - the application shell, sidebar items, badges and the rail chrome, login and anonymous sessions with the login view, and the state classes for transitions.
+description: Read before extending app.view.xml - the application shell, sidebar items, badges and the rail chrome, login and anonymous sessions with the login view, and the state marks for transitions.
 order: 80
 ---
 
@@ -177,9 +177,9 @@ An application that has nothing to show a visitor names a login view in its `Vie
 
 Leaving works the other way round: `<logout-command>` swaps the session back and sends the browser to the root of the view application (`ViewServlet.ROOT_PATH`), because the page the departing user was on is theirs and not the landing page of whoever sits down at the browser next. `com.top_logic.demo.react` configures a login view, `com.top_logic.demo` does not — its React view is browsed anonymously and logged into through the account area.
 
-## Transitions: the state classes an application animates
+## Transitions: the state marks an application animates
 
-Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with state classes, and which animation runs — or whether one runs at all — is the application stylesheet's decision. The classes and states are the API; the engine ships a default animation for the wizard, and the design system package one for the dialog (a fade over `--tl-duration-base`), which an application overrides with rules on the same state.
+Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with state marks (class names or `data-tl-state` words), and which animation runs — or whether one runs at all — is the application stylesheet's decision. The classes and states are the API; the engine ships a default animation for the wizard, and the design system package one for the dialog (a fade over `--tl-duration-base`), which an application overrides with rules on the same state.
 
 | Display | While it arrives | While it leaves | Direction on the root |
 | --- | --- | --- | --- |
@@ -193,6 +193,6 @@ The wizard takes its direction from the server (state key `direction`); the tile
 
 **Reduced motion is decided before the stylesheet.** Where `(prefers-reduced-motion: reduce)` matches, no class is set and no copy is made at all, so the change is instantaneous whatever an application animates. Neither the engine stylesheet nor an application's needs a `prefers-reduced-motion` block for these classes.
 
-**One hook does this for all three.** `useKeyedTransition` (`com.top_logic.layout.react/react-src/bridge/transition.ts`, exported from `tl-react-bridge`) takes the keys of what is displayed now, a way to resolve the element of a key, the container the copies are shown in, and how to mark: two class names, or `state: true` for the words `entering` and `exiting` in `data-tl-state`; it notices which keys appeared and which disappeared, marks the DOM before the browser paints, and takes the marks away again. It writes the classes onto the DOM rather than handing them back for rendering, so the element marked may be rendered anywhere below the component that notices the change — a dialog's backdrop belongs to the dialog, while its opening and closing is the dialog manager's news. A display that newly wants a transition uses this hook rather than a mechanism of its own.
+**One hook does this for all three.** `useKeyedTransition` (`com.top_logic.layout.react/react-src/bridge/transition.ts`, exported from `tl-react-bridge`) takes the keys of what is displayed now, a way to resolve the element of a key, the container the copies are shown in, and how to mark: two class names, or `state: true` for the words `entering` and `exiting` in `data-tl-state`; it notices which keys appeared and which disappeared, marks the DOM before the browser paints, and takes the marks away again. It writes the marks (class names, or the words `entering`/`exiting` in `data-tl-state`) onto the DOM rather than handing them back for rendering, so the element marked may be rendered anywhere below the component that notices the change — a dialog's scrim belongs to the dialog, while its opening and closing is the dialog manager's news. A display that newly wants a transition uses this hook rather than a mechanism of its own.
 
 **An example stylesheet.** `com.top_logic.demo.react/src/main/webapp/style/tl-demo-react.css` animates the anchors the engine leaves free: a 200ms fade-and-slide for the tile frames, the slide following `tlTileStack--forward` / `tlTileStack--backward`.

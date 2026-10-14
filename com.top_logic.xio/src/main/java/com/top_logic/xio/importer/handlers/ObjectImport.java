@@ -115,13 +115,28 @@ public abstract class ObjectImport<C extends ObjectImport.Config<?>> extends Nes
 			return null;
 		}
 
-		String id;
 		if (TEXT_CONTENT.equals(idAttribute)) {
-			id = XMLStreamUtil.nextText(in);
+			return normalizeId(XMLStreamUtil.nextText(in));
 		} else {
-			id = in.getAttributeValue(null, idAttribute);
+			return readIdAttribute(in, idAttribute);
 		}
+	}
 
+	/**
+	 * Reads an ID from an attribute of the current element.
+	 *
+	 * @param in
+	 *        The XML source positioned at a start element.
+	 * @param idAttribute
+	 *        The name of the attribute to read.
+	 * @return The trimmed value of the given attribute, or <code>null</code>, if the attribute is
+	 *         not given or empty.
+	 */
+	public static String readIdAttribute(XMLStreamReader in, String idAttribute) {
+		return normalizeId(in.getAttributeValue(null, idAttribute));
+	}
+
+	private static String normalizeId(String id) {
 		if (id == null) {
 			return null;
 		}

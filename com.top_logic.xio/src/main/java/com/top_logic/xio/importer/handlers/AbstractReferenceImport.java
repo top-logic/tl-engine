@@ -5,11 +5,13 @@
  */
 package com.top_logic.xio.importer.handlers;
 
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.xio.importer.binding.ImportContext;
 
 /**
  * Base class for {@link Handler}s importing model references.
@@ -21,7 +23,7 @@ public class AbstractReferenceImport<C extends AbstractReferenceImport.Config<?>
 	/**
 	 * Configuration options for {@link AbstractReferenceImport}.
 	 */
-	public interface Config<I extends AbstractReferenceImport<?>> extends StoreHandler.Config<I> {
+	public interface Config<I extends AbstractReferenceImport<?>> extends StoreHandler.Config<I>, UnresolvedIdConfig {
 
 		/**
 		 * Name of the XML ID attribute containing the serialized reference.
@@ -42,6 +44,13 @@ public class AbstractReferenceImport<C extends AbstractReferenceImport.Config<?>
 	@CalledByReflection
 	public AbstractReferenceImport(InstantiationContext context, C config) {
 		super(context, config);
+	}
+
+	/**
+	 * Resolves the given ID, see {@link UnresolvedIdConfig#getIgnoreUnresolved()}.
+	 */
+	protected Object resolveReference(ImportContext context, Location location, String id) {
+		return context.resolveObject(this, location, id, !getConfig().getIgnoreUnresolved());
 	}
 
 	/**

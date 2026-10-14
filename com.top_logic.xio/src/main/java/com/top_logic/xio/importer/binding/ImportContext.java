@@ -5,6 +5,10 @@
  */
 package com.top_logic.xio.importer.binding;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -134,6 +138,38 @@ public interface ImportContext extends ModelBindingBase, XMLStreamLog, TypedAnno
 	void close();
 
 	/**
+	 * Resolves the object with the given ID, whose resolution is required.
+	 * 
+	 * @see #resolveObject(ImportPart, Location, String, boolean)
+	 */
+	@Override
+	default Object resolveObject(ImportPart handler, Location location, String id) {
+		return resolveObject(handler, location, id, true);
+	}
+
+	/**
+	 * Resolves the object with the given ID, potentially forwards.
+	 * 
+	 * <p>
+	 * If the object is not yet known, a reference is returned that is filled when the object with
+	 * the given ID is imported later on, see {@link #deref(Object, Resolution)}.
+	 * </p>
+	 * 
+	 * @param handler
+	 *        The {@link Handler} that requests the object (for potential error reporting).
+	 * @param location
+	 *        The location in the source XML that contains the reference.
+	 * @param id
+	 *        The ID of the object to resolve.
+	 * @param required
+	 *        Whether an ID that is still unresolved at the end of the import is reported as error.
+	 *        If no requester of an ID requires its resolution, an unresolved ID is ignored, and all
+	 *        operations waiting for the object are dropped.
+	 * @return The object or future for the object with the given ID.
+	 */
+	Object resolveObject(ImportPart handler, Location location, String id, boolean required);
+
+	/**
 	 * Resolves the object with the given ID, if it was created before or is found by an
 	 * {@link IdLookup} installed with {@link #withIdLookup(IdLookup, XMLStreamReader, Handler)}.
 	 * 
@@ -161,6 +197,67 @@ public interface ImportContext extends ModelBindingBase, XMLStreamLog, TypedAnno
 	 *        The function to call with the imported object, when it has been imported.
 	 */
 	void deref(Object obj, Resolution fun);
+
+	/**
+	 * Calls the given {@link Resolution} callback when the given object has been imported, or the
+	 * given fallback, if the object is still not imported at the end of the import.
+	 *
+	 * @param obj
+	 *        The (potentially forwards-referenced) import value, see
+	 *        {@link #resolveObject(ImportPart, Location, String)}.
+	 * @param fun
+	 *        The function to call with the imported object, when it has been imported.
+	 * @param ifUnresolved
+	 *        The function to call at the end of the import, if the object has not been imported
+	 *        (before an unresolved ID is reported). <code>null</code> for no callback.
+	 */
+	void deref(Object obj, Resolution fun, Runnable ifUnresolved);
+
+	/**
+	 * Calls the given callback with the imported objects of the given values, when all of them
+	 * have been imported.
+	 * 
+	 * <p>
+	 * Values that are still not imported at the end of the import are left out: In that case, the
+	 * given callback is called at the end of the import with the imported objects only. The order of
+	 * the values is preserved.
+	 * </p>
+	 *
+	 * @param values
+	 *        The (potentially forwards-referenced) import values, see
+	 *        {@link #resolveObject(ImportPart, Location, String)}.
+	 * @param fun
+	 *        The function to call with the list of imported objects.
+	 */
+	default void derefAll(List<?> values, Consumer<List<Object>> fun) {
+		int size = values.size();
+		Object[] targets = new Object[size];
+		boolean[] resolved = new boolean[size];
+		int[] pending = { size };
+		Runnable done = () -> {
+			if (--pending[0] == 0) {
+				List<Object> result = new ArrayList<>(size);
+				for (int n = 0; n < size; n++) {
+					if (resolved[n]) {
+						result.add(targets[n]);
+					}
+				}
+				fun.accept(result);
+			}
+		};
+		if (size == 0) {
+			fun.accept(new ArrayList<>());
+			return;
+		}
+		for (int n = 0; n < size; n++) {
+			int index = n;
+			deref(values.get(n), target -> {
+				targets[index] = target;
+				resolved[index] = true;
+				done.run();
+			}, done);
+		}
+	}
 
 	/**
 	 * Assigns an unbound object reference with a concrete value.

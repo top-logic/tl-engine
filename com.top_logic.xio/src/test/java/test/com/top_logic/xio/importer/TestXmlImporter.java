@@ -21,6 +21,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -63,6 +64,10 @@ public class TestXmlImporter extends TestCase {
 		TLObject b2 = (TLObject) result.tValueByName("defaultValue");
 		assertSame(bs.get(1), b2);
 		assertEquals("b2", b2.tValueByName("name"));
+
+		// Forward references in a multi-reference.
+		assertEquals(List.of(bs.get(1), bs.get(2)), bs.get(0).tValueByName("next"));
+		assertEquals(List.of(bs.get(0)), bs.get(2).tValueByName("next"));
 	}
 
 	public void testImport2() throws XMLStreamException, IOException {
@@ -235,6 +240,77 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("e3", duplicate.tValueByName("extId"));
 		assertEquals("duplicate", duplicate.tValueByName("name"));
 		assertEquals("old-e3", e3.tValueByName("name"));
+	}
+
+	public void testUnlessKnownAndIgnoreUnresolved() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter9-UnlessKnown.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter9-UnlessKnown.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test9");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+		TLObject e1 = existingItem(container, (TLClass) module.getType("Item"), "e1");
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter9-UnlessKnown.data.xml").getStream()), container);
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(3, elements.size());
+
+		// Known through the resolve-existing lookup: skipped with its content.
+		assertSame(e1, elements.get(0));
+		assertEquals("old-e1", e1.tValueByName("name"));
+		assertEquals(0, list(e1.tValueByName("children")).size());
+
+		// Unknown: imported with its content. The second occurrence is known and skipped.
+		TLObject n1 = elements.get(1);
+		assertEquals("new1", n1.tValueByName("name"));
+		List<? extends TLObject> n1Children = list(n1.tValueByName("children"));
+		assertEquals(1, n1Children.size());
+		assertEquals("c2", n1Children.get(0).tValueByName("extId"));
+
+		// An ignored unresolved reference stays unset.
+		assertNull(n1.tValueByName("other"));
+		assertNull(n1.tValueByName("note"));
+
+		// An ignored unresolved ID is left out of a multi-reference, the others (including a
+		// forward reference) are stored in order.
+		assertEquals(List.of(e1, elements.get(2)), n1.tValueByName("others"));
+
+		// An ignorable reference to an ID defined later is resolved.
+		TLObject n2 = elements.get(2);
+		assertEquals("new2", n2.tValueByName("name"));
+		assertSame(n1, n2.tValueByName("other"));
+		assertEquals("forward", n2.tValueByName("note"));
+	}
+
+	public void testUnresolvedReported() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter9-UnlessKnown.importer.xml"));
+		TLModel model = loadModel(new AssertProtocol(), "testXmlImporter9-UnlessKnown.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test9");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter9-UnlessKnown-errors.data.xml").getStream()), container);
+
+		String errors = String.join("\n", importLog.getErrors());
+		assertEquals(errors, 4, importLog.getErrors().size());
+		assertTrue(errors, errors.contains("\"missing1\""));
+		assertTrue(errors, errors.contains("\"missing2\""));
+		assertTrue(errors, errors.contains("\"missing5\""));
+		assertTrue(errors, errors.contains("\"missing6\""));
+
+		// A required unresolved ID is reported and left out of a multi-reference.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		TLObject strictItem = elements.get(0);
+		TLObject n1 = elements.get(1);
+		assertEquals("n1", n1.tValueByName("extId"));
+		assertEquals(List.of(n1), strictItem.tValueByName("others"));
 	}
 
 	private TLObject existingItem(TLObject container, TLClass itemType, String extId) {

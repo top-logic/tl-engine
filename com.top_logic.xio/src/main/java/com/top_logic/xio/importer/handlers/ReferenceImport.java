@@ -65,7 +65,7 @@ public class ReferenceImport<C extends ReferenceImport.Config<?>> extends Abstra
 		if (rawId != null) {
 			try {
 				String id = _format.getValue(getConfig().getIdAttribute(), rawId);
-				Object ref = context.resolveObject(this, in.getLocation(), id);
+				Object ref = resolveReference(context, in.getLocation(), id);
 				storeReference(context, ref);
 			} catch (ConfigurationException ex) {
 				context.error(in.getLocation(),

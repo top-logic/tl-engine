@@ -105,6 +105,12 @@
 						resourceKey="tl.scripting.recorder.storeCurrentRevision"
 					/>
 					<button class="com.top_logic.layout.scripting.template.gui.SaveScriptCommand"/>
+					<button id="downloadScript"
+						class="com.top_logic.layout.scripting.template.gui.DownloadScriptCommand"
+						clique="additional-apply"
+						group="System"
+						image="theme:DOWNLOAD_SCRIPT"
+					/>
 					<button id="switchTechnical"
 						activeImage="theme:com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
 						class="com.top_logic.layout.scripting.template.gui.SwitchRecordTechnicalCommands"

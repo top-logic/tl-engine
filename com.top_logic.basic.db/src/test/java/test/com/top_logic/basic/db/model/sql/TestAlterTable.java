@@ -10,6 +10,8 @@ import static java.util.Arrays.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
@@ -18,6 +20,7 @@ import test.com.top_logic.basic.DatabaseTestSetup;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.db.model.DBColumn;
+import com.top_logic.basic.db.model.DBIndex;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBTable;
@@ -29,6 +32,7 @@ import com.top_logic.basic.db.sql.SQLAlterTable;
 import com.top_logic.basic.db.sql.SQLBoolean;
 import com.top_logic.basic.db.sql.SQLDropColumn;
 import com.top_logic.basic.db.sql.SQLDropIndex;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLModifyColumn;
 import com.top_logic.basic.db.sql.SQLQuery;
 import com.top_logic.basic.db.sql.SQLStatement;
@@ -285,36 +289,101 @@ public class TestAlterTable extends BasicTestCase {
 	}
 
 	/**
-	 * Tests {@link SQLModifyColumn} changing the type of a column of a table with content.
+	 * Tests {@link SQLModifyColumn} changing the type of a non-mandatory column of a table with
+	 * content.
 	 */
 	public void testModifyColumnTypeWithContent() throws SQLException {
+		boolean detectsBinary = detectsBinary();
+		insertRows();
+		insertRow(rowName(ROW_COUNT), literalNull(DBType.LONG));
+
+		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
+
+		DBColumn b = analyzeTable().getColumn("b");
+		assertEquals(DBType.STRING, b.getType());
+		assertFalse(b.isMandatory());
+		if (detectsBinary) {
+			assertFalse(b.isBinary());
+		}
+		assertValues("b", n -> n < ROW_COUNT ? Long.toString(rowValue(n)) : null, ROW_COUNT + 1);
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn} changing the type of a mandatory column of a table with
+	 * content.
+	 */
+	public void testModifyMandatoryColumnTypeWithContent() throws SQLException {
+		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
 		insertRows();
 
-		PooledConnection connection = _pool.borrowWriteConnection();
-		try {
-			executeUpdate(connection,
-				modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
-			connection.commit();
-		} finally {
-			_pool.releaseWriteConnection(connection);
+		executeAlter(
+			modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60).setMandatory(true));
+
+		DBColumn b = analyzeTable().getColumn("b");
+		assertEquals(DBType.STRING, b.getType());
+		assertTrue(b.isMandatory());
+		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn} changing the type of a column of a table with content to a
+	 * binary string.
+	 */
+	public void testModifyColumnTypeToBinaryWithContent() throws SQLException {
+		boolean detectsBinary = detectsBinary();
+		insertRows();
+
+		executeAlter(
+			modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60).setBinary(true));
+
+		DBColumn b = analyzeTable().getColumn("b");
+		assertEquals(DBType.STRING, b.getType());
+		assertFalse(b.isMandatory());
+		if (detectsBinary) {
+			assertTrue(b.isBinary());
 		}
+		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
+	}
 
-		DBSchema analyzedTable = DBSchemaUtils.extractTable(_pool, _table.getDBName());
-		DBTable alteredTable = analyzedTable.getTable(_table.getDBName());
-		assertEquals(DBType.STRING, alteredTable.getColumn("b").getType());
+	/**
+	 * Tests {@link SQLModifyColumn} changing a mandatory binary string column of a table with
+	 * content to a non-binary string.
+	 */
+	public void testModifyColumnTypeFromBinaryWithContent() throws SQLException {
+		boolean detectsBinary = detectsBinary();
+		insertRows();
 
-		connection = _pool.borrowReadConnection();
+		executeAlter(
+			modifyColumnType(table(_table.getDBName()), "a", DBType.STRING).setSize(100).setMandatory(true));
+
+		DBColumn a = analyzeTable().getColumn("a");
+		assertEquals(DBType.STRING, a.getType());
+		assertTrue(a.isMandatory());
+		if (detectsBinary) {
+			assertFalse(a.isBinary());
+		}
+		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
+	}
+
+	/**
+	 * Tests that an index containing a column is kept when changing the type of the column in a
+	 * table with content.
+	 */
+	public void testModifyColumnTypeKeepsIndex() throws SQLException {
+		executeAlter(addIndex(table(_table.getDBName()), "testIndex", true, "b", "a"));
+		insertRows();
+		assertTestIndex("Index not extracted.");
+
+		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
+
+		assertTestIndex("Index lost by type change.");
+		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
+
 		try {
-			try (ResultSet result = executeQuery(connection, selectRows("b"))) {
-				for (int n = 0; n < ROW_COUNT; n++) {
-					assertTrue(result.next());
-					assertEquals(rowName(n), result.getString("a"));
-					assertEquals(Long.toString(rowValue(n)), result.getString("b"));
-				}
-				assertFalse(result.next());
-			}
-		} finally {
-			_pool.releaseReadConnection(connection);
+			insertRow(rowName(0), literalString(Long.toString(rowValue(0))));
+			fail("Unique index violation!");
+		} catch (SQLException ex) {
+			// expected
 		}
 	}
 
@@ -407,6 +476,92 @@ public class TestAlterTable extends BasicTestCase {
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Inserts a single row into the test table.
+	 */
+	private void insertRow(String a, SQLExpression b) throws SQLException {
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection, insert(
+				table(_table.getDBName(), "t"),
+				asList("a", "b"),
+				asList(
+					literalString(a),
+					b)));
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Executes the given schema modification.
+	 */
+	private void executeAlter(SQLStatement alter) throws SQLException {
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection, alter);
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * The test table as currently defined in the database.
+	 */
+	private DBTable analyzeTable() throws SQLException {
+		return DBSchemaUtils.extractTable(_pool, _table.getDBName()).getTable(_table.getDBName());
+	}
+
+	/**
+	 * Asserts that the test table has the unique index "testIndex" on the columns "b" and "a".
+	 */
+	private void assertTestIndex(String message) throws SQLException {
+		DBTable table = analyzeTable();
+		DBIndex index = table.getIndices().stream()
+			.filter(i -> "testIndex".equalsIgnoreCase(i.getName()))
+			.findFirst()
+			.orElse(null);
+		assertNotNull(message + " Extracted indices: " + table.getIndices().stream()
+			.map(i -> i.getName() + i.getColumns().stream().map(DBColumn::getName).collect(Collectors.toList()))
+			.collect(Collectors.toList()), index);
+		assertTrue(index.isUnique());
+		assertEquals(asList("b", "a"), index.getColumns().stream().map(DBColumn::getName).collect(Collectors.toList()));
+	}
+
+	/**
+	 * Whether the schema extraction of the database reports the binary flag of string columns.
+	 * 
+	 * <p>
+	 * Must be called before modifying column "a", which is created binary.
+	 * </p>
+	 */
+	private boolean detectsBinary() throws SQLException {
+		return analyzeTable().getColumn("a").isBinary();
+	}
+
+	/**
+	 * Asserts that the table contains exactly the given number of rows with the names
+	 * {@link #rowName(int)} and the given values in the given column.
+	 */
+	private void assertValues(String valueColumn, IntFunction<String> expectedValue, int rowCount)
+			throws SQLException {
+		PooledConnection connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = executeQuery(connection, selectRows(valueColumn))) {
+				for (int n = 0; n < rowCount; n++) {
+					assertTrue(result.next());
+					assertEquals(rowName(n), result.getString("a"));
+					assertEquals(expectedValue.apply(n), result.getString(valueColumn));
+				}
+				assertFalse(result.next());
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
 		}
 	}
 

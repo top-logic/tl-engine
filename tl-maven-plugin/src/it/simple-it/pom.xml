@@ -26,6 +26,9 @@
             <goals>
               <goal>touch</goal>
             </goals>
+            <configuration>
+              <path>touch.txt</path>
+            </configuration>
           </execution>
         </executions>
       </plugin>

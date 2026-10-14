@@ -35,6 +35,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
@@ -154,6 +155,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** @see #setFilterBar(boolean) */
 	private boolean _filterBar;
 
+	/** @see #setRowCount(boolean) */
+	private boolean _rowCount = true;
+
 	private SortSpec _defaultSort = SortSpec.NONE;
 
 	/** The columns displayed only once the user selects them, taken from the resolved columns. */
@@ -196,6 +200,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
 	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
+
+	/** @see #setRowCssClass(Function) */
+	private Function<? super TLObject, String> _rowCssClass;
 
 	private ListRowSource<TLObject> _rowSource;
 
@@ -390,6 +397,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Whether the table tells below its rows how many it has.
+	 *
+	 * @see TableViewControl#setRowCount(boolean)
+	 */
+	public void setRowCount(boolean rowCount) {
+		_rowCount = rowCount;
+	}
+
+	/**
 	 * The order the rows are displayed in until the user sorts the table themselves.
 	 */
 	public void setDefaultSort(SortSpec defaultSort) {
@@ -500,6 +516,24 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setTrailingColumns(List<? extends Column<TLObject, ?>> columns) {
 		_trailingColumns = columns;
+	}
+
+	/**
+	 * Sets the function computing the CSS class of a data row from its row object.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the function is installed on each
+	 * {@link DefaultTableView} this control builds, so it survives the switch between view and
+	 * edit mode.
+	 * </p>
+	 *
+	 * @param rowCssClass
+	 *        The function answering the class of a row object, or {@code null} for none.
+	 *
+	 * @see DefaultTableView#setRowCssClass(Function)
+	 */
+	public void setRowCssClass(Function<? super TLObject, String> rowCssClass) {
+		_rowCssClass = rowCssClass;
 	}
 
 	/**
@@ -615,6 +649,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
+		view.setRowCssClass(_rowCssClass);
 
 		disposeSelectionBinding();
 		disposeFilterBinding();
@@ -623,6 +658,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
 
 		// Set panel child to the table.
@@ -838,6 +874,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		// Create a fresh ViewContext for the dialog scope.
 		ViewContext dialogContext = new DefaultViewContext(_context);
+		List<ViewChannel> dialogChannels = new ArrayList<>();
 
 		// Inject the row object into the configured input channel.
 		String inputChannelName = _detailDialogConfig.getInputChannel();
@@ -845,6 +882,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			DefaultViewChannel inputChannel = new DefaultViewChannel(inputChannelName);
 			inputChannel.set(rowObject);
 			dialogContext.registerChannel(inputChannelName, inputChannel);
+			dialogChannels.add(inputChannel);
 		}
 
 		// Inject the edit mode state into the configured edit-mode channel.
@@ -853,10 +891,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			DefaultViewChannel editModeChannel = new DefaultViewChannel(editModeChannelName);
 			editModeChannel.set(Boolean.valueOf(formControl().isEditMode()));
 			dialogContext.registerChannel(editModeChannelName, editModeChannel);
+			dialogChannels.add(editModeChannel);
 		}
 
 		// Create the dialog control tree from the view definition.
 		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
+		ObservingChannels.observeWhileDisplayed(dialogControl, dialogChannels, dialogContext);
 
 		// Open the dialog.
 		mgr.openDialog(false, dialogControl, result -> {

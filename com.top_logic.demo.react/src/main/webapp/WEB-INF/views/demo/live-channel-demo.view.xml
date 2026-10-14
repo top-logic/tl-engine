@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Live channel demo: a <source-channel> fed by a server-side source.
+	
+	The "ticker" channel is subscribed to a DemoTickerSource while this view is displayed. The
+	source simulates a feed receiving a temperature telegram every 100 milliseconds on a scheduler
+	thread, without any request of the window, and publishes the state of the feed as a map: the
+	number of telegrams since the subscription under 'tick', the time of the last one under 'at',
+	and the texts of the last five telegrams under 'recent'. The channel takes over at most one
+	state every 250 milliseconds (update-interval), always the latest one, so the display counts up
+	in steps of about two or three.
+	
+	The derived channels and the list below read the map like any other channel value. Leaving the
+	view ends the subscription; coming back subscribes anew, so the count starts at zero again.
+	
+	The button writes a state of its own into the channel - a source channel stays a writable value
+	- and the next telegram overwrites it again.
+-->
+<view>
+	<channels>
+		<source-channel name="ticker"
+			update-interval="250"
+		>
+			<source class="com.top_logic.demo.react.channel.DemoTickerSource"
+				period="100"
+			/>
+		</source-channel>
+		<derived-channel name="tick"
+			expr="s -> if($s == null, null, #('Tick: {0}'@en, 'Tick: {0}'@de).fill($s['tick']))"
+			inputs="ticker"
+		/>
+		<derived-channel name="at"
+			expr="s -> if($s == null, null, #('Last telegram at {0}'@en, 'Letztes Telegramm um {0}'@de).fill(dateFormat('HH:mm:ss.SSS').format($s['at'])))"
+			inputs="ticker"
+		/>
+	</channels>
+
+	<panel with-inset="true">
+		<title>
+			<en>Live channel</en>
+			<de>Live-Kanal</de>
+		</title>
+
+		<text>
+			<label>
+				<en>The values below come from a simulated feed on the server that receives a temperature telegram every 100 milliseconds. A source channel follows the feed while this view is displayed and takes over its latest state at most every 250 milliseconds - nothing has to be clicked. Leaving the view ends the subscription, coming back starts it anew.</en>
+				<de>Die Werte unten stammen aus einem simulierten Datenstrom auf dem Server, der alle 100 Millisekunden ein Temperatur-Telegramm empfängt. Ein Quell-Kanal folgt dem Strom, solange diese Ansicht angezeigt wird, und übernimmt höchstens alle 250 Millisekunden seinen letzten Stand - ohne dass etwas angeklickt werden muss. Das Verlassen der Ansicht beendet das Abonnement, die Rückkehr beginnt es neu.</de>
+			</label>
+		</text>
+
+		<text
+			input="tick"
+			variant="title"
+		/>
+
+		<text
+			input="at"
+			tone="secondary"
+		/>
+
+		<text variant="label">
+			<label>
+				<en>Last telegrams</en>
+				<de>Letzte Telegramme</de>
+			</label>
+		</text>
+
+		<object-list
+			gap="compact"
+			inputs="ticker"
+			items="s -> if($s == null, [], $s['recent'])"
+			layout="list"
+		>
+			<item>
+				<text input="element"/>
+			</item>
+			<empty-text>
+				<en>No telegrams yet.</en>
+				<de>Noch keine Telegramme.</de>
+			</empty-text>
+		</object-list>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-pencil"
+			>
+				<label>
+					<en>Write into the channel</en>
+					<de>In den Kanal schreiben</de>
+				</label>
+				<execute-script>
+					<function><![CDATA[x -> {
+	state = {
+		'tick': 0,
+		'at': now(),
+		'recent': [#('Written by the button - the next telegram overwrites it.'@en, 'Vom Knopf geschrieben - das nächste Telegramm überschreibt es.'@de)]
+	};
+	$state;
+}]]></function>
+				</execute-script>
+				<write-channel name="ticker"/>
+			</action>
+		</button>
+	</panel>
+</view>

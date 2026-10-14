@@ -6,7 +6,8 @@
 	viewer (<pdf>), an HTML file as a document of its own (<html display="document">). A <switch>
 	on the content type of the document chooses the viewer. The toolbar uploads further documents
 	and deletes the selected one; an uploaded file becomes a document named after the file and is
-	selected right away.
+	selected right away. Above the viewer, a read-only binary field (<value-input type="tl.core:Binary">)
+	shows the file of the selected document with a download link.
 	
 	Every viewer reads the "data" channel, which is derived from the "document" channel the
 	<switch> switches on. They therefore change within the same notification - the viewer being
@@ -113,6 +114,20 @@
 					<title-content>
 						<text input="name"/>
 					</title-content>
+					<inset>
+						<fields>
+							<value-input
+								readonly="true"
+								type="tl.core:Binary"
+								value="data"
+							>
+								<label>
+									<en>File</en>
+									<de>Datei</de>
+								</label>
+							</value-input>
+						</fields>
+					</inset>
 					<switch input="document">
 						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('image/')">
 							<image input="data">

@@ -322,6 +322,15 @@
 								<de>Lang laufender Auftrag</de>
 							</label>
 						</nav-item>
+						<nav-item id="live-channel"
+							icon="css:bi bi-broadcast"
+						>
+							<view-ref view="demo/live-channel-demo.view.xml"/>
+							<label>
+								<en>Live channel</en>
+								<de>Live-Kanal</de>
+							</label>
+						</nav-item>
 						<nav-item id="wizard"
 							icon="css:bi bi-signpost-2"
 						>
@@ -356,6 +365,15 @@
 							<label>
 								<en>Calendar</en>
 								<de>Kalender</de>
+							</label>
+						</nav-item>
+						<nav-item id="dnd-demo"
+							icon="css:bi bi-arrows-move"
+						>
+							<view-ref view="demo/dnd-demo.view.xml"/>
+							<label>
+								<en>Drag and drop</en>
+								<de>Drag and Drop</de>
 							</label>
 						</nav-item>
 						<nav-item id="styling-demo"

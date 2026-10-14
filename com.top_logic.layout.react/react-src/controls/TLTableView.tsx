@@ -1,7 +1,9 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { NO_DRAG_IMAGE } from './drop-hint';
+import { DropHint } from './DropHint';
+import type { HintAnchor } from './DropHint';
 import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
 import { buttonClassName } from './button/buttonClassName';
@@ -143,6 +145,13 @@ interface RowState {
    * offers this text; the others offer their own text while it does not fit.
    */
   tooltips?: Record<string, string>;
+  /** The CSS class the row's element carries in addition to its own classes; absent for none. */
+  cssClass?: string;
+  /**
+   * The CSS class of the cells that are marked, by column name. A cell named here carries it in
+   * addition to its column's class; the others carry the column's class only.
+   */
+  cellClasses?: Record<string, string>;
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
@@ -155,48 +164,24 @@ interface RowState {
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
-/** Where a running drag hovers the table: a row and the position within it, or the table itself. */
+/** Command applying a drop (DropSupport.CMD_DROP). */
+const CMD_DROP = 'drop';
+
+/** State word (drag.css) of each marker drawn at a row. */
+const ROW_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
+  before: 'drop-before',
+  after: 'drop-after',
+  into: 'drop-onto',
+};
+
+/** Where a running drag hovers the table: a row and the zone within it, or beside the rows. */
 interface DropState {
-  /** The hovered row, `null` for the table as a whole. */
+  /** The hovered row, `null` beside the rows. */
   row: string | null;
-  position: TLDropPosition;
+  zone: TLDropZone;
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
 }
-
-/**
- * Where the hint on a refused drop target stands: at the pointer's `x`, beside the drag image, which
- * spans `height` pixels down from `y` (see {@link TLRunningDrag.image}).
- */
-interface HintAnchor {
-  x: number;
-  y: number;
-  height: number;
-}
-
-/**
- * Why the target under the running drag refuses it: a tl-popover at the pointer, below the drag image
- * or, where the viewport has no room there, above it - never on it, since the browser draws the drag
- * image over everything (a native tooltip is not shown while a drag runs). The table moves it through
- * `moveRef` on every dragover, so only the hint renders while the pointer moves, not the table.
- */
-const DropHint: React.FC<{
-  reason: string;
-  start: HintAnchor;
-  moveRef: React.MutableRefObject<((at: HintAnchor) => void) | null>;
-}> = ({ reason, start, moveRef }) => {
-  const [at, setAt] = React.useState(start);
-  React.useEffect(() => {
-    moveRef.current = (next) => setAt((p) => (p.x === next.x && p.y === next.y && p.height === next.height ? p : next));
-    return () => { moveRef.current = null; };
-  }, [moveRef]);
-  const { setFloating, style } = usePopover({ open: true, anchor: at, placement: 'bottom-start' });
-  return createPortal(
-    <div ref={setFloating} className="tl-popover tl-table__hint tl-type-body" role="status" style={style}>
-      {reason}
-    </div>,
-    document.body);
-};
 
 const MIN_COL_WIDTH = 50;
 
@@ -330,6 +315,18 @@ const ColumnsButton: React.FC<{
  * renders the rows its viewport shows, so the table needs a height bounded by its container rather
  * than one following its rows. Its containers fill in turn, up to the next bounded region.
  */
+/** A highlight class of the application among the given classes (#29815). */
+const STATUS_CLASS = /(?:^|\s)tl-status-(error|warning|success|info)(?=\s|$)/;
+
+/**
+ * The status role the highlight class among the given classes stands for: `tl-status-error`,
+ * `-warning`, `-success` or `-info`, which the design system draws as `data-tl-role` on the row or the
+ * cell. Undefined without such a class.
+ */
+function statusRole(cssClass: string | undefined): string | undefined {
+  return cssClass ? STATUS_CLASS.exec(cssClass)?.[1] : undefined;
+}
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const fillClass = useFill(true);
@@ -358,7 +355,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // rendered from the first layout on, so the token is read where the rows inherit it.
   const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
-  const selectedCount = (state.selectedCount as number) ?? 0;
+  /**
+   * What the select-all checkbox shows, decided by the server from how many of the rows the
+   * select-all acts on - the rows the filter lets pass, collapsed group members included - are
+   * selected: `none`, `some` or `all`.
+   */
+  const selectAllState = (state.selectAllState as string) ?? 'none';
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
@@ -371,10 +373,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const serverSearch = (state.search as string) ?? '';
   const filterSaving = (state.filterSaving as boolean) ?? false;
   const dragEnabled = (state.dragEnabled as boolean) ?? false;
-  const dragType = (state.dragType as string) ?? '';
+  const dragKind = (state.dragKind as string | null) ?? undefined;
+  const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
-  const dropOnRows = (state.dropOnRows as boolean) ?? false;
+  const dropModes = (state.dropModes as string[]) ?? [];
+  const dropModesByKind = (state.dropModesByKind as Record<string, string[]>) ?? {};
+  // Rows forming a tree are split as tree nodes: an insertion has a middle part going into the row.
+  const dropTreeZones = (state.dropTreeZones as boolean) ?? false;
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
+  /** How many rows the table has (of how many, while filtered); empty while it shows no count. */
+  const rowCount = (state.rowCount as string) ?? '';
+  /** How many rows are selected; empty while nothing is or the table selects a single row only. */
+  const rowCountSelected = (state.rowCountSelected as string) ?? '';
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -394,6 +404,36 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const headerRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
+
+  // Whether the pointer pressed on the body and has not been released yet.
+  const bodyPressRef = React.useRef(false);
+
+  // Hands a focus that landed on the body on to the grid. A focus a press put there moves on only
+  // once the press is over (released, or ended as a drag): Chromium starts no drag from a press
+  // during which the focus moved away from where the press put it, so no row could be dragged.
+  const bodyFocusToGrid = React.useCallback(() => {
+    if (document.activeElement === scrollContainerRef.current) {
+      gridRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  const handleBodyPress = React.useCallback(() => {
+    bodyPressRef.current = true;
+    const pressOver = () => {
+      window.removeEventListener('pointerup', pressOver, true);
+      window.removeEventListener('dragend', pressOver, true);
+      bodyPressRef.current = false;
+      bodyFocusToGrid();
+    };
+    window.addEventListener('pointerup', pressOver, true);
+    window.addEventListener('dragend', pressOver, true);
+  }, [bodyFocusToGrid]);
+
+  const handleBodyFocus = React.useCallback(() => {
+    if (!bodyPressRef.current) {
+      bodyFocusToGrid();
+    }
+  }, [bodyFocusToGrid]);
 
   // A cell whose editable input should receive the caret once the server has re-rendered its row
   // as editable. Set on a selecting cell-click (edit the clicked cell) and on Tab-wrap to a
@@ -433,6 +473,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The grabbed row may scroll out of the rendered window and take its dragend handler with it.
   React.useEffect(() => (draggedRow ? onDragEnd(() => setDraggedRow(null)) : undefined), [draggedRow]);
 
+  // The marker of the drop accepted at the hovered place. Until the verdict on a newly hovered place
+  // arrives, the marker of the place hovered before stays, so the marker does not flicker.
+  const lastAcceptedRef = React.useRef<DropVerdict | null>(null);
+  if (dropState === null || dropRefused) {
+    lastAcceptedRef.current = null;
+  } else if (dropVerdict !== undefined) {
+    lastAcceptedRef.current = dropVerdict;
+  }
+  const dropMarker = lastAcceptedRef.current?.marker;
+  const dropMarkerKey = lastAcceptedRef.current?.markerKey;
+
   // A drag hovering this table may end without any event reaching it: a refused drop is not
   // dispatched here, and the source's dragend reaches the source's control only.
   const dragHovers = dropState !== null;
@@ -463,6 +514,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // therefore ends with a reserve of this width. Measured rather than assumed: it depends on the
   // platform, and it is zero for an overlay scrollbar or a table short enough not to scroll.
   const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
+
+  /** Re-measures whether columns run underneath the column button, see {@link columnsCovered}. */
+  const measureCoveredRef = React.useRef<() => void>(() => {});
 
   React.useEffect(() => {
     const body = scrollContainerRef.current;
@@ -678,6 +732,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       headerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft;
     }
     measureWindow();
+    measureCoveredRef.current();
     // Debounced vertical scroll command.
     if (scrollTimeoutRef.current !== null) {
       clearTimeout(scrollTimeoutRef.current);
@@ -742,25 +797,30 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       source: controlId,
       keys: [row.id],
       selection: row.selected,
-      type: dragType,
+      kind: dragKind,
     });
     const dragged = { id: row.id, selection: row.selected };
     // A drag cancelled before the image was taken has already ended: no row stays marked dragging.
     afterDragImage(() => { if (runningDrag()) setDraggedRow(dragged); });
-  }, [controlId, dragType]);
+  }, [controlId, dragKind]);
 
-  /** Which row an event points at, and where within it, or the table itself. */
+  /**
+   * Which row an event points at and the zone within it, split as the drop modes announced for the
+   * dragged kind need, or no row where the pointer is beside the rows or the rows have no zones.
+   */
   const dropTargetAt = React.useCallback(
-    (event: React.DragEvent): { row: string | null; position: TLDropPosition } => {
-      if (dropOnRows && event.target instanceof Element) {
+    (event: React.DragEvent): { row: string | null; zone: TLDropZone } => {
+      const modes = dragModes(event.dataTransfer, dropModes, dropModesByKind);
+      const zoneSplit = dropTreeZones ? treeZoneSplit(modes) : flatZoneSplit(modes);
+      if (zoneSplit !== 'none' && event.target instanceof Element) {
         const rowElement = event.target.closest('.tl-table__row') as HTMLElement | null;
         const key = rowElement?.dataset.dropRow;
         if (rowElement && key) {
-          return { row: key, position: dropPositionAt(event.clientY, rowElement) };
+          return { row: key, zone: dropZoneAt(event.clientY, rowElement, zoneSplit) };
         }
       }
-      return { row: null, position: 'none' };
-    }, [dropOnRows]);
+      return { row: null, zone: 'none' };
+    }, [dropModes, dropModesByKind, dropTreeZones]);
 
   const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
     if (columnDragging) {
@@ -780,10 +840,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (header) header.scrollLeft = body.scrollLeft;
       return;
     }
-    // Coarse acceptance from the payload's type tag alone: during a drag the payload itself is
-    // unreadable, and the tag is what the table declares its accepted types against. Whether this
+    // Coarse acceptance from the payload's kind alone: during a drag the payload itself is
+    // unreadable, and the kind is what the table declares its accepted drags against. Whether this
     // particular drop is possible is the server's answer, given once it arrives.
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
     const drag = runningDrag();
@@ -796,7 +856,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (drag) {
       // The payload is unreadable here, but a drag started in this document is known: ask the
       // server once per drag and target whether a drop there would be accepted.
-      probe = drag.id + '|' + (target.row ?? '') + '|' + target.position;
+      probe = drag.id + '|' + (target.row ?? '') + '|' + target.zone;
       let probes = probesRef.current;
       if (!probes || probes.drag !== drag.id) {
         probes = { drag: drag.id, sent: new Set() };
@@ -808,7 +868,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           source: drag.payload.source,
           keys: drag.payload.keys.join(','),
           selection: drag.payload.selection,
-          position: target.position,
+          zone: target.zone,
           drag: drag.id,
           probe,
         };
@@ -819,7 +879,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
     }
     setDropState((previous) =>
-      previous && previous.row === target.row && previous.position === target.position
+      previous && previous.row === target.row && previous.zone === target.zone
           && previous.probe === probe
         ? previous
         : { ...target, probe });
@@ -831,7 +891,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, [columnDragging, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
+  }, [columnDragging, dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the table's own descendants fires a leave on each one left behind; only leaving
@@ -842,7 +902,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleRootDrop = React.useCallback((event: React.DragEvent) => {
-    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+    if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       // Not a row drag: a column heading released anywhere in the table lands where its mark shows
       // (useListReorder).
       if (columnDragging) columnReorder.containerProps.onDrop?.(event);
@@ -860,15 +920,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         // no comma.
         keys: payload.keys.join(','),
         selection: payload.selection,
-        position: target.position,
+        zone: target.zone,
       };
       if (target.row) {
-        // Named only for a drop on a row; a drop on the table as a whole names none.
+        // Named only for a drop on a row; a drop beside the rows names none.
         args.targetKey = target.row;
       }
-      sendCommand('drop', args);
+      sendCommand(CMD_DROP, args);
     }
-  }, [columnDragging, columnReorder.containerProps, dropAccepts, dropTargetAt, sendCommand]);
+  }, [columnDragging, columnReorder.containerProps, dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
@@ -1070,9 +1130,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleSelectAll = React.useCallback(() => {
-    const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
-    sendCommand('selectAll', { selected: !allSelected });
-  }, [sendCommand, selectedCount, totalRowCount]);
+    sendCommand('selectAll', { selected: selectAllState !== 'all' });
+  }, [sendCommand, selectAllState]);
 
   // -- Expand handler --
   const handleExpand = React.useCallback((rowIndex: number, expanded: boolean, event: React.MouseEvent) => {
@@ -1325,8 +1384,40 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
   const buttonReserve = columnSelect && !cogInHeaderCell ? columnsButtonWidth : 0;
 
-  const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
-  const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
+  // Whether columns run on underneath the column button: the table is wider than its header and
+  // not scrolled to its right end. The header then fades out in front of the button, so the column
+  // cut off there reads as scrolled out of view rather than as a heading the button covers by
+  // mistake.
+  const [columnsCovered, setColumnsCovered] = React.useState(false);
+  const measureCovered = React.useCallback(() => {
+    const header = headerRef.current;
+    if (!header || buttonReserve === 0) {
+      setColumnsCovered(false);
+      return;
+    }
+    const columnsEnd = tableWidth - header.scrollLeft;
+    const covered = columnsEnd > header.clientWidth - buttonReserve + 0.5;
+    setColumnsCovered((previous) => (previous === covered ? previous : covered));
+  }, [tableWidth, buttonReserve]);
+  measureCoveredRef.current = measureCovered;
+  // Measured again whenever what it depends on changes - a column resize changes the table width
+  // with every pointer move - while the observer of the header's size stays one for the table's
+  // lifetime, reaching the current measurement through the ref.
+  React.useLayoutEffect(() => {
+    measureCovered();
+  }, [measureCovered]);
+  React.useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+    const observer = new ResizeObserver(() => measureCoveredRef.current());
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  const allSelected = selectAllState === 'all';
+  const someSelected = selectAllState === 'some';
 
   const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
     if (el) {
@@ -1380,8 +1471,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return col.sortDirection === 'asc' ? 'ascending' : 'descending';
   };
 
-  const dropWord = (row: RowState) =>
-    dropState && dropState.row === row.id ? (dropRefused ? 'drop-refused' : 'drop-' + dropState.position) : undefined;
+  // The marker the server's verdict names, at the row it names; a refusal at the hovered row.
+  const dropWord = (row: RowState) => {
+    if (!dropState) return undefined;
+    if (dropRefused) return dropState.row === row.id ? 'drop-refused' : undefined;
+    return dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id ? ROW_MARKER_STATE[dropMarker] : undefined;
+  };
   const draggedWord = (row: RowState) =>
     draggedRow && (row.id === draggedRow.id || (draggedRow.selection && row.selected)) ? 'dragging' : undefined;
 
@@ -1400,7 +1495,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tl-table', fillClass)}
-      data-tl-state={dropState && dropState.row === null ? (dropRefused ? 'drop-refused' : 'drop-onto') : undefined}
+      data-tl-state={dropState ? (dropRefused
+          ? (dropState.row === null ? 'drop-refused' : undefined)
+          : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
@@ -1524,7 +1621,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         aria-activedescendant={cursorRendered ? rowId(cursorIndex) : undefined}
         tabIndex={0}
       >
-      <div className="tl-table__header" ref={headerRef} role="rowgroup" onScroll={handleHeaderScroll}>
+      <div className="tl-table__header" ref={headerRef} role="rowgroup" onScroll={handleHeaderScroll}
+        data-tl-state={stateAttr(columnsCovered && 'covered')}>
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}
@@ -1653,9 +1751,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         // A press on the body or a part of it that takes no focus - the empty area below the rows,
         // the selection cell beside its box - focuses the body (it carries a tabindex); the focus
         // belongs to the grid, which holds the keyboard and shows the ring.
+        onPointerDown={handleBodyPress}
         onFocus={(e) => {
           if (e.target === e.currentTarget) {
-            gridRef.current?.focus({ preventScroll: true });
+            handleBodyFocus();
           }
         }}
         onScroll={handleScroll}
@@ -1687,7 +1786,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               aria-expanded={treegrid && row.expandable ? !!row.expanded : undefined}
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
-              className="tl-table__row"
+              className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
+              // The selection wins over a highlight: a selected row carries no role.
+              data-tl-role={row.selected ? undefined : statusRole(row.cssClass)}
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
@@ -1737,6 +1838,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
                 const { isFrozen, isPinned, words } = placeOf(colIdx);
+                const rowCellClass = row.cellClasses?.[col.name];
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
                 // What the cell says: the tooltip of its content where it has one, its own text while
@@ -1749,10 +1851,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     key={col.name}
                     role="gridcell"
-                    className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')}
+                    className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')
+                      + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
                     data-tl-state={stateAttr(...words)}
+                    data-tl-role={row.selected ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
                       ...widthStyle(colIdx, w, isFrozen),
@@ -1820,6 +1924,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />
         )}
       </div>
+
+      {/* The row count below the rows, outside the scroller, so it stays in view wherever the rows
+          are scrolled to. A live region, so a screen reader hears the count a filter leaves. */}
+      {rowCount !== '' && (
+        <div className="tl-table__footer tl-type-label" role="status" aria-live="polite">
+          <span className="tl-table__row-count">{rowCount}</span>
+          {rowCountSelected !== '' && (
+            <span className="tl-table__selection-count">{rowCountSelected}</span>
+          )}
+        </div>
+      )}
 
       {/* Column context menu */}
       <Menu open={!!contextMenu} anchor={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null} onClose={() => setContextMenu(null)}>

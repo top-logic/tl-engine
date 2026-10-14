@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.element;
 
 import java.util.List;
+import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -22,7 +23,10 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.form.constraint.MandatoryConstraintCheck;
 import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -49,8 +53,11 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -86,9 +93,21 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A {@link Config#getOnSubmit() submit command} turns the input into an action: the value the user
- * finishes entering is written to the channel and then run through the command, which is what a
- * search field or a jump-to box is - one input and one command over what was entered.
+ * The value is declared in the words of an attribute of a class in the model: its
+ * {@link Config#getType() type}, whether it is {@link Config#getMandatory() mandatory}, whether it
+ * holds {@link Config#getMultiple() multiple} values, and the {@link Config#getAnnotations()
+ * annotations} that shape its display - a {@code <classification-display>}, a
+ * {@code <multi-line>}, a {@code <format>}, an {@code <input-control>} - which act on the input as
+ * they act on a field of such an attribute. An annotation the input does not state is taken from
+ * the type.
+ * </p>
+ *
+ * <p>
+ * A {@link Config#getOnSubmit() submit command} turns the input into an action over the value the
+ * user enters: a search field or a jump-to box runs it on Enter, an input whose value is applied at
+ * once runs it on every edit the user finishes, as {@link Config#getSubmitOn() stated}. A value
+ * that is picked from options runs it with every choice. Whenever the command runs, the value has
+ * already reached the channel.
  * </p>
  */
 @InApp
@@ -103,7 +122,7 @@ public class ValueInputElement implements UIElement {
 	 * Configuration for {@link ValueInputElement}.
 	 */
 	@TagName("value-input")
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase {
 
 		@Override
 		@ClassDefault(ValueInputElement.class)
@@ -120,6 +139,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
+
+		/** Configuration name for {@link #getMandatory()}. */
+		String MANDATORY = TLStructuredTypePart.MANDATORY_ATTR;
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -144,6 +166,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getOnSubmit()}. */
 		String ON_SUBMIT = "on-submit";
+
+		/** Configuration name for {@link #getSubmitOn()}. */
+		String SUBMIT_ON = "submit-on";
 
 		/** Configuration name for {@link #getInputControl()}. */
 		String INPUT_CONTROL = "input-control";
@@ -197,6 +222,19 @@ public class ValueInputElement implements UIElement {
 		 */
 		@Name(MULTIPLE)
 		boolean getMultiple();
+
+		/**
+		 * Whether the value may not be empty.
+		 *
+		 * <p>
+		 * The same statement the mandatory flag makes for an attribute: a selection offers no
+		 * empty choice, and an input the user types in reports the missing value once it is
+		 * emptied. The empty value still reaches the {@link #getValue() value channel}, but the
+		 * {@link #getOnSubmit() submit command} does not run on it.
+		 * </p>
+		 */
+		@Name(MANDATORY)
+		boolean getMandatory();
 
 		/**
 		 * The label shown beside the input.
@@ -307,10 +345,11 @@ public class ValueInputElement implements UIElement {
 		 * The command run on the value the user submits.
 		 *
 		 * <p>
-		 * A value the user finishes entering is written to the value channel and then handed to
-		 * this command as its input. In a field the user types in - a text, a number - the value is
-		 * finished by pressing Enter; in a field that is picked from - a dropdown, a date, a
-		 * checkbox - every choice finishes it.
+		 * The command receives the value of the input as its input, after the value has reached the
+		 * value channel. In a field the user types in - a text, a number - the
+		 * {@link #getSubmitOn() submit gesture} decides when it runs: on Enter, or on every edit the
+		 * user finishes. In a field that is picked from - a dropdown, a date, a checkbox - every
+		 * choice runs it.
 		 * </p>
 		 *
 		 * <p>
@@ -323,6 +362,31 @@ public class ValueInputElement implements UIElement {
 		@ImplementationClassDefault(GenericViewCommand.class)
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
+
+		/**
+		 * When the {@link #getOnSubmit() submit command} runs on a value the user types - a text, a
+		 * number.
+		 *
+		 * <p>
+		 * With {@link SubmitOn#ENTER}, the command runs when the user presses Enter, which is what a
+		 * search field or a jump-to box does. With {@link SubmitOn#CHANGE}, it runs on each edit the
+		 * user finishes, by pressing Enter or by leaving the input after changing its value - once
+		 * per edit, which is what an input does whose value is applied at once.
+		 * </p>
+		 *
+		 * <p>
+		 * The entered value reaches the {@link #getValue() value channel} and the server in every
+		 * case, when the input is left as well as on Enter, whatever is stated here. This property
+		 * only decides whether the command runs at that point.
+		 * </p>
+		 *
+		 * <p>
+		 * A value that is picked - from a dropdown, a date picker, a checkbox - runs the command
+		 * with every choice; this property has no effect there.
+		 * </p>
+		 */
+		@Name(SUBMIT_ON)
+		SubmitOn getSubmitOn();
 
 		/**
 		 * The control the value is entered in, overriding the one its type implies.
@@ -354,6 +418,10 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _multiple;
 
+	private final boolean _mandatory;
+
+	private final AnnotationLookup _annotations;
+
 	private final ResKey _label;
 
 	private final ResKey _placeholder;
@@ -372,6 +440,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ViewCommand.Config _submitCommandConfig;
 
+	private final SubmitOn _submitOn;
+
 	private final PolymorphicConfiguration<? extends ReactFieldControlProvider> _inputControl;
 
 	private final String _cssClass;
@@ -386,6 +456,8 @@ public class ValueInputElement implements UIElement {
 		_options = QueryExecutor.compileOptional(config.getOptions());
 		_inputRefs = config.getInputs();
 		_multiple = config.getMultiple();
+		_mandatory = config.getMandatory();
+		_annotations = config;
 		_label = config.getLabel();
 		_placeholder = config.getPlaceholder();
 		_icon = config.getIcon();
@@ -397,6 +469,7 @@ public class ValueInputElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
 		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_submitOn = config.getSubmitOn();
 		_inputControl = config.getInputControl();
 		_cssClass = config.getCssClass();
 	}
@@ -412,29 +485,34 @@ public class ValueInputElement implements UIElement {
 			? new AbstractFieldModel(null)
 			: new SimpleSelectFieldModel(null, options, _multiple);
 		field.setEditable(!_readonly);
+		field.setMandatory(_mandatory);
 
 		// Bound before the control is built, so that the control is built over the value the
 		// channel already holds instead of over an empty field it has to be told about afterwards.
 		ChannelFieldBinding binding = ChannelFieldBinding.bind(context.resolveChannel(_valueRef), field,
 			options != null, _multiple);
+		FieldModelListener mandatoryCheck = _mandatory ? checkMandatory(field) : null;
 
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
-		FieldSpec spec = FieldControlService.fieldSpec(type, type, label, _multiple, field);
+		FieldSpec spec = FieldControlService.fieldSpec(type, _annotations, label, _multiple, field);
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
 		}
 		spec.setIcon(_icon).setClearable(_clearable).setDebounce(_debounce);
-		ReactControl input =
-			FieldControlService.getInstance().createFieldControl(context, type, spec, field, _inputControl);
+		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, _annotations,
+			spec, field, _inputControl);
 		input.addCleanupAction(binding::dispose);
+		if (mandatoryCheck != null) {
+			input.addCleanupAction(() -> field.removeListener(mandatoryCheck));
+		}
 
 		if (_options != null && !optionInputs.isEmpty()) {
 			followOptions(type, optionInputs, (SelectFieldModel) field, input);
 		}
 
 		if (_submitCommand != null) {
-			followSubmit(context, input, binding);
+			followSubmit(context, input, field, binding);
 		}
 
 		if (_label == null && _labelPosition == null) {
@@ -453,31 +531,104 @@ public class ValueInputElement implements UIElement {
 	 * entering.
 	 *
 	 * <p>
-	 * Where the control has a submit gesture of its own, the submit is that gesture; otherwise
+	 * In a field the user types in, the {@link Config#getSubmitOn() submit gesture} decides: on
+	 * {@link SubmitOn#CHANGE}, each edit the user finishes runs the command; on
+	 * {@link SubmitOn#ENTER}, the Enter gesture of the field does, and a field without one - a text
+	 * area, in which Enter starts a new line - runs no command. In a field that is picked from,
 	 * every value the user produces is a finished one, and the binding reports it once it has
 	 * reached the channel. The command's executability rule decides per value, so the model needs
 	 * no attachment to a channel.
 	 * </p>
 	 *
 	 * <p>
-	 * The command's result - its refusal included - is reported to the user: a submit gesture
-	 * returns it as the result of the client's submit. A committed value is reported from within
-	 * the value change the client sent, which has no result to return it through, so a failed
-	 * result is shown right away.
+	 * The command's result - its refusal included - is reported to the user: a finished edit and a
+	 * submit return it as the result of the client's command. A picked value is reported from
+	 * within the value change the client sent, which has no result to return it through, so a
+	 * failed result is shown right away.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link Config#getMandatory() mandatory} value that is empty is not handed to the command:
+	 * the field shows the missing value, and the finished edit or the submit succeeds without
+	 * running anything.
 	 * </p>
 	 */
-	private void followSubmit(ViewContext context, ReactControl input, ChannelFieldBinding binding) {
+	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
+			ChannelFieldBinding binding) {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
-		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.hasSubmitGesture()) {
-			fieldControl.setSubmitListener(value -> model.execute(context, value));
+		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
+			Function<Object, HandlerResult> submit = value -> {
+				if (missingValue(value) != null) {
+					// The field reports the missing value; the submit itself has nothing to add.
+					field.setRevealed(true);
+					return HandlerResult.DEFAULT_RESULT;
+				}
+				return model.execute(context, value);
+			};
+			switch (_submitOn) {
+				case CHANGE:
+					fieldControl.setCommitListener(submit);
+					break;
+				case ENTER:
+					if (fieldControl.hasSubmitGesture()) {
+						fieldControl.setSubmitListener(submit);
+					}
+					break;
+			}
 		} else {
 			binding.setCommitListener(value -> {
+				if (missingValue(value) != null) {
+					// The value change reveals the missing value at the field.
+					return;
+				}
 				HandlerResult result = model.execute(context, value);
 				if (!result.isSuccess()) {
 					CommandErrors.show(context.getErrorSink(), result);
 				}
 			});
 		}
+	}
+
+	/**
+	 * Checks the value of a {@link Config#getMandatory() mandatory} field for emptiness, now and on
+	 * every change.
+	 *
+	 * <p>
+	 * The check reports at the field only once the field is revealed, which a change of its value
+	 * does: an input that appears empty does not complain before the user touched it.
+	 * </p>
+	 *
+	 * @return The registered listener, to be removed when the input goes away.
+	 */
+	private FieldModelListener checkMandatory(AbstractFieldModel field) {
+		field.setModelValidationError(missingValue(field.getValue()));
+		FieldModelListener listener = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				field.setModelValidationError(missingValue(newValue));
+				field.setRevealed(true);
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// The check does not depend on editability.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				// Reported by the check itself.
+			}
+		};
+		field.addListener(listener);
+		return listener;
+	}
+
+	/**
+	 * The error reporting that the given value is missing, or {@code null} if the value is given or
+	 * may be empty.
+	 */
+	private ResKey missingValue(Object value) {
+		return _mandatory ? MandatoryConstraintCheck.INSTANCE.checkValue(value) : null;
 	}
 
 	/**

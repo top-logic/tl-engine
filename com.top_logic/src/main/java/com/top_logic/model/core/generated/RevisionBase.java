@@ -53,4 +53,9 @@ public interface RevisionBase extends com.top_logic.model.TLObject {
 	 */
 	String REVISION_ATTR = "revision";
 
+	/**
+	 * Name of the table storing {@link #REVISION_TYPE} objects.
+	 */
+	String TABLE_NAME = "Revision";
+
 }

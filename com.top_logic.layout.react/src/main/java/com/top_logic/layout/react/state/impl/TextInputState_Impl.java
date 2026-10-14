@@ -118,8 +118,8 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	}
 
 	@Override
-	public com.top_logic.layout.react.state.TextInputState setCommitOnBlur(boolean value) {
-		internalSetCommitOnBlur(value);
+	public com.top_logic.layout.react.state.TextInputState setCommitEdits(boolean value) {
+		internalSetCommitEdits(value);
 		return this;
 	}
 

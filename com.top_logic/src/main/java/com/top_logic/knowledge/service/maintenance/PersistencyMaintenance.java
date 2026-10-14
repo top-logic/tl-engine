@@ -22,6 +22,8 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.sched.Scheduler;
+import com.top_logic.util.sched.task.Task;
 
 /**
  * What an operation needs that rewrites the stored history of the running application.
@@ -41,7 +43,8 @@ import com.top_logic.util.error.TopLogicException;
  * and is therefore scheduled on the {@link SchedulerService} instead of running on the thread that
  * triggered the operation, so that the answer to the request triggering it is still delivered. The
  * maintenance window is a cluster property that is read again on start-up and hence survives the
- * restart.
+ * restart, unless the caller requests that the restart ends it once the persistency layer is up and
+ * running again.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -122,21 +125,39 @@ public class PersistencyMaintenance {
 	 *
 	 * @param log
 	 *        Receives the outcome of the restart.
+	 * @param leaveMaintenanceWindow
+	 *        Whether the maintenance window is left after the persistency layer is up and running
+	 *        again. A caller passes <code>true</code> only for a maintenance window that was entered
+	 *        for the operation, e.g. one the {@link Scheduler} entered for a task and that the task
+	 *        took over through {@link Scheduler#takeOverMaintenanceMode(Task)}, never for one an
+	 *        administrator entered manually. After a failed restart the maintenance window stays
+	 *        active.
 	 */
-	public static void scheduleRestart(Log log) {
+	public static void scheduleRestart(Log log, boolean leaveMaintenanceWindow) {
 		log.info("Restarting the persistency layer in " + RESTART_DELAY_SECONDS + " seconds.");
 
 		SchedulerService.getInstance().schedule(
-			() -> ThreadContextManager.inSystemInteraction(PersistencyMaintenance.class, () -> restart(log)),
+			() -> ThreadContextManager.inSystemInteraction(PersistencyMaintenance.class,
+				() -> restart(log, leaveMaintenanceWindow)),
 			RESTART_DELAY_SECONDS, TimeUnit.SECONDS);
 	}
 
-	private static void restart(Log log) {
+	private static void restart(Log log, boolean leaveMaintenanceWindow) {
 		try {
 			ModuleUtil.INSTANCE.restart(KnowledgeBaseFactory.Module.INSTANCE, null);
-			log.info("The persistency layer is up and running again.");
 		} catch (RestartException ex) {
-			log.error("Restarting the persistency layer failed.", ex);
+			if (leaveMaintenanceWindow) {
+				log.error("Restarting the persistency layer failed, the maintenance window stays active.", ex);
+			} else {
+				log.error("Restarting the persistency layer failed.", ex);
+			}
+			return;
+		}
+		log.info("The persistency layer is up and running again.");
+
+		if (leaveMaintenanceWindow) {
+			MaintenanceWindowManager.getInstance().leaveMaintenanceWindow();
+			log.info("Left the maintenance window.");
 		}
 	}
 

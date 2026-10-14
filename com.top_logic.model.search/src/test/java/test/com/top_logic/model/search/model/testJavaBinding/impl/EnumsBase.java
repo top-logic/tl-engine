@@ -81,6 +81,11 @@ public interface EnumsBase extends test.com.top_logic.model.search.model.testJav
 	String REF_ORDERED_BAG_ATTR = "refOrderedBag";
 
 	/**
+	 * Name of the table storing {@link #ENUMS_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #REF_ATTR}.
 	 */
 	default com.top_logic.model.TLClassifier getRef() {

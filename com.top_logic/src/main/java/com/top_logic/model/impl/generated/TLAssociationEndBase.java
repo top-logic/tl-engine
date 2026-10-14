@@ -80,4 +80,9 @@ public interface TLAssociationEndBase extends com.top_logic.model.TLStructuredTy
 	 */
 	String REFERENCE_ATTR = "reference";
 
+	/**
+	 * Name of the table storing {@link #TL_ASSOCIATION_END_TYPE} objects.
+	 */
+	String TABLE_NAME = "MetaAttribute";
+
 }

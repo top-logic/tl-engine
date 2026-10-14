@@ -36,6 +36,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String BINARY_ATTR = "binary";
 
 	/**
+	 * Part <code>binary2</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Binary</code> in configuration.
+	 * </p>
+	 */
+	String BINARY2_ATTR = "binary2";
+
+	/**
 	 * Part <code>boolean</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -441,6 +450,24 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String DOCUMENT_ATTR = "document";
 
 	/**
+	 * Part <code>duration</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Duration</code> in configuration.
+	 * </p>
+	 */
+	String DURATION_ATTR = "duration";
+
+	/**
+	 * Part <code>durationShort</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Duration</code> in configuration.
+	 * </p>
+	 */
+	String DURATION_SHORT_ATTR = "durationShort";
+
+	/**
 	 * Part <code>encryptedLong</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -540,6 +567,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String HTML_ATTR = "html";
 
 	/**
+	 * Part <code>htmlDescription</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.wysiwyg:Html</code> in configuration.
+	 * </p>
+	 */
+	String HTML_DESCRIPTION_ATTR = "htmlDescription";
+
+	/**
 	 * Part <code>i18NHTMLNormal</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -619,6 +655,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * </p>
 	 */
 	String INLINE_REFERENCE_REVERSE_ATTR = "inlineReferenceReverse";
+
+	/**
+	 * Part <code>intConstraint</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String INT_CONSTRAINT_ATTR = "intConstraint";
 
 	/**
 	 * Part <code>intList</code> of <code>DemoTypes.A</code>
@@ -747,6 +792,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String RESPONSIBLE_ATTR = "responsible";
 
 	/**
+	 * Part <code>responsibleContact</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>Contacts:PersonContact</code> in configuration.
+	 * </p>
+	 */
+	String RESPONSIBLE_CONTACT_ATTR = "responsibleContact";
+
+	/**
 	 * Part <code>singleStructure</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -808,6 +862,15 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 * </p>
 	 */
 	String STRUCTURE_ATTR = "structure";
+
+	/**
+	 * Part <code>style</code> of <code>DemoTypes.A</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String STYLE_ATTR = "style";
 
 	/**
 	 * Part <code>template</code> of <code>DemoTypes.A</code>
@@ -1006,6 +1069,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setBinary(com.top_logic.basic.io.binary.BinaryDataSource newValue) {
 		tUpdateByName(BINARY_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #BINARY2_ATTR}.
+	 */
+	default com.top_logic.basic.io.binary.BinaryDataSource getBinary2() {
+		return (com.top_logic.basic.io.binary.BinaryDataSource) tValueByName(BINARY2_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #BINARY2_ATTR}.
+	 */
+	default void setBinary2(com.top_logic.basic.io.binary.BinaryDataSource newValue) {
+		tUpdateByName(BINARY2_ATTR, newValue);
 	}
 
 	/**
@@ -1938,6 +2015,34 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	}
 
 	/**
+	 * Getter for part {@link #DURATION_ATTR}.
+	 */
+	default Long getDuration() {
+		return (Long) tValueByName(DURATION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #DURATION_ATTR}.
+	 */
+	default void setDuration(Long newValue) {
+		tUpdateByName(DURATION_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DURATION_SHORT_ATTR}.
+	 */
+	default Long getDurationShort() {
+		return (Long) tValueByName(DURATION_SHORT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #DURATION_SHORT_ATTR}.
+	 */
+	default void setDurationShort(Long newValue) {
+		tUpdateByName(DURATION_SHORT_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #ENCRYPTED_LONG_ATTR}.
 	 */
 	default Long getEncryptedLong() {
@@ -2151,6 +2256,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	}
 
 	/**
+	 * Getter for part {@link #HTML_DESCRIPTION_ATTR}.
+	 */
+	default com.top_logic.layout.wysiwyg.ui.StructuredText getHtmlDescription() {
+		return (com.top_logic.layout.wysiwyg.ui.StructuredText) tValueByName(HTML_DESCRIPTION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #HTML_DESCRIPTION_ATTR}.
+	 */
+	default void setHtmlDescription(com.top_logic.layout.wysiwyg.ui.StructuredText newValue) {
+		tUpdateByName(HTML_DESCRIPTION_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #I18NHTML_NORMAL_ATTR}.
 	 */
 	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getI18NHTMLNormal() {
@@ -2268,6 +2387,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	@SuppressWarnings("unchecked")
 	default java.util.Set<? extends com.top_logic.demo.model.types.DemoTypesA> getInlineReferenceReverse() {
 		return (java.util.Set<? extends com.top_logic.demo.model.types.DemoTypesA>) tValueByName(INLINE_REFERENCE_REVERSE_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #INT_CONSTRAINT_ATTR}.
+	 */
+	default Integer getIntConstraint() {
+		return (Integer) tValueByName(INT_CONSTRAINT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #INT_CONSTRAINT_ATTR}.
+	 */
+	default void setIntConstraint(Integer newValue) {
+		tUpdateByName(INT_CONSTRAINT_ATTR, newValue);
 	}
 
 	/**
@@ -2535,6 +2668,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	}
 
 	/**
+	 * Getter for part {@link #RESPONSIBLE_CONTACT_ATTR}.
+	 */
+	default com.top_logic.contact.business.PersonContact getResponsibleContact() {
+		return (com.top_logic.contact.business.PersonContact) tValueByName(RESPONSIBLE_CONTACT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #RESPONSIBLE_CONTACT_ATTR}.
+	 */
+	default void setResponsibleContact(com.top_logic.contact.business.PersonContact newValue) {
+		tUpdateByName(RESPONSIBLE_CONTACT_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #SINGLE_STRUCTURE_ATTR}.
 	 */
 	default com.top_logic.demo.model.types.C getSingleStructure() {
@@ -2674,6 +2821,20 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void removeStructure(com.top_logic.demo.model.types.C oldValue) {
 		tRemoveByName(STRUCTURE_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #STYLE_ATTR}.
+	 */
+	default String getStyle() {
+		return (String) tValueByName(STYLE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #STYLE_ATTR}.
+	 */
+	default void setStyle(String newValue) {
+		tUpdateByName(STYLE_ATTR, newValue);
 	}
 
 	/**

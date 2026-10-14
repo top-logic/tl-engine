@@ -99,6 +99,11 @@ public interface LoginMessageBase extends com.top_logic.model.TLNamed {
 	String WINDOW_WIDTH_ATTR = "windowWidth";
 
 	/**
+	 * Name of the table storing {@link #LOGIN_MESSAGE_TYPE} objects.
+	 */
+	String TABLE_NAME = "LoginMessage";
+
+	/**
 	 * Getter for part {@link #ACTIVE_ATTR}.
 	 */
 	default boolean getActive() {

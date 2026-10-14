@@ -26,6 +26,8 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnsConfig;
+import com.top_logic.layout.view.table.RowClassConfig;
+import com.top_logic.layout.view.table.RowClassFunction;
 
 /**
  * Declarative {@link UIElement} that creates a {@link RowSetTableControl} for an inline
@@ -58,7 +60,7 @@ public class CompositionTableElement implements UIElement {
 	 * Configuration for {@link CompositionTableElement}.
 	 */
 	@TagName("composition-table")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, RowClassConfig {
 
 		@Override
 		@ClassDefault(CompositionTableElement.class)
@@ -146,6 +148,9 @@ public class CompositionTableElement implements UIElement {
 	/** The declared {@link Config#getColumns() columns}, in display order. */
 	private final List<ColumnDeclaration> _columns;
 
+	/** The compiled {@link Config#getRowClass() row class function}. */
+	private final RowClassFunction _rowClass;
+
 	/**
 	 * Creates a new {@link CompositionTableElement} from configuration.
 	 */
@@ -153,6 +158,7 @@ public class CompositionTableElement implements UIElement {
 	public CompositionTableElement(InstantiationContext context, Config config) {
 		_config = config;
 		_columns = ColumnDeclarations.instantiate(context, config.getColumns());
+		_rowClass = RowClassFunction.compile(config.getRowClass());
 	}
 
 	@Override
@@ -172,6 +178,7 @@ public class CompositionTableElement implements UIElement {
 		control.setFallbackTitle(attribute);
 		control.setDetailDialog(_config.getDetailDialog());
 		control.setCssClass(_config.getCssClass());
+		control.setRowCssClass(_rowClass.bind(List.of()));
 		control.init();
 		return control;
 	}

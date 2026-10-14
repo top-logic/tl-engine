@@ -17,4 +17,9 @@ public interface CNodeDefaultsBase extends com.top_logic.demo.model.aspect.CNode
 	 */
 	String C_NODE_DEFAULTS_TYPE = "CNodeDefaults";
 
+	/**
+	 * Name of the table storing {@link #C_NODE_DEFAULTS_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoAspect";
+
 }

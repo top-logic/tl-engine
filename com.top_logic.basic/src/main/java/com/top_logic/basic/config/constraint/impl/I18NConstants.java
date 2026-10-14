@@ -29,6 +29,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Must be set, if none of {0} is set. */
 	public static ResKey1 MUST_BE_SET_IF_OTHERS_ARE_UNSET__OTHERS;
 
+	/** @en Must be set, if {0} is set. */
+	public static ResKey1 MUST_BE_SET_IF_OTHERS_ARE_SET__OTHERS;
+
 	/** @en Must not be set together with {0}. */
 	public static ResKey1 MUST_NOT_BE_SET_TOGETHER_WITH__OTHER;
 

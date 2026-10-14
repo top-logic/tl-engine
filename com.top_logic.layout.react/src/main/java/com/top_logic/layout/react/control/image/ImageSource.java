@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.state.ImageSourceState;
 
 /**
  * The picture a React control displays, resolved from an application value to the client state
@@ -27,6 +28,10 @@ import com.top_logic.layout.react.DataProvider;
  * </p>
  *
  * <p>
+ * The state it writes is described by {@link ImageSourceState}.
+ * </p>
+ *
+ * <p>
  * A control displaying a picture holds one of these, forwards the values it receives to
  * {@link #setValue(Object)}, and answers {@link DataProvider#getDownloadData(String)} with
  * {@link #getData()}.
@@ -35,13 +40,13 @@ import com.top_logic.layout.react.DataProvider;
 public class ImageSource {
 
 	/** State key for the address the picture is loaded from, or {@code null} for no picture. */
-	public static final String URL = "url";
+	public static final String URL = ImageSourceState.URL__PROP;
 
 	/** State key telling whether the displaying control serves the picture itself. */
-	public static final String HAS_DATA = "hasData";
+	public static final String HAS_DATA = ImageSourceState.HAS_DATA__PROP;
 
 	/** State key counting how often the served picture was replaced. */
-	public static final String DATA_REVISION = "dataRevision";
+	public static final String DATA_REVISION = ImageSourceState.DATA_REVISION__PROP;
 
 	/** Prefix of the content type of any picture. */
 	private static final String IMAGE_TYPE_PREFIX = "image/";

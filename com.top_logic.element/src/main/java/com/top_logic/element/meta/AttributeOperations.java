@@ -119,6 +119,7 @@ import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -233,10 +234,23 @@ public class AttributeOperations {
 	};
 
 	/**
+	 * Reads the value of the given attribute of the given object.
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the read is traced and resolved through the scope's overlays.
+	 * </p>
+	 *
 	 * @see StorageImplementation#getAttributeValue(TLObject, TLStructuredTypePart)
 	 */
 	public static Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
+		TracingScope scope = TracingScope.current();
+		if (scope != null) {
+			Object overlayValue = scope.read(object, attribute);
+			if (overlayValue != TracingScope.PLAIN) {
+				return overlayValue;
+			}
+		}
 		checkAlive(object, attribute);
 		return getStorageImplementation(object, attribute).getAttributeValue(object, attribute);
 	}

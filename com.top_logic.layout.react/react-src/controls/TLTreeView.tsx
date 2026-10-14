@@ -1,6 +1,10 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, dropPositionAt, afterDragImage, useI18N, tooltipProps, ThemeIcon, ICON_EXPAND, isEditorTarget } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, tooltipProps, ThemeIcon, ICON_EXPAND, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { ProgressBar } from './TLProgress';
+import { NO_DRAG_IMAGE } from './drop-hint';
+import type { DropVerdict } from './drop-hint';
+import { DropHint } from './DropHint';
+import type { HintAnchor } from './DropHint';
 
 interface NodeState {
   id: string;
@@ -11,7 +15,28 @@ interface NodeState {
   loading: boolean;
   selected: boolean;
   content: unknown;
+  /** Whether the node may be dragged; present while the tree's nodes are draggable at all. */
+  draggable?: boolean;
 }
+
+/** Where a running drag hovers the tree: a node and the zone within it, or beside the nodes. */
+interface DropState {
+  /** Id of the hovered node, `null` beside the nodes. */
+  node: string | null;
+  zone: TLDropZone;
+  /** Identifier of the probe asking about this target, `null` for a drag not started here. */
+  probe: string | null;
+}
+
+/** State word (drag.css) of each marker drawn at a node. */
+const NODE_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
+  before: 'drop-before',
+  after: 'drop-after',
+  into: 'drop-onto',
+};
+
+/** How long a drag hovers the middle of a collapsed node before the node is expanded, in ms. */
+const AUTO_EXPAND_DELAY = 700;
 
 const I18N_KEYS = {
   'js.treeView.expand': 'Expand',
@@ -22,12 +47,6 @@ const I18N_KEYS = {
 
 /** The indent of a level until the token is read: the toggle's width, size-control-sm. */
 const INDENT_FALLBACK_PX = 24;
-
-/** The server's names of the three drop positions (ReactTreeControl), by the shared calculator's. */
-const SERVER_POSITION = { before: 'above', onto: 'within', after: 'below' } as const;
-
-/** The data-tl-state word (drag.css) of a drop position the server reports. */
-const DROP_STATE: Record<string, string> = { above: 'drop-before', within: 'drop-onto', below: 'drop-after' };
 
 /** What the expansion toggle of a node in the given state does. */
 function toggleLabel(i18n: Record<string, string>, expanded: boolean): string {
@@ -40,9 +59,12 @@ const COLLAPSE_COMMAND = 'collapse';
 const SELECT_COMMAND = 'select';
 const ACTIVATE_COMMAND = 'activate';
 const CONTEXT_MENU_COMMAND = 'contextMenu';
-const DRAG_OVER_COMMAND = 'dragOver';
-const DROP_COMMAND = 'drop';
-const DRAG_END_COMMAND = 'dragEnd';
+
+/** Command applying a drop (DropSupport.CMD_DROP). */
+const CMD_DROP = 'drop';
+
+/** Command asking the server whether a drop at the hovered target would be accepted. */
+const CMD_DROP_PROBE = 'dropProbe';
 
 /** The selection mode in which one node at a time is selected. */
 const SINGLE_SELECTION = 'single';
@@ -61,9 +83,12 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const nodes = (state.nodes as NodeState[]) ?? [];
   const selectionMode = (state.selectionMode as string) ?? SINGLE_SELECTION;
   const dragEnabled = (state.dragEnabled as boolean) ?? false;
-  const dropEnabled = (state.dropEnabled as boolean) ?? false;
-  const dropIndicatorNodeId = (state.dropIndicatorNodeId as string) ?? null;
-  const dropIndicatorPosition = (state.dropIndicatorPosition as string) ?? null;
+  const dragKind = (state.dragKind as string | null) ?? undefined;
+  const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
+  const dropAccepts = (state.dropAccepts as string[]) ?? [];
+  const dropModes = (state.dropModes as string[]) ?? [];
+  const dropModesByKind = (state.dropModesByKind as Record<string, string[]>) ?? {};
+  const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const isMulti = selectionMode === MULTI_SELECTION;
 
@@ -80,8 +105,10 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const indent = useTokenPx(listRef, '--tl-size-control-sm', INDENT_FALLBACK_PX);
   const domId = (id: string) => `${controlId}-node-${id}`;
 
-  // The node being dragged out of this tree, faded by drag.css while the drag runs.
-  const [draggingNodeId, setDraggingNodeId] = React.useState<string | null>(null);
+  // The nodes a drag started here carries, faded by drag.css (data-tl-state~="dragging") while it
+  // runs: the grabbed node, or the whole selection when the grabbed node is part of it.
+  const [draggedNode, setDraggedNode] = React.useState<{ id: string; selection: boolean } | null>(null);
+  React.useEffect(() => (draggedNode ? onDragEnd(() => setDraggedNode(null)) : undefined), [draggedNode]);
 
   // Where the keyboard navigation continues. Without a cursor of its own it continues at the
   // selected node, so that the keys take up a selection made elsewhere (a click on another view
@@ -150,54 +177,199 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CONTEXT_MENU_COMMAND, { nodeId, x: e.clientX, y: e.clientY });
   }, [sendCommand]);
 
-  // -- Drag-and-drop handlers --
+  // -- Drag-and-drop --
 
-  const dragOverTimerRef = React.useRef<number | null>(null);
+  // Where an accepted drag currently hovers the tree, or null while none does.
+  const [dropState, setDropState] = React.useState<DropState | null>(null);
 
-  // The shared calculator (thirds: before, onto, after), in the server's names.
-  const computeDropPosition = React.useCallback((e: React.DragEvent, element: HTMLElement): string => {
-    const position = dropPositionAt(e.clientY, element);
-    return position === 'none' ? 'within' : SERVER_POSITION[position];
+  // Drop probes sent for the running drag, by probe identifier: each target is asked once per drag.
+  // Reset when a probe of another drag is sent.
+  const probesRef = React.useRef<{ drag: string; sent: Set<string> } | null>(null);
+
+  // The verdict on the hovered target: undefined while no verdict has arrived, which counts as
+  // accepted until the server says otherwise.
+  const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
+  const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
+
+  // The marker of the drop accepted at the hovered place. Until the verdict on a newly hovered place
+  // arrives, the marker of the place hovered before stays, so the marker does not flicker.
+  const lastAcceptedRef = React.useRef<DropVerdict | null>(null);
+  if (dropState === null || dropRefused) {
+    lastAcceptedRef.current = null;
+  } else if (dropVerdict !== undefined) {
+    lastAcceptedRef.current = dropVerdict;
+  }
+  const dropMarker = lastAcceptedRef.current?.marker;
+  const dropMarkerKey = lastAcceptedRef.current?.markerKey;
+
+  // A collapsed node the running drag rests on in its middle, expanded once the drag stays there.
+  const autoExpandRef = React.useRef<{ node: string; timer: number } | null>(null);
+  const cancelAutoExpand = React.useCallback(() => {
+    if (autoExpandRef.current) {
+      window.clearTimeout(autoExpandRef.current.timer);
+      autoExpandRef.current = null;
+    }
   }, []);
 
-  const handleDragStart = React.useCallback((nodeId: string, e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', nodeId);
-    afterDragImage(() => setDraggingNodeId(nodeId));
-  }, []);
+  // A drag hovering this tree may end without any event reaching it: a refused drop is not
+  // dispatched here, and the source's dragend reaches the source's control only.
+  const dragHovers = dropState !== null;
+  React.useEffect(() => {
+    if (!dragHovers) {
+      cancelAutoExpand();
+      return undefined;
+    }
+    return onDragEnd(() => setDropState(null));
+  }, [dragHovers, cancelAutoExpand]);
 
-  const handleDragOver = React.useCallback((nodeId: string, e: React.DragEvent) => {
+  // Where the hint on a refused target stands, and the hook moving it: the hint follows the pointer
+  // on every dragover without rendering the tree.
+  const hintAnchorRef = React.useRef<HintAnchor>({ x: 0, y: 0, height: 0 });
+  const hintMoveRef = React.useRef<((at: HintAnchor) => void) | null>(null);
+
+  /**
+   * Starts a node drag. The payload names the node by its id and says whether the node was
+   * selected - the server then drags the whole selection, including selected nodes in collapsed
+   * subtrees.
+   */
+  const handleDragStart = React.useCallback((node: NodeState, e: React.DragEvent) => {
+    writeDragPayload(e, {
+      source: controlId,
+      keys: [node.id],
+      selection: node.selected,
+      kind: dragKind,
+    });
+    const dragged = { id: node.id, selection: node.selected };
+    // A drag cancelled before the image was taken has already ended: no node stays marked dragging.
+    afterDragImage(() => { if (runningDrag()) setDraggedNode(dragged); });
+  }, [controlId, dragKind]);
+
+  /**
+   * Which node an event points at and the zone within it, split as the drop modes announced for the
+   * dragged kind need, or no node where the pointer is beside the nodes or the nodes have no zones.
+   */
+  const dropTargetAt = React.useCallback(
+    (e: React.DragEvent): { node: string | null; zone: TLDropZone } => {
+      const zoneSplit = treeZoneSplit(dragModes(e.dataTransfer, dropModes, dropModesByKind));
+      if (zoneSplit !== 'none' && e.target instanceof Element) {
+        const nodeElement = e.target.closest('.tl-tree__node') as HTMLElement | null;
+        const key = nodeElement?.dataset.dropNode;
+        if (nodeElement && key) {
+          return { node: key, zone: dropZoneAt(e.clientY, nodeElement, zoneSplit) };
+        }
+      }
+      return { node: null, zone: 'none' };
+    }, [dropModes, dropModesByKind]);
+
+  /** Expands a collapsed node once the drag rests on its middle for a while; cancels otherwise. */
+  const scheduleAutoExpand = React.useCallback((target: { node: string | null; zone: TLDropZone }) => {
+    const node = target.zone === 'middle' && target.node != null
+      ? nodes.find((n) => n.id === target.node) : undefined;
+    if (!node || !node.expandable || node.expanded) {
+      cancelAutoExpand();
+      return;
+    }
+    if (autoExpandRef.current?.node === node.id) {
+      return;
+    }
+    cancelAutoExpand();
+    autoExpandRef.current = {
+      node: node.id,
+      timer: window.setTimeout(() => {
+        autoExpandRef.current = null;
+        sendCommand(EXPAND_COMMAND, { nodeId: node.id });
+      }, AUTO_EXPAND_DELAY),
+    };
+  }, [nodes, cancelAutoExpand, sendCommand]);
+
+  const handleRootDragOver = React.useCallback((e: React.DragEvent) => {
+    // Coarse acceptance from the payload's kind alone: during a drag the payload itself is
+    // unreadable. Whether this particular drop is possible is the server's answer.
+    if (!dragKindAccepted(e.dataTransfer, dropAcceptsAny, dropAccepts)) {
+      return;
+    }
+    const drag = runningDrag();
+    // The browser draws the drag image around the pointer; the hint stands beside it.
+    const image = drag?.image ?? NO_DRAG_IMAGE;
+    hintAnchorRef.current = { x: e.clientX, y: e.clientY + image.top, height: image.bottom - image.top };
+    hintMoveRef.current?.(hintAnchorRef.current);
+    const target = dropTargetAt(e);
+    scheduleAutoExpand(target);
+    let probe: string | null = null;
+    if (drag) {
+      // A drag started in this document is known: ask the server once per drag and target whether
+      // a drop there would be accepted.
+      probe = drag.id + '|' + (target.node ?? '') + '|' + target.zone;
+      let probes = probesRef.current;
+      if (!probes || probes.drag !== drag.id) {
+        probes = { drag: drag.id, sent: new Set() };
+        probesRef.current = probes;
+      }
+      if (!probes.sent.has(probe)) {
+        probes.sent.add(probe);
+        const args: Record<string, unknown> = {
+          source: drag.payload.source,
+          keys: drag.payload.keys.join(','),
+          selection: drag.payload.selection,
+          zone: target.zone,
+          drag: drag.id,
+          probe,
+        };
+        if (target.node) {
+          args.targetKey = target.node;
+        }
+        void sendCommand(CMD_DROP_PROBE, args);
+      }
+    }
+    setDropState((previous) =>
+      previous && previous.node === target.node && previous.zone === target.zone
+          && previous.probe === probe
+        ? previous
+        : { ...target, probe });
+    const verdict = probe ? dropVerdicts[probe] : undefined;
+    if (verdict && !verdict.accepted) {
+      // Refused: leaving the default in place makes the target refuse the drop.
+      e.dataTransfer.dropEffect = 'none';
+      return;
+    }
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    const position = computeDropPosition(e, e.currentTarget as HTMLElement);
-    // Debounce: only send command if position or node changed.
-    if (dragOverTimerRef.current != null) {
-      window.clearTimeout(dragOverTimerRef.current);
-    }
-    dragOverTimerRef.current = window.setTimeout(() => {
-      sendCommand(DRAG_OVER_COMMAND, { nodeId, position });
-      dragOverTimerRef.current = null;
-    }, 50);
-  }, [sendCommand, computeDropPosition]);
+  }, [dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, scheduleAutoExpand, sendCommand]);
 
-  const handleDrop = React.useCallback((nodeId: string, e: React.DragEvent) => {
+  const handleRootDragLeave = React.useCallback((e: React.DragEvent) => {
+    // Moving among the tree's own descendants fires a leave on each one left behind; only leaving
+    // the tree itself ends the feedback.
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setDropState(null);
+    }
+  }, []);
+
+  const handleRootDrop = React.useCallback((e: React.DragEvent) => {
+    if (!dragKindAccepted(e.dataTransfer, dropAcceptsAny, dropAccepts)) {
+      return;
+    }
     e.preventDefault();
-    if (dragOverTimerRef.current != null) {
-      window.clearTimeout(dragOverTimerRef.current);
-      dragOverTimerRef.current = null;
+    e.stopPropagation();
+    cancelAutoExpand();
+    const payload = readDragPayload(e.dataTransfer);
+    const target = dropTargetAt(e);
+    setDropState(null);
+    if (payload) {
+      const args: Record<string, unknown> = {
+        source: payload.source,
+        // Comma-separated: the command argument is a formatted string list, and a node id holds no
+        // comma.
+        keys: payload.keys.join(','),
+        selection: payload.selection,
+        zone: target.zone,
+      };
+      if (target.node) {
+        // Named only for a drop on a node; a drop beside the nodes names none.
+        args.targetKey = target.node;
+      }
+      sendCommand(CMD_DROP, args);
     }
-    const position = computeDropPosition(e, e.currentTarget as HTMLElement);
-    sendCommand(DROP_COMMAND, { nodeId, position });
-  }, [sendCommand, computeDropPosition]);
-
-  const handleDragEnd = React.useCallback(() => {
-    setDraggingNodeId(null);
-    if (dragOverTimerRef.current != null) {
-      window.clearTimeout(dragOverTimerRef.current);
-      dragOverTimerRef.current = null;
-    }
-    sendCommand(DRAG_END_COMMAND);
-  }, [sendCommand]);
+  }, [dropAcceptsAny, dropAccepts, dropTargetAt, cancelAutoExpand, sendCommand]);
 
   // Moves the keyboard cursor onto the node at the given index, with the selection following it:
   // in single selection the node the cursor lands on becomes the selection, in multi selection a
@@ -302,6 +474,13 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [cursorIndex, cursorNode, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
 
+  // The marker the server's verdict names, at the node it names; a refusal at the hovered node.
+  const dropWord = (node: NodeState) => {
+    if (!dropState) return undefined;
+    if (dropRefused) return dropState.node === node.id ? 'drop-refused' : undefined;
+    return dropMarker && dropMarker !== 'control' && dropMarkerKey === node.id ? NODE_MARKER_STATE[dropMarker] : undefined;
+  };
+
   return (
     <ul
       ref={listRef}
@@ -310,9 +489,19 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
       aria-multiselectable={isMulti || undefined}
       aria-activedescendant={cursorNode ? domId(cursorNode.id) : undefined}
       className={rootClassName(state, 'tl-tree', 'tl-type-body')}
+      data-tl-state={dropState ? (dropRefused
+        ? (dropState.node === null ? 'drop-refused' : undefined)
+        : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onDragOver={handleRootDragOver}
+      onDragLeave={handleRootDragLeave}
+      onDrop={handleRootDrop}
     >
+      {/* Why the target under the running drag refuses it, beside the pointer (DropHint). */}
+      {dropRefused && dropVerdict?.reason && (
+        <DropHint reason={dropVerdict.reason} start={hintAnchorRef.current} moveRef={hintMoveRef} />
+      )}
       {nodes.map((node, index) => (
         <React.Fragment key={node.id}>
           <li
@@ -325,11 +514,12 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
             className="tl-tree__node"
             data-tl-state={stateAttr(
               index === cursorIndex && 'cursor',
-              draggingNodeId === node.id && 'dragging',
-              dropIndicatorNodeId === node.id && dropIndicatorPosition ? DROP_STATE[dropIndicatorPosition] : undefined,
+              draggedNode && (node.id === draggedNode.id || (draggedNode.selection && node.selected)) && 'dragging',
+              dropWord(node),
             )}
             style={{ paddingInlineStart: node.depth * indent }}
-            draggable={dragEnabled}
+            data-drop-node={node.id}
+            draggable={dragEnabled && node.draggable !== false}
             onMouseDown={(e) => {
               // Suppress the text selection the browser would start as a side
               // effect of node-selection gestures (shift/ctrl range or toggle,
@@ -341,10 +531,8 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
             onClick={(e) => handleSelect(node.id, e)}
             onDoubleClick={() => handleActivate(node.id)}
             onContextMenu={(e) => handleContextMenu(node.id, e)}
-            onDragStart={(e) => handleDragStart(node.id, e)}
-            onDragOver={dropEnabled ? (e) => handleDragOver(node.id, e) : undefined}
-            onDrop={dropEnabled ? (e) => handleDrop(node.id, e) : undefined}
-            onDragEnd={handleDragEnd}
+            onDragStart={dragEnabled && node.draggable !== false ? (e) => handleDragStart(node, e) : undefined}
+            onDragEnd={dragEnabled && node.draggable !== false ? () => setDropState(null) : undefined}
           >
             {node.expandable ? (
               // The toggle expands its own node, so it points at no other element;

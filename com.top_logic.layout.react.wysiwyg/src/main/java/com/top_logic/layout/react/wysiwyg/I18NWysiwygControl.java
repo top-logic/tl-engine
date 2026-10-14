@@ -49,7 +49,7 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 		_i18nModel = i18nModel;
 		if (TranslationService.isActive()) {
 			// Defer auto-translation to editor commit (blur); see #onCommit.
-			putState(TypingFieldState.COMMIT_ON_BLUR__PROP, Boolean.TRUE);
+			putState(TypingFieldState.COMMIT_EDITS__PROP, Boolean.TRUE);
 		}
 	}
 

@@ -37,6 +37,13 @@ public class ScriptContainer {
 		}
 
 		/**
+		 * The source file of the {@link #getAction() action}.
+		 */
+		public File getFile() {
+			return _file;
+		}
+
+		/**
 		 * Write the {@link #getAction() action} back to its source file.
 		 */
 		public void persist() {

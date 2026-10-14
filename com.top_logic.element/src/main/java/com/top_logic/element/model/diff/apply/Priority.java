@@ -103,19 +103,26 @@ enum Priority {
 	CREATE_TYPE_PART,
 
 	/**
+	 * Creation or moving of an {@link TLClass#getGeneralizations()}.
+	 * 
+	 * @implNote Must occur before {@link #CREATE_TYPE_PART_OVERRIDE}: an override of a property in
+	 *           an existing type is created immediately and checked against the generalizations
+	 *           its owner has at that moment. A generalization that the same patch adds to the
+	 *           owner must therefore already be in place.
+	 * 
+	 * @see #REMOVE_GENERALISATION
+	 * @see #CREATE_TYPE_PART_OVERRIDE
+	 */
+	CREATE_OR_MOVE_GENERALISATION,
+
+	/**
 	 * Creation of a {@link TLTypePart} which overrides another part.
 	 * 
 	 * @see #CREATE_TYPE_PART
+	 * @see #CREATE_OR_MOVE_GENERALISATION
 	 * @see #DELETE_TYPE_PART
 	 */
 	CREATE_TYPE_PART_OVERRIDE,
-
-	/**
-	 * Creation or moving of an {@link TLClass#getGeneralizations()}.
-	 * 
-	 * @see #REMOVE_GENERALISATION
-	 */
-	CREATE_OR_MOVE_GENERALISATION,
 
 	/**
 	 * Change of {@link TLClass#isAbstract()}

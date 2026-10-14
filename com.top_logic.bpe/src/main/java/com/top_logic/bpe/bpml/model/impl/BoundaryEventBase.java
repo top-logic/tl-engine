@@ -36,6 +36,11 @@ public interface BoundaryEventBase extends com.top_logic.bpe.bpml.model.Intermed
 	String CANCEL_ACTIVITY_ATTR = "cancelActivity";
 
 	/**
+	 * Name of the table storing {@link #BOUNDARY_EVENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #ATTACHED_TO_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Task getAttachedTo() {

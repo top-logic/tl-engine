@@ -44,7 +44,7 @@ import com.top_logic.element.meta.query.FulltextFilter;
 import com.top_logic.element.meta.query.MetaAttributeFilter;
 import com.top_logic.element.meta.query.StoredQuery;
 import com.top_logic.element.meta.query.kbbased.StructuredElementAttributeFilter;
-import com.top_logic.element.structured.wrap.StructuredElementWrapper;
+import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.searching.SearchResultSet;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -678,7 +678,7 @@ public class AttributedSearchComponent extends FormComponent {
      *
      * @return additional filter for the Mandator attribute
      */
-    public MetaAttributeFilter getStructureFilter(TLStructuredTypePart anAttribute, StructuredElementWrapper aWrapper, boolean isRelevant, boolean doNegate) {
+    public MetaAttributeFilter getStructureFilter(TLStructuredTypePart anAttribute, StructuredElement aWrapper, boolean isRelevant, boolean doNegate) {
     	MetaAttributeFilter theFilter;
     	try {
     		theFilter = new StructuredElementAttributeFilter(anAttribute, aWrapper, true, doNegate, isRelevant, null);
@@ -695,7 +695,7 @@ public class AttributedSearchComponent extends FormComponent {
      *
      * @return additional filter for the Mandator attribute
      */
-    public MetaAttributeFilter getStructureFilter(TLStructuredTypePart anAttribute, Set<StructuredElementWrapper> someWrappers, boolean isRelevant, boolean doNegate) {
+    public MetaAttributeFilter getStructureFilter(TLStructuredTypePart anAttribute, Set<? extends StructuredElement> someWrappers, boolean isRelevant, boolean doNegate) {
         MetaAttributeFilter theFilter;
         try {
             theFilter = new StructuredElementAttributeFilter(anAttribute, someWrappers, true, doNegate, isRelevant, null, StructuredElementAttributeFilter.START_LEVEL_CONTEXT);

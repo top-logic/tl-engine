@@ -17,4 +17,9 @@ public interface ReceiveTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	 */
 	String RECEIVE_TASK_TYPE = "ReceiveTask";
 
+	/**
+	 * Name of the table storing {@link #RECEIVE_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

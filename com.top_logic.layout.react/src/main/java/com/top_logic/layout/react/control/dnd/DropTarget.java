@@ -5,30 +5,41 @@
  */
 package com.top_logic.layout.react.control.dnd;
 
-import java.util.Collection;
+import java.util.Set;
+
+import com.top_logic.layout.react.I18NConstants;
 
 /**
  * What a control does with objects dropped on it, and what it accepts a drop of.
  *
  * <p>
- * Acceptance is decided in two stages. The {@link #acceptedTypes() accepted type tags} reach the
+ * A target consists of drop operations, each of a {@link DropMode}: on the control as a whole, onto
+ * an item, or inserting among the items. The {@link #dropModes() modes} of the operations reach
+ * the client, which splits an item into the {@link DropZone zones} they need; the control resolves
+ * the item and the zone a drop is made in into the {@link DropLocation} of each mode, and the target
+ * {@link #check(DropRequest) decides} which operation, if any, accepts the drop at the location of
+ * its mode.
+ * </p>
+ *
+ * <p>
+ * Acceptance is decided in two stages. The {@link #acceptedKinds() accepted kinds} reach the
  * client, which uses them while a drag moves over the control to tell the user whether a drop is
- * possible at all; the same tags are checked again against the
- * {@link DragSourceControl#dragType() source's tag} when the drop arrives, so a client announcing a
+ * possible at all; the same kinds are checked again against the
+ * {@link DragSourceControl#dragKind() source's kind} when the drop arrives, so a client announcing a
  * drop the control never offered is refused. Whatever else makes a particular drop impossible — the
- * objects, the target row, the position — is decided by {@link #check(DropEvent)}, which has the
- * resolved objects at hand.
+ * objects, the location — is decided by {@link #check(DropRequest)}, which has the resolved objects
+ * at hand.
  * </p>
  *
  * <p>
  * The check is asked twice: while a drag hovers a target, the client probes it so the user sees
- * whether the target under the pointer takes the dragged objects, and why not; and once more when
- * the drop arrives, before {@link #onDrop(DropEvent)} is called — a refused drop never reaches
- * {@link #onDrop(DropEvent)}.
+ * whether the target under the pointer takes the dragged objects - and where, or why not; and once
+ * more when the drop arrives, before {@link #onDrop(DropEvent)} is called with the location the
+ * check accepted the drop at - a refused drop never reaches {@link #onDrop(DropEvent)}.
  * </p>
  *
  * <p>
- * A target whose {@link #acceptedTypes()} or {@link #dropOnRows()} answer changes over its life
+ * A target whose {@link #acceptedKinds()} or {@link #dropModes()} answer changes over its life
  * tells the control displaying it to announce the change to the client again (for a table:
  * {@link com.top_logic.layout.react.control.table.TableViewControl#refreshDropTarget()}).
  * </p>
@@ -38,50 +49,85 @@ import java.util.Collection;
 public interface DropTarget {
 
 	/**
-	 * The {@link DragSourceControl#dragType() type tags} of the drags this target accepts.
+	 * The {@link DragSourceControl#dragKind() kinds} of the drags this target accepts.
 	 */
-	Collection<String> acceptedTypes();
+	AcceptedKinds acceptedKinds();
 
 	/**
-	 * Whether a single row is a drop target of its own, so that a drop names the row it was made on.
+	 * The modes of the operations this target currently offers.
 	 *
 	 * <p>
-	 * A target that assigns the dragged objects to the row they were dropped on (or inserts them
-	 * next to it) needs this; one that only adds them to the control as a whole does not, and
-	 * receives every drop with a {@code null} {@link DropEvent#target() target}.
+	 * The control announces them to the client, which splits an item into the zones the modes need:
+	 * an insertion between two items needs the upper and the lower part of an item told apart, a
+	 * drop onto an item its middle, a drop on the control as a whole no item at all.
 	 * </p>
+	 *
+	 * @return The modes, in the order {@link #check(DropRequest)} tries them by default. A drop on
+	 *         the control as a whole by default.
 	 */
-	default boolean dropOnRows() {
-		return false;
+	default Set<DropMode> dropModes() {
+		return Set.of(DropMode.CONTROL);
 	}
 
 	/**
-	 * Whether this target accepts the given drop.
+	 * The modes of the operations this target currently offers for a drag of the given kind.
 	 *
 	 * <p>
-	 * Asked for every target the pointer moves over during a drag, and again before
-	 * {@link #onDrop(DropEvent)}. It must therefore not modify anything.
+	 * The client splits an item by the modes of the kind it drags. A target that inserts the objects
+	 * of one kind among its items and drops the objects of another kind onto an item therefore splits
+	 * an item in halves for the first kind and takes it as a whole for the second - in thirds, which
+	 * {@link #dropModes() all its modes} together need, the middle would refuse the first kind and
+	 * the upper and lower part the second.
 	 * </p>
 	 *
-	 * @param event
-	 *        The drop in question: the dragged objects, the row it would be made on and the position
-	 *        relative to it.
-	 * @return {@link DropVerdict#ACCEPTED}, or a {@link DropVerdict#refused(com.top_logic.basic.util.ResKey)
-	 *         refusal} naming the reason the user is shown. Accepts every drop by default.
+	 * @param kind
+	 *        One of the {@link AcceptedKinds#kinds() listed kinds} the target accepts.
+	 * @return The modes of the operations accepting a drag of the kind, in the order of
+	 *         {@link #dropModes()}. By default all of {@link #dropModes()}.
 	 */
-	default DropVerdict check(DropEvent event) {
-		return DropVerdict.ACCEPTED;
+	default Set<DropMode> dropModes(String kind) {
+		return dropModes();
+	}
+
+	/**
+	 * Whether this target accepts the given drop, and at which location.
+	 *
+	 * <p>
+	 * A target with several operations tries them in its order: the first operation that accepts
+	 * the drag's kind, finds a location for its mode in the request, and accepts the drop there
+	 * wins. Asked for every place the pointer moves over during a drag, and again before
+	 * {@link #onDrop(DropEvent)}, so it must not modify anything and must decide the same way for
+	 * the same request.
+	 * </p>
+	 *
+	 * @param request
+	 *        The drop in question: the dragged objects and the location of the drop for each mode.
+	 * @return The {@link DropVerdict#accepted(DropLocation) acceptance} at the location of the
+	 *         winning operation, or a {@link DropVerdict#refused(com.top_logic.basic.util.ResKey)
+	 *         refusal} naming the reason the user is shown. By default, the drop is accepted at the
+	 *         location of the first of the {@link #dropModes()} the request has one for.
+	 */
+	default DropVerdict check(DropRequest request) {
+		for (DropMode mode : dropModes()) {
+			DropLocation location = request.location(mode);
+			if (location != null) {
+				return DropVerdict.accepted(location);
+			}
+		}
+		return DropVerdict.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 	}
 
 	/**
 	 * Applies a drop.
 	 *
 	 * <p>
-	 * Called only for a drop {@link #check(DropEvent)} accepts.
+	 * Called only for a drop {@link #check(DropRequest)} accepts, at the location of the accepting
+	 * verdict. A target with several operations applies the drop through the operation that
+	 * accepts {@link DropRequest#of(DropEvent) a request of exactly this location}.
 	 * </p>
 	 *
 	 * @param event
-	 *        The dragged objects, the row they were dropped on and the position relative to it.
+	 *        The dragged objects and the location the drop is applied at.
 	 */
 	void onDrop(DropEvent event);
 
@@ -96,7 +142,7 @@ public interface DropTarget {
 	 * </p>
 	 *
 	 * @param event
-	 *        The dragged objects, the row they were dropped on and the position relative to it.
+	 *        The dragged objects and the location the drop is applied at.
 	 * @param onApplied
 	 *        Runs once the drop is applied.
 	 */

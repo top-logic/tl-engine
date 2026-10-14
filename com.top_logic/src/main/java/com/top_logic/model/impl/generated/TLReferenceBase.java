@@ -89,4 +89,9 @@ public interface TLReferenceBase extends com.top_logic.model.TLStructuredTypePar
 	 */
 	String OPPOSITE_END_ATTR = "oppositeEnd";
 
+	/**
+	 * Name of the table storing {@link #TL_REFERENCE_TYPE} objects.
+	 */
+	String TABLE_NAME = "MetaAttribute";
+
 }

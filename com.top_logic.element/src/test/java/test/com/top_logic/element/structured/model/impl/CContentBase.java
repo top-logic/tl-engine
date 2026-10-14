@@ -17,4 +17,9 @@ public interface CContentBase extends com.top_logic.model.TLObject {
 	 */
 	String C_CONTENT_TYPE = "CContent";
 
+	/**
+	 * Name of the table storing {@link #C_CONTENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

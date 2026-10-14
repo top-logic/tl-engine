@@ -10,8 +10,8 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -124,11 +124,12 @@ public class TestFieldControlProviderPreview extends TestCase {
 	}
 
 	/**
-	 * Test suite providing the resources and label providers the previews are resolved with.
+	 * Test suite providing the resources and label providers the previews are resolved with, started
+	 * on a knowledge base the label providers depend on.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestFieldControlProviderPreview.class, ResourcesModule.Module.INSTANCE,
+		return KBSetup.getSingleKBTest(TestFieldControlProviderPreview.class,
+			ServiceTestSetup.createStarterFactoryForModules(ResourcesModule.Module.INSTANCE,
 				LabelProviderService.Module.INSTANCE));
 	}
 

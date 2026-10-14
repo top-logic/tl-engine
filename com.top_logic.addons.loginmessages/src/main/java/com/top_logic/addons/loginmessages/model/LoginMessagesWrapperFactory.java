@@ -17,15 +17,23 @@ package com.top_logic.addons.loginmessages.model;
 public class LoginMessagesWrapperFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>LoginMessages</code> defined by {@link LoginMessagesWrapperFactory}.
+	 * Name of the module <code>LoginMessages</code> defined by {@link LoginMessagesWrapperFactory}.
 	 */
-	public static final String LOGIN_MESSAGES_STRUCTURE = "LoginMessages";
+	public static final String LOGIN_MESSAGES_MODULE = "LoginMessages";
+
+	/**
+	 * Name of the structure <code>LoginMessages</code> defined by {@link LoginMessagesWrapperFactory}.
+	 * 
+	 * @deprecated Use {@link #LOGIN_MESSAGES_MODULE}.
+	 */
+	@Deprecated
+	public static final String LOGIN_MESSAGES_STRUCTURE = LOGIN_MESSAGES_MODULE;
 
 	/**
 	 * Lookup {@link com.top_logic.addons.loginmessages.model.intf.LoginMessage} type.
 	 */
 	public static com.top_logic.model.TLClass getLoginMessageType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(LOGIN_MESSAGES_STRUCTURE).getType(com.top_logic.addons.loginmessages.model.intf.LoginMessage.LOGIN_MESSAGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(LOGIN_MESSAGES_MODULE).getType(com.top_logic.addons.loginmessages.model.intf.LoginMessage.LOGIN_MESSAGE_TYPE);
 	}
 
 	/**
@@ -92,7 +100,7 @@ public class LoginMessagesWrapperFactory extends com.top_logic.element.meta.kbba
 	}
 
 	/**
-	 * Name of type <code>LoginMessage</code> in structure {@link #LOGIN_MESSAGES_STRUCTURE}.
+	 * Name of type <code>LoginMessage</code> in module {@link #LOGIN_MESSAGES_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.addons.loginmessages.model.intf.LoginMessage#LOGIN_MESSAGE_TYPE}.
 	 */
@@ -101,8 +109,11 @@ public class LoginMessagesWrapperFactory extends com.top_logic.element.meta.kbba
 
 	/**
 	 * Storage table name of {@link #LOGIN_MESSAGE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link LoginMessageBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_LOGIN_MESSAGE = "LoginMessage";
+	@Deprecated
+	public static final String KO_NAME_LOGIN_MESSAGE = LoginMessageBase.TABLE_NAME;
 
 
 	/**
@@ -123,6 +134,6 @@ public class LoginMessagesWrapperFactory extends com.top_logic.element.meta.kbba
 	 * The singleton instance of {@link LoginMessagesWrapperFactory}.
 	 */
 	public static LoginMessagesWrapperFactory getInstance() {
-		return (LoginMessagesWrapperFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(LOGIN_MESSAGES_STRUCTURE);
+		return (LoginMessagesWrapperFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(LOGIN_MESSAGES_MODULE);
 	}
 }

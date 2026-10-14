@@ -51,6 +51,21 @@ public class PersonalConfigurationWrapper extends AbstractBoundWrapper implement
         super(ko);
     }
 
+	@Override
+	public boolean getBooleanValue(String aKey) {
+		return PersonalConfiguration.super.getBooleanValue(aKey);
+	}
+
+	@Override
+	public Boolean getBoolean(String key) {
+		return PersonalConfiguration.super.getBoolean(key);
+	}
+
+	@Override
+	public void setBoolean(String key, Boolean value) {
+		PersonalConfiguration.super.setBoolean(key, value);
+	}
+
     /**
      *  NOTE: Use the {@link TLContext#getPersonalConfiguration()} to get/set individual information 
      *        of the current user! For futher information ask KHA.

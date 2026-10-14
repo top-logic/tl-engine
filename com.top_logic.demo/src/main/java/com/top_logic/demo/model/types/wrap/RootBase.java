@@ -18,6 +18,11 @@ public interface RootBase extends com.top_logic.demo.model.types.DemoTypesRoot, 
 	String ROOT_TYPE = "Root";
 
 	/**
+	 * Name of the table storing {@link #ROOT_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

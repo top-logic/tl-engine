@@ -117,6 +117,11 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	String STATE_ATTR = "state";
 
 	/**
+	 * Name of the table storing {@link #COLLABORATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPCollaboration";
+
+	/**
 	 * Getter for part {@link #DIAGRAM_ATTR}.
 	 */
 	default String getDiagram() {

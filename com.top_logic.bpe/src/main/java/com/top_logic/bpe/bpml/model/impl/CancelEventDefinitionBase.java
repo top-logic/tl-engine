@@ -17,4 +17,9 @@ public interface CancelEventDefinitionBase extends com.top_logic.bpe.bpml.model.
 	 */
 	String CANCEL_EVENT_DEFINITION_TYPE = "CancelEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #CANCEL_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

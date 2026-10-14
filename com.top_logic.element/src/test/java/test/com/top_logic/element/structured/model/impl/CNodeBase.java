@@ -63,6 +63,11 @@ public interface CNodeBase extends test.com.top_logic.element.structured.model.A
 	String MIXED_REFERENCE_SINGLE_ATTR = "mixedReferenceSingle";
 
 	/**
+	 * Name of the table storing {@link #C_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "StructuredElement";
+
+	/**
 	 * Getter for part {@link #COMPOSITE_REFERENCE_MULTI_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

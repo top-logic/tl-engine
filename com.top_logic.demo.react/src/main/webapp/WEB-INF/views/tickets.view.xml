@@ -79,7 +79,7 @@
 	row: a closed ticket can be picked up only by somebody who has commented on it, so a closed
 	ticket the logged-in user never took part in stays where it is - it offers no drag, and a
 	selection including it cannot be dragged as a whole. The <refuse-if> of the Involve list
-	decides over the person hovered and the dragged tickets together: a person who has already
+	decides over the dragged tickets and the person hovered together: a person who has already
 	commented on one of the tickets is refused, and while the tickets are dragged over that
 	person, the pointer shows that no drop is possible and the reason names the person and the
 	ticket. The server checks a drop once more when it is made, so a refused drop changes nothing.
@@ -89,6 +89,10 @@
 	standing for no ticket: clicking it collapses the group and leaves the selection alone. The
 	column header menu of either list regroups it by another column or removes the grouping, and
 	that choice is kept per user.
+	
+	The lists stand one below the other in the scrolling body of the Tickets panel, each as high as
+	its rows: their panels set fill="false", so that the tables do not divide the height of the
+	page between them, as a panel around a table otherwise does.
 -->
 <view>
 	<channels>
@@ -348,7 +352,7 @@
 								</value-input>
 							</fields>
 						</inset>
-						<panel>
+						<panel fill="false">
 							<title>
 								<en>Open</en>
 								<de>Offen</de>
@@ -362,12 +366,12 @@
 								selection="ticket"
 								types="demo.tickets:Ticket"
 							>
-								<drag>
+								<drag kind="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
 								</drag>
-								<drop accept="demo.tickets:Ticket">
+								<drop accept="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -448,9 +452,11 @@
 									</computed-column>
 								</columns>
 								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
+								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
-						<panel>
+						<panel fill="false">
 							<title>
 								<en>Closed</en>
 								<de>Geschlossen</de>
@@ -461,7 +467,7 @@
 								selection="ticket"
 								types="demo.tickets:Ticket"
 							>
-								<drag>
+								<drag kind="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -469,7 +475,7 @@
 										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
 									</row-executability>
 								</drag>
-								<drop accept="demo.tickets:Ticket">
+								<drop accept="ticket">
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -492,18 +498,18 @@
 								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 							</table>
 						</panel>
-						<panel>
+						<panel fill="false">
 							<title>
 								<en>Involve</en>
 								<de>Beteiligen</de>
 							</title>
 							<table types="tl.accounts:Person">
 								<drop
-									accept="demo.tickets:Ticket"
+									accept="ticket"
 									target="row"
 									target-channel="dropPerson"
 								>
-									<refuse-if>person -&gt; tickets -&gt; { commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
+									<refuse-if>tickets -&gt; person -&gt; { commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
 									<with-transaction>
 										<commitMessage>
 											<en>Involved a person in tickets {0}.</en>
@@ -536,6 +542,9 @@
 						<form input="ticket">
 							<field attribute="name"/>
 							<field attribute="status"/>
+							<field attribute="statusLabel"/>
+							<field attribute="headline"/>
+							<field attribute="resolution"/>
 						</form>
 						<object-list
 							element-channel="comment"

@@ -88,6 +88,23 @@ An application adds or relabels a clique in its own configuration; entries are k
 
 A clique that is not configured is not an error: its commands form an inline group without label after the groups of all configured cliques.
 
+## Icon, label or both: the display mode
+
+Whether a button shows the command's icon, its label or both is the command's `display="icon-only|icon-label|label-only"` (on any view command, `ViewCommand.Config#getDisplay`). An icon-only button shows its label as tooltip. `icon-only` on a command without an `image` is refused with a warning, and the button shows its label; a command with an image that requests nothing shows icon and label. A command scope sets the default for every button it renders whose command requests no mode: `command-display` on `<panel>`, `<window>` and `<full-page>` (`CommandScopeElement`) applies to the configured commands and to those contributed by child elements (e.g. a form's edit and save buttons), and `command-display` on `<accordion>` (default `icon-only`) to the buttons of its section headers; the command's own `display` always wins.
+
+A `<button>` (`ButtonElement`) shows its one command the same way, so its mode is set on its `<action>`:
+
+```xml
+<button appearance="ghost" size="small">
+	<action class="com.top_logic.layout.view.command.GenericViewCommand"
+		display="icon-only"
+		image="css:bi bi-x"
+	>
+		<label><en>Close</en><de>Schließen</de></label>
+	</action>
+</button>
+```
+
 ## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
 
 Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* input, not on the value the chain hands to the action (see `ModelAccessRule` and `ModelAccessPolicy` for hide vs. disable).
@@ -161,7 +178,7 @@ Work that takes longer than a request may take does not belong in the request. `
 </action>
 ```
 
-- **The channel carries immutable snapshots.** The `job` channel holds a `JobState` from the moment the job starts, and a *new* one on every report, so nothing a display would have to observe ever changes. `update-interval` is the shortest time in milliseconds between two published snapshots: a job counting thousands of items is followed at that pace instead of flooding the browser, the last report of a burst is never lost, and the snapshot that ends the job is always delivered. The body runs in the sub-session of the starting request and publishes under the window's interaction, so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the same session exactly like a command is.
+- **The channel carries immutable snapshots.** The `job` channel holds a `JobState` from the moment the job starts, and a *new* one on every report, so nothing a display would have to observe ever changes. `update-interval` is the shortest time in milliseconds between two published snapshots: a job counting thousands of items is followed at that pace instead of flooding the browser, the last report of a burst is never lost, and the snapshot that ends the job is always delivered. The body runs in the sub-session of the starting request and publishes under the window's interaction through a `ChannelPublisher` (the mechanism behind a [`<source-channel>`](doc:view-layer/channels#channels-fed-by-a-server-side-source-source-channel) as well), so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the same session exactly like a command is.
 - **The work runs outside any transaction, on a thread that serves no request.** Persisting what the job produced is the business of the actions *after* it: the command continues where it left off with the job's result as its value, so a `<with-transaction><execute-script .../></with-transaction>` or a `<write-channel>` behind the `<start-job>` is where the result lands. A job that fails or is cancelled **aborts** the command instead — the remaining actions are skipped, the compensations of the ones before it run, and the failure stays visible in the last state of the job rather than in a snackbar.
 - **The body is a TL-Script `function=` or a Java `<body class="…"/>`**, exactly one of the two. The function is called with the **monitor of the job as its first argument**, followed by the `inputs` channel values in declaration order and the command's own value last. It reports with `$job.jobPhase('name')` (entering a step marks the steps passed over as done; naming a step that was never declared ends the job with an error), `$job.jobPhases([…])` or `$job.jobPhases({name: label})` for a job that learns its steps only while running, `$job.jobProgress(done, total)`, `$job.jobIndeterminate()` and `$job.jobMessage(text)`. What the function returns is the result of the job.
 - **Reading a snapshot** is `jobIsRunning($s)`, `jobIsFinished($s)`, `jobStatus($s)` (the texts `running`, `completed`, `failed`, `cancelled`, so a `<switch><case match="'completed'">` decides on it), `jobResult($s)` and `jobError($s)`. Each of them answers over no job at all as well, which is what the channel holds before the first start — so a start button guards itself with `input="job"` plus `<disabled-if expr="s -> jobIsRunning($s)"/>` and needs no case of its own for the time before the first run.

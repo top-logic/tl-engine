@@ -364,6 +364,34 @@ public class ReactSplitPanelControl extends ReactControl {
 		}
 
 		/**
+		 * The size in {@link #getUnit()}.
+		 */
+		public float getSize() {
+			return _size;
+		}
+
+		/**
+		 * The unit of {@link #getSize()}.
+		 */
+		public DisplayUnit getUnit() {
+			return _unit;
+		}
+
+		/**
+		 * The minimum size in pixels (0 for no minimum).
+		 */
+		public int getMinSize() {
+			return _minSize;
+		}
+
+		/**
+		 * The scrolling strategy.
+		 */
+		public Scrolling getScrolling() {
+			return _scrolling;
+		}
+
+		/**
 		 * Creates a percentage-based constraint with default minimum size and auto scrolling.
 		 *
 		 * @param percent

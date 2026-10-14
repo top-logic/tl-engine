@@ -17,4 +17,9 @@ public interface ResultBase extends test.com.top_logic.element.meta.benchmark.mo
 	 */
 	String RESULT_TYPE = "Result";
 
+	/**
+	 * Name of the table storing {@link #RESULT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BenchmarkResult";
+
 }

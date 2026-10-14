@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -62,6 +63,17 @@ public interface DynamicColumnSet {
 	ColumnType type(Object column);
 
 	/**
+	 * Whether the column the given object stands for is shown from the start, rather than only
+	 * offered in the column selection.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 */
+	default boolean visible(Object column) {
+		return true;
+	}
+
+	/**
 	 * Reads the cell value of the column the given object stands for from a row.
 	 *
 	 * @param column
@@ -99,6 +111,19 @@ public interface DynamicColumnSet {
 	 *        One of the objects standing for a column.
 	 */
 	default Function<List<Object>, Object> aggregate(Object column) {
+		return null;
+	}
+
+	/**
+	 * The ascending order of the values of the column the given object stands for, or
+	 * {@code null} for the order derived from the type of its values.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 *
+	 * @see ColumnSetup#comparator()
+	 */
+	default Comparator<Object> comparator(Object column) {
 		return null;
 	}
 

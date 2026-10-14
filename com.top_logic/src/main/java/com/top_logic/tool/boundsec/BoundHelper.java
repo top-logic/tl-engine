@@ -48,7 +48,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
-import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
+import com.top_logic.tool.boundsec.wrap.BoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 
@@ -815,17 +815,10 @@ public class BoundHelper extends ManagedClass {
      */
     public void copyRoles (BoundObject aSource, BoundObject aDest) {
 
-        if ( (aSource instanceof AbstractBoundWrapper)
-          && (aDest   instanceof AbstractBoundWrapper)) {
-
-			{
-                AbstractBoundWrapper sBW = (AbstractBoundWrapper) aSource;
-                AbstractBoundWrapper dBW = (AbstractBoundWrapper) aDest;
-
-                BoundedRole.removeRoleAssignments(sBW);
-                BoundedRole.copyRoleAssignments(dBW, sBW);
-            }
-        }
+		if ((aSource instanceof BoundWrapper) && (aDest instanceof BoundWrapper)) {
+			BoundedRole.removeRoleAssignments(aSource);
+			BoundedRole.copyRoleAssignments(aDest, aSource);
+		}
     }
 
 	/**
@@ -883,7 +876,7 @@ public class BoundHelper extends ManagedClass {
     }
 
     /** Remove all Roles from aDest and Copy the Roles from aSource */
-    public static void inheritSecurity (AbstractBoundWrapper aSource, AbstractBoundWrapper aDest) {
+    public static void inheritSecurity(BoundObject aSource, BoundObject aDest) {
 		BoundedRole.removeRoleAssignments(aDest);
 		BoundedRole.copyRoleAssignments(aDest, aSource);
     }

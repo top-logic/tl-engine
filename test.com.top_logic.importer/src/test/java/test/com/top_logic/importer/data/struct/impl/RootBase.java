@@ -27,6 +27,11 @@ public interface RootBase extends test.com.top_logic.importer.data.struct.TestSt
 	String NAME_ATTR = "name";
 
 	/**
+	 * Name of the table storing {@link #ROOT_TYPE} objects.
+	 */
+	String TABLE_NAME = "StructuredElement";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

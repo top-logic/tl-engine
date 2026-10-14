@@ -17,4 +17,9 @@ public interface RootBase extends com.top_logic.doc.model.Page {
 	 */
 	String ROOT_TYPE = "Root";
 
+	/**
+	 * Name of the table storing {@link #ROOT_TYPE} objects.
+	 */
+	String TABLE_NAME = "tl.doc.Page";
+
 }

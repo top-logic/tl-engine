@@ -28,9 +28,9 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TableElement;
-import com.top_logic.layout.view.element.TableElement.CriterionConfig;
-import com.top_logic.layout.view.element.TableElement.PresetConfig;
-import com.top_logic.layout.view.element.TableElement.PresetsConfig;
+import com.top_logic.layout.view.element.AbstractTableElement.CriterionConfig;
+import com.top_logic.layout.view.element.AbstractTableElement.PresetConfig;
+import com.top_logic.layout.view.element.AbstractTableElement.PresetsConfig;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
@@ -252,24 +252,17 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
-	 * Tests that the {@code <drag>} of a {@code <table>} is parsed, and that a table declaring no row
-	 * type at all is reported: nothing would then say what its rows are.
+	 * Tests that the {@code <drag>} of a {@code <table>} is parsed with the kind it declares.
 	 */
 	public void testParseDrag() throws Exception {
 		TableElement.Config tableConfig = readTableConfig();
 
 		assertNotNull("The table declares its rows draggable.", tableConfig.getDrag());
-		assertNull("The drag takes the table's row type, so it declares none of its own.",
-			tableConfig.getDrag().getType());
-
-		TableElement.Config withoutType = TypedConfiguration.copy(tableConfig);
-		withoutType.update(withoutType.descriptor().getProperty(TableElement.Config.TYPES), List.of());
-
-		assertContains("must say what they are", errors(withoutType));
+		assertEquals("row", tableConfig.getDrag().getKind());
 	}
 
 	/**
-	 * Tests that the {@code <drop>}s of a {@code <table>} are parsed with the types they accept, what
+	 * Tests that the {@code <drop>}s of a {@code <table>} are parsed with the kinds they accept, what
 	 * they target, and the action chain applying them.
 	 */
 	public void testParseDrops() throws Exception {
@@ -277,16 +270,15 @@ public class TestTableElement extends TestCase {
 		assertEquals("Should have two drops", 2, drops.size());
 
 		TableDropConfig onTable = drops.get(0);
-		assertEquals(List.of("demo.test:Row"),
-			onTable.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
+		assertEquals("A drop without 'accept' lists no kind, so it accepts every drag.", List.of(),
+			onTable.getAccept());
 		assertEquals("A drop targets the table unless it says otherwise.",
 			DropTargetMode.TABLE, onTable.getTarget());
 		assertNull("A table drop has no target row to publish.", onTable.getTargetChannel());
 		assertEquals("Should declare one action", 1, onTable.getActions().size());
 
 		TableDropConfig onRow = drops.get(1);
-		assertEquals(List.of("demo.test:Row", "demo.test:Other"),
-			onRow.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
+		assertEquals(List.of("row", "other"), onRow.getAccept());
 		assertEquals(DropTargetMode.ROW, onRow.getTarget());
 		assertNotNull("The row drop publishes the row dropped on.", onRow.getTargetChannel());
 		assertEquals("dropTarget", onRow.getTargetChannel().getChannelName());
@@ -370,8 +362,8 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a {@code <dynamic-columns>} is parsed with everything it says about the columns it
-	 * computes: the objects standing for them, their names, labels, values, edits, aggregate and
-	 * the display all of them share.
+	 * computes: the objects standing for them, their names, labels, values, edits, aggregate, the
+	 * order of their values and the display all of them share.
 	 */
 	public void testParseDynamicColumns() throws Exception {
 		DynamicColumns.Config milestones = dynamicColumns(readTableConfig());
@@ -388,15 +380,21 @@ public class TestTableElement extends TestCase {
 		assertNotNull("The objects standing for the columns are computed.", milestones.getColumns());
 		assertNotNull("The columns are named after their objects.", milestones.getColumnName());
 		assertNotNull("The columns are labelled after their objects.", milestones.getColumnLabel());
+		assertNotNull("The columns say which of them are shown from the start.",
+			milestones.getColumnVisible());
 		assertNotNull("The cell value is computed.", milestones.getValue());
 		assertNotNull("An edited value is written back.", milestones.getUpdate());
 		assertNotNull("The columns say which of their rows are edited.", milestones.getCanUpdate());
 		assertNotNull("The columns aggregate over a group.", milestones.getAggregate());
+		assertNotNull("The columns order their values themselves.", milestones.getComparator());
 		assertEquals("Should declare one input", 1, milestones.getInputs().size());
 		assertEquals("testInput", milestones.getInputs().get(0).getChannelName());
 
 		DynamicColumns.Config plain = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
 		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
+		assertNull("Without a visibility function, every column is shown from the start.",
+			plain.getColumnVisible());
+		assertNull("The columns keep the order their type derives.", plain.getComparator());
 		assertEquals("The columns keep the width their type derives.", 0, plain.getWidth());
 		assertFalse("The columns are edited like any other unless they say otherwise.",
 			plain.getReadonly());
@@ -588,7 +586,8 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a {@code <column>} carries what it declares about its column: the display width,
-	 * the header label overriding the attribute's own, the sort direction and the read-only flag.
+	 * the header label overriding the attribute's own, the sort direction, the order of its values
+	 * and the read-only flag.
 	 */
 	public void testParseAttributeColumns() throws Exception {
 		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
@@ -601,12 +600,15 @@ public class TestTableElement extends TestCase {
 			((ResKey.LiteralKey) name.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
 		assertEquals(SortDirection.ASC, name.getSort());
 		assertFalse("A column is editable unless it says otherwise.", name.getReadonly());
+		assertNotNull("The column orders its values themselves.", name.getComparator());
 
 		AttributeColumn.Config active = (AttributeColumn.Config) columns.get(1);
 		assertEquals("active", active.getAttribute());
 		assertEquals("A column without a width keeps the one its type derives.", 0, active.getWidth());
 		assertNull("A column without a label keeps the attribute's.", active.getLabel());
 		assertNull("A column that declares no direction starts unsorted.", active.getSort());
+		assertNull("A column without a comparator keeps the order its type derives.",
+			active.getComparator());
 
 		AttributeColumn.Config owner = (AttributeColumn.Config) columns.get(2);
 		assertEquals("owner", owner.getAttribute());
@@ -615,7 +617,7 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a {@code <computed-column>} is parsed with the type of its values, the inputs its
-	 * value function receives and what it aggregates over a group.
+	 * value function receives, what it aggregates over a group and the order of its values.
 	 */
 	public void testParseComputedColumn() throws Exception {
 		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
@@ -630,6 +632,7 @@ public class TestTableElement extends TestCase {
 		assertEquals("Should declare one input", 1, total.getInputs().size());
 		assertEquals("testInput", total.getInputs().get(0).getChannelName());
 		assertNotNull("The column aggregates over a group.", total.getAggregate());
+		assertNotNull("The column orders its values themselves.", total.getComparator());
 		assertNull("A column without a label is named after itself.", total.getLabel());
 	}
 

@@ -2221,6 +2221,22 @@ a.tl-field-value:hover {
   background: transparent;
 }
 
+/* Laufen Spalten unter der Spaltenwahl weiter (Kopf data-tl-state~="covered": breiter als sein Fenster und
+   nicht ganz nach rechts gescrollt), blenden die Überschriften vor ihr aus: die dort abgeschnittene
+   Überschrift — ihr Trichter zumal — liest sich als hinausgescrollt, nicht als Bruchstück, das der Knopf
+   versehentlich verdeckt (#29757). Ein Verlauf in der Fläche des Kopfes, nicht eine Maske: der Kopf ist
+   immer surface-layer, und eine Maske nähme die Linie darunter mit. */
+.tl-table__frame:has(.tl-table__header[data-tl-state~="covered"]) > .tl-table__columns::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  width: calc(var(--tl-space-xs) + var(--tl-space-sm));
+  background: linear-gradient(to left, var(--tl-surface-layer) var(--tl-space-xs), transparent);
+  pointer-events: none;
+}
+
 /* Breite ziehen und Fixiergrenze: Griffe mit role=separator, Zeigerbedienung. Der Griff ist space-xs
    breit; unter dem Zeiger und beim Ziehen eine Linie border-width-md in border-interactive. */
 .tl-table__resize {
@@ -2372,6 +2388,23 @@ a.tl-field-value:hover {
   border-left: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
 }
 
+/* --- Hervorgehobene Zeilen und Zellen (#29815) ------------------------------------------------ */
+
+/* Eine Zeile oder Zelle, der die Anwendung eine der Klassen tl-status-error, -warning, -success oder
+   -info gibt (TableView#rowCssClass, #cellCssClass), trägt die Rolle als data-tl-role — TLTableView
+   übersetzt die Klasse, die Rolle bleibt ein Attribut. Die Auswahl gewinnt: an einer ausgewählten Zeile
+   und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
+   Zeile steht in :where); fixierte und angeheftete Zellen erben die Tönung ihrer Zeile, eine getönte Zelle
+   setzt ihre eigene. Nach den Regeln der Lage, die an haftenden Zellen inherit setzen. */
+:where(.tl-table__row[data-tl-role="error"]) { background: var(--tl-status-error-subtle); border-color: var(--tl-status-error-border); }
+:where(.tl-table__row[data-tl-role="warning"]) { background: var(--tl-status-warning-subtle); border-color: var(--tl-status-warning-border); }
+:where(.tl-table__row[data-tl-role="success"]) { background: var(--tl-status-success-subtle); border-color: var(--tl-status-success-border); }
+:where(.tl-table__row[data-tl-role="info"]) { background: var(--tl-status-info-subtle); border-color: var(--tl-status-info-border); }
+.tl-table__cell[data-tl-role="error"] { background: var(--tl-status-error-subtle); border-color: var(--tl-status-error-border); }
+.tl-table__cell[data-tl-role="warning"] { background: var(--tl-status-warning-subtle); border-color: var(--tl-status-warning-border); }
+.tl-table__cell[data-tl-role="success"] { background: var(--tl-status-success-subtle); border-color: var(--tl-status-success-border); }
+.tl-table__cell[data-tl-role="info"] { background: var(--tl-status-info-subtle); border-color: var(--tl-status-info-border); }
+
 /* --- Zellinhalt ------------------------------------------------------------------ */
 
 /* Der Wurzelknoten eines Lesewerts ohne eigene Form (span ohne Klasse, tl-text) füllt die Zelle: ein
@@ -2499,6 +2532,39 @@ a.tl-field-value:hover {
   flex-shrink: 0;
   margin-inline-start: var(--tl-space-xs);
   color: var(--tl-text-secondary);
+}
+
+/* --- Zeilenzahl (#29757) ---------------------------------------------------------- */
+
+/* Unter den Zeilen, außerhalb des Rollbehälters wie die Filterleiste: wie viele Zeilen die Tabelle hat
+   (von wie vielen, solange gefiltert) und wie viele ausgewählt sind. Leise gesetzt — eine Bemerkung über
+   die Tabelle, keine weitere Zeile —, die Ziffern gleich breit, damit der Text beim Tippen eines Filters
+   nicht zittert. Ein Live-Bereich (role=status); die Typo-Klasse trägt das TSX. */
+.tl-table__footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-control);
+  padding: var(--tl-space-xs) var(--tl-space-control-x);
+  overflow: hidden;
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tl-table__row-count,
+.tl-table__selection-count {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-table__selection-count::before {
+  content: "\00B7";
+  margin-inline-end: var(--tl-space-xs);
 }
 
 /* --- Leer und lädt nach ---------------------------------------------------------- */

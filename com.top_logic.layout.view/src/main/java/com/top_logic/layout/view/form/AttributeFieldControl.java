@@ -444,9 +444,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				_model.removeListener(_modelListener);
 				_modelListener = null;
 			}
-			if (_model instanceof AttributeSelectFieldModel) {
-				((AttributeSelectFieldModel) _model).dispose();
-			}
+			_model.dispose();
 			_formControl.unregisterParticipant(this);
 		}
 		_model = null;

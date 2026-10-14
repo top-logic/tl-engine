@@ -486,6 +486,15 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	String INLINE_REFERENCE_ATTR = "inlineReference";
 
 	/**
+	 * Part <code>intConstraint</code> of <code>DemoTypes.X</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String INT_CONSTRAINT_ATTR = "intConstraint";
+
+	/**
 	 * Part <code>list</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
@@ -1074,6 +1083,13 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default com.top_logic.demo.model.types.DemoTypesAll getInlineReference() {
 		return (com.top_logic.demo.model.types.DemoTypesAll) tValueByName(INLINE_REFERENCE_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #INT_CONSTRAINT_ATTR}.
+	 */
+	default Integer getIntConstraint() {
+		return (Integer) tValueByName(INT_CONSTRAINT_ATTR);
 	}
 
 	/**

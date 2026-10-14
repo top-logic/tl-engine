@@ -81,9 +81,9 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	 * Creates a new {@link AttributeSelectFieldModel} and computes its initial options.
 	 *
 	 * @param object
-	 *        See {@link AttributeFieldModel#AttributeFieldModel(TLObject, TLStructuredTypePart)}.
+	 *        See {@link AttributeFieldModel#AttributeFieldModel(TLObject, TLStructuredTypePart, FormControl)}.
 	 * @param part
-	 *        See {@link AttributeFieldModel#AttributeFieldModel(TLObject, TLStructuredTypePart)}.
+	 *        See {@link AttributeFieldModel#AttributeFieldModel(TLObject, TLStructuredTypePart, FormControl)}.
 	 * @param formControl
 	 *        The enclosing form, providing the overlay lookup and field-change notifications.
 	 * @param optionSource
@@ -91,7 +91,7 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	 */
 	public AttributeSelectFieldModel(TLObject object, TLStructuredTypePart part, FormControl formControl,
 			OptionSource optionSource) {
-		super(object, part);
+		super(object, part, formControl);
 		_formControl = formControl;
 		_optionSource = optionSource;
 		_multiple = part.isMultiple();
@@ -203,6 +203,7 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	@Override
 	public void dispose() {
 		_formControl.removeFieldChangeListener(_fieldChangeListener);
+		super.dispose();
 	}
 
 }

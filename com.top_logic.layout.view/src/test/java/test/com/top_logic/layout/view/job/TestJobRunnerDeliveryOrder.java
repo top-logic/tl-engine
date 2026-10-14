@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.job;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -23,13 +25,13 @@ import com.top_logic.layout.view.job.JobState;
 import com.top_logic.layout.view.job.JobStatus;
 
 /**
- * Tests that a {@link JobRunner} publishes its snapshots in the order it took them, so that the
- * snapshot ending a job is the last one the channel receives.
+ * Tests that the snapshot ending a job run by a {@link JobRunner} is the last value its channel
+ * holds, even when a report held back by the update interval competes with it.
  *
  * <p>
- * The test holds the flush of a held-back report inside the channel write until the body has
- * returned, which is the moment a snapshot taken while the job was running competes with the one
- * ending it.
+ * The test holds the delivery of the first report inside the channel write until the body has
+ * returned and the job has ended. At that moment a second report is held back by the update
+ * interval and the snapshot ending the job is waiting for the running delivery to complete.
  * </p>
  */
 public class TestJobRunnerDeliveryOrder extends TestCase {
@@ -37,17 +39,20 @@ public class TestJobRunnerDeliveryOrder extends TestCase {
 	/** How long the test waits for any step before it counts as hanging. */
 	private static final long TIMEOUT = 20_000;
 
-	/** The shortest time between two published snapshots, long enough to hold a report back. */
-	private static final long UPDATE_INTERVAL = 100;
+	/**
+	 * The shortest time between two published snapshots, longer than the test waits: the end of the
+	 * job does not wait for it.
+	 */
+	private static final long UPDATE_INTERVAL = 60_000;
 
 	/** What the body of the job produces. */
 	private static final String RESULT = "result";
 
 	/**
-	 * Tests that a flush that took its snapshot while the job was running does not overwrite the
-	 * snapshot ending the job.
+	 * Tests that the snapshot ending the job is delivered without waiting for the update interval,
+	 * replaces the report held back before it, and is the last value of the channel.
 	 */
-	public void testFlushDoesNotOverwriteTheTerminalSnapshot() throws Exception {
+	public void testTerminalSnapshotIsTheLastValue() throws Exception {
 		BlockingChannel channel = new BlockingChannel();
 		CountDownLatch finished = new CountDownLatch(1);
 		JobRunner runner = new JobRunner(null, channel, List.of(), false, UPDATE_INTERVAL,
@@ -56,44 +61,42 @@ public class TestJobRunnerDeliveryOrder extends TestCase {
 		runner.start((job, arguments) -> {
 			channel._worker = Thread.currentThread();
 			job.fraction(0.1);
+			assertTrue("The first report must start writing the channel.",
+				channel._firstReportWriting.await(TIMEOUT, TimeUnit.MILLISECONDS));
 			job.fraction(0.2);
-			assertTrue("The flush of the held-back report must start writing the channel.",
-				channel._flushWriting.await(TIMEOUT, TimeUnit.MILLISECONDS));
 			channel._bodyReturning.countDown();
 			return RESULT;
 		}, List.of());
 
 		assertTrue("The job must finish within " + TIMEOUT + " ms.",
 			finished.await(TIMEOUT, TimeUnit.MILLISECONDS));
-		assertTrue("The flush must leave the channel within " + TIMEOUT + " ms.",
-			channel._flushLeft.await(TIMEOUT, TimeUnit.MILLISECONDS));
 
+		List<JobState> received = List.copyOf(channel._received);
+		assertEquals("The initial snapshot, the first report, and the end: " + received, 3, received.size());
+		assertEquals(Double.valueOf(0.1), received.get(1).fraction());
 		JobState last = (JobState) channel.get();
+		assertSame(received.get(2), last);
 		assertEquals("The channel keeps the snapshot that ended the job.", JobStatus.COMPLETED, last.status());
 		assertEquals(RESULT, last.result());
 	}
 
 	/**
-	 * {@link DefaultViewChannel} that holds the write of a running state from a thread other than
-	 * the worker - the flush - until the body has returned and the job has either published its end
-	 * or waits to publish it.
+	 * {@link DefaultViewChannel} that holds the write of the first report until the body has
+	 * returned and the worker has ended the job.
 	 */
 	private static class BlockingChannel extends DefaultViewChannel {
 
 		/** The thread the body runs on, once it has started. */
 		volatile Thread _worker;
 
-		/** Counted down once the flush has entered {@link #set(Object)}. */
-		final CountDownLatch _flushWriting = new CountDownLatch(1);
+		/** Every value written, in the order written. */
+		final List<JobState> _received = Collections.synchronizedList(new ArrayList<>());
+
+		/** Counted down once the write of the first report has started. */
+		final CountDownLatch _firstReportWriting = new CountDownLatch(1);
 
 		/** Counted down by the body right before it returns. */
 		final CountDownLatch _bodyReturning = new CountDownLatch(1);
-
-		/** Counted down once the terminal snapshot has been written. */
-		final CountDownLatch _terminalWritten = new CountDownLatch(1);
-
-		/** Counted down once the flush has left {@link #set(Object)}. */
-		final CountDownLatch _flushLeft = new CountDownLatch(1);
 
 		BlockingChannel() {
 			super("job");
@@ -101,43 +104,28 @@ public class TestJobRunnerDeliveryOrder extends TestCase {
 
 		@Override
 		public boolean set(Object newValue) {
-			Thread worker = _worker;
 			JobState state = (JobState) newValue;
-			boolean flush = worker != null && Thread.currentThread() != worker && state.isRunning();
-			if (!flush) {
-				try {
-					return super.set(newValue);
-				} finally {
-					if (state.isFinished()) {
-						_terminalWritten.countDown();
-					}
-				}
-			}
-			try {
-				_flushWriting.countDown();
+			Thread worker = _worker;
+			if (worker != null && state.isRunning() && _firstReportWriting.getCount() > 0) {
+				_firstReportWriting.countDown();
 				awaitQuietly(_bodyReturning);
-				awaitTerminalWrittenOrBlocked(worker);
-				return super.set(newValue);
-			} finally {
-				_flushLeft.countDown();
+				awaitJobEnded(worker);
 			}
+			_received.add(state);
+			return super.set(newValue);
 		}
 
 		/**
-		 * Waits until the worker has written the terminal snapshot or waits for the flush to finish
-		 * its delivery.
+		 * Waits until the worker has left the body and the end of the job, which it handed to the
+		 * publisher without waiting for this delivery.
 		 */
-		private void awaitTerminalWrittenOrBlocked(Thread worker) {
+		private static void awaitJobEnded(Thread worker) {
 			long end = System.currentTimeMillis() + TIMEOUT;
-			while (System.currentTimeMillis() < end) {
-				if (worker.getState() == Thread.State.BLOCKED) {
-					return;
-				}
+			while (System.currentTimeMillis() < end && worker.getState() == Thread.State.RUNNABLE) {
 				try {
-					if (_terminalWritten.await(5, TimeUnit.MILLISECONDS)) {
-						return;
-					}
+					Thread.sleep(5);
 				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
 					return;
 				}
 			}

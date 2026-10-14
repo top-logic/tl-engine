@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps, ThemeIcon, ButtonDefaults } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, tooltipProps, ThemeIcon, ButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -57,9 +57,9 @@ const IconPopOut = () => (
  * - showMinimize: boolean
  * - showMaximize: boolean
  * - showPopOut: boolean
- * - fill: boolean (fill the container's bounded height instead of growing with content; a filling
- *     panel takes part in the fill contract, so its container grows with it, while its own body
- *     bounds and scrolls what it contains)
+ * - fill: boolean (absent: the panel fills while its content fills, e.g. a table; true: fills even
+ *     around content of its own size; false: does not pass the fill request of its content on to
+ *     its container)
  * - width: string (a CSS width of the panel's own, e.g. "380px", instead of the width its
  *     container offers; capped at the available width, so the panel stays visible on a narrow
  *     screen)
@@ -82,7 +82,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const showMaximize = state.showMaximize === true;
   const showPopOut = state.showPopOut === true;
   const fullLine = state.fullLine === true;
-  const fill = state.fill === true;
+  const alwaysFill = state.fill === true;
+  const neverFill = state.fill === false;
   const hoverActions = state.hoverActions === true;
   const card = state.appearance === 'card';
   const width = (state.width as string | undefined) ?? undefined;
@@ -104,13 +105,20 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('popOut');
   }, [sendCommand]);
 
-  // A hidden panel occupies no space, so it asks its container for none either.
-  const fillClass = useFill(fill && !isHidden);
+  // The panel takes part in the fill contract as a container: it fills while it is configured to,
+  // or while its content fills - a table, a split - which can only resolve its height against a
+  // body of definite height. A hidden panel renders no content and occupies no space, so it asks
+  // its container for none either. A panel configured not to fill ends the chain at its body
+  // instead: the request of its content reaches no container.
+  const [fillClass, fillHost] = useFillHost(alwaysFill && !isHidden);
 
   if (isHidden) {
     return null;
   }
 
+  // The height spans a container of definite height that is no flex column - a split pane - where
+  // the fill class cannot size the panel. In a container as high as its content the percentage has
+  // nothing to resolve against, and the panel is as high as its content, unless it fills.
   const panelStyle: React.CSSProperties = isMaximized
     ? { position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }
     : {
@@ -186,9 +194,15 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {!isMinimized && (
         <div className="tlPanel__content">
-          <FillBarrier>
-            <TLChild control={state.child} />
-          </FillBarrier>
+          {neverFill ? (
+            <FillBarrier>
+              <TLChild control={state.child} />
+            </FillBarrier>
+          ) : (
+            <FillProvider host={fillHost}>
+              <TLChild control={state.child} />
+            </FillProvider>
+          )}
         </div>
       )}
       {!isMinimized && errorMessage && (

@@ -19,11 +19,14 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -52,6 +55,7 @@ import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SelectionMode;
 
@@ -119,17 +123,46 @@ public class TreeElement implements UIElement {
 		String DROPS = "drops";
 
 		/**
-		 * Types to observe for object creation events.
+		 * Optional TL-Script function computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * When configured, the tree re-evaluates its root function when objects of these types
-		 * are created. This enables automatic node insertion for trees that query all instances
-		 * of a type.
+		 * Takes the input channel values followed by an object as last argument, and returns the object
+		 * whose child list holds it - nothing for the object the tree is built from, and for an object
+		 * belonging to no tree at all.
 		 * </p>
 		 *
 		 * <p>
-		 * When empty (default), only updates and deletes of currently displayed nodes are
-		 * observed. This is correct for trees whose nodes come directly from a channel.
+		 * It is how the node of an object written to the selection channel is found: the tree walks
+		 * from the object up to the one it is built from and descends along that chain, computing only
+		 * the child lists on the way. Without it the node is searched for, which computes the child list
+		 * of every node passed on the way - affordable for a tree of small extent, not for a large or an
+		 * unbounded one.
+		 * </p>
+		 *
+		 * <p>
+		 * It is also where the tree places a created or changed object of the
+		 * {@link #getObservedTypes() observed types} it has no node for, so it is required while
+		 * {@link #getObservedTypes()} names a type.
+		 * </p>
+		 */
+		@Override
+		@Constraint(value = MandatoryIfSet.class, args = @Ref(OBSERVED_TYPES))
+		Expr getParents();
+
+		/**
+		 * Types whose created or changed objects the tree places even while it has no node for
+		 * them.
+		 *
+		 * <p>
+		 * Such an object is placed through {@link #getParents()}: the node of what holds it now
+		 * gets its child list computed again, so the object appears there - if that node is open.
+		 * Where it is not, the object appears when somebody opens it. Requires
+		 * {@link #getParents()}.
+		 * </p>
+		 *
+		 * <p>
+		 * When empty (default), the tree follows only the objects it displays: their changes and
+		 * deletions.
 		 * </p>
 		 */
 		@Name(OBSERVED_TYPES)
@@ -367,8 +400,9 @@ public class TreeElement implements UIElement {
 		treeControl.setCssClass(_config.getCssClass());
 
 		// 6. Create ObservableTreeModel to forward model changes to the tree control. The function
-		//    saying what holds an object serves the observation (where an object that moved went)
-		//    and the selection (which node an object of the channel has).
+		//    saying what holds an object serves the observation (where an object that moved went,
+		//    where an object of an observed type belongs) and the selection (which node an object of
+		//    the channel has).
 		Function<Object, Object> parentFunction = _functions.parentFunction(inputChannels);
 		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
 		ObservableTreeModel observableModel = new ObservableTreeModel(

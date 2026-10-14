@@ -44,6 +44,11 @@ import com.top_logic.basic.sql.PooledConnection;
  */
 public class TestAlterTable extends BasicTestCase {
 
+	/**
+	 * Number of rows inserted by {@link #insertRows()}.
+	 */
+	private static final int ROW_COUNT = 5;
+
 	private DBSchema _schema;
 
 	private ConnectionPool _pool;
@@ -242,6 +247,186 @@ public class TestAlterTable extends BasicTestCase {
 			_pool.releaseReadConnection(connection);
 		}
 
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn} renaming a column of a table with content.
+	 */
+	public void testRenameColumnWithContent() throws SQLException {
+		insertRows();
+
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection,
+				modifyColumnName(table(_table.getDBName()), "b", DBType.LONG, "xxx"));
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+
+		DBSchema analyzedSchema = DBSchemaUtils.extractTable(_pool, _table.getDBName());
+		DBTable alteredTable = analyzedSchema.getTable(_table.getDBName());
+		assertNull(alteredTable.getColumn("b"));
+		assertEquals(DBType.LONG, alteredTable.getColumn("xxx").getType());
+
+		connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = executeQuery(connection, selectRows("xxx"))) {
+				for (int n = 0; n < ROW_COUNT; n++) {
+					assertTrue(result.next());
+					assertEquals(rowName(n), result.getString("a"));
+					assertEquals(rowValue(n), result.getLong("xxx"));
+				}
+				assertFalse(result.next());
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn} changing the type of a column of a table with content.
+	 */
+	public void testModifyColumnTypeWithContent() throws SQLException {
+		insertRows();
+
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection,
+				modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+
+		DBSchema analyzedTable = DBSchemaUtils.extractTable(_pool, _table.getDBName());
+		DBTable alteredTable = analyzedTable.getTable(_table.getDBName());
+		assertEquals(DBType.STRING, alteredTable.getColumn("b").getType());
+
+		connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = executeQuery(connection, selectRows("b"))) {
+				for (int n = 0; n < ROW_COUNT; n++) {
+					assertTrue(result.next());
+					assertEquals(rowName(n), result.getString("a"));
+					assertEquals(Long.toString(rowValue(n)), result.getString("b"));
+				}
+				assertFalse(result.next());
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn} making a column of a table with content mandatory.
+	 */
+	public void testModifyColumnMandatoryWithContent() throws SQLException {
+		insertRows();
+
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection,
+				modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+
+		DBSchema analyzedTable = DBSchemaUtils.extractTable(_pool, _table.getDBName());
+		DBTable alteredTable = analyzedTable.getTable(_table.getDBName());
+		assertTrue(alteredTable.getColumn("b").isMandatory());
+
+		connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = executeQuery(connection, selectRows("b"))) {
+				for (int n = 0; n < ROW_COUNT; n++) {
+					assertTrue(result.next());
+					assertEquals(rowName(n), result.getString("a"));
+					assertEquals(rowValue(n), result.getLong("b"));
+				}
+				assertFalse(result.next());
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
+	}
+
+	/**
+	 * Tests {@link SQLDropColumn} on a table with content.
+	 */
+	public void testDropColumnWithContent() throws SQLException {
+		insertRows();
+
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection,
+				dropColumn(table(_table.getDBName()), "b"));
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+
+		DBSchema analyzedTable = DBSchemaUtils.extractTable(_pool, _table.getDBName());
+		DBTable alteredTable = analyzedTable.getTable(_table.getDBName());
+		assertNull(alteredTable.getColumn("b"));
+
+		SQLStatement query = select(
+			asList(columnDef("a")),
+			table(_table.getDBName()),
+			SQLBoolean.TRUE,
+			orders(order(false, column("a"))));
+		connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = executeQuery(connection, query)) {
+				for (int n = 0; n < ROW_COUNT; n++) {
+					assertTrue(result.next());
+					assertEquals(rowName(n), result.getString("a"));
+				}
+				assertFalse(result.next());
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
+	}
+
+	/**
+	 * Fills the test table with {@link #ROW_COUNT} rows.
+	 */
+	private void insertRows() throws SQLException {
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			for (int n = 0; n < ROW_COUNT; n++) {
+				executeUpdate(connection, insert(
+					table(_table.getDBName(), "t"),
+					asList("a", "b"),
+					asList(
+						literalString(rowName(n)),
+						literalLong(rowValue(n)))));
+			}
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Query selecting column "a" and the given column of all rows, ordered by "a".
+	 */
+	private SQLStatement selectRows(String valueColumn) {
+		return select(
+			asList(columnDef("a"), columnDef(valueColumn)),
+			table(_table.getDBName()),
+			SQLBoolean.TRUE,
+			orders(order(false, column("a"))));
+	}
+
+	private static String rowName(int n) {
+		return "row" + n;
+	}
+
+	private static long rowValue(int n) {
+		return 1000L * n + 42L;
 	}
 
 	/**

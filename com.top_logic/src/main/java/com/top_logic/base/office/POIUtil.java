@@ -365,9 +365,9 @@ public class POIUtil {
 	 * Always use this method instead of {@link SXSSFWorkbook#SXSSFWorkbook(int)}. The workbook is
 	 * written with {@link Zip64Mode#AsNeeded}, which gives a plain ZIP archive as
 	 * {@link XSSFWorkbook} writes it. POI's default {@link Zip64Mode#Always} writes ZIP64 data
-	 * descriptors without the ZIP64 extra field that announces them. LibreOffice then finds gaps
-	 * between the entries and reports the file as corrupt. The cost: a single sheet of more than 4
-	 * GB cannot be written, which is far beyond the size of a sheet Excel can open.
+	 * descriptors without the ZIP64 extra field that announces them. {@code LibreOffice} then finds
+	 * gaps between the entries and reports the file as corrupt. The cost: a single sheet of more
+	 * than 4 GB cannot be written, which is far beyond the size of a sheet Excel can open.
 	 * </p>
 	 *
 	 * @param rowAccessWindowSize

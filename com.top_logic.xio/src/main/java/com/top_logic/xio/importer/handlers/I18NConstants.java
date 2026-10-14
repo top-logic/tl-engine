@@ -47,6 +47,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey4 WARN_AMBIGUOUS_EXISTING_KEY__HANDLER_KEY_USED_IGNORED;
 
+	/**
+	 * @en No language given for the translation ({0}).
+	 */
+	public static ResKey1 ERROR_NO_LANGUAGE__HANDLER;
+
+	/**
+	 * @en Invalid language "{1}" for the translation ({0}).
+	 */
+	public static ResKey2 ERROR_INVALID_LANGUAGE__HANDLER_VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

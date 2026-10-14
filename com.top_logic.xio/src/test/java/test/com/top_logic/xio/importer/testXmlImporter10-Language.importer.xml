@@ -1,0 +1,29 @@
+<handler>
+	<tag name="root">
+		<with-var var="language" xml-attribute="DefaultLanguage">
+			<object model-type="test.com.top_logic.xio.importer.test10:Root">
+				<dispatch>
+					<tag name="a">
+						<with-var var="language" xml-attribute="DefaultLanguage">
+							<object model-type="test.com.top_logic.xio.importer.test10:A">
+								<property name="name" xml-attribute="name"/>
+								<set-translation name="label" xml-attribute="label" language-var="language"/>
+								<set-translation name="fixed" xml-attribute="fixed" language="de-DE"/>
+								<set-translation name="other" xml-attribute="otherEn" language="en"/>
+								<set-translation name="other" xml-attribute="other" language-var="language" fill-fallback="true"/>
+								<linking>
+									<list-linking name="test.com.top_logic.xio.importer.test10:Root#as"/>
+								</linking>
+								<dispatch>
+									<tag name="text">
+										<set-translation name="text" language-attribute="lang"/>
+									</tag>
+								</dispatch>
+							</object>
+						</with-var>
+					</tag>
+				</dispatch>
+			</object>
+		</with-var>
+	</tag>
+</handler>

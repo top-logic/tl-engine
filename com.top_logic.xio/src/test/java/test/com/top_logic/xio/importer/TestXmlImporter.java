@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.stream.StreamSource;
@@ -21,12 +22,17 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey.LiteralKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -311,6 +317,62 @@ public class TestXmlImporter extends TestCase {
 		TLObject n1 = elements.get(1);
 		assertEquals("n1", n1.tValueByName("extId"));
 		assertEquals(List.of(n1), strictItem.tValueByName("others"));
+	}
+
+	public void testLanguageFromInput() throws XMLStreamException, IOException {
+		assertEquals("Test expects English as fallback language.", Locale.ENGLISH,
+			ResourcesModule.getInstance().getFallbackLocale());
+
+		TLObject root = importXml(
+			"testXmlImporter10-Language.model.xml",
+			"testXmlImporter10-Language.importer.xml",
+			"testXmlImporter10-Language.data.xml");
+
+		List<? extends TLObject> as = list(root.tValueByName("as"));
+		assertEquals(3, as.size());
+
+		// Language from the variable bound by the outer element, reduced to the language.
+		TLObject a1 = as.get(0);
+		assertTranslations(Map.of(Locale.GERMAN, "Eins"), a1.tValueByName("label"));
+		// Fixed language tag, reduced to the language.
+		assertTranslations(Map.of(Locale.GERMAN, "Fest"), a1.tValueByName("fixed"));
+		// Language from an attribute.
+		assertTranslations(Map.of(Locale.FRENCH, "Texte", Locale.ENGLISH, "Text"), a1.tValueByName("text"));
+		// The missing fallback translation is filled.
+		assertTranslations(Map.of(Locale.GERMAN, "Nur deutsch", Locale.ENGLISH, "Nur deutsch"),
+			a1.tValueByName("other"));
+
+		// An inner element overrides the language for its subtree.
+		TLObject a2 = as.get(1);
+		assertTranslations(Map.of(Locale.ENGLISH, "Two"), a2.tValueByName("label"));
+		assertTranslations(Map.of(Locale.ENGLISH, "Only English"), a2.tValueByName("other"));
+
+		// Without an own language, the outer language stays in effect. An existing fallback
+		// translation is not overwritten.
+		TLObject a3 = as.get(2);
+		assertTranslations(Map.of(Locale.GERMAN, "Drei"), a3.tValueByName("label"));
+		assertTranslations(Map.of(Locale.ENGLISH, "English", Locale.GERMAN, "Deutsch"), a3.tValueByName("other"));
+	}
+
+	private static void assertTranslations(Map<Locale, String> expected, Object resKey) {
+		assertEquals(expected, ((LiteralKey) resKey).getTranslations());
+	}
+
+	public void testLanguageOptionsExclusive() {
+		assertInvalidImporter("testXmlImporter10-Language-none.importer.xml");
+		assertInvalidImporter("testXmlImporter10-Language-two.importer.xml");
+	}
+
+	private void assertInvalidImporter(String importerResource) {
+		BufferingProtocol log = new BufferingProtocol();
+		try {
+			XmlImporter.readImportConfig(new DefaultInstantiationContext(log), resource(importerResource));
+			fail("Invalid language options not detected: " + importerResource);
+		} catch (AbortExecutionException | ConfigurationError ex) {
+			// Expected.
+		}
+		String errors = String.join("\n", log.getErrors());
+		assertTrue(errors, errors.contains("Exactly one of"));
 	}
 
 	private TLObject existingItem(TLObject container, TLClass itemType, String extId) {

@@ -1,8 +1,10 @@
 import {
-  React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults,
+  React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
+  FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
+  ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -11,20 +13,19 @@ const MIN_WIDTH = 200;
 const MIN_HEIGHT = 100;
 
 /**
- * The space a window keeps free towards each edge of the browser window, when it is resized and
- * when a remembered size is checked against the browser window. Matches the margin the stylesheet
- * keeps with the window's max-width.
+ * The space a window keeps free towards each edge of the browser window before the stylesheet is
+ * measured: the scrim's padding, `--tl-space-lg`.
  */
-const VIEWPORT_MARGIN = 24;
+const DEFAULT_MARGIN = 24;
 
 /** The largest width a window may take in a browser window of the given width. */
-function maxWindowWidth(viewportWidth: number): number {
-  return Math.max(MIN_WIDTH, viewportWidth - 2 * VIEWPORT_MARGIN);
+function maxWindowWidth(viewportWidth: number, margin: number): number {
+  return Math.max(MIN_WIDTH, viewportWidth - 2 * margin);
 }
 
 /** The largest height a window may take in a browser window of the given height. */
-function maxWindowHeight(viewportHeight: number): number {
-  return Math.max(MIN_HEIGHT, viewportHeight - 2 * VIEWPORT_MARGIN);
+function maxWindowHeight(viewportHeight: number, margin: number): number {
+  return Math.max(MIN_HEIGHT, viewportHeight - 2 * margin);
 }
 
 /** The size of the browser window, updated when the browser window is resized. */
@@ -37,18 +38,6 @@ function useViewportSize(): { width: number; height: number } {
   }, []);
   return size;
 }
-
-/**
- * Registers Escape -> close in the enclosing window scope as a fallback. Rendered as the first
- * child of the scope so an explicit action's {@code key="ESCAPE"} (mounted later) overrides it.
- */
-const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  useKeyboardBinding('ESCAPE', () => {
-    onClose();
-    return true;
-  });
-  return null;
-};
 
 const I18N_KEYS = {
   'js.window.close': 'Close',
@@ -101,10 +90,6 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const serverHeight = state.height ?? null;
   const customWidth = state.customWidth ?? null;
   const customHeight = state.customHeight ?? null;
-  const viewport = useViewportSize();
-  const customFits = customWidth != null && customHeight != null
-    && customWidth <= maxWindowWidth(viewport.width)
-    && customHeight <= maxWindowHeight(viewport.height);
   const resizable = state.resizable === true;
   // A window held open by ongoing work: Escape is left to the enclosing scope and the close
   // button stays visible, but disabled.
@@ -130,6 +115,16 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const localHeightRef = useRef<number | null>(null);
 
   const windowRef = useRef<HTMLDivElement>(null);
+
+  // The margin the scrim keeps (--tl-space-lg); read for resizing and for checking a remembered size.
+  const margin = useTokenPx(windowRef, '--tl-space-lg', DEFAULT_MARGIN);
+  const marginRef = useRef(margin);
+  marginRef.current = margin;
+
+  const viewport = useViewportSize();
+  const customFits = customWidth != null && customHeight != null
+    && customWidth <= maxWindowWidth(viewport.width, margin)
+    && customHeight <= maxWindowHeight(viewport.height, margin);
   const dragState = useRef<{
     dir: ResizeDir;
     startX: number;
@@ -203,8 +198,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
         // The window never grows beyond the browser window, so the size reported and remembered
         // for it fits again when the window is opened next time.
-        const newW = Math.min(maxWindowWidth(window.innerWidth), Math.max(MIN_WIDTH, w));
-        const newH = Math.min(maxWindowHeight(window.innerHeight), Math.max(MIN_HEIGHT, h));
+        const newW = Math.min(maxWindowWidth(window.innerWidth, marginRef.current), Math.max(MIN_WIDTH, w));
+        const newH = Math.min(maxWindowHeight(window.innerHeight, marginRef.current), Math.max(MIN_HEIGHT, h));
 
         if (ds.symmetric) {
           // Keep center fixed: position shifts by half the size change.
@@ -349,7 +344,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   }, [maximized, localWidth, localHeight]);
 
   const style: React.CSSProperties = maximized
-    ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }
+    ? {}
     : {
         width: localWidth != null ? localWidth + 'px' : customFits ? customWidth + 'px' : serverWidth,
         ...(localHeight != null
@@ -361,10 +356,6 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         ...(customFits && localHeight == null
           ? { minHeight: customHeight + 'px' }
           : {}),
-        // The height limit of the stylesheet holds until the user gives the window a height: a
-        // window that is moved keeps the height it had, also where its content is taller. A height
-        // given by resizing fits into the browser window already.
-        ...(localHeight != null ? { maxHeight: '100vh' } : {}),
         ...(position
           ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }
           : {}),
@@ -378,84 +369,70 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     <KeyboardScopeProvider modal>
       {closable && <EscapeToClose onClose={handleClose} />}
       <div
-      id={controlId}
-      className={rootClassName(state, 'tlWindow')}
-      style={style}
-      ref={windowRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-    >
-      <div
-        className={`tlWindow__header${maximized ? ' tlWindow__header--maximized' : ''}`}
-        onPointerDown={maximized ? undefined : handleTitlePointerDown}
-        onDoubleClick={resizable ? handleToggleMaximize : undefined}
+        id={controlId}
+        className={rootClassName(state, 'tl-dialog__surface')}
+        style={style}
+        ref={windowRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        data-tl-state={maximized ? 'maximized' : undefined}
       >
-        <span className="tlWindow__title" id={titleId}>{title}</span>
-        {!!toolbar && (
-          <div className="tlWindow__toolbar">
-            <TLChild control={toolbar} />
-          </div>
-        )}
-        {/* Maximizing only makes sense for resizable windows; fixed-size dialogs (e.g. login) omit it. */}
-        {resizable && (
-        <button
-          type="button"
-          className="tlWindow__maximizeBtn"
-          onClick={handleToggleMaximize}
-          aria-label={maximizeLabel}
-          {...tooltipProps(maximizeLabel)}
-        >
-          {maximized ? (
-            // Restore icon: two overlapping squares.
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <rect x="4" y="8" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth="2" />
-              <path d="M8 8V5.5A1.5 1.5 0 0 1 9.5 4H18.5A1.5 1.5 0 0 1 20 5.5V14.5A1.5 1.5 0 0 1 18.5 16H16" fill="none" stroke="currentColor" strokeWidth="2" />
-            </svg>
-          ) : (
-            // Maximize icon: single square.
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <rect x="4" y="4" width="16" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="2" />
-            </svg>
-          )}
-        </button>
-        )}
-        <button
-          type="button"
-          className="tlWindow__closeBtn"
-          onClick={handleClose}
-          disabled={!closable}
-          aria-label={i18n['js.window.close']}
-          {...tooltipProps(i18n['js.window.close'])}
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" />
-            <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
-      <div className="tlWindow__body">
-        <FillBarrier>
-          <TLChild control={child} />
-        </FillBarrier>
-      </div>
-      {!!footer && (
-        <ButtonDefaults appearance="secondary">
-          <div className="tlWindow__footer">
-            <TLChild control={footer} />
-          </div>
-        </ButtonDefaults>
-      )}
-      {resizable && !maximized && RESIZE_HANDLES.map(dir => (
         <div
-          key={dir}
-          className={`tlWindow__resizeHandle tlWindow__resizeHandle--${dir}`}
-          onPointerDown={(e) => handleResizePointerDown(dir, e)}
-          onDoubleClick={handleResetSize}
-        />
-      ))}
+          className="tl-titlebar"
+          onPointerDown={maximized ? undefined : handleTitlePointerDown}
+          onDoubleClick={resizable ? handleToggleMaximize : undefined}
+        >
+          <h2 className="tl-titlebar__title tl-type-heading-sm" id={titleId}>{title}</h2>
+          {!!toolbar && (
+            <div className="tl-titlebar__actions">
+              <TLChild control={toolbar} />
+            </div>
+          )}
+          {/* Maximizing only makes sense for resizable windows; fixed-size dialogs (e.g. login) omit it. */}
+          {resizable && (
+            <button
+              type="button"
+              className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+              onClick={handleToggleMaximize}
+              aria-label={maximizeLabel}
+              {...tooltipProps(maximizeLabel)}
+            >
+              <ThemeIcon encoded={maximized ? ICON_RESTORE : ICON_MAXIMIZE} className="tl-button__icon tl-icon-sm" />
+            </button>
+          )}
+          <button
+            type="button"
+            className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+            onClick={handleClose}
+            disabled={!closable}
+            aria-label={i18n['js.window.close']}
+            {...tooltipProps(i18n['js.window.close'])}
+          >
+            <ThemeIcon encoded={ICON_CLOSE} className="tl-button__icon tl-icon-sm" />
+          </button>
+        </div>
+        <div className="tl-dialog__body">
+          <FillBarrier>
+            <TLChild control={child} />
+          </FillBarrier>
+        </div>
+        {!!footer && (
+          <ButtonDefaults appearance="secondary">
+            <div className="tl-dialog__footer">
+              <TLChild control={footer} />
+            </div>
+          </ButtonDefaults>
+        )}
+        {resizable && !maximized && RESIZE_HANDLES.map(dir => (
+          <div
+            key={dir}
+            className="tl-dialog__resize"
+            data-tl-edge={dir}
+            onPointerDown={(e) => handleResizePointerDown(dir, e)}
+            onDoubleClick={handleResetSize}
+          />
+        ))}
       </div>
     </KeyboardScopeProvider>
   );

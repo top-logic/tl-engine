@@ -9,12 +9,12 @@ const { useRef } = React;
  * State:
  * - dialogs: ChildDescriptor[]
  *
- * Opening and closing a dialog is a transition an application stylesheet owns: the backdrop of a
+ * Opening and closing a dialog is a transition a stylesheet draws: the backdrop of a
  * dialog that opened carries `tlDialog__backdrop--entering` while it arrives, and a dialog that
  * closed is held on screen as an inert copy of its backdrop marked `tlDialog__backdrop--exiting`
- * while it leaves. The copy belongs here rather than to the dialog, whose control is disposed on
- * the server the moment it closes; this element outlives every dialog it holds and is therefore
- * where the copy is shown.
+ * while it leaves; the engine draws a default fade for both, which a stylesheet redefines. The copy
+ * belongs here rather than to the dialog, whose control is disposed on the server the moment it
+ * closes; this element outlives every dialog it holds and is therefore where the copy is shown.
  */
 const TLDialogManager: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();

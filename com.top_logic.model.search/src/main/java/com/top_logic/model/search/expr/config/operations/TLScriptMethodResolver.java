@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,19 +71,12 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 		for (Class<?> methodsClass : allTLScriptFunctions) {
 			String scriptPrefix = computeScriptPrefix(methodsClass);
 			for (Method m : methodsClass.getDeclaredMethods()) {
-				if (m.isSynthetic()) {
-					continue;
-				}
-				if (!Modifier.isStatic(m.getModifiers())) {
-					continue;
-				}
-				if (!Modifier.isPublic(m.getModifiers())) {
+				if (!Builder.isScriptFunction(m)) {
 					continue;
 				}
 				String localScriptName = Builder.getLocalScriptName(m);
 				String scriptName = prefixLocalName(scriptPrefix, localScriptName);
-				String qualifiedMethodName =
-						methodsClass.getCanonicalName() + TLScriptMethod.Builder.METHOD_SEPARATOR + m.getName();
+				String qualifiedMethodName = Builder.signature(m);
 				
 				Builder clash = buildersByName.get(scriptName);
 				if (clash != null) {

@@ -54,6 +54,11 @@ public interface AssignmentBase extends test.com.top_logic.model.search.model.te
 	String WRITERS_ATTR = "writers";
 
 	/**
+	 * Name of the table storing {@link #ASSIGNMENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #AREA_ATTR}.
 	 */
 	default test.com.top_logic.model.search.model.testScriptPathElement.ZArea getArea() {

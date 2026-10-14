@@ -64,7 +64,7 @@ public class FullPageElement extends CommandScopeElement {
 		// keeps the (reused) panel control header-less; the fill flag makes it span the available
 		// height so its content scrolls internally.
 		ReactPanelControl page = new ReactPanelControl(context, "", content, null, null, false, false, false);
-		page.setFill(true);
+		page.setFill(Boolean.TRUE);
 		return page;
 	}
 }

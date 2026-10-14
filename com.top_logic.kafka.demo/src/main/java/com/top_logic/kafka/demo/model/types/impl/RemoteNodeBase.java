@@ -36,6 +36,11 @@ public interface RemoteNodeBase extends com.top_logic.kafka.demo.model.types.Com
 	String OTHER_REMOTE_NODE_ATTR = "otherRemoteNode";
 
 	/**
+	 * Name of the table storing {@link #REMOTE_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "KafkaDemoRemote";
+
+	/**
 	 * Getter for part {@link #EXTERNAL_ID_ATTR}.
 	 */
 	default String getExternalId() {

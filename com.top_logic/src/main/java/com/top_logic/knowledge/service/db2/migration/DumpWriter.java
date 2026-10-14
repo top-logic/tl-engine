@@ -30,7 +30,6 @@ import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.db2.migration.db.RowValue;
 import com.top_logic.knowledge.service.migration.Version;
 import com.top_logic.knowledge.service.migration.VersionDescriptor;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
@@ -250,7 +249,7 @@ public class DumpWriter extends AbstractDumpWriter implements IDumpWriter {
 		if (item instanceof KnowledgeObject) {
 			KnowledgeObject ko = (KnowledgeObject) item;
 			Wrapper wrapper = WrapperFactory.getWrapper(ko);
-			values = ((AbstractWrapper) wrapper).getAllValues();
+			values = wrapper.getAllValues();
 		} else {
 			values = new HashMap<>();
 			String[] attributes = item.getAttributeNames();

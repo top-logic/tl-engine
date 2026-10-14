@@ -66,7 +66,7 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
     }
     
     /**
-     * Test {@link AbstractWrapper#compareTo(Wrapper)}.
+     * Test {@link Wrapper#compareTo(Wrapper)}.
      */
     public void testComparable() throws Exception {
 		Wrapper wrapper1 = new TestWrapper("111", DummyKnowledgeObject.item("id1"));
@@ -107,7 +107,7 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 	}
 
 	/**
-	 * Test {@link AbstractWrapper#compareTo(Wrapper)} via {@link Collections#sort(List)}
+	 * Test {@link Wrapper#compareTo(Wrapper)} via {@link Collections#sort(List)}
 	 */
     public void testComparableSort() throws Exception {
 		Wrapper wrapper1 = new TestWrapper("111", DummyKnowledgeObject.item("id1"));

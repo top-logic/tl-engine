@@ -485,6 +485,26 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public int matchCount() {
+		return _source.matchCount();
+	}
+
+	@Override
+	public int dataCount() {
+		return _source.dataCount();
+	}
+
+	@Override
+	public List<Object> matchingKeys() {
+		return _source.matchingKeys();
+	}
+
+	@Override
+	public Set<Object> matchingKeys(Collection<?> keys) {
+		return _source.matchingKeys(keys);
+	}
+
+	@Override
 	public List<Row<R>> rows(int from, int to) {
 		return _source.window(from, to);
 	}

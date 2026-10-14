@@ -17,15 +17,23 @@ package com.top_logic.kafka.demo.model.types;
 public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>kafka.demo</code> defined by {@link KafkaDemoFactory}.
+	 * Name of the module <code>kafka.demo</code> defined by {@link KafkaDemoFactory}.
 	 */
-	public static final String KAFKA_DEMO_STRUCTURE = "kafka.demo";
+	public static final String KAFKA_DEMO_MODULE = "kafka.demo";
+
+	/**
+	 * Name of the structure <code>kafka.demo</code> defined by {@link KafkaDemoFactory}.
+	 * 
+	 * @deprecated Use {@link #KAFKA_DEMO_MODULE}.
+	 */
+	@Deprecated
+	public static final String KAFKA_DEMO_STRUCTURE = KAFKA_DEMO_MODULE;
 
 	/**
 	 * Lookup {@link CommonNode} type.
 	 */
 	public static com.top_logic.model.TLClass getCommonNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_STRUCTURE).getType(CommonNode.COMMON_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_MODULE).getType(CommonNode.COMMON_NODE_TYPE);
 	}
 
 	/**
@@ -53,7 +61,7 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Node} type.
 	 */
 	public static com.top_logic.model.TLClass getNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_STRUCTURE).getType(Node.NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_MODULE).getType(Node.NODE_TYPE);
 	}
 
 	/**
@@ -88,7 +96,7 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link RemoteNode} type.
 	 */
 	public static com.top_logic.model.TLClass getRemoteNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_STRUCTURE).getType(RemoteNode.REMOTE_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_MODULE).getType(RemoteNode.REMOTE_NODE_TYPE);
 	}
 
 	/**
@@ -109,11 +117,11 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link UntransferredNode} type.
 	 */
 	public static com.top_logic.model.TLClass getUntransferredNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_STRUCTURE).getType(UntransferredNode.UNTRANSFERRED_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(KAFKA_DEMO_MODULE).getType(UntransferredNode.UNTRANSFERRED_NODE_TYPE);
 	}
 
 	/**
-	 * Name of type <code>CommonNode</code> in structure {@link #KAFKA_DEMO_STRUCTURE}.
+	 * Name of type <code>CommonNode</code> in module {@link #KAFKA_DEMO_MODULE}.
 	 * 
 	 * @deprecated Use {@link CommonNode#COMMON_NODE_TYPE}.
 	 */
@@ -121,7 +129,7 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String COMMON_NODE_NODE = CommonNode.COMMON_NODE_TYPE;
 
 	/**
-	 * Name of type <code>Node</code> in structure {@link #KAFKA_DEMO_STRUCTURE}.
+	 * Name of type <code>Node</code> in module {@link #KAFKA_DEMO_MODULE}.
 	 * 
 	 * @deprecated Use {@link Node#NODE_TYPE}.
 	 */
@@ -130,11 +138,14 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.kafka.demo.model.types.impl.NodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_NODE = "KafkaDemo";
+	@Deprecated
+	public static final String KO_NAME_NODE = com.top_logic.kafka.demo.model.types.impl.NodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>RemoteNode</code> in structure {@link #KAFKA_DEMO_STRUCTURE}.
+	 * Name of type <code>RemoteNode</code> in module {@link #KAFKA_DEMO_MODULE}.
 	 * 
 	 * @deprecated Use {@link RemoteNode#REMOTE_NODE_TYPE}.
 	 */
@@ -143,11 +154,14 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #REMOTE_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.kafka.demo.model.types.impl.RemoteNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_REMOTE_NODE = "KafkaDemoRemote";
+	@Deprecated
+	public static final String KO_NAME_REMOTE_NODE = com.top_logic.kafka.demo.model.types.impl.RemoteNodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>UntransferredNode</code> in structure {@link #KAFKA_DEMO_STRUCTURE}.
+	 * Name of type <code>UntransferredNode</code> in module {@link #KAFKA_DEMO_MODULE}.
 	 * 
 	 * @deprecated Use {@link UntransferredNode#UNTRANSFERRED_NODE_TYPE}.
 	 */
@@ -156,8 +170,11 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #UNTRANSFERRED_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.kafka.demo.model.types.impl.UntransferredNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_UNTRANSFERRED_NODE = "KafkaDemoUntransferred";
+	@Deprecated
+	public static final String KO_NAME_UNTRANSFERRED_NODE = com.top_logic.kafka.demo.model.types.impl.UntransferredNodeBase.TABLE_NAME;
 
 
 	/**
@@ -206,6 +223,6 @@ public class KafkaDemoFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * The singleton instance of {@link KafkaDemoFactory}.
 	 */
 	public static KafkaDemoFactory getInstance() {
-		return (KafkaDemoFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(KAFKA_DEMO_STRUCTURE);
+		return (KafkaDemoFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(KAFKA_DEMO_MODULE);
 	}
 }

@@ -49,16 +49,26 @@ public abstract class AbstractModelPatchTest extends BasicTestCase {
 	}
 
 	protected TLModel loadModel(String name) {
-		return loadModel(PersistentTLModel.newInstance(kb()), new DefaultModelFactory(), name);
+		return loadModel(readModelConfig(name));
+	}
+
+	protected TLModel loadModel(ModelConfig config) {
+		return loadModel(PersistentTLModel.newInstance(kb()), new DefaultModelFactory(), config);
 	}
 
 	protected TLModel loadModelTransient(String name) {
-		return loadModel(new TLModelImpl(), TransientObjectFactory.INSTANCE, name);
+		return loadModelTransient(readModelConfig(name));
 	}
 
-	protected TLModel loadModel(TLModel model, TLFactory factory, String name) {
-		ModelConfig config =
-			DefinitionReader.readElementConfig(new ClassRelativeBinaryContent(TestModelPatch.class, name));
+	protected TLModel loadModelTransient(ModelConfig config) {
+		return loadModel(new TLModelImpl(), TransientObjectFactory.INSTANCE, config);
+	}
+
+	protected ModelConfig readModelConfig(String name) {
+		return DefinitionReader.readElementConfig(new ClassRelativeBinaryContent(TestModelPatch.class, name));
+	}
+
+	protected TLModel loadModel(TLModel model, TLFactory factory, ModelConfig config) {
 		AssertProtocol log = new AssertProtocol();
 		ModelResolver modelResolver = new TestingModelResolver(log, model, factory);
 		modelResolver.createModel(config);

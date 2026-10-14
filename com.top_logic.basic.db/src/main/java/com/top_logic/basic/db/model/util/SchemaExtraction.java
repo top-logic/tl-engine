@@ -114,8 +114,9 @@ public class SchemaExtraction {
 		DBTable table = DBSchemaFactory.createTable(tableName);
 		String sourceCatalog = metaData.getConnection().getCatalog();
 		String sourceSchema = sqlDialect.getCurrentSchema(metaData.getConnection());
+		String metaDataTableName = sqlDialect.tablePattern(tableName);
 		try (ResultSet columns =
-			metaData.getColumns(sourceCatalog, sourceSchema, sqlDialect.tablePattern(tableName), "%")) {
+			metaData.getColumns(sourceCatalog, sourceSchema, metaDataTableName, "%")) {
 			int COLUMN_NAME = 4;
 			int DATA_TYPE = 5;
 			int TYPE_NAME = 6;
@@ -164,7 +165,7 @@ public class SchemaExtraction {
 		String pkName = null;
 		List<DBColumn> keyColumns = new ArrayList<>(); 
 		try (ResultSet primaryKeys =
-			metaData.getPrimaryKeys(sourceCatalog, sourceSchema, sqlDialect.tablePattern(tableName))) {
+			metaData.getPrimaryKeys(sourceCatalog, sourceSchema, metaDataTableName)) {
 			final int COLUMN_NAME = 4; 
 			final int KEY_SEQ = 5;
 			final int PK_NAME = 6;
@@ -206,7 +207,7 @@ public class SchemaExtraction {
 			table.setPrimaryKey(primaryKey);
 		}
 		
-		try (ResultSet indexInfo = metaData.getIndexInfo(sourceCatalog, sourceSchema, tableName, /* unique */ false,
+		try (ResultSet indexInfo = metaData.getIndexInfo(sourceCatalog, sourceSchema, metaDataTableName, /* unique */ false,
 			/* approximate */ false)) {
 			Object currentIndexName = NONE;
 			DBIndex currentIndex = null;

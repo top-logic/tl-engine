@@ -45,6 +45,11 @@ public interface AssemblyBase extends test.com.top_logic.model.search.model.test
 	String PLANT_ATTR = "plant";
 
 	/**
+	 * Name of the table storing {@link #ASSEMBLY_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #AREA_ATTR}.
 	 */
 	default test.com.top_logic.model.search.model.testScriptPathElement.ZAreaInstance getArea() {

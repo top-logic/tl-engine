@@ -5,93 +5,23 @@
  */
 package com.top_logic.tool.boundsec.wrap;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-
-import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
-import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
- * Persistent {@link com.top_logic.tool.boundsec.BoundObject}.
+ * Base class of persistent objects that are {@link com.top_logic.tool.boundsec.BoundObject}s.
+ * 
+ * <p>
+ * The security behavior is defined by {@link BoundWrapper}.
+ * </p>
  *
  * @author <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */
-public abstract class AbstractBoundWrapper extends AbstractWrapper implements BoundObject {
+public abstract class AbstractBoundWrapper extends AbstractWrapper implements BoundWrapper {
 
 	/** Constructor */
     public AbstractBoundWrapper(KnowledgeObject ko) {
         super(ko);
     }
-
-    @Override
-	public final TLID getID() {
-		return KBUtils.getWrappedObjectName(this);
-    }
-
-    @Override
-	public final Set<BoundRole> getRoles(Person aPerson) {
-		return BoundedRole.getRoles(this, toGroup(aPerson));
-    }
-
-	private static Group toGroup(Person aPerson) {
-		return aPerson == null ? null : aPerson.getRepresentativeGroup();
-	}
-
-	@Override
-	public final Set<BoundRole> getRoles(Group aGroup) {
-		return BoundedRole.getRoles(this, aGroup);
-    }
-
-    @Override
-	public final Set<BoundRole> getLocalAndGlobalRoles(Person aPerson) {
-		return BoundedRole.getLocalAndGlobalRoles(this, aPerson);
-    }
-
-    @Override
-	public final Set<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
-		return BoundedRole.getLocalAndGlobalAndGroupRoles(this, aPerson);
-    }
-
-    @Override
-	public final boolean hasAnyRole(Person aPerson) {
-		return BoundedRole.hasLocalOrGlobalOrGroupRole(this, aPerson);
-    }
-
-    @Override
-	public final Set<BoundRole> getRoles() {
-		return BoundedRole.getRoles(this, null);
-    }
-
-    @Override
-	public Collection<? extends BoundObject> getSecurityChildren() {
-		return Collections.emptyList();
-    }
-
-    @Override
-	public final BoundObject getSecurityParent() {
-		throw new UnsupportedOperationException("Call getSecurityParents()");
-	}
-
-	/**
-	 * The security parents configured for the type of this object.
-	 * 
-	 * <p>
-	 * The security-parent rules of the {@link AccessManager} define the parent set. An object
-	 * whose type has no security-parent rules has no security parent. The global security root
-	 * is a parent only if a rule names it explicitly (the "singleton" security-parent path
-	 * element).
-	 * </p>
-	 */
-	@Override
-	public Collection<? extends BoundObject> getSecurityParents() {
-		return AccessManager.getInstance().getSecurityParents(this);
-	}
 
 }

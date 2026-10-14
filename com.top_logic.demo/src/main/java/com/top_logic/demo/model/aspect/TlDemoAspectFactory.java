@@ -17,20 +17,28 @@ package com.top_logic.demo.model.aspect;
 public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of singleton {@link #TL_DEMO_ASPECT_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT = "ROOT";
 
 	/**
-	 * Name of the structure <code>tl.demo.aspect</code> defined by {@link TlDemoAspectFactory}.
+	 * Name of the module <code>tl.demo.aspect</code> defined by {@link TlDemoAspectFactory}.
 	 */
-	public static final String TL_DEMO_ASPECT_STRUCTURE = "tl.demo.aspect";
+	public static final String TL_DEMO_ASPECT_MODULE = "tl.demo.aspect";
+
+	/**
+	 * Name of the structure <code>tl.demo.aspect</code> defined by {@link TlDemoAspectFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_DEMO_ASPECT_MODULE}.
+	 */
+	@Deprecated
+	public static final String TL_DEMO_ASPECT_STRUCTURE = TL_DEMO_ASPECT_MODULE;
 
 	/**
 	 * Lookup {@link Common} type.
 	 */
 	public static com.top_logic.model.TLClass getCommonType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(Common.COMMON_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(Common.COMMON_TYPE);
 	}
 
 	/**
@@ -58,7 +66,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
@@ -107,7 +115,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * Lookup {@link B} type.
 	 */
 	public static com.top_logic.model.TLClass getBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(B.B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(B.B_TYPE);
 	}
 
 	/**
@@ -128,7 +136,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * Lookup {@link C} type.
 	 */
 	public static com.top_logic.model.TLClass getCType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(C.C_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(C.C_TYPE);
 	}
 
 	/**
@@ -177,7 +185,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * Lookup {@link CDefaults} type.
 	 */
 	public static com.top_logic.model.TLClass getCDefaultsType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(CDefaults.C_DEFAULTS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(CDefaults.C_DEFAULTS_TYPE);
 	}
 
 	/**
@@ -205,7 +213,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * Lookup {@link RootNode} type.
 	 */
 	public static com.top_logic.model.TLClass getRootNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(RootNode.ROOT_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(RootNode.ROOT_NODE_TYPE);
 	}
 
 	/**
@@ -219,35 +227,35 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * Lookup {@link ANode} type.
 	 */
 	public static com.top_logic.model.TLClass getANodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(ANode.A_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(ANode.A_NODE_TYPE);
 	}
 
 	/**
 	 * Lookup {@link BNode} type.
 	 */
 	public static com.top_logic.model.TLClass getBNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(BNode.B_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(BNode.B_NODE_TYPE);
 	}
 
 	/**
 	 * Lookup {@link CNode} type.
 	 */
 	public static com.top_logic.model.TLClass getCNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(CNode.C_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(CNode.C_NODE_TYPE);
 	}
 
 	/**
 	 * Lookup {@link CNodeDefaults} type.
 	 */
 	public static com.top_logic.model.TLClass getCNodeDefaultsType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(CNodeDefaults.C_NODE_DEFAULTS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(CNodeDefaults.C_NODE_DEFAULTS_TYPE);
 	}
 
 	/**
 	 * Lookup {@link CommonChild} type.
 	 */
 	public static com.top_logic.model.TLClass getCommonChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_STRUCTURE).getType(CommonChild.COMMON_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_DEMO_ASPECT_MODULE).getType(CommonChild.COMMON_CHILD_TYPE);
 	}
 
 	/**
@@ -258,7 +266,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	}
 
 	/**
-	 * Name of type <code>Common</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>Common</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Common#COMMON_TYPE}.
 	 */
@@ -266,7 +274,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	public static final String COMMON_NODE = Common.COMMON_TYPE;
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -274,7 +282,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	public static final String A_NODE = A.A_TYPE;
 
 	/**
-	 * Name of type <code>B</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>B</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link B#B_TYPE}.
 	 */
@@ -282,7 +290,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	public static final String B_NODE = B.B_TYPE;
 
 	/**
-	 * Name of type <code>C</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>C</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link C#C_TYPE}.
 	 */
@@ -290,7 +298,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	public static final String C_NODE = C.C_TYPE;
 
 	/**
-	 * Name of type <code>CDefaults</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>CDefaults</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link CDefaults#C_DEFAULTS_TYPE}.
 	 */
@@ -298,7 +306,7 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	public static final String C_DEFAULTS_NODE = CDefaults.C_DEFAULTS_TYPE;
 
 	/**
-	 * Name of type <code>RootNode</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>RootNode</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link RootNode#ROOT_NODE_TYPE}.
 	 */
@@ -307,11 +315,14 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 
 	/**
 	 * Storage table name of {@link #ROOT_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.aspect.wrap.RootNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ROOT_NODE = "DemoAspect";
+	@Deprecated
+	public static final String KO_NAME_ROOT_NODE = com.top_logic.demo.model.aspect.wrap.RootNodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ANode</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>ANode</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link ANode#A_NODE_TYPE}.
 	 */
@@ -320,11 +331,14 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 
 	/**
 	 * Storage table name of {@link #A_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.aspect.wrap.ANodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A_NODE = "DemoAspect";
+	@Deprecated
+	public static final String KO_NAME_A_NODE = com.top_logic.demo.model.aspect.wrap.ANodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>BNode</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>BNode</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link BNode#B_NODE_TYPE}.
 	 */
@@ -333,11 +347,14 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 
 	/**
 	 * Storage table name of {@link #B_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.aspect.wrap.BNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B_NODE = "DemoAspect";
+	@Deprecated
+	public static final String KO_NAME_B_NODE = com.top_logic.demo.model.aspect.wrap.BNodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CNode</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>CNode</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link CNode#C_NODE_TYPE}.
 	 */
@@ -346,11 +363,14 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 
 	/**
 	 * Storage table name of {@link #C_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.aspect.wrap.CNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_C_NODE = "DemoAspect";
+	@Deprecated
+	public static final String KO_NAME_C_NODE = com.top_logic.demo.model.aspect.wrap.CNodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CNodeDefaults</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>CNodeDefaults</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link CNodeDefaults#C_NODE_DEFAULTS_TYPE}.
 	 */
@@ -359,11 +379,14 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 
 	/**
 	 * Storage table name of {@link #C_NODE_DEFAULTS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.aspect.wrap.CNodeDefaultsBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_C_NODE_DEFAULTS = "DemoAspect";
+	@Deprecated
+	public static final String KO_NAME_C_NODE_DEFAULTS = com.top_logic.demo.model.aspect.wrap.CNodeDefaultsBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CommonChild</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
+	 * Name of type <code>CommonChild</code> in module {@link #TL_DEMO_ASPECT_MODULE}.
 	 * 
 	 * @deprecated Use {@link CommonChild#COMMON_CHILD_TYPE}.
 	 */
@@ -466,6 +489,6 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	 * The singleton instance of {@link TlDemoAspectFactory}.
 	 */
 	public static TlDemoAspectFactory getInstance() {
-		return (TlDemoAspectFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_DEMO_ASPECT_STRUCTURE);
+		return (TlDemoAspectFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_DEMO_ASPECT_MODULE);
 	}
 }

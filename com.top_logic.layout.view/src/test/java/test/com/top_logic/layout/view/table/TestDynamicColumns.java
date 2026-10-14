@@ -18,6 +18,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -145,6 +146,22 @@ public class TestDynamicColumns extends TestCase {
 	}
 
 	/**
+	 * A column the set does not show from the start is only offered: exactly the columns it rejects
+	 * start out hidden.
+	 */
+	public void testVisibilityIsDecidedPerColumnObject() {
+		Columns partlyVisible = set("first", "second", "third");
+		partlyVisible.setVisible(column -> !column.equals("second"));
+
+		List<ColumnSetup> columns = resolve(declaration(), partlyVisible);
+
+		assertEquals("Only the rejected column starts out hidden.", List.of("milestones.second"),
+			List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
+		assertEquals("A set that says nothing about visibility shows all its columns.", List.of(),
+			List.copyOf(ColumnDeclarations.hiddenByDefault(resolve(declaration(), set("first", "second")))));
+	}
+
+	/**
 	 * What a column shows for a group of rows is computed from the group's rows and the object the
 	 * column stands for.
 	 */
@@ -211,6 +228,8 @@ public class TestDynamicColumns extends TestCase {
 
 		private Function<Object, Function<List<Object>, Object>> _aggregate = column -> null;
 
+		private Predicate<Object> _visible;
+
 		/**
 		 * Creates a {@link Columns} standing for the given objects, all of them holding values of
 		 * the given type.
@@ -238,6 +257,16 @@ public class TestDynamicColumns extends TestCase {
 		/** @see #aggregate(Object) */
 		void setAggregate(Function<Object, Function<List<Object>, Object>> aggregate) {
 			_aggregate = aggregate;
+		}
+
+		/** @see #visible(Object) */
+		void setVisible(Predicate<Object> visible) {
+			_visible = visible;
+		}
+
+		@Override
+		public boolean visible(Object column) {
+			return _visible == null ? DynamicColumnSet.super.visible(column) : _visible.test(column);
 		}
 
 		@Override

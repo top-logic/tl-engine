@@ -17,15 +17,23 @@ package com.top_logic.demo.model.containmentContext;
 public class TestContainmentContextFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>test.containmentContext</code> defined by {@link TestContainmentContextFactory}.
+	 * Name of the module <code>test.containmentContext</code> defined by {@link TestContainmentContextFactory}.
 	 */
-	public static final String TEST_CONTAINMENT_CONTEXT_STRUCTURE = "test.containmentContext";
+	public static final String TEST_CONTAINMENT_CONTEXT_MODULE = "test.containmentContext";
+
+	/**
+	 * Name of the structure <code>test.containmentContext</code> defined by {@link TestContainmentContextFactory}.
+	 * 
+	 * @deprecated Use {@link #TEST_CONTAINMENT_CONTEXT_MODULE}.
+	 */
+	@Deprecated
+	public static final String TEST_CONTAINMENT_CONTEXT_STRUCTURE = TEST_CONTAINMENT_CONTEXT_MODULE;
 
 	/**
 	 * Lookup {@link Thing} type.
 	 */
 	public static com.top_logic.model.TLClass getThingType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_STRUCTURE).getType(Thing.THING_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_MODULE).getType(Thing.THING_TYPE);
 	}
 
 	/**
@@ -60,7 +68,14 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 	 * Lookup {@link Usage} type.
 	 */
 	public static com.top_logic.model.TLClass getUsageType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_STRUCTURE).getType(Usage.USAGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_MODULE).getType(Usage.USAGE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Usage#NAME_ATTR} of {@link Usage}.
+	 */
+	public static com.top_logic.model.TLProperty getNameUsageAttr() {
+		return (com.top_logic.model.TLProperty) getUsageType().getPart(Usage.NAME_ATTR);
 	}
 
 	/**
@@ -88,7 +103,7 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 	 * Lookup {@link World} type.
 	 */
 	public static com.top_logic.model.TLClass getWorldType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_STRUCTURE).getType(World.WORLD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_CONTAINMENT_CONTEXT_MODULE).getType(World.WORLD_TYPE);
 	}
 
 	/**
@@ -106,7 +121,7 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 	}
 
 	/**
-	 * Name of type <code>Thing</code> in structure {@link #TEST_CONTAINMENT_CONTEXT_STRUCTURE}.
+	 * Name of type <code>Thing</code> in module {@link #TEST_CONTAINMENT_CONTEXT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Thing#THING_TYPE}.
 	 */
@@ -115,11 +130,14 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 
 	/**
 	 * Storage table name of {@link #THING_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.containmentContext.wrap.ThingBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_THING = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_THING = com.top_logic.demo.model.containmentContext.wrap.ThingBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Usage</code> in structure {@link #TEST_CONTAINMENT_CONTEXT_STRUCTURE}.
+	 * Name of type <code>Usage</code> in module {@link #TEST_CONTAINMENT_CONTEXT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Usage#USAGE_TYPE}.
 	 */
@@ -128,11 +146,14 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 
 	/**
 	 * Storage table name of {@link #USAGE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.containmentContext.wrap.UsageBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_USAGE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_USAGE = com.top_logic.demo.model.containmentContext.wrap.UsageBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>World</code> in structure {@link #TEST_CONTAINMENT_CONTEXT_STRUCTURE}.
+	 * Name of type <code>World</code> in module {@link #TEST_CONTAINMENT_CONTEXT_MODULE}.
 	 * 
 	 * @deprecated Use {@link World#WORLD_TYPE}.
 	 */
@@ -141,8 +162,11 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 
 	/**
 	 * Storage table name of {@link #WORLD_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.containmentContext.wrap.WorldBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_WORLD = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_WORLD = com.top_logic.demo.model.containmentContext.wrap.WorldBase.TABLE_NAME;
 
 
 	/**
@@ -191,6 +215,6 @@ public class TestContainmentContextFactory extends com.top_logic.element.meta.kb
 	 * The singleton instance of {@link TestContainmentContextFactory}.
 	 */
 	public static TestContainmentContextFactory getInstance() {
-		return (TestContainmentContextFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_CONTAINMENT_CONTEXT_STRUCTURE);
+		return (TestContainmentContextFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_CONTAINMENT_CONTEXT_MODULE);
 	}
 }

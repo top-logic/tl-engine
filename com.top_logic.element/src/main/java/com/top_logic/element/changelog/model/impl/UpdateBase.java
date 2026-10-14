@@ -27,6 +27,11 @@ public interface UpdateBase extends com.top_logic.element.changelog.model.Change
 	String MODIFICATIONS_ATTR = "modifications";
 
 	/**
+	 * Name of the table storing {@link #UPDATE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #MODIFICATIONS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

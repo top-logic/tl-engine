@@ -15,6 +15,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
@@ -67,6 +68,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
+
+		/** Configuration name for {@link #getVisible()}. */
+		String VISIBLE = "visible";
 
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
@@ -134,6 +138,19 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		Expr getAggregate();
 
 		/**
+		 * Whether the column is shown from the start.
+		 *
+		 * <p>
+		 * {@code false} offers the column in the column selection only: the table starts out
+		 * without it, and the user shows it by selecting it there. A user's own arrangement of the
+		 * table takes precedence over this setting.
+		 * </p>
+		 */
+		@Name(VISIBLE)
+		@BooleanDefault(true)
+		boolean getVisible();
+
+		/**
 		 * The order of this column's values: a function comparing two cell values, by which the
 		 * column sorts the rows and orders the groups it forms.
 		 *
@@ -190,7 +207,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = config.getWidth();
 		_aggregate = aggregate(config.getAggregate());
 		_comparator = comparator(config.getComparator());
-		_hiddenByDefault = false;
+		_hiddenByDefault = !config.getVisible();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
 	}

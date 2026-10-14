@@ -12,7 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.layout.person.EditPersonContactComponent;
 import com.top_logic.element.meta.form.component.AbstractApplyAttributedCommandHandler;
-import com.top_logic.element.meta.kbbased.AttributedWrapper;
+import com.top_logic.element.meta.kbbased.AttributedObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.model.FormContext;
@@ -47,7 +47,7 @@ public class ContactApplyHandler extends AbstractApplyAttributedCommandHandler {
     @Override
 	protected boolean storeChanges(LayoutComponent component, FormContext formContext, Object model) {
     	boolean flag = false;
-		if (model instanceof AttributedWrapper) {
+		if (model instanceof AttributedObject) {
 			flag = saveMetaAttributes(formContext);
         }
 //    	formfield for "representative" is automatically added for personcontacts that belong to a person

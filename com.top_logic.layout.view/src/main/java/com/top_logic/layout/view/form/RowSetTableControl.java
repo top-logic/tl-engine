@@ -157,6 +157,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** @see #setFilterBar(boolean) */
 	private boolean _filterBar;
 
+	/** @see #setRowCount(boolean) */
+	private boolean _rowCount = true;
+
 	private SortSpec _defaultSort = SortSpec.NONE;
 
 	/** The columns displayed only once the user selects them, taken from the resolved columns. */
@@ -400,6 +403,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setFilterBar(boolean filterBar) {
 		_filterBar = filterBar;
+	}
+
+	/**
+	 * Whether the table tells below its rows how many it has.
+	 *
+	 * @see TableViewControl#setRowCount(boolean)
+	 */
+	public void setRowCount(boolean rowCount) {
+		_rowCount = rowCount;
 	}
 
 	/**
@@ -669,6 +681,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
 
 		// Set panel child to the table.

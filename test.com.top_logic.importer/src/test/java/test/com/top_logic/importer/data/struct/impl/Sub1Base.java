@@ -17,4 +17,9 @@ public interface Sub1Base extends test.com.top_logic.importer.data.struct.TestSt
 	 */
 	String SUB1_TYPE = "Sub1";
 
+	/**
+	 * Name of the table storing {@link #SUB1_TYPE} objects.
+	 */
+	String TABLE_NAME = "StructuredElement";
+
 }

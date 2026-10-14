@@ -18,6 +18,11 @@ public interface ContextBase extends test.com.top_logic.importer.data.struct.Tes
 	String CONTEXT_TYPE = "Context";
 
 	/**
+	 * Name of the table storing {@link #CONTEXT_TYPE} objects.
+	 */
+	String TABLE_NAME = "StructuredElement";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

@@ -44,4 +44,9 @@ public interface TLAssociationBase extends com.top_logic.model.TLStructuredType 
 	 */
 	String UNION_ATTR = "union";
 
+	/**
+	 * Name of the table storing {@link #TL_ASSOCIATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "MetaElement";
+
 }

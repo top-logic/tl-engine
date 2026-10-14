@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -117,6 +118,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		/** Configuration name for {@link #getOnRemove()}. */
 		String ON_REMOVE = "on-remove";
 
+		/** Configuration name for {@link #getRowCount()}. */
+		String ROW_COUNT = "row-count";
+
 		/** Configuration name for {@link #getDrops()}. */
 		String DROPS = "drops";
 
@@ -190,6 +194,19 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		 */
 		@Name(ON_REMOVE)
 		RowSetBinding.RemoveMode getOnRemove();
+
+		/**
+		 * Whether the table tells below its rows how many rows it has.
+		 *
+		 * <p>
+		 * While a column filter, the search or a filter of the filter bar narrows the rows, the
+		 * count tells how many of all rows are displayed. In a table selecting several rows, it
+		 * tells how many are selected as well. A grouped table counts its rows, not its groups.
+		 * </p>
+		 */
+		@Name(ROW_COUNT)
+		@BooleanDefault(true)
+		boolean getRowCount();
 
 		/**
 		 * What this table accepts a drop of, and what it does with the dropped objects.
@@ -282,6 +299,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			_rowClass.bind(inputChannels));
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
+		control.setRowCount(_config.getRowCount());
 
 		contributeExportCommand(context, control, table::view,
 			() -> ColumnDeclarations.exportRenderers(table.setups()), inputChannels);
@@ -354,6 +372,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
 		control.setFilterBar(filterBar());
+		control.setRowCount(_config.getRowCount());
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());

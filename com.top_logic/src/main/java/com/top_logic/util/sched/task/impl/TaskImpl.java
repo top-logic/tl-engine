@@ -908,7 +908,7 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 			.beginTransaction(com.top_logic.util.sched.task.I18NConstants.STOPPED_CLUSTER_TASK__TASK.fill(getName()));
 		try {
 			TaskLogWrapper logWrapper = (TaskLogWrapper) getLog();
-			logWrapper.touch();
+			logWrapper.tTouch();
 			if (logWrapper.getState() != TaskState.RUNNING) {
 				// The chance for this is almost(!) 0 as it is checked above,
 				// but to be (race condition) safe, it's here anyway.

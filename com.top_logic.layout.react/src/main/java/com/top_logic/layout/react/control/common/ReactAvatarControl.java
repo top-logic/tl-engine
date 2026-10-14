@@ -10,6 +10,7 @@ import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.image.ImageSource;
+import com.top_logic.layout.react.state.AvatarState;
 
 /**
  * A {@link ReactControl} that displays a person or object as a circular avatar via the
@@ -20,16 +21,14 @@ import com.top_logic.layout.react.control.image.ImageSource;
  * with the initials of the display name on one of the eight category roles of the design system, which
  * the client derives from that name.
  * </p>
+ *
+ * <p>
+ * The state is described by {@link AvatarState}.
+ * </p>
  */
 public class ReactAvatarControl extends ReactControl implements DataProvider {
 
 	private static final String REACT_MODULE = "TLAvatar";
-
-	/** State key for the display name the avatar represents, or {@code null} for no value. */
-	public static final String NAME = "name";
-
-	/** @see #setSize(AvatarSize) */
-	public static final String SIZE = "size";
 
 	private final ImageSource _image = new ImageSource(this::putState);
 
@@ -54,14 +53,14 @@ public class ReactAvatarControl extends ReactControl implements DataProvider {
 	 *        The new display name, or {@code null} to display nothing.
 	 */
 	public void setName(String name) {
-		putState(NAME, name);
+		putState(AvatarState.NAME__PROP, name);
 	}
 
 	/**
 	 * Sets the diameter of the circle.
 	 */
 	public void setSize(AvatarSize size) {
-		putState(SIZE, size.getExternalName());
+		putState(AvatarState.SIZE__PROP, size.getExternalName());
 	}
 
 	/**

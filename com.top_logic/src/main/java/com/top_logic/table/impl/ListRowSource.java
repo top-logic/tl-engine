@@ -80,8 +80,29 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	private List<Row<R>> _displayed;
 
-	/** The filtered and sorted business objects the {@link #_displayed} rows are built from. */
-	private List<R> _rows = List.of();
+	/**
+	 * The {@link #_elements} the {@link #_filter} lets pass, in sort order - the list
+	 * {@link #recompute()} builds the displayed rows from anyway, kept for {@link #matchCount()},
+	 * {@link #matchingKeys()} and {@link #allRows()}.
+	 */
+	private List<R> _matching = List.of();
+
+	/**
+	 * The keys of {@link #_matching}, for {@link #matchingKeys(Collection)}, or {@code null} until
+	 * asked for after a {@link #recompute()}.
+	 */
+	private Set<Object> _matchingKeys;
+
+	/**
+	 * The number of {@link #_elements}, see {@link #dataCount()}.
+	 *
+	 * <p>
+	 * Taken in {@link #recompute()} together with {@link #_matching}, so that the two counts
+	 * describe the same elements even when the backing list - which is not copied - is changed
+	 * without {@link #setElements(List) telling} this source.
+	 * </p>
+	 */
+	private int _dataCount;
 
 	/**
 	 * Creates a {@link ListRowSource} using object identity as the row key.
@@ -139,6 +160,47 @@ public class ListRowSource<R> implements RowSource<R> {
 	}
 
 	@Override
+	public int matchCount() {
+		return _matching.size();
+	}
+
+	@Override
+	public int dataCount() {
+		return _dataCount;
+	}
+
+	@Override
+	public List<Object> matchingKeys() {
+		List<Object> result = new ArrayList<>(_matching.size());
+		for (R element : _matching) {
+			result.add(_keyOf.apply(element));
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> result = new LinkedHashSet<>();
+		if (keys.isEmpty()) {
+			return result;
+		}
+		Set<Object> matching = _matchingKeys;
+		if (matching == null) {
+			matching = new HashSet<>();
+			for (R element : _matching) {
+				matching.add(_keyOf.apply(element));
+			}
+			_matchingKeys = matching;
+		}
+		for (Object key : keys) {
+			if (matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
+	}
+
+	@Override
 	public List<Row<R>> window(int from, int to) {
 		int lo = Math.max(0, from);
 		int hi = Math.min(_displayed.size(), to);
@@ -165,7 +227,7 @@ public class ListRowSource<R> implements RowSource<R> {
 	 */
 	@Override
 	public List<Row<R>> allRows() {
-		return _grouping.columns().isEmpty() ? List.copyOf(_displayed) : groupedRows(_rows, true);
+		return _grouping.columns().isEmpty() ? List.copyOf(_displayed) : groupedRows(_matching, true);
 	}
 
 	@Override
@@ -292,7 +354,9 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
-		_rows = rows;
+		_matching = rows;
+		_matchingKeys = null;
+		_dataCount = _elements.size();
 		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows, false);
 	}
 

@@ -90,6 +90,11 @@ public interface ReferencesDerivedBase extends test.com.top_logic.model.search.m
 	String REF_ORDERED_BAG_ATTR = "refOrderedBag";
 
 	/**
+	 * Name of the table storing {@link #REFERENCES_DERIVED_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #IN_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

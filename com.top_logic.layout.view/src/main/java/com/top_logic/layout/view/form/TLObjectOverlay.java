@@ -23,6 +23,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.util.error.TopLogicException;
 
@@ -135,12 +136,28 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		return _base.tReferers(ref);
 	}
 
+	/**
+	 * The value of the given attribute as edited in this overlay.
+	 *
+	 * <p>
+	 * A changed attribute delivers the buffered value, an unchanged one the value of the base
+	 * object. A {@link TLStructuredTypePart#isDerived() derived} attribute is computed by its
+	 * storage on the base object in a {@link TracingScope} that resolves the base object to this
+	 * overlay (see {@link TracingScope#computeOnOverlay(TLObject, TLObject, TLStructuredTypePart)}),
+	 * so that the storage receives the base object and still reflects the edits buffered here.
+	 * </p>
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the read is reported to the scope's trace.
+	 * </p>
+	 */
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
-		if (_changes.containsKey(part)) {
-			return _changes.get(part);
+		TracingScope scope = TracingScope.current();
+		if (scope != null) {
+			scope.record(this, part);
 		}
-		return _base.tValue(part);
+		return getFieldValue(part);
 	}
 
 	@Override
@@ -148,11 +165,26 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		_changes.put(part, value);
 	}
 
+	/**
+	 * The value this overlay holds for the given attribute: the buffered value of a changed
+	 * attribute, the value of the base object otherwise.
+	 *
+	 * <p>
+	 * A {@link TLStructuredTypePart#isDerived() derived} attribute that is not changed is computed
+	 * over the edits of this overlay, see {@link #tValue(TLStructuredTypePart)}. In contrast to
+	 * {@link #tValue(TLStructuredTypePart)}, the read of this overlay itself is not reported to a
+	 * {@link TracingScope}.
+	 * </p>
+	 */
 	@Override
 	public Object getFieldValue(TLStructuredTypePart attribute) {
-		// All values displayed in the form are read through this overlay, so the buffered value is
-		// the value being displayed.
-		return tValue(attribute);
+		if (_changes.containsKey(attribute)) {
+			return _changes.get(attribute);
+		}
+		if (attribute.isDerived()) {
+			return TracingScope.computeOnOverlay(_base, this, attribute);
+		}
+		return baseValue(attribute);
 	}
 
 	/**
@@ -166,12 +198,24 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 
 	@Override
 	public Object getBaseValue(TLStructuredTypePart attribute) {
-		return _base.tValue(attribute);
+		return baseValue(attribute);
 	}
 
 	@Override
 	public Object defaultValue(TLStructuredTypePart part) {
-		return _base.tValue(part);
+		return baseValue(part);
+	}
+
+	/**
+	 * The value of the given attribute of the base object.
+	 *
+	 * <p>
+	 * Read through {@link TracingScope#readBase(TLObject, TLStructuredTypePart)}, so that the read
+	 * is neither reported to a {@link TracingScope} nor redirected back to this overlay.
+	 * </p>
+	 */
+	private Object baseValue(TLStructuredTypePart part) {
+		return TracingScope.readBase(_base, part);
 	}
 
 	/**
@@ -191,7 +235,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public boolean isDirty() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			if (isChange(entry.getValue(), _base.tValue(entry.getKey()))) {
+			if (isChange(entry.getValue(), baseValue(entry.getKey()))) {
 				return true;
 			}
 		}
@@ -252,7 +296,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * @see #isDirty()
 	 */
 	public boolean isModified(TLStructuredTypePart part) {
-		return _changes.containsKey(part) && isChange(_changes.get(part), _base.tValue(part));
+		return _changes.containsKey(part) && isChange(_changes.get(part), baseValue(part));
 	}
 
 	/**
@@ -297,7 +341,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	public void checkApply() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
 			TLStructuredTypePart part = entry.getKey();
-			if (isChange(entry.getValue(), _base.tValue(part))) {
+			if (isChange(entry.getValue(), baseValue(part))) {
 				Update.checkWritePermission(_base, part);
 			}
 		}

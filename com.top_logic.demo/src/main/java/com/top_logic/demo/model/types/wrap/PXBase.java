@@ -27,6 +27,11 @@ public interface PXBase extends com.top_logic.demo.model.types.P {
 	String ALTERNATIVE_PROTECTED_ATTR = "alternativeProtected";
 
 	/**
+	 * Name of the table storing {@link #PX_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
+	/**
 	 * Getter for part {@link #ALTERNATIVE_PROTECTED_ATTR}.
 	 */
 	default boolean getAlternativeProtected() {

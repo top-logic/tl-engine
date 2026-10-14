@@ -168,7 +168,7 @@
 					<plugin>
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
-						<version>0.11.0</version>
+						<version>0.11.1</version>
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>tl-ossrh</publishingServerId>
@@ -1085,7 +1085,7 @@
 			<dependency>
 			    <groupId>org.apache.httpcomponents.client5</groupId>
 			    <artifactId>httpclient5</artifactId>
-			    <version>5.6.4</version>
+			    <version>5.6.5</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -1136,7 +1136,7 @@
 			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
 			    <groupId>com.github.luben</groupId>
 			    <artifactId>zstd-jni</artifactId>
-			    <version>1.5.7-22</version>
+			    <version>1.5.7-23</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>

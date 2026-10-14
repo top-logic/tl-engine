@@ -682,10 +682,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The names of the columns the table declares.
 	 * @param selectionBinding
 	 *        The binding of the selection channel, {@code null} without one.
+	 * @param setups
+	 *        The descriptors of the declared columns.
 	 */
 	protected record ReadOnlyTable<S extends RowSource<Object>>(TableViewControl<Object> control,
 			DefaultTableView<Object> view, S source, List<Column<Object, ?>> columns, List<String> declaredNames,
-			TableSelectionBinding selectionBinding) {
+			TableSelectionBinding selectionBinding, List<ColumnSetup> setups) {
 		// Pure data.
 	}
 
@@ -771,7 +773,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		control.setActivationHandler(activationHandler(context, activation));
 
-		return new ReadOnlyTable<>(control, view, source, columns, declaredNames, selectionBinding);
+		return new ReadOnlyTable<>(control, view, source, columns, declaredNames, selectionBinding, setups);
 	}
 
 	/**

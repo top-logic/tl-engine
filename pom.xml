@@ -28,6 +28,7 @@
     <module>tl-chat-classic</module>
     <module>tl-ai-views</module>
     <module>tl-ai-index</module>
+    <module>tl-ai-index-onnx</module>
     <module>tl-ai-demo</module>
     <module>tl-ai-vector-index</module>
     <module>tl-ai-tool-api</module>

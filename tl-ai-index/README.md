@@ -67,12 +67,68 @@ Then give an agent the tools `index.search` and `index.similar`.
 - `OpenAiCompatibleEmbedder` - `POST <base-url>/v1/embeddings`, one batch per request, retries on
   network errors, 429 and 5xx. vLLM, text-embeddings-inference, llama.cpp's server and Ollama serve this
   route. `send-dimensions="true"` asks the server to cut the vector (OpenAI API).
+- `OnnxEmbedder` (module `tl-ai-index-onnx`, ONNX Runtime 1.30.0 MIT + DJL tokenizers 0.38.0
+  Apache-2.0, about 73 MB of native libraries) - runs the model in the application's JVM on the CPU.
+  It is the default the owner chose (2026-10-14): `snowflake-arctic-embed-m-v2.0` int8; the option for
+  small servers is `multilingual-e5-small` int8. See below for the model files.
 - Every embedder has `dimensions` (mandatory; fewer than the model's own cuts a Matryoshka-trained
   vector and normalizes it again), `query-prefix`, `passage-prefix` and `batch-size`. The prefixes per
   model: e5 `query: ` / `passage: `; arctic-embed v2 `query: ` / none.
 
 A change of the model, the dimensions or the prefixes builds a new generation of the index (below);
 until it is complete the old one serves with words only.
+
+### The in-process model
+
+```xml
+<embedder class="com.top_logic.tl.ai.index.onnx.OnnxEmbedder"
+	model-dir="%VAR_PATH%/models/snowflake-arctic-embed-m-v2.0"
+	model-file="model_int8.onnx"
+	pooling="CLS"
+	dimensions="768"
+	query-prefix="query: "
+	threads="4"
+/>
+```
+
+For `multilingual-e5-small`: `pooling="MEAN"`, `dimensions="384"`, `query-prefix="query: "`,
+`passage-prefix="passage: "`. Further settings: `max-tokens` (512), `max-batch-tokens` (8192),
+`rows-per-inference` (1, see below), `model` (the stored model name; the directory's name by default).
+
+The model files are not in any jar. Fetch them from the official repositories into the model
+directory and compare the checksums:
+
+```bash
+d=$VAR_PATH/models/snowflake-arctic-embed-m-v2.0; mkdir -p $d && cd $d
+curl -L -o model_int8.onnx https://huggingface.co/Snowflake/snowflake-arctic-embed-m-v2.0/resolve/main/onnx/model_int8.onnx
+curl -L -o tokenizer.json  https://huggingface.co/Snowflake/snowflake-arctic-embed-m-v2.0/resolve/main/tokenizer.json
+# sha256 (2026-10-14): model_int8.onnx 03d923bb1850ebdccb068e2f3abd8aa43fe81c50d07d037ef103fe3d0fb78e3b
+#                      tokenizer.json  f1cc44ad7faaeec47241864835473fd5403f2da94673f3f764a77ebcb0a803ec
+
+d=$VAR_PATH/models/multilingual-e5-small; mkdir -p $d && cd $d
+curl -L -o model_int8.onnx https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/onnx/model_qint8_avx512_vnni.onnx
+curl -L -o tokenizer.json  https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/tokenizer.json
+# sha256 (2026-10-14): model_int8.onnx dd476dd0c2514e9b9be83aeb3853fac0763e0bdf4a71645407587d77c48a2d88
+#                      tokenizer.json  0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39
+```
+
+Licences: arctic-embed-m-v2.0 Apache-2.0, multilingual-e5-small MIT.
+
+Operation:
+
+- **Offline.** The embedder sets `ai.djl.offline=true` before the tokenizer loads; without it DJL
+  downloads a GPU build of itself when it finds a CUDA GPU and reports telemetry. The tokenizer's
+  native library is extracted from the jar into `~/.djl.ai` (or `DJL_CACHE_DIR`), ONNX Runtime's into
+  `java.io.tmpdir` (or `onnxruntime.native.path`) - both must be writable. Linux needs glibc 2.28.
+- **CPU.** `threads` per inference, no thread spinning, on the index worker's low-priority thread. On a
+  laptop CPU (4 threads, int8, passages of about 60 tokens): arctic-embed-m-v2.0 about 47 passages/s,
+  e5-small about 140 (230 with `rows-per-inference="16"`); a first load of a million chunks wants a
+  night or a GPU endpoint. A query takes about 8 ms (arctic) or 3 ms (e5).
+- **One text per inference.** An int8 model quantizes its activations with a scale computed over the
+  whole batch, so a text's vector depends on its batch-mates (arctic: cosine 0.976 to 0.985 to the
+  vector alone; e5-small: 0.997). `rows-per-inference` is therefore 1 by default.
+- **Memory.** 0.5 to 1.3 GB of native memory outside the Java heap.
+- **Redeploy.** Restart the JVM: a native library stays loaded until the JVM ends.
 
 ## What it does
 
@@ -139,3 +195,13 @@ embedder against a fake server, the chunker, the sync against an H2 knowledge ba
 link change, delete, catch-up after a stop and after a crash, a new generation without embedding, a
 bounded build), the rights and the bounded search (the same work for 200 and 2,000 unreadable objects),
 and the tools in a scripted agent run.
+
+The real models are behind `-Dtl.ai.index.model.e2e=true` (`OnnxModelE2e`, skipped without it): 30
+German sentences must find their English translation as nearest passage at least 28 times (both
+models: 30 of 30), and a text's vector must not depend on its batch-mates.
+
+```bash
+mvn -pl tl-ai-index,tl-ai-index-onnx test -DskipTests=false -Dtest=TestOnnxEmbedder \
+  -Dsurefire.failIfNoSpecifiedTests=false -Dtl.ai.index.model.e2e=true \
+  -Dtl.ai.index.model.dir=$HOME/.cache/tl-ai-index-models/snowflake-arctic-embed-m-v2.0
+```

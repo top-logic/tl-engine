@@ -2299,17 +2299,6 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
-
-		<repository>
-			<id>tl-snapshots</id>
-			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
 	</repositories>
 	
 	<pluginRepositories>
@@ -2321,17 +2310,6 @@
 			</releases>
 			<snapshots>
 				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-		
-		<pluginRepository>
-			<id>tl-snapshots</id>
-			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>

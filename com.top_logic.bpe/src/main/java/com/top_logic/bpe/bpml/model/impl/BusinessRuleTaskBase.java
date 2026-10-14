@@ -17,4 +17,9 @@ public interface BusinessRuleTaskBase extends com.top_logic.bpe.bpml.model.Task 
 	 */
 	String BUSINESS_RULE_TASK_TYPE = "BusinessRuleTask";
 
+	/**
+	 * Name of the table storing {@link #BUSINESS_RULE_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

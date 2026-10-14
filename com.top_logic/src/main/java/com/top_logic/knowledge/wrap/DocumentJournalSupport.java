@@ -16,7 +16,6 @@ import com.top_logic.knowledge.journal.MessageJournalAttributeEntryImpl;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -59,8 +58,8 @@ public class DocumentJournalSupport {
             if (aJournallable == null) {
                 ContainerWrapper theContainer = WebFolder.getContainer(aDoc);
 
-                if (theContainer instanceof AbstractBoundWrapper) {
-					for (BoundObject secParent : ((AbstractBoundWrapper) theContainer).getSecurityParents()) {
+				if (theContainer instanceof BoundObject boundContainer) {
+					for (BoundObject secParent : boundContainer.getSecurityParents()) {
 						internalJournalDocument(aDoc, secParent, aType, aVersion);
 					}
 				} else {

@@ -50,7 +50,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
+import com.top_logic.tool.boundsec.wrap.BoundWrapper;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 import com.top_logic.tool.execution.ExecutableState;
@@ -147,7 +147,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 
 	@Override
 	public Consumer<DocumentTileConfig> initForm(FormContainer form, DocumentTileConfig model) {
-		AbstractBoundWrapper context = getSelectedContext();
+		BoundWrapper context = getSelectedContext();
 		FolderDefinition folder = getFolder(context);
 
 		SelectField select = getPDFSelectField(folder);
@@ -185,7 +185,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 		return null;
 	}
 
-	private CommandField createPDFUploadField(AbstractBoundWrapper context, FolderDefinition folder,
+	private CommandField createPDFUploadField(BoundObject context, FolderDefinition folder,
 			SelectField select) {
 		CommandField upload = FormFactory.newCommandField(UPLOAD_FIELD, (Command) (executionContext -> {
 			UploadExecutor uploadExecutor = createUploadExecutor(context, folder, document -> {
@@ -222,7 +222,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 	 * @param continuation
 	 *        Must be called with the uploaded document.
 	 */
-	protected UploadExecutor createUploadExecutor(AbstractBoundWrapper context, FolderDefinition folder, 
+	protected UploadExecutor createUploadExecutor(BoundObject context, FolderDefinition folder, 
 			Consumer<? super Named> continuation) {
 		SingleSelectionModel folderSelection = new DefaultSingleSelectionModel(SelectionModelOwner.NO_OWNER);
 		AbstractMutableTLTreeModel<FolderNode> model =
@@ -289,16 +289,16 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 		field.setLabel(getConfig().getResPrefix().key(field.getName()));
 	}
 
-	private AbstractBoundWrapper getSelectedContext() {
+	private BoundWrapper getSelectedContext() {
 		Object selected = _selectComponent.getSelected();
 		if (selected == null) {
 			throw new TopLogicException(com.top_logic.tool.execution.I18NConstants.ERROR_NO_SELECTION);
 		}
-		if (!(selected instanceof AbstractBoundWrapper)) {
+		if (!(selected instanceof BoundWrapper context)) {
 			String businessLabel = MetaLabelProvider.INSTANCE.getLabel(selected);
 			throw new TopLogicException(I18NConstants.ERROR_NO_DOCUMENTS_FOR_MODEL__MODEL.fill(businessLabel));
 		}
-		return (AbstractBoundWrapper) selected;
+		return context;
 	}
 
 }

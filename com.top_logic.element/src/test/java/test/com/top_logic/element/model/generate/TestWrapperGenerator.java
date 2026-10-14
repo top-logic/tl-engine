@@ -13,11 +13,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -63,6 +66,7 @@ public class TestWrapperGenerator extends TestCase {
 		changeProperties(fooResources);
 		generateWrappers(root, app1, foo);
 		checkProperties(fooResources);
+		addClient(root, pkg());
 		generateWrappers(root, app1, bar);
 	}
 
@@ -104,9 +108,15 @@ public class TestWrapperGenerator extends TestCase {
 	}
 
 	private static File app1() {
-		File pkg = new File(ModuleLayoutConstants.SRC_TEST_DIR,
+		return new File(pkg(), "app1/" + ModuleLayoutConstants.WEBAPP_DIR);
+	}
+
+	/**
+	 * The source directory of this test's package.
+	 */
+	private static File pkg() {
+		return new File(ModuleLayoutConstants.SRC_TEST_DIR,
 			TestWrapperGenerator.class.getPackage().getName().replace('.', '/'));
-		return new File(pkg, "app1/" + ModuleLayoutConstants.WEBAPP_DIR);
 	}
 
 	private static String[] generatorArgs(File root, String moduleName) {
@@ -127,6 +137,15 @@ public class TestWrapperGenerator extends TestCase {
 		WrapperGenerator.main(args);
 
 		compileSources(root);
+	}
+
+	/**
+	 * Adds a client of the generated API to the sources compiled with the generated code.
+	 */
+	private void addClient(File root, File pkg) throws IOException {
+		File clientDir = new File(root, "test/client");
+		clientDir.mkdirs();
+		Files.copy(new File(pkg, "Client.java.txt").toPath(), new File(clientDir, "Client.java").toPath());
 	}
 
 	private void changeProperties(String path) throws FileNotFoundException, IOException {
@@ -166,9 +185,22 @@ public class TestWrapperGenerator extends TestCase {
 		Iterable<? extends File> sourceFiles = listJavaFiles(root);
 
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
 			Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFiles);
-			compiler.getTask(null, fileManager, null, null, null, compilationUnits).call();
+			Boolean success = compiler.getTask(null, fileManager, diagnostics, List.of("-Xlint:deprecation", "-Werror"), null,
+				compilationUnits).call();
+			if (!success.booleanValue()) {
+				StringBuilder errors = new StringBuilder("Generated sources do not compile:");
+				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+					if (diagnostic.getKind() == Diagnostic.Kind.ERROR
+						|| diagnostic.getKind() == Diagnostic.Kind.WARNING
+						|| diagnostic.getKind() == Diagnostic.Kind.MANDATORY_WARNING) {
+						errors.append('\n').append(diagnostic);
+					}
+				}
+				fail(errors.toString());
+			}
 		}
 	}
 

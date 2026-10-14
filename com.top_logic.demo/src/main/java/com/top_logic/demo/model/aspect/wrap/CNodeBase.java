@@ -17,4 +17,9 @@ public interface CNodeBase extends com.top_logic.demo.model.aspect.CommonChild, 
 	 */
 	String C_NODE_TYPE = "CNode";
 
+	/**
+	 * Name of the table storing {@link #C_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoAspect";
+
 }

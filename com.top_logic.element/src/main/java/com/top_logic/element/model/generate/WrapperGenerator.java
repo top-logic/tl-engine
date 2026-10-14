@@ -40,6 +40,7 @@ import com.top_logic.dsa.DataAccessService;
 import com.top_logic.element.meta.AttributeSettings;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.config.JavaClass;
@@ -444,6 +445,9 @@ public class WrapperGenerator {
 			removeLegacyImplementation(type);
 			generateImplementation(type);
 		}
+		for (TLEnumeration type : module.getEnumerations()) {
+			generateEnumeration(type);
+		}
 
 		generateFactory(module);
 		generateMessages(module);
@@ -585,6 +589,17 @@ public class WrapperGenerator {
 		if (_getterPrefix != null) {
 			generator.setGetterPrefix(_getterPrefix);
 		}
+		generate(generator);
+	}
+
+	private void generateEnumeration(TLEnumeration type) throws IOException {
+		if (_noIntf) {
+			return;
+		}
+		_log.info(
+			"Generate class for enumeration '" + type.getName() + "' in module '" + type.getModule().getName() + "'.");
+		EnumerationGenerator generator = new EnumerationGenerator(type);
+		generator.setNoElementClasses(_noElementClasses);
 		generate(generator);
 	}
 

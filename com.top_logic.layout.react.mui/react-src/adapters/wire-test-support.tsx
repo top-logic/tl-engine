@@ -13,6 +13,7 @@ import {
   useTLState, register,
 } from 'tl-react-bridge';
 import type { TLCellProps, FieldLabel, FormLayout, ButtonDefaultsValue, ChildControlJson } from 'tl-react-bridge';
+import type { ThemeOptions } from '@mui/material/styles';
 import { createMuiRoot, createPageThemes } from '../MuiRoot';
 
 /** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
@@ -91,6 +92,9 @@ export interface MountOptions {
 
   /** The defaults a container around the adapter gives its buttons; absent: none. */
   buttonDefaults?: ButtonDefaultsValue;
+
+  /** The options of the theme the adapter renders with; absent: the MUI default theme. */
+  theme?: ThemeOptions;
 }
 
 /**
@@ -131,15 +135,16 @@ export function mountAdapter(
   const adapter = options.buttonDefaults === undefined
     ? control
     : <ButtonDefaults {...options.buttonDefaults}>{control}</ButtonDefaults>;
+  const Root = options.theme === undefined ? MuiRoot : createMuiRoot(createPageThemes(options.theme));
   render(
-    <MuiRoot>
+    <Root>
       {outer && <OuterBinding gesture={outer.gesture} onGesture={outer.onGesture} />}
       <KeyboardScopeProvider>
         {options.formLayout === undefined
           ? adapter
           : <FormLayoutContext.Provider value={options.formLayout}>{adapter}</FormLayoutContext.Provider>}
       </KeyboardScopeProvider>
-    </MuiRoot>,
+    </Root>,
   );
   return sent;
 }

@@ -63,6 +63,11 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	String PART_CHANGES_ATTR = "partChanges";
 
 	/**
+	 * Name of the table storing {@link #CHANGE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #BELONGS_TO_ATTR}.
 	 */
 	default com.top_logic.element.changelog.model.Change getBelongsTo() {

@@ -17,4 +17,9 @@ public interface B2Base extends test.com.top_logic.element.meta.model.ticket2851
 	 */
 	String B2_TYPE = "B2";
 
+	/**
+	 * Name of the table storing {@link #B2_TYPE} objects.
+	 */
+	String TABLE_NAME = "Ticket28519_B2";
+
 }

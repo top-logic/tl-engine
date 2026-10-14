@@ -17,15 +17,23 @@ package com.top_logic.demo.model.plain;
 public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>DemoPlain</code> defined by {@link DemoPlainFactory}.
+	 * Name of the module <code>DemoPlain</code> defined by {@link DemoPlainFactory}.
 	 */
-	public static final String DEMO_PLAIN_STRUCTURE = "DemoPlain";
+	public static final String DEMO_PLAIN_MODULE = "DemoPlain";
+
+	/**
+	 * Name of the structure <code>DemoPlain</code> defined by {@link DemoPlainFactory}.
+	 * 
+	 * @deprecated Use {@link #DEMO_PLAIN_MODULE}.
+	 */
+	@Deprecated
+	public static final String DEMO_PLAIN_STRUCTURE = DEMO_PLAIN_MODULE;
 
 	/**
 	 * Lookup {@link DemoPlainAll} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoPlainAllType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(DemoPlainAll.DEMO_PLAIN_ALL_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(DemoPlainAll.DEMO_PLAIN_ALL_TYPE);
 	}
 
 	/**
@@ -39,7 +47,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link DemoPlainA} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoPlainAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(DemoPlainA.DEMO_PLAIN_A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(DemoPlainA.DEMO_PLAIN_A_TYPE);
 	}
 
 	/**
@@ -256,7 +264,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link DemoPlainBC} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoPlainBCType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(DemoPlainBC.DEMO_PLAIN_BC_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(DemoPlainBC.DEMO_PLAIN_BC_TYPE);
 	}
 
 	/**
@@ -277,7 +285,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link DemoPlainB} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoPlainBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(DemoPlainB.DEMO_PLAIN_B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(DemoPlainB.DEMO_PLAIN_B_TYPE);
 	}
 
 	/**
@@ -291,7 +299,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link DemoPlainC} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoPlainCType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(DemoPlainC.DEMO_PLAIN_C_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(DemoPlainC.DEMO_PLAIN_C_TYPE);
 	}
 
 	/**
@@ -305,25 +313,25 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
 	 * Lookup {@link B} type.
 	 */
 	public static com.top_logic.model.TLClass getBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(B.B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(B.B_TYPE);
 	}
 
 	/**
 	 * Lookup {@link C} type.
 	 */
 	public static com.top_logic.model.TLClass getCType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_STRUCTURE).getType(C.C_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_PLAIN_MODULE).getType(C.C_TYPE);
 	}
 
 	/**
-	 * Name of type <code>DemoPlain.All</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>DemoPlain.All</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoPlainAll#DEMO_PLAIN_ALL_TYPE}.
 	 */
@@ -331,7 +339,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DEMO_PLAIN_ALL_NODE = DemoPlainAll.DEMO_PLAIN_ALL_TYPE;
 
 	/**
-	 * Name of type <code>DemoPlain.A</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>DemoPlain.A</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoPlainA#DEMO_PLAIN_A_TYPE}.
 	 */
@@ -339,7 +347,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DEMO_PLAIN_A_NODE = DemoPlainA.DEMO_PLAIN_A_TYPE;
 
 	/**
-	 * Name of type <code>DemoPlain.BC</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>DemoPlain.BC</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoPlainBC#DEMO_PLAIN_BC_TYPE}.
 	 */
@@ -347,7 +355,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DEMO_PLAIN_BC_NODE = DemoPlainBC.DEMO_PLAIN_BC_TYPE;
 
 	/**
-	 * Name of type <code>DemoPlain.B</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>DemoPlain.B</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoPlainB#DEMO_PLAIN_B_TYPE}.
 	 */
@@ -355,7 +363,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DEMO_PLAIN_B_NODE = DemoPlainB.DEMO_PLAIN_B_TYPE;
 
 	/**
-	 * Name of type <code>DemoPlain.C</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>DemoPlain.C</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoPlainC#DEMO_PLAIN_C_TYPE}.
 	 */
@@ -363,7 +371,7 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DEMO_PLAIN_C_NODE = DemoPlainC.DEMO_PLAIN_C_TYPE;
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -372,11 +380,14 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #A_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.plain.wrap.ABase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_A = com.top_logic.demo.model.plain.wrap.ABase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>B</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>B</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link B#B_TYPE}.
 	 */
@@ -385,11 +396,14 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #B_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.plain.wrap.BBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_B = com.top_logic.demo.model.plain.wrap.BBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>C</code> in structure {@link #DEMO_PLAIN_STRUCTURE}.
+	 * Name of type <code>C</code> in module {@link #DEMO_PLAIN_MODULE}.
 	 * 
 	 * @deprecated Use {@link C#C_TYPE}.
 	 */
@@ -398,8 +412,11 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #C_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.plain.wrap.CBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_C = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_C = com.top_logic.demo.model.plain.wrap.CBase.TABLE_NAME;
 
 
 	/**
@@ -448,6 +465,6 @@ public class DemoPlainFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * The singleton instance of {@link DemoPlainFactory}.
 	 */
 	public static DemoPlainFactory getInstance() {
-		return (DemoPlainFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(DEMO_PLAIN_STRUCTURE);
+		return (DemoPlainFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(DEMO_PLAIN_MODULE);
 	}
 }

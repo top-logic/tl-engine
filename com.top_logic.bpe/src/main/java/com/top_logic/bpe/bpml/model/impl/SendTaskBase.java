@@ -54,6 +54,11 @@ public interface SendTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	String SUBJECT_TEMPLATE_ATTR = "subjectTemplate";
 
 	/**
+	 * Name of the table storing {@link #SEND_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #CONTENT_TEMPLATE_ATTR}.
 	 */
 	default com.top_logic.model.search.expr.SearchExpression getContentTemplate() {

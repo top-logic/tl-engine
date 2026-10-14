@@ -12,7 +12,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -515,6 +518,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			log().info("Referenced generalization '" + before + "' not found in '" + diff.getType() + "', appending.");
 			index = 0;
 		}
+		Map<TLClassPart, TLStructuredTypePart> definitions = snapshotDefinitions(target);
 		generalizations.add(index, generalization);
 
 		if (createProcessors()) {
@@ -530,7 +534,76 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				addReorderGeneralization(type, generalizationName, diff.getBefore());
 			}
 		}
+
+		updateDefinitions(definitions);
 		return null;
+	}
+
+	/**
+	 * Records the {@link TLStructuredTypePart#getDefinition() definitions} of all local parts of
+	 * the given class and its transitive specializations.
+	 *
+	 * <p>
+	 * Must be called before the generalizations of the given class change, since a change of the
+	 * generalizations may change the definitions of the recorded parts.
+	 * </p>
+	 *
+	 * @see #updateDefinitions(Map)
+	 */
+	private static Map<TLClassPart, TLStructuredTypePart> snapshotDefinitions(TLClass type) {
+		Map<TLClassPart, TLStructuredTypePart> definitions = new LinkedHashMap<>();
+		snapshotDefinitions(definitions, type);
+		return definitions;
+	}
+
+	private static void snapshotDefinitions(Map<TLClassPart, TLStructuredTypePart> definitions, TLClass type) {
+		for (TLClassPart part : TLModelUtil.getLocalParts(type)) {
+			definitions.put(part, part.getDefinition());
+		}
+		for (TLClass specialization : type.getSpecializations()) {
+			snapshotDefinitions(definitions, specialization);
+		}
+	}
+
+	/**
+	 * Recomputes the {@link TLStructuredTypePart#getDefinition() definitions} of the given parts
+	 * after the generalizations of their class (or one of its generalizations) have changed, and
+	 * creates a migration for each part whose definition differs from the given snapshot.
+	 *
+	 * <p>
+	 * A part whose definition changes either becomes an override of a part of a new
+	 * generalization, or becomes an own part again, if the generalization defining it was
+	 * removed. The part keeps its own characteristics in both cases.
+	 * </p>
+	 *
+	 * @param definitions
+	 *        The definitions before the change, see {@link #snapshotDefinitions(TLClass)}.
+	 */
+	private void updateDefinitions(Map<TLClassPart, TLStructuredTypePart> definitions) {
+		// Note: The live part lists of a persistent class must not be iterated while updating
+		// definitions, therefore the snapshot is used.
+		for (TLClassPart part : definitions.keySet()) {
+			part.updateDefinition();
+		}
+
+		for (Entry<TLClassPart, TLStructuredTypePart> entry : definitions.entrySet()) {
+			TLClassPart part = entry.getKey();
+			TLStructuredTypePart definition = part.getDefinition();
+			if (definition.equals(entry.getValue())) {
+				continue;
+			}
+
+			log().info("Changing definition of '" + TLModelUtil.qualifiedName(part) + "' from '"
+				+ TLModelUtil.qualifiedName(entry.getValue()) + "' to '" + TLModelUtil.qualifiedName(definition)
+				+ "'.");
+			if (createProcessors()) {
+				MarkTLTypePartOverride.Config config = newConfigItem(MarkTLTypePartOverride.Config.class);
+				config.setName(qTypePartName(part));
+				config.setDefinition(qTypePartName(definition));
+				config.setCopyValues(false);
+				addProcessor(config);
+			}
+		}
 	}
 
 	@Override
@@ -1705,6 +1778,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		log().info("Removing generalization '" + diff.getGeneralization() + "' from '" + diff.getType() + "'.");
+		Map<TLClassPart, TLStructuredTypePart> definitions = snapshotDefinitions(type);
 		type.getGeneralizations().remove(generalization);
 
 		if (createProcessors()) {
@@ -1714,6 +1788,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			config.getGeneralizations().add(newGeneralization(qTypeName(diff.getGeneralization())));
 			addProcessor(config);
 		}
+
+		updateDefinitions(definitions);
 		return null;
 	}
 

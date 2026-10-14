@@ -17,4 +17,9 @@ public interface CBase extends com.top_logic.demo.model.plain.DemoPlainC {
 	 */
 	String C_TYPE = "C";
 
+	/**
+	 * Name of the table storing {@link #C_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

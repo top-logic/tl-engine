@@ -40,6 +40,12 @@ public class TLClassImpl extends AbstractTLStructuredType<TLClassPart> implement
 				throw new IllegalStateException("Super class '" + generalization.getName()
 					+ "' already is in the extends list.");
 			}
+		}
+
+		@Override
+		protected void afterAdd(TLClass key) {
+			// The definitions depend on the generalizations, therefore they can only be computed
+			// when the new generalization is part of this list.
 			TLTypePartCommon.updatePartDefinitions(TLClassImpl.this);
 		}
 

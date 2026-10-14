@@ -36,6 +36,11 @@ public interface TextAnnotationBase extends com.top_logic.bpe.bpml.model.Externa
 	String TEXT_ATTR = "text";
 
 	/**
+	 * Name of the table storing {@link #TEXT_ANNOTATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPAnnotation";
+
+	/**
 	 * Getter for part {@link #ANNOTATION_ASSOCIATIONS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

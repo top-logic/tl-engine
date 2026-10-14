@@ -54,7 +54,7 @@ public class PersistentObjectImpl {
 		PersistentScope.addMetaElement(self, aMetaElement);
 	}
 
-	public static void setMetaElement(AbstractWrapper self, TLClass aMetaElement) {
+	public static void setMetaElement(TLObject self, TLClass aMetaElement) {
 		AbstractWrapper.setReference(self, PersistentObject.TYPE_REF, aMetaElement);
 	}
 

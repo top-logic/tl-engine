@@ -14,7 +14,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.element.structured.StructuredElement;
-import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.importer.base.ImportValueProvider;
 import com.top_logic.importer.base.StructuredDataImportPerformer.StructureImportResult;
 
@@ -23,7 +22,7 @@ import com.top_logic.importer.base.StructuredDataImportPerformer.StructureImport
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public class StructuredElementDOImportHandler<C extends StructuredElementDOImportHandler.Config, O extends AttributedStructuredElementWrapper> extends AbstractAttributedDOImportHandler<C, O> {
+public class StructuredElementDOImportHandler<C extends StructuredElementDOImportHandler.Config, O extends StructuredElement> extends AbstractAttributedDOImportHandler<C, O> {
 
     public interface Config extends AbstractAttributedDOImportHandler.Config {
 
@@ -45,7 +44,7 @@ public class StructuredElementDOImportHandler<C extends StructuredElementDOImpor
 
 	/**
 	 * Set a unique element ID (for a reason look at
-	 * {@link #getElementID(AttributedStructuredElementWrapper)}).
+	 * {@link #getElementID(StructuredElement)}).
 	 * 
 	 * @param anElement
 	 *        The element to set the ID for.

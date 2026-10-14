@@ -17,25 +17,33 @@ package com.top_logic.demo.model.dnd;
 public class TestDndFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #TEST_DND_STRUCTURE}.
+	 * Name of singleton {@link #TEST_DND_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT = "ROOT";
 
 	/**
-	 * Name of singleton {@link #TEST_DND_STRUCTURE}.
+	 * Name of singleton {@link #TEST_DND_MODULE}.
 	 */
 	public static final String SINGLETON_LIBRARY = "LIBRARY";
 
 	/**
-	 * Name of the structure <code>test.dnd</code> defined by {@link TestDndFactory}.
+	 * Name of the module <code>test.dnd</code> defined by {@link TestDndFactory}.
 	 */
-	public static final String TEST_DND_STRUCTURE = "test.dnd";
+	public static final String TEST_DND_MODULE = "test.dnd";
+
+	/**
+	 * Name of the structure <code>test.dnd</code> defined by {@link TestDndFactory}.
+	 * 
+	 * @deprecated Use {@link #TEST_DND_MODULE}.
+	 */
+	@Deprecated
+	public static final String TEST_DND_STRUCTURE = TEST_DND_MODULE;
 
 	/**
 	 * Lookup {@link Library} type.
 	 */
 	public static com.top_logic.model.TLClass getLibraryType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Library.LIBRARY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Library.LIBRARY_TYPE);
 	}
 
 	/**
@@ -56,7 +64,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * Lookup {@link NamedPlanElement} type.
 	 */
 	public static com.top_logic.model.TLClass getNamedPlanElementType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(NamedPlanElement.NAMED_PLAN_ELEMENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(NamedPlanElement.NAMED_PLAN_ELEMENT_TYPE);
 	}
 
 	/**
@@ -70,14 +78,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * Lookup {@link Entry} type.
 	 */
 	public static com.top_logic.model.TLClass getEntryType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Entry.ENTRY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Entry.ENTRY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Factory} type.
 	 */
 	public static com.top_logic.model.TLClass getFactoryType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Factory.FACTORY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Factory.FACTORY_TYPE);
 	}
 
 	/**
@@ -91,7 +99,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * Lookup {@link Floor} type.
 	 */
 	public static com.top_logic.model.TLClass getFloorType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Floor.FLOOR_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Floor.FLOOR_TYPE);
 	}
 
 	/**
@@ -105,7 +113,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * Lookup {@link Location} type.
 	 */
 	public static com.top_logic.model.TLClass getLocationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Location.LOCATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Location.LOCATION_TYPE);
 	}
 
 	/**
@@ -119,7 +127,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * Lookup {@link Machine} type.
 	 */
 	public static com.top_logic.model.TLClass getMachineType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Machine.MACHINE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Machine.MACHINE_TYPE);
 	}
 
 	/**
@@ -133,7 +141,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * Lookup {@link Root} type.
 	 */
 	public static com.top_logic.model.TLClass getRootType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_STRUCTURE).getType(Root.ROOT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_DND_MODULE).getType(Root.ROOT_TYPE);
 	}
 
 	/**
@@ -151,7 +159,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	}
 
 	/**
-	 * Name of type <code>Library</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Library</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Library#LIBRARY_TYPE}.
 	 */
@@ -160,11 +168,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #LIBRARY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.LibraryBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_LIBRARY = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_LIBRARY = com.top_logic.demo.model.dnd.wrap.LibraryBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>NamedPlanElement</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>NamedPlanElement</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link NamedPlanElement#NAMED_PLAN_ELEMENT_TYPE}.
 	 */
@@ -172,7 +183,7 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	public static final String NAMED_PLAN_ELEMENT_NODE = NamedPlanElement.NAMED_PLAN_ELEMENT_TYPE;
 
 	/**
-	 * Name of type <code>Entry</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Entry</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Entry#ENTRY_TYPE}.
 	 */
@@ -181,11 +192,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #ENTRY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.EntryBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ENTRY = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ENTRY = com.top_logic.demo.model.dnd.wrap.EntryBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Factory</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Factory</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Factory#FACTORY_TYPE}.
 	 */
@@ -194,11 +208,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #FACTORY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.FactoryBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_FACTORY = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_FACTORY = com.top_logic.demo.model.dnd.wrap.FactoryBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Floor</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Floor</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Floor#FLOOR_TYPE}.
 	 */
@@ -207,11 +224,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #FLOOR_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.FloorBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_FLOOR = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_FLOOR = com.top_logic.demo.model.dnd.wrap.FloorBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Location</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Location</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Location#LOCATION_TYPE}.
 	 */
@@ -220,11 +240,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #LOCATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.LocationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_LOCATION = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_LOCATION = com.top_logic.demo.model.dnd.wrap.LocationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Machine</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Machine</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Machine#MACHINE_TYPE}.
 	 */
@@ -233,11 +256,14 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #MACHINE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.MachineBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_MACHINE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_MACHINE = com.top_logic.demo.model.dnd.wrap.MachineBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Root</code> in structure {@link #TEST_DND_STRUCTURE}.
+	 * Name of type <code>Root</code> in module {@link #TEST_DND_MODULE}.
 	 * 
 	 * @deprecated Use {@link Root#ROOT_TYPE}.
 	 */
@@ -246,8 +272,11 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 
 	/**
 	 * Storage table name of {@link #ROOT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.dnd.wrap.RootBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ROOT = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ROOT = com.top_logic.demo.model.dnd.wrap.RootBase.TABLE_NAME;
 
 	/**
 	 * Singleton <code>ROOT</code>.
@@ -394,6 +423,6 @@ public class TestDndFactory extends com.top_logic.element.structured.wrap.Struct
 	 * The singleton instance of {@link TestDndFactory}.
 	 */
 	public static TestDndFactory getInstance() {
-		return (TestDndFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_DND_STRUCTURE);
+		return (TestDndFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_DND_MODULE);
 	}
 }

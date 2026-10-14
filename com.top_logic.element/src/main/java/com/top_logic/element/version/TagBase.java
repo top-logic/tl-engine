@@ -17,4 +17,9 @@ public interface TagBase extends com.top_logic.element.version.intf.TagAll {
 	 */
 	String TAG_TYPE = "Tag";
 
+	/**
+	 * Name of the table storing {@link #TAG_TYPE} objects.
+	 */
+	String TABLE_NAME = "Tag";
+
 }

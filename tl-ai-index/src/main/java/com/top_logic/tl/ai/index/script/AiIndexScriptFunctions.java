@@ -83,10 +83,11 @@ public class AiIndexScriptFunctions extends TLScriptFunctions {
 	 *
 	 * @return A dictionary with {@code ready}, {@code indexedRevision}, {@code headRevision},
 	 *         {@code pendingRevisions}, {@code rebuilding}, {@code buildTotal}, {@code buildDone},
-	 *         {@code meaning} and {@code lastError}.
+	 *         {@code meaning}, {@code lastError} and {@code embedderProblem}.
 	 */
 	public static Map<String, Object> status() {
-		IndexStatus status = AiIndexService.getInstance().index().status();
+		AiIndexService service = AiIndexService.getInstance();
+		IndexStatus status = service.index().status();
 		Map<String, Object> result = new LinkedHashMap<>();
 		result.put("ready", status.ready());
 		result.put("indexedRevision", status.indexedRevision());
@@ -97,6 +98,7 @@ public class AiIndexScriptFunctions extends TLScriptFunctions {
 		result.put("buildDone", status.buildDone());
 		result.put("meaning", status.meaning());
 		result.put("lastError", status.lastError());
+		result.put("embedderProblem", service.embedderProblem());
 		return result;
 	}
 

@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -43,14 +45,40 @@ public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config
 
 	private final Embedder _embedder;
 
+	private final String _embedderProblem;
+
 	private AiIndex _index;
 
 	/**
 	 * Creates the service from configuration.
+	 *
+	 * <p>
+	 * An embedder that cannot be created - an in-process model whose files are not installed, say -
+	 * leaves the index searching words only, and says why in its status and in the log. The
+	 * application starts either way.
+	 * </p>
 	 */
 	public AiIndexService(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_embedder = config.getEmbedder() == null ? null : context.getInstance(config.getEmbedder());
+		Embedder embedder = null;
+		String problem = null;
+		if (config.getEmbedder() != null) {
+			try {
+				embedder = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config.getEmbedder());
+			} catch (RuntimeException ex) {
+				problem = "The embedder cannot be created, the index searches words only: " + ex.getMessage();
+				Logger.error(problem, ex, AiIndexService.class);
+			}
+		}
+		_embedder = embedder;
+		_embedderProblem = problem;
+	}
+
+	/**
+	 * Why the configured embedder is not used, or <code>null</code> when it is.
+	 */
+	public String embedderProblem() {
+		return _embedderProblem;
 	}
 
 	@Override

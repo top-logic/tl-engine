@@ -21,7 +21,7 @@ Custom AI agent framework built on TopLogic, replacing LangChain4j with a purpos
 | **tl-ai-eval** | Model eval harness: the same business tasks put to several models through our own agent loop, graded against the database they leave behind. Its own runs are gated by `-Dtl.ai.eval=true`; its plumbing runs in every build against a scripted provider. See `tl-ai-eval/README.md` |
 | **tl-ai-demo** | Application module bundling all above for deployment |
 
-**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; `tl-ai-index` → `tl-ai-index-onnx`; `tl-ai-core` → `tl-ai-views`; all but `tl-ai-eval`, `tl-ai-index` and `tl-ai-index-onnx` → `tl-ai-demo`
+**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; `tl-ai-index` → `tl-ai-index-onnx`; `tl-ai-core` → `tl-ai-views`; all but `tl-ai-eval` → `tl-ai-demo`
 
 ## Build Commands
 

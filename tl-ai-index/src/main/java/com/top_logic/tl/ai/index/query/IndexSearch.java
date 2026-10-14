@@ -318,7 +318,8 @@ public final class IndexSearch {
 
 	private String meaningUnavailable(IndexSync.Serving serving) {
 		if (_embedder == null) {
-			return "This application searches words only.";
+			return "The meaning search is not configured or its model is not installed; these hits come from"
+				+ " words only.";
 		}
 		if (!serving.vectors()) {
 			return "The index is being rebuilt for another embedding model; until then it searches words only.";

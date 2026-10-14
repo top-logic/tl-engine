@@ -68,6 +68,17 @@
 			<artifactId>tl-ai-vector-index</artifactId>
 			<version>2.1.2-SNAPSHOT</version>
 		</dependency>
+		<!-- Hybrid search over the demo's events and sessions; see ai-index.config.xml. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index</artifactId>
+			<version>2.1.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index-onnx</artifactId>
+			<version>2.1.2-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-themes-core</artifactId>

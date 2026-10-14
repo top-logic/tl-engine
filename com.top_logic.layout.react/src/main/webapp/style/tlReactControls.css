@@ -926,6 +926,12 @@ div.tlValueList {
 	width: 100%;
 }
 
+/* Files dragged over a list that adds its values by uploading files. */
+.tlValueList--dragover {
+	outline: 2px dashed var(--interactive);
+	outline-offset: 2px;
+}
+
 .tlValueList__row {
 	display: flex;
 	align-items: center;

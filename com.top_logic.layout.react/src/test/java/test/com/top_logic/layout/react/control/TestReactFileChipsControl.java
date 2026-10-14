@@ -261,7 +261,10 @@ public class TestReactFileChipsControl extends TestCase {
 		return BinaryDataFactory.createBinaryData(content.getBytes(StandardCharsets.UTF_8), "text/plain", name);
 	}
 
-	private static Part part(String fileName, String content) {
+	/**
+	 * A {@value UploadSupport#FILE_PART} part of a multipart upload holding the given text.
+	 */
+	static Part part(String fileName, String content) {
 		return new TestPart(UploadSupport.FILE_PART, fileName, content);
 	}
 
@@ -323,7 +326,7 @@ public class TestReactFileChipsControl extends TestCase {
 	/**
 	 * A {@link Part} of a multipart upload holding a text.
 	 */
-	private static final class TestPart implements Part {
+	static final class TestPart implements Part {
 
 		private final String _name;
 

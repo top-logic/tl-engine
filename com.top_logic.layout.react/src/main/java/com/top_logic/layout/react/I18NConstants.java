@@ -462,6 +462,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_VALUE_LIST_ADD;
 
 	/**
+	 * @en Add files
+	 */
+	@CustomKey("js.valueList.addFiles")
+	public static ResKey JS_VALUE_LIST_ADD_FILES;
+
+	/**
 	 * @en Remove this value
 	 */
 	@CustomKey("js.valueList.remove")

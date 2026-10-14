@@ -97,9 +97,11 @@ public class FieldControlRegistry {
 	 * <p>
 	 * It edits one value at a time, so a {@link FieldSpec#isMultiple() multi-valued} field passed to
 	 * {@link #createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)} with
-	 * this provider is a {@link ReactValueListControl} with one such control per file. The files the
-	 * file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types} of the field.
-	 * The preview of a file is its name.
+	 * this provider is a {@link ReactValueListControl} with one such control per file, to which
+	 * several files are added at once: each uploaded file is a {@link ReactFieldControlProvider#uploadValues(FieldSpec)
+	 * value} of its own. The files the file picker offers are the
+	 * {@link FieldSpec#getAcceptedTypes() accepted types} of the field. The preview of a file is its
+	 * name.
 	 * </p>
 	 *
 	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
@@ -113,6 +115,11 @@ public class FieldControlRegistry {
 				control.setAcceptedTypes(field.getAcceptedTypes());
 			}
 			return control;
+		}
+
+		@Override
+		public UploadValueFactory uploadValues(FieldSpec field) {
+			return files -> files;
 		}
 
 		@Override

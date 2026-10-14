@@ -98,6 +98,28 @@ public interface ReactFieldControlProvider {
 	}
 
 	/**
+	 * Creates values of the given field from uploaded files, or {@code null} if the values this
+	 * provider edits are not created from files.
+	 *
+	 * <p>
+	 * Where a {@link FieldSpec#isMultiple() multi-valued} field is built from one control per value,
+	 * see {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
+	 * a value is added as an empty one the user then fills. A provider of values created from files
+	 * offers the {@link UploadValueFactory} here instead, and the field takes several files in one
+	 * gesture, adding one value for each.
+	 * </p>
+	 *
+	 * @param field
+	 *        What a single value is, the {@link FieldSpec#elementSpec() element specification} of
+	 *        the multi-valued field.
+	 * @return The factory creating the values from files, {@code null} if values are not created
+	 *         from files.
+	 */
+	default UploadValueFactory uploadValues(FieldSpec field) {
+		return null;
+	}
+
+	/**
 	 * Whether the control this provider creates for the given field needs more room than a
 	 * {@link FieldSpec#isCompact() compact} display offers.
 	 *

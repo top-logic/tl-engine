@@ -44,5 +44,5 @@
     z-index: 10;
     /* The button floats over the plot: a surface of its own keeps it readable there. */
     background: var(--layer-01);
-    border-radius: var(--tl-radius-sm);
+    border-radius: var(--corner-radius);
 }

@@ -95,10 +95,13 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
   const remaining = remainingMs != null ? formatDuration(remainingMs) : null;
   const clickable = actionLabel != null;
 
+  const role = clickable ? 'button' : severity === 'error' ? 'alert' : 'status';
+
   return (
     <div id={controlId}
-      className={rootClassName(state, `tlNoticeBar tlNoticeBar--${severity}${clickable ? ' tlNoticeBar--clickable' : ''}`)}
-      role={clickable ? 'button' : 'status'} aria-live="polite"
+      className={rootClassName(state, 'tl-alert tl-notice-bar tl-type-body')}
+      data-tl-role={severity}
+      role={role}
       tabIndex={clickable ? 0 : undefined}
       {...tooltipProps(actionLabel)}
       aria-label={clickable ? `${text} ${actionLabel}` : undefined}
@@ -111,8 +114,12 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
             }
           }
         : undefined}>
-      <span className="tlNoticeBar__text">{text}</span>
-      {remaining !== null && <span className="tlNoticeBar__countdown">{remaining}</span>}
+      <div className="tl-alert__body">
+        <div className="tl-alert__message">
+          {text}
+          {remaining !== null && <> <span className="tl-notice-bar__countdown tl-nums tl-type-body-strong">{remaining}</span></>}
+        </div>
+      </div>
     </div>
   );
 };

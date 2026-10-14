@@ -14,7 +14,7 @@ const MIN_HEIGHT = 100;
 
 /**
  * The space a window keeps free towards each edge of the browser window before the stylesheet is
- * measured: the scrim's padding, `--tl-space-lg`.
+ * measured: the surface's margin to the viewport, `--tl-space-lg`.
  */
 const DEFAULT_MARGIN = 24;
 

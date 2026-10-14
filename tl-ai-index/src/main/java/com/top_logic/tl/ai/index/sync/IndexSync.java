@@ -561,7 +561,6 @@ public final class IndexSync {
 		try {
 			old = _serving;
 			_serving = building;
-			_building = null;
 		} finally {
 			_switch.writeLock().unlock();
 		}
@@ -571,6 +570,8 @@ public final class IndexSync {
 			old.index().close();
 			_generations.delete(old.number());
 		}
+		// Only now, so that whoever sees no build any more also sees the old generation gone.
+		_building = null;
 		synchronized (_progress) {
 			_progress.notifyAll();
 		}

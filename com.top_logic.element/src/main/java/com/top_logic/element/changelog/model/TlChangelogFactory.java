@@ -17,60 +17,95 @@ package com.top_logic.element.changelog.model;
 public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
+	 * Name of the module <code>tl.changelog</code> defined by {@link TlChangelogFactory}.
+	 */
+	public static final String TL_CHANGELOG_MODULE = "tl.changelog";
+
+	/**
 	 * Name of the structure <code>tl.changelog</code> defined by {@link TlChangelogFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_CHANGELOG_MODULE}.
 	 */
-	public static final String TL_CHANGELOG_STRUCTURE = "tl.changelog";
+	@Deprecated
+	public static final String TL_CHANGELOG_STRUCTURE = TL_CHANGELOG_MODULE;
 
 	/**
-	 * Name of the enumeration <code>ChangeType</code> in module {@value #TL_CHANGELOG_STRUCTURE}.
+	 * Name of the enumeration <code>ChangeType</code> in module {@value #TL_CHANGELOG_MODULE}.
+	 * 
+	 * @deprecated Use {@link ChangeType#TYPE_NAME}.
 	 */
-	public static final String CHANGE_TYPE_ENUM = "ChangeType";
+	@Deprecated
+	public static final String CHANGE_TYPE_ENUM = ChangeType.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>CREATE</code> in enumeration {@value #CHANGE_TYPE_ENUM}.
+	 * Name of the classifier <code>CREATE</code> in enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#CREATE_CLASSIFIER}.
 	 */
-	public static final String CREATE_CHANGE_TYPE_CLASSIFIER = "CREATE";
+	@Deprecated
+	public static final String CREATE_CHANGE_TYPE_CLASSIFIER = ChangeType.CREATE_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>DELETE</code> in enumeration {@value #CHANGE_TYPE_ENUM}.
+	 * Name of the classifier <code>DELETE</code> in enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#DELETE_CLASSIFIER}.
 	 */
-	public static final String DELETE_CHANGE_TYPE_CLASSIFIER = "DELETE";
+	@Deprecated
+	public static final String DELETE_CHANGE_TYPE_CLASSIFIER = ChangeType.DELETE_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>UPDATE</code> in enumeration {@value #CHANGE_TYPE_ENUM}.
+	 * Name of the classifier <code>UPDATE</code> in enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#UPDATE_CLASSIFIER}.
 	 */
-	public static final String UPDATE_CHANGE_TYPE_CLASSIFIER = "UPDATE";
+	@Deprecated
+	public static final String UPDATE_CHANGE_TYPE_CLASSIFIER = ChangeType.UPDATE_CLASSIFIER;
 
 	/**
-	 * Name of the enumeration <code>ErrorAction</code> in module {@value #TL_CHANGELOG_STRUCTURE}.
+	 * Name of the enumeration <code>ErrorAction</code> in module {@value #TL_CHANGELOG_MODULE}.
+	 * 
+	 * @deprecated Use {@link ErrorAction#TYPE_NAME}.
 	 */
-	public static final String ERROR_ACTION_ENUM = "ErrorAction";
+	@Deprecated
+	public static final String ERROR_ACTION_ENUM = ErrorAction.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>IGNORE</code> in enumeration {@value #ERROR_ACTION_ENUM}.
+	 * Name of the classifier <code>IGNORE</code> in enumeration <code>ErrorAction</code>.
+	 * 
+	 * @deprecated Use {@link ErrorAction#IGNORE_CLASSIFIER}.
 	 */
-	public static final String IGNORE_ERROR_ACTION_CLASSIFIER = "IGNORE";
+	@Deprecated
+	public static final String IGNORE_ERROR_ACTION_CLASSIFIER = ErrorAction.IGNORE_CLASSIFIER;
 
 	/**
-	 * Name of the enumeration <code>WarningAction</code> in module {@value #TL_CHANGELOG_STRUCTURE}.
+	 * Name of the enumeration <code>WarningAction</code> in module {@value #TL_CHANGELOG_MODULE}.
+	 * 
+	 * @deprecated Use {@link WarningAction#TYPE_NAME}.
 	 */
-	public static final String WARNING_ACTION_ENUM = "WarningAction";
+	@Deprecated
+	public static final String WARNING_ACTION_ENUM = WarningAction.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>IGNORE</code> in enumeration {@value #WARNING_ACTION_ENUM}.
+	 * Name of the classifier <code>IGNORE</code> in enumeration <code>WarningAction</code>.
+	 * 
+	 * @deprecated Use {@link WarningAction#IGNORE_CLASSIFIER}.
 	 */
-	public static final String IGNORE_WARNING_ACTION_CLASSIFIER = "IGNORE";
+	@Deprecated
+	public static final String IGNORE_WARNING_ACTION_CLASSIFIER = WarningAction.IGNORE_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>SKIP</code> in enumeration {@value #WARNING_ACTION_ENUM}.
+	 * Name of the classifier <code>SKIP</code> in enumeration <code>WarningAction</code>.
+	 * 
+	 * @deprecated Use {@link WarningAction#SKIP_CLASSIFIER}.
 	 */
-	public static final String SKIP_WARNING_ACTION_CLASSIFIER = "SKIP";
+	@Deprecated
+	public static final String SKIP_WARNING_ACTION_CLASSIFIER = WarningAction.SKIP_CLASSIFIER;
 
 	/**
 	 * Lookup {@link Change} type.
 	 */
 	public static com.top_logic.model.TLClass getChangeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(Change.CHANGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(Change.CHANGE_TYPE);
 	}
 
 	/**
@@ -112,21 +147,21 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link Creation} type.
 	 */
 	public static com.top_logic.model.TLClass getCreationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(Creation.CREATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(Creation.CREATION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Deletion} type.
 	 */
 	public static com.top_logic.model.TLClass getDeletionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(Deletion.DELETION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(Deletion.DELETION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Update} type.
 	 */
 	public static com.top_logic.model.TLClass getUpdateType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(Update.UPDATE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(Update.UPDATE_TYPE);
 	}
 
 	/**
@@ -140,7 +175,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link ChangeConfirmation} type.
 	 */
 	public static com.top_logic.model.TLClass getChangeConfirmationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(ChangeConfirmation.CHANGE_CONFIRMATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(ChangeConfirmation.CHANGE_CONFIRMATION_TYPE);
 	}
 
 	/**
@@ -154,7 +189,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link ErrorMessage} type.
 	 */
 	public static com.top_logic.model.TLClass getErrorMessageType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(ErrorMessage.ERROR_MESSAGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(ErrorMessage.ERROR_MESSAGE_TYPE);
 	}
 
 	/**
@@ -168,7 +203,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link WarningMessage} type.
 	 */
 	public static com.top_logic.model.TLClass getWarningMessageType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(WarningMessage.WARNING_MESSAGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(WarningMessage.WARNING_MESSAGE_TYPE);
 	}
 
 	/**
@@ -182,7 +217,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link ChangeSet} type.
 	 */
 	public static com.top_logic.model.TLClass getChangeSetType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(ChangeSet.CHANGE_SET_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(ChangeSet.CHANGE_SET_TYPE);
 	}
 
 	/**
@@ -204,6 +239,20 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 */
 	public static com.top_logic.model.TLProperty getDateChangeSetAttr() {
 		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.DATE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ChangeSet#IS_REDO_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLProperty getIsRedoChangeSetAttr() {
+		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.IS_REDO_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ChangeSet#IS_REVERT_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLProperty getIsRevertChangeSetAttr() {
+		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.IS_REVERT_ATTR);
 	}
 
 	/**
@@ -238,7 +287,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link Modification} type.
 	 */
 	public static com.top_logic.model.TLClass getModificationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(Modification.MODIFICATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(Modification.MODIFICATION_TYPE);
 	}
 
 	/**
@@ -266,7 +315,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link Operation} type.
 	 */
 	public static com.top_logic.model.TLClass getOperationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(Operation.OPERATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(Operation.OPERATION_TYPE);
 	}
 
 	/**
@@ -280,7 +329,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link CreateOp} type.
 	 */
 	public static com.top_logic.model.TLClass getCreateOpType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(CreateOp.CREATE_OP_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(CreateOp.CREATE_OP_TYPE);
 	}
 
 	/**
@@ -308,7 +357,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link DeleteOp} type.
 	 */
 	public static com.top_logic.model.TLClass getDeleteOpType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(DeleteOp.DELETE_OP_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(DeleteOp.DELETE_OP_TYPE);
 	}
 
 	/**
@@ -322,7 +371,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link UpdateOp} type.
 	 */
 	public static com.top_logic.model.TLClass getUpdateOpType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(UpdateOp.UPDATE_OP_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(UpdateOp.UPDATE_OP_TYPE);
 	}
 
 	/**
@@ -343,7 +392,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link SetOp} type.
 	 */
 	public static com.top_logic.model.TLClass getSetOpType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(SetOp.SET_OP_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_MODULE).getType(SetOp.SET_OP_TYPE);
 	}
 
 	/**
@@ -361,70 +410,97 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
-	 * Lookup {@value #CHANGE_TYPE_ENUM} enumeration.
+	 * Lookup the enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getChangeTypeEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(CHANGE_TYPE_ENUM);
+		return ChangeType.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #CREATE_CHANGE_TYPE_CLASSIFIER} of enumeration {@value #CHANGE_TYPE_ENUM}.
+	 * Lookup classifier <code>CREATE</code> of enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#createClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getCREATEChangeTypeClassifier() {
-		return getChangeTypeEnum().getClassifier(CREATE_CHANGE_TYPE_CLASSIFIER);
+		return ChangeType.createClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #DELETE_CHANGE_TYPE_CLASSIFIER} of enumeration {@value #CHANGE_TYPE_ENUM}.
+	 * Lookup classifier <code>DELETE</code> of enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#deleteClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getDELETEChangeTypeClassifier() {
-		return getChangeTypeEnum().getClassifier(DELETE_CHANGE_TYPE_CLASSIFIER);
+		return ChangeType.deleteClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #UPDATE_CHANGE_TYPE_CLASSIFIER} of enumeration {@value #CHANGE_TYPE_ENUM}.
+	 * Lookup classifier <code>UPDATE</code> of enumeration <code>ChangeType</code>.
+	 * 
+	 * @deprecated Use {@link ChangeType#updateClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getUPDATEChangeTypeClassifier() {
-		return getChangeTypeEnum().getClassifier(UPDATE_CHANGE_TYPE_CLASSIFIER);
+		return ChangeType.updateClassifier();
 	}
 
 	/**
-	 * Lookup {@value #ERROR_ACTION_ENUM} enumeration.
+	 * Lookup the enumeration <code>ErrorAction</code>.
+	 * 
+	 * @deprecated Use {@link ErrorAction#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getErrorActionEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(ERROR_ACTION_ENUM);
+		return ErrorAction.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #IGNORE_ERROR_ACTION_CLASSIFIER} of enumeration {@value #ERROR_ACTION_ENUM}.
+	 * Lookup classifier <code>IGNORE</code> of enumeration <code>ErrorAction</code>.
+	 * 
+	 * @deprecated Use {@link ErrorAction#ignoreClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getIGNOREErrorActionClassifier() {
-		return getErrorActionEnum().getClassifier(IGNORE_ERROR_ACTION_CLASSIFIER);
+		return ErrorAction.ignoreClassifier();
 	}
 
 	/**
-	 * Lookup {@value #WARNING_ACTION_ENUM} enumeration.
+	 * Lookup the enumeration <code>WarningAction</code>.
+	 * 
+	 * @deprecated Use {@link WarningAction#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getWarningActionEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(WARNING_ACTION_ENUM);
+		return WarningAction.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #IGNORE_WARNING_ACTION_CLASSIFIER} of enumeration {@value #WARNING_ACTION_ENUM}.
+	 * Lookup classifier <code>IGNORE</code> of enumeration <code>WarningAction</code>.
+	 * 
+	 * @deprecated Use {@link WarningAction#ignoreClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getIGNOREWarningActionClassifier() {
-		return getWarningActionEnum().getClassifier(IGNORE_WARNING_ACTION_CLASSIFIER);
+		return WarningAction.ignoreClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #SKIP_WARNING_ACTION_CLASSIFIER} of enumeration {@value #WARNING_ACTION_ENUM}.
+	 * Lookup classifier <code>SKIP</code> of enumeration <code>WarningAction</code>.
+	 * 
+	 * @deprecated Use {@link WarningAction#skipClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getSKIPWarningActionClassifier() {
-		return getWarningActionEnum().getClassifier(SKIP_WARNING_ACTION_CLASSIFIER);
+		return WarningAction.skipClassifier();
 	}
 
 	/**
-	 * Name of type <code>Change</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>Change</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Change#CHANGE_TYPE}.
 	 */
@@ -433,11 +509,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #CHANGE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.ChangeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CHANGE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_CHANGE = com.top_logic.element.changelog.model.impl.ChangeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Creation</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>Creation</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Creation#CREATION_TYPE}.
 	 */
@@ -446,11 +525,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #CREATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.CreationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CREATION = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_CREATION = com.top_logic.element.changelog.model.impl.CreationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Deletion</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>Deletion</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Deletion#DELETION_TYPE}.
 	 */
@@ -459,11 +541,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #DELETION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.DeletionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_DELETION = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_DELETION = com.top_logic.element.changelog.model.impl.DeletionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Update</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>Update</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Update#UPDATE_TYPE}.
 	 */
@@ -472,11 +557,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #UPDATE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.UpdateBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_UPDATE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_UPDATE = com.top_logic.element.changelog.model.impl.UpdateBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ChangeConfirmation</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>ChangeConfirmation</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link ChangeConfirmation#CHANGE_CONFIRMATION_TYPE}.
 	 */
@@ -484,7 +572,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	public static final String CHANGE_CONFIRMATION_NODE = ChangeConfirmation.CHANGE_CONFIRMATION_TYPE;
 
 	/**
-	 * Name of type <code>ErrorMessage</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>ErrorMessage</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link ErrorMessage#ERROR_MESSAGE_TYPE}.
 	 */
@@ -493,11 +581,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #ERROR_MESSAGE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.ErrorMessageBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ERROR_MESSAGE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ERROR_MESSAGE = com.top_logic.element.changelog.model.impl.ErrorMessageBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>WarningMessage</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>WarningMessage</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link WarningMessage#WARNING_MESSAGE_TYPE}.
 	 */
@@ -506,11 +597,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #WARNING_MESSAGE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.WarningMessageBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_WARNING_MESSAGE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_WARNING_MESSAGE = com.top_logic.element.changelog.model.impl.WarningMessageBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ChangeSet</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>ChangeSet</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link ChangeSet#CHANGE_SET_TYPE}.
 	 */
@@ -519,11 +613,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #CHANGE_SET_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.ChangeSetBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CHANGE_SET = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_CHANGE_SET = com.top_logic.element.changelog.model.impl.ChangeSetBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Modification</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>Modification</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Modification#MODIFICATION_TYPE}.
 	 */
@@ -531,7 +628,7 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	public static final String MODIFICATION_NODE = Modification.MODIFICATION_TYPE;
 
 	/**
-	 * Name of type <code>Operation</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>Operation</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link Operation#OPERATION_TYPE}.
 	 */
@@ -540,11 +637,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #OPERATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.OperationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_OPERATION = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_OPERATION = com.top_logic.element.changelog.model.impl.OperationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CreateOp</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>CreateOp</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link CreateOp#CREATE_OP_TYPE}.
 	 */
@@ -553,11 +653,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #CREATE_OP_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.CreateOpBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CREATE_OP = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_CREATE_OP = com.top_logic.element.changelog.model.impl.CreateOpBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>DeleteOp</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>DeleteOp</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link DeleteOp#DELETE_OP_TYPE}.
 	 */
@@ -566,11 +669,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #DELETE_OP_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.DeleteOpBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_DELETE_OP = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_DELETE_OP = com.top_logic.element.changelog.model.impl.DeleteOpBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>UpdateOp</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>UpdateOp</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link UpdateOp#UPDATE_OP_TYPE}.
 	 */
@@ -579,11 +685,14 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #UPDATE_OP_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.UpdateOpBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_UPDATE_OP = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_UPDATE_OP = com.top_logic.element.changelog.model.impl.UpdateOpBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>SetOp</code> in structure {@link #TL_CHANGELOG_STRUCTURE}.
+	 * Name of type <code>SetOp</code> in module {@link #TL_CHANGELOG_MODULE}.
 	 * 
 	 * @deprecated Use {@link SetOp#SET_OP_TYPE}.
 	 */
@@ -592,8 +701,11 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #SET_OP_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.element.changelog.model.impl.SetOpBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SET_OP = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_SET_OP = com.top_logic.element.changelog.model.impl.SetOpBase.TABLE_NAME;
 
 
 	/**
@@ -768,6 +880,6 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * The singleton instance of {@link TlChangelogFactory}.
 	 */
 	public static TlChangelogFactory getInstance() {
-		return (TlChangelogFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_CHANGELOG_STRUCTURE);
+		return (TlChangelogFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_CHANGELOG_MODULE);
 	}
 }

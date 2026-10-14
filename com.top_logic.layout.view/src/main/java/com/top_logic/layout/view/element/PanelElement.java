@@ -126,11 +126,19 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 		 * content.
 		 *
 		 * <p>
-		 * Enable this for a panel whose single child scrolls internally - in particular a table
-		 * ({@link com.top_logic.layout.react.control.table.TableViewControl}), which only bounds its
-		 * scroll viewport (and virtualizes) when its container has a definite height. A plain
-		 * (non-filling) panel grows with its content, so a large table would overflow and scroll the
-		 * surrounding tab rather than itself.
+		 * Unset, the panel follows its content: it fills while its content fills - a table
+		 * ({@link com.top_logic.layout.react.control.table.TableViewControl}), a split, a nested
+		 * filling panel - and grows with its content otherwise. A table only bounds its scroll
+		 * viewport (and virtualizes) when its container has a definite height, so a panel around a
+		 * table spans the available height and the table scrolls its rows itself, wherever the panel
+		 * sits.
+		 * </p>
+		 *
+		 * <p>
+		 * {@code true} fills even around content of its own size. {@code false} does not pass the
+		 * fill request of its content on: where nothing else gives the panel a height - one of
+		 * several panels listed one below the other in a scrolling panel body - it stays as high as
+		 * its content, and a table inside shows all of its rows.
 		 * </p>
 		 *
 		 * <p>
@@ -140,7 +148,8 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 		 * </p>
 		 */
 		@Name(FILL)
-		boolean getFill();
+		@Nullable
+		Boolean getFill();
 
 		/**
 		 * A width of the panel's own, as a CSS length, e.g. {@code 380px}.
@@ -177,7 +186,7 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 
 	private final List<UIElement> _titleContent;
 
-	private final boolean _fill;
+	private final Boolean _fill;
 
 	private final boolean _hoverActions;
 

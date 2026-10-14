@@ -36,7 +36,7 @@ abstract public class AbstractFlexWrapperJournalDelegate implements JournalEntry
     /**
      * the wrapper delegating the journalling
      */
-    protected abstract AbstractWrapper getWrapper();
+    protected abstract Wrapper getWrapper();
     
 	public AbstractFlexWrapperJournalDelegate() {
         // get storages of ko attributes
@@ -65,7 +65,7 @@ abstract public class AbstractFlexWrapperJournalDelegate implements JournalEntry
         }
     }
     
-    public static String getJournalType(AbstractWrapper aWrapper) {
+    public static String getJournalType(Wrapper aWrapper) {
     	return aWrapper.tTable().getName();
     }
     

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields) or when a channel write must ask about unsaved changes.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
 order: 40
 ---
 
@@ -165,3 +165,27 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 **A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
+
+## Derived fields
+
+A `<field>` of a derived attribute - one computed by a `<storage-algorithm>`, such as a `<query>` - follows the values entered in the form. While the form is edited, the field computes the attribute over the form's edits instead of the stored values, and computes it again when a field it reads changes. This holds through a chain of derived attributes as well: a `headline` reading a derived `statusLabel` that reads the `status` reference changes as soon as another status is selected, before anything is saved. A derived field is never dirty - it holds no input of its own and is not stored - but it announces each change of its value, so whatever depends on it follows in turn.
+
+A derived attribute may also be implemented in Java, by a storage derived from `AbstractDerivedStorage` configured as `<storage-algorithm><implementation class="..."/></storage-algorithm>`. In a form, the storage is called with the edited object itself, not with the form's overlay, so it may cast it to the generated interface and use the generated getters; its reads are traced and redirected to the form's edits all the same. The demo's `HeadlineStorage` computes the `headline` of a ticket from `getName()` and `getStatusLabel()`, the latter a derived attribute computed by a script, so selecting another status changes the headline through both kinds of derived attributes.
+
+The same applies to every script a form evaluates for an object it edits: a `dynamic-visibility` mode selector, an options expression, a constraint check. Each records the attributes it reads (directly or through derived attributes), reads their entered values and is evaluated again when one of them changes, so a field appears, disappears or changes its options while the user is still typing:
+
+```xml
+<property name="resolution"
+	type="tl.core:String"
+>
+	<annotations>
+		<dynamic-visibility>
+			<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+				function="t -> editMode -> if(demoTicketsIsClosed($t), if($editMode, 'editable', 'read-only'), 'hidden')"
+			/>
+		</dynamic-visibility>
+	</annotations>
+</property>
+```
+
+A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.

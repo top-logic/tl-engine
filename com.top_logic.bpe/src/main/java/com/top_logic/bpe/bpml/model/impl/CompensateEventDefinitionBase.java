@@ -17,4 +17,9 @@ public interface CompensateEventDefinitionBase extends com.top_logic.bpe.bpml.mo
 	 */
 	String COMPENSATE_EVENT_DEFINITION_TYPE = "CompensateEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #COMPENSATE_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

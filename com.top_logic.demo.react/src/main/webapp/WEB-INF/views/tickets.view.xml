@@ -89,6 +89,10 @@
 	standing for no ticket: clicking it collapses the group and leaves the selection alone. The
 	column header menu of either list regroups it by another column or removes the grouping, and
 	that choice is kept per user.
+	
+	The lists stand one below the other in the scrolling body of the Tickets panel, each as high as
+	its rows: their panels set fill="false", so that the tables do not divide the height of the
+	page between them, as a panel around a table otherwise does.
 -->
 <view>
 	<channels>
@@ -348,7 +352,7 @@
 								</value-input>
 							</fields>
 						</inset>
-						<panel>
+						<panel fill="false">
 							<title>
 								<en>Open</en>
 								<de>Offen</de>
@@ -448,9 +452,11 @@
 									</computed-column>
 								</columns>
 								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
+								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
-						<panel>
+						<panel fill="false">
 							<title>
 								<en>Closed</en>
 								<de>Geschlossen</de>
@@ -492,7 +498,7 @@
 								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 							</table>
 						</panel>
-						<panel>
+						<panel fill="false">
 							<title>
 								<en>Involve</en>
 								<de>Beteiligen</de>
@@ -536,6 +542,9 @@
 						<form input="ticket">
 							<field attribute="name"/>
 							<field attribute="status"/>
+							<field attribute="statusLabel"/>
+							<field attribute="headline"/>
+							<field attribute="resolution"/>
 						</form>
 						<object-list
 							element-channel="comment"

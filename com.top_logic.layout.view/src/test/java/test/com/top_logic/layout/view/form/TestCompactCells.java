@@ -13,8 +13,8 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -277,11 +277,12 @@ public class TestCompactCells extends TestCase {
 	 * {@link AttributeSettings} the test model is built with, the {@link CompatibilityService} the
 	 * transient parts hold their values through, the {@link ThemeFactory} providing the icon of the
 	 * button opening a compact field, the resources and label providers the displays use, and the
-	 * {@link ThreadContextManager} each test runs its interaction in.
+	 * {@link ThreadContextManager} each test runs its interaction in, started on a knowledge base
+	 * these services depend on.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestCompactCells.class,
+		return KBSetup.getSingleKBTest(TestCompactCells.class,
+			ServiceTestSetup.createStarterFactoryForModules(
 				ThreadContextManager.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
 				AttributeSettings.Module.INSTANCE,

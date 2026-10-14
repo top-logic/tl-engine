@@ -36,6 +36,11 @@ public interface ManualTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	String FORM_DEFINITION_ATTR = "formDefinition";
 
 	/**
+	 * Name of the table storing {@link #MANUAL_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #CAN_EDIT_ATTR}.
 	 */
 	default boolean getCanEdit() {

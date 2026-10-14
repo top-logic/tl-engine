@@ -92,30 +92,30 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
     }
     
     /**
-	 * Creates a new AttributedWarpper of the given type
+	 * Creates a new {@link AttributedObject} of the given type.
 	 * 
 	 * @param anElementName
 	 *        the type of wrapper to create. May not be null or empty
-	 * @return a new AttributedWrapper
+	 * @return a new {@link AttributedObject}
 	 * @throws CreateElementException
 	 *         if the wrapper can not be created
 	 * 
 	 * @deprecated Use {@link #createObject(TLClass)}
 	 */
 	@Deprecated
-	public final AttributedWrapper createNewWrapper(String anElementName) throws CreateElementException {
-		return (AttributedWrapper) createObject(type(anElementName));
+	public final AttributedObject createNewWrapper(String anElementName) throws CreateElementException {
+		return (AttributedObject) createObject(type(anElementName));
     }
 
 	/**
-	 * Creates a new AttributedWarpper of the given type
+	 * Creates a new {@link AttributedObject} of the given type.
 	 * 
 	 * @param anElementName
 	 *        the type of wrapper to create. May not be null or empty
 	 * @param initialValues
 	 *        Initial values for the wrapper. The buffer is modified by this method. See
 	 *        {@link #buildInitialValues(NameValueBuilder, String, TLClass)}
-	 * @return a new AttributedWrapper
+	 * @return a new {@link AttributedObject}
 	 * 
 	 * @throws CreateElementException
 	 *         if the wrapper can not be created
@@ -123,8 +123,8 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	 * @deprecated Implement {@link #createObject(TLClass, TLObject, ValueProvider, TLID)}
 	 */
 	@Deprecated
-	protected final AttributedWrapper createNewWrapper(String anElementName, NameValueBuffer initialValues) {
-		return (AttributedWrapper) createObject(type(anElementName));
+	protected final AttributedObject createNewWrapper(String anElementName, NameValueBuffer initialValues) {
+		return (AttributedObject) createObject(type(anElementName));
 	}
 
 	/**
@@ -156,7 +156,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	 * @deprecated Use {@link #createObject(TLClass, com.top_logic.model.TLObject)}
 	 */
 	@Deprecated
-	public final AttributedWrapper createNewWrapper(MetaElementHolder aHolder, String aMEType, String anElementName)
+	public final AttributedObject createNewWrapper(MetaElementHolder aHolder, String aMEType, String anElementName)
 			throws CreateElementException {
         if (aHolder == null) {
 			throw new IllegalArgumentException("Given type holder is null (in createNewWrapper)");
@@ -178,7 +178,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 					aHolder + "'!");
 			}
 			theKOType = TLAnnotations.getTable(type);
-			AttributedWrapper theWrapper = getNewWrapper(theKOType, type);
+			AttributedObject theWrapper = getNewWrapper(theKOType, type);
 
             if (theWrapper != null) {
 				{
@@ -218,7 +218,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	 *        the type of the wrapper
 	 * @return the new Wrapper
 	 */
-	protected AttributedWrapper getNewWrapper(String staticTypeName, TLClass type) throws DataObjectException {
+	protected AttributedObject getNewWrapper(String staticTypeName, TLClass type) throws DataObjectException {
 		return getNewWrapper(staticTypeName, type, new NameValueBuffer());
 	}
 
@@ -237,7 +237,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	 * @deprecated Implement {@link #createObject(TLClass, TLObject, ValueProvider, TLID)}
 	 */
 	@Deprecated
-	protected AttributedWrapper getNewWrapper(String staticTypeName, TLClass type, NameValueBuffer initialValues)
+	protected AttributedObject getNewWrapper(String staticTypeName, TLClass type, NameValueBuffer initialValues)
 			throws DataObjectException {
 		TLFactory.failIfAbstract(type);
 		KnowledgeBase   theKBase  = this.getKnowledgeBase();
@@ -245,7 +245,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 		KnowledgeObject theObject =
 			theKBase.createKnowledgeObject(staticTypeName, initialValues);
 
-		return (AttributedWrapper) WrapperFactory.getWrapper(theObject);
+		return (AttributedObject) WrapperFactory.getWrapper(theObject);
 	}
 
 	/**

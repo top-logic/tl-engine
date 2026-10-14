@@ -17,4 +17,9 @@ public interface SubProcessBase extends com.top_logic.bpe.bpml.model.Task, com.t
 	 */
 	String SUB_PROCESS_TYPE = "SubProcess";
 
+	/**
+	 * Name of the table storing {@link #SUB_PROCESS_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

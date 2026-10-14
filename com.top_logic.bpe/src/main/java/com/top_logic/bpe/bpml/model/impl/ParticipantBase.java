@@ -99,6 +99,11 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	String TOKEN_TYPE_ATTR = "tokenType";
 
 	/**
+	 * Name of the table storing {@link #PARTICIPANT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #COLLABORATION_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Collaboration getCollaboration() {

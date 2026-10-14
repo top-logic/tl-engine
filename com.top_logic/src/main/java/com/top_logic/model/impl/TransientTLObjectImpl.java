@@ -29,6 +29,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.fallback.StorageWithFallback;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -88,8 +89,22 @@ public class TransientTLObjectImpl extends TransientObject {
 		return container == null || container.tValid();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the read is traced and resolved through the scope's overlays.
+	 * </p>
+	 */
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
+		TracingScope scope = TracingScope.current();
+		if (scope != null) {
+			Object overlayValue = scope.read(this, part);
+			if (overlayValue != TracingScope.PLAIN) {
+				return overlayValue;
+			}
+		}
 		Object directValue = directValue(part);
 		if (directValue == null) {
 			// Value may not be set yet.

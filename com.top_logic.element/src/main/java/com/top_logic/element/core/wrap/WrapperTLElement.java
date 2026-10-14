@@ -19,9 +19,6 @@ import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
  */
 public abstract class WrapperTLElement extends AbstractBoundWrapper implements StructuredElement {
 
-    /** Flag, if caching is enabled. */
-    protected static Boolean USE_CACHE;
-
     /**
      * @param    ko         The KO to be wrapped.
      */

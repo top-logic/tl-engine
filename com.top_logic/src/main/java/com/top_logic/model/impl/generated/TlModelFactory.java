@@ -17,22 +17,35 @@ package com.top_logic.model.impl.generated;
 public interface TlModelFactory {
 
 	/**
-	 * Name of the structure <code>tl.model</code> defined by {@link TlModelFactory}.
+	 * Name of the module <code>tl.model</code> defined by {@link TlModelFactory}.
 	 */
-	public static final String TL_MODEL_STRUCTURE = "tl.model";
+	public static final String TL_MODEL_MODULE = "tl.model";
 
 	/**
-	 * Name of the data type <code>HistoryType</code> in module {@value #TL_MODEL_STRUCTURE}.
+	 * Name of the structure <code>tl.model</code> defined by {@link TlModelFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_MODEL_MODULE}.
+	 */
+	@Deprecated
+	public static final String TL_MODEL_STRUCTURE = TL_MODEL_MODULE;
+
+	/**
+	 * Name of the data type <code>HistoryType</code> in module {@value #TL_MODEL_MODULE}.
 	 */
 	public static final String HISTORY_TYPE_TYPE = "HistoryType";
 
 	/**
-	 * Name of the data type <code>TLAnnotation</code> in module {@value #TL_MODEL_STRUCTURE}.
+	 * Name of the data type <code>DeletionPolicy</code> in module {@value #TL_MODEL_MODULE}.
+	 */
+	public static final String DELETION_POLICY_TYPE = "DeletionPolicy";
+
+	/**
+	 * Name of the data type <code>TLAnnotation</code> in module {@value #TL_MODEL_MODULE}.
 	 */
 	public static final String TL_ANNOTATION_TYPE = "TLAnnotation";
 
 	/**
-	 * Name of the data type <code>DBType</code> in module {@value #TL_MODEL_STRUCTURE}.
+	 * Name of the data type <code>DBType</code> in module {@value #TL_MODEL_MODULE}.
 	 */
 	public static final String DB_TYPE_TYPE = "DBType";
 
@@ -40,7 +53,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLObject} type.
 	 */
 	public static com.top_logic.model.TLClass getTLObjectType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLObject.TL_OBJECT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLObject.TL_OBJECT_TYPE);
 	}
 
 	/**
@@ -54,7 +67,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLModelPart} type.
 	 */
 	public static com.top_logic.model.TLClass getTLModelPartType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLModelPart.TL_MODEL_PART_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLModelPart.TL_MODEL_PART_TYPE);
 	}
 
 	/**
@@ -75,7 +88,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLNamedPart} type.
 	 */
 	public static com.top_logic.model.TLClass getTLNamedPartType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLNamedPart.TL_NAMED_PART_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLNamedPart.TL_NAMED_PART_TYPE);
 	}
 
 	/**
@@ -89,7 +102,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLModel} type.
 	 */
 	public static com.top_logic.model.TLClass getTLModelType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLModel.TL_MODEL_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLModel.TL_MODEL_TYPE);
 	}
 
 	/**
@@ -110,7 +123,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLScope} type.
 	 */
 	public static com.top_logic.model.TLClass getTLScopeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLScope.TL_SCOPE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLScope.TL_SCOPE_TYPE);
 	}
 
 	/**
@@ -124,7 +137,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLModule} type.
 	 */
 	public static com.top_logic.model.TLClass getTLModuleType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLModule.TL_MODULE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLModule.TL_MODULE_TYPE);
 	}
 
 	/**
@@ -145,7 +158,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLType} type.
 	 */
 	public static com.top_logic.model.TLClass getTLTypeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLType.TL_TYPE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLType.TL_TYPE_TYPE);
 	}
 
 	/**
@@ -173,7 +186,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLStructuredType} type.
 	 */
 	public static com.top_logic.model.TLClass getTLStructuredTypeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLStructuredType.TL_STRUCTURED_TYPE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLStructuredType.TL_STRUCTURED_TYPE_TYPE);
 	}
 
 	/**
@@ -187,7 +200,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLEnumeration} type.
 	 */
 	public static com.top_logic.model.TLClass getTLEnumerationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLEnumeration.TL_ENUMERATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLEnumeration.TL_ENUMERATION_TYPE);
 	}
 
 	/**
@@ -208,7 +221,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLPrimitive} type.
 	 */
 	public static com.top_logic.model.TLClass getTLPrimitiveType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLPrimitive.TL_PRIMITIVE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLPrimitive.TL_PRIMITIVE_TYPE);
 	}
 
 	/**
@@ -250,7 +263,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLAssociation} type.
 	 */
 	public static com.top_logic.model.TLClass getTLAssociationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLAssociation.TL_ASSOCIATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLAssociation.TL_ASSOCIATION_TYPE);
 	}
 
 	/**
@@ -285,7 +298,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLClass} type.
 	 */
 	public static com.top_logic.model.TLClass getTLClassType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLClass.TL_CLASS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLClass.TL_CLASS_TYPE);
 	}
 
 	/**
@@ -327,7 +340,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLTypePart} type.
 	 */
 	public static com.top_logic.model.TLClass getTLTypePartType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLTypePart.TL_TYPE_PART_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLTypePart.TL_TYPE_PART_TYPE);
 	}
 
 	/**
@@ -355,7 +368,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.DerivedTLTypePart} type.
 	 */
 	public static com.top_logic.model.TLClass getDerivedTLTypePartType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.DerivedTLTypePart.DERIVED_TL_TYPE_PART_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.DerivedTLTypePart.DERIVED_TL_TYPE_PART_TYPE);
 	}
 
 	/**
@@ -369,7 +382,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLStructuredTypePart} type.
 	 */
 	public static com.top_logic.model.TLClass getTLStructuredTypePartType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLStructuredTypePart.TL_STRUCTURED_TYPE_PART_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLStructuredTypePart.TL_STRUCTURED_TYPE_PART_TYPE);
 	}
 
 	/**
@@ -446,7 +459,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLAssociationEnd} type.
 	 */
 	public static com.top_logic.model.TLClass getTLAssociationEndType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLAssociationEnd.TL_ASSOCIATION_END_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLAssociationEnd.TL_ASSOCIATION_END_TYPE);
 	}
 
 	/**
@@ -461,6 +474,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLProperty getCompositeTLAssociationEndAttr() {
 		return (com.top_logic.model.TLProperty) getTLAssociationEndType().getPart(com.top_logic.model.TLAssociationEnd.COMPOSITE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLAssociationEnd#DELETION_POLICY_ATTR} of {@link com.top_logic.model.TLAssociationEnd}.
+	 */
+	public static com.top_logic.model.TLProperty getDeletionPolicyTLAssociationEndAttr() {
+		return (com.top_logic.model.TLProperty) getTLAssociationEndType().getPart(com.top_logic.model.TLAssociationEnd.DELETION_POLICY_ATTR);
 	}
 
 	/**
@@ -495,7 +515,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLReference} type.
 	 */
 	public static com.top_logic.model.TLClass getTLReferenceType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLReference.TL_REFERENCE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLReference.TL_REFERENCE_TYPE);
 	}
 
 	/**
@@ -531,6 +551,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLProperty getCompositeTLReferenceAttr() {
 		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.COMPOSITE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#DELETION_POLICY_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLProperty getDeletionPolicyTLReferenceAttr() {
+		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.DELETION_POLICY_ATTR);
 	}
 
 	/**
@@ -593,14 +620,14 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLProperty} type.
 	 */
 	public static com.top_logic.model.TLClass getTLPropertyType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLProperty.TL_PROPERTY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLProperty.TL_PROPERTY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link com.top_logic.model.TLClassifier} type.
 	 */
 	public static com.top_logic.model.TLClass getTLClassifierType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLClassifier.TL_CLASSIFIER_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLClassifier.TL_CLASSIFIER_TYPE);
 	}
 
 	/**
@@ -635,7 +662,7 @@ public interface TlModelFactory {
 	 * Lookup {@link com.top_logic.model.TLModuleSingleton} type.
 	 */
 	public static com.top_logic.model.TLClass getTLModuleSingletonsType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLModuleSingleton.TL_MODULE_SINGLETONS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(com.top_logic.model.TLModuleSingleton.TL_MODULE_SINGLETONS_TYPE);
 	}
 
 	/**
@@ -663,25 +690,32 @@ public interface TlModelFactory {
 	 * Lookup {@value #HISTORY_TYPE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getHistoryTypeType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(HISTORY_TYPE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(HISTORY_TYPE_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #DELETION_POLICY_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getDeletionPolicyType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(DELETION_POLICY_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #TL_ANNOTATION_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getTLAnnotationType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(TL_ANNOTATION_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(TL_ANNOTATION_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DB_TYPE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDBTypeType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(DB_TYPE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_MODULE).getType(DB_TYPE_TYPE);
 	}
 
 	/**
-	 * Name of type <code>TLObject</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLObject</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLObject#TL_OBJECT_TYPE}.
 	 */
@@ -689,7 +723,7 @@ public interface TlModelFactory {
 	public static final String TL_OBJECT_NODE = com.top_logic.model.TLObject.TL_OBJECT_TYPE;
 
 	/**
-	 * Name of type <code>TLModelPart</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLModelPart</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLModelPart#TL_MODEL_PART_TYPE}.
 	 */
@@ -697,7 +731,7 @@ public interface TlModelFactory {
 	public static final String TL_MODEL_PART_NODE = com.top_logic.model.TLModelPart.TL_MODEL_PART_TYPE;
 
 	/**
-	 * Name of type <code>TLNamedPart</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLNamedPart</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLNamedPart#TL_NAMED_PART_TYPE}.
 	 */
@@ -705,7 +739,7 @@ public interface TlModelFactory {
 	public static final String TL_NAMED_PART_NODE = com.top_logic.model.TLNamedPart.TL_NAMED_PART_TYPE;
 
 	/**
-	 * Name of type <code>TLModel</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLModel</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLModel#TL_MODEL_TYPE}.
 	 */
@@ -714,11 +748,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_MODEL_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLModelBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_MODEL = "TLModel";
+	@Deprecated
+	public static final String KO_NAME_TL_MODEL = com.top_logic.model.impl.generated.TLModelBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLScope</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLScope</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLScope#TL_SCOPE_TYPE}.
 	 */
@@ -726,7 +763,7 @@ public interface TlModelFactory {
 	public static final String TL_SCOPE_NODE = com.top_logic.model.TLScope.TL_SCOPE_TYPE;
 
 	/**
-	 * Name of type <code>TLModule</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLModule</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLModule#TL_MODULE_TYPE}.
 	 */
@@ -735,11 +772,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_MODULE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLModuleBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_MODULE = "TLModule";
+	@Deprecated
+	public static final String KO_NAME_TL_MODULE = com.top_logic.model.impl.generated.TLModuleBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLType</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLType</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLType#TL_TYPE_TYPE}.
 	 */
@@ -747,7 +787,7 @@ public interface TlModelFactory {
 	public static final String TL_TYPE_NODE = com.top_logic.model.TLType.TL_TYPE_TYPE;
 
 	/**
-	 * Name of type <code>TLStructuredType</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLStructuredType</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLStructuredType#TL_STRUCTURED_TYPE_TYPE}.
 	 */
@@ -755,7 +795,7 @@ public interface TlModelFactory {
 	public static final String TL_STRUCTURED_TYPE_NODE = com.top_logic.model.TLStructuredType.TL_STRUCTURED_TYPE_TYPE;
 
 	/**
-	 * Name of type <code>TLEnumeration</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLEnumeration</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLEnumeration#TL_ENUMERATION_TYPE}.
 	 */
@@ -764,11 +804,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_ENUMERATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLEnumerationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_ENUMERATION = "FastList";
+	@Deprecated
+	public static final String KO_NAME_TL_ENUMERATION = com.top_logic.model.impl.generated.TLEnumerationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLPrimitive</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLPrimitive</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLPrimitive#TL_PRIMITIVE_TYPE}.
 	 */
@@ -777,11 +820,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_PRIMITIVE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLPrimitiveBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_PRIMITIVE = "TLDatatype";
+	@Deprecated
+	public static final String KO_NAME_TL_PRIMITIVE = com.top_logic.model.impl.generated.TLPrimitiveBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLAssociation</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLAssociation</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLAssociation#TL_ASSOCIATION_TYPE}.
 	 */
@@ -790,11 +836,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_ASSOCIATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLAssociationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_ASSOCIATION = "MetaElement";
+	@Deprecated
+	public static final String KO_NAME_TL_ASSOCIATION = com.top_logic.model.impl.generated.TLAssociationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLClass</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLClass</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLClass#TL_CLASS_TYPE}.
 	 */
@@ -803,11 +852,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_CLASS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLClassBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_CLASS = "MetaElement";
+	@Deprecated
+	public static final String KO_NAME_TL_CLASS = com.top_logic.model.impl.generated.TLClassBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLTypePart</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLTypePart</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLTypePart#TL_TYPE_PART_TYPE}.
 	 */
@@ -815,7 +867,7 @@ public interface TlModelFactory {
 	public static final String TL_TYPE_PART_NODE = com.top_logic.model.TLTypePart.TL_TYPE_PART_TYPE;
 
 	/**
-	 * Name of type <code>DerivedTLTypePart</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>DerivedTLTypePart</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.DerivedTLTypePart#DERIVED_TL_TYPE_PART_TYPE}.
 	 */
@@ -823,7 +875,7 @@ public interface TlModelFactory {
 	public static final String DERIVED_TL_TYPE_PART_NODE = com.top_logic.model.DerivedTLTypePart.DERIVED_TL_TYPE_PART_TYPE;
 
 	/**
-	 * Name of type <code>TLStructuredTypePart</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLStructuredTypePart</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLStructuredTypePart#TL_STRUCTURED_TYPE_PART_TYPE}.
 	 */
@@ -831,7 +883,7 @@ public interface TlModelFactory {
 	public static final String TL_STRUCTURED_TYPE_PART_NODE = com.top_logic.model.TLStructuredTypePart.TL_STRUCTURED_TYPE_PART_TYPE;
 
 	/**
-	 * Name of type <code>TLAssociationEnd</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLAssociationEnd</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLAssociationEnd#TL_ASSOCIATION_END_TYPE}.
 	 */
@@ -840,11 +892,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_ASSOCIATION_END_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLAssociationEndBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_ASSOCIATION_END = "MetaAttribute";
+	@Deprecated
+	public static final String KO_NAME_TL_ASSOCIATION_END = com.top_logic.model.impl.generated.TLAssociationEndBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLReference</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLReference</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLReference#TL_REFERENCE_TYPE}.
 	 */
@@ -853,11 +908,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_REFERENCE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLReferenceBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_REFERENCE = "MetaAttribute";
+	@Deprecated
+	public static final String KO_NAME_TL_REFERENCE = com.top_logic.model.impl.generated.TLReferenceBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLProperty</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLProperty</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLProperty#TL_PROPERTY_TYPE}.
 	 */
@@ -866,11 +924,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_PROPERTY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLPropertyBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_PROPERTY = "MetaAttribute";
+	@Deprecated
+	public static final String KO_NAME_TL_PROPERTY = com.top_logic.model.impl.generated.TLPropertyBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLClassifier</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLClassifier</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLClassifier#TL_CLASSIFIER_TYPE}.
 	 */
@@ -879,11 +940,14 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_CLASSIFIER_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLClassifierBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_CLASSIFIER = "FastListElt";
+	@Deprecated
+	public static final String KO_NAME_TL_CLASSIFIER = com.top_logic.model.impl.generated.TLClassifierBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TLModuleSingletons</code> in structure {@link #TL_MODEL_STRUCTURE}.
+	 * Name of type <code>TLModuleSingletons</code> in module {@link #TL_MODEL_MODULE}.
 	 * 
 	 * @deprecated Use {@link com.top_logic.model.TLModuleSingleton#TL_MODULE_SINGLETONS_TYPE}.
 	 */
@@ -892,7 +956,10 @@ public interface TlModelFactory {
 
 	/**
 	 * Storage table name of {@link #TL_MODULE_SINGLETONS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.model.impl.generated.TLModuleSingletonsBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TL_MODULE_SINGLETONS = "TLModule_singletons";
+	@Deprecated
+	public static final String KO_NAME_TL_MODULE_SINGLETONS = com.top_logic.model.impl.generated.TLModuleSingletonsBase.TABLE_NAME;
 
 }

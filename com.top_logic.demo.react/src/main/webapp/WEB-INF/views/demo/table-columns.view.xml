@@ -11,6 +11,10 @@
 	"Group order" shows groups ordered by a comparator the grouping column declares.
 	"Editable column" edits a computed column through its update function. "Default columns" shows
 	what a table displays when it declares no columns: the main properties of its row type.
+	
+	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
+	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
+	hidden and is offered in the column selection.
 -->
 <view>
 	<channels>
@@ -37,7 +41,8 @@
 						The rows are dictionaries built per milestone, so no model type describes them and
 						every column computes its value from the row. The declared type of a computed column
 						decides how its values are displayed, sorted and filtered, and what a group row
-						aggregates.
+						aggregates. The share column is declared with visible="false": it starts out
+						hidden and is offered in the column selection.
 					-->
 					<table personalization-key="table-columns-map-rows">
 						<columns>
@@ -61,12 +66,26 @@
 								<value><![CDATA[row -> $row["count"]]]></value>
 								<aggregate><![CDATA[rows -> $rows.map(r -> $r["count"]).sum()]]></aggregate>
 							</computed-column>
+							<computed-column name="share"
+								type="tl.core:Double"
+								visible="false"
+							>
+								<label>
+									<en>Share</en>
+									<de>Anteil</de>
+								</label>
+								<value><![CDATA[row -> if($row["total"] == 0, 0, $row["count"] / $row["total"])]]></value>
+							</computed-column>
 						</columns>
-						<rows><![CDATA[all(`tl.demo.projectManagement:Milestone`)
-	.map(m -> {
+						<rows><![CDATA[{
+	milestones = all(`tl.demo.projectManagement:Milestone`);
+	total = $milestones.map(m -> $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()).sum();
+	$milestones.map(m -> {
 		"name": $m.get(`tl.demo.projectManagement:Milestone#name`),
-		"count": $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()
-	})]]></rows>
+		"count": $m.get(`tl.demo.projectManagement:Milestone#tickets`).size(),
+		"total": $total
+	});
+}]]></rows>
 					</table>
 				</panel>
 			</tab>
@@ -85,7 +104,9 @@
 					<!--
 						The rows are milestones that were never persisted. They are displayed by the same
 						columns a table of persistent milestones uses; the computed column reads a reference
-						that a transient object does not hold, which is empty rather than an error.
+						that a transient object does not hold, which is empty rather than an error. The due
+						date column is declared with visible="false": it starts out hidden and is offered in
+						the column selection.
 					-->
 					<table
 						personalization-key="table-columns-transient"
@@ -96,7 +117,10 @@
 								attribute="name"
 								sort="ASC"
 							/>
-							<column attribute="dueDate"/>
+							<column
+								attribute="dueDate"
+								visible="false"
+							/>
 							<computed-column name="ticketCount"
 								type="tl.core:Integer"
 							>
@@ -188,7 +212,9 @@
 						Which columns there are is decided by the data: one per milestone, each showing how
 						many tickets of the contributor belong to it. The table starts grouped by the
 						computed initial column, so the sum every milestone column aggregates over the rows
-						of a group is visible in its header row.
+						of a group is visible in its header row. The column-visible function hides the
+						column of milestone M3 at the start (M1 and M2 are shown); it is offered in the
+						column selection.
 					-->
 					<table
 						group-by="initial"
@@ -219,6 +245,7 @@
 								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
 								<column-name><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
 								<column-label><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<column-visible><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`) != "M3"]]></column-visible>
 								<value><![CDATA[c -> m -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
 	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
 	.size()]]></value>

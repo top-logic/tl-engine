@@ -837,7 +837,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			.beginTransaction(I18NConstants.REQUESTED_CLUSTER_LOCK_FOR__TASK.fill(task.getName()));
 		try {
 			TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
-			logWrapper.touch();
+			logWrapper.tTouch();
 			if (isTaskLocked(logWrapper) || runRecently(task)) {
 				return false;
 			}
@@ -1377,7 +1377,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		Transaction transaction = PersistencyLayer.getKnowledgeBase()
 			.beginTransaction(I18NConstants.CLEARED_CLUSTER_LOCK__TASK.fill(task.getName()));
 		try {
-			logWrapper.touch();
+			logWrapper.tTouch();
 			if (logWrapper.hasClusterLock()) {
 				logWrapper.clearClusterLock();
 				transaction.commit();

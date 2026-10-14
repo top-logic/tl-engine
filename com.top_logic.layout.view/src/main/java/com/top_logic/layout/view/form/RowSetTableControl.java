@@ -155,6 +155,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** @see #setFilterBar(boolean) */
 	private boolean _filterBar;
 
+	/** @see #setRowCount(boolean) */
+	private boolean _rowCount = true;
+
 	private SortSpec _defaultSort = SortSpec.NONE;
 
 	/** The columns displayed only once the user selects them, taken from the resolved columns. */
@@ -197,6 +200,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
 	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
+
+	/** @see #setRowCssClass(Function) */
+	private Function<? super TLObject, String> _rowCssClass;
 
 	private ListRowSource<TLObject> _rowSource;
 
@@ -391,6 +397,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Whether the table tells below its rows how many it has.
+	 *
+	 * @see TableViewControl#setRowCount(boolean)
+	 */
+	public void setRowCount(boolean rowCount) {
+		_rowCount = rowCount;
+	}
+
+	/**
 	 * The order the rows are displayed in until the user sorts the table themselves.
 	 */
 	public void setDefaultSort(SortSpec defaultSort) {
@@ -501,6 +516,24 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setTrailingColumns(List<? extends Column<TLObject, ?>> columns) {
 		_trailingColumns = columns;
+	}
+
+	/**
+	 * Sets the function computing the CSS class of a data row from its row object.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the function is installed on each
+	 * {@link DefaultTableView} this control builds, so it survives the switch between view and
+	 * edit mode.
+	 * </p>
+	 *
+	 * @param rowCssClass
+	 *        The function answering the class of a row object, or {@code null} for none.
+	 *
+	 * @see DefaultTableView#setRowCssClass(Function)
+	 */
+	public void setRowCssClass(Function<? super TLObject, String> rowCssClass) {
+		_rowCssClass = rowCssClass;
 	}
 
 	/**
@@ -616,6 +649,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
+		view.setRowCssClass(_rowCssClass);
 
 		disposeSelectionBinding();
 		disposeFilterBinding();
@@ -624,6 +658,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
 
 		// Set panel child to the table.

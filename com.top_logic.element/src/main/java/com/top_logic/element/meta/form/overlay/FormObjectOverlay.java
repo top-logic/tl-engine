@@ -39,6 +39,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -182,8 +183,22 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		return _type;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the read is reported to the scope's trace.
+	 * </p>
+	 */
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
+		TracingScope scope = TracingScope.current();
+		if (scope != null) {
+			Object overlayValue = scope.read(this, part);
+			if (overlayValue != TracingScope.PLAIN) {
+				return overlayValue;
+			}
+		}
 		return part.getStorageImplementation().getFormValue(this, part);
 	}
 

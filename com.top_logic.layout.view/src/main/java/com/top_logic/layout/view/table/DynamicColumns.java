@@ -104,6 +104,9 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getColumnLabel()}. */
 		String COLUMN_LABEL = "column-label";
 
+		/** Configuration name for {@link #getColumnVisible()}. */
+		String COLUMN_VISIBLE = "column-visible";
+
 		/** Configuration name for {@link #getValue()}. */
 		String VALUE = "value";
 
@@ -232,6 +235,21 @@ public class DynamicColumns implements ColumnDeclaration {
 		@Name(COLUMN_LABEL)
 		@Nullable
 		Expr getColumnLabel();
+
+		/**
+		 * Whether one column is shown from the start: a function receiving the object that column
+		 * stands for, yielding a boolean.
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order. A column for which
+		 * the function yields {@code false} is offered in the column selection only: the table
+		 * starts out without it, and the user shows it by selecting it there. A user's own
+		 * arrangement of the table takes precedence. Unset, every column is shown from the start.
+		 * </p>
+		 */
+		@Name(COLUMN_VISIBLE)
+		@Nullable
+		Expr getColumnVisible();
 
 		/**
 		 * The function computing the cell value, receiving the row and the object the column stands
@@ -394,7 +412,7 @@ public class DynamicColumns implements ColumnDeclaration {
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
-				set.comparator(column), false));
+				set.comparator(column), !set.visible(column)));
 		}
 		return result;
 	}
@@ -411,6 +429,8 @@ public class DynamicColumns implements ColumnDeclaration {
 		private final QueryExecutor _columnLabel;
 
 		private final QueryExecutor _columnType;
+
+		private final QueryExecutor _columnVisible;
 
 		private final QueryExecutor _aggregate;
 
@@ -432,6 +452,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columnName = QueryExecutor.compileOptional(config.getColumnName());
 			_columnLabel = QueryExecutor.compileOptional(config.getColumnLabel());
 			_columnType = QueryExecutor.compileOptional(config.getColumnType());
+			_columnVisible = QueryExecutor.compileOptional(config.getColumnVisible());
 			_aggregate = QueryExecutor.compileOptional(config.getAggregate());
 			_comparator = QueryExecutor.compileOptional(config.getComparator());
 			_functions = ColumnFunctions.compile(config.getValue(), config.getUpdate(), config.getCanUpdate(),
@@ -504,6 +525,15 @@ public class DynamicColumns implements ColumnDeclaration {
 						+ ", which is not a model type.");
 				}
 				return ColumnType.of((TLType) type, _multiple);
+			}
+
+			@Override
+			public boolean visible(Object column) {
+				if (_columnVisible == null) {
+					return true;
+				}
+				Object visible = _columnVisible.execute(_cells.inputs(column));
+				return visible == null || SearchExpression.isTrue(visible);
 			}
 
 			@Override

@@ -36,6 +36,11 @@ public interface LibraryBase extends com.top_logic.model.TLNamed {
 	String NAME_ATTR = "name";
 
 	/**
+	 * Name of the table storing {@link #LIBRARY_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ELEMENTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

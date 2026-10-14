@@ -11,6 +11,7 @@ import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.TracingScope;
 
 /**
  * {@link FormObjectOverlay} representing a {@link TLObject} being currently edited.
@@ -62,7 +63,7 @@ public class ObjectEditing extends FormObjectOverlay {
 
 	@Override
 	public Object defaultValue(TLStructuredTypePart part) {
-		return _base.tValue(part);
+		return TracingScope.readBase(_base, part);
 	}
 
 	@Override

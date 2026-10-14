@@ -21,7 +21,7 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.AttributeUpdateFactory;
 import com.top_logic.element.meta.query.StoredQuery;
-import com.top_logic.element.structured.wrap.StructuredElementWrapper;
+import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLStructuredType;
@@ -48,7 +48,7 @@ public class StructuredElementAttributeFilter extends
     protected static final String KEY_STARTLEVEL = "startLevel";
 
     /** The SE to search. */
-    private  Set<StructuredElementWrapper> seWrappers;
+    private  Set<? extends StructuredElement> seWrappers;
 
     /** If true search the SE and its sub tree, if false only the SE. */
     private boolean searchSubTree;
@@ -78,7 +78,7 @@ public class StructuredElementAttributeFilter extends
 	 *         if the arguments are not correct
 	 */
     public StructuredElementAttributeFilter(TLStructuredTypePart anAttribute,
-    		StructuredElementWrapper aWrapper, boolean subTree, boolean doNegate, boolean isRelevant, String anAccessPath)
+    		StructuredElement aWrapper, boolean subTree, boolean doNegate, boolean isRelevant, String anAccessPath)
     throws IllegalArgumentException {
     	this(anAttribute, Collections.singleton(aWrapper), subTree, doNegate, isRelevant, anAccessPath, START_LEVEL_ELEMENT);
     }
@@ -103,7 +103,7 @@ public class StructuredElementAttributeFilter extends
 	 *         if the arguments are not correct
 	 */
     public StructuredElementAttributeFilter(TLStructuredTypePart anAttribute,
-            Set<StructuredElementWrapper> someWrappers, boolean subTree, boolean doNegate, boolean isRelevant, String anAccessPath, int aStartLevel)
+            Set<? extends StructuredElement> someWrappers, boolean subTree, boolean doNegate, boolean isRelevant, String anAccessPath, int aStartLevel)
             throws IllegalArgumentException {
         super(anAttribute, null, doNegate, isRelevant, anAccessPath);
 
@@ -192,10 +192,10 @@ public class StructuredElementAttributeFilter extends
 		updateValues(this.getAllWrappers(this.seWrappers, this.searchSubTree));
     }
 
-	private List<StructuredElementWrapper> getAllWrappers(Set<StructuredElementWrapper> theWrappers, boolean doSearchSubTree) {
+	private List<StructuredElement> getAllWrappers(Set<? extends StructuredElement> theWrappers, boolean doSearchSubTree) {
 		if (theWrappers != null) {
-			Set<StructuredElementWrapper> theResult = new HashSet<>();
-			for (StructuredElementWrapper theWrapper : theWrappers) {
+			Set<StructuredElement> theResult = new HashSet<>();
+			for (StructuredElement theWrapper : theWrappers) {
 				theResult.addAll(this.getWrappers(theWrapper, this.searchSubTree));
 			}
 			
@@ -213,17 +213,17 @@ public class StructuredElementAttributeFilter extends
      * @param    doSearchSubTree    If true include all elements of the sub tree of aWrapper
      * @return   The list of allowed {@link com.top_logic.knowledge.wrap.Wrapper wrappers}, never <code>null</code>.
      */
-    private List getWrappers(StructuredElementWrapper aWrapper, boolean doSearchSubTree) {
+    private List getWrappers(StructuredElement aWrapper, boolean doSearchSubTree) {
         if (aWrapper == null) {
             return Collections.EMPTY_LIST;
         }
 
         if (!aWrapper.isRoot()) {
         	if (START_LEVEL_CONTEXT == this.startLevel) {
-        		aWrapper = (StructuredElementWrapper) aWrapper.getStructureContext();
+        		aWrapper = aWrapper.getStructureContext();
         	}
         	else if (START_LEVEL_ROOT == this.startLevel) {
-        		aWrapper = (StructuredElementWrapper) aWrapper.getRoot();
+        		aWrapper = aWrapper.getRoot();
         	}
         }
         

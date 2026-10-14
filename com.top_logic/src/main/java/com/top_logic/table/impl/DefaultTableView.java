@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -31,6 +32,7 @@ import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowHierarchy;
+import com.top_logic.table.RowKind;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
 import com.top_logic.table.SearchSpec;
@@ -68,6 +70,13 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	private final TableViewState _state;
 
+	/**
+	 * The state this table is defined with, before a personalization is restored onto it.
+	 *
+	 * @see #resetToDefaults()
+	 */
+	private final TableViewState _defaults;
+
 	private final List<TableViewListener> _listeners = new ArrayList<>();
 
 	private final RowSourceListener _sourceListener = this::onRowsInvalidated;
@@ -95,6 +104,9 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * The order last handed to the {@link RowSource}, see {@link #pushOrder()}.
 	 */
 	private SortSpec _pushedOrder = SortSpec.NONE;
+
+	/** @see #setRowCssClass(Function) */
+	private Function<? super R, String> _rowCssClass;
 
 	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
@@ -184,6 +196,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		_source = source;
 		_state = state;
+		_defaults = state.copy();
 		_store = store;
 		_id = id;
 		_hiddenByDefault = new LinkedHashSet<>(hiddenByDefault);
@@ -198,8 +211,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
 		restore();
-		pinColumns();
-		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
+		fitArrangement();
 		// Whatever the order and the grouping end up being - the initial default or the user's
 		// persisted choice - the row source has to be told about them.
 		pushOrder();
@@ -373,8 +385,8 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *
 	 * <p>
 	 * Called whenever the column order is set from outside - by the caller, by a restored
-	 * personalization, by a column selection - so that the displayed order it establishes holds for
-	 * every consumer: {@link #columns()} lists a pinned column last, and the
+	 * personalization, by a column selection, by a reset - so that the displayed order it
+	 * establishes holds for every consumer: {@link #columns()} lists a pinned column last, and the
 	 * {@link #frozenColumnCount() frozen prefix} counts none of them. A pinned column is always
 	 * displayed; a state hiding it shows it again.
 	 * </p>
@@ -393,6 +405,18 @@ public class DefaultTableView<R> implements TableView<R> {
 		order.removeAll(pinned);
 		_state.getHiddenColumns().removeAll(pinned);
 		order.addAll(pinned);
+	}
+
+	/**
+	 * Brings a column arrangement set from outside into the shape {@link #columns()} relies on: the
+	 * {@link #pinColumns() pinned columns} trail the order, and the frozen prefix ends behind a
+	 * column that {@link #frozenPrefix(int) may be frozen} - a column that was frozen may have been
+	 * hidden or moved out of the frozen range, and the frozen prefix can never reach beyond the
+	 * columns that are left.
+	 */
+	private void fitArrangement() {
+		pinColumns();
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 	}
 
 	/** Whether the column with the given name keeps its place at the end of the table. */
@@ -453,22 +477,31 @@ public class DefaultTableView<R> implements TableView<R> {
 		return result;
 	}
 
-	@Override
-	public List<String> defaultColumnOrder() {
-		List<String> result = new ArrayList<>(_columns.size());
-		for (String name : _columns.keySet()) {
-			if (!_hiddenByDefault.contains(name)) {
-				result.add(name);
-			}
-		}
-		return result;
-	}
-
 	// ---- data window ----
 
 	@Override
 	public int rowCount() {
 		return _source.size();
+	}
+
+	@Override
+	public int matchCount() {
+		return _source.matchCount();
+	}
+
+	@Override
+	public int dataCount() {
+		return _source.dataCount();
+	}
+
+	@Override
+	public List<Object> matchingKeys() {
+		return _source.matchingKeys();
+	}
+
+	@Override
+	public Set<Object> matchingKeys(Collection<?> keys) {
+		return _source.matchingKeys(keys);
 	}
 
 	@Override
@@ -506,6 +539,61 @@ public class DefaultTableView<R> implements TableView<R> {
 			default:
 				return CellContent.empty();
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A {@link RowKind#DATA data row} answers the function set with
+	 * {@link #setRowCssClass(Function)}, a group header or aggregate row none.
+	 * </p>
+	 */
+	@Override
+	public String rowCssClass(Row<R> row) {
+		if (_rowCssClass == null || row.kind() != RowKind.DATA) {
+			return null;
+		}
+		return _rowCssClass.apply(row.data());
+	}
+
+	/**
+	 * Sets the function computing the CSS class of a {@link RowKind#DATA data row} from its row
+	 * object.
+	 *
+	 * <p>
+	 * The function is evaluated whenever a UI tier fetches the row, so the class follows the row
+	 * object's state.
+	 * </p>
+	 *
+	 * @param rowCssClass
+	 *        The function answering the class for a row object, or {@code null} for none. The
+	 *        function may answer {@code null} for a row object that gets no class.
+	 *
+	 * @see #rowCssClass(Row)
+	 */
+	public void setRowCssClass(Function<? super R, String> rowCssClass) {
+		_rowCssClass = rowCssClass;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A {@link RowKind#DATA data row} answers the column's {@link Column#cssClass(Object)} for
+	 * its row object, a group header or aggregate row none.
+	 * </p>
+	 */
+	@Override
+	public String cellCssClass(Row<R> row, String column) {
+		if (row.kind() != RowKind.DATA) {
+			return null;
+		}
+		Column<R, ?> definition = _columns.get(column);
+		if (definition == null) {
+			return null;
+		}
+		return definition.cssClass(row.data());
 	}
 
 	private <V> CellContent aggregate(Column<R, V> column, Group<R> group) {
@@ -903,10 +991,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		_state.setHiddenColumns(hidden);
-		pinColumns();
-		// A column that was frozen may have been hidden or moved out of the frozen range; the
-		// frozen prefix can never reach beyond the columns that are left.
-		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
+		fitArrangement();
 		searchScopeChanged();
 		pushOrder();
 		persist();
@@ -995,6 +1080,24 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public void setFrozenColumnCount(int count) {
 		_state.setFrozenCount(frozenPrefix(count));
+		persist();
+		fireColumnsChanged();
+	}
+
+	@Override
+	public void resetToDefaults() {
+		TableViewState defaults = _defaults.copy();
+		_state.setColumnOrder(defaults.getColumnOrder());
+		_state.setHiddenColumns(defaults.getHiddenColumns());
+		_state.setWidths(defaults.getWidths());
+		_state.setFrozenCount(defaults.getFrozenCount());
+		_state.setSort(defaults.getSort());
+		_state.setGrouping(defaults.getGrouping());
+		fitArrangement();
+		searchScopeChanged();
+		pushOrder();
+		// Also an empty grouping is handed over: it removes the one the user chose.
+		_source.withGrouping(_state.getGrouping());
 		persist();
 		fireColumnsChanged();
 	}

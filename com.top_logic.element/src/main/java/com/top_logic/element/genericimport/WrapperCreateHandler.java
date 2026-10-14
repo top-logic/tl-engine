@@ -10,7 +10,7 @@ import java.util.Properties;
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.genericimport.interfaces.GenericCreateHandler;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
-import com.top_logic.element.meta.kbbased.AttributedWrapper;
+import com.top_logic.element.meta.kbbased.AttributedObject;
 import com.top_logic.knowledge.objects.CreateException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -49,7 +49,7 @@ public class WrapperCreateHandler extends WrapperUpdateHandler implements
 		{
 			KnowledgeObject theObject = kBase.createKnowledgeObject(this.wrapperType);
 			// IGNORE FindBugs(RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT): For better portability.
-            AttributedWrapper theWrap   = (AttributedWrapper) WrapperFactory.getWrapper(theObject);
+            AttributedObject theWrap   = (AttributedObject) WrapperFactory.getWrapper(theObject);
 
             this.updateBusinessObject(theWrap, aDO, aFKeyAttr);
 

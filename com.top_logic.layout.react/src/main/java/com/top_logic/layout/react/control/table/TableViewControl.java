@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -68,6 +69,7 @@ import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowHierarchy;
 import com.top_logic.table.RowKind;
+import com.top_logic.table.RowSource;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.Selection;
@@ -76,6 +78,7 @@ import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
@@ -193,6 +196,40 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String SELECTED_COUNT = "selectedCount";
 
+	/**
+	 * State key of what the select-all checkbox of the header shows: {@link #SELECT_ALL_NONE},
+	 * {@link #SELECT_ALL_SOME} or {@link #SELECT_ALL_ALL}.
+	 *
+	 * <p>
+	 * Decided by how many of the rows {@link #CMD_SELECT_ALL} acts on are selected - the
+	 * {@link TableView#matchingKeys() matching rows}, the members of a collapsed group included -
+	 * not by the size of the selection: a selected row the filter hides takes no part in it, and a
+	 * group header is no row.
+	 * </p>
+	 */
+	private static final String SELECT_ALL_STATE = "selectAllState";
+
+	/** {@link #SELECT_ALL_STATE} while none of the matching rows is selected. */
+	private static final String SELECT_ALL_NONE = "none";
+
+	/** {@link #SELECT_ALL_STATE} while some, but not all of the matching rows are selected. */
+	private static final String SELECT_ALL_SOME = "some";
+
+	/** {@link #SELECT_ALL_STATE} while all of the matching rows, and at least one, are selected. */
+	private static final String SELECT_ALL_ALL = "all";
+
+	/**
+	 * State key of the text telling how many rows the table has, and how many of them its filter
+	 * lets pass; empty while the table shows no row count.
+	 */
+	private static final String ROW_COUNT = "rowCount";
+
+	/**
+	 * State key of the text telling how many rows are selected; empty while the table shows no row
+	 * count, selects a single row only, or has nothing selected.
+	 */
+	private static final String ROW_COUNT_SELECTED = "rowCountSelected";
+
 	/** State key for the keyboard focus/lead row index ({@code -1} when none). */
 	private static final String CURSOR_INDEX = "cursorIndex";
 
@@ -251,6 +288,34 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 */
 	private static final String ROW_TOOLTIPS = "tooltips";
+
+	/**
+	 * Per-row state key holding the CSS class the client puts on the row's element.
+	 *
+	 * <p>
+	 * Holds the {@link TableView#rowCssClass(Row) row class} of the table view; a row without one
+	 * is sent without the key. The class is evaluated with every push of the rows, so it follows
+	 * the row object's state.
+	 * </p>
+	 *
+	 * @see #ROW_CELL_CLASSES
+	 */
+	private static final String ROW_CSS_CLASS = "cssClass";
+
+	/**
+	 * Per-row state key holding the CSS class of the row's cells, by column name.
+	 *
+	 * <p>
+	 * Holds an entry for the cells that have a {@link TableView#cellCssClass(Row, String) cell
+	 * class}; the client puts it on the cell's element next to the column's own class. A row none
+	 * of whose cells has one is sent without the key. The classes are computed together with the
+	 * row's {@link #ROW_CELLS cells}, so they follow the row's data whenever its cells are built
+	 * again.
+	 * </p>
+	 *
+	 * @see #ROW_CSS_CLASS
+	 */
+	private static final String ROW_CELL_CLASSES = "cellClasses";
 
 	private static final String TREE_DEPTH = "treeDepth";
 
@@ -498,6 +563,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
+
+	/** Whether the table tells below its rows how many it has. */
+	private boolean _rowCount = true;
 
 	/** Whether rows may be dragged at all. */
 	private boolean _dragEnabled;
@@ -819,6 +887,22 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Whether the table tells below its rows how many rows it has: how many the filter lets pass
+	 * of how many there are while it is filtered, and how many are selected in a table selecting
+	 * several rows.
+	 *
+	 * <p>
+	 * The rows counted are the business objects, not the displayed lines: the header of a group is
+	 * not counted, a row of a collapsed group is. A table whose rows cannot be counted without
+	 * loading them shows no count.
+	 * </p>
+	 */
+	public void setRowCount(boolean rowCount) {
+		_rowCount = rowCount;
+		refreshSelectionCounts();
+	}
+
+	/**
 	 * The table this control displays.
 	 *
 	 * <p>
@@ -839,6 +923,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		refreshFilterBar();
 		putState(TOTAL_ROW_COUNT, Integer.valueOf(_view.rowCount()));
 		updateViewport(_viewportStart, _viewportCount);
+		refreshSelectionCounts();
 	}
 
 	private void refreshColumns() {
@@ -989,6 +1074,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!cells.tooltips().isEmpty()) {
 				rowState.put(ROW_TOOLTIPS, cells.tooltips());
 			}
+			if (!cells.cssClasses().isEmpty()) {
+				rowState.put(ROW_CELL_CLASSES, cells.cssClasses());
+			}
+			String rowCssClass = _view.rowCssClass(row);
+			if (!StringServices.isEmpty(rowCssClass)) {
+				rowState.put(ROW_CSS_CLASS, rowCssClass);
+			}
 			rowStates.add(rowState);
 			index++;
 		}
@@ -1000,6 +1092,83 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
+	}
+
+	/**
+	 * Pushes what the select-all checkbox shows and the texts of the row count.
+	 *
+	 * <p>
+	 * Called where what it reports on changes, and nowhere else: from {@link #buildFullState()},
+	 * which every change of the rows ends in - the data, the filter, the search, a named filter,
+	 * the grouping - and from {@link #commitSelection()}, which every accepted change of the
+	 * selection ends in. Scrolling changes neither, so it computes nothing here. A value is only
+	 * pushed when it changed.
+	 * </p>
+	 *
+	 * @implNote Checking the selection against the filter costs a lookup per selected key; an empty
+	 *           selection costs nothing.
+	 */
+	private void refreshSelectionCounts() {
+		int selectedCount = _selectedKeys.size();
+		// Only the selection needs checking against the filter, so an empty selection - the common
+		// case while scrolling - costs nothing.
+		int selectedMatching = selectedCount == 0 ? 0 : _view.matchingKeys(_selectedKeys).size();
+
+		String selectAll;
+		if (selectedMatching == 0) {
+			selectAll = SELECT_ALL_NONE;
+		} else {
+			int matching = _view.matchCount();
+			if (matching == RowSource.UNKNOWN_COUNT) {
+				matching = _view.matchingKeys().size();
+			}
+			selectAll = selectedMatching == matching ? SELECT_ALL_ALL : SELECT_ALL_SOME;
+		}
+		putChangedState(SELECT_ALL_STATE, selectAll);
+
+		String rows = NOTHING;
+		String selected = NOTHING;
+		int matching = _view.matchCount();
+		int total = _view.dataCount();
+		if (_rowCount && matching != RowSource.UNKNOWN_COUNT && total != RowSource.UNKNOWN_COUNT) {
+			Resources resources = Resources.getInstance();
+			rows = resources.getString(isFiltered()
+				? I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(matching, total)
+				: I18NConstants.TABLE_ROW_COUNT__COUNT.fill(total));
+			if (_selectionMode == SelectionMode.MULTI && selectedCount > 0) {
+				int filteredOut = selectedCount - selectedMatching;
+				selected = resources.getString(filteredOut == 0
+					? I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(selectedCount)
+					: I18NConstants.TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED.fill(selectedCount,
+						filteredOut));
+			}
+		}
+		putChangedState(ROW_COUNT, rows);
+		putChangedState(ROW_COUNT_SELECTED, selected);
+	}
+
+	/**
+	 * Whether the table's rows are narrowed by a column filter or a search - which is what a named
+	 * filter applies as well.
+	 */
+	private boolean isFiltered() {
+		TableViewState state = _view.state();
+		if (state.getSearch() != null) {
+			return true;
+		}
+		for (FilterState filter : state.getFilters().values()) {
+			if (filter != null && !filter.isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Pushes the given state value unless the client already has it. */
+	private void putChangedState(String key, Object value) {
+		if (!Objects.equals(getState(key), value)) {
+			putState(key, value);
+		}
 	}
 
 	/**
@@ -1078,6 +1247,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private RowCells createCells(Row<R> row) {
 		Map<String, ReactControl> controls = new LinkedHashMap<>();
 		Map<String, String> tooltips = new LinkedHashMap<>();
+		Map<String, String> cssClasses = new LinkedHashMap<>();
 		String typeClass = row.kind() == RowKind.GROUP_HEADER ? GROUP_HEADER_TYPE_CLASS : null;
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
@@ -1087,17 +1257,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!StringServices.isEmpty(tooltip)) {
 				tooltips.put(column.name(), tooltip);
 			}
+			String cssClass = _view.cellCssClass(row, column.name());
+			if (!StringServices.isEmpty(cssClass)) {
+				cssClasses.put(column.name(), cssClass);
+			}
 		}
-		return new RowCells(controls, tooltips);
+		return new RowCells(controls, tooltips, cssClasses);
 	}
 
 	/**
-	 * What is rendered in the cells of one row: the cell controls and, for the cells that say more
-	 * than they display, their tooltips.
+	 * What is rendered in the cells of one row: the cell controls, for the cells that say more than
+	 * they display their tooltips, and for the cells that are marked their CSS classes.
 	 *
 	 * <p>
-	 * Both are built from the same {@link CellContent}, so the row is rendered once however often
-	 * its state is pushed.
+	 * All are built once per row, so the row is rendered once however often its state is pushed.
+	 * They are built again when the row's cells are invalidated - by
+	 * {@link #invalidateRowCells(Collection)}, {@link #refreshData()}, or the row leaving the
+	 * buffered window. The {@link TableView#rowCssClass(Row) row class}, in contrast, is evaluated
+	 * with every push.
 	 * </p>
 	 *
 	 * @param controls
@@ -1105,8 +1282,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @param tooltips
 	 *        The {@link CellContent#tooltip() tooltip} of a cell that has one, by column name;
 	 *        empty when no cell of the row has one.
+	 * @param cssClasses
+	 *        The {@link TableView#cellCssClass(Row, String) CSS class} of a cell that has one, by
+	 *        column name; empty when no cell of the row has one.
 	 */
-	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips) {
+	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips,
+			Map<String, String> cssClasses) {
 
 		/** Disposes the cell controls. */
 		void dispose() {
@@ -1260,10 +1441,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		applyButton.markAsDefault();
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
-				// Resetting restores the table as it is defined, which includes showing its rows
-				// ungrouped again.
-				setGroupedColumn(null);
-				applyColumns(_view.defaultColumnOrder());
+				// Resetting restores the arrangement the table is defined with - its columns, their
+				// widths, the frozen columns, the sort and the grouping -, the filters stay.
+				rearrange(_view::resetToDefaults);
 				dialogs.closeTopDialog(DialogResult.ok(null));
 				return HandlerResult.DEFAULT_RESULT;
 			}),
@@ -1278,21 +1458,45 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Applies a new set of displayed columns and re-renders: the cell controls of the buffered rows
-	 * belong to the previous columns, so they are rebuilt for the new ones.
+	 * Applies a new set of displayed columns and re-renders.
+	 *
+	 * @see #rearrange(Runnable)
+	 */
+	private void applyColumns(List<String> columns) {
+		rearrange(() -> _view.setColumnOrder(columns));
+	}
+
+	/**
+	 * Performs a change of the table's arrangement - its columns, its sort, its grouping - and
+	 * re-renders: the cell controls of the buffered rows belong to the previous arrangement, so they
+	 * are rebuilt for the new one.
 	 *
 	 * <p>
 	 * Columns and rows must reach the client as one patch: a client that already knows a newly shown
 	 * column but still holds the rows of the previous column set would render a cell that has no
 	 * control yet.
 	 * </p>
+	 *
+	 * <p>
+	 * A change of the grouping rearranges the rows, it does not replace them: the selected rows are
+	 * the same objects under the same keys, at other positions. Only the cursor and the range
+	 * anchor, which are positions, have to be found again.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change, performed through the {@link TableView}.
 	 */
-	private void applyColumns(List<String> columns) {
+	private void rearrange(Runnable change) {
+		GroupSpec grouping = _view.state().getGrouping();
 		Object update = beginUpdate();
 		try {
-			_view.setColumnOrder(columns);
-			clearCells();
-			buildFullState();
+			change.run();
+			if (!_view.state().getGrouping().equals(grouping)) {
+				relocateSelection();
+				pushGrouping();
+				pushSelection();
+			}
+			rebuildAfterRowChange();
 		} finally {
 			commitUpdate(update);
 		}
@@ -1406,19 +1610,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
 			return;
 		}
-		_view.group(grouping);
-		Object update = beginUpdate();
-		try {
-			// A grouping rearranges the rows, it does not replace them: the selected rows are the
-			// same objects under the same keys, at other positions. Only the cursor and the range
-			// anchor, which are positions, have to be found again.
-			relocateSelection();
-			pushGrouping();
-			pushSelection();
-			rebuildAfterRowChange();
-		} finally {
-			commitUpdate(update);
-		}
+		rearrange(() -> _view.group(grouping));
 	}
 
 	/**
@@ -1805,18 +1997,21 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Handles the header select-all / deselect-all checkbox.
+	 * Handles the header select-all / deselect-all checkbox and {@code Ctrl+A}.
+	 *
+	 * <p>
+	 * Acts on the rows the filter lets pass, the members of a collapsed group included - the rows
+	 * {@link #SELECT_ALL_STATE} reports on. A selected row the filter hides is beyond the gesture:
+	 * it stays selected either way, exactly as it stays selected while the filter hides it.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SELECT_ALL)
 	void handleSelectAll(SelectAllArguments args) {
-		boolean selected = args.isSelected();
-		_selectedKeys.clear();
-		if (selected) {
-			for (Row<R> row : _view.rows(0, _view.rowCount())) {
-				if (row.kind() == RowKind.DATA) {
-					_selectedKeys.add(row.key());
-				}
-			}
+		List<Object> matching = _view.matchingKeys();
+		if (args.isSelected()) {
+			_selectedKeys.addAll(matching);
+		} else {
+			matching.forEach(_selectedKeys::remove);
 		}
 		pushSelection();
 		updateViewport(_viewportStart, _viewportCount);
@@ -2454,6 +2649,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_committedKeys = new LinkedHashSet<>(_selectedKeys);
 		_committedCursor = _cursorIndex;
 		_committedAnchor = _selectionAnchor;
+		// A refused change restores exactly this state, so the counts of the committed selection are
+		// the ones the client keeps showing then.
+		refreshSelectionCounts();
 	}
 
 }

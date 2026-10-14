@@ -17,4 +17,9 @@ public interface UntransferredNodeBase extends com.top_logic.kafka.demo.model.ty
 	 */
 	String UNTRANSFERRED_NODE_TYPE = "UntransferredNode";
 
+	/**
+	 * Name of the table storing {@link #UNTRANSFERRED_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "KafkaDemoUntransferred";
+
 }

@@ -20,9 +20,9 @@ import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.AvatarSize;
-import com.top_logic.layout.react.control.common.ReactAvatarControl;
 import com.top_logic.layout.react.control.image.ImageSource;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.AvatarState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
@@ -66,7 +66,7 @@ public class TestAvatarElement extends TestCase {
 		_input.set("Jane Doe");
 
 		assertEquals("The label of the input value is what the initials are derived from.",
-			"Jane Doe", state(_avatar, ReactAvatarControl.NAME));
+			"Jane Doe", state(_avatar, AvatarState.NAME__PROP));
 		assertFalse("Nothing on the picture channel leaves the initials.",
 			hasData(_avatar));
 		assertNull("Nothing on the picture channel names no address either.",
@@ -116,10 +116,10 @@ public class TestAvatarElement extends TestCase {
 	/** The configured diameter reaches the client. */
 	public void testSize() {
 		assertEquals("The avatar takes the standard diameter unless it says otherwise.",
-			AvatarSize.MEDIUM.getExternalName(), state(_avatar, ReactAvatarControl.SIZE));
+			AvatarSize.MEDIUM.getExternalName(), state(_avatar, AvatarState.SIZE__PROP));
 
 		assertEquals(AvatarSize.EXTRA_LARGE.getExternalName(),
-			state(createAvatar(AvatarSize.EXTRA_LARGE), ReactAvatarControl.SIZE));
+			state(createAvatar(AvatarSize.EXTRA_LARGE), AvatarState.SIZE__PROP));
 	}
 
 	/** Both channels are let go of when the control is disposed. */
@@ -133,7 +133,7 @@ public class TestAvatarElement extends TestCase {
 		_image.set("/media/john.png");
 
 		assertEquals("The disposed avatar no longer follows its input channel.",
-			"Jane Doe", state(_avatar, ReactAvatarControl.NAME));
+			"Jane Doe", state(_avatar, AvatarState.NAME__PROP));
 		assertEquals("The disposed avatar no longer follows its picture channel.",
 			"/media/jane.png", state(_avatar, ImageSource.URL));
 	}

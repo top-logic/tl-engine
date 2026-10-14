@@ -45,7 +45,7 @@ tl-react-bridge bundle       React, the component registry (register / replace),
 - **The TopLogic components that are not replaced follow the theme.** Tables, trees, panels, the
   sidebar and toolbars read CSS custom properties that `installMui` derives from the MUI theme and
   writes into the page ([Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme)).
-- **Which components are MUI is a free choice**: all 25 replaceable components, or a selection.
+- **Which components are MUI is a free choice**: all 26 replaceable components, or a selection.
 - **There is exactly one Material UI on the page**, the one in `tl-react-mui`. The theme and every
   customer component import Material UI from there, so they share the theme context, the emotion
   style cache and the date localization of the root wrapper with the adapters.
@@ -409,7 +409,7 @@ anything.
 
 `replace` selects the TopLogic components rendered with Material UI:
 
-- `'all'` (`ALL_COMPONENTS`, the default) — every one of `COMPONENT_NAMES`, the 25 components of
+- `'all'` (`ALL_COMPONENTS`, the default) — every one of `COMPONENT_NAMES`, the 26 components of
   the state contract listed in
   [The replaceable components](doc:view-layer/customer-component-library#the-replaceable-components);
 - a list of names (typed as the union `ComponentName`), e.g.
@@ -508,6 +508,30 @@ Two things to know about the adapters:
   adapters map the server state to MUI's own variants. A different look for one particular
   control is a `css-class` in the view ([Basics: composition, spacing, height and styling](doc:view-layer/basics#styling-a-single-element-css-class));
   the adapters put it on their root element (`rootClassName`).
+- **Some adapters bring a default style** for their MUI component, which the theme's
+  `styleOverrides.root` follow, so the theme wins on every property it sets. The avatar
+  (`TLAvatar` → `MuiAvatar`) is one: its default keeps the look of the design system — the
+  neutral circle, the surface and border of the category the display name maps to, the initials in
+  `text.primary`, the diameters of the size tokens. The adapter marks the root with the category
+  (`data-category="1"` to `"8"`, present whenever the avatar has a name) and the size
+  (`data-size="small|medium|large|x-large"`), so a theme restyles them through nested selectors —
+  e.g. the avatar of the user menu on a dark app bar, without a stylesheet against `.tl-avatar`:
+
+  ```ts
+  MuiAvatar: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        '&[data-category]': { borderColor: theme.vars.palette.common.white },
+        '&[data-category="3"]': { backgroundColor: theme.vars.palette.secondary.light },
+        '&[data-size="small"]': { fontSize: theme.typography.pxToRem(10) },
+      }),
+    },
+  },
+  ```
+
+  The constants are `CATEGORY_ATTRIBUTE` and `SIZE_ATTRIBUTE` of
+  `com.top_logic.layout.react.mui/react-src/adapters/MuiAvatarAdapter.tsx`, the default style is
+  its `avatarRootStyle`.
 
 ### B. Replacing a TopLogic component by a customer adapter
 

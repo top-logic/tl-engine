@@ -59,7 +59,7 @@ import com.top_logic.util.model.ModelService;
  *  <li>FastList have no name, or description (its assumed they belong to some other object that provides one)</li>
  *  <li>This List is ordered by name (as of now) may become order by anything else by Subclassing.</li>
  *  <li>Changes in the Elements that affect sorting can be resolved by calling {@link #refetchWrapper()}</li>
- *  <li>In case of a cluster you must {@link #touch()} the List on change of any element</li>
+ *  <li>In case of a cluster you must {@link #tTouch()} the List on change of any element</li>
  *  <li>The Multiselect feature is not enforced</li>
  *  <li>Attaching Fast List to Objects in some other Knowledgebase will
  *      not work due to the nature of Bridge KAs</li>

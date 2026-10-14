@@ -36,6 +36,11 @@ public interface WorldBase extends com.top_logic.model.TLNamed {
 	String THINGS_ATTR = "things";
 
 	/**
+	 * Name of the table storing {@link #WORLD_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #THINGS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

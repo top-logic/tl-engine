@@ -83,6 +83,39 @@ public class TestTLModelImpl extends BasicTestCase {
 	}
 
 	
+	public void testDefinitionFollowsGeneralizations() {
+		TLModule m1 = addModule(model, "m1");
+
+		TLClass base = addClass(m1, "Base");
+		TLProperty baseA = addProperty(base, "a", getPrimitive(STRING));
+
+		TLClass ext = addClass(m1, "Ext");
+		TLProperty extA = addProperty(ext, "a", getPrimitive(STRING));
+
+		TLClass ext2 = addClass(m1, "Ext2");
+		ext2.getGeneralizations().add(ext);
+		TLProperty ext2A = addProperty(ext2, "a", getPrimitive(STRING));
+
+		assertSame(extA, extA.getDefinition());
+		assertFalse(extA.isOverride());
+		assertSame(extA, ext2A.getDefinition());
+		assertTrue(ext2A.isOverride());
+
+		ext.getGeneralizations().add(base);
+
+		assertSame(baseA, extA.getDefinition());
+		assertTrue(extA.isOverride());
+		assertSame(baseA, ext2A.getDefinition());
+		assertTrue(ext2A.isOverride());
+
+		ext.getGeneralizations().remove(base);
+
+		assertSame(extA, extA.getDefinition());
+		assertFalse(extA.isOverride());
+		assertSame(extA, ext2A.getDefinition());
+		assertTrue(ext2A.isOverride());
+	}
+
 	public void testExtends() throws FactoryConfigurationError {
 		TLModule m1 = addModule(model, "m1");
 

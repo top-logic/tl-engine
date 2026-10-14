@@ -17,4 +17,9 @@ public interface ParallelGatewayBase extends com.top_logic.bpe.bpml.model.Gatewa
 	 */
 	String PARALLEL_GATEWAY_TYPE = "ParallelGateway";
 
+	/**
+	 * Name of the table storing {@link #PARALLEL_GATEWAY_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

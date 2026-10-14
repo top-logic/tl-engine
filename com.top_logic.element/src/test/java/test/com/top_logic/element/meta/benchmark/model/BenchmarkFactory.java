@@ -17,15 +17,23 @@ package test.com.top_logic.element.meta.benchmark.model;
 public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
-	 * Name of the structure <code>Benchmark</code> defined by {@link BenchmarkFactory}.
+	 * Name of the module <code>Benchmark</code> defined by {@link BenchmarkFactory}.
 	 */
-	public static final String BENCHMARK_STRUCTURE = "Benchmark";
+	public static final String BENCHMARK_MODULE = "Benchmark";
+
+	/**
+	 * Name of the structure <code>Benchmark</code> defined by {@link BenchmarkFactory}.
+	 * 
+	 * @deprecated Use {@link #BENCHMARK_MODULE}.
+	 */
+	@Deprecated
+	public static final String BENCHMARK_STRUCTURE = BENCHMARK_MODULE;
 
 	/**
 	 * Lookup {@link BenchmarkA} type.
 	 */
 	public static com.top_logic.model.TLClass getBenchmarkAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_STRUCTURE).getType(BenchmarkA.BENCHMARK_A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_MODULE).getType(BenchmarkA.BENCHMARK_A_TYPE);
 	}
 
 	/**
@@ -88,7 +96,7 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link BenchmarkB} type.
 	 */
 	public static com.top_logic.model.TLClass getBenchmarkBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_STRUCTURE).getType(BenchmarkB.BENCHMARK_B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_MODULE).getType(BenchmarkB.BENCHMARK_B_TYPE);
 	}
 
 	/**
@@ -144,7 +152,7 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link BenchmarkResult} type.
 	 */
 	public static com.top_logic.model.TLClass getBenchmarkResultType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_STRUCTURE).getType(BenchmarkResult.BENCHMARK_RESULT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_MODULE).getType(BenchmarkResult.BENCHMARK_RESULT_TYPE);
 	}
 
 	/**
@@ -172,25 +180,25 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
 	 * Lookup {@link B} type.
 	 */
 	public static com.top_logic.model.TLClass getBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_STRUCTURE).getType(B.B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_MODULE).getType(B.B_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Result} type.
 	 */
 	public static com.top_logic.model.TLClass getResultType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_STRUCTURE).getType(Result.RESULT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(BENCHMARK_MODULE).getType(Result.RESULT_TYPE);
 	}
 
 	/**
-	 * Name of type <code>BenchmarkA</code> in structure {@link #BENCHMARK_STRUCTURE}.
+	 * Name of type <code>BenchmarkA</code> in module {@link #BENCHMARK_MODULE}.
 	 * 
 	 * @deprecated Use {@link BenchmarkA#BENCHMARK_A_TYPE}.
 	 */
@@ -198,7 +206,7 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String BENCHMARK_A_NODE = BenchmarkA.BENCHMARK_A_TYPE;
 
 	/**
-	 * Name of type <code>BenchmarkB</code> in structure {@link #BENCHMARK_STRUCTURE}.
+	 * Name of type <code>BenchmarkB</code> in module {@link #BENCHMARK_MODULE}.
 	 * 
 	 * @deprecated Use {@link BenchmarkB#BENCHMARK_B_TYPE}.
 	 */
@@ -206,7 +214,7 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String BENCHMARK_B_NODE = BenchmarkB.BENCHMARK_B_TYPE;
 
 	/**
-	 * Name of type <code>BenchmarkResult</code> in structure {@link #BENCHMARK_STRUCTURE}.
+	 * Name of type <code>BenchmarkResult</code> in module {@link #BENCHMARK_MODULE}.
 	 * 
 	 * @deprecated Use {@link BenchmarkResult#BENCHMARK_RESULT_TYPE}.
 	 */
@@ -214,7 +222,7 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String BENCHMARK_RESULT_NODE = BenchmarkResult.BENCHMARK_RESULT_TYPE;
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #BENCHMARK_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #BENCHMARK_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -223,11 +231,14 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #A_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.meta.benchmark.model.impl.ABase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A = "Benchmark";
+	@Deprecated
+	public static final String KO_NAME_A = test.com.top_logic.element.meta.benchmark.model.impl.ABase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>B</code> in structure {@link #BENCHMARK_STRUCTURE}.
+	 * Name of type <code>B</code> in module {@link #BENCHMARK_MODULE}.
 	 * 
 	 * @deprecated Use {@link B#B_TYPE}.
 	 */
@@ -236,11 +247,14 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #B_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.meta.benchmark.model.impl.BBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B = "Benchmark";
+	@Deprecated
+	public static final String KO_NAME_B = test.com.top_logic.element.meta.benchmark.model.impl.BBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Result</code> in structure {@link #BENCHMARK_STRUCTURE}.
+	 * Name of type <code>Result</code> in module {@link #BENCHMARK_MODULE}.
 	 * 
 	 * @deprecated Use {@link Result#RESULT_TYPE}.
 	 */
@@ -249,8 +263,11 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #RESULT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.meta.benchmark.model.impl.ResultBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_RESULT = "BenchmarkResult";
+	@Deprecated
+	public static final String KO_NAME_RESULT = test.com.top_logic.element.meta.benchmark.model.impl.ResultBase.TABLE_NAME;
 
 
 	/**
@@ -299,6 +316,6 @@ public class BenchmarkFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * The singleton instance of {@link BenchmarkFactory}.
 	 */
 	public static BenchmarkFactory getInstance() {
-		return (BenchmarkFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(BENCHMARK_STRUCTURE);
+		return (BenchmarkFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(BENCHMARK_MODULE);
 	}
 }

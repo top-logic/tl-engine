@@ -17,4 +17,9 @@ public interface ConditionalEventDefinitionBase extends com.top_logic.bpe.bpml.m
 	 */
 	String CONDITIONAL_EVENT_DEFINITION_TYPE = "ConditionalEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #CONDITIONAL_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

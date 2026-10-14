@@ -54,6 +54,11 @@ public interface ThingBase extends com.top_logic.model.TLNamed {
 	String WORLD_ATTR = "world";
 
 	/**
+	 * Name of the table storing {@link #THING_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #CREATED_FOR_ATTR}.
 	 */
 	default com.top_logic.demo.model.containmentContext.World getCreatedFor() {

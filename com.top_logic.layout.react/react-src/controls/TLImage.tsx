@@ -1,6 +1,5 @@
-import { React, useTLState, useI18N, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useImageSrc, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { useImageSrc } from './imageSource';
 
 const I18N_KEYS = {
   'js.image.alt': 'Image',

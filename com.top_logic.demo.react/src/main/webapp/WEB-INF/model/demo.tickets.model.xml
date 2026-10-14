@@ -3,6 +3,12 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
 		<module name="demo.tickets">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.demo.react.model.tickets.impl"
+					interface-package="com.top_logic.demo.react.model.tickets"
+				/>
+			</annotations>
 			<enum name="TicketStatus">
 				<classifier name="open">
 					<annotations>
@@ -54,6 +60,26 @@
 									<expr>t -&gt; label($t.get(`demo.tickets:Ticket#status`))</expr>
 								</query>
 							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="headline"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<implementation class="com.top_logic.demo.react.model.tickets.HeadlineStorage"/>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="resolution"
+						type="tl.core:String"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="t -> editMode -> if(demoTicketsIsClosed($t), if($editMode, &quot;editable&quot;, &quot;read-only&quot;), &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
 						</annotations>
 					</property>
 					<reference name="comments"

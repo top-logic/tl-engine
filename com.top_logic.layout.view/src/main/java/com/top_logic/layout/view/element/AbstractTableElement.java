@@ -663,7 +663,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * A read-only table built by {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List)}.
+	 * A read-only table built by {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
@@ -704,10 +704,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The grouping the table starts with.
 	 * @param drops
 	 *        The compiled drops the table accepts, in declaration order.
+	 * @param rowCssClass
+	 *        The CSS class of a row computed from its object, {@code null} for a table whose rows
+	 *        carry none.
 	 */
 	protected final <S extends RowSource<Object>> ReadOnlyTable<S> createTable(ViewContext context,
 			TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
-			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops) {
+			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass) {
 		ViewCommandModel activation = activationModel(context);
 
 		List<ColumnDeclaration> declarations = columns(rowType);
@@ -728,6 +731,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
 			declaredFilters(columns, declaredNames, inputValues), filterStore(), _initialFilter);
+		if (rowCssClass != null) {
+			view.setRowCssClass(rowCssClass);
+		}
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
 		control.setCssClass(_config.getCssClass());

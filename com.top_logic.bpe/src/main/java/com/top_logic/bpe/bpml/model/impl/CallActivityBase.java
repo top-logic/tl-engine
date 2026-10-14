@@ -17,4 +17,9 @@ public interface CallActivityBase extends com.top_logic.bpe.bpml.model.Task {
 	 */
 	String CALL_ACTIVITY_TYPE = "CallActivity";
 
+	/**
+	 * Name of the table storing {@link #CALL_ACTIVITY_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

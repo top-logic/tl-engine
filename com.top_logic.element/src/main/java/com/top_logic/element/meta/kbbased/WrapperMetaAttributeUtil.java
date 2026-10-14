@@ -59,7 +59,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -438,7 +437,7 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 	public static List getIncomingWrappers(TLObject dest, String koType) {
 		ArrayList result = new ArrayList();
 		for (MetaObject referenceType : getReferenceAssociationTypes()) {
-			result.addAll(((AbstractWrapper) dest).getIncomingWrappers(referenceType.getName(), koType));
+			result.addAll(((Wrapper) dest).getIncomingWrappers(referenceType.getName(), koType));
 		}
 		return result;
 	}

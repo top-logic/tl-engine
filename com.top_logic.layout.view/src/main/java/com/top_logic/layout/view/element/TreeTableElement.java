@@ -14,8 +14,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
@@ -30,6 +33,7 @@ import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.TableDropConfig;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.TreeStructure;
@@ -79,12 +83,46 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		String DROPS = "drops";
 
 		/**
-		 * Types to observe for object creation events.
+		 * Optional TL-Script function computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * When configured, the tree table checks every child list it computed whenever objects of
-		 * these types are created, so that a new object appears as a row. When empty (default),
-		 * only updates and deletes of the displayed objects are observed.
+		 * Takes the input channel values followed by an object as last argument, and returns the object
+		 * whose child list holds it - nothing for the object the tree is built from, and for an object
+		 * belonging to no tree at all.
+		 * </p>
+		 *
+		 * <p>
+		 * It is how the node of an object written to the selection channel is found: the tree walks
+		 * from the object up to the one it is built from and descends along that chain, computing only
+		 * the child lists on the way. Without it the node is searched for, which computes the child list
+		 * of every node passed on the way - affordable for a tree of small extent, not for a large or an
+		 * unbounded one.
+		 * </p>
+		 *
+		 * <p>
+		 * It is also where the tree table places a created or changed object of the
+		 * {@link #getObservedTypes() observed types} it has no row for, so it is required while
+		 * {@link #getObservedTypes()} names a type.
+		 * </p>
+		 */
+		@Override
+		@Constraint(value = MandatoryIfSet.class, args = @Ref(OBSERVED_TYPES))
+		Expr getParents();
+
+		/**
+		 * Types whose created or changed objects the tree table places even while it has no row for
+		 * them.
+		 *
+		 * <p>
+		 * Such an object is placed through {@link #getParents()}: the row of what holds it now gets
+		 * its child list computed again, so the object appears there - if that row is expanded.
+		 * Where it is not, the object appears when somebody expands it. Requires
+		 * {@link #getParents()}.
+		 * </p>
+		 *
+		 * <p>
+		 * When empty (default), the tree table follows only the objects it displays: their changes
+		 * and deletions.
 		 * </p>
 		 */
 		@Name(OBSERVED_TYPES)
@@ -131,7 +169,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>> table = createTable(context,
 			resolveRowType(structure.topLevelObjects()), ChannelInputs.arguments(inputChannels),
-			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops);
+			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, null);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 

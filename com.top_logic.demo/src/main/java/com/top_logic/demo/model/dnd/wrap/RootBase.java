@@ -36,6 +36,11 @@ public interface RootBase extends com.top_logic.model.TLNamed {
 	String NAME_ATTR = "name";
 
 	/**
+	 * Name of the table storing {@link #ROOT_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #FACTORIES_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

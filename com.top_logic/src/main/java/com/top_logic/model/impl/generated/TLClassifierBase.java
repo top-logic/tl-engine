@@ -35,4 +35,9 @@ public interface TLClassifierBase extends com.top_logic.model.TLTypePart {
 	 */
 	String INDEX_ATTR = "index";
 
+	/**
+	 * Name of the table storing {@link #TL_CLASSIFIER_TYPE} objects.
+	 */
+	String TABLE_NAME = "FastListElt";
+
 }

@@ -17,4 +17,9 @@ public interface CreationBase extends com.top_logic.element.changelog.model.Chan
 	 */
 	String CREATION_TYPE = "Creation";
 
+	/**
+	 * Name of the table storing {@link #CREATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

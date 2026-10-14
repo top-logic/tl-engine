@@ -180,6 +180,15 @@ var(--background-image)`. The image token is `none` by default, so the page is a
 theme that wants a gradient or a texture behind the whole application sets it (`linear-gradient(…)`,
 `url(…)`) and leaves the colour as what shows through.
 
+## Sticky table cells
+
+The frozen and the pinned cells of a table hide the cells scrolling underneath, so they must be
+opaque without standing out. The table of the design system (`tl-table`, `table.css` of the package)
+paints every row opaque - its surface, the colour of hover or selection, or the tint of a
+[highlight class](doc:view-layer/tables) - and the sticky cells inherit the background of their row.
+They therefore show what the rest of their row shows, in every state and on every surface, without a
+property of the surface they are placed on.
+
 ## Writing a flat theme
 
 A theme that wants square corners and no elevation overrides the three radius tokens and the three

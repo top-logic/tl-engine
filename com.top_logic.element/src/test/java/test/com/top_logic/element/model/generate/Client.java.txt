@@ -1,0 +1,62 @@
+package test.client;
+
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLProperty;
+import com.top_logic.model.TLReference;
+
+import test.bar.BarFactory;
+import test.bar.X;
+import test.foo.AddressSpace;
+import test.foo.FooFactory;
+
+/**
+ * Client of the generated model API, compiled together with the generated sources.
+ */
+public class Client {
+
+	static TLClass aType() {
+		return FooFactory.getAType();
+	}
+
+	static TLProperty aName() {
+		return FooFactory.getNameAAttr();
+	}
+
+	static TLReference bOthers() {
+		return BarFactory.getOthersBAttr();
+	}
+
+	static String xTable() {
+		return X.TABLE_NAME;
+	}
+
+	static TLEnumeration addressSpace() {
+		return AddressSpace.type();
+	}
+
+	static TLClassifier lcFilterMemory() {
+		return AddressSpace.lcFilterMemoryClassifier();
+	}
+
+	static String fooModule() {
+		return FooFactory.FOO_MODULE;
+	}
+
+	@SuppressWarnings("deprecation")
+	static String fooStructure() {
+		return FooFactory.FOO_STRUCTURE;
+	}
+
+	@SuppressWarnings("deprecation")
+	static String xTableDeprecated() {
+		return BarFactory.KO_NAME_X;
+	}
+
+	@SuppressWarnings("deprecation")
+	static TLClassifier lcFilterMemoryDeprecated() {
+		return FooFactory.getLcFilterMemoryAddressSpaceClassifier();
+	}
+
+}

@@ -17,47 +17,67 @@ package com.top_logic.bpe.bpml.model;
 public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
+	 * Name of the module <code>tl.bpe.bpml</code> defined by {@link TlBpeBpmlFactory}.
+	 */
+	public static final String TL_BPE_BPML_MODULE = "tl.bpe.bpml";
+
+	/**
 	 * Name of the structure <code>tl.bpe.bpml</code> defined by {@link TlBpeBpmlFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_BPE_BPML_MODULE}.
 	 */
-	public static final String TL_BPE_BPML_STRUCTURE = "tl.bpe.bpml";
+	@Deprecated
+	public static final String TL_BPE_BPML_STRUCTURE = TL_BPE_BPML_MODULE;
 
 	/**
-	 * Name of the enumeration <code>ApprovalState</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 * Name of the enumeration <code>ApprovalState</code> in module {@value #TL_BPE_BPML_MODULE}.
+	 * 
+	 * @deprecated Use {@link ApprovalState#TYPE_NAME}.
 	 */
-	public static final String APPROVAL_STATE_ENUM = "ApprovalState";
+	@Deprecated
+	public static final String APPROVAL_STATE_ENUM = ApprovalState.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>Development</code> in enumeration {@value #APPROVAL_STATE_ENUM}.
+	 * Name of the classifier <code>Development</code> in enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#DEVELOPMENT_CLASSIFIER}.
 	 */
-	public static final String DEVELOPMENT_APPROVAL_STATE_CLASSIFIER = "Development";
+	@Deprecated
+	public static final String DEVELOPMENT_APPROVAL_STATE_CLASSIFIER = ApprovalState.DEVELOPMENT_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Released</code> in enumeration {@value #APPROVAL_STATE_ENUM}.
+	 * Name of the classifier <code>Released</code> in enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#RELEASED_CLASSIFIER}.
 	 */
-	public static final String RELEASED_APPROVAL_STATE_CLASSIFIER = "Released";
+	@Deprecated
+	public static final String RELEASED_APPROVAL_STATE_CLASSIFIER = ApprovalState.RELEASED_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Retired</code> in enumeration {@value #APPROVAL_STATE_ENUM}.
+	 * Name of the classifier <code>Retired</code> in enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#RETIRED_CLASSIFIER}.
 	 */
-	public static final String RETIRED_APPROVAL_STATE_CLASSIFIER = "Retired";
+	@Deprecated
+	public static final String RETIRED_APPROVAL_STATE_CLASSIFIER = ApprovalState.RETIRED_CLASSIFIER;
 
 	/**
-	 * Name of the data type <code>BPTimeGranularity</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 * Name of the data type <code>BPTimeGranularity</code> in module {@value #TL_BPE_BPML_MODULE}.
 	 */
 	public static final String BP_TIME_GRANULARITY_TYPE = "BPTimeGranularity";
 
 	/**
-	 * Name of the data type <code>DisplayDescription</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 * Name of the data type <code>DisplayDescription</code> in module {@value #TL_BPE_BPML_MODULE}.
 	 */
 	public static final String DISPLAY_DESCRIPTION_TYPE = "DisplayDescription";
 
 	/**
-	 * Name of the data type <code>ProcessFormDefinition</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 * Name of the data type <code>ProcessFormDefinition</code> in module {@value #TL_BPE_BPML_MODULE}.
 	 */
 	public static final String PROCESS_FORM_DEFINITION_TYPE = "ProcessFormDefinition";
 
 	/**
-	 * Name of the data type <code>SequenceFlowRule</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 * Name of the data type <code>SequenceFlowRule</code> in module {@value #TL_BPE_BPML_MODULE}.
 	 */
 	public static final String SEQUENCE_FLOW_RULE_TYPE = "SequenceFlowRule";
 
@@ -65,7 +85,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link AnnotationContainer} type.
 	 */
 	public static com.top_logic.model.TLClass getAnnotationContainerType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(AnnotationContainer.ANNOTATION_CONTAINER_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(AnnotationContainer.ANNOTATION_CONTAINER_TYPE);
 	}
 
 	/**
@@ -79,7 +99,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Described} type.
 	 */
 	public static com.top_logic.model.TLClass getDescribedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Described.DESCRIBED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Described.DESCRIBED_TYPE);
 	}
 
 	/**
@@ -93,7 +113,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link EventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(EventDefinition.EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(EventDefinition.EVENT_DEFINITION_TYPE);
 	}
 
 	/**
@@ -107,63 +127,63 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link CancelEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getCancelEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(CancelEventDefinition.CANCEL_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(CancelEventDefinition.CANCEL_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link CompensateEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getCompensateEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(CompensateEventDefinition.COMPENSATE_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(CompensateEventDefinition.COMPENSATE_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ConditionalEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getConditionalEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ConditionalEventDefinition.CONDITIONAL_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ConditionalEventDefinition.CONDITIONAL_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ErrorEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getErrorEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ErrorEventDefinition.ERROR_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ErrorEventDefinition.ERROR_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link EscalationEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getEscalationEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(EscalationEventDefinition.ESCALATION_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(EscalationEventDefinition.ESCALATION_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link MessageEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getMessageEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(MessageEventDefinition.MESSAGE_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(MessageEventDefinition.MESSAGE_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link SignalEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getSignalEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SignalEventDefinition.SIGNAL_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(SignalEventDefinition.SIGNAL_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link TerminateEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getTerminateEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(TerminateEventDefinition.TERMINATE_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(TerminateEventDefinition.TERMINATE_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@link TimerEventDefinition} type.
 	 */
 	public static com.top_logic.model.TLClass getTimerEventDefinitionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(TimerEventDefinition.TIMER_EVENT_DEFINITION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(TimerEventDefinition.TIMER_EVENT_DEFINITION_TYPE);
 	}
 
 	/**
@@ -177,7 +197,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Externalized} type.
 	 */
 	public static com.top_logic.model.TLClass getExternalizedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Externalized.EXTERNALIZED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Externalized.EXTERNALIZED_TYPE);
 	}
 
 	/**
@@ -191,7 +211,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Annotated} type.
 	 */
 	public static com.top_logic.model.TLClass getAnnotatedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Annotated.ANNOTATED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Annotated.ANNOTATED_TYPE);
 	}
 
 	/**
@@ -205,7 +225,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link AnnotationAssociation} type.
 	 */
 	public static com.top_logic.model.TLClass getAnnotationAssociationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(AnnotationAssociation.ANNOTATION_ASSOCIATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(AnnotationAssociation.ANNOTATION_ASSOCIATION_TYPE);
 	}
 
 	/**
@@ -226,21 +246,21 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link FlowSource} type.
 	 */
 	public static com.top_logic.model.TLClass getFlowSourceType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(FlowSource.FLOW_SOURCE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(FlowSource.FLOW_SOURCE_TYPE);
 	}
 
 	/**
 	 * Lookup {@link FlowTarget} type.
 	 */
 	public static com.top_logic.model.TLClass getFlowTargetType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(FlowTarget.FLOW_TARGET_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(FlowTarget.FLOW_TARGET_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Named} type.
 	 */
 	public static com.top_logic.model.TLClass getNamedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Named.NAMED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Named.NAMED_TYPE);
 	}
 
 	/**
@@ -254,7 +274,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Collaboration} type.
 	 */
 	public static com.top_logic.model.TLClass getCollaborationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Collaboration.COLLABORATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Collaboration.COLLABORATION_TYPE);
 	}
 
 	/**
@@ -345,7 +365,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Edge} type.
 	 */
 	public static com.top_logic.model.TLClass getEdgeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Edge.EDGE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Edge.EDGE_TYPE);
 	}
 
 	/**
@@ -394,7 +414,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link SequenceFlow} type.
 	 */
 	public static com.top_logic.model.TLClass getSequenceFlowType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SequenceFlow.SEQUENCE_FLOW_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(SequenceFlow.SEQUENCE_FLOW_TYPE);
 	}
 
 	/**
@@ -429,7 +449,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Lane} type.
 	 */
 	public static com.top_logic.model.TLClass getLaneType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Lane.LANE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Lane.LANE_TYPE);
 	}
 
 	/**
@@ -457,7 +477,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link MessageFlow} type.
 	 */
 	public static com.top_logic.model.TLClass getMessageFlowType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(MessageFlow.MESSAGE_FLOW_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(MessageFlow.MESSAGE_FLOW_TYPE);
 	}
 
 	/**
@@ -492,7 +512,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Node} type.
 	 */
 	public static com.top_logic.model.TLClass getNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Node.NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Node.NODE_TYPE);
 	}
 
 	/**
@@ -527,7 +547,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Event} type.
 	 */
 	public static com.top_logic.model.TLClass getEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Event.EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Event.EVENT_TYPE);
 	}
 
 	/**
@@ -541,21 +561,21 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link EndEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getEndEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(EndEvent.END_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(EndEvent.END_EVENT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link IntermediateEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getIntermediateEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(IntermediateEvent.INTERMEDIATE_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(IntermediateEvent.INTERMEDIATE_EVENT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link BoundaryEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getBoundaryEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(BoundaryEvent.BOUNDARY_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(BoundaryEvent.BOUNDARY_EVENT_TYPE);
 	}
 
 	/**
@@ -576,28 +596,28 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link IntermediateCatchEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getIntermediateCatchEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(IntermediateCatchEvent.INTERMEDIATE_CATCH_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(IntermediateCatchEvent.INTERMEDIATE_CATCH_EVENT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link IntermediateThrowEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getIntermediateThrowEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(IntermediateThrowEvent.INTERMEDIATE_THROW_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(IntermediateThrowEvent.INTERMEDIATE_THROW_EVENT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link IntermediateMessageThrowEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getIntermediateMessageThrowEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(IntermediateMessageThrowEvent.INTERMEDIATE_MESSAGE_THROW_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(IntermediateMessageThrowEvent.INTERMEDIATE_MESSAGE_THROW_EVENT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link StartEvent} type.
 	 */
 	public static com.top_logic.model.TLClass getStartEventType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(StartEvent.START_EVENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(StartEvent.START_EVENT_TYPE);
 	}
 
 	/**
@@ -618,14 +638,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Gateway} type.
 	 */
 	public static com.top_logic.model.TLClass getGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Gateway.GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Gateway.GATEWAY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link DefaultGateway} type.
 	 */
 	public static com.top_logic.model.TLClass getDefaultGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(DefaultGateway.DEFAULT_GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(DefaultGateway.DEFAULT_GATEWAY_TYPE);
 	}
 
 	/**
@@ -639,14 +659,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link ComplexGateway} type.
 	 */
 	public static com.top_logic.model.TLClass getComplexGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ComplexGateway.COMPLEX_GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ComplexGateway.COMPLEX_GATEWAY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ExclusiveGateway} type.
 	 */
 	public static com.top_logic.model.TLClass getExclusiveGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ExclusiveGateway.EXCLUSIVE_GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ExclusiveGateway.EXCLUSIVE_GATEWAY_TYPE);
 	}
 
 	/**
@@ -660,28 +680,28 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link InclusiveGateway} type.
 	 */
 	public static com.top_logic.model.TLClass getInclusiveGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(InclusiveGateway.INCLUSIVE_GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(InclusiveGateway.INCLUSIVE_GATEWAY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link EventBasedGateway} type.
 	 */
 	public static com.top_logic.model.TLClass getEventBasedGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(EventBasedGateway.EVENT_BASED_GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(EventBasedGateway.EVENT_BASED_GATEWAY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ParallelGateway} type.
 	 */
 	public static com.top_logic.model.TLClass getParallelGatewayType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ParallelGateway.PARALLEL_GATEWAY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ParallelGateway.PARALLEL_GATEWAY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Task} type.
 	 */
 	public static com.top_logic.model.TLClass getTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Task.TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Task.TASK_TYPE);
 	}
 
 	/**
@@ -716,21 +736,21 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link BusinessRuleTask} type.
 	 */
 	public static com.top_logic.model.TLClass getBusinessRuleTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(BusinessRuleTask.BUSINESS_RULE_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(BusinessRuleTask.BUSINESS_RULE_TASK_TYPE);
 	}
 
 	/**
 	 * Lookup {@link CallActivity} type.
 	 */
 	public static com.top_logic.model.TLClass getCallActivityType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(CallActivity.CALL_ACTIVITY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(CallActivity.CALL_ACTIVITY_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ManualTask} type.
 	 */
 	public static com.top_logic.model.TLClass getManualTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ManualTask.MANUAL_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ManualTask.MANUAL_TASK_TYPE);
 	}
 
 	/**
@@ -751,21 +771,21 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link ReceiveTask} type.
 	 */
 	public static com.top_logic.model.TLClass getReceiveTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ReceiveTask.RECEIVE_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ReceiveTask.RECEIVE_TASK_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ScriptTask} type.
 	 */
 	public static com.top_logic.model.TLClass getScriptTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ScriptTask.SCRIPT_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ScriptTask.SCRIPT_TASK_TYPE);
 	}
 
 	/**
 	 * Lookup {@link SendTask} type.
 	 */
 	public static com.top_logic.model.TLClass getSendTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SendTask.SEND_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(SendTask.SEND_TASK_TYPE);
 	}
 
 	/**
@@ -800,7 +820,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link ServiceTask} type.
 	 */
 	public static com.top_logic.model.TLClass getServiceTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(ServiceTask.SERVICE_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(ServiceTask.SERVICE_TASK_TYPE);
 	}
 
 	/**
@@ -814,21 +834,21 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link SubProcess} type.
 	 */
 	public static com.top_logic.model.TLClass getSubProcessType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SubProcess.SUB_PROCESS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(SubProcess.SUB_PROCESS_TYPE);
 	}
 
 	/**
 	 * Lookup {@link UserTask} type.
 	 */
 	public static com.top_logic.model.TLClass getUserTaskType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(UserTask.USER_TASK_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(UserTask.USER_TASK_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Participant} type.
 	 */
 	public static com.top_logic.model.TLClass getParticipantType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Participant.PARTICIPANT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Participant.PARTICIPANT_TYPE);
 	}
 
 	/**
@@ -898,7 +918,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Process} type.
 	 */
 	public static com.top_logic.model.TLClass getProcessType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Process.PROCESS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Process.PROCESS_TYPE);
 	}
 
 	/**
@@ -940,7 +960,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link TextAnnotation} type.
 	 */
 	public static com.top_logic.model.TLClass getTextAnnotationType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(TextAnnotation.TEXT_ANNOTATION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(TextAnnotation.TEXT_ANNOTATION_TYPE);
 	}
 
 	/**
@@ -961,7 +981,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link Iconified} type.
 	 */
 	public static com.top_logic.model.TLClass getIconifiedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(Iconified.ICONIFIED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(Iconified.ICONIFIED_TYPE);
 	}
 
 	/**
@@ -975,7 +995,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * Lookup {@link LaneSet} type.
 	 */
 	public static com.top_logic.model.TLClass getLaneSetType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(LaneSet.LANE_SET_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(LaneSet.LANE_SET_TYPE);
 	}
 
 	/**
@@ -1000,63 +1020,75 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@value #APPROVAL_STATE_ENUM} enumeration.
+	 * Lookup the enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getApprovalStateEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(APPROVAL_STATE_ENUM);
+		return ApprovalState.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #DEVELOPMENT_APPROVAL_STATE_CLASSIFIER} of enumeration {@value #APPROVAL_STATE_ENUM}.
+	 * Lookup classifier <code>Development</code> of enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#developmentClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getDevelopmentApprovalStateClassifier() {
-		return getApprovalStateEnum().getClassifier(DEVELOPMENT_APPROVAL_STATE_CLASSIFIER);
+		return ApprovalState.developmentClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #RELEASED_APPROVAL_STATE_CLASSIFIER} of enumeration {@value #APPROVAL_STATE_ENUM}.
+	 * Lookup classifier <code>Released</code> of enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#releasedClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getReleasedApprovalStateClassifier() {
-		return getApprovalStateEnum().getClassifier(RELEASED_APPROVAL_STATE_CLASSIFIER);
+		return ApprovalState.releasedClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #RETIRED_APPROVAL_STATE_CLASSIFIER} of enumeration {@value #APPROVAL_STATE_ENUM}.
+	 * Lookup classifier <code>Retired</code> of enumeration <code>ApprovalState</code>.
+	 * 
+	 * @deprecated Use {@link ApprovalState#retiredClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getRetiredApprovalStateClassifier() {
-		return getApprovalStateEnum().getClassifier(RETIRED_APPROVAL_STATE_CLASSIFIER);
+		return ApprovalState.retiredClassifier();
 	}
 
 	/**
 	 * Lookup {@value #BP_TIME_GRANULARITY_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getBPTimeGranularityType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(BP_TIME_GRANULARITY_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(BP_TIME_GRANULARITY_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DISPLAY_DESCRIPTION_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDisplayDescriptionType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(DISPLAY_DESCRIPTION_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(DISPLAY_DESCRIPTION_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #PROCESS_FORM_DEFINITION_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getProcessFormDefinitionType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(PROCESS_FORM_DEFINITION_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(PROCESS_FORM_DEFINITION_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #SEQUENCE_FLOW_RULE_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getSequenceFlowRuleType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SEQUENCE_FLOW_RULE_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_MODULE).getType(SEQUENCE_FLOW_RULE_TYPE);
 	}
 
 	/**
-	 * Name of type <code>AnnotationContainer</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>AnnotationContainer</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link AnnotationContainer#ANNOTATION_CONTAINER_TYPE}.
 	 */
@@ -1064,7 +1096,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String ANNOTATION_CONTAINER_NODE = AnnotationContainer.ANNOTATION_CONTAINER_TYPE;
 
 	/**
-	 * Name of type <code>Described</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Described</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Described#DESCRIBED_TYPE}.
 	 */
@@ -1072,7 +1104,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DESCRIBED_NODE = Described.DESCRIBED_TYPE;
 
 	/**
-	 * Name of type <code>EventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>EventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link EventDefinition#EVENT_DEFINITION_TYPE}.
 	 */
@@ -1080,7 +1112,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String EVENT_DEFINITION_NODE = EventDefinition.EVENT_DEFINITION_TYPE;
 
 	/**
-	 * Name of type <code>CancelEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>CancelEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link CancelEventDefinition#CANCEL_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1089,11 +1121,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #CANCEL_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.CancelEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CANCEL_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_CANCEL_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.CancelEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CompensateEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>CompensateEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link CompensateEventDefinition#COMPENSATE_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1102,11 +1137,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #COMPENSATE_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.CompensateEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_COMPENSATE_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_COMPENSATE_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.CompensateEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ConditionalEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ConditionalEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ConditionalEventDefinition#CONDITIONAL_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1115,11 +1153,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #CONDITIONAL_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ConditionalEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CONDITIONAL_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_CONDITIONAL_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.ConditionalEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ErrorEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ErrorEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ErrorEventDefinition#ERROR_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1128,11 +1169,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #ERROR_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ErrorEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ERROR_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_ERROR_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.ErrorEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>EscalationEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>EscalationEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link EscalationEventDefinition#ESCALATION_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1141,11 +1185,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #ESCALATION_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.EscalationEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ESCALATION_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_ESCALATION_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.EscalationEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>MessageEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>MessageEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link MessageEventDefinition#MESSAGE_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1154,11 +1201,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #MESSAGE_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.MessageEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_MESSAGE_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_MESSAGE_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.MessageEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>SignalEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>SignalEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link SignalEventDefinition#SIGNAL_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1167,11 +1217,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #SIGNAL_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.SignalEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SIGNAL_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_SIGNAL_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.SignalEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TerminateEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>TerminateEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link TerminateEventDefinition#TERMINATE_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1180,11 +1233,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #TERMINATE_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.TerminateEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TERMINATE_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_TERMINATE_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.TerminateEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TimerEventDefinition</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>TimerEventDefinition</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link TimerEventDefinition#TIMER_EVENT_DEFINITION_TYPE}.
 	 */
@@ -1193,11 +1249,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #TIMER_EVENT_DEFINITION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TIMER_EVENT_DEFINITION = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_TIMER_EVENT_DEFINITION = com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Externalized</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Externalized</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Externalized#EXTERNALIZED_TYPE}.
 	 */
@@ -1205,7 +1264,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String EXTERNALIZED_NODE = Externalized.EXTERNALIZED_TYPE;
 
 	/**
-	 * Name of type <code>Annotated</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Annotated</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Annotated#ANNOTATED_TYPE}.
 	 */
@@ -1213,7 +1272,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String ANNOTATED_NODE = Annotated.ANNOTATED_TYPE;
 
 	/**
-	 * Name of type <code>AnnotationAssociation</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>AnnotationAssociation</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link AnnotationAssociation#ANNOTATION_ASSOCIATION_TYPE}.
 	 */
@@ -1222,11 +1281,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #ANNOTATION_ASSOCIATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.AnnotationAssociationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ANNOTATION_ASSOCIATION = "BPAssociation";
+	@Deprecated
+	public static final String KO_NAME_ANNOTATION_ASSOCIATION = com.top_logic.bpe.bpml.model.impl.AnnotationAssociationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>FlowSource</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>FlowSource</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link FlowSource#FLOW_SOURCE_TYPE}.
 	 */
@@ -1234,7 +1296,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String FLOW_SOURCE_NODE = FlowSource.FLOW_SOURCE_TYPE;
 
 	/**
-	 * Name of type <code>FlowTarget</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>FlowTarget</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link FlowTarget#FLOW_TARGET_TYPE}.
 	 */
@@ -1242,7 +1304,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String FLOW_TARGET_NODE = FlowTarget.FLOW_TARGET_TYPE;
 
 	/**
-	 * Name of type <code>Named</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Named</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Named#NAMED_TYPE}.
 	 */
@@ -1250,7 +1312,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String NAMED_NODE = Named.NAMED_TYPE;
 
 	/**
-	 * Name of type <code>Collaboration</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Collaboration</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Collaboration#COLLABORATION_TYPE}.
 	 */
@@ -1259,11 +1321,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #COLLABORATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.CollaborationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_COLLABORATION = "BPCollaboration";
+	@Deprecated
+	public static final String KO_NAME_COLLABORATION = com.top_logic.bpe.bpml.model.impl.CollaborationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Edge</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Edge</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Edge#EDGE_TYPE}.
 	 */
@@ -1271,7 +1336,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String EDGE_NODE = Edge.EDGE_TYPE;
 
 	/**
-	 * Name of type <code>SequenceFlow</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>SequenceFlow</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link SequenceFlow#SEQUENCE_FLOW_TYPE}.
 	 */
@@ -1280,11 +1345,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #SEQUENCE_FLOW_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.SequenceFlowBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SEQUENCE_FLOW = "BPEdge";
+	@Deprecated
+	public static final String KO_NAME_SEQUENCE_FLOW = com.top_logic.bpe.bpml.model.impl.SequenceFlowBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Lane</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Lane</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Lane#LANE_TYPE}.
 	 */
@@ -1293,11 +1361,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #LANE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.LaneBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_LANE = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_LANE = com.top_logic.bpe.bpml.model.impl.LaneBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>MessageFlow</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>MessageFlow</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link MessageFlow#MESSAGE_FLOW_TYPE}.
 	 */
@@ -1306,11 +1377,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #MESSAGE_FLOW_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.MessageFlowBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_MESSAGE_FLOW = "BPFlow";
+	@Deprecated
+	public static final String KO_NAME_MESSAGE_FLOW = com.top_logic.bpe.bpml.model.impl.MessageFlowBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Node</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Node</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Node#NODE_TYPE}.
 	 */
@@ -1318,7 +1392,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String NODE_NODE = Node.NODE_TYPE;
 
 	/**
-	 * Name of type <code>Event</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Event</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Event#EVENT_TYPE}.
 	 */
@@ -1326,7 +1400,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String EVENT_NODE = Event.EVENT_TYPE;
 
 	/**
-	 * Name of type <code>EndEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>EndEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link EndEvent#END_EVENT_TYPE}.
 	 */
@@ -1335,11 +1409,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #END_EVENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.EndEventBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_END_EVENT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_END_EVENT = com.top_logic.bpe.bpml.model.impl.EndEventBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>IntermediateEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>IntermediateEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link IntermediateEvent#INTERMEDIATE_EVENT_TYPE}.
 	 */
@@ -1347,7 +1424,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String INTERMEDIATE_EVENT_NODE = IntermediateEvent.INTERMEDIATE_EVENT_TYPE;
 
 	/**
-	 * Name of type <code>BoundaryEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>BoundaryEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link BoundaryEvent#BOUNDARY_EVENT_TYPE}.
 	 */
@@ -1356,11 +1433,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #BOUNDARY_EVENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.BoundaryEventBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_BOUNDARY_EVENT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_BOUNDARY_EVENT = com.top_logic.bpe.bpml.model.impl.BoundaryEventBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>IntermediateCatchEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>IntermediateCatchEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link IntermediateCatchEvent#INTERMEDIATE_CATCH_EVENT_TYPE}.
 	 */
@@ -1369,11 +1449,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #INTERMEDIATE_CATCH_EVENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.IntermediateCatchEventBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_INTERMEDIATE_CATCH_EVENT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_INTERMEDIATE_CATCH_EVENT = com.top_logic.bpe.bpml.model.impl.IntermediateCatchEventBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>IntermediateThrowEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>IntermediateThrowEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link IntermediateThrowEvent#INTERMEDIATE_THROW_EVENT_TYPE}.
 	 */
@@ -1382,11 +1465,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #INTERMEDIATE_THROW_EVENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.IntermediateThrowEventBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_INTERMEDIATE_THROW_EVENT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_INTERMEDIATE_THROW_EVENT = com.top_logic.bpe.bpml.model.impl.IntermediateThrowEventBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>IntermediateMessageThrowEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>IntermediateMessageThrowEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link IntermediateMessageThrowEvent#INTERMEDIATE_MESSAGE_THROW_EVENT_TYPE}.
 	 */
@@ -1395,11 +1481,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #INTERMEDIATE_MESSAGE_THROW_EVENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.IntermediateMessageThrowEventBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_INTERMEDIATE_MESSAGE_THROW_EVENT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_INTERMEDIATE_MESSAGE_THROW_EVENT = com.top_logic.bpe.bpml.model.impl.IntermediateMessageThrowEventBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>StartEvent</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>StartEvent</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link StartEvent#START_EVENT_TYPE}.
 	 */
@@ -1408,11 +1497,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #START_EVENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.StartEventBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_START_EVENT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_START_EVENT = com.top_logic.bpe.bpml.model.impl.StartEventBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Gateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Gateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Gateway#GATEWAY_TYPE}.
 	 */
@@ -1420,7 +1512,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String GATEWAY_NODE = Gateway.GATEWAY_TYPE;
 
 	/**
-	 * Name of type <code>DefaultGateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>DefaultGateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link DefaultGateway#DEFAULT_GATEWAY_TYPE}.
 	 */
@@ -1428,7 +1520,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DEFAULT_GATEWAY_NODE = DefaultGateway.DEFAULT_GATEWAY_TYPE;
 
 	/**
-	 * Name of type <code>ComplexGateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ComplexGateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ComplexGateway#COMPLEX_GATEWAY_TYPE}.
 	 */
@@ -1437,11 +1529,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #COMPLEX_GATEWAY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ComplexGatewayBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_COMPLEX_GATEWAY = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_COMPLEX_GATEWAY = com.top_logic.bpe.bpml.model.impl.ComplexGatewayBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ExclusiveGateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ExclusiveGateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ExclusiveGateway#EXCLUSIVE_GATEWAY_TYPE}.
 	 */
@@ -1450,11 +1545,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #EXCLUSIVE_GATEWAY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ExclusiveGatewayBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_EXCLUSIVE_GATEWAY = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_EXCLUSIVE_GATEWAY = com.top_logic.bpe.bpml.model.impl.ExclusiveGatewayBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>InclusiveGateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>InclusiveGateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link InclusiveGateway#INCLUSIVE_GATEWAY_TYPE}.
 	 */
@@ -1463,11 +1561,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #INCLUSIVE_GATEWAY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.InclusiveGatewayBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_INCLUSIVE_GATEWAY = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_INCLUSIVE_GATEWAY = com.top_logic.bpe.bpml.model.impl.InclusiveGatewayBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>EventBasedGateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>EventBasedGateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link EventBasedGateway#EVENT_BASED_GATEWAY_TYPE}.
 	 */
@@ -1476,11 +1577,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #EVENT_BASED_GATEWAY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.EventBasedGatewayBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_EVENT_BASED_GATEWAY = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_EVENT_BASED_GATEWAY = com.top_logic.bpe.bpml.model.impl.EventBasedGatewayBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ParallelGateway</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ParallelGateway</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ParallelGateway#PARALLEL_GATEWAY_TYPE}.
 	 */
@@ -1489,11 +1593,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #PARALLEL_GATEWAY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ParallelGatewayBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PARALLEL_GATEWAY = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_PARALLEL_GATEWAY = com.top_logic.bpe.bpml.model.impl.ParallelGatewayBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Task</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Task</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Task#TASK_TYPE}.
 	 */
@@ -1502,11 +1609,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.TaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_TASK = com.top_logic.bpe.bpml.model.impl.TaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>BusinessRuleTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>BusinessRuleTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link BusinessRuleTask#BUSINESS_RULE_TASK_TYPE}.
 	 */
@@ -1515,11 +1625,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #BUSINESS_RULE_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.BusinessRuleTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_BUSINESS_RULE_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_BUSINESS_RULE_TASK = com.top_logic.bpe.bpml.model.impl.BusinessRuleTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CallActivity</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>CallActivity</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link CallActivity#CALL_ACTIVITY_TYPE}.
 	 */
@@ -1528,11 +1641,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #CALL_ACTIVITY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.CallActivityBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CALL_ACTIVITY = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_CALL_ACTIVITY = com.top_logic.bpe.bpml.model.impl.CallActivityBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ManualTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ManualTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ManualTask#MANUAL_TASK_TYPE}.
 	 */
@@ -1541,11 +1657,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #MANUAL_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ManualTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_MANUAL_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_MANUAL_TASK = com.top_logic.bpe.bpml.model.impl.ManualTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ReceiveTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ReceiveTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ReceiveTask#RECEIVE_TASK_TYPE}.
 	 */
@@ -1554,11 +1673,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #RECEIVE_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ReceiveTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_RECEIVE_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_RECEIVE_TASK = com.top_logic.bpe.bpml.model.impl.ReceiveTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ScriptTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ScriptTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ScriptTask#SCRIPT_TASK_TYPE}.
 	 */
@@ -1567,11 +1689,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #SCRIPT_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ScriptTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SCRIPT_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_SCRIPT_TASK = com.top_logic.bpe.bpml.model.impl.ScriptTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>SendTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>SendTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link SendTask#SEND_TASK_TYPE}.
 	 */
@@ -1580,11 +1705,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #SEND_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.SendTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SEND_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_SEND_TASK = com.top_logic.bpe.bpml.model.impl.SendTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ServiceTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>ServiceTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link ServiceTask#SERVICE_TASK_TYPE}.
 	 */
@@ -1593,11 +1721,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #SERVICE_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ServiceTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SERVICE_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_SERVICE_TASK = com.top_logic.bpe.bpml.model.impl.ServiceTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>SubProcess</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>SubProcess</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link SubProcess#SUB_PROCESS_TYPE}.
 	 */
@@ -1606,11 +1737,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #SUB_PROCESS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.SubProcessBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SUB_PROCESS = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_SUB_PROCESS = com.top_logic.bpe.bpml.model.impl.SubProcessBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>UserTask</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>UserTask</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link UserTask#USER_TASK_TYPE}.
 	 */
@@ -1619,11 +1753,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #USER_TASK_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.UserTaskBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_USER_TASK = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_USER_TASK = com.top_logic.bpe.bpml.model.impl.UserTaskBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Participant</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Participant</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Participant#PARTICIPANT_TYPE}.
 	 */
@@ -1632,11 +1769,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #PARTICIPANT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ParticipantBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PARTICIPANT = "BPNode";
+	@Deprecated
+	public static final String KO_NAME_PARTICIPANT = com.top_logic.bpe.bpml.model.impl.ParticipantBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Process</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Process</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Process#PROCESS_TYPE}.
 	 */
@@ -1645,11 +1785,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #PROCESS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.ProcessBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PROCESS = "BPElement";
+	@Deprecated
+	public static final String KO_NAME_PROCESS = com.top_logic.bpe.bpml.model.impl.ProcessBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>TextAnnotation</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>TextAnnotation</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link TextAnnotation#TEXT_ANNOTATION_TYPE}.
 	 */
@@ -1658,11 +1801,14 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 
 	/**
 	 * Storage table name of {@link #TEXT_ANNOTATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.bpml.model.impl.TextAnnotationBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TEXT_ANNOTATION = "BPAnnotation";
+	@Deprecated
+	public static final String KO_NAME_TEXT_ANNOTATION = com.top_logic.bpe.bpml.model.impl.TextAnnotationBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Iconified</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>Iconified</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link Iconified#ICONIFIED_TYPE}.
 	 */
@@ -1670,7 +1816,7 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String ICONIFIED_NODE = Iconified.ICONIFIED_TYPE;
 
 	/**
-	 * Name of type <code>LaneSet</code> in structure {@link #TL_BPE_BPML_STRUCTURE}.
+	 * Name of type <code>LaneSet</code> in module {@link #TL_BPE_BPML_MODULE}.
 	 * 
 	 * @deprecated Use {@link LaneSet#LANE_SET_TYPE}.
 	 */
@@ -2214,6 +2360,6 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 * The singleton instance of {@link TlBpeBpmlFactory}.
 	 */
 	public static TlBpeBpmlFactory getInstance() {
-		return (TlBpeBpmlFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_BPE_BPML_STRUCTURE);
+		return (TlBpeBpmlFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_BPE_BPML_MODULE);
 	}
 }

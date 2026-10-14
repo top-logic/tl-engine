@@ -145,6 +145,13 @@ interface RowState {
    * offers this text; the others offer their own text while it does not fit.
    */
   tooltips?: Record<string, string>;
+  /** The CSS class the row's element carries in addition to its own classes; absent for none. */
+  cssClass?: string;
+  /**
+   * The CSS class of the cells that are marked, by column name. A cell named here carries it in
+   * addition to its column's class; the others carry the column's class only.
+   */
+  cellClasses?: Record<string, string>;
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
@@ -308,6 +315,18 @@ const ColumnsButton: React.FC<{
  * renders the rows its viewport shows, so the table needs a height bounded by its container rather
  * than one following its rows. Its containers fill in turn, up to the next bounded region.
  */
+/** A highlight class of the application among the given classes (#29815). */
+const STATUS_CLASS = /(?:^|\s)tl-status-(error|warning|success|info)(?=\s|$)/;
+
+/**
+ * The status role the highlight class among the given classes stands for: `tl-status-error`,
+ * `-warning`, `-success` or `-info`, which the design system draws as `data-tl-role` on the row or the
+ * cell. Undefined without such a class.
+ */
+function statusRole(cssClass: string | undefined): string | undefined {
+  return cssClass ? STATUS_CLASS.exec(cssClass)?.[1] : undefined;
+}
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const fillClass = useFill(true);
@@ -336,7 +355,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // rendered from the first layout on, so the token is read where the rows inherit it.
   const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
-  const selectedCount = (state.selectedCount as number) ?? 0;
+  /**
+   * What the select-all checkbox shows, decided by the server from how many of the rows the
+   * select-all acts on - the rows the filter lets pass, collapsed group members included - are
+   * selected: `none`, `some` or `all`.
+   */
+  const selectAllState = (state.selectAllState as string) ?? 'none';
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
@@ -357,6 +381,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropTreeZones = (state.dropTreeZones as boolean) ?? false;
   const zoneSplit = dropTreeZones ? treeZoneSplit(dropModes) : flatZoneSplit(dropModes);
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
+  /** How many rows the table has (of how many, while filtered); empty while it shows no count. */
+  const rowCount = (state.rowCount as string) ?? '';
+  /** How many rows are selected; empty while nothing is or the table selects a single row only. */
+  const rowCountSelected = (state.rowCountSelected as string) ?? '';
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -486,6 +514,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // therefore ends with a reserve of this width. Measured rather than assumed: it depends on the
   // platform, and it is zero for an overlay scrollbar or a table short enough not to scroll.
   const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
+
+  /** Re-measures whether columns run underneath the column button, see {@link columnsCovered}. */
+  const measureCoveredRef = React.useRef<() => void>(() => {});
 
   React.useEffect(() => {
     const body = scrollContainerRef.current;
@@ -701,6 +732,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       headerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft;
     }
     measureWindow();
+    measureCoveredRef.current();
     // Debounced vertical scroll command.
     if (scrollTimeoutRef.current !== null) {
       clearTimeout(scrollTimeoutRef.current);
@@ -1096,9 +1128,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleSelectAll = React.useCallback(() => {
-    const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
-    sendCommand('selectAll', { selected: !allSelected });
-  }, [sendCommand, selectedCount, totalRowCount]);
+    sendCommand('selectAll', { selected: selectAllState !== 'all' });
+  }, [sendCommand, selectAllState]);
 
   // -- Expand handler --
   const handleExpand = React.useCallback((rowIndex: number, expanded: boolean, event: React.MouseEvent) => {
@@ -1351,8 +1382,40 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
   const buttonReserve = columnSelect && !cogInHeaderCell ? columnsButtonWidth : 0;
 
-  const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
-  const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
+  // Whether columns run on underneath the column button: the table is wider than its header and
+  // not scrolled to its right end. The header then fades out in front of the button, so the column
+  // cut off there reads as scrolled out of view rather than as a heading the button covers by
+  // mistake.
+  const [columnsCovered, setColumnsCovered] = React.useState(false);
+  const measureCovered = React.useCallback(() => {
+    const header = headerRef.current;
+    if (!header || buttonReserve === 0) {
+      setColumnsCovered(false);
+      return;
+    }
+    const columnsEnd = tableWidth - header.scrollLeft;
+    const covered = columnsEnd > header.clientWidth - buttonReserve + 0.5;
+    setColumnsCovered((previous) => (previous === covered ? previous : covered));
+  }, [tableWidth, buttonReserve]);
+  measureCoveredRef.current = measureCovered;
+  // Measured again whenever what it depends on changes - a column resize changes the table width
+  // with every pointer move - while the observer of the header's size stays one for the table's
+  // lifetime, reaching the current measurement through the ref.
+  React.useLayoutEffect(() => {
+    measureCovered();
+  }, [measureCovered]);
+  React.useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+    const observer = new ResizeObserver(() => measureCoveredRef.current());
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  const allSelected = selectAllState === 'all';
+  const someSelected = selectAllState === 'some';
 
   const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
     if (el) {
@@ -1556,7 +1619,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         aria-activedescendant={cursorRendered ? rowId(cursorIndex) : undefined}
         tabIndex={0}
       >
-      <div className="tl-table__header" ref={headerRef} role="rowgroup" onScroll={handleHeaderScroll}>
+      <div className="tl-table__header" ref={headerRef} role="rowgroup" onScroll={handleHeaderScroll}
+        data-tl-state={stateAttr(columnsCovered && 'covered')}>
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}
@@ -1720,7 +1784,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               aria-expanded={treegrid && row.expandable ? !!row.expanded : undefined}
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
-              className="tl-table__row"
+              className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
+              // The selection wins over a highlight: a selected row carries no role.
+              data-tl-role={row.selected ? undefined : statusRole(row.cssClass)}
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
@@ -1770,6 +1836,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
                 const { isFrozen, isPinned, words } = placeOf(colIdx);
+                const rowCellClass = row.cellClasses?.[col.name];
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
                 // What the cell says: the tooltip of its content where it has one, its own text while
@@ -1782,10 +1849,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     key={col.name}
                     role="gridcell"
-                    className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')}
+                    className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')
+                      + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
                     data-tl-state={stateAttr(...words)}
+                    data-tl-role={row.selected ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
                       ...widthStyle(colIdx, w, isFrozen),
@@ -1853,6 +1922,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />
         )}
       </div>
+
+      {/* The row count below the rows, outside the scroller, so it stays in view wherever the rows
+          are scrolled to. A live region, so a screen reader hears the count a filter leaves. */}
+      {rowCount !== '' && (
+        <div className="tl-table__footer tl-type-label" role="status" aria-live="polite">
+          <span className="tl-table__row-count">{rowCount}</span>
+          {rowCountSelected !== '' && (
+            <span className="tl-table__selection-count">{rowCountSelected}</span>
+          )}
+        </div>
+      )}
 
       {/* Column context menu */}
       <Menu open={!!contextMenu} anchor={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null} onClose={() => setContextMenu(null)}>

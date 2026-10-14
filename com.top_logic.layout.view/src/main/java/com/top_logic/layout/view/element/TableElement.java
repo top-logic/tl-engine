@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -47,6 +48,8 @@ import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
+import com.top_logic.layout.view.table.RowClassConfig;
+import com.top_logic.layout.view.table.RowClassFunction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -85,7 +88,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	 * Configuration for {@link TableElement}.
 	 */
 	@TagName("table")
-	public interface Config extends AbstractTableElement.Config {
+	public interface Config extends AbstractTableElement.Config, RowClassConfig {
 
 		@Override
 		@ClassDefault(TableElement.class)
@@ -108,6 +111,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 		/** Configuration name for {@link #getOnRemove()}. */
 		String ON_REMOVE = "on-remove";
+
+		/** Configuration name for {@link #getRowCount()}. */
+		String ROW_COUNT = "row-count";
 
 		/** Configuration name for {@link #getDrops()}. */
 		String DROPS = "drops";
@@ -181,6 +187,19 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		RowSetBinding.RemoveMode getOnRemove();
 
 		/**
+		 * Whether the table tells below its rows how many rows it has.
+		 *
+		 * <p>
+		 * While a column filter, the search or a filter of the filter bar narrows the rows, the
+		 * count tells how many of all rows are displayed. In a table selecting several rows, it
+		 * tells how many are selected as well. A grouped table counts its rows, not its groups.
+		 * </p>
+		 */
+		@Name(ROW_COUNT)
+		@BooleanDefault(true)
+		boolean getRowCount();
+
+		/**
 		 * What this table accepts a drop of, and what it does with the dropped objects.
 		 *
 		 * <p>
@@ -213,6 +232,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 	private final QueryExecutor _rowsExecutor;
 
+	/** The compiled {@link Config#getRowClass() row class function}. */
+	private final RowClassFunction _rowClass;
+
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
 
@@ -223,6 +245,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
+		_rowClass = RowClassFunction.compile(config.getRowClass());
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a
@@ -244,9 +267,11 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		}
 
 		ReadOnlyTable<ListRowSource<Object>> table = createTable(context, resolveRowType(rows), inputValues,
-			columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false, initialGrouping(), _drops);
+			columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false, initialGrouping(), _drops,
+			_rowClass.bind(inputChannels));
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
+		control.setRowCount(_config.getRowCount());
 
 		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
@@ -316,6 +341,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
 		control.setFilterBar(filterBar());
+		control.setRowCount(_config.getRowCount());
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());
@@ -325,6 +351,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
+		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 
 		contributeAddRowCommand(context, formControl, binding, control);

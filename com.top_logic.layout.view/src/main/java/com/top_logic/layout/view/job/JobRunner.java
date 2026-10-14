@@ -7,7 +7,6 @@ package com.top_logic.layout.view.job;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.AbortExecutionException;
@@ -18,8 +17,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.scripting.ReactWindowReplay;
-import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.channel.ChannelPublisher;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.util.error.TopLogicException;
 
@@ -28,28 +26,31 @@ import com.top_logic.util.error.TopLogicException;
  * snapshots on a {@link ViewChannel}.
  *
  * <p>
- * The job leaves the request that started it: the first snapshot is published on the starting
+ * The job leaves the request that started it: the first snapshot is written on the starting
  * thread, so the channel holds the running job before the request returns, and the body then runs
  * in the sub-session of that request on a thread of the {@link SchedulerService}. Every later
- * snapshot is published from a background thread in that sub-session and under the interaction of
- * the window the job belongs to, so writing the channel, the controls that update from it and the
- * updates delivered to the browser are serialized against the requests of the same session exactly
- * like a command is.
+ * snapshot is handed to a {@link ChannelPublisher}, which writes it asynchronously on a scheduler
+ * thread, in that sub-session and under the interaction of the window the job belongs to. Writing
+ * the channel, the controls that update from it and the updates delivered to the browser are thus
+ * serialized against the requests of the same session exactly like a command is, and the body
+ * never waits for the display.
  * </p>
  *
  * <p>
  * A job that reports faster than the display can follow is throttled to one snapshot per update
- * interval: a report arriving too early is held back, and a flush delivers the state the job has
- * reached once the interval has passed, so the last report of a burst is never lost. The snapshot
- * that ends the job is always delivered, and with it the runner tells whoever waits for the job
- * that it has ended - within the same interaction, so that the work following the job runs where a
- * command runs.
+ * interval: a report arriving too early is held back, and a later one replaces it, so the display
+ * shows the state the job has reached and the last report of a burst is never lost. The snapshot
+ * that ends the job is delivered without waiting for the interval, and with it the runner tells
+ * whoever waits for the job that it has ended - within the same interaction, so that the work
+ * following the job runs where a command runs. It is delivered even when the window is gone, so
+ * that nothing waiting for the job is left hanging.
  * </p>
  *
  * <p>
- * Snapshots reach the channel in the order they were taken: taking a snapshot and delivering it is
- * one step for the worker and the flush alike, so a snapshot taken before the job ended is never
- * delivered after the one that ends it.
+ * Snapshots reach the channel in the order they were taken: a snapshot is handed to the publisher
+ * while the state it was taken from is locked, and the publisher delivers in the order it was
+ * handed the values, so a snapshot taken before the job ended is never delivered after the one that
+ * ends it. Once that one has been delivered, the publisher is closed.
  * </p>
  *
  * @see JobMonitor
@@ -57,31 +58,20 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class JobRunner implements JobControl, JobMonitor {
 
-	private final ReactContext _context;
-
 	private final ViewChannel _target;
 
 	private final boolean _cancelable;
 
-	private final long _updateInterval;
-
 	private final Consumer<JobState> _onFinished;
+
+	/** Delivers the snapshots taken after the first one. */
+	private final ChannelPublisher _publisher;
+
+	/** The sub-session of the request that started the job, the one the body runs in. */
+	private final SubSessionContext _subSession;
 
 	/** Guards everything the snapshot is built from. */
 	private final Object _lock = new Object();
-
-	/**
-	 * Orders the deliveries of the worker and the flush.
-	 *
-	 * <p>
-	 * Held from taking a snapshot until it is delivered - written to the channel and, for the one
-	 * ending the job, handed to whoever waits for it - so that snapshots are delivered one after
-	 * the other and in the order they were taken. Acquired before {@link #_lock} and before the
-	 * interaction of the window, never while holding either of them. {@link #cancel()} does not
-	 * take it, so that stopping a job never waits for a delivery.
-	 * </p>
-	 */
-	private final Object _deliveryLock = new Object();
 
 	private final Date _startedAt = new Date();
 
@@ -101,18 +91,17 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	private ResKey _error;
 
-	private long _lastDelivery;
-
-	private boolean _flushScheduled;
-
 	private Thread _worker;
-
-	private SubSessionContext _subSession;
 
 	private volatile boolean _cancelled;
 
 	/**
 	 * Creates a {@link JobRunner}.
+	 *
+	 * <p>
+	 * Called from the request that starts the job, whose sub-session the job runs and publishes
+	 * in.
+	 * </p>
 	 *
 	 * @param context
 	 *        The context of the window the job belongs to; its
@@ -134,12 +123,12 @@ public class JobRunner implements JobControl, JobMonitor {
 	 */
 	public JobRunner(ReactContext context, ViewChannel target, List<JobPhase> phases, boolean cancelable,
 			long updateInterval, Consumer<JobState> onFinished) {
-		_context = context;
 		_target = target;
 		_phases = List.copyOf(phases);
 		_cancelable = cancelable;
-		_updateInterval = updateInterval;
 		_onFinished = onFinished;
+		_subSession = ThreadContextManager.getSubSession();
+		_publisher = new ChannelPublisher(context, updateInterval, value -> apply((JobState) value), true);
 	}
 
 	/**
@@ -158,8 +147,6 @@ public class JobRunner implements JobControl, JobMonitor {
 	public void start(JobBody body, List<Object> arguments) {
 		JobState initial;
 		synchronized (_lock) {
-			_lastDelivery = System.currentTimeMillis();
-			_subSession = ThreadContextManager.getSubSession();
 			initial = snapshot();
 		}
 		apply(initial);
@@ -347,22 +334,16 @@ public class JobRunner implements JobControl, JobMonitor {
 	}
 
 	/**
-	 * Applies the given change to the state of the job and publishes the result, unless another
-	 * snapshot was published so recently that this one is held back for the flush.
+	 * Applies the given change to the state of the job and publishes the result, which the
+	 * publisher holds back when another snapshot was delivered too recently.
 	 */
 	private void report(Runnable change) {
-		synchronized (_deliveryLock) {
-			JobState state;
-			synchronized (_lock) {
-				if (_status != JobStatus.RUNNING) {
-					return;
-				}
-				change.run();
-				state = due();
+		synchronized (_lock) {
+			if (_status != JobStatus.RUNNING) {
+				return;
 			}
-			if (state != null) {
-				deliver(state);
-			}
+			change.run();
+			_publisher.publish(snapshot());
 		}
 	}
 
@@ -377,95 +358,18 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *        Why it failed, for a failed one.
 	 */
 	private void finish(JobStatus status, Object result, ResKey error) {
-		synchronized (_deliveryLock) {
-			JobState state;
-			synchronized (_lock) {
-				if (_status != JobStatus.RUNNING) {
-					return;
-				}
-				_status = status;
-				_result = result;
-				_error = error;
-				_finishedAt = new Date();
-				if (status == JobStatus.COMPLETED && !_phases.isEmpty()) {
-					_currentPhase = _phases.size();
-				}
-				_lastDelivery = System.currentTimeMillis();
-				state = snapshot();
+		synchronized (_lock) {
+			if (_status != JobStatus.RUNNING) {
+				return;
 			}
-			deliver(state);
-		}
-	}
-
-	/**
-	 * Delivers what the job has reached since the last snapshot, called once the update interval has
-	 * passed.
-	 */
-	private void flush() {
-		synchronized (_deliveryLock) {
-			JobState state;
-			synchronized (_lock) {
-				_flushScheduled = false;
-				if (_status != JobStatus.RUNNING) {
-					return;
-				}
-				_lastDelivery = System.currentTimeMillis();
-				state = snapshot();
+			_status = status;
+			_result = result;
+			_error = error;
+			_finishedAt = new Date();
+			if (status == JobStatus.COMPLETED && !_phases.isEmpty()) {
+				_currentPhase = _phases.size();
 			}
-			deliver(state);
-		}
-	}
-
-	/**
-	 * The snapshot to publish right now, or {@code null} when this update is held back for the
-	 * flush, which is scheduled here.
-	 *
-	 * <p>
-	 * Called while holding {@link #_lock}.
-	 * </p>
-	 */
-	private JobState due() {
-		long now = System.currentTimeMillis();
-		long elapsed = now - _lastDelivery;
-		if (elapsed >= _updateInterval) {
-			_lastDelivery = now;
-			return snapshot();
-		}
-		if (!_flushScheduled) {
-			_flushScheduled = true;
-			SchedulerService.getInstance().schedule(this::flush, _updateInterval - elapsed, TimeUnit.MILLISECONDS);
-		}
-		return null;
-	}
-
-	/**
-	 * Publishes the given snapshot from a thread that is not serving the window - the worker, or the
-	 * one the flush runs on - in the sub-session the job was started from and under the interaction
-	 * of the window.
-	 *
-	 * <p>
-	 * Called while holding {@link #_deliveryLock}.
-	 * </p>
-	 */
-	private void deliver(JobState state) {
-		SubSessionContext subSession = _subSession;
-		if (subSession == null) {
-			publish(state);
-		} else {
-			ThreadContextManager.inContext(subSession, () -> publish(state));
-		}
-	}
-
-	private void publish(JobState state) {
-		ReactWindowRegistry registry = _context == null ? null : _context.getWindowRegistry();
-		if (registry == null) {
-			apply(state);
-			return;
-		}
-		if (!ReactWindowReplay.inWindow(registry, _context.getWindowName(), () -> apply(state))) {
-			// The page the job reported to is gone; the channel and whoever waits for the job are
-			// still told, so that nothing is left hanging.
-			apply(state);
+			_publisher.publishNow(snapshot());
 		}
 	}
 
@@ -478,13 +382,24 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * ended even when the work taken up after it fails; that failure is left to the one waiting for
 	 * the job to report.
 	 * </p>
+	 *
+	 * <p>
+	 * The snapshot that ends the job is the last one: nothing is reported after it, so the
+	 * publisher is closed once it has been delivered.
+	 * </p>
 	 */
 	private void apply(JobState state) {
 		try {
 			_target.set(state);
 		} finally {
-			if (state.isFinished() && _onFinished != null) {
-				_onFinished.accept(state);
+			if (state.isFinished()) {
+				try {
+					if (_onFinished != null) {
+						_onFinished.accept(state);
+					}
+				} finally {
+					_publisher.close();
+				}
 			}
 		}
 	}

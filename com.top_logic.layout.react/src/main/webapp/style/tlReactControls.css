@@ -1108,9 +1108,9 @@ button.tlPanel__actionButton:focus-visible {
 	stroke-linejoin: round;
 }
 
-/* The body of a panel is where the fill chain ends (see the fill contract above): it is bounded by
-   the panel - it takes the space the panel has left over and scrolls what does not fit into it -
-   and is therefore the box a filling child resolves its height against. A child can only do that in
+/* The body of a panel is the box a filling child resolves its height against (see the fill contract
+   above): it is bounded by the panel - it takes the space the panel has left over and scrolls what
+   does not fit into it -, and the panel fills while such a child does. A child can only do that in
    a flex container, so the body is a column: a child carrying .tlFill takes the height the body
    offers, and any other child keeps the height of its content. */
 .tlPanel__content {
@@ -2323,7 +2323,10 @@ button.tlBottomBar__item:hover {
 /* --- TLDialogManager ------------------------------------------------------- */
 
 .tlDialogManager {
-	/* Container for stacked dialogs; no visual styles. */
+	/* Container for stacked dialogs, which are fixed overlays: it takes no part in the layout of the
+	   window root it is a child of, so it claims no room there - not even the gap the root stack
+	   would put in front of it, which cut the page short at the bottom. */
+	display: contents;
 }
 
 /* --- TLWindow -------------------------------------------------------------- */

@@ -5,7 +5,10 @@
  */
 package com.top_logic.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,23 +55,11 @@ public interface TableView<R> {
 	 *
 	 * <p>
 	 * This is what a column selection UI offers; the choice it produces is applied through
-	 * {@link #setColumnOrder(List)}.
+	 * {@link #setColumnOrder(List)}, and {@link #resetToDefaults()} returns to the arrangement the
+	 * table is defined with.
 	 * </p>
 	 */
 	List<ColumnOption> columnOptions();
-
-	/**
-	 * The columns as the table was defined: those displayed without any personalization, in
-	 * declaration order.
-	 *
-	 * <p>
-	 * This is the arrangement a column selection UI restores when the user resets their
-	 * personalization, and the state a table starts from before anything is persisted. It does not
-	 * cover columns a table only offers - those stay hidden until the user selects them, exactly as
-	 * on a first visit.
-	 * </p>
-	 */
-	List<String> defaultColumnOrder();
 
 	// ---- data window ----
 
@@ -76,6 +67,76 @@ public interface TableView<R> {
 	 * The total number of displayed rows.
 	 */
 	int rowCount();
+
+	/**
+	 * The number of data rows the table is filtered to - by its column filters, its search and the
+	 * named filter applied.
+	 *
+	 * <p>
+	 * Unlike the {@link #rowCount() displayed rows}, this counts business objects: a group header
+	 * is not counted, a row inside a collapsed group is.
+	 * </p>
+	 *
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} when the rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see RowSource#matchCount()
+	 */
+	default int matchCount() {
+		return RowSource.UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The number of data rows of the table, regardless of what it is filtered by.
+	 *
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} when the rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see RowSource#dataCount()
+	 */
+	default int dataCount() {
+		return RowSource.UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the data rows the table is filtered to, in sort order - the
+	 * rows {@link #matchCount()} counts, the members of a collapsed group included.
+	 *
+	 * <p>
+	 * This is the set a "select all" acts on.
+	 * </p>
+	 *
+	 * @see RowSource#matchingKeys()
+	 */
+	default List<Object> matchingKeys() {
+		List<Object> result = new ArrayList<>();
+		for (Row<R> row : rows(0, rowCount())) {
+			if (row.kind() == RowKind.DATA) {
+				result.add(row.key());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The given keys that belong to a {@link #matchingKeys() matching} row.
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The matching keys among the given ones, in the order they are given.
+	 *
+	 * @see RowSource#matchingKeys(Collection)
+	 */
+	default Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> matching = new HashSet<>(matchingKeys());
+		Set<Object> result = new LinkedHashSet<>();
+		for (Object key : keys) {
+			if (matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * The displayed rows in the half-open index range {@code [from, to)}.
@@ -108,6 +169,36 @@ public interface TableView<R> {
 	 * The content of the given row's cell in the named column.
 	 */
 	CellContent cell(Row<R> row, String column);
+
+	/**
+	 * The CSS class marking the given row as a whole, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier puts it on the row's element, so that a row can be highlighted by what its row
+	 * object is (e.g. by its state). The cells keep the column-level class
+	 * {@link Column#cssClass()} and their own {@link #cellCssClass(Row, String) cell class}.
+	 * </p>
+	 *
+	 * @see #cellCssClass(Row, String)
+	 */
+	default String rowCssClass(Row<R> row) {
+		return null;
+	}
+
+	/**
+	 * The CSS class marking the given row's cell in the named column, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier puts it on the cell's element, so that a single cell can be highlighted by the row
+	 * it is in, see {@link Column#cssClass(Object)}. It is added to the column-level class
+	 * {@link Column#cssClass()}, it does not replace it.
+	 * </p>
+	 *
+	 * @see #rowCssClass(Row)
+	 */
+	default String cellCssClass(Row<R> row, String column) {
+		return null;
+	}
 
 	/**
 	 * The filter of the named column, or {@code null} if the column is not filterable. Used
@@ -273,6 +364,21 @@ public interface TableView<R> {
 	 * Sets the number of leading frozen (fixed) columns.
 	 */
 	void setFrozenColumnCount(int count);
+
+	/**
+	 * Restores the arrangement the table is defined with, discarding the user's personalization of
+	 * it.
+	 *
+	 * <p>
+	 * The arrangement consists of the displayed columns and their order - columns the table only
+	 * offers are hidden again -, the column widths, the number of {@link #frozenColumnCount()
+	 * frozen} columns, the {@link #sort(SortSpec) sort} and the {@link #group(GroupSpec)
+	 * grouping}. The rows the user is looking at stay the same: the column filters, the
+	 * {@link #search(TextFilterState) search}, the {@link #select(Selection) selection} and the
+	 * {@link #setExpanded(Object, boolean) expansion} are kept.
+	 * </p>
+	 */
+	void resetToDefaults();
 
 	/**
 	 * Expands or collapses the row with the given {@link Row#key() key}.

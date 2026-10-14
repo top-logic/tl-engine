@@ -266,6 +266,37 @@
 						</property>
 					</attributes>
 				</class>
+
+				<!-- Test type for tracing a chain of derived attributes, see TestScriptTracerDerivedAttributes. -->
+				<class name="F">
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<property name="base" type="tl.core:Double" />
+						<reference name="other" type="F" />
+
+						<property name="doubled" type="tl.core:Double">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:F#base`) * 2"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="incremented" type="tl.core:Double">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:F#doubled`) + 1"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="otherDoubled" type="tl.core:Double">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:F#other`).get(`TestSearchExpression:F#doubled`)"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

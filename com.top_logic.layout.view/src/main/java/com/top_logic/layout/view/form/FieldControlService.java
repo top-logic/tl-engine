@@ -1069,6 +1069,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * {@link AttributeFieldModel} otherwise.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link TLStructuredTypePart#isDerived() derived} attribute is never edited, so it is offered
+	 * no options: its select model only displays the value. Either model computes a derived value
+	 * over the form's edits, see {@link AttributeFieldModel}.
+	 * </p>
+	 *
 	 * @param object
 	 *        The object to read/write the attribute value from.
 	 * @param part
@@ -1079,10 +1085,18 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part, FormControl form) {
 		OptionSource optionSource = selectOptionSource(part);
 		if (optionSource != null) {
+			if (part.isDerived()) {
+				optionSource = NO_OPTIONS;
+			}
 			return new AttributeSelectFieldModel(object, part, form, optionSource);
 		}
-		return new AttributeFieldModel(object, part);
+		return new AttributeFieldModel(object, part, form);
 	}
+
+	/**
+	 * The {@link OptionSource} of a field that offers nothing to choose from.
+	 */
+	private static final OptionSource NO_OPTIONS = (self, overlays, dependencies) -> Collections.emptyList();
 
 	/**
 	 * The {@link OptionSource} for the given attribute if it is edited as a select, or {@code null}

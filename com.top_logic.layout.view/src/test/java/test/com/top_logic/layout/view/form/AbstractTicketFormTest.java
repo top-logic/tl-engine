@@ -76,6 +76,7 @@ public abstract class AbstractTicketFormTest extends BasicTestCase {
 		_ticketType = TLModelUtil.addClass(module, "Ticket");
 		TLModelUtil.addProperty(_ticketType, TITLE, text);
 		TLModelUtil.addProperty(_ticketType, STATUS, text);
+		addAttributes(module, text);
 
 		_ticket = newTicket("Login fails", "open");
 
@@ -99,6 +100,19 @@ public abstract class AbstractTicketFormTest extends BasicTestCase {
 		_context = null;
 
 		super.tearDown();
+	}
+
+	/**
+	 * Adds further attributes to the {@link #_ticketType}, before the ticket and the form are
+	 * created.
+	 *
+	 * @param module
+	 *        The module defining the ticket type.
+	 * @param text
+	 *        The datatype of {@link #TITLE} and {@link #STATUS}.
+	 */
+	protected void addAttributes(TLModule module, TLPrimitive text) {
+		// The ticket has the title and the status only.
 	}
 
 	/**

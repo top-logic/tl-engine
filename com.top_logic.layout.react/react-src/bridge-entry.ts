@@ -34,7 +34,7 @@ export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
-export { registerPart, replacePart, usePart, buttonPartAttributes } from './bridge/parts';
+export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
 export type {
   PartProps,
   PartName,

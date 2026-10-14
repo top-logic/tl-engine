@@ -520,70 +520,6 @@ button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
 	font-style: italic;
 }
 
-/* Download button */
-.tlDownload__downloadBtn {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	width: 2rem;
-	height: 2rem;
-	border: none;
-	border-radius: var(--corner-radius);
-	cursor: pointer;
-	background: transparent;
-	color: var(--button-secondary);
-	padding: 0;
-}
-
-button.tlDownload__downloadBtn:hover {
-	background: var(--button-secondary-hover);
-	color: var(--text-on-color);
-}
-
-button.tlDownload__downloadBtn:focus {
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	outline: none;
-}
-
-button.tlDownload__downloadBtn:disabled {
-	cursor: default;
-	color: var(--text-disabled);
-}
-
-/* Downloading state: spinning icon */
-.tlDownload__downloadBtn--downloading .tlDownload__downloadIcon {
-	animation: tlDownloadSpin 0.8s linear infinite;
-}
-
-@keyframes tlDownloadSpin {
-	to { transform: rotate(360deg); }
-}
-
-/* Clear button */
-.tlDownload__clearBtn {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	width: 1.5rem;
-	height: 1.5rem;
-	border: none;
-	border-radius: var(--corner-radius);
-	cursor: pointer;
-	background: transparent;
-	color: var(--text-secondary);
-	padding: 0;
-}
-
-button.tlDownload__clearBtn:hover {
-	background: var(--button-danger-hover);
-	color: var(--text-on-color);
-}
-
-button.tlDownload__clearBtn:focus {
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	outline: none;
-}
-
 /* --- TLPhotoCapture ---------------------------------------------------- */
 
 .tlPhotoCapture {
@@ -956,9 +892,7 @@ div.tlValueList {
 	min-width: 0;
 }
 
-.tlValueList__handle,
-.tlValueList__remove,
-.tlValueList__add {
+.tlValueList__handle {
 	display: flex;
 	flex: 0 0 auto;
 	align-items: center;
@@ -974,21 +908,13 @@ div.tlValueList {
 	cursor: pointer;
 }
 
-.tlValueList__handle:hover,
-.tlValueList__remove:hover,
-.tlValueList__add:hover {
+.tlValueList__handle:hover {
 	background-color: var(--layer-hover);
 }
 
-.tlValueList__handle:focus-visible,
-.tlValueList__remove:focus-visible,
-.tlValueList__add:focus-visible {
+.tlValueList__handle:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: -1px;
-}
-
-.tlValueList__remove:hover {
-	color: var(--support-error);
 }
 
 /* The grip the value is dragged by; the arrow keys move the value while it has the focus. */
@@ -1096,37 +1022,7 @@ div.tlValueList {
 }
 
 .tlPanel__actionButton {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	width: 1.75rem;
-	height: 1.75rem;
-	border: none;
-	border-radius: var(--corner-radius);
-	background: transparent;
-	color: var(--icon-primary);
-	cursor: pointer;
-	padding: 0;
 	flex-shrink: 0;
-}
-
-button.tlPanel__actionButton:hover {
-	background: var(--layer-hover);
-}
-
-button.tlPanel__actionButton:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-.tlPanel__actionButton svg {
-	width: 1rem;
-	height: 1rem;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 2;
-	stroke-linecap: round;
-	stroke-linejoin: round;
 }
 
 /* The body of a panel is the box a filling child resolves its height against (see the fill contract
@@ -1648,33 +1544,16 @@ button.tlSidebar__flyoutItem:focus-visible {
 
 /* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
 
-.tlDrawerToggle {
+/* Qualified by the element, so that the rule wins over the display of whatever button library
+   draws the button. */
+button.tlDrawerToggle {
 	display: none; /* desktop: hidden; mobile @media rules below override */
-	align-items: center;
-	justify-content: center;
-	width: 2.5rem;
-	height: 2.5rem;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: inherit;
-	cursor: pointer;
-	border-radius: var(--corner-radius);
-}
-
-button.tlDrawerToggle:hover {
-	background: rgba(255, 255, 255, 0.12);
-}
-
-button.tlDrawerToggle:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
 }
 
 /* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
 
 @media (max-width: 768px) {
-	.tlDrawerToggle {
+	button.tlDrawerToggle {
 		display: inline-flex;
 	}
 
@@ -2648,29 +2527,6 @@ button.tlWindow__maximizeBtn:focus-visible {
 	white-space: nowrap;
 }
 
-.tlDrawer__closeBtn {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	width: 2rem;
-	height: 2rem;
-	border: none;
-	border-radius: var(--corner-radius);
-	background: transparent;
-	color: var(--text-secondary);
-	cursor: pointer;
-	padding: 0;
-}
-
-button.tlDrawer__closeBtn:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlDrawer__closeBtn:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
 
 .tlDrawer__body {
 	flex: 1;
@@ -2753,7 +2609,7 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* The close button (a ghost icon button) takes the text color of the variant; on hover it swaps
    surface and text color, which reads on every variant. */
-.tlSnackbar__close {
+.tlSnackbar .tlSnackbar__close {
 	/* Centered on the first line of the message: beside a single line, in the top end corner of a
 	   longer message. The end gap equals the resulting top gap. */
 	align-self: flex-start;
@@ -3106,30 +2962,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	box-sizing: border-box;
 }
 
-.tlTableView__barButton {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	width: 2rem;
-	height: 2rem;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	cursor: pointer;
-}
-
-.tlTableView__barButton:hover:not(:disabled) {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-.tlTableView__barButton:disabled {
-	color: var(--text-disabled);
-	cursor: default;
-}
 
 /* The header row, with the column selection button over its right edge above the body's vertical
    scrollbar wherever no pinned column offers it a heading of its own. The button must not take
@@ -3176,20 +3008,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	align-items: center;
 	justify-content: center;
 	width: 2rem;
-	padding: 0;
-	border: none;
-	/* Transparent: a column passing underneath is masked out of the header, see
-	   .tlTableView__header--covered. */
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	cursor: pointer;
 	box-sizing: border-box;
-}
-
-.tlTableView__columnsButton:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
 }
 
 /* In the heading of the rightmost pinned column the button is part of that cell: it takes the
@@ -3199,7 +3018,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	position: static;
 	margin: 0 auto;
 	height: 2rem;
-	background: transparent;
 }
 
 .tlTableView__headerRow {
@@ -3245,6 +3063,11 @@ button.tlDrawer__closeBtn:focus-visible {
 /* Opens the column's filter. Keeps its room next to a label that is running out of it. */
 .tlTableView__filterButton {
 	flex-shrink: 0;
+}
+
+/* The filter of the column is in force: its filled funnel reads in the color of the interactive text. */
+.tlTableView__filterButton--active {
+	color: var(--tl-text-link);
 }
 
 .tlTableView__sortIndicator {
@@ -3750,7 +3573,9 @@ button.tlDrawer__closeBtn:focus-visible {
 	position: absolute;
 	top: var(--spacing-03);
 	right: var(--spacing-03);
+	/* The button floats over the document: a raised surface of its own keeps it readable there. */
 	background: var(--layer-01);
+	border-radius: var(--tl-radius-sm);
 	box-shadow: var(--shadow-raised);
 }
 
@@ -3820,18 +3645,6 @@ button.tlDrawer__closeBtn:focus-visible {
 /* The request to stop stands at the end of the header line, apart from what the job reports. */
 .tlJobStatus__cancel {
 	margin-left: auto;
-	padding: var(--spacing-01) var(--spacing-03);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--corner-radius);
-	background: transparent;
-	color: var(--text-primary);
-	font-family: inherit;
-	font-size: var(--label-01-font-size);
-	cursor: pointer;
-}
-
-.tlJobStatus__cancel:hover {
-	background: var(--layer-hover);
 }
 
 .tlJobStatus__phases {
@@ -5839,7 +5652,6 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 .tlCalBtn:hover { background: var(--layer-hover); }
 .tlCalBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -1px; }
-.tlCalBtn--icon { width: 32px; display: inline-flex; align-items: center; justify-content: center; }
 .tlCalBtn--active {
 	background: var(--button-primary);
 	border-color: var(--button-primary);

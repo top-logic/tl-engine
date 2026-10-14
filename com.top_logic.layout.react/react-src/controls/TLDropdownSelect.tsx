@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon, usePart } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -15,6 +15,9 @@ import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
+
+/** Icon of the button clearing the selection. */
+const CLEAR_ICON = 'css:fa-solid fa-xmark';
 
 // -- Sub-components --
 
@@ -194,6 +197,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   });
 
   const nothingFoundLabel = i18n['js.dropdownSelect.nothingFound'];
+  const Button = usePart('Button');
 
   /** Format remove-chip label by replacing {0} with the option label. */
   const removeChipLabel = useCallback(
@@ -636,9 +640,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {loadError && (
         <div className="tl-select__status tl-type-body" role="alert">
-          <button type="button" className="tl-button tl-button--link tl-type-body" onClick={handleRetry}>
-            {i18n['js.dropdownSelect.error']}
-          </button>
+          <Button
+            label={i18n['js.dropdownSelect.error']}
+            display="label-only"
+            appearance="link"
+            onClick={handleRetry}
+          />
         </div>
       )}
       {optionsLoaded && filteredOptions.length === 0 && (
@@ -732,15 +739,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         </span>
         <span className="tl-select__controls">
           {showClearButton && (
-            <button
-              type="button"
-              className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+            <Button
+              label={i18n['js.dropdownSelect.clear']}
+              image={CLEAR_ICON}
+              display="icon-only"
+              appearance="ghost"
+              small
               onClick={clearAll}
-              aria-label={i18n['js.dropdownSelect.clear']}
-              {...tooltipProps(i18n['js.dropdownSelect.clear'])}
-            >
-              <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
-            </button>
+            />
           )}
           <span className="tl-select__arrow" aria-hidden="true">
             <ThemeIcon

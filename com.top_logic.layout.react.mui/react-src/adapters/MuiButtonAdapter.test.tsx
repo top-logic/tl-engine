@@ -23,6 +23,9 @@ const GESTURE_SAVE = 'Ctrl+S';
 /** An icon font image in its encoded form. */
 const IMAGE_EDIT = 'css:fas fa-edit';
 
+/** The address of a link. */
+const LINK_ADDRESS = 'https://example.com/handbuch';
+
 function mountButton(state: Partial<ButtonStateJson>, outer?: () => void) {
   return mountAdapter(TLButton, state,
     outer && state.keyGesture ? { outer: { gesture: state.keyGesture, onGesture: outer } } : {});
@@ -319,6 +322,39 @@ describe('the MUI button part', () => {
     expect(button.classList).toContain('MuiIconButton-sizeSmall');
     expect(button.getAttribute('aria-describedby')).toBe('hint');
     expect(button.getAttribute('data-probe')).toBe('p');
+  });
+
+  it('draws a link as an anchor opening its address in a window of its own', () => {
+    const ref = React.createRef<HTMLElement>();
+
+    render(<>
+      <MuiButtonAdapter ref={ref} label="Öffnen" image={IMAGE_EDIT} display="icon-only" appearance="ghost"
+        href={LINK_ADDRESS} target="_blank" />
+      <MuiButtonAdapter label="Handbuch" display="label-only" appearance="link" href={LINK_ADDRESS} />
+    </>);
+
+    const iconLink = screen.getByRole('link', { name: 'Öffnen' });
+    expect(iconLink.tagName).toBe('A');
+    expect(ref.current).toBe(iconLink);
+    expect(iconLink.classList).toContain('MuiIconButton-root');
+    expect(iconLink.getAttribute('href')).toBe(LINK_ADDRESS);
+    expect(iconLink.getAttribute('target')).toBe('_blank');
+    expect(iconLink.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(iconLink.getAttribute('aria-label')).toBe('Öffnen');
+    const textLink = screen.getByRole('link', { name: 'Handbuch' });
+    expect(textLink.classList).toContain('MuiButton-root');
+    expect(textLink.hasAttribute('target')).toBe(false);
+    expect(textLink.hasAttribute('rel')).toBe(false);
+  });
+
+  it('draws a disabled link as an anchor without address', () => {
+    render(<MuiButtonAdapter label="Öffnen" image={IMAGE_EDIT} display="icon-only" appearance="ghost"
+      href={LINK_ADDRESS} disabled />);
+
+    const anchor = document.querySelector('a')!;
+    expect(anchor.hasAttribute('href')).toBe(false);
+    expect(anchor.getAttribute('aria-disabled')).toBe('true');
+    expect(anchor.getAttribute('aria-label')).toBe('Öffnen');
   });
 
   it('draws no TopLogic button classes', () => {

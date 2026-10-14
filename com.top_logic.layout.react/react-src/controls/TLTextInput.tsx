@@ -8,11 +8,11 @@ import {
   useFieldLabelProps,
   fieldInputId,
   ThemeIcon,
+  usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useRef } = React;
 
@@ -118,6 +118,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
     normalize: inputType === 'url' ? normalizeUrl : undefined,
   });
   const t = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleChange = useCallback(
@@ -204,27 +205,26 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {input}
       {clearable && (
-        <button
-          type="button"
-          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+        <Button
+          label={t['js.textInput.clear']}
+          image={CLEAR_ICON}
+          display="icon-only"
+          appearance="ghost"
+          small
           onClick={handleClear}
-          aria-label={t['js.textInput.clear']}
-          {...tooltipProps(t['js.textInput.clear'])}
-        >
-          <ThemeIcon encoded={CLEAR_ICON} className="tl-button__icon tl-icon-sm" />
-        </button>
+        />
       )}
       {openHref !== null && (
-        <a
-          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+        <Button
+          label={t['js.textInput.open']}
+          image={OPEN_ICON}
+          display="icon-only"
+          appearance="ghost"
+          small
+          tooltip={text}
           href={openHref}
           target="_blank"
-          rel="noopener noreferrer"
-          aria-label={t['js.textInput.open']}
-          {...tooltipProps(text)}
-        >
-          <ThemeIcon encoded={OPEN_ICON} className="tl-button__icon tl-icon-sm" />
-        </a>
+        />
       )}
     </span>
   );

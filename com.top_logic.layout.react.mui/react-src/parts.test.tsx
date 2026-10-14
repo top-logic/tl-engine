@@ -6,6 +6,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ButtonPartProps, MenuTriggerPartProps } from 'tl-react-bridge';
 
+/** The address of a link. */
+const LINK_ADDRESS = 'https://example.com/handbuch';
+
 /** Draws a button part as a marker naming the drawing, so a test sees which component drew it. */
 function drawing(name: string): React.FC<ButtonPartProps> {
   return ({ label }) => <span data-testid="part">{`${name}:${label}`}</span>;
@@ -122,6 +125,34 @@ describe('the TopLogic drawing of the parts', () => {
     expect(button.getAttribute('aria-describedby')).toBe('hint');
     expect(button.querySelector('.tl-button__label')).toBeNull();
     expect(button.querySelector('i.fa-xmark.tl-icon-sm')).not.toBeNull();
+  });
+
+  it('draws a link as an anchor with the classes of a button', async () => {
+    const { ButtonPart } = await defaults();
+    const ref = React.createRef<HTMLElement>();
+
+    render(<ButtonPart ref={ref} label="Öffnen" image="css:fa-solid fa-arrow-up-right-from-square"
+      display="icon-only" appearance="ghost" small href={LINK_ADDRESS} target="_blank" />);
+
+    const link = screen.getByRole('link', { name: 'Öffnen' });
+    expect(link.tagName).toBe('A');
+    expect(ref.current).toBe(link);
+    expect(link.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--sm tl-button--icon');
+    expect(link.getAttribute('href')).toBe(LINK_ADDRESS);
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(link.hasAttribute('type')).toBe(false);
+  });
+
+  it('draws a disabled link as an anchor without address', async () => {
+    const { ButtonPart } = await defaults();
+
+    render(<ButtonPart label="Öffnen" display="label-only" appearance="link" href={LINK_ADDRESS} disabled />);
+
+    const anchor = document.querySelector('a')!;
+    expect(anchor.hasAttribute('href')).toBe(false);
+    expect(anchor.getAttribute('aria-disabled')).toBe('true');
+    expect(anchor.hasAttribute('rel')).toBe(false);
   });
 
   it('draws a toggle in a menu as a checkbox entry, an active button as the current entry', async () => {

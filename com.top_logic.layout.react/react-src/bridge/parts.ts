@@ -51,16 +51,36 @@ export type ButtonDisplay = ButtonStateJson.DisplayMode;
  * is the alternative in force (e.g. the active theme): outside a menu it is marked pressed, inside
  * a menu it is the current entry.</p>
  *
+ * <p>A button with {@link href} is a link: pressing it navigates to the address, as a link does,
+ * so the button is drawn as an anchor with the look of a button.</p>
+ *
  * <p>{@link buttonPartAttributes} gives the attributes every implementation sets on its element:
  * the accessible name, the pressed, current or checked state, the role and roving tabindex of a
- * menu entry, the tooltip.</p>
+ * menu entry, the tooltip. {@link buttonLinkAttributes} gives the attributes of the anchor of a
+ * link.</p>
  */
 export interface ButtonPartProps extends PartAttributes {
   /** The ID of the drawn element. */
   id?: string;
 
-  /** Receives the drawn element, e.g. as anchor of a popover. */
-  ref?: PartRef<HTMLButtonElement>;
+  /**
+   * Receives the drawn element, e.g. as anchor of a popover: the button, or the anchor of a link
+   * ({@link href}).
+   */
+  ref?: PartRef<HTMLElement>;
+
+  /**
+   * The address the button navigates to. A button with an address is a link, drawn as an anchor
+   * with the look of the button. A disabled link has no address and is marked `aria-disabled`.
+   */
+  href?: string;
+
+  /**
+   * The browsing context a link ({@link href}) opens its address in, e.g. `_blank` for a window
+   * of its own; absent: the current one. A link into a window of its own gets no access to the
+   * page that opened it (`rel="noopener noreferrer"`).
+   */
+  target?: string;
 
   /**
    * The label. It is the accessible name of the button, also when the button does not show it,
@@ -224,6 +244,30 @@ export function usePart<K extends PartName>(name: K): PartComponent<K> {
     throw new Error(`[TLReact] No component registered for the part: ${name}`);
   }
   return component as unknown as PartComponent<K>;
+}
+
+/** The relation of a link opening its address in a window of its own to the page it is on. */
+const REL_NEW_WINDOW = 'noopener noreferrer';
+
+/** The browsing context of a window of its own. */
+const TARGET_NEW_WINDOW = '_blank';
+
+/**
+ * The attributes of the anchor an implementation of {@link ButtonPartProps} draws for a link
+ * ({@link ButtonPartProps.href}): the address - none while disabled, which is then marked
+ * `aria-disabled` -, the target and, for a window of its own, the relation that keeps the opened
+ * page from reaching the page it was opened from.
+ */
+export function buttonLinkAttributes(props: ButtonPartProps): {
+  href?: string; target?: string; rel?: string; 'aria-disabled'?: boolean;
+} {
+  const { href, target, disabled } = props;
+  return {
+    href: disabled ? undefined : href,
+    target,
+    rel: target === TARGET_NEW_WINDOW ? REL_NEW_WINDOW : undefined,
+    'aria-disabled': disabled ? true : undefined,
+  };
 }
 
 /**

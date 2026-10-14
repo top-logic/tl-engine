@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -8,6 +8,12 @@ const I18N_KEYS = {
   'js.download.clear': 'Clear',
   'js.download.clearFile': 'Clear file',
 };
+
+/** Icon of the button downloading the file. */
+const DOWNLOAD_ICON = 'css:fa-solid fa-download';
+
+/** Icon of the button clearing the file. */
+const CLEAR_ICON = 'css:fa-solid fa-xmark';
 
 const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -60,6 +66,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   }, [hasData, sendCommand]);
 
   const t = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   if (!hasData) {
     return (
@@ -75,31 +82,26 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className={rootClassName(state, 'tlDownload')}>
-      <button
-        type="button"
-        className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}
-        onClick={handleDownload}
+      <Button
+        label={downloadLabel}
+        image={DOWNLOAD_ICON}
+        display="icon-only"
+        appearance="ghost"
         disabled={downloading}
-        aria-label={downloadLabel}
-        {...tooltipProps(downloadLabel)}
-      >
-        <svg className="tlDownload__downloadIcon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
-      </button>
+        aria-busy={downloading ? true : undefined}
+        onClick={handleDownload}
+      />
       <span className="tlDownload__fileName">{fileName}</span>
       {clearable && (
-        <button
-          type="button"
-          className="tlDownload__clearBtn"
+        <Button
+          label={t['js.download.clearFile']}
+          image={CLEAR_ICON}
+          display="icon-only"
+          appearance="ghost"
+          small
+          tooltip={t['js.download.clear']}
           onClick={handleClear}
-          aria-label={t['js.download.clearFile']}
-          {...tooltipProps(t['js.download.clear'])}
-        >
-          <svg className="tlDownload__clearIcon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        />
       )}
     </div>
   );

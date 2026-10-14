@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps, AlertStateJson, ChildControlJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -12,6 +12,9 @@ const DISMISS_COMMAND = 'dismiss';
 
 /** The argument of {@link DISMISS_COMMAND} naming the content dismissed. */
 const GENERATION_ARG = 'generation';
+
+/** Icon of the button dismissing the alert. */
+const DISMISS_ICON = 'css:fa-solid fa-xmark';
 
 /**
  * A highlighted message standing in the content of a page: an icon, an optional heading, the
@@ -33,6 +36,8 @@ const TLAlert: React.FC<TLCellProps> = ({ controlId }) => {
   const handleDismiss = useCallback(() => {
     sendCommand(DISMISS_COMMAND, { [GENERATION_ARG]: generation });
   }, [sendCommand, generation]);
+
+  const Button = usePart('Button');
 
   if (state.hidden === true) return null;
 
@@ -56,16 +61,15 @@ const TLAlert: React.FC<TLCellProps> = ({ controlId }) => {
         )}
       </div>
       {closable && (
-        <button type="button"
-          className="tl-button tl-button--ghost tl-button--sm tl-alert__close"
+        <Button
+          label={i18n['js.alert.dismiss']}
+          image={DISMISS_ICON}
+          display="icon-only"
+          appearance="ghost"
+          small
+          className="tl-alert__close"
           onClick={handleDismiss}
-          aria-label={i18n['js.alert.dismiss']}
-          {...tooltipProps(i18n['js.alert.dismiss'])}>
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-            <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
+        />
       )}
     </div>
   );

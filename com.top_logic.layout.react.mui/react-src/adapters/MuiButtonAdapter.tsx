@@ -1,5 +1,5 @@
-import { React, ThemeIcon, buttonPartAttributes } from 'tl-react-bridge';
-import type { ButtonPartProps } from 'tl-react-bridge';
+import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes } from 'tl-react-bridge';
+import type { ButtonPartProps, PartRef } from 'tl-react-bridge';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -42,20 +42,25 @@ const TOGGLE_VALUE = 'on';
  *     `error` (not for a link), the icon → `startIcon`.</li>
  * </ul>
  *
+ * <p>A link ({@link ButtonPartProps.href}) is the `IconButton` or `Button` drawn as an anchor
+ * (`component` `a`) with the attributes {@link buttonLinkAttributes} gives.</p>
+ *
  * <p>small → size `small`; active → the selected background of the MUI theme. The accessible name,
  * the pressed, current or checked state, the role of a menu entry and the tooltip are the ones
  * {@link buttonPartAttributes} gives.</p>
  */
 const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
   const {
-    id, ref, label, image, display, appearance, danger: dangerTone, small, active, checked, disabled,
-    tooltip: _tooltip, className, onClick, onMouseDown, ...attributes
+    id, ref, href, target: _target, label, image, display, appearance, danger: dangerTone, small, active, checked,
+    disabled, tooltip: _tooltip, className, onClick, onMouseDown, ...attributes
   } = props;
   const isLink = appearance === 'link';
   const danger = dangerTone === true && !isLink;
   const showIcon = !!image && display !== 'label-only';
   const accessibility: Record<string, string | number | boolean | undefined> = { ...buttonPartAttributes(props), ...attributes };
-  const common = { id, ref, disabled, className, onClick, onMouseDown };
+  const common = { id, ref: ref as PartRef<HTMLButtonElement>, disabled, className, onClick, onMouseDown };
+  // A link is an anchor also while disabled, when it has no address.
+  const link = href === undefined ? {} : { component: 'a' as const, ...buttonLinkAttributes(props) };
 
   if (appearance === 'menu-item') {
     return (
@@ -96,6 +101,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
         size={size}
         color={iconButtonColor(appearance, danger)}
         sx={active ? ACTIVE_SX : undefined}
+        {...link}
         {...accessibility}
       >
         <ThemeIcon encoded={image} className={ICON_ALONE_CLASS} />
@@ -111,6 +117,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
       color={buttonColor(danger)}
       startIcon={showIcon ? <ThemeIcon encoded={image} className={ICON_WITH_LABEL_CLASS} /> : undefined}
       sx={[isLink && LINK_SX, active && ACTIVE_SX].filter(Boolean) as SxProps<Theme>}
+      {...link}
       {...accessibility}
     >
       {label}

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
 import { ProgressBar } from './TLProgress';
@@ -45,6 +45,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   const status = (state.status as string | null) ?? null;
   const phases = (state.phases as PhaseEntry[] | undefined) ?? [];
@@ -99,9 +100,13 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
           <span className="tlJobStatus__elapsed" {...tooltipProps(i18n['js.jobStatus.elapsed'])}>{elapsed}</span>
         )}
         {cancelable && (
-          <button type="button" className="tlJobStatus__cancel" onClick={handleCancel}>
-            {i18n['js.jobStatus.cancel']}
-          </button>
+          <Button
+            label={i18n['js.jobStatus.cancel']}
+            display="label-only"
+            appearance="secondary"
+            className="tlJobStatus__cancel"
+            onClick={handleCancel}
+          />
         )}
       </div>
       {phases.length > 0 && (

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, usePart } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
@@ -251,29 +251,52 @@ function editableInRow(
   return null;
 }
 
+/** Icon of the button opening the column selection. */
+const COLUMNS_ICON = 'css:bi bi-gear';
+
+/** Icon of the button saving the current criteria as a named filter. */
+const SAVE_FILTER_ICON = 'css:bi bi-bookmark-plus';
+
+/** Icon of the button confirming the name of a filter to save. */
+const CONFIRM_ICON = 'css:bi bi-check-lg';
+
+/** Icon of the button cancelling the saving of a filter. */
+const CANCEL_ICON = 'css:bi bi-x-lg';
+
+/** Icon of the button opening the filter of a column. */
+const FILTER_ICON = 'css:bi bi-funnel';
+
+/** Icon of the button opening the filter of a column whose filter is in force. */
+const FILTER_ACTIVE_ICON = 'css:bi bi-funnel-fill';
+
 /**
  * Opens the column selection. Rendered either over the right edge of the header, where it needs a
  * strip of the header kept clear of the columns, or inside the heading of the rightmost pinned
- * column — that heading carries no label, so the button takes no room from the columns there.
+ * column — that heading carries no label, so the button takes no room from the columns there. The
+ * strip places the button, the part {@code Button} draws it.
  */
 const ColumnsButton: React.FC<{
   label: string;
   inCell?: boolean;
   onClick: (event: React.MouseEvent) => void;
-}> = ({ label, inCell, onClick }) => (
-  <button
-    type="button"
-    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
-    {...tooltipProps(label)}
-    aria-label={label}
-    // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
-    // button's business.
-    onMouseDown={(e) => e.stopPropagation()}
-    onClick={onClick}
-  >
-    <i className="bi bi-gear" />
-  </button>
-);
+}> = ({ label, inCell, onClick }) => {
+  const Button = usePart('Button');
+  return (
+    <div className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}>
+      <Button
+        label={label}
+        image={COLUMNS_ICON}
+        display="icon-only"
+        appearance="ghost"
+        small
+        // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
+        // button's business.
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={onClick}
+      />
+    </div>
+  );
+};
 
 /**
  * React table component with virtual scrolling, server-driven cell controls,
@@ -288,6 +311,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const fillClass = useFill(true);
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   const columns = (state.columns as ColumnState[]) ?? [];
@@ -1371,15 +1395,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             />
           </div>
           {filterSaving && (saveName === null ? (
-            <button
-              type="button"
-              className="tlTableView__barButton"
-              {...tooltipProps(i18n['js.table.saveFilter'])}
-              aria-label={i18n['js.table.saveFilter']}
+            <Button
+              label={i18n['js.table.saveFilter']}
+              image={SAVE_FILTER_ICON}
+              display="icon-only"
+              appearance="ghost"
               onClick={() => setSaveName('')}
-            >
-              <i className="bi bi-bookmark-plus" />
-            </button>
+            />
           ) : (
             <div className="tlTableView__saveForm">
               <input
@@ -1392,25 +1414,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onChange={(e) => setSaveName(e.target.value)}
                 onKeyDown={handleSaveKeyDown}
               />
-              <button
-                type="button"
-                className="tlTableView__barButton"
-                {...tooltipProps(i18n['js.table.saveFilter'])}
-                aria-label={i18n['js.table.saveFilter']}
+              <Button
+                label={i18n['js.table.saveFilter']}
+                image={CONFIRM_ICON}
+                display="icon-only"
+                appearance="ghost"
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
-              >
-                <i className="bi bi-check-lg" />
-              </button>
-              <button
-                type="button"
-                className="tlTableView__barButton"
-                {...tooltipProps(i18n['js.table.cancelSave'])}
-                aria-label={i18n['js.table.cancelSave']}
+              />
+              <Button
+                label={i18n['js.table.cancelSave']}
+                image={CANCEL_ICON}
+                display="icon-only"
+                appearance="ghost"
                 onClick={() => setSaveName(null)}
-              >
-                <i className="bi bi-x-lg" />
-              </button>
+              />
             </div>
           ))}
         </div>
@@ -1515,21 +1533,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />
                 )}
                 {col.filterable && (
-                  <button
-                    type="button"
+                  <Button
+                    label={i18n['js.table.filter']}
+                    image={col.filterActive ? FILTER_ACTIVE_ICON : FILTER_ICON}
+                    display="icon-only"
+                    appearance="ghost"
+                    small
                     className={'tlTableView__filterButton'
                       + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
-                    {...tooltipProps(i18n['js.table.filter'])}
-                    aria-label={i18n['js.table.filter']}
-                    style={{
-                      border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px',
-                      color: col.filterActive ? '#1565c0' : 'inherit',
-                    }}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
-                  >
-                    <i className={col.filterActive ? 'bi bi-funnel-fill' : 'bi bi-funnel'} />
-                  </button>
+                  />
                 )}
                 {col.sortDirection && (
                   <span className="tlTableView__sortIndicator">

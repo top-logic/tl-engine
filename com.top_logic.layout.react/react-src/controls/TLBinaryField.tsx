@@ -1,6 +1,5 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 import { showsValueOnly } from './form/fieldState';
 
 const I18N_KEYS = {
@@ -14,6 +13,9 @@ const I18N_KEYS = {
 type LocalStatus = 'idle' | 'uploading';
 
 const UPLOAD_ICON = 'css:fa-solid fa-upload';
+
+/** Icon of the button downloading the file. */
+const DOWNLOAD_ICON = 'css:fa-solid fa-download';
 
 /**
  * Form-field control for a binary ({@code tl.core:Binary}) attribute. Renders a file upload
@@ -32,6 +34,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   const upload = useTLUpload();
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   const disabled = state.disabled === true;
   const hasData = !!state.hasData;
@@ -130,18 +133,15 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
 
   const downloadLink = (
     <span className="tlDownload">
-      <button
-        type="button"
-        className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}
-        onClick={doDownload}
+      <Button
+        label={downloadLabel}
+        image={DOWNLOAD_ICON}
+        display="icon-only"
+        appearance="ghost"
         disabled={downloading || disabled}
-        aria-label={downloadLabel}
-        {...tooltipProps(downloadLabel)}
-      >
-        <svg className="tlDownload__downloadIcon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
-      </button>
+        aria-busy={downloading ? true : undefined}
+        onClick={doDownload}
+      />
       <span className="tlDownload__fileName">{fileName}</span>
     </span>
   );
@@ -184,19 +184,17 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
           style={{ display: 'none' }}
         />
       )}
-      <button
-        type="button"
-        className={buttonClassName({ appearance: 'secondary' })}
-        onClick={handleButtonClick}
+      <Button
+        id={inputId}
+        label={buttonLabel}
+        image={UPLOAD_ICON}
+        display="icon-only"
+        appearance="secondary"
         disabled={isDisabled}
         aria-busy={isUploading ? true : undefined}
-        aria-label={buttonLabel}
-        {...tooltipProps(buttonLabel)}
-        id={inputId}
+        onClick={handleButtonClick}
         {...labelProps}
-      >
-        <ThemeIcon encoded={UPLOAD_ICON} className="tl-button__icon tl-icon-md" />
-      </button>
+      />
       {hasData && downloadLink}
       {serverError && (
         <span className="tl-file-upload__status tl-type-label" role="alert">{serverError}</span>

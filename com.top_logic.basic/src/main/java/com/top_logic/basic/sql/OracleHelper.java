@@ -48,6 +48,32 @@ public abstract class OracleHelper extends DBHelper {
 	protected static final int BINARY_DOUBLE = 101;
 
 	/**
+	 * Name of the temporary column holding the values of a column whose type is changed.
+	 *
+	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
+	 */
+	private static final String TMP_TYPE_CHANGE_COLUMN = "tl_tmp_type_change";
+
+	/**
+	 * Oracle error code (as PL/SQL <code>SQLCODE</code>) of "ORA-01439: column to be modified
+	 * must be empty to change datatype".
+	 * 
+	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
+	 */
+	private static final int ORA_COLUMN_NOT_EMPTY = -1439;
+
+	/**
+	 * Oracle error code (as PL/SQL <code>SQLCODE</code>) of "ORA-01451: column to be modified to
+	 * NULL cannot be modified to NULL", i.e. the column is already nullable.
+	 * 
+	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
+	 */
+	private static final int ORA_ALREADY_NULLABLE = -1451;
+
+	/**
 	 * Configuration options for {@link OracleHelper}.
 	 */
 	public interface Config extends DBHelper.Config {
@@ -1043,7 +1069,23 @@ public abstract class OracleHelper extends DBHelper {
 	/**
 	 * @implNote Changing column type must <b>not</b> append mandatory. This leads to errors if the
 	 *           mandatory state is not changed.
-	 * 
+	 *
+	 *           <p>
+	 *           Oracle only changes the data type of a column that contains no values (ORA-01439).
+	 *           Therefore, a PL/SQL block is created that first tries the plain "MODIFY". If this
+	 *           fails, because the column is not empty, the values are saved in a temporary column
+	 *           of the new type, the column is cleared, modified, and filled again from the
+	 *           temporary column. This keeps the position, the indexes, and the constraints of the
+	 *           column. The values are converted implicitly when being copied to the temporary
+	 *           column. A <code>NOT NULL</code> constraint of the column is removed while clearing
+	 *           it and restored afterwards.
+	 *           </p>
+	 *
+	 *           <p>
+	 *           Since Oracle commits each DDL statement, a failure in the fallback (e.g. a value
+	 *           that cannot be converted) may leave the temporary column behind.
+	 *           </p>
+	 *
 	 * @see com.top_logic.basic.sql.DBHelper#appendChangeColumnType(java.lang.Appendable,
 	 *      String, com.top_logic.basic.sql.DBType, java.lang.String, String, long, int,
 	 *      boolean, boolean, java.lang.Object)
@@ -1051,12 +1093,58 @@ public abstract class OracleHelper extends DBHelper {
 	@Override
 	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
 			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
-		result.append(alterTable(tableName));
-		result.append("MODIFY ");
-		result.append(columnRef(columnName));
-		result.append(" ");
-		internalAppendDBType(result, sqlType, size, precision, mandatory, binary, binary, newName);
-		appendDefaultValue(result, sqlType, defaultValue);
+		String column = columnRef(columnName);
+		String tmpColumn = columnRef(TMP_TYPE_CHANGE_COLUMN);
+
+		StringBuilder modify = new StringBuilder();
+		modify.append(alterTable(tableName));
+		modify.append("MODIFY ");
+		modify.append(column);
+		modify.append(" ");
+		internalAppendDBType(modify, sqlType, size, precision, mandatory, binary, binary, newName);
+		appendDefaultValue(modify, sqlType, defaultValue);
+
+		StringBuilder addTmp = new StringBuilder();
+		addTmp.append(alterTable(tableName));
+		addTmp.append("ADD ");
+		addTmp.append(tmpColumn);
+		addTmp.append(" ");
+		internalAppendDBType(addTmp, sqlType, size, precision, mandatory, binary, binary, newName);
+
+		result.append("DECLARE ");
+		result.append("column_not_empty EXCEPTION; ");
+		result.append("PRAGMA EXCEPTION_INIT(column_not_empty, " + ORA_COLUMN_NOT_EMPTY + "); ");
+		result.append("already_nullable EXCEPTION; ");
+		result.append("PRAGMA EXCEPTION_INIT(already_nullable, " + ORA_ALREADY_NULLABLE + "); ");
+		result.append("was_mandatory BOOLEAN := TRUE; ");
+		result.append("BEGIN ");
+		appendExecuteImmediate(result, modify);
+		result.append("EXCEPTION WHEN column_not_empty THEN ");
+		appendExecuteImmediate(result, addTmp);
+		appendExecuteImmediate(result,
+			"UPDATE " + tableRef(tableName) + " SET " + tmpColumn + " = " + column);
+		result.append("BEGIN ");
+		appendExecuteImmediate(result, alterTable(tableName) + "MODIFY " + column + " NULL");
+		result.append("EXCEPTION WHEN already_nullable THEN was_mandatory := FALSE; ");
+		result.append("END; ");
+		appendExecuteImmediate(result, "UPDATE " + tableRef(tableName) + " SET " + column + " = NULL");
+		appendExecuteImmediate(result, modify);
+		appendExecuteImmediate(result,
+			"UPDATE " + tableRef(tableName) + " SET " + column + " = " + tmpColumn);
+		appendExecuteImmediate(result, alterTable(tableName) + "DROP COLUMN " + tmpColumn);
+		result.append("IF was_mandatory THEN ");
+		appendExecuteImmediate(result, alterTable(tableName) + "MODIFY " + column + " NOT NULL");
+		result.append("END IF; ");
+		result.append("END;");
+	}
+
+	/**
+	 * Appends a PL/SQL "EXECUTE IMMEDIATE" of the given SQL statement.
+	 */
+	private void appendExecuteImmediate(Appendable result, CharSequence sql) throws IOException {
+		result.append("EXECUTE IMMEDIATE ");
+		escape(result, sql.toString());
+		result.append("; ");
 	}
 
 	@Override

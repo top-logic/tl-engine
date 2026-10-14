@@ -10,11 +10,11 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.MetaElementHolder;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLClass;
 import com.top_logic.element.structured.StructuredElementFactory;
-import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
@@ -26,7 +26,7 @@ public class ScriptingElementUtil {
 
 	public static TLClass getMetaElement(String structureName, String metaElementTypeName) {
 		StructuredElementFactory structure = StructuredElementFactory.getInstanceForStructure(structureName);
-		AttributedStructuredElementWrapper structureRoot = (AttributedStructuredElementWrapper) structure.getRoot();
+		MetaElementHolder structureRoot = (MetaElementHolder) structure.getRoot();
 		return structureRoot.getMetaElement(metaElementTypeName);
 	}
 

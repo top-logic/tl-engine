@@ -77,11 +77,11 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 	/**
 	 * TODO #6121: Delete TL 5.8.0 deprecation
 	 * 
-	 * @deprecated Use {@link #createChild(String, StructuredElementWrapper, String, TLClass)}
+	 * @deprecated Use {@link #createChild(String, StructuredElement, String, TLClass)}
 	 *             instead.
 	 */
 	@Deprecated
-	protected StructuredElement createChild(String aStructureName, StructuredElementWrapper aWrapper, String aName,
+	protected StructuredElement createChild(String aStructureName, StructuredElement aWrapper, String aName,
 			String typeName) throws CreateElementException {
 		TLClass type = StructuredElementUtil.resolveChildType(aWrapper, typeName);
 		return createChild(aStructureName, aWrapper, aName, type);
@@ -97,7 +97,7 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
      * @return    The new created element, never <code>null</code>.
      * @throws    CreateElementException    If creation process fails for a reason.
      */
-    protected StructuredElement createChild(String aStructureName, StructuredElementWrapper aWrapper, String aName, TLClass aType) throws CreateElementException {
+    protected StructuredElement createChild(String aStructureName, StructuredElement aWrapper, String aName, TLClass aType) throws CreateElementException {
 		return (this.createChild(aStructureName, aWrapper, null, aName, aType));
     }
 
@@ -117,7 +117,7 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 	 *             instead.
 	 */
 	@Deprecated
-	protected StructuredElement createChild(String structureName, StructuredElementWrapper parentElement,
+	protected StructuredElement createChild(String structureName, StructuredElement parentElement,
 			TLID id, String name, String typeName)
     			throws CreateElementException {
 		TLClass type = StructuredElementUtil.resolveChildType(parentElement, typeName);
@@ -152,15 +152,14 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 		if (type == null) {
 			throw new IllegalArgumentException("Given type is null or empty (in createChild)");
 		}
-		AttributedStructuredElementWrapper parent = (AttributedStructuredElementWrapper) parentElement;
 		checkStructure(structureName);
 
 		try {
 			KnowledgeBase kb;
 			Branch branch;
-			if (parent != null) {
-				kb = parent.getKnowledgeBase();
-				branch = WrapperHistoryUtils.getBranch(parent);
+			if (parentElement != null) {
+				kb = parentElement.getKnowledgeBase();
+				branch = WrapperHistoryUtils.getBranch(parentElement);
 			} else {
 				kb = getKnowledgeBase();
 				branch = kb.getHistoryManager().getContextBranch();
@@ -171,15 +170,14 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 						.put(PersistentObject.TYPE_REF, type.tHandle()),
 					KnowledgeObject.class);
 
-			AttributedStructuredElementWrapper child =
-				(AttributedStructuredElementWrapper) WrapperFactory.getWrapper(knowledgeObject);
+			StructuredElement child = (StructuredElement) WrapperFactory.getWrapper(knowledgeObject);
 			if (name != null) {
 				child.setElementName(name);
 			}
 
 			setupLocalScope(child);
-			if (parent != null) {
-				AttributeOperations.addValue(parent, StructuredElement.CHILDREN_ATTR, child);
+			if (parentElement != null) {
+				AttributeOperations.addValue(parentElement, StructuredElement.CHILDREN_ATTR, child);
 			}
 
 			TLFactory.setupDefaultValues(parentElement, child, type);
@@ -285,8 +283,8 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 			if (Utils.equals(anObject1, anObject2)) {
 				return 0;
 			}
-            StructuredElementWrapper theElement1 = (StructuredElementWrapper) anObject1;
-            StructuredElementWrapper theElement2 = (StructuredElementWrapper) anObject2;
+            StructuredElement theElement1 = (StructuredElement) anObject1;
+            StructuredElement theElement2 = (StructuredElement) anObject2;
 
             if (!theElement1.tValid()) {
                 return (theElement2.tValid() ? -1 : 0); 
@@ -347,7 +345,7 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 
 		private AssociationStorage parentStorage(StructuredElement element) {
 			TLClass type = (TLClass) element.tType();
-			TLStructuredTypePart parentAttr = type.getPart(StructuredElementWrapper.PARENT_ATTR);
+			TLStructuredTypePart parentAttr = type.getPart(StructuredElement.PARENT_ATTR);
 			return (AssociationStorage) AttributeOperations.getStorageImplementation(element, parentAttr);
 		}
 

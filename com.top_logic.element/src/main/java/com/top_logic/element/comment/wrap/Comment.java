@@ -15,7 +15,6 @@ import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -37,7 +36,7 @@ public class Comment extends AttributedWrapper {
     }
 
     /**
-     * @see AbstractWrapper#compareTo(Wrapper)
+     * @see Wrapper#compareTo(Wrapper)
      */
     @Override
 	public int compareTo(Wrapper anOtherWrapper) {

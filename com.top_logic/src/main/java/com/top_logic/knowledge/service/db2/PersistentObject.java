@@ -16,8 +16,7 @@ import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.KnowledgeObjectRef;
-import com.top_logic.knowledge.service.event.Modification;
-import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.wrap.WrapperLifecycle;
 import com.top_logic.model.AbstractTLObject;
 import com.top_logic.model.TLObject;
 
@@ -26,7 +25,7 @@ import com.top_logic.model.TLObject;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class PersistentObject extends AbstractTLObject implements Serializable {
+public abstract class PersistentObject extends AbstractTLObject implements WrapperLifecycle, Serializable {
 
 	/**
 	 * The abstract table type all objects copy from.
@@ -48,52 +47,6 @@ public abstract class PersistentObject extends AbstractTLObject implements Seria
 	@Override
 	public KnowledgeObject tHandle() {
 		return _tHandle;
-	}
-
-	/**
-	 * Callback invoked before an object is deleted.
-	 * 
-	 * <p>
-	 * Note: Implementations must not directly perform any actions, but only collect required
-	 * information from this object being deleted and return a {@link Modification} callback that is
-	 * called after the initial deletion has completed.
-	 * </p>
-	 * 
-	 * @see ModificationListener#notifyUpcomingDeletion(com.top_logic.knowledge.service.KnowledgeBase,
-	 *      KnowledgeItem)
-	 * @see #handleDelete()
-	 * @see Modification#andThen(Modification) Combining modifications from overridden methods with
-	 *      own modifications.
-	 */
-	protected Modification notifyUpcomingDeletion() {
-		return Modification.NONE;
-	}
-
-	/**
-	 * Hook for subclasses to clean up external state after the deletion of this object.
-	 * 
-	 * <p>
-	 * Note: At call time this object has already been deleted and the deletion has been committed.
-	 * </p>
-	 * 
-	 * @see #notifyUpcomingDeletion()
-	 * @see #handleLoad()
-	 */
-	protected void handleDelete() {
-		// nothing special to do here
-	}
-
-	/**
-	 * Hook for subclasses to initialize due to loading of the corresponding {@link KnowledgeItem}.
-	 * 
-	 * <p>
-	 * Note: This method is called for both, current and historic objects.
-	 * </p>
-	 * 
-	 * @see #handleDelete()
-	 */
-	protected void handleLoad() {
-		// nothing special to do here
 	}
 
 	/**

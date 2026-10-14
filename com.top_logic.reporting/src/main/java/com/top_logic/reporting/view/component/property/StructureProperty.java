@@ -15,7 +15,6 @@ import com.top_logic.element.core.TraversalFactory;
 import com.top_logic.element.core.util.FilteredVisitor;
 import com.top_logic.element.layout.structured.StructuredElementTreeModel;
 import com.top_logic.element.structured.StructuredElement;
-import com.top_logic.element.structured.wrap.StructuredElementWrapper;
 import com.top_logic.layout.CachedLabelProvider;
 import com.top_logic.layout.form.model.AbstractFormField;
 import com.top_logic.layout.form.model.FormFactory;
@@ -31,13 +30,13 @@ import com.top_logic.tool.boundsec.BoundComponent;
  */
 public class StructureProperty extends WrapperListProperty {
 
-	private StructuredElementWrapper root;
+	private StructuredElement root;
 
 	/**
 	 * Creates a new {@link StructureProperty}.
 	 */
-	public StructureProperty(String name, List<? extends StructuredElementWrapper> initialValue,
-			BoundComponent aComponent, StructuredElementWrapper aRoot) {
+	public StructureProperty(String name, List<? extends StructuredElement> initialValue,
+			BoundComponent aComponent, StructuredElement aRoot) {
 		super(name, initialValue, true, aComponent);
 		root = aRoot;
 	}
@@ -48,14 +47,14 @@ public class StructureProperty extends WrapperListProperty {
 	}
 	
 	@Override
-	protected List<? extends StructuredElementWrapper> getAllElements() {
+	protected List<? extends StructuredElement> getAllElements() {
     	final StructuredElement theRoot = this.getRoot();
 		FilteredVisitor filteredVisitor = new FilteredVisitor(AllowViewFilter.INSTANCE);
     	TraversalFactory.traverse(theRoot, filteredVisitor, TraversalFactory.DEPTH_FIRST);
-    	return CollectionUtil.dynamicCastView(StructuredElementWrapper.class, filteredVisitor.getResult());
+    	return CollectionUtil.dynamicCastView(StructuredElement.class, filteredVisitor.getResult());
 	}
 	
-	protected StructuredElementWrapper getRoot() {
+	protected StructuredElement getRoot() {
 		return root;
 	}
 
@@ -64,18 +63,18 @@ public class StructureProperty extends WrapperListProperty {
     	boolean    isMultiple  = true;
     	
     	final StructuredElement theRoot = getRoot();
-    	final List<? extends StructuredElementWrapper> allowedWrappers = getAllElements();
-    	List<StructuredElementWrapper> navigationWrappers = new ArrayList<>();
-    	for (StructuredElementWrapper theWrapper : allowedWrappers) {
-			StructuredElementWrapper theParent = (StructuredElementWrapper) theWrapper.getParent();
+    	final List<? extends StructuredElement> allowedWrappers = getAllElements();
+    	List<StructuredElement> navigationWrappers = new ArrayList<>();
+    	for (StructuredElement theWrapper : allowedWrappers) {
+			StructuredElement theParent = theWrapper.getParent();
 			while(theParent != null) {
 				if (!allowedWrappers.contains(theParent) && !navigationWrappers.contains(theParent)) {
 					navigationWrappers.add(theParent);
 				}
-				theParent = (StructuredElementWrapper) theParent.getParent();
+				theParent = theParent.getParent();
 			}
 		}
-    	final List<StructuredElementWrapper> possibleWrappers = new ArrayList<>(allowedWrappers);
+    	final List<StructuredElement> possibleWrappers = new ArrayList<>(allowedWrappers);
     	possibleWrappers.addAll(navigationWrappers);
     	
     	SelectField selectField = FormFactory.newSelectField(name, new StructuredElementTreeModel(theRoot, new SetFilter(possibleWrappers)),

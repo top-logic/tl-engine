@@ -280,7 +280,7 @@ public class EditGroupComponent extends EditComponent {
             }
 
             if (i18nSaved) {
-				theGroup.touch();
+				theGroup.tTouch();
             }
             
             Collection theOldMembers = theGroup.getMembers(false); 

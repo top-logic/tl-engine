@@ -105,7 +105,7 @@ public final class SchedulerClusterCleanupTask extends StateHandlingTask<StateHa
 			if (isLogValid(taskLog)) {
 				continue;
 			}
-			taskLog.touch();
+			taskLog.tTouch();
 			// By checking before locking, the number of locks (and therefore changes that will
 			// be committed) is drastically reduced.
 			// By checking again after locking, race conditions are prevented.

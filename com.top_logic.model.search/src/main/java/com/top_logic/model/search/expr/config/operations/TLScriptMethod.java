@@ -9,6 +9,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -174,6 +176,29 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 		/** Separator between class name and method name. */
 		public static final char METHOD_SEPARATOR = '#';
 
+		/** Start of the optional parameter type list following the method name. */
+		public static final char PARAMETERS_START = '(';
+
+		/** End of the optional parameter type list following the method name. */
+		public static final char PARAMETERS_END = ')';
+
+		/** Separator between the parameter types in the parameter type list. */
+		public static final char PARAMETER_SEPARATOR = ',';
+
+		/**
+		 * Primitive types by their {@link Class#getName()}, which {@link Class#forName(String)} does
+		 * not resolve.
+		 */
+		private static final Map<String, Class<?>> PRIMITIVE_TYPES = Map.of(
+			boolean.class.getName(), boolean.class,
+			byte.class.getName(), byte.class,
+			char.class.getName(), char.class,
+			short.class.getName(), short.class,
+			int.class.getName(), int.class,
+			long.class.getName(), long.class,
+			float.class.getName(), float.class,
+			double.class.getName(), double.class);
+
 		private final Method _method;
 
 		private final ArgumentDescriptor _descriptor;
@@ -196,8 +221,23 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 		@TagName("java")
 		public interface Config extends AbstractSimpleMethodBuilder.Config<Builder> {
 			/**
-			 * Qualified name of the static method to call in the form
-			 * <code>fully.qualified.ClassName#methodName</code>
+			 * The public static Java method to call.
+			 *
+			 * <p>
+			 * The method is given either in the form <code>fully.qualified.ClassName#methodName</code>
+			 * or with its parameter types in the form
+			 * <code>fully.qualified.ClassName#methodName(p1,p2,...)</code>. The class name and each
+			 * parameter type <code>pi</code> are given by the binary name of the type, e.g.
+			 * <code>java.lang.String</code>, <code>int</code>, or <code>[Ljava.lang.String;</code> for
+			 * an array. An empty parameter list <code>()</code> denotes a method without parameters.
+			 * </p>
+			 *
+			 * <p>
+			 * Only public, static, non-synthetic methods are considered. Without parameter types, the
+			 * class must declare exactly one such method with the given name.
+			 * </p>
+			 *
+			 * @implNote The binary name of a type is its {@link Class#getName()}.
 			 */
 			@Mandatory
 			String getMethod();
@@ -215,14 +255,9 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 			super(context, config);
 
 			String method = config.getMethod();
-			int sepIndex = method.indexOf(METHOD_SEPARATOR);
-			String methodName = method.substring(sepIndex + 1);
-			String className = method.substring(0, sepIndex);
 
 			try {
-				Class<?> implClass = Class.forName(className);
-				_method = Arrays.stream(implClass.getDeclaredMethods())
-					.filter(m -> m.getName().equals(methodName)).findAny().get();
+				_method = resolveMethod(method);
 
 				ArgumentDescriptorBuilder descriptor = ArgumentDescriptor.builder();
 				Parameter[] parameters = _method.getParameters();
@@ -289,6 +324,102 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 			} catch (ClassNotFoundException | SecurityException | NoSuchMethodException ex) {
 				throw new RuntimeException(ex);
 			}
+		}
+
+		/**
+		 * Whether the given Java method can be called as TL-Script function.
+		 *
+		 * <p>
+		 * A script function is a public, static, non-synthetic method.
+		 * </p>
+		 */
+		public static boolean isScriptFunction(Method m) {
+			int modifiers = m.getModifiers();
+			return !m.isSynthetic() && Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers);
+		}
+
+		/**
+		 * The given method in the form <code>fully.qualified.ClassName#methodName(p1,p2,...)</code>
+		 * accepted by {@link Config#getMethod()}.
+		 */
+		public static String signature(Method m) {
+			StringBuilder result = new StringBuilder();
+			result.append(m.getDeclaringClass().getName());
+			result.append(METHOD_SEPARATOR);
+			result.append(m.getName());
+			result.append(PARAMETERS_START);
+			Class<?>[] parameterTypes = m.getParameterTypes();
+			for (int n = 0; n < parameterTypes.length; n++) {
+				if (n > 0) {
+					result.append(PARAMETER_SEPARATOR);
+				}
+				result.append(parameterTypes[n].getName());
+			}
+			result.append(PARAMETERS_END);
+			return result.toString();
+		}
+
+		/**
+		 * Resolves the {@link #isScriptFunction(Method) script function} described by the given
+		 * {@link Config#getMethod() method specification}.
+		 */
+		private static Method resolveMethod(String method) throws ClassNotFoundException {
+			int sepIndex = method.indexOf(METHOD_SEPARATOR);
+			if (sepIndex < 0) {
+				throw new IllegalArgumentException("Method '" + method + "' has no class name, expected '"
+					+ "fully.qualified.ClassName" + METHOD_SEPARATOR + "methodName'.");
+			}
+			String className = method.substring(0, sepIndex);
+			String methodPart = method.substring(sepIndex + 1);
+
+			int paramsStart = methodPart.indexOf(PARAMETERS_START);
+			String methodName = paramsStart < 0 ? methodPart : methodPart.substring(0, paramsStart);
+
+			Class<?> implClass = Class.forName(className);
+			List<Method> candidates = Arrays.stream(implClass.getDeclaredMethods())
+				.filter(m -> m.getName().equals(methodName))
+				.filter(Builder::isScriptFunction)
+				.toList();
+
+			if (paramsStart < 0) {
+				if (candidates.size() != 1) {
+					throw new IllegalArgumentException("Method '" + method + "' must denote exactly one public"
+						+ " static method, found: " + signatures(candidates) + ".");
+				}
+				return candidates.get(0);
+			}
+
+			if (methodPart.charAt(methodPart.length() - 1) != PARAMETERS_END) {
+				throw new IllegalArgumentException("Parameter list of method '" + method + "' is not terminated by '"
+					+ PARAMETERS_END + "'.");
+			}
+			Class<?>[] parameterTypes =
+				parameterTypes(methodPart.substring(paramsStart + 1, methodPart.length() - 1));
+			for (Method candidate : candidates) {
+				if (Arrays.equals(candidate.getParameterTypes(), parameterTypes)) {
+					return candidate;
+				}
+			}
+			throw new IllegalArgumentException("No public static method '" + method + "', found: "
+				+ signatures(candidates) + ".");
+		}
+
+		private static Class<?>[] parameterTypes(String parameterList) throws ClassNotFoundException {
+			if (parameterList.isBlank()) {
+				return new Class<?>[0];
+			}
+			String[] typeNames = parameterList.split(String.valueOf(PARAMETER_SEPARATOR), -1);
+			Class<?>[] result = new Class<?>[typeNames.length];
+			for (int n = 0; n < typeNames.length; n++) {
+				String typeName = typeNames[n].strip();
+				Class<?> primitive = PRIMITIVE_TYPES.get(typeName);
+				result[n] = primitive != null ? primitive : Class.forName(typeName);
+			}
+			return result;
+		}
+
+		private static String signatures(List<Method> methods) {
+			return methods.stream().map(Builder::signature).collect(Collectors.joining(", ", "[", "]"));
 		}
 
 		static String getLocalScriptName(Method m) {

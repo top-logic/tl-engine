@@ -17,4 +17,9 @@ public interface ABase extends test.com.top_logic.element.meta.benchmark.model.B
 	 */
 	String A_TYPE = "A";
 
+	/**
+	 * Name of the table storing {@link #A_TYPE} objects.
+	 */
+	String TABLE_NAME = "Benchmark";
+
 }

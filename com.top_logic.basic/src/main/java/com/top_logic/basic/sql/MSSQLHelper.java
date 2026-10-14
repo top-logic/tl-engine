@@ -415,14 +415,77 @@ public class MSSQLHelper extends DBHelper {
 		result.append(", 'COLUMN'");
 	}
 
+	/**
+	 * @implNote MS SQL Server does not change the type of a column that is part of an index
+	 *           (error 5074). Therefore, the indexes containing the column are dropped before and
+	 *           re-created with their original definition after changing the type. The index
+	 *           definitions are read from the system catalog. Indexes backing a primary key or
+	 *           unique constraint are not handled, changing the type of such a column still fails.
+	 *           Since DDL statements are transactional in MS SQL Server, a failure rolls back all
+	 *           changes.
+	 *
+	 * @see com.top_logic.basic.sql.DBHelper#appendChangeColumnType(java.lang.Appendable,
+	 *      String, com.top_logic.basic.sql.DBType, java.lang.String, String, long, int,
+	 *      boolean, boolean, java.lang.Object)
+	 */
 	@Override
 	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
 			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		String indexColumns =
+			"FROM sys.index_columns ic JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id "
+				+ "WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id ";
+		String indexes =
+			"FROM sys.indexes i "
+				+ "WHERE i.object_id = OBJECT_ID(" + escapeToString(tableRef(tableName)) + ") "
+				+ "AND i.type IN (1, 2) AND i.is_primary_key = 0 AND i.is_unique_constraint = 0 "
+				+ "AND EXISTS (SELECT 1 " + indexColumns + "AND c.name = " + escapeToString(columnName) + ") ";
+		String indexTable =
+			"QUOTENAME(OBJECT_SCHEMA_NAME(i.object_id)) + N'.' + QUOTENAME(OBJECT_NAME(i.object_id))";
+
+		result.append("DECLARE @tl_drop NVARCHAR(MAX); ");
+		result.append("DECLARE @tl_create NVARCHAR(MAX); ");
+
+		result.append("SET @tl_drop = (SELECT N'DROP INDEX ' + QUOTENAME(i.name) + N' ON ' + ");
+		result.append(indexTable);
+		result.append(" + N'; ' ");
+		result.append(indexes);
+		result.append("FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'); ");
+
+		result.append("SET @tl_create = (SELECT N'CREATE ' ");
+		result.append("+ CASE WHEN i.is_unique = 1 THEN N'UNIQUE ' ELSE N'' END ");
+		result.append("+ i.type_desc COLLATE DATABASE_DEFAULT + N' INDEX ' + QUOTENAME(i.name) + N' ON ' + ");
+		result.append(indexTable);
+		result.append(" + N' (' + STUFF((SELECT N', ' + QUOTENAME(c.name) ");
+		result.append("+ CASE WHEN ic.is_descending_key = 1 THEN N' DESC' ELSE N'' END ");
+		result.append(indexColumns);
+		result.append("AND ic.is_included_column = 0 ORDER BY ic.key_ordinal ");
+		result.append("FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, N'') + N')' ");
+		result.append("+ ISNULL(N' INCLUDE (' + STUFF((SELECT N', ' + QUOTENAME(c.name) ");
+		result.append(indexColumns);
+		result.append("AND ic.is_included_column = 1 ORDER BY ic.index_column_id ");
+		result.append("FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, N'') + N')', N'') ");
+		result.append("+ ISNULL(N' WHERE ' + i.filter_definition, N'') + N'; ' ");
+		result.append(indexes);
+		result.append("ORDER BY i.type ");
+		result.append("FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'); ");
+
+		result.append("IF @tl_drop IS NOT NULL EXEC sp_executesql @tl_drop; ");
 		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
 		result.append(" ");
 		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		result.append("; ");
+		result.append("IF @tl_create IS NOT NULL EXEC sp_executesql @tl_create;");
+	}
+
+	/**
+	 * The given value as SQL string literal.
+	 */
+	private String escapeToString(String value) throws IOException {
+		StringBuilder result = new StringBuilder();
+		internalEscape(result, value);
+		return result.toString();
 	}
 
 	@Override

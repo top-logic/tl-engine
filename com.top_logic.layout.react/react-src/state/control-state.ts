@@ -36,6 +36,7 @@
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
  *   TLProgress        - ProgressState
+ *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
@@ -1353,9 +1354,9 @@ export namespace TextStateJson {
 		 */
 		| 'helper'
 		/**
-		 * Text the application draws attention to, in the color interactive elements share.
+		 * Text that stands in for a value not yet there: a name not given, a list without entries.
 		 */
-		| 'accent'
+		| 'placeholder'
 		/**
 		 * An outcome that went well.
 		 */
@@ -1562,6 +1563,78 @@ export interface ProgressStateJson extends ControlStateJson {
 	 * The text beside the bar, plain text (e.g. `3 / 4`). Absent: the bar stands alone.
 	 */
 	label: string;
+}
+
+/**
+ * State properties of a control displaying a picture.
+ *
+ * The client only ever loads an address: either the {@link ImageSourceStateJson.url} naming the picture, or - while
+ * {@link ImageSourceStateJson.hasData} is set - the address of the data endpoint of the control itself, which serves the
+ * picture. The client appends the {@link ImageSourceStateJson.dataRevision} to the latter, so that a picture which was
+ * replaced is loaded again instead of being taken from the browser cache.
+ */
+export interface ImageSourceStateJson extends ControlStateJson {
+	/**
+	 * The address the picture is loaded from. Absent or `null`: no picture, unless
+	 * {@link ImageSourceStateJson.hasData} is set.
+	 */
+	url: string;
+
+	/**
+	 * Whether the control serves the picture itself from its data endpoint. The {@link ImageSourceStateJson.url} is
+	 * then absent.
+	 */
+	hasData: boolean;
+
+	/**
+	 * How often the picture the control serves was replaced, the revision the client appends to the
+	 * address of the data endpoint. Absent: 0.
+	 */
+	dataRevision: number;
+}
+
+/**
+ * State of a circular avatar for a person or object, the component `TLAvatar`.
+ *
+ * The circle shows the picture of the one it represents. Where there is none, it shows the
+ * initials of the {@link AvatarStateJson.name} on one of the eight category roles of the design system, which the
+ * client derives from the name; without a name, the neutral circle. The component sends no
+ * commands.
+ */
+export interface AvatarStateJson extends ImageSourceStateJson {
+	/**
+	 * The display name of the one the avatar represents, plain text, the source of the initials,
+	 * the category and the accessible name. Absent or `null`: the neutral circle.
+	 */
+	name: string;
+
+	/**
+	 * The diameter of the circle. Absent means `'medium'`.
+	 */
+	size: AvatarStateJson.Size;
+}
+
+export namespace AvatarStateJson {
+	/**
+	 * The diameter of an avatar, chosen by where the avatar stands, independent of the density.
+	 */
+	export type Size =
+		/**
+		 * An avatar in a table cell or a row.
+		 */
+		| 'small'
+		/**
+		 * The rule: beside text, in lists and in comment headers.
+		 */
+		| 'medium'
+		/**
+		 * An avatar in the header of a detail view.
+		 */
+		| 'large'
+		/**
+		 * A profile page: the picture is the content.
+		 */
+		| 'x-large';
 }
 
 /**

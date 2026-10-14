@@ -17,4 +17,9 @@ public interface XBase extends com.top_logic.demo.model.types.DemoTypesX, com.to
 	 */
 	String X_TYPE = "X";
 
+	/**
+	 * Name of the table storing {@link #X_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

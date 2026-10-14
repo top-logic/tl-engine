@@ -6,8 +6,14 @@
  */
 import React from 'react';
 import { useFloating, autoUpdate, offset, flip, shift } from '@floating-ui/react';
+import { tokenPx } from './token-px';
 
-export type PopoverAnchor = Element | { x: number; y: number };
+/**
+ * Where a surface stands: at an element, or at a viewport point. A point with a `height` is a vertical
+ * span from `y` downwards - the extent of a drag image around the pointer: the surface stands below
+ * it, or above it where there is no room below, and never on it.
+ */
+export type PopoverAnchor = Element | { x: number; y: number; height?: number };
 
 export interface PopoverOptions {
   open: boolean;
@@ -20,11 +26,7 @@ export interface PopoverOptions {
  * pixels. Read once per opening (see usePopover), not on every render.
  */
 function gapPx(): number {
-  const root = getComputedStyle(document.documentElement);
-  const v = root.getPropertyValue('--tl-space-xs').trim();
-  const rem = parseFloat(root.fontSize) || 16;
-  const n = parseFloat(v);
-  return isNaN(n) ? 8 : v.endsWith('rem') ? n * rem : n;
+  return tokenPx(document.documentElement, '--tl-space-xs', 8);
 }
 
 export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElement | null) => void; style: React.CSSProperties } {
@@ -42,12 +44,13 @@ export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElemen
   // or a menu once opened at a point stays there when it is next opened at an element.
   const x = anchor && !(anchor instanceof Element) ? anchor.x : null;
   const y = anchor && !(anchor instanceof Element) ? anchor.y : null;
+  const h = anchor && !(anchor instanceof Element) ? anchor.height ?? 0 : 0;
   React.useLayoutEffect(() => {
     if (!open || !anchor) return;
     if (anchor instanceof Element) { refs.setPositionReference(anchor); return; }
-    const r = { x: anchor.x, y: anchor.y, left: anchor.x, top: anchor.y, right: anchor.x, bottom: anchor.y, width: 0, height: 0 };
+    const r = { x: anchor.x, y: anchor.y, left: anchor.x, top: anchor.y, right: anchor.x, bottom: anchor.y + h, width: 0, height: h };
     refs.setPositionReference({ getBoundingClientRect: () => r });
-  }, [open, anchor instanceof Element ? anchor : null, x, y, refs]);
+  }, [open, anchor instanceof Element ? anchor : null, x, y, h, refs]);
   // Only an open surface is observed: a mounted-but-hidden overflow menu must not run autoUpdate.
   const setFloating = React.useCallback((el: HTMLElement | null) => refs.setFloating(open ? el : null), [open, refs]);
   return { setFloating, style: floatingStyles };

@@ -73,6 +73,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 ERROR_SINGLETON_REFERENCE_IS_NULL__FIELD;
 
+	public static ResKey2 ERROR_UNDECODABLE_ENCRYPTED_VALUE__PROPERTY_PREFIX;
+
 	public static ResKey PROPERTY_IS_MANDATORY_BUT_VALUE_WAS_EMPTY;
 
 	public static ResKey2 ERROR_INSTANTIATION_FAILED__CLASS_LOCATION;

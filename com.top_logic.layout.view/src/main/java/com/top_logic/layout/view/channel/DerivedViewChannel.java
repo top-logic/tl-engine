@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.channel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -14,7 +13,6 @@ import java.util.function.Function;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
-import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 
@@ -61,21 +59,14 @@ public class DerivedViewChannel implements ObservingChannel {
 
 	private Function<Object, Object> _reverseFunction;
 
-	private List<ViewChannel> _inputs;
-
 	private Function<Object[], Object> _evaluator;
 
-	private ChannelObjectObserver _inputObserver;
+	/**
+	 * The connection to the input channels, {@code null} while the channel is not bound.
+	 */
+	private ChannelInputBinding _binding;
 
 	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
-
-	private final List<Runnable> _vetoForwarderRemovers = new ArrayList<>();
-
-	/**
-	 * The registrations of the listener recomputing the value on every one of {@link #_inputs},
-	 * empty while the channel is not bound.
-	 */
-	private final List<Registration> _inputRegistrations = new ArrayList<>();
 
 	/**
 	 * Creates a {@link DerivedViewChannel}.
@@ -145,8 +136,8 @@ public class DerivedViewChannel implements ObservingChannel {
 	 *        hold, which are always observed; empty for a function reading nothing but those
 	 *        objects.
 	 *
-	 * @implNote Registers a listener and a {@link VetoForwarder} on every input, replacing the ones
-	 *           of a previous binding.
+	 * @implNote Connects to the inputs through a {@link ChannelInputBinding}, replacing the one of
+	 *           a previous binding.
 	 *
 	 * @see #attach(ModelScope)
 	 */
@@ -154,17 +145,10 @@ public class DerivedViewChannel implements ObservingChannel {
 			Function<Object, Object> reverse, Set<TLStructuredType> observedTypes) {
 		release();
 
-		_inputs = inputs;
 		_evaluator = evaluator;
 		_reverseFunction = reverse;
-		_value = evaluate(evaluator, inputs);
-		_inputObserver = new ChannelObjectObserver(inputs, observedTypes, this::recompute);
-
-		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute();
-		for (ViewChannel input : inputs) {
-			_inputRegistrations.add(input.addListener(refreshListener));
-			_vetoForwarderRemovers.add(VetoForwarder.forward(input, this));
-		}
+		_binding = new ChannelInputBinding(this, inputs, observedTypes, this::recompute, this::recompute);
+		_value = evaluator.apply(_binding.arguments());
 	}
 
 	/**
@@ -173,21 +157,9 @@ public class DerivedViewChannel implements ObservingChannel {
 	 */
 	@Override
 	public void release() {
-		for (Registration registration : _inputRegistrations) {
-			registration.dispose();
+		if (_binding != null) {
+			_binding.release();
 		}
-		_inputRegistrations.clear();
-		removeVetoForwarders();
-		if (_inputObserver != null) {
-			_inputObserver.detach();
-		}
-	}
-
-	private void removeVetoForwarders() {
-		for (Runnable remover : _vetoForwarderRemovers) {
-			remover.run();
-		}
-		_vetoForwarderRemovers.clear();
 	}
 
 	/**
@@ -195,7 +167,7 @@ public class DerivedViewChannel implements ObservingChannel {
 	 */
 	@Override
 	public void attach(ModelScope scope) {
-		_inputObserver.attach(scope);
+		_binding.attach(scope);
 		recompute();
 	}
 
@@ -204,7 +176,7 @@ public class DerivedViewChannel implements ObservingChannel {
 	 */
 	@Override
 	public void detach() {
-		_inputObserver.detach();
+		_binding.detach();
 	}
 
 	@Override
@@ -218,7 +190,7 @@ public class DerivedViewChannel implements ObservingChannel {
 			throw new UnsupportedOperationException("Derived channel '" + _name + "' is read-only.");
 		}
 		Object sourceValue = _reverseFunction.apply(newValue);
-		return _inputs.get(0).set(sourceValue);
+		return _binding.inputs().get(0).set(sourceValue);
 	}
 
 	@Override
@@ -256,20 +228,12 @@ public class DerivedViewChannel implements ObservingChannel {
 	}
 
 	private void recompute() {
-		Object newValue = evaluate(_evaluator, _inputs);
+		Object newValue = _evaluator.apply(_binding.arguments());
 		Object oldValue = _value;
 		if (!Objects.equals(oldValue, newValue)) {
 			_value = newValue;
 			_listeners.notifyChange(oldValue, newValue);
 		}
-	}
-
-	private static Object evaluate(Function<Object[], Object> evaluator, List<ViewChannel> inputs) {
-		Object[] args = new Object[inputs.size()];
-		for (int i = 0; i < args.length; i++) {
-			args[i] = inputs.get(i).get();
-		}
-		return evaluator.apply(args);
 	}
 
 	@Override

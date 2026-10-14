@@ -1,9 +1,13 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
-import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
-import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
+import { NO_DRAG_IMAGE } from './drop-hint';
+import { DropHint } from './DropHint';
+import type { HintAnchor } from './DropHint';
 import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
+import { buttonClassName } from './button/buttonClassName';
+import { SearchField } from './SearchField';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -18,33 +22,58 @@ const TableKeyBindings: React.FC<{
   onToggle: () => void;
   onSelectAll: () => void;
   onActivate: () => boolean;
-}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll, onActivate }) => {
-  useKeyboardBinding('ArrowUp', () => { onMove('up', false, false); return true; });
-  useKeyboardBinding('ArrowDown', () => { onMove('down', false, false); return true; });
-  useKeyboardBinding('Home', () => { onMove('home', false, false); return true; });
-  useKeyboardBinding('End', () => { onMove('end', false, false); return true; });
-  useKeyboardBinding('PageUp', () => { onMove('pageUp', false, false); return true; });
-  useKeyboardBinding('PageDown', () => { onMove('pageDown', false, false); return true; });
+  onExpand: (expanded: boolean) => void;
+  onGrid: () => boolean;
+  inEditor: () => boolean;
+}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll, onActivate, onExpand, onGrid, inEditor }) => {
+  // An editor in a cell - a text input, a dropdown, a checkbox, an editable text - keeps every key
+  // it answers itself: the grid declines them, so the arrows move the caret or the option and Space
+  // and Enter reach the editor.
+  const move = (direction: string, extend: boolean, cursorOnly: boolean) => {
+    if (inEditor()) {
+      return false;
+    }
+    onMove(direction, extend, cursorOnly);
+    return true;
+  };
+  // Right opens the cursor row of a tree or group, left closes it - as in the tree. Where there is
+  // nothing to open or close, the arrows scroll the body sideways (the focus is on the grid, not on
+  // the scrolling body). Only while the grid itself has the focus: a dropdown, a checkbox, a chip or
+  // a button in the table keeps its arrows.
+  useKeyboardBinding('ArrowRight', () => { if (!onGrid()) { return false; } onExpand(true); return true; });
+  useKeyboardBinding('ArrowLeft', () => { if (!onGrid()) { return false; } onExpand(false); return true; });
+  useKeyboardBinding('ArrowUp', () => move('up', false, false));
+  useKeyboardBinding('ArrowDown', () => move('down', false, false));
+  useKeyboardBinding('Home', () => move('home', false, false));
+  useKeyboardBinding('End', () => move('end', false, false));
+  useKeyboardBinding('PageUp', () => move('pageUp', false, false));
+  useKeyboardBinding('PageDown', () => move('pageDown', false, false));
   // Shift extends the range (multi only); in single selection it behaves like a plain move.
-  useKeyboardBinding('Shift+ArrowUp', () => { onMove('up', isMulti, false); return true; });
-  useKeyboardBinding('Shift+ArrowDown', () => { onMove('down', isMulti, false); return true; });
-  useKeyboardBinding('Shift+Home', () => { onMove('home', isMulti, false); return true; });
-  useKeyboardBinding('Shift+End', () => { onMove('end', isMulti, false); return true; });
-  useKeyboardBinding('Shift+PageUp', () => { onMove('pageUp', isMulti, false); return true; });
-  useKeyboardBinding('Shift+PageDown', () => { onMove('pageDown', isMulti, false); return true; });
+  useKeyboardBinding('Shift+ArrowUp', () => move('up', isMulti, false));
+  useKeyboardBinding('Shift+ArrowDown', () => move('down', isMulti, false));
+  useKeyboardBinding('Shift+Home', () => move('home', isMulti, false));
+  useKeyboardBinding('Shift+End', () => move('end', isMulti, false));
+  useKeyboardBinding('Shift+PageUp', () => move('pageUp', isMulti, false));
+  useKeyboardBinding('Shift+PageDown', () => move('pageDown', isMulti, false));
   // Ctrl moves the focus cursor without changing the selection (multi only).
-  useKeyboardBinding('Ctrl+ArrowUp', () => { onMove('up', false, isMulti); return true; });
-  useKeyboardBinding('Ctrl+ArrowDown', () => { onMove('down', false, isMulti); return true; });
-  // Space toggles the cursor row; Ctrl+A selects all (multi only).
-  useKeyboardBinding('Space', () => { if (cursorIndex < 0) { return false; } onToggle(); return true; });
-  useKeyboardBinding('Ctrl+A', () => { if (!isMulti) { return false; } onSelectAll(); return true; });
+  useKeyboardBinding('Ctrl+ArrowUp', () => move('up', false, isMulti));
+  useKeyboardBinding('Ctrl+ArrowDown', () => move('down', false, isMulti));
+  // Space toggles the cursor row - on the grid only: on a button or a checkbox in the table it is
+  // that control's. Ctrl+A selects all (multi only).
+  useKeyboardBinding('Space', () => { if (cursorIndex < 0 || !onGrid()) { return false; } onToggle(); return true; });
+  useKeyboardBinding('Ctrl+A', () => { if (!isMulti || inEditor()) { return false; } onSelectAll(); return true; });
   // Enter opens the cursor row; it declines when there is nothing to open, so the gesture falls
   // through to an enclosing scope (a dialog's default button).
-  useKeyboardBinding('Enter', () => onActivate());
+  useKeyboardBinding('Enter', () => !inEditor() && onActivate());
   return null;
 };
 
 const I18N_KEYS = {
+  'js.table.selectAll': 'Select all rows',
+  'js.table.selectRow': 'Select this row',
+  'js.table.empty': 'No entries',
+  'js.treeView.expand': 'Expand',
+  'js.treeView.collapse': 'Collapse',
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.groupBy': 'Group by this column',
@@ -53,6 +82,8 @@ const I18N_KEYS = {
   'js.table.grouped': 'The rows are grouped by this column',
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
+  'js.table.filterActive': 'Filter (active)',
+  'js.table.columnWidth': 'Change the width of {0}',
   'js.table.columns': 'Columns',
   'js.table.search': 'Search',
   'js.table.searchHint': 'Search the displayed columns',
@@ -136,11 +167,11 @@ const CMD_DROP_PROBE = 'dropProbe';
 /** Command applying a drop (DropSupport.CMD_DROP). */
 const CMD_DROP = 'drop';
 
-/** Row class suffix of each marker drawn at a row. */
-const ROW_MARKER_CLASS: Record<Exclude<TLDropMarker, 'control'>, string> = {
-  before: 'tlTableView__row--dragOver-before',
-  after: 'tlTableView__row--dragOver-after',
-  into: 'tlTableView__row--dragOver-onto',
+/** State word (drag.css) of each marker drawn at a row. */
+const ROW_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
+  before: 'drop-before',
+  after: 'drop-after',
+  into: 'drop-onto',
 };
 
 /** Where a running drag hovers the table: a row and the zone within it, or beside the rows. */
@@ -171,7 +202,7 @@ const MIN_COL_WIDTH = 50;
  */
 const measureColumnContentWidth = (root: HTMLElement, columnName: string): number => {
   const cells = Array.from(
-    root.querySelectorAll<HTMLElement>('.tlTableView__headerCell, .tlTableView__cell'))
+    root.querySelectorAll<HTMLElement>('.tl-table__header-cell, .tl-table__cell'))
     .filter((cell) => cell.dataset.col === columnName);
   if (cells.length === 0) {
     return 0;
@@ -186,7 +217,7 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
       const copy = cell.cloneNode(true) as HTMLElement;
       // The handle sits at the cell border and is no content; the ids would be duplicates while
       // the copy is in the document.
-      copy.querySelectorAll('.tlTableView__resizeHandle').forEach((handle) => handle.remove());
+      copy.querySelectorAll('.tl-table__resize').forEach((handle) => handle.remove());
       copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
       copy.style.position = 'static';
       copy.style.flex = 'none';
@@ -263,7 +294,7 @@ const ColumnsButton: React.FC<{
 }> = ({ label, inCell, onClick }) => (
   <button
     type="button"
-    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
+    className={buttonClassName({ appearance: 'ghost', small: inCell, icon: true, extra: 'tl-table__columns' })}
     {...tooltipProps(label)}
     aria-label={label}
     // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
@@ -271,7 +302,8 @@ const ColumnsButton: React.FC<{
     onMouseDown={(e) => e.stopPropagation()}
     onClick={onClick}
   >
-    <i className="bi bi-gear" />
+    {/* Spec §12: icons are tl-icon-sm, also in a full-size icon button (Entscheidung 16). */}
+    <ThemeIcon encoded={ICON_COLUMNS} className="tl-button__icon tl-icon-sm" />
   </button>
 );
 
@@ -283,17 +315,45 @@ const ColumnsButton: React.FC<{
  * renders the rows its viewport shows, so the table needs a height bounded by its container rather
  * than one following its rows. Its containers fill in turn, up to the next bounded region.
  */
+/** A highlight class of the application among the given classes (#29815). */
+const STATUS_CLASS = /(?:^|\s)tl-status-(error|warning|success|info)(?=\s|$)/;
+
+/**
+ * The status role the highlight class among the given classes stands for: `tl-status-error`,
+ * `-warning`, `-success` or `-info`, which the design system draws as `data-tl-role` on the row or the
+ * cell. Undefined without such a class.
+ */
+function statusRole(cssClass: string | undefined): string | undefined {
+  return cssClass ? STATUS_CLASS.exec(cssClass)?.[1] : undefined;
+}
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const fillClass = useFill(true);
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const rootRef = React.useRef<HTMLDivElement>(null);
+  // The grid (role=grid) holds the keyboard focus and points at the cursor row with
+  // aria-activedescendant; the body inside it only scrolls.
+  const gridRef = React.useRef<HTMLDivElement>(null);
+  const frameRef = React.useRef<HTMLDivElement>(null);
+  // Whether the keyboard focus is on the grid itself, not on a control within it (Left, Right, Space).
+  const isGridFocused = React.useCallback(() => document.activeElement === gridRef.current, []);
+  // Whether the keyboard focus is in an editor within the grid - a cell's input, dropdown, checkbox
+  // or editable text, the heading's checkbox: the grid leaves it its keys.
+  const isEditorFocused = React.useCallback(() => {
+    const active = document.activeElement;
+    return !!active && active !== gridRef.current && !!gridRef.current?.contains(active)
+      && isEditorTarget(active);
+  }, []);
 
   const columns = (state.columns as ColumnState[]) ?? [];
   const totalRowCount = (state.totalRowCount as number) ?? 0;
   const rows = (state.rows as RowState[]) ?? [];
-  const rowHeight = (state.rowHeight as number) ?? 36;
+  // The client measures what the design system says (3b §3): a row is size-row high, so the table
+  // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
+  // rendered from the first layout on, so the token is read where the rows inherit it.
+  const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
   /**
    * What the select-all checkbox shows, decided by the server from how many of the rows the
@@ -317,9 +377,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropModes = (state.dropModes as string[]) ?? [];
+  const dropModesByKind = (state.dropModesByKind as Record<string, string[]>) ?? {};
   // Rows forming a tree are split as tree nodes: an insertion has a middle part going into the row.
   const dropTreeZones = (state.dropTreeZones as boolean) ?? false;
-  const zoneSplit = dropTreeZones ? treeZoneSplit(dropModes) : flatZoneSplit(dropModes);
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
   /** How many rows the table has (of how many, while filtered); empty while it shows no count. */
   const rowCount = (state.rowCount as string) ?? '';
@@ -332,13 +392,48 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   );
 
   const isMulti = selectionMode === 'multi';
-  const checkboxWidth = 40;
-  const treeIndentWidth = 20;
+  // The selection column is a square as high as the heading (size-bar); a tree level indents by the
+  // width of its toggle (size-control-sm), so a child stands under its parent's label; the column
+  // button is a control-sized square.
+  const checkboxWidth = useTokenPx(gridRef, '--tl-size-bar', 40);
+  const treeIndentWidth = useTokenPx(gridRef, '--tl-size-control-sm', 24);
+  const columnsButtonWidth = useTokenPx(gridRef, '--tl-size-control', 32);
+  const treegrid = treeMode || grouping !== '';
+  const rowId = (index: number) => `${controlId}-row-${index}`;
 
   const headerRef = React.useRef<HTMLDivElement>(null);
-  const headerAreaRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
+
+  // Whether the pointer pressed on the body and has not been released yet.
+  const bodyPressRef = React.useRef(false);
+
+  // Hands a focus that landed on the body on to the grid. A focus a press put there moves on only
+  // once the press is over (released, or ended as a drag): Chromium starts no drag from a press
+  // during which the focus moved away from where the press put it, so no row could be dragged.
+  const bodyFocusToGrid = React.useCallback(() => {
+    if (document.activeElement === scrollContainerRef.current) {
+      gridRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  const handleBodyPress = React.useCallback(() => {
+    bodyPressRef.current = true;
+    const pressOver = () => {
+      window.removeEventListener('pointerup', pressOver, true);
+      window.removeEventListener('dragend', pressOver, true);
+      bodyPressRef.current = false;
+      bodyFocusToGrid();
+    };
+    window.addEventListener('pointerup', pressOver, true);
+    window.addEventListener('dragend', pressOver, true);
+  }, [bodyFocusToGrid]);
+
+  const handleBodyFocus = React.useCallback(() => {
+    if (!bodyPressRef.current) {
+      bodyFocusToGrid();
+    }
+  }, [bodyFocusToGrid]);
 
   // A cell whose editable input should receive the caret once the server has re-rendered its row
   // as editable. Set on a selecting cell-click (edit the clicked cell) and on Tab-wrap to a
@@ -351,9 +446,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
   const justResizedRef = React.useRef(false);
 
-  // -- Drag reorder state --
-  const dragColumnRef = React.useRef<string | null>(null);
-  const [dragOver, setDragOver] = React.useState<{ column: string; side: 'left' | 'right' } | null>(null);
+  // -- Column reordering: the common gesture (useListReorder, halves along the row of headings) --
+  const columnReorder = useListReorder({
+    axis: 'horizontal',
+    count: columns.length,
+    onMove: (from, to) => sendCommand('columnReorder', { column: columns[from].name, targetIndex: to }),
+  });
+  const columnDragging = columnReorder.dragIndex !== null;
 
   // -- Row drop state: where an accepted drag currently hovers, or null while none does. A null row
   //    means the drag hovers the table itself rather than one of its rows. --
@@ -367,6 +466,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // accepted until the server says otherwise.
   const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
   const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
+
+  // -- The rows a drag started here carries, faded by drag.css (data-tl-state~="dragging") while it
+  //    runs: the grabbed row, or the whole selection when the grabbed row is part of it. --
+  const [draggedRow, setDraggedRow] = React.useState<{ id: string; selection: boolean } | null>(null);
+  // The grabbed row may scroll out of the rendered window and take its dragend handler with it.
+  React.useEffect(() => (draggedRow ? onDragEnd(() => setDraggedRow(null)) : undefined), [draggedRow]);
 
   // The marker of the drop accepted at the hovered place. Until the verdict on a newly hovered place
   // arrives, the marker of the place hovered before stays, so the marker does not flicker.
@@ -389,18 +494,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return onDragEnd(() => setDropState(null));
   }, [dragHovers]);
 
-  // -- The pointer of the running drag over the table, in viewport coordinates, and the hint that
-  //    follows it. Moved directly in the DOM: dragover fires continuously, and re-rendering the
-  //    table for each pointer move is not needed to move one element. --
-  const dragPointerRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const dropHintRef = React.useRef<HTMLDivElement | null>(null);
-  const attachDropHint = React.useCallback((hint: HTMLDivElement | null) => {
-    dropHintRef.current = hint;
-    if (hint) {
-      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y,
-        runningDrag()?.image ?? NO_DRAG_IMAGE);
-    }
-  }, []);
+  // -- Where the hint on a refused target stands - at the pointer, beside the drag image - and the
+  //    hint's way to follow it: dragover fires continuously, and only the hint re-renders for each
+  //    move, not the table. --
+  const hintAnchorRef = React.useRef<HintAnchor>({ x: 0, y: 0, height: 0 });
+  const hintMoveRef = React.useRef<((at: HintAnchor) => void) | null>(null);
 
   // -- Column context menu state --
   const [contextMenu, setContextMenu] = React.useState<{
@@ -604,12 +702,36 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('columnResize', { column: columnName, width });
   }, [sendCommand]);
 
+  // -- The rows the body shows right now, by index: what the server has not sent of them yet is drawn
+  //    as a skeleton row, and the grid is aria-busy until it has. Updated when the range changes, not
+  //    on every scrolled pixel. --
+  const [windowRange, setWindowRange] = React.useState<{ first: number; last: number }>({ first: 0, last: -1 });
+  const measureWindow = React.useCallback(() => {
+    const body = scrollContainerRef.current;
+    if (!body || rowHeight <= 0) return;
+    const first = Math.floor(body.scrollTop / rowHeight);
+    const last = Math.min(totalRowCount - 1, Math.ceil((body.scrollTop + body.clientHeight) / rowHeight) - 1);
+    setWindowRange((p) => (p.first === first && p.last === last ? p : { first, last }));
+  }, [rowHeight, totalRowCount]);
+  React.useLayoutEffect(measureWindow, [measureWindow]);
+
+  // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
+  // a sort or filter button beyond the edge); the body follows, and its scroll event aligns both again.
+  const handleHeaderScroll = React.useCallback(() => {
+    const header = headerRef.current;
+    const body = scrollContainerRef.current;
+    if (header && body && body.scrollLeft !== header.scrollLeft) {
+      body.scrollLeft = header.scrollLeft;
+    }
+  }, []);
+
   // -- Scroll handler --
   const handleScroll = React.useCallback(() => {
     // Sync header horizontal scroll immediately.
     if (headerRef.current && scrollContainerRef.current) {
       headerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft;
     }
+    measureWindow();
     measureCoveredRef.current();
     // Debounced vertical scroll command.
     if (scrollTimeoutRef.current !== null) {
@@ -623,10 +745,31 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       const start = Math.floor(scrollTop / rowHeight);
       sendCommand('scroll', { start, count: visibleCount });
     }, 80);
-  }, [sendCommand, rowHeight]);
+  }, [sendCommand, rowHeight, measureWindow]);
 
-  // -- Sort handler --
-  const handleSort = React.useCallback((columnName: string, currentDirection: string | undefined, event: React.MouseEvent) => {
+  // A density switch changes the row height: the rows the server sends for the viewport change with
+  // it. Not for the first measurement - useTokenPx starts from its fallback (36) and reaches the
+  // token's value (32 in compact density) one render later; a scroll command then would only repeat
+  // the window the server already sent. A height the hook has not caught up with yet is skipped, the
+  // first one that matches the token is recorded without a command.
+  const reportedRowHeightRef = React.useRef<number | null>(null);
+  React.useEffect(() => {
+    if (rowHeight !== tokenPx(gridRef.current, '--tl-size-row', 36)) {
+      return;
+    }
+    const previous = reportedRowHeightRef.current;
+    reportedRowHeightRef.current = rowHeight;
+    if (previous === null || previous === rowHeight) {
+      return;
+    }
+    if (scrollContainerRef.current) {
+      handleScroll();
+    }
+  }, [rowHeight]);
+
+  // -- Sort handler: click or Enter on the label sorts by the column; with Shift it adds a level to the
+  //    sort order. --
+  const handleSort = React.useCallback((columnName: string, currentDirection: string | undefined, event: { shiftKey: boolean }) => {
     if (justResizedRef.current) return;
     let newDirection: string;
     if (!currentDirection || currentDirection === 'desc') {
@@ -637,68 +780,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const mode = event.shiftKey ? 'add' : 'replace';
     sendCommand('sort', { column: columnName, direction: newDirection, mode });
   }, [sendCommand]);
-
-  // -- Drag reorder handlers --
-  const handleDragStart = React.useCallback((columnName: string, event: React.DragEvent) => {
-    dragColumnRef.current = columnName;
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', columnName);
-  }, []);
-
-  const handleDragOver = React.useCallback((columnName: string, event: React.DragEvent) => {
-    if (!dragColumnRef.current || dragColumnRef.current === columnName
-        || columns.find((c) => c.name === columnName)?.pinnedEnd) {
-      setDragOver(null);
-      return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const side = (event.clientX < rect.left + rect.width / 2) ? 'left' : 'right';
-    setDragOver({ column: columnName, side });
-  }, [columns]);
-
-  const handleDrop = React.useCallback((event: React.DragEvent) => {
-    const draggedName = dragColumnRef.current;
-    if (!draggedName) {
-      // Without a column drag of this table the drop is none of this handler's business. Leaving
-      // the event untouched lets it bubble to the table root, where a row drop landing on the
-      // header counts as a drop on the table as a whole.
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    if (!dragOver) {
-      dragColumnRef.current = null;
-      setDragOver(null);
-      return;
-    }
-
-    // Compute target index based on drop side.
-    let targetIndex = columns.findIndex((c) => c.name === dragOver.column);
-    if (targetIndex < 0) {
-      dragColumnRef.current = null;
-      setDragOver(null);
-      return;
-    }
-    const draggedIndex = columns.findIndex((c) => c.name === draggedName);
-    if (dragOver.side === 'right') {
-      targetIndex++;
-    }
-    // Adjust for removal: if dragged is before target, removal shifts indices down.
-    if (draggedIndex < targetIndex) {
-      targetIndex--;
-    }
-
-    sendCommand('columnReorder', { column: draggedName, targetIndex });
-    dragColumnRef.current = null;
-    setDragOver(null);
-  }, [columns, dragOver, sendCommand]);
-
-  const handleDragEnd = React.useCallback(() => {
-    dragColumnRef.current = null;
-    setDragOver(null);
-  }, []);
 
   // -- Row drag-and-drop handlers --
 
@@ -718,26 +799,31 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       selection: row.selected,
       kind: dragKind,
     });
+    const dragged = { id: row.id, selection: row.selected };
+    // A drag cancelled before the image was taken has already ended: no row stays marked dragging.
+    afterDragImage(() => { if (runningDrag()) setDraggedRow(dragged); });
   }, [controlId, dragKind]);
 
   /**
-   * Which row an event points at and the zone within it, split as the announced drop modes need,
-   * or no row where the pointer is beside the rows or the rows have no zones.
+   * Which row an event points at and the zone within it, split as the drop modes announced for the
+   * dragged kind need, or no row where the pointer is beside the rows or the rows have no zones.
    */
   const dropTargetAt = React.useCallback(
     (event: React.DragEvent): { row: string | null; zone: TLDropZone } => {
+      const modes = dragModes(event.dataTransfer, dropModes, dropModesByKind);
+      const zoneSplit = dropTreeZones ? treeZoneSplit(modes) : flatZoneSplit(modes);
       if (zoneSplit !== 'none' && event.target instanceof Element) {
-        const rowElement = event.target.closest('.tlTableView__row') as HTMLElement | null;
+        const rowElement = event.target.closest('.tl-table__row') as HTMLElement | null;
         const key = rowElement?.dataset.dropRow;
         if (rowElement && key) {
           return { row: key, zone: dropZoneAt(event.clientY, rowElement, zoneSplit) };
         }
       }
       return { row: null, zone: 'none' };
-    }, [zoneSplit]);
+    }, [dropModes, dropModesByKind, dropTreeZones]);
 
   const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
-    if (dragColumnRef.current) {
+    if (columnDragging) {
       event.preventDefault();
       // Auto-scroll horizontally during column drag.
       const body = scrollContainerRef.current;
@@ -760,12 +846,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
-    dragPointerRef.current = { x: event.clientX, y: event.clientY };
     const drag = runningDrag();
-    const hint = dropHintRef.current;
-    if (hint) {
-      placeDropHint(hint, event.clientX, event.clientY, drag?.image ?? NO_DRAG_IMAGE);
-    }
+    // The browser draws the drag image around the pointer; the hint stands beside it.
+    const image = drag?.image ?? NO_DRAG_IMAGE;
+    hintAnchorRef.current = { x: event.clientX, y: event.clientY + image.top, height: image.bottom - image.top };
+    hintMoveRef.current?.(hintAnchorRef.current);
     const target = dropTargetAt(event);
     let probe: string | null = null;
     if (drag) {
@@ -806,7 +891,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, [dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
+  }, [columnDragging, dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the table's own descendants fires a leave on each one left behind; only leaving
@@ -818,8 +903,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleRootDrop = React.useCallback((event: React.DragEvent) => {
     if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
-      // Not a row drag: a dragged column heading ends here.
-      handleDrop(event);
+      // Not a row drag: a column heading released anywhere in the table lands where its mark shows
+      // (useListReorder).
+      if (columnDragging) columnReorder.containerProps.onDrop?.(event);
       return;
     }
     event.preventDefault();
@@ -842,7 +928,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }
       sendCommand(CMD_DROP, args);
     }
-  }, [dropAcceptsAny, dropAccepts, dropTargetAt, handleDrop, sendCommand]);
+  }, [columnDragging, columnReorder.containerProps, dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
@@ -852,11 +938,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (selection && !selection.isCollapsed && event.currentTarget.contains(selection.anchorNode)) {
       return;
     }
-    // Give the body keyboard focus so the table's keyboard scope becomes active - except when
+    // Give the grid keyboard focus so the table's keyboard scope becomes active - except when
     // the click landed in an interactive cell element (e.g. a text input of an editable cell),
     // which must keep the focus to stay editable.
     if (!isInteractiveTarget(event)) {
-      scrollContainerRef.current?.focus({ preventScroll: true });
+      gridRef.current?.focus({ preventScroll: true });
       // A plain selecting click enters the clicked cell for editing: once the row re-renders
       // editable, the focus effect moves the caret into that column's input.
       if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
@@ -969,9 +1055,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     pendingFocusRef.current = null;
     // A click that opened a control of its own (a dropdown's option list, a date picker) has moved
-    // the focus out of the table on purpose; taking it back would close what was just opened.
+    // the focus out of the table on purpose; taking it back would close what was just opened. The
+    // clicked row has given the focus to the grid, which holds the body.
     const active = document.activeElement;
-    if (active && active !== document.body && !body.contains(active)) {
+    if (active && active !== document.body && !gridRef.current?.contains(active)) {
       return;
     }
     const input = editableInRow(body, row.id, { col: pending.col, last: pending.last });
@@ -1036,6 +1123,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
     event.stopPropagation();
+    // The box is no stop of its own (tabindex -1): the keyboard stays with the grid, whose cursor
+    // follows the selection.
+    gridRef.current?.focus({ preventScroll: true });
     sendCommand('select', { rowIndex, ctrlKey: true, shiftKey: false });
   }, [sendCommand]);
 
@@ -1048,6 +1138,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     event.stopPropagation();
     sendCommand('expand', { rowIndex, expanded });
   }, [sendCommand]);
+
+  // Right and left at the cursor: open or close its tree or group row; where there is nothing to open
+  // or close, scroll the body sideways by a control's width.
+  const handleExpandCursor = React.useCallback((expanded: boolean) => {
+    const row = rows.find((r) => r.index === cursorIndex);
+    if (row?.expandable && row.expanded !== expanded) {
+      sendCommand('expand', { rowIndex: row.index, expanded });
+      return;
+    }
+    const body = scrollContainerRef.current;
+    if (body) {
+      body.scrollLeft += expanded ? columnsButtonWidth : -columnsButtonWidth;
+    }
+  }, [rows, cursorIndex, sendCommand, columnsButtonWidth]);
 
   // -- Column context menu handlers --
   const handleColumnContextMenu = React.useCallback((colIdx: number, event: React.MouseEvent) => {
@@ -1080,7 +1184,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleFrozenSplitStart = React.useCallback((event: React.PointerEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    const area = headerAreaRef.current;
+    const area = frameRef.current;
     const header = headerRef.current;
     if (!area || !header) {
       return;
@@ -1199,13 +1303,45 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [activeNamedFilter, sendCommand]);
 
-  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    sendCommand('deleteNamedFilter', { id });
-  }, [sendCommand]);
-
   // The name being typed for a filter to save; null while the save affordance is a plain button.
   const [saveName, setSaveName] = React.useState<string | null>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const filterBarRef = React.useRef<HTMLDivElement>(null);
+
+  // A deleted filter's chip vanishes with its focused remove button once the server has dropped it:
+  // the focus goes to the neighbour's remove button (same place, else the one before), without any
+  // to the search, else to the grid - the same hand-over as the select's chips.
+  const noteFilterRemoval = useFocusAfterRemove(
+    namedFilters,
+    () => filterBarRef.current?.querySelectorAll<HTMLElement>('.tl-chip__remove'),
+    () => searchInputRef.current ?? gridRef.current,
+  );
+
+  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    const removable = namedFilters.filter((named) => named.deletable);
+    noteFilterRemoval(removable.findIndex((named) => named.id === id), event.currentTarget);
+    sendCommand('deleteNamedFilter', { id });
+  }, [namedFilters, noteFilterRemoval, sendCommand]);
+  const saveButtonRef = React.useRef<HTMLButtonElement>(null);
+  // Whether closing the save form took the focus with it: the form's input and buttons vanish.
+  const saveFocusReturnRef = React.useRef(false);
+
+  // Closes the save form and hands the focus back to the button that opened it (WCAG 2.4.3).
+  const closeSaveForm = React.useCallback(() => {
+    saveFocusReturnRef.current = true;
+    setSaveName(null);
+  }, []);
+
+  // Once the form is gone, the focus goes to the save button, or to the grid where the table offers
+  // no saving any more; it must not fall to the document body.
+  React.useLayoutEffect(() => {
+    if (saveName !== null || !saveFocusReturnRef.current) {
+      return;
+    }
+    saveFocusReturnRef.current = false;
+    (saveButtonRef.current ?? gridRef.current)?.focus();
+  }, [saveName, filterSaving]);
 
   const handleSaveSubmit = React.useCallback(() => {
     const name = (saveName ?? '').trim();
@@ -1213,8 +1349,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     sendCommand('saveNamedFilter', { filterName: name });
-    setSaveName(null);
-  }, [saveName, sendCommand]);
+    closeSaveForm();
+  }, [saveName, sendCommand, closeSaveForm]);
 
   const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -1223,9 +1359,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     } else if (event.key === 'Escape') {
       // Stops the enclosing dialog/window from reading the Escape as "close me".
       event.preventDefault();
-      setSaveName(null);
+      closeSaveForm();
     }
-  }, [handleSaveSubmit]);
+  }, [handleSaveSubmit, closeSaveForm]);
 
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
@@ -1238,15 +1374,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Without such a heading, both the header row and the body end this much behind the last column,
   // keeping the column button clear of it: otherwise the button covers the last column's funnel as
-  // soon as the columns fill the available width, and that filter cannot be opened at all. Matches
-  // the button's CSS width (2rem), and applies to the body as well so that scrolling to the right
-  // end frees the funnel there, too.
+  // soon as the columns fill the available width, and that filter cannot be opened at all. The
+  // button is a control-sized square (size-control); the reserve applies to the body as well so that
+  // scrolling to the right end frees the funnel there, too.
   // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
   // scroll range without offering the last cell space to grow into and without a sticky cell -
   // confined to the content box - ever reaching underneath the button. The design system sizes every
   // box as border-box, so a minimum width given for a row includes its padding: it must add the
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
-  const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
+  const buttonReserve = columnSelect && !cogInHeaderCell ? columnsButtonWidth : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
   // not scrolled to its right end. The header then fades out in front of the button, so the column
@@ -1289,6 +1425,61 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [someSelected]);
 
+  // The cursor row as the grid's active descendant: only while it is rendered - the body renders
+  // exactly the rows the server sent - and within the visible part of the body; otherwise the grid
+  // keeps the ring itself (base.css). A reference to a row that is not there, or scrolled out of
+  // sight, would hide the focus (WCAG 2.4.7).
+  const cursorRendered = cursorIndex >= 0
+    && cursorIndex >= windowRange.first && cursorIndex <= windowRange.last
+    && rows.some((r) => r.index === cursorIndex);
+
+  // The rows of the visible window the server has not sent yet: skeleton rows of row height.
+  const sentIndexes = new Set(rows.map((r) => r.index));
+  const missing: number[] = [];
+  for (let i = windowRange.first; i <= windowRange.last; i++) {
+    if (!sentIndexes.has(i)) missing.push(i);
+  }
+
+  // Where a cell sits relative to the scrolling area: frozen at the start, pinned at the end. A state
+  // of its location (data-tl-state), not of the user's handling of it.
+  const placeOf = (colIdx: number) => {
+    const col = columns[colIdx];
+    const isFrozen = colIdx < frozenColumnCount;
+    const isPinned = !!col.pinnedEnd;
+    return {
+      isFrozen,
+      isPinned,
+      words: [
+        isFrozen && 'frozen',
+        colIdx === frozenColumnCount - 1 && 'frozen-last',
+        isPinned && 'pinned',
+        isPinned && colIdx === lastUnpinnedIdx + 1 && 'pinned-first',
+      ],
+    };
+  };
+
+  // The width a cell takes: the last column the user arranges takes the space left over, in the
+  // heading exactly as in the rows; the configured width is the flex basis, so cell and heading are
+  // the same width whatever either of them holds.
+  const widthStyle = (colIdx: number, w: number, isFrozen: boolean): React.CSSProperties =>
+    colIdx === lastUnpinnedIdx && !isFrozen ? { flex: `1 0 ${w}px`, minWidth: w } : { width: w, minWidth: w };
+
+  // The sort order as the heading announces it. WAI-ARIA knows no levels: aria-sort names the first
+  // level only, and only there (APG sortable table); every other heading leaves it out.
+  const ariaSort = (col: ColumnState): 'ascending' | 'descending' | undefined => {
+    if (!col.sortable || !col.sortDirection || (col.sortPriority ?? 1) > 1) return undefined;
+    return col.sortDirection === 'asc' ? 'ascending' : 'descending';
+  };
+
+  // The marker the server's verdict names, at the row it names; a refusal at the hovered row.
+  const dropWord = (row: RowState) => {
+    if (!dropState) return undefined;
+    if (dropRefused) return dropState.row === row.id ? 'drop-refused' : undefined;
+    return dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id ? ROW_MARKER_STATE[dropMarker] : undefined;
+  };
+  const draggedWord = (row: RowState) =>
+    draggedRow && (row.id === draggedRow.id || (draggedRow.selection && row.selected)) ? 'dragging' : undefined;
+
   return (
     <KeyboardScopeProvider active={isTableFocused}>
     <TableKeyBindings
@@ -1298,93 +1489,92 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onToggle={handleToggleCursor}
       onSelectAll={handleSelectAllRows}
       onActivate={handleActivateCursor}
+      onExpand={handleExpandCursor}
+      onGrid={isGridFocused}
+      inEditor={isEditorFocused}
     />
     <div ref={rootRef} id={controlId}
-      className={rootClassName(state, 'tlTableView',
-        dropState && (dropRefused
-          ? (dropState.row === null && 'tlTableView--dropRefused')
-          : (dropMarker === 'control' && 'tlTableView--dragover')),
-        fillClass)}
+      className={rootClassName(state, 'tl-table', fillClass)}
+      data-tl-state={dropState ? (dropRefused
+          ? (dropState.row === null ? 'drop-refused' : undefined)
+          : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
     >
-      {/* Why the target under the running drag refuses it. A native tooltip is not shown while a
-          drag runs, so the reason follows the pointer, placed in the document body so that neither
-          the table's scrolling nor its clipping can hide it. */}
-      {dropRefused && dropVerdict?.reason && createPortal(
-        <div ref={attachDropHint} className="tlTableView__dropHint" role="status">
-          {dropVerdict.reason}
-        </div>,
-        document.body)}
-      {/* Filter bar above the headings: the named criteria as chips, the cross-column search, and
-          saving the current criteria under a name. Outside both scrollers, so it neither scrolls
-          with the columns nor takes part in the header/body width alignment. */}
+      {/* Why the target under the running drag refuses it: a tl-popover in the document body, so that
+          neither the table's scrolling nor its clipping can hide it. */}
+      {dropRefused && dropVerdict?.reason && (
+        <DropHint reason={dropVerdict.reason} start={hintAnchorRef.current} moveRef={hintMoveRef} />
+      )}
+      {/* Filter bar above the headings: the named criteria as removable chips, the cross-column
+          search, and saving the current criteria under a name. Outside both scrollers, so it
+          neither scrolls with the columns nor takes part in the header/body width alignment. */}
       {filterBar && (
-        <div className="tlTableView__filterBar">
+        <div ref={filterBarRef} className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
-            <div className="tlTableView__filterChips">
+            <span className="tl-chip-group">
               {namedFilters.map((named) => {
                 const isActive = named.id === activeNamedFilter;
                 return (
-                  <span
-                    key={named.id}
-                    className={'tlTableView__chip' + (isActive ? ' tlTableView__chip--active' : '')}
-                  >
+                  <span key={named.id} className="tl-chip tl-type-label">
                     <button
                       type="button"
-                      className="tlTableView__chipLabel"
+                      className="tl-chip__toggle"
                       aria-pressed={isActive}
                       {...tooltipProps(isActive ? i18n['js.table.clearFilter'] : named.label)}
                       onClick={() => handleNamedFilter(named.id)}
                     >
-                      {named.label}
+                      <span className="tl-chip__label">{named.label}</span>
                     </button>
                     {/* Only a filter of the user's own can be deleted; a declared one is part of
                         the table and offers no remove affordance. */}
                     {named.deletable && (
                       <button
                         type="button"
-                        className="tlTableView__chipRemove"
+                        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-chip__remove' })}
                         {...tooltipProps(i18n['js.table.deleteFilter'])}
                         aria-label={i18n['js.table.deleteFilter']}
                         onClick={(e) => handleDeleteNamedFilter(named.id, e)}
                       >
-                        &times;
+                        <ThemeIcon encoded={ICON_REMOVE} className="tl-button__icon tl-icon-sm" />
                       </button>
                     )}
                   </span>
                 );
               })}
-            </div>
+            </span>
           )}
-          <div className="tlTableView__search" {...tooltipProps(i18n['js.table.searchHint'])}>
-            <i className="bi bi-search" aria-hidden="true" />
-            <input
-              type="search"
-              className="tlTableView__searchInput"
-              placeholder={i18n['js.table.search']}
-              aria-label={i18n['js.table.searchHint']}
-              value={searchDraft}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-            />
-          </div>
+          <SearchField
+            className="tl-table__search"
+            tooltip={i18n['js.table.searchHint']}
+            label={i18n['js.table.searchHint']}
+            placeholder={i18n['js.table.search']}
+            inputRef={searchInputRef}
+            value={searchDraft}
+            onChange={handleSearchChange}
+            onClear={() => {
+              setSearchDraft('');
+              sendSearch('');
+            }}
+            onKeyDown={handleSearchKeyDown}
+          />
           {filterSaving && (saveName === null ? (
             <button
+              ref={saveButtonRef}
               type="button"
-              className="tlTableView__barButton"
+              className={buttonClassName({ appearance: 'ghost', icon: true })}
               {...tooltipProps(i18n['js.table.saveFilter'])}
               aria-label={i18n['js.table.saveFilter']}
               onClick={() => setSaveName('')}
             >
-              <i className="bi bi-bookmark-plus" />
+              <ThemeIcon encoded={ICON_SAVE} className="tl-button__icon tl-icon-sm" />
             </button>
           ) : (
-            <div className="tlTableView__saveForm">
+            <span className="tl-table__save">
               <input
                 type="text"
-                className="tlTableView__saveInput"
+                className="tl-field tl-type-body"
                 autoFocus
                 placeholder={i18n['js.table.filterName']}
                 aria-label={i18n['js.table.filterName']}
@@ -1394,60 +1584,65 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               />
               <button
                 type="button"
-                className="tlTableView__barButton"
+                className={buttonClassName({ appearance: 'ghost', icon: true })}
                 {...tooltipProps(i18n['js.table.saveFilter'])}
                 aria-label={i18n['js.table.saveFilter']}
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
               >
-                <i className="bi bi-check-lg" />
+                <ThemeIcon encoded={ICON_CONFIRM} className="tl-button__icon tl-icon-sm" />
               </button>
               <button
                 type="button"
-                className="tlTableView__barButton"
+                className={buttonClassName({ appearance: 'ghost', icon: true })}
                 {...tooltipProps(i18n['js.table.cancelSave'])}
                 aria-label={i18n['js.table.cancelSave']}
-                onClick={() => setSaveName(null)}
+                onClick={closeSaveForm}
               >
-                <i className="bi bi-x-lg" />
+                <ThemeIcon encoded={ICON_CANCEL} className="tl-button__icon tl-icon-sm" />
               </button>
-            </div>
+            </span>
           ))}
         </div>
       )}
 
-      {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
-      <div className="tlTableView__headerArea" ref={headerAreaRef}>
-      <div className={'tlTableView__header' + (columnsCovered ? ' tlTableView__header--covered' : '')}
-        ref={headerRef}>
+      {/* The frame holds the grid and what lies over it without being a cell: the column selection
+          above the body's vertical scrollbar, the grip of the frozen area and its preview. */}
+      <div className="tl-table__frame" ref={frameRef}>
+      <div
+        ref={gridRef}
+        className="tl-table__grid"
+        role={treegrid ? 'treegrid' : 'grid'}
+        // Heading plus rows; an empty table counts its status row (aria-rowindex 2).
+        aria-rowcount={Math.max(totalRowCount, 1) + 1}
+        aria-colcount={columns.length + (isMulti ? 1 : 0)}
+        aria-multiselectable={isMulti || undefined}
+        aria-busy={missing.length > 0 || undefined}
+        aria-activedescendant={cursorRendered ? rowId(cursorIndex) : undefined}
+        tabIndex={0}
+      >
+      <div className="tl-table__header" ref={headerRef} role="rowgroup" onScroll={handleHeaderScroll}
+        data-tl-state={stateAttr(columnsCovered && 'covered')}>
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}
-        <div className="tlTableView__headerRow"
-          style={{
-            minWidth: tableWidth + buttonReserve + scrollbarWidth,
-            paddingRight: buttonReserve + scrollbarWidth,
-          }}>
+        <div className="tl-table__header-row tl-type-label-strong" role="row" aria-rowindex={1}
+          data-tl-axis="horizontal" {...columnReorder.containerProps}
+          style={{ minWidth: tableWidth + buttonReserve + scrollbarWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
-            <div className={'tlTableView__headerCell tlTableView__checkboxCell'
-                + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
-              style={{
-                width: checkboxWidth, minWidth: checkboxWidth,
-                ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
-              }}
-              onDragOver={(e) => {
-                if (!dragColumnRef.current) return;
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                if (columns.length > 0 && columns[0].name !== dragColumnRef.current) {
-                  setDragOver({ column: columns[0].name, side: 'left' });
-                }
-              }}
+            <div role="columnheader"
+              className="tl-table__header-cell tl-table__select"
+              data-tl-state={stateAttr(frozenColumnCount > 0 && 'frozen')}
+              style={{ width: checkboxWidth, minWidth: checkboxWidth, ...(frozenColumnCount > 0 ? { left: 0 } : {}) }}
             >
+              {/* "Some selected" is the box's indeterminate property (headerCheckboxRef), which the
+                  browser reports as mixed; a native checkbox carries no ARIA checked state of its
+                  own (ARIA in HTML, Entscheidung 22). */}
               <input
                 type="checkbox"
                 ref={headerCheckboxRef}
-                className="tlTableView__checkbox"
+                className="tl-checkbox"
+                aria-label={i18n['js.table.selectAll']}
                 checked={allSelected}
                 onChange={handleSelectAll}
               />
@@ -1455,96 +1650,84 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           )}
           {columns.map((col, colIdx) => {
             const w = getColWidth(col);
-            let cellClass = 'tlTableView__headerCell';
-            if (col.sortable) cellClass += ' tlTableView__headerCell--sortable';
-            if (dragOver && dragOver.column === col.name) {
-              cellClass += ' tlTableView__headerCell--dragOver-' + dragOver.side;
-            }
-            const isFrozen = colIdx < frozenColumnCount;
-            const isFrozenLast = colIdx === frozenColumnCount - 1;
-            if (isFrozen) cellClass += ' tlTableView__headerCell--frozen';
-            if (isFrozenLast) cellClass += ' tlTableView__headerCell--frozenLast';
-            const isPinned = !!col.pinnedEnd;
-            if (isPinned) cellClass += ' tlTableView__headerCell--pinnedEnd';
-            if (isPinned && colIdx === lastUnpinnedIdx + 1) {
-              cellClass += ' tlTableView__headerCell--pinnedEndFirst';
-            }
-            if (col.cssClass) cellClass += ' ' + col.cssClass;
+            const { isFrozen, isPinned, words } = placeOf(colIdx);
+            const sortIcon = col.sortDirection === 'asc' ? ICON_SORT_ASC : ICON_SORT_DESC;
+            // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
+            // #29752); only a tooltip the column declares is set here.
+            const label = (
+              <span className="tl-table__label" {...tooltipProps(col.tooltip)}>{col.label}</span>
+            );
+            const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
             return (
               <div
                 key={col.name}
-                className={cellClass}
+                role="columnheader"
+                aria-sort={ariaSort(col)}
+                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
                 data-col={col.name}
                 data-col-idx={colIdx}
+                data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
+                  reorderState(columnReorder.itemState(colIdx)))}
                 style={{
-                  // The last column the user arranges takes the space left over, in the heading
-                  // exactly as in the rows - otherwise the two drift apart as soon as the columns
-                  // no longer fill the table. The configured width is the flex basis, so the cell
-                  // is that wide whatever its content measures: a heading whose label, funnel and
-                  // sort mark need more room than the user gave the column keeps the column's
-                  // width and clips the label instead of pushing its own tail - the resize handle
-                  // included - under the column behind it.
-                  ...(colIdx === lastUnpinnedIdx && !isFrozen
-                    ? { flex: `1 0 ${w}px`, minWidth: w }
-                    : { width: w, minWidth: w }),
-                  position: isFrozen || isPinned ? 'sticky' as const : 'relative' as const,
-                  ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                  ...widthStyle(colIdx, w, isFrozen),
+                  ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
                   // The header ends with the reserve the body's scrollbar and, where it is not in a
-                  // heading, the column button take; its cells therefore stick that much further
-                  // from the right edge than the body's - which is what puts a heading above its
-                  // column at every scroll position.
-                  ...(isPinned
-                    ? {
-                      right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth,
-                      zIndex: 2,
-                    }
-                    : {}),
+                  // heading, the column button take; its cells stick that much further from the right
+                  // edge than the body's - which puts a heading above its column at every scroll position.
+                  ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth } : {}),
                 }}
-                draggable={!isPinned}
-                onClick={col.sortable ? (e) => handleSort(col.name, col.sortDirection, e) : undefined}
+                {...(isPinned ? {} : columnReorder.itemProps(colIdx))}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
-                onDragStart={(e) => handleDragStart(col.name, e)}
-                onDragOver={(e) => handleDragOver(col.name, e)}
-                onDrop={handleDrop}
-                onDragEnd={handleDragEnd}
               >
-                <span className="tlTableView__headerLabel"
-                  {...tooltipProps(col.tooltip)}>{col.label}</span>
-                {col.name === grouping && (
-                  <i className="tlTableView__groupMark bi bi-collection"
-                    {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />
-                )}
-                {col.filterable && (
+                {col.sortable ? (
                   <button
                     type="button"
-                    className={'tlTableView__filterButton'
-                      + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
-                    {...tooltipProps(i18n['js.table.filter'])}
-                    aria-label={i18n['js.table.filter']}
-                    style={{
-                      border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px',
-                      color: col.filterActive ? '#1565c0' : 'inherit',
+                    className="tl-table__sort"
+                    onClick={(e) => handleSort(col.name, col.sortDirection, e)}
+                    onKeyDown={(e) => {
+                      // Enter sorts here, with Shift as a further level: a keyboard click carries no Shift
+                      // in every browser.
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSort(col.name, col.sortDirection, e);
+                      }
                     }}
+                  >
+                    {label}
+                    {col.sortDirection && <ThemeIcon encoded={sortIcon} className="tl-table__mark tl-icon-sm" />}
+                    {col.sortDirection && sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
+                      <span className="tl-badge tl-type-label-strong tl-nums" aria-hidden="true">{col.sortPriority}</span>
+                    )}
+                  </button>
+                ) : label}
+                {col.name === grouping && (
+                  <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
+                    <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
+                  </span>
+                )}
+                {col.filterable && (
+                  // One glyph; an active filter is the column's state (data-tl-state~="filtered",
+                  // icon-primary) and the button's name says so as well.
+                  <button
+                    type="button"
+                    className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-table__filter' })}
+                    {...tooltipProps(filterLabel)}
+                    aria-label={filterLabel}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
                   >
-                    <i className={col.filterActive ? 'bi bi-funnel-fill' : 'bi bi-funnel'} />
+                    <ThemeIcon encoded={ICON_FILTER} className="tl-button__icon tl-icon-sm" />
                   </button>
-                )}
-                {col.sortDirection && (
-                  <span className="tlTableView__sortIndicator">
-                    {col.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}
-                    {sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
-                      <span className="tlTableView__sortPriority">{col.sortPriority}</span>
-                    )}
-                  </span>
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
                   <ColumnsButton label={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
                 )}
                 {!isPinned && (
                   <div
-                    className="tlTableView__resizeHandle"
+                    className="tl-table__resize"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label={i18n['js.table.columnWidth'].replace('{0}', col.label)}
                     onPointerDown={(e) => handleResizeStart(col.name, w, e)}
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => {
@@ -1556,70 +1739,57 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               </div>
             );
           })}
-          {/* Drop zone for reordering past the last column */}
-          <div
-            style={{ flex: '0 0 0', minHeight: '100%' }}
-            onDragOver={(e) => {
-              if (!dragColumnRef.current) return;
-              if (lastUnpinnedIdx >= 0) {
-                const lastCol = columns[lastUnpinnedIdx];
-                if (lastCol.name !== dragColumnRef.current) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                  setDragOver({ column: lastCol.name, side: 'right' });
-                }
-              }
-            }}
-            onDrop={handleDrop}
-          />
         </div>
       </div>
-        {/* Grip on the boundary of the frozen columns. Confined to the header: a grip running down
-            the body would swallow the clicks on the cells behind it. */}
-        <div
-          className={'tlTableView__frozenSplitter'
-            + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
-          style={{ left: frozenWidth }}
-          {...tooltipProps(i18n['js.table.freezeSplitter'])}
-          aria-label={i18n['js.table.freezeSplitter']}
-          onPointerDown={handleFrozenSplitStart}
-        />
-        {columnSelect && !cogInHeaderCell && (
-          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
-        )}
-      </div>
-
-      {/* Scrollable body (focusable so keyboard row navigation can target it) */}
+      {/* Scrollable body; the focus stays on the grid. tabIndex -1: Chromium makes a scrolling
+          element without one a tab stop of its own. */}
       <div
         ref={scrollContainerRef}
-        className="tlTableView__body"
+        className="tl-table__body tl-type-body"
+        role="rowgroup"
+        tabIndex={-1}
+        // A press on the body or a part of it that takes no focus - the empty area below the rows,
+        // the selection cell beside its box - focuses the body (it carries a tabindex); the focus
+        // belongs to the grid, which holds the keyboard and shows the ring.
+        onPointerDown={handleBodyPress}
+        onFocus={(e) => {
+          if (e.target === e.currentTarget) {
+            handleBodyFocus();
+          }
+        }}
         onScroll={handleScroll}
         onKeyDown={handleBodyKeyDown}
-        tabIndex={0}
       >
+        {totalRowCount === 0 && (
+          <div role="row" aria-rowindex={2} aria-level={treegrid ? 1 : undefined}>
+            <div role="gridcell" className="tl-status">{i18n['js.table.empty']}</div>
+          </div>
+        )}
         {/* Spacer for virtual scrolling. Fills the body when the columns are narrower than it, so
             the rows reach the right edge and a cell pinned there lands on it; the reserve is
             padding, so it widens the scroll range without taking any cell along. */}
-        <div style={{
-          height: totalHeight, position: 'relative', minWidth: tableWidth + buttonReserve,
-          paddingRight: buttonReserve,
-        }}>
+        <div className="tl-table__canvas" style={{ height: totalHeight, minWidth: tableWidth + buttonReserve, paddingRight: buttonReserve }}>
+          {missing.map((index) => (
+            <div key={'skeleton-' + index} className="tl-table__placeholder" aria-hidden="true"
+              style={{ position: 'absolute', top: index * rowHeight, height: rowHeight, left: 0, right: 0 }}>
+              <span className="tl-skeleton" />
+            </div>
+          ))}
           {rows.map((row) => (
             <div
               key={row.id}
+              id={rowId(row.index)}
+              role="row"
+              aria-rowindex={row.index + 2}
+              aria-selected={!!row.selected}
+              aria-level={treegrid ? (row.treeDepth ?? 0) + 1 : undefined}
+              aria-expanded={treegrid && row.expandable ? !!row.expanded : undefined}
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
-              className={
-                'tlTableView__row' +
-                (row.selected ? ' tlTableView__row--selected' : '') +
-                (row.index === cursorIndex ? ' tlTableView__row--cursor' : '') +
-                (dropState && dropRefused && dropState.row === row.id ? ' tlTableView__row--dropRefused' : '') +
-                (dropState && !dropRefused && dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id
-                  ? ' ' + ROW_MARKER_CLASS[dropMarker]
-                  : '') +
-                (row.groupCount != null ? ' tlTableView__row--group' : '') +
-                (row.cssClass ? ' ' + row.cssClass : '')
-              }
+              className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
+              // The selection wins over a highlight: a selected row carries no role.
+              data-tl-role={row.selected ? undefined : statusRole(row.cssClass)}
+              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,
@@ -1642,21 +1812,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               }}
               onClick={(e) => handleRowClick(row.index, e)}
               onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, e) : undefined}
-              onDragEnd={dragEnabled && row.draggable !== false ? () => setDropState(null) : undefined}
+              onDragEnd={dragEnabled && row.draggable !== false ? () => { setDropState(null); setDraggedRow(null); } : undefined}
               onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
               {isMulti && (
-                <div className={'tlTableView__cell tlTableView__checkboxCell'
-                    + (frozenColumnCount > 0 ? ' tlTableView__cell--frozen' : '')}
-                  style={{
-                    width: checkboxWidth, minWidth: checkboxWidth,
-                    ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
-                  }}
+                <div role="gridcell"
+                  className="tl-table__cell tl-table__select"
+                  data-tl-state={stateAttr(frozenColumnCount > 0 && 'frozen')}
+                  style={{ width: checkboxWidth, minWidth: checkboxWidth, ...(frozenColumnCount > 0 ? { left: 0 } : {}) }}
                   onClick={(e) => e.stopPropagation()}>
                   {row.groupCount == null && (
+                    // Space at the cursor selects; the box is no stop of its own in the tab order.
                     <input
                       type="checkbox"
-                      className="tlTableView__checkbox"
+                      className="tl-checkbox"
+                      aria-label={i18n['js.table.selectRow']}
                       checked={row.selected}
                       onChange={() => {/* handled by onClick */}}
                       onClick={(e) => handleCheckboxClick(row.index, e)}
@@ -1667,71 +1837,60 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               )}
               {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
-                const isFrozen = colIdx < frozenColumnCount;
-                const isFrozenLast = colIdx === frozenColumnCount - 1;
-                let cellClass = 'tlTableView__cell';
-                if (isFrozen) cellClass += ' tlTableView__cell--frozen';
-                if (isFrozenLast) cellClass += ' tlTableView__cell--frozenLast';
-                const isPinned = !!col.pinnedEnd;
-                if (isPinned) cellClass += ' tlTableView__cell--pinnedEnd';
-                if (isPinned && colIdx === lastUnpinnedIdx + 1) {
-                  cellClass += ' tlTableView__cell--pinnedEndFirst';
-                }
-                if (col.cssClass) cellClass += ' ' + col.cssClass;
+                const { isFrozen, isPinned, words } = placeOf(colIdx);
                 const rowCellClass = row.cellClasses?.[col.name];
-                if (rowCellClass) cellClass += ' ' + rowCellClass;
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
-                // What the cell says: the tooltip of its content where it has one, its own text
-                // while the column is too narrow to read it otherwise. In the tree column the
-                // declaration sits on the value, so the expand toggle and the group size - which
-                // are the cell's text as much as the value is - stay out of it.
+                // What the cell says: the tooltip of its content where it has one, its own text while
+                // the column is too narrow to read it otherwise. In the tree column the declaration
+                // sits on the value, so the toggle and the group size stay out of it.
                 const cellTooltip = row.tooltips?.[col.name];
                 const cellTooltipProps = cellTooltip ? tooltipProps(cellTooltip) : TOOLTIP_WHEN_CLIPPED;
+                const toggleLabel = row.expanded ? i18n['js.treeView.collapse'] : i18n['js.treeView.expand'];
                 return (
                   <div
                     key={col.name}
-                    className={cellClass}
+                    role="gridcell"
+                    className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')
+                      + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
+                    data-tl-state={stateAttr(...words)}
+                    data-tl-role={row.selected ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
-                      // The last column the user arranges takes the space left over; a pinned
-                      // column keeps its width, so the space stays in front of it. The configured
-                      // width is the flex basis, as in the heading, so that cell and heading are
-                      // the same width whatever either of them holds.
-                      ...(colIdx === lastUnpinnedIdx && !isFrozen
-                        ? { flex: `1 0 ${w}px`, minWidth: w }
-                        : { width: w, minWidth: w }),
-                      ...(isFrozen ? { position: 'sticky' as const, left: frozenOffsets[colIdx], zIndex: 2 } : {}),
-                      ...(isPinned
-                        ? {
-                          position: 'sticky' as const,
-                          right: pinnedOffsets[colIdx] + buttonReserve,
-                          zIndex: 2,
-                        }
-                        : {}),
+                      ...widthStyle(colIdx, w, isFrozen),
+                      ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
+                      ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve } : {}),
                     }}
                   >
                     {isTreeColumn ? (
-                      <div className="tlTableView__treeCell" style={{ paddingLeft: treeDepth * treeIndentWidth }}>
+                      <div className="tl-table__tree" style={{ paddingInlineStart: treeDepth * treeIndentWidth }}>
                         {row.expandable ? (
+                          // The toggle opens its own row, so it points at no other element. A press
+                          // keeps the focus where it is - on the grid, whose ring stays at the cursor.
                           <button
-                            className="tlTableView__treeToggle"
+                            type="button"
+                            className="tl-toggle"
+                            tabIndex={-1}
+                            aria-expanded={!!row.expanded}
+                            aria-label={toggleLabel}
+                            {...tooltipProps(toggleLabel)}
+                            onMouseDown={(e) => e.preventDefault()}
                             onClick={(e) => handleExpand(row.index, !row.expanded, e)}
                           >
-                            {row.expanded ? '\u25BE' : '\u25B8'}
+                            <ThemeIcon encoded={ICON_EXPAND} className="tl-icon-sm" />
                           </button>
                         ) : (
-                          <span className="tlTableView__treeToggleSpacer" />
+                          <span className="tl-table__spacer" />
                         )}
                         {/* A row that predates the current columns has no control for a newly shown
-                            column yet \u2014 leave that cell empty rather than tearing down the table. */}
-                        <span className="tlTableView__treeValue" {...cellTooltipProps}>
+                            column yet - leave that cell empty rather than tearing down the table. */}
+                        <span className="tl-table__value" {...cellTooltipProps}>
                           {!!row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
                         </span>
                         {row.groupCount != null && (
-                          <span className="tlTableView__groupCount">({row.groupCount})</span>
+                          <span className="tl-table__count tl-type-label">({row.groupCount})</span>
                         )}
                       </div>
                     ) : (
@@ -1744,22 +1903,37 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </div>
       </div>
+      </div>
+
+        {/* Grip on the boundary of the frozen columns, confined to the heading: a grip running down
+            the body would swallow the clicks on the cells behind it. */}
+        <div
+          className="tl-table__freeze"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={i18n['js.table.freezeSplitter']}
+          style={{ left: frozenWidth }}
+          {...tooltipProps(i18n['js.table.freezeSplitter'])}
+          onPointerDown={handleFrozenSplitStart}
+        />
+        {columnSelect && !cogInHeaderCell && (
+          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
+        )}
+        {/* Where the frozen area would end if the grip were dropped now, over heading and rows. */}
+        {frozenPreview && (
+          <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />
+        )}
+      </div>
 
       {/* The row count below the rows, outside the scroller, so it stays in view wherever the rows
           are scrolled to. A live region, so a screen reader hears the count a filter leaves. */}
       {rowCount !== '' && (
-        <div className="tlTableView__footer" role="status" aria-live="polite">
-          <span className="tlTableView__rowCount">{rowCount}</span>
+        <div className="tl-table__footer tl-type-label" role="status" aria-live="polite">
+          <span className="tl-table__row-count">{rowCount}</span>
           {rowCountSelected !== '' && (
-            <span className="tlTableView__rowCountSelected">{rowCountSelected}</span>
+            <span className="tl-table__selection-count">{rowCountSelected}</span>
           )}
         </div>
-      )}
-
-      {/* Where the frozen area would end if the splitter were dropped now. Drawn over the whole
-          table, so the boundary can be judged against the rows, not only against the headings. */}
-      {frozenPreview && (
-        <div className="tlTableView__frozenPreview" style={{ left: frozenPreview.x }} />
       )}
 
       {/* Column context menu */}

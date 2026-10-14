@@ -14,5 +14,9 @@
 			overflow="ellipsis"
 			tone="error"
 		/>
+		<text
+			label="Unnamed"
+			tone="placeholder"
+		/>
 	</stack>
 </view>

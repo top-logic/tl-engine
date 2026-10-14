@@ -17,4 +17,9 @@ public interface B1Base extends test.com.top_logic.element.meta.model.ticket2851
 	 */
 	String B1_TYPE = "B1";
 
+	/**
+	 * Name of the table storing {@link #B1_TYPE} objects.
+	 */
+	String TABLE_NAME = "Ticket28519_B1";
+
 }

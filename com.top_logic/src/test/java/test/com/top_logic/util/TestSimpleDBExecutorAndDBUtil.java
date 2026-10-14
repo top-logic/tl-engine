@@ -16,10 +16,12 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.sql.ConnectionPool;
+import com.top_logic.basic.sql.ConnectionPoolAdapter;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
-import com.top_logic.knowledge.service.CommitHandler;
+import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.SimpleDBExecutor;
@@ -329,13 +331,6 @@ public class TestSimpleDBExecutorAndDBUtil extends BasicTestCase {
             catch (IllegalArgumentException e) {
                 // expected;
             }
-            try {
-                db.beginTransaction((CommitHandler)kb);
-                fail("Expected IllegalArgumentException.");
-            }
-            catch (IllegalArgumentException e) {
-                // expected;
-            }
 
 			assertEquals(1, db.executeUpdate("INSERT INTO " + testDBUtiltableRef + " VALUES (?, ?, ?, ?, ?)",
 				params("TEST12", null, null, null, null)));
@@ -471,155 +466,75 @@ public class TestSimpleDBExecutorAndDBUtil extends BasicTestCase {
         }
         finally {
             db.closeTransaction();
-            db.releaseCommitContext();
         }
 
     }
 
+	/**
+	 * Tests that a transaction completed by commit or rollback returns its connection to the pool,
+	 * while a transaction aborted by a failure drops its connection.
+	 */
+	public void testSimpleDBExecutorDropsConnectionOfAbortedTransaction() throws Exception {
+		RecordingPool pool = new RecordingPool(ConnectionPoolRegistry.getDefaultConnectionPool());
+		SimpleDBExecutor db = new SimpleDBExecutor(pool);
 
+		db.beginTransaction();
+		try {
+			db.commitTransaction();
+		} finally {
+			db.closeTransaction();
+		}
+		assertEquals(1, pool._released);
+		assertEquals(0, pool._invalidated);
 
-    public void testSimpleDBExecutorKB() throws Exception {
-		DBHelper sqlDialect = sqlDialect();
-		String testDBUtiltableRef = sqlDialect.tableRef("TEST_DBUTIL");
-		assertFalse(DBUtil.executeQueryAsBoolean("SELECT * FROM " + testDBUtiltableRef));
-        KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-        SimpleDBExecutor db = new SimpleDBExecutor();
+		db.beginTransaction();
+		try {
+			db.rollbackTransaction();
+		} finally {
+			db.closeTransaction();
+		}
+		assertEquals(2, pool._released);
+		assertEquals(0, pool._invalidated);
 
-        try {
-            try {
-				db.executeUpdate("INSERT INTO " + testDBUtiltableRef + " VALUES (?, ?, ?, ?, ?)",
-					params("TEST19", null, null, null, null));
-                fail("Expected IllegalArgumentException.");
-            }
-            catch (IllegalArgumentException e) {
-                // expected;
-            }
+		db.beginTransaction();
+		try {
+			db.executeUpdate("INSERT INTO " + sqlDialect().tableRef("NO_SUCH_TABLE") + " VALUES (1)");
+			fail("Expected SQLException.");
+		} catch (SQLException ex) {
+			// expected
+		} finally {
+			db.closeTransaction();
+		}
+		assertEquals(2, pool._released);
+		assertEquals(1, pool._invalidated);
+		assertNull(db.getTransactionConnection());
+	}
 
-            assertNull(db.getTransactionConnection());
-            db.beginTransaction((CommitHandler)kb);
-            assertNotNull(db.getTransactionConnection());
+	/**
+	 * {@link ConnectionPool} counting the write connections given back to it.
+	 */
+	private static class RecordingPool extends ConnectionPoolAdapter {
 
-            try {
-                db.beginTransaction();
-                fail("Expected IllegalArgumentException.");
-            }
-            catch (IllegalArgumentException e) {
-                // expected;
-            }
+		int _released;
 
-			assertEquals(1, db.executeUpdate("INSERT INTO " + testDBUtiltableRef + " VALUES (?, ?, ?, ?, ?)",
-				params("TEST12", null, null, null, null)));
+		int _invalidated;
 
-			String testIDColumnRef = sqlDialect.columnRef("TEST_ID");
+		RecordingPool(ConnectionPool impl) {
+			super(impl);
+		}
 
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST11'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'"));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST11'", null));
-			assertTrue(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM " + testDBUtiltableRef
-				+ " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'", null));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST13'", null));
+		@Override
+		public void releaseWriteConnection(PooledConnection connection) {
+			_released++;
+			super.releaseWriteConnection(connection);
+		}
 
-            try {
-                db.commitTransaction();
-                fail("Expected IllegalArgumentException.");
-            }
-            catch (IllegalArgumentException e) {
-                // expected;
-            }
+		@Override
+		public void invalidateWriteConnection(PooledConnection connection) {
+			_invalidated++;
+			super.invalidateWriteConnection(connection);
+		}
 
-            assertNotNull(db.getTransactionConnection());
-            // assert nothing has changed as this is a own connection
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST11'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'"));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST11'", null));
-			assertTrue(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM " + testDBUtiltableRef
-				+ " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'", null));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST13'", null));
-
-            kb.commit();
-            assertNull(db.getTransactionConnection());
-
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST11'"));
-			assertTrue(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'"));
-            db.beginTransaction((CommitHandler)kb);
-            assertNotNull(db.getTransactionConnection());
-
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST11'"));
-			assertTrue(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'"));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST11'", null));
-			assertTrue(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM " + testDBUtiltableRef
-				+ " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'", null));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST13'", null));
-
-			assertEquals(1, db.executeUpdate(
-				"INSERT INTO " + testDBUtiltableRef + " VALUES (?, NULL, NULL, NULL, NULL)", params("TEST13")));
-
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST11'"));
-			assertTrue(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'"));
-			assertFalse(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM "
-				+ testDBUtiltableRef + " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef
-				+ " = 'TEST11'", null));
-			assertTrue(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM " + testDBUtiltableRef
-				+ " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'", null));
-			assertTrue(DBUtil.executeQueryAsBoolean(db.getTransactionConnection(), "SELECT 1 FROM " + testDBUtiltableRef
-				+ " " + sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'", null));
-
-            kb.rollback();
-            assertNull(db.getTransactionConnection());
-
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST11'"));
-			assertTrue(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST12'"));
-			assertFalse(DBUtil.executeQueryAsBoolean("SELECT 1 FROM " + testDBUtiltableRef + " "
-				+ sqlDialect.selectNoBlockHint() + " WHERE " + testIDColumnRef + " = 'TEST13'"));
-
-            try {
-				db.executeUpdate("INSERT INTO " + testDBUtiltableRef + " VALUES (?, ?, ?, ?, ?)",
-					params("TEST19", null, null, null, null));
-                fail("Expected IllegalArgumentException.");
-            }
-            catch (IllegalArgumentException e) {
-                // expected;
-            }
-        }
-        finally {
-            db.closeTransaction();
-            db.releaseCommitContext();
-        }
-
-    }
+	}
 
 }

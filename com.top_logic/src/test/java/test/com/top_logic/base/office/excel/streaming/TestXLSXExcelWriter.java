@@ -5,9 +5,13 @@
  */
 package test.com.top_logic.base.office.excel.streaming;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import junit.framework.Test;
+
+import test.com.top_logic.base.office.ZipGaps;
 
 import com.top_logic.base.office.excel.streaming.ExcelWriter;
 
@@ -23,6 +27,19 @@ public class TestXLSXExcelWriter extends AbstractExcelWriterTest {
 	@Override
 	protected ExcelWriter newExcelWriter() throws IOException {
 		return ExcelWriter.createStreamingWriter();
+	}
+
+	/**
+	 * Writes a ZIP archive without gaps between its entries, which LibreOffice would report as
+	 * corrupt.
+	 */
+	public void testArchiveWithoutGaps() throws IOException {
+		ExcelWriter writer = newExcelWriter();
+		writer.newTable("sheet");
+		writer.write("value");
+		File file = writer.close();
+
+		assertNull(ZipGaps.findGap(Files.readAllBytes(file.toPath())));
 	}
 
 	/**

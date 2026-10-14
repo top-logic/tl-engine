@@ -1,0 +1,8 @@
+<data>
+	<strict-update ref="missing1" note="reported"/>
+	<strict-item other="missing2" others="n1 missing6"/>
+	<update ref="missing3" note="ignored"/>
+	<item id="n1" other="missing4"/>
+	<update ref="missing5" note="ignored"/>
+	<strict-update ref="missing5" note="reported"/>
+</data>

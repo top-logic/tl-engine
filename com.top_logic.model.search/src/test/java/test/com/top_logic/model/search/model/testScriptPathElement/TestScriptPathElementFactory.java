@@ -17,25 +17,33 @@ package test.com.top_logic.model.search.model.testScriptPathElement;
 public class TestScriptPathElementFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of singleton {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT1 = "ROOT1";
 
 	/**
-	 * Name of singleton {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of singleton {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT2 = "ROOT2";
 
 	/**
-	 * Name of the structure <code>TestScriptPathElement</code> defined by {@link TestScriptPathElementFactory}.
+	 * Name of the module <code>TestScriptPathElement</code> defined by {@link TestScriptPathElementFactory}.
 	 */
-	public static final String TEST_SCRIPT_PATH_ELEMENT_STRUCTURE = "TestScriptPathElement";
+	public static final String TEST_SCRIPT_PATH_ELEMENT_MODULE = "TestScriptPathElement";
+
+	/**
+	 * Name of the structure <code>TestScriptPathElement</code> defined by {@link TestScriptPathElementFactory}.
+	 * 
+	 * @deprecated Use {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
+	 */
+	@Deprecated
+	public static final String TEST_SCRIPT_PATH_ELEMENT_STRUCTURE = TEST_SCRIPT_PATH_ELEMENT_MODULE;
 
 	/**
 	 * Lookup {@link Named} type.
 	 */
 	public static com.top_logic.model.TLClass getNamedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(Named.NAMED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(Named.NAMED_TYPE);
 	}
 
 	/**
@@ -49,7 +57,7 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	 * Lookup {@link Assignment} type.
 	 */
 	public static com.top_logic.model.TLClass getAssignmentType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(Assignment.ASSIGNMENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(Assignment.ASSIGNMENT_TYPE);
 	}
 
 	/**
@@ -84,14 +92,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	 * Lookup {@link Plant} type.
 	 */
 	public static com.top_logic.model.TLClass getPlantType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(Plant.PLANT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(Plant.PLANT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Plants} type.
 	 */
 	public static com.top_logic.model.TLClass getPlantsType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(Plants.PLANTS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(Plants.PLANTS_TYPE);
 	}
 
 	/**
@@ -112,14 +120,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	 * Lookup {@link ZArea} type.
 	 */
 	public static com.top_logic.model.TLClass getZAreaType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(ZArea.Z_AREA_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(ZArea.Z_AREA_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ZAreaInstance} type.
 	 */
 	public static com.top_logic.model.TLClass getZAreaInstanceType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(ZAreaInstance.Z_AREA_INSTANCE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(ZAreaInstance.Z_AREA_INSTANCE_TYPE);
 	}
 
 	/**
@@ -133,7 +141,7 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	 * Lookup {@link Assembly} type.
 	 */
 	public static com.top_logic.model.TLClass getAssemblyType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE).getType(Assembly.ASSEMBLY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_SCRIPT_PATH_ELEMENT_MODULE).getType(Assembly.ASSEMBLY_TYPE);
 	}
 
 	/**
@@ -158,7 +166,7 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	}
 
 	/**
-	 * Name of type <code>Named</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>Named</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Named#NAMED_TYPE}.
 	 */
@@ -166,7 +174,7 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	public static final String NAMED_NODE = Named.NAMED_TYPE;
 
 	/**
-	 * Name of type <code>Assignment</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>Assignment</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Assignment#ASSIGNMENT_TYPE}.
 	 */
@@ -175,11 +183,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 
 	/**
 	 * Storage table name of {@link #ASSIGNMENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testScriptPathElement.impl.AssignmentBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ASSIGNMENT = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ASSIGNMENT = test.com.top_logic.model.search.model.testScriptPathElement.impl.AssignmentBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Plant</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>Plant</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Plant#PLANT_TYPE}.
 	 */
@@ -188,11 +199,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 
 	/**
 	 * Storage table name of {@link #PLANT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testScriptPathElement.impl.PlantBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PLANT = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_PLANT = test.com.top_logic.model.search.model.testScriptPathElement.impl.PlantBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Plants</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>Plants</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Plants#PLANTS_TYPE}.
 	 */
@@ -201,11 +215,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 
 	/**
 	 * Storage table name of {@link #PLANTS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testScriptPathElement.impl.PlantsBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PLANTS = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_PLANTS = test.com.top_logic.model.search.model.testScriptPathElement.impl.PlantsBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ZArea</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>ZArea</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link ZArea#Z_AREA_TYPE}.
 	 */
@@ -214,11 +231,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 
 	/**
 	 * Storage table name of {@link #Z_AREA_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testScriptPathElement.impl.ZAreaBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_Z_AREA = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_Z_AREA = test.com.top_logic.model.search.model.testScriptPathElement.impl.ZAreaBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ZAreaInstance</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>ZAreaInstance</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link ZAreaInstance#Z_AREA_INSTANCE_TYPE}.
 	 */
@@ -227,11 +247,14 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 
 	/**
 	 * Storage table name of {@link #Z_AREA_INSTANCE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testScriptPathElement.impl.ZAreaInstanceBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_Z_AREA_INSTANCE = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_Z_AREA_INSTANCE = test.com.top_logic.model.search.model.testScriptPathElement.impl.ZAreaInstanceBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Assembly</code> in structure {@link #TEST_SCRIPT_PATH_ELEMENT_STRUCTURE}.
+	 * Name of type <code>Assembly</code> in module {@link #TEST_SCRIPT_PATH_ELEMENT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Assembly#ASSEMBLY_TYPE}.
 	 */
@@ -240,8 +263,11 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 
 	/**
 	 * Storage table name of {@link #ASSEMBLY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testScriptPathElement.impl.AssemblyBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ASSEMBLY = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ASSEMBLY = test.com.top_logic.model.search.model.testScriptPathElement.impl.AssemblyBase.TABLE_NAME;
 
 	/**
 	 * Singleton <code>ROOT1</code>.
@@ -374,6 +400,6 @@ public class TestScriptPathElementFactory extends com.top_logic.element.structur
 	 * The singleton instance of {@link TestScriptPathElementFactory}.
 	 */
 	public static TestScriptPathElementFactory getInstance() {
-		return (TestScriptPathElementFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_SCRIPT_PATH_ELEMENT_STRUCTURE);
+		return (TestScriptPathElementFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_SCRIPT_PATH_ELEMENT_MODULE);
 	}
 }

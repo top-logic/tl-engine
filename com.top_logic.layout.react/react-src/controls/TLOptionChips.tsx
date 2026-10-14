@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
+import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues, optionRoleAttr } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
@@ -98,6 +98,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
             key={option.value}
             type="button"
             className="tl-chip tl-type-label"
+            data-tl-role={optionRoleAttr(option)}
             aria-pressed={selected}
             disabled={disabled}
             onClick={() => toggle(option)}

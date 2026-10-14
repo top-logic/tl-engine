@@ -9,15 +9,20 @@
 	both are reflected in the rows without a reload. A project being created has its creator as
 	administrator, so the creator sees and administers it once it is created.
 	
-	Above the table, a new budget for the selected project is applied in place: each edit the user
-	finishes - Enter, or leaving the input after a change - stores the entered budget
-	(submit-on="change"), which the budget column then shows. A negative budget is refused with an
-	error message.
+	Above the table, a new budget for the selected project is applied in place. The budget channel is
+	initialized from the selected project (init over the input project): the field shows the stored
+	budget of the selected project and follows the selection. Each edit the user finishes - Enter,
+	or leaving the input after a change - stores the entered budget (submit-on="change"), which the
+	budget column and, through the observation of the project, the field then show. A negative
+	budget is refused with an error message.
 -->
 <view>
 	<channels>
 		<channel name="project"/>
-		<channel name="budget"/>
+		<channel name="budget"
+			init="p -> if($p == null, null, $p.get(`tl.demo.projectManagement:ProjectScope#budget`))"
+			inputs="project"
+		/>
 	</channels>
 
 	<panel>

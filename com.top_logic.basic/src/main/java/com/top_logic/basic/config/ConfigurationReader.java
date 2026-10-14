@@ -1069,15 +1069,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 		private void errorInvalidAttributeConfiguration(XMLStreamReader reader, PropertyDescriptor property,
 				Exception ex, String attributeValue) {
-			StringBuilder invalidConfigError = new StringBuilder();
-			invalidConfigError.append("Invalid value '");
-			invalidConfigError.append(attributeValue);
-			invalidConfigError.append("'");
-			appendForProperty(invalidConfigError, property);
-			appendAtLocation(invalidConfigError, reader);
-			appendException(invalidConfigError, ex);
-			invalidConfigError.append(".");
-			context.error(invalidConfigError.toString(), ex);
+			context.error(messageInvalidValue(reader, property, attributeValue, ex), ex);
 		}
 
 		private XMLStreamException errorInvalidComplexValue(XMLStreamReader reader, PropertyDescriptor property,
@@ -1142,9 +1134,13 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		private String messageInvalidValue(XMLStreamReader reader, PropertyDescriptor property, CharSequence value,
 				Throwable ex) {
 			StringBuilder invalidConfigError = new StringBuilder();
-			invalidConfigError.append("Invalid value '");
-			invalidConfigError.append(value);
-			invalidConfigError.append("'");
+			invalidConfigError.append("Invalid value");
+			// The value of an encrypted property is a secret.
+			if (!property.isEncrypted()) {
+				invalidConfigError.append(" '");
+				invalidConfigError.append(value);
+				invalidConfigError.append("'");
+			}
 			appendForProperty(invalidConfigError, property);
 			appendAtLocation(invalidConfigError, reader);
 			appendException(invalidConfigError, ex);

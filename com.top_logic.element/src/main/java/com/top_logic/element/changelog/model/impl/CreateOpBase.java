@@ -45,6 +45,11 @@ public interface CreateOpBase extends com.top_logic.element.changelog.model.Oper
 	String TYPE_ATTR = "type";
 
 	/**
+	 * Name of the table storing {@link #CREATE_OP_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ID_ATTR}.
 	 */
 	default Long getId() {

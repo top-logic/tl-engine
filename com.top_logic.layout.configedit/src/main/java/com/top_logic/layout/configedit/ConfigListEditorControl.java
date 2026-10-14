@@ -32,6 +32,7 @@ import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.common.TextTone;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
@@ -63,8 +64,6 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class ConfigListEditorControl extends ReactFormLayoutControl {
-
-	private static final String PLACEHOLDER_CSS = "tlText--placeholder";
 
 	private record Label(String text, boolean placeholder) {
 	}
@@ -697,7 +696,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	private ReactTextControl createHeaderControl(Label label) {
-		return new ReactTextControl(_context, label.text(), label.placeholder() ? PLACEHOLDER_CSS : null);
+		ReactTextControl header = new ReactTextControl(_context, label.text(), null);
+		if (label.placeholder()) {
+			header.setTone(TextTone.PLACEHOLDER);
+		}
+		return header;
 	}
 
 	/**

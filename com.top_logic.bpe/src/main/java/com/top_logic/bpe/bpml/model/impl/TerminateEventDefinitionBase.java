@@ -17,4 +17,9 @@ public interface TerminateEventDefinitionBase extends com.top_logic.bpe.bpml.mod
 	 */
 	String TERMINATE_EVENT_DEFINITION_TYPE = "TerminateEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #TERMINATE_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

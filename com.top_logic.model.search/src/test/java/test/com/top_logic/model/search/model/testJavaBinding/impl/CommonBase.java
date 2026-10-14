@@ -26,4 +26,9 @@ public interface CommonBase extends com.top_logic.model.TLNamed {
 	 */
 	String NAME_ATTR = "name";
 
+	/**
+	 * Name of the table storing {@link #COMMON_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

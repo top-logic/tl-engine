@@ -16,4 +16,7 @@
 	<icon name="SAVE_SCRIPT_AS"
 		value="colored:fas fa-save overlay-add"
 	/>
+	<icon name="DOWNLOAD_SCRIPT"
+		value="css:fas fa-file-download"
+	/>
 </settings>

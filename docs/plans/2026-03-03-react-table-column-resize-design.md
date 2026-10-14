@@ -1,5 +1,7 @@
 # React Table Column Resize — Design
 
+> alt (bis Welle 3b): `.tlTableView*`, `.tlTreeView*`, `.tlColumnSelect*`, `.tlColumns*`, `.tlText*` are now `tl-table`, `tl-tree`, `tl-reorder-list`, `tl-columns`, `tl-text` (design system).
+
 ## Interaction
 
 - Drag handle on the right border of each header cell (~5px invisible hit area, `col-resize` cursor).

@@ -70,6 +70,26 @@ public interface DropTarget {
 	}
 
 	/**
+	 * The modes of the operations this target currently offers for a drag of the given kind.
+	 *
+	 * <p>
+	 * The client splits an item by the modes of the kind it drags. A target that inserts the objects
+	 * of one kind among its items and drops the objects of another kind onto an item therefore splits
+	 * an item in halves for the first kind and takes it as a whole for the second - in thirds, which
+	 * {@link #dropModes() all its modes} together need, the middle would refuse the first kind and
+	 * the upper and lower part the second.
+	 * </p>
+	 *
+	 * @param kind
+	 *        One of the {@link AcceptedKinds#kinds() listed kinds} the target accepts.
+	 * @return The modes of the operations accepting a drag of the kind, in the order of
+	 *         {@link #dropModes()}. By default all of {@link #dropModes()}.
+	 */
+	default Set<DropMode> dropModes(String kind) {
+		return dropModes();
+	}
+
+	/**
 	 * Whether this target accepts the given drop, and at which location.
 	 *
 	 * <p>

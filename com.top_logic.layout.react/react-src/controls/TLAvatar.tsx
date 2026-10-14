@@ -1,43 +1,26 @@
-import { React, useTLState, rootClassName, tooltipProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
-import { useImageSrc } from './imageSource';
-
-/** Derives up to two initials from a display name. */
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) {
-    return '?';
-  }
-  if (words.length === 1) {
-    return words[0].slice(0, 2).toUpperCase();
-  }
-  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-}
-
-/**
- * Maps a name to one of the eight category roles of the design system, 1 to 8. The same name gives
- * the same category everywhere; the category, not a color value, is what reaches the stylesheet.
- */
-export function categoryOf(name: string): number {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) | 0;
-  }
-  return 1 + (Math.abs(hash) % 8);
-}
+import {
+  React,
+  useTLState,
+  useImageSrc,
+  avatarInitials,
+  avatarCategory,
+  rootClassName,
+  tooltipProps,
+} from 'tl-react-bridge';
+import type { TLCellProps, AvatarStateJson } from 'tl-react-bridge';
 
 /**
  * The scale abbreviation of an external size name, which the CSS classes of the design system carry.
  * `medium` - and a missing size - is the step without a modifier.
  */
-const SIZE_CLASS: Record<string, string> = {
+const SIZE_CLASS: Partial<Record<AvatarStateJson.Size, string>> = {
   small: 'sm',
   large: 'lg',
   'x-large': 'xl',
 };
 
 /** The type class the initials of a size read in - set from outside, as the design system asks. */
-const TYPE_CLASS: Record<string, string> = {
+const TYPE_CLASS: Record<AvatarStateJson.Size, string> = {
   small: 'tl-type-label-strong',
   medium: 'tl-type-body-strong',
   large: 'tl-type-heading-md',
@@ -49,17 +32,14 @@ const TYPE_CLASS: Record<string, string> = {
  * of the one it represents; where there is none, initials on the category the display name maps
  * to; without a name, the neutral circle.
  *
- * State:
- * - name: string | null
- * - size: "small" | "medium" | "large" | "x-large" - medium when absent
- * - url / hasData / dataRevision: the picture, see useImageSrc
+ * The state is described by AvatarStateJson.
  */
 const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<AvatarStateJson>>();
   const src = useImageSrc();
 
-  const name = state.name as string | null;
-  const size = (state.size as string) ?? 'medium';
+  const name = state.name;
+  const size = state.size ?? 'medium';
   const abbreviation = SIZE_CLASS[size];
   const sizeClass = abbreviation ? `tl-avatar--${abbreviation}` : '';
 
@@ -90,15 +70,16 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       className={rootClassName(
         state,
-        ['tl-avatar', sizeClass, `tl-avatar--category-${categoryOf(name)}`, TYPE_CLASS[size] ?? TYPE_CLASS.medium]
+        ['tl-avatar', sizeClass, TYPE_CLASS[size] ?? TYPE_CLASS.medium]
           .filter(Boolean)
           .join(' ')
       )}
+      data-tl-role={`category-${avatarCategory(name)}`}
       role="img"
       aria-label={name}
       {...tooltipProps(name)}
     >
-      {initials(name)}
+      {avatarInitials(name)}
     </span>
   );
 };

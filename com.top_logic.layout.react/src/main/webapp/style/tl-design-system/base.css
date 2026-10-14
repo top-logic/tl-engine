@@ -113,10 +113,34 @@ body {
   border: 0;
 }
 
-/* Der Ring gehört der Tastatur. Ein Mechanismus, außen, nur beim Tastaturfokus. */
-:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
+/* Der Ring gehört der Tastatur. Ein Mechanismus, außen, nur beim Tastaturfokus.
+   Ein Behälter mit virtuellem Cursor (Tabelle, Baum: aria-activedescendant, 3a §5.4, 3b §3) trägt ihn
+   nicht selbst: der Ring liegt innen am Element mit data-tl-state~="cursor". Gezeichnet wird er von
+   dessen ::after, einer Fläche über dem Element — haftende Zellen überdecken den eigenen Umriss einer
+   Zeile. Ein Feld mit aria-activedescendant ist kein Behälter und behält den Ring: das Suchfeld eines
+   Select (input) und das Select ohne Suchfeld (role=combobox) — ihr Cursor steht im Popup. */
+:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):where(:not(:not(input, textarea, [role="combobox"])[aria-activedescendant])):focus-visible,
+:where(:not(input, textarea, [role="combobox"])[aria-activedescendant]:focus-visible [data-tl-state~="cursor"])::after {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
   outline-offset: var(--tl-focus-offset);
+}
+
+/* Die Fläche des Cursor-Rings: deckungsgleich mit dem Element, über seinen haftenden Zellen
+   (layer-sticky; der Behälter isoliert den Stapel), für den Zeiger durchlässig, der Ring nach innen. */
+:where(:not(input, textarea, [role="combobox"])[aria-activedescendant] [data-tl-state~="cursor"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-sticky);
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+  pointer-events: none;
+}
+
+/* Der Behälter mit virtuellem Cursor zeichnet kein Browser-Outline (Spec 3b §3): der Ring liegt am
+   Cursor-Element. Die einzige Ausnahme vom Ring, nur dieser Selektor. Ohne Cursor-Element setzt die
+   Engine kein aria-activedescendant (WCAG 2.4.7) — dann gilt der normale Ring. */
+:where(:not(input, textarea, [role="combobox"])[aria-activedescendant]):focus-visible {
+  outline-style: none;
 }
 
 /* Icons: drei Stufen nach Rolle plus Glyph im Control — siehe skalen.md „Icons“.

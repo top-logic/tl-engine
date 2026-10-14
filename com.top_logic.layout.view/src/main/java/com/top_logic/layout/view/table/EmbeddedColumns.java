@@ -349,7 +349,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			null,
 			aggregate == null ? null : rows -> aggregate.apply(objects(rows, navigation)),
 			comparator != null && target.multiple() ? ColumnSetup.elementwise(comparator) : comparator,
-			setup.hiddenByDefault());
+			setup.hiddenByDefault(),
+			setup.export());
 	}
 
 	/** The name of an embedded column, under the path leading to the object it shows. */

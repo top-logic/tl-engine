@@ -27,6 +27,11 @@ public interface LocationBase extends com.top_logic.demo.model.dnd.NamedPlanElem
 	String ENTRY_ATTR = "entry";
 
 	/**
+	 * Name of the table storing {@link #LOCATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ENTRY_ATTR}.
 	 */
 	default com.top_logic.demo.model.dnd.Entry getEntry() {

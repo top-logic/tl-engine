@@ -17,4 +17,9 @@ public interface Sub2Base extends test.com.top_logic.importer.data.struct.TestSt
 	 */
 	String SUB2_TYPE = "Sub2";
 
+	/**
+	 * Name of the table storing {@link #SUB2_TYPE} objects.
+	 */
+	String TABLE_NAME = "StructuredElement";
+
 }

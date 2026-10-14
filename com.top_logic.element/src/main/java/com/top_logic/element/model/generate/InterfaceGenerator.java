@@ -25,6 +25,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
@@ -62,6 +63,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 			nl();
 			writeTypeNameConstant();
 			writePartConstants();
+			writeTableNameConstant();
 			writeParts();
 		}
 		line("}");
@@ -72,6 +74,23 @@ public class InterfaceGenerator extends BaseClassGenerator {
 		commentLine("Name of type <code>" + typeName() + "</code>");
 		javadocStop();
 		line("String " + typeNameConstant(type()) + " = " + toStringLiteral(typeName()) + ";");
+		nl();
+	}
+
+	private void writeTableNameConstant() {
+		if (!(type() instanceof TLClass)) {
+			return;
+		}
+		TLClass type = (TLClass) type();
+		if (type.isAbstract()) {
+			/* Abstract types are not stored in tables. When they have a table annotation it is just
+			 * a template for concrete specialisations. */
+			return;
+		}
+		javadocStart();
+		commentLine("Name of the table storing {@link #" + typeNameConstant(type) + "} objects.");
+		javadocStop();
+		line("String " + TABLE_NAME_CONSTANT + " = " + toStringLiteral(TLAnnotations.getTable(type)) + ";");
 		nl();
 	}
 
@@ -276,12 +295,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 
 	private void writeImports() {
 		if (generalizations(type()).isEmpty() && !(noGetter() && noSetter())) {
-			if (isStructure(module())) {
-				checkElementClassesAllowedInStructures();
-				importLine("com.top_logic.element.structured.StructuredElement");
-			} else {
-				importLine("com.top_logic.knowledge.wrap.Wrapper");
-			}
+			importLine("com.top_logic.knowledge.wrap.Wrapper");
 			nl();
 		}
 	}

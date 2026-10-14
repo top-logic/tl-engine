@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -45,6 +45,24 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	String DATE_ATTR = "date";
 
 	/**
+	 * Part <code>isRedo</code> of <code>ChangeSet</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String IS_REDO_ATTR = "isRedo";
+
+	/**
+	 * Part <code>isRevert</code> of <code>ChangeSet</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String IS_REVERT_ATTR = "isRevert";
+
+	/**
 	 * Part <code>message</code> of <code>ChangeSet</code>
 	 * 
 	 * <p>
@@ -79,6 +97,11 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String REVISION_ATTR = "revision";
+
+	/**
+	 * Name of the table storing {@link #CHANGE_SET_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
 
 	/**
 	 * Getter for part {@link #AUTHOR_ATTR}.
@@ -149,6 +172,20 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	 */
 	default void setDate(java.util.Date newValue) {
 		tUpdateByName(DATE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #IS_REDO_ATTR}.
+	 */
+	default boolean getIsRedo() {
+		return (Boolean) tValueByName(IS_REDO_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #IS_REVERT_ATTR}.
+	 */
+	default boolean getIsRevert() {
+		return (Boolean) tValueByName(IS_REVERT_ATTR);
 	}
 
 	/**

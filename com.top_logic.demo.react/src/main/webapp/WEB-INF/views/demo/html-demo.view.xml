@@ -250,7 +250,7 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 											/>
 											<inset>
 												<text
-													css-class="tlText--strong"
+													css-class="tl-type-body-strong"
 													input="element"
 													overflow="ellipsis"
 												/>

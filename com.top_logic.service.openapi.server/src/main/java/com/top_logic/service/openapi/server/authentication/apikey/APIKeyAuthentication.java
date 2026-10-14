@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -69,12 +70,32 @@ public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthe
 		Config<?> config = getConfig();
 		Map<String, String> allowedKeys =
 			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerAPIKeySecret.class)
+				.filter(this::hasAPIKey)
 				.collect(Collectors.toMap(s -> s.getAPIKey(), s -> StringServices.nonNull(s.getUserId())));
 
 		if (allowedKeys.isEmpty()) {
 			return NeverAuthenticated.missingSecret();
 		}
 		return new APIKeyAuthenticator(config.getPosition(), config.getParameterName(), allowedKeys);
+	}
+
+	/**
+	 * Whether the given secret has a non-empty API key.
+	 * 
+	 * <p>
+	 * A secret with an empty API key is ignored and reported as configuration error, since it
+	 * would accept requests sending an empty API key.
+	 * </p>
+	 */
+	private boolean hasAPIKey(ServerAPIKeySecret secret) {
+		if (StringServices.isEmpty(secret.getAPIKey())) {
+			Config<?> config = getConfig();
+			Logger.error("Ignoring API key secret with empty API key for authentication domain '"
+				+ config.getDomain() + "' (parameter '" + config.getParameterName() + "').",
+				APIKeyAuthentication.class);
+			return false;
+		}
+		return true;
 	}
 
 }

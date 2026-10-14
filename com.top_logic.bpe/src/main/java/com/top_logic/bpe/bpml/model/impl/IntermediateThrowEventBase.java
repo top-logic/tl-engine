@@ -17,4 +17,9 @@ public interface IntermediateThrowEventBase extends com.top_logic.bpe.bpml.model
 	 */
 	String INTERMEDIATE_THROW_EVENT_TYPE = "IntermediateThrowEvent";
 
+	/**
+	 * Name of the table storing {@link #INTERMEDIATE_THROW_EVENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

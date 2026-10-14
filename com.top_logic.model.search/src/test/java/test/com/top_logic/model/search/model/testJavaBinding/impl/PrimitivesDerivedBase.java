@@ -81,6 +81,11 @@ public interface PrimitivesDerivedBase extends test.com.top_logic.model.search.m
 	String IN_ATTR = "in";
 
 	/**
+	 * Name of the table storing {@link #PRIMITIVES_DERIVED_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #DERIVED_BYTE_ATTR}.
 	 */
 	default Integer getDerivedByte() {

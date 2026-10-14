@@ -17,4 +17,9 @@ public interface ErrorEventDefinitionBase extends com.top_logic.bpe.bpml.model.E
 	 */
 	String ERROR_EVENT_DEFINITION_TYPE = "ErrorEventDefinition";
 
+	/**
+	 * Name of the table storing {@link #ERROR_EVENT_DEFINITION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
 }

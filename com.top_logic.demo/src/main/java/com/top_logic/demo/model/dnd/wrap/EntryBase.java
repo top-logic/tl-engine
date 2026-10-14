@@ -17,4 +17,9 @@ public interface EntryBase extends com.top_logic.demo.model.dnd.NamedPlanElement
 	 */
 	String ENTRY_TYPE = "Entry";
 
+	/**
+	 * Name of the table storing {@link #ENTRY_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

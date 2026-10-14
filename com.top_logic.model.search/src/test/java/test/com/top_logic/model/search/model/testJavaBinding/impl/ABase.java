@@ -36,6 +36,11 @@ public interface ABase extends test.com.top_logic.model.search.model.testJavaBin
 	String PRIMITIVES_ATTR = "primitives";
 
 	/**
+	 * Name of the table storing {@link #A_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ENUMS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

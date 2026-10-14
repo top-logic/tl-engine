@@ -27,6 +27,11 @@ public interface ExclusiveGatewayBase extends com.top_logic.bpe.bpml.model.Defau
 	String AUTOMATIC_ATTR = "automatic";
 
 	/**
+	 * Name of the table storing {@link #EXCLUSIVE_GATEWAY_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #AUTOMATIC_ATTR}.
 	 */
 	default boolean getAutomatic() {

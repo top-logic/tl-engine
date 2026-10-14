@@ -54,6 +54,11 @@ public interface MessageFlowBase extends com.top_logic.bpe.bpml.model.Named {
 	String TARGET_ATTR = "target";
 
 	/**
+	 * Name of the table storing {@link #MESSAGE_FLOW_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPFlow";
+
+	/**
 	 * Getter for part {@link #COLLABORATION_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Collaboration getCollaboration() {

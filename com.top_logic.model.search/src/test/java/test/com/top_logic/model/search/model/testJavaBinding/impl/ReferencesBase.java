@@ -81,6 +81,11 @@ public interface ReferencesBase extends test.com.top_logic.model.search.model.te
 	String REF_ORDERED_BAG_ATTR = "refOrderedBag";
 
 	/**
+	 * Name of the table storing {@link #REFERENCES_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #REF_ATTR}.
 	 */
 	default test.com.top_logic.model.search.model.testJavaBinding.Primitives getRef() {

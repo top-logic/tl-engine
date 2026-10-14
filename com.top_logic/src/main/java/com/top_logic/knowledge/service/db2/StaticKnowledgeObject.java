@@ -28,6 +28,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link DBKnowledgeBase} internal implementation of {@link KnowledgeObject}.
@@ -186,6 +187,16 @@ public class StaticKnowledgeObject extends StaticKnowledgeItem implements Knowle
 	@Override
 	public void setValue(String attributeName, Object aValue) {
 		setKOValue(attributeName, aValue);
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		return tGetData(part.getName());
+	}
+
+	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		tSetData(part.getName(), value);
 	}
 
 	private Object getKOValue(String attributeName) {

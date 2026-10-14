@@ -27,6 +27,11 @@ public interface PPBase extends com.top_logic.demo.model.types.P {
 	String MORE_PROTECTED_ATTR = "moreProtected";
 
 	/**
+	 * Name of the table storing {@link #PP_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
+	/**
 	 * Getter for part {@link #MORE_PROTECTED_ATTR}.
 	 */
 	default boolean getMoreProtected() {

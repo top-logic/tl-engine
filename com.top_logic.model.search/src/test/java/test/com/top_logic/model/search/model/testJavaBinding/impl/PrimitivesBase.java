@@ -72,6 +72,11 @@ public interface PrimitivesBase extends test.com.top_logic.model.search.model.te
 	String SHORT_ATTR = "short";
 
 	/**
+	 * Name of the table storing {@link #PRIMITIVES_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #BYTE_ATTR}.
 	 */
 	default Integer getByte() {

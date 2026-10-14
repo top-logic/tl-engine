@@ -81,6 +81,11 @@ public interface PrimitivesDerivedMandatoryBase extends test.com.top_logic.model
 	String IN_ATTR = "in";
 
 	/**
+	 * Name of the table storing {@link #PRIMITIVES_DERIVED_MANDATORY_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #DERIVED_BYTE_ATTR}.
 	 */
 	default int getDerivedByte() {

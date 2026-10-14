@@ -202,7 +202,7 @@ import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.knowledge.wrap.ImplementationFactory;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.WrapperLifecycle;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -3905,8 +3905,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 					continue;
 				}
 
-				if (object instanceof Wrapper) {
-					((Wrapper) object).refetchWrapper();
+				if (object instanceof WrapperLifecycle lifecycle) {
+					lifecycle.refetchWrapper();
 				}
 			}
 		}

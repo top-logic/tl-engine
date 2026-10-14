@@ -17,27 +17,35 @@ package test.com.top_logic.importer.data.struct;
 public class TestStructFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of singleton {@link #TEST_STRUCT_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT = "ROOT";
 
 	/**
-	 * Name of the structure <code>testStruct</code> defined by {@link TestStructFactory}.
+	 * Name of the module <code>testStruct</code> defined by {@link TestStructFactory}.
 	 */
-	public static final String TEST_STRUCT_STRUCTURE = "testStruct";
+	public static final String TEST_STRUCT_MODULE = "testStruct";
+
+	/**
+	 * Name of the structure <code>testStruct</code> defined by {@link TestStructFactory}.
+	 * 
+	 * @deprecated Use {@link #TEST_STRUCT_MODULE}.
+	 */
+	@Deprecated
+	public static final String TEST_STRUCT_STRUCTURE = TEST_STRUCT_MODULE;
 
 	/**
 	 * Lookup {@link TestStructRoot} type.
 	 */
 	public static com.top_logic.model.TLClass getTestStructRootType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(TestStructRoot.TEST_STRUCT_ROOT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(TestStructRoot.TEST_STRUCT_ROOT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link TestStructAll} type.
 	 */
 	public static com.top_logic.model.TLClass getTestStructAllType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(TestStructAll.TEST_STRUCT_ALL_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(TestStructAll.TEST_STRUCT_ALL_TYPE);
 	}
 
 	/**
@@ -107,7 +115,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link TestStructContext} type.
 	 */
 	public static com.top_logic.model.TLClass getTestStructContextType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(TestStructContext.TEST_STRUCT_CONTEXT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(TestStructContext.TEST_STRUCT_CONTEXT_TYPE);
 	}
 
 	/**
@@ -142,7 +150,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link TestStructSub1} type.
 	 */
 	public static com.top_logic.model.TLClass getTestStructSub1Type() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(TestStructSub1.TEST_STRUCT_SUB1_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(TestStructSub1.TEST_STRUCT_SUB1_TYPE);
 	}
 
 	/**
@@ -170,7 +178,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link TestStructSub2} type.
 	 */
 	public static com.top_logic.model.TLClass getTestStructSub2Type() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(TestStructSub2.TEST_STRUCT_SUB2_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(TestStructSub2.TEST_STRUCT_SUB2_TYPE);
 	}
 
 	/**
@@ -191,7 +199,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link Root} type.
 	 */
 	public static com.top_logic.model.TLClass getRootType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(Root.ROOT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(Root.ROOT_TYPE);
 	}
 
 	/**
@@ -212,7 +220,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link Context} type.
 	 */
 	public static com.top_logic.model.TLClass getContextType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(Context.CONTEXT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(Context.CONTEXT_TYPE);
 	}
 
 	/**
@@ -226,21 +234,21 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link Sub1} type.
 	 */
 	public static com.top_logic.model.TLClass getSub1Type() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(Sub1.SUB1_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(Sub1.SUB1_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Sub2} type.
 	 */
 	public static com.top_logic.model.TLClass getSub2Type() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(Sub2.SUB2_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(Sub2.SUB2_TYPE);
 	}
 
 	/**
 	 * Lookup {@link RootChild} type.
 	 */
 	public static com.top_logic.model.TLClass getRootChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(RootChild.ROOT_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(RootChild.ROOT_CHILD_TYPE);
 	}
 
 	/**
@@ -254,7 +262,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * Lookup {@link ContextChild} type.
 	 */
 	public static com.top_logic.model.TLClass getContextChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_STRUCTURE).getType(ContextChild.CONTEXT_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_STRUCT_MODULE).getType(ContextChild.CONTEXT_CHILD_TYPE);
 	}
 
 	/**
@@ -265,7 +273,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	}
 
 	/**
-	 * Name of type <code>testStruct.Root</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>testStruct.Root</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link TestStructRoot#TEST_STRUCT_ROOT_TYPE}.
 	 */
@@ -273,7 +281,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	public static final String TEST_STRUCT_ROOT_NODE = TestStructRoot.TEST_STRUCT_ROOT_TYPE;
 
 	/**
-	 * Name of type <code>testStruct.All</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>testStruct.All</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link TestStructAll#TEST_STRUCT_ALL_TYPE}.
 	 */
@@ -281,7 +289,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	public static final String TEST_STRUCT_ALL_NODE = TestStructAll.TEST_STRUCT_ALL_TYPE;
 
 	/**
-	 * Name of type <code>testStruct.Context</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>testStruct.Context</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link TestStructContext#TEST_STRUCT_CONTEXT_TYPE}.
 	 */
@@ -289,7 +297,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	public static final String TEST_STRUCT_CONTEXT_NODE = TestStructContext.TEST_STRUCT_CONTEXT_TYPE;
 
 	/**
-	 * Name of type <code>testStruct.Sub1</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>testStruct.Sub1</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link TestStructSub1#TEST_STRUCT_SUB1_TYPE}.
 	 */
@@ -297,7 +305,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	public static final String TEST_STRUCT_SUB1_NODE = TestStructSub1.TEST_STRUCT_SUB1_TYPE;
 
 	/**
-	 * Name of type <code>testStruct.Sub2</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>testStruct.Sub2</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link TestStructSub2#TEST_STRUCT_SUB2_TYPE}.
 	 */
@@ -305,7 +313,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	public static final String TEST_STRUCT_SUB2_NODE = TestStructSub2.TEST_STRUCT_SUB2_TYPE;
 
 	/**
-	 * Name of type <code>Root</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>Root</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Root#ROOT_TYPE}.
 	 */
@@ -314,11 +322,14 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 
 	/**
 	 * Storage table name of {@link #ROOT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.importer.data.struct.impl.RootBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ROOT = "StructuredElement";
+	@Deprecated
+	public static final String KO_NAME_ROOT = test.com.top_logic.importer.data.struct.impl.RootBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Context</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>Context</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Context#CONTEXT_TYPE}.
 	 */
@@ -327,11 +338,14 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 
 	/**
 	 * Storage table name of {@link #CONTEXT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.importer.data.struct.impl.ContextBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_CONTEXT = "StructuredElement";
+	@Deprecated
+	public static final String KO_NAME_CONTEXT = test.com.top_logic.importer.data.struct.impl.ContextBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Sub1</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>Sub1</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Sub1#SUB1_TYPE}.
 	 */
@@ -340,11 +354,14 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 
 	/**
 	 * Storage table name of {@link #SUB1_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.importer.data.struct.impl.Sub1Base#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SUB1 = "StructuredElement";
+	@Deprecated
+	public static final String KO_NAME_SUB1 = test.com.top_logic.importer.data.struct.impl.Sub1Base.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Sub2</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>Sub2</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link Sub2#SUB2_TYPE}.
 	 */
@@ -353,11 +370,14 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 
 	/**
 	 * Storage table name of {@link #SUB2_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.importer.data.struct.impl.Sub2Base#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_SUB2 = "StructuredElement";
+	@Deprecated
+	public static final String KO_NAME_SUB2 = test.com.top_logic.importer.data.struct.impl.Sub2Base.TABLE_NAME;
 
 	/**
-	 * Name of type <code>RootChild</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>RootChild</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link RootChild#ROOT_CHILD_TYPE}.
 	 */
@@ -365,7 +385,7 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	public static final String ROOT_CHILD_NODE = RootChild.ROOT_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>ContextChild</code> in structure {@link #TEST_STRUCT_STRUCTURE}.
+	 * Name of type <code>ContextChild</code> in module {@link #TEST_STRUCT_MODULE}.
 	 * 
 	 * @deprecated Use {@link ContextChild#CONTEXT_CHILD_TYPE}.
 	 */
@@ -454,6 +474,6 @@ public class TestStructFactory extends com.top_logic.element.structured.wrap.Str
 	 * The singleton instance of {@link TestStructFactory}.
 	 */
 	public static TestStructFactory getInstance() {
-		return (TestStructFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_STRUCT_STRUCTURE);
+		return (TestStructFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_STRUCT_MODULE);
 	}
 }

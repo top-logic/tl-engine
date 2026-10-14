@@ -17,4 +17,9 @@ public interface BBase extends com.top_logic.demo.model.plain.DemoPlainB {
 	 */
 	String B_TYPE = "B";
 
+	/**
+	 * Name of the table storing {@link #B_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
 }

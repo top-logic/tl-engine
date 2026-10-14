@@ -45,7 +45,7 @@ tl-react-bridge bundle       React, the part registry (registerPart / replacePar
 - **The TopLogic components that are not replaced follow the theme.** Tables, trees, panels, the
   sidebar and toolbars read CSS custom properties that `installMui` derives from the MUI theme and
   writes into the page ([Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme)).
-- **What is MUI is a free choice**: all 11 parts and 17 controls the module has adapters for, or a
+- **What is MUI is a free choice**: all 11 parts and 18 controls the module has adapters for, or a
   selection.
 - **There is exactly one Material UI on the page**, the one in `tl-react-mui`. The theme and every
   customer component import Material UI from there, so they share the theme context, the emotion
@@ -424,7 +424,7 @@ anything.
 | `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |
-| `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
+| `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLAvatar`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
 
 The parts are described in [Parts: the atoms of the React UI](doc:view-layer/parts), the controls
 in [The replaceable components](doc:view-layer/customer-component-library#the-replaceable-components).
@@ -526,6 +526,30 @@ Two things to know about the adapters:
   adapters map the server state to MUI's own variants. A different look for one particular
   control is a `css-class` in the view ([Basics: composition, spacing, height and styling](doc:view-layer/basics#styling-a-single-element-css-class));
   the adapters put it on their root element (`rootClassName`).
+- **Some adapters bring a default style** for their MUI component, which the theme's
+  `styleOverrides.root` follow, so the theme wins on every property it sets. The avatar
+  (`TLAvatar` → `MuiAvatar`) is one: its default keeps the look of the design system — the
+  neutral circle, the surface and border of the category the display name maps to, the initials in
+  `text.primary`, the diameters of the size tokens. The adapter marks the root with the category
+  (`data-category="1"` to `"8"`, present whenever the avatar has a name) and the size
+  (`data-size="small|medium|large|x-large"`), so a theme restyles them through nested selectors —
+  e.g. the avatar of the user menu on a dark app bar, without a stylesheet against `.tl-avatar`:
+
+  ```ts
+  MuiAvatar: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        '&[data-category]': { borderColor: theme.vars.palette.common.white },
+        '&[data-category="3"]': { backgroundColor: theme.vars.palette.secondary.light },
+        '&[data-size="small"]': { fontSize: theme.typography.pxToRem(10) },
+      }),
+    },
+  },
+  ```
+
+  The constants are `CATEGORY_ATTRIBUTE` and `SIZE_ATTRIBUTE` of
+  `com.top_logic.layout.react.mui/react-src/adapters/MuiAvatarAdapter.tsx`, the default style is
+  its `avatarRootStyle`.
 
 ### B. Replacing a part or a control by a customer adapter
 

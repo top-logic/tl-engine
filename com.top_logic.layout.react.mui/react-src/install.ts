@@ -34,6 +34,7 @@ import MuiTextAdapter from './adapters/MuiTextAdapter';
 import MuiCardAdapter from './adapters/MuiCardAdapter';
 import MuiAppBarAdapter from './adapters/MuiAppBarAdapter';
 import MuiBreadcrumbAdapter from './adapters/MuiBreadcrumbAdapter';
+import MuiAvatarAdapter from './adapters/MuiAvatarAdapter';
 import MuiSliderAdapter from './adapters/MuiSliderAdapter';
 
 /**
@@ -88,6 +89,7 @@ const CONTROL_ADAPTERS = {
   TLCard: MuiCardAdapter,
   TLAppBar: MuiAppBarAdapter,
   TLBreadcrumb: MuiBreadcrumbAdapter,
+  TLAvatar: MuiAvatarAdapter,
   TLSlider: MuiSliderAdapter,
 } as const satisfies Record<string, React.ComponentType<TLCellProps>>;
 

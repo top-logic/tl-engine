@@ -26,4 +26,9 @@ public interface TLModuleBase extends com.top_logic.model.TLScope, com.top_logic
 	 */
 	String SINGLETONS_ATTR = "singletons";
 
+	/**
+	 * Name of the table storing {@link #TL_MODULE_TYPE} objects.
+	 */
+	String TABLE_NAME = "TLModule";
+
 }

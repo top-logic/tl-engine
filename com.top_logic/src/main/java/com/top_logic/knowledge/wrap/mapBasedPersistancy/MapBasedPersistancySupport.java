@@ -26,7 +26,6 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.FlexData;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -274,23 +273,23 @@ public class MapBasedPersistancySupport {
     }
     
     /**
-	 * Checks if this {@link AbstractWrapper} has associations of type
+	 * Checks if this {@link Wrapper} has associations of type
 	 * {@link #PUBLISHING_ASSOCIATION}.
 	 * 
 	 * @param aKO
-	 *            a {@link AbstractWrapper} to check for
+	 *            a {@link Wrapper} to check for
 	 *            {@link #PUBLISHING_ASSOCIATION} associations
 	 * @return the partners or an empty List if none is found; never
 	 *         <code>null</code>
 	 */
-    public static List getGroupAssociation(AbstractWrapper aKO) {
+    public static List getGroupAssociation(Wrapper aKO) {
     	return aKO.getOutgoingWrappers(PUBLISHING_ASSOCIATION, null);
     }
     
     /**
 	 * Deletes the group association between the given {@link Wrapper} and the given {@link Group}.
 	 */
-	public static void deleteGroupAssociation(AbstractWrapper aKO, Group aGroup) {
+	public static void deleteGroupAssociation(Wrapper aKO, Group aGroup) {
 		{
 			Iterator theIt = aKO.tHandle().getOutgoingAssociations(PUBLISHING_ASSOCIATION);
 			KnowledgeBase theKB = aKO.getKnowledgeBase();

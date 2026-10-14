@@ -336,6 +336,7 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLCard` | `CardState` |
 | `TLAppBar` | `AppBarState` |
 | `TLBreadcrumb` | `BreadcrumbState` |
+| `TLAvatar` | `AvatarState` |
 | `TLSlider` | `SliderState` |
 
 The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
@@ -570,7 +571,7 @@ installMui({ theme: customerTheme, replace: 'all' });
   functions included (e.g. a `typography` computed from the palette);
 - `replace?: 'all' | readonly ComponentName[]` — the parts and controls rendered with Material UI,
   `'all'` (the default, `ALL_COMPONENTS`) or a selection of `COMPONENT_NAMES`, typed as the union
-  `ComponentName`: the 11 part names ([The parts](doc:view-layer/parts#the-parts)) and the 17
+  `ComponentName`: the 11 part names ([The parts](doc:view-layer/parts#the-parts)) and the 18
   control names of [The replaceable components](#the-replaceable-components) that have an adapter
   (all but `TLAccordion`), e.g. `replace: ['Button', 'Checkbox', 'TLWindow']`. A part is drawn
   with Material UI wherever a control draws it, a control is replaced as a whole. What is not

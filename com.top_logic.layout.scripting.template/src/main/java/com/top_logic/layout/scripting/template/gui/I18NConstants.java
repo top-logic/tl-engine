@@ -27,6 +27,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey SAVE_SCRIPT_ERROR_SCRIPT_NOT_SAVABLE;
 
+	/**
+	 * @en There is no script to download.
+	 */
+	public static ResKey DOWNLOAD_SCRIPT_ERROR_NO_SCRIPT;
+
 	public static ResPrefix VARIABLE_NAME_DIALOG;
 
 	public static ResKey ERROR_NOT_RECORDING;

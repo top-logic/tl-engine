@@ -90,6 +90,8 @@ export type {
   ReorderSide,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
+export { useImageSrc } from './bridge/image-source';
+export { avatarInitials, avatarCategory } from './bridge/avatar';
 // The state contract of the replaceable components, generated from state.proto: one message per
 // component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
 export type {
@@ -119,6 +121,8 @@ export type {
   AppBarStateJson,
   BreadcrumbStateJson,
   ProgressStateJson,
+  ImageSourceStateJson,
+  AvatarStateJson,
   SliderStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';

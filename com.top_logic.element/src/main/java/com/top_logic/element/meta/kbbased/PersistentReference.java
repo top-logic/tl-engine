@@ -130,7 +130,7 @@ public class PersistentReference extends ConfiguredAttributeImpl implements TLRe
 	 * Delete underlying association, if the forwards reference is deleted.
 	 */
 	@Override
-	protected Modification notifyUpcomingDeletion() {
+	public Modification notifyUpcomingDeletion() {
 		Modification result = Modification.NONE;
 
 		TLAssociationEnd end = getEnd();

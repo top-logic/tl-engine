@@ -17,137 +17,208 @@ package com.top_logic.demo.model.types;
 public class DemoTypesFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of singleton {@link #DEMO_TYPES_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT = "ROOT";
 
 	/**
+	 * Name of the module <code>DemoTypes</code> defined by {@link DemoTypesFactory}.
+	 */
+	public static final String DEMO_TYPES_MODULE = "DemoTypes";
+
+	/**
 	 * Name of the structure <code>DemoTypes</code> defined by {@link DemoTypesFactory}.
+	 * 
+	 * @deprecated Use {@link #DEMO_TYPES_MODULE}.
 	 */
-	public static final String DEMO_TYPES_STRUCTURE = "DemoTypes";
+	@Deprecated
+	public static final String DEMO_TYPES_STRUCTURE = DEMO_TYPES_MODULE;
 
 	/**
-	 * Name of the enumeration <code>DemoEnum</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 * Name of the enumeration <code>DemoEnum</code> in module {@value #DEMO_TYPES_MODULE}.
+	 * 
+	 * @deprecated Use {@link DemoEnum#TYPE_NAME}.
 	 */
-	public static final String DEMO_ENUM_ENUM = "DemoEnum";
+	@Deprecated
+	public static final String DEMO_ENUM_ENUM = DemoEnum.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>FirstOption</code> in enumeration {@value #DEMO_ENUM_ENUM}.
+	 * Name of the classifier <code>FirstOption</code> in enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#FIRST_OPTION_CLASSIFIER}.
 	 */
-	public static final String FIRST_OPTION_DEMO_ENUM_CLASSIFIER = "FirstOption";
+	@Deprecated
+	public static final String FIRST_OPTION_DEMO_ENUM_CLASSIFIER = DemoEnum.FIRST_OPTION_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>LastOption</code> in enumeration {@value #DEMO_ENUM_ENUM}.
+	 * Name of the classifier <code>LastOption</code> in enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#LAST_OPTION_CLASSIFIER}.
 	 */
-	public static final String LAST_OPTION_DEMO_ENUM_CLASSIFIER = "LastOption";
+	@Deprecated
+	public static final String LAST_OPTION_DEMO_ENUM_CLASSIFIER = DemoEnum.LAST_OPTION_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>MiddleOption</code> in enumeration {@value #DEMO_ENUM_ENUM}.
+	 * Name of the classifier <code>MiddleOption</code> in enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#MIDDLE_OPTION_CLASSIFIER}.
 	 */
-	public static final String MIDDLE_OPTION_DEMO_ENUM_CLASSIFIER = "MiddleOption";
+	@Deprecated
+	public static final String MIDDLE_OPTION_DEMO_ENUM_CLASSIFIER = DemoEnum.MIDDLE_OPTION_CLASSIFIER;
 
 	/**
-	 * Name of the enumeration <code>demo.federalstates</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 * Name of the enumeration <code>demo.federalstates</code> in module {@value #DEMO_TYPES_MODULE}.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#TYPE_NAME}.
 	 */
-	public static final String DEMO_FEDERALSTATES_ENUM = "demo.federalstates";
+	@Deprecated
+	public static final String DEMO_FEDERALSTATES_ENUM = DemoFederalstates.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>Baden-Wuerttemberg</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Baden-Wuerttemberg</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#BADEN_WUERTTEMBERG_CLASSIFIER}.
 	 */
-	public static final String BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER = "Baden-Wuerttemberg";
+	@Deprecated
+	public static final String BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.BADEN_WUERTTEMBERG_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Bavaria</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Bavaria</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#BAVARIA_CLASSIFIER}.
 	 */
-	public static final String BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER = "Bavaria";
+	@Deprecated
+	public static final String BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.BAVARIA_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Berlin</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Berlin</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#BERLIN_CLASSIFIER}.
 	 */
-	public static final String BERLIN_DEMO_FEDERALSTATES_CLASSIFIER = "Berlin";
+	@Deprecated
+	public static final String BERLIN_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.BERLIN_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Brandenburg</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Brandenburg</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#BRANDENBURG_CLASSIFIER}.
 	 */
-	public static final String BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER = "Brandenburg";
+	@Deprecated
+	public static final String BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.BRANDENBURG_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Bremen</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Bremen</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#BREMEN_CLASSIFIER}.
 	 */
-	public static final String BREMEN_DEMO_FEDERALSTATES_CLASSIFIER = "Bremen";
+	@Deprecated
+	public static final String BREMEN_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.BREMEN_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Hamburg</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Hamburg</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#HAMBURG_CLASSIFIER}.
 	 */
-	public static final String HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER = "Hamburg";
+	@Deprecated
+	public static final String HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.HAMBURG_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Hesse</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Hesse</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#HESSE_CLASSIFIER}.
 	 */
-	public static final String HESSE_DEMO_FEDERALSTATES_CLASSIFIER = "Hesse";
+	@Deprecated
+	public static final String HESSE_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.HESSE_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Lower_Saxony</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Lower_Saxony</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#LOWER_SAXONY_CLASSIFIER}.
 	 */
-	public static final String LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER = "Lower_Saxony";
+	@Deprecated
+	public static final String LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.LOWER_SAXONY_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Mecklenburg-Western_Pomerania</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Mecklenburg-Western_Pomerania</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#MECKLENBURG_WESTERN_POMERANIA_CLASSIFIER}.
 	 */
-	public static final String MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER = "Mecklenburg-Western_Pomerania";
+	@Deprecated
+	public static final String MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.MECKLENBURG_WESTERN_POMERANIA_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>North_Rhine-Westphalia</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>North_Rhine-Westphalia</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#NORTH_RHINE_WESTPHALIA_CLASSIFIER}.
 	 */
-	public static final String NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER = "North_Rhine-Westphalia";
+	@Deprecated
+	public static final String NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.NORTH_RHINE_WESTPHALIA_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Rhineland-Palatinate</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Rhineland-Palatinate</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#RHINELAND_PALATINATE_CLASSIFIER}.
 	 */
-	public static final String RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER = "Rhineland-Palatinate";
+	@Deprecated
+	public static final String RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.RHINELAND_PALATINATE_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Saarland</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Saarland</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#SAARLAND_CLASSIFIER}.
 	 */
-	public static final String SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER = "Saarland";
+	@Deprecated
+	public static final String SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.SAARLAND_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Saxony</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Saxony</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#SAXONY_CLASSIFIER}.
 	 */
-	public static final String SAXONY_DEMO_FEDERALSTATES_CLASSIFIER = "Saxony";
+	@Deprecated
+	public static final String SAXONY_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.SAXONY_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Saxony-Anhalt</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Saxony-Anhalt</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#SAXONY_ANHALT_CLASSIFIER}.
 	 */
-	public static final String SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER = "Saxony-Anhalt";
+	@Deprecated
+	public static final String SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.SAXONY_ANHALT_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Schleswig-Holstein</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Schleswig-Holstein</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#SCHLESWIG_HOLSTEIN_CLASSIFIER}.
 	 */
-	public static final String SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER = "Schleswig-Holstein";
+	@Deprecated
+	public static final String SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.SCHLESWIG_HOLSTEIN_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>Thuringia</code> in enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Name of the classifier <code>Thuringia</code> in enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#THURINGIA_CLASSIFIER}.
 	 */
-	public static final String THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER = "Thuringia";
+	@Deprecated
+	public static final String THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER = DemoFederalstates.THURINGIA_CLASSIFIER;
 
 	/**
-	 * Name of the data type <code>DemoTime</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 * Name of the data type <code>DemoTime</code> in module {@value #DEMO_TYPES_MODULE}.
 	 */
 	public static final String DEMO_TIME_TYPE = "DemoTime";
 
 	/**
-	 * Name of the data type <code>DemoVec</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 * Name of the data type <code>DemoVec</code> in module {@value #DEMO_TYPES_MODULE}.
 	 */
 	public static final String DEMO_VEC_TYPE = "DemoVec";
 
 	/**
-	 * Name of the data type <code>com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.A.encryptedLong</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 * Name of the data type <code>com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.A.encryptedLong</code> in module {@value #DEMO_TYPES_MODULE}.
 	 */
 	public static final String COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_A_ENCRYPTED_LONG_TYPE = "com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.A.encryptedLong";
 
 	/**
-	 * Name of the data type <code>com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.X.encryptedLong</code> in module {@value #DEMO_TYPES_STRUCTURE}.
+	 * Name of the data type <code>com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.X.encryptedLong</code> in module {@value #DEMO_TYPES_MODULE}.
 	 */
 	public static final String COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_X_ENCRYPTED_LONG_TYPE = "com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.X.encryptedLong";
 
@@ -155,35 +226,35 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link AChild} type.
 	 */
 	public static com.top_logic.model.TLClass getAChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(AChild.A_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(AChild.A_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link BChild} type.
 	 */
 	public static com.top_logic.model.TLClass getBChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(BChild.B_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(BChild.B_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link BNotUnderAChild} type.
 	 */
 	public static com.top_logic.model.TLClass getBNotUnderAChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(BNotUnderAChild.B_NOT_UNDER_A_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(BNotUnderAChild.B_NOT_UNDER_A_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link CChild} type.
 	 */
 	public static com.top_logic.model.TLClass getCChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(CChild.C_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(CChild.C_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link DemoTypesAll} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesAllType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesAll.DEMO_TYPES_ALL_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesAll.DEMO_TYPES_ALL_TYPE);
 	}
 
 	/**
@@ -204,7 +275,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link DemoTypesA} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesA.DEMO_TYPES_A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesA.DEMO_TYPES_A_TYPE);
 	}
 
 	/**
@@ -219,6 +290,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getBinaryDemoTypesAAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.BINARY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#BINARY2_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getBinary2DemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.BINARY2_ATTR);
 	}
 
 	/**
@@ -537,6 +615,20 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#DURATION_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getDurationDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.DURATION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#DURATION_SHORT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getDurationShortDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.DURATION_SHORT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#ENCRYPTED_LONG_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getEncryptedLongDemoTypesAAttr() {
@@ -614,6 +706,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#HTML_DESCRIPTION_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getHtmlDescriptionDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.HTML_DESCRIPTION_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#I18NHTML_NORMAL_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getI18NHTMLNormalDemoTypesAAttr() {
@@ -674,6 +773,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getInlineReferenceReverseDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.INLINE_REFERENCE_REVERSE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#INT_CONSTRAINT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getIntConstraintDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.INT_CONSTRAINT_ATTR);
 	}
 
 	/**
@@ -775,6 +881,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesA#RESPONSIBLE_CONTACT_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLReference getResponsibleContactDemoTypesAAttr() {
+		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.RESPONSIBLE_CONTACT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesA#SINGLE_STRUCTURE_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLReference getSingleStructureDemoTypesAAttr() {
@@ -821,6 +934,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLReference getStructureDemoTypesAAttr() {
 		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.STRUCTURE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link DemoTypesA#STYLE_ATTR} of {@link DemoTypesA}.
+	 */
+	public static com.top_logic.model.TLProperty getStyleDemoTypesAAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesAType().getPart(DemoTypesA.STYLE_ATTR);
 	}
 
 	/**
@@ -960,7 +1080,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
@@ -974,7 +1094,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link DemoTypesBC} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesBCType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesBC.DEMO_TYPES_BC_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesBC.DEMO_TYPES_BC_TYPE);
 	}
 
 	/**
@@ -995,7 +1115,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link DemoTypesB} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesB.DEMO_TYPES_B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesB.DEMO_TYPES_B_TYPE);
 	}
 
 	/**
@@ -1023,7 +1143,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link B} type.
 	 */
 	public static com.top_logic.model.TLClass getBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(B.B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(B.B_TYPE);
 	}
 
 	/**
@@ -1037,7 +1157,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link BNotUnderA} type.
 	 */
 	public static com.top_logic.model.TLClass getBNotUnderAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(BNotUnderA.B_NOT_UNDER_A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(BNotUnderA.B_NOT_UNDER_A_TYPE);
 	}
 
 	/**
@@ -1051,7 +1171,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link DemoTypesCAll} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesCAllType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesCAll.DEMO_TYPES_C_ALL_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesCAll.DEMO_TYPES_C_ALL_TYPE);
 	}
 
 	/**
@@ -1107,7 +1227,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link C} type.
 	 */
 	public static com.top_logic.model.TLClass getCType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(C.C_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(C.C_TYPE);
 	}
 
 	/**
@@ -1121,7 +1241,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link DemoTypesL} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesLType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesL.DEMO_TYPES_L_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesL.DEMO_TYPES_L_TYPE);
 	}
 
 	/**
@@ -1142,14 +1262,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link L} type.
 	 */
 	public static com.top_logic.model.TLClass getLType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(L.L_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(L.L_TYPE);
 	}
 
 	/**
 	 * Lookup {@link DemoTypesX} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesXType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesX.DEMO_TYPES_X_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesX.DEMO_TYPES_X_TYPE);
 	}
 
 	/**
@@ -1517,6 +1637,13 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link DemoTypesX#INT_CONSTRAINT_ATTR} of {@link DemoTypesX}.
+	 */
+	public static com.top_logic.model.TLProperty getIntConstraintDemoTypesXAttr() {
+		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.INT_CONSTRAINT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link DemoTypesX#LIST_ATTR} of {@link DemoTypesX}.
 	 */
 	public static com.top_logic.model.TLProperty getListDemoTypesXAttr() {
@@ -1688,14 +1815,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link X} type.
 	 */
 	public static com.top_logic.model.TLClass getXType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(X.X_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(X.X_TYPE);
 	}
 
 	/**
 	 * Lookup {@link P} type.
 	 */
 	public static com.top_logic.model.TLClass getPType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(P.P_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(P.P_TYPE);
 	}
 
 	/**
@@ -1709,7 +1836,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link PP} type.
 	 */
 	public static com.top_logic.model.TLClass getPPType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(PP.PP_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(PP.PP_TYPE);
 	}
 
 	/**
@@ -1723,7 +1850,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link PX} type.
 	 */
 	public static com.top_logic.model.TLClass getPXType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(PX.PX_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(PX.PX_TYPE);
 	}
 
 	/**
@@ -1737,14 +1864,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link DemoTypesRoot} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesRootType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesRoot.DEMO_TYPES_ROOT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesRoot.DEMO_TYPES_ROOT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Root} type.
 	 */
 	public static com.top_logic.model.TLClass getRootType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(Root.ROOT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(Root.ROOT_TYPE);
 	}
 
 	/**
@@ -1765,21 +1892,21 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link RootChild} type.
 	 */
 	public static com.top_logic.model.TLClass getRootChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(RootChild.ROOT_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(RootChild.ROOT_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link DemoTypesChild} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesChild.DEMO_TYPES_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesChild.DEMO_TYPES_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link DemoTypesContainer} type.
 	 */
 	public static com.top_logic.model.TLClass getDemoTypesContainerType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DemoTypesContainer.DEMO_TYPES_CONTAINER_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DemoTypesContainer.DEMO_TYPES_CONTAINER_TYPE);
 	}
 
 	/**
@@ -1790,182 +1917,245 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
-	 * Lookup {@value #DEMO_ENUM_ENUM} enumeration.
+	 * Lookup the enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getDemoEnumEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DEMO_ENUM_ENUM);
+		return DemoEnum.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #FIRST_OPTION_DEMO_ENUM_CLASSIFIER} of enumeration {@value #DEMO_ENUM_ENUM}.
+	 * Lookup classifier <code>FirstOption</code> of enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#firstOptionClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getFirstOptionDemoEnumClassifier() {
-		return getDemoEnumEnum().getClassifier(FIRST_OPTION_DEMO_ENUM_CLASSIFIER);
+		return DemoEnum.firstOptionClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #LAST_OPTION_DEMO_ENUM_CLASSIFIER} of enumeration {@value #DEMO_ENUM_ENUM}.
+	 * Lookup classifier <code>LastOption</code> of enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#lastOptionClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getLastOptionDemoEnumClassifier() {
-		return getDemoEnumEnum().getClassifier(LAST_OPTION_DEMO_ENUM_CLASSIFIER);
+		return DemoEnum.lastOptionClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #MIDDLE_OPTION_DEMO_ENUM_CLASSIFIER} of enumeration {@value #DEMO_ENUM_ENUM}.
+	 * Lookup classifier <code>MiddleOption</code> of enumeration <code>DemoEnum</code>.
+	 * 
+	 * @deprecated Use {@link DemoEnum#middleOptionClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getMiddleOptionDemoEnumClassifier() {
-		return getDemoEnumEnum().getClassifier(MIDDLE_OPTION_DEMO_ENUM_CLASSIFIER);
+		return DemoEnum.middleOptionClassifier();
 	}
 
 	/**
-	 * Lookup {@value #DEMO_FEDERALSTATES_ENUM} enumeration.
+	 * Lookup the enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getDemoFederalstatesEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DEMO_FEDERALSTATES_ENUM);
+		return DemoFederalstates.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Baden-Wuerttemberg</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#badenWuerttembergClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getBadenWuerttembergDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(BADEN_WUERTTEMBERG_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.badenWuerttembergClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Bavaria</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#bavariaClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getBavariaDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(BAVARIA_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.bavariaClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #BERLIN_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Berlin</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#berlinClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getBerlinDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(BERLIN_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.berlinClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Brandenburg</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#brandenburgClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getBrandenburgDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(BRANDENBURG_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.brandenburgClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #BREMEN_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Bremen</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#bremenClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getBremenDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(BREMEN_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.bremenClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Hamburg</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#hamburgClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getHamburgDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(HAMBURG_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.hamburgClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #HESSE_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Hesse</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#hesseClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getHesseDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(HESSE_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.hesseClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Lower_Saxony</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#lowerSaxonyClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getLowerSaxonyDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(LOWER_SAXONY_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.lowerSaxonyClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Mecklenburg-Western_Pomerania</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#mecklenburgWesternPomeraniaClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getMecklenburgWesternPomeraniaDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(MECKLENBURG_WESTERN_POMERANIA_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.mecklenburgWesternPomeraniaClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>North_Rhine-Westphalia</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#northRhineWestphaliaClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getNorthRhineWestphaliaDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(NORTH_RHINE_WESTPHALIA_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.northRhineWestphaliaClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Rhineland-Palatinate</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#rhinelandPalatinateClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getRhinelandPalatinateDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(RHINELAND_PALATINATE_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.rhinelandPalatinateClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Saarland</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#saarlandClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getSaarlandDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(SAARLAND_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.saarlandClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #SAXONY_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Saxony</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#saxonyClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getSaxonyDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(SAXONY_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.saxonyClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Saxony-Anhalt</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#saxonyAnhaltClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getSaxonyAnhaltDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(SAXONY_ANHALT_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.saxonyAnhaltClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Schleswig-Holstein</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#schleswigHolsteinClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getSchleswigHolsteinDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(SCHLESWIG_HOLSTEIN_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.schleswigHolsteinClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER} of enumeration {@value #DEMO_FEDERALSTATES_ENUM}.
+	 * Lookup classifier <code>Thuringia</code> of enumeration <code>demo.federalstates</code>.
+	 * 
+	 * @deprecated Use {@link DemoFederalstates#thuringiaClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getThuringiaDemoFederalstatesClassifier() {
-		return getDemoFederalstatesEnum().getClassifier(THURINGIA_DEMO_FEDERALSTATES_CLASSIFIER);
+		return DemoFederalstates.thuringiaClassifier();
 	}
 
 	/**
 	 * Lookup {@value #DEMO_TIME_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDemoTimeType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DEMO_TIME_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DEMO_TIME_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #DEMO_VEC_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getDemoVecType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(DEMO_VEC_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(DEMO_VEC_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_A_ENCRYPTED_LONG_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getComTopLogicDemoModelTypesUtilEncryptedLongMappingDemoTypesAEncryptedLongType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_A_ENCRYPTED_LONG_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_A_ENCRYPTED_LONG_TYPE);
 	}
 
 	/**
 	 * Lookup {@value #COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_X_ENCRYPTED_LONG_TYPE} data type.
 	 */
 	public static com.top_logic.model.TLPrimitive getComTopLogicDemoModelTypesUtilEncryptedLongMappingDemoTypesXEncryptedLongType() {
-		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_STRUCTURE).getType(COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_X_ENCRYPTED_LONG_TYPE);
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TYPES_MODULE).getType(COM_TOP_LOGIC_DEMO_MODEL_TYPES_UTIL_ENCRYPTED_LONG_MAPPING_DEMO_TYPES_X_ENCRYPTED_LONG_TYPE);
 	}
 
 	/**
-	 * Name of type <code>AChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>AChild</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link AChild#A_CHILD_TYPE}.
 	 */
@@ -1973,7 +2163,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String A_CHILD_NODE = AChild.A_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>BChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>BChild</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link BChild#B_CHILD_TYPE}.
 	 */
@@ -1981,7 +2171,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String B_CHILD_NODE = BChild.B_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>BNotUnderAChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>BNotUnderAChild</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link BNotUnderAChild#B_NOT_UNDER_A_CHILD_TYPE}.
 	 */
@@ -1989,7 +2179,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String B_NOT_UNDER_A_CHILD_NODE = BNotUnderAChild.B_NOT_UNDER_A_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>CChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>CChild</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link CChild#C_CHILD_TYPE}.
 	 */
@@ -1997,7 +2187,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String C_CHILD_NODE = CChild.C_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>DemoTypes.All</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.All</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesAll#DEMO_TYPES_ALL_TYPE}.
 	 */
@@ -2005,7 +2195,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_ALL_NODE = DemoTypesAll.DEMO_TYPES_ALL_TYPE;
 
 	/**
-	 * Name of type <code>DemoTypes.A</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.A</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesA#DEMO_TYPES_A_TYPE}.
 	 */
@@ -2013,7 +2203,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_A_NODE = DemoTypesA.DEMO_TYPES_A_TYPE;
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -2022,11 +2212,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #A_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.ABase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_A = com.top_logic.demo.model.types.wrap.ABase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>DemoTypes.BC</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.BC</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesBC#DEMO_TYPES_BC_TYPE}.
 	 */
@@ -2034,7 +2227,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_BC_NODE = DemoTypesBC.DEMO_TYPES_BC_TYPE;
 
 	/**
-	 * Name of type <code>DemoTypes.B</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.B</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesB#DEMO_TYPES_B_TYPE}.
 	 */
@@ -2042,7 +2235,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_B_NODE = DemoTypesB.DEMO_TYPES_B_TYPE;
 
 	/**
-	 * Name of type <code>B</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>B</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link B#B_TYPE}.
 	 */
@@ -2051,11 +2244,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #B_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.BBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_B = com.top_logic.demo.model.types.wrap.BBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>BNotUnderA</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>BNotUnderA</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link BNotUnderA#B_NOT_UNDER_A_TYPE}.
 	 */
@@ -2064,11 +2260,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #B_NOT_UNDER_A_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.BNotUnderABase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B_NOT_UNDER_A = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_B_NOT_UNDER_A = com.top_logic.demo.model.types.wrap.BNotUnderABase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>DemoTypes.C.All</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.C.All</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesCAll#DEMO_TYPES_C_ALL_TYPE}.
 	 */
@@ -2076,7 +2275,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_C_ALL_NODE = DemoTypesCAll.DEMO_TYPES_C_ALL_TYPE;
 
 	/**
-	 * Name of type <code>C</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>C</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link C#C_TYPE}.
 	 */
@@ -2084,7 +2283,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String C_NODE = C.C_TYPE;
 
 	/**
-	 * Name of type <code>DemoTypes.L</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.L</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesL#DEMO_TYPES_L_TYPE}.
 	 */
@@ -2092,7 +2291,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_L_NODE = DemoTypesL.DEMO_TYPES_L_TYPE;
 
 	/**
-	 * Name of type <code>L</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>L</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link L#L_TYPE}.
 	 */
@@ -2101,11 +2300,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #L_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.LBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_L = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_L = com.top_logic.demo.model.types.wrap.LBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>DemoTypes.X</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.X</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesX#DEMO_TYPES_X_TYPE}.
 	 */
@@ -2113,7 +2315,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_X_NODE = DemoTypesX.DEMO_TYPES_X_TYPE;
 
 	/**
-	 * Name of type <code>X</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>X</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link X#X_TYPE}.
 	 */
@@ -2122,11 +2324,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #X_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.XBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_X = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_X = com.top_logic.demo.model.types.wrap.XBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>P</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>P</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link P#P_TYPE}.
 	 */
@@ -2135,11 +2340,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #P_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.PBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_P = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_P = com.top_logic.demo.model.types.wrap.PBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>PP</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>PP</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link PP#PP_TYPE}.
 	 */
@@ -2148,11 +2356,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #PP_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.PPBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PP = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_PP = com.top_logic.demo.model.types.wrap.PPBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>PX</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>PX</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link PX#PX_TYPE}.
 	 */
@@ -2161,11 +2372,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #PX_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.PXBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PX = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_PX = com.top_logic.demo.model.types.wrap.PXBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>DemoTypes.Root</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypes.Root</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesRoot#DEMO_TYPES_ROOT_TYPE}.
 	 */
@@ -2173,7 +2387,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_ROOT_NODE = DemoTypesRoot.DEMO_TYPES_ROOT_TYPE;
 
 	/**
-	 * Name of type <code>Root</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>Root</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link Root#ROOT_TYPE}.
 	 */
@@ -2182,11 +2396,14 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #ROOT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.model.types.wrap.RootBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ROOT = "DemoTypes";
+	@Deprecated
+	public static final String KO_NAME_ROOT = com.top_logic.demo.model.types.wrap.RootBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>RootChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>RootChild</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link RootChild#ROOT_CHILD_TYPE}.
 	 */
@@ -2194,7 +2411,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String ROOT_CHILD_NODE = RootChild.ROOT_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>DemoTypesChild</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypesChild</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesChild#DEMO_TYPES_CHILD_TYPE}.
 	 */
@@ -2202,7 +2419,7 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String DEMO_TYPES_CHILD_NODE = DemoTypesChild.DEMO_TYPES_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>DemoTypesContainer</code> in structure {@link #DEMO_TYPES_STRUCTURE}.
+	 * Name of type <code>DemoTypesContainer</code> in module {@link #DEMO_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link DemoTypesContainer#DEMO_TYPES_CONTAINER_TYPE}.
 	 */
@@ -2361,6 +2578,6 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * The singleton instance of {@link DemoTypesFactory}.
 	 */
 	public static DemoTypesFactory getInstance() {
-		return (DemoTypesFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(DEMO_TYPES_STRUCTURE);
+		return (DemoTypesFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(DEMO_TYPES_MODULE);
 	}
 }

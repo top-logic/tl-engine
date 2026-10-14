@@ -27,6 +27,11 @@ public interface PBase extends com.top_logic.demo.model.types.BChild, com.top_lo
 	String PROTECTED_ATTR = "protected";
 
 	/**
+	 * Name of the table storing {@link #P_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
+	/**
 	 * Getter for part {@link #PROTECTED_ATTR}.
 	 */
 	default boolean getProtected() {

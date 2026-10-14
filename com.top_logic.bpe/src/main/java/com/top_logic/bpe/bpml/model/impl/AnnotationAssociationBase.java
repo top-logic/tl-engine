@@ -36,6 +36,11 @@ public interface AnnotationAssociationBase extends com.top_logic.bpe.bpml.model.
 	String TARGET_ATTR = "target";
 
 	/**
+	 * Name of the table storing {@link #ANNOTATION_ASSOCIATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPAssociation";
+
+	/**
 	 * Getter for part {@link #SOURCE_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Annotated getSource() {

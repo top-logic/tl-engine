@@ -21,7 +21,7 @@ public class MandatorFactory extends StructuredElementWrapperFactory {
     /**
      * Overridden to init Mandator
      * 
-     * @see com.top_logic.element.structured.wrap.StructuredElementWrapperFactory#createChild(java.lang.String, com.top_logic.element.structured.wrap.StructuredElementWrapper, java.lang.String, java.lang.String)
+     * @see com.top_logic.element.structured.wrap.StructuredElementWrapperFactory#createChild(String, StructuredElement, TLID, String, TLClass)
      */
     @Override
 	public StructuredElement createChild(String aStructureName, StructuredElement aWrapper,

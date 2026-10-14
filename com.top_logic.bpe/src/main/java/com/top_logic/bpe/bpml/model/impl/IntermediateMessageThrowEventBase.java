@@ -17,4 +17,9 @@ public interface IntermediateMessageThrowEventBase extends com.top_logic.bpe.bpm
 	 */
 	String INTERMEDIATE_MESSAGE_THROW_EVENT_TYPE = "IntermediateMessageThrowEvent";
 
+	/**
+	 * Name of the table storing {@link #INTERMEDIATE_MESSAGE_THROW_EVENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

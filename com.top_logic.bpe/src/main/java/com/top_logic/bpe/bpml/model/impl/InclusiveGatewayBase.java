@@ -17,4 +17,9 @@ public interface InclusiveGatewayBase extends com.top_logic.bpe.bpml.model.Defau
 	 */
 	String INCLUSIVE_GATEWAY_TYPE = "InclusiveGateway";
 
+	/**
+	 * Name of the table storing {@link #INCLUSIVE_GATEWAY_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

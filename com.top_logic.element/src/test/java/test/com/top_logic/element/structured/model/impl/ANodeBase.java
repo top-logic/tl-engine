@@ -90,6 +90,11 @@ public interface ANodeBase extends test.com.top_logic.element.structured.model.A
 	String NAME_ATTR = "name";
 
 	/**
+	 * Name of the table storing {@link #A_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "AElement";
+
+	/**
 	 * Getter for part {@link #AS1_ATTR}.
 	 */
 	@Override

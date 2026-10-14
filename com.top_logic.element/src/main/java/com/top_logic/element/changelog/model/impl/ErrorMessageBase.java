@@ -27,6 +27,11 @@ public interface ErrorMessageBase extends com.top_logic.element.changelog.model.
 	String ACTION_ATTR = "action";
 
 	/**
+	 * Name of the table storing {@link #ERROR_MESSAGE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ACTION_ATTR}.
 	 */
 	default com.top_logic.model.TLClassifier getAction() {

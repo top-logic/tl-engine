@@ -27,6 +27,11 @@ public interface ServiceTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	String ACTION_ATTR = "action";
 
 	/**
+	 * Name of the table storing {@link #SERVICE_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #ACTION_ATTR}.
 	 */
 	default com.top_logic.model.search.expr.SearchExpression getAction() {

@@ -25,6 +25,7 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
+ *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
@@ -1565,6 +1566,77 @@ message ProgressState extends ControlState {
 	 * The text beside the bar, plain text (e.g. {@code 3 / 4}). Absent: the bar stands alone.
 	 */
 	string label;
+}
+
+/**
+ * State properties of a control displaying a picture.
+ *
+ * The client only ever loads an address: either the {@link #url} naming the picture, or - while
+ * {@link #hasData} is set - the address of the data endpoint of the control itself, which serves the
+ * picture. The client appends the {@link #dataRevision} to the latter, so that a picture which was
+ * replaced is loaded again instead of being taken from the browser cache.
+ */
+message ImageSourceState extends ControlState {
+	/**
+	 * The address the picture is loaded from. Absent or {@code null}: no picture, unless
+	 * {@link #hasData} is set.
+	 */
+	string url;
+
+	/**
+	 * Whether the control serves the picture itself from its data endpoint. The {@link #url} is
+	 * then absent.
+	 */
+	bool hasData;
+
+	/**
+	 * How often the picture the control serves was replaced, the revision the client appends to the
+	 * address of the data endpoint. Absent: 0.
+	 */
+	int32 dataRevision;
+}
+
+/**
+ * State of a circular avatar for a person or object, the component {@code TLAvatar}.
+ *
+ * The circle shows the picture of the one it represents. Where there is none, it shows the
+ * initials of the {@link #name} on one of the eight category roles of the design system, which the
+ * client derives from the name; without a name, the neutral circle. The component sends no
+ * commands.
+ */
+message AvatarState extends ImageSourceState {
+
+	/**
+	 * The diameter of an avatar, chosen by where the avatar stands, independent of the density.
+	 */
+	enum Size {
+		/** An avatar in a table cell or a row. */
+		@Name("small")
+		SMALL;
+
+		/** The rule: beside text, in lists and in comment headers. */
+		@Name("medium")
+		MEDIUM;
+
+		/** An avatar in the header of a detail view. */
+		@Name("large")
+		LARGE;
+
+		/** A profile page: the picture is the content. */
+		@Name("x-large")
+		EXTRA_LARGE;
+	}
+
+	/**
+	 * The display name of the one the avatar represents, plain text, the source of the initials,
+	 * the category and the accessible name. Absent or {@code null}: the neutral circle.
+	 */
+	string name;
+
+	/**
+	 * The diameter of the circle. Absent means {@link Size#MEDIUM}.
+	 */
+	Size size;
 }
 
 /**

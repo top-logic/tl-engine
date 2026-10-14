@@ -44,4 +44,9 @@ public interface TLModuleSingletonsBase extends com.top_logic.model.TLNamed {
 	 */
 	String SINGLETON_ATTR = "singleton";
 
+	/**
+	 * Name of the table storing {@link #TL_MODULE_SINGLETONS_TYPE} objects.
+	 */
+	String TABLE_NAME = "TLModule_singletons";
+
 }

@@ -350,7 +350,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.setActivationHandler(activationHandler(context, activation));
-		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
+		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 

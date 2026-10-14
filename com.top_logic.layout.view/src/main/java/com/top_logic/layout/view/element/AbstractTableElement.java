@@ -81,6 +81,7 @@ import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
 
 /**
@@ -243,8 +244,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * The button sits in a column of its own at the right edge of the table, which stays there
 		 * while the table is scrolled. It offers the row activation where the gestures running it -
 		 * a double-click, {@code Enter} on the cursor row - are neither visible nor available: a
-		 * touch device has neither. Each button follows the command's executability for its own
-		 * row, so a row the rules reject shows a disabled button and a row they hide shows none.
+		 * touch device has neither. Pressing it activates its row as the gestures do: the row
+		 * becomes the selection, then the command runs. Each button follows the command's
+		 * executability for its own row, so a row the rules reject shows a disabled button and a
+		 * row they hide shows none.
 		 * </p>
 		 *
 		 * <p>
@@ -721,7 +724,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.buildColumn());
 		}
-		columns.addAll(this.<Object> rowCommandColumns(context, activation));
+		// The activation button activates its row through the table control, but the control is
+		// built from the view over these very columns - the button reaches it once it exists.
+		ControlActivation activate = new ControlActivation();
+		columns.addAll(this.<Object> rowCommandColumns(activation, activate));
 		S source = sourceFactory.apply(columns);
 		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
@@ -736,6 +742,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
+		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
 		if (_config.getDrag() != null) {
@@ -1017,7 +1024,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *
 	 * <p>
 	 * One model serves both ways of running the command - the activation gesture and the button the
-	 * rows carry - so both decide by the same rules.
+	 * rows carry - so both decide by the same rules. Both also run it the same way: the row
+	 * becomes the table's selection first, then the command runs with it, so that whatever the
+	 * command reads from the selection channel is that row.
 	 * </p>
 	 */
 	protected final ViewCommandModel activationModel(ViewContext context) {
@@ -1043,16 +1052,53 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * The trailing columns holding a button per row, empty when the table offers no command per
 	 * row.
 	 *
+	 * <p>
+	 * The activation button of a row activates that row like the activation gesture does: the
+	 * row becomes the table's selection, then the activation command runs with it.
+	 * </p>
+	 *
 	 * @param activation
-	 *        The model of the activation command, {@code null} when the table configures none.
+	 *        The model of the activation command, {@code null} when the table configures none. It
+	 *        decides the button's state for each row.
+	 * @param activate
+	 *        Activates a row in the table control displaying it - the selection, then the
+	 *        {@link #activationHandler(ViewContext, ViewCommandModel) activation handler}.
 	 */
-	protected final <R> List<Column<R, R>> rowCommandColumns(ViewContext context, ViewCommandModel activation) {
+	protected final <R> List<Column<R, R>> rowCommandColumns(ViewCommandModel activation,
+			Function<? super R, HandlerResult> activate) {
 		if (activation == null || !_config.getActivationButton()) {
 			return List.of();
 		}
-		return RowCommandColumn.columns(context, List.of(
-			new RowCommandColumn.RowCommand(activation, Icons.TABLE_ACTIVATE_ROW,
+		return RowCommandColumn.columns(List.of(
+			new RowCommandColumn.RowCommand<R>(activation, activate, Icons.TABLE_ACTIVATE_ROW,
 				I18NConstants.TABLE_ACTIVATE_ROW)));
+	}
+
+	/**
+	 * Activates a row in a {@link TableViewControl} bound after this activation was handed out.
+	 *
+	 * <p>
+	 * A table's columns exist before its control: the control is built from the view over them.
+	 * The activation button sits in one of these columns and needs the control; it gets this
+	 * activation, which reaches the control once {@link #bind(TableViewControl) bound}. A button
+	 * is pressed only in a rendered table, so the control is bound by then.
+	 * </p>
+	 */
+	private static final class ControlActivation implements Function<Object, HandlerResult> {
+
+		private TableViewControl<Object> _control;
+
+		/**
+		 * Binds the control the rows are activated in.
+		 */
+		void bind(TableViewControl<Object> control) {
+			_control = control;
+		}
+
+		@Override
+		public HandlerResult apply(Object row) {
+			return _control.activate(row);
+		}
 	}
 
 	/**

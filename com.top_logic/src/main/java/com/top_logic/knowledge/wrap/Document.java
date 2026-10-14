@@ -735,7 +735,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
     /**
 	 * Default security parent is the {@link WebFolder} which contains the document
 	 * 
-	 * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
+	 * @see com.top_logic.tool.boundsec.wrap.BoundWrapper#getSecurityParents()
 	 */
     @Override
 	public Collection<? extends BoundObject> getSecurityParents() {

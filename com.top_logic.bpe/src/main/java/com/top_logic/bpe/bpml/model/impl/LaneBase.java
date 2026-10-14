@@ -45,6 +45,11 @@ public interface LaneBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	String TITLE_ATTR = "title";
 
 	/**
+	 * Name of the table storing {@link #LANE_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
+	/**
 	 * Getter for part {@link #NODES_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

@@ -311,6 +311,50 @@ public class TestTableSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Tests that the channel announcing the deletion of the selected row's object - dropping it to
+	 * <code>null</code>, as an attached channel does - leaves the table's selection alone until the
+	 * refresh removing the row, which writes what survives.
+	 */
+	public void testAnnouncedDeletionIsAnsweredByTheRefresh() {
+		DeletableItem kept = new DeletableItem("kept");
+		DeletableItem deleted = new DeletableItem("deleted");
+		ListRowSource<Object> rows = objectRows(kept, deleted);
+		TableViewControl<Object> table = objectTable(rows);
+		TableSelectionBinding binding = new TableSelectionBinding(table, _channel);
+		try {
+			_channel.set(deleted);
+			assertEquals(Set.of(deleted), table.getSelectedKeys());
+
+			deleted.markDeleted();
+			_channel.set(null);
+
+			assertEquals("The announced deletion asks for no selection.", Set.of(deleted),
+				table.getSelectedKeys());
+
+			rows.setElements(new ArrayList<>(List.of(kept)));
+			table.refreshData();
+			binding.rowsRefreshed();
+
+			assertEquals("The deleted row is gone from the selection.", Set.of(), table.getSelectedKeys());
+			assertNull("Nothing of the selection is left.", _channel.get());
+		} finally {
+			binding.dispose();
+		}
+	}
+
+	/**
+	 * Tests that another writer clearing the channel while the selected row's object is still
+	 * valid clears the table's selection.
+	 */
+	public void testClearedChannelClearsTheSelection() {
+		_channel.set(A1);
+
+		_channel.set(null);
+
+		assertEquals("A value naming nothing is no selection.", Set.of(), _tableA.getSelectedKeys());
+	}
+
+	/**
 	 * Tests that a disposed binding leaves its table alone.
 	 */
 	public void testDisposedBindingDoesNotDisplayAnything() {
@@ -478,6 +522,24 @@ public class TestTableSelectionBinding extends TestCase {
 	/** Refreshes the rows of the table selecting any number of rows, as its owner does. */
 	private void refreshM(String... elements) {
 		refresh(_rowsM, _tableM, _bindingM, elements);
+	}
+
+	/** A row source over the given objects, each being its own row key. */
+	private static ListRowSource<Object> objectRows(Object... elements) {
+		return new ListRowSource<>(new ArrayList<>(List.of(elements)), objectColumns());
+	}
+
+	/** The single column showing the row object itself. */
+	private static List<Column<Object, ?>> objectColumns() {
+		return List.<Column<Object, ?>> of(DefaultColumn.<Object, Object> builder(COLUMN_VALUE, row -> row).build());
+	}
+
+	/** A table over the given object rows, selecting one row at a time. */
+	private TableViewControl<Object> objectTable(ListRowSource<Object> rows) {
+		List<Column<Object, ?>> columns = objectColumns();
+		TableViewState state = DefaultTableView.initialState(columns, SortSpec.NONE, Set.of());
+		state.setSelection(Selection.none(SelectionMode.SINGLE));
+		return new TableViewControl<>(_context, new DefaultTableView<>(columns, rows, state), false);
 	}
 
 	/** Suite requiring the resources the table builds its column headers from. */

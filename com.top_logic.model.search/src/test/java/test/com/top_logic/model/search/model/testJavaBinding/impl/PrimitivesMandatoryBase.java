@@ -72,6 +72,11 @@ public interface PrimitivesMandatoryBase extends test.com.top_logic.model.search
 	String SHORT_ATTR = "short";
 
 	/**
+	 * Name of the table storing {@link #PRIMITIVES_MANDATORY_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #BYTE_ATTR}.
 	 */
 	default int getByte() {

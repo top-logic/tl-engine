@@ -27,6 +27,11 @@ public interface MachineBase extends com.top_logic.demo.model.dnd.NamedPlanEleme
 	String LOCATION_ATTR = "location";
 
 	/**
+	 * Name of the table storing {@link #MACHINE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #LOCATION_ATTR}.
 	 */
 	default com.top_logic.demo.model.dnd.Location getLocation() {

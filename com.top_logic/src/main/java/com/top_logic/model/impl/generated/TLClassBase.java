@@ -53,4 +53,9 @@ public interface TLClassBase extends com.top_logic.model.TLStructuredType {
 	 */
 	String SPECIALIZATIONS_ATTR = "specializations";
 
+	/**
+	 * Name of the table storing {@link #TL_CLASS_TYPE} objects.
+	 */
+	String TABLE_NAME = "MetaElement";
+
 }

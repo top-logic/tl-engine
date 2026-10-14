@@ -99,6 +99,11 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	String REVISION_ATTR = "revision";
 
 	/**
+	 * Name of the table storing {@link #CHANGE_SET_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #AUTHOR_ATTR}.
 	 */
 	default com.top_logic.knowledge.wrap.person.Person getAuthor() {

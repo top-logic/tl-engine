@@ -20,12 +20,12 @@
 		selection-mode="multi"
 		types="demo.test:Row"
 	>
-		<drag/>
-		<drop accept="demo.test:Row">
+		<drag kind="row"/>
+		<drop>
 			<execute-script function="rows -> $rows"/>
 		</drop>
 		<drop
-			accept="demo.test:Row, demo.test:Other"
+			accept="row, other"
 			target="row"
 			target-channel="dropTarget"
 		>
@@ -128,6 +128,7 @@
 				<can-update>factor -&gt; row -&gt; col -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
 				<column-label>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-label>
 				<column-name>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-name>
+				<column-visible>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`) != "hidden"</column-visible>
 				<comparator>factor -&gt; value1 -&gt; value2 -&gt; $value2 - $value1</comparator>
 				<columns>factor -&gt; all(`demo.test:Milestone`)</columns>
 				<inputs>

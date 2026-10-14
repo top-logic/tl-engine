@@ -15,15 +15,21 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
+import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -47,7 +53,7 @@ import com.top_logic.util.Resources;
  * side by side in a draggable split.</li>
  * <li>On a wide viewport with a {@link DetailDisplay#DRAWER} display, the selector keeps the full
  * width and the detail overlays it from the right edge, in a panel as wide as
- * {@value Config#DETAIL_SIZE} says, appearing with the selection and dismissed by clearing it.</li>
+ * {@value Config#DRAWER_SIZE} says, appearing with the selection and dismissed by clearing it.</li>
  * <li>On a narrow ({@code COMPACT}) viewport, whichever display is configured, the selector is shown
  * full-bleed and is replaced by the detail once something is selected (with a back affordance to
  * clear the selection).</li>
@@ -88,11 +94,11 @@ public class AdaptiveDetailElement implements UIElement {
 		/** Configuration name for {@link #getDetailDisplay()}. */
 		String DETAIL_DISPLAY = "detail-display";
 
-		/** Configuration name for {@link #getDetailSize()}. */
-		String DETAIL_SIZE = "detail-size";
+		/** Configuration name for {@link #getDrawerSize()}. */
+		String DRAWER_SIZE = "drawer-size";
 
-		/** Default value of {@link #getDetailSize()}. */
-		int DEFAULT_DETAIL_SIZE = 420;
+		/** Default value of {@link #getDrawerSize()}. */
+		int DEFAULT_DRAWER_SIZE = 420;
 
 		@Override
 		@ClassDefault(AdaptiveDetailElement.class)
@@ -108,21 +114,24 @@ public class AdaptiveDetailElement implements UIElement {
 		ChannelRef getSelection();
 
 		/**
-		 * The master content (e.g. a {@code <table>} or {@code <tree>}) that writes the
-		 * {@link #getSelection() selection} channel.
+		 * The master side: its content (e.g. a {@code <table>} or {@code <tree>}) that writes the
+		 * {@link #getSelection() selection} channel, and its share of the width when it stands
+		 * beside the {@link #getDetail() detail} in a {@link DetailDisplay#SPLIT split}.
 		 */
 		@Name(SELECTOR)
 		@TreeProperty
-		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getSelector();
+		@ItemDefault
+		SelectorConfig getSelector();
 
 		/**
-		 * The detail content bound to the {@link #getSelection() selection} channel.
+		 * The detail side: its content bound to the {@link #getSelection() selection} channel, and
+		 * its share of the width when it stands beside the {@link #getSelector() selector} in a
+		 * {@link DetailDisplay#SPLIT split}.
 		 */
 		@Name(DETAIL)
 		@TreeProperty
-		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getDetail();
+		@ItemDefault
+		DetailConfig getDetail();
 
 		/**
 		 * Channels on which this element's {@link #getSelection() selection} depends; whenever one of
@@ -177,16 +186,107 @@ public class AdaptiveDetailElement implements UIElement {
 		 * {@link #getDetailDisplay() drawer display} the value has no effect.
 		 * </p>
 		 */
-		@Name(DETAIL_SIZE)
-		@IntDefault(DEFAULT_DETAIL_SIZE)
-		int getDetailSize();
+		@Name(DRAWER_SIZE)
+		@IntDefault(DEFAULT_DRAWER_SIZE)
+		int getDrawerSize();
+	}
+
+	/**
+	 * One side of an {@link AdaptiveDetailElement}: its content and its share of the width in a
+	 * {@link DetailDisplay#SPLIT split}.
+	 *
+	 * <p>
+	 * When only one of the two sides gives its {@link #getSize() size} and both sides measure in
+	 * percent, the other side takes the rest of the 100 percent, so that
+	 * {@code <selector size="55">} alone yields a detail of 45 percent. Sizes given on both sides,
+	 * or in pixels, are taken as given.
+	 * </p>
+	 */
+	public interface SideConfig extends PaneSizeConfig {
+
+		/** Configuration name for {@link #getChildren()}. */
+		String CHILDREN = "children";
+
+		/**
+		 * The content elements of this side.
+		 */
+		@Name(CHILDREN)
+		@DefaultContainer
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+	}
+
+	/**
+	 * The {@link Config#getSelector() selector} side of an {@link AdaptiveDetailElement}.
+	 */
+	public interface SelectorConfig extends SideConfig {
+
+		/** Default value of {@link #getSize()}. */
+		float DEFAULT_SIZE = 32f;
+
+		/** Default value of {@link #getMinSize()}. */
+		int DEFAULT_MIN_SIZE = 240;
+
+		@Override
+		@FloatDefault(DEFAULT_SIZE)
+		float getSize();
+
+		@Override
+		@IntDefault(DEFAULT_MIN_SIZE)
+		int getMinSize();
+	}
+
+	/**
+	 * The {@link Config#getDetail() detail} side of an {@link AdaptiveDetailElement}.
+	 */
+	public interface DetailConfig extends SideConfig {
+
+		/** Default value of {@link #getSize()}. */
+		float DEFAULT_SIZE = 68f;
+
+		/** Default value of {@link #getMinSize()}. */
+		int DEFAULT_MIN_SIZE = 320;
+
+		@Override
+		@FloatDefault(DEFAULT_SIZE)
+		float getSize();
+
+		@Override
+		@IntDefault(DEFAULT_MIN_SIZE)
+		int getMinSize();
+	}
+
+	/**
+	 * The size one side of an {@link AdaptiveDetailElement} takes in a {@link DetailDisplay#SPLIT
+	 * split}.
+	 *
+	 * @param size
+	 *        The share of the width, measured in {@code unit}.
+	 * @param unit
+	 *        The unit of {@code size}.
+	 * @param minSize
+	 *        The minimum width in pixels.
+	 */
+	public record SideSize(float size, DisplayUnit unit, int minSize) {
+
+		/**
+		 * The constraint a split panel lays this side out with.
+		 */
+		public ChildConstraint toConstraint() {
+			return new ChildConstraint(size, unit, minSize, Scrolling.AUTO);
+		}
 	}
 
 	private final ChannelRef _selectionRef;
 
 	private final List<UIElement> _selector;
 
+	private final SideSize _selectorSize;
+
 	private final List<UIElement> _detail;
+
+	private final SideSize _detailSize;
 
 	private final List<ChannelRef> _resetOnRefs;
 
@@ -194,7 +294,7 @@ public class AdaptiveDetailElement implements UIElement {
 
 	private final DetailDisplay _detailDisplay;
 
-	private final int _detailSize;
+	private final int _drawerSize;
 
 	/**
 	 * Whether this element is nested inside another {@code <adaptive-detail>}'s detail. Set by the
@@ -211,18 +311,51 @@ public class AdaptiveDetailElement implements UIElement {
 	@CalledByReflection
 	public AdaptiveDetailElement(InstantiationContext context, Config config) {
 		_selectionRef = config.getSelection();
-		_selector = config.getSelector().stream().map(context::getInstance).collect(Collectors.toList());
-		_detail = config.getDetail().stream().map(context::getInstance).collect(Collectors.toList());
+		SideConfig selectorConfig = config.getSelector();
+		SideConfig detailConfig = config.getDetail();
+		_selector = selectorConfig.getChildren().stream().map(context::getInstance).collect(Collectors.toList());
+		_detail = detailConfig.getChildren().stream().map(context::getInstance).collect(Collectors.toList());
+		_selectorSize = resolveSideSize(selectorConfig, detailConfig);
+		_detailSize = resolveSideSize(detailConfig, selectorConfig);
 		_resetOnRefs = config.getResetOn();
 		_homeLabel = config.getHomeLabel();
 		_detailDisplay = config.getDetailDisplay();
-		_detailSize = config.getDetailSize();
+		_drawerSize = config.getDrawerSize();
 
 		AdaptiveDetailElement nested = firstNestedAdaptiveDetail();
 		if (nested != null) {
 			nested._nested = true;
 		}
 		_cssClass = config.getCssClass();
+	}
+
+	/**
+	 * The size a side of an {@link AdaptiveDetailElement} takes in a split beside the other side.
+	 *
+	 * <p>
+	 * When the other side gives its size explicitly, this side does not, and both measure in
+	 * percent, this side takes the rest of the 100 percent. Otherwise this side takes the size it
+	 * is configured with (explicitly or by default).
+	 * </p>
+	 *
+	 * @param side
+	 *        The side to resolve the size of.
+	 * @param other
+	 *        The other side of the same element.
+	 * @return The size {@code side} takes in the split.
+	 */
+	public static SideSize resolveSideSize(SideConfig side, SideConfig other) {
+		DisplayUnit unit = side.getUnit();
+		float size = side.getSize();
+		if (!isSizeSet(side) && isSizeSet(other)
+			&& unit == DisplayUnit.PERCENT && other.getUnit() == DisplayUnit.PERCENT) {
+			size = Math.max(0f, 100f - other.getSize());
+		}
+		return new SideSize(size, unit, side.getMinSize());
+	}
+
+	private static boolean isSizeSet(SideConfig side) {
+		return side.valueSet(side.descriptor().getProperty(PaneSizeConfig.SIZE));
 	}
 
 	/**
@@ -265,7 +398,8 @@ public class AdaptiveDetailElement implements UIElement {
 		}
 
 		ReactAdaptiveDetailControl result = new ReactAdaptiveDetailControl(context, this, _selector, _detail,
-			selectionChannel, resetOn, coordinator, chain, homeLabel, _detailDisplay, _detailSize);
+			selectionChannel, resetOn, coordinator, chain, homeLabel, _detailDisplay, _drawerSize,
+			_selectorSize.toConstraint(), _detailSize.toConstraint());
 		result.setCssClass(_cssClass);
 		return result;
 	}

@@ -65,7 +65,7 @@ public class ReactPanelControl extends ToolbarControl {
 	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String CHILD = "child";
 
-	/** @see #setFill(boolean) */
+	/** @see #setFill(Boolean) */
 	public static final String FILL = "fill";
 
 	/** @see #setWidth(String) */
@@ -212,13 +212,16 @@ public class ReactPanelControl extends ToolbarControl {
 	 * content.
 	 *
 	 * <p>
-	 * Set this for a panel whose content scrolls internally - in particular a virtualized
+	 * {@code null} (the default) lets the panel follow its content: it fills while its content
+	 * fills - in particular a virtualized
 	 * {@link com.top_logic.layout.react.control.table.TableViewControl}, which only bounds its
-	 * scroll viewport when its container has a definite height.
+	 * scroll viewport when its container has a definite height. {@link Boolean#TRUE} fills even
+	 * around content of its own size, {@link Boolean#FALSE} does not pass the fill request of its
+	 * content on to its container.
 	 * </p>
 	 */
-	public void setFill(boolean fill) {
-		putState(FILL, Boolean.valueOf(fill));
+	public void setFill(Boolean fill) {
+		putState(FILL, fill);
 	}
 
 	/**

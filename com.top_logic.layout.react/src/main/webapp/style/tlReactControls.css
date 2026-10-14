@@ -259,6 +259,11 @@ button.tlCounter__button:focus {
    =========================================================================== */
 :root {
 	--page-inset: var(--spacing-04);
+	/* The color of the surface the content at hand is placed on: the page's background, overridden by
+	   every control painting a surface of its own (card, window, drawer, ...). An element that must be
+	   opaque without standing out - a sticky table cell over the cells scrolling underneath - paints
+	   this color, so it is of one color with whatever it is placed on. */
+	--tl-current-surface: var(--background);
 }
 
 /* An inset passes the space it is given on to its content: a bounded flex column, so that content
@@ -1124,9 +1129,9 @@ button.tlPanel__actionButton:focus-visible {
 	stroke-linejoin: round;
 }
 
-/* The body of a panel is where the fill chain ends (see the fill contract above): it is bounded by
-   the panel - it takes the space the panel has left over and scrolls what does not fit into it -
-   and is therefore the box a filling child resolves its height against. A child can only do that in
+/* The body of a panel is the box a filling child resolves its height against (see the fill contract
+   above): it is bounded by the panel - it takes the space the panel has left over and scrolls what
+   does not fit into it -, and the panel fills while such a child does. A child can only do that in
    a flex container, so the body is a column: a child carrying .tlFill takes the height the body
    offers, and any other child keeps the height of its content. */
 .tlPanel__content {
@@ -1148,6 +1153,7 @@ button.tlPanel__actionButton:focus-visible {
 }
 
 .tlPanel--maximized {
+	--tl-current-surface: var(--background);
 	background: var(--background);
 }
 
@@ -1157,6 +1163,7 @@ button.tlPanel__actionButton:focus-visible {
    button (chevron, icon, label) and the section's actions beside it. The focus ring is the one of
    the design system, drawn inside the trigger since the header spans the whole frame. */
 .tl-accordion {
+	--tl-current-surface: var(--tl-surface-layer);
 	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
 	border-radius: var(--tl-radius-md);
 	background: var(--tl-surface-layer);
@@ -1321,6 +1328,7 @@ button.tlPanel__actionButton:focus-visible {
 }
 
 .tlSidebar__nav {
+	--tl-current-surface: var(--layer-01);
 	display: flex;
 	flex-direction: column;
 	width: 16rem;
@@ -1571,6 +1579,7 @@ button.tlSidebar__collapseBtn:focus-visible {
 }
 
 .tlSidebar__flyout {
+	--tl-current-surface: var(--layer-02);
 	position: fixed;
 	z-index: 1000;
 	min-width: 12rem;
@@ -2132,6 +2141,7 @@ button.tlDrawerToggle:focus-visible {
    height explicitly: a card sharing a column with a filling control keeps its full content instead
    of giving up height to it. */
 .tlCard {
+	--tl-current-surface: var(--layer-01);
 	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
 	background: var(--layer-01);
@@ -2277,6 +2287,7 @@ button.tlDrawerToggle:focus-visible {
 /* --- TLBottomBar ----------------------------------------------------------- */
 
 .tlBottomBar {
+	--tl-current-surface: var(--layer-01);
 	display: flex;
 	align-items: stretch;
 	height: 3.5rem;
@@ -2380,12 +2391,16 @@ button.tlBottomBar__item:hover {
 /* --- TLDialogManager ------------------------------------------------------- */
 
 .tlDialogManager {
-	/* Container for stacked dialogs; no visual styles. */
+	/* Container for stacked dialogs, which are fixed overlays: it takes no part in the layout of the
+	   window root it is a child of, so it claims no room there - not even the gap the root stack
+	   would put in front of it, which cut the page short at the bottom. */
+	display: contents;
 }
 
 /* --- TLWindow -------------------------------------------------------------- */
 
 .tlWindow {
+	--tl-current-surface: var(--layer-01);
 	position: relative;
 	background: var(--layer-01);
 	border-radius: var(--border-radius-02);
@@ -2569,6 +2584,7 @@ button.tlWindow__maximizeBtn:focus-visible {
 /* --- TLDrawer -------------------------------------------------------------- */
 
 .tlDrawer {
+	--tl-current-surface: var(--layer-01);
 	position: fixed;
 	z-index: var(--tl-layer-overlay);
 	background: var(--layer-01);
@@ -2918,6 +2934,7 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* Placeholder rendered in place of a view that could not be loaded. */
 .tlViewError {
+	--tl-current-surface: var(--layer-01);
 	margin: var(--spacing-05);
 	padding: var(--spacing-05);
 	border: 1px solid var(--support-error);
@@ -3118,36 +3135,52 @@ button.tlDrawer__closeBtn:focus-visible {
    scrollbar wherever no pinned column offers it a heading of its own. The button must not take
    width from the header: a header narrower than the body keeps its last 2rem permanently out of
    view, so the last column's heading stays cut off however far the user scrolls. Overlaying instead
-   keeps every heading complete; only while the table is scrolled fully right does the button cover
-   the tail of the last column - which is why it is opaque. */
+   keeps every heading complete: scrolled fully right, the last column ends in front of the button,
+   whose strip the rows keep clear as padding. */
 .tlTableView__headerArea {
 	position: relative;
 	display: flex;
 	flex-shrink: 0;
 	align-items: stretch;
+	/* The line below the headings belongs to the area, not to the header: the header fades out in
+	   front of the column button (see below), the line runs through. */
+	border-bottom: 2px solid var(--border-subtle);
 }
 
 .tlTableView__header {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
-	border-bottom: 2px solid var(--border-subtle);
+}
+
+/* While columns run on underneath the column button, the headings fade out in front of it: the
+   heading cut off there - its funnel in particular - reads as scrolled out of view, not as a fragment
+   the button covers by mistake. Transparent beneath the button and a little in front of it, so a
+   funnel cut off at the button's edge is gone rather than faded, then fading in. A mask rather than
+   a color laid over the headings, so whatever surface the table is placed on shows through, the
+   button's hover included. */
+.tlTableView__header--covered {
+	-webkit-mask-image: linear-gradient(to left,
+		transparent calc(2rem + var(--spacing-02)), #000 calc(2rem + var(--spacing-02) + var(--spacing-03)));
+	mask-image: linear-gradient(to left,
+		transparent calc(2rem + var(--spacing-02)), #000 calc(2rem + var(--spacing-02) + var(--spacing-03)));
 }
 
 .tlTableView__columnsButton {
 	position: absolute;
 	top: 0;
 	right: 0;
-	/* Leaves the header's bottom border uncovered, so the line runs through below the button. */
-	bottom: 2px;
+	/* Ends on the line below the headings, which the area draws. */
+	bottom: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	width: 2rem;
 	padding: 0;
 	border: none;
-	/* Opaque: while the table is scrolled, a column label may pass underneath. */
-	background: var(--layer-01);
+	/* Transparent: a column passing underneath is masked out of the header, see
+	   .tlTableView__header--covered. */
+	background: transparent;
 	color: var(--text-secondary);
 	font-size: var(--body-compact-01-font-size);
 	cursor: pointer;
@@ -3247,23 +3280,28 @@ button.tlDrawer__closeBtn:focus-visible {
 /* Must not clip: an ancestor with a clipping overflow between a sticky cell and the scroll container
    turns the row into the cell's scroll context, and a frozen cell would scroll away with the row
    instead of sticking to the left edge. Each cell clips its own content anyway. */
+/* A row paints the color of its state, which a state rule sets as --tl-row-background: the sticky
+   cells paint that very color over the surface, so they look like the rest of their row in every
+   state the row can be in. */
 .tlTableView__row {
+	--tl-row-background: transparent;
 	display: flex;
 	border-bottom: 1px solid var(--border-subtle);
 	box-sizing: border-box;
 	cursor: pointer;
+	background: var(--tl-row-background);
 }
 
 .tlTableView__row:hover {
-	background: var(--layer-hover);
+	--tl-row-background: var(--layer-hover);
 }
 
 .tlTableView__row--selected {
-	background: var(--layer-selected);
+	--tl-row-background: var(--layer-selected);
 }
 
 .tlTableView__row--selected:hover {
-	background: var(--layer-selected-hover);
+	--tl-row-background: var(--layer-selected-hover);
 }
 
 /* The row the keyboard cursor is on. The ring is drawn on the cells rather than on the row itself:
@@ -3938,7 +3976,7 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 .tlTableView__row--dragOver-onto {
-	background: var(--layer-selected-hover);
+	--tl-row-background: var(--layer-selected-hover);
 	outline: 2px solid var(--interactive);
 	outline-offset: -2px;
 }
@@ -3966,8 +4004,9 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* Why the target under the running drag refuses it, next to the pointer (left/top set by the
-   table or the board), above every other layer like a tooltip. */
+   table, the tree or the board), above every other layer like a tooltip. */
 .tlTableView__dropHint,
+.tlTreeView__dropHint,
 .tlKanbanBoard__dropHint {
 	position: fixed;
 	z-index: 13000;
@@ -3980,23 +4019,17 @@ button.tlDrawer__closeBtn:focus-visible {
 	pointer-events: none;
 }
 
-/* -- Frozen columns -- */
+/* -- Frozen columns --
+   They stick to the left edge while the other columns scroll past underneath, so they are opaque:
+   the surface the table is placed on, with the color of the row's state over it - exactly what the
+   rest of the row shows, in every state and on every surface. */
 
-.tlTableView__headerCell--frozen,
+.tlTableView__headerCell--frozen {
+	background: var(--tl-current-surface);
+}
+
 .tlTableView__cell--frozen {
-	background: var(--layer-01);
-}
-
-.tlTableView__row:hover .tlTableView__cell--frozen {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected .tlTableView__cell--frozen {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover .tlTableView__cell--frozen {
-	background: var(--layer-selected-hover);
+	background: linear-gradient(var(--tl-row-background), var(--tl-row-background)), var(--tl-current-surface);
 }
 
 .tlTableView__headerCell--frozenLast,
@@ -4009,21 +4042,12 @@ button.tlDrawer__closeBtn:focus-visible {
    They stick to the right edge while the columns in front of them scroll past underneath, so their
    background is opaque, exactly like a frozen column's. */
 
-.tlTableView__headerCell--pinnedEnd,
+.tlTableView__headerCell--pinnedEnd {
+	background: var(--tl-current-surface);
+}
+
 .tlTableView__cell--pinnedEnd {
-	background: var(--layer-01);
-}
-
-.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
-	background: var(--layer-selected-hover);
+	background: linear-gradient(var(--tl-row-background), var(--tl-row-background)), var(--tl-current-surface);
 }
 
 /* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
@@ -4031,6 +4055,59 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlTableView__cell--pinnedEndFirst {
 	box-shadow: var(--shadow-raised);
 	clip-path: inset(0 0 0 -4px);
+}
+
+/* -- Highlighted rows and cells --
+   A row or a single cell carrying one of the classes tl-status-error, tl-status-warning,
+   tl-status-success or tl-status-info (the CSS class the table view answers for the row or the cell)
+   is tinted with the subtle surface of that status role.
+
+   Selection wins over the tint: a selected row shows the selection colors only, on its scrolling
+   and on its frozen and pinned cells alike, and so does a marked cell in it. Hover does not change a
+   tinted row or a tinted cell: the tint stays while the pointer is over it. The frozen and the pinned
+   cells paint an opaque background of their own, so they are tinted together with their row -
+   otherwise the tint would stop at the frozen boundary. All of this is expressed by matching unselected
+   rows only; the selectors outrank the hover rules above by specificity. */
+
+.tlTableView__row.tl-status-error:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-error:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-error:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-error-subtle);
+}
+
+.tlTableView__row.tl-status-warning:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-warning:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-warning:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-warning-subtle);
+}
+
+.tlTableView__row.tl-status-success:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-success:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-success:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-success-subtle);
+}
+
+.tlTableView__row.tl-status-info:not(.tlTableView__row--selected),
+.tlTableView__row.tl-status-info:not(.tlTableView__row--selected) .tlTableView__cell--frozen,
+.tlTableView__row.tl-status-info:not(.tlTableView__row--selected) .tlTableView__cell--pinnedEnd {
+	background: var(--tl-status-info-subtle);
+}
+
+/* A marked cell in a tinted row shows its own tint: the cell rules follow the row rules. */
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-error {
+	background: var(--tl-status-error-subtle);
+}
+
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-warning {
+	background: var(--tl-status-warning-subtle);
+}
+
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-success {
+	background: var(--tl-status-success-subtle);
+}
+
+.tlTableView__row:not(.tlTableView__row--selected) .tlTableView__cell.tl-status-info {
+	background: var(--tl-status-info-subtle);
 }
 
 /* -- A column offering a command on every row: the button is ghost and small, carrying its own
@@ -4050,7 +4127,8 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlTableView__frozenSplitter {
 	position: absolute;
 	top: 0;
-	bottom: 2px;
+	/* Ends on the line below the headings, which the area draws. */
+	bottom: 0;
 	z-index: 3;
 	width: 7px;
 	cursor: col-resize;
@@ -4134,7 +4212,7 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* A group header row: the group value, its size, and the columns' aggregates. */
 .tlTableView__row--group {
-	background-color: var(--layer);
+	--tl-row-background: var(--layer);
 	font-weight: 600;
 }
 
@@ -4149,6 +4227,39 @@ button.tlDrawer__closeBtn:focus-visible {
 	margin-left: var(--spacing-02);
 	color: var(--text-secondary);
 	flex-shrink: 0;
+}
+
+/* The row count below the rows: how many the table has, how many of them its filter lets pass, and
+   how many are selected. Outside the scroller like the filter bar, and set in quiet colors, so
+   it reads as a remark about the table rather than as one more row. Its text starts where the text
+   of the cells starts. The digits keep their width, so the text does not jitter while a filter is
+   typed. Without a background of its own, so it is of one color with whatever the table is placed
+   on. */
+.tlTableView__footer {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--spacing-02);
+	min-height: 2rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	border-top: 1px solid var(--border-subtle);
+	box-sizing: border-box;
+	font-size: var(--label-01-font-size);
+	color: var(--text-secondary);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.tlTableView__rowCount,
+.tlTableView__rowCountSelected {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlTableView__rowCountSelected::before {
+	content: "\00B7";
+	margin-right: var(--spacing-02);
 }
 
 /* --- TLColumnSelect ---------------------------------------------------- */
@@ -4490,21 +4601,48 @@ button.tlDrawer__closeBtn:focus-visible {
   white-space: nowrap;
 }
 
-.tlTreeView__node--drop-above {
+.tlTreeView__node[draggable="true"] {
+  cursor: grab;
+}
+
+.tlTreeView__node[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* The marker of the drop the tree accepts where the running drag hovers: an insertion line before
+   or after a node, a highlight of the node dropped onto or inserted into. */
+.tlTreeView__node--dragOver-before {
   box-shadow: inset 0 2px 0 0 var(--interactive);
 }
 
-.tlTreeView__node--drop-within {
-  outline: 2px solid var(--interactive);
-  outline-offset: -2px;
-  background: var(--layer-hover);
-}
-
-.tlTreeView__node--drop-below {
+.tlTreeView__node--dragOver-after {
   box-shadow: inset 0 -2px 0 0 var(--interactive);
 }
 
-.tlTreeView__node--no-drop {
+.tlTreeView__node--dragOver-into {
+  background: var(--layer-selected-hover);
+  outline: 2px solid var(--interactive);
+  outline-offset: -2px;
+}
+
+/* The tree accepts the running drag as a drop on the tree as a whole. */
+.tlTreeView--dragover {
+  outline: 2px dashed var(--focus);
+  outline-offset: -2px;
+  border-radius: var(--corner-radius);
+}
+
+/* The target under the running drag refuses it: the tree as a whole, or a single node. */
+.tlTreeView--dropRefused {
+  outline: 2px dashed var(--support-error);
+  outline-offset: -2px;
+  border-radius: var(--corner-radius);
+  cursor: not-allowed;
+}
+
+.tlTreeView__node--dropRefused {
+  outline: 2px solid var(--support-error);
+  outline-offset: -2px;
   cursor: not-allowed;
 }
 

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,6 +89,7 @@ public class TestWrapperGenerator extends TestCase {
 		changeProperties(fooResources);
 		generateWrappers(root, app1, foo);
 		checkProperties(fooResources);
+		addClient(root, pkg);
 		generateWrappers(root, app1, bar);
 	}
 
@@ -175,6 +177,15 @@ public class TestWrapperGenerator extends TestCase {
 		compileSources(root);
 	}
 
+	/**
+	 * Adds a client of the generated API to the sources compiled with the generated code.
+	 */
+	private void addClient(File root, File pkg) throws IOException {
+		File clientDir = new File(root, "test/client");
+		clientDir.mkdirs();
+		Files.copy(new File(pkg, "Client.java.txt").toPath(), new File(clientDir, "Client.java").toPath());
+	}
+
 	private void changeProperties(String path) throws FileNotFoundException, IOException {
 		Properties properties = new Properties();
 
@@ -212,16 +223,21 @@ public class TestWrapperGenerator extends TestCase {
 		Iterable<? extends File> sourceFiles = listJavaFiles(root);
 
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
 			Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFiles);
-			DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-			Boolean success = compiler.getTask(null, fileManager, diagnostics, null, null, compilationUnits).call();
-			if (!Boolean.TRUE.equals(success)) {
-				StringBuilder message = new StringBuilder("Generated sources do not compile:");
+			Boolean success = compiler.getTask(null, fileManager, diagnostics, List.of("-Xlint:deprecation", "-Werror"), null,
+				compilationUnits).call();
+			if (!success.booleanValue()) {
+				StringBuilder errors = new StringBuilder("Generated sources do not compile:");
 				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-					message.append('\n').append(diagnostic);
+					if (diagnostic.getKind() == Diagnostic.Kind.ERROR
+						|| diagnostic.getKind() == Diagnostic.Kind.WARNING
+						|| diagnostic.getKind() == Diagnostic.Kind.MANDATORY_WARNING) {
+						errors.append('\n').append(diagnostic);
+					}
 				}
-				fail(message.toString());
+				fail(errors.toString());
 			}
 		}
 	}

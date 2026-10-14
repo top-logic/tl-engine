@@ -63,11 +63,10 @@ import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.AllocationService;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.core.wrap.WrapperTLElement;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Icons;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.ResourceProvider;
@@ -1672,11 +1671,11 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	 * Gets the Element type of the given business object for color lookup.
 	 */
 	protected String getElementType(Object businessObject) {
-		if (businessObject instanceof WrapperTLElement) {
-			return ((WrapperTLElement) businessObject).getElementType();
+		if (businessObject instanceof StructuredElement element) {
+			return element.getElementType();
 		}
-		else if (businessObject instanceof AbstractWrapper) {
-			return ((AbstractWrapper) businessObject).tTable().getName();
+		else if (businessObject instanceof Wrapper wrapper) {
+			return wrapper.tTable().getName();
 		}
 		return null;
 	}

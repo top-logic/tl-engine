@@ -27,6 +27,11 @@ public interface FactoryBase extends com.top_logic.demo.model.dnd.NamedPlanEleme
 	String FLOORS_ATTR = "floors";
 
 	/**
+	 * Name of the table storing {@link #FACTORY_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #FLOORS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

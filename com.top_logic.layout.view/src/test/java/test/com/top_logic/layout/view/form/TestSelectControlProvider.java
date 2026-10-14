@@ -12,8 +12,8 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -291,12 +291,12 @@ public class TestSelectControlProvider extends TestCase {
 
 	/**
 	 * Test suite requiring the {@link LabelProviderService} the options are labelled and imaged by,
-	 * and the {@link ModelResolver} naming an option in what a headless interface reads.
+	 * and the {@link ModelResolver} naming an option in what a headless interface reads, started on a
+	 * knowledge base these services depend on.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestSelectControlProvider.class,
-				LabelProviderService.Module.INSTANCE,
+		return KBSetup.getSingleKBTest(TestSelectControlProvider.class,
+			ServiceTestSetup.createStarterFactoryForModules(LabelProviderService.Module.INSTANCE,
 				ModelResolver.Module.INSTANCE));
 	}
 

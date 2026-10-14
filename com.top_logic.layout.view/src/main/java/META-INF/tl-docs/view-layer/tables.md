@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <table> (TableViewControl) in a .view.xml - column declarations, row selection, row activation, grouping, the filter bar and its presets, pinned columns, and drag and drop of rows.
+description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations, row and node selection, activation, grouping, CSS classes marking rows by their data (row-class on <table> and <composition-table>, tl-status-error / -warning / -success / -info), the filter bar and its presets, pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered" parent-channel before-channel>).
 order: 60
 ---
 
@@ -12,6 +12,7 @@ order: 60
 - Each `TableViewControl` cell is a registered child control, so interactive cell controls work. Cell rendering (`CellContentReactAdapter`): `CellContent.Text` / `Labeled` → text; `CellContent.Editable` backed by a *boolean* `FieldModel` → interactive `ReactCheckboxControl` (other field types read-only); **`CellContent.Raw` whose payload is a `CellControlFactory` → whatever control the factory builds** — the escape hatch for bespoke cells. The composition table uses it to put typed field inputs (`FieldControlService.createFieldControl(part, fieldModel)`) and detail / delete action buttons in cells; a column's `value(R)=row` plus a renderer returning `Raw(ctx -> buildControl(ctx, row, …))` gives the factory the row.
 - **`TLPanel` renders a single `toolbar` child control (a `ReactToolbarControl`), not a `toolbarButtons` list.** Push a panel toolbar via `putState("toolbar", new ReactToolbarControl(ctx))` + `addGroup(name, ToolbarGroupDisplay.INLINE, …, List.of(button))`.
 - **A column's display width**: `<column width="220"/>` on a `<table>` or a `<composition-table>` is the width in pixels a column is shown with until the user resizes it, from then on their own width is remembered; `0` (the default) keeps the width the column's type derives (`ColumnProviderService` config: boolean 80, number 100, date 110, time 90, date-time 160, enumeration 120, string and everything else 150, each retunable per application). The configured width is applied uniformly after the `ColumnBinding` built the column — `ColumnSetup.buildColumn()` wraps it through `DelegatingColumn.withDefaultWidth(…)`, the general `Column` decorator for overriding single aspects of a column — so no binding knows about widths.
+- A table whose rows form a tree is a `<tree-table>`, see [Tree tables](doc:view-layer/tree-tables); it shares the configuration and the building code of a `<table>` through `AbstractTableElement`.
 - Mutable rows: `ListRowSource.setElements(list)` then `TableViewControl.refreshData()`. `DefaultTableView.create(columns, source[, ViewStateStore, TableId])` — the 2-arg form skips personalization; pass a stable `TableId` to persist column width / order.
 
 ### Column declarations
@@ -29,6 +30,7 @@ Further rules that hold across the kinds:
 - **A column may order its values itself.** `<column>`, `<computed-column>` and `<dynamic-columns>` take a `<comparator>`: a function of two cell values yielding a negative number, zero or a positive number — the contract of the comparator of TL-Script's `sort` function, so an order by a key is written with the `comparator(key)` sugar: `` <comparator>comparator(p -> $p.get(`m:Page#position`))</comparator> ``. The column sorts the rows by it and orders the groups it forms by it, instead of the order the type of its values derives (`ColumnSetup#comparator()`, applied as the column's `Column#sort()`). The function is never passed an empty value; rows without a value are ordered apart from it, a group without a value comes last. In `<dynamic-columns>` the input values precede the two compared values, and every column of the set shares the function. An embedded column keeps the comparator of the column it embeds; one collecting the values of several objects orders those collections element by element by the same comparator (`ColumnSetup.elementwise`).
 - **Default columns.** A table without `<columns>` shows the main properties of its row type (`<main-properties properties="name, dueDate"/>` on the type), and all non-hidden attributes of that type when it names none.
 - **Offered columns.** Whatever the declared columns do not cover, the table offers in its column selection, hidden until the user picks it — the remaining attributes of the configured `types`, and the remaining attributes of an embedded type under their prefixed labels. Only an explicitly configured `types` produces this offering; a type guessed from the first row would vary with the data.
+- **Columns hidden at the start.** `visible="false"` on a `<column>` or `<computed-column>` (also inside `<embedded-columns>`) offers the column in the column selection only: the table starts out without it, and the user shows it from there. A `<dynamic-columns>` decides this per column object with `<column-visible>inputs… -> col -> …</column-visible>`, a boolean function (unset, or a `null` result, shows the column). A user's own arrangement of the table, once stored, takes precedence.
 - **A row need not be a model object.** A table whose rows are dictionaries declares no `types` at all and computes every column (`$row["name"]`); transient objects are displayed by the same attribute columns persistent ones are, and are skipped when the table observes its row types for changes.
 - `com.top_logic.demo.react` shows all of this under the *Table columns* nav item (`WEB-INF/views/demo/table-columns.view.xml`), one tab per kind.
 
@@ -45,10 +47,10 @@ A `<table>` and a `<tree>` write what the user selects to the channel named by `
 - **In a `multi` tree** a plain click still replaces the selection, a click with `Ctrl` adds a node or takes it out again, and a click with `Shift` selects the range from the node the selection started at; the keyboard gestures are described under [Row activation](#row-activation), where the cursor is.
 - **The channel holds the selection, never a wrapper around it**: the selected object while exactly one row or node is selected, the `Set` of the selected objects while there are several, and `null` while there is none. A display or a command bound to the channel therefore works with either mode, and only one that is to show or process several objects at once has to expect a set. A tree writes the *business objects* of the selected nodes, not the nodes (`TreeSelectionBinding`).
 - **A table also reads its channel** (`TableSelectionBinding`), and how it answers a collection depends on its mode: a `multi` table selects the rows it has for those objects, a `single` table cannot display such a value at all and shows no selection. Either way a value the table has no row for is "nothing selected here" and is **left alone** — clearing it would destroy what another writer put there, the row a second table over a different row set selected or the object a create command wrote before this table's rows caught up.
-- **A tree reads its channel too** (`TreeSelectionBinding`): the node of an object another writer puts on it is looked for, the subtrees above it are opened so that it is visible, and it becomes the selection. A collection is answered by mode as in a table — a `multi` tree selects the nodes it has for those objects, a `single` tree cannot display such a value and shows no selection — and an object the tree has no node for is "nothing selected here": the channel **and** the tree's own selection are left alone, since that object may well get a node in a moment. Finding the node means searching the tree, which computes the child list of every node it passes; a large or unbounded tree therefore declares `parents` — `<tree parents="input -> node -> $node.get(\`my:Type#parent\`)">` — and the tree walks from the object up to its root and descends along that chain instead, computing only the child lists on the way.
-- **A tree follows the model it displays** (`ObservableTreeModel`, the tree's counterpart of the row observation a `<table>` does over its `observed-types`): a change reconciles the child lists in place, so a node whose object is still there is the node the display was working with and the subtrees the user opened stay open, a deleted object loses its node, and an object that appeared gets one. Creates need the type in `observed-types`, since no channel value changes when an object is added. The selection is re-applied after every such change, which is what a create command needs: it writes the new object to the selection channel before the tree has a node for it, and the object is revealed and selected as soon as the node exists. An input naming another root builds the tree anew and opens the subtrees that were open again.
+- **A tree reads its channel too** (`TreeSelectionBinding`): the node of an object another writer puts on it is looked for, the subtrees above it are opened so that it is visible, and it becomes the selection. A collection is answered by mode as in a table — a `multi` tree selects the nodes it has for those objects, a `single` tree cannot display such a value and shows no selection — and an object the tree has no node for is "nothing selected here": the channel **and** the tree's own selection are left alone, since that object may well get a node in a moment. A selected node that vanishes - its object deleted, or taken out of the child list it hung in - hands its place to the node it hung in. The channel announcing the deletion of a selected object (it drops the object, see [deleted objects on a channel](doc:view-layer/channels#deleted-objects-on-a-channel)) does not clear the tree's selection; the tree answers when its node is removed: where nothing of the selection survives, that node is revealed and selected and its object written to the channel (the nearest node above it the tree still holds, where its parent is gone too; the root only where the tree displays it, otherwise the channel is cleared). Surviving nodes of a `multi` selection simply stay the selection. Finding the node means searching the tree, which computes the child list of every node it passes; a large or unbounded tree therefore declares `parents` — `<tree parents="input -> node -> $node.get(\`my:Type#parent\`)">` — and the tree walks from the object up to its root and descends along that chain instead, computing only the child lists on the way.
+- **A tree follows the model it displays** (`ObservableTreeModel`, the tree's counterpart of the row observation a `<table>` does over its `observed-types`): a change reconciles the child lists in place, so a node whose object is still there is the node the display was working with and the subtrees the user opened stay open, a deleted object loses its node, and an object that appeared gets one. A selected node that loses its place this way makes the node it hung in the selection, as described above, so the user stays where the change happened instead of on an empty detail. An object of an `observed-types` type that is created or changed while the tree has no node for it is placed through the tree's `parents` expression: the node of what holds it now has its child list reconciled when that node is open, and a closed node computes it when it is opened — so `observed-types` requires `parents`, and the tree is never reconciled as a whole. The selection is re-applied after every such change, which is what a create command needs: it writes the new object to the selection channel before the tree has a node for it, and the object is revealed and selected as soon as the node exists. An input naming another root builds the tree anew and opens the subtrees that were open again.
 - **A command working on one object binds to a derived channel rather than to the selection**, since the selection may be several: `<derived-channel name="selectedSingle" inputs="selected" expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"/>` is the selection while it consists of exactly one object and nothing otherwise — `size()` counts nothing as zero, a single object as one and a set as the number of its elements. With `<null-input-disabled/>` that is the whole of "enabled for one selected object". A command working on the whole selection needs nothing: `delete()` and the other collection-valued script functions accept a single object as well as a set of them.
-- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side, and creates, detaches and deletes nodes in place: a milestone created through a dialog and a ticket created without one are revealed and selected as soon as their node exists, detaching a ticket from its milestone takes the node out of the child list without deleting anything, and a delete works on the whole selection - in each case the opened subtrees stay open.
+- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side, and creates, detaches and deletes nodes in place: a milestone created through a dialog and a ticket created without one are revealed and selected as soon as their node exists, detaching a ticket from its milestone takes the node out of the child list without deleting anything, attaching a free ticket to the selected milestone places the ticket that had no node under that open milestone and selects it, and a delete works on the whole selection - in each case the opened subtrees stay open.
 
 ## Row activation
 
@@ -84,6 +86,32 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - **One column at a time** — `ListRowSource` rejects a multi-column `GroupSpec`, and the UI offers a single column accordingly.
 - Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row. A tree table (`TableViewControl` built in `treeMode` over a `TreeRowSource`) offers no grouping at all: its rows are structured by their nodes already.
 - Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
+
+## Row classes: marking rows by their data
+
+`row-class` gives each row a CSS class computed from the row's object — the way to tint the failed jobs of a list red or mark the overdue tickets. It is the same property on `<table>` and on `<composition-table>`:
+
+```xml
+<table group-by="status" observed-types="demo.tickets:Ticket">
+	<inputs>
+		<input channel="state"/>
+	</inputs>
+	<rows>state -> …</rows>
+	<row-class>state -> row -> $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+</table>
+
+<composition-table attribute="parts"
+	row-class="row -> $row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
+/>
+```
+
+- **Arguments follow the convention of every table function**: the values of the `<table>`'s declared `<inputs>` first, in declaration order, the row object last. A `<composition-table>` has no inputs, so there the row object is the only argument.
+- **The result becomes the class**: `null` or an empty string gives the row none, a list gives it all of its members (joined with spaces), any other value its text — the conversion the classic table's `RowClassProviderByExpression` applies, `CellClassProviderByExpression.toCssClass(Object)`.
+- **Four standard classes come with the theme**: `tl-status-error`, `tl-status-warning`, `tl-status-success` and `tl-status-info` tint a row (or a single cell) with the subtle background of the matching status token, frozen and pinned cells included. A selected row shows its selection instead. Any other class is the application's to style in its own stylesheet.
+- **Only data rows get a class**: a group header and an aggregate row stand for no object and carry none.
+- **The class follows the row's data**: it is evaluated whenever the control pushes a row to the client, so it is computed again with every push of the rows — after a change of an object of the `observed-types`, after an input channel changed, and when a `<composition-table>` or a row-editing `<table>` switches between view and edit mode (on save, say) or a row is added or removed.
+- **The Java seam** (`com.top_logic.table`): `TableView#rowCssClass(Row)` answers the class of a row and `TableView#cellCssClass(Row, String)` that of one cell; `TableViewControl` sends both, and the client puts them on the row and cell elements. `DefaultTableView#setRowCssClass(Function)` installs a function over the row object (applied to data rows only), and a column's per-cell class is `Column#cssClass(row)`, set with `DefaultColumn.Builder#css(Function)`. `RowClassConfig` is the configuration mixin both elements extend; `RowClassFunction` compiles the function once per element and binds it to the input channels of each table built — `TableElement` installs it on its `DefaultTableView`, the row-editing `<table row-edit="…">` and `<composition-table>` through `RowSetTableControl#setRowCssClass(Function)`, which applies it to every table it (re-)builds on an edit-mode switch.
+- Demos in `com.top_logic.demo.react`: *Object list* (`tickets.view.xml`) tints the tickets in progress of its Open list; *Attributes* (`attributes.view.xml`) marks the parts of an object with an amount above 100 in its *Parts* composition table.
 
 ## Filtering: the filter bar and its presets
 
@@ -156,15 +184,15 @@ A `<table>` declares that its rows may be dragged, and what it accepts a drop of
 
 ```xml
 <table rows="…" selection="ticket" types="demo.tickets:Ticket">
-    <drag/>
-    <drop accept="demo.tickets:Ticket">
+    <drag kind="ticket"/>
+    <drop accept="ticket">
         <with-transaction>
             <execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
         </with-transaction>
     </drop>
 </table>
 <table rows="all(`tl.accounts:Person`)" types="tl.accounts:Person">
-    <drop accept="demo.tickets:Ticket" target="row" target-channel="dropPerson">
+    <drop accept="ticket" target="row" target-channel="dropPerson">
         <with-transaction>
             <execute-script function="person -> tickets -> …">
                 <inputs><input channel="dropPerson"/></inputs>
@@ -174,12 +202,102 @@ A `<table>` declares that its rows may be dragged, and what it accepts a drop of
 </table>
 ```
 
-- **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. The rows are announced under a type tag: `type` when the drag declares one, otherwise the table's first `types` entry. A table declaring neither is a configuration error — nothing would say what its rows are.
-- **`<drop>`** is a list, so a table can accept several kinds of object, and accept one kind on its rows and another as a whole. `accept` names the types (a subtype of an accepted type is accepted as well); `target` is `table` (default) or `row`; `target-channel` is written with the row dropped on — `null` for a table drop — *before* the actions run, which is how the chain reads what was dropped on. The element content is the action chain, declared exactly as a `<generic-command>` declares its actions, and its first action receives the **list of dropped objects** as its input. Nothing about a drop is implicit: a drop that changes persistent state wraps its script in `<with-transaction>`, as any other command does.
-- **Which drop applies**: the first declared one that accepts the drag. A drop made on a row is offered to the `row` drops first and falls back to a `table` drop when none of them accepts it, so a table whose rows are targets for one kind of object still accepts another kind wherever the pointer was.
+- **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. `kind` classifies the drag with a free name the application chooses (`ticket`, `assignment`, …); without it, the drag has no kind.
+- **`<drop>`** is a list, so a table can accept several kinds of drag, and accept one kind on its rows and another as a whole. `accept` lists the kinds it takes, comma-separated (`accept="ticket, milestone"`); a drag without a kind or of an unlisted kind is refused. Without `accept`, the drop takes every drag, of any kind or none. Kinds are compared literally, so a drag and the drops meant to take it agree on the spelling. What a drop takes beyond the kind — only objects of a certain model type, say — is decided by its `refuse-if`, e.g. ``refuse-if="objects -> $objects.filter(o -> !$o.instanceOf(`demo.tickets:Ticket`)).size() > 0"``. The first argument of `refuse-if` is the list of dragged objects. `target` is `table` (default), `row` or `ordered`, and decides which objects the drop refers to at its place — its *references*, the arguments of `refuse-if` following the dragged objects, each written to its channel *before* the actions run, which is how the chain reads where the drop was made:
 
-**Acceptance is decided twice, on purpose.** The server expands each accepted type to its own qualified name plus those of all its subtypes and sends that set of tags to the client. While a drag moves, the client compares the drag's tag against those tags alone — no round trip — and highlights the table, or the row under the pointer for a table whose rows are targets. When the drop arrives, the server matches it again, per declared drop, and the receiving table refuses a drop of a tag it never offered: the client-side check narrows the gesture for the user, it does not decide it. The dragged objects are resolved by the control the drag started in, from its own row keys, so no wire value can designate an object neither table displays.
+  | `target` | applies | `refuse-if` | channel |
+  |---|---|---|---|
+  | `table` | anywhere on the table | `objects -> target -> reason`, `target` is `null` | `target-channel` (written with `null`) |
+  | `row` | onto the row under the pointer | `objects -> target -> reason` | `target-channel`: the row dropped on |
+  | `ordered` | between two rows (insertion line); beside the rows appends | `objects -> before -> reason` | `before-channel`: the row to insert before, `null` at the end |
 
-**Recording**: a drop is recorded as a `dropObjects` step naming the dragged objects and the target row by their business identity, so it replays after sorting, filtering and in a fresh session. A replayed drop names no source control — it names the objects instead — and is matched by their type.
+  A `refuse-if` deciding over the dragged objects alone is written `objects -> reason` for every `target`: TL-Script ignores the surplus arguments of a function with fewer parameters (see [passing arguments to TL-Script](doc:tl-script-arguments#positional-arguments)).
+
+  A channel the drop's target has no reference for — `before-channel` on a `table` or `row` drop, `target-channel` on an `ordered` drop, `parent-channel` on any table drop (a flat list has no parent; see [tree nodes](#drag-and-drop-of-tree-nodes)) — and `target-executability` on anything but a `row` drop are reported as configuration errors. The element content is the action chain, declared exactly as a `<generic-command>` declares its actions, and its first action receives the **list of dropped objects** as its input. Nothing about a drop is implicit: a drop that changes persistent state wraps its script in `<with-transaction>`, as any other command does.
+- **Which drop applies**: the declared drops are tried in declaration order, and the first one that accepts the drop where it was made applies it. A drop is skipped where it does not accept the drag's kind, where it has no location at the place of the drop — a `row` drop beside the rows, an `ordered` drop in the middle third of a row —, and where its `executability`, `target-executability` or `refuse-if` refuses; a refusal hands the drop on to the next declared one. So a `row` drop declared before a `table` drop takes a drop on a row and leaves a drop beside the rows, or one the row drop refuses, to the table drop; a `table` drop declared first takes every drop of its kinds, the rows included. Where no drop accepts, the first refusal is shown.
+
+A **reorderable table** declares an `ordered` drop; next to a `row` drop, a row is split into thirds. Declared first, the `ordered` drop takes the upper and lower thirds and the place beside the rows, and the `row` drop the middle third — and every insertion the `ordered` drop refuses; a `row` drop declared first would take the whole row:
+
+```xml
+<table rows="$sprint.get(`demo.tickets:Sprint#tickets`)" types="demo.tickets:Ticket">
+    <drag kind="ticket"/>
+    <!-- Reorder within the list: insert the dragged tickets before the row `before`. -->
+    <drop accept="ticket" target="ordered" before-channel="insertBefore"
+        refuse-if="tickets -> before -> $tickets.containsElement($before)">
+        <with-transaction>
+            <!-- Take the tickets out, then insert them at the index of `before`, at the end without one. -->
+            <execute-script function="sprint -> before -> tickets -> {
+                $sprint.remove(`demo.tickets:Sprint#tickets`, $tickets);
+                list = $sprint.get(`demo.tickets:Sprint#tickets`);
+                $sprint.add(`demo.tickets:Sprint#tickets`, if($before == null, $list.size(), $list.elementIndex($before)), $tickets);
+            }">
+                <inputs><input channel="sprint"/><input channel="insertBefore"/></inputs>
+            </execute-script>
+        </with-transaction>
+    </drop>
+    <!-- Drop onto a row: make the dragged tickets sub-tasks of the ticket dropped on. -->
+    <drop accept="ticket" target="row" target-channel="parentTicket">
+        …
+    </drop>
+</table>
+```
+
+**Acceptance is decided twice, on purpose.** The server sends the client the kinds the table's enabled drops accept, or that it accepts any drag (`dropAcceptsAny`, `dropAccepts`). A drag carries its kind in its payload and as an empty `dataTransfer` entry `application/x-tl-drag-kind.<kind, lower-cased>`, the one part of a drag a `dragover` handler can read. While a drag moves, the client compares that entry against the accepted kinds alone — no round trip; a drag without a kind passes only a table accepting any drag — and asks the server for the verdict on the place under the pointer (`dropProbe`). The client reports that place only as the row and its zone (`zone`: `upper`, `middle`, `lower`, or `none` beside the rows); how it splits a row follows the modes the table's enabled drops announce (`dropModes`: `control` for a `table` drop, `onto` for a `row` drop, `ordered` for an `ordered` drop) — a row is a whole for `onto` and has no zones for `control` alone. The server resolves the place per mode into a location (`DropLocation`: `Control`, `Onto` the row, `Insert` before a row), picks the drop as above, and answers with the marker to draw (`marker`: `into` highlights a row, `control` the table, `before`/`after` draw an insertion line; `markerKey` names the row). When the drop arrives, the server matches the kind again, per declared drop, and the receiving table refuses a drop of a kind it never offered: the client-side check narrows the gesture for the user, it does not decide it. The dragged objects are resolved by the control the drag started in, from its own row keys, so no wire value can designate an object neither table displays.
+
+**Recording**: a drop is recorded as a `dropObjects` step naming the dragged objects, the mode of the drop that applied it, and the objects of its location (the row dropped onto) by their business identity, so it replays after sorting, filtering and in a fresh session — a replayed drop is offered exactly that location, and the same declared drop applies it. A replayed drop names no source control — it names the objects instead — and carries the kind the drag had when it was recorded, by which it is matched.
+
+**The protocol underneath** (`com.top_logic.layout.react.control.dnd`) has a mode per `target`: `DropMode.CONTROL` (`table`), `ONTO` (`row`) and `ORDERED` (`ordered`, an insertion among the rows); a `DropTarget` written in Java offers them to `TableViewControl.setDropTarget(…)`. In the view layer, a declared drop's `DropSignature` fixes its mode and its references (`DropReference.TARGET`, `DropReference.PARENT`, `DropReference.BEFORE`; a table's `ordered` drop is `DropSignature.ORDERED_LIST`, a tree's `ORDERED_TREE`), which `DropBinding` reads from the location for `refuse-if` and the channels. A target announces its modes (`DropTarget.dropModes()`), and the client splits a row accordingly: `ordered` alone into an upper and a lower half, `onto` alone not at all (the whole row is its middle), both together into thirds. A flat table resolves an insertion as in a flat list (`DropLocation.Insert(parent, before)` with `parent` null): the upper part of row X inserts before X, its lower part before the data row following X (`before` null below the last one), and a drop beside the rows at the end; the marker is a line before X, after X, or after the last row. `DropTarget.check(DropRequest)` picks the operation and returns `DropVerdict.accepted(location)`; `onDrop(DropEvent)` then receives that location, and a recorded drop names it (`mode`, `targetObject`, `parent`, `before`).
+
+A table whose rows form a tree resolves its drops by the rules of a tree instead, see [drag and drop on a tree table](doc:view-layer/tree-tables#drag-and-drop).
 
 `<drag>` and `<drop>` apply to the read-only table. A table in edit mode (`row-edit`) renders through `RowSetTableControl`, a control of its own that carries no drag-and-drop seam, so declaring either there is reported as a configuration error.
+
+## Drag and drop of tree nodes
+
+A `<tree>` declares `<drag>` and `<drop>` exactly as a table does, and takes part in the same protocol: a node dragged out of a tree is dropped on a table, a row dragged out of a table on a tree. What is dragged are the *business objects* of the nodes — the objects the tree's `children` function works on —, never the nodes.
+
+```xml
+<tree root="all(`demo.tickets:Project`).firstElement()"
+    children="node -> $node.get(`demo.tickets:Item#children`)"
+    selection="selectedItem"
+>
+    <drag kind="item">
+        <node-executability>
+            <disabled-if expr="item -> $item.get(`demo.tickets:Item#locked`)"/>
+        </node-executability>
+    </drag>
+    <!-- Move nodes: insert the dragged items under `parent` before its child `before`. -->
+    <drop accept="item" target="ordered" parent-channel="dropParent" before-channel="dropBefore"
+        refuse-if="items -> parent -> before -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
+    >
+        <with-transaction>
+            <!-- Take the items out of their containers, then insert them at the index of `before`, at the end without one. -->
+            <execute-script function="parent -> before -> items -> {
+                $items.foreach(i -> $i.container().remove(`demo.tickets:Item#children`, $i));
+                children = $parent.get(`demo.tickets:Item#children`);
+                $parent.add(`demo.tickets:Item#children`, if($before == null, $children.size(), $children.elementIndex($before)), $items);
+            }">
+                <inputs><input channel="dropParent"/><input channel="dropBefore"/></inputs>
+            </execute-script>
+        </with-transaction>
+    </drop>
+    <!-- Drop a ticket dragged out of a table onto a node: assign it to the node's item. -->
+    <drop accept="ticket" target="node" target-channel="dropItem">
+        …
+    </drop>
+</tree>
+```
+
+- **`<drag>`** makes the nodes draggable; dragging a selected node drags the whole selection, including selected nodes in collapsed subtrees. `node-executability` decides per node, with the node's object as the rules' input — a node the rules refuse offers no drag, and a selection including it is refused as a whole.
+- **`<drop target="…">`** is `tree` (default), `node` or `ordered`:
+
+  | `target` | applies | `refuse-if` | channels |
+  |---|---|---|---|
+  | `tree` | anywhere on the tree | `objects -> target -> reason`, `target` is `null` | `target-channel` (written with `null`) |
+  | `node` | onto the node under the pointer, in any part of it | `objects -> target -> reason` | `target-channel`: the object of the node dropped on |
+  | `ordered` | at a place among the nodes | `objects -> parent -> before -> reason` | `parent-channel`: the object whose children the dropped objects become; `before-channel`: the child they are inserted before, `null` for an insertion as the last children |
+
+  For an `ordered` drop the client splits a node X into thirds: the **upper third** inserts before X among its siblings (`parent` = parent of X, `before` = X, an insertion line above X); the **middle third** inserts into X as its first children (`parent` = X, `before` = the first child of X or `null`, X highlighted); the **lower third** inserts as the first children of X where X is expanded and has children, and after X among its siblings otherwise (`before` = the sibling following X, `null` after the last one; an insertion line below X). **Beside the nodes** the drop appends to the top-level nodes (`parent` = the object the tree is built from, `before` = `null`; the tree as a whole highlighted). The parent of a top-level node is the object `root` computes; where that object is itself displayed as a node, its own parent is `null`. Children are taken in the order the `children` function returns them, so the action chain inserting before `before` changes exactly the list `children` reads. A collapsed node the drag rests on in its middle third is expanded after a moment, so a drop can reach into it.
+- A `node` drop alone does not split a node; next to an `ordered` drop the declared order decides, as for a table: an `ordered` drop declared first takes the middle third as an insertion into the node and hands it to the `node` drop only where it refuses, a `node` drop declared first takes the whole node.
+- `parent-channel` belongs to a tree's `ordered` drop only: declared on a `tree` or `node` drop, or on any drop of a `<table>`, it is a configuration error, as is `target-channel` on an `ordered` drop and `target-executability` on anything but a `node` drop.
+- **The protocol underneath** is the table's: `ReactTreeControl.setDragSource(…)` / `setDropTarget(…)`, the client-side node id as the item key, `DropLocation.Insert(parent, before)` with business objects, the markers `before`/`after`/`into`/`control`, and `dropObjects` recordings naming `parent` and `before` by business identity. The place a drop is made at is resolved by the rules of a `TreeDropPlace`, which a [tree table](doc:view-layer/tree-tables#underneath) shares; applying, probing, recording and replaying a drop is shared (`DropSupport`).

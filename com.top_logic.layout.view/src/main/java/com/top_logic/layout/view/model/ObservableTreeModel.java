@@ -34,8 +34,8 @@ import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 
 /**
- * Keeps the {@link DefaultTreeUINodeModel} a {@link ReactTreeControl} displays in sync with the
- * model behind it: changes of the displayed objects arrive through a {@link ModelScope}, changes of
+ * Keeps the {@link DefaultTreeUINodeModel} a {@link Display} - a {@link ReactTreeControl}, a table
+ * whose rows form a tree - displays in sync with the model behind it: changes of the displayed objects arrive through a {@link ModelScope}, changes of
  * the input the tree is built from through the {@link ViewChannel}s it reads.
  *
  * <p>
@@ -54,9 +54,17 @@ import com.top_logic.model.listen.ModelScope;
  * longer a child, and nothing but the child list of the node it hung in says so - and that node is
  * reported as changed by nobody, since the change was made on the object. Where the tree says what
  * holds an object, the node of what holds it now is reconciled as well, so an object that moved
- * appears where it went. A created object of an observed type reconciles the whole computed tree,
- * because the function computing the children is opaque: where the new object appears is not known
- * here.
+ * appears where it went.
+ * </p>
+ *
+ * <p>
+ * An object the tree has no node for is followed only where its type is observed. Such an object
+ * that is created or changed is placed through the function saying what holds an object: the child
+ * list of the node of what holds it now is reconciled, and the object appears there. Where nothing
+ * holds it, or the node of what holds it has no computed children, nothing is done - that child
+ * list is computed when somebody opens the node. A deleted object the tree has no node for was in
+ * no displayed child list and needs nothing. The tree is never reconciled as a whole in answer to a
+ * change, since that computes every open child list of a tree that may be large.
  * </p>
  *
  * <p>
@@ -81,7 +89,61 @@ import com.top_logic.model.listen.ModelScope;
  */
 public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelListener, TreeModelListener {
 
-	private final ReactTreeControl _treeControl;
+	/**
+	 * What displays the tree an {@link ObservableTreeModel} keeps in sync, and is told about its
+	 * changes.
+	 */
+	public interface Display {
+
+		/**
+		 * The object of the given node changed, so what the display shows of it is stale.
+		 *
+		 * <p>
+		 * Every change reported this way is followed by {@link #nodesChanged()}.
+		 * </p>
+		 *
+		 * @param node
+		 *        A node of the displayed tree.
+		 */
+		void invalidateNode(DefaultTreeUINode node);
+
+		/**
+		 * The nodes of the tree changed: nodes were taken out, put in or moved, or the display of
+		 * a node was {@link #invalidateNode(DefaultTreeUINode) invalidated}.
+		 */
+		void nodesChanged();
+
+		/**
+		 * The tree was built anew from another root object; the given model replaces the one
+		 * displayed so far.
+		 */
+		void treeReplaced(DefaultTreeUINodeModel treeModel);
+
+		/**
+		 * The {@link Display} of the given tree control.
+		 */
+		static Display of(ReactTreeControl tree) {
+			return new Display() {
+				@Override
+				public void invalidateNode(DefaultTreeUINode node) {
+					tree.invalidateNodeControl(node);
+				}
+
+				@Override
+				public void nodesChanged() {
+					tree.updateVisibleState();
+				}
+
+				@Override
+				public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+					tree.setTreeModel(treeModel);
+				}
+			};
+		}
+
+	}
+
+	private final Display _display;
 
 	private final Function<Object[], Object> _rootFunction;
 
@@ -121,8 +183,8 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	/**
 	 * Creates a new {@link ObservableTreeModel}.
 	 *
-	 * @param treeControl
-	 *        The tree control displaying the given model.
+	 * @param display
+	 *        What displays the given model.
 	 * @param treeModel
 	 *        The tree model the control was built with.
 	 * @param rootFunction
@@ -131,19 +193,22 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 *        Computes the children of a node, and creates the nodes of the tree.
 	 * @param parentFunction
 	 *        What holds a business object in the tree, {@code null} where the tree does not say. It
-	 *        is what tells where an object that moved went, see {@link NodeLocator#byParents(Function)}.
+	 *        is what tells where an object that moved went, see {@link NodeLocator#byParents(Function)},
+	 *        and where an object of an observed type the tree has no node for belongs.
 	 * @param observedTypes
-	 *        Types whose creates reconcile the tree, empty for a tree that expects none.
+	 *        Types whose created or changed objects are placed through the given parent function
+	 *        even while the tree has no node for them, empty for a tree that follows only the
+	 *        objects it displays.
 	 * @param inputChannels
 	 *        The channels whose values the root function is called with.
 	 */
-	public ObservableTreeModel(ReactTreeControl treeControl, DefaultTreeUINodeModel treeModel,
+	public ObservableTreeModel(Display display, DefaultTreeUINodeModel treeModel,
 			Function<Object[], Object> rootFunction,
 			TreeBuilder<DefaultTreeUINode> builder,
 			Function<Object, Object> parentFunction,
 			Set<TLStructuredType> observedTypes,
 			List<ViewChannel> inputChannels) {
-		_treeControl = treeControl;
+		_display = display;
 		_treeModel = treeModel;
 		_rootFunction = rootFunction;
 		_observedTypes = observedTypes;
@@ -194,6 +259,20 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		for (Runnable listener : new ArrayList<>(_structureListeners)) {
 			listener.run();
 		}
+	}
+
+	/**
+	 * Observes the objects of the nodes whose children were computed since the tree last changed.
+	 *
+	 * <p>
+	 * A display computing the children of a node without {@link TreeModelEvent#AFTER_EXPAND
+	 * expanding} it in the model - a table whose rows form the tree keeps the expansion of its own -
+	 * calls this after it did, so that the objects it shows from then on are followed like every
+	 * other displayed object.
+	 * </p>
+	 */
+	public void nodesComputed() {
+		syncObjectListeners();
 	}
 
 	/**
@@ -279,7 +358,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		if (changed) {
 			syncObjectListeners();
-			_treeControl.updateVisibleState();
+			_display.nodesChanged();
 			notifyStructureChanged();
 		}
 	}
@@ -331,15 +410,10 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		try {
 			changed = removeDeleted(event, toReconcile);
 			changed |= invalidateUpdated(event, toReconcile);
+			collectUndisplayed(event, toReconcile);
 
-			if (hasRelevantCreates(event)) {
-				// Where a created object appears is not known here, so the whole computed tree is
-				// checked.
-				changed |= reconcileSubtree(_treeModel.getRoot());
-			} else {
-				for (DefaultTreeUINode node : toReconcile) {
-					changed |= reconcileChildren(node);
-				}
+			for (DefaultTreeUINode node : toReconcile) {
+				changed |= reconcileChildren(node);
 			}
 		} finally {
 			endUpdate(before);
@@ -347,7 +421,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 		if (changed) {
 			syncObjectListeners();
-			_treeControl.updateVisibleState();
+			_display.nodesChanged();
 			notifyStructureChanged();
 		}
 	}
@@ -398,7 +472,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			if (node == null) {
 				continue;
 			}
-			_treeControl.invalidateNodeControl(node);
+			_display.invalidateNode(node);
 			toReconcile.add(node);
 
 			DefaultTreeUINode parent = node.getParent();
@@ -408,23 +482,40 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 				// so, and nobody reports that node as changed.
 				toReconcile.add(parent);
 			}
-			collectNewParent(updated, toReconcile);
+			collectHolder(updated, toReconcile);
 			changed = true;
 		}
 		return changed;
 	}
 
 	/**
-	 * Collects the node of what holds the given object now, so that an object that moved appears
-	 * where it went.
+	 * Collects the nodes of what holds the created and changed objects of the observed types the
+	 * tree has no node for, so that such an object appears where it belongs now.
 	 */
-	private void collectNewParent(TLObject updated, Set<DefaultTreeUINode> toReconcile) {
+	private void collectUndisplayed(ModelChangeEvent event, Set<DefaultTreeUINode> toReconcile) {
+		for (TLStructuredType type : _observedTypes) {
+			Stream.concat(event.getCreated(type), event.getUpdated(type)).forEach(object -> {
+				if (!object.tValid() || isDisplayed(object)) {
+					// An object that is gone is in no child list; a displayed one is handled by its
+					// node.
+					return;
+				}
+				collectHolder(object, toReconcile);
+			});
+		}
+	}
+
+	/**
+	 * Collects the node of what holds the given object now, so that an object that moved or
+	 * appeared is displayed where it belongs.
+	 */
+	private void collectHolder(TLObject object, Set<DefaultTreeUINode> toReconcile) {
 		if (_parentFunction == null) {
 			// Without a function saying what holds an object, where it went is unknown; the node it
 			// came from loses it, and the place it went to is computed when somebody opens it.
 			return;
 		}
-		Object parentObject = _parentFunction.apply(updated);
+		Object parentObject = _parentFunction.apply(object);
 		if (parentObject == null) {
 			return;
 		}
@@ -440,24 +531,19 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	private List<TLObject> observedObjects(Stream<? extends TLObject> objects) {
 		List<TLObject> result = new ArrayList<>();
 		objects.forEach(object -> {
-			ObjectKey key = key(object);
-			if (key != null && _observed.containsKey(key)) {
+			if (isDisplayed(object)) {
 				result.add(object);
 			}
 		});
 		return result;
 	}
 
-	private boolean hasRelevantCreates(ModelChangeEvent event) {
-		if (_observedTypes.isEmpty()) {
-			return false;
-		}
-		for (TLStructuredType type : _observedTypes) {
-			if (event.getCreated(type).findAny().isPresent()) {
-				return true;
-			}
-		}
-		return false;
+	/**
+	 * Whether the tree has a node for the given object, and therefore observes it.
+	 */
+	private boolean isDisplayed(TLObject object) {
+		ObjectKey key = key(object);
+		return key != null && _observed.containsKey(key);
 	}
 
 	// --- ChannelListener ---
@@ -601,7 +687,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			endUpdate(before);
 		}
 
-		_treeControl.setTreeModel(_treeModel);
+		_display.treeReplaced(_treeModel);
 		syncObjectListeners();
 		notifyStructureChanged();
 	}

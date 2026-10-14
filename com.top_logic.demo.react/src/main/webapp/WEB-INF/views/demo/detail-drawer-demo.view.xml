@@ -26,7 +26,7 @@
 
 		<adaptive-detail
 			detail-display="drawer"
-			detail-size="420"
+			drawer-size="420"
 			selection="selectedTicket"
 		>
 			<home-label>

@@ -960,7 +960,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	}
 
 	@Override
-	protected Modification notifyUpcomingDeletion() {
+	public Modification notifyUpcomingDeletion() {
 		Modification result = super.notifyUpcomingDeletion();
 
 		Set<? extends TLObject> content = getOwnedContent();
@@ -977,7 +977,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	}
 
 	@Override
-	protected void handleDelete() {
+	public void handleDelete() {
 		super.handleDelete();
 
 		deleteFolderResource();
@@ -1006,7 +1006,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	 * 
 	 * @return never NULL
 	 */
-	private static Set<? extends TLObject> getOwners(AbstractWrapper contents) {
+	private static Set<? extends TLObject> getOwners(Wrapper contents) {
 		if (contents == null) {
 			return Collections.emptySet();
 		} else {

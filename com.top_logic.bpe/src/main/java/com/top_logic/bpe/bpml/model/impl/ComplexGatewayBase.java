@@ -17,4 +17,9 @@ public interface ComplexGatewayBase extends com.top_logic.bpe.bpml.model.Default
 	 */
 	String COMPLEX_GATEWAY_TYPE = "ComplexGateway";
 
+	/**
+	 * Name of the table storing {@link #COMPLEX_GATEWAY_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

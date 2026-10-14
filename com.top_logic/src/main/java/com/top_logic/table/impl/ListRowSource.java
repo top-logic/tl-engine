@@ -81,6 +81,30 @@ public class ListRowSource<R> implements RowSource<R> {
 	private List<Row<R>> _displayed;
 
 	/**
+	 * The {@link #_elements} the {@link #_filter} lets pass, in sort order - the list
+	 * {@link #recompute()} builds the displayed rows from anyway, kept for {@link #matchCount()} and
+	 * {@link #matchingKeys()}.
+	 */
+	private List<R> _matching = List.of();
+
+	/**
+	 * The keys of {@link #_matching}, for {@link #matchingKeys(Collection)}, or {@code null} until
+	 * asked for after a {@link #recompute()}.
+	 */
+	private Set<Object> _matchingKeys;
+
+	/**
+	 * The number of {@link #_elements}, see {@link #dataCount()}.
+	 *
+	 * <p>
+	 * Taken in {@link #recompute()} together with {@link #_matching}, so that the two counts
+	 * describe the same elements even when the backing list - which is not copied - is changed
+	 * without {@link #setElements(List) telling} this source.
+	 * </p>
+	 */
+	private int _dataCount;
+
+	/**
 	 * Creates a {@link ListRowSource} using object identity as the row key.
 	 *
 	 * @param elements
@@ -133,6 +157,47 @@ public class ListRowSource<R> implements RowSource<R> {
 	@Override
 	public int size() {
 		return _displayed.size();
+	}
+
+	@Override
+	public int matchCount() {
+		return _matching.size();
+	}
+
+	@Override
+	public int dataCount() {
+		return _dataCount;
+	}
+
+	@Override
+	public List<Object> matchingKeys() {
+		List<Object> result = new ArrayList<>(_matching.size());
+		for (R element : _matching) {
+			result.add(_keyOf.apply(element));
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> result = new LinkedHashSet<>();
+		if (keys.isEmpty()) {
+			return result;
+		}
+		Set<Object> matching = _matchingKeys;
+		if (matching == null) {
+			matching = new HashSet<>();
+			for (R element : _matching) {
+				matching.add(_keyOf.apply(element));
+			}
+			_matchingKeys = matching;
+		}
+		for (Object key : keys) {
+			if (matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -277,6 +342,9 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
+		_matching = rows;
+		_matchingKeys = null;
+		_dataCount = _elements.size();
 		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows);
 	}
 

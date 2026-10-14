@@ -6,33 +6,33 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
-import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TreeBuilder;
@@ -45,7 +45,8 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.model.NodeLocator;
+import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
@@ -55,7 +56,6 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SelectionMode;
 
@@ -81,6 +81,12 @@ import com.top_logic.table.SelectionMode;
  * reveals and selects the node of an object another writer puts on it - the object a create command
  * just made, for instance - and writes what the user selects back.
  * </p>
+ *
+ * <p>
+ * Nodes are dragged as a {@link Config#getDrag() drag} declares and dropped as the
+ * {@link Config#getDrops() drops} declare: onto a node, on the tree as a whole, or inserted at a
+ * place among the nodes - under a parent object, before one of its children.
+ * </p>
  */
 @InApp
 public class TreeElement implements UIElement {
@@ -89,23 +95,11 @@ public class TreeElement implements UIElement {
 	 * Configuration for {@link TreeElement}.
 	 */
 	@TagName("tree")
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, TreeStructureConfig {
 
 		@Override
 		@ClassDefault(TreeElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getRoot()}. */
-		String ROOT = "root";
-
-		/** Configuration name for {@link #getChildren()}. */
-		String CHILDREN = "children";
-
-		/** Configuration name for {@link #getParents()}. */
-		String PARENTS = "parents";
-
-		/** Configuration name for {@link #getCanExpandAll()}. */
-		String CAN_EXPAND_ALL = "canExpandAll";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -122,76 +116,58 @@ public class TreeElement implements UIElement {
 		/** Configuration name for {@link #getOnActivate()}. */
 		String ON_ACTIVATE = "on-activate";
 
-		/**
-		 * TL-Script function computing the root object of the tree.
-		 *
-		 * <p>
-		 * Takes the input channel values as positional arguments and returns a single object to be
-		 * used as the tree root.
-		 * </p>
-		 */
-		@Name(ROOT)
-		@Mandatory
-		@NonNullable
-		Expr getRoot();
+		/** Configuration name for {@link #getDrag()}. */
+		String DRAG = "drag";
 
-		/**
-		 * TL-Script function computing the children of a node.
-		 *
-		 * <p>
-		 * Takes the input channel values followed by the parent business object as last argument.
-		 * Returns a {@link Collection} of child business objects.
-		 * </p>
-		 */
-		@Name(CHILDREN)
-		@Mandatory
-		@NonNullable
-		Expr getChildren();
+		/** Configuration name for {@link #getDrops()}. */
+		String DROPS = "drops";
 
 		/**
 		 * Optional TL-Script function computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by an object as last argument, and returns the
-		 * object whose child list holds it - nothing for the object the tree is built from, and for
-		 * an object belonging to no tree at all.
+		 * Takes the input channel values followed by an object as last argument, and returns the object
+		 * whose child list holds it - nothing for the object the tree is built from, and for an object
+		 * belonging to no tree at all.
 		 * </p>
 		 *
 		 * <p>
-		 * It is how the node of an object written to the {@link #getSelection() selection channel}
-		 * is found: the tree walks from the object up to the one it is built from and descends along
-		 * that chain, computing only the child lists on the way. Without it the node is searched for,
-		 * which computes the child list of every node passed on the way - affordable for a tree of
-		 * small extent, not for a large or an unbounded one.
+		 * It is how the node of an object written to the selection channel is found: the tree walks
+		 * from the object up to the one it is built from and descends along that chain, computing only
+		 * the child lists on the way. Without it the node is searched for, which computes the child list
+		 * of every node passed on the way - affordable for a tree of small extent, not for a large or an
+		 * unbounded one.
+		 * </p>
+		 *
+		 * <p>
+		 * It is also where the tree places a created or changed object of the
+		 * {@link #getObservedTypes() observed types} it has no node for, so it is required while
+		 * {@link #getObservedTypes()} names a type.
 		 * </p>
 		 */
-		@Name(PARENTS)
+		@Override
+		@Constraint(value = MandatoryIfSet.class, args = @Ref(OBSERVED_TYPES))
 		Expr getParents();
 
 		/**
-		 * Types to observe for object creation events.
+		 * Types whose created or changed objects the tree places even while it has no node for
+		 * them.
 		 *
 		 * <p>
-		 * When configured, the tree re-evaluates its root function when objects of these types
-		 * are created. This enables automatic node insertion for trees that query all instances
-		 * of a type.
+		 * Such an object is placed through {@link #getParents()}: the node of what holds it now
+		 * gets its child list computed again, so the object appears there - if that node is open.
+		 * Where it is not, the object appears when somebody opens it. Requires
+		 * {@link #getParents()}.
 		 * </p>
 		 *
 		 * <p>
-		 * When empty (default), only updates and deletes of currently displayed nodes are
-		 * observed. This is correct for trees whose nodes come directly from a channel.
+		 * When empty (default), the tree follows only the objects it displays: their changes and
+		 * deletions.
 		 * </p>
 		 */
 		@Name(OBSERVED_TYPES)
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getObservedTypes();
-
-		/**
-		 * Whether the tree supports expand-all.
-		 */
-		@Name(CAN_EXPAND_ALL)
-		@BooleanDefault(true)
-		boolean getCanExpandAll();
 
 		/**
 		 * Optional reference to the {@link ViewChannel} holding the selection.
@@ -271,6 +247,31 @@ public class TreeElement implements UIElement {
 		@Name(NODE_CONTENT)
 		@ItemDefault(NodeDisplay.class)
 		PolymorphicConfiguration<ReactControlProvider> getNodeContent();
+
+		/**
+		 * Makes the nodes of this tree draggable, so they can be dropped on a display that accepts
+		 * the drag's kind.
+		 *
+		 * <p>
+		 * What is dragged are the objects of the nodes. Dragging a selected node drags the whole
+		 * selection, an unselected node drags itself. Unset (default) leaves the nodes undraggable.
+		 * </p>
+		 */
+		@Name(DRAG)
+		TreeDragConfig getDrag();
+
+		/**
+		 * What this tree accepts a drop of, and what it does with the dropped objects.
+		 *
+		 * <p>
+		 * A drop is applied by the first declared entry that accepts it, so a tree can accept
+		 * several kinds of object - and insert one of them among its nodes while dropping another
+		 * onto a node. Empty (default) leaves the tree accepting no drop.
+		 * </p>
+		 */
+		@Name(DROPS)
+		@DefaultContainer
+		List<TreeDropConfig> getDrops();
 	}
 
 	/**
@@ -299,12 +300,8 @@ public class TreeElement implements UIElement {
 
 	private final Config _config;
 
-	private final QueryExecutor _rootExecutor;
-
-	private final QueryExecutor _childrenExecutor;
-
-	/** The compiled {@link Config#getParents()} function, {@code null} without one. */
-	private final QueryExecutor _parentsExecutor;
+	/** The compiled functions computing the tree. */
+	private final TreeFunctions _functions;
 
 	private final ReactControlProvider _nodeContentProvider;
 
@@ -314,28 +311,72 @@ public class TreeElement implements UIElement {
 	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
 	private final ViewCommand.Config _onActivateConfig;
 
+	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
+	private final List<DeclaredDrop> _drops;
+
 	/**
 	 * Creates a new {@link TreeElement} from configuration.
 	 *
 	 * <p>
-	 * Expressions are compiled once here and shared across all sessions. If services like
-	 * {@code PersistencyLayer} are not yet active, {@link QueryExecutor#compile(Expr)} returns a
-	 * {@code DeferredQueryExecutor} that lazily compiles on first execution.
+	 * Expressions are compiled once here and shared across all sessions, see
+	 * {@link TreeFunctions}.
 	 * </p>
 	 */
 	@CalledByReflection
 	public TreeElement(InstantiationContext context, Config config) {
 		_config = config;
 
-		_rootExecutor = QueryExecutor.compile(config.getRoot());
-		_childrenExecutor = QueryExecutor.compile(config.getChildren());
-		_parentsExecutor = QueryExecutor.compileOptional(config.getParents());
+		_functions = new TreeFunctions(config);
 
 		_nodeContentProvider = context.getInstance(config.getNodeContent());
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
 		_onActivate = context.getInstance(onActivate);
+
+		_drops = compileDrops(context, config.getDrops());
+	}
+
+	/**
+	 * Instantiates the action chains of the declared drops, so that applying one only has to run
+	 * them.
+	 */
+	private static List<DeclaredDrop> compileDrops(InstantiationContext context, List<TreeDropConfig> dropConfigs) {
+		List<DeclaredDrop> result = new ArrayList<>(dropConfigs.size());
+		for (TreeDropConfig dropConfig : dropConfigs) {
+			result.add(DeclaredDrop.compile(context, dropConfig, dropConfig.getTarget().signature()));
+		}
+		return result;
+	}
+
+	/**
+	 * Makes the nodes of the given control draggable as the {@link Config#getDrag() drag} declares,
+	 * the {@link TreeDragConfig#getNodeExecutability() node rules} deciding per node object.
+	 */
+	private void installDragSource(ViewContext context, ReactTreeControl control) {
+		TreeDragConfig drag = _config.getDrag();
+		DragSourceBinding.Source source = new DragSourceBinding.Source() {
+			@Override
+			public boolean isDragEnabled() {
+				return control.isDragEnabled();
+			}
+
+			@Override
+			public void setDragSource(String dragKind, Predicate<Object> draggable) {
+				control.setDragSource(dragKind, draggable);
+			}
+
+			@Override
+			public void setDragEnabled(boolean enabled) {
+				control.setDragEnabled(enabled);
+			}
+
+			@Override
+			public void refreshDragSource() {
+				control.refreshDragSource();
+			}
+		};
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getNodeExecutability());
 	}
 
 	@Override
@@ -343,13 +384,9 @@ public class TreeElement implements UIElement {
 		// 1. Resolve input channels.
 		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
 
-		// 2. Execute initial root query.
-		Object[] channelValues = ChannelInputs.arguments(inputChannels);
-		Object rootObject = _rootExecutor.execute(channelValues);
-
-		// 3. Build tree model with custom TreeBuilder.
-		TreeBuilder<DefaultTreeUINode> builder = createTreeBuilder(inputChannels);
-		DefaultTreeUINodeModel treeModel = new DefaultTreeUINodeModel(builder, rootObject);
+		// 2. Build the tree model from the root object the input names.
+		TreeBuilder<DefaultTreeUINode> builder = _functions.builder(inputChannels);
+		DefaultTreeUINodeModel treeModel = _functions.treeModel(builder, inputChannels);
 
 		// 4. Create the selection model for the configured selection mode.
 		SelectionMode selectionMode = _config.getSelectionMode();
@@ -363,15 +400,15 @@ public class TreeElement implements UIElement {
 		treeControl.setCssClass(_config.getCssClass());
 
 		// 6. Create ObservableTreeModel to forward model changes to the tree control. The function
-		//    saying what holds an object serves the observation (where an object that moved went)
-		//    and the selection (which node an object of the channel has).
-		Function<Object, Object> parentFunction = createParentFunction(inputChannels);
+		//    saying what holds an object serves the observation (where an object that moved went,
+		//    where an object of an observed type belongs) and the selection (which node an object of
+		//    the channel has).
+		Function<Object, Object> parentFunction = _functions.parentFunction(inputChannels);
 		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
-		QueryExecutor rootExec = _rootExecutor;
 		ObservableTreeModel observableModel = new ObservableTreeModel(
-			treeControl,
+			ObservableTreeModel.Display.of(treeControl),
 			treeModel,
-			args -> rootExec.execute(args),
+			_functions::root,
 			builder,
 			parentFunction,
 			observedTypes,
@@ -385,7 +422,7 @@ public class TreeElement implements UIElement {
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
 			TreeSelectionBinding selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
-				observableModel::getTreeModel, nodeLocator(parentFunction), selectionChannel);
+				observableModel::getTreeModel, TreeFunctions.nodeLocator(parentFunction), selectionChannel);
 			observableModel.addStructureListener(selectionBinding::structureChanged);
 
 			// The channel and the selection outlive the control, so the binding is dropped with it.
@@ -397,110 +434,24 @@ public class TreeElement implements UIElement {
 		// 8. Wire the activation command, which runs with the activated node's business object.
 		if (_onActivate != null && _onActivateConfig != null) {
 			ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
-			treeControl.setActivationHandler(node -> activation.execute(context, businessObject(node)));
+			treeControl.setActivationHandler(node -> activation.execute(context, TreeFunctions.businessObject(node)));
 		}
 
-		// 9. Observe the model only while the tree is displayed.
+		// 9. Wire dragging and dropping of nodes.
+		if (_config.getDrag() != null) {
+			installDragSource(context, treeControl);
+		}
+		if (!_drops.isEmpty()) {
+			treeControl.setDropTarget(DeclaredDrop.bind(context, treeControl, treeControl::refreshDropTarget, _drops));
+		}
+
+		// 10. Observe the model only while the tree is displayed.
 		treeControl.addAttachListener(() -> {
 			observableModel.attach(context.getModelScope());
 		});
 		treeControl.addDetachListener(observableModel::detach);
 
 		return treeControl;
-	}
-
-	/**
-	 * What holds a business object in the tree, {@code null} without a {@link Config#getParents()}
-	 * function.
-	 *
-	 * @param inputChannels
-	 *        The channels whose values the function is called with, followed by the object.
-	 */
-	private Function<Object, Object> createParentFunction(List<ViewChannel> inputChannels) {
-		if (_parentsExecutor == null) {
-			return null;
-		}
-		return businessObject -> singleObject(
-			_parentsExecutor.execute(appendArg(ChannelInputs.arguments(inputChannels), businessObject)));
-	}
-
-	/**
-	 * How the node of a business object is found in the tree.
-	 *
-	 * @param parentFunction
-	 *        What holds an object in the tree, {@code null} where the tree does not say.
-	 */
-	private static NodeLocator nodeLocator(Function<Object, Object> parentFunction) {
-		return parentFunction == null ? NodeLocator.SEARCHING : NodeLocator.byParents(parentFunction);
-	}
-
-	/**
-	 * The object a function returning a single object yielded, taking the first element of a
-	 * collection the script produced instead and {@code null} from an empty one.
-	 */
-	private static Object singleObject(Object result) {
-		if (result instanceof Collection<?> collection) {
-			return collection.isEmpty() ? null : collection.iterator().next();
-		}
-		return result;
-	}
-
-	private TreeBuilder<DefaultTreeUINode> createTreeBuilder(List<ViewChannel> inputChannels) {
-		return new TreeBuilder<>() {
-
-			@Override
-			public DefaultTreeUINode createNode(AbstractMutableTLTreeModel<DefaultTreeUINode> model,
-					DefaultTreeUINode parent, Object userObject) {
-				return new DefaultTreeUINode(model, parent, userObject);
-			}
-
-			@Override
-			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
-				Object[] channelValues = ChannelInputs.arguments(inputChannels);
-				Object[] args = appendArg(channelValues, node.getBusinessObject());
-				Object result = _childrenExecutor.execute(args);
-				Collection<?> children = toCollection(result);
-
-				List<DefaultTreeUINode> childNodes = new ArrayList<>(children.size());
-				for (Object childObj : children) {
-					DefaultTreeUINode childNode = createNode(node.getModel(), node, childObj);
-					if (childNode != null) {
-						childNodes.add(childNode);
-					}
-				}
-				return childNodes;
-			}
-
-			@Override
-			public boolean isFinite() {
-				return _config.getCanExpandAll();
-			}
-		};
-	}
-
-	/**
-	 * The business object a tree node stands for, the node itself when it is no
-	 * {@link DefaultTreeUINode}.
-	 */
-	private static Object businessObject(Object node) {
-		return node instanceof DefaultTreeUINode uiNode ? uiNode.getBusinessObject() : node;
-	}
-
-	private static Object[] appendArg(Object[] base, Object extra) {
-		Object[] result = new Object[base.length + 1];
-		System.arraycopy(base, 0, result, 0, base.length);
-		result[base.length] = extra;
-		return result;
-	}
-
-	private static Collection<?> toCollection(Object result) {
-		if (result instanceof Collection<?>) {
-			return (Collection<?>) result;
-		}
-		if (result == null) {
-			return Collections.emptyList();
-		}
-		return Collections.singletonList(result);
 	}
 
 }

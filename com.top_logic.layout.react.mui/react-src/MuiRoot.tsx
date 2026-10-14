@@ -12,6 +12,7 @@ import 'dayjs/locale/de';
 import 'dayjs/locale/en';
 import { CSS_LAYER, MODE_ATTRIBUTE } from './themeProperties';
 import type { SchemeName } from './themeProperties';
+import { avatarRootStyle } from './adapters/MuiAvatarAdapter';
 
 /** The language of the MUI texts and the date format while the page names none this bundle has. */
 const DEFAULT_LOCALE = 'en';
@@ -80,15 +81,49 @@ function withModeSelector(options: ThemeOptions): ThemeOptions {
 }
 
 /**
+ * The style of the root of an MUI component an adapter gives it ahead of the theme's style
+ * overrides of that component, by the name of the component in the theme (`components`).
+ */
+const ROOT_STYLE_DEFAULTS: Readonly<Record<string, unknown>> = {
+  MuiAvatar: avatarRootStyle,
+};
+
+/** The part of the theme options a component's {@link ROOT_STYLE_DEFAULTS} goes into. */
+type ComponentOptions = { styleOverrides?: { root?: unknown } & Record<string, unknown> } & Record<string, unknown>;
+
+/**
+ * The options of the application's theme with the {@link ROOT_STYLE_DEFAULTS} in front of the
+ * `styleOverrides.root` of each component: MUI resolves an array of styles in its order into the
+ * same rule, so a property the theme sets for the root (including one for a nested selector)
+ * follows the default of the adapter and wins.
+ */
+function withRootStyleDefaults(options: ThemeOptions): ThemeOptions {
+  const components: Record<string, unknown> = { ...options.components };
+  for (const [name, style] of Object.entries(ROOT_STYLE_DEFAULTS)) {
+    const component = components[name] as ComponentOptions | undefined;
+    const overrides = component?.styleOverrides;
+    const root = overrides?.root;
+    components[name] = {
+      ...component,
+      styleOverrides: { ...overrides, root: root === undefined ? style : [style, root] },
+    };
+  }
+  return { ...options, components: components as ThemeOptions['components'] };
+}
+
+/**
  * Creates the {@link PageThemes} from the options of the application's theme, as `createTheme`
  * takes them (they may contain functions, e.g. a typography computed from the palette).
  *
  * <p>A theme with a light and a dark color scheme renders the MUI components in the scheme of the
  * mode of the design system (see {@link withModeSelector}), as the TopLogic components are. A
  * theme with a single scheme renders them in that scheme in every mode.</p>
+ *
+ * <p>The style the adapters give the roots of their MUI components comes first, the theme's
+ * `styleOverrides` follow it (see {@link withRootStyleDefaults}).</p>
  */
 export function createPageThemes(options: ThemeOptions): PageThemes {
-  const themeOptions = withModeSelector(options);
+  const themeOptions = withModeSelector(withRootStyleDefaults(options));
   return {
     de: createTheme(themeOptions, pickersDeDE, coreDeDE),
     en: createTheme(themeOptions, pickersEnUS, coreEnUS),

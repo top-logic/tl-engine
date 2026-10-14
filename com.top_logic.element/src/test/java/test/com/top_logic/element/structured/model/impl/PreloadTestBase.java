@@ -81,6 +81,11 @@ public interface PreloadTestBase extends com.top_logic.model.TLObject {
 	String SINGLETON_LINK_ATTR = "singletonLink";
 
 	/**
+	 * Name of the table storing {@link #PRELOAD_TEST_TYPE} objects.
+	 */
+	String TABLE_NAME = "PreloadTest";
+
+	/**
 	 * Getter for part {@link #COMPOSITE_LIST_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

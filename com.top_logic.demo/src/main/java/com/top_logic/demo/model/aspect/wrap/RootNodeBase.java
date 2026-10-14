@@ -17,4 +17,9 @@ public interface RootNodeBase extends com.top_logic.demo.model.aspect.CommonChil
 	 */
 	String ROOT_NODE_TYPE = "RootNode";
 
+	/**
+	 * Name of the table storing {@link #ROOT_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoAspect";
+
 }

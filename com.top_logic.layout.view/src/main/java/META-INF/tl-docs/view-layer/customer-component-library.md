@@ -307,6 +307,7 @@ commands the component sends. The list in the header:
 | `TLAppBar` | `AppBarState` |
 | `TLBreadcrumb` | `BreadcrumbState` |
 | `TLProgress` | `ProgressState` |
+| `TLAvatar` | `AvatarState` |
 | `TLSlider` | `SliderState` |
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,
@@ -528,7 +529,7 @@ installMui({ theme: customerTheme, replace: 'all' });
 - `theme: ThemeOptions` — the options of the application's theme, as `createTheme` takes them,
   functions included (e.g. a `typography` computed from the palette);
 - `replace?: 'all' | readonly ComponentName[]` — the TopLogic components rendered with Material UI,
-  `'all'` (the default, `ALL_COMPONENTS`) or a selection of `COMPONENT_NAMES` (the 25 names of the
+  `'all'` (the default, `ALL_COMPONENTS`) or a selection of `COMPONENT_NAMES` (the 26 names of the
   table [The replaceable components](#the-replaceable-components), typed as the union
   `ComponentName`), e.g. `replace: ['TLButton', 'TLCheckbox']`. The components not selected keep
   their TopLogic rendering and follow the theme through the derived properties.

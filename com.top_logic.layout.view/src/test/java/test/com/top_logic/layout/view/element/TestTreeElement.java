@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -13,17 +14,21 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.element.TreeElement;
 import com.top_logic.table.SelectionMode;
 
@@ -31,6 +36,9 @@ import com.top_logic.table.SelectionMode;
  * Tests parsing and instantiation of {@link TreeElement}.
  */
 public class TestTreeElement extends TestCase {
+
+	/** Name of the views given inline. */
+	private static final String INLINE_VIEW = "inline-tree.view.xml";
 
 	/**
 	 * Tests that a view XML with a {@code <tree>} element can be parsed into configuration.
@@ -62,6 +70,61 @@ public class TestTreeElement extends TestCase {
 			TypedConfiguration.newConfigItem(TreeElement.Config.class).getParents());
 
 		assertNotNull("The tree declares what holds an object in it.", readTreeConfig().getParents());
+	}
+
+	/**
+	 * Tests that a tree declaring observed types without saying what holds an object fails to
+	 * load, naming the missing property.
+	 */
+	public void testObservedTypesRequireParents() {
+		try {
+			ViewLoader.parseConfig(List.of(CharacterContents.newContent(observingTree(""), INLINE_VIEW)));
+			fail("A tree observing types places their objects through the parents function.");
+		} catch (ConfigurationException | AbortExecutionException ex) {
+			String reported = messages(ex);
+			assertTrue("The failure names the property: " + reported,
+				reported.contains(TreeElement.Config.PARENTS));
+		}
+	}
+
+	/**
+	 * Tests that a tree declaring observed types together with the parents function loads.
+	 */
+	public void testObservedTypesWithParentsLoad() throws Exception {
+		ViewElement.Config config = ViewLoader.parseConfig(List.of(CharacterContents.newContent(
+			observingTree("<parents>input -> node -> $input</parents>"), INLINE_VIEW)));
+
+		assertNotNull(((TreeElement.Config) config.getContent()).getParents());
+	}
+
+	/**
+	 * A view with a tree observing a type, with the given additional content.
+	 */
+	private static String observingTree(String content) {
+		return """
+			<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+				<channels>
+					<channel name="rootInput"/>
+				</channels>
+				<tree observed-types="test.types:A">
+					<inputs>
+						<input channel="rootInput"/>
+					</inputs>
+					<root>input -> $input</root>
+					<children>input -> parent -> list()</children>
+					%s
+				</tree>
+			</view>
+			""".formatted(content);
+	}
+
+	/** The messages along the cause chain of the given failure. */
+	private static String messages(Throwable failure) {
+		StringBuilder result = new StringBuilder();
+		for (Throwable current = failure; current != null; current = current.getCause()) {
+			result.append(current.getMessage()).append('\n');
+		}
+		return result.toString();
 	}
 
 	/**

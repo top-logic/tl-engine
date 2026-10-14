@@ -287,6 +287,26 @@ public class TestColumnDeclarations extends TestCase {
 			List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
 	}
 
+	/**
+	 * A {@code <column>} and a {@code <computed-column>} declared not to be visible start out
+	 * hidden, while a declaration saying nothing about it is shown from the start.
+	 */
+	public void testDeclaredInvisibleColumnsStartOutHidden() {
+		AttributeColumn.Config hiddenAttribute = attributeColumn("count", null);
+		set(hiddenAttribute, AttributeColumn.Config.VISIBLE, false);
+		ComputedColumn.Config hiddenComputed = computedColumn("total", MODULE + ":Integer");
+		set(hiddenComputed, ComputedColumn.Config.VISIBLE, false);
+		ComputedColumn.Config shown = computedColumn("shown", MODULE + ":Integer");
+
+		List<ColumnSetup> columns =
+			ColumnDeclarations.resolve(instantiate(hiddenAttribute, hiddenComputed, shown), scope());
+
+		assertEquals("Exactly the columns declared not to be visible start out hidden.",
+			List.of("count", "total"), List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
+		assertFalse("A column saying nothing about its visibility is shown from the start.",
+			columns.get(2).hiddenByDefault());
+	}
+
 	/** The single column the given declaration contributes. */
 	private ColumnSetup single(PolymorphicConfiguration<? extends ColumnDeclaration> config) {
 		List<ColumnSetup> setups = ColumnDeclarations.resolve(instantiate(config), scope());

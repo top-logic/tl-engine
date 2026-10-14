@@ -17,35 +17,55 @@ package com.top_logic.bpe.execution.model;
 public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
+	 * Name of the module <code>tl.bpe.execution</code> defined by {@link TlBpeExecutionFactory}.
+	 */
+	public static final String TL_BPE_EXECUTION_MODULE = "tl.bpe.execution";
+
+	/**
 	 * Name of the structure <code>tl.bpe.execution</code> defined by {@link TlBpeExecutionFactory}.
+	 * 
+	 * @deprecated Use {@link #TL_BPE_EXECUTION_MODULE}.
 	 */
-	public static final String TL_BPE_EXECUTION_STRUCTURE = "tl.bpe.execution";
+	@Deprecated
+	public static final String TL_BPE_EXECUTION_STRUCTURE = TL_BPE_EXECUTION_MODULE;
 
 	/**
-	 * Name of the enumeration <code>ExecutionState</code> in module {@value #TL_BPE_EXECUTION_STRUCTURE}.
+	 * Name of the enumeration <code>ExecutionState</code> in module {@value #TL_BPE_EXECUTION_MODULE}.
+	 * 
+	 * @deprecated Use {@link ExecutionState#TYPE_NAME}.
 	 */
-	public static final String EXECUTION_STATE_ENUM = "ExecutionState";
+	@Deprecated
+	public static final String EXECUTION_STATE_ENUM = ExecutionState.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>ABORTED</code> in enumeration {@value #EXECUTION_STATE_ENUM}.
+	 * Name of the classifier <code>ABORTED</code> in enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#ABORTED_CLASSIFIER}.
 	 */
-	public static final String ABORTED_EXECUTION_STATE_CLASSIFIER = "ABORTED";
+	@Deprecated
+	public static final String ABORTED_EXECUTION_STATE_CLASSIFIER = ExecutionState.ABORTED_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>FINISHED</code> in enumeration {@value #EXECUTION_STATE_ENUM}.
+	 * Name of the classifier <code>FINISHED</code> in enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#FINISHED_CLASSIFIER}.
 	 */
-	public static final String FINISHED_EXECUTION_STATE_CLASSIFIER = "FINISHED";
+	@Deprecated
+	public static final String FINISHED_EXECUTION_STATE_CLASSIFIER = ExecutionState.FINISHED_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>RUNNING</code> in enumeration {@value #EXECUTION_STATE_ENUM}.
+	 * Name of the classifier <code>RUNNING</code> in enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#RUNNING_CLASSIFIER}.
 	 */
-	public static final String RUNNING_EXECUTION_STATE_CLASSIFIER = "RUNNING";
+	@Deprecated
+	public static final String RUNNING_EXECUTION_STATE_CLASSIFIER = ExecutionState.RUNNING_CLASSIFIER;
 
 	/**
 	 * Lookup {@link ProcessExecution} type.
 	 */
 	public static com.top_logic.model.TLClass getProcessExecutionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(ProcessExecution.PROCESS_EXECUTION_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_MODULE).getType(ProcessExecution.PROCESS_EXECUTION_TYPE);
 	}
 
 	/**
@@ -122,7 +142,7 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	 * Lookup {@link Token} type.
 	 */
 	public static com.top_logic.model.TLClass getTokenType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(Token.TOKEN_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_MODULE).getType(Token.TOKEN_TYPE);
 	}
 
 	/**
@@ -231,35 +251,47 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	}
 
 	/**
-	 * Lookup {@value #EXECUTION_STATE_ENUM} enumeration.
+	 * Lookup the enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getExecutionStateEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(EXECUTION_STATE_ENUM);
+		return ExecutionState.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #ABORTED_EXECUTION_STATE_CLASSIFIER} of enumeration {@value #EXECUTION_STATE_ENUM}.
+	 * Lookup classifier <code>ABORTED</code> of enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#abortedClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getABORTEDExecutionStateClassifier() {
-		return getExecutionStateEnum().getClassifier(ABORTED_EXECUTION_STATE_CLASSIFIER);
+		return ExecutionState.abortedClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #FINISHED_EXECUTION_STATE_CLASSIFIER} of enumeration {@value #EXECUTION_STATE_ENUM}.
+	 * Lookup classifier <code>FINISHED</code> of enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#finishedClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getFINISHEDExecutionStateClassifier() {
-		return getExecutionStateEnum().getClassifier(FINISHED_EXECUTION_STATE_CLASSIFIER);
+		return ExecutionState.finishedClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #RUNNING_EXECUTION_STATE_CLASSIFIER} of enumeration {@value #EXECUTION_STATE_ENUM}.
+	 * Lookup classifier <code>RUNNING</code> of enumeration <code>ExecutionState</code>.
+	 * 
+	 * @deprecated Use {@link ExecutionState#runningClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getRUNNINGExecutionStateClassifier() {
-		return getExecutionStateEnum().getClassifier(RUNNING_EXECUTION_STATE_CLASSIFIER);
+		return ExecutionState.runningClassifier();
 	}
 
 	/**
-	 * Name of type <code>ProcessExecution</code> in structure {@link #TL_BPE_EXECUTION_STRUCTURE}.
+	 * Name of type <code>ProcessExecution</code> in module {@link #TL_BPE_EXECUTION_MODULE}.
 	 * 
 	 * @deprecated Use {@link ProcessExecution#PROCESS_EXECUTION_TYPE}.
 	 */
@@ -268,11 +300,14 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 
 	/**
 	 * Storage table name of {@link #PROCESS_EXECUTION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.execution.model.impl.ProcessExecutionBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PROCESS_EXECUTION = "BPExecution";
+	@Deprecated
+	public static final String KO_NAME_PROCESS_EXECUTION = com.top_logic.bpe.execution.model.impl.ProcessExecutionBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Token</code> in structure {@link #TL_BPE_EXECUTION_STRUCTURE}.
+	 * Name of type <code>Token</code> in module {@link #TL_BPE_EXECUTION_MODULE}.
 	 * 
 	 * @deprecated Use {@link Token#TOKEN_TYPE}.
 	 */
@@ -281,8 +316,11 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 
 	/**
 	 * Storage table name of {@link #TOKEN_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.bpe.execution.model.impl.TokenBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TOKEN = "BPExecution";
+	@Deprecated
+	public static final String KO_NAME_TOKEN = com.top_logic.bpe.execution.model.impl.TokenBase.TABLE_NAME;
 
 
 	/**
@@ -317,6 +355,6 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	 * The singleton instance of {@link TlBpeExecutionFactory}.
 	 */
 	public static TlBpeExecutionFactory getInstance() {
-		return (TlBpeExecutionFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_BPE_EXECUTION_STRUCTURE);
+		return (TlBpeExecutionFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TL_BPE_EXECUTION_MODULE);
 	}
 }

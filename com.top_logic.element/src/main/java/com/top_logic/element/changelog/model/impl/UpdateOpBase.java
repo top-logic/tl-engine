@@ -36,6 +36,11 @@ public interface UpdateOpBase extends com.top_logic.element.changelog.model.Oper
 	String UPDATES_ATTR = "updates";
 
 	/**
+	 * Name of the table storing {@link #UPDATE_OP_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #TARGET_ATTR}.
 	 */
 	default com.top_logic.model.TLObject getTarget() {

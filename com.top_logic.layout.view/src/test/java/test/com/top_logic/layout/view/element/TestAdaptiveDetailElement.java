@@ -22,10 +22,13 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.AdaptiveDetailElement;
+import com.top_logic.layout.view.element.AdaptiveDetailElement.SideConfig;
+import com.top_logic.layout.view.element.AdaptiveDetailElement.SideSize;
 import com.top_logic.layout.view.element.DetailDisplay;
 
 /**
@@ -69,8 +72,9 @@ public class TestAdaptiveDetailElement extends TestCase {
 
 		assertEquals("Selection channel", "selectedSplit", config.getSelection().getChannelName());
 		assertEquals("Detail display defaults to a split", DetailDisplay.SPLIT, config.getDetailDisplay());
-		assertEquals("Detail size defaults to the configured default",
-			AdaptiveDetailElement.Config.DEFAULT_DETAIL_SIZE, config.getDetailSize());
+		assertEquals("Drawer size defaults to the configured default",
+			AdaptiveDetailElement.Config.DEFAULT_DRAWER_SIZE, config.getDrawerSize());
+		assertEquals("Default drawer size", 420, config.getDrawerSize());
 	}
 
 	/**
@@ -82,7 +86,62 @@ public class TestAdaptiveDetailElement extends TestCase {
 
 		assertEquals("Selection channel", "selectedDrawer", config.getSelection().getChannelName());
 		assertEquals("Detail display", DetailDisplay.DRAWER, config.getDetailDisplay());
-		assertEquals("Detail size", 360, config.getDetailSize());
+		assertEquals("Drawer size", 360, config.getDrawerSize());
+	}
+
+	/**
+	 * Tests that the sides of an {@code <adaptive-detail>} saying nothing about their sizes divide
+	 * the width as 32 to 68 percent with minimum widths of 240 and 320 pixels.
+	 */
+	public void testSideSizeDefaults() throws Exception {
+		AdaptiveDetailElement.Config config = adaptiveDetail(0);
+
+		SideConfig selector = config.getSelector();
+		SideConfig detail = config.getDetail();
+		assertEquals("Selector content", 1, selector.getChildren().size());
+		assertEquals("Detail content", 1, detail.getChildren().size());
+
+		assertEquals(new SideSize(32f, DisplayUnit.PERCENT, 240),
+			AdaptiveDetailElement.resolveSideSize(selector, detail));
+		assertEquals(new SideSize(68f, DisplayUnit.PERCENT, 320),
+			AdaptiveDetailElement.resolveSideSize(detail, selector));
+	}
+
+	/**
+	 * Tests that sizes given on both sides parse and are taken as given, without the remainder
+	 * rule adjusting either.
+	 */
+	public void testSideSizesExplicit() throws Exception {
+		AdaptiveDetailElement.Config config = adaptiveDetail(2);
+
+		SideConfig selector = config.getSelector();
+		SideConfig detail = config.getDetail();
+		assertEquals(300f, selector.getSize(), 0f);
+		assertEquals(DisplayUnit.PIXEL, selector.getUnit());
+		assertEquals(200, selector.getMinSize());
+		assertEquals(70f, detail.getSize(), 0f);
+		assertEquals(DisplayUnit.PERCENT, detail.getUnit());
+		assertEquals(400, detail.getMinSize());
+
+		assertEquals(new SideSize(300f, DisplayUnit.PIXEL, 200),
+			AdaptiveDetailElement.resolveSideSize(selector, detail));
+		assertEquals(new SideSize(70f, DisplayUnit.PERCENT, 400),
+			AdaptiveDetailElement.resolveSideSize(detail, selector));
+	}
+
+	/**
+	 * Tests that a percent size given only on the selector leaves the detail the rest of the 100
+	 * percent.
+	 */
+	public void testSideSizeRemainder() throws Exception {
+		AdaptiveDetailElement.Config config = adaptiveDetail(3);
+
+		SideConfig selector = config.getSelector();
+		SideConfig detail = config.getDetail();
+		assertEquals(new SideSize(55f, DisplayUnit.PERCENT, 240),
+			AdaptiveDetailElement.resolveSideSize(selector, detail));
+		assertEquals("Detail takes the remainder", new SideSize(45f, DisplayUnit.PERCENT, 320),
+			AdaptiveDetailElement.resolveSideSize(detail, selector));
 	}
 
 	/**

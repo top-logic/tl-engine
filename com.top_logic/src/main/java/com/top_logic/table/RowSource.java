@@ -5,7 +5,10 @@
  */
 package com.top_logic.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +41,78 @@ public interface RowSource<R> {
 	 * after sort, filter, grouping and expansion.
 	 */
 	int size();
+
+	/**
+	 * Value of {@link #matchCount()} and {@link #dataCount()} for a source that cannot tell its
+	 * count.
+	 */
+	int UNKNOWN_COUNT = -1;
+
+	/**
+	 * The number of data rows the current filter lets pass.
+	 *
+	 * <p>
+	 * Counts the business objects, not the {@link #size() displayed rows}: a group header or an
+	 * aggregate row is not counted, a data row inside a collapsed group or tree node is.
+	 * </p>
+	 *
+	 * @return The count, or {@link #UNKNOWN_COUNT} for a source that would have to load what it
+	 *         displays lazily to tell it.
+	 */
+	default int matchCount() {
+		return UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The number of data rows regardless of the current filter.
+	 *
+	 * @return The count, or {@link #UNKNOWN_COUNT} for a source that would have to load what it
+	 *         displays lazily to tell it.
+	 *
+	 * @see #matchCount()
+	 */
+	default int dataCount() {
+		return UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the data rows the current filter lets pass, in the order of the
+	 * current sort.
+	 *
+	 * <p>
+	 * These are the rows {@link #matchCount()} counts: a data row inside a collapsed group or tree
+	 * node belongs to them. A source that cannot tell them without loading what it displays lazily
+	 * answers the data rows it {@link #window(int, int) displays}.
+	 * </p>
+	 */
+	default List<Object> matchingKeys() {
+		List<Object> result = new ArrayList<>();
+		for (Row<R> row : window(0, size())) {
+			if (row.kind() == RowKind.DATA) {
+				result.add(row.key());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The given keys that belong to a row the current filter lets pass.
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The keys among the given ones that are {@link #matchingKeys() matching keys}, in the
+	 *         order they are given.
+	 */
+	default Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> matching = new HashSet<>(matchingKeys());
+		Set<Object> result = new LinkedHashSet<>();
+		for (Object key : keys) {
+			if (matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * The displayed rows in the half-open index range {@code [from, to)}, clamped to
@@ -88,6 +163,18 @@ public interface RowSource<R> {
 	 * collapsible group header).
 	 */
 	void setExpanded(Object rowKey, boolean expanded);
+
+	/**
+	 * The tree the rows of this source form, {@code null} for a source whose rows form none.
+	 *
+	 * <p>
+	 * A flat list and a grouped one have no hierarchy of their own: a group header row stands for
+	 * no object its members are the children of.
+	 * </p>
+	 */
+	default RowHierarchy<R> hierarchy() {
+		return null;
+	}
 
 	/**
 	 * Registers a listener notified when the displayed rows change.

@@ -53,4 +53,9 @@ public interface TLPrimitiveBase extends com.top_logic.model.TLType {
 	 */
 	String DB_TYPE_ATTR = "dbType";
 
+	/**
+	 * Name of the table storing {@link #TL_PRIMITIVE_TYPE} objects.
+	 */
+	String TABLE_NAME = "TLDatatype";
+
 }

@@ -54,6 +54,11 @@ public interface UsageBase extends com.top_logic.model.TLNamed {
 	String THING_ATTR = "thing";
 
 	/**
+	 * Name of the table storing {@link #USAGE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #REASON_ATTR}.
 	 */
 	default String getReason() {

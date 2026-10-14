@@ -10,6 +10,9 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.trace.ScriptTracer;
 
 /**
  * Base class for classes that have functions to call from TL-Script.
@@ -37,6 +40,15 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
  * String), it is possible to annotate a {@link ValueConverter} using the annotation
  * {@link ScriptConversion}.</li>
  * </ol>
+ * A <code>boolean</code> parameter annotated with {@link UsesSecurity} is not a TL-Script parameter,
+ * but receives whether the script is evaluated with the current user's access rights.
+ * </p>
+ * 
+ * <p>
+ * A function reads attributes through {@link TLObject#tValue(TLStructuredTypePart)},
+ * {@link TLObject#tValueByName(String)} or a generated getter. In an evaluation by a
+ * {@link ScriptTracer}, each such read is recorded as a dependency of the calling script and answered
+ * from the values currently edited in the form, without any cooperation of the function.
  * </p>
  * 
  * @impl This class is used in TLDoclet. It must be adapted, when this class is moved.

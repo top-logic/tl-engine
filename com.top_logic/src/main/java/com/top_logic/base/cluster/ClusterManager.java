@@ -1553,7 +1553,10 @@ public class ClusterManager extends ManagedClass {
 				Object[] row =
 					CollectionUtil.getFirst(DBUtil.executeQueryAsMatrix(dbHelper, dbExec.getTransactionConnection(),
 						READ_PROPERTY_STATEMENT, params(property), TYPES));
-                if (row == null) return null;
+				if (row == null) {
+					dbExec.commitTransaction();
+					return null;
+				}
 				boolean isConfirmed = internalIsConfirmed((Long) row[INDEX_COLUMN_SEQ_NUMBER]);
                 dbExec.commitTransaction();
 

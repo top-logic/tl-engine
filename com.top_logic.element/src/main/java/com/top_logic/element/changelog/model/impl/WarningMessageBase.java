@@ -27,6 +27,11 @@ public interface WarningMessageBase extends com.top_logic.element.changelog.mode
 	String ACTION_ATTR = "action";
 
 	/**
+	 * Name of the table storing {@link #WARNING_MESSAGE_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ACTION_ATTR}.
 	 */
 	default com.top_logic.model.TLClassifier getAction() {

@@ -17,4 +17,9 @@ public interface ANodeBase extends com.top_logic.demo.model.aspect.CommonChild, 
 	 */
 	String A_NODE_TYPE = "ANode";
 
+	/**
+	 * Name of the table storing {@link #A_NODE_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoAspect";
+
 }

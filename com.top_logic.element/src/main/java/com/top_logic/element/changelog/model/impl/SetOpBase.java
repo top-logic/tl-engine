@@ -36,6 +36,11 @@ public interface SetOpBase extends com.top_logic.model.TLObject {
 	String VALUE_ATTR = "value";
 
 	/**
+	 * Name of the table storing {@link #SET_OP_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #PROPERTY_ATTR}.
 	 */
 	default com.top_logic.model.TLStructuredTypePart getProperty() {

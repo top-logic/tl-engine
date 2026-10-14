@@ -54,6 +54,11 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	String TOKEN_TYPE_ATTR = "tokenType";
 
 	/**
+	 * Name of the table storing {@link #TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
+	/**
 	 * Getter for part {@link #BOUNDARY_EVENTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

@@ -18,6 +18,11 @@ public interface BBase extends com.top_logic.demo.model.types.DemoTypesB, com.to
 	String B_TYPE = "B";
 
 	/**
+	 * Name of the table storing {@link #B_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

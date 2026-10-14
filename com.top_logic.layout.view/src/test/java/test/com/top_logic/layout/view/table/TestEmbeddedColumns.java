@@ -182,6 +182,20 @@ public class TestEmbeddedColumns extends TestCase {
 	}
 
 	/**
+	 * An embedded column declared not to be visible is offered under its embedded name, like the
+	 * attributes of the embedded type no declaration names.
+	 */
+	public void testInvisibleDeclarationIsOfferedUnderItsEmbeddedName() {
+		AttributeColumn.Config email = attributeColumn("email");
+		set(email, AttributeColumn.Config.VISIBLE, false);
+		List<ColumnSetup> columns = resolve(embedded("assignee.contact", email));
+
+		assertEquals(List.of("assignee.contact.email", "assignee.contact.phone"), names(columns));
+		assertEquals("The column declared not to be visible starts out hidden, too.",
+			List.of("assignee.contact.email", "assignee.contact.phone"), hidden(columns));
+	}
+
+	/**
 	 * An embedded object is displayed through the row, not edited through it - whatever the
 	 * embedded column would offer on its own.
 	 */

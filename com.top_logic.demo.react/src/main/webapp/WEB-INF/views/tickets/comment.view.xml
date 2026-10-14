@@ -31,7 +31,7 @@
 			<title-content>
 				<avatar input="author"/>
 				<text
-					css-class="tlText--strong"
+					css-class="tl-type-body-strong"
 					input="author"
 				/>
 				<relative-time input="date"/>

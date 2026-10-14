@@ -74,6 +74,9 @@ public class TestPinnedColumns extends TestCase {
 	/** Per-column state key holding the CSS class every cell of the column carries. */
 	private static final String CSS_CLASS = "cssClass";
 
+	/** State key the client once read the row height from. */
+	private static final String ROW_HEIGHT = "rowHeight";
+
 	/**
 	 * A row business object.
 	 *
@@ -187,6 +190,14 @@ public class TestPinnedColumns extends TestCase {
 		assertEquals(ACTIONS_CSS_CLASS, columnState(table, COLUMN_ACTIONS).get(CSS_CLASS));
 		assertFalse("A column without a CSS class sends none.",
 			columnState(table, COLUMN_NAME).containsKey(CSS_CLASS));
+	}
+
+	/**
+	 * Tests that the server sends no row height: the client reads it from the design system's
+	 * {@code --tl-size-row}, so the table follows the density.
+	 */
+	public void testClientMeasuresTheRowHeight() {
+		assertNull("The row height is the client's (--tl-size-row).", control().clientState(ROW_HEIGHT));
 	}
 
 	/**

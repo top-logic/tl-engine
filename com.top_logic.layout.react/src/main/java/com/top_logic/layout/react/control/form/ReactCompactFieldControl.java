@@ -394,8 +394,11 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 		ReactWindowControl window = new ReactWindowControl(context, dialogTitle(), DIALOG_WIDTH, cancel);
 		window.setResizable(true);
-		// The window body is flush; the editor keeps the page inset from its border.
-		window.setChild(new ReactInsetControl(context, editor));
+		// The window body is flush; the editor keeps the page inset from its border. The inset is the
+		// place of the value, as the input area of a form field: a read-only value takes its type.
+		ReactInsetControl inset = new ReactInsetControl(context, editor);
+		inset.setCssClass("tl-type-body");
+		window.setChild(inset);
 
 		List<ReactControl> actions = new ArrayList<>();
 		if (editable) {

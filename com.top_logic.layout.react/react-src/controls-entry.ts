@@ -7,7 +7,10 @@
 //
 // Use:   import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 //        React.useState(...)   React.useRef(...)   React.useCallback(...)
-import { register } from 'tl-react-bridge';
+import { register, registerPart } from 'tl-react-bridge';
+
+import ButtonPart from './controls/button/ButtonPart';
+import MenuTriggerPart from './controls/button/MenuTriggerPart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -90,6 +93,11 @@ import TLSlot from './controls/TLSlot';
 import TLSlotContent from './controls/TLSlotContent';
 import TLDrawerToggle from './controls/TLDrawerToggle';
 
+
+// The TopLogic drawing of the parts the controls draw themselves with; a component library
+// replaces them with replacePart.
+registerPart('Button', ButtonPart);
+registerPart('MenuTrigger', MenuTriggerPart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

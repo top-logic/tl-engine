@@ -1,12 +1,18 @@
-// The wire contract of TLButton, checked against the MUI adapter.
+// The wire contract of TLButton and TLToggleButton, checked with their part Button drawn by the MUI
+// adapter: the controls map their state to the part, the adapter draws it.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import React from 'react';
+import { screen, cleanup, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from 'tl-react-bridge';
-import type { ButtonStateJson, ButtonDefaultsValue } from 'tl-react-bridge';
+import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, replacePart } from 'tl-react-bridge';
+import type { ButtonStateJson, ButtonDefaultsValue, ToggleButtonStateJson } from 'tl-react-bridge';
+import TLButton from '../../../com.top_logic.layout.react/react-src/controls/TLButton';
+import TLToggleButton from '../../../com.top_logic.layout.react/react-src/controls/TLToggleButton';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
+
+replacePart('Button', MuiButtonAdapter);
 
 /** The only command a button sends: it was clicked (or its keyboard gesture was pressed). */
 const CMD_CLICK = 'click';
@@ -18,7 +24,7 @@ const GESTURE_SAVE = 'Ctrl+S';
 const IMAGE_EDIT = 'css:fas fa-edit';
 
 function mountButton(state: Partial<ButtonStateJson>, outer?: () => void) {
-  return mountAdapter(MuiButtonAdapter, state,
+  return mountAdapter(TLButton, state,
     outer && state.keyGesture ? { outer: { gesture: state.keyGesture, onGesture: outer } } : {});
 }
 
@@ -36,7 +42,7 @@ afterEach(() => {
 const IN_MENU: ButtonDefaultsValue = { appearance: 'menu-item' };
 
 function mountInContainer(state: Partial<ButtonStateJson>, buttonDefaults: ButtonDefaultsValue) {
-  return mountAdapter(MuiButtonAdapter, state, { buttonDefaults });
+  return mountAdapter(TLButton, state, { buttonDefaults });
 }
 
 describe('TLButton as MUI Button inside a container', () => {
@@ -230,5 +236,96 @@ describe('TLButton as MUI Button', () => {
 
     expect(open).toHaveBeenCalledWith('/sso', '_blank');
     expect(sent).not.toHaveBeenCalled();
+  });
+});
+
+/** Mounts a toggle button, inside a container with the given defaults. */
+function mountToggle(state: Partial<ToggleButtonStateJson>, buttonDefaults?: ButtonDefaultsValue) {
+  return mountAdapter(TLToggleButton, state, { buttonDefaults });
+}
+
+describe('TLToggleButton as MUI ToggleButton inside a menu', () => {
+  it('is a checkbox entry of the menu with the roving tabindex', () => {
+    mountToggle({ label: 'Fett', active: true }, IN_MENU);
+
+    const item = screen.getByRole('menuitemcheckbox', { name: 'Fett' });
+    expect(item.id).toBe(CONTROL_ID);
+    expect(item.classList).toContain('MuiListItemButton-root');
+    expect(item.getAttribute('aria-checked')).toBe('true');
+    expect(item.getAttribute('tabindex')).toBe('-1');
+    expect(item.hasAttribute('aria-pressed')).toBe(false);
+    expect(item.classList).not.toContain('Mui-selected');
+  });
+
+  it('sends click when the entry is chosen', async () => {
+    const sent = mountToggle({ label: 'Fett' }, IN_MENU);
+
+    const item = screen.getByRole('menuitemcheckbox', { name: 'Fett' });
+    expect(item.getAttribute('aria-checked')).toBe('false');
+    await userEvent.click(item);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_CLICK, {}]]);
+  });
+});
+
+describe('TLToggleButton as MUI ToggleButton', () => {
+  it('renders an MUI toggle button, pressed while active', () => {
+    mountToggle({ label: 'Fett', active: true, cssClass: 'my-class' });
+
+    const button = screen.getByRole('button', { name: 'Fett' });
+    expect(button.id).toBe(CONTROL_ID);
+    expect(button.classList).toContain('MuiToggleButton-root');
+    expect(button.classList).toContain('Mui-selected');
+    expect(button.classList).toContain('my-class');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('is not pressed while inactive', () => {
+    mountToggle({ label: 'Fett' });
+
+    const button = screen.getByRole('button', { name: 'Fett' });
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(button.classList).not.toContain('Mui-selected');
+  });
+
+  it('sends exactly the command click when it is clicked', async () => {
+    const sent = mountToggle({ label: 'Fett', active: true });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Fett' }));
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_CLICK, {}]]);
+  });
+
+  it('renders nothing and sends nothing while hidden', async () => {
+    const sent = mountToggle({ label: 'Fett', hidden: true });
+    await settle();
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(sent).not.toHaveBeenCalled();
+  });
+});
+
+describe('the MUI button part', () => {
+  it('hands the drawn element to the ref and passes on further attributes', () => {
+    const ref = React.createRef<HTMLButtonElement>();
+
+    render(<MuiButtonAdapter ref={ref} label="Schließen" image={IMAGE_EDIT} display="icon-only"
+      appearance="ghost" small aria-describedby="hint" data-probe="p" />);
+
+    const button = screen.getByRole('button', { name: 'Schließen' });
+    expect(ref.current).toBe(button);
+    expect(button.classList).toContain('MuiIconButton-sizeSmall');
+    expect(button.getAttribute('aria-describedby')).toBe('hint');
+    expect(button.getAttribute('data-probe')).toBe('p');
+  });
+
+  it('draws no TopLogic button classes', () => {
+    render(<MuiButtonAdapter label="Speichern" display="label-only" appearance="primary" />);
+
+    const button = screen.getByRole('button', { name: 'Speichern' });
+    expect(button.classList).toContain('MuiButton-contained');
+    expect(button.classList).not.toContain('tl-button');
   });
 });

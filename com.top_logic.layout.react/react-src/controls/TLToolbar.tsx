@@ -1,6 +1,5 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 import { useRovingMenu } from './menu/Menu';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
@@ -12,9 +11,6 @@ const I18N_KEYS = {
 
 /** Icon of the overflow menu trigger. */
 const OVERFLOW_ICON = 'css:bi bi-three-dots';
-
-/** Icon after the label of a labeled menu trigger. */
-const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
 
 /** The groups of a toolbar without any: one array, so that it is the same in every render. */
 const NO_GROUPS: CliqueGroup[] = [];
@@ -118,8 +114,8 @@ const InlineGroup: React.FC<{ units: PlacedUnit[] }> = ({ units }) => {
 };
 
 /**
- * Renders a clique group as a dropdown menu: a tl-button opening a tl-menu, whose entries are the
- * group's buttons, presented as menu items (ButtonDefaults `menu-item`).
+ * Renders a clique group as a dropdown menu: the part `MenuTrigger` opening a tl-menu, whose
+ * entries are the group's buttons, presented as menu items (ButtonDefaults `menu-item`).
  */
 const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitIndex?: number }> =
     ({ group, align = 'end', unitIndex }) => {
@@ -128,6 +124,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   const menuRef = useRef<HTMLDivElement | null>(null);
   // The trigger looks like the buttons beside it.
   const inheritedAppearance = useButtonDefaults().appearance ?? 'ghost';
+  const MenuTrigger = usePart('MenuTrigger');
 
   const handleToggle = useCallback(() => {
     setOpen(prev => !prev);
@@ -176,32 +173,21 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   // An icon (e.g. a burger "☰") renders as a compact icon-only trigger; the label is kept
   // as the accessible name instead of visible text (which would not be internationalized).
   const label = group.label ?? group.name;
-  const iconOnly = !!group.icon;
 
   return (
     <div className="tl-toolbar__group" data-tlunit={unitIndex}>
-      <button
+      <MenuTrigger
         ref={triggerRef}
-        type="button"
-        className={buttonClassName({ appearance: inheritedAppearance, icon: iconOnly })}
+        appearance={inheritedAppearance}
+        expanded={open}
+        label={label}
+        icon={group.icon}
         // Don't steal focus from the content (e.g. a table) on mouse-open: the menu acts on the
         // current selection, so focus should return there after a command's dialog closes. The
         // menu's own focus trap still moves focus into the dropdown while it is open.
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleToggle}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={iconOnly ? label : undefined}
-        {...tooltipProps(iconOnly ? label : undefined)}
-      >
-        {iconOnly
-          ? <ThemeIcon encoded={group.icon!} className="tl-button__icon tl-icon-md" />
-          : <>
-              <span className="tl-button__label">{label}</span>
-              <ThemeIcon encoded={CHEVRON_ICON} className="tl-button__icon tl-icon-sm" />
-            </>
-        }
-      </button>
+      />
       {/* The dropdown stays mounted (only hidden when closed) so its item controls keep
           their live SSE subscription. If items were mounted lazily on open, they would read
           the toolbar's build-time snapshot and miss any executability change (e.g. a row

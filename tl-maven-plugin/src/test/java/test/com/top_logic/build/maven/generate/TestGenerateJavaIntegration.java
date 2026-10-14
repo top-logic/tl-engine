@@ -36,9 +36,9 @@ import com.top_logic.build.maven.generate.GenerateJavaBinding;
  * <p>
  * The test builds the application project {@value #PROJECT} up to {@value #GOAL} in a separate
  * Maven process. The application binds the goal to the phase <code>generate-sources</code> and
- * has never been installed. The build starts with an empty local repository whose only remote is
- * the local repository of the running build. The plugin under test is staged into the empty
- * repository from the plugin's POM and compiled classes.
+ * has never been installed. The build starts with an empty local repository and gets the TopLogic
+ * artifacts from the local repository of the running build. The plugin under test is staged into
+ * the empty repository from the plugin's POM and compiled classes.
  * </p>
  */
 public class TestGenerateJavaIntegration {
@@ -85,9 +85,9 @@ public class TestGenerateJavaIntegration {
 	private static final String VERSION_PLACEHOLDER = "@project.version@";
 
 	/**
-	 * Placeholder for the URL of the remote repository in {@link #SETTINGS}.
+	 * ID of the profile in {@link #SETTINGS} that declares the remote repository.
 	 */
-	private static final String URL_PLACEHOLDER = "@remoteRepositoryUrl@";
+	private static final String REPOSITORY_PROFILE = "it-repo";
 
 	/**
 	 * Group ID of the plugin under test, as path in a repository.
@@ -131,12 +131,13 @@ public class TestGenerateJavaIntegration {
 	private static final String SKIPPED_FRAGMENT = "Skipping web fragment";
 
 	/**
-	 * Settings of the application build.
+	 * Global settings of the application build, a format with the URL of the remote repository and
+	 * {@link #REPOSITORY_PROFILE} as arguments.
 	 *
 	 * <p>
-	 * The only remote for TopLogic artifacts is the local repository of the running build: the
-	 * snapshot repository the engine POMs declare is disabled, so the build uses the engine of the
-	 * running build.
+	 * The settings add the local repository of the running build as remote repository, so that the
+	 * application build uses the engine of the running build. They are passed as global settings,
+	 * so that the user settings of the running build (mirrors, proxies, credentials) apply as well.
 	 * </p>
 	 */
 	private static final String SETTINGS = """
@@ -144,40 +145,28 @@ public class TestGenerateJavaIntegration {
 		<settings>
 			<profiles>
 				<profile>
-					<id>it-repo</id>
-					<activation>
-						<activeByDefault>true</activeByDefault>
-					</activation>
+					<id>%2$s</id>
 					<repositories>
 						<repository>
 							<id>local.central</id>
-							<url>@remoteRepositoryUrl@</url>
+							<url>%1$s</url>
 							<releases><enabled>true</enabled></releases>
 							<snapshots><enabled>true</enabled></snapshots>
-						</repository>
-						<repository>
-							<id>tl-snapshots</id>
-							<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
-							<releases><enabled>false</enabled></releases>
-							<snapshots><enabled>false</enabled></snapshots>
 						</repository>
 					</repositories>
 					<pluginRepositories>
 						<pluginRepository>
 							<id>local.central</id>
-							<url>@remoteRepositoryUrl@</url>
+							<url>%1$s</url>
 							<releases><enabled>true</enabled></releases>
 							<snapshots><enabled>true</enabled></snapshots>
-						</pluginRepository>
-						<pluginRepository>
-							<id>tl-snapshots</id>
-							<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
-							<releases><enabled>false</enabled></releases>
-							<snapshots><enabled>false</enabled></snapshots>
 						</pluginRepository>
 					</pluginRepositories>
 				</profile>
 			</profiles>
+			<activeProfiles>
+				<activeProfile>%2$s</activeProfile>
+			</activeProfiles>
 		</settings>
 		""";
 
@@ -211,7 +200,7 @@ public class TestGenerateJavaIntegration {
 
 		Path settings = workDir.resolve("settings.xml");
 		String remoteUrl = Path.of(property(PROPERTY_REMOTE_REPOSITORY)).toUri().toString();
-		Files.writeString(settings, SETTINGS.replace(URL_PLACEHOLDER, remoteUrl), StandardCharsets.UTF_8);
+		Files.writeString(settings, SETTINGS.formatted(remoteUrl, REPOSITORY_PROFILE), StandardCharsets.UTF_8);
 
 		Path log = workDir.resolve("build.log");
 		int exitCode = build(project, repository, settings, log);
@@ -240,7 +229,7 @@ public class TestGenerateJavaIntegration {
 		request.setBaseDirectory(project.toFile());
 		request.setGoals(List.of(GOAL));
 		request.setBatchMode(true);
-		request.setUserSettingsFile(settings.toFile());
+		request.setGlobalSettingsFile(settings.toFile());
 		request.setLocalRepositoryDirectory(repository.toFile());
 
 		DefaultInvoker invoker = new DefaultInvoker();

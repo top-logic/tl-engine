@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,9 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ParameterLocation;
 import com.top_logic.service.openapi.common.layout.WithMultiPartBodyTransferType;
+import com.top_logic.service.openapi.server.schema.JsonSchemaCompiler;
+import com.top_logic.service.openapi.server.schema.JsonSchemaValidator;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Interprets the request multipart body as parameter.
@@ -212,6 +216,12 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	}
 
 	/**
+	 * Validators for the values of the {@link Config#getParts() parts} indexed by the part name.
+	 * Parts without validation are not contained.
+	 */
+	private Map<String, JsonSchemaValidator> _partValidators = Collections.emptyMap();
+
+	/**
 	 * Creates a {@link MultiPartBodyParameter} from configuration.
 	 * 
 	 * @param context
@@ -222,6 +232,28 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 	@CalledByReflection
 	public MultiPartBodyParameter(InstantiationContext context, Config config) {
 		super(context, config);
+	}
+
+	/**
+	 * Compiles the schemas of the {@link Config#getParts() parts} in addition to the own schema.
+	 */
+	@Override
+	public void compileSchemas(JsonSchemaCompiler compiler) throws TopLogicException {
+		super.compileSchemas(compiler);
+
+		Map<String, JsonSchemaValidator> partValidators = new HashMap<>();
+		for (BodyPart part : getConfig().getParts().values()) {
+			JsonSchemaValidator validator;
+			try {
+				validator = compileSchema(compiler, part);
+			} catch (TopLogicException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_PART_SCHEMA__PART.fill(part.getName()), ex);
+			}
+			if (validator != null) {
+				partValidators.put(part.getName(), validator);
+			}
+		}
+		_partValidators = partValidators;
 	}
 
 	@Override
@@ -350,7 +382,8 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 			addValue(values, name, decodedValue, false);
 		} else {
 			ParameterFormat format = bodyPart.getFormat();
-			addValue(values, name, parse(decodedValue, format, name), bodyPart.isMultiple());
+			addValue(values, name, parse(decodedValue, format, name, _partValidators.get(name)),
+				bodyPart.isMultiple());
 		}
 	}
 
@@ -456,7 +489,8 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 				}
 				/* ParameterFormat#BINARY is handled above. */
 				ParameterFormat format = bodyPartDefinition.getFormat();
-				value = parse(readString(stream, charSet), format, bodyPartDefinition.getName());
+				String partName = bodyPartDefinition.getName();
+				value = parse(readString(stream, charSet), format, partName, _partValidators.get(partName));
 			}
 			addValue(values, fieldName, value, bodyPartDefinition.isMultiple());
 		}

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, tooltipProps, ThemeIcon, ICON_EXPAND, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, tooltipProps, ThemeIcon, ICON_EXPAND, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { ProgressBar } from './TLProgress';
 import { NO_DRAG_IMAGE } from './drop-hint';
@@ -87,7 +87,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropModes = (state.dropModes as string[]) ?? [];
-  const zoneSplit = treeZoneSplit(dropModes);
+  const dropModesByKind = (state.dropModesByKind as Record<string, string[]>) ?? {};
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const isMulti = selectionMode === MULTI_SELECTION;
@@ -245,11 +245,12 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [controlId, dragKind]);
 
   /**
-   * Which node an event points at and the zone within it, split as the announced drop modes need,
-   * or no node where the pointer is beside the nodes or the nodes have no zones.
+   * Which node an event points at and the zone within it, split as the drop modes announced for the
+   * dragged kind need, or no node where the pointer is beside the nodes or the nodes have no zones.
    */
   const dropTargetAt = React.useCallback(
     (e: React.DragEvent): { node: string | null; zone: TLDropZone } => {
+      const zoneSplit = treeZoneSplit(dragModes(e.dataTransfer, dropModes, dropModesByKind));
       if (zoneSplit !== 'none' && e.target instanceof Element) {
         const nodeElement = e.target.closest('.tl-tree__node') as HTMLElement | null;
         const key = nodeElement?.dataset.dropNode;
@@ -258,7 +259,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
         }
       }
       return { node: null, zone: 'none' };
-    }, [zoneSplit]);
+    }, [dropModes, dropModesByKind]);
 
   /** Expands a collapsed node once the drag rests on its middle for a while; cancels otherwise. */
   const scheduleAutoExpand = React.useCallback((target: { node: string | null; zone: TLDropZone }) => {

@@ -255,6 +255,34 @@ export function dragKindAccepted(
 }
 
 /**
+ * The drop modes that apply to the drag a transfer carries: the modes the target announces for the
+ * dragged kind, or all its modes where the kind is not listed - a target accepting any kind lists
+ * none. The split of an item follows these modes, so a target inserting one kind among its items and
+ * dropping another kind onto an item splits an item in halves for the first and takes it as a whole
+ * for the second.
+ *
+ * @param dataTransfer The transfer of the running drag.
+ * @param modes The wire names of the drop modes the target announces.
+ * @param modesByKind The wire names of the drop modes the target announces per accepted kind.
+ */
+export function dragModes(
+  dataTransfer: DataTransfer,
+  modes: readonly string[],
+  modesByKind: Readonly<Record<string, readonly string[]>>,
+): readonly string[] {
+  const types = Array.from(dataTransfer.types);
+  const result = new Set<string>();
+  let listed = false;
+  for (const [kind, kindModes] of Object.entries(modesByKind)) {
+    if (types.includes(DRAG_KIND_TYPE_PREFIX + kind.toLowerCase())) {
+      listed = true;
+      kindModes.forEach((mode) => result.add(mode));
+    }
+  }
+  return listed ? [...result] : modes;
+}
+
+/**
  * The split of a row of a flat list for the given announced drop modes: an insertion between two
  * rows needs their upper and lower halves told apart, a drop onto a row needs the row itself, both
  * together need the row in thirds, and a drop on the control as a whole needs no row at all.

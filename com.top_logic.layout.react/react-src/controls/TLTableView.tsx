@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { NO_DRAG_IMAGE } from './drop-hint';
@@ -377,9 +377,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropModes = (state.dropModes as string[]) ?? [];
+  const dropModesByKind = (state.dropModesByKind as Record<string, string[]>) ?? {};
   // Rows forming a tree are split as tree nodes: an insertion has a middle part going into the row.
   const dropTreeZones = (state.dropTreeZones as boolean) ?? false;
-  const zoneSplit = dropTreeZones ? treeZoneSplit(dropModes) : flatZoneSplit(dropModes);
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
   /** How many rows the table has (of how many, while filtered); empty while it shows no count. */
   const rowCount = (state.rowCount as string) ?? '';
@@ -805,11 +805,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [controlId, dragKind]);
 
   /**
-   * Which row an event points at and the zone within it, split as the announced drop modes need,
-   * or no row where the pointer is beside the rows or the rows have no zones.
+   * Which row an event points at and the zone within it, split as the drop modes announced for the
+   * dragged kind need, or no row where the pointer is beside the rows or the rows have no zones.
    */
   const dropTargetAt = React.useCallback(
     (event: React.DragEvent): { row: string | null; zone: TLDropZone } => {
+      const modes = dragModes(event.dataTransfer, dropModes, dropModesByKind);
+      const zoneSplit = dropTreeZones ? treeZoneSplit(modes) : flatZoneSplit(modes);
       if (zoneSplit !== 'none' && event.target instanceof Element) {
         const rowElement = event.target.closest('.tl-table__row') as HTMLElement | null;
         const key = rowElement?.dataset.dropRow;
@@ -818,7 +820,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         }
       }
       return { row: null, zone: 'none' };
-    }, [zoneSplit]);
+    }, [dropModes, dropModesByKind, dropTreeZones]);
 
   const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
     if (columnDragging) {

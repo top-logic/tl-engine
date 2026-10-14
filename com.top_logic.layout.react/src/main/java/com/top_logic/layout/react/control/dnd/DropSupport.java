@@ -77,6 +77,18 @@ public final class DropSupport {
 	public static final String DROP_MODES = "dropModes";
 
 	/**
+	 * State key: for each of the listed {@link #DROP_ACCEPTS accepted kinds}, the
+	 * {@link DropTarget#dropModes(String) modes} of the operations accepting a drag of that kind, by
+	 * kind.
+	 *
+	 * <p>
+	 * The client splits an item by the modes of the kind it drags; a drag of a kind not listed here
+	 * is split by the {@link #DROP_MODES modes of the whole target}.
+	 * </p>
+	 */
+	public static final String DROP_MODES_BY_KIND = "dropModesByKind";
+
+	/**
 	 * State key holding the verdicts answered to the {@link #CMD_DROP_PROBE probes} of the running
 	 * drag, by {@link DropProbeArguments#getProbe() probe identifier}.
 	 *
@@ -265,7 +277,8 @@ public final class DropSupport {
 
 	/**
 	 * The state announcing the {@link #setTarget(DropTarget) target} to the client: the values of
-	 * {@link #DROP_ACCEPTS_ANY}, {@link #DROP_ACCEPTS} and {@link #DROP_MODES}, by state key.
+	 * {@link #DROP_ACCEPTS_ANY}, {@link #DROP_ACCEPTS}, {@link #DROP_MODES} and
+	 * {@link #DROP_MODES_BY_KIND}, by state key.
 	 *
 	 * <p>
 	 * The owner puts them into its state whenever the target or its answers change.
@@ -278,6 +291,13 @@ public final class DropSupport {
 		result.put(DROP_ACCEPTS_ANY, Boolean.valueOf(accepted.any()));
 		result.put(DROP_ACCEPTS, List.copyOf(accepted.kinds()));
 		result.put(DROP_MODES, target == null ? List.of() : wireNames(target.dropModes()));
+		Map<String, List<String>> modesByKind = new LinkedHashMap<>();
+		if (target != null) {
+			for (String kind : accepted.kinds()) {
+				modesByKind.put(kind, wireNames(target.dropModes(kind)));
+			}
+		}
+		result.put(DROP_MODES_BY_KIND, modesByKind);
 		return result;
 	}
 

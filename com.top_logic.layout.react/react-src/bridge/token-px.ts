@@ -32,6 +32,21 @@ export function tokenPx(element: Element | null, name: string, fallback: number)
   return n;
 }
 
+/**
+ * The duration a token holds, in milliseconds - `150ms` or `0.15s` - read at the document root.
+ *
+ * @param name The custom property, e.g. `--tl-duration-base`.
+ * @param fallback The value without a design system.
+ */
+export function tokenMs(name: string, fallback: number): number {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const n = parseFloat(value);
+  if (isNaN(n)) {
+    return fallback;
+  }
+  return value.endsWith('ms') ? n : value.endsWith('s') ? n * 1000 : n;
+}
+
 /** The attributes of the document root that switch the tokens. */
 const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
 

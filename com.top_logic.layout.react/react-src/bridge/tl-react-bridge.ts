@@ -667,6 +667,22 @@ function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, Ge
 }
 
 /**
+ * Binds Escape to {@code onClose} in the enclosing keyboard scope.
+ *
+ * <p>A component, not a hook: a dialog or window opens its own scope with a
+ * {@link KeyboardScopeProvider} and renders this as the provider's first child, so the binding lands
+ * in that scope - a hook called by the same component would bind into the scope around it. Being the
+ * first child, it is overridden by an explicit action bound to Escape that mounts later.</p>
+ */
+const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useKeyboardBinding('ESCAPE', () => {
+    onClose();
+    return true;
+  });
+  return null;
+};
+
+/**
  * Confines keyboard focus to {@code ref}'s element while {@code active}, moving focus into it on
  * activation and restoring focus to the previously focused element on deactivation.
  *
@@ -683,11 +699,16 @@ function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, Ge
  *        {@code 'first'} = the first focusable element (item menus), {@code 'container'} = the
  *        container itself (default; e.g. a menu that manages its own roving focus). In every mode
  *        the fallback is the container - never an incidental title-bar button.
+ * @param options
+ *        {@code trap: false} moves focus in and gives it back, but does not confine it - a surface that
+ *        is not modal (a drawer without scrim). {@code preventScroll: true} moves focus in without
+ *        scrolling, for a surface that slides in from outside the clipped box of its area.
  */
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
-  mode: 'field' | 'first' | 'container' = 'container'
+  mode: 'field' | 'first' | 'container' = 'container',
+  options: { trap?: boolean; preventScroll?: boolean } = {}
 ): void {
   React.useEffect(() => {
     if (!active) {
@@ -717,11 +738,11 @@ function useFocusTrap(
       }
       return cur;
     };
-    const unpush = pushTrap(() => ref.current, preferredTarget);
+    const unpush = options.trap === false ? () => {} : pushTrap(() => ref.current, preferredTarget);
 
     const target = preferredTarget();
     if (target && target !== document.activeElement) {
-      target.focus();
+      target.focus({ preventScroll: options.preventScroll === true });
     }
 
     return () => {
@@ -739,6 +760,7 @@ export {
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  EscapeToClose,
 };
 
 // --- MutationObserver for auto-mount and auto-unmount ---

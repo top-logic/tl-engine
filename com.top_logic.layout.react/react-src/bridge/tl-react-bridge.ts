@@ -697,8 +697,9 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  * @param mode
  *        Where to place initial focus: {@code 'field'} = the first form field (form dialogs),
  *        {@code 'first'} = the first focusable element (item menus), {@code 'container'} = the
- *        container itself (default; e.g. a menu that manages its own roving focus). In every mode
- *        the fallback is the container - never an incidental title-bar button.
+ *        container itself (default; e.g. a menu that manages its own roving focus), or a function
+ *        that picks the target in the container for a surface with an order of its own (a dialog).
+ *        In every mode the fallback is the container - never an incidental title-bar button.
  * @param options
  *        {@code trap: false} moves focus in and gives it back, but does not confine it - a surface that
  *        is not modal (a drawer without scrim). {@code preventScroll: true} moves focus in without
@@ -707,7 +708,7 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
-  mode: 'field' | 'first' | 'container' = 'container',
+  mode: 'field' | 'first' | 'container' | ((container: HTMLElement) => HTMLElement | null) = 'container',
   options: { trap?: boolean; preventScroll?: boolean } = {}
 ): void {
   React.useEffect(() => {
@@ -727,7 +728,8 @@ function useFocusTrap(
       if (!cur) {
         return null;
       }
-      const pick = mode === 'field' ? firstFocusable(cur, true)
+      const pick = typeof mode === 'function' ? mode(cur)
+        : mode === 'field' ? firstFocusable(cur, true)
         : mode === 'first' ? firstFocusable(cur, false)
         : null;
       if (pick) {

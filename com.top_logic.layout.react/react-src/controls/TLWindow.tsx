@@ -1,12 +1,49 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
-  FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
+  firstFocusable, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
   ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
+
+/**
+ * Where focus starts when a window opens: its first field; without one, the primary button of the
+ * footer, which is the window's Enter default (`ReactButtonControl.markAsDefault`) - a focused button
+ * takes Enter for itself, so any other button would change what Enter does; without one, the first
+ * control of the body; without one, the first footer button that is not destructive - a window
+ * without a default (the question about unsaved changes) gives Enter to its least destructive
+ * answer. Only a window with none of them focuses its surface, which then shows the focus ring as a
+ * whole. The title bar's buttons are never the start.
+ */
+function initialFocus(surface: HTMLElement): HTMLElement | null {
+  const field = firstFocusable(surface, true);
+  if (field) {
+    return field;
+  }
+  const footer = surface.querySelector<HTMLElement>('.tl-dialog__footer');
+  const primary = footer && firstShown(footer, '.tl-button--primary:not([disabled])');
+  if (primary) {
+    return primary;
+  }
+  const body = surface.querySelector<HTMLElement>('.tl-dialog__body');
+  const control = body && firstFocusable(body);
+  if (control) {
+    return control;
+  }
+  return footer && firstShown(footer, 'button:not([disabled]):not(.tl-button--danger)');
+}
+
+/** The first element under the root matching the selector that is rendered (not in an overflow). */
+function firstShown(root: HTMLElement, selector: string): HTMLElement | null {
+  for (const el of root.querySelectorAll<HTMLElement>(selector)) {
+    if (el.getClientRects().length > 0) {
+      return el;
+    }
+  }
+  return null;
+}
 
 /** The smallest size a window can be resized to. */
 const MIN_WIDTH = 200;
@@ -140,9 +177,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('close');
   }, [sendCommand]);
 
-  // Trap focus within the dialog while open (default focus on its first field) and restore focus
-  // to the opener (e.g. a table) when it closes.
-  useFocusTrap(true, windowRef, 'field');
+  // Trap focus within the dialog while open (initial focus see initialFocus) and restore focus to
+  // the opener (e.g. a table) when it closes.
+  useFocusTrap(true, windowRef, initialFocus);
 
   const handleResizePointerDown = useCallback((dir: ResizeDir, e: React.PointerEvent) => {
     e.preventDefault();

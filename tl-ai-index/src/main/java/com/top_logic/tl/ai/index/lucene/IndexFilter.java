@@ -38,32 +38,49 @@ import org.apache.lucene.util.BytesRef;
  *        Per keyword name the values one of which a chunk must carry.
  * @param excluded
  *        Objects whose chunks must not be found, e.g. the object a similarity search starts from.
+ * @param unscoped
+ *        Types whose chunks pass the scope restriction without a scope: types without a scope rule,
+ *        whose objects are checked one by one after the search.
  */
 public record IndexFilter(Set<String> types, Set<String> scopes, Map<String, Set<String>> keywords,
-		Set<String> excluded) {
+		Set<String> excluded, Set<String> unscoped) {
 
 	/** A filter that lets every chunk pass. */
-	public static final IndexFilter NONE = new IndexFilter(Set.of(), null, Map.of(), Set.of());
+	public static final IndexFilter NONE = new IndexFilter(Set.of(), null, Map.of(), Set.of(), Set.of());
+
+	/**
+	 * A filter without types exempt from the scope restriction.
+	 */
+	public IndexFilter(Set<String> types, Set<String> scopes, Map<String, Set<String>> keywords, Set<String> excluded) {
+		this(types, scopes, keywords, excluded, Set.of());
+	}
 
 	/**
 	 * This filter, restricted to the given scopes as well.
 	 */
 	public IndexFilter withScopes(Set<String> newScopes) {
-		return new IndexFilter(types, newScopes, keywords, excluded);
+		return new IndexFilter(types, newScopes, keywords, excluded, unscoped);
+	}
+
+	/**
+	 * This filter, restricted to the given scopes, except for chunks of the given types.
+	 */
+	public IndexFilter withScopes(Set<String> newScopes, Set<String> unscopedTypes) {
+		return new IndexFilter(types, newScopes, keywords, excluded, unscopedTypes);
 	}
 
 	/**
 	 * This filter, excluding the given objects as well.
 	 */
 	public IndexFilter excluding(Set<String> objects) {
-		return new IndexFilter(types, scopes, keywords, objects);
+		return new IndexFilter(types, scopes, keywords, objects, unscoped);
 	}
 
 	/**
 	 * The filter as a Lucene query, or <code>null</code> when it lets every chunk pass.
 	 */
 	public Query toQuery() {
-		if (scopes != null && scopes.isEmpty()) {
+		if (scopes != null && scopes.isEmpty() && unscoped.isEmpty()) {
 			return new MatchNoDocsQuery("No readable scope.");
 		}
 		List<Query> required = new ArrayList<>();
@@ -71,7 +88,17 @@ public record IndexFilter(Set<String> types, Set<String> scopes, Map<String, Set
 			required.add(anyOf(IndexSchema.TYPE, types));
 		}
 		if (scopes != null) {
-			required.add(anyOf(IndexSchema.SCOPE, scopes));
+			if (unscoped.isEmpty()) {
+				required.add(anyOf(IndexSchema.SCOPE, scopes));
+			} else {
+				BooleanQuery.Builder scoped = new BooleanQuery.Builder();
+				if (!scopes.isEmpty()) {
+					scoped.add(anyOf(IndexSchema.SCOPE, scopes), Occur.SHOULD);
+				}
+				scoped.add(anyOf(IndexSchema.TYPE, unscoped), Occur.SHOULD);
+				scoped.setMinimumNumberShouldMatch(1);
+				required.add(scoped.build());
+			}
 		}
 		for (Map.Entry<String, Set<String>> keyword : keywords.entrySet()) {
 			if (keyword.getValue().isEmpty()) {

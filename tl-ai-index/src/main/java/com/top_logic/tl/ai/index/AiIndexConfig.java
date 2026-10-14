@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.tl.ai.index.config.ChunkingConfig;
 import com.top_logic.tl.ai.index.config.IndexedTypeConfig;
 import com.top_logic.tl.ai.index.embed.Embedder;
@@ -36,6 +37,12 @@ public interface AiIndexConfig extends ConfigurationItem {
 
 	/** Configuration name of {@link #getTypes()}. */
 	String TYPES = "types";
+
+	/** Configuration name of {@link #getReadableScopes()}. */
+	String READABLE_SCOPES = "readable-scopes";
+
+	/** Configuration name of {@link #getMaxCandidates()}. */
+	String MAX_CANDIDATES = "max-candidates";
 
 	/** Configuration name of {@link #getBatchSize()}. */
 	String BATCH_SIZE = "batch-size";
@@ -87,6 +94,34 @@ public interface AiIndexConfig extends ConfigurationItem {
 	@Name(TYPES)
 	@EntryTag("type")
 	List<IndexedTypeConfig> getTypes();
+
+	/**
+	 * TL-Script without arguments answering every scope object a reader may search in, e.g.
+	 * {@code all(`my:Project`)}.
+	 *
+	 * <p>
+	 * Runs in the reader's own interaction for each search, and the result is filtered again by the
+	 * reader's read rights. The search then filters by these scopes inside the index, so a reader of
+	 * one project of a thousand gets a full page from that project. Without it, chunks of scoped
+	 * types are filtered by type only and checked one by one, which can leave a narrow reader with a
+	 * short page.
+	 * </p>
+	 *
+	 * @see #READABLE_SCOPES
+	 */
+	@Name(READABLE_SCOPES)
+	@Nullable
+	Expr getReadableScopes();
+
+	/**
+	 * How many chunks each side of a search reads at most, when it searches deeper because the
+	 * reader may not read the best hits.
+	 *
+	 * @see #MAX_CANDIDATES
+	 */
+	@Name(MAX_CANDIDATES)
+	@IntDefault(2000)
+	int getMaxCandidates();
 
 	/**
 	 * How many objects are indexed together, with one call of the embedder.

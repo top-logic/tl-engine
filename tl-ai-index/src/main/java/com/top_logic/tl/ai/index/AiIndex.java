@@ -10,11 +10,17 @@ import java.nio.file.Path;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.index.config.ChunkingConfig;
 import com.top_logic.tl.ai.index.config.IndexedTypeConfig;
 import com.top_logic.tl.ai.index.config.IndexedTypes;
 import com.top_logic.tl.ai.index.embed.Embedder;
 import com.top_logic.tl.ai.index.lucene.Generations;
+import com.top_logic.tl.ai.index.query.Hits;
+import com.top_logic.tl.ai.index.query.IndexSearch;
+import com.top_logic.tl.ai.index.query.ReadableScopes;
+import com.top_logic.tl.ai.index.query.SearchRequest;
 import com.top_logic.tl.ai.index.sync.IndexStatus;
 import com.top_logic.tl.ai.index.sync.IndexSync;
 
@@ -37,6 +43,8 @@ public final class AiIndex {
 
 	private final IndexSync _sync;
 
+	private final IndexSearch _search;
+
 	/**
 	 * Creates an index; {@link #start()} opens it.
 	 *
@@ -56,6 +64,8 @@ public final class AiIndex {
 		_sync = new IndexSync(new IndexSync.Settings(kb, root, _types, ChunkingConfig.chunker(config.getChunking()),
 			config.getChunking().getMaxTextChars(), embedder, fingerprint(config, embedder), config.getBatchSize(),
 			config.getRevisionSlice(), config.getBuildStepMillis()));
+		_search = new IndexSearch(_sync, _types, embedder, new ReadableScopes(config.getReadableScopes()), kb,
+			config.getMaxCandidates());
 	}
 
 	/**
@@ -111,6 +121,31 @@ public final class AiIndex {
 	 */
 	public IndexSync sync() {
 		return _sync;
+	}
+
+	/**
+	 * Searches the index for a reader.
+	 *
+	 * @see IndexSearch#search(SearchRequest, ModelSecurity)
+	 */
+	public Hits search(SearchRequest request, ModelSecurity security) {
+		return _search.search(request, security);
+	}
+
+	/**
+	 * Searches the index for objects near the given one.
+	 *
+	 * @see IndexSearch#similar(TLObject, SearchRequest, ModelSecurity)
+	 */
+	public Hits similar(TLObject object, SearchRequest request, ModelSecurity security) {
+		return _search.similar(object, request, security);
+	}
+
+	/**
+	 * The search of this index.
+	 */
+	public IndexSearch searcher() {
+		return _search;
 	}
 
 	/**

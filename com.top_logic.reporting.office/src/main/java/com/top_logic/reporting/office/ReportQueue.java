@@ -113,9 +113,11 @@ public class ReportQueue extends Thread {
 				}
 			});
 
-            // if anything works fine until here we move the job to the processed map.
-			tokenQueue.poll();
+			// If anything works fine until here, move the job to the processed map. The job is added
+			// there before it is removed from the queue, so that it is always either queued or
+			// executed, see jobQueued() and jobExecuted().
 			processedJobs.put(tokenToExecute, jobToExecute);
+			tokenQueue.poll();
 			if (immediatelyTerminationRequested()) {
 				if (!tokenQueue.isEmpty()) {
 					StringBuilder msg = new StringBuilder("Missing process of following tokens: ");

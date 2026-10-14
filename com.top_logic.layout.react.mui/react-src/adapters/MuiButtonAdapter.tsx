@@ -52,13 +52,13 @@ const TOGGLE_VALUE = 'on';
 const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
   const {
     id, ref, href, target: _target, label, image, display, appearance, danger: dangerTone, small, active, checked,
-    disabled, tooltip: _tooltip, className, onClick, onMouseDown, ...attributes
+    disabled, tabIndex, tooltip: _tooltip, className, onClick, onMouseDown, ...attributes
   } = props;
   const isLink = appearance === 'link';
   const danger = dangerTone === true && !isLink;
   const showIcon = !!image && display !== 'label-only';
   const accessibility: Record<string, string | number | boolean | undefined> = { ...buttonPartAttributes(props), ...attributes };
-  const common = { id, ref: ref as PartRef<HTMLButtonElement>, disabled, className, onClick, onMouseDown };
+  const common = { id, ref: ref as PartRef<HTMLButtonElement>, disabled, tabIndex, className, onClick, onMouseDown };
   // A link is an anchor also while disabled, when it has no address.
   const link = href === undefined ? {} : { component: 'a' as const, ...buttonLinkAttributes(props) };
 

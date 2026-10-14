@@ -8,9 +8,14 @@ import MuiChoiceGroupAdapter from './MuiChoiceGroupAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
 
 // The checkboxes of a group of several options are drawn by the part Checkbox.
 replacePart('Checkbox', MuiCheckboxAdapter);
+// The options with a color role and the chosen values of a field that is not editable.
+replacePart('Chip', MuiChipAdapter);
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** Argument of {@link CMD_VALUE_CHANGED}: the values of the chosen options. */
 const ARG_VALUE = 'value';

@@ -15,6 +15,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { childControl, mountAdapter, settle } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
 
 replacePart('Button', MuiButtonAdapter);
 // The table looks up the toggle of its tree rows as well.
@@ -23,6 +24,8 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 // The table looks up the boxes of its search as well.
 replacePart('TextInput', MuiTextInputAdapter);
+// The table draws its named filters as chips.
+replacePart('Chip', MuiChipAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';

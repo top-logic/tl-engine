@@ -1,6 +1,5 @@
-import { React, useTLState, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, TextStateJson } from 'tl-react-bridge';
-import { TLPill } from './pill/TLPill';
+import { React, useTLState, rootClassName, usePart } from 'tl-react-bridge';
+import type { TLCellProps, TextStateJson, ChipTone } from 'tl-react-bridge';
 
 /** Typographic role written as a class; the role the server omits. */
 const DEFAULT_VARIANT = 'body';
@@ -12,7 +11,7 @@ const DEFAULT_TONE = 'primary';
  * The pill role a text of the given tone takes when it is drawn as a pill without a role of its own:
  * the meanings keep their name, the accent is the brand, everything else is neutral.
  */
-function roleOfTone(tone: string): string {
+function roleOfTone(tone: string): ChipTone {
   switch (tone) {
     case 'success': case 'warning': case 'error': return tone;
     case 'accent': return 'brand';
@@ -24,10 +23,12 @@ function roleOfTone(tone: string): string {
  * Simple read-only text control rendering a {@code <span>}.
  *
  * The state is described by TextStateJson. The variant and the tone are written as the classes
- * tlText--<variant> and tlText--tone-<tone>.
+ * tlText--<variant> and tlText--tone-<tone>. A text the model gives a color role, or one drawn as a
+ * pill, is the part `Chip` of that role inside the span.
  */
 const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextStateJson>>();
+  const Chip = usePart('Chip');
   const text = state.text ?? '';
   const hasTooltip = state.hasTooltip === true;
   const role = state.role || undefined;
@@ -45,7 +46,8 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   );
   // A pill is drawn around content only: a value without a label - an empty channel, a value not
   // yet chosen - shows nothing rather than an empty tinted box.
-  const pillRole = text === '' ? undefined : pill ? colorRole ?? roleOfTone(tone) : colorRole;
+  const pillRole = text === '' ? undefined : pill ? (colorRole as ChipTone | undefined) ?? roleOfTone(tone)
+    : colorRole as ChipTone | undefined;
 
   return (
     <span
@@ -53,7 +55,7 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
       className={className}
       role={role}
       data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
-    >{pillRole ? <TLPill role={pillRole}>{text}</TLPill> : text}</span>
+    >{pillRole ? <Chip tone={pillRole} label={text} /> : text}</span>
   );
 };
 

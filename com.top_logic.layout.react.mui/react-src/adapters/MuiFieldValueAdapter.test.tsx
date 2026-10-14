@@ -1,7 +1,9 @@
-// The part FieldValue drawn with Material UI: a Typography, a Link for a value pointing somewhere.
+// The part FieldValue drawn with Material UI: a Typography, a Link for a value pointing somewhere or
+// running an action.
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { FieldValuePartProps } from 'tl-react-bridge';
 import { createMuiRoot, createPageThemes } from '../MuiRoot';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
@@ -54,5 +56,31 @@ describe('the part FieldValue as MUI Typography', () => {
     const value = draw({ text: '' });
 
     expect(value.textContent).toBe('');
+  });
+
+  it('draws a value running an action as a link that is a button', async () => {
+    const onClick = vi.fn();
+    const value = draw({ text: 'Alpha', onClick });
+
+    expect(screen.getByRole('button', { name: 'Alpha' })).toBe(value);
+    expect(value.classList).toContain('MuiLink-root');
+    expect(value.hasAttribute('href')).toBe(false);
+    await userEvent.click(value);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws the icon ahead of the text', () => {
+    const value = draw({ text: 'Alpha', icon: 'css:fa-solid fa-star' });
+
+    expect(value.firstElementChild!.className).toBe('fa-solid fa-star tl-icon-sm');
+    expect(value.textContent).toBe('Alpha');
+  });
+
+  it('draws a multi-line value without icon and action', () => {
+    const value = draw({ text: 'a\nb', multiline: true, icon: 'css:fa-solid fa-star', onClick: vi.fn() });
+
+    expect(value.tagName).toBe('DIV');
+    expect(value.querySelector('i')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

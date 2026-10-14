@@ -105,7 +105,15 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: CheckboxPart } = await import('../../com.top_logic.layout.react/react-src/controls/form/CheckboxPart');
     const { default: TextInputPart } = await import('../../com.top_logic.layout.react/react-src/controls/form/TextInputPart');
     const { default: FieldValuePart } = await import('../../com.top_logic.layout.react/react-src/controls/form/FieldValuePart');
-    return { ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart };
+    const { default: ChipPart } = await import('../../com.top_logic.layout.react/react-src/controls/chip/ChipPart');
+    const { default: BadgePart } = await import('../../com.top_logic.layout.react/react-src/controls/chip/BadgePart');
+    // A chip draws its remove button with the part Button.
+    const { registerPart } = await import('tl-react-bridge');
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    registerPart('Button', ButtonPart);
+    return {
+      ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart, ChipPart, BadgePart,
+    };
   }
 
   it('draws a button with the classes of the design system', async () => {
@@ -514,5 +522,154 @@ describe('the TopLogic drawing of the parts', () => {
     expect(value.className).toBe('tl-field-value tl-type-body tl-field-value--multiline');
     expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', ' ', 'c']);
     expect(screen.queryByRole('link')).toBeNull();
+  });
+  it('draws a field value with an icon ahead of its text', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text="Alpha" icon="css:fa-solid fa-star" />);
+
+    const value = document.getElementById('v1')!;
+    expect(Array.from(value.children).map(child => child.className)).toEqual(['fa-solid fa-star tl-icon-sm', 'tl-field-value__text']);
+  });
+
+  it('draws a field value running an action as a link that does not navigate', async () => {
+    const { FieldValuePart } = await defaults();
+    const onClick = vi.fn();
+
+    render(<FieldValuePart id="v1" text="Alpha" onClick={onClick} />);
+    const link = screen.getByRole('link', { name: 'Alpha' });
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    link.dispatchEvent(event);
+
+    expect(link.className).toBe('tl-field-value tl-type-body');
+    expect(link.getAttribute('target')).toBeNull();
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('draws a chip showing a value as a pill of its color role, with icon, label and detail', async () => {
+    const { ChipPart } = await defaults();
+
+    render(<ChipPart id="c1" label="Alpha" detail="2 KB" icon="css:fa-solid fa-star" tone="success" className="x"
+      tooltip="Tipp" data-role="value" />);
+
+    const chip = document.getElementById('c1')!;
+    expect(chip.tagName).toBe('SPAN');
+    expect(chip.className).toBe('tl-pill tl-pill--success tl-type-label x');
+    expect(chip.getAttribute(TOOLTIP_ATTR)).toBe('text:Tipp');
+    expect(chip.getAttribute('data-role')).toBe('value');
+    expect(Array.from(chip.children).map(child => child.className))
+      .toEqual(['fa-solid fa-star tl-pill__icon tl-icon-sm', 'tl-pill__label', 'tlChip__detail tl-nums']);
+    expect(chip.textContent).toBe('Alpha2 KB');
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('draws a neutral chip as a pill without a role class', async () => {
+    const { ChipPart } = await defaults();
+
+    render(<ChipPart id="c1" label="Alpha" tone="neutral" />);
+
+    expect(document.getElementById('c1')!.className).toBe('tl-pill tl-type-label');
+  });
+
+  it('draws a chip running an action as a pill that is a button', async () => {
+    const { ChipPart } = await defaults();
+    const onClick = vi.fn();
+
+    render(<ChipPart label="report.pdf" onClick={onClick} />);
+    const chip = screen.getByRole('button', { name: 'report.pdf' });
+    await userEvent.click(chip);
+
+    expect(chip.className).toBe('tl-pill tl-type-label');
+    expect(chip.hasAttribute('aria-pressed')).toBe(false);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws a toggle as the chip of the design system, its color role as a pill inside', async () => {
+    const { ChipPart } = await defaults();
+    const onClick = vi.fn();
+
+    render(<ChipPart label="Beta" tone="error" pressed={false} onClick={onClick} />);
+    const chip = screen.getByRole('button', { name: 'Beta' });
+    await userEvent.click(chip);
+
+    expect(chip.className).toBe('tl-chip tl-type-label');
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
+    expect(chip.firstElementChild!.className).toBe('tl-pill tl-pill--error');
+    expect(chip.querySelector('.tl-chip__label')!.textContent).toBe('Beta');
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws a disabled toggle natively disabled', async () => {
+    const { ChipPart } = await defaults();
+    const onClick = vi.fn();
+
+    render(<ChipPart label="Beta" pressed onClick={onClick} disabled />);
+    const chip = screen.getByRole('button', { name: 'Beta' });
+    await userEvent.setup({ pointerEventsCheck: 0 }).click(chip);
+
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+    expect((chip as HTMLButtonElement).disabled).toBe(true);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('draws a removable chip with the remove button of the part Button inside the pill', async () => {
+    const { ChipPart } = await defaults();
+    const onRemove = vi.fn();
+
+    render(<ChipPart id="c1" label="Alpha" onRemove={onRemove} removeLabel="Alpha entfernen" />);
+    const remove = screen.getByRole('button', { name: 'Alpha entfernen' });
+    await userEvent.click(remove);
+
+    const chip = document.getElementById('c1')!;
+    expect(chip.className).toBe('tl-pill tl-select__chip tl-type-label');
+    expect(remove.parentElement).toBe(chip);
+    expect(remove.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--sm tl-button--icon');
+    expect(screen.getAllByRole('button')).toEqual([remove]);
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws a removable toggle with its toggle beside the remove button, each pressed on its own', async () => {
+    const { ChipPart } = await defaults();
+    const onClick = vi.fn();
+    const onRemove = vi.fn();
+
+    render(<ChipPart id="c1" label="Meine" pressed tooltip="Filter aufheben" onClick={onClick} onRemove={onRemove}
+      removeLabel="Filter löschen" />);
+    const toggle = screen.getByRole('button', { name: 'Meine' });
+    const remove = screen.getByRole('button', { name: 'Filter löschen' });
+    await userEvent.click(remove);
+
+    const chip = document.getElementById('c1')!;
+    expect(chip.className).toBe('tl-chip tl-select__chip tl-type-label');
+    expect(chip.hasAttribute('aria-pressed')).toBe(false);
+    expect(toggle.className).toBe('tlChip__action');
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(toggle.getAttribute(TOOLTIP_ATTR)).toBe('text:Filter aufheben');
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
+    await userEvent.click(toggle);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the tab index on the toggle and on the remove button of a chip', async () => {
+    const { ChipPart } = await defaults();
+
+    render(<ChipPart id="c1" label="Meine" pressed onClick={vi.fn()} onRemove={vi.fn()} removeLabel="Löschen"
+      tabIndex={-1} />);
+
+    expect(screen.getAllByRole('button').map(button => button.getAttribute('tabindex'))).toEqual(['-1', '-1']);
+    expect(document.getElementById('c1')!.hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('draws a badge as the badge of the design system', async () => {
+    const { BadgePart } = await defaults();
+
+    render(<BadgePart id="b1" content="12" className="x" aria-label="12 neu" />);
+
+    const badge = document.getElementById('b1')!;
+    expect(badge.className).toBe('tl-badge tl-type-label-strong tl-nums x');
+    expect(badge.textContent).toBe('12');
+    expect(badge.getAttribute('aria-label')).toBe('12 neu');
   });
 });

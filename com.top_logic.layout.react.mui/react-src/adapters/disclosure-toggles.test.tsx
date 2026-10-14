@@ -18,6 +18,8 @@ import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Button', MuiButtonAdapter);
@@ -25,6 +27,9 @@ replacePart('Button', MuiButtonAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 // The table looks up the boxes of its search as well.
 replacePart('TextInput', MuiTextInputAdapter);
+// The table draws its named filters as chips, the sidebar its counts as badges.
+replacePart('Chip', MuiChipAdapter);
+replacePart('Badge', MuiBadgeAdapter);
 
 /** The labels of the toggles: the keys, as the test stub translates each key to itself. */
 const LABEL_GROUP_EXPAND = 'js.formGroup.expand';

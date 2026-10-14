@@ -53,7 +53,12 @@ export type {
   TextInputType,
   TextInputMode,
   FieldValuePartProps,
+  ChipPartProps,
+  ChipTone,
+  BadgePartProps,
 } from './bridge/parts';
+export { OptionValues } from './bridge/option-values';
+export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';

@@ -76,7 +76,7 @@ function htmlAttributes(): string[] {
 }
 
 /** The parts the MUI module draws. */
-const PART_NAMES = ['Button', 'MenuTrigger', 'DisclosureToggle', 'Checkbox', 'TextInput', 'FieldValue'];
+const PART_NAMES = ['Button', 'MenuTrigger', 'DisclosureToggle', 'Checkbox', 'TextInput', 'FieldValue', 'Chip', 'Badge'];
 
 /** The names the parts or components were replaced under, in the order of the calls. */
 function replacedNames(replace: { mock: { calls: unknown[][] } }): unknown[] {
@@ -101,10 +101,12 @@ describe('installMui', () => {
 
     installMui({ theme: {} });
 
-    expect(COMPONENT_NAMES).toHaveLength(25);
+    expect(COMPONENT_NAMES).toHaveLength(26);
     expect(replacedNames(replacePart)).toEqual(PART_NAMES);
     expect(replacedNames(replace)).toEqual(COMPONENT_NAMES.filter(name => !PART_NAMES.includes(name)));
     expect(replacedNames(replace)).not.toContain('TLButton');
+    // The option chips draw their toggles and their read-only values through the parts.
+    expect(replacedNames(replace)).not.toContain('TLOptionChips');
     expect(replacedNames(replace)).not.toContain('TLCheckbox');
     expect(replacedNames(replace)).not.toContain('TLTextInput');
     expect(replacedNames(replace)).not.toContain('TLPasswordInput');

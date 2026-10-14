@@ -320,6 +320,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
+  const Chip = usePart('Chip');
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   const columns = (state.columns as ColumnState[]) ?? [];
@@ -1230,7 +1231,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [activeNamedFilter, sendCommand]);
 
-  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent) => {
+  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.SyntheticEvent) => {
     event.stopPropagation();
     sendCommand('deleteNamedFilter', { id });
   }, [sendCommand]);
@@ -1351,34 +1352,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <div className="tlTableView__filterChips">
               {namedFilters.map((named) => {
                 const isActive = named.id === activeNamedFilter;
+                // Only a filter of the user's own can be deleted; a declared one is part of the
+                // table and offers no remove affordance.
                 return (
-                  <span
+                  <Chip
                     key={named.id}
-                    className={'tlTableView__chip' + (isActive ? ' tlTableView__chip--active' : '')}
-                  >
-                    <button
-                      type="button"
-                      className="tlTableView__chipLabel"
-                      aria-pressed={isActive}
-                      {...tooltipProps(isActive ? i18n['js.table.clearFilter'] : named.label)}
-                      onClick={() => handleNamedFilter(named.id)}
-                    >
-                      {named.label}
-                    </button>
-                    {/* Only a filter of the user's own can be deleted; a declared one is part of
-                        the table and offers no remove affordance. */}
-                    {named.deletable && (
-                      <button
-                        type="button"
-                        className="tlTableView__chipRemove"
-                        {...tooltipProps(i18n['js.table.deleteFilter'])}
-                        aria-label={i18n['js.table.deleteFilter']}
-                        onClick={(e) => handleDeleteNamedFilter(named.id, e)}
-                      >
-                        &times;
-                      </button>
-                    )}
-                  </span>
+                    label={named.label}
+                    pressed={isActive}
+                    tooltip={isActive ? i18n['js.table.clearFilter'] : named.label}
+                    onClick={() => handleNamedFilter(named.id)}
+                    onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
+                    removeLabel={i18n['js.table.deleteFilter']}
+                  />
                 );
               })}
             </div>

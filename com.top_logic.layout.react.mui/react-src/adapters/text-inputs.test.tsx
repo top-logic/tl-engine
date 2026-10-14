@@ -25,6 +25,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
 import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
 
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('FieldValue', MuiFieldValueAdapter);
@@ -32,6 +33,8 @@ replacePart('FieldValue', MuiFieldValueAdapter);
 replacePart('Button', MuiButtonAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
+// The table and the dropdown draw chips as well.
+replacePart('Chip', MuiChipAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} and {@link CMD_SUBMIT} holding the text. */
 const ARG_VALUE = 'value';

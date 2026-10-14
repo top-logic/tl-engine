@@ -1,9 +1,12 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { withPill } from './selectOptions';
+import { Pill } from './selectOptions';
 
 /** Command sent when the user follows the link of the displayed value. */
 const CMD_GOTO = 'goto';
+
+/** The prefix of the encoded form of a theme image drawn by a CSS class (see ThemeIcon). */
+const CSS_ICON_PREFIX = 'css:';
 
 /**
  * Displays a business object with optional icon, label, and goto link.
@@ -14,7 +17,7 @@ const CMD_GOTO = 'goto';
  * - iconSrc?: string    - image URL for non-CSS icons
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
- * - colorRole?: string  - color role the object carries in the model; shown as a pill of that role
+ * - colorRole?: string  - color role the object carries in the model; shown as the part Chip of that role
  *
  * Design system: a read-only value, `tl-field-value` (an `a` where it is a link), with the icon
  * in `tl-icon-sm` and the label in `tl-field-value__text`.
@@ -36,13 +39,13 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
     ? <img src={iconSrc} className="tl-icon-sm" alt="" />
     : null;
 
-  // A colored object is drawn as a pill; one the model gives no role stays plain.
-  const content = withPill(colorRole, (
-    <>
+  // A colored object is drawn as the part Chip; one the model gives no role stays plain.
+  const content = (
+    <Pill role={colorRole} icon={iconCss ? CSS_ICON_PREFIX + iconCss : iconSrc} label={label}>
       {icon}
       {label && <span className="tl-field-value__text">{label}</span>}
-    </>
-  ));
+    </Pill>
+  );
 
   const handleClick = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();

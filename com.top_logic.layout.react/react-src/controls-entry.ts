@@ -15,6 +15,8 @@ import DisclosureTogglePart from './controls/button/DisclosureTogglePart';
 import CheckboxPart from './controls/form/CheckboxPart';
 import TextInputPart from './controls/form/TextInputPart';
 import FieldValuePart from './controls/form/FieldValuePart';
+import ChipPart from './controls/chip/ChipPart';
+import BadgePart from './controls/chip/BadgePart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -106,6 +108,8 @@ registerPart('DisclosureToggle', DisclosureTogglePart);
 registerPart('Checkbox', CheckboxPart);
 registerPart('TextInput', TextInputPart);
 registerPart('FieldValue', FieldValuePart);
+registerPart('Chip', ChipPart);
+registerPart('Badge', BadgePart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

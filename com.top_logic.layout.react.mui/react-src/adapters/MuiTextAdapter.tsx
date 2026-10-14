@@ -1,10 +1,8 @@
-import { React, useTLState, rootClassName, TOOLTIP_ATTR } from 'tl-react-bridge';
-import type { TLCellProps, TextStateJson } from 'tl-react-bridge';
-import Chip from '@mui/material/Chip';
+import { React, useTLState, rootClassName, usePart, TOOLTIP_ATTR } from 'tl-react-bridge';
+import type { TLCellProps, TextStateJson, ChipTone } from 'tl-react-bridge';
 import Typography from '@mui/material/Typography';
 import type { TypographyProps } from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { roleColor } from './choice';
 
 /** The value of {@link TOOLTIP_ATTR} fetching the rich tooltip the server holds for the control. */
 const RICH_TOOLTIP = 'key:tooltip';
@@ -49,7 +47,7 @@ const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--text-on-color, var(--mui-pal
  * TLText draws it: the meanings keep their name, the accent is the brand, everything else is
  * neutral.
  */
-function roleOfTone(tone: TextStateJson.Tone): string {
+function roleOfTone(tone: TextStateJson.Tone): ChipTone {
   switch (tone) {
     case 'success': case 'warning': case 'error': return tone;
     case 'accent': return 'brand';
@@ -58,8 +56,8 @@ function roleOfTone(tone: TextStateJson.Tone): string {
 }
 
 /**
- * Renders the state of a TopLogic text (module name `TLText`) with the MUI `Typography`, or as a
- * small MUI `Chip` where TLText draws a pill.
+ * Renders the state of a TopLogic text (module name `TLText`) with the MUI `Typography`, or as the
+ * part `Chip` where TLText draws a pill.
  *
  * <p>Mapping from the control state:</p>
  * <ul>
@@ -70,22 +68,22 @@ function roleOfTone(tone: TextStateJson.Tone): string {
  *     `textSecondary`, accent → `primary`, success, warning and error → the palette color of that
  *     name, on-color → the theme color for text on a filled surface (`text-on-color`, as in TLText);</li>
  * <li>overflow `ellipsis` → `noWrap`;</li>
- * <li>colorRole, or appearance `pill` → a small `Chip` of the color of the role (for a pill
- *     without a role of its own, the role of its tone); an empty text is never a pill;</li>
+ * <li>colorRole, or appearance `pill` → the part `Chip` of the role (for a pill without a role of
+ *     its own, the role of its tone) inside a `span`, as TLText draws it; an empty text is never a
+ *     pill;</li>
  * <li>role → the ARIA role; hasTooltip → the rich tooltip of the control;</li>
  * <li>hidden → nothing is rendered; the configured CSS class → className of the root.</li>
  * </ul>
- *
- * <p>The color roles without an MUI counterpart (neutral, the categories) are drawn as the
- * default chip.</p>
  */
 const MuiTextAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextStateJson>>();
+  const Chip = usePart('Chip');
   const text = state.text ?? '';
   const tone = state.tone ?? 'primary';
   const colorRole = state.colorRole || undefined;
   const pill = state.appearance === 'pill';
-  const pillRole = text === '' ? undefined : pill ? colorRole ?? roleOfTone(tone) : colorRole;
+  const pillRole = text === '' ? undefined : pill ? (colorRole as ChipTone | undefined) ?? roleOfTone(tone)
+    : colorRole as ChipTone | undefined;
   const tooltip = state.hasTooltip === true ? { [TOOLTIP_ATTR]: RICH_TOOLTIP } : {};
 
   if (state.hidden === true) {
@@ -94,8 +92,9 @@ const MuiTextAdapter: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (pillRole !== undefined) {
     return (
-      <Chip id={controlId} component="span" size="small" color={roleColor(pillRole)} label={text}
-        role={state.role || undefined} className={rootClassName(state)} {...tooltip} />
+      <span id={controlId} role={state.role || undefined} className={rootClassName(state)} {...tooltip}>
+        <Chip tone={pillRole} label={text} />
+      </span>
     );
   }
 

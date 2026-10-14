@@ -7,9 +7,9 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
 // - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
-// of a field. A part has a typed props contract and no server state: the control maps its state to
-// the props of the part, sends its commands and handles keyboard bindings and navigation, and the
-// part only draws. The controls bundle registers a default for every part (registerPart); a customer
+// of a field, a chip, a badge. A part has a typed props contract and no server state: the control
+// maps its state to the props of the part, sends its commands and handles keyboard bindings and
+// navigation, and the part only draws. The controls bundle registers a default for every part (registerPart); a customer
 // component library replaces a part (replacePart) and so changes how the part looks wherever a
 // control draws it - as a control of its own, in a toolbar or in a table.
 //
@@ -115,6 +115,12 @@ export interface ButtonPartProps extends PartAttributes {
 
   /** Whether the button cannot be pressed. */
   disabled?: boolean;
+
+  /**
+   * The tab index of the button; `-1` keeps it out of the tab order, e.g. the remove button of a
+   * chip in a field that offers removal by its own keys. Absent: the button is in the tab order.
+   */
+  tabIndex?: number;
 
   /**
    * An explicit tooltip, shown whatever the button shows. Absent: the label is the tooltip wherever
@@ -490,7 +496,133 @@ export interface FieldValuePartProps extends PartAttributes {
   /** Whether the text is shown with its line breaks. */
   multiline?: boolean;
 
+  /**
+   * The icon shown ahead of the text, a theme image in its encoded form (see `ThemeIcon`), e.g. the
+   * image of a chosen option; absent: none. Ignored for a multi-line value.
+   */
+  icon?: string;
+
+  /**
+   * Called when the value is pressed; the value is then a link that leads somewhere within the
+   * application, e.g. to the place the chosen object is displayed at. Ignored for a value with an
+   * {@link href} and for a multi-line value.
+   */
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+
   /** Classes added to the drawn element. */
+  className?: string;
+}
+
+/**
+ * The color role of a {@link ChipPartProps chip}, from a closed list: `neutral`; `brand`; the
+ * meanings `error`, `warning`, `success` and `info`; and the categories without meaning
+ * `category-1` to `category-8`. The role a model gives a value arrives by this name; how a role
+ * looks is up to the implementation.
+ */
+export type ChipTone = 'neutral' | 'brand' | 'error' | 'warning' | 'success' | 'info'
+  | 'category-1' | 'category-2' | 'category-3' | 'category-4'
+  | 'category-5' | 'category-6' | 'category-7' | 'category-8';
+
+/**
+ * The props of the part {@link PartProps.Chip}: a compact, rounded value - a value the model gives
+ * a color role, the chosen value of a field choosing several, an option that is switched on and off,
+ * a named filter of a table, an attached file.
+ *
+ * <p>A chip comes in these forms, which combine:</p>
+ * <ul>
+ * <li>A chip with neither {@link pressed} nor {@link onClick} only shows its value.</li>
+ * <li>A chip with {@link pressed} is a toggle: it is a button marked `aria-pressed`, drawn as
+ *     switched on while pressed.</li>
+ * <li>A chip with {@link onClick} and without {@link pressed} is a button running an action, e.g.
+ *     downloading the file it stands for.</li>
+ * <li>A chip with {@link onRemove} offers to remove its value, named by {@link removeLabel}.</li>
+ * </ul>
+ *
+ * <p>Every implementation puts {@link id}, {@link ref}, {@link className} and the passed-through
+ * attributes on its outermost element.</p>
+ */
+export interface ChipPartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
+  /** Receives the outermost drawn element. */
+  ref?: PartRef<HTMLElement>;
+
+  /**
+   * The label: a text, or content such as the label of an option with the part matching a search
+   * set off.
+   */
+  label: React.ReactNode;
+
+  /**
+   * A second, less prominent text after the label, e.g. the size of a file; absent: none.
+   */
+  detail?: string;
+
+  /** The icon ahead of the label, a theme image in its encoded form (see `ThemeIcon`); absent: none. */
+  icon?: string;
+
+  /** The color role; absent: none, the chip is drawn in the plain look of its form. */
+  tone?: ChipTone;
+
+  /** The state of a toggle; absent for a chip that is no toggle. */
+  pressed?: boolean;
+
+  /**
+   * The state of the value of the field a toggle belongs to, as the checks of the field judge it;
+   * absent: valid.
+   */
+  validation?: FieldValidation;
+
+  /** Whether the chip cannot be pressed and its value cannot be removed. */
+  disabled?: boolean;
+
+  /**
+   * The tab index of what takes the focus in the chip - the chip, or its toggle and its remove
+   * button; `-1` keeps them out of the tab order, e.g. the chosen values of a field whose own keys
+   * move between and remove them. Absent: they are in the tab order.
+   */
+  tabIndex?: number;
+
+  /** The tooltip; absent: none. */
+  tooltip?: string;
+
+  /** Classes added to the outermost drawn element. */
+  className?: string;
+
+  /** Called when a toggle or a chip running an action is pressed. */
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+
+  /**
+   * Called when the value of the chip is to be removed: by a press of the remove button, or, where
+   * the implementation offers it, by a key. Absent: the value cannot be removed.
+   */
+  onRemove?: (event: React.SyntheticEvent<HTMLElement>) => void;
+
+  /**
+   * The accessible name and tooltip of the means removing the value, e.g. "Remove Alpha"; required
+   * with {@link onRemove}.
+   */
+  removeLabel?: string;
+}
+
+/**
+ * The props of the part {@link PartProps.Badge}: a small marker carrying a count or a short status
+ * beside an icon or a label, e.g. the number of new entries behind an item of the navigation.
+ *
+ * <p>A badge carries digits or an abbreviation only; a text belongs in a {@link ChipPartProps chip}.
+ * Where it stands - beside a label or over the corner of an icon - is up to the element around
+ * it, which places the badge through its {@link className}. Every implementation puts {@link id},
+ * {@link className} and the passed-through attributes on its outermost element.</p>
+ */
+export interface BadgePartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
+  /** What the badge shows: a count, or a short status. */
+  content: string;
+
+  /** Classes added to the outermost drawn element. */
   className?: string;
 }
 
@@ -517,6 +649,12 @@ export interface PartProps {
 
   /** The value of a field that is not editable: {@link FieldValuePartProps}. */
   FieldValue: FieldValuePartProps;
+
+  /** A compact, rounded value, a toggle or a removable value: {@link ChipPartProps}. */
+  Chip: ChipPartProps;
+
+  /** A small marker carrying a count: {@link BadgePartProps}. */
+  Badge: BadgePartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

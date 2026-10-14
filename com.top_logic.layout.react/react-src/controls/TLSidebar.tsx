@@ -104,28 +104,31 @@ const SidebarNavItem: React.FC<{
   tabIndex: number;
   itemRef: (el: HTMLElement | null) => void;
   onFocus: (id: string) => void;
-}> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => (
-  <button
-    className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
-    onClick={() => onSelect(item.id)}
-    aria-label={collapsed ? item.label : undefined}
-    {...tooltipProps(collapsed ? item.label : undefined)}
-    tabIndex={tabIndex}
-    ref={itemRef}
-    onFocus={() => onFocus(item.id)}
-  >
-    {collapsed && item.badge ? (
-      <span className="tlSidebar__iconWrap">
+}> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => {
+  const Badge = usePart('Badge');
+  return (
+    <button
+      className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
+      onClick={() => onSelect(item.id)}
+      aria-label={collapsed ? item.label : undefined}
+      {...tooltipProps(collapsed ? item.label : undefined)}
+      tabIndex={tabIndex}
+      ref={itemRef}
+      onFocus={() => onFocus(item.id)}
+    >
+      {collapsed && item.badge ? (
+        <span className="tlSidebar__iconWrap">
+          <SidebarIcon icon={item.icon} />
+          <Badge content={item.badge} className="tlSidebar__badge tlSidebar__badge--collapsed" />
+        </span>
+      ) : (
         <SidebarIcon icon={item.icon} />
-        <span className="tlSidebar__badge tlSidebar__badge--collapsed">{item.badge}</span>
-      </span>
-    ) : (
-      <SidebarIcon icon={item.icon} />
-    )}
-    {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-    {!collapsed && item.badge && <span className="tlSidebar__badge">{item.badge}</span>}
-  </button>
-);
+      )}
+      {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
+      {!collapsed && item.badge && <Badge content={item.badge} className="tlSidebar__badge" />}
+    </button>
+  );
+};
 
 const SidebarCommandItem: React.FC<{
   item: CommandItemInfo;
@@ -179,6 +182,7 @@ const SidebarGroupFlyout: React.FC<{
   onClose: () => void;
 }> = ({ item, activeItemId, anchorRect, triggerRef, onSelect, onExecute, onClose }) => {
   const flyoutRef = useRef<HTMLDivElement>(null);
+  const Badge = usePart('Badge');
 
   // Close on a press outside the flyout. A press on the group icon the flyout hangs off is left to
   // that icon, which toggles the flyout on its click.
@@ -227,7 +231,7 @@ const SidebarGroupFlyout: React.FC<{
               <SidebarIcon icon={child.icon} />
               <span className="tlSidebar__label">{child.label}</span>
               {child.type === 'nav' && (child as NavItem).badge && (
-                <span className="tlSidebar__badge">{(child as NavItem).badge}</span>
+                <Badge content={(child as NavItem).badge!} className="tlSidebar__badge" />
               )}
             </button>
           );

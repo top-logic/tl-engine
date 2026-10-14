@@ -1,10 +1,10 @@
-import { React, useFieldLabelProps, rootClassName, usePart } from 'tl-react-bridge';
+import { React, useFieldLabelProps, rootClassName, usePart, OptionValues } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, FieldValidation } from 'tl-react-bridge';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import { MuiReadonlyValues, OptionContent, useChoice } from './choice';
+import { OptionContent, useChoice } from './choice';
 import { showsValueOnly } from './field';
 
 /** The orientation laying the options out side by side; any other lays them out one below the other. */
@@ -30,7 +30,7 @@ const EMPTY = '';
  * icon and label ({@link OptionContent}); hasError → `aria-invalid` and the color `error` on the radio
  * group, or the validation `error` of every checkbox (a group of several takes none); hasWarnings →
  * the validation `warning` of every checkbox; a field that is not editable
- * shows the chosen values ({@link MuiReadonlyValues}); disabled → every input disabled; hidden →
+ * shows the chosen values ({@link OptionValues}); disabled → every input disabled; hidden →
  * nothing is rendered. The group (role `radiogroup` or `group`) carries the control ID and is
  * labelled by the surrounding form field.</p>
  *
@@ -47,7 +47,7 @@ const MuiChoiceGroupAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
   if (showsValueOnly(state)) {
-    return <MuiReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
+    return <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
   }
 
   const disabled = state.disabled === true;

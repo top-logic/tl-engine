@@ -13,10 +13,11 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiFieldValueAdapter from './adapters/MuiFieldValueAdapter';
+import MuiChipAdapter from './adapters/MuiChipAdapter';
+import MuiBadgeAdapter from './adapters/MuiBadgeAdapter';
 import MuiDatePickerAdapter from './adapters/MuiDatePickerAdapter';
 import MuiSelectAdapter from './adapters/MuiSelectAdapter';
 import MuiDropdownSelectAdapter from './adapters/MuiDropdownSelectAdapter';
-import MuiOptionChipsAdapter from './adapters/MuiOptionChipsAdapter';
 import MuiSegmentedChoiceAdapter from './adapters/MuiSegmentedChoiceAdapter';
 import MuiChoiceGroupAdapter from './adapters/MuiChoiceGroupAdapter';
 import MuiTabBarAdapter from './adapters/MuiTabBarAdapter';
@@ -43,7 +44,11 @@ import MuiSliderAdapter from './adapters/MuiSliderAdapter';
  * and number fields (TLTextInput, TLPasswordInput, TLNumberInput), the search of a table and of its
  * column selection and the filters of a dropdown and of the icon and color popups, the part
  * `FieldValue` the value of every text, password, number, select, date and slider field that is
- * not editable.
+ * not editable and the chosen values without a color role of a choice field that is not editable,
+ * the part `Chip` the toggles of an option chip field (TLOptionChips), the chosen values of a
+ * dropdown, the named filters of a table, the files of a file chip field, every value with a color
+ * role and every text drawn as a pill, the part `Badge` the counts of the sidebar and of the bottom
+ * bar.
  */
 const PART_ADAPTERS = {
   Button: MuiButtonAdapter,
@@ -52,6 +57,8 @@ const PART_ADAPTERS = {
   Checkbox: MuiCheckboxAdapter,
   TextInput: MuiTextInputAdapter,
   FieldValue: MuiFieldValueAdapter,
+  Chip: MuiChipAdapter,
+  Badge: MuiBadgeAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */
@@ -59,7 +66,6 @@ const CONTROL_ADAPTERS = {
   TLDatePicker: MuiDatePickerAdapter,
   TLSelect: MuiSelectAdapter,
   TLDropdownSelect: MuiDropdownSelectAdapter,
-  TLOptionChips: MuiOptionChipsAdapter,
   TLSegmentedChoice: MuiSegmentedChoiceAdapter,
   TLChoiceGroup: MuiChoiceGroupAdapter,
   TLTabBar: MuiTabBarAdapter,

@@ -1,15 +1,11 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon, usePart } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, usePart, OptionValues } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, ChipTone } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
   OptionContent,
-  OptionImage,
-  ReadonlyValues,
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { pillClassName } from './pill/TLPill';
-import { buttonClassName } from './button/buttonClassName';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { SEARCH_ICON } from './form/fieldIcons';
@@ -25,11 +21,32 @@ const CLEAR_ICON = 'css:fa-solid fa-xmark';
 /** How a chip takes part in reordering by drag and drop: the design system's data-tl-state word. */
 type ChipDragState = 'dragging' | 'drop-before' | 'drop-after';
 
+/** The icon of the handle a chip is dragged by. */
+const DRAG_HANDLE_ICON = 'css:fa-solid fa-grip-vertical';
+
+/** The attribute marking the chip of a chosen value, by which the focus finds a chip after a removal. */
+const VALUE_CHIP_ATTR = 'data-tl-value-chip';
+
 /**
- * Renders a selected value of a multi-valued field as a chip: a pill of the value's color role
- * (neutral without one) holding the drag handle, the label and the button removing the value.
+ * What takes the focus of a chip: the chip itself where it is focusable, else its first button, e.g.
+ * its remove button.
  */
-function Chip({
+const CHIP_FOCUS_TARGET = 'button:not([disabled]), [tabindex]';
+
+/** Whether the given element is a button, e.g. the remove button of a chip or the clear button. */
+function isButton(element: HTMLElement): boolean {
+  return element.tagName === 'BUTTON' || element.getAttribute('role') === 'button';
+}
+
+/**
+ * Renders a selected value of a multi-valued field as the part `Chip`, of the value's color role,
+ * removable while the field is editable.
+ *
+ * <p>A chip that can be reordered stands in a drag source (tlDropdownSelect__chipDrag) holding the
+ * drag handle before the chip; the chip carries the design system's state of the reordering in
+ * `data-tl-state`.</p>
+ */
+function ValueChip({
   option,
   removable,
   onRemove,
@@ -52,42 +69,42 @@ function Chip({
   onDragEnd?: (e: React.DragEvent) => void;
   dragState?: ChipDragState;
 }) {
+  const Chip = usePart('Chip');
   const handleRemove = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.SyntheticEvent) => {
       e.stopPropagation();
       onRemove(option.value);
     },
     [onRemove, option.value]
   );
 
+  const chip = (
+    <Chip
+      label={option.label}
+      icon={option.image}
+      tone={(option.colorRole || undefined) as ChipTone | undefined}
+      onRemove={removable ? handleRemove : undefined}
+      removeLabel={removeLabel}
+      data-tl-state={dragState}
+      {...{ [VALUE_CHIP_ATTR]: true }}
+    />
+  );
+  if (!draggable) {
+    return chip;
+  }
   return (
     <span
-      className={pillClassName(option.colorRole, 'tl-type-label tl-select__chip')}
-      data-tl-state={dragState}
-      draggable={draggable || undefined}
+      className="tlDropdownSelect__chipDrag"
+      draggable
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
     >
-      {draggable && (
-        <span className="tl-select__drag-handle" aria-hidden="true">
-          <ThemeIcon encoded="css:fa-solid fa-grip-vertical" className="tl-icon-sm" />
-        </span>
-      )}
-      <OptionImage image={option.image} />
-      <span className="tl-pill__label">{option.label}</span>
-      {removable && (
-        <button
-          type="button"
-          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
-          onClick={handleRemove}
-          aria-label={removeLabel}
-          {...tooltipProps(removeLabel)}
-        >
-          <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
-        </button>
-      )}
+      <span className="tl-select__drag-handle" aria-hidden="true">
+        <ThemeIcon encoded={DRAG_HANDLE_ICON} className="tl-icon-sm" />
+      </span>
+      {chip}
     </span>
   );
 }
@@ -153,8 +170,8 @@ function OptionRow({
  *
  * Design system: the field is `tl-field tl-select` with `role="combobox"`, its state carried as
  * attributes (see fieldStateAttrs), open as `aria-expanded`, switched off as `aria-disabled`. A
- * chosen value with a color role is a pill of that role; the values of a multi-valued field are
- * chips. The list floats in `tl-select__popup`, positioned from the field, its layer the design
+ * chosen value with a color role is the part `Chip` of that role; the values of a multi-valued field
+ * are chips (part `Chip`), removable while the field is editable. The list floats in `tl-select__popup`, positioned from the field, its layer the design
  * system's. The focus stays on the field or the search field; the keyboard highlight is
  * `data-tl-state="highlighted"` on the option and `aria-activedescendant` on the search field. A
  * read-only field shows its values in `tl-select__values`. A disabled field renders the field as
@@ -278,20 +295,16 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [isOpen, optionsLoaded, value]);
 
-  // After a chip is removed, focus the next remove button (or previous, or container).
+  // After a chip is removed, focus the next chip (or previous, or container), see CHIP_FOCUS_TARGET.
   useEffect(() => {
     if (removalIndexRef.current < 0) return;
     const idx = removalIndexRef.current;
     removalIndexRef.current = -1;
 
-    const buttons = containerRef.current?.querySelectorAll<HTMLElement>(
-      '.tl-select__chip > .tl-button'
-    );
-    if (buttons && buttons.length > 0) {
-      buttons[Math.min(idx, buttons.length - 1)].focus();
-    } else {
-      containerRef.current?.focus();
-    }
+    const chips = containerRef.current?.querySelectorAll<HTMLElement>(`[${VALUE_CHIP_ATTR}]`);
+    const chip = chips && chips.length > 0 ? chips[Math.min(idx, chips.length - 1)] : null;
+    const target = chip && (chip.matches(CHIP_FOCUS_TARGET) ? chip : chip.querySelector<HTMLElement>(CHIP_FOCUS_TARGET));
+    (target ?? containerRef.current)?.focus();
   }, [value]);
 
   // Close the dropdown on a press outside the control and its (portalled) list.
@@ -423,7 +436,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (noFilter && isTypeAheadKey(e, typeAhead.typing()) && (e.target as HTMLElement).tagName !== 'BUTTON') {
+      if (noFilter && isTypeAheadKey(e, typeAhead.typing()) && !isButton(e.target as HTMLElement)) {
         e.preventDefault();
         e.stopPropagation();
         if (!disabled && editable) typeAheadKey(e.key);
@@ -433,7 +446,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       if (!isOpen) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
           // Let Enter/Space activate a focused child button (chip remove, clear).
-          if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+          if (isButton(e.target as HTMLElement)) return;
           e.preventDefault();
           e.stopPropagation();
           openDropdown();
@@ -588,7 +601,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // affordance and would mislead in a read-only display) --
 
   if (showsValueOnly(state)) {
-    return <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
+    return <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
   }
 
   // -- Editable or disabled rendering --
@@ -713,7 +726,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 dragState = 'drop-after';
               }
               return (
-                <Chip
+                <ValueChip
                   key={v.value}
                   option={v}
                   removable={!disabled}

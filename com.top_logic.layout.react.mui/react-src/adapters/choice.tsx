@@ -1,10 +1,8 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, ThemeIcon } from 'tl-react-bridge';
-import type { DropdownSelectStateJson } from 'tl-react-bridge';
-import Chip from '@mui/material/Chip';
-import type { ChipProps } from '@mui/material/Chip';
-import Link from '@mui/material/Link';
+import { React, useTLState, useTLCommand, usePart, CMD_VALUE_CHANGED, ThemeIcon } from 'tl-react-bridge';
+import type { ChipTone, DropdownSelectStateJson, OptionDescriptor } from 'tl-react-bridge';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+
+export type { OptionDescriptor } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -21,73 +19,18 @@ export const ARG_VALUE = 'value';
 const ICON_CLASS = 'tl-icon-sm';
 
 /**
- * One option of a choice field as the server describes it, a chosen one or one to choose. The
- * server always sends its value and label.
- */
-export type OptionDescriptor = Partial<DropdownSelectStateJson.Option>
-  & Required<Pick<DropdownSelectStateJson.Option, 'value' | 'label'>>;
-
-/**
- * The MUI color of the given color role of a value. The roles without an MUI counterpart (neutral,
- * the categories) are drawn in the default color.
- */
-export function roleColor(role: string | undefined): ChipProps['color'] {
-  switch (role) {
-    case 'brand':
-      return 'primary';
-    case 'error':
-    case 'warning':
-    case 'success':
-    case 'info':
-      return role;
-    default:
-      return 'default';
-  }
-}
-
-/** The icon of an option, from its encoded theme image, or nothing. */
-export function optionIcon(option: OptionDescriptor) {
-  return option.image ? <ThemeIcon encoded={option.image} className={ICON_CLASS} /> : undefined;
-}
-
-/**
- * An option as its icon followed by its label; a value with a color role is a small chip of that
- * role, as TopLogic draws it as a pill.
+ * An option as its icon followed by its label; a value with a color role is the part `Chip` of that
+ * role, as TopLogic draws it.
  */
 export function OptionContent({ option }: { option: OptionDescriptor }) {
+  const Chip = usePart('Chip');
   if (option.colorRole) {
-    return <Chip size="small" color={roleColor(option.colorRole)} icon={optionIcon(option)} label={option.label} />;
+    return <Chip tone={option.colorRole as ChipTone} icon={option.image} label={option.label} />;
   }
   return (
     <Stack component="span" direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-      {optionIcon(option)}
+      {option.image && <ThemeIcon encoded={option.image} className={ICON_CLASS} />}
       <span>{option.label}</span>
-    </Stack>
-  );
-}
-
-/**
- * The chosen values of a choice field that is not editable: one {@link OptionContent} per value,
- * a value the application displays somewhere as a link sending {@link CMD_GOTO}. Nothing chosen
- * shows nothing, as in TopLogic: the empty option label is an edit affordance.
- */
-export function MuiReadonlyValues({ id, className, value, onGoto }: {
-  id: string;
-  className?: string;
-  value: OptionDescriptor[];
-  onGoto: (optionValue: string) => void;
-}) {
-  return (
-    <Stack id={id} component="span" direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}
-      className={className}>
-      {value.map(option => option.link
-        ? (
-          <Link key={option.value} component="button" type="button" variant="body2"
-            onClick={() => onGoto(option.value)}>
-            <OptionContent option={option} />
-          </Link>
-        )
-        : <Typography key={option.value} component="span" variant="body2"><OptionContent option={option} /></Typography>)}
     </Stack>
   );
 }

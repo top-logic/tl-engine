@@ -119,13 +119,21 @@ const SidebarNavItem: React.FC<{
       {collapsed && item.badge ? (
         <span className="tlSidebar__iconWrap">
           <SidebarIcon icon={item.icon} />
-          <Badge content={item.badge} className="tlSidebar__badge tlSidebar__badge--collapsed" />
+          {/* Over the corner of the icon, placed by the element around the badge: the root of
+              the part keeps the position its implementation gives it. */}
+          <span className="tlSidebar__cornerBadge">
+            <Badge content={item.badge} />
+          </span>
         </span>
       ) : (
         <SidebarIcon icon={item.icon} />
       )}
       {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-      {!collapsed && item.badge && <Badge content={item.badge} className="tlSidebar__badge" />}
+      {!collapsed && item.badge && (
+        <span className="tlSidebar__badge">
+          <Badge content={item.badge} />
+        </span>
+      )}
     </button>
   );
 };
@@ -166,13 +174,17 @@ const SidebarHeaderItem: React.FC<{
   );
 };
 
-/** The class of the divider between two items of the sidebar, which gives it the space around it. */
+/** The class of the element around the divider between two items, which gives it the space around it. */
 const SEPARATOR_CLASS = 'tlSidebar__separator';
 
 /** The line between two items of the sidebar or of its flyout, drawn by the part `Divider`. */
 const SidebarSeparator: React.FC = () => {
   const Divider = usePart('Divider');
-  return <Divider className={SEPARATOR_CLASS} />;
+  return (
+    <div className={SEPARATOR_CLASS}>
+      <Divider />
+    </div>
+  );
 };
 
 /* ---------- Group flyout (collapsed mode) ---------- */
@@ -236,7 +248,9 @@ const SidebarGroupFlyout: React.FC<{
               <SidebarIcon icon={child.icon} />
               <span className="tlSidebar__label">{child.label}</span>
               {child.type === 'nav' && (child as NavItem).badge && (
-                <Badge content={(child as NavItem).badge!} className="tlSidebar__badge" />
+                <span className="tlSidebar__badge">
+                  <Badge content={(child as NavItem).badge!} />
+                </span>
               )}
             </button>
           );

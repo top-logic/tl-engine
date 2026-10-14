@@ -1,12 +1,14 @@
-import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
-import { Pill } from './selectOptions';
+import { React, useTLState, useTLCommand, rootClassName, usePart, TOOLTIP_ATTR } from 'tl-react-bridge';
+import type { TLCellProps, ChipTone } from 'tl-react-bridge';
 
 /** Command sent when the user follows the link of the displayed value. */
 const CMD_GOTO = 'goto';
 
 /** The prefix of the encoded form of a theme image drawn by a CSS class (see ThemeIcon). */
 const CSS_ICON_PREFIX = 'css:';
+
+/** The {@link TOOLTIP_ATTR} value showing the rich tooltip the server answers for the cell. */
+const SERVER_TOOLTIP = 'key:tooltip';
 
 /**
  * Displays a business object with optional icon, label, and goto link.
@@ -17,62 +19,42 @@ const CSS_ICON_PREFIX = 'css:';
  * - iconSrc?: string    - image URL for non-CSS icons
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
- * - colorRole?: string  - color role the object carries in the model; shown as the part Chip of that role
+ * - colorRole?: string  - color role the object carries in the model
  *
- * Design system: a read-only value, `tl-field-value` (an `a` where it is a link), with the icon
- * in `tl-icon-sm` and the label in `tl-field-value__text`.
+ * The object is drawn as the part `FieldValue`, a link running {@link CMD_GOTO} where it has one;
+ * an object the model gives a color role is drawn as the part `Chip` of that role, a chip running
+ * {@link CMD_GOTO} where it has a link.
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const FieldValue = usePart('FieldValue');
+  const Chip = usePart('Chip');
 
   const iconCss = state.iconCss as string | undefined;
   const iconSrc = state.iconSrc as string | undefined;
-  const label = state.label as string | undefined;
+  const label = (state.label as string | undefined) ?? '';
   const hasTooltip = state.hasTooltip === true;
-  const hasLink = state.hasLink as boolean;
+  const hasLink = state.hasLink === true;
   const colorRole = (state.colorRole as string) || undefined;
 
-  const icon = iconCss
-    ? <i className={iconCss + ' tl-icon-sm'} aria-hidden="true" />
-    : iconSrc
-    ? <img src={iconSrc} className="tl-icon-sm" alt="" />
-    : null;
-
-  // A colored object is drawn as the part Chip; one the model gives no role stays plain.
-  const content = (
-    <Pill role={colorRole} icon={iconCss ? CSS_ICON_PREFIX + iconCss : iconSrc} label={label}>
-      {icon}
-      {label && <span className="tl-field-value__text">{label}</span>}
-    </Pill>
-  );
-
-  const handleClick = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleClick = React.useCallback(() => {
     sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
-  const className = rootClassName(state, 'tl-field-value tl-type-body');
-  const tooltipAttr = hasTooltip ? 'key:tooltip' : undefined;
+  const icon = iconCss ? CSS_ICON_PREFIX + iconCss : iconSrc;
+  const className = rootClassName(state) || undefined;
+  const tooltip = { [TOOLTIP_ATTR]: hasTooltip ? SERVER_TOOLTIP : undefined };
+  const onClick = hasLink ? handleClick : undefined;
 
-  if (hasLink) {
+  if (colorRole) {
     return (
-      <a
-        id={controlId}
-        className={className}
-        href="#"
-        onClick={handleClick}
-        data-tooltip={tooltipAttr}
-      >
-        {content}
-      </a>
+      <Chip id={controlId} tone={colorRole as ChipTone} icon={icon} label={label} onClick={onClick}
+        className={className} {...tooltip} />
     );
   }
-
   return (
-    <span id={controlId} className={className} data-tooltip={tooltipAttr}>
-      {content}
-    </span>
+    <FieldValue id={controlId} text={label} icon={icon} onClick={onClick} className={className} {...tooltip} />
   );
 };
 

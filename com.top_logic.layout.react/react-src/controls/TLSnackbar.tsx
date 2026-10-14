@@ -94,15 +94,16 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
         ? <span className="tlSnackbar__message" dangerouslySetInnerHTML={{ __html: content }} />
         : <span className="tlSnackbar__message">{message}</span>
       }
-      <Button
-        label={i18n['js.snackbar.dismiss']}
-        image={DISMISS_ICON}
-        display="icon-only"
-        appearance="ghost"
-        small
-        className="tlSnackbar__close"
-        onClick={handleDismiss}
-      />
+      <span className="tlSnackbar__close">
+        <Button
+          label={i18n['js.snackbar.dismiss']}
+          image={DISMISS_ICON}
+          display="icon-only"
+          appearance="ghost"
+          small
+          onClick={handleDismiss}
+        />
+      </span>
     </div>
   );
 };

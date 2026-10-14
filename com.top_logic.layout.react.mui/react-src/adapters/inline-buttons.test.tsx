@@ -10,11 +10,13 @@ import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPa
 import TLDrawer from '../../../com.top_logic.layout.react/react-src/controls/TLDrawer';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
+import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
+import TLDrawerToggle from '../../../com.top_logic.layout.react/react-src/controls/TLDrawerToggle';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
-import { childControl, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 
 replacePart('Button', MuiButtonAdapter);
@@ -36,6 +38,9 @@ const LABEL_COLUMNS = 'js.table.columns';
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_ADD = 'js.valueList.add';
 const LABEL_REMOVE = 'js.valueList.remove';
+const LABEL_GROUP_BY = 'js.table.groupBy';
+const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
+const LABEL_UNGROUP = 'js.table.ungroup';
 
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
@@ -73,8 +78,9 @@ describe('the header buttons of a panel as MUI icon buttons', () => {
     for (const label of [LABEL_MINIMIZE, LABEL_MAXIMIZE, LABEL_POP_OUT]) {
       const button = screen.getByRole('button', { name: label });
       expectMuiIconButton(button);
-      // The panel positions its buttons by its own class.
+      // The class marks the button; the element around the buttons places them.
       expect(button.classList).toContain('tlPanel__actionButton');
+      expect(button.parentElement!.classList).toContain('tlPanel__actions');
     }
   });
 
@@ -176,5 +182,66 @@ describe('the buttons of a value list as MUI icon buttons', () => {
 
     expect((screen.getByRole('button', { name: LABEL_ADD }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole('button', { name: LABEL_REMOVE }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('the group-by toggles of the column selection as MUI toggle buttons', () => {
+  /** The command the column selection sends for its group-by toggle. */
+  const CMD_GROUP_BY = 'groupBy';
+
+  function entry(name: string, grouped: boolean) {
+    return { name, label: 'Spalte ' + name, visible: true, grouped };
+  }
+
+  it('shows the icon alone, pressed for the grouped column, and groups by the chosen one', async () => {
+    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', false)] });
+    await settle();
+
+    const ungroup = screen.getByRole('button', { name: LABEL_UNGROUP });
+    const groupBy = screen.getByRole('button', { name: LABEL_GROUP_BY });
+    for (const toggle of [ungroup, groupBy]) {
+      expect(toggle.classList).toContain('MuiToggleButton-root');
+      expect(toggle.parentElement!.classList).toContain('tlColumnSelect__groupBy');
+      expect(toggle.textContent).toBe('');
+    }
+    expect(ungroup.getAttribute('aria-pressed')).toBe('true');
+    expect(ungroup.querySelector('i.bi-collection-fill')).not.toBeNull();
+    expect(groupBy.getAttribute('aria-pressed')).toBe('false');
+    expect(groupBy.querySelector('i.bi-collection')).not.toBeNull();
+
+    await userEvent.click(groupBy);
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP_BY, { column: 'b' });
+  });
+
+  it('offers no grouping in a table whose rows cannot be grouped', async () => {
+    mountAdapter(TLColumnSelect, { entries: [entry('a', false)], groupable: false });
+    await settle();
+
+    expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
+  });
+});
+
+describe('the button opening the drawer of the sidebar as MUI icon button', () => {
+  /** The command the button sends to the sidebar. */
+  const CMD_TOGGLE = 'toggle';
+
+  it('is shown and hidden by the element around it, and toggles the drawer', async () => {
+    const sent = mountAdapter(TLDrawerToggle, {});
+    await settle();
+
+    const button = screen.getByRole('button', { name: LABEL_OPEN_DRAWER });
+    expectMuiIconButton(button);
+    // MUI sets the display of its button, which wins against the stylesheets of TopLogic: the
+    // breakpoints of the sidebar show and hide the element around it.
+    expect(button.classList).not.toContain('tlDrawerToggle');
+    expect(button.parentElement!.classList).toContain('tlDrawerToggle');
+    expect(button.parentElement!.id).toBe(CONTROL_ID);
+
+    await userEvent.click(button);
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_TOGGLE, {});
   });
 });

@@ -177,6 +177,45 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
 A control or composition never draws an atom with its own markup where a part exists: a hand-drawn
 `<button>` keeps the TopLogic look under every component library.
 
+## Placing a part
+
+A site places a part through an element of its own around it, or through its container — never
+through the `className` of the part:
+
+```tsx
+// The search box sits at the end of the bar and takes up to 16rem.
+<div className="tlTableView__search">
+  <TextInput type="search" value={search} onChange={setSearch} />
+</div>
+```
+
+```css
+.tlTableView__search {
+  display: grid;          /* the box fills the element */
+  flex: 0 1 16rem;
+  min-width: 8rem;
+  margin-left: auto;
+}
+```
+
+An implementation of a part styles its root itself, and the rules of a component library win
+against the stylesheets of TopLogic: the page orders them in the cascade layers `tl, mui` (see
+[Where customer CSS goes](doc:view-layer/mui-customer-theme#where-customer-css-goes)), whatever the
+specificity. A margin, width, `min-width`, `flex`, `position` or `display` set on the part through
+its `className` is lost as soon as the library sets the same property on its root — MUI sets the
+margin of a text field to 0, the position of a badge to `relative`, the display of a button to
+`inline-flex`. So:
+
+- **Layout belongs to the site.** An element around the part takes the margin, the size, the flex
+  or grid placement, the absolute position over a corner, the visibility at a breakpoint. A
+  `display: grid` wrapper lets the part fill it.
+- **Or to the container.** A row that gives a part the rest of its width is a grid
+  (`grid-template-columns: auto minmax(0, 1fr)`) rather than a flex row with `flex: 1` on the part.
+- **The `className` of a part only marks it** — for tests, for the measuring of a control (the
+  width of the dividers of a toolbar), for a look the TopLogic drawing reads (the active filter
+  button of a column). A look rule on such a class reaches the TopLogic drawing only; a library
+  draws the part in its own look.
+
 ## Adding a part (engine developers)
 
 1. In `react-src/bridge/parts.ts`, add the props interface (extending `PartAttributes`, every prop

@@ -100,13 +100,14 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
           <span className="tlJobStatus__elapsed" {...tooltipProps(i18n['js.jobStatus.elapsed'])}>{elapsed}</span>
         )}
         {cancelable && (
-          <Button
-            label={i18n['js.jobStatus.cancel']}
-            display="label-only"
-            appearance="secondary"
-            className="tlJobStatus__cancel"
-            onClick={handleCancel}
-          />
+          <span className="tlJobStatus__cancel">
+            <Button
+              label={i18n['js.jobStatus.cancel']}
+              display="label-only"
+              appearance="secondary"
+              onClick={handleCancel}
+            />
+          </span>
         )}
       </div>
       {phases.length > 0 && (

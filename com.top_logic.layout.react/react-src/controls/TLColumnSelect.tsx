@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { SEARCH_ICON } from './form/fieldIcons';
 
@@ -16,6 +16,12 @@ const CMD_COLUMN_REORDER = 'columnReorder';
 
 /** Groups the rows by one of the columns, or removes the grouping by it. */
 const CMD_GROUP_BY = 'groupBy';
+
+/** The icon of the toggle grouping the rows by a column the rows are not grouped by. */
+const GROUP_BY_ICON = 'css:bi bi-collection';
+
+/** The icon of the toggle grouping the rows by the column the rows are grouped by. */
+const GROUPED_ICON = 'css:bi bi-collection-fill';
 
 /** Argument of every command: which column it applies to. */
 const ARG_COLUMN = 'column';
@@ -49,6 +55,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
+  const Button = usePart('Button');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const groupable = state.groupable !== false;
@@ -91,15 +98,16 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div id={controlId} className={rootClassName(state, 'tlColumnSelect')} {...reorder.containerProps}>
       {searchable && (
-        <TextInput
-          type="search"
-          className="tlColumnSelect__search"
-          icon={SEARCH_ICON}
-          placeholder={i18n['js.table.columnSearch']}
-          aria-label={i18n['js.table.columnSearch']}
-          value={search}
-          onChange={setSearch}
-        />
+        <div className="tlColumnSelect__search">
+          <TextInput
+            type="search"
+            icon={SEARCH_ICON}
+            placeholder={i18n['js.table.columnSearch']}
+            aria-label={i18n['js.table.columnSearch']}
+            value={search}
+            onChange={setSearch}
+          />
+        </div>
       )}
       {/* Alongside the search the list scrolls within a fixed height: a list that grows and shrinks
           with the number of matches would resize the dialog under the pointer on every keystroke. */}
@@ -124,25 +132,26 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
           >
             <i className="tlColumnSelect__handle bi bi-grip-vertical" aria-hidden="true" />
             {groupable && (
-              <button
-                type="button"
-                className={'tlColumnSelect__groupBy'
-                  + (entry.grouped ? ' tlColumnSelect__groupBy--active' : '')}
-                aria-label={groupByLabel}
-                {...tooltipProps(groupByLabel)}
-                aria-pressed={entry.grouped}
-                onClick={() => handleGroupBy(entry.name)}
-              >
-                <i className={entry.grouped ? 'bi bi-collection-fill' : 'bi bi-collection'} aria-hidden="true" />
-              </button>
+              <span className="tlColumnSelect__groupBy">
+                <Button
+                  label={groupByLabel}
+                  image={entry.grouped ? GROUPED_ICON : GROUP_BY_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  checked={entry.grouped}
+                  onClick={() => handleGroupBy(entry.name)}
+                />
+              </span>
             )}
-            <Checkbox
-              className="tlColumnSelect__label"
-              label={entry.label}
-              checked={entry.visible}
-              disabled={lastVisible}
-              onChange={(checked) => handleToggle(entry.name, checked)}
-            />
+            <div className="tlColumnSelect__label">
+              <Checkbox
+                label={entry.label}
+                checked={entry.visible}
+                disabled={lastVisible}
+                onChange={(checked) => handleToggle(entry.name, checked)}
+              />
+            </div>
           </div>
         );
       })}

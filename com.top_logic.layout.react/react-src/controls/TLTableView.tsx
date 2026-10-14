@@ -1368,17 +1368,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               })}
             </div>
           )}
-          <TextInput
-            type="search"
-            className="tlTableView__search"
-            icon={SEARCH_ICON}
-            placeholder={i18n['js.table.search']}
-            aria-label={i18n['js.table.searchHint']}
-            tooltip={i18n['js.table.searchHint']}
-            value={searchDraft}
-            onChange={handleSearchChange}
-            onKeyDown={handleSearchKeyDown}
-          />
+          <div className="tlTableView__search">
+            <TextInput
+              type="search"
+              icon={SEARCH_ICON}
+              placeholder={i18n['js.table.search']}
+              aria-label={i18n['js.table.searchHint']}
+              tooltip={i18n['js.table.searchHint']}
+              value={searchDraft}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+            />
+          </div>
           {filterSaving && (saveName === null ? (
             <Button
               label={i18n['js.table.saveFilter']}
@@ -1389,15 +1390,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             />
           ) : (
             <div className="tlTableView__saveForm">
-              <TextInput
-                className="tlTableView__saveInput"
-                autoFocus
-                placeholder={i18n['js.table.filterName']}
-                aria-label={i18n['js.table.filterName']}
-                value={saveName}
-                onChange={setSaveName}
-                onKeyDown={handleSaveKeyDown}
-              />
+              <div className="tlTableView__saveInput">
+                <TextInput
+                  autoFocus
+                  placeholder={i18n['js.table.filterName']}
+                  aria-label={i18n['js.table.filterName']}
+                  value={saveName}
+                  onChange={setSaveName}
+                  onKeyDown={handleSaveKeyDown}
+                />
+              </div>
               <Button
                 label={i18n['js.table.saveFilter']}
                 image={CONFIRM_ICON}
@@ -1517,17 +1519,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />
                 )}
                 {col.filterable && (
-                  <Button
-                    label={i18n['js.table.filter']}
-                    image={col.filterActive ? FILTER_ACTIVE_ICON : FILTER_ICON}
-                    display="icon-only"
-                    appearance="ghost"
-                    small
-                    className={'tlTableView__filterButton'
-                      + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => handleOpenFilter(col.name, e)}
-                  />
+                  <span className="tlTableView__filterButton">
+                    <Button
+                      label={i18n['js.table.filter']}
+                      image={col.filterActive ? FILTER_ACTIVE_ICON : FILTER_ICON}
+                      display="icon-only"
+                      appearance="ghost"
+                      small
+                      className={col.filterActive ? 'tlTableView__filterButton--active' : undefined}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => handleOpenFilter(col.name, e)}
+                    />
+                  </span>
                 )}
                 {col.sortDirection && (
                   <span className="tlTableView__sortIndicator">
@@ -1713,12 +1716,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     {isTreeColumn ? (
                       <div className="tlTableView__treeCell" style={{ paddingLeft: treeDepth * treeIndentWidth }}>
                         {row.expandable ? (
-                          <DisclosureToggle
-                            className="tlTableView__treeToggle"
-                            expanded={row.expanded === true}
-                            label={row.expanded ? i18n['js.table.collapseRow'] : i18n['js.table.expandRow']}
-                            onClick={(e) => handleExpand(row.index, !row.expanded, e)}
-                          />
+                          <span className="tlTableView__treeToggle">
+                            <DisclosureToggle
+                              expanded={row.expanded === true}
+                              label={row.expanded ? i18n['js.table.collapseRow'] : i18n['js.table.expandRow']}
+                              onClick={(e) => handleExpand(row.index, !row.expanded, e)}
+                            />
+                          </span>
                         ) : (
                           <span className="tlTableView__treeToggleSpacer" />
                         )}

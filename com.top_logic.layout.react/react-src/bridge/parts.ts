@@ -15,6 +15,12 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 //
 // A part is added by a props interface, an entry in PartProps, a default registered by the controls
 // bundle and, where a library draws it, an adapter of that library.
+//
+// A site places a part through an element of its own around it or through its container (a flex or
+// grid row giving the part its track), never through the className of the part: an implementation
+// styles the root of the part itself, and the rules of a component library win against the
+// stylesheets of TopLogic (cascade layers `tl, mui`), so margin, width, flex, position or display
+// set through the className would be lost. The className of a part only marks it.
 
 /**
  * Attributes a part passes on to the element it draws as they are: the `aria-*` attributes naming
@@ -128,7 +134,10 @@ export interface ButtonPartProps extends PartAttributes {
    */
   tooltip?: string;
 
-  /** Classes added to the drawn element. */
+  /**
+   * Classes added to the drawn element. They mark the part and carry no layout: the element
+   * around the part places it.
+   */
   className?: string;
 
   /** Called when the button is pressed. */
@@ -168,7 +177,10 @@ export interface MenuTriggerPartProps extends PartAttributes {
   /** Free content of the trigger, drawn instead of label and icon. */
   children?: React.ReactNode;
 
-  /** Classes added to the drawn element. */
+  /**
+   * Classes added to the drawn element. They mark the part and carry no layout: the element
+   * around the part places it.
+   */
   className?: string;
 
   /** Inline style of the drawn element. */
@@ -237,7 +249,10 @@ export interface DisclosureTogglePartProps extends PartAttributes {
    */
   tabIndex?: number;
 
-  /** Classes added to the drawn element. */
+  /**
+   * Classes added to the drawn element. They mark the part and carry no layout: the element
+   * around the part places it.
+   */
   className?: string;
 
   /** Called when the toggle is pressed. */
@@ -334,7 +349,10 @@ export interface CheckboxPartProps extends PartAttributes {
    */
   tabIndex?: number;
 
-  /** Classes added to the outermost drawn element: the label around the box, else the box. */
+  /**
+   * Classes added to the outermost drawn element: the label around the box, else the box. They
+   * mark the part and carry no layout: the element around the part places it.
+   */
   className?: string;
 
   /**
@@ -444,7 +462,10 @@ export interface TextInputPartProps extends PartAttributes {
   /** The greatest value of a `number` box. */
   max?: number;
 
-  /** Classes added to the outermost drawn element. */
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
   className?: string;
 
   /**
@@ -509,7 +530,10 @@ export interface FieldValuePartProps extends PartAttributes {
    */
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 
-  /** Classes added to the drawn element. */
+  /**
+   * Classes added to the drawn element. They mark the part and carry no layout: the element
+   * around the part places it.
+   */
   className?: string;
 }
 
@@ -587,7 +611,10 @@ export interface ChipPartProps extends PartAttributes {
   /** The tooltip; absent: none. */
   tooltip?: string;
 
-  /** Classes added to the outermost drawn element. */
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
   className?: string;
 
   /** Called when a toggle or a chip running an action is pressed. */
@@ -612,8 +639,8 @@ export interface ChipPartProps extends PartAttributes {
  *
  * <p>A badge carries digits or an abbreviation only; a text belongs in a {@link ChipPartProps chip}.
  * Where it stands - beside a label or over the corner of an icon - is up to the element around
- * it, which places the badge through its {@link className}. Every implementation puts {@link id},
- * {@link className} and the passed-through attributes on its outermost element.</p>
+ * it, e.g. an element of its own over the corner of the icon. Every implementation puts
+ * {@link id}, {@link className} and the passed-through attributes on its outermost element.</p>
  */
 export interface BadgePartProps extends PartAttributes {
   /** The ID of the drawn element. */
@@ -622,7 +649,10 @@ export interface BadgePartProps extends PartAttributes {
   /** What the badge shows: a count, or a short status. */
   content: string;
 
-  /** Classes added to the outermost drawn element. */
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
   className?: string;
 }
 
@@ -652,7 +682,10 @@ export interface DividerPartProps extends PartAttributes {
   /** The direction of the line; absent: `horizontal`. */
   orientation?: DividerOrientation;
 
-  /** Classes added to the drawn element. */
+  /**
+   * Classes added to the drawn element. They mark the part and carry no layout: the element
+   * around the part places it.
+   */
   className?: string;
 }
 
@@ -681,7 +714,10 @@ export interface ProgressBarPartProps extends PartAttributes {
   /** The text shown beside the bar, e.g. "3 / 4"; absent: none. */
   label?: string;
 
-  /** Classes added to the outermost drawn element. */
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
   className?: string;
 }
 
@@ -713,7 +749,10 @@ export interface SpinnerPartProps extends PartAttributes {
   /** The accessible name, e.g. "Loading…"; absent: the spinner is decoration. */
   label?: string;
 
-  /** Classes added to the outermost drawn element. */
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
   className?: string;
 }
 

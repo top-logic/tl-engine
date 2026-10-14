@@ -15,7 +15,7 @@ const STANDALONE_SX: SxProps<Theme> = {
  * Draws the part `Badge` ({@link BadgePartProps}) with the MUI `Badge` in the color `primary`,
  * standing on its own: the round marker of MUI that counts the new entries of a navigation item,
  * without an element it is anchored to. Where it stands - beside a label or over the corner of an
- * icon - comes from the className, as for the TopLogic badge.
+ * icon - comes from the element around it.
  *
  * <p>Mapping from the props: content → `badgeContent`; id, className and the passed-through
  * attributes → the root of the badge.</p>

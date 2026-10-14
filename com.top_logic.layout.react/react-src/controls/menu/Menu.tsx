@@ -114,11 +114,19 @@ export const MenuHeader: React.FC<{ label: string }> = ({ label }) => (
   <div className="tl-menu__header tl-type-label" role="presentation">{label}</div>
 );
 
-/** The class of the divider between the sections of a menu, which gives it the space around it. */
+/**
+ * The class of the element around the divider between the sections of a menu, which gives it the
+ * space around it.
+ */
 const SEPARATOR_CLASS = 'tlMenu__separator';
 
 /** The line between two sections of a menu, drawn by the part `Divider`. */
 export const MenuSeparator: React.FC = () => {
   const Divider = usePart('Divider');
-  return <Divider className={SEPARATOR_CLASS} />;
+  // No role of its own: the divider inside is the separator of the menu.
+  return (
+    <div className={SEPARATOR_CLASS} role="none">
+      <Divider />
+    </div>
+  );
 };

@@ -132,35 +132,40 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         <div className="tlPanel__toolbar">
           {!!state.toolbar && <TLChild control={state.toolbar} />}
-          {showMinimize && !isMaximized && (
-            <Button
-              label={minimizeLabel}
-              image={isMinimized ? RESTORE_ICON : MINIMIZE_ICON}
-              display="icon-only"
-              appearance="ghost"
-              className="tlPanel__actionButton"
-              onClick={handleMinimize}
-            />
-          )}
-          {showMaximize && !isMinimized && (
-            <Button
-              label={maximizeLabel}
-              image={isMaximized ? RESTORE_ICON : MAXIMIZE_ICON}
-              display="icon-only"
-              appearance="ghost"
-              className="tlPanel__actionButton"
-              onClick={handleMaximize}
-            />
-          )}
-          {showPopOut && (
-            <Button
-              label={i18n['js.panel.popOut']}
-              image={POP_OUT_ICON}
-              display="icon-only"
-              appearance="ghost"
-              className="tlPanel__actionButton"
-              onClick={handlePopOut}
-            />
+          {((showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut) && (
+            // The buttons of the panel keep their size while its toolbar gives way.
+            <div className="tlPanel__actions">
+              {showMinimize && !isMaximized && (
+                <Button
+                  label={minimizeLabel}
+                  image={isMinimized ? RESTORE_ICON : MINIMIZE_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  className="tlPanel__actionButton"
+                  onClick={handleMinimize}
+                />
+              )}
+              {showMaximize && !isMinimized && (
+                <Button
+                  label={maximizeLabel}
+                  image={isMaximized ? RESTORE_ICON : MAXIMIZE_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  className="tlPanel__actionButton"
+                  onClick={handleMaximize}
+                />
+              )}
+              {showPopOut && (
+                <Button
+                  label={i18n['js.panel.popOut']}
+                  image={POP_OUT_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  className="tlPanel__actionButton"
+                  onClick={handlePopOut}
+                />
+              )}
+            </div>
           )}
         </div>
       </div>

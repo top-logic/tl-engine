@@ -1021,7 +1021,12 @@ div.tlValueList {
 	min-width: var(--tl-size-control);
 }
 
-.tlPanel__actionButton {
+/* The minimize, maximize and pop-out buttons (part Button), which keep their size while the
+   toolbar beside them gives way. */
+.tlPanel__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
 	flex-shrink: 0;
 }
 
@@ -1209,8 +1214,8 @@ div.tlValueList {
 	align-items: center;
 }
 
-.tlSplitPanel__child--collapsedHorizontal .tlPanel__actionButton {
-	margin-left: 0;
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__actions {
+	flex-direction: column;
 }
 
 /* --- DisclosureToggle (part) --------------------------------------------- */
@@ -1250,8 +1255,8 @@ div.tlValueList {
 
 /* --- Divider (part) in a menu ---------------------------------------------- */
 
-/* The divider between two sections of a menu: its line is the part's, the space around it the
-   menu's. */
+/* The element around the divider between two sections of a menu: the line is the part's, the
+   space around it the menu's. */
 .tl-menu > .tlMenu__separator {
 	margin-block: var(--tl-space-2xs);
 }
@@ -1453,6 +1458,7 @@ button.tlSidebar__navItem--active:hover {
 /* Separator */
 /* The divider between two items (part Divider): its line is the part's, the space around it the
    sidebar's. */
+/* The element around the divider between two items (part Divider), giving it the space around it. */
 .tlSidebar__separator {
 	margin: var(--spacing-02) var(--spacing-04);
 }
@@ -1487,7 +1493,9 @@ button.tlSidebar__navItem--active:hover {
 }
 
 /* Badge (part Badge): at the end of the item, beside the label. */
+/* The element around the badge of an item (part Badge), at the end of the item. */
 .tlSidebar__badge {
+	display: flex;
 	margin-left: auto;
 	flex-shrink: 0;
 }
@@ -1497,12 +1505,12 @@ button.tlSidebar__navItem--active:hover {
 	display: inline-flex;
 }
 
-/* Over the corner of the icon of a collapsed sidebar. */
-.tlSidebar__badge--collapsed {
+/* Over the corner of the icon of a collapsed sidebar: the element around the badge. */
+.tlSidebar__cornerBadge {
 	position: absolute;
 	top: -0.375rem;
 	right: -0.5rem;
-	margin-left: 0;
+	display: flex;
 }
 
 /* --- Collapsed mode: center icon-only items --- */
@@ -1609,16 +1617,16 @@ button.tlSidebar__flyoutItem:focus-visible {
 
 /* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
 
-/* Qualified by the element, so that the rule wins over the display of whatever button library
-   draws the button. */
-button.tlDrawerToggle {
+/* The element around the button (part Button), which keeps the display any implementation of the
+   part gives its own root. */
+.tlDrawerToggle {
 	display: none; /* desktop: hidden; mobile @media rules below override */
 }
 
 /* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
 
 @media (max-width: 768px) {
-	button.tlDrawerToggle {
+	.tlDrawerToggle {
 		display: inline-flex;
 	}
 
@@ -2281,10 +2289,12 @@ button.tlBottomBar__item:hover {
 }
 
 /* The badge (part Badge) over the corner of the icon. */
+/* Over the corner of the icon: the element around the badge. */
 .tlBottomBar__badge {
 	position: absolute;
 	top: -0.375rem;
 	right: -0.5rem;
+	display: flex;
 }
 
 .tlBottomBar__label {
@@ -2663,7 +2673,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 
 /* The close button (a ghost icon button) takes the text color of the variant; on hover it swaps
    surface and text color, which reads on every variant. */
-.tlSnackbar .tlSnackbar__close {
+/* The element around the close button (part Button). */
+.tlSnackbar__close {
+	display: flex;
 	/* Centered on the first line of the message: beside a single line, in the top end corner of a
 	   longer message. The end gap equals the resulting top gap. */
 	align-self: flex-start;
@@ -2672,11 +2684,15 @@ button.tlWindow__maximizeBtn:focus-visible {
 	margin-block: calc((var(--body-compact-01-line-height) - var(--tl-size-control-sm)) / 2);
 	margin-inline-end: calc(var(--spacing-03) - var(--spacing-04)
 		+ (var(--body-compact-01-line-height) - var(--tl-size-control-sm)) / 2);
+}
+
+/* The TopLogic button takes the color of the message. */
+.tlSnackbar__close > .tl-button {
 	color: inherit;
 }
 
-.tlSnackbar .tlSnackbar__close:hover,
-.tlSnackbar .tlSnackbar__close:active {
+.tlSnackbar__close > .tl-button:hover,
+.tlSnackbar__close > .tl-button:active {
 	background: var(--tlSnackbar-fg);
 	color: var(--tlSnackbar-bg);
 }
@@ -2719,7 +2735,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 	padding-block-start: var(--tl-space-xs);
 }
 
+/* The element around the close button of an alert (part Button). */
 .tl-alert__close {
+	display: flex;
 	align-self: start;
 }
 
@@ -2914,7 +2932,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 
 /* Search and saving keep to the right end of the bar, whatever number of chips precedes them. The
    search box (part TextInput) draws itself; the bar only gives it its width. */
+/* The element around the search box (part TextInput), at the end of the bar; the box fills it. */
 .tlTableView__search {
+	display: grid;
 	flex: 0 1 16rem;
 	min-width: 8rem;
 	margin-left: auto;
@@ -2928,7 +2948,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 	flex-shrink: 0;
 }
 
+/* The element around the box naming a filter (part TextInput); the box fills it. */
 .tlTableView__saveInput {
+	display: grid;
 	width: 10rem;
 }
 
@@ -3031,7 +3053,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 }
 
 /* Opens the column's filter. Keeps its room next to a label that is running out of it. */
+/* The element around the filter button of a column (part Button). */
 .tlTableView__filterButton {
+	display: flex;
 	flex-shrink: 0;
 }
 
@@ -3613,7 +3637,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 }
 
 /* The request to stop stands at the end of the header line, apart from what the job reports. */
+/* The element around the cancel button (part Button), at the end of the header. */
 .tlJobStatus__cancel {
+	display: flex;
 	margin-left: auto;
 }
 
@@ -3947,7 +3973,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 	height: 100%;
 }
 
+/* The element around the toggle of a tree row (part DisclosureToggle). */
 .tlTableView__treeToggle {
+	display: flex;
 	flex-shrink: 0;
 }
 
@@ -4031,29 +4059,13 @@ button.tlWindow__maximizeBtn:focus-visible {
 	padding: var(--spacing-03) 0;
 }
 
+/* The element around the group-by toggle (part Button), which keeps it at its size. */
 .tlColumnSelect__groupBy {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 24px;
-	height: 24px;
+	display: flex;
 	flex-shrink: 0;
-	border: none;
-	border-radius: var(--corner-radius);
-	background: none;
-	cursor: pointer;
-	color: var(--text-secondary);
 }
 
-.tlColumnSelect__groupBy:hover {
-	background-color: var(--layer-hover);
-}
-
-.tlColumnSelect__groupBy--active {
-	color: var(--link-primary);
-}
-
-/* The search box (part TextInput) draws itself; the list only places it. */
+/* The element around the search box (part TextInput). */
 .tlColumnSelect__search {
 	margin: 0 var(--spacing-05) var(--spacing-03);
 }
@@ -4100,13 +4112,17 @@ button.tlWindow__maximizeBtn:focus-visible {
 	cursor: grab;
 }
 
+/* The element around the labelled box (part Checkbox), taking the rest of the row; the box with
+   its label fills it. */
 .tlColumnSelect__label {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
-/* The label text, after the box. */
-.tlColumnSelect__label > span:last-child {
+/* The label text of the TopLogic box, after the box. */
+.tlColumnSelect__label > * > span:last-child {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -4184,7 +4200,9 @@ button.tlWindow__maximizeBtn:focus-visible {
   outline-offset: -2px;
 }
 
+/* The element around the toggle of a node (part DisclosureToggle). */
 .tlTreeView__toggle {
+  display: flex;
   flex-shrink: 0;
 }
 
@@ -4738,8 +4756,10 @@ button.tlWindow__maximizeBtn:focus-visible {
   margin: var(--spacing-02) 0;
 }
 
+/* A label and its box (part TextInput), which takes the rest of the row. */
 .tlColorInput__inputRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--spacing-03);
 }
@@ -4751,11 +4771,6 @@ button.tlWindow__maximizeBtn:focus-visible {
   flex-shrink: 0;
 }
 
-/* The boxes (part TextInput) draw themselves; the row only gives them its remaining width. */
-.tlColorInput__input {
-  flex: 1;
-  min-width: 0;
-}
 
 .tlColorInput__actions {
   display: flex;
@@ -5003,8 +5018,10 @@ button.tlWindow__maximizeBtn:focus-visible {
   gap: var(--spacing-03);
 }
 
+/* A label and its box (part TextInput), which takes the rest of the row. */
 .tlIconSelect__editRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--spacing-03);
 }
@@ -5017,10 +5034,6 @@ button.tlWindow__maximizeBtn:focus-visible {
 }
 
 /* The box (part TextInput) draws itself; the row only gives it its remaining width. */
-.tlIconSelect__editInput {
-  flex: 1;
-  min-width: 0;
-}
 
 .tlIconSelect__previewArea {
   display: flex;

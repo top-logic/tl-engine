@@ -620,22 +620,23 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     >
       {/* Search field - shown when options are loaded, unless the field asks for none */}
       {!noFilter && (optionsLoaded || loadError) && (
-        <TextInput
-          ref={searchRef}
-          className="tl-select__search-group"
-          icon={SEARCH_ICON}
-          value={searchTerm}
-          onChange={setSearchTerm}
-          onKeyDown={handleKeyDown}
-          placeholder={i18n['js.dropdownSelect.filterPlaceholder']}
-          aria-label={i18n['js.dropdownSelect.filterPlaceholder']}
-          aria-activedescendant={
-            highlightedIndex >= 0
-              ? `${controlId}-opt-${highlightedIndex}`
-              : undefined
-          }
-          aria-controls={listboxId}
-        />
+        <div className="tl-select__search-group">
+          <TextInput
+            ref={searchRef}
+            icon={SEARCH_ICON}
+            value={searchTerm}
+            onChange={setSearchTerm}
+            onKeyDown={handleKeyDown}
+            placeholder={i18n['js.dropdownSelect.filterPlaceholder']}
+            aria-label={i18n['js.dropdownSelect.filterPlaceholder']}
+            aria-activedescendant={
+              highlightedIndex >= 0
+                ? `${controlId}-opt-${highlightedIndex}`
+                : undefined
+            }
+            aria-controls={listboxId}
+          />
+        </div>
       )}
 
       {/* Loading, error and empty states - a line of the popup, not an option of the list */}

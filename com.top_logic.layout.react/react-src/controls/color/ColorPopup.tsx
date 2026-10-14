@@ -270,7 +270,6 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.red']}</span>
             <TextInput
-              className="tlColorInput__input"
               type="number"
               min={0}
               max={255}
@@ -282,7 +281,6 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.green']}</span>
             <TextInput
-              className="tlColorInput__input"
               type="number"
               min={0}
               max={255}
@@ -294,7 +292,6 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.blue']}</span>
             <TextInput
-              className="tlColorInput__input"
               type="number"
               min={0}
               max={255}
@@ -306,7 +303,6 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.hex']}</span>
             <TextInput
-              className="tlColorInput__input"
               aria-label={i18n['js.colorInput.hex']}
               validation={hexInput !== '' && !isValidHex(hexInput) ? 'error' : undefined}
               value={hexInput}

@@ -61,15 +61,16 @@ const TLAlert: React.FC<TLCellProps> = ({ controlId }) => {
         )}
       </div>
       {closable && (
-        <Button
-          label={i18n['js.alert.dismiss']}
-          image={DISMISS_ICON}
-          display="icon-only"
-          appearance="ghost"
-          small
-          className="tl-alert__close"
-          onClick={handleDismiss}
-        />
+        <span className="tl-alert__close">
+          <Button
+            label={i18n['js.alert.dismiss']}
+            image={DISMISS_ICON}
+            display="icon-only"
+            appearance="ghost"
+            small
+            onClick={handleDismiss}
+          />
+        </span>
       )}
     </div>
   );

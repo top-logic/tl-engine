@@ -4,6 +4,8 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TOOLTIP_ATTR } from 'tl-react-bridge';
 import { replacePart } from 'tl-react-bridge';
 import TLTextInput from '../../../com.top_logic.layout.react/react-src/controls/TLTextInput';
 import TLPasswordInput from '../../../com.top_logic.layout.react/react-src/controls/TLPasswordInput';
@@ -11,6 +13,8 @@ import TLNumberInput from '../../../com.top_logic.layout.react/react-src/control
 import TLSelect from '../../../com.top_logic.layout.react/react-src/controls/TLSelect';
 import TLDatePicker from '../../../com.top_logic.layout.react/react-src/controls/TLDatePicker';
 import TLSlider from '../../../com.top_logic.layout.react/react-src/controls/TLSlider';
+import TLResourceCell from '../../../com.top_logic.layout.react/react-src/controls/TLResourceCell';
+import MuiChipAdapter from './MuiChipAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
@@ -20,6 +24,8 @@ replacePart('FieldValue', MuiFieldValueAdapter);
 // The text fields look up their box and its buttons as well.
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Button', MuiButtonAdapter);
+// An object with a color role is drawn as a chip.
+replacePart('Chip', MuiChipAdapter);
 
 /** The class of the MUI typography of a value. */
 const MUI_BODY = 'MuiTypography-body2';
@@ -133,5 +139,56 @@ describe('the values of other read-only fields as MUI Typography', () => {
     expectMuiValue(shown());
     expect(shown().textContent).toBe('20 %');
     expect(screen.queryByRole('slider')).toBeNull();
+  });
+});
+
+describe('the object of a resource cell as MUI Typography', () => {
+  /** The command a resource cell sends when its link is followed. */
+  const CMD_GOTO = 'goto';
+
+  it('shows icon and label, with the configured class and the tooltip of the server', () => {
+    mountAdapter(TLResourceCell, {
+      label: 'Projekt A', iconCss: 'bi bi-folder', hasTooltip: true, hasLink: false, cssClass: 'my-class',
+    });
+
+    expectMuiValue(shown());
+    expect(shown().classList).toContain('my-class');
+    expect(shown().textContent).toBe('Projekt A');
+    expect(shown().querySelector('i.bi-folder')).not.toBeNull();
+    expect(shown().getAttribute(TOOLTIP_ATTR)).toBe('key:tooltip');
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('shows the image of an object without an icon class', () => {
+    mountAdapter(TLResourceCell, { label: 'Bild', iconSrc: '/app/icons/obj.png', hasLink: false });
+
+    expect(shown().querySelector('img')!.getAttribute('src')).toBe('/app/icons/obj.png');
+    expect(shown().getAttribute(TOOLTIP_ATTR)).toBeNull();
+  });
+
+  it('follows the link of an object to the place it is displayed at', async () => {
+    const sent = mountAdapter(TLResourceCell, { label: 'Projekt A', hasLink: true });
+
+    const link = screen.getByRole('button', { name: 'Projekt A' });
+    expect(link).toBe(shown());
+    expect(link.classList).toContain('MuiLink-root');
+    await userEvent.click(link);
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_GOTO, {});
+  });
+
+  it('shows an object with a color role as MUI chip', async () => {
+    const sent = mountAdapter(TLResourceCell, { label: 'Dringend', colorRole: 'error', hasLink: true });
+
+    const chip = shown();
+    expect(chip.classList).toContain('MuiChip-root');
+    expect(chip.classList).toContain('MuiChip-colorError');
+    expect(chip.textContent).toBe('Dringend');
+    await userEvent.click(chip);
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_GOTO, {});
   });
 });

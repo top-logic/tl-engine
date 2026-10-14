@@ -447,6 +447,17 @@ describe('the counts of the navigation as MUI badges', () => {
   const INBOX = { id: 'inbox', type: 'nav', label: 'Eingang', icon: 'css:fa-solid fa-inbox', badge: '3' };
   const ARCHIVE = { id: 'archive', type: 'nav', label: 'Archiv', icon: 'css:fa-solid fa-box' };
 
+  /**
+   * Asserts that the element with the given class around the badge places it over the corner of
+   * the icon: MUI positions the root of its badge itself, and its rules win against the
+   * stylesheets of TopLogic, so a class on the root could not move it there.
+   */
+  function expectPlacedByCorner(badge: Element, cornerClass: string) {
+    expect(getComputedStyle(badge).position).toBe('relative');
+    expect(badge.classList).not.toContain(cornerClass);
+    expect(badge.parentElement!.classList).toContain(cornerClass);
+  }
+
   /** The MUI badges of the page with their content. */
   function badges() {
     return Array.from(document.querySelectorAll('.MuiBadge-root')).map(badge => {
@@ -461,7 +472,8 @@ describe('the counts of the navigation as MUI badges', () => {
 
     expect(badges()).toEqual(['3']);
     const badge = document.querySelector('.MuiBadge-root')!;
-    expect(badge.classList).toContain('tlSidebar__badge');
+    expect(badge.classList).not.toContain('tlSidebar__badge');
+    expect(badge.parentElement!.classList).toContain('tlSidebar__badge');
     expect(badge.querySelector('.MuiBadge-colorPrimary')).not.toBeNull();
   });
 
@@ -470,13 +482,13 @@ describe('the counts of the navigation as MUI badges', () => {
     await settle();
 
     expect(badges()).toEqual(['3']);
-    expect(document.querySelector('.MuiBadge-root')!.classList).toContain('tlSidebar__badge--collapsed');
+    expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tlSidebar__cornerBadge');
   });
 
   it('draws the count of an item of the bottom bar, and none for an item without', () => {
     mountAdapter(TLBottomBar, { items: [INBOX, ARCHIVE], activeItemId: 'inbox' });
 
     expect(badges()).toEqual(['3']);
-    expect(document.querySelector('.MuiBadge-root')!.classList).toContain('tlBottomBar__badge');
+    expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tlBottomBar__badge');
   });
 });

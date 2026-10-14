@@ -276,7 +276,7 @@ describe('the boxes of the column selection as MUI checkboxes', () => {
     expectMuiBox(a);
     expect(a.checked).toBe(true);
     expect(a.closest('label')!.classList).toContain('MuiFormControlLabel-root');
-    expect(a.closest('label')!.classList).toContain('tlColumnSelect__label');
+    expect(a.closest('label')!.parentElement!.classList).toContain('tlColumnSelect__label');
     await userEvent.click(screen.getByText('Spalte b'));
     await settle();
 

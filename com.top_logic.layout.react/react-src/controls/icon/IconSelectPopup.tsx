@@ -267,7 +267,6 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
               {i18n['js.iconSelect.classLabel']}
             </span>
             <TextInput
-              className="tlIconSelect__editInput"
               aria-label={i18n['js.iconSelect.classLabel']}
               value={advancedInput}
               onChange={setAdvancedInput}

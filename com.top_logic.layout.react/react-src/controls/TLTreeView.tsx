@@ -508,17 +508,18 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
           onDragEnd={dragEnabled && node.draggable !== false ? () => setDropState(null) : undefined}
         >
           {node.expandable ? (
-            <DisclosureToggle
-              className="tlTreeView__toggle"
-              expanded={node.expanded}
-              loading={node.loading}
-              label={toggleLabel(i18n, node.expanded)}
-              tabIndex={-1}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggle(node.id, node.expanded);
-              }}
-            />
+            <span className="tlTreeView__toggle">
+              <DisclosureToggle
+                expanded={node.expanded}
+                loading={node.loading}
+                label={toggleLabel(i18n, node.expanded)}
+                tabIndex={-1}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggle(node.id, node.expanded);
+                }}
+              />
+            </span>
           ) : (
             <span className="tlTreeView__toggleSpacer" />
           )}

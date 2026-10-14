@@ -34,7 +34,7 @@ const TOGGLE_VALUE = 'on';
  *     MUI `MenuItem` works only inside an MUI menu, and the menu around the entry is TopLogic's);
  *     active → `selected`; danger → the error color;</li>
  * <li>a toggle ({@link ButtonPartProps.checked}) outside a menu → a `ToggleButton`, `selected` while
- *     checked;</li>
+ *     checked, showing its icon and its label as the display mode says;</li>
  * <li>a button showing its icon alone → an `IconButton`, color `error` for danger, `primary` for
  *     the appearance `primary`;</li>
  * <li>otherwise → a `Button`: appearance → variant (`primary` → `contained`, `ghost` → `text`,
@@ -89,7 +89,8 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
     const { 'aria-pressed': _pressed, ...toggleAttributes } = accessibility;
     return (
       <ToggleButton {...common} value={TOGGLE_VALUE} selected={checked} size={size} {...toggleAttributes}>
-        {label}
+        {showIcon && <ThemeIcon encoded={image} className={display === 'icon-only' ? ICON_ALONE_CLASS : ICON_WITH_LABEL_CLASS} />}
+        {(!showIcon || display !== 'icon-only') && label}
       </ToggleButton>
     );
   }

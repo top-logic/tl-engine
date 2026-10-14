@@ -21,16 +21,18 @@ const TLDrawerToggle: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const Button = usePart('Button');
 
+  // The element around the button shows or hides it: the root of the part keeps the display its
+  // implementation gives it.
   return (
-    <Button
-      id={controlId}
-      label={i18n['js.sidebar.openDrawer']}
-      image={MENU_ICON}
-      display="icon-only"
-      appearance="ghost"
-      className={rootClassName(state, 'tlDrawerToggle')}
-      onClick={() => sendCommand('toggle', {})}
-    />
+    <span id={controlId} className={rootClassName(state, 'tlDrawerToggle')}>
+      <Button
+        label={i18n['js.sidebar.openDrawer']}
+        image={MENU_ICON}
+        display="icon-only"
+        appearance="ghost"
+        onClick={() => sendCommand('toggle', {})}
+      />
+    </span>
   );
 };
 

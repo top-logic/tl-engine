@@ -17,7 +17,9 @@ interface BottomBarItem {
  * - items: { id, label, icon, badge? }[]
  * - activeItemId: string
  *
- * The badge of an item is the part `Badge`, over the corner of the icon.
+ * The badge of an item is the part `Badge`, over the corner of the icon. The element around the
+ * badge places it there, so that the badge keeps the position any implementation of the part gives
+ * its own root.
  */
 const TLBottomBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -47,7 +49,11 @@ const TLBottomBar: React.FC<TLCellProps> = ({ controlId }) => {
           >
             <span className="tlBottomBar__iconWrap">
               <i className={'tlBottomBar__icon ' + item.icon} aria-hidden="true" />
-              {item.badge && <Badge content={item.badge} className="tlBottomBar__badge" />}
+              {item.badge && (
+                <span className="tlBottomBar__badge">
+                  <Badge content={item.badge} />
+                </span>
+              )}
             </span>
             <span className="tlBottomBar__label">{item.label}</span>
           </button>

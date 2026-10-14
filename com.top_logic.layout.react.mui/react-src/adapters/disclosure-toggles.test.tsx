@@ -176,7 +176,7 @@ describe('the toggle of a tree table row as MUI icon button', () => {
     const toggle = screen.getByRole('button', { name: LABEL_ROW_EXPAND });
     expectMuiToggle(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(toggle.classList).toContain('tlTableView__treeToggle');
+    expect(toggle.parentElement!.classList).toContain('tlTableView__treeToggle');
     expect(screen.getAllByRole('button', { name: /js\.table\.(expand|collapse)Row/ })).toHaveLength(1);
     await userEvent.click(toggle);
     await settle();

@@ -4,10 +4,14 @@ import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { register, useFieldLabelProps, fieldInputId, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { register, replacePart, useFieldLabelProps, fieldInputId, TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson, ChildControlJson, FormLayout } from 'tl-react-bridge';
 import MuiFormFieldAdapter from './MuiFormFieldAdapter';
+import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, mountAdapter, patchState } from './wire-test-support';
+
+// The field draws its help button through the part Button, which the MUI module draws as well.
+replacePart('Button', MuiButtonAdapter);
 
 /** The component name of the stand-in for the input control of the field. */
 const TEST_INPUT = 'MuiFormFieldTestInput';
@@ -122,6 +126,9 @@ describe('TLFormField as MUI FormControl', () => {
     const help = document.getElementById(CONTROL_ID + '-help')!;
     expect(help.parentElement!.hidden).toBe(true);
     const button = screen.getByRole('button', { name: LABEL_HELP });
+    expect(button.classList).toContain('MuiIconButton-root');
+    expect(button.classList).toContain('tl-form-field__help');
+    expect(button.getAttribute('aria-controls')).toBe(help.id);
     expect(button.getAttribute('aria-expanded')).toBe('false');
 
     await userEvent.click(button);

@@ -6,11 +6,12 @@ import type { ButtonStateJson } from '../state/control-state';
 import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host';
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
-// - a button, the trigger of a menu. A part has a typed props contract and no server state: the
-// control maps its state to the props of the part, sends its commands and handles keyboard bindings
-// and navigation, and the part only draws. The controls bundle registers a default for every part
-// (registerPart); a customer component library replaces a part (replacePart) and so changes how the
-// part looks wherever a control draws it - as a control of its own, in a toolbar or in a table.
+// - a button, the trigger of a menu, the toggle disclosing content. A part has a typed props
+// contract and no server state: the control maps its state to the props of the part, sends its
+// commands and handles keyboard bindings and navigation, and the part only draws. The controls
+// bundle registers a default for every part (registerPart); a customer component library replaces a
+// part (replacePart) and so changes how the part looks wherever a control draws it - as a control
+// of its own, in a toolbar or in a table.
 //
 // A part is added by a props interface, an entry in PartProps, a default registered by the controls
 // bundle and, where a library draws it, an adapter of that library.
@@ -175,6 +176,69 @@ export interface MenuTriggerPartProps extends PartAttributes {
 }
 
 /**
+ * The direction the content of a {@link DisclosureTogglePartProps disclosure toggle} extends in
+ * from the toggle when it is shown:
+ *
+ * <ul>
+ * <li>`below`: the content opens below the toggle - a section, a node of a tree, a row of a tree
+ *     table. The chevron points to the end of the line while the content is hidden, and down
+ *     while it is shown.</li>
+ * <li>`end`: the content opens toward the end of the line - a sidebar extending into the page.
+ *     The chevron points to the end while the content is hidden, and back to the start while it is
+ *     shown.</li>
+ * </ul>
+ */
+export type DisclosureDirection = 'below' | 'end';
+
+/**
+ * The props of the part {@link PartProps.DisclosureToggle}: the button that shows or hides content
+ * belonging to it - the body of a section, the children of a node in a tree, a sidebar.
+ *
+ * <p>The toggle shows a chevron pointing where the content opens ({@link opens}) and is named by its
+ * {@link label}, which is also its tooltip. Every implementation marks whether the content is shown
+ * ({@link expanded}, `aria-expanded`); the element holding the content is named by `aria-controls`
+ * where the control has one. While the content is being loaded ({@link loading}), the toggle shows a
+ * busy indicator in place of the chevron.</p>
+ */
+export interface DisclosureTogglePartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
+  /** Receives the drawn element. */
+  ref?: PartRef<HTMLButtonElement>;
+
+  /** Whether the content of the toggle is shown. */
+  expanded: boolean;
+
+  /**
+   * The accessible name and tooltip of the toggle: what pressing it does, e.g. "Expand" or
+   * "Collapse".
+   */
+  label: string;
+
+  /** Where the content opens from the toggle; absent: `below`. */
+  opens?: DisclosureDirection;
+
+  /** Whether the content is being loaded; the toggle then shows a busy indicator. */
+  loading?: boolean;
+
+  /** Whether the toggle cannot be pressed. */
+  disabled?: boolean;
+
+  /**
+   * The tab index of the toggle; `-1` keeps it out of the tab order, e.g. in a tree, which handles
+   * the keyboard for its nodes itself. Absent: the toggle is in the tab order.
+   */
+  tabIndex?: number;
+
+  /** Classes added to the drawn element. */
+  className?: string;
+
+  /** Called when the toggle is pressed. */
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+}
+
+/**
  * The parts of the React UI by name, each with its props. The name is what {@link registerPart},
  * {@link replacePart} and {@link usePart} take; the props are the contract every implementation of
  * the part fulfils.
@@ -185,6 +249,9 @@ export interface PartProps {
 
   /** The button that opens a menu: {@link MenuTriggerPartProps}. */
   MenuTrigger: MenuTriggerPartProps;
+
+  /** The button that shows or hides content: {@link DisclosureTogglePartProps}. */
+  DisclosureToggle: DisclosureTogglePartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

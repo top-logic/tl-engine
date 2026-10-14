@@ -1,7 +1,7 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
   useCloseOnOutsidePress, FillBarrier, rootClassName, tooltipProps,
-  ThemeIcon,
+  ThemeIcon, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -410,6 +410,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const DisclosureToggle = usePart('DisclosureToggle');
 
   const items = (state.items as SidebarItemData[]) ?? [];
   const activeItemId = state.activeItemId as string;
@@ -610,6 +611,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       handleSelect, handleExecute, handleToggleGroup, handleOpenFlyout, handleCloseFlyout]);
 
   const collapseLabel = collapsed ? i18n['js.sidebar.expand'] : i18n['js.sidebar.collapse'];
+  const navId = `${controlId}-nav`;
 
   const rootClass = 'tlSidebar'
     + (collapsed ? ' tlSidebar--collapsed' : '')
@@ -623,7 +625,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       {drawerOpen && (
         <div className="tlSidebar__backdrop" onClick={handleToggleDrawer} aria-hidden="true" />
       )}
-      <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
+      <nav id={navId} className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (
           !!state.headerCollapsedContent && (
             <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">
@@ -673,14 +675,10 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
           )
         )}
 
-        <button className="tlSidebar__collapseBtn" onClick={handleToggleCollapse}
-          aria-label={collapseLabel} {...tooltipProps(collapseLabel)}>
-          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-            <path d={collapsed ? 'M6 4l4 4-4 4' : 'M10 4l-4 4 4 4'}
-              fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className="tlSidebar__collapseBar">
+          <DisclosureToggle expanded={!collapsed} opens="end" label={collapseLabel} onClick={handleToggleCollapse}
+            aria-controls={navId} />
+        </div>
       </nav>
 
       {/* The region stretches the active view to its own bounded height either way, which ends

@@ -76,7 +76,7 @@ function htmlAttributes(): string[] {
 }
 
 /** The parts the MUI module draws. */
-const PART_NAMES = ['Button', 'MenuTrigger'];
+const PART_NAMES = ['Button', 'MenuTrigger', 'DisclosureToggle'];
 
 /** The names the parts or components were replaced under, in the order of the calls. */
 function replacedNames(replace: { mock: { calls: unknown[][] } }): unknown[] {
@@ -101,7 +101,7 @@ describe('installMui', () => {
 
     installMui({ theme: {} });
 
-    expect(COMPONENT_NAMES).toHaveLength(25);
+    expect(COMPONENT_NAMES).toHaveLength(26);
     expect(replacedNames(replacePart)).toEqual(PART_NAMES);
     expect(replacedNames(replace)).toEqual(COMPONENT_NAMES.filter(name => !PART_NAMES.includes(name)));
     expect(replacedNames(replace)).not.toContain('TLButton');

@@ -61,6 +61,8 @@ const I18N_KEYS = {
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
   'js.table.cancelSave': 'Do not save',
+  'js.table.expandRow': 'Expand',
+  'js.table.collapseRow': 'Collapse',
 };
 
 /**
@@ -312,6 +314,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const Button = usePart('Button');
+  const DisclosureToggle = usePart('DisclosureToggle');
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   const columns = (state.columns as ColumnState[]) ?? [];
@@ -1730,12 +1733,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     {isTreeColumn ? (
                       <div className="tlTableView__treeCell" style={{ paddingLeft: treeDepth * treeIndentWidth }}>
                         {row.expandable ? (
-                          <button
+                          <DisclosureToggle
                             className="tlTableView__treeToggle"
+                            expanded={row.expanded === true}
+                            label={row.expanded ? i18n['js.table.collapseRow'] : i18n['js.table.expandRow']}
                             onClick={(e) => handleExpand(row.index, !row.expanded, e)}
-                          >
-                            {row.expanded ? '\u25BE' : '\u25B8'}
-                          </button>
+                          />
                         ) : (
                           <span className="tlTableView__treeToggleSpacer" />
                         )}

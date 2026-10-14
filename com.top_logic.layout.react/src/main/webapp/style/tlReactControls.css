@@ -1213,6 +1213,30 @@ div.tlValueList {
 	margin-left: 0;
 }
 
+/* --- DisclosureToggle (part) --------------------------------------------- */
+
+/* The toggle of the design system (tl-toggle) turns its chevron from the end of the line down. A
+   toggle whose content opens toward the end of the line turns it back to the start instead. */
+.tl-toggle.tlDisclosureToggle--end[aria-expanded="true"] > .tl-icon-sm {
+	rotate: 180deg;
+}
+
+/* The busy indicator of a toggle whose content is being loaded: a spinning ring in place of the
+   chevron. */
+.tlDisclosureToggle__spinner {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--border-subtle);
+	border-top-color: var(--interactive);
+	border-radius: 50%;
+	animation: tlDisclosureToggleSpin 0.6s linear infinite;
+}
+
+@keyframes tlDisclosureToggleSpin {
+	to { transform: rotate(360deg); }
+}
+
 /* --- TLSidebar --------------------------------------------------------- */
 
 .tlSidebar {
@@ -1444,29 +1468,14 @@ button.tlSidebar__navItem--active:hover {
 	margin: var(--spacing-02) var(--spacing-02);
 }
 
-/* Collapse toggle button */
-.tlSidebar__collapseBtn {
+/* The bar at the foot of the rail holding the toggle that collapses and expands the sidebar. */
+.tlSidebar__collapseBar {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 100%;
 	height: 2.5rem;
-	border: none;
 	border-top: 1px solid var(--border-subtle);
-	background: transparent;
-	color: var(--text-secondary);
-	cursor: pointer;
 	flex-shrink: 0;
-}
-
-button.tlSidebar__collapseBtn:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlSidebar__collapseBtn:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
 }
 
 /* Group flyout (collapsed-mode popover) */
@@ -1601,7 +1610,7 @@ button.tlDrawerToggle {
 	}
 
 	/* In-rail collapse arrow is meaningless on mobile; the AppBar hamburger replaces it. */
-	.tlSidebar__collapseBtn {
+	.tlSidebar__collapseBar {
 		display: none;
 	}
 
@@ -3985,28 +3994,13 @@ button.tlWindow__maximizeBtn:focus-visible {
 }
 
 .tlTableView__treeToggle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 20px;
-	height: 20px;
 	flex-shrink: 0;
-	border: none;
-	background: none;
-	padding: 0;
-	cursor: pointer;
-	color: var(--text-secondary);
-	font-size: 12px;
-	border-radius: var(--corner-radius);
 }
 
-.tlTableView__treeToggle:hover {
-	background-color: var(--layer-hover);
-}
-
+/* Takes the place of the expand toggle in a row without children, as wide as the toggle. */
 .tlTableView__treeToggleSpacer {
 	display: inline-block;
-	width: 20px;
+	width: var(--tl-size-control-sm);
 	flex-shrink: 0;
 }
 
@@ -4353,57 +4347,14 @@ button.tlWindow__maximizeBtn:focus-visible {
 }
 
 .tlTreeView__toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
   flex-shrink: 0;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--text-secondary);
-  border-radius: var(--corner-radius);
 }
 
-.tlTreeView__toggle:hover {
-  background: var(--layer-hover);
-  color: var(--text-primary);
-}
-
+/* Takes the place of the expand toggle of a node without children, as wide as the toggle. */
 .tlTreeView__toggleSpacer {
   display: inline-block;
-  width: 24px;
+  width: var(--tl-size-control-sm);
   flex-shrink: 0;
-}
-
-.tlTreeView__chevron--right::before,
-.tlTreeView__chevron--down::before {
-  display: inline-block;
-  font-size: 12px;
-}
-
-.tlTreeView__chevron--right::before {
-  content: '\25B6';
-}
-
-.tlTreeView__chevron--down::before {
-  content: '\25BC';
-}
-
-.tlTreeView__spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border-subtle);
-  border-top-color: var(--interactive);
-  border-radius: 50%;
-  animation: tlTreeSpin 0.6s linear infinite;
-}
-
-@keyframes tlTreeSpin {
-  to { transform: rotate(360deg); }
 }
 
 .tlTreeView__content {

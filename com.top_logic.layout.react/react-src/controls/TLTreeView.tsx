@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, tooltipProps, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, treeZoneSplit, dropZoneAt, createPortal } from 'tl-react-bridge';
+import { React, usePart, useTLState, useTLCommand, TLChild, rootClassName, useI18N, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, treeZoneSplit, dropZoneAt, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
@@ -73,6 +73,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const DisclosureToggle = usePart('DisclosureToggle');
 
   const nodes = (state.nodes as NodeState[]) ?? [];
   const selectionMode = (state.selectionMode as string) ?? SINGLE_SELECTION;
@@ -507,25 +508,17 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
           onDragEnd={dragEnabled && node.draggable !== false ? () => setDropState(null) : undefined}
         >
           {node.expandable ? (
-            <button
-              type="button"
+            <DisclosureToggle
               className="tlTreeView__toggle"
+              expanded={node.expanded}
+              loading={node.loading}
+              label={toggleLabel(i18n, node.expanded)}
+              tabIndex={-1}
               onClick={(e) => {
                 e.stopPropagation();
                 handleToggle(node.id, node.expanded);
               }}
-              tabIndex={-1}
-              aria-label={toggleLabel(i18n, node.expanded)}
-              {...tooltipProps(toggleLabel(i18n, node.expanded))}
-            >
-              {node.loading ? (
-                <span className="tlTreeView__spinner" />
-              ) : (
-                <span className={
-                  node.expanded ? 'tlTreeView__chevron--down' : 'tlTreeView__chevron--right'
-                } />
-              )}
-            </button>
+            />
           ) : (
             <span className="tlTreeView__toggleSpacer" />
           )}

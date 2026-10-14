@@ -9,6 +9,7 @@ import { createMuiRoot, createPageThemes, pageTheme } from './MuiRoot';
 import { installThemeProperties, singleScheme } from './themeProperties';
 import MuiButtonAdapter from './adapters/MuiButtonAdapter';
 import MuiMenuTriggerAdapter from './adapters/MuiMenuTriggerAdapter';
+import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiPasswordInputAdapter from './adapters/MuiPasswordInputAdapter';
@@ -37,11 +38,13 @@ import MuiSliderAdapter from './adapters/MuiSliderAdapter';
  * The adapter around MUI components for each part (see PartProps of 'tl-react-bridge') this module
  * draws. A part is drawn wherever a control draws it: the part `Button` draws the button controls
  * (TLButton, TLToggleButton), the part `MenuTrigger` the trigger of a toolbar menu and of a menu
- * region.
+ * region, the part `DisclosureToggle` the toggles expanding a form group, a node of a tree, a row of
+ * a tree table and the sidebar.
  */
 const PART_ADAPTERS = {
   Button: MuiButtonAdapter,
   MenuTrigger: MuiMenuTriggerAdapter,
+  DisclosureToggle: MuiDisclosureToggleAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */

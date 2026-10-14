@@ -4,6 +4,7 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
+import { TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { ButtonPartProps, MenuTriggerPartProps } from 'tl-react-bridge';
 
 /** The address of a link. */
@@ -99,7 +100,8 @@ describe('the TopLogic drawing of the parts', () => {
   async function defaults() {
     const { default: ButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/ButtonPart');
     const { default: MenuTriggerPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/MenuTriggerPart');
-    return { ButtonPart, MenuTriggerPart };
+    const { default: DisclosureTogglePart } = await import('../../com.top_logic.layout.react/react-src/controls/button/DisclosureTogglePart');
+    return { ButtonPart, MenuTriggerPart, DisclosureTogglePart };
   }
 
   it('draws a button with the classes of the design system', async () => {
@@ -189,5 +191,51 @@ describe('the TopLogic drawing of the parts', () => {
     expect(iconOnly.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--icon');
     expect(iconOnly.getAttribute('aria-expanded')).toBe('true');
     expect(iconOnly.textContent).toBe('');
+  });
+
+  it('draws a disclosure toggle as the toggle of the design system, named by its label', async () => {
+    const { DisclosureTogglePart } = await defaults();
+    const onClick = vi.fn();
+
+    render(<>
+      <DisclosureTogglePart expanded={false} label="Aufklappen" onClick={onClick} aria-controls="body" />
+      <DisclosureTogglePart expanded label="Zuklappen" tabIndex={-1} className="x" />
+    </>);
+
+    const collapsed = screen.getByRole('button', { name: 'Aufklappen' });
+    expect(collapsed.className).toBe('tl-toggle');
+    expect(collapsed.getAttribute('type')).toBe('button');
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false');
+    expect(collapsed.getAttribute('aria-controls')).toBe('body');
+    expect(collapsed.getAttribute(TOOLTIP_ATTR)).toBe('text:Aufklappen');
+    expect(collapsed.hasAttribute('aria-busy')).toBe(false);
+    expect(collapsed.querySelector('i.fa-chevron-right.tl-icon-sm')).not.toBeNull();
+    collapsed.click();
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    const expanded = screen.getByRole('button', { name: 'Zuklappen' });
+    expect(expanded.className).toBe('tl-toggle x');
+    expect(expanded.getAttribute('aria-expanded')).toBe('true');
+    expect(expanded.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('marks a disclosure toggle opening toward the end of the line', async () => {
+    const { DisclosureTogglePart } = await defaults();
+
+    render(<DisclosureTogglePart expanded opens="end" label="Seitenleiste zuklappen" />);
+
+    expect(screen.getByRole('button', { name: 'Seitenleiste zuklappen' }).className)
+      .toBe('tl-toggle tlDisclosureToggle--end');
+  });
+
+  it('shows a busy indicator instead of the chevron while the content is being loaded', async () => {
+    const { DisclosureTogglePart } = await defaults();
+
+    render(<DisclosureTogglePart expanded={false} loading label="Aufklappen" />);
+
+    const toggle = screen.getByRole('button', { name: 'Aufklappen' });
+    expect(toggle.getAttribute('aria-busy')).toBe('true');
+    expect(toggle.querySelector('.tlDisclosureToggle__spinner')).not.toBeNull();
+    expect(toggle.querySelector('i.fa-chevron-right')).toBeNull();
   });
 });

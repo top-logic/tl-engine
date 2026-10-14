@@ -680,6 +680,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_CANCEL_SAVE;
 
 	/**
+	 * @en Expand
+	 */
+	@CustomKey("js.table.expandRow")
+	public static ResKey JS_TABLE_EXPAND_ROW;
+
+	/**
+	 * @en Collapse
+	 */
+	@CustomKey("js.table.collapseRow")
+	public static ResKey JS_TABLE_COLLAPSE_ROW;
+
+	/**
 	 * @en Restore default
 	 */
 	public static ResKey TABLE_COLUMNS_RESET;

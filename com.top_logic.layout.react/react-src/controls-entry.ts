@@ -11,6 +11,7 @@ import { register, registerPart } from 'tl-react-bridge';
 
 import ButtonPart from './controls/button/ButtonPart';
 import MenuTriggerPart from './controls/button/MenuTriggerPart';
+import DisclosureTogglePart from './controls/button/DisclosureTogglePart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -98,6 +99,7 @@ import TLDrawerToggle from './controls/TLDrawerToggle';
 // replaces them with replacePart.
 registerPart('Button', ButtonPart);
 registerPart('MenuTrigger', MenuTriggerPart);
+registerPart('DisclosureToggle', DisclosureTogglePart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

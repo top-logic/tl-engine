@@ -1,9 +1,8 @@
 import {
-  React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
-  focusFieldInput, ThemeIcon, useFormLayout,
+  React, useTLState, TLChild, rootClassName, useI18N, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
+  focusFieldInput, ThemeIcon, useFormLayout, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useState, useCallback, useMemo } = React;
 
@@ -36,6 +35,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<FormFieldStateJson>>();
   const ctx = useFormLayout();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   const label = state.label ?? '';
   const required = state.required === true;
@@ -126,11 +126,9 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
           {required && !readOnly && <span className="tl-form-field__required" aria-hidden="true">*</span>}
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
           {showHelp && (
-            <button type="button" className={`${buttonClassName({ appearance: 'ghost', small: true, icon: true })} tl-form-field__help`} onClick={toggleHelp}
-              aria-label={i18n['js.formField.help']} aria-expanded={helpVisible} aria-controls={helpTextId}
-              {...tooltipProps(i18n['js.formField.help'])}>
-              <ThemeIcon encoded={HELP_ICON} className="tl-button__icon tl-icon-sm" />
-            </button>
+            <Button label={i18n['js.formField.help']} image={HELP_ICON} display="icon-only" appearance="ghost" small
+              className="tl-form-field__help" onClick={toggleHelp}
+              aria-expanded={helpVisible} aria-controls={helpTextId} />
           )}
         </div>
       )}

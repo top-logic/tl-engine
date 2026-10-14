@@ -12,6 +12,7 @@ import { register, registerPart } from 'tl-react-bridge';
 import ButtonPart from './controls/button/ButtonPart';
 import MenuTriggerPart from './controls/button/MenuTriggerPart';
 import DisclosureTogglePart from './controls/button/DisclosureTogglePart';
+import CheckboxPart from './controls/form/CheckboxPart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -100,6 +101,7 @@ import TLDrawerToggle from './controls/TLDrawerToggle';
 registerPart('Button', ButtonPart);
 registerPart('MenuTrigger', MenuTriggerPart);
 registerPart('DisclosureToggle', DisclosureTogglePart);
+registerPart('Checkbox', CheckboxPart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

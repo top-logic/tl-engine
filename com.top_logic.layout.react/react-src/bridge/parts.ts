@@ -239,6 +239,107 @@ export interface DisclosureTogglePartProps extends PartAttributes {
 }
 
 /**
+ * The shape of a {@link CheckboxPartProps checkbox}:
+ *
+ * <ul>
+ * <li>`checkbox`: a box that is ticked;</li>
+ * <li>`switch`: a toggle sliding between its two states, with the role `switch`. A switch has no
+ *     indeterminate state.</li>
+ * </ul>
+ */
+export type CheckboxDisplay = 'checkbox' | 'switch';
+
+/**
+ * The state of the value a {@link CheckboxPartProps checkbox} stands for, as the checks of its form
+ * field judge it:
+ *
+ * <ul>
+ * <li>`error`: the value is invalid; the checkbox is marked `aria-invalid`.</li>
+ * <li>`warning`: the value is questionable without being invalid.</li>
+ * </ul>
+ */
+export type CheckboxValidation = 'error' | 'warning';
+
+/**
+ * The props of the part {@link PartProps.Checkbox}: a box that is ticked, or a switch that is
+ * flipped - the input of a boolean field, the selection of a row, the choice whether a column is
+ * shown.
+ *
+ * <p>The checkbox is controlled: it shows {@link checked} and {@link indeterminate} as given, and a
+ * press asks for the new state through {@link onChange}; it shows the new state only once the
+ * control passes it.</p>
+ *
+ * <p>Every implementation draws an indeterminate box as indeterminate and marks it
+ * `aria-checked="mixed"`, marks a read-only box `aria-readonly`, an invalid one `aria-invalid` and a
+ * required one `aria-required`, and puts {@link id}, {@link ref}, {@link name}, {@link tabIndex} and
+ * the passed-through attributes on the focusable input. A checkbox without {@link label} is named by
+ * the control: by an `aria-label`, or by `aria-labelledby` naming the label of its form field.</p>
+ */
+export interface CheckboxPartProps extends PartAttributes {
+  /** The ID of the input. */
+  id?: string;
+
+  /** Receives the input. */
+  ref?: PartRef<HTMLInputElement>;
+
+  /** Whether the box is ticked, the switch on. */
+  checked: boolean;
+
+  /**
+   * Whether the box shows that it is neither ticked nor clear: the "no value" of a tri-state field,
+   * the selection of some of the rows of a table. It is drawn instead of {@link checked}. Ignored
+   * for a switch.
+   */
+  indeterminate?: boolean;
+
+  /** The shape; absent: `checkbox`. */
+  display?: CheckboxDisplay;
+
+  /**
+   * The label shown beside the box: a text, or content such as the icon and text of an option. It
+   * names the box, and pressing it presses the box. Absent: the box is drawn alone.
+   */
+  label?: React.ReactNode;
+
+  /** Whether the box is drawn small, e.g. in the narrow selection column of a table. */
+  small?: boolean;
+
+  /** Whether the checkbox cannot be pressed; it is drawn inactive. */
+  disabled?: boolean;
+
+  /**
+   * Whether the checkbox shows its state only: it is drawn as an active one, but a press changes
+   * nothing and calls no {@link onChange}.
+   */
+  readOnly?: boolean;
+
+  /** Whether the value is required. */
+  required?: boolean;
+
+  /** The state of the value; absent: valid. */
+  validation?: CheckboxValidation;
+
+  /** The name of the input. */
+  name?: string;
+
+  /**
+   * The tab index of the input; `-1` keeps it out of the tab order, e.g. in the row of a table,
+   * which handles the keyboard for its rows itself. Absent: the input is in the tab order.
+   */
+  tabIndex?: number;
+
+  /** Classes added to the outermost drawn element: the label around the box, else the box. */
+  className?: string;
+
+  /**
+   * Called when the checkbox is pressed, with the state it asks for: the opposite of
+   * {@link checked}, `true` for an indeterminate box. Not called while {@link disabled} or
+   * {@link readOnly}.
+   */
+  onChange?: (checked: boolean) => void;
+}
+
+/**
  * The parts of the React UI by name, each with its props. The name is what {@link registerPart},
  * {@link replacePart} and {@link usePart} take; the props are the contract every implementation of
  * the part fulfils.
@@ -252,6 +353,9 @@ export interface PartProps {
 
   /** The button that shows or hides content: {@link DisclosureTogglePartProps}. */
   DisclosureToggle: DisclosureTogglePartProps;
+
+  /** A box that is ticked, or a switch: {@link CheckboxPartProps}. */
+  Checkbox: CheckboxPartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

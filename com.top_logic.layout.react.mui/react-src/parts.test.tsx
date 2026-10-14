@@ -4,6 +4,7 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { ButtonPartProps, MenuTriggerPartProps } from 'tl-react-bridge';
 
@@ -101,7 +102,8 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: ButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/ButtonPart');
     const { default: MenuTriggerPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/MenuTriggerPart');
     const { default: DisclosureTogglePart } = await import('../../com.top_logic.layout.react/react-src/controls/button/DisclosureTogglePart');
-    return { ButtonPart, MenuTriggerPart, DisclosureTogglePart };
+    const { default: CheckboxPart } = await import('../../com.top_logic.layout.react/react-src/controls/form/CheckboxPart');
+    return { ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart };
   }
 
   it('draws a button with the classes of the design system', async () => {
@@ -237,5 +239,126 @@ describe('the TopLogic drawing of the parts', () => {
     expect(toggle.getAttribute('aria-busy')).toBe('true');
     expect(toggle.querySelector('.tlDisclosureToggle__spinner')).not.toBeNull();
     expect(toggle.querySelector('i.fa-chevron-right')).toBeNull();
+  });
+
+  it('draws a checkbox as the box of the design system, named by its attributes', async () => {
+    const { CheckboxPart } = await defaults();
+    const ref = React.createRef<HTMLInputElement>();
+    const onChange = vi.fn();
+
+    render(<CheckboxPart id="b1" ref={ref} name="n" tabIndex={-1} className="x" checked={false}
+      onChange={onChange} aria-label="Zeile auswählen" />);
+
+    const box = screen.getByRole('checkbox', { name: 'Zeile auswählen' }) as HTMLInputElement;
+    expect(ref.current).toBe(box);
+    expect(box.id).toBe('b1');
+    expect(box.name).toBe('n');
+    expect(box.className).toBe('tl-checkbox x');
+    expect(box.getAttribute('tabindex')).toBe('-1');
+    expect(box.hasAttribute('aria-checked')).toBe(false);
+    expect(box.hasAttribute('aria-readonly')).toBe(false);
+    expect(box.hasAttribute('aria-invalid')).toBe(false);
+
+    await userEvent.click(box);
+    expect(onChange.mock.calls).toEqual([[true]]);
+    // Controlled: the box shows the state it is given.
+    expect(box.checked).toBe(false);
+  });
+
+  it('draws an indeterminate checkbox, which stays indeterminate when pressed', async () => {
+    const { CheckboxPart } = await defaults();
+    const onChange = vi.fn();
+
+    const { rerender } = render(<CheckboxPart checked={false} indeterminate onChange={onChange} aria-label="Alle" />);
+
+    const box = screen.getByRole('checkbox') as HTMLInputElement;
+    expect(box.indeterminate).toBe(true);
+    expect(box.getAttribute('aria-checked')).toBe('mixed');
+    await userEvent.click(box);
+    expect(onChange.mock.calls).toEqual([[true]]);
+    expect(box.indeterminate).toBe(true);
+
+    rerender(<CheckboxPart checked indeterminate={false} onChange={onChange} aria-label="Alle" />);
+    expect(box.indeterminate).toBe(false);
+    expect(box.checked).toBe(true);
+    expect(box.hasAttribute('aria-checked')).toBe(false);
+  });
+
+  it('keeps a read-only checkbox as it is and calls nothing', async () => {
+    const { CheckboxPart } = await defaults();
+    const onChange = vi.fn();
+
+    render(<CheckboxPart checked readOnly onChange={onChange} aria-label="Aktiv" />);
+
+    const box = screen.getByRole('checkbox') as HTMLInputElement;
+    expect(box.getAttribute('aria-readonly')).toBe('true');
+    expect(box.disabled).toBe(false);
+    await userEvent.click(box);
+    expect(box.checked).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('draws a disabled checkbox natively disabled', async () => {
+    const { CheckboxPart } = await defaults();
+    const onChange = vi.fn();
+
+    render(<CheckboxPart checked={false} disabled onChange={onChange} aria-label="Aktiv" />);
+
+    const box = screen.getByRole('checkbox') as HTMLInputElement;
+    expect(box.disabled).toBe(true);
+    await userEvent.setup({ pointerEventsCheck: 0 }).click(box);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('marks the state of the value as the design system reads it', async () => {
+    const { CheckboxPart } = await defaults();
+
+    render(<>
+      <CheckboxPart checked={false} validation="error" required aria-label="Fehler" />
+      <CheckboxPart checked={false} validation="warning" aria-label="Warnung" />
+    </>);
+
+    const invalid = screen.getByRole('checkbox', { name: 'Fehler' });
+    expect(invalid.getAttribute('aria-invalid')).toBe('true');
+    expect(invalid.getAttribute('aria-required')).toBe('true');
+    const questionable = screen.getByRole('checkbox', { name: 'Warnung' });
+    expect(questionable.getAttribute('data-tl-state')).toBe('warning');
+    expect(questionable.hasAttribute('aria-invalid')).toBe(false);
+  });
+
+  it('draws a switch, which is never indeterminate', async () => {
+    const { CheckboxPart } = await defaults();
+
+    render(<CheckboxPart display="switch" checked indeterminate aria-label="An" />);
+
+    const toggle = screen.getByRole('switch', { name: 'An' }) as HTMLInputElement;
+    expect(toggle.className).toBe('tl-checkbox tl-checkbox--switch');
+    expect(toggle.indeterminate).toBe(false);
+    expect(toggle.hasAttribute('aria-checked')).toBe(false);
+  });
+
+  it('draws a checkbox with a label in the label of the design system, which presses the box', async () => {
+    const { CheckboxPart } = await defaults();
+    const onChange = vi.fn();
+
+    render(<CheckboxPart checked label="Name" className="x" onChange={onChange} />);
+
+    const box = screen.getByRole('checkbox', { name: 'Name' });
+    expect(box.className).toBe('tl-checkbox');
+    const label = box.closest('label')!;
+    expect(label.className).toBe('tl-choice tl-type-body x');
+    await userEvent.click(screen.getByText('Name'));
+    expect(onChange.mock.calls).toEqual([[false]]);
+  });
+
+  it('draws content other than a text as the label as it is given, and a small box like any other', async () => {
+    const { CheckboxPart } = await defaults();
+
+    render(<CheckboxPart checked={false} small label={<><i className="icon" /><b>Option</b></>} />);
+
+    const box = screen.getByRole('checkbox', { name: 'Option' });
+    expect(box.className).toBe('tl-checkbox');
+    const label = box.closest('label')!;
+    expect(Array.from(label.children).map(child => child.tagName)).toEqual(['INPUT', 'I', 'B']);
   });
 });

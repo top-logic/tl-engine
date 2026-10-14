@@ -63,6 +63,8 @@ const I18N_KEYS = {
   'js.table.cancelSave': 'Do not save',
   'js.table.expandRow': 'Expand',
   'js.table.collapseRow': 'Collapse',
+  'js.table.selectAllRows': 'Select all rows',
+  'js.table.selectRow': 'Select row',
 };
 
 /**
@@ -315,6 +317,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
   const Button = usePart('Button');
   const DisclosureToggle = usePart('DisclosureToggle');
+  const Checkbox = usePart('Checkbox');
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   const columns = (state.columns as ColumnState[]) ?? [];
@@ -1061,8 +1064,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('select', { rowIndex: targetIndex, ctrlKey: false, shiftKey: false });
   }, [rows, totalRowCount, sendCommand]);
 
-  const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleCheckboxClick = React.useCallback((rowIndex: number) => {
     sendCommand('select', { rowIndex, ctrlKey: true, shiftKey: false });
   }, [sendCommand]);
 
@@ -1310,12 +1312,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const allSelected = selectAllState === 'all';
   const someSelected = selectAllState === 'some';
 
-  const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
-    if (el) {
-      el.indeterminate = someSelected;
-    }
-  }, [someSelected]);
-
   return (
     <KeyboardScopeProvider active={isTableFocused}>
     <TableKeyBindings
@@ -1465,12 +1461,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
             >
-              <input
-                type="checkbox"
-                ref={headerCheckboxRef}
-                className="tlTableView__checkbox"
+              <Checkbox
+                small
                 checked={allSelected}
+                indeterminate={someSelected}
                 onChange={handleSelectAll}
+                aria-label={i18n['js.table.selectAllRows']}
               />
             </div>
           )}
@@ -1671,13 +1667,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   }}
                   onClick={(e) => e.stopPropagation()}>
                   {row.groupCount == null && (
-                    <input
-                      type="checkbox"
-                      className="tlTableView__checkbox"
+                    <Checkbox
+                      small
                       checked={row.selected}
-                      onChange={() => {/* handled by onClick */}}
-                      onClick={(e) => handleCheckboxClick(row.index, e)}
+                      onChange={() => handleCheckboxClick(row.index)}
                       tabIndex={-1}
+                      aria-label={i18n['js.table.selectRow']}
                     />
                   )}
                 </div>

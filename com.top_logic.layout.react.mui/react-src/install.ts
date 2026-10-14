@@ -39,17 +39,18 @@ import MuiSliderAdapter from './adapters/MuiSliderAdapter';
  * draws. A part is drawn wherever a control draws it: the part `Button` draws the button controls
  * (TLButton, TLToggleButton), the part `MenuTrigger` the trigger of a toolbar menu and of a menu
  * region, the part `DisclosureToggle` the toggles expanding a form group, a node of a tree, a row of
- * a tree table and the sidebar.
+ * a tree table and the sidebar, the part `Checkbox` the boolean fields (TLCheckbox), the selection
+ * boxes of a table and the boxes of the column selection.
  */
 const PART_ADAPTERS = {
   Button: MuiButtonAdapter,
   MenuTrigger: MuiMenuTriggerAdapter,
   DisclosureToggle: MuiDisclosureToggleAdapter,
+  Checkbox: MuiCheckboxAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */
 const CONTROL_ADAPTERS = {
-  TLCheckbox: MuiCheckboxAdapter,
   TLTextInput: MuiTextInputAdapter,
   TLPasswordInput: MuiPasswordInputAdapter,
   TLNumberInput: MuiNumberInputAdapter,

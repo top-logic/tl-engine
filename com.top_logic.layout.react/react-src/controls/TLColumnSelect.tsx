@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -46,6 +46,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Checkbox = usePart('Checkbox');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const groupable = state.groupable !== false;
@@ -135,16 +136,13 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 <i className={entry.grouped ? 'bi bi-collection-fill' : 'bi bi-collection'} aria-hidden="true" />
               </button>
             )}
-            <label className="tlColumnSelect__label">
-              <input
-                type="checkbox"
-                className="tl-checkbox"
-                checked={entry.visible}
-                disabled={lastVisible}
-                onChange={(e) => handleToggle(entry.name, e.target.checked)}
-              />
-              <span>{entry.label}</span>
-            </label>
+            <Checkbox
+              className="tlColumnSelect__label"
+              label={entry.label}
+              checked={entry.visible}
+              disabled={lastVisible}
+              onChange={(checked) => handleToggle(entry.name, checked)}
+            />
           </div>
         );
       })}

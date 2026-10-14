@@ -14,11 +14,14 @@ import TLTreeView from '../../../com.top_logic.layout.react/react-src/controls/T
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLSidebar from '../../../com.top_logic.layout.react/react-src/controls/TLSidebar';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
+import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Button', MuiButtonAdapter);
+// The table looks up the selection boxes of its rows as well.
+replacePart('Checkbox', MuiCheckboxAdapter);
 
 /** The labels of the toggles: the keys, as the test stub translates each key to itself. */
 const LABEL_GROUP_EXPAND = 'js.formGroup.expand';

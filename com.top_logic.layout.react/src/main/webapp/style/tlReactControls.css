@@ -3732,13 +3732,6 @@ button.tlWindow__maximizeBtn:focus-visible {
 	flex-shrink: 0;
 }
 
-.tlTableView__checkbox {
-	cursor: pointer;
-	width: 1rem;
-	height: 1rem;
-	accent-color: var(--interactive);
-}
-
 .tlTableView__resizeHandle {
 	position: absolute;
 	top: 0;
@@ -4168,15 +4161,12 @@ button.tlWindow__maximizeBtn:focus-visible {
 }
 
 .tlColumnSelect__label {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
 	flex: 1 1 auto;
 	min-width: 0;
-	cursor: pointer;
 }
 
-.tlColumnSelect__label > span {
+/* The label text, after the box. */
+.tlColumnSelect__label > span:last-child {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

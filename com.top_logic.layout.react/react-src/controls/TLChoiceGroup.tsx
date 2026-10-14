@@ -1,5 +1,5 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, CheckboxValidation } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
@@ -23,8 +23,9 @@ const ORIENTATION_HORIZONTAL: DropdownSelectStateJson.Orientation = 'horizontal'
  * both, which also makes the text part of the input's hit area; the field's label names the group as
  * a whole (see FieldLabelContext).
  *
- * Design system: radios are `tl-radio`, checkboxes `tl-checkbox`, each in a `tl-choice` label within a
- * `tl-choice-group` (role `radiogroup` for one value, `group` for several). The options stand one
+ * Design system: radios are `tl-radio` in a `tl-choice` label, checkboxes are drawn by the part
+ * `Checkbox` with the option as their label; all within a `tl-choice-group` (role `radiogroup` for
+ * one value, `group` for several). The options stand one
  * below the other (`tl-choice-group--vertical`) unless the server asks for them side by side, where
  * they wrap onto further lines. The field's state is an attribute (see fieldStateAttrs): on the radio
  * group, or on every checkbox, since a `group` takes no `aria-invalid`. A read-only field shows its
@@ -38,6 +39,7 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DropdownSelectStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
+  const Checkbox = usePart('Checkbox');
 
   const value = (state.value ?? []) as OptionDescriptor[];
   const options = (state.options ?? []) as OptionDescriptor[];
@@ -98,21 +100,19 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (multiSelect) {
     // A group takes no aria-invalid: each checkbox carries the field's check state itself.
-    const checkboxAttrs = fieldStateAttrs({ hasError: state.hasError, hasWarnings: state.hasWarnings });
+    const validation: CheckboxValidation | undefined =
+      state.hasError === true ? 'error' : state.hasWarnings === true ? 'warning' : undefined;
     return (
       <div id={controlId} {...labelProps} role="group" className={rootClassName(state, groupClass)}>
         {options.map((option) => (
-          <label key={option.value} className="tl-choice tl-type-body">
-            <input
-              type="checkbox"
-              className="tl-checkbox"
-              checked={selectedIds.has(option.value)}
-              disabled={disabled}
-              {...checkboxAttrs}
-              onChange={() => toggle(option)}
-            />
-            <OptionContent option={option} />
-          </label>
+          <Checkbox
+            key={option.value}
+            label={<OptionContent option={option} />}
+            checked={selectedIds.has(option.value)}
+            disabled={disabled}
+            validation={validation}
+            onChange={() => toggle(option)}
+          />
         ))}
       </div>
     );

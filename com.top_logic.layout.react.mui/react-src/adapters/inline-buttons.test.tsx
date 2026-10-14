@@ -12,11 +12,14 @@ import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
+import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import { childControl, mountAdapter, settle } from './wire-test-support';
 
 replacePart('Button', MuiButtonAdapter);
 // The table looks up the toggle of its tree rows as well.
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
+// The table looks up the selection boxes of its rows as well.
+replacePart('Checkbox', MuiCheckboxAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';

@@ -692,6 +692,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLLAPSE_ROW;
 
 	/**
+	 * @en Select all rows
+	 */
+	@CustomKey("js.table.selectAllRows")
+	public static ResKey JS_TABLE_SELECT_ALL_ROWS;
+
+	/**
+	 * @en Select row
+	 */
+	@CustomKey("js.table.selectRow")
+	public static ResKey JS_TABLE_SELECT_ROW;
+
+	/**
 	 * @en Restore default
 	 */
 	public static ResKey TABLE_COLUMNS_RESET;

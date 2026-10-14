@@ -117,7 +117,8 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
       <div className="tl-alert__body">
         <div className="tl-alert__message">
           {text}
-          {remaining !== null && <> <span className="tl-notice-bar__countdown tl-nums tl-type-body-strong">{remaining}</span></>}
+          {/* aria-live off: the role announces the notice once, the ticking is not re-read every second. */}
+          {remaining !== null && <> <span className="tl-notice-bar__countdown tl-nums tl-type-body-strong" aria-live="off">{remaining}</span></>}
         </div>
       </div>
     </div>

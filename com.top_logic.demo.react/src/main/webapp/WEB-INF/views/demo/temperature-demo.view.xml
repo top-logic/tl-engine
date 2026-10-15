@@ -39,6 +39,14 @@
 						<en>Sites</en>
 						<de>Standorte</de>
 					</title>
+					<inset>
+						<text>
+							<label>
+								<en>This demo shows an application-defined value type: the temperatures of the sensors are stored as plain numbers in degrees Celsius, but every display - table, form, label - shows them in the unit of the site the sensor belongs to, and a number typed into a form is read in that unit. Change the unit of a site to see its sensors in another unit. How such a type is built is described in the developer article model/custom-primitive-type.</en>
+								<de>Diese Demo zeigt einen anwendungsdefinierten Werttyp: Die Temperaturen der Sensoren werden als einfache Zahlen in Grad Celsius gespeichert, aber jede Anzeige - Tabelle, Formular, Beschriftung - zeigt sie in der Einheit des Standorts, zu dem der Sensor gehört, und eine in ein Formular eingegebene Zahl wird in dieser Einheit gelesen. Ändern Sie die Einheit eines Standorts, um seine Sensoren in einer anderen Einheit zu sehen. Wie ein solcher Typ gebaut wird, beschreibt der Entwicklerartikel model/custom-primitive-type.</de>
+							</label>
+						</text>
+					</inset>
 					<table
 						observed-types="demo.temperature:DemoSite"
 						selection="site"

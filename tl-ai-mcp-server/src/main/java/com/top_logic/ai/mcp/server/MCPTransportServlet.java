@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import io.modelcontextprotocol.spec.HttpHeaders;
+
 /**
  * Static servlet that delegates MCP protocol requests to the current transport provider from
  * {@link MCPServerService}.
@@ -66,6 +68,9 @@ public class MCPTransportServlet extends HttpServlet {
 		}
 
 		// Delegate to the transport provider from the current service instance
+		service.noteSessionRequest(req.getHeader(HttpHeaders.MCP_SESSION_ID));
 		service.getTransportProvider().service(req, resp);
+		// An initialize request has its session id only in the answer.
+		service.noteSessionRequest(resp.getHeader(HttpHeaders.MCP_SESSION_ID));
 	}
 }

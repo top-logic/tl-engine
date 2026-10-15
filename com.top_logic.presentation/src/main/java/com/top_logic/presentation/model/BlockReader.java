@@ -144,6 +144,11 @@ public final class BlockReader {
 	static final double ENTRY_SIZE = 20;
 
 	/**
+	 * The font size of a subtitle shown as content element, see {@link #subtitleText(TextSpec)}.
+	 */
+	static final double SUBTITLE_SIZE = 18;
+
+	/**
 	 * The color of the element's role.
 	 */
 	private static final ColorSpec ACCENT = new ColorSpec.Role(ROLE_ACCENT, Map.of());
@@ -570,6 +575,21 @@ public final class BlockReader {
 				CrossAlign.CENTER));
 		}
 		return new ContainerSpec(Bounds.NONE, ContainerSpec.Direction.COLUMN, rows, null, null, CrossAlign.STRETCH);
+	}
+
+	/**
+	 * The text element showing the subtitle of a slide whose layout has no subtitle placeholder.
+	 *
+	 * <p>
+	 * The text takes the height of its paragraphs and is shown in the color
+	 * {@link PresentationData#ROLE_MUTED}, unless the subtitle formats it.
+	 * </p>
+	 */
+	public static TextBoxSpec subtitleText(TextSpec subtitle) {
+		Bounds bounds = new Bounds(null, null, null, null, true, null);
+		RunStyle style = size(RunStyle.INHERIT, SUBTITLE_SIZE, MUTED);
+		return new TextBoxSpec(bounds, new TextSpec(subtitle.paragraphs(), subtitle.style().inheritFrom(style),
+			subtitle.align(), TextAnchor.TOP, InsetsSpec.ZERO, subtitle.overflow(), false, subtitle.wrap()), null);
 	}
 
 	/**

@@ -18,6 +18,7 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.presentation.template.BlankTemplate;
 import com.top_logic.presentation.template.TemplateAnalysis;
 import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.util.error.TopLogicException;
@@ -80,6 +81,16 @@ public class PptTemplateFunctions extends TLScriptFunctions {
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);
 		}
+	}
+
+	/**
+	 * Reads the given PowerPoint file, or creates the {@link BlankTemplate} if none is given.
+	 *
+	 * @throws TopLogicException
+	 *         If the data is not a PowerPoint presentation or template.
+	 */
+	static XMLSlideShow openOrBlank(BinaryDataSource data) {
+		return data == null ? BlankTemplate.create() : open(data);
 	}
 
 	/**

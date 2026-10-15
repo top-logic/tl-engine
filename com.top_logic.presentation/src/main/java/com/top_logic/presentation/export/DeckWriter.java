@@ -190,6 +190,12 @@ public final class DeckWriter {
 	 * </p>
 	 *
 	 * <p>
+	 * A subtitle fills the subtitle placeholder of the layout (see {@link LayoutProfile#subtitle()}).
+	 * On a layout without one, the subtitle becomes the first content element, see
+	 * {@link BlockReader#subtitleText(TextSpec)}.
+	 * </p>
+	 *
+	 * <p>
 	 * The {@link SlideSpec#entries() entries} of an agenda slide fill the entry placeholders of
 	 * its layout (see {@link LayoutProfile#entries()}). A slide with entries and without layout, or
 	 * with the layout role {@link LayoutRole#AGENDA}, is created on the
@@ -233,8 +239,15 @@ public final class DeckWriter {
 		LayoutProfile layoutProfile = layoutProfile(index);
 		Rectangle2D area = layoutProfile.contentArea();
 
+		TextSpec subtitle = spec.subtitle();
+		if (subtitle != null && layoutProfile.subtitle() == null) {
+			content = new ArrayList<>(content);
+			content.add(0, BlockReader.subtitleText(subtitle));
+			subtitle = null;
+		}
+
 		Map<XSLFTextShape, PlaceholderText> texts =
-			placeholderTexts(spec, entries, footer, layout, layoutProfile, path);
+			placeholderTexts(spec, subtitle, entries, footer, layout, layoutProfile, path);
 
 		XSLFSlide result = null;
 		Continuation continuation = null;
@@ -367,7 +380,8 @@ public final class DeckWriter {
 		// Pure data.
 	}
 
-	private Map<XSLFTextShape, PlaceholderText> placeholderTexts(SlideSpec spec, List<TextSpec> entries,
+	private Map<XSLFTextShape, PlaceholderText> placeholderTexts(SlideSpec spec, TextSpec subtitleText,
+			List<TextSpec> entries,
 			TextSpec footer, XSLFSlideLayout layout, LayoutProfile layoutProfile, String path) {
 		Map<XSLFTextShape, PlaceholderText> result = new LinkedHashMap<>();
 		if (footer != null && layoutProfile.footer() != null) {
@@ -384,14 +398,13 @@ public final class DeckWriter {
 			}
 			result.put(title, new PlaceholderText(spec.title(), titlePath));
 		}
-		if (spec.subtitle() != null) {
+		if (subtitleText != null) {
 			String subtitlePath = path + "." + PresentationData.SUBTITLE;
-			XSLFTextShape subtitle = layoutProfile.subtitle() == null
-				? null : placeholderByIdx(layout, layoutProfile.subtitle().longValue());
+			XSLFTextShape subtitle = placeholderByIdx(layout, layoutProfile.subtitle().longValue());
 			if (subtitle == null) {
 				throw noPlaceholder(subtitlePath, PresentationData.SUBTITLE, layout);
 			}
-			result.put(subtitle, new PlaceholderText(spec.subtitle(), subtitlePath));
+			result.put(subtitle, new PlaceholderText(subtitleText, subtitlePath));
 		}
 		if (!entries.isEmpty()) {
 			List<Long> entryPlaceholders = layoutProfile.entries();

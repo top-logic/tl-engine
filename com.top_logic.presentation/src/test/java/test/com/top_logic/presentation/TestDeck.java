@@ -260,6 +260,72 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		}
 	}
 
+	public void testDeckWithoutTemplate() throws Exception {
+		Map<?, ?> profile = (Map<?, ?>) eval("pptProfile()");
+		Map<?, ?> layouts = (Map<?, ?>) profile.get(LAYOUTS);
+		assertEquals(0.0, layouts.get("title"));
+		assertEquals(1.0, layouts.get("content"));
+		assertEquals(2.0, layouts.get("section"));
+		Map<?, ?> content = (Map<?, ?>) ((Map<?, ?>) profile.get(SLIDE_LAYOUTS)).get("1");
+		Map<?, ?> area = (Map<?, ?>) content.get(CONTENT_AREA);
+		assertEquals("Content area stretched to the 16:9 slide.", 960.0,
+			((Number) area.get(X)).doubleValue() * 2 + ((Number) area.get(WIDTH)).doubleValue(), 1.0);
+
+		BinaryData deck = (BinaryData) evalOnce("""
+			pptDeck(slides: [
+				pptTitle("Statusbericht", "Ohne eigene Vorlage", notes: "Titelfolie"),
+				pptAgenda(["Kennzahlen", "Tabelle", "Diagramm"]),
+				pptSection("Kennzahlen"),
+				pptContent("Kennzahlen", "Karten in einer Zeile", [
+					pptRow([pptStat("12", "offene Tickets", role: "topicA"),
+						pptStat("30", "erledigte Tickets", role: "topicB"),
+						pptStat("3", "Meilensteine", role: "topicC")]),
+					pptRow([pptCard("Erstens", "Eine Karte mit kurzem Text.", role: "topicA"),
+						pptCard("Zweitens", "Noch eine Karte.", role: "topicB")]),
+					pptBanner("Kernaussage der Folie")
+				]),
+				pptContent("Tabelle", null, pptTable([["Ticket", "Priorität"],
+					["Erstes Ticket", pptRating("high", "hoch")],
+					["Zweites Ticket", pptRating("low", "niedrig")]], headerRows: 1, columnWeights: [3, 1])),
+				pptContent("Diagramm", null, pptColumnChart(["Neu", "In Arbeit", "Erledigt"],
+					[pptSeries("Tickets", [4, 8, 30], "topicA")])),
+				pptClosing("Vielen Dank")
+			], footer: "Ohne Vorlage", name: "blank.pptx")
+			""");
+		writeDeck(deck, "blank.pptx");
+		try (XMLSlideShow result = open(deck)) {
+			assertEquals(960, result.getPageSize().getWidth(), DELTA);
+			assertEquals(540, result.getPageSize().getHeight(), DELTA);
+			List<XSLFSlide> slides = result.getSlides();
+			assertEquals(7, slides.size());
+			assertEquals("Title Slide", slides.get(0).getSlideLayout().getName());
+			assertEquals("Section Header", slides.get(2).getSlideLayout().getName());
+			assertEquals("Title and Content", slides.get(3).getSlideLayout().getName());
+			assertEquals("Ohne Vorlage", placeholderText(slides.get(3), "ftr", 11));
+
+			// Content shapes stay on the slide and their texts are not cut.
+			for (int n = 0; n < slides.size(); n++) {
+				for (XSLFShape shape : slides.get(n).getShapes()) {
+					Rectangle2D bounds = shape.getAnchor();
+					assertTrue("Shape " + shape.getShapeName() + " of slide " + n + " outside the slide: " + bounds,
+						bounds.getMinX() >= 0 && bounds.getMaxX() <= 960 && bounds.getMinY() >= 0
+							&& bounds.getMaxY() <= 540);
+					if (shape instanceof XSLFTextShape text && PlaceholderInfo.typeOf(shape) == null) {
+						assertFalse("Text must not be cut: " + text.getText(), text.getText().contains("\u2026"));
+					}
+				}
+			}
+
+			SlideRenderer renderer = new SlideRenderer();
+			List<BufferedImage> images = new ArrayList<>();
+			for (XSLFSlide slide : slides) {
+				images.add(renderer.render(slide, 1280));
+			}
+			assertEquals(720, images.get(0).getHeight());
+			writeImages(images, "blank");
+		}
+	}
+
 	public void testProfileOverride() throws Exception {
 		BinaryData template = template();
 		BinaryData deck = (BinaryData) evalOnce("""

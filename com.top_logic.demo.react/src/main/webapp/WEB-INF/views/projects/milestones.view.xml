@@ -54,6 +54,7 @@
 						<field attribute="budget"/>
 						<field attribute="members"/>
 						<field attribute="admins"/>
+						<field attribute="reportTemplate"/>
 					</form>
 				</panel>
 			</tile>

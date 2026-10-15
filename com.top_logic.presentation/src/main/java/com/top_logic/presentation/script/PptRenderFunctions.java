@@ -35,8 +35,9 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The images show how a presentation looks, e.g. to check a generated presentation for overflowing
  * text or to see the style of a template. They are rendered on the server by Apache POI, which
- * supports the common shapes, fills, outlines, pictures, tables and text, but no charts, no
- * diagrams and not all effects.
+ * supports the common shapes, fills, outlines, pictures, tables and text, but no
+ * <code>SmartArt</code> diagrams and not all effects. Bar and column charts are drawn from their data, other charts as a frame
+ * naming the kind of chart.
  * </p>
  *
  * <p>

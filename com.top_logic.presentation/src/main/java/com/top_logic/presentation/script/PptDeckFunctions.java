@@ -36,7 +36,9 @@ import com.top_logic.presentation.template.TemplateAnalysis;
  * A presentation is described by slides created with <code>pptSlide()</code> and the other
  * <code>ppt</code> builder functions. It is created on the basis of a template, whose slide
  * layouts, backgrounds, logos, fonts and colors it takes over. What the creation needs to know
- * about the template beyond its layouts is its profile, see <code>pptProfile()</code>.
+ * about the template beyond its layouts is its profile, see <code>pptProfile()</code>. Without a
+ * template, the presentation is created on the standard slide layouts of a blank presentation in
+ * the format 16:9 (960 x 540 points).
  * </p>
  */
 @ScriptPrefix("ppt")
@@ -59,6 +61,12 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
+	 * Without a template, the slides are created on the standard slide layouts (e.g. "Title Slide",
+	 * "Title and Content", "Section Header") of a blank presentation in the format 16:9, whose
+	 * slides are 960 points wide and 540 points high.
+	 * </p>
+	 *
+	 * <p>
 	 * Example:
 	 * </p>
 	 *
@@ -72,7 +80,8 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * </pre>
 	 *
 	 * @param template
-	 *        The PowerPoint template (<code>.pptx</code> or <code>.potx</code>).
+	 *        The PowerPoint template (<code>.pptx</code> or <code>.potx</code>). Without a template,
+	 *        a blank presentation in the format 16:9 is used.
 	 * @param slides
 	 *        The slides, each described by <code>pptSlide()</code> or an equivalent dictionary.
 	 * @param footer
@@ -90,14 +99,14 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	@Label("Create presentation")
 	@SideEffectFree
 	public static BinaryData deck(
-			@Mandatory BinaryDataSource template,
+			BinaryDataSource template,
 			@Mandatory Object slides,
 			Object footer,
 			Map<?, ?> profile,
 			@StringDefault(DeckWriter.DEFAULT_NAME) String name) {
 		List<SlideSpec> slideSpecs = DescriptionReader.readSlides(slides);
 		TextSpec footerSpec = DescriptionReader.readText(new Value(footer, PresentationData.FOOTER));
-		try (XMLSlideShow slideShow = PptTemplateFunctions.open(template)) {
+		try (XMLSlideShow slideShow = PptTemplateFunctions.openOrBlank(template)) {
 			return DeckWriter.createDeck(slideShow, slideSpecs, footerSpec, profile, name);
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);
@@ -153,13 +162,15 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param template
-	 *        The PowerPoint template (<code>.pptx</code> or <code>.potx</code>).
+	 *        The PowerPoint template (<code>.pptx</code> or <code>.potx</code>). Without a template,
+	 *        the profile of the blank presentation used by <code>pptDeck()</code> without a template
+	 *        is reported.
 	 * @return The dictionary describing the profile of the template.
 	 */
 	@Label("Template profile")
 	@SideEffectFree
-	public static Map<String, Object> profile(@Mandatory BinaryDataSource template) {
-		try (XMLSlideShow slideShow = PptTemplateFunctions.open(template)) {
+	public static Map<String, Object> profile(BinaryDataSource template) {
+		try (XMLSlideShow slideShow = PptTemplateFunctions.openOrBlank(template)) {
 			return TemplateProfile.derive(TemplateAnalysis.analyze(slideShow)).toData();
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);

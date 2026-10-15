@@ -72,7 +72,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param title
 	 *        The text of the title placeholder.
 	 * @param subtitle
-	 *        The text of the subtitle placeholder.
+	 *        The text of the subtitle placeholder. On a slide layout without subtitle placeholder,
+	 *        the subtitle is shown as first content element.
 	 * @param content
 	 *        The elements on the slide: shapes, text boxes, tables, images, rows and columns.
 	 * @param notes

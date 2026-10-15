@@ -145,6 +145,9 @@
 				<property name="budget"
 					type="tl.core:Double"
 				/>
+				<property name="reportTemplate"
+					type="tl.core:Binary"
+				/>
 				<reference name="members"
 					multiple="true"
 					type="tl.accounts:Person"

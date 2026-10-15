@@ -24,7 +24,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.basic.util.Utils;
@@ -125,7 +125,7 @@ public class DatabaseLayoutCacheEntry {
 
 	private void putAllLazy(List<Theme> cachedThemes, List<Theme> themesToCache,
 			Collection<PersistentTemplateLayoutWrapper> layouts) {
-		Runnable loadLayoutsLazy = () -> ThreadContextManager.inSystemInteraction(LayoutStorage.class, () -> {
+		Runnable loadLayoutsLazy = () -> ThreadContext.inSystemContext(LayoutStorage.class, () -> {
 			_uncachedThemes = Collections.emptyList();
 			putAll(cachedThemes, themesToCache, layouts);
 		});

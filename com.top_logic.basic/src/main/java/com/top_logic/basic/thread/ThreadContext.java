@@ -5,7 +5,6 @@
  */
 package com.top_logic.basic.thread;
 
-import java.util.EmptyStackException;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -90,43 +89,6 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 */
 	public final void inContext(InContext job) {
 		ThreadContextManager.inContext(this, job);
-	}
-
-	/**
-	 * Switches off the security checks for the current thread until {@link #popSuperUser()}.
-	 *
-	 * <p>
-	 * Calls nest: the checks are switched on again by the {@link #popSuperUser()} matching the
-	 * first call. Prefer {@link #uncheckedSecurity(InContext)}, which restores the previous state
-	 * on its own.
-	 * </p>
-	 *
-	 * @see #isSecurityUnchecked()
-	 */
-	public static void pushSuperUser() {
-		SecurityState.current()._depth++;
-	}
-
-	/**
-	 * Undoes the last {@link #pushSuperUser()}.
-	 *
-	 * @throws EmptyStackException
-	 *         if there is no {@link #pushSuperUser()} to undo.
-	 */
-	public static void popSuperUser() {
-		SecurityState state = SecurityState.current();
-		if (state._depth == 0) {
-			throw new EmptyStackException();
-		}
-		state._depth--;
-	}
-
-	/**
-	 * Switches the security checks for the current thread on again, regardless of the number of
-	 * {@link #pushSuperUser()} calls.
-	 */
-	public static void resetSuperUser() {
-		SecurityState.current()._depth = 0;
 	}
 
 	/**
@@ -260,9 +222,15 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * <p>
 	 * The system context has no person, its {@link SubSessionContext#getContextId() context id} is
 	 * {@link ThreadContextManager#systemContextId(Class)}, and the
-	 * {@link #isSecurityUnchecked() security is unchecked} during the computation. The system
-	 * context is established also when an interaction is already active; the previous context is
-	 * restored afterwards.
+	 * {@link #isSecurityUnchecked() security is unchecked} during the computation.
+	 * </p>
+	 *
+	 * <p>
+	 * The system context is established in any case: If no interaction is active, a new interaction
+	 * is created for the computation. Otherwise, the {@link SubSessionContext} of the current
+	 * interaction becomes the system context for the computation, keeping its
+	 * {@link SessionContext}. After the computation, the previous identity of the
+	 * {@link SubSessionContext} is restored, also when the computation fails.
 	 * </p>
 	 *
 	 * @param caller
@@ -270,10 +238,13 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * @param computation
 	 *        The computation to evaluate in system context.
 	 * @return the {@link ComputationEx2#run() result} of the given {@link ComputationEx2}.
+	 *
+	 * @see #uncheckedSecurity(ComputationEx2)
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemContext(final Class<?> caller,
 			final ComputationEx2<T, E1, E2> computation) throws E1, E2 {
-		return ThreadContextManager.inSystemContext(caller, computation);
+		return ThreadContextManager.getManager().inSystemContextInternal(ThreadContextManager.systemContextId(caller),
+			computation);
 	}
 
 	/**
@@ -288,7 +259,30 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * @see #inSystemContext(Class, ComputationEx2)
 	 */
 	public static void inSystemContext(final Class<?> caller, final InContext job) {
-		ThreadContextManager.inSystemContext(caller, job);
+		ThreadContextManager.getManager().inSystemContextInternal(ThreadContextManager.systemContextId(caller), job);
+	}
+
+	/**
+	 * Executes the given {@link InContext} in a system context identified by the given caller
+	 * class and the name of the caller instance.
+	 *
+	 * <p>
+	 * The system context is the one of {@link #inSystemContext(Class, ComputationEx2)}, with the
+	 * {@link SubSessionContext#getContextId() context id}
+	 * {@link ThreadContextManager#systemContextId(Class, String)}, which identifies e.g. the
+	 * individual task among the instances of a task class in log messages.
+	 * </p>
+	 *
+	 * @param caller
+	 *        Class identifying the system context to create.
+	 * @param name
+	 *        Name of the caller instance.
+	 * @param job
+	 *        The job to execute in system context.
+	 */
+	public static void inSystemContext(final Class<?> caller, String name, final InContext job) {
+		ThreadContextManager.getManager()
+			.inSystemContextInternal(ThreadContextManager.systemContextId(caller, name), job);
 	}
 
 	/**

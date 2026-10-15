@@ -48,8 +48,7 @@ public class TestMultiThemeFactory extends BasicTestCase {
     }
     
     public void testGetCurrentThemeWithoutInitializedContext() {
-		TLContext.pushSuperUser();
-        try {
+		TLContext.uncheckedSecurity(() -> {
             Person root = PersonManager.getManager().getRoot();
 			TLContext theContext = TLContext.getContext();
             theContext.setCurrentPerson(root);
@@ -61,9 +60,7 @@ public class TestMultiThemeFactory extends BasicTestCase {
             Theme theTheme = theFactory.getCurrentTheme();
             
             assertNotNull(theTheme);
-        } finally {
-        	TLContext.popSuperUser();
-        }
+		});
     }
     /**
      * The method constructing a test suite for this class.

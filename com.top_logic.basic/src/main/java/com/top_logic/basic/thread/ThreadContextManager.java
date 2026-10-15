@@ -285,95 +285,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	}
 
 	/**
-	 * Executes the given job in a system context with the given context id.
-	 *
-	 * @param contextId
-	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
-	 * @param job
-	 *        Callback to execute
-	 *
-	 * @see #inSystemContext(Class, InContext)
-	 */
-	public static void inInteraction(String contextId, InContext job) {
-		getManager().inSystemContextInternal(contextId, job);
-	}
-
-	/**
-	 * Computes the given job in a system context with the given context id.
-	 *
-	 * @param contextId
-	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
-	 * @param job
-	 *        Callback to execute
-	 * @return The result of the given job.
-	 *
-	 * @see #inSystemContext(Class, ComputationEx2)
-	 */
-	public static <T, E1 extends Throwable, E2 extends Throwable> T inInteraction(String contextId,
-			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return getManager().inSystemContextInternal(contextId, job);
-	}
-
-	/**
-	 * Executes the given job in a system context identified by the given caller class.
-	 *
-	 * @see #inSystemContext(Class, InContext)
-	 */
-	public static void inSystemInteraction(Class<?> caller, InContext job) {
-		inSystemContext(caller, job);
-	}
-
-	/**
-	 * Computes the given job in a system context identified by the given caller class.
-	 *
-	 * @see #inSystemContext(Class, ComputationEx2)
-	 */
-	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemInteraction(Class<?> caller,
-			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return inSystemContext(caller, job);
-	}
-
-	/**
-	 * Executes the given job in a system context identified by the given caller class.
-	 *
-	 * @param caller
-	 *        Class to create the {@link #systemContextId(Class) context id} of the system context
-	 *        from.
-	 * @param job
-	 *        Callback to execute
-	 *
-	 * @see #inSystemContext(Class, ComputationEx2)
-	 */
-	public static void inSystemContext(Class<?> caller, InContext job) {
-		getManager().inSystemContextInternal(systemContextId(caller), job);
-	}
-
-	/**
-	 * Computes the given job in a system context identified by the given caller class.
-	 *
-	 * <p>
-	 * A system context has a {@link SubSessionContext} without a person, the given
-	 * {@link #systemContextId(Class) context id} and {@link ThreadContext#isSecurityUnchecked()
-	 * unchecked security}. It is established in any case: If no interaction is active, a new
-	 * interaction is created for the job. Otherwise, the {@link SubSessionContext} of the current
-	 * interaction becomes the system context for the job, keeping its {@link SessionContext}. After
-	 * the job, the previous state is restored.
-	 * </p>
-	 *
-	 * @param caller
-	 *        Class to create the {@link #systemContextId(Class) context id} of the system context
-	 *        from.
-	 * @param job
-	 *        Callback to execute
-	 * @return The result of the given job.
-	 */
-	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemContext(Class<?> caller,
-			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return getManager().inSystemContextInternal(systemContextId(caller), job);
-	}
-
-	/**
-	 * Implementation of {@link #inSystemContext(Class, InContext)}.
+	 * Implementation of {@link ThreadContext#inSystemContext(Class, InContext)}.
 	 *
 	 * @param contextId
 	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
@@ -388,7 +300,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	}
 
 	/**
-	 * Implementation of {@link #inSystemContext(Class, ComputationEx2)}.
+	 * Implementation of {@link ThreadContext#inSystemContext(Class, ComputationEx2)}.
 	 *
 	 * @param contextId
 	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
@@ -644,6 +556,21 @@ public abstract class ThreadContextManager extends ManagedClass {
 	@FrameworkInternal
 	public static String systemContextId(Class<?> caller) {
 		return SessionContext.SYSTEM_ID_PREFIX + caller.getName();
+	}
+
+	/**
+	 * Creates the context id for a {@link SubSessionContext} when the system executes some
+	 * operations on behalf of a named instance of the given caller class.
+	 *
+	 * @param caller
+	 *        Class that sets the context id.
+	 * @param name
+	 *        Name of the instance of the caller class, e.g. the name of a task, appended to the
+	 *        {@link #systemContextId(Class) context id of the caller class}.
+	 */
+	@FrameworkInternal
+	public static String systemContextId(Class<?> caller, String name) {
+		return systemContextId(caller) + "-" + name;
 	}
 
 	/**

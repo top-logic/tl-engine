@@ -20,7 +20,7 @@ import com.top_logic.basic.XMLProperties.XMLPropertiesConfig;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.module.ModuleException;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.Transaction;
@@ -68,7 +68,7 @@ public class TestModelConfigurationChange extends BasicTestCase {
 		XMLProperties.restartXMLProperties(newConfig);
 
 		// Re-test the model, create new interaction, since the re-boot has dropped the current one.
-		ThreadContextManager.inSystemInteraction(TestModelConfigurationChange.class, () -> {
+		ThreadContext.inSystemContext(TestModelConfigurationChange.class, () -> {
 			TLModule module = DynamicModelService.getInstance().getModel().getModule("TestModelConfigurationChange");
 
 			TLClass A = (TLClass) module.getType("A");

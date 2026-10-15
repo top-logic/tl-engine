@@ -150,18 +150,18 @@ public class TestTransactions extends BasicTestCase {
 	/** Test creation and committing of KnowledgeAssociations (Version 1) */
 	public void testCreateKA() throws Exception {
         KnowledgeBase   kb   = KBSetup.getKnowledgeBase();
-        ThreadContext.pushSuperUser();
-        try {
-            setupTriangle();
-            assertTrue(kb.commit());
-            // Check all the dependencies after commit
-            checkTriangle();
-    	}
-        finally {
-            tearDownTriangle();
-            kb.commit();
-            ThreadContext.popSuperUser();
-        }
+		ThreadContext.uncheckedSecurity(() -> {
+			try {
+				setupTriangle();
+				assertTrue(kb.commit());
+				// Check all the dependencies after commit
+				checkTriangle();
+			} finally {
+				tearDownTriangle();
+				kb.commit();
+			}
+			return null;
+		});
 	}
 
 

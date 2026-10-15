@@ -546,6 +546,9 @@ The ~2000 other removed lines in the diff are the UTF-8 re-encoding of `_de` bun
 | `MetaElementUtil.getAllInstancesOf(TLClass)` | `getAllInstancesOf(TLClass, Class<T>)` / `AttributeOperations.allDirectInstances` | #29092 |
 | `ListStorage.listConfig(...)`, `SetStorage.setConfig(...)`, `SingletonLinkStorage.singletonLinkConfig(...)` | trailing `boolean unversioned` (`false`) | #29092 |
 | `DiffVisitor` implementations | `CreateRole`/`DeleteRole` cases gone; `UpdateDeletionPolicy`/`UpdateHistoryType` added | #29221, #29361 |
+| `ThreadContextManager.inSystemInteraction(Class, job)`, `ThreadContextManager.inInteraction(String, job)` | `ThreadContext.inSystemContext(Class, job)` | #29798 |
+| `ThreadContext.pushSuperUser()` / `popSuperUser()` / `resetSuperUser()` | `ThreadContext.uncheckedSecurity(job)` (keeps the person), or `ThreadContext.inSystemContext(Class, job)` (no person) | #29798 |
+| `TLContextManager.inRootPersonContext(job)` | `ThreadContext.inSystemContext(Class, job)`, or `TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), job)` | #29798 |
 
 Deprecations are almost absent in the range (only `Environment.DEVELOPER_MODE` and `isJarFile()`):
 breaking changes were made by removal, so compile the app (including tests, see
@@ -574,6 +577,12 @@ breaking changes were made by removal, so compile the app (including tests, see
 - `Utils.isEmpty(StructuredText)` counts empty HTML as empty (#29195); `DBType.fromLiteralValue`
   maps `Float`/`Integer` to `FLOAT`/`INT`; `ErrorHandlingHelper` logs only `SYSTEM_FAILURE` as ERROR.
 - The session locale is no longer fixed at login (#29525): do not cache resolved `ResKey`s in shared objects.
+- `ThreadContext.inSystemContext(...)` and `TLContextManager.inPersonContext(...)` take effect also
+  inside a running interaction (#29798): the identity of the caller's sub-session is switched for the
+  job and restored afterwards. A job must therefore not log in or set a person meant to outlive it;
+  look up the account inside the job, return it, and continue outside. Setting a person on the
+  current context does not switch the security checks on or off: access is unchecked only in a
+  system context or within `ThreadContext.uncheckedSecurity(...)`.
 
 ### 6.3 TL-Script semantics
 

@@ -22,7 +22,6 @@ import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.DCMetaData;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.util.TLContext;
-import com.top_logic.util.sched.Scheduler;
 
 /**
  * After an Upload the given Documents can be sheduled for an OCR.
@@ -211,42 +210,35 @@ public abstract class PDFUploadBatch extends BatchImpl {
      * @return the created batch
      */
     public static synchronized PDFUploadBatch addUpload(Document aDocument, String aPersonName, boolean startBatch) {
-        PDFUploadBatch theBatch = null;
-        
-        try {
-            ThreadContext.pushSuperUser();
-            TLContext ocrContext; 
-            if (current != null && aPersonName.equals(current.ocrContext.getCurrentUserName())) {
-                ocrContext = current.ocrContext;
-            }
-            else { // must create new Context 
+		return ThreadContext.uncheckedSecurity(() -> {
+			PDFUploadBatch theBatch = null;
+			TLContext ocrContext;
+			if (current != null && aPersonName.equals(current.ocrContext.getCurrentUserName())) {
+				ocrContext = current.ocrContext;
+			} else { // must create new Context
 				ocrContext = null;
-            }
-    
-            DataAccessProxy theDap = aDocument.getDAP();
-            if (theDap.isRepository()) {
+			}
+
+			DataAccessProxy theDap = aDocument.getDAP();
+			if (theDap.isRepository()) {
 				if (!theDap.lock()) // Lock in repository with correct context
 					throw new DataObjectException("Cannot lock '" + theDap + "' for PDF Upload");
-            }
-            boolean start = current == null || uploads.isEmpty() 
+			}
+			boolean start = current == null || uploads.isEmpty()
 				|| null == ocrContext; // must start with a different context.
-            uploads.addLast(aDocument);
-            if (start) {
+			uploads.addLast(aDocument);
+			if (start) {
 				if (ocrContext != null) {
 					theBatch = new InContextPDFUploadBatch(ocrContext);
 				} else {
 					theBatch = new InPersonPDFUploadBatch(aPersonName);
 				}
-            	if (startBatch) {
-            		Scheduler r = Scheduler.getSchedulerInstance();
+				if (startBatch) {
 					SchedulerService.getInstance().execute(theBatch);
-            	}
-            }
-        } finally {
-            ThreadContext.popSuperUser();
-        }
-        
-    	return theBatch;
+				}
+			}
+			return theBatch;
+		});
     }
     
     /** 

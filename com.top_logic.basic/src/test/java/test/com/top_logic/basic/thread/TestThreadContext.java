@@ -8,7 +8,6 @@ package test.com.top_logic.basic.thread;
 
 import static test.com.top_logic.basic.BasicTestCase.*;
 
-import java.util.EmptyStackException;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -258,35 +257,18 @@ public class TestThreadContext extends TestCase {
 		return userContext;
 	}
 
-    /** 
-     * Test the SupeUrser methods 
-     */
-    public void testSuperUser () throws Exception {
-       
-        assertFalse(ThreadContext.isAdmin());
-        ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isAdmin());
-        assertTrue(ThreadContext.isSecurityUnchecked());
-        ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isAdmin());
-        ThreadContext.resetSuperUser();
-        assertFalse(ThreadContext.isAdmin());
-        try {
-        	ThreadContext.popSuperUser();
-        	fail("Expected EmptyStackException");
-        } catch (EmptyStackException expected) { /* expected */ }
-            
-        assertFalse(ThreadContext.isAdmin());
-        ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isAdmin());
-        ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isAdmin());
-        ThreadContext.popSuperUser();
-        assertTrue (ThreadContext.isAdmin());
-        ThreadContext.popSuperUser();
-        assertFalse(ThreadContext.isAdmin());
-        assertFalse(ThreadContext.isSecurityUnchecked());
-    }
+	/**
+	 * {@link ThreadContext#isAdmin()} holds while the security is unchecked.
+	 */
+	public void testAdminWhileUnchecked() {
+		assertFalse(ThreadContext.isAdmin());
+		ThreadContext.uncheckedSecurity(() -> {
+			assertTrue(ThreadContext.isAdmin());
+			ThreadContext.withSecurityUnchecked(false, () -> assertFalse(ThreadContext.isAdmin()));
+			assertTrue(ThreadContext.isAdmin());
+		});
+		assertFalse(ThreadContext.isAdmin());
+	}
 
     /** Inner class implementing ThreadContextListener */
 	static class TestedListener implements UnboundListener {

@@ -20,6 +20,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -107,7 +108,7 @@ public class TestCompactCells extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestCompactCells.class, () -> {
+		ThreadContext.<Void, Throwable, RuntimeException> inSystemContext(TestCompactCells.class, () -> {
 			super.runTest();
 			return null;
 		});

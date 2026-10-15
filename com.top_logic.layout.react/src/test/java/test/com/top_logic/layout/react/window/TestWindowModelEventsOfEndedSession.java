@@ -22,6 +22,7 @@ import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -31,7 +32,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelChangeEvent;
-import com.top_logic.util.TLContextManager;
 
 /**
  * Tests that {@link ReactWindowRegistry#synthesizeModelEvents(String)} delivers model events only
@@ -131,7 +131,7 @@ public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
 		// Keep the session context of the test thread.
-		return TLContextManager.inSystemInteraction(TestWindowModelEventsOfEndedSession.class,
+		return ThreadContext.inSystemContext(TestWindowModelEventsOfEndedSession.class,
 			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user));
 	}
 

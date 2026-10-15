@@ -107,7 +107,7 @@ public class TLContextManager extends ThreadContextManager {
 	 *        Callback to execute.
 	 * @return The result of the given job.
 	 * 
-	 * @see ThreadContextManager#inSystemContext(Class, ComputationEx2)
+	 * @see ThreadContext#inSystemContext(Class, ComputationEx2)
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inPersonContext(Person p,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {

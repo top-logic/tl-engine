@@ -157,7 +157,7 @@ public class BasicTestCase extends TestCase implements InContext {
     @Override
 	public void runBare() throws Throwable {
 		try {
-			ThreadContextManager.inSystemContext(getClass(), this);
+			ThreadContext.inSystemContext(getClass(), this);
 		} catch (WrappedThrowable ex) {
 			throw ex.getCause();
 		}
@@ -1532,7 +1532,7 @@ public class BasicTestCase extends TestCase implements InContext {
 			@Override
 			public void run() {
 				super.run();
-				ThreadContextManager.inSystemContext(testClass, new InContext() {
+				ThreadContext.inSystemContext(testClass, new InContext() {
 
 					@Override
 					public void inContext() {
@@ -1683,7 +1683,7 @@ public class BasicTestCase extends TestCase implements InContext {
 				if (context != null) {
 					ThreadContextManager.inContext(context, job);
 				} else {
-					ThreadContextManager.inSystemContext(testClass, job);
+					ThreadContext.inSystemContext(testClass, job);
 				}
 			}
     	};

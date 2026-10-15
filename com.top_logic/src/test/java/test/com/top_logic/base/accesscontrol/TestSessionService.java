@@ -38,7 +38,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.util.TLContextManager;
 
 
 /**
@@ -81,8 +80,7 @@ public class TestSessionService extends BasicTestCase {
 
 		HttpServletRequest servletRequest = ic.getRequest();
 
-        ThreadContext.pushSuperUser();
-        try {
+		ThreadContext.uncheckedSecurity(() -> {
 			HttpServletResponse response = ic.getResponse();
 			SessionService myService;
 			LoginCredentials login =
@@ -114,9 +112,8 @@ public class TestSessionService extends BasicTestCase {
     		
 			final Collection<String> sessionIDsAfterLogout = myService.getSessionIDs();
 			assertTrue("expected there is a no session when session was invalided", sessionIDsAfterLogout.isEmpty());
-        } finally {
-            ThreadContext.popSuperUser();
-        }
+			return null;
+		});
     }
 
 	/**
@@ -226,7 +223,7 @@ public class TestSessionService extends BasicTestCase {
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
 		// Keep the session context of the test thread.
-		return TLContextManager.inSystemInteraction(TestSessionService.class,
+		return ThreadContext.inSystemContext(TestSessionService.class,
 			() -> {
 				return SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user);
 			});

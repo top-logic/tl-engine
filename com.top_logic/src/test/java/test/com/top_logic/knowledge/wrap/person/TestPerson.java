@@ -263,9 +263,7 @@ public class TestPerson extends BasicTestCase {
         KnowledgeBase kBase = KBSetup.getKnowledgeBase ();
         PersonManager thePM = PersonManager.getManager();
         
-        ThreadContext.pushSuperUser();
-        try
-        {
+		ThreadContext.uncheckedSecurity(() -> {
 			KnowledgeObject thePersonKO =
 				kBase.getKnowledgeObject("Person", KBUtils.getWrappedObjectName(TestPersonSetup.getTestPerson()));
             Person thePerson  = thePersonKO.getWrapper();
@@ -279,10 +277,7 @@ public class TestPerson extends BasicTestCase {
             assertEquals("The wrappers are not the same.", thePerson, thePerson2);
             // Person is god
 			assertEquals(thePerson.getName(), TestPersonSetup.USER_ID);
-        }
-        finally {
-            ThreadContext.popSuperUser();   
-        }        
+		});
     }
     
 	/**

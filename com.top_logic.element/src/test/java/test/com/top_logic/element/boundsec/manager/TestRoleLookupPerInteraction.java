@@ -24,7 +24,6 @@ import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.LoggingDataSourceProxy;
 import com.top_logic.basic.sql.LoggingDataSourceProxy.StatementAnalyzer;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -364,7 +363,7 @@ public class TestRoleLookupPerInteraction extends BasicTestCase {
 	}
 
 	private static void inInteraction(Runnable check) {
-		ThreadContextManager.inInteraction(TestRoleLookupPerInteraction.class.getName(), check::run);
+		ThreadContext.inSystemContext(TestRoleLookupPerInteraction.class, check::run);
 	}
 
 	private static void inTransaction(Runnable modification) {

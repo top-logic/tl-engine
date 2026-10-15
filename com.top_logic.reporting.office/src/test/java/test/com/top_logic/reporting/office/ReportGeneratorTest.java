@@ -90,9 +90,14 @@ public class ReportGeneratorTest extends BasicTestCase {
     }
 
     public void testGetReportResult() throws Exception {
+		ThreadContext.uncheckedSecurity(() -> {
+			checkReportResult();
+			return null;
+		});
+    }
+
+	private void checkReportResult() throws Exception {
 		BinaryContent resultFile = null;
-        try {
-            ThreadContext.pushSuperUser();
             Map<String, ?> env = getEnvironment();
             Person thePerson = (Person) env.get("person");
 			UserInterface theUser = thePerson.getUser();
@@ -154,10 +159,6 @@ public class ReportGeneratorTest extends BasicTestCase {
                 fail("unable to parse powerpointfile" + resultFile.toString());
             }
 
-        }
-        finally {
-            ThreadContext.popSuperUser();
-        }
     }
 
     private Map<String, ?> getEnvironment() throws Exception {

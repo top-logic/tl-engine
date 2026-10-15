@@ -141,14 +141,13 @@ public class TestSecurityCoverageDirectRoleAssignment extends BasicTestCase {
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.pushSuperUser();
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
-			.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			modification.run();
-			tx.commit();
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		ThreadContext.uncheckedSecurity(() -> {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				modification.run();
+				tx.commit();
+			}
+		});
 	}
 
 	/** Return the suite of tests to perform. */

@@ -248,13 +248,12 @@ public class TestAccessParentCheck extends BasicTestCase {
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.pushSuperUser();
-		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			modification.run();
-			tx.commit();
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		ThreadContext.uncheckedSecurity(() -> {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				modification.run();
+				tx.commit();
+			}
+		});
 	}
 
 	/** Return the suite of tests to perform. */

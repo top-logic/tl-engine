@@ -515,6 +515,7 @@ public class SubagentJobRegistry {
 
 	private void run(Pending pending) {
 		SubagentJob job = pending.job();
+		boolean released = false;
 		try {
 			job.markRunning();
 			notifyStarted(job);
@@ -533,21 +534,34 @@ public class SubagentJobRegistry {
 			// Before the job reads as ended: a message sent from then on is refused, and one that arrived
 			// when no turn was left to read it is named in the result, not lost.
 			job.setUnreadMessages(job.inbox().closeAndDrain());
+			// The slot is given back before the job reads as ended: the lead that the end wakes may
+			// let go of this registry at once, and a registry that still counts the job as started is
+			// not idle and stays behind (TestSubagentOutsideChat, #920).
+			release();
+			released = true;
 			job.markTerminal(terminal, result);
 			notifyFinished(job);
 			signalCompletion();
 		} finally {
-			ended();
+			if (!released) {
+				release();
+			}
+			dispatch();
 		}
 	}
 
 	/** A slot of this registry and of the installation is free again; start what waits. */
 	private void ended() {
+		release();
+		dispatch();
+	}
+
+	/** Gives the slot of a job that no longer runs back to this registry and to the installation. */
+	private void release() {
 		synchronized (this) {
 			_started--;
 		}
 		SubagentSlots.release();
-		dispatch();
 	}
 
 	private void endNotStarted(Pending pending) {

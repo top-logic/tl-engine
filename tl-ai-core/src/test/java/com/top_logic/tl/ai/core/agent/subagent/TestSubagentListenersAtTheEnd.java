@@ -82,6 +82,37 @@ public class TestSubagentListenersAtTheEnd extends TestCase {
 		assertEquals(SubagentJobStatus.RUNNING, job.status());
 	}
 
+	/**
+	 * When a subagent's end is told, its slot is free already (#920).
+	 *
+	 * <p>
+	 * The end wakes the lead, and a lead outside a chat lets go of its registry as soon as its run
+	 * ends. A registry that still counted the job as started then was not idle and stayed behind -
+	 * whenever the lead was faster than the subagent's thread.
+	 * </p>
+	 */
+	public void testTheSlotIsFreeWhenTheEndIsTold() throws Exception {
+		SubagentJobRegistry registry = new SubagentJobRegistry(1);
+		List<Boolean> slotFree = new CopyOnWriteArrayList<>();
+		CountDownLatch told = new CountDownLatch(1);
+		registry.addListener(new SubagentJobRegistry.Listener() {
+			@Override
+			public void finished(SubagentJob job) {
+				slotFree.add(Boolean.valueOf(registry.canStart()));
+				told.countDown();
+			}
+		});
+		try {
+			SubagentJob job = registry.register("worker", "task", new CancellationToken());
+			registry.spawn(job, j -> new SubagentResult("done", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE));
+
+			assertTrue("The end was not told.", told.await(5, TimeUnit.SECONDS));
+			assertEquals("The slot of an ended job is free when its end is told.", List.of(Boolean.TRUE), slotFree);
+		} finally {
+			registry.cancelAll();
+		}
+	}
+
 	private SubagentJob startBlocking() throws InterruptedException {
 		SubagentJob job = _registry.register("worker", "task", new CancellationToken());
 		CountDownLatch running = new CountDownLatch(1);

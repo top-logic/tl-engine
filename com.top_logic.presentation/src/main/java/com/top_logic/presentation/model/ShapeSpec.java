@@ -13,9 +13,9 @@ package com.top_logic.presentation.model;
  * @param geometry
  *        The outline geometry.
  * @param fill
- *        The fill, <code>null</code> for the default fill.
+ *        The fill, <code>null</code> for no fill.
  * @param line
- *        The outline, <code>null</code> for the default outline.
+ *        The outline, <code>null</code> for no outline.
  * @param shadow
  *        The outer shadow, <code>null</code> for no shadow.
  * @param text

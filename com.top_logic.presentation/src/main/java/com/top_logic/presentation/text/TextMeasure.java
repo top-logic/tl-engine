@@ -24,11 +24,13 @@ import org.apache.poi.sl.usermodel.TextShape;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
-import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
-import org.apache.poi.xslf.usermodel.XSLFTextRun;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties;
-import org.openxmlformats.schemas.drawingml.x2006.main.STTextCapsType;
+
+import com.top_logic.presentation.export.DrawingWriter;
+import com.top_logic.presentation.export.TextWriter;
+import com.top_logic.presentation.model.ParagraphSpec;
+import com.top_logic.presentation.model.RunStyle;
+import com.top_logic.presentation.model.TextSpec;
 
 /**
  * Measures text as it is laid out in a PowerPoint text box.
@@ -81,6 +83,13 @@ public final class TextMeasure {
 	 * The largest font size in points a PowerPoint text can have.
 	 */
 	public static final double MAX_FONT_SIZE = 4000;
+
+	private static final TextWriter TEXT_WRITER = new TextWriter(DrawingWriter.WITHOUT_ROLES);
+
+	/**
+	 * The path of the text in error messages.
+	 */
+	private static final String TEXT = "text";
 
 	private static final ThreadLocal<XSLFSlide> SCRATCH_SLIDE = ThreadLocal.withInitial(TextMeasure::createSlide);
 
@@ -220,35 +229,14 @@ public final class TextMeasure {
 	 */
 	public static void setText(XSLFTextShape shape, String text, String fontFamily, double fontSize, boolean bold,
 			boolean italic, double spacing, boolean caps) {
-		shape.clearText();
+		List<ParagraphSpec> paragraphs = new ArrayList<>();
 		for (String line : lines(text)) {
-			XSLFTextParagraph paragraph = shape.addNewTextParagraph();
-
-			XSLFTextRun run = paragraph.addNewTextRun();
-			run.setText(line);
-			run.setFontFamily(fontFamily);
-			run.setFontSize(Double.valueOf(fontSize));
-			run.setBold(bold);
-			run.setItalic(italic);
-			if (spacing != 0) {
-				run.setCharacterSpacing(spacing);
-			}
-			if (caps) {
-				run.getRPr(true).setCap(STTextCapsType.ALL);
-			}
-
-			CTTextCharacterProperties end = paragraph.getXmlObject().addNewEndParaRPr();
-			end.setSz((int) Math.round(fontSize * 100));
-			end.setB(bold);
-			end.setI(italic);
-			if (spacing != 0) {
-				end.setSpc((int) Math.round(spacing * 100));
-			}
-			if (caps) {
-				end.setCap(STTextCapsType.ALL);
-			}
-			end.addNewLatin().setTypeface(fontFamily);
+			paragraphs.add(ParagraphSpec.plain(line));
 		}
+		RunStyle style = new RunStyle(Boolean.valueOf(bold), Boolean.valueOf(italic), null,
+			caps ? Boolean.TRUE : null, Double.valueOf(fontSize), null, fontFamily,
+			spacing != 0 ? Double.valueOf(spacing) : null);
+		TEXT_WRITER.write(shape, new TextSpec(paragraphs, style, null, null, null, null, null), TEXT);
 	}
 
 	/**

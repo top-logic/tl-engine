@@ -63,4 +63,21 @@ public record PlaceholderInfo(String type, long idx, String name, Rectangle2D bo
 		return ph == null ? null : TemplateAnalyzer.placeholderType(ph);
 	}
 
+	/**
+	 * The placeholder definition of the given shape.
+	 *
+	 * @return The <code>ph</code> element of the shape, or <code>null</code> if the shape is no
+	 *         placeholder.
+	 */
+	public static CTPlaceholder placeholderOf(XSLFShape shape) {
+		return TemplateAnalyzer.placeholder(shape);
+	}
+
+	/**
+	 * The placeholder index of the given placeholder definition, see {@link #idx()}.
+	 */
+	public static long idxOf(CTPlaceholder ph) {
+		return ph.isSetIdx() ? ph.getIdx() : 0;
+	}
+
 }

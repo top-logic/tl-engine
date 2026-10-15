@@ -113,6 +113,13 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
+	 * The shape shows only what is described: without <code>fill</code> it is not filled, without
+	 * <code>line</code> it has no outline, and its text has the text color of the template unless
+	 * <code>color</code> is given. The text is centered horizontally and vertically unless
+	 * <code>align</code> or <code>anchor</code> say otherwise.
+	 * </p>
+	 *
+	 * <p>
 	 * The formatting arguments (font, size, color, ...) apply to the whole text, unless a
 	 * paragraph or text run defines its own formatting.
 	 * </p>
@@ -130,10 +137,12 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param height
 	 *        The height.
 	 * @param fill
-	 *        The fill: a color, <code>none</code>, or a gradient (<code>pptGradient()</code>).
+	 *        The fill: a color, <code>none</code>, or a gradient (<code>pptGradient()</code>). If
+	 *        not given, the shape is not filled.
 	 * @param line
 	 *        The outline: a color, <code>none</code>, or an outline description
-	 *        (<code>pptLine()</code>).
+	 *        (<code>pptLine()</code>), drawn in the text color <code>tx1</code> if it gives no
+	 *        color. If not given, the shape has no outline.
 	 * @param shadow
 	 *        The shadow: <code>true</code> for the default shadow or a shadow description
 	 *        (<code>pptShadow()</code>).

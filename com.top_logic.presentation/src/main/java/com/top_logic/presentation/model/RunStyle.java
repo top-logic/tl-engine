@@ -45,4 +45,22 @@ public record RunStyle(Boolean bold, Boolean italic, Boolean underline, Boolean 
 		return equals(INHERIT);
 	}
 
+	/**
+	 * This style with each property that is not given taken from the given style.
+	 *
+	 * @param parent
+	 *        The style to inherit from.
+	 */
+	public RunStyle inheritFrom(RunStyle parent) {
+		return new RunStyle(
+			bold != null ? bold : parent.bold,
+			italic != null ? italic : parent.italic,
+			underline != null ? underline : parent.underline,
+			caps != null ? caps : parent.caps,
+			size != null ? size : parent.size,
+			color != null ? color : parent.color,
+			font != null ? font : parent.font,
+			characterSpacing != null ? characterSpacing : parent.characterSpacing);
+	}
+
 }

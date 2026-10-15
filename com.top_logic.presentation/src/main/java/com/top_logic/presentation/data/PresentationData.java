@@ -314,6 +314,21 @@ public final class PresentationData {
 	/** Key of the way an image is fitted into its bounds. */
 	public static final String FIT = "fit";
 
+	/** Key of the template profile of a presentation. */
+	public static final String PROFILE = "profile";
+
+	/** Key of the properties of the individual slide layouts in a template profile. */
+	public static final String SLIDE_LAYOUTS = "slideLayouts";
+
+	/** Key of the footer of a presentation or of the footer placeholder of a slide layout. */
+	public static final String FOOTER = "footer";
+
+	/** Key of the area of a slide layout that takes the content elements of a slide. */
+	public static final String CONTENT_AREA = "contentArea";
+
+	/** Key of the colors of the color roles in a template profile. */
+	public static final String ROLES = "roles";
+
 	/** {@link #TYPE} of a slide. */
 	public static final String TYPE_SLIDE = "slide";
 
@@ -380,6 +395,43 @@ public final class PresentationData {
 		List<Object> result = new ArrayList<>(elements.size());
 		for (T element : elements) {
 			result.add(toData.apply(element));
+		}
+		return result;
+	}
+
+	/**
+	 * Merges the given dictionaries.
+	 *
+	 * <p>
+	 * The result contains all entries of both dictionaries. For a key in both dictionaries, the
+	 * value of the override wins, unless both values are dictionaries, which are merged in the same
+	 * way. Neither dictionary is modified.
+	 * </p>
+	 *
+	 * @param base
+	 *        The dictionary with the values to keep unless overridden.
+	 * @param override
+	 *        The dictionary with the values to take precedence, <code>null</code> for none.
+	 * @return The merged dictionary in the key order of the base, followed by the keys only in the
+	 *         override.
+	 */
+	public static Map<String, Object> merge(Map<?, ?> base, Map<?, ?> override) {
+		Map<String, Object> result = map();
+		for (Map.Entry<?, ?> entry : base.entrySet()) {
+			result.put(String.valueOf(entry.getKey()), entry.getValue());
+		}
+		if (override == null) {
+			return result;
+		}
+		for (Map.Entry<?, ?> entry : override.entrySet()) {
+			String key = String.valueOf(entry.getKey());
+			Object value = entry.getValue();
+			Object baseValue = result.get(key);
+			if (baseValue instanceof Map<?, ?> baseMap && value instanceof Map<?, ?> overrideMap) {
+				result.put(key, merge(baseMap, overrideMap));
+			} else {
+				result.put(key, value);
+			}
 		}
 		return result;
 	}

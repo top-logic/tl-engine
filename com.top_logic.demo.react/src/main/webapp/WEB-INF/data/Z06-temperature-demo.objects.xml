@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!-- Sites of the temperature demo in different units. The temperatures are given in degrees Celsius, the unit they are stored in. -->
+	<object id="site-1"
+		type="demo.temperature:DemoSite"
+	>
+		<attribute name="name"
+			value="Stuttgart"
+		/>
+		<attribute name="temperatureUnit">
+			<model-ref name="demo.temperature:TemperatureUnit#CELSIUS"/>
+		</attribute>
+		<attribute name="sensors">
+			<object id="sensor-1"
+				type="demo.temperature:DemoSensor"
+			>
+				<attribute name="name"
+					value="Cold store"
+				/>
+				<attribute name="minTemperature"
+					value="-25"
+				/>
+				<attribute name="maxTemperature"
+					value="-18"
+				/>
+			</object>
+			<object id="sensor-2"
+				type="demo.temperature:DemoSensor"
+			>
+				<attribute name="name"
+					value="Office"
+				/>
+				<attribute name="minTemperature"
+					value="19"
+				/>
+				<attribute name="maxTemperature"
+					value="24.5"
+				/>
+			</object>
+		</attribute>
+	</object>
+	<object id="site-2"
+		type="demo.temperature:DemoSite"
+	>
+		<attribute name="name"
+			value="Houston"
+		/>
+		<attribute name="temperatureUnit">
+			<model-ref name="demo.temperature:TemperatureUnit#FAHRENHEIT"/>
+		</attribute>
+		<attribute name="sensors">
+			<object id="sensor-3"
+				type="demo.temperature:DemoSensor"
+			>
+				<attribute name="name"
+					value="Server room"
+				/>
+				<attribute name="minTemperature"
+					value="18"
+				/>
+				<attribute name="maxTemperature"
+					value="27"
+				/>
+			</object>
+			<object id="sensor-4"
+				type="demo.temperature:DemoSensor"
+			>
+				<attribute name="name"
+					value="Loading dock"
+				/>
+				<attribute name="minTemperature"
+					value="5"
+				/>
+				<attribute name="maxTemperature"
+					value="40"
+				/>
+			</object>
+		</attribute>
+	</object>
+	<object id="site-3"
+		type="demo.temperature:DemoSite"
+	>
+		<attribute name="name"
+			value="Cryo lab"
+		/>
+		<attribute name="temperatureUnit">
+			<model-ref name="demo.temperature:TemperatureUnit#KELVIN"/>
+		</attribute>
+		<attribute name="sensors">
+			<object id="sensor-5"
+				type="demo.temperature:DemoSensor"
+			>
+				<attribute name="name"
+					value="Dewar"
+				/>
+				<attribute name="minTemperature"
+					value="-269"
+				/>
+				<attribute name="maxTemperature"
+					value="-196"
+				/>
+			</object>
+		</attribute>
+	</object>
+</objects>

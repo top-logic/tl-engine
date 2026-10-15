@@ -62,6 +62,66 @@ public class AnnotatedToolsTest extends TestCase {
             result.text().startsWith("ok:Bob:1"));
     }
 
+    /** Tools that take a map and a list of records, the shapes a model stringifies. */
+    public static class FieldTools {
+
+        @ToolMethod(description = "Set fields", marking = AnswerMarking.NONE)
+        public String set(@P("the fields") Map<String, Object> fields) {
+            return "fields:" + fields.get("definition");
+        }
+
+        @ToolMethod(description = "Submit orders", marking = AnswerMarking.NONE)
+        public String orders(@P("the orders") List<Order> orders) {
+            return "orders:" + orders.get(0).customer();
+        }
+    }
+
+    /**
+     * A stringified value whose German quote is closed with a plain quotation mark is read with
+     * the typographic closing mark: the JSON is broken only by that mark.
+     */
+    public void testAQuoteClosedByAPlainMarkIsRead() {
+        Tool tool = AnnotatedTools.from(new FieldTools()).get(0);
+        String broken = "{\"definition\": \"Der \u201EBericht\" kommt montags.\", \"kind\": \"INFO\"}";
+
+        ToolResult result = tool.execute(Map.of("fields", broken), null);
+
+        assertEquals("fields:Der \u201EBericht\u201C kommt montags.", result.text());
+    }
+
+    /** The same inside a list of records, and for an English opening mark. */
+    public void testAQuoteInAListOfRecordsIsRead() {
+        Tool tool = AnnotatedTools.from(new FieldTools()).get(1);
+        String broken = "[{\"customer\": \"The \u201Cbig\" shop\", \"items\": []}]";
+
+        ToolResult result = tool.execute(Map.of("orders", broken), null);
+
+        assertEquals("orders:The \u201Cbig\u201D shop", result.text());
+    }
+
+    /** A text that is no JSON for another reason says where it breaks, not only its type. */
+    public void testATextThatIsNoJsonNamesTheFault() {
+        Tool tool = AnnotatedTools.from(new FieldTools()).get(0);
+
+        try {
+            tool.execute(Map.of("fields", "{\"definition\": \"x\" \"kind\": 1}"), null);
+            fail("A text that is no JSON was taken.");
+        } catch (ToolArgumentCoercionException ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().contains("no valid JSON: "));
+            assertTrue(ex.getMessage(), ex.getMessage().contains("column"));
+            assertTrue(ex.getMessage(), ex.getMessage().contains("not as a string"));
+        }
+    }
+
+    /** Valid JSON is read as it is: a plain mark that ends a string after an open quote stays. */
+    public void testValidJsonIsNotRepaired() {
+        Tool tool = AnnotatedTools.from(new FieldTools()).get(0);
+
+        ToolResult result = tool.execute(Map.of("fields", "{\"definition\": \"\u201Eopen\"}"), null);
+
+        assertEquals("fields:\u201Eopen", result.text());
+    }
+
     /** Proves each element in a {@code List<Record>} is coerced, not left as a raw Map. */
     public void testListRecordCoercionWithMultipleElements() {
         Map<String, Object> orderArg = Map.of(

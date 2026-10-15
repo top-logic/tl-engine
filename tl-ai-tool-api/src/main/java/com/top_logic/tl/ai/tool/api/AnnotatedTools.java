@@ -387,6 +387,15 @@ public final class AnnotatedTools {
 			// Already phrased for the model - a resolution that failed says why, and restating it as
 			// a type mismatch would replace the reason with a guess.
 			throw e;
+		} catch (NotJson e) {
+			// The model wrote the value as a text, and the text is no JSON either: the type of the
+			// value says nothing the model can act on, the place of the parse error does.
+			throw new ToolArgumentCoercionException(
+				"Parameter '" + paramName + "': expected " + targetType.getSimpleName()
+					+ " as a JSON value, got a text that is no valid JSON: " + e.getMessage()
+					+ ". Pass the value itself, not as a string. Inside a text, write a quotation mark as"
+					+ " \\\" or use typographic quotes on both sides.",
+				e);
 		} catch (IllegalArgumentException e) {
 			throw new ToolArgumentCoercionException(
 				"Parameter '" + paramName + "': expected " + targetType.getSimpleName()
@@ -554,7 +563,72 @@ public final class AnnotatedTools {
 		try {
 			return JsonTree.parseValue(json);
 		} catch (IOException e) {
-			throw new IllegalArgumentException("Failed to parse JSON string: " + e.getMessage(), e);
+			String repaired = closeTypographicQuotes(json);
+			if (!repaired.equals(json)) {
+				try {
+					return JsonTree.parseValue(repaired);
+				} catch (IOException ignored) {
+					// The fault is another one; the first message names it.
+				}
+			}
+			throw new NotJson(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * The given JSON text with every plain quotation mark that closes a typographic quote inside a
+	 * string replaced by the typographic closing mark.
+	 *
+	 * <p>
+	 * A model writing German puts quotes as {@code „Wort"}: the opening mark typographic, the
+	 * closing one the plain {@code "} - which ends the JSON string in the middle of the text. A
+	 * provider that cannot parse the arguments hands the whole value over as a string, and the call
+	 * failed with nothing the model could correct (22 calls of one evaluation run, every one of them
+	 * this fault). A plain mark after an open {@code „} or {@code “} inside a string is read as the
+	 * mark that closes it: {@code “} after {@code „}, {@code ”} after {@code “}. Used only when the
+	 * text does not parse as it is.
+	 * </p>
+	 */
+	static String closeTypographicQuotes(String json) {
+		StringBuilder result = new StringBuilder(json.length());
+		boolean inString = false;
+		boolean escaped = false;
+		char open = 0;
+		for (int i = 0; i < json.length(); i++) {
+			char c = json.charAt(i);
+			if (!inString) {
+				inString = c == '"';
+				result.append(c);
+				continue;
+			}
+			if (escaped) {
+				escaped = false;
+			} else if (c == '\\') {
+				escaped = true;
+			} else if (c == '\u201E') {
+				open = c;
+			} else if (c == '\u201C') {
+				open = open == '\u201E' ? 0 : c;
+			} else if (c == '\u201D') {
+				open = 0;
+			} else if (c == '"') {
+				if (open != 0) {
+					result.append(open == '\u201E' ? '\u201C' : '\u201D');
+					open = 0;
+					continue;
+				}
+				inString = false;
+			}
+			result.append(c);
+		}
+		return result.toString();
+	}
+
+	/** A text that is no JSON, where a parameter wants a JSON value. */
+	private static final class NotJson extends IllegalArgumentException {
+
+		NotJson(String message, Throwable cause) {
+			super(message, cause);
 		}
 	}
 

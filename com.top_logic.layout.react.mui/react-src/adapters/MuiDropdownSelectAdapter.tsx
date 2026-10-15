@@ -25,10 +25,12 @@ function sameOption(option: OptionDescriptor, value: OptionDescriptor): boolean 
  *
  * <p>The list opens on demand. While the options are not loaded (optionsLoaded), opening sends
  * `loadOptions` and the list shows MUI's loading state until the server's answer brings the
- * options. The options are filtered by the text typed, on the client, as TLDropdownSelect does; the
- * chosen options are left out of the list. Choosing sends `valueChanged` with the values of the
- * chosen options (see {@link useChoice}); a field choosing several (multiSelect) shows them as
- * chips, each with a button removing it, a new one appended at the end.</p>
+ * options. The options are filtered by the text typed, on the client, as TLDropdownSelect does. The
+ * list of a field choosing one option holds all options, MUI marking the chosen one; the list of a
+ * field choosing several (multiSelect) leaves the chosen options out. Choosing sends `valueChanged`
+ * with the values of the chosen options (see {@link useChoice}), choosing the chosen option again
+ * sends nothing; a field choosing several shows them as chips, each with a button removing it, a
+ * new one appended at the end.</p>
  *
  * <p>A field that is not mandatory offers MUI's clear button, which sends the empty choice; while
  * nothing is chosen, emptyOptionLabel is the placeholder. An option → its icon and label, a small
@@ -89,7 +91,7 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         onClose={() => setOpen(false)}
         loading={open && !optionsLoaded}
         onChange={handleChange}
-        filterSelectedOptions
+        filterSelectedOptions={multiSelect}
         disableClearable={state.mandatory === true}
         disabled={state.disabled === true}
         isOptionEqualToValue={sameOption}

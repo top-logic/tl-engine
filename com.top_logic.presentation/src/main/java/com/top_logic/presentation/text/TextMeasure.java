@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.poi.sl.draw.DrawFactory;
 import org.apache.poi.sl.draw.DrawTextFragment;
 import org.apache.poi.sl.draw.DrawTextParagraph;
 import org.apache.poi.sl.draw.DrawTextShape;
@@ -29,6 +28,7 @@ import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties;
+import org.openxmlformats.schemas.drawingml.x2006.main.STTextCapsType;
 
 /**
  * Measures text as it is laid out in a PowerPoint text box.
@@ -36,8 +36,9 @@ import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties
  * <p>
  * The measurement runs the text layout of Apache POI itself, the same code that breaks lines when
  * POI renders a slide into an image. Text measured here therefore takes the same number of lines
- * as the rendered text, as long as the rendering {@link Graphics2D} uses the
- * {@link #RENDERING_HINTS} (see {@link #applyRenderingHints(Graphics2D)}).
+ * as the rendered text, as long as the rendering {@link Graphics2D} is configured by
+ * {@link #applyRenderingHints(Graphics2D)}: It uses the {@link #RENDERING_HINTS} and lays out text
+ * through the {@link TextDrawFactory}, which applies the character spacing POI ignores.
  * </p>
  *
  * <p>
@@ -88,15 +89,18 @@ public final class TextMeasure {
 	}
 
 	/**
-	 * Sets the {@link #RENDERING_HINTS} to the given graphics.
+	 * Sets the {@link #RENDERING_HINTS} to the given graphics and installs the
+	 * {@link TextDrawFactory} as {@link Drawable#DRAW_FACTORY}.
 	 *
 	 * <p>
 	 * A slide rendered into a graphics configured this way breaks its text into lines as computed
-	 * by {@link #measure(TextShape)}.
+	 * by {@link #measure(TextShape)}. A caller installing its own draw factory afterwards must
+	 * derive it from {@link TextDrawFactory}.
 	 * </p>
 	 */
 	public static void applyRenderingHints(Graphics2D graphics) {
 		graphics.addRenderingHints(RENDERING_HINTS);
+		graphics.setRenderingHint(Drawable.DRAW_FACTORY, TextDrawFactory.INSTANCE);
 	}
 
 	/**
@@ -104,7 +108,7 @@ public final class TextMeasure {
 	 *
 	 * <p>
 	 * The text is laid out like in a text box without insets filled by
-	 * {@link #setText(XSLFTextShape, String, String, double, boolean, boolean)}.
+	 * {@link #setText(XSLFTextShape, String, String, double, boolean, boolean, double, boolean)}.
 	 * </p>
 	 *
 	 * @param text
@@ -117,13 +121,17 @@ public final class TextMeasure {
 	 *        Whether the text is set in bold face.
 	 * @param italic
 	 *        Whether the text is set in italics.
+	 * @param spacing
+	 *        The additional space between two characters in points, negative to condense the text.
+	 * @param caps
+	 *        Whether the text is shown in upper case letters.
 	 * @param width
 	 *        The width in points available for the text, or <code>null</code> if the text is not
 	 *        wrapped.
 	 * @return The extent of the laid out text.
 	 */
 	public static TextMetrics measure(String text, String fontFamily, double fontSize, boolean bold,
-			boolean italic, Double width) {
+			boolean italic, double spacing, boolean caps, Double width) {
 		if (!isValidFontSize(fontSize)) {
 			throw new IllegalArgumentException(
 				"Font size must be between " + MIN_FONT_SIZE + "pt and " + MAX_FONT_SIZE + "pt: " + fontSize);
@@ -138,7 +146,7 @@ public final class TextMeasure {
 			box.setInsets(new Insets2D(0, 0, 0, 0));
 			box.setWordWrap(true);
 			box.setAnchor(new Rectangle2D.Double(0, 0, width == null ? UNBOUNDED_WIDTH : width.doubleValue(), 0));
-			setText(box, text, fontFamily, fontSize, bold, italic);
+			setText(box, text, fontFamily, fontSize, bold, italic, spacing, caps);
 			return measure(box);
 		} finally {
 			slide.removeShape(box);
@@ -205,9 +213,13 @@ public final class TextMeasure {
 	 *        Whether the text is set in bold face.
 	 * @param italic
 	 *        Whether the text is set in italics.
+	 * @param spacing
+	 *        The additional space between two characters in points, negative to condense the text.
+	 * @param caps
+	 *        Whether the text is shown in upper case letters.
 	 */
 	public static void setText(XSLFTextShape shape, String text, String fontFamily, double fontSize, boolean bold,
-			boolean italic) {
+			boolean italic, double spacing, boolean caps) {
 		shape.clearText();
 		for (String line : lines(text)) {
 			XSLFTextParagraph paragraph = shape.addNewTextParagraph();
@@ -218,11 +230,23 @@ public final class TextMeasure {
 			run.setFontSize(Double.valueOf(fontSize));
 			run.setBold(bold);
 			run.setItalic(italic);
+			if (spacing != 0) {
+				run.setCharacterSpacing(spacing);
+			}
+			if (caps) {
+				run.getRPr(true).setCap(STTextCapsType.ALL);
+			}
 
 			CTTextCharacterProperties end = paragraph.getXmlObject().addNewEndParaRPr();
 			end.setSz((int) Math.round(fontSize * 100));
 			end.setB(bold);
 			end.setI(italic);
+			if (spacing != 0) {
+				end.setSpc((int) Math.round(spacing * 100));
+			}
+			if (caps) {
+				end.setCap(STTextCapsType.ALL);
+			}
 			end.addNewLatin().setTypeface(fontFamily);
 		}
 	}
@@ -283,9 +307,9 @@ public final class TextMeasure {
 	}
 
 	/**
-	 * {@link DrawFactory} recording the paragraphs it creates during the text layout.
+	 * {@link TextDrawFactory} recording the paragraphs it creates during the text layout.
 	 */
-	private static final class RecordingDrawFactory extends DrawFactory {
+	private static final class RecordingDrawFactory extends TextDrawFactory {
 
 		private final List<RecordingTextParagraph> _paragraphs = new ArrayList<>();
 
@@ -303,9 +327,9 @@ public final class TextMeasure {
 	}
 
 	/**
-	 * {@link DrawTextParagraph} giving access to the lines of its layout.
+	 * {@link SpacedTextParagraph} giving access to the lines of its layout.
 	 */
-	private static final class RecordingTextParagraph extends DrawTextParagraph {
+	private static final class RecordingTextParagraph extends SpacedTextParagraph {
 
 		RecordingTextParagraph(TextParagraph<?, ?, ?> paragraph) {
 			super(paragraph);

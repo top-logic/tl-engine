@@ -17,7 +17,6 @@ import junit.framework.Test;
 
 import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
-import org.apache.poi.sl.draw.DrawFactory;
 import org.apache.poi.sl.draw.DrawTextFragment;
 import org.apache.poi.sl.draw.DrawTextParagraph;
 import org.apache.poi.sl.draw.Drawable;
@@ -26,8 +25,11 @@ import org.apache.poi.sl.usermodel.TextParagraph;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
+import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 import com.top_logic.presentation.script.PptTextFunctions;
+import com.top_logic.presentation.text.SpacedTextParagraph;
+import com.top_logic.presentation.text.TextDrawFactory;
 import com.top_logic.presentation.text.TextMeasure;
 import com.top_logic.presentation.text.TextMetrics;
 import com.top_logic.util.error.TopLogicException;
@@ -76,7 +78,7 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 		double previousHeight = 0;
 		for (int lines = 1; lines <= 4; lines++) {
 			String text = String.join("\n", Collections.nCopies(lines, "Line"));
-			TextMetrics metrics = TextMeasure.measure(text, FONT, 12, false, false, null);
+			TextMetrics metrics = TextMeasure.measure(text, FONT, 12, false, false, 0, false, null);
 
 			assertEquals(lines, metrics.lines());
 			assertTrue(metrics.height() > previousHeight);
@@ -142,16 +144,82 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 		}
 	}
 
+	/**
+	 * Like {@link #testMatchesRendering()} for letter-spaced text in upper case letters, as used by
+	 * the titles of a template.
+	 */
+	public void testMatchesRenderingWithSpacing() throws Exception {
+		for (double boxWidth : new double[] { 120, 200, 333, 480 }) {
+			for (double spacing : new double[] { 3, -1 }) {
+				assertMatchesRendering(TEXT + "\nSecond paragraph.", boxWidth, 18, spacing, true);
+			}
+		}
+	}
+
+	public void testSpacing() throws Exception {
+		Map<?, ?> plain = measure("pptMeasureText('" + TEXT + "', size: 20)");
+		Map<?, ?> spaced = measure("pptMeasureText('" + TEXT + "', size: 20, spacing: 3)");
+		Map<?, ?> condensed = measure("pptMeasureText('" + TEXT + "', size: 20, spacing: -1)");
+
+		// Each character is followed by the additional space.
+		double expected = number(plain, PptTextFunctions.WIDTH) + 3 * (TEXT.length() - 1);
+		assertEquals(expected, number(spaced, PptTextFunctions.WIDTH), 3.5);
+		assertTrue(number(condensed, PptTextFunctions.WIDTH) < number(plain, PptTextFunctions.WIDTH));
+
+		Map<?, ?> plainNarrow = measure("pptMeasureText('" + TEXT + "', size: 20, width: 200)");
+		Map<?, ?> spacedNarrow = measure("pptMeasureText('" + TEXT + "', size: 20, width: 200, spacing: 3)");
+		assertTrue(number(spacedNarrow, PptTextFunctions.LINES) > number(plainNarrow, PptTextFunctions.LINES));
+	}
+
+	public void testCaps() throws Exception {
+		Map<?, ?> caps = measure("pptMeasureText('" + TEXT + "', size: 20, caps: true)");
+		Map<?, ?> upper = measure("pptMeasureText('" + TEXT.toUpperCase() + "', size: 20)");
+		Map<?, ?> lower = measure("pptMeasureText('" + TEXT + "', size: 20)");
+
+		assertEquals(number(upper, PptTextFunctions.WIDTH), number(caps, PptTextFunctions.WIDTH), 0.01);
+		assertTrue(number(caps, PptTextFunctions.WIDTH) > number(lower, PptTextFunctions.WIDTH));
+	}
+
+	/**
+	 * The character spacing a template defines for the title style of its master is applied.
+	 */
+	public void testInheritedSpacing() throws Exception {
+		try (XMLSlideShow slideShow = new XMLSlideShow(
+			getClass().getResourceAsStream("toplogic-template.pptx"))) {
+			XSLFSlide slide = slideShow.getSlides().get(8);
+			XSLFTextShape title = null;
+			for (var shape : slide.getShapes()) {
+				if (shape instanceof XSLFTextShape text && text.getText().toLowerCase().startsWith("agentensystem")) {
+					title = text;
+				}
+			}
+			assertNotNull(title);
+			assertEquals(3.0, title.getTextParagraphs().get(0).getTextRuns().get(0).getCharacterSpacing(), 0.01);
+
+			TextMetrics spaced = TextMeasure.measure(title);
+			// Explicitly no spacing, overriding the inherited one.
+			title.getTextParagraphs().get(0).getTextRuns().get(0).getRPr(true).setSpc(0);
+			TextMetrics plain = TextMeasure.measure(title);
+			assertTrue(spaced.width() + " <= " + plain.width(),
+				spaced.lines() > plain.lines() || spaced.width() > plain.width());
+		}
+	}
+
 	private void assertMatchesRendering(String text, double boxWidth, double fontSize) throws Exception {
+		assertMatchesRendering(text, boxWidth, fontSize, 0, false);
+	}
+
+	private void assertMatchesRendering(String text, double boxWidth, double fontSize, double spacing, boolean caps)
+			throws Exception {
 		try (XMLSlideShow slideShow = new XMLSlideShow()) {
 			XSLFSlide slide = slideShow.createSlide();
 			XSLFTextBox box = slide.createTextBox();
 			box.setAnchor(new Rectangle2D.Double(37, 51, boxWidth, 400));
 			box.setWordWrap(true);
-			TextMeasure.setText(box, text, FONT, fontSize, false, false);
+			TextMeasure.setText(box, text, FONT, fontSize, false, false, spacing, caps);
 
 			Insets2D insets = box.getInsets();
-			TextMetrics measured = TextMeasure.measure(text, FONT, fontSize, false, false,
+			TextMetrics measured = TextMeasure.measure(text, FONT, fontSize, false, false, spacing, caps,
 				Double.valueOf(boxWidth - insets.left - insets.right));
 
 			double scale = 2;
@@ -215,7 +283,7 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 	/**
 	 * {@link DrawFactory} recording the lines drawn when rendering a slide.
 	 */
-	private static final class Recorder extends DrawFactory {
+	private static final class Recorder extends TextDrawFactory {
 
 		private final List<RecordingParagraph> _paragraphs = new ArrayList<>();
 
@@ -238,7 +306,7 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 		}
 	}
 
-	private static final class RecordingParagraph extends DrawTextParagraph {
+	private static final class RecordingParagraph extends SpacedTextParagraph {
 
 		RecordingParagraph(TextParagraph<?, ?, ?> paragraph) {
 			super(paragraph);

@@ -848,7 +848,7 @@ final class TemplateAnalyzer {
 		return elements == null ? null : elements.getFmtScheme();
 	}
 
-	private static CTPlaceholder placeholder(XSLFShape shape) {
+	static CTPlaceholder placeholder(XSLFShape shape) {
 		try (XmlCursor cursor = shape.getXmlObject().newCursor()) {
 			for (boolean found = cursor.toFirstChild(); found; found = cursor.toNextSibling()) {
 				if (cursor.getName().getLocalPart().startsWith("nv")) {
@@ -863,7 +863,7 @@ final class TemplateAnalyzer {
 		return null;
 	}
 
-	private static String placeholderType(CTPlaceholder ph) {
+	static String placeholderType(CTPlaceholder ph) {
 		return ph.isSetType() ? ph.getType().toString() : DEFAULT_PLACEHOLDER_TYPE;
 	}
 

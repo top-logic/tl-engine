@@ -88,7 +88,7 @@ public class PptTemplateFunctions extends TLScriptFunctions {
 	 * @throws TopLogicException
 	 *         If the data is not a PowerPoint presentation or template.
 	 */
-	private static XMLSlideShow open(BinaryDataSource data) {
+	static XMLSlideShow open(BinaryDataSource data) {
 		try (InputStream in = data.toData().getStream()) {
 			return new XMLSlideShow(in);
 		} catch (IOException | RuntimeException ex) {

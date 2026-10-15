@@ -8,6 +8,9 @@ package com.top_logic.presentation.template;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
+import org.apache.poi.xslf.usermodel.XSLFShape;
+import org.openxmlformats.schemas.presentationml.x2006.main.CTPlaceholder;
+
 /**
  * A placeholder of a slide layout or slide master of a presentation template.
  *
@@ -46,6 +49,16 @@ public record PlaceholderInfo(String type, long idx, String name, Rectangle2D bo
 		TemplateData.put(result, TemplateData.TEXT, text == null ? null : text.toData());
 		TemplateData.put(result, TemplateData.PROMPT, prompt);
 		return result;
+	}
+
+	/**
+	 * The placeholder type of the given shape as named in the file format, see {@link #type()}.
+	 *
+	 * @return The type, or <code>null</code> if the shape is no placeholder.
+	 */
+	public static String typeOf(XSLFShape shape) {
+		CTPlaceholder ph = TemplateAnalyzer.placeholder(shape);
+		return ph == null ? null : TemplateAnalyzer.placeholderType(ph);
 	}
 
 }

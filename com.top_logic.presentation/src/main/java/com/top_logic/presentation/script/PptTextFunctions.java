@@ -61,7 +61,9 @@ public class PptTextFunctions extends TLScriptFunctions {
 	 * <p>
 	 * The text is laid out exactly like in a text box without inner margins that is rendered into
 	 * an image. Each line break in the text starts a new paragraph. If a width is given, the text
-	 * is wrapped at word boundaries to fit this width, otherwise only at its line breaks.
+	 * is wrapped at word boundaries to fit this width, otherwise only at its line breaks. Character
+	 * spacing and upper case letters are applied as PowerPoint does, e.g. to measure the
+	 * letter-spaced titles of a template.
 	 * </p>
 	 *
 	 * <p>
@@ -91,6 +93,12 @@ public class PptTextFunctions extends TLScriptFunctions {
 	 *        Whether the text is set in bold face.
 	 * @param italic
 	 *        Whether the text is set in italics.
+	 * @param spacing
+	 *        The additional space between two characters in points, as set as character spacing in
+	 *        PowerPoint. A negative value condenses the text.
+	 * @param caps
+	 *        Whether the text is shown in upper case letters, like a text formatted with "all caps"
+	 *        in PowerPoint.
 	 * @return The dictionary describing the extent of the text.
 	 */
 	@Label("Measure text on a slide")
@@ -101,7 +109,9 @@ public class PptTextFunctions extends TLScriptFunctions {
 			@DoubleDefault(18) double size,
 			Double width,
 			boolean bold,
-			boolean italic) {
+			boolean italic,
+			double spacing,
+			boolean caps) {
 		if (!TextMeasure.isValidFontSize(size)) {
 			throw new TopLogicException(I18NConstants.ERROR_INVALID_FONT_SIZE__SIZE_MIN_MAX.fill(size,
 				TextMeasure.MIN_FONT_SIZE, TextMeasure.MAX_FONT_SIZE));
@@ -110,7 +120,7 @@ public class PptTextFunctions extends TLScriptFunctions {
 			throw new TopLogicException(I18NConstants.ERROR_INVALID_TEXT_WIDTH__WIDTH.fill(width));
 		}
 
-		TextMetrics metrics = TextMeasure.measure(text, font, size, bold, italic, width);
+		TextMetrics metrics = TextMeasure.measure(text, font, size, bold, italic, spacing, caps, width);
 
 		Map<String, Object> result = new LinkedHashMap<>();
 		result.put(WIDTH, Double.valueOf(metrics.width()));

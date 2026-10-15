@@ -551,7 +551,7 @@
 							element-type="demo.tickets:Comment"
 							inputs="ticket"
 							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
-							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); $persistent; }"
 							new-element-channel="newComment"
 							remove="ticket -> comment -> $comment.delete()"
 						>

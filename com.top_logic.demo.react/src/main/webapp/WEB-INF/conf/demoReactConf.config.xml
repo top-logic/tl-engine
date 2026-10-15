@@ -569,6 +569,69 @@
 				</resources>
 			</instance>
 		</config>
+		<!--
+			TL-Script functions of this application, shared by the views calling them.
+		-->
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<!--
+						The comment views enter the attachments of a comment as a list of files and store
+						them through this function. A file matches an attachment holding the same content
+						under the same name; each attachment matches one file at most, so a file that is
+						attached twice stays two attachments.
+					-->
+					<configured-script name="demoTicketsStoreAttachments">
+						<label>
+							<en>Store attachments</en>
+							<de>Anhänge speichern</de>
+						</label>
+						<description>
+							<en><![CDATA[<p>Makes the attachments of a comment hold the given files, in their order: an attachment whose file is still in the list is kept, a new file becomes a new attachment, and an attachment whose file is no longer in the list is deleted.</p>]]></en>
+							<de><![CDATA[<p>Lässt die Anhänge eines Kommentars die gegebenen Dateien in deren Reihenfolge halten: Ein Anhang, dessen Datei noch in der Liste steht, bleibt erhalten, eine neue Datei wird zu einem neuen Anhang, und ein Anhang, dessen Datei nicht mehr in der Liste steht, wird gelöscht.</p>]]></de>
+						</description>
+						<parameters>
+							<parameter name="comment"
+								mandatory="true"
+								type="demo.tickets:Comment"
+							>
+								<description>
+									<en>The comment whose attachments are stored.</en>
+									<de>Der Kommentar, dessen Anhänge gespeichert werden.</de>
+								</description>
+							</parameter>
+							<parameter name="files"
+								multiple="true"
+								type="tl.core:Binary"
+							>
+								<description>
+									<en>The files the attachments hold afterwards, in their order.</en>
+									<de>Die Dateien, die die Anhänge danach halten, in ihrer Reihenfolge.</de>
+								</description>
+							</parameter>
+						</parameters>
+						<implementation><![CDATA[{
+  matched = $files.reduce(
+    [[], $comment.get(`demo.tickets:Comment#attachments`)],
+    state -> file -> {
+      match = $state[1]
+        .filter(a -> {
+          data = $a.get(`demo.tickets:Attachment#data`);
+          $data == $file && label($data) == label($file);
+        })
+        .firstElement();
+      $match == null
+        ? [concat($state[0], new(`demo.tickets:Attachment`)..set(`demo.tickets:Attachment#data`, $file)), $state[1]]
+        : [concat($state[0], $match), $state[1].filter(a -> $a != $match)];
+    });
+  $matched[1].delete();
+  $comment.set(`demo.tickets:Comment#attachments`, $matched[0]);
+  $comment;
+}]]></implementation>
+					</configured-script>
+				</scripts>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

@@ -4,6 +4,21 @@
 	<channels>
 		<channel name="comment"/>
 		<channel name="draft"/>
+		<channel name="editMode"/>
+		<!--
+			The files of the comment's attachments, entered in the form and stored by its save. Filled
+			again when the comment is displayed and after its attachments are stored.
+		-->
+		<channel name="files"
+			init="c -> $c.get(`demo.tickets:Comment#attachments`).map(a -> $a.get(`demo.tickets:Attachment#data`))"
+			inputs="comment"
+			observed-types="demo.tickets:Attachment"
+		/>
+		<!-- The attachments are offered while the comment is edited or has any. -->
+		<derived-channel name="showFiles"
+			expr="edit -> files -> $edit || $files.size() > 0"
+			inputs="editMode, files"
+		/>
 		<derived-channel name="author"
 			expr="c -> $c.get(`demo.tickets:Comment#author`)"
 			inputs="comment"
@@ -78,6 +93,7 @@
 				</generic-command>
 			</commands>
 			<form
+				editMode="editMode"
 				input="comment"
 				with-inset="true"
 			>
@@ -85,7 +101,35 @@
 					attribute="content"
 					label-position="hide-label"
 				/>
-				<file-list attribute="attachments"/>
+				<visible-if
+					expr="show -> $show"
+					input="showFiles"
+				>
+					<value-input
+						label="model.demo.tickets.Comment.attachments"
+						multiple="true"
+						type="tl.core:Binary"
+						value="files"
+					/>
+				</visible-if>
+				<save-action>
+					<with-transaction>
+						<store-form-state/>
+						<execute-script
+							function="comment -> files -> stored -> demoTicketsStoreAttachments($comment, $files)"
+							inputs="comment, files"
+						/>
+					</with-transaction>
+					<discard-form-state/>
+				</save-action>
+				<cancel-action>
+					<discard-form-state/>
+					<execute-script
+						function="c -> discarded -> $c.get(`demo.tickets:Comment#attachments`).map(a -> $a.get(`demo.tickets:Attachment#data`))"
+						inputs="comment"
+					/>
+					<write-channel name="files"/>
+				</cancel-action>
 			</form>
 		</panel>
 	</anchor>

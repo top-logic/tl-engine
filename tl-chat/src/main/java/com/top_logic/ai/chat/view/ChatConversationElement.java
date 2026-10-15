@@ -749,8 +749,8 @@ public class ChatConversationElement implements UIElement {
 		 * <p>
 		 * A {@code <chat-dock/>} states it the same way, on the {@code <chat-conversation/>} nested
 		 * inside it - and should, because the dock is where a user asks about the page behind it.
-		 * The dock's own channel has to be handed the page's selection for that; on a shell whose
-		 * pages are {@code <view-ref>}s, that is a {@code <bind>} per page.
+		 * The dock's own channel has to be handed the page's selection for that: a
+		 * {@code <page-selection>} in each page, and {@code <chat-channels>} in the shell.
 		 * </p>
 		 */
 		@Name(SELECTION)
@@ -1315,7 +1315,8 @@ public class ChatConversationElement implements UIElement {
 		 * <p>
 		 * Normally the {@code selection} channel of the table or list the user picks in. A channel
 		 * of <em>this</em> view: a page of a shell hands its selection to a dock in the shell's
-		 * footer with a {@code <bind>} on the {@code <view-ref>}, the way it hands over the draft.
+		 * footer with a {@code <page-selection>}, into a channel that {@code <chat-channels>}
+		 * publishes.
 		 * </p>
 		 */
 		@Name(CHANNEL)

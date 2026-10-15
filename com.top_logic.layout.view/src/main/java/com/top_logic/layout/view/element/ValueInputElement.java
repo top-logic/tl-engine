@@ -5,9 +5,16 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.function.Function;
 
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -122,7 +129,17 @@ public class ValueInputElement implements UIElement {
 	 * Configuration for {@link ValueInputElement}.
 	 */
 	@TagName("value-input")
-	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase {
+	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnSubmitAs()}. */
+		String SUBMIT_AS = "submit-as";
+
+		/** Name of the value the submitted value when no other name is given. */
+		String DEFAULT_SUBMIT_AS = "value";
+
 
 		@Override
 		@ClassDefault(ValueInputElement.class)
@@ -364,6 +381,30 @@ public class ValueInputElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
 
 		/**
+		 * The name of the argument holding the submitted value, the main argument of the
+		 * {@link #getOnSubmit() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(SUBMIT_AS)
+		@StringDefault(DEFAULT_SUBMIT_AS)
+		String getOnSubmitAs();
+
+		/**
+		 * The {@link #getOnSubmit() command} runs with the submitted value as argument named by
+		 * {@link #getOnSubmitAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnSubmit()) {
+				return ActionScope.single(getOnSubmitAs());
+			}
+			return outer;
+		}
+
+		/**
 		 * When the {@link #getOnSubmit() submit command} runs on a value the user types - a text, a
 		 * number.
 		 *
@@ -438,6 +479,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ViewCommand _submitCommand;
 
+	private final String _submitAs;
+
 	private final ViewCommand.Config _submitCommandConfig;
 
 	private final SubmitOn _submitOn;
@@ -468,7 +511,9 @@ public class ValueInputElement implements UIElement {
 
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
-		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_submitCommand = _submitCommandConfig == null ? null
+			: ViewCommands.instantiate(context, submitConfig, config.getOnSubmitAs());
+		_submitAs = config.getOnSubmitAs();
 		_submitOn = config.getSubmitOn();
 		_inputControl = config.getInputControl();
 		_cssClass = config.getCssClass();
@@ -555,7 +600,8 @@ public class ValueInputElement implements UIElement {
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
 			ChannelFieldBinding binding) {
-		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
+		ViewCommandModel model =
+			ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig, _submitAs);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
 			Function<Object, HandlerResult> submit = value -> {
 				if (missingValue(value) != null) {

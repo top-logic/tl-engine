@@ -21,7 +21,8 @@ import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DeletedObjects;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.listen.ModelScope;
@@ -30,13 +31,19 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Runtime bridge between a stateless {@link ViewCommand} and the UI running it - its button, or a
- * gesture like a table row activation that supplies the input itself
+ * gesture like a table row activation that supplies the main argument itself
  * ({@link #execute(ReactContext, Object)}).
+ *
+ * <p>
+ * The model reads the {@link ViewCommand.Config#getInputs() inputs} of the command and hands them
+ * to the command as its {@link CommandArguments arguments}. Without a trigger supplying a value,
+ * the first input is the main argument, the input the executability rules decide over.
+ * </p>
  *
  * <p>
  * Created by the panel at setup time, one per command. While
  * {@link #attach(ModelScope) attached}, the model follows its input in both directions a rule can
- * decide by: the {@link ViewCommand.Config#getInput() input channel} taking a new value, and the
+ * decide by: the channel of the main argument taking a new value, and the
  * object that value points to being edited. A rule testing an attribute of the input object -
  * a workflow command offered only while a ticket is open, say - therefore re-evaluates when that
  * attribute is stored, although the channel keeps pointing to the same object. A rule that decides
@@ -52,6 +59,13 @@ public class ViewCommandModel implements CommandModel {
 	private final ViewCommand _command;
 
 	private final ViewCommand.Config _config;
+
+	private final CommandArguments _arguments;
+
+	/**
+	 * The channels of the {@link CommandArguments#getInputs() inputs}, in their order.
+	 */
+	private final List<ViewChannel> _inputChannels;
 
 	/**
 	 * The command's rule applied to its input channel, followed while this model is attached.
@@ -76,7 +90,7 @@ public class ViewCommandModel implements CommandModel {
 	 * @param config
 	 *        The command configuration (provides label, image, placement, etc.).
 	 * @param inputChannel
-	 *        The resolved input channel (may be {@code null} if no input configured).
+	 *        The channel of the main argument (may be {@code null} without one).
 	 * @param rule
 	 *        The combined executability rule.
 	 */
@@ -93,7 +107,7 @@ public class ViewCommandModel implements CommandModel {
 	 * @param config
 	 *        The command configuration (provides label, image, placement, etc.).
 	 * @param inputChannel
-	 *        The resolved input channel (may be {@code null} if no input configured).
+	 *        The channel of the main argument (may be {@code null} without one).
 	 * @param rule
 	 *        The combined executability rule.
 	 * @param scopeDirty
@@ -103,11 +117,36 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
 			ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
+		this(command, config, inputChannel == null ? List.of() : List.of(inputChannel), null, rule, scopeDirty);
+	}
+
+	/**
+	 * Creates a new {@link ViewCommandModel} for a command reading the given input channels.
+	 *
+	 * @param command
+	 *        The stateless command handler.
+	 * @param config
+	 *        The command configuration (provides label, image, placement, etc.).
+	 * @param inputChannels
+	 *        The channels of the {@link ViewCommand.Config#getInputs() inputs}, in their order.
+	 * @param trigger
+	 *        The name of the value the trigger of the command supplies, {@code null} for a trigger
+	 *        supplying none, see {@link CommandArguments}.
+	 * @param rule
+	 *        The combined executability rule.
+	 * @param scopeDirty
+	 *        The channel of the scope the command is displayed in, see
+	 *        {@link #ViewCommandModel(ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule, DirtyChannel)}.
+	 */
+	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, List<ViewChannel> inputChannels,
+			String trigger, ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
 		_command = command;
 		_config = config;
+		_arguments = new CommandArguments(config.getInputs(), trigger);
+		_inputChannels = List.copyOf(inputChannels);
 		_scopeDirty = scopeDirty;
 		_executableState = ExecutableState.EXECUTABLE;
-		_executability = new LiveExecutability(rule, inputChannel,
+		_executability = new LiveExecutability(rule, _inputChannels.isEmpty() ? null : _inputChannels.get(0),
 			ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
 	}
 
@@ -123,38 +162,47 @@ public class ViewCommandModel implements CommandModel {
 	 * </p>
 	 *
 	 * @param context
-	 *        The build-time context of the hosting element, binding a rule that needs it;
-	 *        {@code null} for a command built outside a view.
+	 *        The build-time context of the hosting element, resolving the input channels and binding
+	 *        a rule that needs it; {@code null} for a command built outside a view.
+	 * @param trigger
+	 *        The name of the value the trigger of the command supplies, {@code null} for a trigger
+	 *        supplying none.
 	 * @param rule
 	 *        The rule built from the command's configuration, possibly extended by the hosting
 	 *        element.
 	 */
 	public static ViewCommandModel create(ViewContext context, ViewCommand command, ViewCommand.Config config,
-			ViewChannel inputChannel, ViewExecutabilityRule rule) {
+			String trigger, ViewExecutabilityRule rule) {
 		ViewExecutabilityRule deciding = ViewExecutabilityRules.withIntrinsicRule(context, command, rule);
+		List<ViewChannel> inputChannels = new ArrayList<>();
+		if (context != null) {
+			for (InputRef input : config.getInputs()) {
+				inputChannels.add(context.resolveChannel(input.getChannel()));
+			}
+		}
 		if (config instanceof UploadCommand.Config) {
-			return new ViewUploadCommandModel((UploadCommand) command, (UploadCommand.Config) config, inputChannel,
+			return new ViewUploadCommandModel((UploadCommand) command, (UploadCommand.Config) config, inputChannels,
 				deciding);
 		}
 		DirtyChannel scopeDirty = context == null ? null : context.getDirtyChannel();
-		return new ViewCommandModel(command, config, inputChannel, deciding, scopeDirty);
+		return new ViewCommandModel(command, config, inputChannels, trigger, deciding, scopeDirty);
 	}
 
 	/**
 	 * Creates the {@link ViewCommandModel} for a command an element has instantiated from its
-	 * configuration: resolves the command's {@link ViewCommand.Config#getInput() input channel} in
+	 * configuration: resolves the command's {@link ViewCommand.Config#getInputs() input channels} in
 	 * the given context, builds its executability rule there, and picks the matching model.
 	 *
 	 * <p>
 	 * This is the one construction path for a configured command, shared by every element that
 	 * hosts commands. An element that has to interfere with the rule - the form, which additionally
 	 * disables the commands its validation would reject - builds the model from
-	 * {@link #create(ViewContext, ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)}
+	 * {@link #create(ViewContext, ViewCommand, ViewCommand.Config, String, ViewExecutabilityRule)}
 	 * with the rule it composed.
 	 * </p>
 	 *
 	 * @param context
-	 *        The build-time context of the hosting element, resolving the input channel and binding
+	 *        The build-time context of the hosting element, resolving the input channels and binding
 	 *        the rules.
 	 * @param command
 	 *        The instantiated command.
@@ -163,17 +211,48 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	public static ViewCommandModel forCommand(ViewContext context, ViewCommand command,
 			ViewCommand.Config config) {
-		ChannelRef inputRef = config.getInput();
-		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
-		return create(context, command, config, inputChannel, rule);
+		return forCommand(context, command, config, null);
 	}
 
 	/**
-	 * Resolves the current input value from the channel.
+	 * Creates the {@link ViewCommandModel} for a command run by a trigger supplying a value of its
+	 * own, see {@link #forCommand(ViewContext, ViewCommand, ViewCommand.Config)}.
+	 *
+	 * @param trigger
+	 *        The name of the value the trigger supplies, {@code null} for a trigger supplying none.
+	 *        The command must have been instantiated in the {@link ActionScope#single(String) scope}
+	 *        of that name, see {@link ViewCommands#instantiate(com.top_logic.basic.config.InstantiationContext, com.top_logic.basic.config.PolymorphicConfiguration, String)}.
+	 */
+	public static ViewCommandModel forCommand(ViewContext context, ViewCommand command,
+			ViewCommand.Config config, String trigger) {
+		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
+		return create(context, command, config, trigger, rule);
+	}
+
+	/**
+	 * Resolves the current value of the main argument from its channel.
 	 */
 	public Object resolveInput() {
 		return _executability.getInput();
+	}
+
+	/**
+	 * The current values of the {@link ViewCommand.Config#getInputs() input channels}, in their
+	 * order, without the objects deleted meanwhile.
+	 */
+	protected List<Object> inputValues() {
+		List<Object> result = new ArrayList<>(_inputChannels.size());
+		for (ViewChannel channel : _inputChannels) {
+			result.add(DeletedObjects.withoutDeleted(channel.get()));
+		}
+		return result;
+	}
+
+	/**
+	 * The arguments of a run of the command for the given main argument.
+	 */
+	protected ActionArguments arguments(Object main) {
+		return _arguments.arguments(main, inputValues());
 	}
 
 	@Override
@@ -339,8 +418,9 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
-	 * Executes the command with an input the caller supplies instead of the
-	 * {@link #resolveInput() channel value} - the row a table activation opens, say.
+	 * Executes the command with a main argument the caller supplies instead of the
+	 * {@link #resolveInput() channel value} - the row a table activation opens, say. The command
+	 * receives it together with the values of its inputs, see {@link CommandArguments}.
 	 *
 	 * <p>
 	 * The command's executability rules decide over that same input: a rule that rejects it
@@ -376,7 +456,7 @@ public class ViewCommandModel implements CommandModel {
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
-		return _command.execute(context, input);
+		return _command.execute(context, arguments(input));
 	}
 
 	/**

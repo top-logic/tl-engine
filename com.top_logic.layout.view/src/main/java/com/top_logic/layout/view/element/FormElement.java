@@ -5,6 +5,11 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionArguments;
 import java.util.ArrayList;
@@ -85,7 +90,10 @@ public class FormElement extends ContainerElement {
 	 * Configuration for {@link FormElement}.
 	 */
 	@TagName("form")
-	public interface Config extends ContainerElement.Config, FormLayoutOptions {
+	public interface Config extends ContainerElement.Config, FormLayoutOptions, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
@@ -280,6 +288,18 @@ public class FormElement extends ContainerElement {
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getCancelActions();
+
+		/**
+		 * The {@link #getSaveActions() save} and {@link #getCancelActions() cancel} actions run
+		 * without arguments.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getSaveActions(), part) || ActionScopes.contains(getCancelActions(), part)) {
+				return ActionScope.NONE;
+			}
+			return outer;
+		}
 	}
 
 	private final Config _config;
@@ -460,9 +480,6 @@ public class FormElement extends ContainerElement {
 			ViewCommand cmd = _formCommands.get(i);
 			ViewCommand.Config cmdConfig = _formCommandConfigs.get(i);
 
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
-
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
 			if (cmd.appliesFormState()) {
 				// The form rejects the command while errors are on screen, so do not offer it.
@@ -470,7 +487,7 @@ public class FormElement extends ContainerElement {
 			}
 
 			ViewCommandModel inner =
-				ViewCommandModel.create(formContext, cmd, cmdConfig, inputChannel, rule);
+				ViewCommandModel.create(formContext, cmd, cmdConfig, null, rule);
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.

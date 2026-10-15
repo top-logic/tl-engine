@@ -19,8 +19,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.MessageDialogControl;
 import com.top_logic.layout.view.ViewMessages;
-import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.Resources;
 
 /**
@@ -28,12 +29,12 @@ import com.top_logic.util.Resources;
  * - and either lets the chain continue or ends it after the notice.
  *
  * <p>
- * The message is produced by a TL-Script expression evaluated like {@link ExecuteScriptAction}: the
- * configured input channel values are passed as leading positional arguments, followed by the
- * chain's current input value as the last argument. The expression returns the message (typically
+ * The message is produced by a TL-Script expression evaluated like {@link ExecuteScriptAction}: it
+ * uses the arguments of the chain and the values of the configured inputs as variables. The
+ * expression returns the message (typically
  * an i18n literal such as {@code #('Nothing selected.'@en, 'Nichts ausgewählt.'@de)}), or
  * {@code null}/empty when there is nothing to say - which makes the notice
- * <em>conditional</em> and passes the chain's value on untouched.
+ * <em>conditional</em>.
  * </p>
  *
  * <p>
@@ -50,7 +51,7 @@ import com.top_logic.util.Resources;
  *           the chain continues synchronously.
  */
 @InApp
-public class NotifyAction extends InterruptibleViewAction {
+public class NotifyAction extends ArgumentsViewAction {
 
 	/**
 	 * How serious what the user is told is.
@@ -131,7 +132,7 @@ public class NotifyAction extends InterruptibleViewAction {
 	 * Configuration for {@link NotifyAction}.
 	 */
 	@TagName("notify")
-	public interface Config extends PolymorphicConfiguration<NotifyAction>, Inputs {
+	public interface Config extends PolymorphicConfiguration<NotifyAction>, NamedInputs {
 
 		@Override
 		@ClassDefault(NotifyAction.class)
@@ -142,12 +143,13 @@ public class NotifyAction extends InterruptibleViewAction {
 		 * chain continues untouched).
 		 *
 		 * <p>
-		 * Called with the {@link #getInputs() input} channel values as leading positional arguments
-		 * (in declaration order), followed by the chain's current input value as the last argument.
+		 * Uses the arguments of the chain and the values of the {@link #getInputs() inputs} as
+		 * variables named after them, without declaring them.
 		 * </p>
 		 */
 		@Name("expr")
 		@Mandatory
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getExpr();
 
 		/**
@@ -168,7 +170,7 @@ public class NotifyAction extends InterruptibleViewAction {
 		Display getDisplay();
 
 		/**
-		 * Whether the chain ends with the notice instead of continuing with its value unchanged.
+		 * Whether the chain ends with the notice instead of continuing.
 		 *
 		 * <p>
 		 * An ending chain runs the compensations of the actions before it and reports nothing
@@ -204,7 +206,8 @@ public class NotifyAction extends InterruptibleViewAction {
 	 */
 	@CalledByReflection
 	public NotifyAction(InstantiationContext context, Config config) {
-		this(ActionScript.compile(config.getExpr(), config.getInputs()), config.getKind(), config.getDisplay(),
+		this(ActionScript.compile(config.getExpr(), ActionScope.of(context), config.getInputs()), config.getKind(),
+			config.getDisplay(),
 			config.isStop(), config.getTitle());
 	}
 
@@ -231,8 +234,9 @@ public class NotifyAction extends InterruptibleViewAction {
 	}
 
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ResKey message = _expr.message(context, input);
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		Object input = arguments.value();
+		ResKey message = _expr.message(context, arguments);
 		if (message == null) {
 			// Nothing to say leaves the chain as it was, whether or not it would have ended here.
 			continuation.resume(input);

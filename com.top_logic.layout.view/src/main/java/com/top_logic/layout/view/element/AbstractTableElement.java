@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -15,6 +17,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
@@ -113,7 +119,17 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * Configuration of an {@link AbstractTableElement}: what a table displays of its rows, how they are
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnActivateAs()}. */
+		String ACTIVATE_AS = "activate-as";
+
+		/** Name of the value the activated row when no other name is given. */
+		String DEFAULT_ACTIVATE_AS = "row";
+
 
 		/** Configuration name for {@link #getTypes()}. */
 		String TYPES = "types";
@@ -223,7 +239,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * The activated row becomes the table's selection first, then the command runs with that row
-		 * as its input. The command's own executability rules decide over the row, so a row the
+		 * as its main argument, named by {@link #getOnActivateAs() activate-as}. The command's own executability rules decide over the row, so a row the
 		 * rules reject activates nothing. Without a command, activating a row only selects it.
 		 * </p>
 		 *
@@ -235,6 +251,30 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * The name of the argument holding the activated row, the main argument of the
+		 * {@link #getOnActivate() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(ACTIVATE_AS)
+		@StringDefault(DEFAULT_ACTIVATE_AS)
+		String getOnActivateAs();
+
+		/**
+		 * The {@link #getOnActivate() command} runs with the activated row as argument named by
+		 * {@link #getOnActivateAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnActivate()) {
+				return ActionScope.single(getOnActivateAs());
+			}
+			return outer;
+		}
 
 		/**
 		 * Whether every row shows a button running the {@link #getOnActivate() activation command}
@@ -644,7 +684,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
-		_onActivate = context.getInstance(onActivate);
+		_onActivate = ViewCommands.instantiate(context, onActivate, config.getOnActivateAs());
 	}
 
 	/**
@@ -1035,7 +1075,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (_onActivate == null || _onActivateConfig == null) {
 			return null;
 		}
-		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, _config.getOnActivateAs());
 	}
 
 	/**

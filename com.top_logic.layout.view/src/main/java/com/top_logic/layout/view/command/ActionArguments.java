@@ -58,6 +58,40 @@ public final class ActionArguments {
 	}
 
 	/**
+	 * Arguments with the given names and values.
+	 *
+	 * <p>
+	 * A name occurring more than once is shadowed by its last occurrence, see
+	 * {@link #with(String, Object)}.
+	 * </p>
+	 *
+	 * @param names
+	 *        The names of the arguments.
+	 * @param values
+	 *        The values of the arguments, in the order of the names.
+	 * @param defaultName
+	 *        The name of the default argument, one of the given names; {@code null} only for no
+	 *        names at all.
+	 */
+	public static ActionArguments of(List<String> names, List<?> values, String defaultName) {
+		if (names.size() != values.size()) {
+			throw new IllegalArgumentException("Names " + names + " do not match values " + values + ".");
+		}
+		if (names.isEmpty()) {
+			return NONE;
+		}
+		LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+		for (int n = 0, cnt = names.size(); n < cnt; n++) {
+			map.remove(names.get(n));
+			map.put(names.get(n), values.get(n));
+		}
+		if (!map.containsKey(defaultName)) {
+			throw new IllegalArgumentException("Default '" + defaultName + "' is not among " + names + ".");
+		}
+		return new ActionArguments(Collections.unmodifiableMap(map), defaultName);
+	}
+
+	/**
 	 * These arguments extended by the given named value, which becomes the default.
 	 *
 	 * <p>

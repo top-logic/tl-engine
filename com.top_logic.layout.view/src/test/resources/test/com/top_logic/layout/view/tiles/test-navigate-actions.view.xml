@@ -11,7 +11,7 @@
 	<panel title="Navigate Actions Test">
 		<commands>
 			<generic-command name="back"
-				input="depth"
+				inputs="depth"
 			>
 				<executability>
 					<visible-if expr="d -> $d > 0"/>

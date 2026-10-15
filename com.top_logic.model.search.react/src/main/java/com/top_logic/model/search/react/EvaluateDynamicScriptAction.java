@@ -7,6 +7,7 @@ package com.top_logic.model.search.react;
 
 import java.io.StringReader;
 import java.util.Collections;
+import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -18,6 +19,8 @@ import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.parser.ParseException;
@@ -30,7 +33,12 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} of the TL-Script console, compiling and evaluating the script source it
- * receives as input.
+ * processes - the default argument of its chain.
+ *
+ * <p>
+ * The script uses the arguments of the chain as variables, without declaring them: it is compiled
+ * against the names of the arguments it runs with.
+ * </p>
  *
  * <p>
  * The source is the text a developer entered into the console's editor. Since the action executes
@@ -86,12 +94,16 @@ public class EvaluateDynamicScriptAction extends AbstractScriptAction {
 	}
 
 	@Override
-	public Object execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		Object input = arguments.value();
 		String source = input == null ? "" : input.toString();
 		if (source.isBlank()) {
-			return Collections.emptyList();
+			continuation.resume(Collections.emptyList());
+			return;
 		}
-		return evaluate(QueryExecutor.compile(parse(source)), null, source);
+		List<String> names = arguments.names();
+		QueryExecutor script = QueryExecutor.compile(parse(source), names);
+		continuation.resume(evaluate(() -> script.execute(arguments.values(names).toArray()), source));
 	}
 
 	private Expr parse(String source) {

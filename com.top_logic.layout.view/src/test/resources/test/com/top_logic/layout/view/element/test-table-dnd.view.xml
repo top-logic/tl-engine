@@ -29,7 +29,7 @@
 			<target-executability>
 				<disabled-if expr="row -> $row == 'locked'"/>
 			</target-executability>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<columns>
 			<computed-column name="value"

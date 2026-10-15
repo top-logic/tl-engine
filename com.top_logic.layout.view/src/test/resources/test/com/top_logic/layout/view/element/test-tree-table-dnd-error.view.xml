@@ -14,21 +14,21 @@
 			parent-channel="ch"
 			target="table"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			parent-channel="ch"
 			target="row"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			target="ordered"
 			target-channel="ch"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<columns>
 			<computed-column name="value"

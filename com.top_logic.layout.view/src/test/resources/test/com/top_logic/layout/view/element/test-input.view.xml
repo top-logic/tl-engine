@@ -26,7 +26,7 @@
 					<en>Search</en>
 				</placeholder>
 				<on-submit>
-					<execute-script function="entered -> $entered"/>
+					<execute-script function="$value"/>
 					<write-channel name="state"/>
 				</on-submit>
 			</value-input>

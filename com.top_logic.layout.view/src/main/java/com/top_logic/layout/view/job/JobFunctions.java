@@ -23,15 +23,14 @@ import com.top_logic.util.error.TopLogicException;
  * what a display reads from what it said.
  *
  * <p>
- * The reporting functions are called on the monitor the body of a job is given as its first
- * argument, so a job written as a TL-Script function reports with
- * <code>$job.jobPhase('read')</code>. The reading functions are called on the state a job publishes
+ * The reporting functions are called on the monitor the body of a job is given, so a job written
+ * as a TL-Script reports with <code>$job.jobPhase('read')</code>. The reading functions are called on the state a job publishes
  * on its channel, so a display asks with <code>jobStatus($state)</code> - over no job at all just
  * as well, which is what a channel holds before the first job was started.
  * </p>
  *
  * <pre>
- * job -&gt; files -&gt; x -&gt; {
+ * {
  *   $job.jobPhases(['read', 'check']);
  *   $job.jobPhase('read');
  *   $job.jobMessage('reading the files');

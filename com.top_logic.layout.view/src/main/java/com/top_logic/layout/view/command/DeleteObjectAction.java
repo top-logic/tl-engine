@@ -31,8 +31,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * parts of its compositions, in a transaction of its own (a transaction nested in an enclosing
  * {@link WithTransactionAction} commits together with that one). The current user must hold the
  * right to delete the object; a refusal aborts the chain with the message of {@code delete()}.
- * The action results in {@code null}, so that a following {@link WriteChannelAction} clears the
- * channel that held the deleted object.
+ * A {@link WriteChannelAction} with {@link WriteChannelAction.Config#isClear() clear} following it
+ * empties the channel that held the deleted object.
  * </p>
  *
  * <p>
@@ -51,12 +51,12 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * </p>
  *
  * <pre>
- * &lt;generic-command input="project"&gt;
+ * &lt;generic-command inputs="project"&gt;
  *   &lt;executability&gt;
  *     &lt;null-input-disabled/&gt;
  *   &lt;/executability&gt;
  *   &lt;delete-object/&gt;
- *   &lt;write-channel name="project"/&gt;
+ *   &lt;write-channel name="project" clear="true"/&gt;
  * &lt;/generic-command&gt;
  * </pre>
  *

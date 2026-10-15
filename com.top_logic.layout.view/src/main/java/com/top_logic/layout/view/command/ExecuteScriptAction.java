@@ -5,45 +5,48 @@
  */
 package com.top_logic.layout.view.command;
 
-import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.channel.Inputs;
-import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
- * {@link ViewAction} that evaluates a configured TL-Script function.
+ * {@link ViewAction} that evaluates a configured TL-Script.
  *
  * <p>
- * Without {@link Config#getInputs() inputs}, the configured expression must be a function that takes
- * one argument: the chain's default argument is passed as the argument and the function's return
- * value is the result of this action, seen by the follow-up actions nested into it.
+ * The script uses the arguments of the chain as variables, without declaring them: the arguments
+ * the trigger of the chain supplies, the results of the actions it is nested in, and the
+ * {@link Config#getInputs() inputs} of the action itself. Its value is the result of this action,
+ * seen by the follow-up actions nested into it.
  * </p>
  *
  * <p>
- * Example: Create a transient object:
+ * Example: In a command with the input channel {@code draft}, persist the transient object it
+ * holds, write the created object to a channel and close the dialog:
  * </p>
  *
  * <pre>
- * &lt;execute-script function="x -&gt; new(`test.constraints:ConstraintTestType`, transient: true)"/&gt;
+ * &lt;execute-script function="$draft.copy(transient: false)" as="created"&gt;
+ *   &lt;write-channel name="selection"/&gt;
+ *   &lt;close-dialog/&gt;
+ * &lt;/execute-script&gt;
  * </pre>
  *
  * <p>
- * With {@link Config#getInputs() inputs}, the current values of the referenced {@link ViewChannel}s
- * are passed as leading positional arguments, followed by the chain's default argument as the last
- * argument. This allows an action to combine a separate channel value (e.g. a create context /
- * container) with the chain's value (e.g. the form object being created). Example: persist a
- * transient form object into a container channel's composite reference:
+ * Example: add the object the chain works on to the container held by the channel
+ * {@code context}:
  * </p>
  *
  * <pre>
- * &lt;execute-script function="container -&gt; obj -&gt; $container.add(`my.module:Container#children`, $obj.copy(transient: false))"&gt;
+ * &lt;execute-script function="$context.add(`my.module:Container#children`, $draft.copy(transient: false))"&gt;
  *     &lt;inputs&gt;
  *         &lt;input channel="context"/&gt;
  *     &lt;/inputs&gt;
@@ -51,30 +54,33 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * </pre>
  */
 @InApp
-public class ExecuteScriptAction implements ViewAction {
+public class ExecuteScriptAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link ExecuteScriptAction}.
 	 */
 	@TagName("execute-script")
 	public interface Config
-			extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction>, Inputs, WithResultActions {
+			extends PolymorphicConfiguration<ExecuteScriptAction>, NamedInputs, WithResultActions {
+
+		/** Configuration name for {@link #getFunction()}. */
+		String FUNCTION = "function";
 
 		@Override
 		@ClassDefault(ExecuteScriptAction.class)
 		Class<? extends ExecuteScriptAction> getImplementationClass();
 
 		/**
-		 * TL-Script function expression.
+		 * TL-Script to evaluate.
 		 *
 		 * <p>
-		 * Called with the {@link #getInputs() input} channel values as leading positional arguments
-		 * (in declaration order), followed by the chain's default argument as the last argument.
-		 * With no inputs, called with the chain's default argument as the single argument.
+		 * Uses the arguments of the chain and the values of the {@link #getInputs() inputs} as
+		 * variables named after them, without declaring them.
 		 * </p>
 		 */
-		@Name("function")
+		@Name(FUNCTION)
 		@Mandatory
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getFunction();
 	}
 
@@ -85,11 +91,21 @@ public class ExecuteScriptAction implements ViewAction {
 	 */
 	@CalledByReflection
 	public ExecuteScriptAction(InstantiationContext context, Config config) {
-		_function = ActionScript.compile(config.getFunction(), config.getInputs());
+		this(ActionScript.compile(config.getFunction(), ActionScope.of(context), config.getInputs()));
+	}
+
+	/**
+	 * Creates a new {@link ExecuteScriptAction}.
+	 *
+	 * @param function
+	 *        The script to evaluate.
+	 */
+	public ExecuteScriptAction(ActionScript function) {
+		_function = function;
 	}
 
 	@Override
-	public Object execute(ReactContext context, Object input) {
-		return _function.execute(context, input);
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		continuation.resume(_function.execute(context, arguments));
 	}
 }

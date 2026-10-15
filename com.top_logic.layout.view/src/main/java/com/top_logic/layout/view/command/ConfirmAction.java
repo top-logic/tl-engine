@@ -17,8 +17,9 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.ConfirmDialogControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.Resources;
 
 /**
@@ -28,16 +29,14 @@ import com.top_logic.util.Resources;
  * Placed as a guard in a command chain - typically <em>after</em> {@code <store-form-state/>} (so it
  * sees the validated, applied form values) and <em>before</em> {@code <with-transaction>} (so no
  * transaction is held open during the dialog). The message is produced by a TL-Script expression
- * evaluated like {@link ExecuteScriptAction}: the configured {@link Config#getInputs() input}
- * channel values are passed as leading positional arguments, followed by the chain's current input
- * value as the last argument. The expression returns the confirmation message (typically an i18n
+ * evaluated like {@link ExecuteScriptAction}: it uses the arguments of the chain and the values of
+ * the configured {@link Config#getInputs() inputs} as variables. The expression returns the confirmation message (typically an i18n
  * literal such as {@code #('Replace?'@en, 'Ersetzen?'@de)}) to prompt, or {@code null}/empty to
  * proceed without asking - making the guard <em>conditional</em>.
  * </p>
  *
  * <p>
- * On confirm the chain {@link Continuation#resume(Object) resumes} (the input passes through
- * unchanged); on decline it {@link Continuation#abort() aborts}, running the compensations of any
+ * On confirm the chain {@link Continuation#resume(Object) resumes}; on decline it {@link Continuation#abort() aborts}, running the compensations of any
  * already-executed actions.
  * </p>
  *
@@ -47,13 +46,13 @@ import com.top_logic.util.Resources;
  * </p>
  */
 @InApp
-public class ConfirmAction extends InterruptibleViewAction {
+public class ConfirmAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link ConfirmAction}.
 	 */
 	@TagName("confirm")
-	public interface Config extends PolymorphicConfiguration<ConfirmAction>, Inputs {
+	public interface Config extends PolymorphicConfiguration<ConfirmAction>, NamedInputs {
 
 		@Override
 		@ClassDefault(ConfirmAction.class)
@@ -64,12 +63,13 @@ public class ConfirmAction extends InterruptibleViewAction {
 		 * confirmation (proceed without asking).
 		 *
 		 * <p>
-		 * Called with the {@link #getInputs() input} channel values as leading positional arguments
-		 * (in declaration order), followed by the chain's current input value as the last argument.
+		 * Uses the arguments of the chain and the values of the {@link #getInputs() inputs} as
+		 * variables named after them, without declaring them.
 		 * </p>
 		 */
 		@Name("expr")
 		@Mandatory
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getExpr();
 
 		/**
@@ -116,15 +116,16 @@ public class ConfirmAction extends InterruptibleViewAction {
 	 */
 	@CalledByReflection
 	public ConfirmAction(InstantiationContext context, Config config) {
-		_expr = ActionScript.compile(config.getExpr(), config.getInputs());
+		_expr = ActionScript.compile(config.getExpr(), ActionScope.of(context), config.getInputs());
 		_title = config.getTitle();
 		_confirmLabel = config.getConfirmLabel();
 		_cancelLabel = config.getCancelLabel();
 	}
 
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ResKey message = _expr.message(context, input);
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		Object input = arguments.value();
+		ResKey message = _expr.message(context, arguments);
 		if (message == null) {
 			continuation.resume(input);
 			return;

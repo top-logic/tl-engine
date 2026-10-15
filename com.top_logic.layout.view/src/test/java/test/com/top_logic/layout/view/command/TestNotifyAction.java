@@ -121,7 +121,7 @@ public class TestNotifyAction extends TestCase {
 	 * leaves the chain untouched, even when it would otherwise end it.
 	 */
 	public void testNothingToSayPassesThrough() {
-		run(notify((context, input) -> null, Kind.ERROR, Display.SNACKBAR, true), "in", windowContext());
+		run(notify((context, arguments, additional) -> null, Kind.ERROR, Display.SNACKBAR, true), "in", windowContext());
 
 		assertTrue("Nothing is shown for a message there is none of.", _shown.isEmpty());
 		assertEquals("The chain runs on although the notice would have ended it.", List.of("in"), _downstream);
@@ -209,7 +209,7 @@ public class TestNotifyAction extends TestCase {
 	 * named.
 	 */
 	public void testConfiguration() throws Exception {
-		NotifyAction.Config plain = (NotifyAction.Config) parseAction("<notify expr=\"x -> $x\"/>");
+		NotifyAction.Config plain = (NotifyAction.Config) parseAction("<notify expr=\"$x\"/>");
 		assertEquals("A message not called anything else is an information.", Kind.INFO, plain.getKind());
 		assertEquals("A notice is said in passing unless a dialog is asked for.", Display.SNACKBAR,
 			plain.getDisplay());
@@ -218,7 +218,7 @@ public class TestNotifyAction extends TestCase {
 			plain.getTitle());
 
 		NotifyAction.Config configured = (NotifyAction.Config) parseAction(
-			"<notify expr=\"x -> $x\" kind=\"warning\" display=\"dialog\" stop=\"true\"/>");
+			"<notify expr=\"$x\" kind=\"warning\" display=\"dialog\" stop=\"true\"/>");
 		assertEquals(Kind.WARNING, configured.getKind());
 		assertEquals(Display.DIALOG, configured.getDisplay());
 		assertTrue(configured.isStop());
@@ -258,7 +258,7 @@ public class TestNotifyAction extends TestCase {
 
 	/** A message function delivering the given text for every value. */
 	private static ActionScript says(String text) {
-		return (context, input) -> text;
+		return (context, arguments, additional) -> text;
 	}
 
 	private void run(ViewAction notify, Object input, ReactContext context) {

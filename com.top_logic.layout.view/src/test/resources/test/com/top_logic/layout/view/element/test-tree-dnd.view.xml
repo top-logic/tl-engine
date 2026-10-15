@@ -23,14 +23,14 @@
 			refuse-if="objects -> parent -> before -> $parent == 'b' || $objects.size() != 1"
 			target="ordered"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			target="node"
 			target-channel="target"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 	</tree>
 </view>

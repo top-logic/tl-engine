@@ -54,6 +54,35 @@ public final class ActionScope {
 	}
 
 	/**
+	 * The scope of arguments with the given names.
+	 *
+	 * <p>
+	 * A name occurring more than once is shadowed by its last occurrence, see
+	 * {@link #with(String)}.
+	 * </p>
+	 *
+	 * @param names
+	 *        The names in the order of the arguments.
+	 * @param defaultName
+	 *        The name of the default argument, one of the given names; {@code null} only for no
+	 *        names at all.
+	 */
+	public static ActionScope of(List<String> names, String defaultName) {
+		List<String> unique = new ArrayList<>(names.size());
+		for (String name : names) {
+			unique.remove(name);
+			unique.add(name);
+		}
+		if (defaultName != null && !unique.contains(defaultName)) {
+			throw new IllegalArgumentException("Default '" + defaultName + "' is not among " + names + ".");
+		}
+		if (unique.isEmpty()) {
+			return NONE;
+		}
+		return new ActionScope(Collections.unmodifiableList(unique), defaultName);
+	}
+
+	/**
 	 * The scope of actions instantiated in the given context.
 	 *
 	 * @return The scope {@link #bind(InstantiationContext) bound} to the context, {@link #NONE} when

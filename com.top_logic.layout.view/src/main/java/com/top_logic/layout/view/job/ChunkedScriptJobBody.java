@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -21,7 +22,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -36,17 +41,16 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * </p>
  *
  * <p>
- * Every script is called with the monitor of the job as its first argument - the opaque value the
- * reporting functions are called on, so a script says what it is doing with
- * <code>$job.jobMessage('…')</code>:
+ * Every script uses its values as variables, without declaring them. Each sees the monitor of
+ * the job as {@value ScriptJobBody#MONITOR} - the opaque value the reporting functions are called on,
+ * so a script says what it is doing with <code>$job.jobMessage('…')</code>:
  * </p>
  *
  * <ul>
- * <li>{@link Config#getInit()} as <code>job -&gt; a -&gt; b -&gt; …</code>, the monitor followed by
- * the values the job was started with,</li>
- * <li>{@link Config#getElements()} as <code>job -&gt; state -&gt; …</code>,</li>
- * <li>{@link Config.Step#getExpr()} as <code>job -&gt; chunk -&gt; state -&gt; …</code>,</li>
- * <li>{@link Config#getFinish()} as <code>job -&gt; state -&gt; …</code>.</li>
+ * <li>{@link Config#getInit()} sees the values the job was started with, named after them,</li>
+ * <li>{@link Config#getElements()} sees the {@value #STATE},</li>
+ * <li>{@link Config.Step#getExpr()} sees the {@value #CHUNK} and the {@value #STATE},</li>
+ * <li>{@link Config#getFinish()} sees the {@value #STATE}.</li>
  * </ul>
  *
  * <p>
@@ -60,15 +64,15 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <pre>
  * &lt;body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="100"&gt;
  *   &lt;init-label&gt;&lt;en&gt;Reading the file&lt;/en&gt;&lt;/init-label&gt;
- *   &lt;init&gt;job -&gt; file -&gt; $file.parse()&lt;/init&gt;
- *   &lt;elements&gt;job -&gt; state -&gt; $state.get(`my:Import#rows`)&lt;/elements&gt;
+ *   &lt;init&gt;$file.parse()&lt;/init&gt;
+ *   &lt;elements&gt;$state.get(`my:Import#rows`)&lt;/elements&gt;
  *   &lt;steps&gt;
  *     &lt;step&gt;
  *       &lt;label&gt;&lt;en&gt;Creating the records&lt;/en&gt;&lt;/label&gt;
- *       &lt;expr&gt;job -&gt; chunk -&gt; state -&gt; $chunk.foreach(r -&gt; $state.create($r))&lt;/expr&gt;
+ *       &lt;expr&gt;$chunk.foreach(r -&gt; $state.create($r))&lt;/expr&gt;
  *     &lt;/step&gt;
  *   &lt;/steps&gt;
- *   &lt;finish&gt;job -&gt; state -&gt; $state.get(`my:Import#created`)&lt;/finish&gt;
+ *   &lt;finish&gt;$state.get(`my:Import#created`)&lt;/finish&gt;
  * &lt;/body&gt;
  * </pre>
  *
@@ -77,7 +81,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * ends with the text saying how many items it processed and how many it skipped.
  * </p>
  *
- * @implNote The scripts are compiled with {@link QueryExecutor#compile(Expr)}, and the frame
+ * @implNote The scripts are compiled with {@link QueryExecutor#compile(Expr, List)}, and the frame
  *           {@link ChunkedJobBody} is what runs them: the hooks of the frame are bound to the
  *           compiled scripts, and the texts the reader sees fall back to what the frame names its
  *           steps where the configuration leaves them unset. The value of
@@ -87,11 +91,23 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 @InApp
 public class ChunkedScriptJobBody extends ChunkedJobBody {
 
+	/** Name of the variable holding the state in the scripts after the preparation. */
+	public static final String STATE = "state";
+
+	/** Name of the variable holding the chunk of work items in the script of a pass. */
+	public static final String CHUNK = "chunk";
+
+	/** The variables of the scripts seeing the state. */
+	static final List<String> STATE_VARIABLES = List.of(ScriptJobBody.MONITOR, STATE);
+
+	/** The variables of the script of a pass. */
+	static final List<String> CHUNK_VARIABLES = List.of(ScriptJobBody.MONITOR, CHUNK, STATE);
+
 	/**
 	 * Configuration of a {@link ChunkedScriptJobBody}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<ChunkedScriptJobBody> {
+	public interface Config extends PolymorphicConfiguration<ChunkedScriptJobBody>, ConfigPart {
 
 		/** Configuration tag of a {@link ChunkedScriptJobBody}. */
 		String TAG_NAME = "chunked-script";
@@ -126,13 +142,14 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 		 * its own.
 		 *
 		 * <p>
-		 * Called with the monitor of the job followed by the values the job was started with. It
+		 * Sees the monitor of the job and the values the job was started with as variables. It
 		 * yields whatever the passes have to reach - typically the container the work items are
 		 * created in, which has to be persistent before them. Where it is unset, the first value
 		 * the job was started with is the state.
 		 * </p>
 		 */
 		@Name(INIT)
+		@ScriptContextVariables(ScriptJobBody.BodyVariables.class)
 		Expr getInit();
 
 		/**
@@ -146,11 +163,12 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 		 * any transaction.
 		 *
 		 * <p>
-		 * Called with the monitor of the job and the state. A collection is the list of items, any
-		 * other value is the single item it stands for.
+		 * Sees the monitor of the job and the state as variables. A collection is the list of
+		 * items, any other value is the single item it stands for.
 		 * </p>
 		 */
 		@Name(ELEMENTS)
+		@ScriptContextVariables(StateVariables.class)
 		Expr getElements();
 
 		/**
@@ -195,8 +213,8 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 			String LABEL = "label";
 
 			/**
-			 * The script of the pass, called with the monitor of the job, the chunk of work items
-			 * it is to process and the state.
+			 * The script of the pass, seeing the monitor of the job, the chunk of work items it is
+			 * to process and the state as variables.
 			 *
 			 * <p>
 			 * It runs in a transaction that is committed once it returns, and it runs again on a
@@ -206,6 +224,7 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 			 */
 			@Name(EXPR)
 			@Mandatory
+			@ScriptContextVariables(ChunkVariables.class)
 			Expr getExpr();
 
 			/**
@@ -220,13 +239,14 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 		 * state.
 		 *
 		 * <p>
-		 * Called with the monitor of the job and the state. The one-shot finalizer that has to see
+		 * Sees the monitor of the job and the state as variables. The one-shot finalizer that has to see
 		 * everything committed - resetting a sequence past what was imported, computing an
 		 * aggregate - and what it produces is the result of the job. Work spanning the items
 		 * belongs in a later pass, not here.
 		 * </p>
 		 */
 		@Name(FINISH)
+		@ScriptContextVariables(StateVariables.class)
 		Expr getFinish();
 
 		/**
@@ -234,6 +254,28 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 		 */
 		@Name(FINISH_LABEL)
 		ResKey getFinishLabel();
+	}
+
+	/**
+	 * {@link ScriptContextVariablesProvider} for the scripts seeing the state.
+	 */
+	public static class StateVariables implements ScriptContextVariablesProvider {
+
+		@Override
+		public List<String> getVariables(ValueModel valueModel) {
+			return STATE_VARIABLES;
+		}
+	}
+
+	/**
+	 * {@link ScriptContextVariablesProvider} for the script of a pass.
+	 */
+	public static class ChunkVariables implements ScriptContextVariablesProvider {
+
+		@Override
+		public List<String> getVariables(ValueModel valueModel) {
+			return CHUNK_VARIABLES;
+		}
 	}
 
 	private final QueryExecutor _init;
@@ -257,16 +299,16 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 	public ChunkedScriptJobBody(InstantiationContext context, Config config) {
 		super(config.getChunkSize());
 
-		_init = QueryExecutor.compileOptional(config.getInit());
+		_init = QueryExecutor.compileOptional(config.getInit(), ScriptJobBody.variables(ActionScope.of(context)));
 		_initLabel = config.getInitLabel();
-		_elements = QueryExecutor.compileOptional(config.getElements());
-		_finish = QueryExecutor.compileOptional(config.getFinish());
+		_elements = QueryExecutor.compileOptional(config.getElements(), STATE_VARIABLES);
+		_finish = QueryExecutor.compileOptional(config.getFinish(), STATE_VARIABLES);
 		_finishLabel = config.getFinishLabel();
 
 		List<QueryExecutor> steps = new ArrayList<>();
 		List<ResKey> labels = new ArrayList<>();
 		for (Config.Step step : config.getSteps()) {
-			steps.add(QueryExecutor.compile(step.getExpr()));
+			steps.add(QueryExecutor.compile(step.getExpr(), CHUNK_VARIABLES));
 			labels.add(step.getLabel());
 		}
 		_steps = Collections.unmodifiableList(steps);

@@ -24,6 +24,12 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ActionScriptVariables;
+import com.top_logic.layout.view.command.CommandArguments;
+import com.top_logic.layout.view.command.SwitchAction;
+import com.top_logic.layout.view.command.WithTransactionAction;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionStep;
@@ -247,7 +253,7 @@ public class TestActionArguments extends TestCase {
 	 */
 	public void testIfPassesArguments() {
 		ActionArguments arguments = ActionArguments.of(MAIN, MAIN_VALUE).with(OTHER, OTHER_VALUE);
-		IfAction branch = new IfAction((context, input) -> Boolean.TRUE, List.of(seeArguments()), List.of());
+		IfAction branch = new IfAction((context, args, additional) -> Boolean.TRUE, List.of(seeArguments()), List.of());
 
 		ViewActionChain.run(context(), List.of(branch, seeArguments()), arguments, _completions::add);
 
@@ -262,15 +268,15 @@ public class TestActionArguments extends TestCase {
 	public void testParseFollowUps() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionArguments.class);
 		GenericViewCommand.Config config = parse(context,
-			"<generic-command input='draft'>"
-				+ "<execute-script function='x -> $x' as='created'>"
+			"<generic-command inputs='draft'>"
+				+ "<execute-script function='$draft' as='created'>"
 				+ "<write-channel name='selection'/>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
 				+ "<with-transaction>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
 				+ "</with-transaction>"
 				+ "</execute-script>"
-				+ "<execute-script function='a -> x -> $x'>"
+				+ "<execute-script function='$a'>"
 				+ "<inputs><input channel='a'/></inputs>"
 				+ "<write-channel name='selection'/>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
@@ -287,7 +293,7 @@ public class TestActionArguments extends TestCase {
 		ExecuteScriptAction.Config withInputs = (ExecuteScriptAction.Config) config.getActions().get(1);
 		assertNull(withInputs.getAs());
 		assertEquals(1, withInputs.getInputs().size());
-		assertEquals("a", withInputs.getInputs().get(0).getChannelName());
+		assertEquals("a", withInputs.getInputs().get(0).getName());
 		assertEquals(2, withInputs.getActions().size());
 
 		assertEquals("draft", ((WriteChannelAction.Config) config.getActions().get(2)).getValue());
@@ -304,13 +310,73 @@ public class TestActionArguments extends TestCase {
 	}
 
 	/**
+	 * Tests that the inputs of a command are written as attribute, an entry renaming its argument
+	 * with {@code as}, or as nested elements.
+	 */
+	public void testParseCommandInputs() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionArguments.class);
+		GenericViewCommand.Config attribute = parse(context, "<generic-command inputs='selection as ticket, other'/>");
+		GenericViewCommand.Config elements = parse(context,
+			"<generic-command><inputs><input channel='selection' as='ticket'/><input channel='other'/></inputs>"
+				+ "</generic-command>");
+
+		for (GenericViewCommand.Config config : List.of(attribute, elements)) {
+			assertEquals(List.of("ticket", "other"), InputRef.names(config.getInputs()));
+			assertEquals("selection", config.getInputs().get(0).getChannel().getChannelName());
+			ActionScope scope = CommandArguments.of(config, ActionScope.NONE).scope();
+			assertEquals(List.of("ticket", "other"), scope.names());
+			assertEquals("ticket", scope.defaultName());
+		}
+
+		ActionScope triggered = CommandArguments.of(attribute, ActionScope.single("row")).scope();
+		assertEquals(List.of("ticket", "other", "row"), triggered.names());
+		assertEquals("row", triggered.defaultName());
+	}
+
+	/**
+	 * Tests that the script editor offers the names defined at the position of a nested script: the
+	 * inputs of the command, the results of the enclosing actions, the inputs of the action itself,
+	 * and the switch value in a case.
+	 */
+	public void testEditorVariables() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionArguments.class);
+		GenericViewCommand.Config config = parse(context,
+			"<generic-command inputs='selection as ticket'>"
+				+ "<execute-script function='$ticket' as='created'>"
+				+ "<with-transaction>"
+				+ "<if test='true'><then>"
+				+ "<execute-script function='$created' inputs='other'/>"
+				+ "<switch as='current'><case test='$current'/></switch>"
+				+ "</then></if>"
+				+ "</with-transaction>"
+				+ "</execute-script>"
+				+ "</generic-command>");
+
+		ExecuteScriptAction.Config outer = (ExecuteScriptAction.Config) config.getActions().get(0);
+		assertEquals(List.of("ticket"), ActionScriptVariables.variables(outer, List.of()));
+
+		WithTransactionAction.Config transaction = (WithTransactionAction.Config) outer.getActions().get(0);
+		IfAction.Config branch = (IfAction.Config) transaction.getActions().get(0);
+		ExecuteScriptAction.Config inner = (ExecuteScriptAction.Config) branch.getThen().get(0);
+		assertEquals(List.of("ticket", "created", "other"), ActionScriptVariables.variables(inner, List.of()));
+
+		SwitchAction.Config switchConfig = (SwitchAction.Config) branch.getThen().get(1);
+		assertEquals(List.of("ticket", "created", "current"),
+			ActionScriptVariables.variables(switchConfig, List.of(SwitchAction.Config.switchValueName(switchConfig))));
+
+		ActionScope runtime = CommandArguments.of(config, ActionScope.NONE).scope().with(WithResultActions.resultName(outer));
+		assertEquals("The editor offers the names the runtime instantiates the action with.",
+			runtime.names(), ActionScopes.scopeAt(inner).names());
+	}
+
+	/**
 	 * Tests that selecting an argument that is not defined at the position of the action is a
 	 * configuration error.
 	 */
 	public void testUnknownValueIsError() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionArguments.class);
 		GenericViewCommand.Config config = parse(context,
-			"<generic-command input='draft'>"
+			"<generic-command inputs='draft'>"
 				+ "<" + DeleteObjectAction.Config.TAG_NAME + " value='created'/>"
 				+ "</generic-command>");
 

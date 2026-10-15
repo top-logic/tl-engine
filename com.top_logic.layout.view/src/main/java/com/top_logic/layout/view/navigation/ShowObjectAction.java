@@ -30,7 +30,7 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <pre>
- * &lt;generic-command input="selection"&gt;
+ * &lt;generic-command inputs="selection"&gt;
  *   &lt;show-object/&gt;
  * &lt;/generic-command&gt;
  * </pre>

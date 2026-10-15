@@ -15,6 +15,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -185,8 +186,8 @@ public class ReactChartJsControl extends ReactControl {
 		Object targetObject = resolveMetadata(snapshot, datasetIndex, index);
 
 		try {
-			ViewCommand command = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-				.getInstance(handlerConfig.getAction());
+			ViewCommand command = ViewCommands.instantiate(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+				handlerConfig.getAction(), handlerConfig.getAs());
 			return command.execute(getReactContext(), targetObject);
 		} catch (RuntimeException ex) {
 			putState(ERROR, ex.getMessage());

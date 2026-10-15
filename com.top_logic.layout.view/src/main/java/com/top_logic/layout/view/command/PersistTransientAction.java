@@ -68,11 +68,12 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <pre>
- * &lt;generic-command input="model"&gt;
+ * &lt;generic-command inputs="model"&gt;
  *   &lt;store-form-state/&gt;
- *   &lt;persist-transient container="container" reference="milestones"/&gt;
- *   &lt;write-channel name="selection"/&gt;
- *   &lt;close-dialog/&gt;
+ *   &lt;persist-transient container="container" reference="milestones"&gt;
+ *     &lt;write-channel name="selection"/&gt;
+ *     &lt;close-dialog/&gt;
+ *   &lt;/persist-transient&gt;
  * &lt;/generic-command&gt;
  * </pre>
  *

@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 
@@ -18,7 +18,7 @@ import com.top_logic.basic.config.annotation.Nullable;
  * </p>
  *
  * <pre>
- * &lt;execute-script function="ticket -&gt; $ticket.get(`demo.tickets:Ticket#assignee`)" as="assignee"&gt;
+ * &lt;execute-script function="$ticket.get(`demo.tickets:Ticket#assignee`)" as="assignee"&gt;
  *   &lt;write-channel name="person"/&gt;
  *   &lt;write-channel name="ticket" value="selection"/&gt;
  * &lt;/execute-script&gt;
@@ -29,7 +29,7 @@ import com.top_logic.basic.config.annotation.Nullable;
  *           {@link ViewActions#instantiate(com.top_logic.basic.config.InstantiationContext, java.util.List, ActionScope)}
  *           wraps the action into, not by the action itself.
  */
-public interface WithValueArgument extends ConfigurationItem {
+public interface WithValueArgument extends ConfigPart {
 
 	/** Configuration name for {@link #getValue()}. */
 	String VALUE = "value";

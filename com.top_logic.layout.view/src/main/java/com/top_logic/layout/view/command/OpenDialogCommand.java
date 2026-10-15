@@ -115,7 +115,7 @@ public class OpenDialogCommand implements ViewCommand {
 		List<ChannelBindingConfig> getOutputs();
 
 		/**
-		 * Dialog channel name to receive the command's input parameter.
+		 * Dialog channel name to receive the command's main argument.
 		 */
 		@Name(BIND_INPUT_TO)
 		@Nullable
@@ -124,7 +124,7 @@ public class OpenDialogCommand implements ViewCommand {
 
 	private final OpenDialogAction _action;
 
-	private final String _argumentName;
+	private final CommandArguments _arguments;
 
 	/**
 	 * Creates a new {@link OpenDialogCommand}.
@@ -133,13 +133,25 @@ public class OpenDialogCommand implements ViewCommand {
 	public OpenDialogCommand(InstantiationContext context, Config config) {
 		_action = new OpenDialogAction(config.getDialogView(), config.getCloseOnBackdrop(),
 			config.getBindInputTo(), config.getBindings());
-		_argumentName = GenericViewCommand.argumentName(config);
+		_arguments = CommandArguments.of(config, ActionScope.of(context));
 	}
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		// Run through the chain: opening may suspend to ask about unsaved changes first.
-		ViewActionChain.run(context, List.of(_action), ActionArguments.of(_argumentName, input), null);
+		return execute(context, _arguments.arguments(context, input));
+	}
+
+	/**
+	 * Opens the dialog for the main argument.
+	 *
+	 * @implNote Runs through the chain: opening may suspend to ask about unsaved changes first.
+	 */
+	@Override
+	public HandlerResult execute(ReactContext context, ActionArguments arguments) {
+		if (arguments == null) {
+			return execute(context, (Object) null);
+		}
+		ViewActionChain.run(context, List.of(_action), arguments, null);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

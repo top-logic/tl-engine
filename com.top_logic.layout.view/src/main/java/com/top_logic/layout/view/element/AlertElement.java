@@ -5,6 +5,12 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import com.top_logic.layout.view.command.CommandArguments;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.channel.ChannelRef;
 import java.util.ArrayList;
@@ -85,7 +91,7 @@ import com.top_logic.util.Resources;
  *     visible-if="t -&gt; $t.get(`my.app:Ticket#overdue`)"
  *     message-expr="t -&gt; #('The ticket is overdue.'@en, 'Das Ticket ist überfällig.'@de)"
  *     closable="true"&gt;
- *   &lt;generic-command input="ticket"&gt;
+ *   &lt;generic-command inputs="ticket"&gt;
  *     &lt;label&gt;&lt;en&gt;Escalate&lt;/en&gt;&lt;de&gt;Eskalieren&lt;/de&gt;&lt;/label&gt;
  *     ...
  *   &lt;/generic-command&gt;
@@ -103,7 +109,10 @@ public class AlertElement implements UIElement {
 	 * Configuration for {@link AlertElement}.
 	 */
 	@TagName("alert")
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getSeverity()}. */
 		String SEVERITY = "severity";
@@ -240,6 +249,29 @@ public class AlertElement implements UIElement {
 		List<PolymorphicConfiguration<? extends ViewAction>> getOnDismiss();
 
 		/**
+		 * The name of the argument the {@link #getOnDismiss() actions run after a dismissal} of the
+		 * given alert receive:
+		 * the name of the first {@link #getInputs() input channel}, or
+		 * {@link CommandArguments#DEFAULT_ARGUMENT} without one.
+		 */
+		static String dismissArgument(Config config) {
+			List<ChannelRef> inputs = config.getInputs();
+			return inputs.isEmpty() ? CommandArguments.DEFAULT_ARGUMENT : inputs.get(0).getChannelName();
+		}
+
+		/**
+		 * The {@link #getOnDismiss() actions run after a dismissal} receive the
+		 * {@link #dismissArgument(Config) value of the first input}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getOnDismiss(), part)) {
+				return ActionScope.single(dismissArgument(this));
+			}
+			return outer;
+		}
+
+		/**
 		 * Commands offered as buttons in the message, e.g. to resolve what it speaks about.
 		 *
 		 * @implNote Written directly as children of the {@code <alert>}.
@@ -316,8 +348,7 @@ public class AlertElement implements UIElement {
 				+ "') or as a function ('" + Config.MESSAGE_EXPR + "').");
 		}
 
-		List<ChannelRef> inputs = config.getInputs();
-		String argumentName = GenericViewCommand.argumentName(inputs.isEmpty() ? null : inputs.get(0));
+		String argumentName = Config.dismissArgument(config);
 		List<ViewAction> onDismiss =
 			ViewActions.instantiate(context, config.getOnDismiss(), ActionScope.single(argumentName));
 		_onDismiss = onDismiss.isEmpty() ? null : new GenericViewCommand(argumentName, onDismiss);

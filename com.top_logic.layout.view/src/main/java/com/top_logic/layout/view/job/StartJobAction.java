@@ -5,9 +5,9 @@
  */
 package com.top_logic.layout.view.job;
 
-import com.top_logic.layout.view.command.WithResultActions;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,15 +28,23 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.Continuation;
-import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -50,10 +58,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
- * The command continues where it left off once the job has completed, with the job's result as its
- * value; a job that fails or is cancelled aborts the command, so the compensations of the actions
+ * The command continues where it left off once the job has completed, with the job's result as the
+ * result of this action, seen by its follow-up actions; a job that fails or is cancelled aborts the command, so the compensations of the actions
  * before it run and the failure stays visible in the last state of the job. The work runs outside
- * any transaction: persisting its result is the business of the actions that follow it.
+ * any transaction: persisting its result is the business of the follow-up actions.
  * </p>
  *
  * <pre>
@@ -67,13 +75,16 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </pre>
  */
 @InApp
-public class StartJobAction extends InterruptibleViewAction {
+public class StartJobAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link StartJobAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<StartJobAction>, Inputs, WithResultActions {
+	public interface Config extends PolymorphicConfiguration<StartJobAction>, NamedInputs, WithResultActions {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration tag of a {@link StartJobAction}. */
 		String TAG_NAME = "start-job";
@@ -125,11 +136,12 @@ public class StartJobAction extends InterruptibleViewAction {
 		boolean isCancelable();
 
 		/**
-		 * TL-Script function doing the work of the job.
+		 * TL-Script doing the work of the job.
 		 *
 		 * <p>
-		 * Called with the monitor of the job as its first argument, followed by the values of the
-		 * input channels in declaration order and the command's current value as the last argument.
+		 * Uses the monitor of the job as variable {@value ScriptJobBody#MONITOR}, the arguments of
+		 * the chain and the values of the {@link #getInputs() inputs} as variables named after them,
+		 * without declaring them.
 		 * </p>
 		 *
 		 * <p>
@@ -138,6 +150,7 @@ public class StartJobAction extends InterruptibleViewAction {
 		 */
 		@Name(FUNCTION)
 		@Nullable
+		@ScriptContextVariables(JobScriptVariables.class)
 		Expr getFunction();
 
 		/**
@@ -145,7 +158,8 @@ public class StartJobAction extends InterruptibleViewAction {
 		 *
 		 * <p>
 		 * The alternative to a TL-Script function for work that is not expressed as an expression.
-		 * Exactly one of this and a function states what the job does.
+		 * Exactly one of this and a function states what the job does. The body receives the values
+		 * of the arguments of the chain followed by the values of the {@link #getInputs() inputs}.
 		 * </p>
 		 */
 		@Name(BODY)
@@ -175,6 +189,34 @@ public class StartJobAction extends InterruptibleViewAction {
 		@Name(UPDATE_INTERVAL)
 		@LongDefault(250)
 		long getUpdateInterval();
+
+		/**
+		 * The {@link #getBody() body} works on the arguments of the chain together with the values
+		 * of the {@link #getInputs() inputs}, see {@link StartJobAction#jobScope(ActionScope, List)}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getBody()) {
+				return jobScope(outer, getInputs());
+			}
+			return WithResultActions.super.actionScope(part, outer);
+		}
+	}
+
+	/**
+	 * {@link ScriptContextVariablesProvider} for the {@link Config#getFunction() function} of a
+	 * {@link StartJobAction}: the monitor of the job followed by the names of its
+	 * {@link StartJobAction#jobScope(ActionScope, List) arguments}.
+	 */
+	public static class JobScriptVariables implements ScriptContextVariablesProvider {
+
+		@Override
+		public List<String> getVariables(ValueModel valueModel) {
+			if (!(valueModel.getModel() instanceof Config config)) {
+				return List.of();
+			}
+			return ScriptJobBody.variables(jobScope(ActionScopes.scopeAt(config), config.getInputs()));
+		}
 	}
 
 	/**
@@ -208,7 +250,9 @@ public class StartJobAction extends InterruptibleViewAction {
 
 	private final ChannelRef _job;
 
-	private final List<ChannelRef> _inputs;
+	private final ActionScope _scope;
+
+	private final List<InputRef> _inputs;
 
 	private final List<JobPhase> _phases;
 
@@ -231,10 +275,11 @@ public class StartJobAction extends InterruptibleViewAction {
 	public StartJobAction(InstantiationContext context, Config config) {
 		_job = config.getJob();
 		_inputs = config.getInputs();
+		_scope = jobScope(ActionScope.of(context), _inputs);
 		_phases = phases(config.getPhases());
 		_cancelable = config.isCancelable();
 		_updateInterval = config.getUpdateInterval();
-		_body = body(context, config);
+		_body = body(context, config, _scope);
 	}
 
 	/**
@@ -242,8 +287,10 @@ public class StartJobAction extends InterruptibleViewAction {
 	 *
 	 * @param job
 	 *        The channel the job publishes its state on.
+	 * @param scope
+	 *        The scope the action runs in.
 	 * @param inputs
-	 *        The channels whose values are handed to the job ahead of the command's value.
+	 *        The channels whose values are handed to the job behind the arguments of the chain.
 	 * @param phases
 	 *        The steps the job announces it goes through; empty for a job that does not name them.
 	 * @param cancelable
@@ -253,17 +300,37 @@ public class StartJobAction extends InterruptibleViewAction {
 	 * @param body
 	 *        The work of the job.
 	 */
-	public StartJobAction(ChannelRef job, List<ChannelRef> inputs, List<JobPhase> phases, boolean cancelable,
-			long updateInterval, JobBody body) {
+	public StartJobAction(ChannelRef job, ActionScope scope, List<InputRef> inputs, List<JobPhase> phases,
+			boolean cancelable, long updateInterval, JobBody body) {
 		_job = job;
 		_inputs = inputs;
+		_scope = jobScope(scope, inputs);
 		_phases = List.copyOf(phases);
 		_cancelable = cancelable;
 		_updateInterval = updateInterval;
 		_body = body;
 	}
 
-	private static JobBody body(InstantiationContext context, Config config) {
+	/**
+	 * The names of the values a job is started with: the arguments of the chain, followed by the
+	 * values of the inputs of the action; a later name shadows an equal earlier one.
+	 *
+	 * @param scope
+	 *        The scope of the action.
+	 * @param inputs
+	 *        The inputs of the action.
+	 */
+	public static ActionScope jobScope(ActionScope scope, List<InputRef> inputs) {
+		List<String> names = new ArrayList<>(scope.names());
+		names.addAll(InputRef.names(inputs));
+		String defaultName = scope.defaultName();
+		if (defaultName == null && !inputs.isEmpty()) {
+			defaultName = inputs.get(0).getName();
+		}
+		return ActionScope.of(names, defaultName);
+	}
+
+	private static JobBody body(InstantiationContext context, Config config, ActionScope scope) {
 		Expr function = config.getFunction();
 		PolymorphicConfiguration<? extends JobBody> body = config.getBody();
 		if (function != null) {
@@ -271,14 +338,14 @@ public class StartJobAction extends InterruptibleViewAction {
 				context.error("A <" + Config.TAG_NAME + "> states its work either as '" + Config.FUNCTION
 					+ "' or as '" + Config.BODY + "', not both.");
 			}
-			return new ScriptJobBody(function);
+			return new ScriptJobBody(QueryExecutor.compile(function, ScriptJobBody.variables(scope)));
 		}
 		if (body == null) {
 			context.error("A <" + Config.TAG_NAME + "> requires either '" + Config.FUNCTION + "' or '"
 				+ Config.BODY + "' to state its work.");
 			return null;
 		}
-		return context.getInstance(body);
+		return scope.bind(context).getInstance(body);
 	}
 
 	private static List<JobPhase> phases(List<PhaseConfig> configs) {
@@ -291,16 +358,18 @@ public class StartJobAction extends InterruptibleViewAction {
 	}
 
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
 		ViewContext viewContext = (ViewContext) context;
 		ViewChannel target = viewContext.resolveChannel(_job);
-		List<ViewChannel> inputs = ChannelInputs.resolve(viewContext, _inputs);
-		List<Object> arguments =
-			Collections.unmodifiableList(Arrays.asList(ChannelInputs.arguments(inputs, input)));
+		ActionArguments jobArguments = arguments;
+		for (InputRef input : _inputs) {
+			jobArguments = jobArguments.with(input.getName(), viewContext.resolveChannel(input.getChannel()).get());
+		}
+		List<Object> values = Collections.unmodifiableList(jobArguments.values(_scope.names()));
 
 		JobRunner runner = new JobRunner(context, target, _phases, _cancelable, _updateInterval,
 			state -> settle(context, state, continuation));
-		runner.start(_body, arguments);
+		runner.start(_body, values);
 	}
 
 	/**

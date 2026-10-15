@@ -25,14 +25,14 @@
 			refuse-if="objects -> parent -> before -> $parent == 'b' || $objects.size() != 1"
 			target="ordered"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			target="row"
 			target-channel="target"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<columns>
 			<computed-column name="value"

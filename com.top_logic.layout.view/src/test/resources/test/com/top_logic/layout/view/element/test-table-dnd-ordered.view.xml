@@ -13,14 +13,14 @@
 			refuse-if="objects -> before -> $before == 'locked' || $objects.size() != 1"
 			target="ordered"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="value"
 			target="row"
 			target-channel="target"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<columns>
 			<computed-column name="value"

@@ -31,6 +31,7 @@ import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.ActionStep;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
@@ -183,15 +184,15 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that the values the job is started with are the input channels followed by the value of
-	 * the command.
+	 * Tests that the values the job is started with are the arguments of the chain followed by the
+	 * values of the input channels.
 	 */
 	public void testTheJobIsStartedWithTheInputsAndTheValueOfTheCommand() throws Exception {
 		_context.resolveChannel(new ChannelRef(CONTEXT)).set("the context");
 		AtomicReference<List<Object>> seen = new AtomicReference<>();
 
-		StartJobAction action = new StartJobAction(new ChannelRef(JOB), List.of(new ChannelRef(CONTEXT)),
-			List.of(), false, 0, body((job, arguments) -> {
+		StartJobAction action = new StartJobAction(new ChannelRef(JOB), ARGUMENTS,
+			List.of(new InputRef(new ChannelRef(CONTEXT))), List.of(), false, 0, body((job, arguments) -> {
 				seen.set(arguments);
 				return null;
 			}));
@@ -199,19 +200,19 @@ public class TestStartJobAction extends AbstractJobTest {
 
 		awaitFinished();
 
-		assertEquals(List.of("the context", INPUT), seen.get());
+		assertEquals(List.of(INPUT, "the context"), seen.get());
 	}
 
 	/**
 	 * Tests that a job written as a TL-Script function is called with the monitor of the job first,
-	 * then the inputs, then the value of the command.
+	 * then the arguments of the chain, then the inputs.
 	 */
 	public void testAScriptJobIsCalledWithTheMonitorFirst() throws Exception {
 		_context.resolveChannel(new ChannelRef(CONTEXT)).set("the context");
 		AtomicReference<List<Object>> seen = new AtomicReference<>();
 
-		StartJobAction action = new StartJobAction(new ChannelRef(JOB), List.of(new ChannelRef(CONTEXT)),
-			List.of(), false, 0, new ScriptJobBody(script(arguments -> {
+		StartJobAction action = new StartJobAction(new ChannelRef(JOB), ARGUMENTS,
+			List.of(new InputRef(new ChannelRef(CONTEXT))), List.of(), false, 0, new ScriptJobBody(script(arguments -> {
 				seen.set(arguments);
 				return "produced";
 			})));
@@ -223,8 +224,8 @@ public class TestStartJobAction extends AbstractJobTest {
 		assertEquals(3, arguments.size());
 		assertSame("The monitor of the job leads the arguments of the function.",
 			last.control(), arguments.get(0));
-		assertEquals("the context", arguments.get(1));
-		assertEquals(INPUT, arguments.get(2));
+		assertEquals(INPUT, arguments.get(1));
+		assertEquals("the context", arguments.get(2));
 		assertEquals("produced", last.result());
 	}
 

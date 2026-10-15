@@ -22,14 +22,14 @@
 	>
 		<drag kind="row"/>
 		<drop>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="row, other"
 			target="row"
 			target-channel="dropTarget"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<inputs>
 			<input channel="testInput"/>

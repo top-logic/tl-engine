@@ -5,8 +5,11 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -32,7 +35,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * </p>
  *
  * <pre>
- * &lt;execute-script function="draft -&gt; $draft.copy(transient: false)" as="created"&gt;
+ * &lt;execute-script function="$draft.copy(transient: false)" as="created"&gt;
  *   &lt;write-channel name="selection"/&gt;
  *   &lt;close-dialog/&gt;
  * &lt;/execute-script&gt;
@@ -42,7 +45,10 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  *           run by the chain step {@link ViewActions#instantiate(com.top_logic.basic.config.InstantiationContext, List, ActionScope)}
  *           wraps the action into, not by the action itself.
  */
-public interface WithResultActions extends ConfigurationItem {
+public interface WithResultActions extends ConfigPart, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 	/** Configuration name for {@link #getAs()}. */
 	String AS = "as";
@@ -83,5 +89,27 @@ public interface WithResultActions extends ConfigurationItem {
 	@DefaultContainer
 	@Options(fun = AllInAppImplementations.class)
 	List<PolymorphicConfiguration<? extends ViewAction>> getActions();
+
+	/**
+	 * The name of the result for the follow-up actions of the given action: the
+	 * {@link #getAs() given name}, or
+	 * {@link #RESULT} without one.
+	 */
+	static String resultName(WithResultActions config) {
+		String as = config.getAs();
+		return as == null || as.isBlank() ? RESULT : as.trim();
+	}
+
+	/**
+	 * The follow-up actions run with the arguments at the position of this action, extended by the
+	 * {@link #resultName(WithResultActions) result}.
+	 */
+	@Override
+	default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+		if (ActionScopes.contains(getActions(), part)) {
+			return outer.with(resultName(this));
+		}
+		return outer;
+	}
 
 }

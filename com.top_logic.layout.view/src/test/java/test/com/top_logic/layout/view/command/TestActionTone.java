@@ -56,7 +56,7 @@ public class TestActionTone extends TestCase {
 	static final ViewAction ORDINARY = (context, input) -> input;
 
 	/** A condition that always holds. */
-	static final ActionScript TRUE = (context, input) -> Boolean.TRUE;
+	static final ActionScript TRUE = (context, arguments, additional) -> Boolean.TRUE;
 
 	/** Deleting is destructive; an action saying nothing is ordinary. */
 	public void testDeletingIsDestructive() throws Exception {
@@ -86,10 +86,10 @@ public class TestActionTone extends TestCase {
 		assertEquals(ButtonTone.DEFAULT, new IfAction(TRUE, List.of(ORDINARY), List.of(ORDINARY)).getTone());
 
 		assertEquals(ButtonTone.DANGER, new SwitchAction(TRUE,
-			List.of(new SwitchCase(value -> true, List.of(new Destroying()))), List.of()).getTone());
+			List.of(new SwitchCase((context, arguments, value) -> true, List.of(new Destroying()))), List.of()).getTone());
 		assertEquals(ButtonTone.DANGER, new SwitchAction(TRUE, List.of(), List.of(new Destroying())).getTone());
 		assertEquals(ButtonTone.DEFAULT, new SwitchAction(TRUE,
-			List.of(new SwitchCase(value -> true, List.of(ORDINARY))), List.of(ORDINARY)).getTone());
+			List.of(new SwitchCase((context, arguments, value) -> true, List.of(ORDINARY))), List.of(ORDINARY)).getTone());
 	}
 
 	/** The model of a command offers the command's tone to every UI element showing it. */

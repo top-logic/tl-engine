@@ -26,7 +26,7 @@ import com.top_logic.layout.view.command.ViewAction;
  * </p>
  *
  * <pre>
- * &lt;generic-command placement="TOOLBAR" input="comment"&gt;
+ * &lt;generic-command placement="TOOLBAR" inputs="comment"&gt;
  *   &lt;remove-element/&gt;
  * &lt;/generic-command&gt;
  * </pre>

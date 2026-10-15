@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Id;
@@ -14,6 +17,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonTone;
@@ -37,7 +41,11 @@ public interface ViewCommand {
 	 * Configuration for {@link ViewCommand}.
 	 */
 	@Id(ViewCommand.class)
-	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig {
+	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig, NamedInputs,
+			ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -169,6 +177,26 @@ public interface ViewCommand {
 		@Nullable
 		@Format(KeyStrokeFormat.class)
 		KeyStroke getKey();
+
+		/**
+		 * The name of the value the trigger of this command supplies.
+		 *
+		 * @param trigger
+		 *        The scope the trigger supplies, {@link ActionScope#NONE} for a trigger supplying no
+		 *        value of its own.
+		 * @return The name of the trigger's value, {@code null} for none.
+		 */
+		default String triggerName(ActionScope trigger) {
+			return trigger.defaultName();
+		}
+
+		/**
+		 * The actions of a command run with its {@link CommandArguments arguments}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			return CommandArguments.of(this, outer).scope();
+		}
 	}
 
 	/**
@@ -177,10 +205,29 @@ public interface ViewCommand {
 	 * @param context
 	 *        The view display context providing rendering infrastructure.
 	 * @param input
-	 *        The input value from the configured channel (may be {@code null}).
+	 *        The main argument of the command, see {@link CommandArguments} (may be {@code null}).
 	 * @return The result of the command execution.
 	 */
 	HandlerResult execute(ReactContext context, Object input);
+
+	/**
+	 * Executes this command with the given arguments.
+	 *
+	 * <p>
+	 * The default executes {@link #execute(ReactContext, Object)} with the
+	 * {@link ActionArguments#value() main argument}. A command running actions overrides it, so that
+	 * they see all arguments.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view display context providing rendering infrastructure.
+	 * @param arguments
+	 *        The arguments of the command, see {@link CommandArguments}; {@code null} for none.
+	 * @return The result of the command execution.
+	 */
+	default HandlerResult execute(ReactContext context, ActionArguments arguments) {
+		return execute(context, arguments == null ? null : arguments.value());
+	}
 
 	/**
 	 * Whether executing this command applies the values entered into the enclosing form.

@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
@@ -52,7 +53,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <pre>
  * &lt;with-transaction&gt;
- *   &lt;execute-script function="obj -&gt; $obj.copy(transient: false)"/&gt;
+ *   &lt;execute-script function="$obj.copy(transient: false)"/&gt;
  * &lt;/with-transaction&gt;
  * </pre>
  */
@@ -63,7 +64,7 @@ public class WithTransactionAction implements ViewAction {
 	 * Configuration for {@link WithTransactionAction}.
 	 */
 	@TagName("with-transaction")
-	public interface Config extends PolymorphicConfiguration<WithTransactionAction>, WithCommitMessage {
+	public interface Config extends PolymorphicConfiguration<WithTransactionAction>, WithCommitMessage, ConfigPart {
 
 		@Override
 		@ClassDefault(WithTransactionAction.class)

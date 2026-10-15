@@ -12,7 +12,7 @@
 	<panel title="Detail">
 		<commands>
 			<generic-command name="back"
-				input="depth"
+				inputs="depth"
 			>
 				<executability>
 					<visible-if expr="d -> $d > 0"/>

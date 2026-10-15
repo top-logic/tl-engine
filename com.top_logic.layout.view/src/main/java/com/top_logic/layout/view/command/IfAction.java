@@ -20,13 +20,14 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
-import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * {@link ViewAction} that decides between two chains of actions by a TL-Script condition over the
- * default argument of the enclosing chain.
+ * arguments of the enclosing chain.
  *
  * <p>
  * The chosen chain runs as a nested chain of the enclosing one, with the same arguments; the result
@@ -41,12 +42,12 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * </p>
  *
  * <pre>
- * &lt;if test="ticket -&gt; $ticket != null"&gt;
+ * &lt;if test="$ticket != null"&gt;
  *   &lt;then&gt;
  *     &lt;write-channel name="ticket"/&gt;
  *   &lt;/then&gt;
  *   &lt;else&gt;
- *     &lt;execute-script function="x -&gt; new(`demo.tickets:Ticket`, transient: true)"&gt;
+ *     &lt;execute-script function="new(`demo.tickets:Ticket`, transient: true)"&gt;
  *       &lt;open-dialog bind-input-to="model" dialog-view="tickets-create.view.xml"/&gt;
  *     &lt;/execute-script&gt;
  *   &lt;/else&gt;
@@ -60,7 +61,7 @@ public class IfAction extends ArgumentsViewAction {
 	 * Configuration for {@link IfAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<IfAction>, Inputs {
+	public interface Config extends PolymorphicConfiguration<IfAction>, NamedInputs {
 
 		/** Configuration tag of an {@link IfAction}. */
 		String TAG_NAME = "if";
@@ -82,14 +83,15 @@ public class IfAction extends ArgumentsViewAction {
 		 * TL-Script condition deciding which branch runs.
 		 *
 		 * <p>
-		 * Called with the {@link #getInputs() inputs} channel values as leading positional
-		 * arguments, followed by the chain's default argument as the last argument. Its result is taken
+		 * Uses the arguments of the chain and the values of the {@link #getInputs() inputs} as
+		 * variables named after them, without declaring them. Its result is taken
 		 * as a condition in the fuzzy sense of TL-Script, so a plain object stands for a true
 		 * condition and nothing - {@code null}, an empty list, an empty text - for a false one.
 		 * </p>
 		 */
 		@Name(TEST)
 		@Mandatory
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getTest();
 
 		/**
@@ -118,7 +120,7 @@ public class IfAction extends ArgumentsViewAction {
 	 */
 	@CalledByReflection
 	public IfAction(InstantiationContext context, Config config) {
-		this(ActionScript.compile(config.getTest(), config.getInputs()),
+		this(ActionScript.compile(config.getTest(), ActionScope.of(context), config.getInputs()),
 			ViewActions.instantiate(context, config.getThen()),
 			ViewActions.instantiate(context, config.getElse()));
 	}
@@ -142,7 +144,7 @@ public class IfAction extends ArgumentsViewAction {
 	@Override
 	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
 		List<ViewAction> branch =
-			SearchExpression.isTrue(_test.execute(context, arguments.value())) ? _then : _else;
+			SearchExpression.isTrue(_test.execute(context, arguments)) ? _then : _else;
 		ViewActionChain.nest(context, branch, arguments, continuation);
 	}
 

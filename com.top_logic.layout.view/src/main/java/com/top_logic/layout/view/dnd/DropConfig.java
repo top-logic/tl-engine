@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -21,7 +23,11 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.DisabledIf;
-import com.top_logic.layout.view.command.ExecutabilityConfig;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.InputExecutabilityConfig;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -46,7 +52,10 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * @see DropBinding
  */
 @TagName(DropConfig.TAG_NAME)
-public interface DropConfig extends ExecutabilityConfig {
+public interface DropConfig extends InputExecutabilityConfig, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 	/** The tag a {@link DropConfig} is written with in a list of drops. */
 	String TAG_NAME = "drop";
@@ -187,5 +196,21 @@ public interface DropConfig extends ExecutabilityConfig {
 	@DefaultContainer
 	@Options(fun = AllInAppImplementations.class)
 	List<PolymorphicConfiguration<? extends ViewAction>> getActions();
+
+	/**
+	 * The scope of the {@link #getActions() actions} of a drop: the dropped objects as argument named
+	 * {@link #OBJECTS_ARGUMENT}.
+	 */
+	static ActionScope actionsScope() {
+		return ActionScope.single(OBJECTS_ARGUMENT);
+	}
+
+	@Override
+	default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+		if (ActionScopes.contains(getActions(), part)) {
+			return actionsScope();
+		}
+		return outer;
+	}
 
 }

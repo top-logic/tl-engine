@@ -87,10 +87,7 @@ public class ViewActions {
 		String resultName = WithResultActions.RESULT;
 		List<ViewAction> followUps = List.of();
 		if (config instanceof WithResultActions resultConfig) {
-			String as = nonEmpty(resultConfig.getAs());
-			if (as != null) {
-				resultName = as;
-			}
+			resultName = WithResultActions.resultName(resultConfig);
 			followUps = instantiate(context, resultConfig.getActions(), scope.with(resultName));
 		}
 

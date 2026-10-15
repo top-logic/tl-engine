@@ -108,7 +108,7 @@ public class LiveExecutability {
 	}
 
 	/**
-	 * Creates the {@link LiveExecutability} an {@link ExecutabilityConfig} declares: its rules
+	 * Creates the {@link LiveExecutability} an {@link InputExecutabilityConfig} declares: its rules
 	 * {@link ViewExecutabilityRules#build(List, ViewContext) built} for the given context, applied
 	 * to its input channel, followed together with its observed types.
 	 *
@@ -119,7 +119,8 @@ public class LiveExecutability {
 	 * @param onChange
 	 *        Run while attached whenever the rules may answer differently than before.
 	 */
-	public static LiveExecutability create(ExecutabilityConfig config, ViewContext context, Runnable onChange) {
+	public static LiveExecutability create(InputExecutabilityConfig config, ViewContext context,
+			Runnable onChange) {
 		ChannelRef inputRef = config.getInput();
 		return new LiveExecutability(
 			ViewExecutabilityRules.build(config.getExecutability(), context),

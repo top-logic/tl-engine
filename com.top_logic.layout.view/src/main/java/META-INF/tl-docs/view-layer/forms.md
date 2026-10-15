@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, fields of derived attributes, scripts following the entered values, a save or cancel of its own by <save-action> / <cancel-action> with <leave-edit-mode>) or when a channel write must ask about unsaved changes.
 order: 40
 ---
 
@@ -189,6 +189,27 @@ A check reads the values entered in the form, not the stored ones: it receives t
 ```
 
 The rule counts only errors on display: an error the user cannot see yet leaves the command enabled, and the attempt to execute it is what reveals the error.
+
+**A save of its own.** A `<form>` with a mode switch saves and cancels by its own buttons. `<save-action>` and `<cancel-action>` replace what these buttons do by an action chain, for a save that stores more than the form's fields - a value entered in a `<value-input>` of the form, say. Such a chain decides about the edit mode itself: `<store-form-state/>` stores the changes and keeps the form in edit mode, `<leave-edit-mode/>` (`LeaveEditModeAction`) then shows the stored values in view mode, as the default save does. `<leave-edit-mode/>` discards nothing: a form that still holds unsaved changes refuses it with an error and stays in edit mode with its changes. A cancel chain leaves the edit mode by `<discard-form-state/>`, which drops the changes.
+
+```xml
+<form input="comment">
+	<field attribute="content"/>
+	<value-input multiple="true" type="tl.core:Binary" value="files"/>
+	<save-action>
+		<with-transaction>
+			<store-form-state/>
+			<execute-script function="comment -> files -> stored -> myStoreFiles($comment, $files)" inputs="comment, files"/>
+		</with-transaction>
+		<leave-edit-mode/>
+	</save-action>
+	<cancel-action>
+		<discard-form-state/>
+		<execute-script function="comment -> discarded -> myFiles($comment)" inputs="comment"/>
+		<write-channel name="files"/>
+	</cancel-action>
+</form>
+```
 
 **A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
 

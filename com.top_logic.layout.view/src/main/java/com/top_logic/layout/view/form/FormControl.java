@@ -787,6 +787,29 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Leaves edit mode, keeping what is stored and discarding nothing.
+	 *
+	 * <p>
+	 * Meant to follow {@link #executeStoreState()}: the form shows the stored values of its object
+	 * again and releases its lock. Without edit mode, nothing happens.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the form still holds {@link #isDirty() unsaved changes}; the form then stays in edit
+	 *         mode with all its changes.
+	 */
+	public void executeLeaveEditMode() {
+		if (!_editMode) {
+			return;
+		}
+		if (isDirty()) {
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_LEAVE_EDIT_MODE_UNSAVED_CHANGES);
+		}
+		exitEditMode();
+	}
+
+	/**
 	 * Validates all participants and throws if any are invalid.
 	 *
 	 * <p>
@@ -963,8 +986,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * <p>
 	 * Used where the form keeps displaying the same object ({@link #executeSave()},
-	 * {@link #executeCancel()}): the fields must drop the overlay values and show the base values
-	 * again, which the notification triggers.
+	 * {@link #executeCancel()}, {@link #executeLeaveEditMode()}): the fields must drop the overlay
+	 * values and show the base values again, which the notification triggers.
 	 * </p>
 	 */
 	private void exitEditMode() {

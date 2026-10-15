@@ -120,7 +120,7 @@
 							inputs="comment, files"
 						/>
 					</with-transaction>
-					<discard-form-state/>
+					<leave-edit-mode/>
 				</save-action>
 				<cancel-action>
 					<discard-form-state/>

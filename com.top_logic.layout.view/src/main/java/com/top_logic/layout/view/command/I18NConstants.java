@@ -96,6 +96,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
 
 	/**
+	 * @en The form still holds unsaved changes. Store them before leaving the edit mode.
+	 */
+	public static ResKey ERROR_LEAVE_EDIT_MODE_UNSAVED_CHANGES;
+
+	/**
 	 * @en Upload of "{0}" failed.
 	 */
 	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;

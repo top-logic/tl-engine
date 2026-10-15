@@ -9,6 +9,9 @@
 	sensor form show them in that unit, and a number typed into the form without a unit is taken in
 	that unit as well. A number typed with a unit (20 °C, 68 F, 300 K) is converted.
 	
+	The sensor table observes the sites as well, so it follows a changed unit of its site at once;
+	the sensor form shows the changed unit when it is displayed again.
+	
 	"New Sensor" creates a sensor in the selected site through a dialog. The sensor being created
 	belongs to no site yet, so its temperatures are entered in degrees Celsius unless typed with
 	another unit.

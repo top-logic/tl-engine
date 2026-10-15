@@ -39,6 +39,8 @@ import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.presentation.model.ElementSpec;
 import com.top_logic.presentation.model.ParagraphSpec;
 import com.top_logic.presentation.model.PlaceholderKey;
+import com.top_logic.presentation.model.RunSpec;
+import com.top_logic.presentation.model.RunStyle;
 import com.top_logic.presentation.model.SlideSpec;
 import com.top_logic.presentation.model.TextSpec;
 import com.top_logic.presentation.profile.LayoutProfile;
@@ -55,7 +57,8 @@ import com.top_logic.util.error.TopLogicException;
  * backgrounds, logos and text styles. Of the layout's placeholders, a slide gets only those that
  * receive content: the title, the subtitle, the footer and the placeholders filled explicitly.
  * Placeholder text inherits the style of the layout, unless the description formats it. The
- * content elements are placed by {@link Placement} and created by {@link ElementWriter}.
+ * content elements are arranged by {@link Arrangement} and created by {@link ElementWriter}; an
+ * element that does not fit onto its slide continues on further slides.
  * </p>
  *
  * <p>
@@ -169,45 +172,129 @@ public final class DeckWriter {
 	/**
 	 * Appends a slide.
 	 *
+	 * <p>
+	 * If an element of the slide does not fit, see {@link ElementWriter#write(ElementSpec, int,
+	 * Rectangle2D, String)}, its rest is shown on continuation slides following the slide. A
+	 * continuation slide repeats the placeholder texts of the slide, its title extended by the
+	 * {@link TemplateProfile#continuationSuffix()}, and shows the continued element in the whole
+	 * content area. The other content elements and the notes appear only on the first slide.
+	 * </p>
+	 *
 	 * @param spec
 	 *        The slide description.
 	 * @param footer
 	 *        The footer of the presentation, <code>null</code> for none.
 	 * @param path
 	 *        The path of the slide in the description, for error messages.
-	 * @return The created slide.
+	 * @return The created slide, without its continuation slides.
 	 */
 	public XSLFSlide addSlide(SlideSpec spec, TextSpec footer, String path) {
 		int index = _profile.resolve(_analysis, spec.layout(), path + "." + PresentationData.LAYOUT);
 		XSLFSlideLayout layout = _layouts.get(index);
 		LayoutProfile layoutProfile = layoutProfile(index);
+		Rectangle2D area = layoutProfile.contentArea();
 
 		Map<XSLFTextShape, PlaceholderText> texts = placeholderTexts(spec, footer, layout, layoutProfile, path);
 
+		XSLFSlide result = null;
+		Continuation continuation = null;
+		do {
+			XSLFSlide slide = createSlide(layout, texts, continuation != null, path);
+			ElementWriter elements = new ElementWriter(slide, _drawing, _text, _profile.minFontSize());
+			List<Arrangement.Placed> placed;
+			int start;
+			if (continuation == null) {
+				placed = new Arrangement(_profile.gap(), elements::naturalHeight).arrange(spec.content(), area, path);
+				start = 0;
+			} else {
+				placed = List.of(new Arrangement.Placed(continuation.element(), area, continuation.path()));
+				start = continuation.start();
+			}
+
+			Continuation next = null;
+			for (Arrangement.Placed element : placed) {
+				int rest = elements.write(element.element(), start, element.bounds(), element.path());
+				if (rest > 0) {
+					if (next != null) {
+						throw new TopLogicException(
+							I18NConstants.ERROR_SEVERAL_CONTINUED__PATH_OTHER.fill(element.path(), next.path()));
+					}
+					next = new Continuation(element.element(), rest, element.path());
+				}
+			}
+
+			if (result == null) {
+				result = slide;
+				if (spec.notes() != null) {
+					writeNotes(slide, spec.notes(), path + "." + PresentationData.NOTES);
+				}
+			}
+			if (spec.hidden()) {
+				slide.setHidden(true);
+			}
+			continuation = next;
+		} while (continuation != null);
+		return result;
+	}
+
+	/**
+	 * An element whose rest is shown on a continuation slide.
+	 *
+	 * @param element
+	 *        The element.
+	 * @param start
+	 *        The first table row or paragraph of the rest.
+	 * @param path
+	 *        The path of the element in the description.
+	 */
+	private record Continuation(ElementSpec element, int start, String path) {
+		// Pure data.
+	}
+
+	/**
+	 * Creates a slide with the given placeholder texts.
+	 *
+	 * @param continued
+	 *        Whether the slide continues the previous slide, so that its title gets the
+	 *        {@link TemplateProfile#continuationSuffix()}.
+	 */
+	private XSLFSlide createSlide(XSLFSlideLayout layout, Map<XSLFTextShape, PlaceholderText> texts,
+			boolean continued, String path) {
 		XSLFSlide slide = _slideShow.createSlide(layout);
 		// The slide gets only the placeholders that receive content.
 		for (XSLFShape shape : new ArrayList<>(slide.getShapes())) {
 			slide.removeShape(shape);
 		}
+		String titlePath = path + "." + PresentationData.TITLE;
 		for (Map.Entry<XSLFTextShape, PlaceholderText> entry : texts.entrySet()) {
 			XSLFAutoShape placeholder = createPlaceholder(slide, entry.getKey());
-			_text.write(placeholder, entry.getValue().text(), entry.getValue().path());
-		}
-
-		List<ElementSpec> content = spec.content();
-		List<Rectangle2D> bounds = Placement.place(content, layoutProfile.contentArea(), path);
-		ElementWriter elements = new ElementWriter(slide, _drawing, _text);
-		for (int n = 0; n < content.size(); n++) {
-			elements.write(content.get(n), bounds.get(n), Placement.elementPath(path, n));
-		}
-
-		if (spec.notes() != null) {
-			writeNotes(slide, spec.notes(), path + "." + PresentationData.NOTES);
-		}
-		if (spec.hidden()) {
-			slide.setHidden(true);
+			PlaceholderText text = entry.getValue();
+			TextSpec spec = continued && text.path().equals(titlePath)
+				? withSuffix(text.text(), _profile.continuationSuffix()) : text.text();
+			_text.write(placeholder, spec, text.path());
 		}
 		return slide;
+	}
+
+	/**
+	 * The given text with the given suffix appended to its last paragraph, separated by a space.
+	 */
+	private static TextSpec withSuffix(TextSpec text, String suffix) {
+		if (suffix.isEmpty()) {
+			return text;
+		}
+		List<ParagraphSpec> paragraphs = new ArrayList<>(text.paragraphs());
+		if (paragraphs.isEmpty()) {
+			paragraphs.add(ParagraphSpec.plain(suffix));
+		} else {
+			ParagraphSpec last = paragraphs.get(paragraphs.size() - 1);
+			List<RunSpec> runs = new ArrayList<>(last.runs());
+			RunStyle style = runs.isEmpty() ? RunStyle.INHERIT : runs.get(runs.size() - 1).style();
+			runs.add(new RunSpec(" " + suffix, style, null));
+			paragraphs.set(paragraphs.size() - 1, new ParagraphSpec(runs, last.style(), last.align(), last.level(),
+				last.bullet(), last.spaceBefore(), last.spaceAfter(), last.lineSpacing()));
+		}
+		return text.withParagraphs(paragraphs);
 	}
 
 	private LayoutProfile layoutProfile(int index) {

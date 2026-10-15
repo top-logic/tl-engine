@@ -23,6 +23,8 @@ import com.top_logic.presentation.model.LayoutRole;
 import com.top_logic.presentation.model.Value;
 import com.top_logic.presentation.template.LayoutInfo;
 import com.top_logic.presentation.template.TemplateAnalysis;
+import com.top_logic.presentation.text.TextMeasure;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -44,9 +46,27 @@ import com.top_logic.util.error.TopLogicException;
  *        The properties of the slide layouts by their index.
  * @param roles
  *        The colors of the color roles by the role names.
+ * @param gap
+ *        The distance in points between the elements of a row or column that gives none, and
+ *        between the content elements of a slide arranged one below the other.
+ * @param minFontSize
+ *        The smallest font size in points to which a text is shrunk to fit into its element.
+ * @param continuationSuffix
+ *        The text appended to the title of a slide that continues the content of the previous
+ *        slide, separated by a space.
  */
 public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, LayoutProfile> slideLayouts,
-		Map<String, ColorSpec> roles) {
+		Map<String, ColorSpec> roles, double gap, double minFontSize, String continuationSuffix) {
+
+	/**
+	 * The default of {@link #gap()} in points.
+	 */
+	public static final double DEFAULT_GAP = 17;
+
+	/**
+	 * The default of {@link #minFontSize()} in points.
+	 */
+	public static final double DEFAULT_MIN_FONT_SIZE = 10;
 
 	/**
 	 * Derives the profile of the analyzed template.
@@ -122,8 +142,14 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 				roles.put(entry.getKey(), DescriptionReader.readColor(color));
 			}
 		}
+		Double gap = entries.get(GAP).optNonNegative();
+		Double minFontSize = entries.get(MIN_FONT_SIZE).optRange(TextMeasure.MIN_FONT_SIZE, TextMeasure.MAX_FONT_SIZE);
+		String continuationSuffix = entries.get(CONTINUATION_SUFFIX).optString();
 		entries.checkComplete();
-		return new TemplateProfile(layouts, slideLayouts, roles);
+		return new TemplateProfile(layouts, slideLayouts, roles,
+			gap == null ? DEFAULT_GAP : gap.doubleValue(),
+			minFontSize == null ? DEFAULT_MIN_FONT_SIZE : minFontSize.doubleValue(),
+			continuationSuffix == null ? defaultContinuationSuffix() : continuationSuffix);
 	}
 
 	private static Object parseIndex(String key) {
@@ -238,6 +264,13 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 	}
 
 	/**
+	 * The default of {@link #continuationSuffix()} in the language of the current user.
+	 */
+	public static String defaultContinuationSuffix() {
+		return Resources.getInstance().getString(I18NConstants.CONTINUATION_SUFFIX);
+	}
+
+	/**
 	 * The properties of the layout with the given index.
 	 *
 	 * @return The properties, <code>null</code> if the profile does not describe the layout.
@@ -250,7 +283,9 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 	 * The data representation with the keys {@link PresentationData#LAYOUTS} (the layout index for
 	 * each {@link LayoutRole#id() role}), {@link PresentationData#SLIDE_LAYOUTS} (the
 	 * {@link LayoutProfile#toData() layout properties} by the layout index) and
-	 * {@link PresentationData#ROLES} (the {@link ColorSpec#toData() color} for each color role).
+	 * {@link PresentationData#ROLES} (the {@link ColorSpec#toData() color} for each color role),
+	 * {@link PresentationData#GAP}, {@link PresentationData#MIN_FONT_SIZE} and
+	 * {@link PresentationData#CONTINUATION_SUFFIX}.
 	 */
 	public Map<String, Object> toData() {
 		Map<String, Object> result = PresentationData.map();
@@ -269,6 +304,9 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 			roleData.put(entry.getKey(), entry.getValue().toData());
 		}
 		result.put(ROLES, roleData);
+		result.put(GAP, PresentationData.number(gap));
+		result.put(MIN_FONT_SIZE, PresentationData.number(minFontSize));
+		result.put(CONTINUATION_SUFFIX, continuationSuffix);
 		return result;
 	}
 

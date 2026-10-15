@@ -49,6 +49,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_EXCLUSIVE_ENTRIES__PATH_OTHER;
 
 	/**
+	 * @en The element {0} of a row or column gives a position. The row or column places its
+	 *     children, give only their size ("width", "height") or their share ("weight").
+	 */
+	public static ResKey1 ERROR_POSITION_IN_CONTAINER__PATH;
+
+	/**
 	 * @en A text.
 	 */
 	public static ResKey EXPECTED_TEXT;
@@ -154,6 +160,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en A row with {0} cells.
 	 */
 	public static ResKey1 EXPECTED_ROW_LENGTH__COUNT;
+
+	/**
+	 * @en A list of {0} positive numbers, one for each child.
+	 */
+	public static ResKey1 EXPECTED_WEIGHTS__COUNT;
+
+	/**
+	 * @en A height: a number that is not negative, or "auto" for the height of the content.
+	 */
+	public static ResKey EXPECTED_HEIGHT;
 
 	/**
 	 * @en A dictionary describing a slide element with the entry "type".

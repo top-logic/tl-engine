@@ -11,7 +11,7 @@ package com.top_logic.presentation.model;
  * <p>
  * All values are given in points relative to the top left corner of the slide. A value that is
  * not given is determined by the area the element is placed in, e.g. the content area of the slide
- * layout.
+ * layout or the space a {@link ContainerSpec row or column} assigns to it.
  * </p>
  *
  * @param x
@@ -24,13 +24,19 @@ package com.top_logic.presentation.model;
  *        The width, <code>null</code> if not given.
  * @param height
  *        The height, <code>null</code> if not given.
+ * @param autoHeight
+ *        Whether the element takes the height of its content at its width. Then
+ *        {@link #height()} is <code>null</code>.
+ * @param weight
+ *        The share of the element in the space of a row or column that is not taken by elements
+ *        with own size, <code>null</code> for the default.
  */
-public record Bounds(Double x, Double y, Double width, Double height) {
+public record Bounds(Double x, Double y, Double width, Double height, boolean autoHeight, Double weight) {
 
 	/**
 	 * Bounds without any value.
 	 */
-	public static final Bounds NONE = new Bounds(null, null, null, null);
+	public static final Bounds NONE = new Bounds(null, null, null, null, false, null);
 
 	/**
 	 * Whether position and size are given completely.
@@ -40,10 +46,11 @@ public record Bounds(Double x, Double y, Double width, Double height) {
 	}
 
 	/**
-	 * Whether no value is given.
+	 * Whether a position is given, so that the element is not arranged with the other elements of
+	 * its slide.
 	 */
-	public boolean isEmpty() {
-		return x == null && y == null && width == null && height == null;
+	public boolean isPositioned() {
+		return x != null || y != null;
 	}
 
 }

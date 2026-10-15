@@ -48,6 +48,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey EXPECTED_PLACEHOLDER;
 
+	/**
+	 * @en (cont.)
+	 */
+	public static ResKey CONTINUATION_SUFFIX;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

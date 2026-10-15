@@ -143,7 +143,7 @@ public final class PresentationData {
 	/** Key of the table description of a table shape. */
 	public static final String TABLE = "table";
 
-	/** Key of the shapes in a group. */
+	/** Key of the shapes in a group or of the elements in a row or column. */
 	public static final String CHILDREN = "children";
 
 	/** Key of the content type of an image. */
@@ -293,8 +293,29 @@ public final class PresentationData {
 	/** Key of the link target of a text. */
 	public static final String HYPERLINK = "hyperlink";
 
-	/** Key of the way a text is fitted into its shape. */
-	public static final String AUTOFIT = "autofit";
+	/**
+	 * Key of the handling of a text that does not fit into its element, see
+	 * {@link com.top_logic.presentation.model.Overflow}.
+	 */
+	public static final String OVERFLOW = "overflow";
+
+	/** Key of the flag telling whether a text continues on further slides by paragraphs. */
+	public static final String SPLIT = "split";
+
+	/** Key of the share of an element in the free space of its row or column. */
+	public static final String WEIGHT = "weight";
+
+	/** Key of the shares of the children of a row or column. */
+	public static final String WEIGHTS = "weights";
+
+	/** Key of the distance between the children of a row or column. */
+	public static final String GAP = "gap";
+
+	/** Key of the smallest font size to which a text is shrunk to fit into its element. */
+	public static final String MIN_FONT_SIZE = "minFontSize";
+
+	/** Key of the text appended to the title of a continuation slide. */
+	public static final String CONTINUATION_SUFFIX = "continuationSuffix";
 
 	/** Key of the flag telling whether a text is wrapped at the shape border. */
 	public static final String WRAP = "wrap";
@@ -343,6 +364,15 @@ public final class PresentationData {
 
 	/** {@link #TYPE} of an image. */
 	public static final String TYPE_IMAGE = "image";
+
+	/** {@link #TYPE} of a container arranging its children side by side. */
+	public static final String TYPE_ROW = "row";
+
+	/** {@link #TYPE} of a container arranging its children one below the other. */
+	public static final String TYPE_COLUMN = "column";
+
+	/** Value of {@link #HEIGHT} giving an element the natural height of its content. */
+	public static final String AUTO = "auto";
 
 	/** Value of {@link #FILL}, {@link #LINE} and {@link #BULLET} that switches them off. */
 	public static final String NONE = "none";

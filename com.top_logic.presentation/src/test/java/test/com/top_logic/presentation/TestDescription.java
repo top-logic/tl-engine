@@ -19,7 +19,6 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyTemplate;
-import com.top_logic.presentation.model.Autofit;
 import com.top_logic.presentation.model.Bounds;
 import com.top_logic.presentation.model.BulletSpec;
 import com.top_logic.presentation.model.CellSpec;
@@ -34,6 +33,7 @@ import com.top_logic.presentation.model.InsetsSpec;
 import com.top_logic.presentation.model.LayoutRef;
 import com.top_logic.presentation.model.LayoutRole;
 import com.top_logic.presentation.model.LineSpec;
+import com.top_logic.presentation.model.Overflow;
 import com.top_logic.presentation.model.PaintSpec;
 import com.top_logic.presentation.model.ParagraphSpec;
 import com.top_logic.presentation.model.PlaceholderKey;
@@ -80,7 +80,7 @@ public class TestDescription extends AbstractSearchExpressionTest {
 							bullet: {"char": "-", "color": "risiko"}, level: 1, spaceBefore: 6),
 						"second"
 					],
-					size: 14, color: "bg1", anchor: "middle", insets: 4, autofit: "shrink"),
+					size: 14, color: "bg1", anchor: "middle", insets: 4, overflow: "ellipsis", split: true),
 				pptTextBox("Box", x: 10, y: 10, width: 100, height: 20, font: "Arial", caps: true),
 				pptShape(cornerRadius: 8, fill: "none", line: "none", shadow: true, text: 42),
 				pptTable([["Name", "Value"], ["A", 1], ["B", pptCell("2", fill: "accent2", bold: true, align: "right")]],
@@ -150,7 +150,7 @@ public class TestDescription extends AbstractSearchExpressionTest {
 		assertEquals(map(TYPE, TYPE_IMAGE, X, 1.0, Y, 2.0, WIDTH, 3.0, HEIGHT, 4.0, DATA, template, FIT, "cover"),
 			image);
 		ImageSpec spec = (ImageSpec) DescriptionReader.readElement(new Value(image, "image"));
-		assertEquals(new Bounds(1.0, 2.0, 3.0, 4.0), spec.bounds());
+		assertEquals(new Bounds(1.0, 2.0, 3.0, 4.0, false, null), spec.bounds());
 		assertSame(template, spec.data());
 		assertEquals(ImageFit.COVER, spec.fit());
 	}
@@ -180,7 +180,7 @@ public class TestDescription extends AbstractSearchExpressionTest {
 		assertEquals(4, content.size());
 
 		ShapeSpec shape = (ShapeSpec) content.get(0);
-		assertEquals(new Bounds(30.0, 130.0, 300.0, 200.0), shape.bounds());
+		assertEquals(new Bounds(30.0, 130.0, 300.0, 200.0, false, null), shape.bounds());
 		assertEquals(new GeometrySpec("ellipse", Map.of(), null), shape.geometry());
 		assertEquals(new PaintSpec.Gradient(List.of(
 			new PaintSpec.Stop(0, new ColorSpec.Scheme("accent1", Map.of())),
@@ -195,7 +195,8 @@ public class TestDescription extends AbstractSearchExpressionTest {
 			text.style());
 		assertEquals(TextAnchor.MIDDLE, text.anchor());
 		assertEquals(new InsetsSpec(4, 4, 4, 4), text.insets());
-		assertEquals(Autofit.SHRINK, text.autofit());
+		assertEquals(Overflow.ELLIPSIS, text.overflow());
+		assertTrue(text.split());
 		assertEquals(2, text.paragraphs().size());
 		ParagraphSpec first = text.paragraphs().get(0);
 		assertEquals(List.of(
@@ -208,9 +209,9 @@ public class TestDescription extends AbstractSearchExpressionTest {
 		assertEquals(ParagraphSpec.plain("second"), text.paragraphs().get(1));
 
 		TextBoxSpec box = (TextBoxSpec) content.get(1);
-		assertEquals(new Bounds(10.0, 10.0, 100.0, 20.0), box.bounds());
+		assertEquals(new Bounds(10.0, 10.0, 100.0, 20.0, false, null), box.bounds());
 		assertEquals(new TextSpec(List.of(ParagraphSpec.plain("Box")),
-			new RunStyle(null, null, null, true, null, null, "Arial", null), null, null, InsetsSpec.ZERO, null, null),
+			new RunStyle(null, null, null, true, null, null, "Arial", null), null, null, InsetsSpec.ZERO, null, false, null),
 			box.text());
 
 		ShapeSpec rounded = (ShapeSpec) content.get(2);
@@ -231,7 +232,7 @@ public class TestDescription extends AbstractSearchExpressionTest {
 		assertEquals(new CellSpec(TextSpec.of(List.of(ParagraphSpec.plain("1"))), null), table.rows().get(1).get(1));
 		assertEquals(new CellSpec(
 			new TextSpec(List.of(ParagraphSpec.plain("2")), new RunStyle(true, null, null, null, null, null, null, null),
-				TextAlign.RIGHT, null, null, null, null),
+				TextAlign.RIGHT, null, null, null, false, null),
 			new PaintSpec.Solid(new ColorSpec.Scheme("accent2", Map.of()))), table.rows().get(2).get(1));
 	}
 

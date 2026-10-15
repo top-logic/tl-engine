@@ -24,7 +24,10 @@ package com.top_logic.presentation.text;
  * @param fontAvailable
  *        Whether all fonts used by the text are installed. Text in a font that is not installed is
  *        measured in a replacement font.
+ * @param wordBroken
+ *        Whether a line ends within a word, because the word is wider than the text box.
  */
-public record TextMetrics(double width, int lines, double height, double lineHeight, boolean fontAvailable) {
+public record TextMetrics(double width, int lines, double height, double lineHeight, boolean fontAvailable,
+		boolean wordBroken) {
 	// Pure data.
 }

@@ -8,7 +8,6 @@ package com.top_logic.presentation.export;
 import java.util.List;
 
 import org.apache.poi.sl.usermodel.Insets2D;
-import org.apache.poi.sl.usermodel.TextShape.TextAutofit;
 import org.apache.poi.sl.usermodel.VerticalAlignment;
 import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
@@ -23,7 +22,6 @@ import org.openxmlformats.schemas.drawingml.x2006.main.STTextUnderlineType;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import com.top_logic.presentation.data.PresentationData;
-import com.top_logic.presentation.model.Autofit;
 import com.top_logic.presentation.model.BulletSpec;
 import com.top_logic.presentation.model.InsetsSpec;
 import com.top_logic.presentation.model.ParagraphSpec;
@@ -41,6 +39,13 @@ import com.top_logic.presentation.model.TextSpec;
  * placeholder, the slide master or the table. The character formatting of the last run of each
  * paragraph is also written as formatting of the paragraph end, so that an empty paragraph keeps
  * the font size of the text.
+ * </p>
+ *
+ * <p>
+ * The writer sets no automatic fitting of the shape (<code>normAutofit</code>): A text in a shape,
+ * text box or table cell is fitted when the presentation is created, see {@link TextFitting}, and
+ * keeps the resulting font sizes when edited in PowerPoint. A placeholder inherits the fitting of
+ * its slide layout.
  * </p>
  */
 public final class TextWriter {
@@ -82,11 +87,28 @@ public final class TextWriter {
 	 *        The path of the text in the description, for error messages.
 	 */
 	public void write(XSLFTextShape shape, TextSpec text, String path) {
+		write(shape, text, path, 0);
+	}
+
+	/**
+	 * Replaces the text of the given shape with a part of a text.
+	 *
+	 * @param shape
+	 *        The shape to fill.
+	 * @param text
+	 *        The part of the text to write.
+	 * @param path
+	 *        The path of the whole text in the description, for error messages.
+	 * @param firstParagraph
+	 *        The index of the first paragraph of the part in the whole text, for error messages.
+	 */
+	public void write(XSLFTextShape shape, TextSpec text, String path, int firstParagraph) {
 		writeBody(shape, text);
 		shape.clearText();
 		List<ParagraphSpec> paragraphs = text.paragraphs();
 		for (int n = 0; n < paragraphs.size(); n++) {
-			String paragraphPath = paragraphs.size() == 1 ? path : path + "[" + n + "]";
+			String paragraphPath =
+				paragraphs.size() == 1 && firstParagraph == 0 ? path : path + "[" + (firstParagraph + n) + "]";
 			writeParagraph(shape.addNewTextParagraph(), paragraphs.get(n), text, paragraphPath);
 		}
 	}
@@ -118,9 +140,6 @@ public final class TextWriter {
 		}
 		if (text.wrap() != null) {
 			shape.setWordWrap(text.wrap().booleanValue());
-		}
-		if (text.autofit() != null) {
-			shape.setTextAutofit(text.autofit() == Autofit.SHRINK ? TextAutofit.NORMAL : TextAutofit.NONE);
 		}
 	}
 

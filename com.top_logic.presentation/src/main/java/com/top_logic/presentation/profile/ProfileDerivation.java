@@ -133,7 +133,8 @@ final class ProfileDerivation {
 		putRole(layouts, LayoutRole.CONTENT, contentLayout());
 		putRole(layouts, LayoutRole.SECTION, firstOfType(SlideLayout.SECTION_HEADER));
 		putRole(layouts, LayoutRole.CLOSING, title);
-		return new TemplateProfile(layouts, slideLayouts, Map.of());
+		return new TemplateProfile(layouts, slideLayouts, Map.of(), TemplateProfile.DEFAULT_GAP,
+			TemplateProfile.DEFAULT_MIN_FONT_SIZE, TemplateProfile.defaultContinuationSuffix());
 	}
 
 	private static void putRole(Map<LayoutRole, Integer> layouts, LayoutRole role, Integer index) {

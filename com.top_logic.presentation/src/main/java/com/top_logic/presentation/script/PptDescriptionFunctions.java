@@ -58,8 +58,10 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * <p>
 	 * The slide is created on a slide layout of the template. Its title and subtitle fill the
 	 * title and subtitle placeholders of the layout, further placeholders are filled by their
-	 * index or name. The content elements are placed on the slide: An element with position and
-	 * size is placed there, a single element without them fills the content area of the layout.
+	 * index or name. The content elements are placed on the slide: An element with a position
+	 * (<code>x</code> or <code>y</code>) is placed there. The elements without position are
+	 * arranged one below the other in the content area of the layout, like the children of a
+	 * column (<code>pptColumn()</code>); a single one fills the content area.
 	 * </p>
 	 *
 	 * @param layout
@@ -72,7 +74,7 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param subtitle
 	 *        The text of the subtitle placeholder.
 	 * @param content
-	 *        The elements on the slide: shapes, text boxes, tables and images.
+	 *        The elements on the slide: shapes, text boxes, tables, images, rows and columns.
 	 * @param notes
 	 *        The speaker notes as text, or a list of lines.
 	 * @param placeholders
@@ -135,7 +137,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param width
 	 *        The width.
 	 * @param height
-	 *        The height.
+	 *        The height, or <code>auto</code> for the height of its text at its width.
+	 * @param weight
+	 *        The share in the free space of a row or column (<code>pptRow()</code>,
+	 *        <code>pptColumn()</code>) or of the content area, if no own size is given. The
+	 *        default is 1.
 	 * @param fill
 	 *        The fill: a color, <code>none</code>, or a gradient (<code>pptGradient()</code>). If
 	 *        not given, the shape is not filled.
@@ -179,8 +185,16 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param insets
 	 *        The inner margins: a number for all sides or a dictionary with the entries
 	 *        <code>left</code>, <code>top</code>, <code>right</code> and <code>bottom</code>.
-	 * @param autofit
-	 *        How the text is fitted into the shape: <code>none</code> or <code>shrink</code>.
+	 * @param overflow
+	 *        What happens to a text that does not fit into the shape: <code>shrink</code> (the
+	 *        default) reduces the font size, but not below the <code>minFontSize</code> of the
+	 *        template profile, and cuts the text off with "…" if it still does not fit;
+	 *        <code>ellipsis</code> cuts the text off without reducing the font size;
+	 *        <code>visible</code> lets the text exceed the shape; <code>error</code> stops the
+	 *        creation of the presentation.
+	 * @param split
+	 *        Whether paragraphs that do not fit into the shape continue on a further slide
+	 *        repeating the title of the slide. Only one element of a slide can be continued.
 	 * @param wrap
 	 *        Whether the text is wrapped at the shape border.
 	 * @return The dictionary describing the shape.
@@ -192,7 +206,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Double x,
 			Double y,
 			Double width,
-			Double height,
+			Object height,
+			Double weight,
 			Object fill,
 			Object line,
 			Object shadow,
@@ -210,10 +225,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			String align,
 			String anchor,
 			Object insets,
-			String autofit,
+			String overflow,
+			Boolean split,
 			Boolean wrap) {
 		Map<String, Object> result = typed(TYPE_SHAPE);
-		putBounds(result, x, y, width, height);
+		putBounds(result, x, y, width, height, weight);
 		if (cornerRadius != null || (adjust != null && !adjust.isEmpty())) {
 			Map<String, Object> geometryData = map();
 			put(geometryData, PRESET, geometry);
@@ -227,7 +243,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 		put(result, LINE, line);
 		put(result, SHADOW, shadow);
 		putText(result, text, font, size, color, bold, italic, underline, caps, spacing, align, anchor, insets);
-		put(result, AUTOFIT, autofit);
+		put(result, OVERFLOW, overflow);
+		put(result, SPLIT, split);
 		put(result, WRAP, wrap);
 		return result;
 	}
@@ -249,7 +266,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param width
 	 *        The width.
 	 * @param height
-	 *        The height.
+	 *        The height, or <code>auto</code> for the height of its text at its width.
+	 * @param weight
+	 *        The share in the free space of a row or column (<code>pptRow()</code>,
+	 *        <code>pptColumn()</code>) or of the content area, if no own size is given. The
+	 *        default is 1.
 	 * @param font
 	 *        The font family.
 	 * @param size
@@ -275,8 +296,17 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param insets
 	 *        The inner margins: a number for all sides or a dictionary with the entries
 	 *        <code>left</code>, <code>top</code>, <code>right</code> and <code>bottom</code>.
-	 * @param autofit
-	 *        How the text is fitted into the box: <code>none</code> or <code>shrink</code>.
+	 * @param overflow
+	 *        What happens to a text that does not fit into the box: <code>shrink</code> (the
+	 *        default) reduces the font size, but not below the <code>minFontSize</code> of the
+	 *        template profile, and cuts the text off with "…" if it still does not fit;
+	 *        <code>ellipsis</code> cuts the text off without reducing the font size;
+	 *        <code>visible</code> lets the text exceed the box; <code>error</code> stops the
+	 *        creation of the presentation.
+	 * @param split
+	 *        Whether paragraphs that do not fit into the box continue on a further slide repeating
+	 *        the title of the slide, e.g. for a long list of bullet points. Only one element of a
+	 *        slide can be continued.
 	 * @param wrap
 	 *        Whether the text is wrapped at the box border.
 	 * @return The dictionary describing the text box.
@@ -288,7 +318,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Double x,
 			Double y,
 			Double width,
-			Double height,
+			Object height,
+			Double weight,
 			String font,
 			Double size,
 			Object color,
@@ -300,12 +331,14 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			String align,
 			String anchor,
 			Object insets,
-			String autofit,
+			String overflow,
+			Boolean split,
 			Boolean wrap) {
 		Map<String, Object> result = typed(TYPE_TEXT_BOX);
-		putBounds(result, x, y, width, height);
+		putBounds(result, x, y, width, height, weight);
 		putText(result, text, font, size, color, bold, italic, underline, caps, spacing, align, anchor, insets);
-		put(result, AUTOFIT, autofit);
+		put(result, OVERFLOW, overflow);
+		put(result, SPLIT, split);
 		put(result, WRAP, wrap);
 		return result;
 	}
@@ -318,6 +351,13 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * "accent2")]], headerRows: 1, columnWeights: [2, 1])</code>
 	 * </p>
 	 *
+	 * <p>
+	 * The rows grow with their text. Rows that do not fit into the height of the table continue
+	 * on further slides, which repeat the header rows and the title of the slide extended by the
+	 * <code>continuationSuffix</code> of the template profile. On these slides, the table fills the
+	 * content area. Only one element of a slide can be continued.
+	 * </p>
+	 *
 	 * @param rows
 	 *        The rows of the table, each a list of cells with the same number of cells. A cell is
 	 *        a text or a cell description (<code>pptCell()</code>).
@@ -328,7 +368,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param width
 	 *        The width.
 	 * @param height
-	 *        The height.
+	 *        The height, or <code>auto</code> for the height of its rows at its width.
+	 * @param weight
+	 *        The share in the free space of a row or column (<code>pptRow()</code>,
+	 *        <code>pptColumn()</code>) or of the content area, if no own size is given. The
+	 *        default is 1.
 	 * @param columnWeights
 	 *        The relative widths of the columns, distributing the width of the table. If neither
 	 *        weights nor widths are given, all columns have the same width.
@@ -347,13 +391,14 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Double x,
 			Double y,
 			Double width,
-			Double height,
+			Object height,
+			Double weight,
 			List<?> columnWeights,
 			List<?> columnWidths,
 			Integer headerRows,
 			Double rowHeight) {
 		Map<String, Object> result = typed(TYPE_TABLE);
-		putBounds(result, x, y, width, height);
+		putBounds(result, x, y, width, height, weight);
 		putList(result, COLUMN_WEIGHTS, columnWeights);
 		putList(result, COLUMN_WIDTHS, columnWidths);
 		result.put(ROWS, rows);
@@ -394,6 +439,13 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param insets
 	 *        The inner margins: a number for all sides or a dictionary with the entries
 	 *        <code>left</code>, <code>top</code>, <code>right</code> and <code>bottom</code>.
+	 * @param overflow
+	 *        What happens to a word that is wider than the column: <code>shrink</code> (the
+	 *        default) reduces the font size, but not below the <code>minFontSize</code> of the
+	 *        template profile, and cuts the text off with "…" if the word still does not fit;
+	 *        <code>ellipsis</code> cuts the text off without reducing the font size;
+	 *        <code>visible</code> breaks the word; <code>error</code> stops the creation of the
+	 *        presentation.
 	 * @return The dictionary describing the cell.
 	 */
 	@Label("Describe a table cell")
@@ -411,9 +463,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Double spacing,
 			String align,
 			String anchor,
-			Object insets) {
+			Object insets,
+			String overflow) {
 		Map<String, Object> result = map();
 		putText(result, text, font, size, color, bold, italic, underline, caps, spacing, align, anchor, insets);
+		put(result, OVERFLOW, overflow);
 		put(result, FILL, fill);
 		return result;
 	}
@@ -430,7 +484,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param width
 	 *        The width.
 	 * @param height
-	 *        The height.
+	 *        The height, or <code>auto</code> for the height of the image keeping its aspect ratio at its width.
+	 * @param weight
+	 *        The share in the free space of a row or column (<code>pptRow()</code>,
+	 *        <code>pptColumn()</code>) or of the content area, if no own size is given. The
+	 *        default is 1.
 	 * @param fit
 	 *        How the image is fitted into its bounds: <code>contain</code> (the default) shows the
 	 *        whole image as large as possible, <code>cover</code> fills the bounds and cuts off
@@ -444,12 +502,141 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Double x,
 			Double y,
 			Double width,
-			Double height,
+			Object height,
+			Double weight,
 			String fit) {
 		Map<String, Object> result = typed(TYPE_IMAGE);
-		putBounds(result, x, y, width, height);
+		putBounds(result, x, y, width, height, weight);
 		result.put(DATA, data);
 		put(result, FIT, fit);
+		return result;
+	}
+
+	/**
+	 * Describes a row: elements arranged side by side.
+	 *
+	 * <p>
+	 * Example: three cards of equal width, the middle one twice as wide:
+	 * <code>pptRow([pptShape(fill: "accent1", text: "A"), pptShape(fill: "accent2", text: "B",
+	 * weight: 2), pptShape(fill: "accent3", text: "C")])</code>
+	 * </p>
+	 *
+	 * <p>
+	 * A child with a <code>width</code> gets this width. The other children share the remaining
+	 * width by their <code>weight</code> (default 1), or by the <code>weights</code> of the row.
+	 * Vertically, a child without own height is stretched to the height of the row, unless
+	 * <code>align</code> is given; then it gets the height of its content. Children have no
+	 * position of their own. Rows and columns can be nested arbitrarily.
+	 * </p>
+	 *
+	 * @param children
+	 *        The elements of the row: shapes, text boxes, tables, images, rows and columns.
+	 * @param gap
+	 *        The horizontal distance between two children. If not given, the <code>gap</code> of
+	 *        the template profile is used.
+	 * @param weights
+	 *        The shares of the children in the remaining width, one number for each child.
+	 * @param align
+	 *        The vertical alignment of the children: <code>stretch</code> (the default),
+	 *        <code>start</code>, <code>center</code> or <code>end</code>.
+	 * @param x
+	 *        The horizontal position of the left border. If neither <code>x</code> nor
+	 *        <code>y</code> is given, the row is arranged with the other content of the slide.
+	 * @param y
+	 *        The vertical position of the top border.
+	 * @param width
+	 *        The width.
+	 * @param height
+	 *        The height, or <code>auto</code> for the height of the highest child.
+	 * @param weight
+	 *        The share in the free space of an enclosing row or column, or of the content area.
+	 *        The default is 1.
+	 * @return The dictionary describing the row.
+	 */
+	@Label("Describe a row")
+	@SideEffectFree
+	public static Map<String, Object> row(
+			@Mandatory List<?> children,
+			Double gap,
+			List<?> weights,
+			String align,
+			Double x,
+			Double y,
+			Double width,
+			Object height,
+			Double weight) {
+		return container(TYPE_ROW, children, gap, weights, align, x, y, width, height, weight);
+	}
+
+	/**
+	 * Describes a column: elements arranged one below the other.
+	 *
+	 * <p>
+	 * Example: a text of its natural height above a table taking the rest:
+	 * <code>pptColumn([pptTextBox("Summary", height: "auto"), pptTable($rows, headerRows:
+	 * 1)])</code>
+	 * </p>
+	 *
+	 * <p>
+	 * A child with a <code>height</code> gets this height, a child with height <code>auto</code>
+	 * the height of its content at the width of the column. The other children share the
+	 * remaining height by their <code>weight</code> (default 1), or by the <code>weights</code> of
+	 * the column. Horizontally, a child without own width takes the width of the column. Children
+	 * have no position of their own. Rows and columns can be nested arbitrarily.
+	 * </p>
+	 *
+	 * <p>
+	 * Several content elements of a slide without position are arranged as in a column.
+	 * </p>
+	 *
+	 * @param children
+	 *        The elements of the column: shapes, text boxes, tables, images, rows and columns.
+	 * @param gap
+	 *        The vertical distance between two children. If not given, the <code>gap</code> of
+	 *        the template profile is used.
+	 * @param weights
+	 *        The shares of the children in the remaining height, one number for each child.
+	 * @param align
+	 *        The horizontal alignment of children with own width: <code>stretch</code> (the
+	 *        default) and <code>start</code> align them left, <code>center</code> centers them,
+	 *        <code>end</code> aligns them right.
+	 * @param x
+	 *        The horizontal position of the left border. If neither <code>x</code> nor
+	 *        <code>y</code> is given, the column is arranged with the other content of the slide.
+	 * @param y
+	 *        The vertical position of the top border.
+	 * @param width
+	 *        The width.
+	 * @param height
+	 *        The height, or <code>auto</code> for the height of its children.
+	 * @param weight
+	 *        The share in the free space of an enclosing row or column, or of the content area.
+	 *        The default is 1.
+	 * @return The dictionary describing the column.
+	 */
+	@Label("Describe a column")
+	@SideEffectFree
+	public static Map<String, Object> column(
+			@Mandatory List<?> children,
+			Double gap,
+			List<?> weights,
+			String align,
+			Double x,
+			Double y,
+			Double width,
+			Object height,
+			Double weight) {
+		return container(TYPE_COLUMN, children, gap, weights, align, x, y, width, height, weight);
+	}
+
+	private static Map<String, Object> container(String type, List<?> children, Double gap, List<?> weights,
+			String align, Double x, Double y, Double width, Object height, Double weight) {
+		Map<String, Object> result = typed(type);
+		putBounds(result, x, y, width, height, weight);
+		result.put(CHILDREN, children);
+		put(result, GAP, gap);
+		putList(result, WEIGHTS, weights);
+		put(result, ALIGN, align);
 		return result;
 	}
 
@@ -734,11 +921,13 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 		return new LinkedHashMap<>();
 	}
 
-	private static void putBounds(Map<String, Object> data, Double x, Double y, Double width, Double height) {
+	private static void putBounds(Map<String, Object> data, Double x, Double y, Double width, Object height,
+			Double weight) {
 		put(data, X, x);
 		put(data, Y, y);
 		put(data, WIDTH, width);
 		put(data, HEIGHT, height);
+		put(data, WEIGHT, weight);
 	}
 
 	private static void putText(Map<String, Object> data, Object text, String font, Double size, Object color,

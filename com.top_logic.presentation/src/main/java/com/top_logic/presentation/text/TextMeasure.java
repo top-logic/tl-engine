@@ -10,6 +10,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.text.AttributedCharacterIterator;
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -192,14 +194,16 @@ public final class TextMeasure {
 		double width = 0;
 		int lines = 0;
 		double lineHeight = 0;
+		boolean wordBroken = false;
 		for (RecordingTextParagraph paragraph : factory.getParagraphs()) {
+			wordBroken |= paragraph.breaksWord();
 			for (DrawTextFragment line : paragraph.getLines()) {
 				lines++;
 				width = Math.max(width, line.getLayout().getVisibleAdvance());
 				lineHeight = Math.max(lineHeight, line.getHeight());
 			}
 		}
-		return new TextMetrics(width, lines, height, lineHeight, fontsAvailable(shape));
+		return new TextMetrics(width, lines, height, lineHeight, fontsAvailable(shape), wordBroken);
 	}
 
 	/**
@@ -236,7 +240,7 @@ public final class TextMeasure {
 		RunStyle style = new RunStyle(Boolean.valueOf(bold), Boolean.valueOf(italic), null,
 			caps ? Boolean.TRUE : null, Double.valueOf(fontSize), null, fontFamily,
 			spacing != 0 ? Double.valueOf(spacing) : null);
-		TEXT_WRITER.write(shape, new TextSpec(paragraphs, style, null, null, null, null, null), TEXT);
+		TEXT_WRITER.write(shape, TextSpec.of(paragraphs).withStyle(style), TEXT);
 	}
 
 	/**
@@ -325,6 +329,33 @@ public final class TextMeasure {
 
 		List<DrawTextFragment> getLines() {
 			return lines;
+		}
+
+		/**
+		 * Whether a line ends at a position where the text cannot be broken, i.e. within a word.
+		 */
+		boolean breaksWord() {
+			String text = rawText;
+			if (text == null || lines.size() < 2) {
+				return false;
+			}
+			BreakIterator breaks = BreakIterator.getLineInstance();
+			breaks.setText(text);
+			int position = 0;
+			for (DrawTextFragment line : lines) {
+				AttributedCharacterIterator chars = line.getAttributedString().getIterator();
+				position += chars.getEndIndex() - chars.getBeginIndex();
+				if (position >= text.length()) {
+					return false;
+				}
+				if (text.charAt(position) == '\n') {
+					// An explicit line break, which is not part of a line.
+					position++;
+				} else if (position > 0 && !breaks.isBoundary(position)) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 	}

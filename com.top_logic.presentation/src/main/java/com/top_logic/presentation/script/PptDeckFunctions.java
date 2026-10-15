@@ -50,9 +50,12 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * description, or the layout of the role <code>content</code>. Of the layout's placeholders, the
 	 * slide shows only those that get a text: the title, the subtitle, the footer and the
 	 * placeholders filled explicitly. Placeholder texts take the style of the template, unless the
-	 * description formats them. The content elements are placed at their position; a single
-	 * element without position fills the content area of the layout. The sample slides of the
-	 * template are not part of the result.
+	 * description formats them. The content elements are placed at their position; the elements
+	 * without position are arranged one below the other in the content area of the layout. Texts
+	 * that do not fit into their element are shrunk or cut off as requested by their
+	 * <code>overflow</code>. A table that does not fit onto its slide, or a text marked with
+	 * <code>split</code>, continues on further slides. The sample slides of the template are not
+	 * part of the result.
 	 * </p>
 	 *
 	 * <p>
@@ -119,10 +122,18 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * <li><code>slideLayouts</code>: For each slide layout by its index: its <code>name</code>, the
 	 * index of the placeholder taking the <code>subtitle</code>, the index of the placeholder
 	 * taking the <code>footer</code>, and the <code>contentArea</code> (<code>x</code>,
-	 * <code>y</code>, <code>width</code>, <code>height</code> in points), which a single content
-	 * element without position fills.</li>
+	 * <code>y</code>, <code>width</code>, <code>height</code> in points), in which the content
+	 * elements without position are arranged.</li>
 	 * <li><code>roles</code>: The color for each color role name. A derived profile defines no
 	 * color roles.</li>
+	 * <li><code>gap</code>: The distance in points between the elements of a row or column that
+	 * gives none, and between the content elements of a slide arranged one below the other
+	 * (default 17).</li>
+	 * <li><code>minFontSize</code>: The smallest font size in points to which a text is shrunk to
+	 * fit into its element (default 10).</li>
+	 * <li><code>continuationSuffix</code>: The text appended to the title of a slide continuing a
+	 * table or text of the previous slide, separated by a space. The default is "(cont.)" in the
+	 * language of the current user.</li>
 	 * </ul>
 	 *
 	 * <p>

@@ -39,11 +39,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 ERROR_NO_PLACEHOLDER__PATH_PLACEHOLDER_LAYOUT;
 
 	/**
-	 * @en The element {0} has no complete position and size, like the element {1}. Only a single
-	 *     element on a slide fills the content area of the slide layout, give the position and size
-	 *     ("x", "y", "width", "height") of the others.
+	 * @en The text {0} does not fit into its element. Shorten the text, enlarge the element, or
+	 *     choose another "overflow" handling ("shrink", "ellipsis" or "visible").
 	 */
-	public static ResKey2 ERROR_SEVERAL_UNPOSITIONED__PATH_OTHER;
+	public static ResKey1 ERROR_TEXT_OVERFLOW__PATH;
+
+	/**
+	 * @en The element {0} does not fit onto its slide and must be continued on a further slide,
+	 *     like the element {1}. Only one element of a slide can be continued. Give the elements more
+	 *     space, or distribute them over several slides.
+	 */
+	public static ResKey2 ERROR_SEVERAL_CONTINUED__PATH_OTHER;
 
 	/**
 	 * @en The entry {0} contains the image "{1}" in a format that cannot be placed on a slide. Use a

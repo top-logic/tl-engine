@@ -74,6 +74,8 @@ public final class DescriptionReader {
 		result.put(TYPE_TEXT_BOX, DescriptionReader::readTextBox);
 		result.put(TYPE_TABLE, DescriptionReader::readTable);
 		result.put(TYPE_IMAGE, DescriptionReader::readImage);
+		result.put(TYPE_ROW, entries -> readContainer(entries, ContainerSpec.Direction.ROW));
+		result.put(TYPE_COLUMN, entries -> readContainer(entries, ContainerSpec.Direction.COLUMN));
 		return Collections.unmodifiableMap(result);
 	}
 
@@ -334,16 +336,58 @@ public final class DescriptionReader {
 	}
 
 	/**
+	 * Reads a row or column from the entries {@link PresentationData#CHILDREN},
+	 * {@link PresentationData#GAP}, {@link PresentationData#WEIGHTS}, {@link PresentationData#ALIGN}
+	 * and the bounds of the container.
+	 *
+	 * <p>
+	 * The children must not give a position, since the container places them.
+	 * </p>
+	 */
+	private static ContainerSpec readContainer(Entries entries, ContainerSpec.Direction direction) {
+		Bounds bounds = readBounds(entries);
+		List<ElementSpec> children = new ArrayList<>();
+		for (Value child : entries.require(CHILDREN, I18NConstants.EXPECTED_LIST).asListOrSingle()) {
+			ElementSpec element = readElement(child);
+			Bounds childBounds = element.bounds();
+			if (childBounds.isPositioned()) {
+				String key = childBounds.x() != null ? X : Y;
+				throw new TopLogicException(
+					I18NConstants.ERROR_POSITION_IN_CONTAINER__PATH.fill(child.path() + "." + key));
+			}
+			children.add(element);
+		}
+		Double gap = entries.get(GAP).optNonNegative();
+		Value weightsValue = entries.get(WEIGHTS);
+		List<Double> weights = readNumbers(weightsValue);
+		if (weights != null && weights.size() != children.size()) {
+			throw weightsValue.invalid(I18NConstants.EXPECTED_WEIGHTS__COUNT.fill(children.size()));
+		}
+		CrossAlign align = entries.get(ALIGN).optEnum(CrossAlign.class);
+		return new ContainerSpec(bounds, direction, children, gap, weights, align);
+	}
+
+	/**
 	 * Reads the position and size of an element from the entries {@link PresentationData#X},
-	 * {@link PresentationData#Y}, {@link PresentationData#WIDTH} and
-	 * {@link PresentationData#HEIGHT}.
+	 * {@link PresentationData#Y}, {@link PresentationData#WIDTH}, {@link PresentationData#HEIGHT}
+	 * (a number or {@link PresentationData#AUTO}) and {@link PresentationData#WEIGHT}.
 	 */
 	public static Bounds readBounds(Entries entries) {
-		return new Bounds(
-			entries.get(X).optNumber(),
-			entries.get(Y).optNumber(),
-			entries.get(WIDTH).optNonNegative(),
-			entries.get(HEIGHT).optNonNegative());
+		Double x = entries.get(X).optNumber();
+		Double y = entries.get(Y).optNumber();
+		Double width = entries.get(WIDTH).optNonNegative();
+		Value heightValue = entries.get(HEIGHT);
+		boolean autoHeight = heightValue.isString() && AUTO.equals(heightValue.asString());
+		Double height;
+		if (autoHeight) {
+			height = null;
+		} else if (heightValue.isAbsent() || heightValue.isNumber()) {
+			height = heightValue.optNonNegative();
+		} else {
+			throw heightValue.invalid(I18NConstants.EXPECTED_HEIGHT);
+		}
+		Double weight = entries.get(WEIGHT).optPositive();
+		return new Bounds(x, y, width, height, autoHeight, weight);
 	}
 
 	/**
@@ -629,8 +673,9 @@ public final class DescriptionReader {
 	/**
 	 * Reads the text of an element from its entries: the text in {@link PresentationData#TEXT},
 	 * the character formatting of {@link #readRunStyle(Entries)}, {@link PresentationData#ALIGN},
-	 * {@link PresentationData#ANCHOR}, {@link PresentationData#INSETS} and, for shapes,
-	 * {@link PresentationData#AUTOFIT} and {@link PresentationData#WRAP}.
+	 * {@link PresentationData#ANCHOR}, {@link PresentationData#INSETS},
+	 * {@link PresentationData#OVERFLOW} and, for shapes, {@link PresentationData#SPLIT} and
+	 * {@link PresentationData#WRAP}.
 	 *
 	 * @param entries
 	 *        The entries of the element.
@@ -638,8 +683,8 @@ public final class DescriptionReader {
 	 *        The inner margins if the entry {@link PresentationData#INSETS} is not given,
 	 *        <code>null</code> to inherit them.
 	 * @param shapeBody
-	 *        Whether the entries {@link PresentationData#AUTOFIT} and
-	 *        {@link PresentationData#WRAP} are supported.
+	 *        Whether the entries {@link PresentationData#SPLIT} and {@link PresentationData#WRAP}
+	 *        are supported.
 	 * @return The text, <code>null</code> if no text and no text property is given.
 	 */
 	public static TextSpec readElementText(Entries entries, InsetsSpec defaultInsets, boolean shapeBody) {
@@ -649,14 +694,15 @@ public final class DescriptionReader {
 		TextAlign align = entries.get(ALIGN).optEnum(TextAlign.class);
 		TextAnchor anchor = entries.get(ANCHOR).optEnum(TextAnchor.class);
 		InsetsSpec insets = readInsets(entries.get(INSETS));
-		Autofit autofit = shapeBody ? entries.get(AUTOFIT).optEnum(Autofit.class) : null;
+		Overflow overflow = entries.get(OVERFLOW).optEnum(Overflow.class);
+		Boolean split = shapeBody ? entries.get(SPLIT).optBoolean() : null;
 		Boolean wrap = shapeBody ? entries.get(WRAP).optBoolean() : null;
 		if (paragraphs == null && style.isInherit() && align == null && anchor == null && insets == null
-			&& autofit == null && wrap == null) {
+			&& overflow == null && split == null && wrap == null) {
 			return null;
 		}
 		return new TextSpec(paragraphs == null ? List.of() : paragraphs, style, align, anchor,
-			insets == null ? defaultInsets : insets, autofit, wrap);
+			insets == null ? defaultInsets : insets, overflow, split != null && split.booleanValue(), wrap);
 	}
 
 	/**

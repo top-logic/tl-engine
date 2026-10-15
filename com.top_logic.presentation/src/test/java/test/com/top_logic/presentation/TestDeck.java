@@ -171,7 +171,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 			for (XSLFSlide slide : slides) {
 				images.add(renderer.render(slide, 1280));
 			}
-			writeImages(images);
+			writeImages(images, "deck");
 		}
 
 		assertTrue("Result must be smaller than the template.", deck.getSize() < size(template));
@@ -347,16 +347,6 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		assertEquals("risk", argument(error, key, 2));
 	}
 
-	public void testErrorUnpositioned() throws Exception {
-		TopLogicException error = expectError(() -> evalOnce("""
-			t -> pptDeck($t, [pptSlide(), pptSlide(content: [pptShape(), pptShape(x: 1, y: 1, width: 1, height: 1),
-				pptTextBox("x", width: 100)])])
-			""", template()));
-		ResKeyTemplate key = com.top_logic.presentation.export.I18NConstants.ERROR_SEVERAL_UNPOSITIONED__PATH_OTHER;
-		assertEquals("slides[1].content[2]", argument(error, key, 0));
-		assertEquals("slides[1].content[0]", argument(error, key, 1));
-	}
-
 	public void testErrorBadLayout() throws Exception {
 		BinaryData template = template();
 
@@ -400,7 +390,11 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		}
 	}
 
-	private void writeImages(List<BufferedImage> images) throws IOException {
+	/**
+	 * Writes the given slide images into the directory given by {@link #PNG_DIR_PROPERTY}, if
+	 * set.
+	 */
+	static void writeImages(List<BufferedImage> images, String prefix) throws IOException {
 		String dir = System.getProperty(PNG_DIR_PROPERTY);
 		if (dir == null || dir.isEmpty()) {
 			return;
@@ -408,11 +402,11 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		File directory = new File(dir);
 		directory.mkdirs();
 		for (int n = 0; n < images.size(); n++) {
-			ImageIO.write(images.get(n), "png", new File(directory, String.format("deck-slide-%02d.png", n)));
+			ImageIO.write(images.get(n), "png", new File(directory, String.format("%s-slide-%02d.png", prefix, n)));
 		}
 	}
 
-	private static void assertBounds(Rectangle2D expected, Rectangle2D actual) {
+	static void assertBounds(Rectangle2D expected, Rectangle2D actual) {
 		assertEquals(expected.getX(), actual.getX(), DELTA);
 		assertEquals(expected.getY(), actual.getY(), DELTA);
 		assertEquals(expected.getWidth(), actual.getWidth(), DELTA);
@@ -425,7 +419,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		return result;
 	}
 
-	private static String placeholderText(XSLFSlide slide, String type, long idx) {
+	static String placeholderText(XSLFSlide slide, String type, long idx) {
 		XSLFTextShape shape = placeholder(slide, idx);
 		assertNotNull("No placeholder " + type + " " + idx, shape);
 		assertEquals(type, PlaceholderInfo.typeOf(shape));
@@ -443,7 +437,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		return null;
 	}
 
-	private static String notesText(XSLFNotes notes) {
+	static String notesText(XSLFNotes notes) {
 		for (XSLFTextShape shape : notes.getPlaceholders()) {
 			if (shape.getTextType() == org.apache.poi.sl.usermodel.Placeholder.BODY) {
 				return shape.getText();
@@ -456,7 +450,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		return findShape(slide, type, s -> true);
 	}
 
-	private static <T> T findShape(XSLFSlide slide, Class<T> type, java.util.function.Predicate<XSLFShape> filter) {
+	static <T> T findShape(XSLFSlide slide, Class<T> type, java.util.function.Predicate<XSLFShape> filter) {
 		for (XSLFShape shape : slide.getShapes()) {
 			if (type.isInstance(shape) && filter.test(shape)) {
 				return type.cast(shape);
@@ -466,13 +460,13 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		return null;
 	}
 
-	private static TemplateAnalysis analyze(BinaryData data) throws IOException {
+	static TemplateAnalysis analyze(BinaryData data) throws IOException {
 		try (XMLSlideShow slideShow = open(data)) {
 			return TemplateAnalysis.analyze(slideShow);
 		}
 	}
 
-	private static XMLSlideShow open(BinaryData data) throws IOException {
+	static XMLSlideShow open(BinaryData data) throws IOException {
 		try (InputStream in = data.getStream()) {
 			return new XMLSlideShow(in);
 		}
@@ -499,7 +493,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 	 * their time stamps.
 	 * </p>
 	 */
-	private static Object evalOnce(String script, Object... args) throws Exception {
+	static Object evalOnce(String script, Object... args) throws Exception {
 		return execute(search(script), args);
 	}
 
@@ -509,21 +503,21 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		}
 	}
 
-	private BinaryData template() {
+	static BinaryData template() {
 		return BinaryDataFactory.createBinaryData(TestDeck.class, TEMPLATE);
 	}
 
-	private static Object argument(TopLogicException error, ResKeyTemplate expectedKey, int index) {
+	static Object argument(TopLogicException error, ResKeyTemplate expectedKey, int index) {
 		ResKey key = error.getErrorKey();
 		assertEquals(expectedKey.getKey(), key.getKey());
 		return key.arguments()[index];
 	}
 
-	private interface Action {
+	interface Action {
 		Object run() throws Exception;
 	}
 
-	private static TopLogicException expectError(Action action) throws Exception {
+	static TopLogicException expectError(Action action) throws Exception {
 		try {
 			action.run();
 		} catch (RuntimeException ex) {

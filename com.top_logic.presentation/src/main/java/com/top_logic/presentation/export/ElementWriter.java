@@ -9,9 +9,11 @@ import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.poi.sl.usermodel.Insets2D;
 import org.apache.poi.sl.usermodel.PictureData.PictureType;
 import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFPictureShape;
@@ -19,6 +21,7 @@ import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTable;
 import org.apache.poi.xslf.usermodel.XSLFTableCell;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
+import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTLineProperties;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
@@ -35,6 +38,7 @@ import com.top_logic.presentation.model.ElementSpec;
 import com.top_logic.presentation.model.ImageSpec;
 import com.top_logic.presentation.model.LineSpec;
 import com.top_logic.presentation.model.PaintSpec;
+import com.top_logic.presentation.model.ParagraphSpec;
 import com.top_logic.presentation.model.RunStyle;
 import com.top_logic.presentation.model.ShapeSpec;
 import com.top_logic.presentation.model.TableSpec;
@@ -43,6 +47,7 @@ import com.top_logic.presentation.model.TextAnchor;
 import com.top_logic.presentation.model.TextBoxSpec;
 import com.top_logic.presentation.model.TextSpec;
 import com.top_logic.presentation.template.ColorInfo;
+import com.top_logic.presentation.text.TextMeasure;
 
 /**
  * Creates the content elements of a slide.
@@ -55,10 +60,16 @@ import com.top_logic.presentation.template.ColorInfo;
  * description aligns it otherwise.</li>
  * <li>A {@link TextBoxSpec text box} has neither fill nor outline.</li>
  * <li>A {@link TableSpec table} takes the width of its bounds; its height results from its rows.
- * The text of the header rows is bold. Each row is separated from the next by a thin line, the
+ * Rows that do not fit into the height of its bounds continue on a further slide. The text of the
+ * header rows is bold. Each row is separated from the next by a thin line, the
  * header rows by a stronger line.</li>
  * <li>An {@link ImageSpec image} is fitted into its bounds as requested.</li>
  * </ul>
+ *
+ * <p>
+ * The texts of shapes, text boxes and table cells are fitted into their element by
+ * {@link TextFitting}.
+ * </p>
  */
 public final class ElementWriter {
 
@@ -84,11 +95,19 @@ public final class ElementWriter {
 	 */
 	private static final PaintSpec DEFAULT_LINE_PAINT = new PaintSpec.Solid(new ColorSpec.Scheme("tx1", Map.of()));
 
+	/**
+	 * The amount in points by which a table may exceed its height without being continued,
+	 * compensating rounding errors.
+	 */
+	private static final double TOLERANCE = 0.01;
+
 	private final XSLFSlide _slide;
 
 	private final DrawingWriter _drawing;
 
 	private final TextWriter _text;
+
+	private final TextFitting _fitting;
 
 	/**
 	 * Creates an {@link ElementWriter}.
@@ -99,38 +118,105 @@ public final class ElementWriter {
 	 *        Writes colors, fills, outlines and shadows.
 	 * @param text
 	 *        Writes texts.
+	 * @param minFontSize
+	 *        The smallest font size in points to which a text is shrunk to fit into its element.
 	 */
-	ElementWriter(XSLFSlide slide, DrawingWriter drawing, TextWriter text) {
+	ElementWriter(XSLFSlide slide, DrawingWriter drawing, TextWriter text, double minFontSize) {
 		_slide = slide;
 		_drawing = drawing;
 		_text = text;
+		_fitting = new TextFitting(text, minFontSize);
 	}
 
 	/**
-	 * Creates the given element on the slide.
+	 * Creates the given element, or the part of it starting at the given position, on the slide.
+	 *
+	 * <p>
+	 * A table that is higher than its bounds shows its header rows and as many further rows as fit
+	 * (at least one), a text marked with {@link TextSpec#split()} as many paragraphs as fit (at
+	 * least one). The rest continues on a further slide.
+	 * </p>
 	 *
 	 * @param element
-	 *        The element description.
+	 *        The element description, no {@link com.top_logic.presentation.model.ContainerSpec}.
+	 * @param start
+	 *        The index of the first table row (after the header rows) or paragraph to show, 0 for
+	 *        the whole element.
 	 * @param bounds
-	 *        The position and size of the element on the slide, see {@link Placement}.
+	 *        The position and size of the element on the slide, see {@link Arrangement}.
 	 * @param path
 	 *        The path of the element in the description, for error messages.
+	 * @return The index of the first row or paragraph that did not fit and continues on a further
+	 *         slide, 0 if the element is complete.
 	 */
-	void write(ElementSpec element, Rectangle2D bounds, String path) {
+	int write(ElementSpec element, int start, Rectangle2D bounds, String path) {
 		if (element instanceof ShapeSpec shape) {
-			writeShape(shape, bounds, path);
+			return writeShape(shape, start, bounds, path);
 		} else if (element instanceof TextBoxSpec textBox) {
-			writeTextBox(textBox, bounds, path);
+			return writeTextBox(textBox, start, bounds, path);
 		} else if (element instanceof TableSpec table) {
-			writeTable(table, bounds, path);
+			return writeTable(table, start, bounds, path);
 		} else if (element instanceof ImageSpec image) {
 			writeImage(image, bounds, path);
+			return 0;
 		} else {
 			throw new IllegalArgumentException("Unsupported element: " + element);
 		}
 	}
 
-	private void writeShape(ShapeSpec spec, Rectangle2D bounds, String path) {
+	/**
+	 * The height in points the given element needs to show its content at the given width.
+	 *
+	 * <p>
+	 * A shape or text box needs the height of its text plus its inner margins, a table the height
+	 * of its rows, an image the height that keeps its aspect ratio. A shape without text needs no
+	 * height.
+	 * </p>
+	 *
+	 * @see Arrangement.HeightMeasure
+	 */
+	double naturalHeight(ElementSpec element, double width, String path) {
+		if (element instanceof ShapeSpec shape) {
+			if (shape.text() == null) {
+				return 0;
+			}
+			XSLFAutoShape probe = _slide.createAutoShape();
+			TextWriter.addTextBody((CTShape) probe.getXmlObject());
+			return textHeight(probe, centered(shape.text()), width, child(path, PresentationData.TEXT));
+		} else if (element instanceof TextBoxSpec textBox) {
+			return textHeight(_slide.createTextBox(), textBox.text(), width, child(path, PresentationData.TEXT));
+		} else if (element instanceof TableSpec table) {
+			if (table.rows().isEmpty() || table.columnCount() == 0) {
+				return 0;
+			}
+			XSLFTable probe = createTable(table, rowIndices(table, 0, table.rows().size()),
+				new Rectangle2D.Double(0, 0, width, 0), path);
+			try {
+				return probe.getAnchor().getHeight();
+			} finally {
+				_slide.removeShape(probe);
+			}
+		} else if (element instanceof ImageSpec image) {
+			Dimension2D size =
+				Pictures.add(_slide.getSlideShow(), image.data(), child(path, PresentationData.DATA)).size();
+			return size.getWidth() > 0 ? width * size.getHeight() / size.getWidth() : 0;
+		} else {
+			throw new IllegalArgumentException("Unsupported element: " + element);
+		}
+	}
+
+	private double textHeight(XSLFTextShape probe, TextSpec text, double width, String path) {
+		try {
+			probe.setAnchor(new Rectangle2D.Double(0, 0, width, 0));
+			_text.write(probe, text, path);
+			Insets2D insets = probe.getInsets();
+			return TextMeasure.measure(probe).height() + insets.top + insets.bottom;
+		} finally {
+			_slide.removeShape(probe);
+		}
+	}
+
+	private int writeShape(ShapeSpec spec, int start, Rectangle2D bounds, String path) {
 		XSLFAutoShape shape = _slide.createAutoShape();
 		shape.setAnchor(bounds);
 		CTShape xml = (CTShape) shape.getXmlObject();
@@ -155,27 +241,113 @@ public final class ElementWriter {
 		if (text == null) {
 			text = TextSpec.of(List.of());
 		}
-		_text.write(shape, centered(text), child(path, PresentationData.TEXT));
+		return writeText(shape, centered(text), start, child(path, PresentationData.TEXT));
 	}
 
 	private static TextSpec centered(TextSpec text) {
-		return new TextSpec(text.paragraphs(), text.style(), text.align() != null ? text.align() : TextAlign.CENTER,
-			text.anchor() != null ? text.anchor() : TextAnchor.MIDDLE, text.insets(), text.autofit(), text.wrap());
+		return text.withDefaultAlignment(TextAlign.CENTER, TextAnchor.MIDDLE);
 	}
 
-	private void writeTextBox(TextBoxSpec spec, Rectangle2D bounds, String path) {
+	private int writeTextBox(TextBoxSpec spec, int start, Rectangle2D bounds, String path) {
 		XSLFTextBox box = _slide.createTextBox();
 		box.setAnchor(bounds);
-		_text.write(box, spec.text(), child(path, PresentationData.TEXT));
+		return writeText(box, spec.text(), start, child(path, PresentationData.TEXT));
 	}
 
-	private void writeTable(TableSpec spec, Rectangle2D bounds, String path) {
-		int rowCount = spec.rows().size();
-		int columnCount = spec.columnCount();
-		if (rowCount == 0 || columnCount == 0) {
-			return;
+	/**
+	 * Writes the paragraphs of the given text from the given index on and fits them into the
+	 * shape.
+	 *
+	 * @return The index of the first paragraph that did not fit, 0 if all paragraphs are written.
+	 */
+	private int writeText(XSLFTextShape shape, TextSpec text, int start, String path) {
+		List<ParagraphSpec> paragraphs = text.paragraphs();
+		int end = paragraphs.size();
+		if (text.split() && end - start > 1) {
+			_text.write(shape, text.withParagraphs(paragraphs.subList(start, end)), path, start);
+			if (!TextFitting.fits(shape, true)) {
+				int fitting = 1;
+				int tooMany = end - start;
+				while (tooMany - fitting > 1) {
+					int candidate = (fitting + tooMany) / 2;
+					_text.write(shape, text.withParagraphs(paragraphs.subList(start, start + candidate)), path, start);
+					if (TextFitting.fits(shape, true)) {
+						fitting = candidate;
+					} else {
+						tooMany = candidate;
+					}
+				}
+				end = start + fitting;
+			}
 		}
-		XSLFTable table = _slide.createTable(rowCount, columnCount);
+		_fitting.write(shape, text.withParagraphs(paragraphs.subList(start, end)), true, path, start);
+		return end < paragraphs.size() ? end : 0;
+	}
+
+	/**
+	 * Writes the header rows and the rows from the given index on, as far as they fit into the
+	 * height of the given bounds.
+	 *
+	 * @return The index of the first row that did not fit, 0 if all rows are written.
+	 */
+	private int writeTable(TableSpec spec, int start, Rectangle2D bounds, String path) {
+		int rowCount = spec.rows().size();
+		if (rowCount == 0 || spec.columnCount() == 0) {
+			return 0;
+		}
+		int headerRows = spec.headerRows();
+		int first = Math.max(start, headerRows);
+		XSLFTable table = createTable(spec, rowIndices(spec, first, rowCount), bounds, path);
+		int bodyRows = rowCount - first;
+		if (bodyRows > 1 && table.getAnchor().getHeight() > bounds.getHeight() + TOLERANCE) {
+			double height = 0;
+			for (int row = 0; row < headerRows; row++) {
+				height += table.getRowHeight(row);
+			}
+			int fitting = 0;
+			while (fitting < bodyRows) {
+				height += table.getRowHeight(headerRows + fitting);
+				if (fitting > 0 && height > bounds.getHeight() + TOLERANCE) {
+					break;
+				}
+				fitting++;
+			}
+			if (fitting < bodyRows) {
+				_slide.removeShape(table);
+				createTable(spec, rowIndices(spec, first, first + fitting), bounds, path);
+				return first + fitting;
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * The indices of the header rows of the given table followed by the indices of the given
+	 * range of rows.
+	 */
+	private static List<Integer> rowIndices(TableSpec spec, int first, int end) {
+		List<Integer> result = new ArrayList<>();
+		int headerRows = spec.headerRows();
+		for (int row = 0; row < headerRows; row++) {
+			result.add(Integer.valueOf(row));
+		}
+		for (int row = Math.max(first, headerRows); row < end; row++) {
+			result.add(Integer.valueOf(row));
+		}
+		return result;
+	}
+
+	/**
+	 * Creates a table with the given rows of the description.
+	 *
+	 * <p>
+	 * The table takes the width of the given bounds, each row the height of its highest cell
+	 * text, but at least the row height of the description.
+	 * </p>
+	 */
+	private XSLFTable createTable(TableSpec spec, List<Integer> rows, Rectangle2D bounds, String path) {
+		int columnCount = spec.columnCount();
+		XSLFTable table = _slide.createTable(rows.size(), columnCount);
 		CTTableProperties tblPr = table.getCTTable().getTblPr();
 		tblPr.setFirstRow(spec.headerRows() > 0);
 
@@ -187,27 +359,43 @@ public final class ElementWriter {
 		}
 
 		String rowsPath = child(path, PresentationData.ROWS);
-		for (int row = 0; row < rowCount; row++) {
-			boolean header = row < spec.headerRows();
-			LineSpec rule = row == spec.headerRows() - 1 ? HEADER_RULE : ROW_RULE;
-			table.setRowHeight(row, spec.rowHeight() == null ? 0 : spec.rowHeight().doubleValue());
-			for (int column = 0; column < columnCount; column++) {
-				String cellPath = rowsPath + "[" + row + "][" + column + "]";
-				writeCell(table.getCell(row, column), spec.rows().get(row).get(column), header, rule, cellPath);
-			}
-		}
-
-		table.setAnchor(new Rectangle2D.Double(bounds.getX(), bounds.getY(), totalWidth, bounds.getHeight()));
-		// Grows the rows to the height of their text.
-		table.updateCellAnchor();
 		double height = 0;
-		for (int row = 0; row < rowCount; row++) {
-			double rowHeight = table.getCell(row, 0).getAnchor().getHeight();
+		for (int row = 0; row < rows.size(); row++) {
+			int index = rows.get(row).intValue();
+			boolean header = index < spec.headerRows();
+			LineSpec rule = index == spec.headerRows() - 1 ? HEADER_RULE : ROW_RULE;
+			double rowHeight = spec.rowHeight() == null ? 0 : spec.rowHeight().doubleValue();
+			for (int column = 0; column < columnCount; column++) {
+				String cellPath = rowsPath + "[" + index + "][" + column + "]";
+				XSLFTableCell cell = table.getCell(row, column);
+				// The cell text is wrapped at the column width.
+				cell.setAnchor(new Rectangle2D.Double(0, 0, widths[column], 0));
+				writeCell(cell, spec.rows().get(index).get(column), header, rule, cellPath);
+				Insets2D insets = cell.getInsets();
+				rowHeight = Math.max(rowHeight, TextMeasure.measure(cell).height() + insets.top + insets.bottom);
+			}
 			table.setRowHeight(row, rowHeight);
 			height += rowHeight;
 		}
+
 		table.setAnchor(new Rectangle2D.Double(bounds.getX(), bounds.getY(), totalWidth, height));
+		// Takes over rows that POI's own text layout makes higher.
 		table.updateCellAnchor();
+		double y = bounds.getY();
+		for (int row = 0; row < rows.size(); row++) {
+			double rowHeight = table.getCell(row, 0).getAnchor().getHeight();
+			table.setRowHeight(row, rowHeight);
+			// Places the cells without the border distance POI inserts between them, as PowerPoint
+			// does.
+			double x = bounds.getX();
+			for (int column = 0; column < columnCount; column++) {
+				table.getCell(row, column).setAnchor(new Rectangle2D.Double(x, y, widths[column], rowHeight));
+				x += widths[column];
+			}
+			y += rowHeight;
+		}
+		table.setAnchor(new Rectangle2D.Double(bounds.getX(), bounds.getY(), totalWidth, y - bounds.getY()));
+		return table;
 	}
 
 	private static double[] columnWidths(TableSpec spec, double width) {
@@ -237,10 +425,9 @@ public final class ElementWriter {
 		TextSpec text = spec.text();
 		if (text != null) {
 			if (header) {
-				text = new TextSpec(text.paragraphs(), text.style().inheritFrom(HEADER_STYLE), text.align(),
-					text.anchor(), text.insets(), text.autofit(), text.wrap());
+				text = text.withStyle(text.style().inheritFrom(HEADER_STYLE));
 			}
-			_text.write(cell, text, path);
+			_fitting.write(cell, text, false, path, 0);
 		}
 		CTTableCell xml = (CTTableCell) cell.getXmlObject();
 		CTTableCellProperties tcPr = xml.isSetTcPr() ? xml.getTcPr() : xml.addNewTcPr();

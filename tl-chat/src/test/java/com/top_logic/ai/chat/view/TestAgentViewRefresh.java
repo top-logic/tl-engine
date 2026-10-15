@@ -7,6 +7,8 @@ package com.top_logic.ai.chat.view;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -26,6 +28,8 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.model.listen.ModelListener;
@@ -173,6 +177,40 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		assertEquals("The fixture did not write during the pass.", 1, writtenDuringThePass.size());
 		assertTrue("The list the window renders does not see the row written during the refresh: "
 			+ _seenByTheList, _seenByTheList.contains(text));
+	}
+
+	/**
+	 * A window whose browser takes nothing from its event stream is not refreshed, and is refreshed
+	 * again once its browser has taken what waited.
+	 *
+	 * <p>
+	 * A browser that dies without reporting that its page is gone leaves its window behind until the
+	 * session ends, and the window's queue keeps every event until a stream connects again. Each
+	 * refresh made the window's lists send their rows again, so such a window grew by the rows of
+	 * every list it showed for every change a run made - 930 MB in eleven windows of a ten-hour run,
+	 * until the JVM ran out of memory (Pietro #738).
+	 * </p>
+	 */
+	public void testAWindowWithUndeliveredEventsIsNotRefreshed() throws InterruptedException {
+		SSEUpdateQueue queue = _registry.getQueue(WINDOW);
+		// What an earlier refresh sent the window, and no browser took.
+		queue.enqueue(PatchEvent.create().setControlId("rows").setPatch("{}"));
+		CountDownLatch passes = new CountDownLatch(1);
+		AgentViewRefreshService.duringPass = passes::countDown;
+
+		remember("Answers in German.");
+
+		assertTrue("No refresh pass ran.", passes.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		assertTrue("A window nobody reads was refreshed: " + _seenByTheList, _seenByTheList.isEmpty());
+
+		// The page is rendered again: what waited is replaced by the full state.
+		queue.discardPendingEvents();
+		String text = "Reads the summary first.";
+		remember(text);
+
+		assertTrue("The window was not refreshed again once it delivered what waited.", awaitNotification());
+		assertTrue("The list the window renders does not see the row the run wrote: " + _seenByTheList,
+			_seenByTheList.contains(text));
 	}
 
 	// --- Fixture ---

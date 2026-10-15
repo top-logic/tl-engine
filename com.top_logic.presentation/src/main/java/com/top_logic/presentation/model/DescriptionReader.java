@@ -40,7 +40,7 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * An element on a slide is a dictionary whose entry {@link PresentationData#TYPE} selects the
  * {@link ElementReader} that creates it. The element types are registered in
- * {@link #createElementTypes()}.
+ * {@link #createElementTypes()}, the building blocks (cards, banners, ...) by {@link BlockReader}.
  * </p>
  */
 public final class DescriptionReader {
@@ -76,6 +76,7 @@ public final class DescriptionReader {
 		result.put(TYPE_IMAGE, DescriptionReader::readImage);
 		result.put(TYPE_ROW, entries -> readContainer(entries, ContainerSpec.Direction.ROW));
 		result.put(TYPE_COLUMN, entries -> readContainer(entries, ContainerSpec.Direction.COLUMN));
+		BlockReader.register(result);
 		return Collections.unmodifiableMap(result);
 	}
 
@@ -242,6 +243,13 @@ public final class DescriptionReader {
 		return result;
 	}
 
+	/**
+	 * Reads a shape from the entries of the shape description: its bounds,
+	 * {@link PresentationData#GEOMETRY}, {@link PresentationData#FILL},
+	 * {@link PresentationData#LINE}, {@link PresentationData#SHADOW}, its text (see
+	 * {@link #readElementText(Entries, InsetsSpec, boolean)}), {@link PresentationData#STYLE} and
+	 * {@link PresentationData#ROLE}.
+	 */
 	private static ShapeSpec readShape(Entries entries) {
 		Bounds bounds = readBounds(entries);
 		GeometrySpec geometry = readGeometry(entries.get(GEOMETRY));
@@ -249,7 +257,9 @@ public final class DescriptionReader {
 		LineSpec line = readLine(entries.get(LINE));
 		ShadowSpec shadow = readShadow(entries.get(SHADOW));
 		TextSpec text = readElementText(entries, null, true);
-		return new ShapeSpec(bounds, geometry == null ? GeometrySpec.RECTANGLE : geometry, fill, line, shadow, text);
+		String style = readStyleName(entries.get(STYLE));
+		String role = readRole(entries.get(ROLE));
+		return new ShapeSpec(bounds, geometry, fill, line, shadow, text, style, role);
 	}
 
 	private static TextBoxSpec readTextBox(Entries entries) {
@@ -258,7 +268,74 @@ public final class DescriptionReader {
 			throw entries.get(TEXT).missing(I18NConstants.EXPECTED_TEXT_CONTENT);
 		}
 		TextSpec text = readElementText(entries, InsetsSpec.ZERO, true);
-		return new TextBoxSpec(bounds, text);
+		String role = readRole(entries.get(ROLE));
+		return new TextBoxSpec(bounds, text, role);
+	}
+
+	/**
+	 * Reads the name of a style of the template profile.
+	 *
+	 * @return The name, <code>null</code> if the value is missing.
+	 */
+	public static String readStyleName(Value style) {
+		if (style.isAbsent()) {
+			return null;
+		}
+		if (style.isString() && !style.asString().isEmpty()) {
+			return style.asString();
+		}
+		throw style.invalid(I18NConstants.EXPECTED_STYLE);
+	}
+
+	/**
+	 * Reads the name of a color role.
+	 *
+	 * @return The name, <code>null</code> if the value is missing.
+	 */
+	public static String readRole(Value role) {
+		if (role.isAbsent()) {
+			return null;
+		}
+		if (role.isString() && ColorSpec.ROLE_NAME.matcher(role.asString()).matches()) {
+			return role.asString();
+		}
+		throw role.invalid(I18NConstants.EXPECTED_ROLE);
+	}
+
+	/**
+	 * Reads a style of the template profile.
+	 *
+	 * <p>
+	 * A style of a shape is a dictionary with the entries of a shape description except the
+	 * bounds, the text content and the style: {@link PresentationData#ROLE} (the role of an element
+	 * that gives none), {@link PresentationData#GEOMETRY}, {@link PresentationData#FILL},
+	 * {@link PresentationData#LINE}, {@link PresentationData#SHADOW} and the text formatting (see
+	 * {@link #readElementText(Entries, InsetsSpec, boolean)}). A style of a table cell has only the
+	 * entries {@link PresentationData#FILL} and the text formatting of a cell.
+	 * </p>
+	 *
+	 * @param style
+	 *        The style description.
+	 * @param shape
+	 *        Whether the style is applied to shapes, otherwise to table cells.
+	 */
+	public static StyleSpec readStyle(Value style, boolean shape) {
+		Entries entries = style.asEntries();
+		String role = null;
+		GeometrySpec geometry = null;
+		LineSpec line = null;
+		ShadowSpec shadow = null;
+		if (shape) {
+			role = readRole(entries.get(ROLE));
+			geometry = readGeometry(entries.get(GEOMETRY));
+			line = readLine(entries.get(LINE));
+			shadow = readShadow(entries.get(SHADOW));
+		}
+		PaintSpec fill = readFill(entries.get(FILL));
+		TextSpec text = readTextFormat(entries, shape);
+		entries.checkComplete();
+		return new StyleSpec(role, geometry, fill, line, shadow, text,
+			Collections.unmodifiableMap(PresentationData.merge((Map<?, ?>) style.raw(), null)));
 	}
 
 	private static TableSpec readTable(Entries entries) {
@@ -308,8 +385,9 @@ public final class DescriptionReader {
 	 * <p>
 	 * A dictionary without the entry {@link PresentationData#RUNS} describes the cell: its entries
 	 * are {@link PresentationData#TEXT}, {@link PresentationData#FILL}, the character formatting,
-	 * {@link PresentationData#ALIGN}, {@link PresentationData#ANCHOR} and
-	 * {@link PresentationData#INSETS}. Any other value is the text of the cell.
+	 * {@link PresentationData#ALIGN}, {@link PresentationData#ANCHOR},
+	 * {@link PresentationData#INSETS}, {@link PresentationData#OVERFLOW} and
+	 * {@link PresentationData#RATING}. Any other value is the text of the cell.
 	 * </p>
 	 */
 	public static CellSpec readCell(Value cell) {
@@ -321,8 +399,9 @@ public final class DescriptionReader {
 			if (!entries.contains(RUNS)) {
 				TextSpec text = readElementText(entries, null, false);
 				PaintSpec fill = readFill(entries.get(FILL));
+				String rating = readStyleName(entries.get(RATING));
 				entries.checkComplete();
-				return new CellSpec(text, fill);
+				return new CellSpec(text, fill, rating);
 			}
 		}
 		return new CellSpec(readText(cell), null);
@@ -641,10 +720,11 @@ public final class DescriptionReader {
 	 * A shadow is a dictionary with the entries {@link PresentationData#COLOR},
 	 * {@link PresentationData#BLUR}, {@link PresentationData#DISTANCE} and
 	 * {@link PresentationData#DIRECTION}, each optional. The truth value <code>true</code> is the
-	 * default shadow, <code>false</code> no shadow.
+	 * default shadow, <code>false</code> no shadow, also not the shadow of a style.
 	 * </p>
 	 *
-	 * @return The shadow, <code>null</code> if the value is missing or <code>false</code>.
+	 * @return The shadow, {@link ShadowSpec#NONE} for <code>false</code>, <code>null</code> if the
+	 *         value is missing.
 	 */
 	public static ShadowSpec readShadow(Value shadow) {
 		if (shadow.isAbsent()) {
@@ -652,7 +732,7 @@ public final class DescriptionReader {
 		}
 		if (shadow.isBoolean()) {
 			return shadow.asBoolean() ? new ShadowSpec(ShadowSpec.DEFAULT_COLOR, ShadowSpec.DEFAULT_BLUR,
-				ShadowSpec.DEFAULT_DISTANCE, ShadowSpec.DEFAULT_DIRECTION) : null;
+				ShadowSpec.DEFAULT_DISTANCE, ShadowSpec.DEFAULT_DIRECTION) : ShadowSpec.NONE;
 		}
 		if (shadow.isMap()) {
 			Entries entries = shadow.asEntries();
@@ -690,6 +770,29 @@ public final class DescriptionReader {
 	public static TextSpec readElementText(Entries entries, InsetsSpec defaultInsets, boolean shapeBody) {
 		Value textValue = entries.get(TEXT);
 		List<ParagraphSpec> paragraphs = textValue.isAbsent() ? null : readParagraphs(textValue);
+		TextSpec format = readTextFormat(entries, shapeBody);
+		if (paragraphs == null && format == null) {
+			return null;
+		}
+		if (format == null) {
+			format = TextSpec.of(List.of());
+		}
+		return new TextSpec(paragraphs == null ? List.of() : paragraphs, format.style(), format.align(),
+			format.anchor(), format.insets() == null ? defaultInsets : format.insets(), format.overflow(),
+			format.split(), format.wrap());
+	}
+
+	/**
+	 * Reads the formatting of a text from the entries of its element: the character formatting of
+	 * {@link #readRunStyle(Entries)}, {@link PresentationData#ALIGN},
+	 * {@link PresentationData#ANCHOR}, {@link PresentationData#INSETS},
+	 * {@link PresentationData#OVERFLOW} and, for shapes, {@link PresentationData#SPLIT} and
+	 * {@link PresentationData#WRAP}.
+	 *
+	 * @return The formatting as text without paragraphs, <code>null</code> if no text property is
+	 *         given.
+	 */
+	private static TextSpec readTextFormat(Entries entries, boolean shapeBody) {
 		RunStyle style = readRunStyle(entries);
 		TextAlign align = entries.get(ALIGN).optEnum(TextAlign.class);
 		TextAnchor anchor = entries.get(ANCHOR).optEnum(TextAnchor.class);
@@ -697,12 +800,12 @@ public final class DescriptionReader {
 		Overflow overflow = entries.get(OVERFLOW).optEnum(Overflow.class);
 		Boolean split = shapeBody ? entries.get(SPLIT).optBoolean() : null;
 		Boolean wrap = shapeBody ? entries.get(WRAP).optBoolean() : null;
-		if (paragraphs == null && style.isInherit() && align == null && anchor == null && insets == null
-			&& overflow == null && split == null && wrap == null) {
+		if (style.isInherit() && align == null && anchor == null && insets == null && overflow == null
+			&& split == null && wrap == null) {
 			return null;
 		}
-		return new TextSpec(paragraphs == null ? List.of() : paragraphs, style, align, anchor,
-			insets == null ? defaultInsets : insets, overflow, split != null && split.booleanValue(), wrap);
+		return new TextSpec(List.of(), style, align, anchor, insets, overflow, split != null && split.booleanValue(),
+			wrap);
 	}
 
 	/**

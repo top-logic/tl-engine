@@ -7,6 +7,7 @@ package com.top_logic.presentation.export;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -125,6 +126,33 @@ public final class DrawingWriter {
 	 */
 	public DrawingWriter(Map<String, ColorSpec> roles) {
 		_roles = roles;
+	}
+
+	/**
+	 * A {@link DrawingWriter} for the content of an element with the given color role.
+	 *
+	 * <p>
+	 * In the result, the role {@link PresentationData#ROLE_ACCENT} stands for the given role, see
+	 * {@link com.top_logic.presentation.model.ElementSpec#role()}.
+	 * </p>
+	 *
+	 * @param role
+	 *        The color role of the element, <code>null</code> for none.
+	 * @param path
+	 *        The path of the role in the description, for error messages.
+	 * @return The writer for the element.
+	 * @throws TopLogicException
+	 *         If the role is not defined.
+	 */
+	public DrawingWriter forRole(String role, String path) {
+		if (role == null || role.equals(PresentationData.ROLE_ACCENT)) {
+			return this;
+		}
+		ColorSpec color = new ColorSpec.Role(role, Map.of());
+		resolve(color, path);
+		Map<String, ColorSpec> roles = new HashMap<>(_roles);
+		roles.put(PresentationData.ROLE_ACCENT, color);
+		return new DrawingWriter(roles);
 	}
 
 	/**

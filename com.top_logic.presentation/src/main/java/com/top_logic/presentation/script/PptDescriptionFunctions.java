@@ -197,6 +197,12 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 *        repeating the title of the slide. Only one element of a slide can be continued.
 	 * @param wrap
 	 *        Whether the text is wrapped at the shape border.
+	 * @param style
+	 *        The name of a style of the template profile (e.g. <code>card</code>), giving the
+	 *        properties the shape does not give itself.
+	 * @param role
+	 *        The color role of the shape (e.g. <code>topicA</code> or <code>risk</code>): within
+	 *        the shape and its style, the color role <code>accent</code> stands for this role.
 	 * @return The dictionary describing the shape.
 	 */
 	@Label("Describe a shape")
@@ -227,7 +233,9 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Object insets,
 			String overflow,
 			Boolean split,
-			Boolean wrap) {
+			Boolean wrap,
+			String style,
+			String role) {
 		Map<String, Object> result = typed(TYPE_SHAPE);
 		putBounds(result, x, y, width, height, weight);
 		if (cornerRadius != null || (adjust != null && !adjust.isEmpty())) {
@@ -246,6 +254,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 		put(result, OVERFLOW, overflow);
 		put(result, SPLIT, split);
 		put(result, WRAP, wrap);
+		put(result, STYLE, style);
+		put(result, ROLE, role);
 		return result;
 	}
 
@@ -309,6 +319,9 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 *        slide can be continued.
 	 * @param wrap
 	 *        Whether the text is wrapped at the box border.
+	 * @param role
+	 *        The color role of the text box: within the text, the color role <code>accent</code>
+	 *        stands for this role.
 	 * @return The dictionary describing the text box.
 	 */
 	@Label("Describe a text box")
@@ -333,13 +346,15 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Object insets,
 			String overflow,
 			Boolean split,
-			Boolean wrap) {
+			Boolean wrap,
+			String role) {
 		Map<String, Object> result = typed(TYPE_TEXT_BOX);
 		putBounds(result, x, y, width, height, weight);
 		putText(result, text, font, size, color, bold, italic, underline, caps, spacing, align, anchor, insets);
 		put(result, OVERFLOW, overflow);
 		put(result, SPLIT, split);
 		put(result, WRAP, wrap);
+		put(result, ROLE, role);
 		return result;
 	}
 
@@ -911,17 +926,17 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 		return result;
 	}
 
-	private static Map<String, Object> typed(String type) {
+	static Map<String, Object> typed(String type) {
 		Map<String, Object> result = map();
 		result.put(TYPE, type);
 		return result;
 	}
 
-	private static Map<String, Object> map() {
+	static Map<String, Object> map() {
 		return new LinkedHashMap<>();
 	}
 
-	private static void putBounds(Map<String, Object> data, Double x, Double y, Double width, Object height,
+	static void putBounds(Map<String, Object> data, Double x, Double y, Double width, Object height,
 			Double weight) {
 		put(data, X, x);
 		put(data, Y, y);
@@ -952,7 +967,7 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 		put(data, CHARACTER_SPACING, spacing);
 	}
 
-	private static void putList(Map<String, Object> data, String key, Object value) {
+	static void putList(Map<String, Object> data, String key, Object value) {
 		if (value instanceof List<?> list && list.isEmpty()) {
 			return;
 		}
@@ -962,7 +977,7 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	/**
 	 * Adds the given value, if it is not <code>null</code>, numbers as {@link Double}.
 	 */
-	private static void put(Map<String, Object> data, String key, Object value) {
+	static void put(Map<String, Object> data, String key, Object value) {
 		if (value instanceof Number number && !(value instanceof Double)) {
 			data.put(key, Double.valueOf(number.doubleValue()));
 		} else {

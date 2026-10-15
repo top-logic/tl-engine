@@ -13,7 +13,9 @@ package com.top_logic.presentation.model;
  * @param text
  *        The text. Its inner margins are zero unless given otherwise, so that the text starts at
  *        the position of the box.
+ * @param role
+ *        See {@link ElementSpec#role()}.
  */
-public record TextBoxSpec(Bounds bounds, TextSpec text) implements ElementSpec {
+public record TextBoxSpec(Bounds bounds, TextSpec text, String role) implements ElementSpec {
 	// Pure data.
 }

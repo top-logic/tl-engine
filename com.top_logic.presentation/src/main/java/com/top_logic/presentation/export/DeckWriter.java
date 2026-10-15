@@ -200,7 +200,7 @@ public final class DeckWriter {
 		Continuation continuation = null;
 		do {
 			XSLFSlide slide = createSlide(layout, texts, continuation != null, path);
-			ElementWriter elements = new ElementWriter(slide, _drawing, _text, _profile.minFontSize());
+			ElementWriter elements = new ElementWriter(slide, _drawing, _text, _profile);
 			List<Arrangement.Placed> placed;
 			int start;
 			if (continuation == null) {

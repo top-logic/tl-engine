@@ -14,7 +14,7 @@ import com.top_logic.presentation.template.ColorInfo;
  *
  * @param color
  *        The shadow color, its transparency given by the modification
- *        {@link ColorInfo#ALPHA}.
+ *        {@link ColorInfo#ALPHA}; <code>null</code> only for {@link #NONE}.
  * @param blur
  *        The blur radius in points.
  * @param distance
@@ -24,6 +24,11 @@ import com.top_logic.presentation.template.ColorInfo;
  *        the shadow downwards).
  */
 public record ShadowSpec(ColorSpec color, double blur, double distance, double direction) {
+
+	/**
+	 * No shadow, also not the shadow of the style of the shape.
+	 */
+	public static final ShadowSpec NONE = new ShadowSpec(null, 0, 0, 0);
 
 	/**
 	 * The {@link #color()} of a shadow without explicit color: black with 35% opacity.

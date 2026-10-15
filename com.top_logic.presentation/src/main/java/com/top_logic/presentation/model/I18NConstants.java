@@ -194,6 +194,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey EXPECTED_SHADOW;
 
+	/**
+	 * @en The name of a style of the template profile.
+	 */
+	public static ResKey EXPECTED_STYLE;
+
+	/**
+	 * @en The name of a color role, e.g. "topicA" or "risk".
+	 */
+	public static ResKey EXPECTED_ROLE;
+
+	/**
+	 * @en A legend entry: a list of its label and its color role, e.g. ["Done", "done"].
+	 */
+	public static ResKey EXPECTED_LEGEND_ITEM;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

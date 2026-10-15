@@ -14,7 +14,9 @@ import java.util.Set;
 
 import org.apache.poi.xslf.usermodel.SlideLayout;
 
+import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.presentation.model.LayoutRole;
+import com.top_logic.presentation.model.Value;
 import com.top_logic.presentation.template.LayoutInfo;
 import com.top_logic.presentation.template.PlaceholderInfo;
 import com.top_logic.presentation.template.TemplateAnalysis;
@@ -115,7 +117,8 @@ final class ProfileDerivation {
 	}
 
 	/**
-	 * Derives the profile of the analyzed template, without color roles.
+	 * Derives the profile of the analyzed template with the color roles, styles and rating styles
+	 * of {@link ProfileDefaults}.
 	 */
 	static TemplateProfile derive(TemplateAnalysis analysis) {
 		return new ProfileDerivation(analysis).derive();
@@ -133,7 +136,12 @@ final class ProfileDerivation {
 		putRole(layouts, LayoutRole.CONTENT, contentLayout());
 		putRole(layouts, LayoutRole.SECTION, firstOfType(SlideLayout.SECTION_HEADER));
 		putRole(layouts, LayoutRole.CLOSING, title);
-		return new TemplateProfile(layouts, slideLayouts, Map.of(), TemplateProfile.DEFAULT_GAP,
+		String profile = PresentationData.PROFILE + ".";
+		return new TemplateProfile(layouts, slideLayouts,
+			TemplateProfile.readRoles(new Value(ProfileDefaults.roles(), profile + PresentationData.ROLES)),
+			TemplateProfile.readStyles(new Value(ProfileDefaults.styles(), profile + PresentationData.STYLES), true),
+			TemplateProfile.readStyles(new Value(ProfileDefaults.ratings(), profile + PresentationData.RATINGS), false),
+			TemplateProfile.DEFAULT_GAP,
 			TemplateProfile.DEFAULT_MIN_FONT_SIZE, TemplateProfile.defaultContinuationSuffix());
 	}
 

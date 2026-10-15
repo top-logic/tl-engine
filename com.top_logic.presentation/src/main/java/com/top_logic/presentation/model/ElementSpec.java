@@ -20,4 +20,18 @@ public interface ElementSpec {
 	 */
 	Bounds bounds();
 
+	/**
+	 * The color role of the element, <code>null</code> for none.
+	 *
+	 * <p>
+	 * Within the element, the color role
+	 * {@link com.top_logic.presentation.data.PresentationData#ROLE_ACCENT} stands for this role, so
+	 * that a style, e.g. of a card, can paint parts of the element in the color of the element's
+	 * role.
+	 * </p>
+	 */
+	default String role() {
+		return null;
+	}
+
 }

@@ -245,7 +245,10 @@ public final class PresentationData {
 	/** Key of the column widths of a table. */
 	public static final String COLUMN_WIDTHS = "columnWidths";
 
-	/** Key of the table style of a table. */
+	/**
+	 * Key of a style: the table style of a table in a template analysis, the name of a style of the
+	 * template profile in the description of a shape.
+	 */
 	public static final String STYLE = "style";
 
 	/** Key of the description of the first cell of a table. */
@@ -266,7 +269,9 @@ public final class PresentationData {
 	/** Key of the flag telling whether a slide is hidden in the slide show. */
 	public static final String HIDDEN = "hidden";
 
-	/** Key of the role of a color or a slide layout. */
+	/**
+	 * Key of a role: the color role of a color or an element, or the role of a slide layout.
+	 */
 	public static final String ROLE = "role";
 
 	/** Key of the text runs of a paragraph. */
@@ -350,6 +355,33 @@ public final class PresentationData {
 	/** Key of the colors of the color roles in a template profile. */
 	public static final String ROLES = "roles";
 
+	/** Key of the named shape styles in a template profile. */
+	public static final String STYLES = "styles";
+
+	/** Key of the styles of the rating words in a template profile. */
+	public static final String RATINGS = "ratings";
+
+	/** Key of the rating word of a table cell, whose style the template profile defines. */
+	public static final String RATING = "rating";
+
+	/** Key of the heading of a card. */
+	public static final String HEADING = "heading";
+
+	/** Key of the body text of a card. */
+	public static final String BODY = "body";
+
+	/** Key of the label of a badge, a key figure or a legend entry. */
+	public static final String LABEL = "label";
+
+	/** Key of the value of a key figure. */
+	public static final String VALUE = "value";
+
+	/** Key of the explanation below a key figure. */
+	public static final String CAPTION = "caption";
+
+	/** Key of the entries of a bullet list or a legend. */
+	public static final String ITEMS = "items";
+
 	/** {@link #TYPE} of a slide. */
 	public static final String TYPE_SLIDE = "slide";
 
@@ -370,6 +402,95 @@ public final class PresentationData {
 
 	/** {@link #TYPE} of a container arranging its children one below the other. */
 	public static final String TYPE_COLUMN = "column";
+
+	/** {@link #TYPE} of a card: a framed shape with a heading and a body text. */
+	public static final String TYPE_CARD = "card";
+
+	/** {@link #TYPE} of a banner: a filled shape stating the key message of a slide. */
+	public static final String TYPE_BANNER = "banner";
+
+	/** {@link #TYPE} of a badge: a filled circle with a short label. */
+	public static final String TYPE_BADGE = "badge";
+
+	/** {@link #TYPE} of a key figure: a card with a big value, a label and a caption. */
+	public static final String TYPE_STAT = "stat";
+
+	/** {@link #TYPE} of a bullet list. */
+	public static final String TYPE_BULLETS = "bullets";
+
+	/** {@link #TYPE} of a legend explaining colors. */
+	public static final String TYPE_LEGEND = "legend";
+
+	/** {@link #TYPE} of a block arrow. */
+	public static final String TYPE_ARROW = "arrow";
+
+	/**
+	 * Color role standing for the {@link #ROLE} of the element it is used in.
+	 *
+	 * <p>
+	 * A style refers to the color of the element it is applied to with this role, e.g. a card
+	 * style draws its outline in the color of the card's role. In an element without role, and
+	 * outside of elements, it is the color the template profile defines for it.
+	 * </p>
+	 */
+	public static final String ROLE_ACCENT = "accent";
+
+	/** Color role of the first topic of a presentation. */
+	public static final String ROLE_TOPIC_A = "topicA";
+
+	/** Color role of the second topic of a presentation. */
+	public static final String ROLE_TOPIC_B = "topicB";
+
+	/** Color role of the third topic of a presentation. */
+	public static final String ROLE_TOPIC_C = "topicC";
+
+	/** Color role of the fourth topic of a presentation. */
+	public static final String ROLE_TOPIC_D = "topicD";
+
+	/** Color role of the fifth topic of a presentation. */
+	public static final String ROLE_TOPIC_E = "topicE";
+
+	/** Color role of the sixth topic of a presentation. */
+	public static final String ROLE_TOPIC_F = "topicF";
+
+	/** Color role marking risks and problems. */
+	public static final String ROLE_RISK = "risk";
+
+	/** Color role marking warnings. */
+	public static final String ROLE_WARNING = "warning";
+
+	/** Color role marking what is done or achieved. */
+	public static final String ROLE_DONE = "done";
+
+	/** Color role of secondary text and inconspicuous shapes. */
+	public static final String ROLE_MUTED = "muted";
+
+	/** Color role of normal text. */
+	public static final String ROLE_TEXT = "text";
+
+	/** Color role of text on a filled shape. */
+	public static final String ROLE_INVERSE = "inverse";
+
+	/** Rating word of a fulfilled requirement. */
+	public static final String RATING_MET = "met";
+
+	/** Rating word of a partly fulfilled requirement. */
+	public static final String RATING_PARTIAL = "partial";
+
+	/** Rating word of a requirement that is not fulfilled. */
+	public static final String RATING_UNMET = "unmet";
+
+	/** Rating word of a low amount, e.g. of effort or risk. */
+	public static final String RATING_LOW = "low";
+
+	/** Rating word of a medium amount. */
+	public static final String RATING_MEDIUM = "medium";
+
+	/** Rating word of a high amount. */
+	public static final String RATING_HIGH = "high";
+
+	/** Rating word of a criterion that does not apply. */
+	public static final String RATING_NONE = "none";
 
 	/** Value of {@link #HEIGHT} giving an element the natural height of its content. */
 	public static final String AUTO = "auto";
@@ -446,6 +567,28 @@ public final class PresentationData {
 	 *         override.
 	 */
 	public static Map<String, Object> merge(Map<?, ?> base, Map<?, ?> override) {
+		return merge(base, override, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * Merges the given dictionaries down to the given depth.
+	 *
+	 * <p>
+	 * Like {@link #merge(Map, Map)}, but dictionaries nested deeper than the given depth are not
+	 * merged: the value of the override replaces the value of the base.
+	 * </p>
+	 *
+	 * @param base
+	 *        The dictionary with the values to keep unless overridden.
+	 * @param override
+	 *        The dictionary with the values to take precedence, <code>null</code> for none.
+	 * @param depth
+	 *        The number of dictionary levels that are merged, at least 1: with 1, each value of the
+	 *        override replaces the value of the base; with 2, dictionaries in both are merged, but
+	 *        their values are replaced.
+	 * @return The merged dictionary.
+	 */
+	public static Map<String, Object> merge(Map<?, ?> base, Map<?, ?> override, int depth) {
 		Map<String, Object> result = map();
 		for (Map.Entry<?, ?> entry : base.entrySet()) {
 			result.put(String.valueOf(entry.getKey()), entry.getValue());
@@ -457,8 +600,8 @@ public final class PresentationData {
 			String key = String.valueOf(entry.getKey());
 			Object value = entry.getValue();
 			Object baseValue = result.get(key);
-			if (baseValue instanceof Map<?, ?> baseMap && value instanceof Map<?, ?> overrideMap) {
-				result.put(key, merge(baseMap, overrideMap));
+			if (depth > 1 && baseValue instanceof Map<?, ?> baseMap && value instanceof Map<?, ?> overrideMap) {
+				result.put(key, merge(baseMap, overrideMap, depth - 1));
 			} else {
 				result.put(key, value);
 			}

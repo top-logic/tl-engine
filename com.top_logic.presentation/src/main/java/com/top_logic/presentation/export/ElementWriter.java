@@ -35,17 +35,20 @@ import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.presentation.model.CellSpec;
 import com.top_logic.presentation.model.ColorSpec;
 import com.top_logic.presentation.model.ElementSpec;
+import com.top_logic.presentation.model.GeometrySpec;
 import com.top_logic.presentation.model.ImageSpec;
 import com.top_logic.presentation.model.LineSpec;
 import com.top_logic.presentation.model.PaintSpec;
 import com.top_logic.presentation.model.ParagraphSpec;
 import com.top_logic.presentation.model.RunStyle;
+import com.top_logic.presentation.model.ShadowSpec;
 import com.top_logic.presentation.model.ShapeSpec;
 import com.top_logic.presentation.model.TableSpec;
 import com.top_logic.presentation.model.TextAlign;
 import com.top_logic.presentation.model.TextAnchor;
 import com.top_logic.presentation.model.TextBoxSpec;
 import com.top_logic.presentation.model.TextSpec;
+import com.top_logic.presentation.profile.TemplateProfile;
 import com.top_logic.presentation.template.ColorInfo;
 import com.top_logic.presentation.text.TextMeasure;
 
@@ -69,6 +72,14 @@ import com.top_logic.presentation.text.TextMeasure;
  * <p>
  * The texts of shapes, text boxes and table cells are fitted into their element by
  * {@link TextFitting}.
+ * </p>
+ *
+ * <p>
+ * A shape referring to a {@link ShapeSpec#style() style} gets the properties of the style of the
+ * template profile where it gives none itself, a table cell with a {@link CellSpec#rating()
+ * rating} the fill and text formatting of the rating's style. Within an element with a
+ * {@link ElementSpec#role() color role}, the role {@link PresentationData#ROLE_ACCENT} stands for
+ * the element's role.
  * </p>
  */
 public final class ElementWriter {
@@ -109,6 +120,8 @@ public final class ElementWriter {
 
 	private final TextFitting _fitting;
 
+	private final TemplateProfile _profile;
+
 	/**
 	 * Creates an {@link ElementWriter}.
 	 *
@@ -118,14 +131,37 @@ public final class ElementWriter {
 	 *        Writes colors, fills, outlines and shadows.
 	 * @param text
 	 *        Writes texts.
-	 * @param minFontSize
-	 *        The smallest font size in points to which a text is shrunk to fit into its element.
+	 * @param profile
+	 *        The profile of the template, giving the styles, the rating styles and the smallest
+	 *        font size to which a text is shrunk to fit into its element.
 	 */
-	ElementWriter(XSLFSlide slide, DrawingWriter drawing, TextWriter text, double minFontSize) {
+	ElementWriter(XSLFSlide slide, DrawingWriter drawing, TextWriter text, TemplateProfile profile) {
 		_slide = slide;
 		_drawing = drawing;
 		_text = text;
-		_fitting = new TextFitting(text, minFontSize);
+		_profile = profile;
+		_fitting = new TextFitting(text, profile.minFontSize());
+	}
+
+	/**
+	 * The given element with the properties of its style.
+	 */
+	private ElementSpec resolve(ElementSpec element, String path) {
+		if (element instanceof ShapeSpec shape && shape.style() != null) {
+			return _profile.style(shape.style(), child(path, PresentationData.STYLE)).applyTo(shape);
+		}
+		return element;
+	}
+
+	/**
+	 * The writer for the content of an element with the given color role.
+	 */
+	private ElementWriter forRole(String role, String path) {
+		DrawingWriter drawing = _drawing.forRole(role, child(path, PresentationData.ROLE));
+		if (drawing == _drawing) {
+			return this;
+		}
+		return new ElementWriter(_slide, drawing, new TextWriter(drawing), _profile);
 	}
 
 	/**
@@ -150,6 +186,11 @@ public final class ElementWriter {
 	 *         slide, 0 if the element is complete.
 	 */
 	int write(ElementSpec element, int start, Rectangle2D bounds, String path) {
+		ElementSpec resolved = resolve(element, path);
+		return forRole(resolved.role(), path).writeResolved(resolved, start, bounds, path);
+	}
+
+	private int writeResolved(ElementSpec element, int start, Rectangle2D bounds, String path) {
 		if (element instanceof ShapeSpec shape) {
 			return writeShape(shape, start, bounds, path);
 		} else if (element instanceof TextBoxSpec textBox) {
@@ -175,7 +216,8 @@ public final class ElementWriter {
 	 *
 	 * @see Arrangement.HeightMeasure
 	 */
-	double naturalHeight(ElementSpec element, double width, String path) {
+	double naturalHeight(ElementSpec spec, double width, String path) {
+		ElementSpec element = resolve(spec, path);
 		if (element instanceof ShapeSpec shape) {
 			if (shape.text() == null) {
 				return 0;
@@ -222,7 +264,7 @@ public final class ElementWriter {
 		CTShape xml = (CTShape) shape.getXmlObject();
 		TextWriter.addTextBody(xml);
 		CTShapeProperties spPr = xml.getSpPr();
-		_drawing.writeGeometry(spPr, spec.geometry(), bounds);
+		_drawing.writeGeometry(spPr, spec.geometry() != null ? spec.geometry() : GeometrySpec.RECTANGLE, bounds);
 		if (spec.fill() != null) {
 			_drawing.writeFill(DrawingWriter.FillTarget.of(spPr), spec.fill(), _slide, child(path, PresentationData.FILL));
 		}
@@ -234,7 +276,7 @@ public final class ElementWriter {
 			_drawing.writeLine(spPr.isSetLn() ? spPr.getLn() : spPr.addNewLn(), line, _slide,
 				child(path, PresentationData.LINE));
 		}
-		if (spec.shadow() != null) {
+		if (spec.shadow() != null && spec.shadow() != ShadowSpec.NONE) {
 			_drawing.writeShadow(spPr, spec.shadow(), child(path, PresentationData.SHADOW));
 		}
 		TextSpec text = spec.text();
@@ -421,7 +463,9 @@ public final class ElementWriter {
 		return spec.columnWeights() == null ? 1 : spec.columnWeights().get(column).doubleValue();
 	}
 
-	private void writeCell(XSLFTableCell cell, CellSpec spec, boolean header, LineSpec rule, String path) {
+	private void writeCell(XSLFTableCell cell, CellSpec cellSpec, boolean header, LineSpec rule, String path) {
+		CellSpec spec = cellSpec.rating() == null ? cellSpec
+			: _profile.rating(cellSpec.rating(), child(path, PresentationData.RATING)).applyTo(cellSpec);
 		TextSpec text = spec.text();
 		if (text != null) {
 			if (header) {

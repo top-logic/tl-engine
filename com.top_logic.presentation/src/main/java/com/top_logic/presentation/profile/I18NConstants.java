@@ -39,6 +39,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 ERROR_NO_LAYOUT_FOR_ROLE__PATH_ROLE_ROLES;
 
 	/**
+	 * @en The entry {0} refers to the style "{1}", which the template profile does not define.
+	 *     Defined styles are: {2}. Define the style in the "styles" entry of the profile.
+	 */
+	public static ResKey3 ERROR_UNKNOWN_STYLE__PATH_STYLE_STYLES;
+
+	/**
+	 * @en The entry {0} uses the rating "{1}", which the template profile does not define. Defined
+	 *     ratings are: {2}. Define the rating in the "ratings" entry of the profile.
+	 */
+	public static ResKey3 ERROR_UNKNOWN_RATING__PATH_RATING_RATINGS;
+
+	/**
 	 * @en A slide layout: its index or its name.
 	 */
 	public static ResKey EXPECTED_LAYOUT;

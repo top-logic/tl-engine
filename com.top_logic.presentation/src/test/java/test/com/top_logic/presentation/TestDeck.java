@@ -211,7 +211,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		assertEquals(11.0, layouts.get("content"));
 		assertEquals(0.0, layouts.get("closing"));
 		assertNull("The template has no section layout.", layouts.get("section"));
-		assertEquals(Map.of(), profile.get(ROLES));
+		assertEquals(Map.of(SCHEME, "accent1"), ((Map<?, ?>) profile.get(ROLES)).get(ROLE_TOPIC_A));
 
 		Map<?, ?> slideLayouts = (Map<?, ?>) profile.get(SLIDE_LAYOUTS);
 		Map<?, ?> content = (Map<?, ?>) slideLayouts.get("11");
@@ -344,7 +344,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		ResKeyTemplate key = com.top_logic.presentation.export.I18NConstants.ERROR_UNKNOWN_COLOR_ROLE__PATH_ROLE_ROLES;
 		assertEquals("slides[0].content[0].fill.color", argument(error, key, 0));
 		assertEquals("chance", argument(error, key, 1));
-		assertEquals("risk", argument(error, key, 2));
+		assertTrue(((String) argument(error, key, 2)).contains("risk"));
 	}
 
 	public void testErrorBadLayout() throws Exception {

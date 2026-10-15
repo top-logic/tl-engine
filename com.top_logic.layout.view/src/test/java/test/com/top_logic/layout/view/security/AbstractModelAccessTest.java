@@ -35,7 +35,7 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -190,10 +190,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	private final List<Person> _persons = new ArrayList<>();
 
-	private Person _formerUser;
-
-	private String _formerContextId;
-
 	/** The super-user, bypassing the model access rights. */
 	protected Person _root;
 
@@ -218,9 +214,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext context = TLContext.getContext();
-		_formerUser = context.getCurrentPersonWrapper();
-		_formerContextId = context.getContextId();
 		_root = PersonManager.getManager().getRoot();
 		_responsible = newPerson("viewModelAccessResponsible");
 		_roleless = newPerson("viewModelAccessRoleless");
@@ -248,13 +241,23 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 			TestPerson.deletePersonAndUser(person);
 		}
 		_persons.clear();
+	}
 
-		TLContext context = TLContext.getContext();
-		context.setCurrentPerson(_formerUser);
-		if (_formerUser == null) {
-			// Without a person, the context is identified by its explicit context id.
-			context.setContextId(_formerContextId);
-		}
+	/**
+	 * Runs the test body with checked security in a context of its own without a person.
+	 *
+	 * <p>
+	 * The fixture is created in {@link #setUp()} without access checks. The test body
+	 * {@link #becomeUser(Person) becomes} the user whose access rights it checks; the context of
+	 * the test body is dropped afterwards.
+	 * </p>
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(null, () -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	private Person newPerson(String name) {

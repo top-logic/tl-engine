@@ -5,6 +5,8 @@
  */
 package com.top_logic.basic.thread;
 
+import java.util.function.Consumer;
+
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -353,9 +355,9 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 * A system context has a {@link SubSessionContext} without a person, the given
 	 * {@link #systemContextId(Class) context id} and {@link ThreadContext#isSecurityUnchecked()
 	 * unchecked security}. It is established in any case: If no interaction is active, a new
-	 * interaction is created for the job. Otherwise, a new {@link SubSessionContext} with its own
-	 * {@link SessionContext} is installed in the current interaction for the job. After the job, the
-	 * previous state is restored.
+	 * interaction is created for the job. Otherwise, the {@link SubSessionContext} of the current
+	 * interaction becomes the system context for the job, keeping its {@link SessionContext}. After
+	 * the job, the previous state is restored.
 	 * </p>
 	 *
 	 * @param caller
@@ -396,48 +398,110 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 */
 	protected <T, E1 extends Throwable, E2 extends Throwable> T inSystemContextInternal(String contextId,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		return this.<T, E1, E2> inIdentity(subSession -> applySystemIdentity(subSession, contextId), true, job);
+	}
+
+	/**
+	 * Computes the given job with the identity established by the given function.
+	 *
+	 * <p>
+	 * If no interaction is active, a new interaction with its own synthetic {@link SessionContext}
+	 * and {@link SubSessionContext} is created for the job, the identity is applied to its
+	 * {@link SubSessionContext}, and the synthetic session is {@link #sessionUnbound(SessionContext)
+	 * unbound} afterwards. Otherwise, the identity is applied in place to the
+	 * {@link SubSessionContext} of the current interaction, which keeps its session and the state of
+	 * the interaction; its {@link #captureIdentity(ThreadContext) previous identity} is restored
+	 * after the job.
+	 * </p>
+	 *
+	 * @param applyIdentity
+	 *        Establishes the identity on the {@link SubSessionContext} the job runs in.
+	 * @param unchecked
+	 *        Value of {@link ThreadContext#isSecurityUnchecked()} during the job.
+	 * @param job
+	 *        Callback to execute
+	 * @return The result of the given job.
+	 */
+	protected final <T, E1 extends Throwable, E2 extends Throwable> T inIdentity(
+			Consumer<? super ThreadContext> applyIdentity, boolean unchecked, ComputationEx2<T, E1, E2> job)
+			throws E1, E2 {
+		ComputationEx2<T, E1, E2> securedJob = () -> ThreadContext.withSecurityUnchecked(unchecked, job);
 		InteractionContext interaction = getInteractionInternal();
 		if (interaction == null) {
-			InteractionContext systemInteraction = newInteractionInternal();
-			systemInteraction.getSubSessionContext().setContextId(contextId);
-			registerSubSessionInSessionForInteraction(systemInteraction);
-			setInteraction(systemInteraction);
+			InteractionContext freshInteraction = newInteractionInternal();
+			registerSubSessionInSessionForInteraction(freshInteraction);
+			setInteraction(freshInteraction);
 			try {
-				return runInSystemSession(systemInteraction.getSessionContext(), job);
+				ThreadContext freshSubSession = (ThreadContext) freshInteraction.getSubSessionContext();
+				return ThreadContextManager.<T, E1, E2> runInSyntheticSession(freshInteraction.getSessionContext(),
+					() -> {
+						applyIdentity.accept(freshSubSession);
+						return securedJob.run();
+					});
 			} finally {
 				removeInteraction();
 			}
-		} else {
-			/* Sub session may be null but session may be not null, in such case the session must be
-			 * saved to be able to reinstall it. */
-			SessionContext oldSession = interaction.getSessionContext();
-			SubSessionContext oldSubSession = interaction.getSubSessionContext();
+		}
 
-			ThreadContext subSession = newSubSessionContext();
-			SessionContext session = newSessionContext();
-			subSession.setSessionContext(session);
-			subSession.setContextId(contextId);
-			interaction.installSessionContext(session);
-			interaction.installSubSessionContext(subSession);
+		ThreadContext subSession = (ThreadContext) interaction.getSubSessionContext();
+		if (subSession == null) {
+			/* An interaction without sub-session: The job gets a sub-session of the interaction's
+			 * session for its identity. */
+			SessionContext session = interaction.getSessionContext();
+			ThreadContext jobSubSession = newSubSessionContext();
+			jobSubSession.setSessionContext(session != null ? session : newSessionContext());
+			interaction.installSubSessionContext(jobSubSession);
 			try {
-				registerSubSessionInSessionForInteraction(interaction);
-				return runInSystemSession(session, job);
+				applyIdentity.accept(jobSubSession);
+				return securedJob.run();
 			} finally {
-				interaction.installSessionContext(oldSession);
-				interaction.installSubSessionContext(oldSubSession);
+				interaction.installSubSessionContext(null);
+				interaction.installSessionContext(session);
 			}
+		}
+
+		Runnable restore = captureIdentity(subSession);
+		try {
+			applyIdentity.accept(subSession);
+			return securedJob.run();
+		} finally {
+			restore.run();
 		}
 	}
 
 	/**
-	 * Runs the given job with {@link ThreadContext#isSecurityUnchecked() unchecked security} and
-	 * {@link #sessionUnbound(SessionContext) unbinds} the given synthetic session afterwards.
+	 * Records the identity of the given {@link SubSessionContext}.
+	 *
+	 * @param subSession
+	 *        The {@link SubSessionContext} whose identity is about to be changed.
+	 * @return Restores the recorded identity of the given {@link SubSessionContext}.
 	 */
-	private static <T, E1 extends Throwable, E2 extends Throwable> T runInSystemSession(SessionContext session,
+	protected Runnable captureIdentity(ThreadContext subSession) {
+		String contextId = subSession.getContextId();
+		return () -> subSession.setContextId(contextId);
+	}
+
+	/**
+	 * Makes the given {@link SubSessionContext} a system context with the given context id.
+	 *
+	 * @param subSession
+	 *        The {@link SubSessionContext} to change.
+	 * @param contextId
+	 *        The {@link SubSessionContext#getContextId() context id} of the system context.
+	 */
+	protected void applySystemIdentity(ThreadContext subSession, String contextId) {
+		subSession.setContextId(contextId);
+	}
+
+	/**
+	 * Runs the given job and {@link #sessionUnbound(SessionContext) unbinds} the given synthetic
+	 * session afterwards.
+	 */
+	private static <T, E1 extends Throwable, E2 extends Throwable> T runInSyntheticSession(SessionContext session,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
 		Throwable problem = null;
 		try {
-			return ThreadContext.withSecurityUnchecked(true, job);
+			return job.run();
 		} catch (Throwable ex) {
 			problem = ex;
 			throw ex;
@@ -626,7 +690,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 * because the {@link InteractionContext} it belongs to is a synthetic interaction.
 	 * </p>
 	 * 
-	 * @see #inSystemContextInternal(String, ComputationEx2)
+	 * @see #inIdentity(Consumer, boolean, ComputationEx2)
 	 */
 	protected static void sessionUnbound(SessionContext session) {
 		HttpSessionBindingListener listener = (SimpleSessionContext) session;

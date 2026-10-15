@@ -9,7 +9,7 @@ package com.top_logic.model.security;
 import java.util.Collections;
 import java.util.Set;
 
-import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -21,54 +21,20 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * {@link ModelAccessRights} that grants every access without a check.
  *
  * <p>
- * Installed for the duration of a {@link ModelAccessRights#uncheckedSecurity(ComputationEx2) scope},
- * which is the only way to reach this implementation. Whoever opens such a scope declares that the
- * code inside it must not be subject to access rights - typically because the security configuration
- * cannot exist yet, see {@link ModelAccessRights#uncheckedSecurity(ComputationEx2)}.
+ * Delivered by {@link ModelAccessRights#getInstance()} for code with
+ * {@link ThreadContext#isSecurityUnchecked() unchecked security} that runs while the
+ * {@link SecurityConfigurationService} is not started.
  * </p>
- *
- * @implNote The scope is held in a {@link ThreadLocal}: the code that must run without a check is
- *           known per thread, and a request being served concurrently must not lose its access
- *           checks because another thread opened a scope.
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 final class UncheckedAccessRights implements ModelAccessRights {
 
 	/** Singleton {@link UncheckedAccessRights} instance. */
-	private static final UncheckedAccessRights INSTANCE = new UncheckedAccessRights();
-
-	private static final ThreadLocal<UncheckedAccessRights> ACTIVE = new ThreadLocal<>();
+	static final UncheckedAccessRights INSTANCE = new UncheckedAccessRights();
 
 	private UncheckedAccessRights() {
 		// Singleton constructor.
-	}
-
-	/**
-	 * The {@link UncheckedAccessRights} installed for the current thread, or <code>null</code>, if
-	 * the current thread does not run in an
-	 * {@link ModelAccessRights#uncheckedSecurity(ComputationEx2) unchecked scope}.
-	 */
-	static ModelAccessRights active() {
-		return ACTIVE.get();
-	}
-
-	/**
-	 * Runs the given job with {@link UncheckedAccessRights} installed for the current thread.
-	 *
-	 * @see ModelAccessRights#uncheckedSecurity(ComputationEx2)
-	 */
-	static <T, E1 extends Throwable, E2 extends Throwable> T execute(ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		if (ACTIVE.get() != null) {
-			// A surrounding scope is already open; there is nothing to install and nothing to restore.
-			return job.run();
-		}
-		ACTIVE.set(INSTANCE);
-		try {
-			return job.run();
-		} finally {
-			ACTIVE.remove();
-		}
 	}
 
 	@Override
@@ -108,7 +74,7 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	/**
-	 * Every type is without security here: inside an unchecked scope no object is access
+	 * Every type is without security here: with unchecked security no object is access
 	 * controlled, so a caller asking whether a type is (e.g. before deciding by its
 	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup) roles}, which are unknown here) learns that
 	 * access is granted independent of roles - consistent with the
@@ -123,7 +89,7 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	 * @implNote Without the security configuration, no roles are known. In contrast to the
 	 *           {@link #isAllowed(Person, TLObject, BoundCommandGroup) checks}, the empty result must
 	 *           not be mistaken for a granted access - a caller deciding access by roles cannot be
-	 *           served in an unchecked scope.
+	 *           served with unchecked security.
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
@@ -140,8 +106,8 @@ final class UncheckedAccessRights implements ModelAccessRights {
 
 	/**
 	 * @implNote The accessible types cannot be determined without the security configuration; the
-	 *           application model is not available either, since it is still being built when an
-	 *           unchecked scope is typically open.
+	 *           application model is not available either, since it is still being built when this
+	 *           implementation is typically in use.
 	 */
 	@Override
 	public Set<TLClass> getAccessibleTypes(Person person, BoundCommandGroup commandGroup) {

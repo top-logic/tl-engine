@@ -24,7 +24,6 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LayoutContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -73,11 +72,6 @@ public class TLContextManager extends ThreadContextManager {
 	/**
 	 * Runs the given job in context of the given person.
 	 * 
-	 * <p>
-	 * If there is already an interaction, the job is just executed without setting the given
-	 * {@link Person}.
-	 * </p>
-	 * 
 	 * @see #inPersonContext(Person, ComputationEx2)
 	 */
 	public static void inPersonContext(Person p, InContext job) {
@@ -88,37 +82,32 @@ public class TLContextManager extends ThreadContextManager {
 	 * Implementation of {@link #inPersonContext(Person, InContext)}.
 	 */
 	protected void inPersonContextInternal(Person p, InContext job) {
-		TLInteractionContext interaction = getInteractionInternal();
-		if (interaction == null) {
-			interaction = newInteractionInternal();
-			registerSubSessionInSessionForInteraction(interaction);
-			setInteraction(interaction);
-			try {
-				TLSessionContext session = interaction.getSessionContext();
-				TLSubSessionContext subsession = interaction.getSubSessionContext();
-				try {
-					subsession.setPerson(p);
-					job.inContext();
-				} finally {
-					sessionUnbound(session);
-				}
-			} finally {
-				removeInteraction();
-			}
-		} else {
+		inPersonContextInternal(p, () -> {
 			job.inContext();
-		}
+			return null;
+		});
 	}
 
 	/**
-	 * Runs the given job in context of the given person.
+	 * Computes the given job in context of the given person.
 	 * 
 	 * <p>
-	 * If there is already an interaction, the job is just executed without setting the given
-	 * {@link Person}.
+	 * The job runs with the given {@link Person} and with
+	 * {@link ThreadContext#isSecurityUnchecked() checked security}, so that access is decided
+	 * for the given person. The person context is established in any case: If no interaction is
+	 * active, a new interaction is created for the job. Otherwise, the {@link TLSubSessionContext}
+	 * of the current interaction gets the given person for the job, keeping its session. After the
+	 * job, the previous state is restored.
 	 * </p>
 	 * 
-	 * @see #inPersonContext(Person, InContext)
+	 * @param p
+	 *        The person to run the job for, <code>null</code> for a context without a person, in
+	 *        which every access is denied.
+	 * @param job
+	 *        Callback to execute.
+	 * @return The result of the given job.
+	 * 
+	 * @see ThreadContextManager#inSystemContext(Class, ComputationEx2)
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inPersonContext(Person p,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
@@ -130,25 +119,30 @@ public class TLContextManager extends ThreadContextManager {
 	 */
 	protected <T, E1 extends Throwable, E2 extends Throwable> T inPersonContextInternal(Person p,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		TLInteractionContext interaction = getInteractionInternal();
-		if (interaction == null) {
-			interaction = newInteractionInternal();
-			registerSubSessionInSessionForInteraction(interaction);
-			setInteraction(interaction);
-			try {
-				TLSessionContext session = interaction.getSessionContext();
-				TLSubSessionContext subsession = interaction.getSubSessionContext();
-				try {
-					subsession.setPerson(p);
-					return job.run();
-				} finally {
-					sessionUnbound(session);
-				}
-			} finally {
-				removeInteraction();
-			}
+		return this.<T, E1, E2> inIdentity(subSession -> ((TLSubSessionContext) subSession).setPerson(p), false, job);
+	}
+
+	/**
+	 * Records the person, context id, locale, time zone and personal configuration of the given
+	 * sub-session.
+	 */
+	@Override
+	protected Runnable captureIdentity(ThreadContext subSession) {
+		if (subSession instanceof TLContext context) {
+			return context.captureIdentity();
+		}
+		return super.captureIdentity(subSession);
+	}
+
+	/**
+	 * Removes the person of the given sub-session before identifying it by the given context id.
+	 */
+	@Override
+	protected void applySystemIdentity(ThreadContext subSession, String contextId) {
+		if (subSession instanceof TLContext context) {
+			context.setSystemIdentity(contextId);
 		} else {
-			return job.run();
+			super.applySystemIdentity(subSession, contextId);
 		}
 	}
 
@@ -159,54 +153,6 @@ public class TLContextManager extends ThreadContextManager {
 	@Override
 	protected TLInteractionContext newInteractionInternal() {
 		return (TLInteractionContext) super.newInteractionInternal();
-	}
-
-	/**
-	 * Executes the given job in context of the root user.
-	 */
-	public static void inRootPersonContext(InContext job) {
-		getManager().inRootPersonContextInternal(job);
-	}
-
-	private void inRootPersonContextInternal(InContext job) {
-		TLInteractionContext interaction = getInteractionInternal();
-		if (interaction == null) {
-			interaction = newInteractionInternal();
-			registerSubSessionInSessionForInteraction(interaction);
-			setInteraction(interaction);
-			try {
-				TLSessionContext session = interaction.getSessionContext();
-				TLSubSessionContext subsession = interaction.getSubSessionContext();
-				try {
-					// Do not fetch person before subsession is installed.
-					Person root = PersonManager.getManager().getRoot();
-					subsession.setPerson(root);
-					job.inContext();
-				} finally {
-					sessionUnbound(session);
-				}
-			} finally {
-				removeInteraction();
-			}
-		} else {
-			Person root = PersonManager.getManager().getRoot();
-			TLSubSessionContext subsession = interaction.getSubSessionContext();
-			Person currentPerson = subsession.getPerson();
-			boolean useContextID = currentPerson == null;
-			String formerContextId = null;
-			if (useContextID) {
-				formerContextId = subsession.getContextId();
-			}
-			subsession.setPerson(root);
-			try {
-				job.inContext();
-			} finally {
-				subsession.setPerson(currentPerson);
-				if (useContextID) {
-					subsession.setContextId(formerContextId);
-				}
-			}
-		}
 	}
 
 	/**

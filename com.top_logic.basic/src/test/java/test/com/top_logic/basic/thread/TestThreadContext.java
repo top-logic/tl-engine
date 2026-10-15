@@ -91,8 +91,8 @@ public class TestThreadContext extends TestCase {
     }
     
 	/**
-	 * A system context nested in another system context installs a sub-session of its own and
-	 * restores the outer one afterwards.
+	 * A system context nested in another system context changes the context id of the current
+	 * sub-session and restores it afterwards.
 	 */
 	public void testNestedSystemContext() {
 		ThreadContext.inSystemContext(TestThreadContext.class, new InContext() {
@@ -101,17 +101,19 @@ public class TestThreadContext extends TestCase {
 			public void inContext() {
 				final ThreadContext currentContext = ThreadContext.getThreadContext();
 				assertNotNull(currentContext);
+				String outerContextId = currentContext.getContextId();
 				ThreadContext.inSystemContext(ExampleContext.class, new InContext() {
 
 					@Override
 					public void inContext() {
 						ThreadContext nested = ThreadContext.getThreadContext();
-						assertNotSame(currentContext, nested);
+						assertSame("The sub-session is kept.", currentContext, nested);
 						assertEquals(ThreadContextManager.systemContextId(ExampleContext.class), nested.getContextId());
 						assertTrue(ThreadContext.isSecurityUnchecked());
 					}
 				});
 				assertSame(currentContext, ThreadContext.getThreadContext());
+				assertEquals(outerContextId, currentContext.getContextId());
 				assertTrue(ThreadContext.isSecurityUnchecked());
 			}
 		});
@@ -149,8 +151,8 @@ public class TestThreadContext extends TestCase {
 	}
 
 	/**
-	 * A system context within an interaction of a user installs a system sub-session for the job
-	 * and restores the user's sub-session and the security state afterwards.
+	 * A system context within an interaction of a user makes the user's sub-session a system
+	 * context for the job and restores its identity and the security state afterwards.
 	 */
 	public void testSystemContextInsideInteraction() {
 		ThreadContext userContext = newUserContext();
@@ -164,9 +166,8 @@ public class TestThreadContext extends TestCase {
 			int result = ThreadContext.inSystemContext(TestThreadContext.class, () -> {
 				assertSame("No new interaction is created.", interaction, ThreadContextManager.getInteraction());
 				SubSessionContext systemContext = ThreadContextManager.getSubSession();
-				assertNotSame(userContext, systemContext);
-				assertNotSame(userSession, ThreadContextManager.getSession());
-				assertSame(ThreadContextManager.getSession(), systemContext.getSessionContext());
+				assertSame("The sub-session is kept.", userContext, systemContext);
+				assertSame("The session is kept.", userSession, ThreadContextManager.getSession());
 				assertEquals(ThreadContextManager.systemContextId(TestThreadContext.class),
 					systemContext.getContextId());
 				assertTrue(ThreadContext.isSystemContext());

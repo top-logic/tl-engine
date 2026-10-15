@@ -136,9 +136,14 @@ public interface BoundChecker {
 
 	/**
 	 * Returns a non-{@code null} shortcut answer when the check can be resolved without role lookup
-	 * (e.g. system group, admin context), or {@code null} to proceed with the full role check.
+	 * (e.g. {@link ThreadContext#isSecurityUnchecked() unchecked security}, system group,
+	 * administrator), or {@code null} to proceed with the full role check.
 	 */
 	static Boolean isAllowedBypass(Person user, BoundCommandGroup cmdGroup) {
+		if (ThreadContext.isSecurityUnchecked()) {
+			// Access checks are switched off.
+			return true;
+		}
 		if (user == null) {
 			// Without user, no access rights.
 			return false;
@@ -148,7 +153,7 @@ public interface BoundChecker {
 			return true;
 		}
 		if (ThreadContext.isAdmin()) {
-			// Technical super user that bypasses access checks.
+			// An administrator bypasses access checks.
 			return true;
 		}
 		if (!SimpleBoundCommandGroup.isAllowedCommandGroup(user, cmdGroup)) {

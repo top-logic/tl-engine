@@ -9,12 +9,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -55,8 +55,8 @@ public class RPCMethod extends GenericMethodWithSecurity {
 	 *           rights: its author decided that the computation is not subject to the user's rights,
 	 *           and an attribute read that silently delivers <code>null</code> would send a request
 	 *           with missing values instead of failing. The whole call is therefore performed in an
-	 *           {@link ModelAccessRights#uncheckedSecurity(com.top_logic.basic.util.ComputationEx2)
-	 *           unchecked scope} in that case.
+	 *           with {@link ThreadContext#uncheckedSecurity(com.top_logic.basic.util.ComputationEx2)
+	 *           unchecked security} in that case.
 	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
@@ -64,7 +64,7 @@ public class RPCMethod extends GenericMethodWithSecurity {
 			if (usesSecurity()) {
 				return _handler.execute(arguments);
 			}
-			return ModelAccessRights.<Object, Exception, RuntimeException> uncheckedSecurity(
+			return ThreadContext.<Object, Exception, RuntimeException> uncheckedSecurity(
 				() -> _handler.execute(arguments));
 		} catch (I18NRuntimeException ex) {
 			throw ex;

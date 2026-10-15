@@ -20,6 +20,7 @@ import java.util.function.BiFunction;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.StringID;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClassImpl;
@@ -136,7 +137,7 @@ public class TestTLObjectOverlay extends TestCase {
 		overlay.tUpdate(namePart, "Bob");
 		overlay.tUpdate(agePart, Integer.valueOf(25));
 
-		ModelAccessRights.uncheckedSecurity(overlay::apply);
+		ThreadContext.uncheckedSecurity(overlay::apply);
 
 		assertEquals("Bob", base.tValue(namePart));
 		assertEquals(Integer.valueOf(25), base.tValue(agePart));

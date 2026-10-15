@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.table.AttributeColumn;
@@ -39,7 +40,6 @@ import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -516,7 +516,7 @@ public class TestEmbeddedColumns extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ModelAccessRights.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
+		ThreadContext.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
 			super.runTest();
 			return null;
 		});

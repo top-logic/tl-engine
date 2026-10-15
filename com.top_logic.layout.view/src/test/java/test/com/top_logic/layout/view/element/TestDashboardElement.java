@@ -261,7 +261,8 @@ public class TestDashboardElement extends BasicTestCase {
 			layoutCommands(new CommandScope(List.of())));
 
 		List<CommandModel> offered = new ArrayList<>();
-		TLContextManager.inRootPersonContext(() -> offered.addAll(layoutCommands(new CommandScope(List.of()))));
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(),
+			() -> offered.addAll(layoutCommands(new CommandScope(List.of()))));
 		assertEquals("A logged-in user is offered to edit the layout and to finish editing.", 2, offered.size());
 	}
 

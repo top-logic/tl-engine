@@ -43,7 +43,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ExtendsConfig;
@@ -311,11 +311,11 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	 *           extension point of this service, i.e. immediately afterwards). Setting up the model
 	 *           touches the model itself - allocating the module singletons applies the default values
 	 *           of their attributes, and a {@code default-by-expression} default that allocates objects
-	 *           executes <i>TL-Script</i>. See {@link ModelAccessRights#uncheckedSecurity(ComputationEx2)}.
+	 *           executes <i>TL-Script</i>. See {@link ModelAccessRights#getInstance()}.
 	 */
 	@Override
 	protected void startUpInContext() throws ConfigurationException, KnowledgeBaseException {
-		ModelAccessRights.<Void, ConfigurationException, KnowledgeBaseException> uncheckedSecurity(() -> {
+		ThreadContext.<Void, ConfigurationException, KnowledgeBaseException> uncheckedSecurity(() -> {
 			internalStartUpInContext();
 			return null;
 		});

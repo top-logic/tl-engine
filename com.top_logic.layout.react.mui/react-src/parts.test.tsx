@@ -133,6 +133,20 @@ describe('the TopLogic drawing of the parts', () => {
     expect(button.querySelector('.tl-button__label')?.textContent).toBe('Löschen');
   });
 
+  it('states the pressed state of a toggle either way, of a plain button not at all', async () => {
+    const { ButtonPart } = await defaults();
+
+    render(<>
+      <ButtonPart label="Gruppieren" display="label-only" appearance="ghost" checked={false} />
+      <ButtonPart label="Fett" display="label-only" appearance="ghost" checked />
+      <ButtonPart label="Speichern" display="label-only" appearance="ghost" />
+    </>);
+
+    expect(screen.getByRole('button', { name: 'Gruppieren' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Fett' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Speichern' }).hasAttribute('aria-pressed')).toBe(false);
+  });
+
   it('draws an icon-only button named by its label, with passed-through attributes', async () => {
     const { ButtonPart } = await defaults();
     const ref = React.createRef<HTMLButtonElement>();

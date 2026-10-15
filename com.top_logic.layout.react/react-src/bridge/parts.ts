@@ -948,7 +948,8 @@ export function buttonPartAttributes(props: ButtonPartProps): Record<string, str
   const iconOnly = display === 'icon-only';
   const result: Record<string, string | number | boolean | undefined> = {
     ...menuItemProps({ appearance }, checked),
-    'aria-pressed': !asMenuItem && (checked ?? active) ? true : undefined,
+    // A toggle states its state either way; a button marked active only while it is.
+    'aria-pressed': asMenuItem ? undefined : checked !== undefined ? checked : active ? true : undefined,
     'aria-current': asMenuItem && active ? 'true' : undefined,
     'aria-checked': asMenuItem && checked !== undefined ? checked : undefined,
     'aria-label': image || iconOnly ? label : undefined,

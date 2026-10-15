@@ -187,7 +187,7 @@ final class McpSessionKeeper {
 		_principals.release(sessionId);
 		session.closeGracefully().onErrorResume(error -> Mono.empty()).subscribe();
 		Logger.info("Removed MCP session " + sessionId + ": it did not answer a ping, and no request named it"
-			+ " for " + Duration.ofMillis(idle).toMinutes() + " minutes.", McpSessionKeeper.class);
+			+ " for " + idle / 1000 + " seconds.", McpSessionKeeper.class);
 	}
 
 }

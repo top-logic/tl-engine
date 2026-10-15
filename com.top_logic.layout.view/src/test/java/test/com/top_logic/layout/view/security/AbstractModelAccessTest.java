@@ -35,7 +35,6 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -243,21 +242,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 		_persons.clear();
 	}
 
-	/**
-	 * Runs the test body with checked security in a context of its own without a person.
-	 *
-	 * <p>
-	 * The fixture is created in {@link #setUp()} without access checks. The test body
-	 * {@link #becomeUser(Person) becomes} the user whose access rights it checks; the context of
-	 * the test body is dropped afterwards.
-	 * </p>
-	 */
 	@Override
-	protected void runTest() throws Throwable {
-		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(null, () -> {
-			super.runTest();
-			return null;
-		});
+	protected boolean checksSecurity() {
+		return true;
 	}
 
 	private Person newPerson(String name) {

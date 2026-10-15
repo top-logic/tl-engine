@@ -54,13 +54,17 @@ public class TestAdminOnly extends AbstractSearchExpressionTest {
 
 	@Override
 	protected void tearDown() throws Exception {
-		becomeUser(PersonManager.getManager().getRoot());
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			_user.tDelete();
 			tx.commit();
 		}
 		_user = null;
 		super.tearDown();
+	}
+
+	@Override
+	protected boolean checksSecurity() {
+		return true;
 	}
 
 	public void testRefusedInteractivelyForNonAdmin() throws Exception {

@@ -22,7 +22,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Test case for {@link WebFolderFieldProvider}.
@@ -34,6 +34,14 @@ public class TestWebFolderFieldProvider extends BasicTestCase {
 	WebFolderFieldProvider fieldProvider;
 
 	FolderNode emptyFolderNode;
+
+	/**
+	 * Runs the test in the context of the root person, whose clipboard backs the clipboard field.
+	 */
+	@Override
+	public void inContext() {
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), super::inContext);
+	}
 
 	@Override
 	protected void setUp() throws Exception {
@@ -47,8 +55,6 @@ public class TestWebFolderFieldProvider extends BasicTestCase {
 											treeModel.getRoot(),
 											DummyWrapper.obj(StringID.createRandomID()),
 											false);
-
-		TLContext.getContext().setCurrentPerson(PersonManager.getManager().getRoot());
 	}
 
 	public void testGetLockFieldName() {

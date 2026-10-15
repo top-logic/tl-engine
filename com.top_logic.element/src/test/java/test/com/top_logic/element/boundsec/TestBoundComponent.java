@@ -48,7 +48,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Test the {@link BoundComponent}.
@@ -88,15 +88,15 @@ public class TestBoundComponent extends BasicTestCase {
         try {
             Person guest = Person.byName("guest_de");
 
-            TLContext context = TLContext.getContext();
-            context.setCurrentPerson(guest);
-            
-			checkPBC(securityLayoutName);
+			TLContextManager.<Void, Exception, RuntimeException> inPersonContext(guest, () -> {
+				checkPBC(securityLayoutName);
 
-			TestedBoundComponent cmp = newTestedBoundComponent(componentName, layout);
-            assertNotNull(cmp.getPersBoundComp());
-            
-			check(cmp, guest, componentName);
+				TestedBoundComponent cmp = newTestedBoundComponent(componentName, layout);
+				assertNotNull(cmp.getPersBoundComp());
+
+				check(cmp, guest, componentName);
+				return null;
+			});
         }
         finally { // remove the PersBoundComp eventually created by checkPBC
 			PersBoundComp schuView = SecurityComponentCache.getSecurityComponent(securityLayoutName);

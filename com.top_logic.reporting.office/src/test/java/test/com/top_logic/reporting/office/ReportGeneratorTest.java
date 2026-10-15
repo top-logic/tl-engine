@@ -23,7 +23,6 @@ import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.BinaryContent;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.reporting.office.ReportGenerator;
@@ -90,13 +89,6 @@ public class ReportGeneratorTest extends BasicTestCase {
     }
 
     public void testGetReportResult() throws Exception {
-		ThreadContext.uncheckedSecurity(() -> {
-			checkReportResult();
-			return null;
-		});
-    }
-
-	private void checkReportResult() throws Exception {
 		BinaryContent resultFile = null;
             Map<String, ?> env = getEnvironment();
             Person thePerson = (Person) env.get("person");

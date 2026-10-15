@@ -260,20 +260,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		return getPerson();
    }
 
-   /** 
-    * Set the the Person currently logged in.
-    *
-    * Take care that this does not conflict with the current User.
-    *
-    * This should not be done by normal code, but Person related
-    * Objects.
-    * 
-    * @param aPerson the person to be set. May be <code>null</code>.
-    */
-	public final void setCurrentPerson(Person aPerson) {
-		setPerson(aPerson);
-   }
-   
 	@Override
 	public final String getCurrentUserName() {
 		return TLContextManager.getCurrentUserName(this);

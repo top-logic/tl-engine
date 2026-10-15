@@ -37,7 +37,6 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.util.TLContext;
 
 /**
  * Test for {@link ObjectFunctions}.
@@ -113,7 +112,16 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 			tx.commit();
 		}
-		TLContext.getContext().setCurrentPerson(_root);
+	}
+
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	@Override
@@ -215,7 +223,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		assertEquals(Boolean.TRUE, eval(RESOLVES, type("Employee"), id));
 		assertEquals(Boolean.TRUE, eval(RESOLVES, type("Record"), id));
 
-		TLContext.getContext().setCurrentPerson(_user);
+		becomeUser(_user);
 		assertEquals(Boolean.FALSE, eval(RESOLVES, type("Employee"), id));
 		assertEquals(Boolean.FALSE, eval(RESOLVES, type("Record"), id));
 		assertEquals(Boolean.TRUE, eval(RESOLVES, type("Record"), eval(ID, _unsecured)));
@@ -241,7 +249,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		String id = (String) eval(ID, _employee);
 		assertEquals(Boolean.TRUE, eval(RESOLVES, EMPLOYEE_TABLE, id));
 
-		TLContext.getContext().setCurrentPerson(_user);
+		becomeUser(_user);
 		assertEquals("An object the user may not read must not be found.",
 			Boolean.FALSE, eval(RESOLVES, EMPLOYEE_TABLE, id));
 		assertEquals("An object the user may read is found.",
@@ -250,7 +258,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 	public void testNotReadableResolvedWithoutSecurity() throws Exception {
 		String id = (String) eval(ID, _employee);
-		TLContext.getContext().setCurrentPerson(_user);
+		becomeUser(_user);
 
 		SearchExpression expr = search(RESOLVES);
 		UpdateSecurityVisitor.disableSecurity(expr);
@@ -315,7 +323,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 			assertEquals(Boolean.TRUE, eval(RESOLVES_KEY, historicKey));
 		}
 
-		TLContext.getContext().setCurrentPerson(_user);
+		becomeUser(_user);
 		assertEquals("An object the user may not read must not be found by its key.",
 			Boolean.FALSE, eval(RESOLVES_KEY, key));
 		if (historicKey != null) {
@@ -328,7 +336,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 	public void testNotReadableResolvedByKeyWithoutSecurity() throws Exception {
 		String key = (String) eval(KEY, _employee);
-		TLContext.getContext().setCurrentPerson(_user);
+		becomeUser(_user);
 
 		SearchExpression expr = search(RESOLVES_KEY);
 		UpdateSecurityVisitor.disableSecurity(expr);

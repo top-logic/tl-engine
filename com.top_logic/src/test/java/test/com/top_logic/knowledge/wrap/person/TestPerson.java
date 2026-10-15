@@ -16,7 +16,6 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.DefaultTestFactory;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.thread.ThreadContext;
@@ -208,12 +207,12 @@ public class TestPerson extends BasicTestCase {
 	 * Tests that Locale Germany is default when nothing different is set.
 	 */
 	public void testGermanyDefaultLocale() throws Throwable {
-		TLSubSessionContext session = TLContextManager.getSubSession();
 		Person creator = createPerson("creator");
 		try {
-			session.setPerson(creator);
-			setLanguageAndCountry(creator, null);
-			Person newPerson = createPerson("newPerson");
+			Person newPerson = TLContextManager.inPersonContext(creator, () -> {
+				setLanguageAndCountry(creator, null);
+				return createPerson("newPerson");
+			});
 			try {
 				Locale defaultLocale = Locale.GERMANY;
 				// Person added variant to locale.
@@ -224,8 +223,6 @@ public class TestPerson extends BasicTestCase {
 				deletePersonAndUser(newPerson);
 			}
 		} finally {
-			// set root to session as otherwise deleting fails
-			session.setPerson(PersonManager.getManager().getRoot());
 			deletePersonAndUser(creator);
 		}
 	}

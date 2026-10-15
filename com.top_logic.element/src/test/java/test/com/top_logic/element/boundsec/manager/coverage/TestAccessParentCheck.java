@@ -30,6 +30,7 @@ import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -146,6 +147,22 @@ public class TestAccessParentCheck extends BasicTestCase {
 		_created.clear();
 
 		super.tearDown();
+	}
+
+	/**
+	 * Runs the test body with checked security.
+	 *
+	 * <p>
+	 * The fixture is created in {@link #setUp()} in the system context of the test. The body
+	 * decides access for explicitly given persons, which is only checked outside a system context.
+	 * </p>
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(null, () -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	public void testObjectWithOwnDefinition() {

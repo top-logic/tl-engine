@@ -37,7 +37,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.search.react.EvaluateDynamicScriptAction;
 import com.top_logic.model.search.react.EvaluateScriptAction;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.Resources;
 
 /**
@@ -76,18 +75,9 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 
 	private TLObject _item;
 
-	private Person _formerUser;
-
-	private String _formerContextId;
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext context = TLContext.getContext();
-		_formerUser = context.getCurrentPersonWrapper();
-		_formerContextId = context.getContextId();
-		becomeUser(PersonManager.getManager().getRoot());
-
 		_context = new DefaultViewContext(null);
 		_item = newObject(ITEM, ORIGINAL);
 	}
@@ -97,13 +87,16 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 		_item = null;
 		_context = null;
 		super.tearDown();
+	}
 
-		TLContext context = TLContext.getContext();
-		context.setCurrentPerson(_formerUser);
-		if (_formerUser == null) {
-			// Without a person, the context is identified by its explicit context id.
-			context.setContextId(_formerContextId);
-		}
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
+	@Override
+	protected Person initialUser() {
+		return PersonManager.getManager().getRoot();
 	}
 
 	/**

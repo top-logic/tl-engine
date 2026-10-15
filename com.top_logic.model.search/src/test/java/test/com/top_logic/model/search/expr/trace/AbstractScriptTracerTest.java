@@ -14,7 +14,6 @@ import java.util.Set;
 import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -65,12 +64,6 @@ public abstract class AbstractScriptTracerTest extends AbstractSearchExpressionT
 	 * Name of the derived attribute of {@link #TYPE_F} reading {@link #DOUBLED} of {@link #OTHER}.
 	 */
 	protected static final String OTHER_DOUBLED = "otherDoubled";
-
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		becomeUser(PersonManager.getManager().getRoot());
-	}
 
 	/**
 	 * Evaluates the given script with a {@link ScriptTracer}.

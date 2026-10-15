@@ -27,7 +27,7 @@
 		<button>
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
 				image="css:bi bi-play-fill"
-				input="job"
+				inputs="job as jobState"
 			>
 				<label>
 					<en>Start job</en>
@@ -61,7 +61,7 @@
 							</label>
 						</phase>
 					</phases>
-					<function><![CDATA[job -> x -> {
+					<function><![CDATA[{
 	$job.jobPhase('collect');
 	$job.jobMessage(#('Collecting the source records.'@en, 'Die Quelldatensätze werden gesammelt.'@de));
 	count(1, 6).foreach(i -> {

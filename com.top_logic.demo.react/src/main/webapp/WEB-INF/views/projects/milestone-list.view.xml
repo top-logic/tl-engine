@@ -25,7 +25,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="project"
+				inputs="project"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -39,24 +39,25 @@
 					container="project"
 					reference="milestones"
 					type="tl.demo.projectManagement:Milestone"
-				/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-milestone.view.xml"
 				>
-					<bind
-						channel="container"
-						to="project"
-					/>
-					<bind
-						channel="selection"
-						to="milestone"
-					/>
-				</open-dialog>
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="demo/create-milestone.view.xml"
+					>
+						<bind
+							channel="container"
+							to="project"
+						/>
+						<bind
+							channel="selection"
+							to="milestone"
+						/>
+					</open-dialog>
+				</create-transient>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-trash"
-				input="milestone"
+				inputs="milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -66,9 +67,11 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="m -> #('Delete milestone {0}?'@en, 'Meilenstein {0} löschen?'@de).fill($m.get(`tl.demo.projectManagement:Milestone#name`))"/>
+				<confirm expr="#('Delete milestone {0}?'@en, 'Meilenstein {0} löschen?'@de).fill($milestone.get(`tl.demo.projectManagement:Milestone#name`))"/>
 				<delete-object/>
-				<write-channel name="milestone"/>
+				<write-channel name="milestone"
+					clear="true"
+				/>
 			</generic-command>
 		</commands>
 		<table

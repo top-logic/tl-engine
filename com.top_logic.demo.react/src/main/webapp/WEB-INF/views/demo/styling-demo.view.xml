@@ -354,8 +354,9 @@
 						<en>Search for "token"</en>
 						<de>Nach "Token" suchen</de>
 					</label>
-					<execute-script function="x -> 'token'"/>
-					<write-channel name="q"/>
+					<execute-script function="'token'">
+						<write-channel name="q"/>
+					</execute-script>
 				</action>
 			</button>
 			<button>
@@ -366,8 +367,9 @@
 						<en>Empty the search field</en>
 						<de>Suchfeld leeren</de>
 					</label>
-					<execute-script function="x -> ''"/>
-					<write-channel name="q"/>
+					<execute-script function="''">
+						<write-channel name="q"/>
+					</execute-script>
 				</action>
 			</button>
 		</stack>
@@ -782,7 +784,6 @@
 					<de>Name (Pflicht, mit Enter übergeben)</de>
 				</label>
 				<on-submit>
-					<execute-script function="text -> $text"/>
 					<write-channel name="submittedText"/>
 				</on-submit>
 			</value-input>

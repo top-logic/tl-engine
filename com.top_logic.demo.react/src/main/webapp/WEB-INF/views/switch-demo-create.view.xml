@@ -28,7 +28,7 @@
 			<field attribute="active"/>
 			<commands>
 				<generic-command
-					input="model"
+					inputs="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -36,9 +36,10 @@
 						<de>Anlegen</de>
 					</label>
 					<store-form-state/>
-					<persist-transient/>
-					<write-channel name="selection"/>
-					<close-dialog/>
+					<persist-transient>
+						<write-channel name="selection"/>
+						<close-dialog/>
+					</persist-transient>
 				</generic-command>
 			</commands>
 		</form>

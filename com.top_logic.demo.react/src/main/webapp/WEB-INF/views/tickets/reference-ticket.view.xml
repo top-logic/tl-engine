@@ -44,7 +44,7 @@
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
-					input="ticket"
+					inputs="ticket"
 				>
 					<label>
 						<en>Insert</en>
@@ -53,9 +53,10 @@
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<execute-script function="t -> htmlObjectLink($t)"/>
-					<write-channel name="result"/>
-					<close-dialog/>
+					<execute-script function="htmlObjectLink($ticket)">
+						<write-channel name="result"/>
+						<close-dialog/>
+					</execute-script>
 				</action>
 			</button>
 			<button>

@@ -90,7 +90,7 @@
 					<de>In den Kanal schreiben</de>
 				</label>
 				<execute-script>
-					<function><![CDATA[x -> {
+					<function><![CDATA[{
 	state = {
 		'tick': 0,
 		'at': now(),
@@ -98,8 +98,8 @@
 	};
 	$state;
 }]]></function>
+					<write-channel name="ticker"/>
 				</execute-script>
-				<write-channel name="ticker"/>
 			</action>
 		</button>
 	</panel>

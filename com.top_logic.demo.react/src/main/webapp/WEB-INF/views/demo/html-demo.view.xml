@@ -256,7 +256,7 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 												/>
 												<button appearance="link">
 													<action class="com.top_logic.layout.view.command.GenericViewCommand"
-														input="element"
+														inputs="element"
 													>
 														<label>
 															<en>Show</en>

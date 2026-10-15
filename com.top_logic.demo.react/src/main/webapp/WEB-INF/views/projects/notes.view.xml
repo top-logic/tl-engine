@@ -20,7 +20,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="project"
+				inputs="project"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -34,16 +34,17 @@
 					container="project"
 					reference="notes"
 					type="tl.demo.projectManagement:Note"
-				/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-note.view.xml"
 				>
-					<bind
-						channel="container"
-						to="project"
-					/>
-				</open-dialog>
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="demo/create-note.view.xml"
+					>
+						<bind
+							channel="container"
+							to="project"
+						/>
+					</open-dialog>
+				</create-transient>
 			</generic-command>
 		</commands>
 		<table

@@ -38,7 +38,7 @@
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					display="icon-only"
 					image="css:bi bi-box-arrow-up-right"
-					input="ticket"
+					inputs="ticket"
 				>
 					<label>
 						<en>Details</en>

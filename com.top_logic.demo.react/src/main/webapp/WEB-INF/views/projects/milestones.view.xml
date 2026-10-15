@@ -72,7 +72,7 @@
 					<button>
 						<action class="com.top_logic.layout.view.command.GenericViewCommand"
 							image="css:bi bi-plus-lg"
-							input="project"
+							inputs="project"
 						>
 							<label>
 								<en>New Milestone</en>
@@ -85,26 +85,27 @@
 								container="project"
 								reference="milestones"
 								type="tl.demo.projectManagement:Milestone"
-							/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="demo/create-milestone.view.xml"
 							>
-								<bind
-									channel="container"
-									to="project"
-								/>
-								<bind
-									channel="selection"
-									to="milestone"
-								/>
-							</open-dialog>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="demo/create-milestone.view.xml"
+								>
+									<bind
+										channel="container"
+										to="project"
+									/>
+									<bind
+										channel="selection"
+										to="milestone"
+									/>
+								</open-dialog>
+							</create-transient>
 						</action>
 					</button>
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
-					input="project"
+					inputs="project"
 					observed-types="tl.demo.projectManagement:ProjectScope"
 					view="projects/milestone-list.view.xml"
 				>
@@ -134,7 +135,7 @@
 					<button>
 						<action class="com.top_logic.layout.view.command.GenericViewCommand"
 							image="css:bi bi-plus-lg"
-							input="project"
+							inputs="project"
 						>
 							<label>
 								<en>New Note</en>
@@ -147,22 +148,23 @@
 								container="project"
 								reference="notes"
 								type="tl.demo.projectManagement:Note"
-							/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="demo/create-note.view.xml"
 							>
-								<bind
-									channel="container"
-									to="project"
-								/>
-							</open-dialog>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="demo/create-note.view.xml"
+								>
+									<bind
+										channel="container"
+										to="project"
+									/>
+								</open-dialog>
+							</create-transient>
 						</action>
 					</button>
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
-					input="project"
+					inputs="project"
 					observed-types="tl.demo.projectManagement:ProjectScope"
 					view="projects/notes.view.xml"
 				>

@@ -91,7 +91,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="selectedScope"
+				inputs="selectedScope"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -105,20 +105,21 @@
 					container="selectedScope"
 					reference="milestones"
 					type="tl.demo.projectManagement:Milestone"
-				/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-milestone.view.xml"
 				>
-					<bind
-						channel="container"
-						to="selectedScope"
-					/>
-					<bind
-						channel="selection"
-						to="selected"
-					/>
-				</open-dialog>
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="demo/create-milestone.view.xml"
+					>
+						<bind
+							channel="container"
+							to="selectedScope"
+						/>
+						<bind
+							channel="selection"
+							to="selected"
+						/>
+					</open-dialog>
+				</create-transient>
 			</generic-command>
 			<!--
 				The ticket is created without a dialog, so the script gets the milestone as the
@@ -128,7 +129,7 @@
 			-->
 			<generic-command
 				image="css:bi bi-ticket-perforated"
-				input="selectedMilestone"
+				inputs="selectedMilestone as milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -147,13 +148,14 @@
 						<en>Created a ticket in milestone {0}.</en>
 						<de>Ticket in Meilenstein {0} angelegt.</de>
 					</commitMessage>
-					<execute-script function="milestone -> { scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
+					<execute-script function="{ scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }">
+						<write-channel name="selected"/>
+					</execute-script>
 				</with-transaction>
-				<write-channel name="selected"/>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-box-arrow-up"
-				input="selectedTicket"
+				inputs="selectedTicket as ticket"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -164,7 +166,7 @@
 					<null-input-disabled/>
 				</executability>
 				<with-transaction>
-					<execute-script function="ticket -> { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, null); null; }"/>
+					<execute-script function="{ $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, null); null; }"/>
 				</with-transaction>
 			</generic-command>
 			<!--
@@ -176,7 +178,7 @@
 			-->
 			<generic-command
 				image="css:bi bi-box-arrow-in-down"
-				input="selectedMilestone"
+				inputs="selectedMilestone as milestone"
 				observed-types="tl.demo.projectManagement:Ticket"
 				placement="TOOLBAR"
 			>
@@ -193,14 +195,15 @@
 						<en>Attached a ticket to milestone {0}.</en>
 						<de>Ticket an Meilenstein {0} angehängt.</de>
 					</commitMessage>
-					<execute-script function="milestone -> { ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }"/>
+					<execute-script function="{ ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }">
+						<write-channel name="selected"/>
+					</execute-script>
 				</with-transaction>
-				<write-channel name="selected"/>
 			</generic-command>
 			<!-- <delete-object/> deletes a single object as well as a set of them. -->
 			<generic-command
 				image="css:bi bi-trash"
-				input="selected"
+				inputs="selected"
 				placement="TOOLBAR"
 			>
 				<label>

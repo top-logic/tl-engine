@@ -28,7 +28,7 @@
 						<commands>
 							<generic-command
 								image="css:ri-links-line"
-								input="ticket"
+								inputs="ticket"
 							>
 								<label>
 									<en>Reference ticket...</en>
@@ -68,8 +68,9 @@
 								reference="comments"
 							/>
 						</executability>
-						<store-form-state/>
-						<link-element/>
+						<store-form-state>
+							<link-element/>
+						</store-form-state>
 					</generic-command>
 				</commands>
 			</form>

@@ -30,7 +30,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-arrow-left"
-				input="depth"
+				inputs="depth"
 				placement="TOOLBAR"
 			>
 				<label>

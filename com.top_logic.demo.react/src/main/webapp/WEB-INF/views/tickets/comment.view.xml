@@ -43,7 +43,7 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-reply"
-					input="comment"
+					inputs="comment"
 					placement="TOOLBAR"
 				>
 					<label>
@@ -58,13 +58,14 @@
 							type="demo.tickets:Comment"
 						/>
 					</executability>
-					<execute-script function="comment -> { reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }"/>
-					<write-channel name="draft"/>
+					<execute-script function="{ reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }">
+						<write-channel name="draft"/>
+					</execute-script>
 					<scroll-to-anchor target="'composer'"/>
 				</generic-command>
 				<generic-command
 					image="css:bi bi-trash"
-					input="comment"
+					inputs="comment"
 					placement="TOOLBAR"
 				>
 					<label>

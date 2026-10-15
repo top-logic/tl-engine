@@ -32,7 +32,7 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
-					input="model"
+					inputs="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -40,9 +40,10 @@
 						<de>Erstellen</de>
 					</label>
 					<store-form-state/>
-					<persist-transient/>
-					<write-channel name="selection"/>
-					<close-dialog/>
+					<persist-transient>
+						<write-channel name="selection"/>
+						<close-dialog/>
+					</persist-transient>
 				</generic-command>
 			</commands>
 		</form>

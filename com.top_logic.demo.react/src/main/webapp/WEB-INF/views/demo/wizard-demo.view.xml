@@ -89,15 +89,17 @@
 										<wizard-has-next/>
 									</executability>
 									<execute-script
-										function="p -> x -> if($p == null, new(`demo.react:Demo`, transient: true), $p)"
+										function="if($profile == null, new(`demo.react:Demo`, transient: true), $profile)"
 										inputs="profile"
-									/>
-									<write-channel name="profile"/>
+									>
+										<write-channel name="profile"/>
+									</execute-script>
 									<execute-script
-										function="qs -> x -> if($qs == null || $qs.isEmpty(), ['role'], $qs)"
+										function="if($questions == null || $questions.isEmpty(), ['role'], $questions)"
 										inputs="questions"
-									/>
-									<write-channel name="questions"/>
+									>
+										<write-channel name="questions"/>
+									</execute-script>
 									<wizard-next/>
 								</action>
 							</button>
@@ -222,10 +224,11 @@
 										</executability>
 										<store-form-state/>
 										<execute-script
-											function="qs -> x -> if($qs.size() == 1, ['role', 'phone'], if($qs.size() == 2, ['role', 'phone', 'notes'], $qs))"
+											function="if($questions.size() == 1, ['role', 'phone'], if($questions.size() == 2, ['role', 'phone', 'notes'], $questions))"
 											inputs="questions"
-										/>
-										<write-channel name="questions"/>
+										>
+											<write-channel name="questions"/>
+										</execute-script>
 										<wizard-next/>
 									</action>
 								</button>

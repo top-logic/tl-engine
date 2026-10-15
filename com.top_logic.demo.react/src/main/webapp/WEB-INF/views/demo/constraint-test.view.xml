@@ -25,20 +25,21 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<create-transient type="test.constraints:ConstraintTestType"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="demo/create-constraint-test.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedObject"
-								/>
-							</open-dialog>
+							<create-transient type="test.constraints:ConstraintTestType">
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="demo/create-constraint-test.view.xml"
+								>
+									<bind
+										channel="selection"
+										to="selectedObject"
+									/>
+								</open-dialog>
+							</create-transient>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-pencil"
-							input="selectedObject"
+							inputs="selectedObject"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -55,7 +56,7 @@
 						</generic-command>
 						<generic-command
 							image="css:bi bi-trash"
-							input="selectedObject"
+							inputs="selectedObject"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -65,9 +66,11 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<confirm expr="obj -> if($obj != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
+							<confirm expr="if($selectedObject != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
 							<delete-object/>
-							<write-channel name="selectedObject"/>
+							<write-channel name="selectedObject"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<table

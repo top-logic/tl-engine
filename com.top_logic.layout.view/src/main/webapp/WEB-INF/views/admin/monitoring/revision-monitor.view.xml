@@ -11,15 +11,18 @@
 	the enclosing tab already labels the view, so no panel title is rendered and the table fills the
 	remaining area.
 	
-	The filter row selects the displayed commits either by a time range or, with the "Revision range"
-	switch on, by a range of commit numbers. In both cases the start is inclusive and the end
-	exclusive. The points in time default to today 00:00 and tomorrow 00:00 in the time zone of the
-	user: their input channels start empty, and the derived channels the inputs are bound to replace
-	an empty value by the default. Clearing an input writes the marker 'cleared' to its input channel,
-	so that the default does not come back and the range stays open on that side, as it does for a
-	missing commit number. The inputs of the mode that is not selected are hidden, and their values
-	are ignored. Changes committed by the system (no person as author) and change sets that do not
-	change a model object are only displayed on request.
+	The filter row selects the displayed commits either by a time range or by a range of commit
+	numbers, as chosen in the mandatory "Range" selection. Its two options are internationalized
+	texts on the modes channel, whose labels are chosen to keep their alphabetical order (the order
+	the options are displayed in) in both languages. The selection defaults to the first one, and
+	revisionRange compares the selection with the second one. In both cases the start is inclusive
+	and the end exclusive. The points in time default to today 00:00 and tomorrow 00:00 in the time
+	zone of the user: their input channels start empty, and the derived channels the inputs are
+	bound to replace an empty value by the default. Clearing an input writes the marker 'cleared' to
+	its input channel, so that the default does not come back and the range stays open on that side,
+	as it does for a missing commit number. The inputs of the mode that is not selected are hidden,
+	and their values are ignored. Changes committed by the system (no person as author) and change
+	sets that do not change a model object are only displayed on request.
 	
 	The table is not updated while the filter is edited: the "Refresh" button writes the current
 	filter values together with the current time as a query to queryInput, and the rows are computed
@@ -29,7 +32,19 @@
 -->
 <view>
 	<channels>
-		<channel name="revisionRange"/>
+		<derived-channel name="modes">
+			<expr><![CDATA[list(#("Date"@en, "Datum"@de), #("Revision"@en, "Revision"@de))]]></expr>
+		</derived-channel>
+		<channel name="modeInput"/>
+		<derived-channel name="mode"
+			expr="x -> modes -> if($x == null, $modes.firstElement(), $x)"
+			inputs="modeInput, modes"
+			reverse="x -> $x"
+		/>
+		<derived-channel name="revisionRange"
+			expr="mode -> modes -> $mode == $modes.lastElement()"
+			inputs="mode, modes"
+		/>
 		<channel name="fromInput"/>
 		<channel name="toInput"/>
 		<derived-channel name="from"
@@ -67,16 +82,18 @@
 				wrap="true"
 			>
 				<value-input
-					label-position="after-value"
-					type="tl.core:Boolean"
-					value="revisionRange"
+					inputs="modes"
+					label-position="above-value"
+					mandatory="true"
+					options="modes -> $modes"
+					value="mode"
 				>
 					<label>
-						<en>Revision range</en>
-						<de>Revisionsbereich</de>
+						<en>Range</en>
+						<de>Bereich</de>
 					</label>
-					<input-control class="com.top_logic.layout.view.form.BooleanControlProvider"
-						display="switch"
+					<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+						display="segmented"
 					/>
 				</value-input>
 				<visible-if

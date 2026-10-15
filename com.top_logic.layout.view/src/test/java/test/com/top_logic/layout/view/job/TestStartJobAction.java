@@ -204,10 +204,10 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that a job written as a TL-Script function is called with the monitor of the job first,
-	 * then the arguments of the chain, then the inputs.
+	 * Tests that a job written as a TL-Script function is called with the arguments of the chain,
+	 * then the inputs, then the monitor of the job.
 	 */
-	public void testAScriptJobIsCalledWithTheMonitorFirst() throws Exception {
+	public void testAScriptJobIsCalledWithTheMonitorLast() throws Exception {
 		_context.resolveChannel(new ChannelRef(CONTEXT)).set("the context");
 		AtomicReference<List<Object>> seen = new AtomicReference<>();
 
@@ -222,10 +222,10 @@ public class TestStartJobAction extends AbstractJobTest {
 
 		List<Object> arguments = seen.get();
 		assertEquals(3, arguments.size());
-		assertSame("The monitor of the job leads the arguments of the function.",
-			last.control(), arguments.get(0));
-		assertEquals(INPUT, arguments.get(1));
-		assertEquals("the context", arguments.get(2));
+		assertEquals(INPUT, arguments.get(0));
+		assertEquals("the context", arguments.get(1));
+		assertSame("The monitor of the job follows the arguments of the function.",
+			last.control(), arguments.get(2));
 		assertEquals("produced", last.result());
 	}
 
@@ -365,7 +365,7 @@ public class TestStartJobAction extends AbstractJobTest {
 	 */
 	public void testCancellingAScriptJobEndsItAsCancelled() throws Exception {
 		run(List.of(compensate("read"),
-			job(new ScriptJobBody(compile("job -> x -> { sleep(10000); $job.jobProgress(1, 2); 'done' }")),
+			job(new ScriptJobBody(compile("x -> job -> { sleep(10000); $job.jobProgress(1, 2); 'done' }")),
 				true, List.of()),
 			record("after")));
 
@@ -512,7 +512,7 @@ public class TestStartJobAction extends AbstractJobTest {
 		StartJobAction.Config config = TypedConfiguration.newConfigItem(StartJobAction.Config.class);
 		update(config, StartJobAction.Config.JOB, new ChannelRef(JOB));
 		if (function) {
-			update(config, StartJobAction.Config.FUNCTION, expr("job -> x -> null"));
+			update(config, StartJobAction.Config.FUNCTION, expr("x -> job -> null"));
 		}
 		if (body) {
 			PolymorphicConfiguration<JobBody> bodyConfig =

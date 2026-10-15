@@ -205,8 +205,8 @@ public class StartJobAction extends ArgumentsViewAction {
 
 	/**
 	 * {@link ScriptContextVariablesProvider} for the {@link Config#getFunction() function} of a
-	 * {@link StartJobAction}: the monitor of the job followed by the names of its
-	 * {@link StartJobAction#jobScope(ActionScope, List) arguments}.
+	 * {@link StartJobAction}: the names of its {@link StartJobAction#jobScope(ActionScope, List)
+	 * arguments} followed by the monitor of the job, see {@link ScriptJobBody#variables(ActionScope)}.
 	 */
 	public static class JobScriptVariables implements ScriptContextVariablesProvider {
 

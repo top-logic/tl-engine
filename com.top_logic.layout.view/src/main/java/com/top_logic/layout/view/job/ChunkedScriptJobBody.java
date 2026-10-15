@@ -352,12 +352,7 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 
 	@Override
 	protected Object init(JobMonitor job, List<Object> arguments) {
-		Object[] args = new Object[arguments.size() + 1];
-		args[0] = job;
-		for (int n = 0; n < arguments.size(); n++) {
-			args[n + 1] = arguments.get(n);
-		}
-		return _init.execute(args);
+		return _init.execute(ScriptJobBody.values(job, arguments));
 	}
 
 	@Override

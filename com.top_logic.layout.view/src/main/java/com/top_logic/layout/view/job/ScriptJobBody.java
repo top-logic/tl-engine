@@ -93,21 +93,37 @@ public class ScriptJobBody implements JobBody {
 	 * Creates a {@link ScriptJobBody} for an already compiled function.
 	 *
 	 * @param function
-	 *        The compiled function doing the work of the job, taking the monitor followed by the
-	 *        values the job is started with.
+	 *        The compiled function doing the work of the job, taking the values the job is
+	 *        started with followed by the monitor, see {@link #values(JobMonitor, List)}.
 	 */
 	public ScriptJobBody(QueryExecutor function) {
 		_function = function;
 	}
 
 	/**
-	 * The variables of a script of a job started with arguments of the given scope: the
-	 * {@link #MONITOR} followed by the names of the arguments.
+	 * The variables of a script of a job started with arguments of the given scope: the names of
+	 * the arguments followed by {@link #MONITOR}, which shadows an argument of the same name.
+	 *
+	 * @see #values(JobMonitor, List)
 	 */
 	public static List<String> variables(ActionScope scope) {
 		List<String> result = new ArrayList<>(scope.names().size() + 1);
-		result.add(MONITOR);
 		result.addAll(scope.names());
+		result.add(MONITOR);
+		return result;
+	}
+
+	/**
+	 * The values of the {@link #variables(ActionScope) variables} of a script of a job.
+	 *
+	 * @param job
+	 *        The monitor of the job.
+	 * @param arguments
+	 *        The values the job was started with, in the order of the names of its scope.
+	 */
+	public static Object[] values(JobMonitor job, List<Object> arguments) {
+		Object[] result = arguments.toArray(new Object[arguments.size() + 1]);
+		result[arguments.size()] = job;
 		return result;
 	}
 
@@ -125,12 +141,7 @@ public class ScriptJobBody implements JobBody {
 
 	@Override
 	public Object run(JobMonitor job, List<Object> arguments) {
-		Object[] args = new Object[arguments.size() + 1];
-		args[0] = job;
-		for (int n = 0; n < arguments.size(); n++) {
-			args[n + 1] = arguments.get(n);
-		}
-		return _function.execute(args);
+		return _function.execute(values(job, arguments));
 	}
 
 }

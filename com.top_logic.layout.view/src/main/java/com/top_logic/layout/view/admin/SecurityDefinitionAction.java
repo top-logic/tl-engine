@@ -260,7 +260,6 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * Stores the given role parent rule after checking that it can navigate anywhere.
 	 */
 	private Object saveRoleParentRule(NavigationRuleConfig rule) {
-		checkCommon(rule);
 		if (rule.getPathElements().isEmpty()) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_PATH);
 		}
@@ -272,7 +271,6 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * Stores the given role rule after checking that it delivers a role.
 	 */
 	private Object saveRoleRule(RoleRuleConfig rule) {
-		checkCommon(rule);
 		if (rule.getRole().isEmpty()) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_ROLE);
 		}
@@ -315,20 +313,6 @@ public class SecurityDefinitionAction implements ViewAction {
 		}
 		if (!removed) {
 			throw new TopLogicException(I18NConstants.ERROR_BASE_RULE_NOT_REMOVABLE__ID.fill(id));
-		}
-	}
-
-	/**
-	 * Checks what every rule needs: a name to be stored under and a type to apply to.
-	 */
-	private static void checkCommon(NavigationRuleConfig rule) {
-		String id = rule.getId();
-		if (id == null || id.isBlank()) {
-			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_ID);
-		}
-		String type = rule.getMetaElement();
-		if (type == null || type.isBlank()) {
-			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_TYPE);
 		}
 	}
 

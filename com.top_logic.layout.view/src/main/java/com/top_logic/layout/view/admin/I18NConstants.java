@@ -127,16 +127,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_UNKNOWN_ROLE_RULE__ID;
 
 	/**
-	 * @en Please enter an id naming the rule.
-	 */
-	public static ResKey ERROR_MISSING_RULE_ID;
-
-	/**
-	 * @en Please select the type the rule applies to.
-	 */
-	public static ResKey ERROR_MISSING_RULE_TYPE;
-
-	/**
 	 * @en Please enter at least one step leading to the role parent.
 	 */
 	public static ResKey ERROR_MISSING_RULE_PATH;

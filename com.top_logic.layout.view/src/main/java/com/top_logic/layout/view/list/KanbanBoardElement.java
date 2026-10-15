@@ -12,6 +12,12 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.dnd.DropArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -129,7 +135,10 @@ public class KanbanBoardElement implements UIElement {
 	 * Configuration for {@link KanbanBoardElement}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
@@ -319,6 +328,19 @@ public class KanbanBoardElement implements UIElement {
 		@Name(DROPS)
 		@DefaultContainer
 		List<KanbanDropConfig> getDrops();
+
+		/**
+		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
+		 * its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), config -> DropSignature.ONTO);
+			if (drop != null) {
+				return drop;
+			}
+			return outer;
+		}
 
 		/**
 		 * TL-Script function giving a column a new order on a drop: {@code column -> objects -> ...},

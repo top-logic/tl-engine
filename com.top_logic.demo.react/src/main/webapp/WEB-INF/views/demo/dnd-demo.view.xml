@@ -33,15 +33,6 @@
 		<channel name="treeSelection"/>
 		<channel name="treeTableSelection"/>
 		<channel name="boardSelection"/>
-		<channel name="listBefore"/>
-		<channel name="listTarget"/>
-		<channel name="treeParent"/>
-		<channel name="treeBefore"/>
-		<channel name="treeTarget"/>
-		<channel name="treeTableParent"/>
-		<channel name="treeTableBefore"/>
-		<channel name="treeTableTarget"/>
-		<channel name="boardColumn"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -155,31 +146,30 @@
 												<drag kind="node"/>
 												<drop
 													accept="node"
-													before-channel="listBefore"
+													as="nodes"
 													target="ordered"
 												>
-													<refuse-if>nodes -&gt; before -&gt; if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null)</refuse-if>
+													<refuse-if>if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null)</refuse-if>
 													<with-transaction>
 														<execute-script>
 															<inputs>
-																<input channel="listRoot"/>
-																<input channel="listBefore"/>
+																<input
+																	as="parent"
+																	channel="listRoot"
+																/>
 															</inputs>
-															<function>parent -&gt; before -&gt; nodes -&gt; { $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
+															<function>{ $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
 														</execute-script>
 													</with-transaction>
 												</drop>
 												<drop
 													accept="note"
+													as="notes"
 													target="row"
-													target-channel="listTarget"
+													target-as="node"
 												>
 													<with-transaction>
-														<execute-script function="node -> notes -> $node.add(`demo.dnd:Node#notes`, $notes)">
-															<inputs>
-																<input channel="listTarget"/>
-															</inputs>
-														</execute-script>
+														<execute-script function="$node.add(`demo.dnd:Node#notes`, $notes)"/>
 													</with-transaction>
 												</drop>
 												<columns>
@@ -210,32 +200,24 @@
 												<drag kind="node"/>
 												<drop
 													accept="node"
-													before-channel="treeBefore"
-													parent-channel="treeParent"
+													as="nodes"
 													target="ordered"
 												>
-													<refuse-if>nodes -&gt; parent -&gt; before -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
+													<refuse-if>if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
 													<with-transaction>
 														<execute-script>
-															<inputs>
-																<input channel="treeParent"/>
-																<input channel="treeBefore"/>
-															</inputs>
-															<function>parent -&gt; before -&gt; nodes -&gt; { $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
+															<function>{ $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
 														</execute-script>
 													</with-transaction>
 												</drop>
 												<drop
 													accept="note"
+													as="notes"
 													target="node"
-													target-channel="treeTarget"
+													target-as="node"
 												>
 													<with-transaction>
-														<execute-script function="node -> notes -> $node.add(`demo.dnd:Node#notes`, $notes)">
-															<inputs>
-																<input channel="treeTarget"/>
-															</inputs>
-														</execute-script>
+														<execute-script function="$node.add(`demo.dnd:Node#notes`, $notes)"/>
 													</with-transaction>
 												</drop>
 											</tree>
@@ -262,32 +244,24 @@
 												<drag kind="node"/>
 												<drop
 													accept="node"
-													before-channel="treeTableBefore"
-													parent-channel="treeTableParent"
+													as="nodes"
 													target="ordered"
 												>
-													<refuse-if>nodes -&gt; parent -&gt; before -&gt; if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
+													<refuse-if>if($parent.recursion(x -&gt; $x.container()).filter(a -&gt; $nodes.containsElement($a)).size() &gt; 0, #('A node cannot be moved into itself or below itself.'@en, 'Ein Knoten kann nicht in sich selbst oder unter sich selbst verschoben werden.'@de), if($nodes.containsElement($before), #('A node cannot be inserted before itself.'@en, 'Ein Knoten kann nicht vor sich selbst eingefügt werden.'@de), null))</refuse-if>
 													<with-transaction>
 														<execute-script>
-															<inputs>
-																<input channel="treeTableParent"/>
-																<input channel="treeTableBefore"/>
-															</inputs>
-															<function>parent -&gt; before -&gt; nodes -&gt; { $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
+															<function>{ $nodes.foreach(n -&gt; $n.container().remove(`demo.dnd:Node#children`, $n)); children = $parent.get(`demo.dnd:Node#children`); $parent.add(`demo.dnd:Node#children`, if($before == null, $children.size(), $children.elementIndex($before)), $nodes); }</function>
 														</execute-script>
 													</with-transaction>
 												</drop>
 												<drop
 													accept="note"
+													as="notes"
 													target="row"
-													target-channel="treeTableTarget"
+													target-as="node"
 												>
 													<with-transaction>
-														<execute-script function="node -> notes -> $node.add(`demo.dnd:Node#notes`, $notes)">
-															<inputs>
-																<input channel="treeTableTarget"/>
-															</inputs>
-														</execute-script>
+														<execute-script function="$node.add(`demo.dnd:Node#notes`, $notes)"/>
 													</with-transaction>
 												</drop>
 												<columns>
@@ -325,14 +299,11 @@
 									<drag kind="node"/>
 									<drop
 										accept="node"
-										target-channel="boardColumn"
+										as="nodes"
+										target-as="lane"
 									>
 										<with-transaction>
-											<execute-script function="lane -> nodes -> $nodes.foreach(n -> $n.set(`demo.dnd:Node#lane`, $lane))">
-												<inputs>
-													<input channel="boardColumn"/>
-												</inputs>
-											</execute-script>
+											<execute-script function="$nodes.foreach(n -> $n.set(`demo.dnd:Node#lane`, $lane))"/>
 										</with-transaction>
 									</drop>
 								</kanban-board>

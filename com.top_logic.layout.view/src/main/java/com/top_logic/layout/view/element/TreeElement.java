@@ -52,6 +52,7 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.model.ObservableTreeModel;
@@ -260,13 +261,18 @@ public class TreeElement implements UIElement {
 		String getOnActivateAs();
 
 		/**
-		 * The {@link #getOnActivate() command} runs with the business object of the activated node as argument named by
-		 * {@link #getOnActivateAs()}.
+		 * The {@link #getOnActivate() command} runs with the business object of the activated node
+		 * as argument named by {@link #getOnActivateAs()}, a {@link #getDrops() drop} with the
+		 * {@link DropArguments arguments} of its signature.
 		 */
 		@Override
 		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
 			if (part != null && part == getOnActivate()) {
 				return ActionScope.single(getOnActivateAs());
+			}
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), dropConfig -> dropConfig.getTarget().signature());
+			if (drop != null) {
+				return drop;
 			}
 			return outer;
 		}

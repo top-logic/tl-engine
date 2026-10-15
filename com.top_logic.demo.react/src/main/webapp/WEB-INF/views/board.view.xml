@@ -19,7 +19,7 @@
 	Cards are dragged between the columns - with the mouse, or on a touch screen by a long press and
 	a move -, and dragging a selected card takes all selected ones along. Dropping a ticket on a
 	column sets its status to that column's status, which is what the <drop> does with the column
-	value it receives on the dropColumn channel. A closed ticket is not reopened directly: dropping it on "Open" is refused,
+	value it names $column. A closed ticket is not reopened directly: dropping it on "Open" is refused,
 	and the reason is shown while it hovers there - it goes through "In progress" first.
 	
 	Within a column, the cards are reordered by dragging them before or after another card: the
@@ -36,7 +36,6 @@
 			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
 			inputs="selected"
 		/>
-		<channel name="dropColumn"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -74,15 +73,12 @@
 						<drag kind="ticket"/>
 						<drop
 							accept="ticket"
-							target-channel="dropColumn"
+							as="tickets"
+							target-as="column"
 						>
-							<refuse-if>tickets -&gt; column -&gt; if($column == `demo.tickets:TicketStatus#open` &amp;&amp; $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size() &gt; 0, #('Closed tickets are reopened through "In progress".'@en, 'Geschlossene Tickets werden über "In Bearbeitung" wieder geöffnet.'@de), null)</refuse-if>
+							<refuse-if>if($column == `demo.tickets:TicketStatus#open` &amp;&amp; $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size() &gt; 0, #('Closed tickets are reopened through "In progress".'@en, 'Geschlossene Tickets werden über "In Bearbeitung" wieder geöffnet.'@de), null)</refuse-if>
 							<with-transaction>
-								<execute-script function="column -> tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))">
-									<inputs>
-										<input channel="dropColumn"/>
-									</inputs>
-								</execute-script>
+								<execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))"/>
 							</with-transaction>
 						</drop>
 					</kanban-board>

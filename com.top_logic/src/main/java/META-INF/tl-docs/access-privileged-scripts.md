@@ -1,11 +1,11 @@
 ---
-description: Read before designing or implementing privileged TL-Script functions - a privileged-script (PrivilegedScript) in the configured TL-Script functions (ConfiguredTLScriptFunctions) authorized as a whole by a command group on a security object computed from its arguments, its unsecured implementation, the Discover filter on its result, the on-denied fallback and the canCall function.
+description: Read before configuring or changing privileged TL-Script functions - a privileged-script (PrivilegedScript) in the configured TL-Script functions (ConfiguredTLScriptFunctions) authorized as a whole by a command group on a security object computed from its arguments, its unsecured implementation, the Discover filter on its result, the on-denied fallback and the canCall function.
 order: 22
 ---
 
-# Specification: privileged TL-Script functions
+# Privileged TL-Script functions
 
-**Status:** specified by ticket #29858, not yet implemented. It extends the model based security
+**Status:** implemented by ticket #29858. It extends the model based security
 described in [the access configuration article](doc:access-configuration) and
 [the Discover specification](doc:access-discover-spec).
 
@@ -78,12 +78,13 @@ configured function (R9, R12).
 
 A privileged function called from a secured evaluation
 
-1. evaluates `security-object` **unsecured** with the arguments of the call. The arguments of a
-   secured call contain only discoverable objects (R4), so the unsecured evaluation starts from
-   objects the user may see; it may navigate to objects the user may not see (e.g. the project of a
-   watched ticket).
-2. checks `ModelAccessRights.isAllowed(currentUser, securityObject, commandGroup)`. A security object
-   `null` (or an expression result that is no `TLObject`) denies the call.
+1. evaluates `security-object` **unsecured** with the arguments of the call, in an evaluation
+   context of its own (not the one of the caller). The arguments of a secured call contain only
+   discoverable objects (R4), so the unsecured evaluation starts from objects the user may see; it
+   may navigate to objects the user may not see (e.g. the project of a watched ticket). An
+   exception raised by the expression propagates; it does not deny silently.
+2. checks `ModelAccessRights.isAllowed(currentUser, securityObject, commandGroup)`. A result that is
+   no single object (`null`, a collection, or anything that is no `TLObject`) denies the call.
 3. allowed: evaluates `implementation` **unsecured** with the arguments and filters its result for
    `Discover` (R4): a single object the user does not hold `Discover` on becomes `null`, such an
    element of a collection is dropped. Computed values (numbers, strings, ...) are not filtered;
@@ -134,14 +135,14 @@ security object expression of the function.
 
 ## Example
 
-The project model of the React demo (`com.top_logic.demo.react`, prefix `pm:` for
+The project model of the React demo (`com.top_logic.demo.react`, module
 `tl.demo.projectManagement`): a project (`ProjectScope`) contains its milestones in the composition
 `ProjectScope#milestones`; a milestone has the flag `Milestone#approved`. A member of a project
 (`demo.react.ProjectMember`) may approve a milestone of the project, but must not write
 `Milestone#approved` in general (e.g. reset it in a form):
 
 ```xml
-<class name="pm:ProjectScope">
+<class name="tl.demo.projectManagement:ProjectScope">
 	<grant operation="Approve" roles="demo.react.ProjectMember"/>
 </class>
 ```
@@ -155,10 +156,27 @@ The project model of the React demo (`com.top_logic.demo.react`, prefix `pm:` fo
 		<parameter name="milestone"/>
 	</parameters>
 	<implementation>{
-		$milestone.set(`pm:Milestone#approved`, true);
-		$milestone
+		$milestone.set(`tl.demo.projectManagement:Milestone#approved`, true);
+		$milestone;
 	}</implementation>
 </privileged-script>
+```
+
+The command group needs a label in an application resource bundle, otherwise startup logs a
+missing resource:
+
+```
+commandGroup.Approve = Approve
+commandGroup.Approve.tooltip = Approving an object, e.g. a milestone of a project.
+```
+
+The command "Approve" in `views/projects/milestone-list.view.xml` calls the function and is enabled
+by `canCall`:
+
+```xml
+<disabled-if expr="m -> if(canCall(approveMilestone($m)), null, #('You may not approve this milestone.'@en))"/>
+...
+<execute-script function="m -> approveMilestone($m)"/>
 ```
 
 | Call | Result |
@@ -176,6 +194,8 @@ The project model of the React demo (`com.top_logic.demo.react`, prefix `pm:` fo
 - **The security object decides.** A security object expression that does not lead to the object
   the operation affects (e.g. a constant global object) grants the operation for all objects. The
   documentation of the configuration points this out.
+- **The command group is an operation of its own.** It needs labels (`commandGroup.<Name>`,
+  `commandGroup.<Name>.tooltip`) in an application resource bundle, see the example.
 - **Computed values are disclosed.** Only objects in the result are filtered (P3).
 - **Discover still applies to the arguments.** A user can only pass objects they may discover (R4,
   R5); a privileged function does not open access to undiscoverable arguments.
@@ -192,7 +212,9 @@ Not part of this specification:
 
 ## Testing
 
-JUnit tests in `com.top_logic.model.search` (next to `TestDiscoverRight`, `TestTLScriptSecurity`):
+JUnit tests in `com.top_logic.model.search` (`test.com.top_logic.model.search.configured.TestPrivilegedScript`
+and `TestPrivilegedScriptConfig`, next to `TestDiscoverRight`, `TestTLScriptSecurity`), on the test
+model type `Proposal`:
 
 - allowed call reads / writes attributes the user holds no right on,
 - denied call without `on-denied` throws, with `on-denied` returns its (secured) result,
@@ -205,8 +227,8 @@ JUnit tests in `com.top_logic.model.search` (next to `TestDiscoverRight`, `TestT
 - a missing `security-object` or `command-group`, or an unknown command group, is a configuration
   error.
 
-Manual verification in `tl-demo-react`: a command "Approve milestone" calling `approveMilestone` with
-`canCall` as executability, tried as project member and as ticket watcher.
+The demo `tl-demo-react` shows the function: the command "Approve" of the milestone list, tried as
+project member and as ticket watcher.
 
 ## Documentation
 

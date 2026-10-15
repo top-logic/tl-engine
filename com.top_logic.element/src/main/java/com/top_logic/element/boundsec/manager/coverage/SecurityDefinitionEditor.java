@@ -569,8 +569,19 @@ public class SecurityDefinitionEditor {
 		return InAppServiceConfigStore.read(_accessManagerFile);
 	}
 
+	/**
+	 * Writes the given configuration to {@link #getAccessManagerFile()}, layered onto the underlying
+	 * configuration.
+	 *
+	 * <p>
+	 * A stored rule replaces the rule of the same id of the underlying layers instead of being
+	 * merged into it: the path of an edited rule would otherwise be appended to the path of the
+	 * rule it was copied from.
+	 * </p>
+	 */
 	private void writeAccessManagerFile(ApplicationConfig.Config appConfig) throws IOException {
-		InAppServiceConfigStore.write(_accessManagerFile, appConfig, InAppServiceConfigStore.LAYER_ONTO_BASE);
+		InAppServiceConfigStore.write(_accessManagerFile, appConfig, InAppServiceConfigStore.LAYER_ONTO_BASE,
+			Set.of(NavigationRuleConfig.class));
 	}
 
 	private ApplicationConfig.Config readGrantsFile() throws ConfigurationException {

@@ -123,9 +123,32 @@ public final class InAppServiceConfigStore {
 	 * @return The pretty printed XML.
 	 */
 	public static String toXml(String rootTag, ConfigurationItem config, Set<Class<?>> overrideTypes) {
+		return toXml(rootTag, config, overrideTypes, Collections.emptySet());
+	}
+
+	/**
+	 * Serializes the given configuration, marking the entries of the given types as replacing the
+	 * entry of the same key of the underlying configuration layers.
+	 *
+	 * @param rootTag
+	 *        The tag name of the root element.
+	 * @param config
+	 *        The configuration to serialize.
+	 * @param overrideTypes
+	 *        The configuration types to mark with the override attribute, see
+	 *        {@link #OVERRIDE_SERVICE} and {@link #LAYER_ONTO_BASE}.
+	 * @param replacedEntryTypes
+	 *        The configuration types whose entries replace the entry of the same key of the
+	 *        underlying configuration layers instead of being merged into it, see
+	 *        {@link OverrideConfigurationWriter#OverrideConfigurationWriter(java.io.Writer, java.util.Collection, java.util.Collection)}.
+	 * @return The pretty printed XML.
+	 */
+	public static String toXml(String rootTag, ConfigurationItem config, Set<Class<?>> overrideTypes,
+			Set<Class<?>> replacedEntryTypes) {
 		String raw;
 		try (StringWriter buffer = new StringWriter()) {
-			try (OverrideConfigurationWriter writer = new OverrideConfigurationWriter(buffer, overrideTypes)) {
+			try (OverrideConfigurationWriter writer =
+				new OverrideConfigurationWriter(buffer, overrideTypes, replacedEntryTypes)) {
 				TypedConfiguration.serialize(rootTag, config, writer);
 			}
 			raw = buffer.toString();
@@ -151,8 +174,33 @@ public final class InAppServiceConfigStore {
 	 */
 	public static void write(File file, ApplicationConfig.Config config, Set<Class<?>> overrideTypes)
 			throws IOException {
+		write(file, config, overrideTypes, Collections.emptySet());
+	}
+
+	/**
+	 * Writes the given application configuration to the given file, creating the folder of the file
+	 * when it does not exist, and marking the entries of the given types as replacing the entry of
+	 * the same key of the underlying configuration layers.
+	 *
+	 * @param file
+	 *        The file to write.
+	 * @param config
+	 *        The configuration to store.
+	 * @param overrideTypes
+	 *        The configuration types to mark with the override attribute, see
+	 *        {@link #OVERRIDE_SERVICE} and {@link #LAYER_ONTO_BASE}.
+	 * @param replacedEntryTypes
+	 *        The configuration types whose entries replace the entry of the same key of the
+	 *        underlying configuration layers, see
+	 *        {@link #toXml(String, ConfigurationItem, Set, Set)}.
+	 * @throws IOException
+	 *         When the file cannot be written.
+	 */
+	public static void write(File file, ApplicationConfig.Config config, Set<Class<?>> overrideTypes,
+			Set<Class<?>> replacedEntryTypes) throws IOException {
 		FileUtilities.enforceDirectory(file.getParentFile());
-		FileUtilities.writeStringToFile(toXml(APPLICATION_TAG, config, overrideTypes), file, StringServices.UTF8);
+		FileUtilities.writeStringToFile(toXml(APPLICATION_TAG, config, overrideTypes, replacedEntryTypes), file,
+			StringServices.UTF8);
 	}
 
 	/**

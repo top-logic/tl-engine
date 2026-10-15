@@ -438,6 +438,21 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	}
 
 	/**
+	 * An edited rule of the base configuration replaces the base rule when the written file is
+	 * layered onto the base configuration: its path is not appended to the one of the base rule.
+	 */
+	public void testEditedBaseRuleReplacesTheBaseRule() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
+		_editor.putRoleParentRule(rule);
+
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		List<NavigationRuleConfig> rules = merged.getSecurityParents().getRules();
+		assertEquals(List.of(BASE_PARENT_ID), rules.stream().map(NavigationRuleConfig::getId).toList());
+		assertEquals("The path of the stored rule replaces the path of the base rule.",
+			1, rules.get(0).getPathElements().size());
+	}
+
+	/**
 	 * A role parent rule for {@link #SINGLE_CONTAINED} navigating {@link #CONTAINER_REFERENCE}
 	 * backwards.
 	 */

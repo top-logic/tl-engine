@@ -27,6 +27,7 @@ import test.com.top_logic.dsa.DSATestSetup;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dsa.repos.EntryInfo;
 import com.top_logic.dsa.repos.NoEntryException;
 import com.top_logic.dsa.repos.RepositoryException;
@@ -371,7 +372,10 @@ public class TestFileRepository extends BasicTestCase {
         eInfo =  (EntryInfo)frep.getInformation("äöü/--]/dada");
         assertTrue(eInfo.isLocked());
         assertEquals("Zisch~Knall", eInfo.getLocker());
-        assertTrue(!frep.unlock("Darf leider nicht",    "äöü/--]/dada"));
+        // Breaking the lock of another user is reserved to an administrator. The test runs in the
+        // system context, so the denial is checked with security checks switched on.
+		assertFalse(ThreadContext.<Boolean, RepositoryException, RuntimeException> withSecurityUnchecked(false,
+			() -> frep.unlock("Darf leider nicht", "äöü/--]/dada")));
         assertTrue(frep.unlock("Zisch~Knall",           "äöü/--]/dada"));
         eInfo =  (EntryInfo)frep.getInformation("äöü/--]/dada");
         assertTrue(!eInfo.isLocked());

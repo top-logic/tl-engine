@@ -13,3 +13,5 @@ register('TLChatDock', TLChatDock)
 register('TLChatRail', TLChatRail)
 register('TLChatSources', TLChatSources)
 register('TLDataList', TLDataList)
+// Draws nothing: <chat-channels> and <page-selection> exist on the server only.
+register('TLChatInvisible', () => null)

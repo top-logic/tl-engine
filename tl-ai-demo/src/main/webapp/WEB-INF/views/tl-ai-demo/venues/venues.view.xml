@@ -89,6 +89,11 @@
 							<column attribute="website"/>
 						</columns>
 						<rows>all(`demo.events:Venue`)</rows>
+						<!-- Opens the venue as a frame of venues-stack.view.xml. -->
+						<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+							bind-input-to="venue"
+							view="tl-ai-demo/venues/venue-detail.view.xml"
+						/>
 					</table>
 				</panel>
 			</pane>

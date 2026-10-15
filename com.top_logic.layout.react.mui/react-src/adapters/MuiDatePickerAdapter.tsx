@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps,
+  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 import dayjs from 'dayjs';
@@ -7,7 +7,7 @@ import type { Dayjs } from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, showsValueOnly } from './field';
+import { FIELD_ROOT_STYLE, fieldAriaProps, showsValueOnly } from './field';
 
 const { useState, useEffect } = React;
 
@@ -61,9 +61,9 @@ export function toIso(inputType: DatePickerStateJson.InputType, value: Dayjs | n
  *
  * <p>Mapping from the control state besides: hasError → `error` and `aria-invalid`, mandatory →
  * `aria-required`; a field that is not editable shows displayValue (the value in the user's
- * format, the ISO form where it is missing), as TLDatePicker does; disabled → `disabled`; hidden →
- * nothing is rendered; the configured CSS class → className of the picker. The control ID is on
- * the element around the picker. The hidden input of the picker field carries {@link fieldInputId},
+ * format, the ISO form where it is missing) as text (part `FieldValue`), as TLDatePicker does;
+ * disabled → `disabled`; hidden → nothing is rendered; the configured CSS class → className of the
+ * picker. The control ID is on the element around the picker. The hidden input of the picker field carries {@link fieldInputId},
  * which the label of the surrounding form field refers to; a click on the label focuses the field
  * through it. The input group of the field (role `group`) is labelled by the form field.</p>
  *
@@ -72,6 +72,7 @@ export function toIso(inputType: DatePickerStateJson.InputType, value: Dayjs | n
  */
 const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DatePickerStateJson>>();
+  const FieldValue = usePart('FieldValue');
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
@@ -88,7 +89,7 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   }
   if (showsValueOnly(state)) {
     return (
-      <MuiFieldValue id={controlId} className={rootClassName(state)}
+      <FieldValue id={controlId} className={rootClassName(state) || undefined}
         text={state.displayValue ?? (typeof value === 'string' ? value : '')} />
     );
   }

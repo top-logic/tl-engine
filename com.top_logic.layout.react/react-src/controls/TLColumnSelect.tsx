@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, tooltipProps, ThemeIcon, ICON_HANDLE, ICON_GROUP } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, usePart, ICON_HANDLE, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 import { SearchField } from './SearchField';
 
 const I18N_KEYS = {
@@ -48,6 +47,8 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Checkbox = usePart('Checkbox');
+  const Button = usePart('Button');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const groupable = state.groupable !== false;
@@ -116,36 +117,32 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               data-tl-state={reorderState(reorder.itemState(index))}
               {...reorder.itemProps(index)}
             >
-              <button
-                type="button"
-                className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__handle' })}
-                {...tooltipProps(handle['aria-label'])}
+              <Button
+                label={handle['aria-label']}
+                image={ICON_HANDLE}
+                display="icon-only"
+                appearance="ghost"
+                small
+                className="tl-reorder-list__handle"
                 {...handle}
-              >
-                <ThemeIcon encoded={ICON_HANDLE} className="tl-button__icon tl-icon-sm" />
-              </button>
+              />
               {groupable && (
-                <button
-                  type="button"
-                  className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
-                  aria-label={groupByLabel}
-                  {...tooltipProps(groupByLabel)}
-                  aria-pressed={entry.grouped}
+                <Button
+                  label={groupByLabel}
+                  image={ICON_GROUP}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  checked={entry.grouped}
                   onClick={() => handleGroupBy(entry.name)}
-                >
-                  <ThemeIcon encoded={ICON_GROUP} className="tl-button__icon tl-icon-sm" />
-                </button>
-              )}
-              <label className="tl-choice">
-                <input
-                  type="checkbox"
-                  className="tl-checkbox"
-                  checked={entry.visible}
-                  disabled={lastVisible}
-                  onChange={(e) => handleToggle(entry.name, e.target.checked)}
                 />
-                <span className="tl-reorder-list__label">{entry.label}</span>
-              </label>
+              )}
+              <Checkbox
+                label={<span className="tl-reorder-list__label">{entry.label}</span>}
+                checked={entry.visible}
+                disabled={lastVisible}
+                onChange={(checked) => handleToggle(entry.name, checked)}
+              />
             </li>
           );
         })}

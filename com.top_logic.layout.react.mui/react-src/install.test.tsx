@@ -1,4 +1,4 @@
-// The installation of Material UI on the page: the adapters it registers, the theme the MUI
+// The installation of Material UI on the page: the adapters of the parts and components it registers, the theme the MUI
 // components render with, the styling properties of the TopLogic components.
 
 import React from 'react';
@@ -9,6 +9,7 @@ import { CSS_LAYER, STYLE_ELEMENT_ID, DS, MODE_ATTRIBUTE } from './themeProperti
 vi.mock('tl-react-bridge', async importOriginal => ({
   ...await importOriginal<typeof import('tl-react-bridge')>(),
   replace: vi.fn(),
+  replacePart: vi.fn(),
   registerRootWrapper: vi.fn(),
 }));
 
@@ -39,6 +40,7 @@ async function load() {
   return {
     ...install,
     replace: vi.mocked(bridge.replace),
+    replacePart: vi.mocked(bridge.replacePart),
     registerRootWrapper: vi.mocked(bridge.registerRootWrapper),
     useTheme,
     useColorScheme,
@@ -73,7 +75,10 @@ function htmlAttributes(): string[] {
   return Array.from(document.documentElement.attributes).map(attr => `${attr.name}=${attr.value}`);
 }
 
-/** The names the components were replaced under, in the order of the calls. */
+/** The parts the MUI module draws. */
+const PART_NAMES = ['Button', 'MenuTrigger', 'DisclosureToggle', 'Checkbox', 'TextInput', 'FieldValue', 'Chip', 'Badge', 'Divider', 'ProgressBar', 'Spinner'];
+
+/** The names the parts or components were replaced under, in the order of the calls. */
 function replacedNames(replace: { mock: { calls: unknown[][] } }): unknown[] {
   return replace.mock.calls.map(call => call[0]);
 }
@@ -91,38 +96,60 @@ afterEach(() => {
 });
 
 describe('installMui', () => {
-  it('replaces all components by default', async () => {
-    const { installMui, COMPONENT_NAMES, replace } = await load();
+  it('replaces all parts and components by default', async () => {
+    const { installMui, COMPONENT_NAMES, replace, replacePart } = await load();
 
     installMui({ theme: {} });
 
-    expect(COMPONENT_NAMES).toHaveLength(26);
-    expect(replacedNames(replace)).toEqual([...COMPONENT_NAMES]);
+    expect(COMPONENT_NAMES).toHaveLength(29);
+    expect(replacedNames(replacePart)).toEqual(PART_NAMES);
+    expect(replacedNames(replace)).toEqual(COMPONENT_NAMES.filter(name => !PART_NAMES.includes(name)));
+    expect(replacedNames(replace)).not.toContain('TLButton');
+    // The option chips draw their toggles and their read-only values through the parts.
+    expect(replacedNames(replace)).not.toContain('TLOptionChips');
+    expect(replacedNames(replace)).not.toContain('TLCheckbox');
+    expect(replacedNames(replace)).not.toContain('TLTextInput');
+    expect(replacedNames(replace)).not.toContain('TLPasswordInput');
+    expect(replacedNames(replace)).not.toContain('TLNumberInput');
+    // The progress control draws its bar through the part.
+    expect(replacedNames(replace)).not.toContain('TLProgress');
+    replacePart.mock.calls.forEach(([, adapter]) => expect(adapter).toBeTypeOf('function'));
     replace.mock.calls.forEach(([, adapter]) => expect(adapter).toBeTypeOf('function'));
   });
 
-  it('replaces all components for the selection "all"', async () => {
-    const { installMui, COMPONENT_NAMES, ALL_COMPONENTS, replace } = await load();
+  it('replaces all parts and components for the selection "all"', async () => {
+    const { installMui, COMPONENT_NAMES, ALL_COMPONENTS, replace, replacePart } = await load();
 
     installMui({ theme: {}, replace: ALL_COMPONENTS });
 
-    expect(replacedNames(replace)).toEqual([...COMPONENT_NAMES]);
+    expect([...replacedNames(replacePart), ...replacedNames(replace)]).toEqual([...COMPONENT_NAMES]);
   });
 
-  it('replaces exactly the selected components', async () => {
-    const { installMui, replace } = await load();
+  it('replaces exactly the selected parts and components', async () => {
+    const { installMui, replace, replacePart } = await load();
 
-    installMui({ theme: {}, replace: ['TLButton', 'TLText'] });
+    installMui({ theme: {}, replace: ['MenuTrigger', 'TLText'] });
 
-    expect(replacedNames(replace)).toEqual(['TLButton', 'TLText']);
+    expect(replacedNames(replacePart)).toEqual(['MenuTrigger']);
+    expect(replacedNames(replace)).toEqual(['TLText']);
+  });
+
+  it('replaces a selected part as part, not as component', async () => {
+    const { installMui, replace, replacePart } = await load();
+
+    installMui({ theme: {}, replace: ['Button'] });
+
+    expect(replacedNames(replacePart)).toEqual(['Button']);
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it('registers the root wrapper for an empty selection too', async () => {
-    const { installMui, replace, registerRootWrapper } = await load();
+    const { installMui, replace, replacePart, registerRootWrapper } = await load();
 
     installMui({ theme: {}, replace: [] });
 
     expect(replace).not.toHaveBeenCalled();
+    expect(replacePart).not.toHaveBeenCalled();
     expect(registerRootWrapper).toHaveBeenCalledTimes(1);
   });
 
@@ -192,20 +219,30 @@ describe('installMui', () => {
   });
 
   it('fails on a second installation', async () => {
-    const { installMui, replace } = await load();
-    installMui({ theme: {}, replace: ['TLButton'] });
+    const { installMui, replace, replacePart } = await load();
+    installMui({ theme: {}, replace: ['Button', 'TLText'] });
 
     expect(() => installMui({ theme: {} })).toThrow(/already installed/);
+    expect(replacePart).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledTimes(1);
   });
 
   it('fails for a component without adapter and installs nothing', async () => {
-    const { installMui, replace, registerRootWrapper } = await load();
+    const { installMui, replace, replacePart, registerRootWrapper } = await load();
 
-    expect(() => installMui({ theme: {}, replace: ['TLTable' as never] })).toThrow(/TLTable/);
+    expect(() => installMui({ theme: {}, replace: ['Button', 'TLTable' as never] })).toThrow(/TLTable/);
     expect(replace).not.toHaveBeenCalled();
+    expect(replacePart).not.toHaveBeenCalled();
     expect(registerRootWrapper).not.toHaveBeenCalled();
     expect(document.getElementById(STYLE_ELEMENT_ID)).toBeNull();
+  });
+
+  it('fails for the component of a button, which is drawn through its part', async () => {
+    const { installMui, replace, replacePart } = await load();
+
+    expect(() => installMui({ theme: {}, replace: ['TLButton' as never] })).toThrow(/TLButton.*Known components: Button, MenuTrigger/);
+    expect(replace).not.toHaveBeenCalled();
+    expect(replacePart).not.toHaveBeenCalled();
   });
 });
 

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, tooltipProps, ThemeIcon, ButtonDefaults } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, ThemeIcon, ButtonDefaults, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -10,42 +10,17 @@ const I18N_KEYS = {
   'js.panel.popOut': 'Pop out',
 };
 
-/* Inline SVG icon components (stroke-based, 24x24 viewBox). */
+/** Icon of the button minimizing the panel. */
+const MINIMIZE_ICON = 'css:fa-solid fa-window-minimize';
 
-/** Horizontal line: minimize indicator. */
-const IconMinimize = () => (
-  <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12" /></svg>
-);
+/** Icon of the button maximizing the panel. */
+const MAXIMIZE_ICON = 'css:fa-solid fa-window-maximize';
 
-/** Small box with upward chevron: restore from minimized. */
-const IconRestoreFromMin = () => (
-  <svg viewBox="0 0 24 24">
-    <rect x="6" y="9" width="12" height="10" rx="1" />
-    <polyline points="9,7 12,4 15,7" />
-  </svg>
-);
+/** Icon of the button restoring a minimized or maximized panel. */
+const RESTORE_ICON = 'css:fa-solid fa-window-restore';
 
-/** Full box outline: maximize indicator. */
-const IconMaximize = () => (
-  <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" /></svg>
-);
-
-/** Two overlapping boxes: restore from maximized. */
-const IconRestoreFromMax = () => (
-  <svg viewBox="0 0 24 24">
-    <rect x="4" y="8" width="12" height="12" rx="1" />
-    <polyline points="8,8 8,4 20,4 20,16 16,16" />
-  </svg>
-);
-
-/** Arrow pointing out of a box: pop-out indicator. */
-const IconPopOut = () => (
-  <svg viewBox="0 0 24 24">
-    <polyline points="15,3 21,3 21,9" />
-    <line x1="21" y1="3" x2="12" y2="12" />
-    <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" />
-  </svg>
-);
+/** Icon of the button opening the panel in a window of its own. */
+const POP_OUT_ICON = 'css:fa-solid fa-arrow-up-right-from-square';
 
 /**
  * A panel with a titled toolbar header wrapping a single child content area.
@@ -111,6 +86,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // its container for none either. A panel configured not to fill ends the chain at its body
   // instead: the request of its content reaches no container.
   const [fillClass, fillHost] = useFillHost(alwaysFill && !isHidden);
+  const Button = usePart('Button');
 
   if (isHidden) {
     return null;
@@ -156,38 +132,40 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         <div className="tlPanel__toolbar">
           {!!state.toolbar && <TLChild control={state.toolbar} />}
-          {showMinimize && !isMaximized && (
-            <button
-              type="button"
-              className="tlPanel__actionButton"
-              onClick={handleMinimize}
-              aria-label={minimizeLabel}
-              {...tooltipProps(minimizeLabel)}
-            >
-              {isMinimized ? <IconRestoreFromMin /> : <IconMinimize />}
-            </button>
-          )}
-          {showMaximize && !isMinimized && (
-            <button
-              type="button"
-              className="tlPanel__actionButton"
-              onClick={handleMaximize}
-              aria-label={maximizeLabel}
-              {...tooltipProps(maximizeLabel)}
-            >
-              {isMaximized ? <IconRestoreFromMax /> : <IconMaximize />}
-            </button>
-          )}
-          {showPopOut && (
-            <button
-              type="button"
-              className="tlPanel__actionButton"
-              onClick={handlePopOut}
-              aria-label={i18n['js.panel.popOut']}
-              {...tooltipProps(i18n['js.panel.popOut'])}
-            >
-              <IconPopOut />
-            </button>
+          {((showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut) && (
+            // The buttons of the panel keep their size while its toolbar gives way.
+            <div className="tlPanel__actions">
+              {showMinimize && !isMaximized && (
+                <Button
+                  label={minimizeLabel}
+                  image={isMinimized ? RESTORE_ICON : MINIMIZE_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  className="tlPanel__actionButton"
+                  onClick={handleMinimize}
+                />
+              )}
+              {showMaximize && !isMinimized && (
+                <Button
+                  label={maximizeLabel}
+                  image={isMaximized ? RESTORE_ICON : MAXIMIZE_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  className="tlPanel__actionButton"
+                  onClick={handleMaximize}
+                />
+              )}
+              {showPopOut && (
+                <Button
+                  label={i18n['js.panel.popOut']}
+                  image={POP_OUT_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  className="tlPanel__actionButton"
+                  onClick={handlePopOut}
+                />
+              )}
+            </div>
           )}
         </div>
       </div>

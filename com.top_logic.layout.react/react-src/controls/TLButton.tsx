@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, ThemeIcon, useButtonDefaults, menuItemProps } from 'tl-react-bridge';
-import type { TLCellProps, ButtonStateJson, ButtonAppearance } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, useButtonDefaults, usePart } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson, ButtonAppearance, ButtonPartProps, buttonPartAttributes, ThemeIcon } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
@@ -38,8 +37,8 @@ export interface TLButtonProps {
  * </ul>
  *
  * <p>An explicit tooltip from {@code state.tooltip} wins over all of this and is shown whatever
- * the button displays. The conditional label tooltip is declared with {@link WHEN_TRUNCATED}, so a
- * button whose label a compact toolbar drops keeps naming itself, while a button reading out its
+ * the button displays. The conditional label tooltip is declared by the part
+ * ({@link buttonPartAttributes}), so a button whose label a compact toolbar drops keeps naming itself, while a button reading out its
  * label offers no tooltip that merely repeats it.</p>
  *
  * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
@@ -54,6 +53,10 @@ export interface TLButtonProps {
  * {@code menuitem} and joins the menu's roving tabindex. An active button - the alternative in
  * force - is marked there as the menu marks it: {@code aria-current} and strong text, instead of
  * {@code aria-pressed}.</p>
+ *
+ * <p>The button is drawn by the part {@code Button} ({@link usePart}, {@link ButtonPartProps}):
+ * this control resolves what the part shows from its state and its container, and handles the
+ * click, the keyboard gesture and the navigation.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
   const state = useTLState<Partial<ButtonStateJson>>();
@@ -120,28 +123,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
     return true;
   });
 
-  const iconOnly = mode === 'icon-only';
-  const icon = iconOnly && !!resolvedImage;
-  // A small icon button carries a small icon: the icon of a regular one would fill it.
-  const small = state.size === 'small' && iconOnly;
-  // In icon-only mode without an image, the label glyph is the visible content.
-  const showLabel = mode === 'label-only' || mode === 'icon-label'
-    || (iconOnly && !resolvedImage);
-  // Part classes: an entry of a menu is drawn by the menu, a button by the button.
-  const asMenuItem = resolvedAppearance === 'menu-item';
-  const part = asMenuItem ? 'tl-menu' : 'tl-button';
-
-  // An explicit tooltip is shown as it is. Otherwise the label serves as tooltip wherever the
-  // button does not read it out: in icon-only mode always - which is also what names the button of
-  // a compact toolbar - and in the other modes whenever the label is clipped.
-  const tooltipText = tooltip ?? resolvedLabel;
-  const tooltipProps: Record<string, string> = {};
-  if (tooltipText) {
-    tooltipProps[TOOLTIP_ATTR] = `text:${tooltipText}`;
-    if (!tooltip && !iconOnly) {
-      tooltipProps[TOOLTIP_WHEN_ATTR] = WHEN_TRUNCATED;
-    }
-  }
+  const Button = usePart('Button');
 
   // A hidden button renders nothing: its empty wrapper (e.g. a toolbar item) can then collapse,
   // so the visible buttons stay flush with the toolbar edge. The keyboard binding above stays
@@ -151,23 +133,20 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   }
 
   return (
-    <button
-      type="button"
+    <Button
       id={controlId}
-      onClick={handleClick}
+      label={resolvedLabel}
+      image={resolvedImage}
+      display={mode}
+      appearance={resolvedAppearance}
+      danger={resolvedDanger}
+      small={state.size === 'small'}
+      active={resolvedActive}
       disabled={resolvedDisabled}
-      className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: resolvedDanger, small, icon, current: resolvedActive, extra: cssClasses }))}
-      {...tooltipProps}
-      {...menuItemProps(defaults)}
-      aria-pressed={!asMenuItem && resolvedActive ? true : undefined}
-      aria-current={asMenuItem && resolvedActive ? 'true' : undefined}
-      aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
-    >
-      {resolvedImage && mode !== 'label-only' && (
-        <ThemeIcon encoded={resolvedImage} className={part + '__icon ' + (showLabel || small ? 'tl-icon-sm' : 'tl-icon-md')} />
-      )}
-      {showLabel && <span className={part + '__label'}>{resolvedLabel}</span>}
-    </button>
+      tooltip={tooltip}
+      className={rootClassName(state, cssClasses)}
+      onClick={handleClick}
+    />
   );
 };
 

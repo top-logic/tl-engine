@@ -1,7 +1,6 @@
-import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
 import type { TLCellProps, SelectStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
-import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -13,14 +12,15 @@ interface SelectOption {
 /**
  * A select dropdown rendered via React.
  *
- * A read-only field shows the label of the selected option as a tl-field-value; a disabled field
- * renders the select as an inactive one (native `disabled`, see showsValueOnly).
+ * A read-only field shows the label of the selected option, drawn by the part `FieldValue`; a
+ * disabled field renders the select as an inactive one (native `disabled`, see showsValueOnly).
  */
 const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
   const state = useTLState<Partial<SelectStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
+  const FieldValue = usePart('FieldValue');
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -34,7 +34,7 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
 
   if (showsValueOnly(state)) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
-    return <FieldValue id={controlId} className={rootClassName(state)} text={selectedLabel} />;
+    return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={selectedLabel} />;
   }
 
   return (

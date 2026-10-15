@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  rootClassName, firstFocusable, tooltipProps,
+  rootClassName, firstFocusable, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -9,6 +9,9 @@ const { useCallback, useEffect, useRef } = React;
 const I18N_KEYS = {
   'js.drawer.close': 'Close',
 };
+
+/** Icon of the button closing the drawer. */
+const CLOSE_ICON = 'css:fa-solid fa-xmark';
 
 /**
  * A slide-in panel from the edge of the viewport or of the container it is rendered in.
@@ -44,6 +47,8 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   const handleClose = useCallback(() => {
     sendCommand('close');
   }, [sendCommand]);
+
+  const Button = usePart('Button');
 
   // Escape key closes the drawer (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(open, { ESCAPE: handleClose });
@@ -97,20 +102,13 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
       {title !== null && (
         <div className="tlDrawer__header">
           <span className="tlDrawer__title">{title}</span>
-          <button
-            type="button"
-            className="tlDrawer__closeBtn"
+          <Button
+            label={i18n['js.drawer.close']}
+            image={CLOSE_ICON}
+            display="icon-only"
+            appearance="ghost"
             onClick={handleClose}
-            aria-label={i18n['js.drawer.close']}
-            {...tooltipProps(i18n['js.drawer.close'])}
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" />
-              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" />
-            </svg>
-          </button>
+          />
         </div>
       )}
       <div className="tlDrawer__body">

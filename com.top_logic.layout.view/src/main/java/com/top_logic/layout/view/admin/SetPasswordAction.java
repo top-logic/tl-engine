@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Arrays;
 
@@ -28,9 +29,10 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * Expects its input to be a (transient) object carrying an {@code account} reference (the
  * {@link Person} to update) and a {@code password} attribute (e.g. the model of the "reset password"
- * {@code <form>} after {@code <store-form-state/>}). The password is set through the default
+ * {@code <form>} as the result of an enclosing {@code <store-form-state>}). The password is set through the default
  * {@link AuthenticationDevice}. Must run inside a transaction (wrap the action in
- * {@code <with-transaction>}); the updated {@link Person} is returned as the action result.
+ * {@code <with-transaction>}); the updated {@link Person} is the result of the action, which its
+ * nested follow-up actions see.
  * </p>
  */
 @InApp
@@ -40,7 +42,8 @@ public class SetPasswordAction implements ViewAction {
 	 * Configuration for {@link SetPasswordAction}.
 	 */
 	@TagName("set-password")
-	public interface Config extends PolymorphicConfiguration<SetPasswordAction>, WithValueArgument {
+	public interface Config extends PolymorphicConfiguration<SetPasswordAction>, WithValueArgument,
+			WithResultActions {
 
 		@Override
 		@ClassDefault(SetPasswordAction.class)

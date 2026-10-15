@@ -23,7 +23,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-cone-striped"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -33,20 +33,21 @@
 				<executability>
 					<visible-if expr="state -> $state == 'NORMAL'"/>
 				</executability>
-				<execute-script function="x -> new(`tl.admin:MaintenanceMode`, transient: true)"/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="admin/system/enter-maintenance.view.xml"
-				>
-					<bind
-						channel="state"
-						to="state"
-					/>
-				</open-dialog>
+				<execute-script function="new(`tl.admin:MaintenanceMode`, transient: true)">
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="admin/system/enter-maintenance.view.xml"
+					>
+						<bind
+							channel="state"
+							to="state"
+						/>
+					</open-dialog>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-x-circle"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -56,15 +57,16 @@
 				<executability>
 					<visible-if expr="state -> $state == 'PENDING'"/>
 				</executability>
-				<confirm expr="x -> #('Abort entering maintenance mode?'@en, 'Aktivierung des Wartungsmodus abbrechen?'@de)"/>
+				<confirm expr="#('Abort entering maintenance mode?'@en, 'Aktivierung des Wartungsmodus abbrechen?'@de)"/>
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
 					mode="ABORT"
-				/>
-				<write-channel name="state"/>
+				>
+					<write-channel name="state"/>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-play-circle"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -74,11 +76,12 @@
 				<executability>
 					<visible-if expr="state -> $state == 'ACTIVE'"/>
 				</executability>
-				<confirm expr="x -> #('Leave maintenance mode and return to normal operation?'@en, 'Wartungsmodus beenden und zum Normalbetrieb zurückkehren?'@de)"/>
+				<confirm expr="#('Leave maintenance mode and return to normal operation?'@en, 'Wartungsmodus beenden und zum Normalbetrieb zurückkehren?'@de)"/>
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
 					mode="LEAVE"
-				/>
-				<write-channel name="state"/>
+				>
+					<write-channel name="state"/>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
@@ -90,8 +93,9 @@
 				</label>
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="state"/>
+				>
+					<write-channel name="state"/>
+				</action>
 			</generic-command>
 		</commands>
 		<child class="com.top_logic.layout.view.admin.system.MaintenanceStatusView"

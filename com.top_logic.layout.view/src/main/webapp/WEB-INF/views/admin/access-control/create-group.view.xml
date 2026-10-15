@@ -27,16 +27,18 @@
 						<en>Create</en>
 						<de>Erstellen</de>
 					</label>
-					<store-form-state/>
-					<with-transaction>
-						<commitMessage>
-							<en>Created group {0}.</en>
-							<de>Gruppe {0} angelegt.</de>
-						</commitMessage>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
-					<write-channel name="selection"/>
-					<close-dialog/>
+					<store-form-state>
+						<with-transaction>
+							<commitMessage>
+								<en>Created group {0}.</en>
+								<de>Gruppe {0} angelegt.</de>
+							</commitMessage>
+							<execute-script function="$result.copy(transient: false)">
+								<write-channel name="selection"/>
+							</execute-script>
+						</with-transaction>
+						<close-dialog/>
+					</store-form-state>
 				</generic-command>
 			</commands>
 		</form>

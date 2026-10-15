@@ -141,7 +141,7 @@
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-key"
-								input="account"
+								inputs="account"
 							>
 								<label>
 									<en>Change password</en>
@@ -150,11 +150,12 @@
 								<executability>
 									<visible-if expr="account -> $account.accountPasswordChangeAllowed()"/>
 								</executability>
-								<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="change-password.view.xml"
-								/>
+								<execute-script function="new(`tl.login:PasswordChange`, transient: true)">
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="change-password.view.xml"
+									/>
+								</execute-script>
 							</action>
 						</button>
 
@@ -215,7 +216,7 @@
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-people"
-								input="representativeGroup"
+								inputs="representativeGroup"
 							>
 								<label>
 									<en>Name deputies</en>
@@ -239,7 +240,7 @@
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-shield-plus"
-								input="account"
+								inputs="account"
 							>
 								<label>
 									<en>Set up two-factor authentication</en>
@@ -254,7 +255,7 @@
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-shield-minus"
-								input="account"
+								inputs="account"
 							>
 								<label>
 									<en>Switch two-factor authentication off</en>
@@ -263,7 +264,7 @@
 								<executability>
 									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
 								</executability>
-								<confirm expr="account -> #('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
+								<confirm expr="#('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
 								<disable-mfa/>
 							</action>
 						</button>

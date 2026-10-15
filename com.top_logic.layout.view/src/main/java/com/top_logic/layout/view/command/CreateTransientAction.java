@@ -49,10 +49,11 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <pre>
  * &lt;generic-command&gt;
- *   &lt;create-transient type="my.module:Milestone" container="selectedScope" reference="milestones"/&gt;
- *   &lt;open-dialog bind-input-to="model" dialog-view="create-milestone.view.xml"&gt;
- *     ...
- *   &lt;/open-dialog&gt;
+ *   &lt;create-transient type="my.module:Milestone" container="selectedScope" reference="milestones"&gt;
+ *     &lt;open-dialog bind-input-to="model" dialog-view="create-milestone.view.xml"&gt;
+ *       ...
+ *     &lt;/open-dialog&gt;
+ *   &lt;/create-transient&gt;
  * &lt;/generic-command&gt;
  * </pre>
  */

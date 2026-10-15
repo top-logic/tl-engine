@@ -39,8 +39,9 @@
 						<en>Verify</en>
 						<de>Bestätigen</de>
 					</label>
-					<store-form-state/>
-					<verify-otp/>
+					<store-form-state>
+						<verify-otp/>
+					</store-form-state>
 				</generic-command>
 			</commands>
 		</form>

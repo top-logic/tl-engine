@@ -44,7 +44,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expects its input to be a (transient) object carrying {@code name} and {@code password}
- * attributes, e.g. the model of the login {@code <form>} after {@code <store-form-state/>}. On
+ * attributes, e.g. the model of the login {@code <form>} as the result of an enclosing {@code <store-form-state>}. On
  * success the actual session swap is deferred to the reload via {@link PendingSessionAction}; on
  * failure a {@link TopLogicException} is raised so the form shows the error.
  * </p>

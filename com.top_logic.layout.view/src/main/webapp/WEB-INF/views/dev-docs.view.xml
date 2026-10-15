@@ -90,8 +90,9 @@
 				</commands>
 				<html input="docHtml">
 					<on-link class="com.top_logic.layout.view.command.GenericViewCommand">
-						<execute-script function="link -> devDocsGet($link)"/>
-						<write-channel name="doc"/>
+						<execute-script function="devDocsGet($link)">
+							<write-channel name="doc"/>
+						</execute-script>
 					</on-link>
 				</html>
 			</panel>

@@ -32,8 +32,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * The configured action chain (e.g. {@code <confirm>} + {@code <with-transaction><execute-script>})
  * runs <em>once per uploaded file</em>, sequentially, with the uploaded file (a
- * {@link com.top_logic.basic.io.binary.BinaryData}) as the chain's input value. Container/context
- * values are threaded into the actions via their {@code <inputs>} channel references, exactly as for
+ * {@link com.top_logic.basic.io.binary.BinaryData}) as the chain's main argument, named by
+ * {@link Config#getAs()}. Container/context values are threaded into the actions via their
+ * {@code <inputs>} channel references, exactly as for
  * a {@code <generic-command>}.
  * </p>
  *

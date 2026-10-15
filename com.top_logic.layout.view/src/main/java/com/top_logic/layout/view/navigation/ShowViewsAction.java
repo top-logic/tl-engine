@@ -47,9 +47,8 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * </pre>
  *
  * <p>
- * Each binding is a function of the chain's current value; a binding without an expression receives
- * that value itself. The chain continues with the value it had, so what a command does after
- * displaying the views is unaffected.
+ * Each binding is a function of the value the action processes; a binding without an expression
+ * receives that value itself.
  * </p>
  *
  * @implNote The action carries out a list of {@link ShowStep}s in one request; a single one is

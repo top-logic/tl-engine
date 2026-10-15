@@ -28,21 +28,22 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`tl.accounts:Group`, transient: true)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="admin/access-control/create-group.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedGroup"
-								/>
-							</open-dialog>
+							<execute-script function="new(`tl.accounts:Group`, transient: true)">
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="admin/access-control/create-group.view.xml"
+								>
+									<bind
+										channel="selection"
+										to="selectedGroup"
+									/>
+								</open-dialog>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedGroup"
+							inputs="selectedGroup"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -52,15 +53,17 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<confirm expr="g -> #('Delete group {0}?'@en, 'Gruppe {0} löschen?'@de).fill($g.get(`tl.accounts:Group#name`))"/>
+							<confirm expr="#('Delete group {0}?'@en, 'Gruppe {0} löschen?'@de).fill($selectedGroup.get(`tl.accounts:Group#name`))"/>
 							<with-transaction>
 								<commitMessage>
 									<en>Deleted group {0}.</en>
 									<de>Gruppe {0} gelöscht.</de>
 								</commitMessage>
-								<execute-script function="obj -> $obj.delete()"/>
+								<execute-script function="$selectedGroup.delete()"/>
 							</with-transaction>
-							<write-channel name="selectedGroup"/>
+							<write-channel name="selectedGroup"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<table

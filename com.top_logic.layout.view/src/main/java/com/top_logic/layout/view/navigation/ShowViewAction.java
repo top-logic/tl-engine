@@ -39,9 +39,8 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * <p>
  * The view is reached wherever it is displayed: the containers on the way to it are opened, or it
  * is drilled down to as a frame of the surrounding stack, or - with {@code dialog} - opened as a
- * dialog. Each binding is a function of the chain's current value; a binding without an expression
- * receives that value itself. The chain continues with the value it had, so what a command does
- * after displaying the view is unaffected.
+ * dialog. Each binding is a function of the value the action processes; a binding without an
+ * expression receives that value itself.
  * </p>
  *
  * @implNote The action carries out one {@link ShowStep}; a list of them is

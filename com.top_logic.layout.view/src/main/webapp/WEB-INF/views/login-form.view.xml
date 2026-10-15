@@ -41,8 +41,9 @@
 					<en>Login</en>
 					<de>Anmelden</de>
 				</label>
-				<store-form-state/>
-				<login/>
+				<store-form-state>
+					<login/>
+				</store-form-state>
 			</generic-command>
 		</commands>
 	</form>

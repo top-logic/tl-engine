@@ -24,7 +24,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -37,14 +37,16 @@
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="START"
 					selection="selection"
-				/>
-				<write-channel name="services"/>
-				<execute-script function="'ACTIVE'"/>
-				<write-channel name="state"/>
+				>
+					<write-channel name="services"/>
+				</action>
+				<execute-script function="'ACTIVE'">
+					<write-channel name="state"/>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -57,14 +59,16 @@
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="STOP"
 					selection="selection"
-				/>
-				<write-channel name="services"/>
-				<execute-script function="'INACTIVE'"/>
-				<write-channel name="state"/>
+				>
+					<write-channel name="services"/>
+				</action>
+				<execute-script function="'INACTIVE'">
+					<write-channel name="state"/>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-repeat"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -77,10 +81,12 @@
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"
 					selection="selection"
-				/>
-				<write-channel name="services"/>
-				<execute-script function="'ACTIVE'"/>
-				<write-channel name="state"/>
+				>
+					<write-channel name="services"/>
+				</action>
+				<execute-script function="'ACTIVE'">
+					<write-channel name="state"/>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
@@ -92,8 +98,9 @@
 				</label>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="services"/>
+				>
+					<write-channel name="services"/>
+				</action>
 			</generic-command>
 		</commands>
 		<child class="com.top_logic.layout.view.admin.system.ServiceTable"

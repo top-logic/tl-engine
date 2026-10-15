@@ -45,15 +45,16 @@
 					<commands>
 						<generic-command
 							image="css:bi bi-arrow-clockwise"
-							input="reload"
+							inputs="reload"
 							placement="TOOLBAR"
 						>
 							<label>
 								<en>Refresh</en>
 								<de>Aktualisieren</de>
 							</label>
-							<execute-script function="tick -> ($tick == null) ? 1 : $tick + 1"/>
-							<write-channel name="reload"/>
+							<execute-script function="($reload == null) ? 1 : $reload + 1">
+								<write-channel name="reload"/>
+							</execute-script>
 						</generic-command>
 					</commands>
 					<child class="com.top_logic.layout.view.admin.system.LogLineTable"

@@ -88,7 +88,7 @@ public class ShowObjectAction extends InterruptibleViewAction {
 	 * The object the given input displays.
 	 *
 	 * @param input
-	 *        The chain's current value: the object itself, a selection holding it, or nothing.
+	 *        The value the action processes: the object itself, a selection holding it, or nothing.
 	 * @return The object to display, or {@code null} if there is nothing to display.
 	 * @throws TopLogicException
 	 *         If the input holds more than one object.

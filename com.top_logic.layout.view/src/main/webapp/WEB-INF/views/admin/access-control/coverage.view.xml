@@ -85,8 +85,9 @@
 								<en>Analyzes the access definition in effect again and rebuilds the table. Saved changes that are not applied yet are not taken into account.</en>
 								<de>Analysiert die geltende Zugriffsdefinition erneut und baut die Tabelle neu auf. Gespeicherte, noch nicht angewendete Änderungen bleiben dabei unberücksichtigt.</de>
 							</tooltip>
-							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"/>
-							<write-channel name="rows"/>
+							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction">
+								<write-channel name="rows"/>
+							</action>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-arrow-repeat"
@@ -100,13 +101,15 @@
 								<en>Reads the stored access definition again, restarts the access services and analyzes the definition anew. Only then does the table show the saved changes.</en>
 								<de>Liest die gespeicherte Zugriffsdefinition neu ein, startet die Zugriffsdienste neu und analysiert die Definition erneut. Erst danach zeigt die Tabelle die gespeicherten Änderungen.</de>
 							</tooltip>
-							<confirm expr="x -> #('The configuration files are read again and the access services are restarted. This takes a moment.'@en, 'Die Konfigurationsdateien werden neu gelesen und die Zugriffsdienste neu gestartet. Das dauert einen Moment.'@de)"/>
+							<confirm expr="#('The configuration files are read again and the access services are restarted. This takes a moment.'@en, 'Die Konfigurationsdateien werden neu gelesen und die Zugriffsdienste neu gestartet. Das dauert einen Moment.'@de)"/>
 							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 								mode="APPLY"
+							>
+								<write-channel name="rows"/>
+							</action>
+							<write-channel name="pending"
+								clear="true"
 							/>
-							<write-channel name="rows"/>
-							<execute-script function="x -> null"/>
-							<write-channel name="pending"/>
 						</generic-command>
 					</commands>
 					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
@@ -142,7 +145,7 @@
 								<commands>
 									<generic-command
 										image="css:bi bi-shield-check"
-										input="selection"
+										inputs="selection"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -158,20 +161,21 @@
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_ACCESS_RIGHTS"
-										/>
-										<open-dialog
-											bind-input-to="rights"
-											dialog-view="admin/access-control/coverage-access-rights.view.xml"
 										>
-											<bind
-												channel="pending"
-												to="pending"
-											/>
-										</open-dialog>
+											<open-dialog
+												bind-input-to="rights"
+												dialog-view="admin/access-control/coverage-access-rights.view.xml"
+											>
+												<bind
+													channel="pending"
+													to="pending"
+												/>
+											</open-dialog>
+										</action>
 									</generic-command>
 									<generic-command
 										image="css:bi bi-shield-shaded"
-										input="selectedModule"
+										inputs="selectedModule"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -187,21 +191,22 @@
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_MODULE_ACCESS_RIGHTS"
-										/>
-										<open-dialog
-											bind-input-to="rights"
-											dialog-view="admin/access-control/coverage-access-rights.view.xml"
 										>
-											<bind
-												channel="pending"
-												to="pending"
-											/>
-										</open-dialog>
+											<open-dialog
+												bind-input-to="rights"
+												dialog-view="admin/access-control/coverage-access-rights.view.xml"
+											>
+												<bind
+													channel="pending"
+													to="pending"
+												/>
+											</open-dialog>
+										</action>
 									</generic-command>
 									<generic-command
 										clique="more"
 										image="css:bi bi-gear"
-										input="selectedInternal"
+										inputs="selectedInternal"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -217,19 +222,20 @@
 											<visible-if expr="internal -> $internal == false"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects. The mark is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte. Die Kennzeichnung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											expr="#('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects. The mark is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte. Die Kennzeichnung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="MARK_INTERNAL"
 											selection="selection"
-										/>
-										<write-channel name="pending"/>
+										>
+											<write-channel name="pending"/>
+										</action>
 									</generic-command>
 									<generic-command
 										clique="more"
 										image="css:bi bi-gear"
-										input="selectedInternal"
+										inputs="selectedInternal"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -244,19 +250,20 @@
 											<visible-if expr="internal -> $internal == true"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Drop the internal mark of {0}? The type is checked again, and its objects need a role source and a read grant. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, 'Kennzeichnung von {0} als intern aufheben? Der Typ wird wieder geprüft, und seine Objekte brauchen eine Rollenquelle und ein Leserecht. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											expr="#('Drop the internal mark of {0}? The type is checked again, and its objects need a role source and a read grant. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, 'Kennzeichnung von {0} als intern aufheben? Der Typ wird wieder geprüft, und seine Objekte brauchen eine Rollenquelle und ein Leserecht. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="UNMARK_INTERNAL"
 											selection="selection"
-										/>
-										<write-channel name="pending"/>
+										>
+											<write-channel name="pending"/>
+										</action>
 									</generic-command>
 									<generic-command
 										clique="more"
 										image="css:bi bi-unlock"
-										input="selectedWithoutSecurity"
+										inputs="selectedWithoutSecurity"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -272,19 +279,20 @@
 											<visible-if expr="withoutSecurity -> $withoutSecurity == false"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. This is meant as a temporary measure only, until the access rights of the type are configured. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Das ist nur als Übergangslösung gedacht, bis die Zugriffsrechte des Typs konfiguriert sind. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											expr="#('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. This is meant as a temporary measure only, until the access rights of the type are configured. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Das ist nur als Übergangslösung gedacht, bis die Zugriffsrechte des Typs konfiguriert sind. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="MARK_WITHOUT_SECURITY"
 											selection="selection"
-										/>
-										<write-channel name="pending"/>
+										>
+											<write-channel name="pending"/>
+										</action>
 									</generic-command>
 									<generic-command
 										clique="more"
 										image="css:bi bi-lock"
-										input="selectedWithoutSecurity"
+										inputs="selectedWithoutSecurity"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -299,14 +307,15 @@
 											<visible-if expr="withoutSecurity -> $withoutSecurity == true"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Put {0} under access control again? A user then needs a role on its objects, and the type is checked. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} wieder der Zugriffskontrolle unterstellen? Ein Benutzer braucht dann eine Rolle auf seinen Objekten, und der Typ wird geprüft. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											expr="#('Put {0} under access control again? A user then needs a role on its objects, and the type is checked. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} wieder der Zugriffskontrolle unterstellen? Ein Benutzer braucht dann eine Rolle auf seinen Objekten, und der Typ wird geprüft. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="UNMARK_WITHOUT_SECURITY"
 											selection="selection"
-										/>
-										<write-channel name="pending"/>
+										>
+											<write-channel name="pending"/>
+										</action>
 									</generic-command>
 								</commands>
 								<visible-if
@@ -344,7 +353,7 @@
 								<commands>
 									<generic-command
 										image="css:bi bi-diagram-2"
-										input="selection"
+										inputs="selection"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -360,20 +369,21 @@
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="NEW_ROLE_PARENT_RULE"
-										/>
-										<open-dialog
-											bind-input-to="rule"
-											dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
 										>
-											<bind
-												channel="pending"
-												to="pending"
-											/>
-										</open-dialog>
+											<open-dialog
+												bind-input-to="rule"
+												dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+											>
+												<bind
+													channel="pending"
+													to="pending"
+												/>
+											</open-dialog>
+										</action>
 									</generic-command>
 									<generic-command
 										image="css:bi bi-person-badge"
-										input="selection"
+										inputs="selection"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -389,20 +399,21 @@
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="NEW_ROLE_RULE"
-										/>
-										<open-dialog
-											bind-input-to="rule"
-											dialog-view="admin/access-control/coverage-role-rule.view.xml"
 										>
-											<bind
-												channel="pending"
-												to="pending"
-											/>
-										</open-dialog>
+											<open-dialog
+												bind-input-to="rule"
+												dialog-view="admin/access-control/coverage-role-rule.view.xml"
+											>
+												<bind
+													channel="pending"
+													to="pending"
+												/>
+											</open-dialog>
+										</action>
 									</generic-command>
 									<generic-command
 										image="css:bi bi-pencil"
-										input="selectedRuleEntry"
+										inputs="selectedRuleEntry"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -416,42 +427,46 @@
 										<executability>
 											<null-input-disabled/>
 										</executability>
-										<switch value="entry -> $entry['kind']">
+										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
-												<execute-script function="entry -> $entry['id']"/>
-												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-													mode="EDIT_ROLE_PARENT_RULE"
-												/>
-												<open-dialog
-													bind-input-to="rule"
-													dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
-												>
-													<bind
-														channel="pending"
-														to="pending"
-													/>
-												</open-dialog>
+												<execute-script function="$selectedRuleEntry['id']">
+													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+														mode="EDIT_ROLE_PARENT_RULE"
+													>
+														<open-dialog
+															bind-input-to="rule"
+															dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+														>
+															<bind
+																channel="pending"
+																to="pending"
+															/>
+														</open-dialog>
+													</action>
+												</execute-script>
 											</case>
 											<case match="'roleRule'">
-												<execute-script function="entry -> $entry['id']"/>
-												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-													mode="EDIT_ROLE_RULE"
-												/>
-												<open-dialog
-													bind-input-to="rule"
-													dialog-view="admin/access-control/coverage-role-rule.view.xml"
-												>
-													<bind
-														channel="pending"
-														to="pending"
-													/>
-												</open-dialog>
+												<execute-script function="$selectedRuleEntry['id']">
+													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+														mode="EDIT_ROLE_RULE"
+													>
+														<open-dialog
+															bind-input-to="rule"
+															dialog-view="admin/access-control/coverage-role-rule.view.xml"
+														>
+															<bind
+																channel="pending"
+																to="pending"
+															/>
+														</open-dialog>
+													</action>
+												</execute-script>
 											</case>
 										</switch>
 									</generic-command>
 									<generic-command
 										image="css:bi bi-trash"
-										input="selectedRuleEntry"
+										inputs="selectedRuleEntry"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -465,22 +480,27 @@
 										<executability>
 											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['stored']"/>
 										</executability>
-										<confirm expr="entry -> #('Delete the rule {0} from the application configuration?'@en, 'Die Regel {0} aus der Anwendungskonfiguration löschen?'@de).fill($entry['id'])"/>
-										<switch value="entry -> $entry['kind']">
+										<confirm expr="#('Delete the rule {0} from the application configuration?'@en, 'Die Regel {0} aus der Anwendungskonfiguration löschen?'@de).fill($selectedRuleEntry['id'])"/>
+										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
-												<execute-script function="entry -> $entry['id']"/>
-												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-													mode="REMOVE_ROLE_PARENT_RULE"
-												/>
+												<execute-script function="$selectedRuleEntry['id']">
+													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+														mode="REMOVE_ROLE_PARENT_RULE"
+													>
+														<write-channel name="pending"/>
+													</action>
+												</execute-script>
 											</case>
 											<case match="'roleRule'">
-												<execute-script function="entry -> $entry['id']"/>
-												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-													mode="REMOVE_ROLE_RULE"
-												/>
+												<execute-script function="$selectedRuleEntry['id']">
+													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+														mode="REMOVE_ROLE_RULE"
+													>
+														<write-channel name="pending"/>
+													</action>
+												</execute-script>
 											</case>
 										</switch>
-										<write-channel name="pending"/>
 									</generic-command>
 								</commands>
 								<table selection="selectedRuleEntry">

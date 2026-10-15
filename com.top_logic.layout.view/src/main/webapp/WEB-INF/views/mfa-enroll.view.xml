@@ -47,8 +47,9 @@
 						<en>Confirm</en>
 						<de>Bestätigen</de>
 					</label>
-					<store-form-state/>
-					<verify-otp persist="true"/>
+					<store-form-state>
+						<verify-otp persist="true"/>
+					</store-form-state>
 				</generic-command>
 			</commands>
 		</form>

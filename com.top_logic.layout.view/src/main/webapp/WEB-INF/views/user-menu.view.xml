@@ -54,12 +54,13 @@
 						<en>Login</en>
 						<de>Anmelden</de>
 					</label>
-					<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
-					<open-dialog
-						bind-input-to="model"
-						close-on-backdrop="false"
-						dialog-view="login.view.xml"
-					/>
+					<execute-script function="new(`tl.login:Credentials`, transient: true)">
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="false"
+							dialog-view="login.view.xml"
+						/>
+					</execute-script>
 				</action>
 			</button>
 		</case>
@@ -120,7 +121,7 @@
 								<en>Reset personal settings</en>
 								<de>Persönliche Einstellungen zurücksetzen</de>
 							</label>
-							<confirm expr="x -> #('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
+							<confirm expr="#('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
 							<reset-personal-configuration/>
 						</generic-command>
 					</group>

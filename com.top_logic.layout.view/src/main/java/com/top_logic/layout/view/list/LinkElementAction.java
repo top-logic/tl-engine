@@ -27,14 +27,15 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * Runs the list's configured link function with the values of the list's inputs and the element in
  * a transaction, then resets the list's new-element channel to a fresh transient element. Typical
- * usage in a new-element template, after the entered field values have been written to the
- * transient element:
+ * usage in a new-element template, over the transient element the entered field values have been
+ * written to:
  * </p>
  *
  * <pre>
  * &lt;generic-command placement="TOOLBAR"&gt;
- *   &lt;store-form-state/&gt;
- *   &lt;link-element/&gt;
+ *   &lt;store-form-state&gt;
+ *     &lt;link-element/&gt;
+ *   &lt;/store-form-state&gt;
  * &lt;/generic-command&gt;
  * </pre>
  */

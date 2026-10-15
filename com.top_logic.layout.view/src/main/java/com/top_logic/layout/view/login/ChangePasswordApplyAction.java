@@ -38,7 +38,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expects its input to be the transient {@link LoginAction#PASSWORD_CHANGE_TYPE} model (carrying
- * {@code newPassword} and {@code newPasswordConfirm}), e.g. after {@code <store-form-state/>}.
+ * {@code newPassword} and {@code newPasswordConfirm}), e.g. as the result of an enclosing
+ * {@code <store-form-state>}.
  * Password policy validation and the actual change are delegated to the
  * {@link AuthenticationDevice}, which also clears the expiry flag and maintains the password
  * history. On a policy violation or mismatch a {@link TopLogicException} is raised so the form shows

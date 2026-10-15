@@ -19,6 +19,7 @@ import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -28,8 +29,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Its input is the selected step's 1-based row key (written by the steps table to a {@code selection}
  * channel). It replays that step on the recorded (opener) window through {@link ReactWindowReplay}, so
- * the effect appears in the main browser window, and returns the <em>next</em> step's row key so the
- * chained {@code <write-channel>} advances the selection. When the last step has been replayed the
+ * the effect appears in the main browser window, and returns the <em>next</em> step's row key so a
+ * nested {@code <write-channel>} advances the selection. When the last step has been replayed the
  * selection is left unchanged. A step that fails to replay (e.g. its address does not resolve in the
  * opener window's current state) reports the failure through the window's {@link ErrorSink} and keeps
  * the selection on the failed step, so the debugger stops where the script does.
@@ -45,7 +46,7 @@ public class StepReplayAction implements ViewAction {
 	 * global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<StepReplayAction> {
+	public interface Config extends PolymorphicConfiguration<StepReplayAction>, WithResultActions {
 
 		@Override
 		@ClassDefault(StepReplayAction.class)

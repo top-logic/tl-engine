@@ -20,7 +20,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-unlock"
-				input="selection"
+				inputs="selection"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -32,8 +32,9 @@
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.LockListAction"
 					mode="RELEASE"
-				/>
-				<write-channel name="locks"/>
+				>
+					<write-channel name="locks"/>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
@@ -45,8 +46,9 @@
 				</label>
 				<action class="com.top_logic.layout.view.admin.system.LockListAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="locks"/>
+				>
+					<write-channel name="locks"/>
+				</action>
 			</generic-command>
 		</commands>
 		<child class="com.top_logic.layout.view.admin.system.LockTable"

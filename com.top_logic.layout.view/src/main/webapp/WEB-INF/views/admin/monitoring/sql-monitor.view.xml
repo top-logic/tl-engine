@@ -21,7 +21,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play"
-				input="monitoring"
+				inputs="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -33,14 +33,16 @@
 				</executability>
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="START"
-				/>
-				<write-channel name="sqlStats"/>
-				<execute-script function="true"/>
-				<write-channel name="monitoring"/>
+				>
+					<write-channel name="sqlStats"/>
+				</action>
+				<execute-script function="true">
+					<write-channel name="monitoring"/>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
-				input="monitoring"
+				inputs="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -52,12 +54,13 @@
 				</executability>
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="sqlStats"/>
+				>
+					<write-channel name="sqlStats"/>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop"
-				input="monitoring"
+				inputs="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -69,10 +72,12 @@
 				</executability>
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="STOP"
-				/>
-				<write-channel name="sqlStats"/>
-				<execute-script function="false"/>
-				<write-channel name="monitoring"/>
+				>
+					<write-channel name="sqlStats"/>
+				</action>
+				<execute-script function="false">
+					<write-channel name="monitoring"/>
+				</execute-script>
 			</generic-command>
 		</commands>
 		<child class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"

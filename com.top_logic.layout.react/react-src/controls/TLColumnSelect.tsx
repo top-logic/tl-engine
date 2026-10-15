@@ -13,6 +13,8 @@ const I18N_KEYS = {
   'js.table.columnHideUnlock': 'Hide and unfreeze {0}',
   'js.table.columnShowShort': 'Show',
   'js.table.columnHideShort': 'Hide',
+  'js.table.columnLockShort': 'Freeze',
+  'js.table.columnUnlockShort': 'Unfreeze',
   'js.table.columnsLocked': 'Frozen',
   'js.table.columnLastVisible': 'At least one column stays visible',
 };
@@ -162,13 +164,14 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
             ? i18n['js.table.columnLastVisible']
             : format(i18n[!entry.visible ? 'js.table.columnShow'
               : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
-          // The tooltip stands next to the row and needs no column name; the accessible name keeps it, since a screen
-          // reader announces the button on its own.
+          // The tooltips of eye and lock stand next to the row and need no column name; the accessible names keep it,
+          // since a screen reader announces a button on its own.
           const eyeTip = lastVisible
             ? eyeLabel
             : i18n[entry.visible ? 'js.table.columnHideShort' : 'js.table.columnShowShort'];
           const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
             : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
+          const lockTip = i18n[entry.locked ? 'js.table.columnUnlockShort' : 'js.table.columnLockShort'];
           const handle = reorder.handleProps(index);
           return (
             <li
@@ -197,7 +200,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__lock' })}
                   aria-label={lockLabel}
                   ref={buttonRef(`${entry.name}:lock`)}
-                  {...tooltipProps(lockLabel)}
+                  {...tooltipProps(lockTip)}
                   onClick={(event) => handleLock(entry.name, !entry.locked, event)}
                 >
                   <ThemeIcon encoded={entry.locked ? ICON_LOCK : ICON_UNLOCK} className="tl-button__icon tl-icon-sm" />

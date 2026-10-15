@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.apache.poi.sl.usermodel.Insets2D;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * The effective style of the first text level of a text shape in a presentation template.
  *
@@ -48,34 +50,34 @@ public record TextStyle(String font, Double size, boolean bold, boolean italic, 
 		boolean caps, String anchor, Insets2D insets, Double characterSpacing, Double lineSpacing) {
 
 	/**
-	 * The data representation with the keys {@link TemplateData#FONT}, {@link TemplateData#SIZE},
-	 * {@link TemplateData#BOLD}, {@link TemplateData#ITALIC}, {@link TemplateData#COLOR},
-	 * {@link TemplateData#ALIGN}, {@link TemplateData#CAPS}, {@link TemplateData#ANCHOR},
-	 * {@link TemplateData#INSETS}, {@link TemplateData#CHARACTER_SPACING} and
-	 * {@link TemplateData#LINE_SPACING}.
+	 * The data representation with the keys {@link PresentationData#FONT}, {@link PresentationData#SIZE},
+	 * {@link PresentationData#BOLD}, {@link PresentationData#ITALIC}, {@link PresentationData#COLOR},
+	 * {@link PresentationData#ALIGN}, {@link PresentationData#CAPS}, {@link PresentationData#ANCHOR},
+	 * {@link PresentationData#INSETS}, {@link PresentationData#CHARACTER_SPACING} and
+	 * {@link PresentationData#LINE_SPACING}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		TemplateData.put(result, TemplateData.FONT, font);
-		TemplateData.put(result, TemplateData.SIZE, size == null ? null : TemplateData.number(size));
-		result.put(TemplateData.BOLD, Boolean.valueOf(bold));
-		result.put(TemplateData.ITALIC, Boolean.valueOf(italic));
-		TemplateData.put(result, TemplateData.COLOR, color == null ? null : color.toData());
-		TemplateData.put(result, TemplateData.ALIGN, align);
-		result.put(TemplateData.CAPS, Boolean.valueOf(caps));
-		TemplateData.put(result, TemplateData.ANCHOR, anchor);
+		Map<String, Object> result = PresentationData.map();
+		PresentationData.put(result, PresentationData.FONT, font);
+		PresentationData.put(result, PresentationData.SIZE, size == null ? null : PresentationData.number(size));
+		result.put(PresentationData.BOLD, Boolean.valueOf(bold));
+		result.put(PresentationData.ITALIC, Boolean.valueOf(italic));
+		PresentationData.put(result, PresentationData.COLOR, color == null ? null : color.toData());
+		PresentationData.put(result, PresentationData.ALIGN, align);
+		result.put(PresentationData.CAPS, Boolean.valueOf(caps));
+		PresentationData.put(result, PresentationData.ANCHOR, anchor);
 		if (insets != null) {
-			Map<String, Object> margins = TemplateData.map();
-			margins.put(TemplateData.LEFT, TemplateData.number(insets.left));
-			margins.put(TemplateData.TOP, TemplateData.number(insets.top));
-			margins.put(TemplateData.RIGHT, TemplateData.number(insets.right));
-			margins.put(TemplateData.BOTTOM, TemplateData.number(insets.bottom));
-			result.put(TemplateData.INSETS, margins);
+			Map<String, Object> margins = PresentationData.map();
+			margins.put(PresentationData.LEFT, PresentationData.number(insets.left));
+			margins.put(PresentationData.TOP, PresentationData.number(insets.top));
+			margins.put(PresentationData.RIGHT, PresentationData.number(insets.right));
+			margins.put(PresentationData.BOTTOM, PresentationData.number(insets.bottom));
+			result.put(PresentationData.INSETS, margins);
 		}
-		TemplateData.put(result, TemplateData.CHARACTER_SPACING,
-			characterSpacing == null ? null : TemplateData.number(characterSpacing));
-		TemplateData.put(result, TemplateData.LINE_SPACING,
-			lineSpacing == null ? null : TemplateData.fraction(lineSpacing));
+		PresentationData.put(result, PresentationData.CHARACTER_SPACING,
+			characterSpacing == null ? null : PresentationData.number(characterSpacing));
+		PresentationData.put(result, PresentationData.LINE_SPACING,
+			lineSpacing == null ? null : PresentationData.fraction(lineSpacing));
 		return result;
 	}
 

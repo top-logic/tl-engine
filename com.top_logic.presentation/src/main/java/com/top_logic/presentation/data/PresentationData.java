@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.presentation.template;
+package com.top_logic.presentation.data;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -13,15 +13,24 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Keys and helpers for the data representation of a {@link TemplateAnalysis}.
+ * Keys, type names and helpers of the data representation of presentations.
+ *
+ * <p>
+ * Two kinds of data share this vocabulary: The description of an existing presentation created by
+ * a {@link com.top_logic.presentation.template.TemplateAnalysis}, and the description of a
+ * presentation to create, read by {@link com.top_logic.presentation.model.DescriptionReader}.
+ * Since both use the same keys for colors, fills, outlines, shadows, geometries and text styles,
+ * a style found in a template can be used as it stands to describe a shape.
+ * </p>
  *
  * <p>
  * The data representation consists of dictionaries with a stable key order, lists, strings,
- * numbers ({@link Double}) and booleans only, so that it can be serialized to JSON. Entries without
- * a value are left out. All lengths are given in points.
+ * numbers ({@link Double}) and booleans only, so that it can be serialized to JSON. The only
+ * exception are images in a presentation description, which are binary data. Entries without a
+ * value are left out. All lengths are given in points.
  * </p>
  */
-public final class TemplateData {
+public final class PresentationData {
 
 	/** Key of the slide size of a presentation. */
 	public static final String SLIDE_SIZE = "slideSize";
@@ -245,7 +254,85 @@ public final class TemplateData {
 	/** Key of the description of the first cell in the second row of a table. */
 	public static final String BODY_CELL = "bodyCell";
 
-	private TemplateData() {
+	/** Key of the title of a slide. */
+	public static final String TITLE = "title";
+
+	/** Key of the subtitle of a slide. */
+	public static final String SUBTITLE = "subtitle";
+
+	/** Key of the speaker notes of a slide. */
+	public static final String NOTES = "notes";
+
+	/** Key of the flag telling whether a slide is hidden in the slide show. */
+	public static final String HIDDEN = "hidden";
+
+	/** Key of the role of a color or a slide layout. */
+	public static final String ROLE = "role";
+
+	/** Key of the text runs of a paragraph. */
+	public static final String RUNS = "runs";
+
+	/** Key of the indentation level of a paragraph. */
+	public static final String LEVEL = "level";
+
+	/** Key of the bullet of a paragraph. */
+	public static final String BULLET = "bullet";
+
+	/** Key of the character of a bullet. */
+	public static final String CHAR = "char";
+
+	/** Key of the space before a paragraph. */
+	public static final String SPACE_BEFORE = "spaceBefore";
+
+	/** Key of the space after a paragraph. */
+	public static final String SPACE_AFTER = "spaceAfter";
+
+	/** Key of the underline flag of a text style. */
+	public static final String UNDERLINE = "underline";
+
+	/** Key of the link target of a text. */
+	public static final String HYPERLINK = "hyperlink";
+
+	/** Key of the way a text is fitted into its shape. */
+	public static final String AUTOFIT = "autofit";
+
+	/** Key of the flag telling whether a text is wrapped at the shape border. */
+	public static final String WRAP = "wrap";
+
+	/** Key of the relative column widths of a table. */
+	public static final String COLUMN_WEIGHTS = "columnWeights";
+
+	/** Key of the number of header rows of a table. */
+	public static final String HEADER_ROWS = "headerRows";
+
+	/** Key of the minimum row height of a table. */
+	public static final String ROW_HEIGHT = "rowHeight";
+
+	/** Key of the binary content of an image. */
+	public static final String DATA = "data";
+
+	/** Key of the way an image is fitted into its bounds. */
+	public static final String FIT = "fit";
+
+	/** {@link #TYPE} of a slide. */
+	public static final String TYPE_SLIDE = "slide";
+
+	/** {@link #TYPE} of a geometric shape. */
+	public static final String TYPE_SHAPE = "shape";
+
+	/** {@link #TYPE} of a text box. */
+	public static final String TYPE_TEXT_BOX = "textBox";
+
+	/** {@link #TYPE} of a table. */
+	public static final String TYPE_TABLE = "table";
+
+	/** {@link #TYPE} of an image. */
+	public static final String TYPE_IMAGE = "image";
+
+	/** Value of {@link #FILL}, {@link #LINE} and {@link #BULLET} that switches them off. */
+	public static final String NONE = "none";
+
+	private PresentationData() {
 		// Constants only.
 	}
 

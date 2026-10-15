@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.apache.poi.xslf.usermodel.SlideLayout;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * A slide layout of a presentation template.
  *
@@ -64,23 +66,23 @@ public record LayoutInfo(int index, String name, SlideLayout type, int masterInd
 	}
 
 	/**
-	 * The data representation with the keys {@link TemplateData#INDEX}, {@link TemplateData#NAME},
-	 * {@link TemplateData#TYPE}, {@link TemplateData#MASTER} (with {@link TemplateData#INDEX} and
-	 * {@link TemplateData#NAME}), {@link TemplateData#BACKGROUND},
-	 * {@link TemplateData#PLACEHOLDERS} and {@link TemplateData#DECORATIONS}.
+	 * The data representation with the keys {@link PresentationData#INDEX}, {@link PresentationData#NAME},
+	 * {@link PresentationData#TYPE}, {@link PresentationData#MASTER} (with {@link PresentationData#INDEX} and
+	 * {@link PresentationData#NAME}), {@link PresentationData#BACKGROUND},
+	 * {@link PresentationData#PLACEHOLDERS} and {@link PresentationData#DECORATIONS}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.INDEX, Double.valueOf(index));
-		TemplateData.put(result, TemplateData.NAME, name);
-		TemplateData.put(result, TemplateData.TYPE, type == null ? null : type.name());
-		Map<String, Object> master = TemplateData.map();
-		master.put(TemplateData.INDEX, Double.valueOf(masterIndex));
-		TemplateData.put(master, TemplateData.NAME, masterName);
-		result.put(TemplateData.MASTER, master);
-		TemplateData.put(result, TemplateData.BACKGROUND, background == null ? null : background.toData());
-		result.put(TemplateData.PLACEHOLDERS, TemplateData.list(placeholders, PlaceholderInfo::toData));
-		result.put(TemplateData.DECORATIONS, TemplateData.list(decorations, ShapeInfo::toData));
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.INDEX, Double.valueOf(index));
+		PresentationData.put(result, PresentationData.NAME, name);
+		PresentationData.put(result, PresentationData.TYPE, type == null ? null : type.name());
+		Map<String, Object> master = PresentationData.map();
+		master.put(PresentationData.INDEX, Double.valueOf(masterIndex));
+		PresentationData.put(master, PresentationData.NAME, masterName);
+		result.put(PresentationData.MASTER, master);
+		PresentationData.put(result, PresentationData.BACKGROUND, background == null ? null : background.toData());
+		result.put(PresentationData.PLACEHOLDERS, PresentationData.list(placeholders, PlaceholderInfo::toData));
+		result.put(PresentationData.DECORATIONS, PresentationData.list(decorations, ShapeInfo::toData));
 		return result;
 	}
 

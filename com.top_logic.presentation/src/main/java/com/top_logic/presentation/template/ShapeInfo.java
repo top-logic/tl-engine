@@ -9,6 +9,8 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * Description of a shape on a slide, layout or master of a presentation template.
  *
@@ -103,44 +105,44 @@ public record ShapeInfo(Kind kind, String name, Rectangle2D bounds, double rotat
 	public record PlaceholderRef(String type, long idx) {
 
 		/**
-		 * The data representation with the keys {@link TemplateData#TYPE} and
-		 * {@link TemplateData#IDX}.
+		 * The data representation with the keys {@link PresentationData#TYPE} and
+		 * {@link PresentationData#IDX}.
 		 */
 		public Map<String, Object> toData() {
-			Map<String, Object> result = TemplateData.map();
-			result.put(TemplateData.TYPE, type);
-			result.put(TemplateData.IDX, Double.valueOf(idx));
+			Map<String, Object> result = PresentationData.map();
+			result.put(PresentationData.TYPE, type);
+			result.put(PresentationData.IDX, Double.valueOf(idx));
 			return result;
 		}
 	}
 
 	/**
-	 * The data representation with the keys {@link TemplateData#KIND}, {@link TemplateData#NAME},
-	 * the bounds ({@link TemplateData#X}, {@link TemplateData#Y}, {@link TemplateData#WIDTH},
-	 * {@link TemplateData#HEIGHT}), {@link TemplateData#ROTATION}, {@link TemplateData#GEOMETRY},
-	 * {@link TemplateData#FILL}, {@link TemplateData#LINE}, {@link TemplateData#SHADOW},
-	 * {@link TemplateData#TEXT}, {@link TemplateData#PLACEHOLDER},
-	 * {@link TemplateData#CONTENT_TYPE}, {@link TemplateData#TABLE} and
-	 * {@link TemplateData#CHILDREN}.
+	 * The data representation with the keys {@link PresentationData#KIND}, {@link PresentationData#NAME},
+	 * the bounds ({@link PresentationData#X}, {@link PresentationData#Y}, {@link PresentationData#WIDTH},
+	 * {@link PresentationData#HEIGHT}), {@link PresentationData#ROTATION}, {@link PresentationData#GEOMETRY},
+	 * {@link PresentationData#FILL}, {@link PresentationData#LINE}, {@link PresentationData#SHADOW},
+	 * {@link PresentationData#TEXT}, {@link PresentationData#PLACEHOLDER},
+	 * {@link PresentationData#CONTENT_TYPE}, {@link PresentationData#TABLE} and
+	 * {@link PresentationData#CHILDREN}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.KIND, kind.id());
-		TemplateData.put(result, TemplateData.NAME, name);
-		TemplateData.putBounds(result, bounds);
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.KIND, kind.id());
+		PresentationData.put(result, PresentationData.NAME, name);
+		PresentationData.putBounds(result, bounds);
 		if (rotation != 0) {
-			result.put(TemplateData.ROTATION, TemplateData.number(rotation));
+			result.put(PresentationData.ROTATION, PresentationData.number(rotation));
 		}
-		TemplateData.put(result, TemplateData.GEOMETRY, geometry == null ? null : geometry.toData());
-		TemplateData.put(result, TemplateData.FILL, fill == null ? null : fill.toData());
-		TemplateData.put(result, TemplateData.LINE, line == null ? null : line.toData());
-		TemplateData.put(result, TemplateData.SHADOW, shadow == null ? null : shadow.toData());
-		TemplateData.put(result, TemplateData.TEXT, text == null ? null : text.toData());
-		TemplateData.put(result, TemplateData.PLACEHOLDER, placeholder == null ? null : placeholder.toData());
-		TemplateData.put(result, TemplateData.CONTENT_TYPE, contentType);
-		TemplateData.put(result, TemplateData.TABLE, table == null ? null : table.toData());
+		PresentationData.put(result, PresentationData.GEOMETRY, geometry == null ? null : geometry.toData());
+		PresentationData.put(result, PresentationData.FILL, fill == null ? null : fill.toData());
+		PresentationData.put(result, PresentationData.LINE, line == null ? null : line.toData());
+		PresentationData.put(result, PresentationData.SHADOW, shadow == null ? null : shadow.toData());
+		PresentationData.put(result, PresentationData.TEXT, text == null ? null : text.toData());
+		PresentationData.put(result, PresentationData.PLACEHOLDER, placeholder == null ? null : placeholder.toData());
+		PresentationData.put(result, PresentationData.CONTENT_TYPE, contentType);
+		PresentationData.put(result, PresentationData.TABLE, table == null ? null : table.toData());
 		if (!children.isEmpty()) {
-			result.put(TemplateData.CHILDREN, TemplateData.list(children, ShapeInfo::toData));
+			result.put(PresentationData.CHILDREN, PresentationData.list(children, ShapeInfo::toData));
 		}
 		return result;
 	}

@@ -7,6 +7,8 @@ package com.top_logic.presentation.template;
 
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * The outline of a shape in a presentation template.
  *
@@ -22,12 +24,12 @@ public record LineInfo(PaintInfo paint, Double width, String dash) {
 
 	/**
 	 * The data representation: the entries of the {@link #paint()} plus the keys
-	 * {@link TemplateData#WIDTH} and {@link TemplateData#DASH}.
+	 * {@link PresentationData#WIDTH} and {@link PresentationData#DASH}.
 	 */
 	public Map<String, Object> toData() {
 		Map<String, Object> result = paint.toData();
-		TemplateData.put(result, TemplateData.WIDTH, width == null ? null : TemplateData.number(width));
-		TemplateData.put(result, TemplateData.DASH, dash);
+		PresentationData.put(result, PresentationData.WIDTH, width == null ? null : PresentationData.number(width));
+		PresentationData.put(result, PresentationData.DASH, dash);
 		return result;
 	}
 

@@ -19,7 +19,7 @@ import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.presentation.template.TemplateAnalysis;
-import com.top_logic.presentation.template.TemplateData;
+import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -48,16 +48,16 @@ public class PptTemplateFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <ul>
-	 * <li>{@link TemplateData#SLIDE_SIZE}: The width and height of a slide.</li>
-	 * <li>{@link TemplateData#MASTERS}: The slide masters with their theme (theme colors and
+	 * <li>{@link PresentationData#SLIDE_SIZE}: The width and height of a slide.</li>
+	 * <li>{@link PresentationData#MASTERS}: The slide masters with their theme (theme colors and
 	 * fonts), their background, their placeholders and their other shapes such as logos.</li>
-	 * <li>{@link TemplateData#LAYOUTS}: The slide layouts of all masters in the order PowerPoint
+	 * <li>{@link PresentationData#LAYOUTS}: The slide layouts of all masters in the order PowerPoint
 	 * shows them. Each layout has its position in this list, its name, its predefined type (e.g.
 	 * <code>TITLE</code>, if it is no custom layout), its master, its background, its placeholders
 	 * and its other shapes. A placeholder is described by its type (e.g. <code>title</code>,
 	 * <code>body</code>), its index, its effective position and size, the style of its text and its
 	 * prompt text.</li>
-	 * <li>{@link TemplateData#SLIDES}: The slides of the presentation with their layout and their
+	 * <li>{@link PresentationData#SLIDES}: The slides of the presentation with their layout and their
 	 * shapes. A shape is described by its kind, name, position and size, geometry, fill, outline,
 	 * shadow and text. Shapes of a group are listed as its children.</li>
 	 * </ul>

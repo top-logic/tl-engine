@@ -17,6 +17,8 @@ import org.apache.poi.xslf.usermodel.XSLFSlideMaster;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTSlideLayoutIdList;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTSlideLayoutIdListEntry;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * Structure and style of a PowerPoint presentation used as template: its slide size, its slide
  * masters with their themes, its slide layouts with their placeholders and its sample slides.
@@ -115,19 +117,19 @@ public record TemplateAnalysis(double slideWidth, double slideHeight, List<Maste
 	}
 
 	/**
-	 * The data representation with the keys {@link TemplateData#SLIDE_SIZE} (with
-	 * {@link TemplateData#WIDTH} and {@link TemplateData#HEIGHT}), {@link TemplateData#MASTERS},
-	 * {@link TemplateData#LAYOUTS} and {@link TemplateData#SLIDES}.
+	 * The data representation with the keys {@link PresentationData#SLIDE_SIZE} (with
+	 * {@link PresentationData#WIDTH} and {@link PresentationData#HEIGHT}), {@link PresentationData#MASTERS},
+	 * {@link PresentationData#LAYOUTS} and {@link PresentationData#SLIDES}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		Map<String, Object> size = TemplateData.map();
-		size.put(TemplateData.WIDTH, TemplateData.number(slideWidth));
-		size.put(TemplateData.HEIGHT, TemplateData.number(slideHeight));
-		result.put(TemplateData.SLIDE_SIZE, size);
-		result.put(TemplateData.MASTERS, TemplateData.list(masters, MasterInfo::toData));
-		result.put(TemplateData.LAYOUTS, TemplateData.list(layouts, LayoutInfo::toData));
-		result.put(TemplateData.SLIDES, TemplateData.list(slides, SlideInfo::toData));
+		Map<String, Object> result = PresentationData.map();
+		Map<String, Object> size = PresentationData.map();
+		size.put(PresentationData.WIDTH, PresentationData.number(slideWidth));
+		size.put(PresentationData.HEIGHT, PresentationData.number(slideHeight));
+		result.put(PresentationData.SLIDE_SIZE, size);
+		result.put(PresentationData.MASTERS, PresentationData.list(masters, MasterInfo::toData));
+		result.put(PresentationData.LAYOUTS, PresentationData.list(layouts, LayoutInfo::toData));
+		result.put(PresentationData.SLIDES, PresentationData.list(slides, SlideInfo::toData));
 		return result;
 	}
 

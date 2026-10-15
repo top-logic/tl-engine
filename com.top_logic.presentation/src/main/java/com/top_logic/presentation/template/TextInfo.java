@@ -7,6 +7,8 @@ package com.top_logic.presentation.template;
 
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * Summary of the text of a shape in a presentation template.
  *
@@ -43,12 +45,12 @@ public record TextInfo(TextStyle style, int paragraphs, String content) {
 
 	/**
 	 * The data representation: the entries of the {@link #style()} plus the keys
-	 * {@link TemplateData#PARAGRAPHS} and {@link TemplateData#CONTENT}.
+	 * {@link PresentationData#PARAGRAPHS} and {@link PresentationData#CONTENT}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = style == null ? TemplateData.map() : style.toData();
-		result.put(TemplateData.PARAGRAPHS, Double.valueOf(paragraphs));
-		TemplateData.put(result, TemplateData.CONTENT, content);
+		Map<String, Object> result = style == null ? PresentationData.map() : style.toData();
+		result.put(PresentationData.PARAGRAPHS, Double.valueOf(paragraphs));
+		PresentationData.put(result, PresentationData.CONTENT, content);
 		return result;
 	}
 

@@ -8,6 +8,8 @@ package com.top_logic.presentation.template;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * The fill of a shape, a line or a background in a presentation template.
  *
@@ -81,13 +83,13 @@ public record PaintInfo(Type type, ColorInfo color, ColorInfo backgroundColor, L
 	public record GradientStop(double position, ColorInfo color) {
 
 		/**
-		 * The data representation with the keys {@link TemplateData#POSITION} and
-		 * {@link TemplateData#COLOR}.
+		 * The data representation with the keys {@link PresentationData#POSITION} and
+		 * {@link PresentationData#COLOR}.
 		 */
 		public Map<String, Object> toData() {
-			Map<String, Object> result = TemplateData.map();
-			result.put(TemplateData.POSITION, TemplateData.fraction(position));
-			TemplateData.put(result, TemplateData.COLOR, color == null ? null : color.toData());
+			Map<String, Object> result = PresentationData.map();
+			result.put(PresentationData.POSITION, PresentationData.fraction(position));
+			PresentationData.put(result, PresentationData.COLOR, color == null ? null : color.toData());
 			return result;
 		}
 	}
@@ -114,24 +116,24 @@ public record PaintInfo(Type type, ColorInfo color, ColorInfo backgroundColor, L
 	}
 
 	/**
-	 * The data representation with the keys {@link TemplateData#TYPE}, {@link TemplateData#COLOR},
-	 * {@link TemplateData#BACKGROUND_COLOR}, {@link TemplateData#STOPS},
-	 * {@link TemplateData#ANGLE}, {@link TemplateData#PATH}, {@link TemplateData#CONTENT_TYPE} and
-	 * {@link TemplateData#OPACITY}.
+	 * The data representation with the keys {@link PresentationData#TYPE}, {@link PresentationData#COLOR},
+	 * {@link PresentationData#BACKGROUND_COLOR}, {@link PresentationData#STOPS},
+	 * {@link PresentationData#ANGLE}, {@link PresentationData#PATH}, {@link PresentationData#CONTENT_TYPE} and
+	 * {@link PresentationData#OPACITY}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.TYPE, type.id());
-		TemplateData.put(result, TemplateData.COLOR, color == null ? null : color.toData());
-		TemplateData.put(result, TemplateData.BACKGROUND_COLOR,
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.TYPE, type.id());
+		PresentationData.put(result, PresentationData.COLOR, color == null ? null : color.toData());
+		PresentationData.put(result, PresentationData.BACKGROUND_COLOR,
 			backgroundColor == null ? null : backgroundColor.toData());
 		if (!stops.isEmpty()) {
-			result.put(TemplateData.STOPS, TemplateData.list(stops, GradientStop::toData));
+			result.put(PresentationData.STOPS, PresentationData.list(stops, GradientStop::toData));
 		}
-		TemplateData.put(result, TemplateData.ANGLE, angle == null ? null : TemplateData.number(angle));
-		TemplateData.put(result, TemplateData.PATH, path);
-		TemplateData.put(result, TemplateData.CONTENT_TYPE, contentType);
-		TemplateData.put(result, TemplateData.OPACITY, opacity == null ? null : TemplateData.fraction(opacity));
+		PresentationData.put(result, PresentationData.ANGLE, angle == null ? null : PresentationData.number(angle));
+		PresentationData.put(result, PresentationData.PATH, path);
+		PresentationData.put(result, PresentationData.CONTENT_TYPE, contentType);
+		PresentationData.put(result, PresentationData.OPACITY, opacity == null ? null : PresentationData.fraction(opacity));
 		return result;
 	}
 

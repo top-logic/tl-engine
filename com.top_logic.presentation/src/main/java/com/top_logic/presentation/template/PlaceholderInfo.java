@@ -11,6 +11,8 @@ import java.util.Map;
 import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTPlaceholder;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * A placeholder of a slide layout or slide master of a presentation template.
  *
@@ -35,19 +37,19 @@ public record PlaceholderInfo(String type, long idx, String name, Rectangle2D bo
 		String prompt) {
 
 	/**
-	 * The data representation with the keys {@link TemplateData#TYPE}, {@link TemplateData#IDX},
-	 * {@link TemplateData#NAME}, the bounds ({@link TemplateData#X}, {@link TemplateData#Y},
-	 * {@link TemplateData#WIDTH}, {@link TemplateData#HEIGHT}), {@link TemplateData#TEXT} and
-	 * {@link TemplateData#PROMPT}.
+	 * The data representation with the keys {@link PresentationData#TYPE}, {@link PresentationData#IDX},
+	 * {@link PresentationData#NAME}, the bounds ({@link PresentationData#X}, {@link PresentationData#Y},
+	 * {@link PresentationData#WIDTH}, {@link PresentationData#HEIGHT}), {@link PresentationData#TEXT} and
+	 * {@link PresentationData#PROMPT}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.TYPE, type);
-		result.put(TemplateData.IDX, Double.valueOf(idx));
-		TemplateData.put(result, TemplateData.NAME, name);
-		TemplateData.putBounds(result, bounds);
-		TemplateData.put(result, TemplateData.TEXT, text == null ? null : text.toData());
-		TemplateData.put(result, TemplateData.PROMPT, prompt);
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.TYPE, type);
+		result.put(PresentationData.IDX, Double.valueOf(idx));
+		PresentationData.put(result, PresentationData.NAME, name);
+		PresentationData.putBounds(result, bounds);
+		PresentationData.put(result, PresentationData.TEXT, text == null ? null : text.toData());
+		PresentationData.put(result, PresentationData.PROMPT, prompt);
 		return result;
 	}
 

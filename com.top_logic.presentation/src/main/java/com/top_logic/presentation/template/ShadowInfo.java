@@ -7,6 +7,8 @@ package com.top_logic.presentation.template;
 
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * The outer shadow of a shape in a presentation template.
  *
@@ -23,15 +25,15 @@ import java.util.Map;
 public record ShadowInfo(ColorInfo color, double blur, double distance, double direction) {
 
 	/**
-	 * The data representation with the keys {@link TemplateData#COLOR}, {@link TemplateData#BLUR},
-	 * {@link TemplateData#DISTANCE} and {@link TemplateData#DIRECTION}.
+	 * The data representation with the keys {@link PresentationData#COLOR}, {@link PresentationData#BLUR},
+	 * {@link PresentationData#DISTANCE} and {@link PresentationData#DIRECTION}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		TemplateData.put(result, TemplateData.COLOR, color == null ? null : color.toData());
-		result.put(TemplateData.BLUR, TemplateData.number(blur));
-		result.put(TemplateData.DISTANCE, TemplateData.number(distance));
-		result.put(TemplateData.DIRECTION, TemplateData.number(direction));
+		Map<String, Object> result = PresentationData.map();
+		PresentationData.put(result, PresentationData.COLOR, color == null ? null : color.toData());
+		result.put(PresentationData.BLUR, PresentationData.number(blur));
+		result.put(PresentationData.DISTANCE, PresentationData.number(distance));
+		result.put(PresentationData.DIRECTION, PresentationData.number(direction));
 		return result;
 	}
 

@@ -8,6 +8,8 @@ package com.top_logic.presentation.template;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * The theme of a slide master of a presentation template.
  *
@@ -32,21 +34,21 @@ public record ThemeInfo(String name, String colorScheme, Map<String, String> col
 		"accent1", "accent2", "accent3", "accent4", "accent5", "accent6", "hlink", "folHlink");
 
 	/**
-	 * The data representation with the keys {@link TemplateData#NAME},
-	 * {@link TemplateData#COLOR_SCHEME}, {@link TemplateData#COLORS} and {@link TemplateData#FONTS}
-	 * (with {@link TemplateData#MAJOR} and {@link TemplateData#MINOR}).
+	 * The data representation with the keys {@link PresentationData#NAME},
+	 * {@link PresentationData#COLOR_SCHEME}, {@link PresentationData#COLORS} and {@link PresentationData#FONTS}
+	 * (with {@link PresentationData#MAJOR} and {@link PresentationData#MINOR}).
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		TemplateData.put(result, TemplateData.NAME, name);
-		TemplateData.put(result, TemplateData.COLOR_SCHEME, colorScheme);
-		Map<String, Object> colorData = TemplateData.map();
+		Map<String, Object> result = PresentationData.map();
+		PresentationData.put(result, PresentationData.NAME, name);
+		PresentationData.put(result, PresentationData.COLOR_SCHEME, colorScheme);
+		Map<String, Object> colorData = PresentationData.map();
 		colorData.putAll(colors);
-		result.put(TemplateData.COLORS, colorData);
-		Map<String, Object> fonts = TemplateData.map();
-		TemplateData.put(fonts, TemplateData.MAJOR, majorFont);
-		TemplateData.put(fonts, TemplateData.MINOR, minorFont);
-		result.put(TemplateData.FONTS, fonts);
+		result.put(PresentationData.COLORS, colorData);
+		Map<String, Object> fonts = PresentationData.map();
+		PresentationData.put(fonts, PresentationData.MAJOR, majorFont);
+		PresentationData.put(fonts, PresentationData.MINOR, minorFont);
+		result.put(PresentationData.FONTS, fonts);
 		return result;
 	}
 

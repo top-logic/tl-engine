@@ -8,6 +8,8 @@ package com.top_logic.presentation.template;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * A color used in a presentation template.
  *
@@ -64,17 +66,17 @@ public record ColorInfo(String rgb, String scheme, Map<String, Double> modifiers
 	}
 
 	/**
-	 * The data representation with the keys {@link TemplateData#RGB}, {@link TemplateData#SCHEME}
+	 * The data representation with the keys {@link PresentationData#RGB}, {@link PresentationData#SCHEME}
 	 * and the names of the {@link #modifiers()}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		TemplateData.put(result, TemplateData.RGB, rgb);
-		TemplateData.put(result, TemplateData.SCHEME, scheme);
+		Map<String, Object> result = PresentationData.map();
+		PresentationData.put(result, PresentationData.RGB, rgb);
+		PresentationData.put(result, PresentationData.SCHEME, scheme);
 		for (String modifier : MODIFIERS) {
 			Double value = modifiers.get(modifier);
 			if (value != null) {
-				result.put(modifier, TemplateData.fraction(value.doubleValue()));
+				result.put(modifier, PresentationData.fraction(value.doubleValue()));
 			}
 		}
 		return result;

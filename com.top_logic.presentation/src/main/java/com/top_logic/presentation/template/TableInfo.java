@@ -8,6 +8,8 @@ package com.top_logic.presentation.template;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * Description of a table in a presentation template.
  *
@@ -39,30 +41,30 @@ public record TableInfo(int rows, int columns, List<Double> columnWidths, String
 	public record CellInfo(PaintInfo fill, TextInfo text) {
 
 		/**
-		 * The data representation with the keys {@link TemplateData#FILL} and
-		 * {@link TemplateData#TEXT}.
+		 * The data representation with the keys {@link PresentationData#FILL} and
+		 * {@link PresentationData#TEXT}.
 		 */
 		public Map<String, Object> toData() {
-			Map<String, Object> result = TemplateData.map();
-			TemplateData.put(result, TemplateData.FILL, fill == null ? null : fill.toData());
-			TemplateData.put(result, TemplateData.TEXT, text == null ? null : text.toData());
+			Map<String, Object> result = PresentationData.map();
+			PresentationData.put(result, PresentationData.FILL, fill == null ? null : fill.toData());
+			PresentationData.put(result, PresentationData.TEXT, text == null ? null : text.toData());
 			return result;
 		}
 	}
 
 	/**
-	 * The data representation with the keys {@link TemplateData#ROWS}, {@link TemplateData#COLUMNS},
-	 * {@link TemplateData#COLUMN_WIDTHS}, {@link TemplateData#STYLE},
-	 * {@link TemplateData#HEADER_CELL} and {@link TemplateData#BODY_CELL}.
+	 * The data representation with the keys {@link PresentationData#ROWS}, {@link PresentationData#COLUMNS},
+	 * {@link PresentationData#COLUMN_WIDTHS}, {@link PresentationData#STYLE},
+	 * {@link PresentationData#HEADER_CELL} and {@link PresentationData#BODY_CELL}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.ROWS, Double.valueOf(rows));
-		result.put(TemplateData.COLUMNS, Double.valueOf(columns));
-		result.put(TemplateData.COLUMN_WIDTHS, TemplateData.list(columnWidths, TemplateData::number));
-		TemplateData.put(result, TemplateData.STYLE, style);
-		TemplateData.put(result, TemplateData.HEADER_CELL, headerCell == null ? null : headerCell.toData());
-		TemplateData.put(result, TemplateData.BODY_CELL, bodyCell == null ? null : bodyCell.toData());
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.ROWS, Double.valueOf(rows));
+		result.put(PresentationData.COLUMNS, Double.valueOf(columns));
+		result.put(PresentationData.COLUMN_WIDTHS, PresentationData.list(columnWidths, PresentationData::number));
+		PresentationData.put(result, PresentationData.STYLE, style);
+		PresentationData.put(result, PresentationData.HEADER_CELL, headerCell == null ? null : headerCell.toData());
+		PresentationData.put(result, PresentationData.BODY_CELL, bodyCell == null ? null : bodyCell.toData());
 		return result;
 	}
 

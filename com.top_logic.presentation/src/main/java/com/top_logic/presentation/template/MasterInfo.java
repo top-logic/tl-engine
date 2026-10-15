@@ -8,6 +8,8 @@ package com.top_logic.presentation.template;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * A slide master of a presentation template.
  *
@@ -29,18 +31,18 @@ public record MasterInfo(int index, String name, ThemeInfo theme, PaintInfo back
 		List<PlaceholderInfo> placeholders, List<ShapeInfo> decorations) {
 
 	/**
-	 * The data representation with the keys {@link TemplateData#INDEX}, {@link TemplateData#NAME},
-	 * {@link TemplateData#THEME}, {@link TemplateData#BACKGROUND},
-	 * {@link TemplateData#PLACEHOLDERS} and {@link TemplateData#DECORATIONS}.
+	 * The data representation with the keys {@link PresentationData#INDEX}, {@link PresentationData#NAME},
+	 * {@link PresentationData#THEME}, {@link PresentationData#BACKGROUND},
+	 * {@link PresentationData#PLACEHOLDERS} and {@link PresentationData#DECORATIONS}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.INDEX, Double.valueOf(index));
-		TemplateData.put(result, TemplateData.NAME, name);
-		result.put(TemplateData.THEME, theme.toData());
-		TemplateData.put(result, TemplateData.BACKGROUND, background == null ? null : background.toData());
-		result.put(TemplateData.PLACEHOLDERS, TemplateData.list(placeholders, PlaceholderInfo::toData));
-		result.put(TemplateData.DECORATIONS, TemplateData.list(decorations, ShapeInfo::toData));
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.INDEX, Double.valueOf(index));
+		PresentationData.put(result, PresentationData.NAME, name);
+		result.put(PresentationData.THEME, theme.toData());
+		PresentationData.put(result, PresentationData.BACKGROUND, background == null ? null : background.toData());
+		result.put(PresentationData.PLACEHOLDERS, PresentationData.list(placeholders, PlaceholderInfo::toData));
+		result.put(PresentationData.DECORATIONS, PresentationData.list(decorations, ShapeInfo::toData));
 		return result;
 	}
 

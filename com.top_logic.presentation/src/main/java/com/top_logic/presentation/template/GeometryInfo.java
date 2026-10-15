@@ -7,6 +7,8 @@ package com.top_logic.presentation.template;
 
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * The outline geometry of a shape in a presentation template.
  *
@@ -23,19 +25,19 @@ import java.util.Map;
 public record GeometryInfo(String preset, Map<String, Double> adjust, Double cornerRadius) {
 
 	/**
-	 * The data representation with the keys {@link TemplateData#PRESET},
-	 * {@link TemplateData#ADJUST} and {@link TemplateData#CORNER_RADIUS}.
+	 * The data representation with the keys {@link PresentationData#PRESET},
+	 * {@link PresentationData#ADJUST} and {@link PresentationData#CORNER_RADIUS}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		TemplateData.put(result, TemplateData.PRESET, preset);
+		Map<String, Object> result = PresentationData.map();
+		PresentationData.put(result, PresentationData.PRESET, preset);
 		if (!adjust.isEmpty()) {
-			Map<String, Object> values = TemplateData.map();
+			Map<String, Object> values = PresentationData.map();
 			values.putAll(adjust);
-			result.put(TemplateData.ADJUST, values);
+			result.put(PresentationData.ADJUST, values);
 		}
-		TemplateData.put(result, TemplateData.CORNER_RADIUS,
-			cornerRadius == null ? null : TemplateData.number(cornerRadius));
+		PresentationData.put(result, PresentationData.CORNER_RADIUS,
+			cornerRadius == null ? null : PresentationData.number(cornerRadius));
 		return result;
 	}
 

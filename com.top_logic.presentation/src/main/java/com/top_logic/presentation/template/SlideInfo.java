@@ -8,6 +8,8 @@ package com.top_logic.presentation.template;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.presentation.data.PresentationData;
+
 /**
  * A sample slide of a presentation template.
  *
@@ -27,19 +29,19 @@ public record SlideInfo(int index, int layoutIndex, String layoutName, PaintInfo
 		List<ShapeInfo> shapes) {
 
 	/**
-	 * The data representation with the keys {@link TemplateData#INDEX}, {@link TemplateData#LAYOUT}
-	 * (with {@link TemplateData#INDEX} and {@link TemplateData#NAME}),
-	 * {@link TemplateData#BACKGROUND} and {@link TemplateData#SHAPES}.
+	 * The data representation with the keys {@link PresentationData#INDEX}, {@link PresentationData#LAYOUT}
+	 * (with {@link PresentationData#INDEX} and {@link PresentationData#NAME}),
+	 * {@link PresentationData#BACKGROUND} and {@link PresentationData#SHAPES}.
 	 */
 	public Map<String, Object> toData() {
-		Map<String, Object> result = TemplateData.map();
-		result.put(TemplateData.INDEX, Double.valueOf(index));
-		Map<String, Object> layout = TemplateData.map();
-		layout.put(TemplateData.INDEX, Double.valueOf(layoutIndex));
-		TemplateData.put(layout, TemplateData.NAME, layoutName);
-		result.put(TemplateData.LAYOUT, layout);
-		TemplateData.put(result, TemplateData.BACKGROUND, background == null ? null : background.toData());
-		result.put(TemplateData.SHAPES, TemplateData.list(shapes, ShapeInfo::toData));
+		Map<String, Object> result = PresentationData.map();
+		result.put(PresentationData.INDEX, Double.valueOf(index));
+		Map<String, Object> layout = PresentationData.map();
+		layout.put(PresentationData.INDEX, Double.valueOf(layoutIndex));
+		PresentationData.put(layout, PresentationData.NAME, layoutName);
+		result.put(PresentationData.LAYOUT, layout);
+		PresentationData.put(result, PresentationData.BACKGROUND, background == null ? null : background.toData());
+		result.put(PresentationData.SHAPES, PresentationData.list(shapes, ShapeInfo::toData));
 		return result;
 	}
 

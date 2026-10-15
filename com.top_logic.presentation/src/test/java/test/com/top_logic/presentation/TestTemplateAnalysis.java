@@ -28,7 +28,7 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.presentation.template.ColorInfo;
 import com.top_logic.presentation.template.LayoutInfo;
 import com.top_logic.presentation.template.TemplateAnalysis;
-import com.top_logic.presentation.template.TemplateData;
+import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -67,24 +67,24 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 	}
 
 	public void testSlideSize() throws Exception {
-		assertEquals(960.0, get(analysis(), TemplateData.SLIDE_SIZE, TemplateData.WIDTH));
-		assertEquals(540.0, get(analysis(), TemplateData.SLIDE_SIZE, TemplateData.HEIGHT));
+		assertEquals(960.0, get(analysis(), PresentationData.SLIDE_SIZE, PresentationData.WIDTH));
+		assertEquals(540.0, get(analysis(), PresentationData.SLIDE_SIZE, PresentationData.HEIGHT));
 	}
 
 	public void testLayoutOrder() throws Exception {
-		List<?> layouts = list(analysis(), TemplateData.LAYOUTS);
+		List<?> layouts = list(analysis(), PresentationData.LAYOUTS);
 		assertEquals(14, layouts.size());
 		for (int n = 0; n < layouts.size(); n++) {
-			assertEquals(Double.valueOf(n), get(layouts.get(n), TemplateData.INDEX));
+			assertEquals(Double.valueOf(n), get(layouts.get(n), PresentationData.INDEX));
 		}
-		assertEquals("1_Titel / Abschluss", get(layouts.get(TITLE_LAYOUT), TemplateData.NAME));
-		assertEquals("3_Grid", get(layouts.get(GRID_LAYOUT), TemplateData.NAME));
-		assertEquals("4_Text volle Breite", get(layouts.get(CONTENT_LAYOUT), TemplateData.NAME));
+		assertEquals("1_Titel / Abschluss", get(layouts.get(TITLE_LAYOUT), PresentationData.NAME));
+		assertEquals("3_Grid", get(layouts.get(GRID_LAYOUT), PresentationData.NAME));
+		assertEquals("4_Text volle Breite", get(layouts.get(CONTENT_LAYOUT), PresentationData.NAME));
 
 		// The layouts reference their masters.
-		assertEquals(0.0, get(layouts.get(TITLE_LAYOUT), TemplateData.MASTER, TemplateData.INDEX));
-		assertEquals(2.0, get(layouts.get(CONTENT_LAYOUT), TemplateData.MASTER, TemplateData.INDEX));
-		assertEquals("3_Inhalt", get(layouts.get(CONTENT_LAYOUT), TemplateData.MASTER, TemplateData.NAME));
+		assertEquals(0.0, get(layouts.get(TITLE_LAYOUT), PresentationData.MASTER, PresentationData.INDEX));
+		assertEquals(2.0, get(layouts.get(CONTENT_LAYOUT), PresentationData.MASTER, PresentationData.INDEX));
+		assertEquals("3_Inhalt", get(layouts.get(CONTENT_LAYOUT), PresentationData.MASTER, PresentationData.NAME));
 	}
 
 	public void testScriptAccess() throws Exception {
@@ -92,64 +92,64 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 	}
 
 	public void testTheme() throws Exception {
-		Map<?, ?> contentTheme = (Map<?, ?>) get(analysis(), TemplateData.MASTERS, 2, TemplateData.THEME);
-		assertEquals("2968C8", get(contentTheme, TemplateData.COLORS, "accent1"));
-		assertEquals("101113", get(contentTheme, TemplateData.COLORS, "dk1"));
-		assertEquals("FFFFFF", get(contentTheme, TemplateData.COLORS, "lt1"));
-		assertEquals("Open Sans", get(contentTheme, TemplateData.FONTS, TemplateData.MAJOR));
-		assertEquals("Open Sans", get(contentTheme, TemplateData.FONTS, TemplateData.MINOR));
+		Map<?, ?> contentTheme = (Map<?, ?>) get(analysis(), PresentationData.MASTERS, 2, PresentationData.THEME);
+		assertEquals("2968C8", get(contentTheme, PresentationData.COLORS, "accent1"));
+		assertEquals("101113", get(contentTheme, PresentationData.COLORS, "dk1"));
+		assertEquals("FFFFFF", get(contentTheme, PresentationData.COLORS, "lt1"));
+		assertEquals("Open Sans", get(contentTheme, PresentationData.FONTS, PresentationData.MAJOR));
+		assertEquals("Open Sans", get(contentTheme, PresentationData.FONTS, PresentationData.MINOR));
 
 		// The title master swaps dark and light text colors for its dark background.
-		assertEquals("FFFFFF", get(analysis(), TemplateData.MASTERS, 0, TemplateData.THEME, TemplateData.COLORS, "dk1"));
+		assertEquals("FFFFFF", get(analysis(), PresentationData.MASTERS, 0, PresentationData.THEME, PresentationData.COLORS, "dk1"));
 	}
 
 	public void testTitleLayout() throws Exception {
 		Map<?, ?> layout = layout(TITLE_LAYOUT);
-		assertEquals(TemplateData.BACKGROUND + " of the title layout", "picture",
-			get(layout, TemplateData.BACKGROUND, TemplateData.TYPE));
+		assertEquals(PresentationData.BACKGROUND + " of the title layout", "picture",
+			get(layout, PresentationData.BACKGROUND, PresentationData.TYPE));
 
 		Map<?, ?> title = placeholder(layout, "ctrTitle", 0);
-		assertEquals("center", get(title, TemplateData.TEXT, TemplateData.ALIGN));
-		assertEquals("FFFFFF", get(title, TemplateData.TEXT, TemplateData.COLOR, TemplateData.RGB));
-		assertEquals("tx1", get(title, TemplateData.TEXT, TemplateData.COLOR, TemplateData.SCHEME));
-		assertEquals(Boolean.TRUE, get(title, TemplateData.TEXT, TemplateData.CAPS));
+		assertEquals("center", get(title, PresentationData.TEXT, PresentationData.ALIGN));
+		assertEquals("FFFFFF", get(title, PresentationData.TEXT, PresentationData.COLOR, PresentationData.RGB));
+		assertEquals("tx1", get(title, PresentationData.TEXT, PresentationData.COLOR, PresentationData.SCHEME));
+		assertEquals(Boolean.TRUE, get(title, PresentationData.TEXT, PresentationData.CAPS));
 
 		Map<?, ?> subtitle = placeholder(layout, "subTitle", 1);
-		assertEquals("center", get(subtitle, TemplateData.TEXT, TemplateData.ALIGN));
-		assertEquals("FFFFFF", get(subtitle, TemplateData.TEXT, TemplateData.COLOR, TemplateData.RGB));
-		assertTrue(number(subtitle, TemplateData.Y) > number(title, TemplateData.Y));
+		assertEquals("center", get(subtitle, PresentationData.TEXT, PresentationData.ALIGN));
+		assertEquals("FFFFFF", get(subtitle, PresentationData.TEXT, PresentationData.COLOR, PresentationData.RGB));
+		assertTrue(number(subtitle, PresentationData.Y) > number(title, PresentationData.Y));
 	}
 
 	public void testContentLayout() throws Exception {
 		Map<?, ?> layout = layout(CONTENT_LAYOUT);
-		assertEquals(List.of(), get(layout, TemplateData.DECORATIONS));
+		assertEquals(List.of(), get(layout, PresentationData.DECORATIONS));
 
 		Map<?, ?> title = placeholder(layout, "title", 0);
-		assertEquals("Open Sans", get(title, TemplateData.TEXT, TemplateData.FONT));
-		assertEquals(28.0, get(title, TemplateData.TEXT, TemplateData.SIZE));
-		assertEquals(Boolean.TRUE, get(title, TemplateData.TEXT, TemplateData.CAPS));
-		assertEquals(Boolean.TRUE, get(title, TemplateData.TEXT, TemplateData.BOLD));
-		assertEquals("accent1", get(title, TemplateData.TEXT, TemplateData.COLOR, TemplateData.SCHEME));
-		assertEquals("<Titel hinzufügen>", get(title, TemplateData.PROMPT));
+		assertEquals("Open Sans", get(title, PresentationData.TEXT, PresentationData.FONT));
+		assertEquals(28.0, get(title, PresentationData.TEXT, PresentationData.SIZE));
+		assertEquals(Boolean.TRUE, get(title, PresentationData.TEXT, PresentationData.CAPS));
+		assertEquals(Boolean.TRUE, get(title, PresentationData.TEXT, PresentationData.BOLD));
+		assertEquals("accent1", get(title, PresentationData.TEXT, PresentationData.COLOR, PresentationData.SCHEME));
+		assertEquals("<Titel hinzufügen>", get(title, PresentationData.PROMPT));
 
 		Map<?, ?> subtitle = placeholder(layout, "body", 13);
 		Map<?, ?> footer = placeholder(layout, "body", 4);
 		Map<?, ?> content = placeholder(layout, "body", 21);
-		assertEquals("Subtitel 1", get(subtitle, TemplateData.NAME));
-		assertEquals("Footer", get(footer, TemplateData.NAME));
+		assertEquals("Subtitel 1", get(subtitle, PresentationData.NAME));
+		assertEquals("Footer", get(footer, PresentationData.NAME));
 
 		// Title, subtitle, content area and footer are stacked from top to bottom.
-		double subtitleBottom = number(subtitle, TemplateData.Y) + number(subtitle, TemplateData.HEIGHT);
-		assertTrue(number(subtitle, TemplateData.Y) >= number(title, TemplateData.Y) + number(title, TemplateData.HEIGHT) - 0.1);
-		assertTrue(number(content, TemplateData.Y) >= subtitleBottom - 0.1);
-		assertTrue(number(footer, TemplateData.Y) > subtitleBottom);
-		assertTrue(number(footer, TemplateData.Y) + number(footer, TemplateData.HEIGHT) <= 540);
+		double subtitleBottom = number(subtitle, PresentationData.Y) + number(subtitle, PresentationData.HEIGHT);
+		assertTrue(number(subtitle, PresentationData.Y) >= number(title, PresentationData.Y) + number(title, PresentationData.HEIGHT) - 0.1);
+		assertTrue(number(content, PresentationData.Y) >= subtitleBottom - 0.1);
+		assertTrue(number(footer, PresentationData.Y) > subtitleBottom);
+		assertTrue(number(footer, PresentationData.Y) + number(footer, PresentationData.HEIGHT) <= 540);
 
 		// The subtitle color is a darker variant of the accent color.
-		Map<?, ?> subtitleColor = (Map<?, ?>) get(subtitle, TemplateData.TEXT, TemplateData.COLOR);
-		assertEquals("accent1", subtitleColor.get(TemplateData.SCHEME));
+		Map<?, ?> subtitleColor = (Map<?, ?>) get(subtitle, PresentationData.TEXT, PresentationData.COLOR);
+		assertEquals("accent1", subtitleColor.get(PresentationData.SCHEME));
 		assertEquals(0.75, subtitleColor.get(ColorInfo.LUM_MOD));
-		assertEquals(10.0, get(footer, TemplateData.TEXT, TemplateData.SIZE));
+		assertEquals(10.0, get(footer, PresentationData.TEXT, PresentationData.SIZE));
 	}
 
 	public void testAgendaLayouts() throws Exception {
@@ -157,11 +157,11 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 		for (int n = 0; n < agendaLayouts.length; n++) {
 			int entries = n + 3;
 			Map<?, ?> layout = layout(agendaLayouts[n]);
-			assertTrue((String) get(layout, TemplateData.NAME), ((String) get(layout, TemplateData.NAME))
+			assertTrue((String) get(layout, PresentationData.NAME), ((String) get(layout, PresentationData.NAME))
 				.endsWith("Index (" + entries + ")"));
 			int entryPlaceholders = 0;
-			for (Object placeholder : list(layout, TemplateData.PLACEHOLDERS)) {
-				if ("body".equals(get(placeholder, TemplateData.TYPE)) && !Double.valueOf(4).equals(get(placeholder, TemplateData.IDX))) {
+			for (Object placeholder : list(layout, PresentationData.PLACEHOLDERS)) {
+				if ("body".equals(get(placeholder, PresentationData.TYPE)) && !Double.valueOf(4).equals(get(placeholder, PresentationData.IDX))) {
 					entryPlaceholders++;
 				}
 			}
@@ -170,57 +170,57 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 	}
 
 	public void testGridDecorations() throws Exception {
-		List<?> decorations = list(layout(GRID_LAYOUT), TemplateData.DECORATIONS);
+		List<?> decorations = list(layout(GRID_LAYOUT), PresentationData.DECORATIONS);
 		assertEquals(84, decorations.size());
 		for (Object decoration : decorations) {
-			assertEquals("shape", get(decoration, TemplateData.KIND));
-			assertEquals("rect", get(decoration, TemplateData.GEOMETRY, TemplateData.PRESET));
-			Map<?, ?> color = (Map<?, ?>) get(decoration, TemplateData.FILL, TemplateData.COLOR);
-			assertEquals("solid", get(decoration, TemplateData.FILL, TemplateData.TYPE));
-			assertEquals("FFBCAD", color.get(TemplateData.RGB));
-			assertEquals("accent2", color.get(TemplateData.SCHEME));
+			assertEquals("shape", get(decoration, PresentationData.KIND));
+			assertEquals("rect", get(decoration, PresentationData.GEOMETRY, PresentationData.PRESET));
+			Map<?, ?> color = (Map<?, ?>) get(decoration, PresentationData.FILL, PresentationData.COLOR);
+			assertEquals("solid", get(decoration, PresentationData.FILL, PresentationData.TYPE));
+			assertEquals("FFBCAD", color.get(PresentationData.RGB));
+			assertEquals("accent2", color.get(PresentationData.SCHEME));
 			assertEquals(0.4, color.get(ColorInfo.LUM_MOD));
 			assertEquals(0.6, color.get(ColorInfo.LUM_OFF));
 		}
 	}
 
 	public void testCard() throws Exception {
-		Map<?, ?> slide = (Map<?, ?>) get(analysis(), TemplateData.SLIDES, 1);
-		assertEquals(Double.valueOf(CONTENT_LAYOUT), get(slide, TemplateData.LAYOUT, TemplateData.INDEX));
+		Map<?, ?> slide = (Map<?, ?>) get(analysis(), PresentationData.SLIDES, 1);
+		assertEquals(Double.valueOf(CONTENT_LAYOUT), get(slide, PresentationData.LAYOUT, PresentationData.INDEX));
 
-		Map<?, ?> card = shape(list(slide, TemplateData.SHAPES), "Abgerundetes Rechteck 89");
-		assertEquals("shape", get(card, TemplateData.KIND));
-		assertEquals("roundRect", get(card, TemplateData.GEOMETRY, TemplateData.PRESET));
-		assertTrue(number((Map<?, ?>) get(card, TemplateData.GEOMETRY), TemplateData.CORNER_RADIUS) > 0);
+		Map<?, ?> card = shape(list(slide, PresentationData.SHAPES), "Abgerundetes Rechteck 89");
+		assertEquals("shape", get(card, PresentationData.KIND));
+		assertEquals("roundRect", get(card, PresentationData.GEOMETRY, PresentationData.PRESET));
+		assertTrue(number((Map<?, ?>) get(card, PresentationData.GEOMETRY), PresentationData.CORNER_RADIUS) > 0);
 
-		assertEquals("gradient", get(card, TemplateData.FILL, TemplateData.TYPE));
-		List<?> stops = list((Map<?, ?>) get(card, TemplateData.FILL), TemplateData.STOPS);
+		assertEquals("gradient", get(card, PresentationData.FILL, PresentationData.TYPE));
+		List<?> stops = list((Map<?, ?>) get(card, PresentationData.FILL), PresentationData.STOPS);
 		assertEquals(2, stops.size());
-		assertEquals("bg1", get(stops.get(0), TemplateData.COLOR, TemplateData.SCHEME));
-		assertEquals("F2F2F2", get(stops.get(0), TemplateData.COLOR, TemplateData.RGB));
-		assertEquals(1.0, get(stops.get(1), TemplateData.POSITION));
+		assertEquals("bg1", get(stops.get(0), PresentationData.COLOR, PresentationData.SCHEME));
+		assertEquals("F2F2F2", get(stops.get(0), PresentationData.COLOR, PresentationData.RGB));
+		assertEquals(1.0, get(stops.get(1), PresentationData.POSITION));
 
-		assertEquals("accent1", get(card, TemplateData.LINE, TemplateData.STOPS, 1, TemplateData.COLOR, TemplateData.SCHEME));
-		assertEquals(1.0, get(card, TemplateData.LINE, TemplateData.WIDTH));
+		assertEquals("accent1", get(card, PresentationData.LINE, PresentationData.STOPS, 1, PresentationData.COLOR, PresentationData.SCHEME));
+		assertEquals(1.0, get(card, PresentationData.LINE, PresentationData.WIDTH));
 
-		Map<?, ?> shadow = (Map<?, ?>) get(card, TemplateData.SHADOW);
-		assertEquals("accent1", get(shadow, TemplateData.COLOR, TemplateData.SCHEME));
-		assertEquals(0.75, get(shadow, TemplateData.COLOR, ColorInfo.LUM_MOD));
-		assertEquals(0.2, get(shadow, TemplateData.COLOR, ColorInfo.ALPHA));
-		assertEquals(16.0, get(shadow, TemplateData.BLUR));
-		assertEquals(8.0, get(shadow, TemplateData.DISTANCE));
-		assertEquals(90.0, get(shadow, TemplateData.DIRECTION));
+		Map<?, ?> shadow = (Map<?, ?>) get(card, PresentationData.SHADOW);
+		assertEquals("accent1", get(shadow, PresentationData.COLOR, PresentationData.SCHEME));
+		assertEquals(0.75, get(shadow, PresentationData.COLOR, ColorInfo.LUM_MOD));
+		assertEquals(0.2, get(shadow, PresentationData.COLOR, ColorInfo.ALPHA));
+		assertEquals(16.0, get(shadow, PresentationData.BLUR));
+		assertEquals(8.0, get(shadow, PresentationData.DISTANCE));
+		assertEquals(90.0, get(shadow, PresentationData.DIRECTION));
 
-		assertEquals("Beispiel", get(card, TemplateData.TEXT, TemplateData.CONTENT));
-		assertEquals(14.0, get(card, TemplateData.TEXT, TemplateData.SIZE));
+		assertEquals("Beispiel", get(card, PresentationData.TEXT, PresentationData.CONTENT));
+		assertEquals(14.0, get(card, PresentationData.TEXT, PresentationData.SIZE));
 	}
 
 	public void testGroupChildrenOnSlideCoordinates() throws Exception {
-		for (Object slide : list(analysis(), TemplateData.SLIDES)) {
-			for (Object shape : list((Map<?, ?>) slide, TemplateData.SHAPES)) {
-				if ("group".equals(get(shape, TemplateData.KIND))) {
+		for (Object slide : list(analysis(), PresentationData.SLIDES)) {
+			for (Object shape : list((Map<?, ?>) slide, PresentationData.SHAPES)) {
+				if ("group".equals(get(shape, PresentationData.KIND))) {
 					Rectangle2D group = bounds((Map<?, ?>) shape);
-					for (Object child : list((Map<?, ?>) shape, TemplateData.CHILDREN)) {
+					for (Object child : list((Map<?, ?>) shape, PresentationData.CHILDREN)) {
 						Rectangle2D childBounds = bounds((Map<?, ?>) child);
 						assertTrue(child + " outside " + group,
 							group.createUnion(childBounds).getWidth() <= group.getWidth() + 0.1
@@ -272,32 +272,32 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 		}
 
 		Map<?, ?> analysis = (Map<?, ?>) eval("t -> pptAnalyze($t)", data);
-		assertEquals(720.0, get(analysis, TemplateData.SLIDE_SIZE, TemplateData.WIDTH));
-		assertEquals(1, list(analysis, TemplateData.MASTERS).size());
+		assertEquals(720.0, get(analysis, PresentationData.SLIDE_SIZE, PresentationData.WIDTH));
+		assertEquals(1, list(analysis, PresentationData.MASTERS).size());
 
-		List<?> layouts = list(analysis, TemplateData.LAYOUTS);
+		List<?> layouts = list(analysis, PresentationData.LAYOUTS);
 		List<Object> types = new ArrayList<>();
 		for (Object layout : layouts) {
-			types.add(get(layout, TemplateData.TYPE));
+			types.add(get(layout, PresentationData.TYPE));
 		}
 		assertTrue(types.toString(), types.contains(SlideLayout.TITLE.name()));
 		assertTrue(types.toString(), types.contains(SlideLayout.TITLE_AND_CONTENT.name()));
 
-		List<?> shapes = list((Map<?, ?>) get(analysis, TemplateData.SLIDES, 0), TemplateData.SHAPES);
+		List<?> shapes = list((Map<?, ?>) get(analysis, PresentationData.SLIDES, 0), PresentationData.SHAPES);
 		Map<?, ?> shape = (Map<?, ?>) shapes.get(0);
-		assertEquals("shape", get(shape, TemplateData.KIND));
-		assertEquals("roundRect", get(shape, TemplateData.GEOMETRY, TemplateData.PRESET));
-		assertEquals(10.0, get(shape, TemplateData.X));
-		assertEquals("FF0000", get(shape, TemplateData.FILL, TemplateData.COLOR, TemplateData.RGB));
-		assertNull(get(shape, TemplateData.FILL, TemplateData.COLOR, TemplateData.SCHEME));
-		assertEquals("Hello", get(shape, TemplateData.TEXT, TemplateData.CONTENT));
+		assertEquals("shape", get(shape, PresentationData.KIND));
+		assertEquals("roundRect", get(shape, PresentationData.GEOMETRY, PresentationData.PRESET));
+		assertEquals(10.0, get(shape, PresentationData.X));
+		assertEquals("FF0000", get(shape, PresentationData.FILL, PresentationData.COLOR, PresentationData.RGB));
+		assertNull(get(shape, PresentationData.FILL, PresentationData.COLOR, PresentationData.SCHEME));
+		assertEquals("Hello", get(shape, PresentationData.TEXT, PresentationData.CONTENT));
 
 		Map<?, ?> table = (Map<?, ?>) shapes.get(1);
-		assertEquals("table", get(table, TemplateData.KIND));
-		assertEquals(2.0, get(table, TemplateData.TABLE, TemplateData.ROWS));
-		assertEquals(3.0, get(table, TemplateData.TABLE, TemplateData.COLUMNS));
-		assertEquals("Head", get(table, TemplateData.TABLE, TemplateData.HEADER_CELL, TemplateData.TEXT, TemplateData.CONTENT));
-		assertEquals("Body", get(table, TemplateData.TABLE, TemplateData.BODY_CELL, TemplateData.TEXT, TemplateData.CONTENT));
+		assertEquals("table", get(table, PresentationData.KIND));
+		assertEquals(2.0, get(table, PresentationData.TABLE, PresentationData.ROWS));
+		assertEquals(3.0, get(table, PresentationData.TABLE, PresentationData.COLUMNS));
+		assertEquals("Head", get(table, PresentationData.TABLE, PresentationData.HEADER_CELL, PresentationData.TEXT, PresentationData.CONTENT));
+		assertEquals("Body", get(table, PresentationData.TABLE, PresentationData.BODY_CELL, PresentationData.TEXT, PresentationData.CONTENT));
 	}
 
 	public void testNotAPresentation() throws Exception {
@@ -310,26 +310,26 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 	}
 
 	private Map<?, ?> layout(int index) throws Exception {
-		return (Map<?, ?>) get(analysis(), TemplateData.LAYOUTS, index);
+		return (Map<?, ?>) get(analysis(), PresentationData.LAYOUTS, index);
 	}
 
 	private static Map<?, ?> placeholder(Map<?, ?> layout, String type, int idx) {
-		for (Object placeholder : list(layout, TemplateData.PLACEHOLDERS)) {
-			if (type.equals(get(placeholder, TemplateData.TYPE))
-				&& Double.valueOf(idx).equals(get(placeholder, TemplateData.IDX))) {
+		for (Object placeholder : list(layout, PresentationData.PLACEHOLDERS)) {
+			if (type.equals(get(placeholder, PresentationData.TYPE))
+				&& Double.valueOf(idx).equals(get(placeholder, PresentationData.IDX))) {
 				return (Map<?, ?>) placeholder;
 			}
 		}
-		fail("No placeholder " + type + "/" + idx + " in " + layout.get(TemplateData.NAME));
+		fail("No placeholder " + type + "/" + idx + " in " + layout.get(PresentationData.NAME));
 		return null;
 	}
 
 	private static Map<?, ?> shape(List<?> shapes, String name) {
 		for (Object shape : shapes) {
-			if (name.equals(get(shape, TemplateData.NAME))) {
+			if (name.equals(get(shape, PresentationData.NAME))) {
 				return (Map<?, ?>) shape;
 			}
-			Object children = ((Map<?, ?>) shape).get(TemplateData.CHILDREN);
+			Object children = ((Map<?, ?>) shape).get(PresentationData.CHILDREN);
 			if (children != null) {
 				Map<?, ?> result = shape((List<?>) children, name);
 				if (result != null) {
@@ -341,8 +341,8 @@ public class TestTemplateAnalysis extends AbstractSearchExpressionTest {
 	}
 
 	private static Rectangle2D bounds(Map<?, ?> shape) {
-		return new Rectangle2D.Double(number(shape, TemplateData.X), number(shape, TemplateData.Y),
-			number(shape, TemplateData.WIDTH), number(shape, TemplateData.HEIGHT));
+		return new Rectangle2D.Double(number(shape, PresentationData.X), number(shape, PresentationData.Y),
+			number(shape, PresentationData.WIDTH), number(shape, PresentationData.HEIGHT));
 	}
 
 	private static List<?> list(Map<?, ?> data, String key) {

@@ -67,3 +67,12 @@ export const ICON_COLUMNS = 'css:fa-solid fa-gear';
 
 /** Saving the current criteria under a name. */
 export const ICON_SAVE = 'css:fa-regular fa-bookmark';
+
+/** Closes a surface: dialog, window, drawer, snackbar. */
+export const ICON_CLOSE = 'css:fa-solid fa-xmark';
+
+/** Maximizes a window. */
+export const ICON_MAXIMIZE = 'css:fa-regular fa-window-maximize';
+
+/** Gives a maximized window its size back. */
+export const ICON_RESTORE = 'css:fa-regular fa-window-restore';

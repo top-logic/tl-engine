@@ -36,10 +36,10 @@ import com.top_logic.util.error.ErrorHandlingHelper;
 public final class CommandErrors {
 
 	/**
-	 * CSS class of the summary line of a command-error message, separating it from the detail
-	 * messages listed below it.
+	 * CSS classes of the summary line of a command-error message, separating it from the detail
+	 * messages listed below it: the title of the alert the snackbar is (design system package).
 	 */
-	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
+	private static final String CSS_SNACKBAR_TITLE = "tl-alert__title tl-type-body-strong";
 
 	private CommandErrors() {
 		// Utility class.

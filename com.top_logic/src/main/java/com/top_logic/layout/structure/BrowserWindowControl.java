@@ -9,7 +9,6 @@ import static java.util.Collections.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,8 +21,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.apache.commons.codec.binary.Hex;
 
 import com.top_logic.base.services.simpleajax.AJAXConstants;
 import com.top_logic.base.services.simpleajax.ClientAction;
@@ -85,6 +82,7 @@ import com.top_logic.layout.history.HistoryEntry;
 import com.top_logic.layout.layoutRenderer.BrowserWindowRenderer;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.servlet.CacheControl;
+import com.top_logic.layout.servlet.ContentDisposition;
 import com.top_logic.layout.window.WindowManager;
 import com.top_logic.mig.html.layout.CommandDispatcher;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -1170,9 +1168,9 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		
 		// mantra to ensure that the browser does not open the file in the frame
 		if (showInline) {
-			response.setHeader("Content-Disposition", "inline; filename=\"" + dataItem.getName() + "\"");
+			ContentDisposition.setInline(response, dataItem.getName());
 		} else {
-			setContentDispositionHeader(response, dataItem.getName());
+			ContentDisposition.setAttachment(response, dataItem.getName());
 		}
 		CacheControl.setNoCache(response);
 		
@@ -1186,21 +1184,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		dataItem.deliverTo(response.getOutputStream());
 	}
 
-	private void setContentDispositionHeader(final HttpServletResponse response, String name)
-			throws UnsupportedEncodingException {
-		// The "filename*" property allows to set the character set used.
-		StringBuilder buffer = new StringBuilder("attachment; filename*=UTF-8''");
-
-		// Encode the name as hexadecimal values of utf-8 code points to consistently support
-		// non-ASCII characters in the file name, see https://tools.ietf.org/html/rfc5987.
-		char[] encodedName = Hex.encodeHex(name.getBytes("UTF-8"));
-		for (int i = 0; i < encodedName.length; i += 2) {
-			buffer.append("%");
-			buffer.append(encodedName[i]);
-			buffer.append(encodedName[i + 1]);
-		}
-		response.setHeader("Content-Disposition", buffer.toString());
-	}
 	
 	/**
 	 * Returns the item stored in {@link #contents} under the given key and, if

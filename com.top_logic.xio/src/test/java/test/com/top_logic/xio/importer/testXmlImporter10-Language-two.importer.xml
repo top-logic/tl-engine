@@ -1,0 +1,5 @@
+<handler>
+	<tag name="a">
+		<set-translation name="label" language="de" language-var="language"/>
+	</tag>
+</handler>

@@ -57,10 +57,15 @@ public class ReportQueueTest extends BasicTestCase {
 		// Suppress (correct) ERROR message from ReportGenerator
         try {
 			_queue.addJob(theToken);
-            
-			assertTrue(_queue.jobQueued(theToken));
-            Thread.sleep(500);
-            
+
+			// The queue thread may already have processed the job. A job leaves the queue only after
+			// it was registered as executed, therefore the queue must be checked first.
+			assertTrue(_queue.jobQueued(theToken) || _queue.jobExecuted(theToken));
+
+			long timeout = System.currentTimeMillis() + 10000;
+			while (!_queue.jobExecuted(theToken) && System.currentTimeMillis() < timeout) {
+				Thread.sleep(10);
+			}
 			assertTrue(_queue.jobExecuted(theToken));
         } finally {
             Logger.configureStdout();

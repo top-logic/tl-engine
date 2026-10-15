@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -45,6 +46,9 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.service.openapi.common.document.Described;
 import com.top_logic.service.openapi.common.document.ParameterLocation;
+import com.top_logic.service.openapi.server.schema.JsonSchemaCompiler;
+import com.top_logic.service.openapi.server.schema.JsonSchemaValidator;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Concrete request parameter, i.e. a {@link RequestParameter} that holds the own implementation.
@@ -374,6 +378,18 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 	}
 
 	/**
+	 * The maximum number of schema violations reported for a single value.
+	 */
+	private static final int MAX_REPORTED_VIOLATIONS = 10;
+
+	/**
+	 * The validator for values of this parameter, <code>null</code> if values are not validated.
+	 * 
+	 * @see #compileSchemas(JsonSchemaCompiler)
+	 */
+	private JsonSchemaValidator _schemaValidator;
+
+	/**
 	 * Creates a {@link ConcreteRequestParameter} from configuration.
 	 * 
 	 * @param context
@@ -384,6 +400,49 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 	@CalledByReflection
 	public ConcreteRequestParameter(InstantiationContext context, C config) {
 		super(context, config);
+	}
+
+	/**
+	 * Compiles the schemas that values of this parameter are validated against.
+	 * 
+	 * <p>
+	 * Each {@link ParameterFormat#OBJECT} value of this parameter, whose configuration declares a
+	 * {@link ParameterConfiguration#getSchema() schema}, is validated against that schema when it is
+	 * parsed from a request. Values are validated only after this method has been called.
+	 * </p>
+	 *
+	 * @param compiler
+	 *        The compiler resolving references to the global schemas of the server.
+	 * @throws TopLogicException
+	 *         If a schema of this parameter cannot be compiled.
+	 */
+	public void compileSchemas(JsonSchemaCompiler compiler) throws TopLogicException {
+		_schemaValidator = compileSchema(compiler, getConfig());
+	}
+
+	/**
+	 * Compiles the schema of the given parameter.
+	 *
+	 * @param compiler
+	 *        The compiler resolving references to the global schemas of the server.
+	 * @param parameter
+	 *        The parameter whose schema is compiled.
+	 * @return The validator for values of the given parameter, <code>null</code> if values of the
+	 *         given parameter are not validated, because it is not a {@link ParameterFormat#OBJECT}
+	 *         parameter or declares no schema.
+	 * @throws TopLogicException
+	 *         If the schema cannot be compiled.
+	 */
+	protected static JsonSchemaValidator compileSchema(JsonSchemaCompiler compiler,
+			ParameterConfiguration parameter) throws TopLogicException {
+		if (parameter.getFormat() != ParameterFormat.OBJECT) {
+			return null;
+		}
+		String schema = parameter.getSchema();
+		if (!JsonSchemaCompiler.isSchema(schema)) {
+			return null;
+		}
+		return compiler.compile(schema);
 	}
 
 	/**
@@ -459,8 +518,50 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 	 * Parses a parameters raw value.
 	 */
 	protected final Object parse(String rawValue) throws InvalidValueException {
-		return parse(rawValue, getConfig().getFormat(), getConfig().getName());
+		return parse(rawValue, getConfig().getFormat(), getConfig().getName(), _schemaValidator);
+	}
 
+	/**
+	 * Parses the given raw value according to the given {@link ParameterFormat} and validates it
+	 * against a schema.
+	 *
+	 * @param rawValue
+	 *        See {@link #parse(String, ParameterFormat, String)}.
+	 * @param format
+	 *        See {@link #parse(String, ParameterFormat, String)}.
+	 * @param parameterName
+	 *        See {@link #parse(String, ParameterFormat, String)}.
+	 * @param schemaValidator
+	 *        The validator checking a non-empty raw value, <code>null</code> to skip validation.
+	 * @return See {@link #parse(String, ParameterFormat, String)}.
+	 * @throws InvalidValueException
+	 *         When the value can not be parsed by the given format, or does not match the schema.
+	 */
+	protected static Object parse(String rawValue, ParameterFormat format, String parameterName,
+			JsonSchemaValidator schemaValidator) throws InvalidValueException {
+		Object result = parse(rawValue, format, parameterName);
+		if (schemaValidator != null && !rawValue.isEmpty()) {
+			checkSchema(rawValue, parameterName, schemaValidator);
+		}
+		return result;
+	}
+
+	private static void checkSchema(String rawValue, String parameterName, JsonSchemaValidator schemaValidator)
+			throws InvalidValueException {
+		List<String> violations = schemaValidator.validate(rawValue);
+		if (violations.isEmpty()) {
+			return;
+		}
+		StringBuilder message = new StringBuilder();
+		message.append("Value of parameter '").append(parameterName).append("' does not match its schema: ");
+		message.append(violations.stream()
+			.limit(MAX_REPORTED_VIOLATIONS)
+			.collect(Collectors.joining("; ")));
+		int omitted = violations.size() - MAX_REPORTED_VIOLATIONS;
+		if (omitted > 0) {
+			message.append("; ... (").append(omitted).append(" more)");
+		}
+		throw new InvalidValueException(message.toString());
 	}
 
 	/**

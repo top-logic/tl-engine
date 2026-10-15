@@ -165,8 +165,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Notified when a row is activated: opened by a double-click, or by {@code Enter} while it
-	 * carries the keyboard cursor.
+	 * Notified when a row is activated: opened by a double-click, by {@code Enter} while it carries
+	 * the keyboard cursor, or by a control acting on behalf of the row through
+	 * {@link TableViewControl#activate(Object)}.
 	 *
 	 * @param <T>
 	 *        The row business object type.
@@ -175,7 +176,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public interface ActivationHandler<T> {
 
 		/**
-		 * Called after the activated row became the table's selection.
+		 * Called after the activated row became the table's selection - whether the row was
+		 * activated by the gesture or through {@link TableViewControl#activate(Object)}.
 		 *
 		 * @param row
 		 *        The business object of the activated row.
@@ -1819,6 +1821,29 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return activateRow(rowIndex);
 	}
 
+	/**
+	 * Activates the row displaying the given business object, as a double-click on that row does:
+	 * the row becomes the sole selection, then what {@link #setActivationHandler(ActivationHandler)}
+	 * registered runs with the object.
+	 *
+	 * <p>
+	 * This is the entry for a control acting on behalf of a row - a button the row carries, say -
+	 * so that whatever reads the table's selection while the activation runs sees that row. An
+	 * object the table currently displays in no row activates nothing.
+	 * </p>
+	 *
+	 * @param row
+	 *        The business object of the row to activate.
+	 * @return The outcome of the {@link ActivationHandler}, {@link HandlerResult#DEFAULT_RESULT}
+	 *         when no row displays the object or no handler is set.
+	 */
+	public HandlerResult activate(R row) {
+		if (row == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return activateRow(rowIndexOfData(row));
+	}
+
 	private HandlerResult activateRow(int rowIndex) {
 		Row<R> row = rowAt(rowIndex);
 		if (row == null) {
@@ -1877,6 +1902,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (target == null) {
 			return -1;
 		}
+		return rowIndexOfData(target);
+	}
+
+	/**
+	 * The index of the row whose business object is the given one, or {@code -1} when no row
+	 * displays it.
+	 */
+	private int rowIndexOfData(Object target) {
 		List<Row<R>> rows = _view.rows(0, _view.rowCount());
 		for (int i = 0; i < rows.size(); i++) {
 			if (target.equals(rows.get(i).data())) {

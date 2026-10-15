@@ -30,6 +30,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_VARIABLE_NAME_REQUIRED__NAME;
 
+	/**
+	 * @en The schema of the part "{0}" is invalid.
+	 */
+	public static ResKey1 ERROR_INVALID_PART_SCHEMA__PART;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

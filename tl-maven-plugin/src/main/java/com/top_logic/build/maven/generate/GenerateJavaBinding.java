@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +33,7 @@ import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
+import com.top_logic.build.maven.war.AppModuleStack;
 import com.top_logic.build.maven.war.ResolveHelper;
 import com.top_logic.build.maven.war.TLAppWar;
 
@@ -38,6 +42,17 @@ import com.top_logic.build.maven.war.TLAppWar;
  */
 @Mojo(name = "generate-java", requiresProject = true, requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM, inheritByDefault = false, requiresDependencyCollection = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class GenerateJavaBinding extends AbstractMojo {
+
+	/**
+	 * Name of the generator class in the application class path.
+	 */
+	private static final String GENERATOR_CLASS = "com.top_logic.element.model.generate.WrapperGenerator";
+
+	/**
+	 * Name of the static generator method that takes the resource stack and the generator
+	 * arguments.
+	 */
+	private static final String GENERATOR_METHOD = "generate";
 
 	@Parameter(defaultValue = "${project}", readonly = true)
 	private MavenProject project;
@@ -110,7 +125,12 @@ public class GenerateJavaBinding extends AbstractMojo {
 			if (copyrightHeader != null) {
 				System.setProperty("tl_copyright_header", copyrightHeader);
 			}
-			List<URL> cp = TLAppWar.getAppClassPath(resolveHelper, project);
+			List<URL> cp = new ArrayList<>();
+			File classesDir = new File(project.getBuild().getOutputDirectory());
+			if (classesDir.isDirectory()) {
+				cp.add(classesDir.toURI().toURL());
+			}
+			TLAppWar.addDependenciesToClassPath(cp, resolveHelper, project);
 			
 			// Add hard coded profile with otherwise provided classes.
 			TLAppWar.addToClassPath(cp, resolveHelper,
@@ -121,26 +141,55 @@ public class GenerateJavaBinding extends AbstractMojo {
 
 			ClassLoader classLoader = TLAppWar.createClassLoader(cp);
 
-			Thread currentThread = Thread.currentThread();
-			ClassLoader before = currentThread.getContextClassLoader();
-			currentThread.setContextClassLoader(classLoader);
-			try {
-				Class<?> tool = classLoader.loadClass("com.top_logic.element.model.generate.WrapperGenerator");
-				Method main = tool.getMethod("main", String[].class);
+			try (AppModuleStack moduleStack = AppModuleStack.resolve(project, resolveHelper, getLog(), false)) {
+				List<Path> resourceStack = moduleStack.resourceStack(appLayer());
+				logResourceStack(resourceStack);
 
-				ArrayList<String> mainArgs = new ArrayList<>();
-				addOutpuDirectory(mainArgs);
-				addResourcesPath(mainArgs);
-				addModules(mainArgs);
-				addLanguages(mainArgs);
+				Thread currentThread = Thread.currentThread();
+				ClassLoader before = currentThread.getContextClassLoader();
+				currentThread.setContextClassLoader(classLoader);
+				try {
+					Class<?> tool = classLoader.loadClass(GENERATOR_CLASS);
+					Method generate = tool.getMethod(GENERATOR_METHOD, List.class, String[].class);
 
-				main.invoke(null, (Object) mainArgs.toArray(new String[0]));
-			} finally {
-				currentThread.setContextClassLoader(before);
+					ArrayList<String> mainArgs = new ArrayList<>();
+					addOutpuDirectory(mainArgs);
+					addResourcesPath(mainArgs);
+					addModules(mainArgs);
+					addLanguages(mainArgs);
+
+					generate.invoke(null, resourceStack, mainArgs.toArray(new String[0]));
+				} finally {
+					currentThread.setContextClassLoader(before);
+				}
 			}
 		} catch (IOException | ClassNotFoundException | NoSuchMethodException | SecurityException
 				| IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
 			throw new MojoFailureException("Generation for modules '" + modules + "' failed.", ex);
+		}
+	}
+
+	/**
+	 * The resource roots of the project itself: its web application directory, if it exists.
+	 */
+	private List<Path> appLayer() {
+		File webapp = new File(project.getBasedir(), ModuleLayoutConstants.WEBAPP_DIR);
+		if (webapp.isDirectory()) {
+			return List.of(webapp.toPath());
+		} else {
+			return List.of();
+		}
+	}
+
+	private void logResourceStack(List<Path> resourceStack) {
+		getLog().info("Resource stack (highest priority first):");
+		for (Path entry : resourceStack) {
+			FileSystem fileSystem = entry.getFileSystem();
+			if (fileSystem == FileSystems.getDefault()) {
+				getLog().info("  " + entry);
+			} else {
+				getLog().info("  " + fileSystem + "!" + entry);
+			}
 		}
 	}
 

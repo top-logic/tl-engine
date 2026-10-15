@@ -20,6 +20,9 @@ Several breaking changes have **no** migration section in Trac (see the appendix
 on the release changelog alone. The 7.11 maintenance branch `TL/TL_7.11_x` has no commits beyond
 the `TL_7.11.0` tag, so 7.11.0 is the exact base of every 7.11 application.
 
+**Upgrading from 7.10.** A 7.10.x application follows this guide unchanged: no change in 7.11.0
+requires a migration step, so there is no separate 7.10 to 7.11 path.
+
 **Legend.** *Mandatory* = the app does not build or start otherwise. *Conditional* = only if the
 app uses the feature (each item names a `grep` to find out). *Optional* = recommended, not required.
 
@@ -61,6 +64,21 @@ Java 17, Jakarta Servlet 6.1 and Jetty 12.1 were already in 7.11; only patch/min
 party libraries happen (Jetty 12.1.10 to 12.1.13, H2 2.4 to 2.5, httpclient5 5.2 to 5.6, BouncyCastle
 1.86, log4j 2.26.1, Jackson 2.22.2). No new JVM flags are needed.
 
+**Maven 3.8.9 or newer** is required (#29702). The `requireMavenVersion` enforcer rule inherited
+from `tl-parent-all` stops a build with an older Maven (e.g. 3.8.7, the Debian/Ubuntu package) right
+at the start:
+
+```
+Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion failed with message:
+Detected Maven Version: 3.8.7 is not in the allowed range [3.8.9,).
+```
+
+If the system Maven is older, add a Maven wrapper to the project and build with `./mvnw`:
+
+```bash
+mvn -N wrapper:wrapper -Dmaven=3.9.11
+```
+
 Related POM hygiene:
 
 - `tl-maven-plugin` is now managed in `tl-parent-all` `<pluginManagement>`. Remove a pinned
@@ -71,6 +89,9 @@ Related POM hygiene:
 - New projects declare the `tl-releases` / `tl-snapshots` repositories in the POM (see
   `tl-archetype-app`); copy them if your build relied on a `settings.xml` for that (#27889).
 - No Maven module was removed or renamed between 7.11 and 8.0, so no `artifactId` changes.
+- An app POM without a `<version>` of its own inherits the TopLogic version from the parent, so the
+  app's own artifact changes its coordinates with this (and every further) parent bump. Declare an
+  own `<version>` to keep the app's coordinates independent of the engine version.
 - No Node/npm is needed: the React modules are optional and not transitive from `tl-core`/`tl-element`.
 
 ### 1.2 Source and resource encoding ISO-8859-1 to UTF-8 (mandatory, do it before the first build)
@@ -704,11 +725,11 @@ case-insensitive.
 
 ## Appendix A: Trac coverage of the changes above
 
-Every change in this guide is covered by a ticket flagged `RequiresMigration` with a `== Migration ==`
-section in its description: #28388, #28694, #28710, #28816, #29037, #29073, #29080, #29088, #29092,
-#29106, #29108, #29111, #29221, #29286, #29306, #29361, #29383, #29384, #29396, #29400, #29420,
-#29423, #29425, #29429, #29447, #29449, #29457, #29465, #29484, #29492, #29512, #29525, #29528,
-#29540, #29542, #29548, #29555, #29563, #29564.
+Every change in this guide except the Maven version (see below) is covered by a ticket flagged
+`RequiresMigration` with a `== Migration ==` section in its description: #28388, #28694, #28710,
+#28816, #29037, #29073, #29080, #29088, #29092, #29106, #29108, #29111, #29221, #29286, #29306,
+#29361, #29383, #29384, #29396, #29400, #29420, #29423, #29425, #29429, #29447, #29449, #29457,
+#29465, #29484, #29492, #29512, #29525, #29528, #29540, #29542, #29548, #29555, #29563, #29564.
 
 The review of the diff found eleven of them incomplete; their sections were written on 2026-09-17
 and are the source of the corresponding items above: #29092 (login rewrite, MFA config, account
@@ -717,6 +738,8 @@ classes), #29088 (removed legacy module system), #29108 (Font Awesome path, move
 #28816 (dangling references), #29361 (schema check, migration API), #29484 (login field label),
 #28388 (resource provider API), #29548 (new `tl.util` types), #29555 (`canEvaluateAtCompileTime`).
 #29400 still carries milestone `TL_8.1.0` although the change is on master before 8.0.
+
+Not flagged: #29702 (Maven 3.8.9 or newer, phase 1.1) has no migration section.
 
 Flagged but not implemented (status `new`, no instructions): #26916, #27285, #28031, #28487,
 #28488. #28026 (`AttributedObject` to `TLObject` in `*Meta.xml`) is flagged but has **not** landed

@@ -35,7 +35,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Tests the row activation of a {@link TableViewControl}: the gesture that opens a row (a
  * double-click, or {@code Enter} on the cursor row) selects that row and runs the
  * {@link TableViewControl#setActivationHandler(TableViewControl.ActivationHandler) activation
- * handler} with its business object.
+ * handler} with its business object. A control acting on behalf of a row activates it the same
+ * way through {@link TableViewControl#activate(Object)}.
  */
 public class TestTableActivation extends TestCase {
 
@@ -50,6 +51,9 @@ public class TestTableActivation extends TestCase {
 
 	/** The third row. */
 	private static final String C = "c";
+
+	/** An object no row displays. */
+	private static final String UNDISPLAYED = "x";
 
 	/** An index no row has. */
 	private static final int UNKNOWN_ROW = 17;
@@ -128,6 +132,47 @@ public class TestTableActivation extends TestCase {
 		assertFalse(result.isSuccess());
 		assertEquals("The row is selected even though opening it failed.",
 			Set.of(B), _table.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that activating a row by its business object replaces a different selection with that
+	 * row before the handler runs, so a command reading the selection sees the activated row - the
+	 * selection listeners have been told as well.
+	 */
+	public void testActivateByObjectSelectsBeforeTheHandler() {
+		_table.selectRow(A);
+		List<Set<Object>> notified = new ArrayList<>();
+		_table.addSelectionListener(keys -> notified.add(Set.copyOf(keys)));
+		List<Set<Object>> seenByHandler = new ArrayList<>();
+		_table.setActivationHandler(row -> {
+			seenByHandler.add(Set.copyOf(_table.getSelectedKeys()));
+			assertEquals("The listeners know the selection when the handler runs.",
+				List.of(Set.of(C)), notified);
+			_activated.add(row);
+			return HandlerResult.DEFAULT_RESULT;
+		});
+
+		HandlerResult result = _table.activate(C);
+
+		assertTrue(result.isSuccess());
+		assertEquals(List.of(C), _activated);
+		assertEquals("The handler already sees the activated row as the selection.",
+			List.of(Set.of(C)), seenByHandler);
+		assertEquals(Set.of(C), _table.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that activating an object no row displays activates nothing - neither the handler runs,
+	 * nor does the selection change.
+	 */
+	public void testActivateUndisplayedObjectActivatesNothing() {
+		_table.selectRow(A);
+
+		HandlerResult result = _table.activate(UNDISPLAYED);
+
+		assertSame(HandlerResult.DEFAULT_RESULT, result);
+		assertEquals("Nothing was opened.", List.of(), _activated);
+		assertEquals("The selection is untouched.", Set.of(A), _table.getSelectedKeys());
 	}
 
 	/** Sends the client's activate command for the row at the given index. */

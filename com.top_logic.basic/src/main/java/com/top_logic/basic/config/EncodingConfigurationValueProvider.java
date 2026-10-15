@@ -78,21 +78,12 @@ public class EncodingConfigurationValueProvider<T> extends ConfigurationValuePro
 		try {
 			return ConfigurationEncryption.decrypt(encodedValue);
 		} catch (RuntimeException ex) {
-			throw handleUndecryptableValue(propertyName, encodedValue, ex);
+			// The value is not part of the error: a value that cannot be decrypted is in most
+			// cases a secret configured in plain text.
+			throw new ConfigurationException(
+				I18NConstants.ERROR_UNDECODABLE_ENCRYPTED_VALUE__PROPERTY_PREFIX.fill(propertyName, UNENCRYPTED_PREFIX),
+				propertyName, null, ex);
 		}
-	}
-
-	private ConfigurationException handleUndecryptableValue(String propertyName, String encodedValue, RuntimeException ex)
-			throws ConfigurationException {
-		StringBuilder msg = new StringBuilder();
-		msg.append("Unable to decode '");
-		msg.append(encodedValue);
-		msg.append("' as value for property '");
-		msg.append(propertyName);
-		msg.append("'. For temporary configuration of unencoded values use '");
-		msg.append(UNENCRYPTED_PREFIX);
-		msg.append("' as prefix.");
-		throw new ConfigurationException(msg.toString(), ex);
 	}
 
 	@Override

@@ -1809,15 +1809,53 @@ button.tlDrawerToggle:focus-visible {
 	visibility: hidden;
 }
 
-/* The frame change as a transition an application animates: the frame pushed carries
+/* The frame change, as the engine draws it by default: the frame pushed carries
    `tlTileStack__frame--entering` while it arrives, a copy of the frame popped carries
    `tlTileStack__frame--exiting` while it leaves, and the root says which way the stack moved
-   (`tlTileStack--forward` / `tlTileStack--backward`). The engine only places the copy - a picture
-   over the stack, taking no place in the layout and no input; the movement is the application's. */
+   (`tlTileStack--forward` / `tlTileStack--backward`). The arriving frame slides in from the side the
+   stack moved towards, the one left behind fades out towards the other. Duration and easing are the
+   motion tokens, so a theme changes or switches off the movement there (a zero duration ends the
+   change at once); an application restyles it by redefining these rules - `animation: none` drops
+   it, and the copy then disappears immediately. */
+.tlTileStack__frame--entering {
+	animation: tlTileStackEnterForward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tlTileStack--backward .tlTileStack__frame--entering {
+	animation-name: tlTileStackEnterBackward;
+}
+
+/* A picture of the frame left behind, over the stack: it takes no place in the layout and no
+   input. */
 .tlTileStack__frame--exiting {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
+	animation: tlTileStackLeaveForward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tlTileStack--backward .tlTileStack__frame--exiting {
+	animation-name: tlTileStackLeaveBackward;
+}
+
+@keyframes tlTileStackEnterForward {
+	from { opacity: 0; transform: translateX(24px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes tlTileStackEnterBackward {
+	from { opacity: 0; transform: translateX(-24px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes tlTileStackLeaveForward {
+	from { opacity: 1; transform: none; }
+	to   { opacity: 0; transform: translateX(-24px); }
+}
+
+@keyframes tlTileStackLeaveBackward {
+	from { opacity: 1; transform: none; }
+	to   { opacity: 0; transform: translateX(24px); }
 }
 
 /* --- TLWizard -------------------------------------------------------------- */
@@ -1958,12 +1996,14 @@ button.tlDrawerToggle:focus-visible {
 }
 
 /* The step change, as the engine draws it by default: the arriving step slides in from the side the
-   wizard moved towards, the one left behind fades out over it. An application restyles the change by
-   redefining these four rules; the classes (and the direction modifier on the root) are what it
-   addresses, so it can also drop the movement and keep only the fade, or animate something else
-   entirely. */
+   wizard moved towards, the one left behind fades out over it. Duration and easing are the motion
+   tokens, so a theme changes or switches off the movement there (a zero duration ends the change at
+   once). An application restyles the change by redefining these four rules; the classes (and the
+   direction modifier on the root) are what it addresses, so it can also drop the movement and keep
+   only the fade, animate something else entirely, or set `animation: none`, which ends the change
+   immediately. */
 .tlWizard__step--entering {
-	animation: tlWizardEnterForward 0.2s ease-out;
+	animation: tlWizardEnterForward var(--tl-duration-slow) var(--tl-easing-entrance);
 }
 
 .tlWizard--backward .tlWizard__step--entering {
@@ -1976,7 +2016,7 @@ button.tlDrawerToggle:focus-visible {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
-	animation: tlWizardLeaveForward 0.2s ease-out forwards;
+	animation: tlWizardLeaveForward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
 }
 
 .tlWizard--backward .tlWizard__step--exiting {

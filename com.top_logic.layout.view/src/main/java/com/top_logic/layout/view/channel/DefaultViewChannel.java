@@ -112,6 +112,27 @@ public class DefaultViewChannel implements ObservingChannel {
 	}
 
 	/**
+	 * Writes the given value without asking the veto listeners.
+	 *
+	 * <p>
+	 * For a write the user cannot object to, since it reflects a state that already exists: the
+	 * value a channel is refilled with from the inputs it is initialized from (whose write was asked
+	 * before), or from an object that was stored.
+	 * </p>
+	 *
+	 * @param newValue
+	 *        The value to hold.
+	 * @return Whether the value changed, i.e. the listeners were notified.
+	 */
+	protected boolean replace(Object newValue) {
+		if (Objects.equals(_value, newValue)) {
+			return false;
+		}
+		update(newValue);
+		return true;
+	}
+
+	/**
 	 * Begins observing the objects of the value, and drops the ones deleted meanwhile.
 	 */
 	@Override

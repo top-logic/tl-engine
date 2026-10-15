@@ -44,6 +44,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final Function<? super V, String> _searchText;
 
+	private final Function<? super V, ?> _exportValue;
+
 	private final Sort<V> _sort;
 
 	private final ColumnFilter<V> _filter;
@@ -71,6 +73,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_renderer = builder._renderer != null ? builder._renderer
 			: value -> CellContent.text(String.valueOf(value));
 		_searchText = builder._searchText;
+		_exportValue = builder._exportValue;
 		_sort = builder._sort;
 		_filter = builder._filter;
 		_aggregate = builder._aggregate;
@@ -112,6 +115,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public String searchText(R row) {
 		return _searchText != null ? _searchText.apply(value(row)) : Column.super.searchText(row);
+	}
+
+	/**
+	 * The export value of the cell value as {@link Builder#exportValue(Function) configured}, or
+	 * the cell value itself when this column configures none.
+	 */
+	@Override
+	public Object exportValue(R row) {
+		V value = value(row);
+		return _exportValue != null ? _exportValue.apply(value) : value;
 	}
 
 	@Override
@@ -196,6 +209,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		Function<? super V, String> _searchText;
 
+		Function<? super V, ?> _exportValue;
+
 		Sort<V> _sort;
 
 		ColumnFilter<V> _filter;
@@ -250,6 +265,22 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> searchText(Function<? super V, String> searchText) {
 			_searchText = searchText;
+			return this;
+		}
+
+		/**
+		 * Sets the value an export of the table writes for a cell value.
+		 *
+		 * <p>
+		 * For a column whose cell value is no value of its own - a carrier pairing the displayed
+		 * value with its row, for a filter that needs both - this unwraps the displayed value, so
+		 * that an export writes that one.
+		 * </p>
+		 *
+		 * @see Column#exportValue(Object)
+		 */
+		public Builder<R, V> exportValue(Function<? super V, ?> exportValue) {
+			_exportValue = exportValue;
 			return this;
 		}
 

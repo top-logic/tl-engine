@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.constraint.CheckExprWithAdditionalParams;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -70,8 +71,9 @@ public class PrivilegedScript extends ConfiguredScript {
 		 * <p>
 		 * The expression accesses the {@link #getParameters() parameters} as variables. It is
 		 * evaluated without security; the arguments of a secured call contain only objects the user
-		 * may discover. A result that is no single persistent object (e.g. a transient object or
-		 * one created in the current transaction) denies the call.
+		 * may discover. An edit overlay of a form is checked as the object it edits. A result that
+		 * is no single persistent object (e.g. a create overlay, a transient object, or one created
+		 * in the current transaction) denies the call.
 		 * </p>
 		 */
 		@Mandatory
@@ -143,17 +145,20 @@ public class PrivilegedScript extends ConfiguredScript {
 	 *
 	 * <p>
 	 * The {@link Config#getSecurityObject() security object} is computed without security, in an
-	 * evaluation context of its own. A result that is no single persistent {@link TLObject} denies
-	 * the call: <code>null</code>, a collection, a value that is no {@link TLObject}, and an object
-	 * that is transient or was created in the current transaction. The access check passes every
-	 * such object (it has no roles yet), so accepting it would let a caller authorize the call with
-	 * an object of its own making.
+	 * evaluation context of its own. An edit overlay of a form ({@link TLFormObjectBase} that is not
+	 * {@link TLFormObjectBase#isCreate() create}) is checked as the object it
+	 * {@link TLFormObjectBase#getEditedObject() edits}. A result that is no single persistent
+	 * {@link TLObject} denies the call: <code>null</code>, a collection, a value that is no
+	 * {@link TLObject}, a create overlay, a transient object, and an object created in the current
+	 * transaction. The access check passes every such object (it has no roles yet), so accepting it
+	 * would let a caller authorize the call with an object of its own making.
 	 * </p>
 	 *
 	 * <p>
-	 * In a traced evaluation (e.g. a computation in a form), the implementation sees the overlays of
-	 * the caller, but the security object is computed from the persistent state: an edited, not yet
-	 * stored value does not decide on the permission.
+	 * The check is made on the persistent object. A security object expression that navigates from
+	 * an overlay argument (e.g. <code>$m.get(...)</code>) reads its not yet stored values; it should
+	 * therefore start from the argument itself or navigate along references the user can not change
+	 * in the form.
 	 * </p>
 	 *
 	 * @param arguments
@@ -162,7 +167,11 @@ public class PrivilegedScript extends ConfiguredScript {
 	 */
 	public boolean isAllowed(Object[] arguments) {
 		Object securityObject = securityObjectExecutor().executeIntermediate(arguments);
-		if (!(securityObject instanceof TLObject object) || !isPersistent(object)) {
+		if (!(securityObject instanceof TLObject candidate)) {
+			return false;
+		}
+		TLObject object = TLFormObjectBase.editedObject(candidate);
+		if (!isPersistent(object)) {
 			return false;
 		}
 		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), object, _commandGroup);

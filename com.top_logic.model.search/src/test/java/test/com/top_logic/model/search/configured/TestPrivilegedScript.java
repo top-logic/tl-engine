@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.model.search.configured;
 
+import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,7 @@ import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -302,6 +304,64 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		} catch (TopLogicException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCount"));
 		}
+	}
+
+	public void testEditOverlayIsCheckedAsTheEditedObject() throws Exception {
+		// An edit form passes an overlay of the edited object, e.g. as security-object="$proposal".
+		TLObject overlay = formObject(_p1, false);
+		becomeUser(_approver);
+		assertEquals(execute(search("p -> testPrivilegedCount($p)"), _p1),
+			execute(search("p -> testPrivilegedCount($p)"), overlay));
+		assertEquals(Boolean.TRUE, execute(search("p -> canCall(testPrivilegedCount($p))"), overlay));
+		becomeUser(_auditor);
+		try {
+			execute(search("p -> testPrivilegedCount($p)"), overlay);
+			fail("The auditor holds no Approve right on the edited proposal.");
+		} catch (TopLogicException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCount"));
+		}
+		assertEquals(Boolean.FALSE, execute(search("p -> canCall(testPrivilegedCount($p))"), overlay));
+	}
+
+	public void testCreateOverlayDenies() throws Exception {
+		// A create overlay stands for no persistent object, even if it names a base object.
+		TLObject overlay = formObject(_p1, true);
+		becomeUser(_approver);
+		try {
+			execute(search("p -> testPrivilegedCount($p)"), overlay);
+			fail("A create overlay denies the call.");
+		} catch (TopLogicException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCount"));
+		}
+		assertEquals(Boolean.FALSE, execute(search("p -> canCall(testPrivilegedCount($p))"), overlay));
+	}
+
+	/**
+	 * A transient {@link TLFormObjectBase} of a form editing (or creating, if <code>create</code>
+	 * is set) the given object.
+	 */
+	private static TLObject formObject(TLObject edited, boolean create) {
+		return (TLObject) Proxy.newProxyInstance(TestPrivilegedScript.class.getClassLoader(),
+			new Class<?>[] { TLFormObjectBase.class }, (proxy, method, args) -> {
+				switch (method.getName()) {
+					case "isCreate":
+						return Boolean.valueOf(create);
+					case "getEditedObject":
+						return create ? null : edited;
+					case "tTransient":
+						return Boolean.TRUE;
+					case "tType":
+						return edited.tType();
+					case "equals":
+						return Boolean.valueOf(proxy == args[0]);
+					case "hashCode":
+						return Integer.valueOf(System.identityHashCode(proxy));
+					case "toString":
+						return "formObject(" + edited + ", create: " + create + ")";
+					default:
+						throw new UnsupportedOperationException(method.toString());
+				}
+			});
 	}
 
 	private static Object trace(String script, Object... args) throws Exception {

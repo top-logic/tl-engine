@@ -193,8 +193,11 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 * <p>
 	 * The plain route ({@link QueryExecutorMethod}) and the tracing route ({@link TracingScriptMethod},
 	 * e.g. a computation in a form) are checked alike. In the tracing route, the implementation is
-	 * evaluated in the context of the caller and therefore sees its overlays, while the security
-	 * object is computed in a fresh context: the persistent state decides on the permission.
+	 * evaluated in the context of the caller and therefore sees the overlays of its evaluation
+	 * context. The security object is computed in a fresh context without these overlays, and the
+	 * check is made on the persistent object (see {@link PrivilegedScript#isAllowed(Object[])}).
+	 * An overlay passed as argument, however, is the argument itself: a security object expression
+	 * navigating from it reads its not yet stored values.
 	 * </p>
 	 *
 	 * @param scriptName

@@ -84,11 +84,12 @@ A privileged function called from a secured evaluation
    may navigate to objects the user may not see (e.g. the project of a watched ticket). An
    exception raised by the expression propagates; it does not deny silently.
 2. checks `ModelAccessRights.isAllowed(currentUser, securityObject, commandGroup)`. A result that is
-   no single object (`null`, a collection, or anything that is no `TLObject`) denies the call. A
-   security object that is not a persistent object (transient, or created in the current
-   transaction) denies the call as well: the access check allows everything on such an object, so
-   the caller could otherwise authorize the call with an object of its own making
-   (`new(..., transient: true)`).
+   no single object (`null`, a collection, or anything that is no `TLObject`) denies the call. An
+   edit overlay of a form (a `TLFormObjectBase` that is no create overlay, e.g. the edited object
+   an edit form passes as argument) is checked as the object it edits. A create overlay, a
+   transient object, or an object created in the current transaction denies the call: the access
+   check allows everything on such an object, so the caller could otherwise authorize the call
+   with an object of its own making (`new(..., transient: true)`).
 3. allowed: evaluates `implementation` **unsecured** with the arguments and filters its result for
    `Discover` (R4): a single object the user does not hold `Discover` on becomes `null`, such an
    element of a collection is dropped. Computed values (numbers, strings, ...) are not filtered;
@@ -129,8 +130,9 @@ canCall(approveMilestone($milestone))
   default values included), but the function is not called.
 - For a privileged function: the security object is computed unsecured (P3, step 1) and the result
   of `isAllowed(currentUser, securityObject, commandGroup)` is returned; `false` for a security
-  object `null`, and for a security object that is not a persistent object (transient, or created
-  in the current transaction). `on-denied` is not evaluated.
+  object `null`, a create overlay, a transient object, or an object created in the current
+  transaction. An edit overlay of a form is checked as the object it edits (P3, step 2).
+  `on-denied` is not evaluated.
 - For a plain configured function: `true`, it has no function level permission.
 - Like `canExecute`, the check is always made for the current user, also in an unsecured
   evaluation.
@@ -208,8 +210,18 @@ by `canCall`:
   either. A privileged function must not return such values holding objects the caller may not
   discover.
 - **The tracing evaluation sees the overlays of a form.** Called from a traced computation (e.g. in
-  a form), the implementation sees the not yet stored values of the form, while the security object
-  is computed from the persistent state.
+  a form), the implementation sees the not yet stored values of the form. The security object is
+  computed in a context of its own without these overlays, and the check is made on the persistent
+  object (P3, step 2). An overlay passed as argument is the argument itself, though: a
+  `security-object` expression navigating from it (e.g. `$m.get(...)`) reads its not yet stored
+  values. A `security-object` expression should therefore start from the argument itself or
+  navigate along references the user cannot change in the form (e.g. `$m.container()`).
+- **The security object must be of the intended type.** With `security-object="$arg"`, every
+  persistent object the user holds the command group on passes the check - of any type carrying a
+  grant of it, whatever the implementation expects. The `type` of a parameter is documentation
+  only, it is not checked at call time. The modeler must ensure the argument is of the intended
+  type, e.g. by checking it in the expression:
+  ``security-object="if($arg.instanceOf(`my.module:MyType`), $arg, null)"``.
 - **Discover still applies to the arguments.** A user can only pass objects they may discover (R4,
   R5); a privileged function does not open access to undiscoverable arguments.
 
@@ -232,6 +244,7 @@ model type `Proposal`:
 - allowed call reads / writes attributes the user holds no right on,
 - denied call without `on-denied` throws, with `on-denied` returns its (secured) result,
 - security object `null` denies, a transient or uncommitted security object denies,
+- an edit overlay is checked as the object it edits, a create overlay denies,
 - undiscoverable objects in the result are filtered at the call (observed by the calling
   script), computed values are not,
 - the tracing route (`ScriptTracer`) checks and filters like the plain route,

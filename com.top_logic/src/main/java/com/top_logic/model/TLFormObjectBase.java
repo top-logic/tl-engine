@@ -71,4 +71,26 @@ public interface TLFormObjectBase extends TLObject {
 	 */
 	Object defaultValue(TLStructuredTypePart part);
 
+	/**
+	 * The object a {@link TLFormObjectBase form object} editing an object stands for, the given
+	 * object otherwise.
+	 *
+	 * <p>
+	 * An edit overlay (one that is not {@link #isCreate() create}) is replaced by its
+	 * {@link #getEditedObject() edited object}, repeatedly for nested overlays. A create overlay is
+	 * returned as it is.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to unwrap, may be <code>null</code>.
+	 * @return The edited object of the given edit overlay, the given object otherwise.
+	 */
+	static TLObject editedObject(TLObject object) {
+		TLObject result = object;
+		while (result instanceof TLFormObjectBase form && !form.isCreate() && form.getEditedObject() != null) {
+			result = form.getEditedObject();
+		}
+		return result;
+	}
+
 }

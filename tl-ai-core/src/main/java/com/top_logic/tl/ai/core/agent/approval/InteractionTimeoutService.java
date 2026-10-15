@@ -28,8 +28,8 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * <p>
  * What expiry <em>does</em> is not configurable: an expired approval resolves as
  * {@link ApprovalOutcome#TIMED_OUT} (the tool call is denied), and an expired question returns a
- * note telling the agent to write its final answer instead. These settings only decide when that
- * happens.
+ * note telling the agent to go on with an assumption it names in its answer. These settings only
+ * decide when that happens.
  * </p>
  */
 public class InteractionTimeoutService extends ConfiguredManagedClass<InteractionTimeoutService.Config<?>> {
@@ -85,8 +85,8 @@ public class InteractionTimeoutService extends ConfiguredManagedClass<Interactio
 		 * How long a question the agent asked waits for the user's answer, in minutes.
 		 *
 		 * <p>
-		 * When the deadline passes, the agent is told the question was not answered and asked to
-		 * write its final answer instead.
+		 * When the deadline passes, the agent is told that nobody answered, and to go on with an
+		 * assumption it names in its answer. A chat application sets a few minutes here.
 		 * </p>
 		 *
 		 * @see #QUESTION_TIMEOUT_MINUTES

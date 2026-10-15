@@ -9,7 +9,6 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,8 +16,6 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -36,9 +33,10 @@ import com.top_logic.build.maven.generate.GenerateJavaBinding;
  * <p>
  * The test builds the application project {@value #PROJECT} up to {@value #GOAL} in a separate
  * Maven process. The application binds the goal to the phase <code>generate-sources</code> and
- * has never been installed. The build starts with an empty local repository and gets the TopLogic
- * artifacts from the local repository of the running build. The plugin under test is staged into
- * the empty repository from the plugin's POM and compiled classes.
+ * has never been installed. The build starts with an empty local repository and gets the plugin and
+ * the other TopLogic artifacts from the local repository of the running build. The module of this
+ * test depends on the plugin and on the engine modules of the application, so that the running
+ * build has installed them before the test runs.
  * </p>
  */
 public class TestGenerateJavaIntegration {
@@ -55,19 +53,9 @@ public class TestGenerateJavaIntegration {
 	private static final String PROPERTY_REMOTE_REPOSITORY = "tl.it.remoteRepository";
 
 	/**
-	 * System property with the version of the plugin under test.
+	 * System property with the version of the plugin under test and the engine.
 	 */
-	private static final String PROPERTY_PLUGIN_VERSION = "tl.it.pluginVersion";
-
-	/**
-	 * System property with the POM file of the plugin under test.
-	 */
-	private static final String PROPERTY_PLUGIN_POM = "tl.it.pluginPom";
-
-	/**
-	 * System property with the compiled classes of the plugin under test.
-	 */
-	private static final String PROPERTY_PLUGIN_CLASSES = "tl.it.pluginClasses";
+	private static final String PROPERTY_VERSION = "tl.it.version";
 
 	/**
 	 * System property with the directory containing the test projects.
@@ -80,7 +68,7 @@ public class TestGenerateJavaIntegration {
 	private static final String PROPERTY_WORK_DIR = "tl.it.workDir";
 
 	/**
-	 * Placeholder for the plugin version in the POM of the test project.
+	 * Placeholder for the version of the plugin and the engine in the POM of the test project.
 	 */
 	private static final String VERSION_PLACEHOLDER = "@project.version@";
 
@@ -90,14 +78,9 @@ public class TestGenerateJavaIntegration {
 	private static final String REPOSITORY_PROFILE = "it-repo";
 
 	/**
-	 * Group ID of the plugin under test, as path in a repository.
+	 * Group ID of the TopLogic artifacts, as path in a repository.
 	 */
-	private static final String PLUGIN_GROUP_PATH = "com/top-logic";
-
-	/**
-	 * Artifact ID of the plugin under test.
-	 */
-	private static final String PLUGIN_ARTIFACT = "tl-maven-plugin";
+	private static final String TL_GROUP_PATH = "com/top-logic";
 
 	/**
 	 * Name of the test project.
@@ -183,7 +166,7 @@ public class TestGenerateJavaIntegration {
 	 */
 	@Test
 	public void testGenerateInNeverInstalledApplication() throws IOException, MavenInvocationException {
-		String version = property(PROPERTY_PLUGIN_VERSION);
+		String version = property(PROPERTY_VERSION);
 		Path workDir = Path.of(property(PROPERTY_WORK_DIR));
 		deleteRecursively(workDir);
 
@@ -196,7 +179,6 @@ public class TestGenerateJavaIntegration {
 
 		Path repository = workDir.resolve("local-repo");
 		Files.createDirectories(repository);
-		stagePlugin(repository, version);
 
 		Path settings = workDir.resolve("settings.xml");
 		String remoteUrl = Path.of(property(PROPERTY_REMOTE_REPOSITORY)).toUri().toString();
@@ -215,7 +197,7 @@ public class TestGenerateJavaIntegration {
 		}
 		assertFalse("A web fragment of an engine module was not resolved, see " + log,
 			output.contains(SKIPPED_FRAGMENT));
-		Path coreFragment = repository.resolve(PLUGIN_GROUP_PATH + "/tl-core/" + version + "/tl-core-" + version
+		Path coreFragment = repository.resolve(TL_GROUP_PATH + "/tl-core/" + version + "/tl-core-" + version
 			+ "-web-fragment.war");
 		assertTrue("Web fragment of tl-core not resolved: " + coreFragment, Files.isRegularFile(coreFragment));
 		Path compilerPlugin = repository.resolve(COMPILER_PLUGIN_PATH);
@@ -247,7 +229,7 @@ public class TestGenerateJavaIntegration {
 	}
 
 	/**
-	 * Copies the test project and inserts the version of the plugin under test into its POM.
+	 * Copies the test project and inserts the version of the plugin and the engine into its POM.
 	 */
 	private static void copyProject(Path source, Path target, String version) throws IOException {
 		try (Stream<Path> files = Files.walk(source)) {
@@ -263,30 +245,6 @@ public class TestGenerateJavaIntegration {
 		Path pom = target.resolve("pom.xml");
 		String content = Files.readString(pom, StandardCharsets.UTF_8);
 		Files.writeString(pom, content.replace(VERSION_PLACEHOLDER, version), StandardCharsets.UTF_8);
-	}
-
-	/**
-	 * Puts the plugin under test into the given repository: its POM and a jar of its compiled
-	 * classes.
-	 */
-	private static void stagePlugin(Path repository, String version) throws IOException {
-		Path classes = Path.of(property(PROPERTY_PLUGIN_CLASSES));
-		assertTrue("Plugin descriptor missing in " + classes,
-			Files.isRegularFile(classes.resolve("META-INF/maven/plugin.xml")));
-
-		Path dir = repository.resolve(PLUGIN_GROUP_PATH + "/" + PLUGIN_ARTIFACT + "/" + version);
-		Files.createDirectories(dir);
-		String baseName = PLUGIN_ARTIFACT + "-" + version;
-		Files.copy(Path.of(property(PROPERTY_PLUGIN_POM)), dir.resolve(baseName + ".pom"));
-		try (OutputStream out = Files.newOutputStream(dir.resolve(baseName + ".jar"));
-				ZipOutputStream zip = new ZipOutputStream(out);
-				Stream<Path> files = Files.walk(classes)) {
-			for (Path file : (Iterable<Path>) files.filter(Files::isRegularFile)::iterator) {
-				zip.putNextEntry(new ZipEntry(classes.relativize(file).toString().replace(File.separatorChar, '/')));
-				Files.copy(file, zip);
-				zip.closeEntry();
-			}
-		}
 	}
 
 	private static void deleteRecursively(Path dir) throws IOException {

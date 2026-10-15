@@ -20,6 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 ERROR_INVALID_FONT_SIZE__SIZE_MIN_MAX;
 
 	/**
+	 * @en The file "{0}" is not a PowerPoint presentation or template.
+	 */
+	public static ResKey1 ERROR_NOT_A_PRESENTATION__NAME;
+
+	/**
 	 * @en The width available for the text must be a positive number of points, but is {0}.
 	 */
 	public static ResKey1 ERROR_INVALID_TEXT_WIDTH__WIDTH;

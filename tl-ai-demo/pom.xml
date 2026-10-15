@@ -18,7 +18,7 @@
 	  </license>
 	</licenses>
 	
-	<version>8.0.0-alpha10</version>
+	<version>2.1.1</version>
   	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
@@ -30,29 +30,29 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-mcp-server</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-a2a</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chat</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<!-- The "Albert" tab of the classic LayoutServlet UI, hosting the React chat (#618). -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chat-classic</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<!-- Living Views: agents build and change the demo's views; see views-demo.config.xml. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-views</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -61,12 +61,12 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-vector-index</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -133,7 +133,7 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
-			<version>2.1.1-SNAPSHOT</version>
+			<version>2.1.1</version>
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
@@ -186,4 +186,8 @@
 			</plugin>
 		</plugins>
 	</build>
+
+  <scm>
+    <tag>TL_2.1.1</tag>
+  </scm>
 </project>

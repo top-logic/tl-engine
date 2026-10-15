@@ -32,14 +32,14 @@
 		<channel name="dockSession"/>
 		<channel name="dockPaneObject"/>
 		<!--
-			What the page BEHIND the dock has selected (Issue #494). Declared in the shell, because
-			the dock floats over every page and the pages are <view-ref>s with channel namespaces of
-			their own: each page hands its own selection channel over with one <bind> below, and the
-			dock states whatever stands here as the turn's "Selected object".
+			What the page BEHIND the dock has open (Issue #494, #928). Declared in the shell, because
+			the dock floats over every page. The pages do not <bind> it: <chat-channels> in the footer
+			makes it reachable from the whole window, and a <page-selection> in a page writes into it
+			while that page is on screen - also from a tile-stack frame, which no <bind> reaches.
 
-			Nothing writes it but the page that is on screen, and a page that binds nothing simply
-			leaves it holding what it held - which is why a page that has a selection to state binds
-			it, and the Chat page, where the dock stands down entirely, does not.
+			Only <page-selection> writes it, and no table uses it as its selection: a page states what
+			it has open, it does not select rows on another page. When the page leaves the screen, the
+			value goes, so on "My settings" the dock states "none".
 		-->
 		<channel name="pageSelection"/>
 		<channel name="dockProgressBadge"/>
@@ -113,10 +113,10 @@
 
 				<!--
 					The event-management domain, one page per kind of thing the user looks for.
-					Each page's own selection channel IS the shell's "pageSelection", so the dock's
-					conversation states what the page behind it has selected without knowing the
-					page exists (Issue #494); the Events and Invoices pages also write the chat's
-					draft with their "Ask about this" command (Issue #440).
+					Each page tells the dock's conversation what it has open with a <page-selection>
+					in its detail view (Issue #928); the Events and Invoices pages also write the
+					chat's draft with their "Ask about this" command (Issue #440). Venues is a tile
+					stack: a double-click opens a venue as a frame over the list.
 				-->
 				<nav-item id="events"
 					config:position="before"
@@ -131,9 +131,6 @@
 						<bind channel="chatDraft"
 							to="chatDraft"
 						/>
-						<bind channel="selectedEvent"
-							to="pageSelection"
-						/>
 					</view-ref>
 				</nav-item>
 
@@ -146,11 +143,7 @@
 						<en>Venues</en>
 						<de>Veranstaltungsorte</de>
 					</label>
-					<view-ref view="tl-ai-demo/venues/venues.view.xml">
-						<bind channel="selectedVenue"
-							to="pageSelection"
-						/>
-					</view-ref>
+					<view-ref view="tl-ai-demo/venues/venues-stack.view.xml"/>
 				</nav-item>
 
 				<nav-item id="invoices"
@@ -165,9 +158,6 @@
 					<view-ref view="tl-ai-demo/invoices/invoices.view.xml">
 						<bind channel="chatDraft"
 							to="chatDraft"
-						/>
-						<bind channel="selectedInvoice"
-							to="pageSelection"
 						/>
 					</view-ref>
 				</nav-item>
@@ -210,6 +200,11 @@
 			composers on one draft channel and two rails on one remembered layout.
 		-->
 		<footer>
+			<!--
+				Makes "pageSelection" reachable from every page of this browser window, for the
+				<page-selection> elements of the pages (Issue #928). It draws nothing.
+			-->
+			<chat-channels channels="pageSelection"/>
 			<chat-dock chat-id="chat"
 				icon="css:bi bi-stars"
 			>
@@ -336,15 +331,10 @@
 								</fact>
 							</context>
 							<!--
-								And what the user is actually looking at: the selection of the page the
-								dock is floating over, handed to the shell by that page's <view-ref>.
-								One line, and the agent is told the label, the type and the identifier
-								it needs to act on the object.
-
-								Named "Selected object", because the shell has no channel saying which
-								nav item is active: this states what the Events, Venues or Invoices
-								page last selected, and keeps saying so while the user reads their
-								settings.
+								And what the user is actually looking at: what the page the dock is
+								floating over has open, written by that page's <page-selection>. One
+								line, and the agent is told the label, the type and the identifier it
+								needs to act on the object. "none" on a page that has nothing open.
 							-->
 							<selection name="Selected object"
 								channel="pageSelection"

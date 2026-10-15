@@ -18,6 +18,15 @@
 	</channels>
 
 	<stack>
+		<!--
+			What this page has open, for the chat (Issue #928). It draws nothing, and the chat states
+			"none" again when the page leaves the screen. See app.view.xml, <chat-channels>.
+		-->
+		<page-selection to="pageSelection">
+			<inputs>
+				<input channel="venue"/>
+			</inputs>
+		</page-selection>
 		<panel>
 			<title>
 				<en>Venue</en>

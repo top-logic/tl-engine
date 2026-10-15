@@ -19,6 +19,15 @@
 			<en>Event</en>
 			<de>Veranstaltung</de>
 		</title>
+		<!--
+			What this page has open, for the chat (Issue #928). It draws nothing, and the chat states
+			"none" again when the page leaves the screen. See app.view.xml, <chat-channels>.
+		-->
+		<page-selection to="pageSelection">
+			<inputs>
+				<input channel="event"/>
+			</inputs>
+		</page-selection>
 		<form input="event"
 			with-inset="true"
 		>

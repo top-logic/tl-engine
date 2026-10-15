@@ -14,6 +14,15 @@
 			<en>Invoice</en>
 			<de>Rechnung</de>
 		</title>
+		<!--
+			What this page has open, for the chat (Issue #928). It draws nothing, and the chat states
+			"none" again when the page leaves the screen. See app.view.xml, <chat-channels>.
+		-->
+		<page-selection to="pageSelection">
+			<inputs>
+				<input channel="invoice"/>
+			</inputs>
+		</page-selection>
 		<form input="invoice" with-inset="true">
 			<!-- The amounts the model computes from the lines, side by side and never editable. -->
 			<grid min-column-width="9rem">

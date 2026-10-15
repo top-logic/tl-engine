@@ -5,7 +5,9 @@
  */
 package com.top_logic.tl.ai.core.tools.interaction;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
@@ -51,6 +53,19 @@ public class AskUserTool {
 	/** Maximum number of options allowed for choice interactions. */
 	private static final int MAX_CHOICE_OPTIONS = 5;
 
+	/** How long a question waits for its answer. */
+	private final Supplier<Duration> _timeout;
+
+	/** The tool as the registry creates it: a question waits as long as the application configures. */
+	public AskUserTool() {
+		this(InteractionTimeoutService::questionTimeout);
+	}
+
+	/** The tool with a wait of its own, for a test that cannot wait minutes. */
+	AskUserTool(Supplier<Duration> timeout) {
+		_timeout = timeout;
+	}
+
 	/**
 	 * What an {@link ToolExecutionContext#attended() unattended} run is told instead of being parked
 	 * on a question nobody will read.
@@ -73,6 +88,28 @@ public class AskUserTool {
 			+ "Either decide yourself, using the information you already have and stating the "
 			+ "assumption you made, or stop and write a final answer naming what you would have "
 			+ "needed to ask.";
+
+	/**
+	 * What the model is told when nobody answered its question in time.
+	 *
+	 * <p>
+	 * A chat turn whose user stepped away is not a cancelled one. The answer used to say "write your
+	 * final answer and ask how they would like to proceed", and a model then either stopped with the
+	 * task half done or took a step nobody asked for: in one Pietro run it deleted the document it had
+	 * just made and built another one. The model is told to go on with the option it can stand
+	 * behind, to say which assumption it took - the person reads that and corrects it in the next
+	 * message - and not to undo work over an open question.
+	 * </p>
+	 */
+	static String timedOut(Duration waited) {
+		long minutes = Math.max(1, waited.toMinutes());
+		return "Nobody answered within " + minutes + (minutes == 1 ? " minute" : " minutes")
+			+ ", and nobody will in this turn. Do not call askUser again. Go on with the task: choose the "
+			+ "option that keeps what exists and that a person can change most easily later, and finish "
+			+ "the work with it. In your final answer, say which assumption you took and why, so that the "
+			+ "user can correct it. Where the work rests on the assumption, record it where this "
+			+ "application keeps assumptions. Never delete or replace work because a question stayed open.";
+	}
 
 	/**
 	 * Ask the user a question and wait for their response.
@@ -152,7 +189,7 @@ public class AskUserTool {
 
 		try {
 			String response = request.getFuture().get(
-				InteractionTimeoutService.questionTimeout().toMillis(), TimeUnit.MILLISECONDS);
+				_timeout.get().toMillis(), TimeUnit.MILLISECONDS);
 			Logger.info("User responded to interaction " + request.getId() + ": " + response,
 				AskUserTool.class);
 			if ("cancelled".equals(response)) {
@@ -184,8 +221,7 @@ public class AskUserTool {
 			store.resolve(request.getId(), "timeout");
 			InteractionRecorder.resolve(interactionId,
 				AgentExecutionStore.InteractionState.TIMED_OUT, null);
-			return "The user interaction timed out. Write your final answer and ask how they would "
-				+ "like to proceed (without using the askUser tool).";
+			return timedOut(_timeout.get());
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			Logger.info("User interaction interrupted/cancelled (id: " + request.getId() + ")",

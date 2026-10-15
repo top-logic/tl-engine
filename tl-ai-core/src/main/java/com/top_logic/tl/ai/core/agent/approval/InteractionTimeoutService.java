@@ -85,8 +85,8 @@ public class InteractionTimeoutService extends ConfiguredManagedClass<Interactio
 		 * How long a question the agent asked waits for the user's answer, in minutes.
 		 *
 		 * <p>
-		 * When the deadline passes, the agent is told the question was not answered and asked to
-		 * write its final answer instead.
+		 * When the deadline passes, the agent is told that nobody answered, and to go on with an
+		 * assumption it names in its answer. A chat application sets a few minutes here.
 		 * </p>
 		 *
 		 * @see #QUESTION_TIMEOUT_MINUTES

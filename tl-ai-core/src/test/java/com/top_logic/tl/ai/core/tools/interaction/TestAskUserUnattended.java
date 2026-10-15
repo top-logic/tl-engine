@@ -100,6 +100,27 @@ public class TestAskUserUnattended extends TestCase {
 		}
 	}
 
+	/**
+	 * A question nobody answers in time ends the wait, and the model is told to go on with an
+	 * assumption it names, not to stop or undo (Openium/Pietro#744: a chat turn waited 30 minutes,
+	 * then the agent deleted the document it had made).
+	 */
+	public void testAQuestionNobodyAnswersLetsTheRunGoOn() throws Exception {
+		UserInteractionStore store = new UserInteractionStore();
+		AskUserTool tool = new AskUserTool(() -> Duration.ofMillis(200));
+		String answer;
+		try (UserInteractionStoreBinding.Binding binding = UserInteractionStoreBinding.bind(store)) {
+			answer = tool.askUser("Which layout do you want?", "Choose", "text", null, Boolean.FALSE,
+				ToolContext.unrestricted());
+		}
+
+		assertTrue(answer, answer.startsWith("Nobody answered within 1 minute"));
+		assertTrue(answer, answer.contains("Go on with the task"));
+		assertTrue(answer, answer.contains("say which assumption you took"));
+		assertTrue(answer, answer.contains("Never delete or replace work"));
+		assertTrue("The question must not stay pending.", store.getPendingRequests().isEmpty());
+	}
+
 	private String ask(ToolContext context) {
 		return _tool.askUser("Which invoice did you mean?", "Clarify", "text", null, Boolean.FALSE,
 			context);

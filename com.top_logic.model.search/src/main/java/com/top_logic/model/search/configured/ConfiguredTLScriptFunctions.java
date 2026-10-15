@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -176,6 +177,53 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 			throw new UncheckedIOException(ex);
 		}
 		return Optional.of(sw.toString());
+	}
+
+	/**
+	 * Calls the configured function.
+	 *
+	 * <p>
+	 * A secured call of a {@link PrivilegedScript} is checked once: if the current user is
+	 * {@link PrivilegedScript#isAllowed(Object[]) allowed}, the function is executed without
+	 * security and its result is filtered for the Discover right, since the calling script
+	 * continues secured; otherwise the {@link PrivilegedScript#denied(Object[]) denied result} is
+	 * returned. Every other call executes the function with the given security setting.
+	 * </p>
+	 *
+	 * @param scriptName
+	 *        The name of the function.
+	 * @param usesSecurity
+	 *        Whether the calling expression is evaluated with security.
+	 * @param arguments
+	 *        The arguments of the call.
+	 * @param execution
+	 *        Executes the function with the given security setting.
+	 * @return The result of the call.
+	 */
+	public Object call(String scriptName, boolean usesSecurity, Object[] arguments,
+			Function<Boolean, Object> execution) {
+		if (usesSecurity && _builders.get(scriptName) instanceof PrivilegedScript privileged) {
+			if (!privileged.isAllowed(arguments)) {
+				return privileged.denied(arguments);
+			}
+			return SearchExpression.filterSecurity(execution.apply(Boolean.FALSE));
+		}
+		return execution.apply(Boolean.valueOf(usesSecurity));
+	}
+
+	/**
+	 * Whether the current user may call the configured function with the given arguments.
+	 *
+	 * @return <code>true</code> for a function that is no {@link PrivilegedScript}.
+	 * @throws TopLogicException
+	 *         iff there is no function with the given name.
+	 */
+	public boolean isCallAllowed(String scriptName, Object[] arguments) {
+		ConfiguredScript script = _builders.get(scriptName);
+		if (script == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
+		}
+		return !(script instanceof PrivilegedScript privileged) || privileged.isAllowed(arguments);
 	}
 
 	/**

@@ -89,11 +89,15 @@ public class QueryExecutorMethod extends GenericMethodWithSecurity {
 	 *           result is an intermediate result of the calling script and must not be filtered for
 	 *           the current user's read rights, see
 	 *           {@link QueryExecutor#executeIntermediate(Object...)}. The result of the calling script is
-	 *           secured by the execution that started it.
+	 *           secured by the execution that started it. A secured call of a
+	 *           {@link PrivilegedScript} is checked and filtered by
+	 *           {@link ConfiguredTLScriptFunctions#call(String, boolean, Object[], Function)}.
 	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return getExecutor().executeIntermediate(arguments);
+		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance().call(getName(),
+			usesSecurity(), arguments,
+			secured -> _executor.apply(getName(), secured).executeIntermediate(arguments));
 	}
 
 	/**

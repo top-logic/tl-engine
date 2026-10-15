@@ -15,11 +15,16 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.constraint.CheckExprWithAdditionalParams;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ConfiguredScript} that is authorized as a whole.
@@ -101,6 +106,10 @@ public class PrivilegedScript extends ConfiguredScript {
 
 	private final BoundCommandGroup _commandGroup;
 
+	private volatile QueryExecutor _securityObject;
+
+	private volatile QueryExecutor _onDenied;
+
 	/**
 	 * Creates a {@link PrivilegedScript}.
 	 */
@@ -123,6 +132,58 @@ public class PrivilegedScript extends ConfiguredScript {
 	 */
 	public BoundCommandGroup getCommandGroup() {
 		return _commandGroup;
+	}
+
+	/**
+	 * Whether the current user may call this function with the given arguments.
+	 *
+	 * <p>
+	 * The {@link Config#getSecurityObject() security object} is computed without security. A result
+	 * that is no single {@link TLObject} (e.g. <code>null</code> or a collection) denies the call.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        The arguments of the call, in the order of the {@link Config#getParameters()
+	 *        parameters}.
+	 */
+	public boolean isAllowed(Object[] arguments) {
+		Object securityObject = securityObjectExecutor().executeIntermediate(arguments);
+		if (!(securityObject instanceof TLObject object)) {
+			return false;
+		}
+		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), object, _commandGroup);
+	}
+
+	/**
+	 * The result of a call the current user is not {@link #isAllowed(Object[]) allowed} to make.
+	 *
+	 * @param arguments
+	 *        The arguments of the call.
+	 * @return The result of {@link Config#getOnDenied()}, evaluated with security.
+	 * @throws TopLogicException
+	 *         if no {@link Config#getOnDenied()} is configured.
+	 */
+	public Object denied(Object[] arguments) {
+		Expr onDenied = getConfig().getOnDenied();
+		if (onDenied == null) {
+			throw new TopLogicException(I18NConstants.ERROR_CALL_NOT_ALLOWED__NAME.fill(getConfig().getName()));
+		}
+		QueryExecutor executor = _onDenied;
+		if (executor == null) {
+			executor = QueryExecutor.compile(withParameters(onDenied));
+			_onDenied = executor;
+		}
+		return executor.executeIntermediate(arguments);
+	}
+
+	private QueryExecutor securityObjectExecutor() {
+		QueryExecutor executor = _securityObject;
+		if (executor == null) {
+			executor = QueryExecutor.compile(withParameters(getConfig().getSecurityObject()));
+			executor.disableSecurity();
+			_securityObject = executor;
+		}
+		return executor;
 	}
 
 }

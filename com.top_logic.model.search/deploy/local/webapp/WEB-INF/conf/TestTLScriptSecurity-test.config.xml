@@ -14,12 +14,124 @@
 			<instance>
 				<roles>
 					<role name="TestTLScriptSecurity.ProjectReader"/>
+					<role name="TestTLScriptSecurity.ProposalReader"/>
+					<role name="TestTLScriptSecurity.ProposalApprover"/>
 					<role name="TestTLScriptSecurity.ProjectResponsible"/>
 					<role name="TestTLScriptSecurity.PathReader"/>
 					<role name="TestTLScriptSecurity.PathViewer"/>
 					<role name="TestTLScriptSecurity.NoteWriter"/>
 					<role name="TestTLScriptSecurity.PathWriter"/>
 				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+				<group name="Approve" type="write"/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<!-- Writes the name of a project, which a ProposalReader may not write directly. -->
+					<privileged-script name="testPrivilegedRename"
+						command-group="Approve"
+						security-object="$project"
+					>
+						<parameters>
+							<parameter name="project"/>
+							<parameter name="name"/>
+						</parameters>
+						<implementation>$project.set(`TestTLScriptSecurity:PathNode#name`, $name)</implementation>
+					</privileged-script>
+					<!-- Delivers all projects and their unfiltered number. -->
+					<privileged-script name="testPrivilegedAll"
+						command-group="Approve"
+						security-object="$project"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>all(`TestTLScriptSecurity:Proposal`)</implementation>
+					</privileged-script>
+					<privileged-script name="testPrivilegedCount"
+						command-group="Approve"
+						security-object="$project"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>all(`TestTLScriptSecurity:Proposal`).size()</implementation>
+					</privileged-script>
+					<!-- Denies every secured call: the security object is always null. -->
+					<privileged-script name="testPrivilegedNever"
+						command-group="Approve"
+						security-object="null"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>$project.get(`TestTLScriptSecurity:PathNode#name`)</implementation>
+					</privileged-script>
+					<!-- Calls a privileged script that denies every secured call. -->
+					<privileged-script name="testPrivilegedOuter"
+						command-group="Approve"
+						security-object="$project"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>testPrivilegedNever($project)</implementation>
+					</privileged-script>
+					<privileged-script name="testPrivilegedOnDeniedValue"
+						command-group="Approve"
+						security-object="$project"
+						on-denied="'denied:' + $project.get(`TestTLScriptSecurity:PathNode#name`)"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>'allowed'</implementation>
+					</privileged-script>
+					<privileged-script name="testPrivilegedOnDeniedThrow"
+						command-group="Approve"
+						security-object="$project"
+						on-denied="throw('custom denial')"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>'allowed'</implementation>
+					</privileged-script>
+					<privileged-script name="testPrivilegedCollection"
+						command-group="Approve"
+						security-object="list($project, $project)"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>'allowed'</implementation>
+					</privileged-script>
+					<privileged-script name="testPrivilegedDefault"
+						command-group="Approve"
+						security-object="$target"
+					>
+						<parameters>
+							<parameter name="project"/>
+							<parameter name="target">
+								<default-value>null</default-value>
+							</parameter>
+						</parameters>
+						<implementation>$target</implementation>
+					</privileged-script>
+					<configured-script name="testPlainScript">
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>$project.get(`TestTLScriptSecurity:PathNode#name`)</implementation>
+					</configured-script>
+				</scripts>
 			</instance>
 		</config>
 
@@ -42,6 +154,19 @@
 							inherit="true"
 							operation="Delete"
 							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+					</class>
+					<class name="TestTLScriptSecurity:Proposal">
+						<!-- A reader reads a proposal, an approver reads it and may approve it. -->
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestTLScriptSecurity.ProposalReader, TestTLScriptSecurity.ProposalApprover"
+						/>
+						<grant
+							inherit="true"
+							operation="Approve"
+							roles="TestTLScriptSecurity.ProposalApprover"
 						/>
 					</class>
 					<class name="TestTLScriptSecurity:Employee">
@@ -242,6 +367,26 @@
 						>
 							<path>
 								<step attribute="TestTLScriptSecurity:PathOffice#writers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="5b7d3c9e-2a41-4d6f-8e0b-7c1a9f3d2e55"
+							meta-element="TestTLScriptSecurity:Proposal"
+							role="TestTLScriptSecurity.ProposalApprover"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Proposal#approvers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="5b7d3c9e-2a41-4d6f-8e0b-7c1a9f3d2e56"
+							meta-element="TestTLScriptSecurity:Proposal"
+							role="TestTLScriptSecurity.ProposalReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Proposal#readers"/>
 								<step attribute="TestTLScriptSecurity:Employee#account"/>
 							</path>
 						</rule>

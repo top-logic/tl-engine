@@ -201,6 +201,98 @@ public class TestBlocks extends AbstractSearchExpressionTest {
 		assertNull(rating.fill());
 	}
 
+	public void testCompositeBuilders() throws Exception {
+		assertEquals(map(TYPE, TYPE_SLIDE, LAYOUT, "agenda", TITLE, "A", ENTRIES, List.of("x", "y"), NOTES, "N"),
+			eval("pptAgenda(['x', 'y'], 'A', 'N')"));
+		assertEquals(map(TYPE, TYPE_TIMELINE, MILESTONES, List.of(List.of("d", "t")), ROLE, "topicA"),
+			eval("pptTimeline([['d', 't']], 'topicA')"));
+		assertEquals(map(TYPE, TYPE_FLOW, STEPS, List.of("a", "b"), HEIGHT, 50.0),
+			eval("pptFlow(['a', 'b'], height: 50)"));
+		assertEquals(map(TYPE, TYPE_PRO_CON, PROS, List.of("p"), CONS, List.of("c"), PROS_TITLE, "P"),
+			eval("pptProCon(['p'], ['c'], 'P')"));
+	}
+
+	public void testCompositeExpansion() throws Exception {
+		ContainerSpec timeline = (ContainerSpec) read(
+			"pptTimeline([['d1', 't1', 's1', 'risk'], {'date': 'd2', 'title': 't2'}], role: 'topicB')");
+		assertTrue(timeline.bounds().autoHeight());
+		assertEquals(ContainerSpec.Direction.COLUMN, timeline.direction());
+		ContainerSpec dates = (ContainerSpec) timeline.children().get(0);
+		assertEquals("risk", dates.children().get(0).role());
+		assertEquals("The role of the timeline is the default.", "topicB", dates.children().get(1).role());
+		ContainerSpec markers = (ContainerSpec) timeline.children().get(1);
+		ContainerSpec first = (ContainerSpec) markers.children().get(0);
+		assertTrue("No line before the first milestone.", first.children().get(0) instanceof ContainerSpec);
+		assertEquals(TYPE_TIMELINE, ((ShapeSpec) first.children().get(2)).style());
+		assertEquals(TYPE_BADGE, ((ShapeSpec) first.children().get(1)).style());
+		ContainerSpec last = (ContainerSpec) markers.children().get(1);
+		assertTrue("No line after the last milestone.", last.children().get(2) instanceof ContainerSpec);
+		List<ParagraphSpec> text = ((TextBoxSpec) ((ContainerSpec) timeline.children().get(2)).children().get(0))
+			.text().paragraphs();
+		assertEquals("t1", text.get(0).runs().get(0).text());
+		assertEquals(new ColorSpec.Role(ROLE_MUTED, Map.of()), text.get(1).style().color());
+
+		ContainerSpec flow = (ContainerSpec) read("pptFlow(['a', pptCard('B', role: 'done', weight: 2)], 'topicC')");
+		assertTrue(flow.bounds().autoHeight());
+		assertEquals(3, flow.children().size());
+		assertEquals("topicC", flow.children().get(0).role());
+		ShapeSpec arrow = (ShapeSpec) ((ContainerSpec) flow.children().get(1)).children().get(1);
+		assertEquals(TYPE_ARROW, arrow.style());
+		assertEquals("done", flow.children().get(2).role());
+		assertEquals(2.0, flow.children().get(2).bounds().weight());
+
+		ContainerSpec proCon = (ContainerSpec) read("pptProCon(['p1', 'p2'], ['c1'], consTitle: 'Risks')");
+		ShapeSpec pros = (ShapeSpec) proCon.children().get(0);
+		ShapeSpec cons = (ShapeSpec) proCon.children().get(1);
+		assertEquals(ROLE_DONE, pros.role());
+		assertEquals(ROLE_RISK, cons.role());
+		assertEquals(3, pros.text().paragraphs().size());
+		assertEquals(ACCENT, pros.text().paragraphs().get(0).style().color());
+		assertEquals("\u2713", pros.text().paragraphs().get(1).bullet().character());
+		assertEquals("Risks", cons.text().paragraphs().get(0).runs().get(0).text());
+		assertEquals("\u2013", cons.text().paragraphs().get(1).bullet().character());
+
+		TopLogicException milestone = expectError(() -> read("pptTimeline([5])"));
+		assertEquals("e.milestones[0]", argument(milestone,
+			com.top_logic.presentation.model.I18NConstants.ERROR_INVALID_ENTRY__PATH_VALUE_EXPECTED, 0));
+		TopLogicException position = expectError(() -> read("pptFlow([pptCard('A', x: 10)])"));
+		assertEquals("e.steps[0].x", argument(position,
+			com.top_logic.presentation.model.I18NConstants.ERROR_POSITION_IN_CONTAINER__PATH, 0));
+	}
+
+	public void testAgendaLayouts() throws Exception {
+		Map<?, ?> profile = (Map<?, ?>) eval("t -> pptProfile($t)", template());
+		assertEquals(map("3", 3.0, "4", 4.0, "5", 5.0, "6", 7.0, "7", 8.0, "8", 9.0), profile.get(AGENDA_LAYOUTS));
+		Map<?, ?> twoColumns = (Map<?, ?>) ((Map<?, ?>) profile.get(SLIDE_LAYOUTS)).get("6");
+		assertEquals("Entries are read column by column.", List.of(21.0, 22.0, 23.0, 24.0, 25.0),
+			twoColumns.get(ENTRIES));
+		assertNull("A list entry is no subtitle.", twoColumns.get(SUBTITLE));
+
+		try (XMLSlideShow deck = open((BinaryData) evalOnce(
+			"t -> pptDeck($t, [pptAgenda(['A', 'B', 'C', 'D']), pptAgenda(['A', 'B'], 'Kurz')], "
+				+ "profile: {'agendaLayouts': {'4': 6}})",
+			template()))) {
+			XSLFSlide agenda = deck.getSlides().get(0);
+			assertEquals("2_Index (5.1)", agenda.getSlideLayout().getName());
+			assertEquals("D", placeholderText(agenda, "body", 24));
+
+			XSLFSlide fallback = deck.getSlides().get(1);
+			assertEquals("4_Text volle Breite", fallback.getSlideLayout().getName());
+			List<XSLFShape> shapes = contentShapes(fallback);
+			assertEquals("A badge and a text for each entry.", 4, shapes.size());
+			assertEquals("2", ((XSLFTextShape) shapes.get(2)).getText());
+			assertEquals("B", ((XSLFTextShape) shapes.get(3)).getText());
+			assertTrue(shapes.get(2).getAnchor().getY() > shapes.get(0).getAnchor().getY());
+		}
+
+		TopLogicException tooFew = expectError(() -> evalOnce(
+			"t -> pptDeck($t, {'layout': 3, 'title': 'X', 'entries': ['a', 'b', 'c', 'd']})", template()));
+		ResKeyTemplate key =
+			com.top_logic.presentation.export.I18NConstants.ERROR_TOO_FEW_ENTRY_PLACEHOLDERS__PATH_COUNT_LAYOUT_AVAILABLE;
+		assertEquals("slides[0].entries", argument(tooFew, key, 0));
+		assertEquals(3, ((Number) argument(tooFew, key, 3)).intValue());
+	}
+
 	public void testErrorExpansion() throws Exception {
 		TopLogicException legend = expectError(() -> read("pptLegend([['a', 'done'], 'b'])"));
 		assertEquals("e.items[1]", argument(legend,
@@ -226,7 +318,7 @@ public class TestBlocks extends AbstractSearchExpressionTest {
 		assertEquals("tx1", ((Map<?, ?>) roles.get(ROLE_MUTED)).get(SCHEME));
 
 		Map<?, ?> styles = (Map<?, ?>) profile.get(STYLES);
-		assertEquals(List.of(TYPE_CARD, TYPE_STAT, TYPE_BANNER, TYPE_BADGE, TYPE_ARROW), new ArrayList<>(styles.keySet()));
+		assertEquals(List.of(TYPE_CARD, TYPE_STAT, TYPE_BANNER, TYPE_BADGE, TYPE_ARROW, TYPE_TIMELINE), new ArrayList<>(styles.keySet()));
 		Map<?, ?> card = (Map<?, ?>) styles.get(TYPE_CARD);
 		assertEquals("roundRect", ((Map<?, ?>) card.get(GEOMETRY)).get(PRESET));
 		assertEquals(Map.of(ROLE, ROLE_ACCENT), ((Map<?, ?>) card.get(LINE)).get(COLOR));
@@ -361,7 +453,7 @@ public class TestBlocks extends AbstractSearchExpressionTest {
 	 * The geometry, fill, outline and shadow of the card on the sample slide of the template, as
 	 * reported by <code>pptAnalyze()</code>.
 	 */
-	private static Map<String, Object> sampleCardStyle() throws Exception {
+	static Map<String, Object> sampleCardStyle() throws Exception {
 		Map<?, ?> analysis = (Map<?, ?>) evalOnce("t -> pptAnalyze($t)", template());
 		Map<?, ?> slide = (Map<?, ?>) ((List<?>) analysis.get(SLIDES)).get(1);
 		Map<?, ?> sample = findShape((List<?>) slide.get(SHAPES), "Abgerundetes Rechteck 89");

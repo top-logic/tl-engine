@@ -36,7 +36,10 @@ import org.openxmlformats.schemas.presentationml.x2006.main.CTShapeNonVisual;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.presentation.data.PresentationData;
+import com.top_logic.presentation.model.BlockReader;
 import com.top_logic.presentation.model.ElementSpec;
+import com.top_logic.presentation.model.LayoutRef;
+import com.top_logic.presentation.model.LayoutRole;
 import com.top_logic.presentation.model.ParagraphSpec;
 import com.top_logic.presentation.model.PlaceholderKey;
 import com.top_logic.presentation.model.RunSpec;
@@ -180,6 +183,16 @@ public final class DeckWriter {
 	 * content area. The other content elements and the notes appear only on the first slide.
 	 * </p>
 	 *
+	 * <p>
+	 * The {@link SlideSpec#entries() entries} of an agenda slide fill the entry placeholders of
+	 * its layout (see {@link LayoutProfile#entries()}). A slide with entries and without layout, or
+	 * with the layout role {@link LayoutRole#AGENDA}, is created on the
+	 * {@link TemplateProfile#agendaLayout(int) agenda layout} for its number of entries, otherwise on
+	 * the layout of the role {@link LayoutRole#AGENDA}, if the slide asks for it. Without such a
+	 * layout, the slide is created on the content layout and lists its entries with numbered badges
+	 * after its content elements, see {@link BlockReader#agendaList(List)}.
+	 * </p>
+	 *
 	 * @param spec
 	 *        The slide description.
 	 * @param footer
@@ -189,12 +202,33 @@ public final class DeckWriter {
 	 * @return The created slide, without its continuation slides.
 	 */
 	public XSLFSlide addSlide(SlideSpec spec, TextSpec footer, String path) {
-		int index = _profile.resolve(_analysis, spec.layout(), path + "." + PresentationData.LAYOUT);
+		List<TextSpec> entries = spec.entries();
+		List<ElementSpec> content = spec.content();
+		LayoutRef layoutRef = spec.layout();
+		String layoutPath = path + "." + PresentationData.LAYOUT;
+		int index;
+		if (!entries.isEmpty() && isAgenda(layoutRef)) {
+			Integer agendaLayout = _profile.agendaLayout(entries.size());
+			if (agendaLayout == null && layoutRef != null && _profile.layouts().containsKey(LayoutRole.AGENDA)) {
+				agendaLayout = _profile.layouts().get(LayoutRole.AGENDA);
+			}
+			if (agendaLayout != null) {
+				index = agendaLayout.intValue();
+			} else {
+				index = _profile.resolve(_analysis, null, layoutPath);
+				content = new ArrayList<>(content);
+				content.add(BlockReader.agendaList(entries));
+				entries = List.of();
+			}
+		} else {
+			index = _profile.resolve(_analysis, layoutRef, layoutPath);
+		}
 		XSLFSlideLayout layout = _layouts.get(index);
 		LayoutProfile layoutProfile = layoutProfile(index);
 		Rectangle2D area = layoutProfile.contentArea();
 
-		Map<XSLFTextShape, PlaceholderText> texts = placeholderTexts(spec, footer, layout, layoutProfile, path);
+		Map<XSLFTextShape, PlaceholderText> texts =
+			placeholderTexts(spec, entries, footer, layout, layoutProfile, path);
 
 		XSLFSlide result = null;
 		Continuation continuation = null;
@@ -204,7 +238,7 @@ public final class DeckWriter {
 			List<Arrangement.Placed> placed;
 			int start;
 			if (continuation == null) {
-				placed = new Arrangement(_profile.gap(), elements::naturalHeight).arrange(spec.content(), area, path);
+				placed = new Arrangement(_profile.gap(), elements::naturalHeight).arrange(content, area, path);
 				start = 0;
 			} else {
 				placed = List.of(new Arrangement.Placed(continuation.element(), area, continuation.path()));
@@ -235,6 +269,13 @@ public final class DeckWriter {
 			continuation = next;
 		} while (continuation != null);
 		return result;
+	}
+
+	/**
+	 * Whether the given layout reference asks for the layout of an agenda slide.
+	 */
+	private static boolean isAgenda(LayoutRef layout) {
+		return layout == null || layout instanceof LayoutRef.Role role && role.role() == LayoutRole.AGENDA;
 	}
 
 	/**
@@ -320,8 +361,8 @@ public final class DeckWriter {
 		// Pure data.
 	}
 
-	private Map<XSLFTextShape, PlaceholderText> placeholderTexts(SlideSpec spec, TextSpec footer,
-			XSLFSlideLayout layout, LayoutProfile layoutProfile, String path) {
+	private Map<XSLFTextShape, PlaceholderText> placeholderTexts(SlideSpec spec, List<TextSpec> entries,
+			TextSpec footer, XSLFSlideLayout layout, LayoutProfile layoutProfile, String path) {
 		Map<XSLFTextShape, PlaceholderText> result = new LinkedHashMap<>();
 		if (footer != null && layoutProfile.footer() != null) {
 			XSLFTextShape placeholder = placeholderByIdx(layout, layoutProfile.footer().longValue());
@@ -346,6 +387,22 @@ public final class DeckWriter {
 			}
 			result.put(subtitle, new PlaceholderText(spec.subtitle(), subtitlePath));
 		}
+		if (!entries.isEmpty()) {
+			List<Long> entryPlaceholders = layoutProfile.entries();
+			if (entryPlaceholders.size() < entries.size()) {
+				throw new TopLogicException(I18NConstants.ERROR_TOO_FEW_ENTRY_PLACEHOLDERS__PATH_COUNT_LAYOUT_AVAILABLE
+					.fill(path + "." + PresentationData.ENTRIES, entries.size(), layout.getName(),
+						entryPlaceholders.size()));
+			}
+			for (int n = 0; n < entries.size(); n++) {
+				String entryPath = path + "." + PresentationData.ENTRIES + "[" + n + "]";
+				XSLFTextShape placeholder = placeholderByIdx(layout, entryPlaceholders.get(n).longValue());
+				if (placeholder == null) {
+					throw noPlaceholder(entryPath, entryPlaceholders.get(n).toString(), layout);
+				}
+				result.put(placeholder, new PlaceholderText(entries.get(n), entryPath));
+			}
+		}
 		for (Map.Entry<PlaceholderKey, TextSpec> entry : spec.placeholders().entrySet()) {
 			PlaceholderKey key = entry.getKey();
 			String name = key instanceof PlaceholderKey.Index index
@@ -368,7 +425,8 @@ public final class DeckWriter {
 
 	private static XSLFTextShape titlePlaceholder(XSLFSlideLayout layout) {
 		for (XSLFShape shape : layout.getShapes()) {
-			if (shape instanceof XSLFTextShape text && TITLE_TYPES.contains(PlaceholderInfo.typeOf(shape))) {
+			String type = PlaceholderInfo.typeOf(shape);
+			if (shape instanceof XSLFTextShape text && type != null && TITLE_TYPES.contains(type)) {
 				return text;
 			}
 		}

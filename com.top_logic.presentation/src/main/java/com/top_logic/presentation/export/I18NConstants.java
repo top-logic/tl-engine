@@ -8,6 +8,7 @@ package com.top_logic.presentation.export;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -37,6 +38,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     not have.
 	 */
 	public static ResKey3 ERROR_NO_PLACEHOLDER__PATH_PLACEHOLDER_LAYOUT;
+
+	/**
+	 * @en The entry {0} gives {1} agenda entries, but the slide layout "{2}" has only {3} entry
+	 *     placeholders. Shorten the agenda or choose another layout.
+	 */
+	public static ResKey4 ERROR_TOO_FEW_ENTRY_PLACEHOLDERS__PATH_COUNT_LAYOUT_AVAILABLE;
 
 	/**
 	 * @en The text {0} does not fit into its element. Shorten the text, enlarge the element, or

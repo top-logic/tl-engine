@@ -78,13 +78,13 @@ public class TestDeck extends AbstractSearchExpressionTest {
 
 	private static final int GRID_LAYOUT = 10;
 
-	private static final int CONTENT_LAYOUT = 11;
+	static final int CONTENT_LAYOUT = 11;
 
 	private static final long FOOTER_IDX = 4;
 
 	private static final long SUBTITLE_IDX = 13;
 
-	private static final long CONTENT_IDX = 21;
+	static final long CONTENT_IDX = 21;
 
 	private static final String FOOTER_TEXT = "TopLogic – vertraulich";
 

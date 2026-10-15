@@ -209,6 +209,27 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey EXPECTED_LEGEND_ITEM;
 
+	/**
+	 * @en A milestone: a dictionary with the entries "date", "title", "subtitle" and "role", or a
+	 *     list of these values in this order, e.g. ["01.03.", "Prototype", "first trial", "topicA"].
+	 */
+	public static ResKey EXPECTED_MILESTONE;
+
+	/**
+	 * @en A step of a flow: an element description such as a card, or a text.
+	 */
+	public static ResKey EXPECTED_STEP;
+
+	/**
+	 * @en Strengths
+	 */
+	public static ResKey PROS_TITLE;
+
+	/**
+	 * @en Limits
+	 */
+	public static ResKey CONS_TITLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

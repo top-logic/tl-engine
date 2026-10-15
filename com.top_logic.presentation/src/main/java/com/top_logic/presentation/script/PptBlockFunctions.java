@@ -19,10 +19,12 @@ import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.presentation.model.LayoutRole;
+import com.top_logic.util.Resources;
 
 /**
  * TL-Script functions describing typical slides and the building blocks of a slide: cards,
- * banners, badges, key figures, bullet lists, ratings, legends and arrows.
+ * banners, badges, key figures, bullet lists, ratings, legends, arrows, timelines, flows and
+ * comparisons of strengths and limits.
  *
  * <p>
  * Like the functions of {@link PptDescriptionFunctions}, these functions only create the
@@ -141,6 +143,41 @@ public class PptBlockFunctions extends TLScriptFunctions {
 			Object notes) {
 		List<?> elements = content == null ? null : content instanceof List<?> list ? list : List.of(content);
 		return PptDescriptionFunctions.slide(LayoutRole.CONTENT.id(), title, subtitle, elements, notes, null, null);
+	}
+
+	/**
+	 * Describes an agenda slide.
+	 *
+	 * <p>
+	 * Example: <code>pptAgenda(["Results", "Plans", "Questions"])</code>
+	 * </p>
+	 *
+	 * <p>
+	 * If the template profile names a slide layout for the number of entries (entry
+	 * <code>agendaLayouts</code>, see <code>pptProfile()</code>), the entries fill the entry
+	 * placeholders of this layout, e.g. next to numbered circles of the template. Otherwise, the
+	 * slide is a content slide listing the entries one below the other, each with a badge showing
+	 * its number.
+	 * </p>
+	 *
+	 * @param entries
+	 *        The entries, each a text.
+	 * @param title
+	 *        The title. If not given, "Agenda" in the language of the current user.
+	 * @param notes
+	 *        The speaker notes as text, or a list of lines.
+	 * @return The dictionary describing the slide on the layout with the role
+	 *         <code>agenda</code>.
+	 */
+	@Label("Describe an agenda slide")
+	@SideEffectFree
+	public static Map<String, Object> agenda(@Mandatory List<?> entries, Object title, Object notes) {
+		Object agendaTitle = title != null ? title : Resources.getInstance().getString(I18NConstants.AGENDA_TITLE);
+		Map<String, Object> result =
+			PptDescriptionFunctions.slide(LayoutRole.AGENDA.id(), agendaTitle, null, null, null, null, null);
+		result.put(ENTRIES, entries);
+		put(result, NOTES, notes);
+		return result;
 	}
 
 	/**
@@ -472,6 +509,139 @@ public class PptBlockFunctions extends TLScriptFunctions {
 		Map<String, Object> result = typed(TYPE_ARROW);
 		put(result, DIRECTION, direction);
 		return block(result, role, x, y, width, height, weight, style);
+	}
+
+	/**
+	 * Describes a timeline: milestones on a horizontal line.
+	 *
+	 * <p>
+	 * Example: <code>pptTimeline([["01.02.", "Start", "Scope fixed"], {"date": "01.04.", "title":
+	 * "Decision", "role": "risk"}])</code>
+	 * </p>
+	 *
+	 * <p>
+	 * The milestones share the width of the timeline equally. Each is a circle on the line (style
+	 * <code>timeline</code> of the template profile, by default in the color of the role
+	 * <code>muted</code>), its date above in the color of its role, its title in bold and its
+	 * subtitle in the color of the role <code>muted</code> below. If neither height nor weight is
+	 * given, the timeline is as high as its texts.
+	 * </p>
+	 *
+	 * @param milestones
+	 *        The milestones, each a dictionary with the entries <code>date</code>,
+	 *        <code>title</code>, <code>subtitle</code> and <code>role</code>, or a list of these
+	 *        values in this order. All entries are optional.
+	 * @param role
+	 *        The color role of the milestones without own role, e.g. <code>topicA</code>. If not
+	 *        given, <code>accent</code>.
+	 * @param x
+	 *        The horizontal position of the left border.
+	 * @param y
+	 *        The vertical position of the top border.
+	 * @param width
+	 *        The width.
+	 * @param height
+	 *        The height.
+	 * @param weight
+	 *        The share in the free space of a row or column, if no own size is given.
+	 * @return The dictionary describing the timeline.
+	 */
+	@Label("Describe a timeline")
+	@SideEffectFree
+	public static Map<String, Object> timeline(@Mandatory List<?> milestones, String role, Double x, Double y,
+			Double width, Object height, Double weight) {
+		Map<String, Object> result = typed(TYPE_TIMELINE);
+		result.put(MILESTONES, milestones);
+		return block(result, role, x, y, width, height, weight, null);
+	}
+
+	/**
+	 * Describes a flow: a chain of steps from left to right with arrows between them.
+	 *
+	 * <p>
+	 * Example: <code>pptFlow(["Input", "Processing", pptCard("Result", "Report", role: "done",
+	 * weight: 2)])</code>
+	 * </p>
+	 *
+	 * <p>
+	 * A step given as text becomes a card (style <code>card</code>) in the role of the flow. A step
+	 * can also be any element, e.g. a card with a heading, an own role and an own weight. The steps
+	 * share the width of the flow by their weights; the arrows have the style <code>arrow</code>.
+	 * If neither height nor weight is given, the flow is as high as its highest step.
+	 * </p>
+	 *
+	 * @param steps
+	 *        The steps, each a text or an element.
+	 * @param role
+	 *        The color role of the steps given as text, e.g. <code>topicA</code>. If not given,
+	 *        <code>accent</code>.
+	 * @param x
+	 *        The horizontal position of the left border.
+	 * @param y
+	 *        The vertical position of the top border.
+	 * @param width
+	 *        The width.
+	 * @param height
+	 *        The height.
+	 * @param weight
+	 *        The share in the free space of a row or column, if no own size is given.
+	 * @return The dictionary describing the flow.
+	 */
+	@Label("Describe a flow")
+	@SideEffectFree
+	public static Map<String, Object> flow(@Mandatory List<?> steps, String role, Double x, Double y, Double width,
+			Object height, Double weight) {
+		Map<String, Object> result = typed(TYPE_FLOW);
+		result.put(STEPS, steps);
+		return block(result, role, x, y, width, height, weight, null);
+	}
+
+	/**
+	 * Describes a comparison of strengths and limits in two cards side by side.
+	 *
+	 * <p>
+	 * Example: <code>pptProCon(["Fast", "Cheap"], ["Not yet tested"])</code>
+	 * </p>
+	 *
+	 * <p>
+	 * The strengths are listed with check marks in the color of the role <code>done</code>, the
+	 * limits with dashes in the color of the role <code>risk</code>. The heading and the outline of
+	 * each card have the color of its role.
+	 * </p>
+	 *
+	 * @param pros
+	 *        The strengths, each a string or a paragraph (<code>pptParagraph()</code>).
+	 * @param cons
+	 *        The limits, each a string or a paragraph.
+	 * @param prosTitle
+	 *        The heading of the strengths. If not given, "Strengths" in the language of the
+	 *        current user.
+	 * @param consTitle
+	 *        The heading of the limits. If not given, "Limits" in the language of the current
+	 *        user.
+	 * @param x
+	 *        The horizontal position of the left border.
+	 * @param y
+	 *        The vertical position of the top border.
+	 * @param width
+	 *        The width.
+	 * @param height
+	 *        The height, or <code>auto</code> for the height of the texts.
+	 * @param weight
+	 *        The share in the free space of a row or column, if no own size is given.
+	 * @return The dictionary describing the comparison.
+	 */
+	@Label("Describe strengths and limits")
+	@SideEffectFree
+	public static Map<String, Object> proCon(@Mandatory List<?> pros, @Mandatory List<?> cons, Object prosTitle,
+			Object consTitle, Double x, Double y, Double width, Object height, Double weight) {
+		Map<String, Object> result = typed(TYPE_PRO_CON);
+		result.put(PROS, pros);
+		result.put(CONS, cons);
+		put(result, PROS_TITLE, prosTitle);
+		put(result, CONS_TITLE, consTitle);
+		putBounds(result, x, y, width, height, weight);
+		return result;
 	}
 
 	private static Map<String, Object> block(Map<String, Object> result, String role, Double x, Double y,

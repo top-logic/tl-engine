@@ -11,11 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.presentation.data.PresentationData;
+import com.top_logic.util.Resources;
 
 /**
  * Reads the building blocks of a presentation description: cards, banners, badges, key figures,
- * bullet lists, legends and arrows.
+ * bullet lists, legends, arrows, timelines, flows and comparisons of strengths and limits.
  *
  * <p>
  * A building block is expanded into the elements shapes, text boxes and rows are made of. Its
@@ -28,8 +30,13 @@ import com.top_logic.presentation.data.PresentationData;
  * {@link PresentationData#WIDTH}, {@link PresentationData#HEIGHT} and
  * {@link PresentationData#WEIGHT}.
  * </p>
+ *
+ * <p>
+ * Besides, {@link #agendaList(List)} builds the list of entries an agenda slide shows on a layout
+ * without entry placeholders.
+ * </p>
  */
-final class BlockReader {
+public final class BlockReader {
 
 	/**
 	 * The font size of the heading of a card.
@@ -92,6 +99,51 @@ final class BlockReader {
 	static final double ARROW_BREADTH = 24;
 
 	/**
+	 * The diameter of the markers of a timeline.
+	 */
+	static final double MARKER_SIZE = 28;
+
+	/**
+	 * The thickness of the line of a timeline.
+	 */
+	static final double TIMELINE_THICKNESS = 4;
+
+	/**
+	 * The distance between the dates, the markers and the titles of a timeline.
+	 */
+	static final double TIMELINE_GAP = 12;
+
+	/**
+	 * The font size of the dates of a timeline.
+	 */
+	static final double DATE_SIZE = 16;
+
+	/**
+	 * The left and right margin of the texts of a milestone.
+	 */
+	static final double MILESTONE_INSET = 4;
+
+	/**
+	 * The distance between the steps of a flow and the arrows between them.
+	 */
+	static final double FLOW_GAP = 8;
+
+	/**
+	 * The bullet character of the strengths of a comparison of strengths and limits.
+	 */
+	static final String PRO_BULLET = "\u2713";
+
+	/**
+	 * The bullet character of the limits of a comparison of strengths and limits.
+	 */
+	static final String CON_BULLET = "\u2013";
+
+	/**
+	 * The font size of the entries of an agenda listed in the content area.
+	 */
+	static final double ENTRY_SIZE = 20;
+
+	/**
 	 * The color of the element's role.
 	 */
 	private static final ColorSpec ACCENT = new ColorSpec.Role(ROLE_ACCENT, Map.of());
@@ -120,6 +172,9 @@ final class BlockReader {
 		types.put(TYPE_BULLETS, BlockReader::readBullets);
 		types.put(TYPE_LEGEND, BlockReader::readLegend);
 		types.put(TYPE_ARROW, BlockReader::readArrow);
+		types.put(TYPE_TIMELINE, BlockReader::readTimeline);
+		types.put(TYPE_FLOW, BlockReader::readFlow);
+		types.put(TYPE_PRO_CON, BlockReader::readProCon);
 	}
 
 	/**
@@ -258,9 +313,263 @@ final class BlockReader {
 		if (direction == null) {
 			direction = ArrowDirection.RIGHT;
 		}
-		Bounds bounds = direction.isHorizontal()
+		return styled(entries, arrowBounds(direction, given), arrowGeometry(direction), List.of(), TYPE_ARROW);
+	}
+
+	/**
+	 * The given bounds of an arrow in the given direction, by default {@link #ARROW_LENGTH} long
+	 * and {@link #ARROW_BREADTH} broad.
+	 */
+	private static Bounds arrowBounds(ArrowDirection direction, Bounds given) {
+		return direction.isHorizontal()
 			? defaultSize(given, ARROW_LENGTH, ARROW_BREADTH) : defaultSize(given, ARROW_BREADTH, ARROW_LENGTH);
-		return styled(entries, bounds, new GeometrySpec(direction.preset(), Map.of(), null), List.of(), TYPE_ARROW);
+	}
+
+	private static GeometrySpec arrowGeometry(ArrowDirection direction) {
+		return new GeometrySpec(direction.preset(), Map.of(), null);
+	}
+
+	/**
+	 * A timeline: the {@link PresentationData#MILESTONES} side by side in equal widths, each a
+	 * marker on a horizontal line (the style {@link PresentationData#TYPE_TIMELINE}), its date
+	 * above (bold, in {@link #DATE_SIZE}, in the color of its role), its title (bold) and subtitle
+	 * (in the color {@link PresentationData#ROLE_MUTED}) below. By default, the timeline is as high
+	 * as its texts.
+	 *
+	 * <p>
+	 * A milestone is a dictionary with the entries {@link PresentationData#DATE},
+	 * {@link PresentationData#TITLE}, {@link PresentationData#SUBTITLE} and
+	 * {@link PresentationData#ROLE}, or a list of these values in this order. The markers are
+	 * circles in the style {@link PresentationData#TYPE_BADGE}. A milestone without role has the
+	 * role of the timeline.
+	 * </p>
+	 */
+	private static ContainerSpec readTimeline(Entries entries) {
+		Bounds bounds = autoHeight(DescriptionReader.readBounds(entries));
+		String defaultRole = DescriptionReader.readRole(entries.get(ROLE));
+		List<Value> milestones = entries.require(MILESTONES, I18NConstants.EXPECTED_LIST).asList();
+
+		Bounds lineBounds = new Bounds(null, null, null, Double.valueOf(TIMELINE_THICKNESS), false, null);
+		Bounds markerBounds =
+			new Bounds(null, null, Double.valueOf(MARKER_SIZE), Double.valueOf(MARKER_SIZE), false, null);
+		InsetsSpec insets = new InsetsSpec(MILESTONE_INSET, 0, MILESTONE_INSET, 0);
+		RunStyle dateStyle = size(BOLD, DATE_SIZE, ACCENT);
+		RunStyle titleStyle = size(BOLD, CAPTION_SIZE, null);
+		RunStyle subtitleStyle = size(RunStyle.INHERIT, CAPTION_SIZE, MUTED);
+
+		List<ElementSpec> dates = new ArrayList<>();
+		List<ElementSpec> markers = new ArrayList<>();
+		List<ElementSpec> titles = new ArrayList<>();
+		for (int n = 0, cnt = milestones.size(); n < cnt; n++) {
+			Milestone milestone = readMilestone(milestones.get(n));
+			String role = milestone.role() != null ? milestone.role() : defaultRole;
+
+			dates.add(centeredText(milestone.date(), dateStyle, 0, insets, role));
+
+			ElementSpec before = n == 0 ? spacer() : timelineLine(lineBounds);
+			ElementSpec after = n == cnt - 1 ? spacer() : timelineLine(lineBounds);
+			ShapeSpec marker = new ShapeSpec(markerBounds, null, null, null, null, null, TYPE_BADGE, role);
+			markers.add(new ContainerSpec(Bounds.NONE, ContainerSpec.Direction.ROW, List.of(before, marker, after),
+				Double.valueOf(0), null, CrossAlign.CENTER));
+
+			List<ParagraphSpec> text = new ArrayList<>();
+			for (ParagraphSpec paragraph : milestone.title()) {
+				text.add(format(paragraph, titleStyle, PARAGRAPH_SPACE, null));
+			}
+			for (ParagraphSpec paragraph : milestone.subtitle()) {
+				text.add(format(paragraph, subtitleStyle, null, null));
+			}
+			titles.add(centeredText(text, RunStyle.INHERIT, 0, insets, role));
+		}
+
+		Bounds rowBounds = new Bounds(null, null, null, null, true, null);
+		Double noGap = Double.valueOf(0);
+		List<ElementSpec> rows = List.of(
+			new ContainerSpec(rowBounds, ContainerSpec.Direction.ROW, dates, noGap, null, CrossAlign.END),
+			new ContainerSpec(new Bounds(null, null, null, Double.valueOf(MARKER_SIZE), false, null),
+				ContainerSpec.Direction.ROW, markers, noGap, null, CrossAlign.STRETCH),
+			new ContainerSpec(rowBounds, ContainerSpec.Direction.ROW, titles, noGap, null, CrossAlign.START));
+		return new ContainerSpec(bounds, ContainerSpec.Direction.COLUMN, rows, Double.valueOf(TIMELINE_GAP), null,
+			CrossAlign.STRETCH);
+	}
+
+	/**
+	 * A milestone of a timeline.
+	 *
+	 * @param date
+	 *        The paragraphs of the date.
+	 * @param title
+	 *        The paragraphs of the title.
+	 * @param subtitle
+	 *        The paragraphs of the subtitle.
+	 * @param role
+	 *        The color role, <code>null</code> for the role of the timeline.
+	 */
+	private record Milestone(List<ParagraphSpec> date, List<ParagraphSpec> title, List<ParagraphSpec> subtitle,
+			String role) {
+		// Pure data.
+	}
+
+	private static Milestone readMilestone(Value milestone) {
+		if (milestone.isList()) {
+			List<Value> parts = milestone.asList();
+			if (parts.isEmpty() || parts.size() > 4) {
+				throw milestone.invalid(I18NConstants.EXPECTED_MILESTONE);
+			}
+			return new Milestone(optParagraphs(parts.get(0)), optParagraphs(part(parts, 1)),
+				optParagraphs(part(parts, 2)), DescriptionReader.readRole(part(parts, 3)));
+		}
+		if (milestone.isMap()) {
+			Entries entries = milestone.asEntries();
+			Milestone result = new Milestone(optParagraphs(entries.get(DATE)), optParagraphs(entries.get(TITLE)),
+				optParagraphs(entries.get(SUBTITLE)), DescriptionReader.readRole(entries.get(ROLE)));
+			entries.checkComplete();
+			return result;
+		}
+		throw milestone.invalid(I18NConstants.EXPECTED_MILESTONE);
+	}
+
+	private static Value part(List<Value> parts, int index) {
+		return index < parts.size() ? parts.get(index) : new Value(null, parts.get(0).path());
+	}
+
+	/**
+	 * The paragraphs of the given text, empty if the value is missing.
+	 */
+	private static List<ParagraphSpec> optParagraphs(Value text) {
+		return text.isAbsent() ? List.of() : DescriptionReader.readParagraphs(text);
+	}
+
+	private static ShapeSpec timelineLine(Bounds bounds) {
+		return new ShapeSpec(bounds, null, null, null, null, null, TYPE_TIMELINE, null);
+	}
+
+	/**
+	 * An element that takes space in a row or column without showing anything.
+	 */
+	private static ContainerSpec spacer() {
+		return new ContainerSpec(Bounds.NONE, ContainerSpec.Direction.ROW, List.of(), null, null, null);
+	}
+
+	/**
+	 * A text box with the given paragraphs, centered horizontally.
+	 */
+	private static TextBoxSpec centeredText(List<ParagraphSpec> paragraphs, RunStyle style, double spaceAfter,
+			InsetsSpec insets, String role) {
+		List<ParagraphSpec> formatted = new ArrayList<>();
+		for (ParagraphSpec paragraph : paragraphs) {
+			formatted.add(format(paragraph, style, Double.valueOf(spaceAfter), null));
+		}
+		if (formatted.isEmpty()) {
+			formatted.add(ParagraphSpec.plain(""));
+		}
+		TextSpec text = new TextSpec(formatted, RunStyle.INHERIT, TextAlign.CENTER, null, insets, null, false, null);
+		return new TextBoxSpec(Bounds.NONE, text, role);
+	}
+
+	/**
+	 * A flow: the {@link PresentationData#STEPS} from left to right with an arrow in the style
+	 * {@link PresentationData#TYPE_ARROW} between two steps, by default as high as its highest step.
+	 *
+	 * <p>
+	 * A step is an element description, e.g. a card, or a text, which becomes a card in the role of
+	 * the flow. The steps share the width of the flow by their weights.
+	 * </p>
+	 */
+	private static ContainerSpec readFlow(Entries entries) {
+		Bounds bounds = autoHeight(DescriptionReader.readBounds(entries));
+		String role = DescriptionReader.readRole(entries.get(ROLE));
+		List<Value> steps = entries.require(STEPS, I18NConstants.EXPECTED_LIST).asList();
+		List<ElementSpec> children = new ArrayList<>();
+		for (Value step : steps) {
+			if (!children.isEmpty()) {
+				ShapeSpec arrow = new ShapeSpec(arrowBounds(ArrowDirection.RIGHT, Bounds.NONE),
+					arrowGeometry(ArrowDirection.RIGHT), null, null, null, null, TYPE_ARROW, null);
+				children.add(centered(arrow, ARROW_LENGTH));
+			}
+			if (step.isMap() && step.asEntries().contains(TYPE)) {
+				children.add(DescriptionReader.readChild(step));
+			} else {
+				List<ParagraphSpec> body = DescriptionReader.readParagraphs(step.require(I18NConstants.EXPECTED_STEP));
+				children.add(new ShapeSpec(Bounds.NONE, null, null, null, null, TextSpec.of(body), TYPE_CARD, role));
+			}
+		}
+		return new ContainerSpec(bounds, ContainerSpec.Direction.ROW, children, Double.valueOf(FLOW_GAP), null,
+			CrossAlign.STRETCH);
+	}
+
+	/**
+	 * A column of the given width, in which the given element is centered vertically.
+	 */
+	private static ContainerSpec centered(ElementSpec element, double width) {
+		return new ContainerSpec(new Bounds(null, null, Double.valueOf(width), null, false, null),
+			ContainerSpec.Direction.COLUMN, List.of(spacer(), element, spacer()), Double.valueOf(0), null,
+			CrossAlign.CENTER);
+	}
+
+	/**
+	 * A comparison of strengths and limits: two cards side by side, the strengths
+	 * ({@link PresentationData#PROS}) with check marks in the role
+	 * {@link PresentationData#ROLE_DONE}, the limits ({@link PresentationData#CONS}) with dashes in
+	 * the role {@link PresentationData#ROLE_RISK}. The headings
+	 * ({@link PresentationData#PROS_TITLE}, {@link PresentationData#CONS_TITLE}) are bold in the
+	 * color of the card's role, by default "Strengths" and "Limits" in the language of the current
+	 * user.
+	 */
+	private static ContainerSpec readProCon(Entries entries) {
+		Bounds bounds = DescriptionReader.readBounds(entries);
+		ShapeSpec pros = listCard(entries.get(PROS_TITLE), I18NConstants.PROS_TITLE,
+			entries.require(PROS, I18NConstants.EXPECTED_TEXT_CONTENT), PRO_BULLET, ROLE_DONE);
+		ShapeSpec cons = listCard(entries.get(CONS_TITLE), I18NConstants.CONS_TITLE,
+			entries.require(CONS, I18NConstants.EXPECTED_TEXT_CONTENT), CON_BULLET, ROLE_RISK);
+		return new ContainerSpec(bounds, ContainerSpec.Direction.ROW, List.of(pros, cons), null, null,
+			CrossAlign.STRETCH);
+	}
+
+	/**
+	 * A card with a heading in the color of the given role and the given items as bullet list.
+	 */
+	private static ShapeSpec listCard(Value heading, ResKey defaultHeading, Value items, String bulletChar,
+			String role) {
+		List<ParagraphSpec> paragraphs = new ArrayList<>();
+		List<ParagraphSpec> headingParagraphs = heading.isAbsent()
+			? List.of(ParagraphSpec.plain(Resources.getInstance().getString(defaultHeading)))
+			: DescriptionReader.readParagraphs(heading);
+		for (ParagraphSpec paragraph : headingParagraphs) {
+			paragraphs.add(format(paragraph, size(BOLD, HEADING_SIZE, ACCENT), HEADING_SPACE, null));
+		}
+		BulletSpec bullet = new BulletSpec(true, bulletChar, ACCENT);
+		for (ParagraphSpec paragraph : DescriptionReader.readParagraphs(items)) {
+			paragraphs.add(format(paragraph, RunStyle.INHERIT, BULLET_SPACE, bullet));
+		}
+		return new ShapeSpec(Bounds.NONE, null, null, null, null, TextSpec.of(paragraphs), TYPE_CARD, role);
+	}
+
+	/**
+	 * The list of entries an agenda slide shows in its content area: each entry in a row, preceded
+	 * by a badge with its number.
+	 *
+	 * @param entries
+	 *        The entries of the agenda.
+	 * @return The column of the entries.
+	 */
+	public static ContainerSpec agendaList(List<TextSpec> entries) {
+		Bounds badgeBounds =
+			new Bounds(null, null, Double.valueOf(BADGE_SIZE), Double.valueOf(BADGE_SIZE), false, null);
+		Bounds rowBounds = new Bounds(null, null, null, null, true, null);
+		RunStyle entryStyle = size(RunStyle.INHERIT, ENTRY_SIZE, null);
+		List<ElementSpec> rows = new ArrayList<>();
+		for (int n = 0; n < entries.size(); n++) {
+			ShapeSpec badge = new ShapeSpec(badgeBounds, null, null, null, null,
+				TextSpec.of(List.of(ParagraphSpec.plain(Integer.toString(n + 1)))), TYPE_BADGE, null);
+			TextSpec entry = entries.get(n);
+			TextBoxSpec text = new TextBoxSpec(Bounds.NONE, new TextSpec(entry.paragraphs(),
+				entry.style().inheritFrom(entryStyle), null, TextAnchor.MIDDLE, InsetsSpec.ZERO, null, false, null),
+				null);
+			rows.add(new ContainerSpec(rowBounds, ContainerSpec.Direction.ROW, List.of(badge, text), null, null,
+				CrossAlign.CENTER));
+		}
+		return new ContainerSpec(Bounds.NONE, ContainerSpec.Direction.COLUMN, rows, null, null, CrossAlign.STRETCH);
 	}
 
 	/**

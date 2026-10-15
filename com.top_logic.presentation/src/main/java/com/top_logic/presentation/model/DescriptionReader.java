@@ -121,7 +121,8 @@ public final class DescriptionReader {
 	 * A slide is a dictionary with the optional entries {@link PresentationData#TYPE} (only
 	 * {@link PresentationData#TYPE_SLIDE}), {@link PresentationData#LAYOUT},
 	 * {@link PresentationData#TITLE}, {@link PresentationData#SUBTITLE},
-	 * {@link PresentationData#PLACEHOLDERS}, {@link PresentationData#CONTENT},
+	 * {@link PresentationData#PLACEHOLDERS}, {@link PresentationData#ENTRIES} (a list of texts),
+	 * {@link PresentationData#CONTENT},
 	 * {@link PresentationData#NOTES} and {@link PresentationData#HIDDEN}.
 	 * </p>
 	 */
@@ -132,11 +133,18 @@ public final class DescriptionReader {
 		TextSpec title = readText(entries.get(TITLE));
 		TextSpec subtitle = readText(entries.get(SUBTITLE));
 		Map<PlaceholderKey, TextSpec> placeholders = readPlaceholders(entries.get(PLACEHOLDERS));
+		List<TextSpec> agendaEntries = new ArrayList<>();
+		Value entriesValue = entries.get(ENTRIES);
+		if (!entriesValue.isAbsent()) {
+			for (Value entry : entriesValue.asList()) {
+				agendaEntries.add(readText(entry.require(I18NConstants.EXPECTED_TEXT_CONTENT)));
+			}
+		}
 		List<ElementSpec> content = readElements(entries.get(CONTENT));
 		String notes = readNotes(entries.get(NOTES));
 		Boolean hidden = entries.get(HIDDEN).optBoolean();
 		entries.checkComplete();
-		return new SlideSpec(layout, title, subtitle, placeholders, content, notes,
+		return new SlideSpec(layout, title, subtitle, placeholders, agendaEntries, content, notes,
 			hidden != null && hidden.booleanValue());
 	}
 
@@ -427,14 +435,7 @@ public final class DescriptionReader {
 		Bounds bounds = readBounds(entries);
 		List<ElementSpec> children = new ArrayList<>();
 		for (Value child : entries.require(CHILDREN, I18NConstants.EXPECTED_LIST).asListOrSingle()) {
-			ElementSpec element = readElement(child);
-			Bounds childBounds = element.bounds();
-			if (childBounds.isPositioned()) {
-				String key = childBounds.x() != null ? X : Y;
-				throw new TopLogicException(
-					I18NConstants.ERROR_POSITION_IN_CONTAINER__PATH.fill(child.path() + "." + key));
-			}
-			children.add(element);
+			children.add(readChild(child));
 		}
 		Double gap = entries.get(GAP).optNonNegative();
 		Value weightsValue = entries.get(WEIGHTS);
@@ -444,6 +445,19 @@ public final class DescriptionReader {
 		}
 		CrossAlign align = entries.get(ALIGN).optEnum(CrossAlign.class);
 		return new ContainerSpec(bounds, direction, children, gap, weights, align);
+	}
+
+	/**
+	 * Reads an element placed by a row or column, which must not give a position.
+	 */
+	static ElementSpec readChild(Value child) {
+		ElementSpec element = readElement(child);
+		Bounds childBounds = element.bounds();
+		if (childBounds.isPositioned()) {
+			String key = childBounds.x() != null ? X : Y;
+			throw new TopLogicException(I18NConstants.ERROR_POSITION_IN_CONTAINER__PATH.fill(child.path() + "." + key));
+		}
+		return element;
 	}
 
 	/**

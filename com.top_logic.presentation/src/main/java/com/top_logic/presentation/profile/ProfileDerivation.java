@@ -6,11 +6,14 @@
 package com.top_logic.presentation.profile;
 
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.poi.xslf.usermodel.SlideLayout;
 
@@ -40,7 +43,13 @@ import com.top_logic.presentation.template.TemplateAnalysis;
  * <li>The <b>subtitle</b> is the <code>subTitle</code> placeholder, otherwise the first other
  * <code>body</code> or <code>obj</code> placeholder starting directly below the title (within
  * {@link #SUBTITLE_GAP} of the slide height), being at most {@link #SUBTITLE_HEIGHT} of the slide
- * height high and spanning at least {@link #SUBTITLE_OVERLAP} of the title's width.</li>
+ * height high, spanning at least {@link #SUBTITLE_OVERLAP} of the title's width and differing in
+ * size (by more than {@link #SIZE_TOLERANCE}) from all other <code>body</code> and
+ * <code>obj</code> placeholders, so that it is no entry of a list.</li>
+ * <li>The <b>entry placeholders</b> are the other <code>body</code> and <code>obj</code>
+ * placeholders that are not large, in reading order: Placeholders overlapping horizontally by at
+ * least half the width of the narrower one form a column; the columns are read from left to
+ * right, each from top to bottom.</li>
  * <li>The <b>content area</b> is the bounds of the content placeholder. A layout without one
  * offers the area between the bottom of the subtitle (or the title) and the top of the footer (or
  * the slide bottom), horizontally from the left edge of the title to the same distance from the
@@ -64,8 +73,15 @@ import com.top_logic.presentation.template.TemplateAnalysis;
  * </ul>
  *
  * <p>
- * A role without a matching layout gets none. In each case, the first layout in the order of
- * {@link TemplateAnalysis#layouts()} wins a tie.
+ * The <b>agenda layout</b> for a number of entries is a layout with a <code>title</code>
+ * placeholder, no large placeholder and this number (at least {@link #MIN_AGENDA_ENTRIES}) of
+ * entry placeholders, all of the same size within {@link #SIZE_TOLERANCE}: a regular list, as an
+ * agenda typically shows it.
+ * </p>
+ *
+ * <p>
+ * A role or number of agenda entries without a matching layout gets none. In each case, the first
+ * layout in the order of {@link TemplateAnalysis#layouts()} wins a tie.
  * </p>
  */
 final class ProfileDerivation {
@@ -94,6 +110,23 @@ final class ProfileDerivation {
 	 * The smallest fraction of the title's width a subtitle spans.
 	 */
 	static final double SUBTITLE_OVERLAP = 0.5;
+
+	/**
+	 * The smallest number of entry placeholders of an agenda layout.
+	 */
+	static final int MIN_AGENDA_ENTRIES = 2;
+
+	/**
+	 * The largest difference in width and height between the entry placeholders of an agenda
+	 * layout as fraction of their size.
+	 */
+	static final double SIZE_TOLERANCE = 0.1;
+
+	/**
+	 * The smallest horizontal overlap of two entry placeholders in the same column as fraction of
+	 * the width of the narrower one.
+	 */
+	static final double COLUMN_OVERLAP = 0.5;
 
 	private static final String TITLE = "title";
 
@@ -126,8 +159,15 @@ final class ProfileDerivation {
 
 	private TemplateProfile derive() {
 		Map<Integer, LayoutProfile> slideLayouts = new LinkedHashMap<>();
+		Map<Integer, Integer> agendaLayouts = new TreeMap<>();
 		for (LayoutInfo layout : _analysis.layouts()) {
-			slideLayouts.put(Integer.valueOf(layout.index()), layoutProfile(layout));
+			Integer index = Integer.valueOf(layout.index());
+			List<PlaceholderInfo> entries = new ArrayList<>();
+			LayoutProfile layoutProfile = layoutProfile(layout, entries);
+			slideLayouts.put(index, layoutProfile);
+			if (isAgenda(layout, entries)) {
+				agendaLayouts.putIfAbsent(Integer.valueOf(entries.size()), index);
+			}
 		}
 
 		Map<LayoutRole, Integer> layouts = new EnumMap<>(LayoutRole.class);
@@ -137,7 +177,7 @@ final class ProfileDerivation {
 		putRole(layouts, LayoutRole.SECTION, firstOfType(SlideLayout.SECTION_HEADER));
 		putRole(layouts, LayoutRole.CLOSING, title);
 		String profile = PresentationData.PROFILE + ".";
-		return new TemplateProfile(layouts, slideLayouts,
+		return new TemplateProfile(layouts, slideLayouts, agendaLayouts,
 			TemplateProfile.readRoles(new Value(ProfileDefaults.roles(), profile + PresentationData.ROLES)),
 			TemplateProfile.readStyles(new Value(ProfileDefaults.styles(), profile + PresentationData.STYLES), true),
 			TemplateProfile.readStyles(new Value(ProfileDefaults.ratings(), profile + PresentationData.RATINGS), false),
@@ -217,13 +257,86 @@ final class ProfileDerivation {
 		return result;
 	}
 
-	private LayoutProfile layoutProfile(LayoutInfo layout) {
+	/**
+	 * Derives the properties of the given layout.
+	 *
+	 * @param entries
+	 *        Receives the entry placeholders of the layout in reading order.
+	 */
+	private LayoutProfile layoutProfile(LayoutInfo layout, List<PlaceholderInfo> entries) {
 		PlaceholderInfo title = title(layout);
 		PlaceholderInfo footer = footer(layout);
 		PlaceholderInfo subtitle = subtitle(layout, title, footer);
 		PlaceholderInfo content = contentPlaceholder(layout, subtitle, footer);
 		Rectangle2D area = content != null ? content.bounds() : freeArea(title, subtitle, footer);
-		return new LayoutProfile(layout.name(), idx(subtitle), idx(footer), area);
+		entries.addAll(entryPlaceholders(layout, subtitle, footer));
+		List<Long> entryIndexes = new ArrayList<>();
+		for (PlaceholderInfo entry : entries) {
+			entryIndexes.add(idx(entry));
+		}
+		return new LayoutProfile(layout.name(), idx(subtitle), idx(footer), entryIndexes, area);
+	}
+
+	/**
+	 * The body and object placeholders that are not large and neither the subtitle nor the
+	 * footer, in reading order: column by column from left to right, each from top to bottom.
+	 */
+	private List<PlaceholderInfo> entryPlaceholders(LayoutInfo layout, PlaceholderInfo subtitle,
+			PlaceholderInfo footer) {
+		List<PlaceholderInfo> candidates = new ArrayList<>();
+		for (PlaceholderInfo placeholder : layout.placeholders()) {
+			if (placeholder != subtitle && placeholder != footer && isContentType(placeholder)
+				&& !isLarge(placeholder)) {
+				candidates.add(placeholder);
+			}
+		}
+		candidates.sort(Comparator.comparingDouble(placeholder -> placeholder.bounds().getX()));
+		List<List<PlaceholderInfo>> columns = new ArrayList<>();
+		for (PlaceholderInfo placeholder : candidates) {
+			List<PlaceholderInfo> column = columns.isEmpty() ? null : columns.get(columns.size() - 1);
+			if (column != null && sameColumn(column.get(0).bounds(), placeholder.bounds())) {
+				column.add(placeholder);
+			} else {
+				column = new ArrayList<>();
+				column.add(placeholder);
+				columns.add(column);
+			}
+		}
+		List<PlaceholderInfo> result = new ArrayList<>();
+		for (List<PlaceholderInfo> column : columns) {
+			column.sort(Comparator.comparingDouble(placeholder -> placeholder.bounds().getY()));
+			result.addAll(column);
+		}
+		return result;
+	}
+
+	private static boolean sameColumn(Rectangle2D first, Rectangle2D second) {
+		double overlap = Math.min(first.getMaxX(), second.getMaxX()) - Math.max(first.getX(), second.getX());
+		return overlap >= Math.min(first.getWidth(), second.getWidth()) * COLUMN_OVERLAP;
+	}
+
+	/**
+	 * Whether the given layout with the given entry placeholders is an agenda layout.
+	 */
+	private boolean isAgenda(LayoutInfo layout, List<PlaceholderInfo> entries) {
+		if (entries.size() < MIN_AGENDA_ENTRIES || layout.placeholder(TITLE) == null || largeCount(layout) > 0) {
+			return false;
+		}
+		Rectangle2D first = entries.get(0).bounds();
+		for (PlaceholderInfo entry : entries) {
+			if (!similarSize(first, entry.bounds())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean similarSize(Rectangle2D bounds, Rectangle2D other) {
+		return similar(bounds.getWidth(), other.getWidth()) && similar(bounds.getHeight(), other.getHeight());
+	}
+
+	private static boolean similar(double size, double other) {
+		return Math.abs(size - other) <= Math.max(size, other) * SIZE_TOLERANCE;
 	}
 
 	private static PlaceholderInfo title(LayoutInfo layout) {
@@ -268,11 +381,25 @@ final class ProfileDerivation {
 			double overlap = Math.min(bounds.getMaxX(), titleBounds.getMaxX())
 				- Math.max(bounds.getX(), titleBounds.getX());
 			if (gap <= height * SUBTITLE_GAP && bounds.getHeight() <= height * SUBTITLE_HEIGHT
-				&& overlap >= titleBounds.getWidth() * SUBTITLE_OVERLAP) {
+				&& overlap >= titleBounds.getWidth() * SUBTITLE_OVERLAP && isUniqueSize(layout, placeholder, footer)) {
 				return placeholder;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether no other body or object placeholder of the layout except the footer has the size of
+	 * the given placeholder.
+	 */
+	private static boolean isUniqueSize(LayoutInfo layout, PlaceholderInfo placeholder, PlaceholderInfo footer) {
+		for (PlaceholderInfo other : layout.placeholders()) {
+			if (other != placeholder && other != footer && isContentType(other)
+				&& similarSize(placeholder.bounds(), other.bounds())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

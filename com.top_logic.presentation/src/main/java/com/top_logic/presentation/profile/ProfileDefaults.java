@@ -116,6 +116,9 @@ final class ProfileDefaults {
 	 * <li>{@link PresentationData#TYPE_ARROW}: a right arrow filled
 	 * with the color of the element's role, by default
 	 * {@link PresentationData#ROLE_MUTED}.</li>
+	 * <li>{@link PresentationData#TYPE_TIMELINE}: the line of a timeline, a rectangle filled with
+	 * a light variant of the color of the element's role, by default
+	 * {@link PresentationData#ROLE_MUTED}.</li>
 	 * </ul>
 	 */
 	static Map<String, Object> styles() {
@@ -153,6 +156,13 @@ final class ProfileDefaults {
 		arrow.put(FILL, role(ROLE_ACCENT));
 		arrow.put(LINE, NONE);
 		result.put(TYPE_ARROW, arrow);
+
+		Map<String, Object> timeline = map();
+		timeline.put(ROLE, ROLE_MUTED);
+		timeline.put(GEOMETRY, "rect");
+		timeline.put(FILL, color(ROLE, ROLE_ACCENT, ColorInfo.LUM_MOD, 0.5, ColorInfo.LUM_OFF, 0.5));
+		timeline.put(LINE, NONE);
+		result.put(TYPE_TIMELINE, timeline);
 		return result;
 	}
 

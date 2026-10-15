@@ -382,6 +382,36 @@ public final class PresentationData {
 	/** Key of the entries of a bullet list or a legend. */
 	public static final String ITEMS = "items";
 
+	/**
+	 * Key of the entries of an agenda slide, or of the placeholders of a slide layout taking such
+	 * entries.
+	 */
+	public static final String ENTRIES = "entries";
+
+	/** Key of the slide layouts of agenda slides by their number of entries in a template profile. */
+	public static final String AGENDA_LAYOUTS = "agendaLayouts";
+
+	/** Key of the milestones of a timeline. */
+	public static final String MILESTONES = "milestones";
+
+	/** Key of the date of a milestone. */
+	public static final String DATE = "date";
+
+	/** Key of the steps of a flow. */
+	public static final String STEPS = "steps";
+
+	/** Key of the strengths in a comparison of strengths and limits. */
+	public static final String PROS = "pros";
+
+	/** Key of the limits in a comparison of strengths and limits. */
+	public static final String CONS = "cons";
+
+	/** Key of the heading of the strengths in a comparison of strengths and limits. */
+	public static final String PROS_TITLE = "prosTitle";
+
+	/** Key of the heading of the limits in a comparison of strengths and limits. */
+	public static final String CONS_TITLE = "consTitle";
+
 	/** {@link #TYPE} of a slide. */
 	public static final String TYPE_SLIDE = "slide";
 
@@ -423,6 +453,18 @@ public final class PresentationData {
 
 	/** {@link #TYPE} of a block arrow. */
 	public static final String TYPE_ARROW = "arrow";
+
+	/**
+	 * {@link #TYPE} of a timeline: milestones on a horizontal line, their dates above and their
+	 * titles below. The line itself has the style of this name.
+	 */
+	public static final String TYPE_TIMELINE = "timeline";
+
+	/** {@link #TYPE} of a flow: a chain of steps from left to right with arrows between them. */
+	public static final String TYPE_FLOW = "flow";
+
+	/** {@link #TYPE} of a comparison of strengths and limits in two cards. */
+	public static final String TYPE_PRO_CON = "proCon";
 
 	/**
 	 * Color role standing for the {@link #ROLE} of the element it is used in.

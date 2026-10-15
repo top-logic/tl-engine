@@ -61,6 +61,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey EXPECTED_PLACEHOLDER;
 
 	/**
+	 * @en The index of a placeholder of the slide layout.
+	 */
+	public static ResKey EXPECTED_PLACEHOLDER_INDEX;
+
+	/**
+	 * @en A number of agenda entries, at least 1.
+	 */
+	public static ResKey EXPECTED_ENTRY_COUNT;
+
+	/**
 	 * @en (cont.)
 	 */
 	public static ResKey CONTINUATION_SUFFIX;

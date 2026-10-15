@@ -46,6 +46,9 @@ import com.top_logic.util.error.TopLogicException;
  *        The index of the layout for each role that has one.
  * @param slideLayouts
  *        The properties of the slide layouts by their index.
+ * @param agendaLayouts
+ *        The index of the layout of an agenda slide by the number of its entries, see
+ *        {@link #agendaLayout(int)}.
  * @param roles
  *        The colors of the color roles by the role names.
  * @param styles
@@ -63,7 +66,7 @@ import com.top_logic.util.error.TopLogicException;
  *        slide, separated by a space.
  */
 public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, LayoutProfile> slideLayouts,
-		Map<String, ColorSpec> roles, Map<String, StyleSpec> styles, Map<String, StyleSpec> ratings, double gap,
+		Map<Integer, Integer> agendaLayouts, Map<String, ColorSpec> roles, Map<String, StyleSpec> styles, Map<String, StyleSpec> ratings, double gap,
 		double minFontSize, String continuationSuffix) {
 
 	/**
@@ -81,11 +84,12 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 	 * with the data of the derived profile, see {@link PresentationData#merge(Map, Map, int)}.
 	 *
 	 * <p>
-	 * A color role is replaced as a whole. A style is merged by its properties, each of which is
-	 * replaced as a whole, e.g. its fill.
+	 * A color role and the agenda layout for a number of entries are replaced as a whole. A style
+	 * is merged by its properties, each of which is replaced as a whole, e.g. its fill.
 	 * </p>
 	 */
-	private static final Map<String, Integer> MERGE_DEPTHS = Map.of(ROLES, 1, STYLES, 2, RATINGS, 2);
+	private static final Map<String, Integer> MERGE_DEPTHS =
+		Map.of(ROLES, 1, STYLES, 2, RATINGS, 2, AGENDA_LAYOUTS, 1);
 
 	/**
 	 * Derives the profile of the analyzed template.
@@ -165,6 +169,22 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 			}
 		}
 
+		Map<Integer, Integer> agendaLayouts = new LinkedHashMap<>();
+		Value agendaValue = entries.get(AGENDA_LAYOUTS);
+		if (!agendaValue.isAbsent()) {
+			for (Map.Entry<String, Value> entry : agendaValue.asEntries().all().entrySet()) {
+				Value layout = entry.getValue();
+				if (layout.isString() && NONE.equals(layout.asString())) {
+					continue;
+				}
+				Object count = parseIndex(entry.getKey());
+				if (!(count instanceof Integer number) || number.intValue() < 1) {
+					throw new Value(entry.getKey(), layout.path()).invalid(I18NConstants.EXPECTED_ENTRY_COUNT);
+				}
+				agendaLayouts.put(number, Integer.valueOf(layoutIndex(analysis, layout)));
+			}
+		}
+
 		Map<String, ColorSpec> roles = readRoles(entries.get(ROLES));
 		Map<String, StyleSpec> styles = readStyles(entries.get(STYLES), true);
 		Map<String, StyleSpec> ratings = readStyles(entries.get(RATINGS), false);
@@ -172,7 +192,7 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 		Double minFontSize = entries.get(MIN_FONT_SIZE).optRange(TextMeasure.MIN_FONT_SIZE, TextMeasure.MAX_FONT_SIZE);
 		String continuationSuffix = entries.get(CONTINUATION_SUFFIX).optString();
 		entries.checkComplete();
-		return new TemplateProfile(layouts, slideLayouts, roles, styles, ratings,
+		return new TemplateProfile(layouts, slideLayouts, agendaLayouts, roles, styles, ratings,
 			gap == null ? DEFAULT_GAP : gap.doubleValue(),
 			minFontSize == null ? DEFAULT_MIN_FONT_SIZE : minFontSize.doubleValue(),
 			continuationSuffix == null ? defaultContinuationSuffix() : continuationSuffix);
@@ -228,6 +248,14 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 		String name = entries.get(NAME).optString();
 		Long subtitle = placeholder(entries.get(SUBTITLE));
 		Long footer = placeholder(entries.get(FOOTER));
+		List<Long> entryPlaceholders = new ArrayList<>();
+		Value entryValues = entries.get(ENTRIES);
+		if (!entryValues.isAbsent()) {
+			for (Value entry : entryValues.asList()) {
+				entryPlaceholders.add(Long.valueOf(entry.require(I18NConstants.EXPECTED_PLACEHOLDER_INDEX)
+					.asInteger(0, Integer.MAX_VALUE)));
+			}
+		}
 		Entries area = entries.require(CONTENT_AREA, com.top_logic.presentation.model.I18NConstants.EXPECTED_DICTIONARY)
 			.asEntries();
 		Rectangle2D contentArea = new Rectangle2D.Double(
@@ -239,7 +267,7 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 				.asNonNegative());
 		area.checkComplete();
 		entries.checkComplete();
-		return new LayoutProfile(name, subtitle, footer, contentArea);
+		return new LayoutProfile(name, subtitle, footer, entryPlaceholders, contentArea);
 	}
 
 	private static Long placeholder(Value placeholder) {
@@ -372,6 +400,16 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 	}
 
 	/**
+	 * The layout for an agenda slide with the given number of entries.
+	 *
+	 * @return The index of the layout, <code>null</code> if the profile has no agenda layout for
+	 *         this number of entries.
+	 */
+	public Integer agendaLayout(int count) {
+		return agendaLayouts.get(Integer.valueOf(count));
+	}
+
+	/**
 	 * The properties of the layout with the given index.
 	 *
 	 * @return The properties, <code>null</code> if the profile does not describe the layout.
@@ -383,7 +421,8 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 	/**
 	 * The data representation with the keys {@link PresentationData#LAYOUTS} (the layout index for
 	 * each {@link LayoutRole#id() role}), {@link PresentationData#SLIDE_LAYOUTS} (the
-	 * {@link LayoutProfile#toData() layout properties} by the layout index) and
+	 * {@link LayoutProfile#toData() layout properties} by the layout index),
+	 * {@link PresentationData#AGENDA_LAYOUTS} (the layout index by the number of agenda entries),
 	 * {@link PresentationData#ROLES} (the {@link ColorSpec#toData() color} for each color role),
 	 * {@link PresentationData#STYLES} and {@link PresentationData#RATINGS} (the
 	 * {@link StyleSpec#data() style description} for each style name or rating word),
@@ -402,6 +441,11 @@ public record TemplateProfile(Map<LayoutRole, Integer> layouts, Map<Integer, Lay
 			slideLayoutData.put(entry.getKey().toString(), entry.getValue().toData());
 		}
 		result.put(SLIDE_LAYOUTS, slideLayoutData);
+		Map<String, Object> agendaData = PresentationData.map();
+		for (Map.Entry<Integer, Integer> entry : agendaLayouts.entrySet()) {
+			agendaData.put(entry.getKey().toString(), Double.valueOf(entry.getValue().intValue()));
+		}
+		result.put(AGENDA_LAYOUTS, agendaData);
 		Map<String, Object> roleData = PresentationData.map();
 		for (Map.Entry<String, ColorSpec> entry : roles.entrySet()) {
 			roleData.put(entry.getKey(), entry.getValue().toData());

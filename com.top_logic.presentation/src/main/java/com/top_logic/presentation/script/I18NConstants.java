@@ -5,6 +5,7 @@
  */
 package com.top_logic.presentation.script;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
@@ -45,6 +46,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     has index 0.
 	 */
 	public static ResKey2 ERROR_NO_SUCH_LAYOUT__INDEX_COUNT;
+
+	/**
+	 * @en Agenda
+	 */
+	public static ResKey AGENDA_TITLE;
 
 	static {
 		initConstants(I18NConstants.class);

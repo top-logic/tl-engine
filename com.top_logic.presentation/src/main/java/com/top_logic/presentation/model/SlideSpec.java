@@ -19,6 +19,9 @@ import java.util.Map;
  *        The text of the subtitle placeholder, <code>null</code> to leave it empty.
  * @param placeholders
  *        The texts of further placeholders of the layout.
+ * @param entries
+ *        The entries of an agenda slide, empty for none. They fill the entry placeholders of the
+ *        slide layout, or are listed in the content area if the layout has none.
  * @param content
  *        The elements placed on the slide.
  * @param notes
@@ -27,6 +30,6 @@ import java.util.Map;
  *        Whether the slide is hidden in the slide show.
  */
 public record SlideSpec(LayoutRef layout, TextSpec title, TextSpec subtitle, Map<PlaceholderKey, TextSpec> placeholders,
-		List<ElementSpec> content, String notes, boolean hidden) {
+		List<TextSpec> entries, List<ElementSpec> content, String notes, boolean hidden) {
 	// Pure data.
 }

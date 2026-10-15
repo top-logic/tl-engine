@@ -121,11 +121,18 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * suitable layout has no entry. A slide refers to these layouts by the role name.</li>
 	 * <li><code>slideLayouts</code>: For each slide layout by its index: its <code>name</code>, the
 	 * index of the placeholder taking the <code>subtitle</code>, the index of the placeholder
-	 * taking the <code>footer</code>, and the <code>contentArea</code> (<code>x</code>,
-	 * <code>y</code>, <code>width</code>, <code>height</code> in points), in which the content
-	 * elements without position are arranged.</li>
-	 * <li><code>roles</code>: The color for each color role name. A derived profile defines no
-	 * color roles.</li>
+	 * taking the <code>footer</code>, the indexes of the placeholders taking the
+	 * <code>entries</code> of an agenda slide in their order, and the <code>contentArea</code>
+	 * (<code>x</code>, <code>y</code>, <code>width</code>, <code>height</code> in points), in
+	 * which the content elements without position are arranged.</li>
+	 * <li><code>agendaLayouts</code>: The index or name of the slide layout of an agenda slide by
+	 * its number of entries, e.g. <code>{"3": 3, "4": 4}</code>. <code>none</code> removes a derived
+	 * entry. An agenda slide with another number of entries lists them on the content layout.</li>
+	 * <li><code>roles</code>: The color for each color role name, e.g. <code>topicA</code>,
+	 * <code>risk</code> or <code>muted</code>.</li>
+	 * <li><code>styles</code>: The shape styles by their names, e.g. <code>card</code>, used by
+	 * the building blocks.</li>
+	 * <li><code>ratings</code>: The styles of rated table cells by the rating words.</li>
 	 * <li><code>gap</code>: The distance in points between the elements of a row or column that
 	 * gives none, and between the content elements of a slide arranged one below the other
 	 * (default 17).</li>
@@ -140,7 +147,9 @@ public class PptDeckFunctions extends TLScriptFunctions {
 	 * The content layout is a layout with a title and a single large text placeholder, whose area
 	 * becomes the content area. A layout without such a placeholder offers the area between title
 	 * (or subtitle) and footer. The subtitle is a placeholder directly below the title, the footer
-	 * a placeholder at the bottom of the slide.
+	 * a placeholder at the bottom of the slide. The entry placeholders are the other small text
+	 * placeholders, read column by column. A layout with a title, no large placeholder and at least
+	 * two entry placeholders of the same size is the agenda layout for their number.
 	 * </p>
 	 *
 	 * @param template

@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
+import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
@@ -171,6 +173,38 @@ public class TestMcpServerProtocol extends TestCase {
 	public void testAnAllowedOriginAndNoOriginAreServed() throws IOException {
 		assertEquals(HttpServletResponse.SC_OK, initialize("https://app.example.com").status);
 		assertEquals(HttpServletResponse.SC_OK, initialize(null).status);
+	}
+
+	/**
+	 * A session whose client never answers a ping stays while its client sends requests, and is
+	 * removed once no request named it for the idle timeout (#917, Pietro #738).
+	 *
+	 * <p>
+	 * A client that only posts - this test's, a script's - cannot answer a ping. The SDK's own
+	 * keep-alive logged a warning for such a session at every interval and kept it until the
+	 * application stopped: ten of them wrote 1,200 warnings an hour in an evaluation run.
+	 * </p>
+	 */
+	public void testASessionThatDoesNotAnswerIsRemovedWhenIdle() throws IOException {
+		McpSessionPrincipals principals = new McpSessionPrincipals();
+		long[] now = { 1_000_000 };
+		McpSessionKeeper keeper = McpSessionKeeper.attach(_transport, Duration.ofMinutes(30), principals, () -> now[0]);
+		assertNotNull("The keeper does not find the sessions of this SDK.", keeper);
+		String session = initialize(null).sessionId;
+		principals.bind(session, "someone");
+		keeper.noteRequest(session);
+
+		now[0] += Duration.ofMinutes(29).toMillis();
+		keeper.checkAll();
+		assertEquals("A session in use stays.", HttpServletResponse.SC_OK,
+			post(session, null, request(2, "tools/list", Map.of())).status);
+
+		keeper.noteRequest(session);
+		now[0] += Duration.ofMinutes(31).toMillis();
+		keeper.checkAll();
+		assertEquals("An idle session that does not answer is removed.", HttpServletResponse.SC_NOT_FOUND,
+			post(session, null, request(3, "tools/list", Map.of())).status);
+		assertEquals("Its owner is released.", 0, principals.size());
 	}
 
 	private Exchange initialize(String origin) throws IOException {

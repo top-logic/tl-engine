@@ -152,6 +152,13 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		String KEEP_ALIVE_INTERVAL = "keep-alive-interval";
 
 		/**
+		 * Configuration property name for how long a session that does not answer stays.
+		 *
+		 * @see #getSessionIdleTimeout()
+		 */
+		String SESSION_IDLE_TIMEOUT = "session-idle-timeout";
+
+		/**
 		 * Configuration property name for dynamic resources.
 		 *
 		 * @see #getDynamicResources()
@@ -208,13 +215,36 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		String getServerVersion();
 
 		/**
-		 * Keep-alive interval in seconds for SSE connections.
+		 * Keep-alive interval in seconds: how often every MCP session is pinged.
+		 *
+		 * <p>
+		 * The ping keeps a client's event stream open through proxies, and finds the sessions that
+		 * no client answers for any more, see {@link #getSessionIdleTimeout()}. {@code 0} switches
+		 * both off.
+		 * </p>
 		 *
 		 * <p>Default: 30 seconds</p>
 		 */
 		@Name(KEEP_ALIVE_INTERVAL)
 		@LongDefault(30)
 		long getKeepAliveInterval();
+
+		/**
+		 * How long, in seconds, a session that does not answer a ping stays after the last request
+		 * that named it.
+		 *
+		 * <p>
+		 * A client that sends its requests by {@code POST} and never opens the event stream cannot
+		 * answer a ping, and most such clients never delete their session. Such a session is removed
+		 * once it has not answered and no request named it for this long; its client is answered
+		 * {@code 404} next and starts a new session.
+		 * </p>
+		 *
+		 * <p>Default: 1800 seconds (30 minutes)</p>
+		 */
+		@Name(SESSION_IDLE_TIMEOUT)
+		@LongDefault(1800)
+		long getSessionIdleTimeout();
 
 		/**
 		 * List of configurable dynamic resources.
@@ -335,6 +365,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 	private final McpSessionPrincipals _sessionPrincipals = new McpSessionPrincipals();
 
+	private McpSessionKeeper _sessionKeeper;
+
 	/**
 	 * Creates a new {@link MCPServerService} from configuration.
 	 *
@@ -389,6 +421,21 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		return _sessionPrincipals;
 	}
 
+	/**
+	 * Notes that a request named the given MCP session, or opened it.
+	 *
+	 * @param sessionId
+	 *        The {@code mcp-session-id} of the request or of its answer; <code>null</code> is ignored.
+	 *
+	 * @see McpSessionKeeper
+	 */
+	void noteSessionRequest(String sessionId) {
+		McpSessionKeeper keeper = _sessionKeeper;
+		if (keeper != null) {
+			keeper.noteRequest(sessionId);
+		}
+	}
+
 	@Override
 	protected void startUp() {
 		super.startUp();
@@ -413,6 +460,14 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 				_transportProvider.init(new ServletConfigAdapter(servletContext));
 			} catch (ServletException ex) {
 				throw new RuntimeException("Failed to initialize MCP transport provider: " + ex.getMessage(), ex);
+			}
+
+			if (config.getKeepAliveInterval() > 0) {
+				_sessionKeeper = McpSessionKeeper.attach(_transportProvider,
+					Duration.ofSeconds(config.getSessionIdleTimeout()), _sessionPrincipals, System::currentTimeMillis);
+				if (_sessionKeeper != null) {
+					_sessionKeeper.start(Duration.ofSeconds(config.getKeepAliveInterval()));
+				}
 			}
 
 			var builder = createServer(_transportProvider, config);
@@ -444,7 +499,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		return HttpServletStreamableServerTransportProvider.builder()
 			.jsonMapper(McpJsonDefaults.getMapper())
 			.mcpEndpoint(MCP_ENDPOINT)
-			.keepAliveInterval(Duration.ofSeconds(config.getKeepAliveInterval()))
+			// No keep-alive of the SDK's: it pings, but never removes a session that does not
+			// answer. McpSessionKeeper does both.
 			.securityValidator(DefaultServerTransportSecurityValidator.builder()
 				.allowedOrigins(config.getAllowedOrigins())
 				.allowedHosts(config.getAllowedHosts())
@@ -593,6 +649,10 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			// The transport is destroyed below, so every MCP session it held is gone; keeping their
 			// owners would leave a restarted service deciding about sessions that no longer exist.
 			_sessionPrincipals.clear();
+			if (_sessionKeeper != null) {
+				_sessionKeeper.stop();
+				_sessionKeeper = null;
+			}
 
 			// Clean up MCP server resources
 			if (_mcpServer != null) {

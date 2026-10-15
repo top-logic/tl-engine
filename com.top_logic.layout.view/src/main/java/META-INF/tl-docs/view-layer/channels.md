@@ -120,9 +120,10 @@ Demo: `com.top_logic.demo.react/src/main/webapp/WEB-INF/views/demo/live-channel-
 
 Elements and commands name channels in their configuration; a channel reference is the plain channel name. The common properties:
 
-- **`input="ch"`** - the object an element displays or a command works on: `<form input="selectedNode">`, `<text input="element"/>`, `<generic-command input="model">`. The element follows the channel and shows the new value.
+- **`input="ch"`** - the object an element displays: `<form input="selectedNode">`, `<text input="element"/>`. The element follows the channel and shows the new value.
 - **`selection="ch"`** - what the user selects in a `<table>`, a tree or a `<flow-diagram>` is written to the channel, and a value written to the channel by another element is marked as selected (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
-- **`inputs="a, b"`** - the channels whose values become the leading arguments of an element's TL-Script functions: the `<rows>` of a `<table>`, the `items` of an `<object-list>`, `<execute-script>`, a `<derived-channel>`. The values are read every time a function is applied.
+- **`inputs="a, b"`** - the channels whose values become the leading arguments of an element's TL-Script functions: the `<rows>` of a `<table>`, the `items` of an `<object-list>`, a `<derived-channel>`. The values are read every time a function is applied.
+- **`inputs="a as x, b"`** on a command or an action of a chain - the channels whose values are *named arguments*, which the scripts of the chain use as variables (`$x`, `$b`) without declaring them; the first input of a command is its main argument, the input of its executability rules: `<generic-command inputs="model">`. See [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments).
 - **`value="ch"`** - a channel bound to an input control in both directions, as with `<value-input value="search"/>`.
 
 Several elements sharing one channel is all a master-detail needs. A table and a form share the selected flow node:
@@ -192,7 +193,7 @@ A bound channel is not a copy: the channel object of the enclosing view is regis
 
 The referenced view is loaded when the `<view-ref>` builds its control, not when the enclosing view is parsed. A view can therefore reference itself - each instance gets a scope of its own - as long as the self-reference sits in content that is built on demand (a dialog, a tab, an item of a list); an unconditional self-reference recurses while the control is built. A referenced view that cannot be loaded renders an error placeholder in its place, so the enclosing application stays usable.
 
-A dialog is connected the same way: `<open-dialog dialog-view="…">` creates the dialog view with a scope of its own, writes the command's input into the dialog channel named by `bind-input-to` (`model` by default), and takes `<bind channel="…" to="…"/>` elements with the same meaning as in `<view-ref>`:
+A dialog is connected the same way: `<open-dialog dialog-view="…">` creates the dialog view with a scope of its own, writes the value it processes - the default argument of the chain, or the argument its `value` names (see [commands](doc:view-layer/commands#actions-processing-one-value-value)) - into the dialog channel named by `bind-input-to` (`model` by default), and takes `<bind channel="…" to="…"/>` elements with the same meaning as in `<view-ref>`:
 
 ```xml
 <open-dialog

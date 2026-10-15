@@ -128,7 +128,7 @@ A value of any other type has no HTML representation; the element reports that i
 			<html display="thumbnail" input="element"/>
 			<text css-class="tl-type-body-strong" input="element"/>
 			<button appearance="link">
-				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="element">
 					<label><en>Show</en></label>
 					<write-channel name="expose"/>
 				</action>

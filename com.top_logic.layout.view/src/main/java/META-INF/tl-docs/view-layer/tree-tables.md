@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <tree-table> in a .view.xml - a table whose rows form a tree (root and children functions, columns, selection, expansion) - or drag and drop on it (<drag>, <drop target="ordered" parent-channel before-channel>), and before touching TreeTableElement, AbstractTableElement, TreeFunctions, RowHierarchy or TreeDropPlace.
+description: Read before configuring a <tree-table> in a .view.xml - a table whose rows form a tree (root and children functions, columns, selection, expansion) - or drag and drop on it (<drag>, <drop target="ordered"> with the arguments objects / parent / before and as / parent-as / before-as), and before touching TreeTableElement, AbstractTableElement, TreeFunctions, RowHierarchy or TreeDropPlace.
 order: 65
 ---
 
@@ -33,11 +33,13 @@ A `<tree-table>` is a table whose rows form a tree: each object is a row with th
 
 A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table — `row-executability` decides per row, `target` is `table`, `row` or `ordered` — but an insertion is made among the children of a row, as in a [tree](doc:view-layer/tables#drag-and-drop-of-tree-nodes):
 
-| `target` | applies | `refuse-if` | channels |
+| `target` | applies | arguments of `refuse-if` and the actions | renamed by |
 |---|---|---|---|
-| `table` | anywhere on the table | `objects -> target -> reason`, `target` is `null` | `target-channel` (written with `null`) |
-| `row` | onto the row under the pointer, in any part of it | `objects -> target -> reason` | `target-channel`: the object of the row dropped on |
-| `ordered` | at a place among the rows | `objects -> parent -> before -> reason` | `parent-channel`: the object whose children the dropped objects become; `before-channel`: the child they are inserted before, `null` for an insertion as the last children |
+| `table` | anywhere on the table | `objects`, `target` (always `null`) | `as`, `target-as` |
+| `row` | onto the row under the pointer, in any part of it | `objects`, `target`: the object of the row dropped on | `as`, `target-as` |
+| `ordered` | at a place among the rows | `objects`, `parent`: the object whose children the dropped objects become, `before`: the child they are inserted before, `null` for an insertion as the last children | `as`, `parent-as`, `before-as` |
+
+The scripts use the arguments as variables without declaring them (see [named arguments](doc:view-layer/commands#scripts-use-the-arguments-as-variables)); `target-channel`, `parent-channel` and `before-channel` additionally publish the references as channel state where a view needs them there.
 
 ```xml
 <tree-table root="$project" children="node -> $node.get(`demo.tickets:Item#children`)"
@@ -50,22 +52,20 @@ A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table �
         </row-executability>
     </drag>
     <!-- Move items: insert the dragged items under `parent` before its child `before`. -->
-    <drop accept="item" target="ordered" parent-channel="dropParent" before-channel="dropBefore"
-        refuse-if="items -> parent -> before -> $parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
+    <drop accept="item" target="ordered" as="items"
+        refuse-if="$parent.recursion(p -> $p.container()).containsSome($items) || $items.containsElement($before)"
     >
         <with-transaction>
             <!-- Take the items out of their containers, then insert them at the index of `before`, at the end without one. -->
-            <execute-script function="parent -> before -> items -> {
+            <execute-script function="{
                 $items.foreach(i -> $i.container().remove(`demo.tickets:Item#children`, $i));
                 children = $parent.get(`demo.tickets:Item#children`);
                 $parent.add(`demo.tickets:Item#children`, if($before == null, $children.size(), $children.elementIndex($before)), $items);
-            }">
-                <inputs><input channel="dropParent"/><input channel="dropBefore"/></inputs>
-            </execute-script>
+            }"/>
         </with-transaction>
     </drop>
     <!-- Drop a ticket dragged out of a table onto a row: assign it to the row's item. -->
-    <drop accept="ticket" target="row" target-channel="dropItem">
+    <drop accept="ticket" target="row" as="tickets" target-as="item">
         …
     </drop>
     <columns>…</columns>
@@ -74,7 +74,8 @@ A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table �
 
 - **Where an insertion goes** — the rules of a tree: the **upper third** of row X inserts before X among its siblings (`parent` = the object of the row holding X, `before` = X; a line above X); the **middle third** inserts into X as its first children (`parent` = X, `before` = the first child of X or `null`; X highlighted), computing the children of a row that is not open; the **lower third** inserts as the first children of X where X is open and has children, and after X among its siblings otherwise (`before` = the next sibling, `null` after the last one; a line below X); **beside the rows** appends to the top-level rows (`parent` = the object `root` computes, `before` = `null`; the table highlighted). Siblings are taken in the order the rows are displayed in, so an insertion meant to follow the order of the `children` function is made while the table is not sorted.
 - **Declared order and fall-through** as in a table: an `ordered` drop declared before a `row` drop takes the middle third as an insertion into the row and hands it to the `row` drop only where it refuses; a `row` drop declared first takes the whole row.
-- `parent-channel` belongs to the `ordered` drop of a tree table (`DropTargetMode.treeSignature()` is `DropSignature.ORDERED_TREE`, where a flat table's `signature()` is `ORDERED_LIST`); on a `table` or `row` drop it is a configuration error, as is `target-channel` on an `ordered` drop. The drops are `TableDropConfig`s.
+- `parent` belongs to the `ordered` drop of a tree table (`DropTargetMode.treeSignature()` is `DropSignature.ORDERED_TREE`, where a flat table's `signature()` is `ORDERED_LIST`); `parent-as` or `parent-channel` on a `table` or `row` drop is a configuration error, as is `target-as` or `target-channel` on an `ordered` drop. The drops are `TableDropConfig`s.
+- **Activation**: `<on-activate>` runs its command with the activated row as the argument `row`, as in a table; `activate-as` names it otherwise.
 - Dragging a selected row drags the whole selection, an unselected row drags itself. Rows and nodes move between tree tables, tables and trees in either direction, since all of them take part in the same protocol.
 
 ## Underneath

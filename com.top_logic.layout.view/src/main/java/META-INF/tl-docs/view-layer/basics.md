@@ -78,13 +78,14 @@ order: 10
     </group>
     ```
     The demo is the "Edit demo object" dialog of `com.top_logic.demo.react`'s Attributes page (`WEB-INF/views/attributes-detail.view.xml`), whose fifty fields stand in eight sections.
-  - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
+  - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its main argument named `value` (`submit-as="term"` on the `<value-input>` names it otherwise), so the command's `<execute-script function="… $value …">` uses it directly and needs no `inputs` channel of its own (see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml
     <fields>
       <value-input value="jump">
         <on-submit>
-          <execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
-          <write-channel name="ticket"/>
+          <execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
+            <write-channel name="ticket"/>
+          </execute-script>
         </on-submit>
       </value-input>
     </fields>
@@ -97,7 +98,6 @@ order: 10
       ```xml
       <value-input type="tl.core:Integer" value="pageSize" submit-on="change">
         <on-submit>
-          <execute-script function="size -> $size"/>
           <write-channel name="appliedPageSize"/>
         </on-submit>
       </value-input>

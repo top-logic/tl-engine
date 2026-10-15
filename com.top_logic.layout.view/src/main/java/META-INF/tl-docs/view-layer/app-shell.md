@@ -116,7 +116,7 @@ Five kinds of item:
         <separator/>
         <command-item id="about">
             <action class="com.top_logic.layout.view.command.GenericViewCommand"
-                image="css:bi bi-info-circle" input="ticketCount"
+                image="css:bi bi-info-circle" inputs="ticketCount"
             >
                 <label>
                     <en>About</en>
@@ -125,7 +125,7 @@ Five kinds of item:
                 <executability>
                     <null-input-disabled/>
                 </executability>
-                <notify expr="count -> #('{0} tickets.'@en, '{0} Tickets.'@de).fill($count)"/>
+                <notify expr="#('{0} tickets.'@en, '{0} Tickets.'@de).fill($ticketCount)"/>
             </action>
         </command-item>
     </items>

@@ -94,6 +94,17 @@
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>
+					<!-- The number is computed inside on-denied: it only counts what the caller may discover. -->
+					<privileged-script name="testPrivilegedOnDeniedCount"
+						command-group="Approve"
+						security-object="$project"
+						on-denied="all(`TestTLScriptSecurity:Proposal`).size()"
+					>
+						<parameters>
+							<parameter name="project"/>
+						</parameters>
+						<implementation>'allowed'</implementation>
+					</privileged-script>
 					<privileged-script name="testPrivilegedOnDeniedThrow"
 						command-group="Approve"
 						security-object="$project"

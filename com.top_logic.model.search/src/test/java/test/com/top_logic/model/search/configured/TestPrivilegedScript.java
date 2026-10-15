@@ -157,6 +157,12 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		assertEquals("allowed", execute(search("p -> testPrivilegedOnDeniedValue($p)"), _p1));
 	}
 
+	public void testOnDeniedIsEvaluatedWithSecurity() throws Exception {
+		// The auditor discovers only p1. An unsecured on-denied would also count p2.
+		becomeUser(_auditor);
+		assertEquals(Double.valueOf(1), execute(search("p -> testPrivilegedOnDeniedCount($p)"), _p1));
+	}
+
 	public void testOnDeniedThrow() throws Exception {
 		becomeUser(_auditor);
 		try {

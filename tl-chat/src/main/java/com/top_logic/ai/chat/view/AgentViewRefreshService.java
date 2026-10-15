@@ -525,6 +525,18 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 * Pushes the pending model changes into one window, in its own sub-session and within its
 	 * interaction. Best-effort: a window that cannot be reached is skipped, never logged as a failure
 	 * of the run that caused the refresh.
+	 *
+	 * <p>
+	 * <b>Only into a window whose browser takes what it is sent.</b> A window whose event queue still
+	 * holds undelivered events has no browser reading its event stream: the page was closed without
+	 * reporting it, or the browser died. The engine keeps such a window until its session ends, and
+	 * its queue keeps every event until a stream connects again. Each refresh made its lists send
+	 * their rows again - the chat's list of conversations, tens of kilobytes - so a window of a
+	 * browser that had died grew by that much for every change a run made, without a limit. In a
+	 * ten-hour run with eleven such windows they held 930 MB of the 2 GB heap when the JVM ran out of
+	 * memory (Pietro #738). Such a window is skipped; a browser that connects again receives the full
+	 * state of its controls, and the next refresh, browser command or heartbeat brings it up to date.
+	 * </p>
 	 */
 	private void refresh(TLSubSessionContext subSession, WindowRef window) {
 		ReactWindowRegistry registry = window.registry().get();
@@ -536,12 +548,29 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		try {
 			// A window that stays busy is skipped: the browser command holding it synthesizes the
 			// same events itself when it finishes, so this refresh has nothing left to do.
-			_interaction.run(registry, subSession, getConfig().getLockTimeoutMillis(),
-				() -> registry.synthesizeModelEvents(window.windowName()));
+			_interaction.run(registry, subSession, getConfig().getLockTimeoutMillis(), () -> {
+				if (isDelivering(registry, window.windowName())) {
+					registry.synthesizeModelEvents(window.windowName());
+				}
+			});
 		} catch (RuntimeException ex) {
 			Logger.warn("Could not refresh chat window '" + window.windowName() + "': "
 				+ ex.getMessage(), ex, AgentViewRefreshService.class);
 		}
+	}
+
+	/**
+	 * Whether the given window delivered everything it was sent: it has an event queue, and nothing
+	 * waits in it.
+	 *
+	 * <p>
+	 * Asked within the window's interaction, so that nothing the interaction itself produces is
+	 * counted: what waits then is what an earlier interaction could not write to a browser.
+	 * </p>
+	 */
+	static boolean isDelivering(ReactWindowRegistry registry, String windowName) {
+		SSEUpdateQueue queue = registry.getQueue(windowName);
+		return queue != null && queue.pendingEventCount() == 0;
 	}
 
 	/**

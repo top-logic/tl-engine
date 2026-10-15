@@ -1,11 +1,11 @@
 import {
-  React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps,
+  React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, useI18N, usePart,
+  OptionValues,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, ColorRole } from 'tl-react-bridge';
 import Autocomplete from '@mui/material/Autocomplete';
-import Chip from '@mui/material/Chip';
 import TextField from '@mui/material/TextField';
-import { MuiReadonlyValues, OptionContent, optionIcon, roleColor, useChoice } from './choice';
+import { OptionContent, useChoice } from './choice';
 import type { OptionDescriptor } from './choice';
 import { FIELD_ROOT_STYLE, fieldAriaProps, fieldColor, showsValueOnly } from './field';
 
@@ -13,6 +13,12 @@ const { useState } = React;
 
 /** Command asking the server for the options, answered by a state with optionsLoaded set. */
 const CMD_LOAD_OPTIONS = 'loadOptions';
+
+/** The key of the name of the button removing a chosen option, `{0}` standing for its label. */
+const KEY_REMOVE_CHIP = 'js.dropdownSelect.removeChip';
+
+/** The texts of the field, by key, with their English defaults. */
+const I18N_KEYS = { [KEY_REMOVE_CHIP]: 'Remove {0}' };
 
 /** Whether two options name the same object. */
 function sameOption(option: OptionDescriptor, value: OptionDescriptor): boolean {
@@ -29,20 +35,20 @@ function sameOption(option: OptionDescriptor, value: OptionDescriptor): boolean 
  * list of a field choosing one option holds all options, MUI marking the chosen one; the list of a
  * field choosing several (multiSelect) leaves the chosen options out. Choosing sends `valueChanged`
  * with the values of the chosen options (see {@link useChoice}), choosing the chosen option again
- * sends nothing; a field choosing several shows them as chips, each with a button removing it, a
- * new one appended at the end.</p>
+ * sends nothing; a field choosing several shows them as chips drawn by the part `Chip`, each with
+ * a button removing it, a new one appended at the end.</p>
  *
  * <p>A field that is not mandatory offers MUI's clear button, which sends the empty choice; while
- * nothing is chosen, emptyOptionLabel is the placeholder. An option → its icon and label, a small
- * chip of its color role where it has one ({@link OptionContent}), also for the chips of the chosen
- * options.</p>
+ * nothing is chosen, emptyOptionLabel is the placeholder. An option → its icon and label, the
+ * part `Chip` of its color role where it has one ({@link OptionContent}); a chip of a chosen option
+ * takes the icon and the color role of its option.</p>
  *
  * <p>The list is portaled to the document body; its popper carries {@link anchoredOverlayProps}, so
  * that the focus trap of a dialog around the field lets the focus into it. The control ID is on the
  * element around the `Autocomplete`, its input carries {@link fieldInputId} and is labelled by the
  * surrounding form field. hasError → `error` and `aria-invalid`, hasWarnings → color `warning`,
  * mandatory → `aria-required`; a field that is not editable shows the chosen values
- * ({@link MuiReadonlyValues}); disabled → `disabled`; hidden → nothing is rendered. MUI's texts
+ * ({@link OptionValues}); disabled → `disabled`; hidden → nothing is rendered. MUI's texts
  * (no options, loading, clear) come from the theme locale of the page language.</p>
  *
  * <p>Not reproduced: reordering the chosen options by drag and drop (customOrder) - the MUI chips
@@ -56,12 +62,14 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [open, setOpen] = useState(false);
+  const i18n = useI18N(I18N_KEYS);
+  const Chip = usePart('Chip');
 
   if (state.hidden === true) {
     return null;
   }
   if (showsValueOnly(state)) {
-    return <MuiReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
+    return <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
   }
 
   const multiSelect = state.multiSelect === true;
@@ -102,10 +110,13 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         renderValue={multiSelect
           ? (chosen, getItemProps) => (chosen as OptionDescriptor[]).map((option, index) => {
-            const itemProps = getItemProps({ index });
+            const { className, disabled, tabIndex, onDelete, 'data-item-index': itemIndex } = getItemProps({ index });
             return (
-              <Chip key={option.value} {...itemProps} size="small" label={option.label} icon={optionIcon(option)}
-                color={roleColor(option.colorRole)} />
+              <Chip key={option.value} className={className} disabled={disabled} tabIndex={tabIndex}
+                data-item-index={itemIndex}
+                label={option.label} icon={option.image}
+                colorRole={(option.colorRole || undefined) as ColorRole | undefined} onRemove={onDelete}
+                removeLabel={i18n[KEY_REMOVE_CHIP].replace('{0}', option.label)} />
             );
           })
           : undefined}

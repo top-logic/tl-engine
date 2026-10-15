@@ -1,8 +1,8 @@
-import { React, useFieldLabelProps, rootClassName } from 'tl-react-bridge';
+import { React, useFieldLabelProps, rootClassName, OptionValues } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import { MuiReadonlyValues, OptionContent, useChoice } from './choice';
+import { OptionContent, useChoice } from './choice';
 import { showsValueOnly } from './field';
 
 /**
@@ -15,9 +15,9 @@ import { showsValueOnly } from './field';
  * the chosen options (see {@link useChoice}). Each segment is a button with `aria-pressed` and a tab
  * stop of its own that Space and Enter press.</p>
  *
- * <p>Mapping from the control state besides: an option → its icon and label, a pill-like chip
+ * <p>Mapping from the control state besides: an option → its icon and label, the part `Chip`
  * where it has a color role ({@link OptionContent}); hasError → `aria-invalid` and the color
- * `error`; a field that is not editable shows the chosen values ({@link MuiReadonlyValues});
+ * `error`; a field that is not editable shows the chosen values ({@link OptionValues});
  * disabled → the group disabled; hidden → nothing is rendered. The group carries the control ID
  * and is labelled by the surrounding form field.</p>
  *
@@ -35,7 +35,7 @@ const MuiSegmentedChoiceAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
   if (showsValueOnly(state)) {
-    return <MuiReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
+    return <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
   }
 
   const multiSelect = state.multiSelect === true;

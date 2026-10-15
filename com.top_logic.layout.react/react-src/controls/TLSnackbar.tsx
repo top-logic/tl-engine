@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -13,6 +12,9 @@ const DISMISS_COMMAND = 'dismiss';
 
 /** The argument of {@link DISMISS_COMMAND} naming the message dismissed. */
 const GENERATION_ARG = 'generation';
+
+/** Icon of the button dismissing the message. */
+const DISMISS_ICON = 'css:fa-solid fa-xmark';
 
 /** Duration in ms of the fade-out animation (tlSnackbarFadeOut) before the dismiss is sent. */
 const FADEOUT_MS = 200;
@@ -79,6 +81,8 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
     return () => clearTimeout(timer);
   }, [visible, duration, hovered, handleDismiss]);
 
+  const Button = usePart('Button');
+
   if (!visible && !exiting) return null;
 
   return (
@@ -90,16 +94,16 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
         ? <span className="tlSnackbar__message" dangerouslySetInnerHTML={{ __html: content }} />
         : <span className="tlSnackbar__message">{message}</span>
       }
-      <button type="button"
-        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tlSnackbar__close' })}
-        onClick={handleDismiss}
-        aria-label={i18n['js.snackbar.dismiss']}
-        {...tooltipProps(i18n['js.snackbar.dismiss'])}>
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
+      <span className="tlSnackbar__close">
+        <Button
+          label={i18n['js.snackbar.dismiss']}
+          image={DISMISS_ICON}
+          display="icon-only"
+          appearance="ghost"
+          small
+          onClick={handleDismiss}
+        />
+      </span>
     </div>
   );
 };

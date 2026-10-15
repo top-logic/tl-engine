@@ -1,8 +1,10 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues, optionRoleAttr } from './selectOptions';
+import {
+  React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart, OptionValues,
+} from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, ColorRole } from 'tl-react-bridge';
+import { ARG_OPTION, CMD_GOTO } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly, validationOf } from './form/fieldState';
 
 const { useCallback, useMemo, useRef } = React;
 
@@ -15,11 +17,11 @@ const { useCallback, useMemo, useRef } = React;
  * toggles each independently; a field taking one switches the selection to the clicked option, and
  * a click on the selected option clears it unless the field is mandatory.
  *
- * Design system: `tl-chip` buttons with `aria-pressed` in a `tl-chip-group`; selected is the
- * attribute, and so is the field's state (see fieldStateAttrs). The label stands in a
- * `tl-chip__label`, which ends in an ellipsis where the chip is too narrow. A read-only field shows
- * its values in `tl-select__values`, as the dropdown does; a disabled field renders every chip as an
- * inactive button (native `disabled`, see showsValueOnly).
+ * Each option is a toggle drawn by the part `Chip`, pressed while the option is chosen, with the
+ * image and the color role of the option, in a `tl-chip-group` of the design system, which carries
+ * the field's state (see fieldStateAttrs); every chip is given that state as its validation, too. A
+ * read-only field shows its values as the other choice fields do (OptionValues); a disabled field
+ * renders every chip disabled (see showsValueOnly).
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -28,6 +30,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DropdownSelectStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
+  const Chip = usePart('Chip');
 
   const value = (state.value ?? []) as OptionDescriptor[];
   const options = (state.options ?? []) as OptionDescriptor[];
@@ -79,10 +82,11 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (showsValueOnly(state)) {
     return (
-      <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
+      <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
     );
   }
 
+  const validation = validationOf(state);
   return (
     <div
       id={controlId}
@@ -91,22 +95,18 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
       className={rootClassName(state, 'tl-chip-group')}
       {...fieldStateAttrs(state, false)}
     >
-      {options.map((option) => {
-        const selected = selectedIds.has(option.value);
-        return (
-          <button
-            key={option.value}
-            type="button"
-            className="tl-chip tl-type-label"
-            data-tl-role={optionRoleAttr(option)}
-            aria-pressed={selected}
-            disabled={disabled}
-            onClick={() => toggle(option)}
-          >
-            <OptionContent option={option} labelClassName="tl-chip__label" />
-          </button>
-        );
-      })}
+      {options.map((option) => (
+        <Chip
+          key={option.value}
+          label={option.label}
+          icon={option.image}
+          colorRole={(option.colorRole || undefined) as ColorRole | undefined}
+          pressed={selectedIds.has(option.value)}
+          validation={validation}
+          disabled={disabled}
+          onClick={() => toggle(option)}
+        />
+      ))}
     </div>
   );
 };

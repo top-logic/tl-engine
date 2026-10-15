@@ -1,4 +1,4 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, tooltipProps, ThemeIcon, ICON_SEARCH } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, tooltipProps, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -56,6 +56,9 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   onLoadIcons,
 }) => {
   const i18n = useI18N(I18N_KEYS);
+  const TextInput = usePart('TextInput');
+  const Button = usePart('Button');
+  const Spinner = usePart('Spinner');
   const [tab, setTab] = useState<Tab>('simple');
   const [searchTerm, setSearchTerm] = useState('');
   const [advancedInput, setAdvancedInput] = useState(currentValue ?? '');
@@ -112,8 +115,10 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     );
   }, [icons, searchTerm]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  // Emptying the filter keeps the focus in it, so that the next filter can be typed right away.
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm('');
+    searchRef.current?.focus();
   }, []);
 
   const handleSimpleSelect = useCallback(
@@ -125,10 +130,6 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
 
   const handleAdvancedIconClick = useCallback((encoded: string) => {
     setAdvancedInput(encoded);
-  }, []);
-
-  const handleAdvancedInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setAdvancedInput(e.target.value);
   }, []);
 
   const handleOk = useCallback(() => {
@@ -181,28 +182,24 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
 
       {/* Search */}
       <div className="tlIconSelect__searchWrapper">
-        <span className="tlIconSelect__searchIcon" aria-hidden="true">
-          <ThemeIcon encoded={ICON_SEARCH} />
-        </span>
-        <input
+        <TextInput
           ref={searchRef}
-          type="text"
-          className="tlIconSelect__search"
+          icon={ICON_SEARCH}
           value={searchTerm}
-          onChange={handleSearchChange}
+          onChange={setSearchTerm}
           placeholder={i18n['js.iconSelect.filterPlaceholder']}
           aria-label={i18n['js.iconSelect.filterPlaceholder']}
+          action={searchTerm && (
+            <Button
+              label={i18n['js.iconSelect.clearFilter']}
+              image={ICON_CLEAR}
+              display="icon-only"
+              appearance="ghost"
+              small
+              onClick={handleClearSearch}
+            />
+          )}
         />
-        {searchTerm && (
-          <button
-            className="tlIconSelect__resetBtn"
-            onClick={() => setSearchTerm('')}
-            aria-label={i18n['js.iconSelect.clearFilter']}
-            {...tooltipProps(i18n['js.iconSelect.clearFilter'])}
-          >
-            &times;
-          </button>
-        )}
       </div>
 
       {/* Icon grid */}
@@ -212,7 +209,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       >
         {!iconsLoaded && !loadError && (
           <div className="tlIconSelect__loading">
-            <span className="tlIconSelect__spinner" />
+            <Spinner label={i18n['js.iconSelect.loading']} />
           </div>
         )}
         {loadError && (
@@ -268,11 +265,10 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
             <span className="tlIconSelect__editLabel">
               {i18n['js.iconSelect.classLabel']}
             </span>
-            <input
-              className="tlIconSelect__editInput"
-              type="text"
+            <TextInput
+              aria-label={i18n['js.iconSelect.classLabel']}
               value={advancedInput}
-              onChange={handleAdvancedInputChange}
+              onChange={setAdvancedInput}
             />
           </div>
           <div className="tlIconSelect__previewArea">

@@ -1,9 +1,14 @@
-import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
-import { FieldValue } from './form/FieldValue';
+import { React, useTLState, useTLCommand, rootClassName, usePart, TOOLTIP_ATTR } from 'tl-react-bridge';
+import type { TLCellProps, ColorRole } from 'tl-react-bridge';
 
 /** Command sent when the user follows the link of the displayed value. */
 const CMD_GOTO = 'goto';
+
+/** The prefix of the encoded form of a theme image drawn by a CSS class (see ThemeIcon). */
+const CSS_ICON_PREFIX = 'css:';
+
+/** The {@link TOOLTIP_ATTR} value showing the rich tooltip the server answers for the cell. */
+const SERVER_TOOLTIP = 'key:tooltip';
 
 /**
  * Displays a business object with optional icon, label, and goto link.
@@ -14,39 +19,36 @@ const CMD_GOTO = 'goto';
  * - iconSrc?: string    - image URL for non-CSS icons
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
- * - colorRole?: string  - color role the object carries in the model; shown as a pill of that role
+ * - colorRole?: string  - color role the object carries in the model
  *
- * Design system: a read-only value, rendered by FieldValue - `tl-field-value` (an `a` sending
- * `goto` where it is a link), the icon through ThemeIcon, a colored object as a `tl-pill` carrying
- * its role as `data-tl-role`.
+ * The object is drawn as the part `FieldValue`, the one read-only value, a link running
+ * {@link CMD_GOTO} where it has one; an object the model gives a color role is a pill of that role
+ * within it.
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const FieldValue = usePart('FieldValue');
 
   const iconCss = state.iconCss as string | undefined;
   const iconSrc = state.iconSrc as string | undefined;
-  const label = state.label as string | undefined;
+  const label = (state.label as string | undefined) ?? '';
   const hasTooltip = state.hasTooltip === true;
-  const hasLink = state.hasLink as boolean;
+  const hasLink = state.hasLink === true;
   const colorRole = (state.colorRole as string) || undefined;
 
-  const handleGoto = React.useCallback(() => {
+  const handleClick = React.useCallback(() => {
     sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
-  // One renderer of a read-only value (N1): the icon through ThemeIcon, a colored object as a pill
-  // carrying data-tl-role, a link as the inner kind (goto).
+  const icon = iconCss ? CSS_ICON_PREFIX + iconCss : iconSrc;
+  const className = rootClassName(state) || undefined;
+  const tooltip = { [TOOLTIP_ATTR]: hasTooltip ? SERVER_TOOLTIP : undefined };
+  const onClick = hasLink ? handleClick : undefined;
+
   return (
-    <FieldValue
-      id={controlId}
-      className={rootClassName(state)}
-      text={label ?? ''}
-      icon={iconCss ? 'css:' + iconCss : iconSrc}
-      role={colorRole}
-      onGoto={hasLink ? handleGoto : undefined}
-      tooltip={hasTooltip ? 'key:tooltip' : undefined}
-    />
+    <FieldValue id={controlId} text={label} icon={icon} colorRole={colorRole as ColorRole | undefined} onClick={onClick}
+      className={className} {...tooltip} />
   );
 };
 

@@ -3,11 +3,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import type { DatePickerStateJson } from 'tl-react-bridge';
 import MuiDatePickerAdapter, { fromIso, toIso } from './MuiDatePickerAdapter';
 import { CONTROL_ID, matchDesktopPointer, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The value of a field that is not editable is drawn by the part FieldValue.
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the ISO form of the value. */
 const ARG_VALUE = 'value';
@@ -138,7 +142,10 @@ describe('TLDatePicker as MUI X picker', () => {
     mountDate({ value: '2026-06-01', displayValue: '01.06.2026', editable: false });
 
     expect(screen.queryByRole('group')).toBeNull();
-    expect(document.getElementById(CONTROL_ID)!.textContent).toBe('01.06.2026');
+    const shown = document.getElementById(CONTROL_ID)!;
+    expect(shown.textContent).toBe('01.06.2026');
+    expect(shown.classList).toContain('MuiTypography-body2');
+    expect(shown.classList).not.toContain('tl-field-value');
   });
 
   it('sends nothing while disabled', async () => {

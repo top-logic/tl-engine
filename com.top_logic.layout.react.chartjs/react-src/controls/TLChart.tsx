@@ -1,5 +1,5 @@
 // react-src/controls/TLChart.tsx
-import { React, rootClassName } from 'tl-react-bridge';
+import { React, rootClassName, useI18N, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
   Chart as ChartJS,
@@ -13,6 +13,10 @@ import ChartTooltip from './chart/ChartTooltip';
 
 // Register all chart types + zoom plugin.
 ChartJS.register(...registerables, zoomPlugin);
+
+const I18N_KEYS = {
+  'js.chart.resetZoom': 'Reset zoom',
+};
 
 /**
  * React component that renders a Chart.js chart driven by server-side state.
@@ -36,6 +40,8 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   const error = state.error as string | null;
   const noDataMessage = state.noDataMessage as string | null;
   const tooltipContent = state.tooltipContent as any;
+  const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   // Merge theme defaults.
   const themedConfig = useThemeDefaults(chartConfig, themeColors);
@@ -132,12 +138,14 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
         options={options}
       />
       {zoomEnabled && (
-        <button
-          className="tlReactChart__zoomReset"
-          onClick={() => chartRef.current?.resetZoom()}
-        >
-          Reset Zoom
-        </button>
+        <div className="tlReactChart__zoomReset">
+          <Button
+            label={i18n['js.chart.resetZoom']}
+            display="label-only"
+            appearance="secondary"
+            onClick={() => chartRef.current?.resetZoom()}
+          />
+        </div>
       )}
       <ChartTooltip content={tooltipContent} position={tooltipPos} />
     </div>

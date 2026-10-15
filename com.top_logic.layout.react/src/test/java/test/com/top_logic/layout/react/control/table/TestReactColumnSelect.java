@@ -30,7 +30,7 @@ import com.top_logic.table.ColumnOption;
 
 /**
  * Test of {@link ReactColumnSelectControl}: locking keeps the locked columns as a block at the start, hiding keeps a
- * column in place, and the result names the columns the table freezes.
+ * column in place, a locked column is always displayed, and the result names the columns the table freezes.
  */
 public class TestReactColumnSelect extends TestCase {
 
@@ -108,14 +108,48 @@ public class TestReactColumnSelect extends TestCase {
 		assertEquals(List.of("a", "b", "e", "c", "d"), unlocked.order());
 	}
 
-	public void testHiddenLockedColumnStaysInTheBlockButDoesNotCount() {
-		ReactColumnSelectControl control = control(Set.of("a", "b"));
+	public void testHidingALockedColumnReleasesIt() {
+		ReactColumnSelectControl control = control(Set.of("a", "b", "c"));
 
 		assertTrue(visible(control, "b", false));
 
-		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
-		assertEquals(List.of("a"), control.lockedColumns());
-		assertFalse(control.visibleColumns().contains("b"));
+		assertEquals(List.of("a", "c", "b", "d", "e"), control.order());
+		assertEquals(List.of("a", "c"), control.lockedColumns());
+
+		// Shown again, the column stays released: no lock waited behind the closed eye.
+		assertTrue(visible(control, "b", true));
+		assertEquals(List.of("a", "c"), control.lockedColumns());
+	}
+
+	public void testLockingAHiddenColumnShowsIt() {
+		ReactColumnSelectControl control = control(Set.of("a"));
+		assertTrue(visible(control, "d", false));
+
+		assertTrue(lock(control, "d", true));
+
+		assertEquals(List.of("a", "d", "b", "c", "e"), control.order());
+		assertEquals(List.of("a", "d"), control.lockedColumns());
+		assertTrue(control.visibleColumns().contains("d"));
+	}
+
+	public void testDroppingAHiddenColumnIntoTheBlockShowsIt() {
+		ReactColumnSelectControl control = control(Set.of("a", "b"));
+		assertTrue(visible(control, "d", false));
+
+		assertTrue(reorder(control, "d", 1));
+
+		assertEquals(List.of("a", "d", "b"), control.lockedColumns());
+		assertTrue(control.visibleColumns().contains("d"));
+	}
+
+	public void testDroppingAHiddenColumnBehindTheBlockKeepsItHidden() {
+		ReactColumnSelectControl control = control(Set.of("a"));
+		assertTrue(visible(control, "d", false));
+
+		assertTrue(reorder(control, "d", 2));
+
+		assertEquals(List.of("a", "b", "d", "c", "e"), control.order());
+		assertFalse(control.visibleColumns().contains("d"));
 	}
 
 	public void testTheLastVisibleColumnStays() {

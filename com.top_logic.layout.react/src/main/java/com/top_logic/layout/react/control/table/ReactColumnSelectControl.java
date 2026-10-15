@@ -25,7 +25,13 @@ import com.top_logic.util.Resources;
  * <p>
  * The locked columns form a block at the start of the list - the columns the table freezes. Locking puts a column at
  * the end of the block, releasing it directly behind; a drop into the block locks, a drop behind it releases. A hidden
- * column keeps its place and its lock, but only displayed columns are frozen.
+ * column keeps its place.
+ * </p>
+ *
+ * <p>
+ * A locked column is always displayed: hiding it releases it, and locking a hidden column - by its lock or by a drop
+ * into the block - displays it. The table freezes a leading run of displayed columns and keeps no lock for a hidden
+ * one, so a hidden locked column would be a state the dialog shows but the table drops.
  * </p>
  *
  * <p>
@@ -170,7 +176,8 @@ public class ReactColumnSelectControl extends ReactControl {
 		int block = lockedCount();
 		int target = Math.min(Math.max(args.getTargetIndex(), 0), _entries.size());
 		boolean locked = entry.locked() ? target <= block : target < block;
-		_entries.add(locked ? Math.min(target, block) : Math.max(target, block), entry.withLocked(locked));
+		Entry moved = locked ? entry.withLocked(true).withVisible(true) : entry.withLocked(false);
+		_entries.add(locked ? Math.min(target, block) : Math.max(target, block), moved);
 		pushEntries();
 	}
 
@@ -179,20 +186,28 @@ public class ReactColumnSelectControl extends ReactControl {
 	 *
 	 * <p>
 	 * Hiding the last displayed column is refused: a table without columns shows nothing at all, and nothing in it
-	 * could bring a column back.
+	 * could bring a column back. Hiding a locked column releases it, so it moves directly behind the block.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_COLUMN_VISIBLE)
 	void handleVisible(ColumnVisibleArguments args) {
 		int index = indexOf(args.getColumn());
-		if (index >= 0 && (args.isVisible() || visibleColumns().size() > 1)) {
-			_entries.set(index, _entries.get(index).withVisible(args.isVisible()));
-			pushEntries();
+		if (index < 0 || (!args.isVisible() && visibleColumns().size() <= 1)) {
+			return;
 		}
+		Entry entry = _entries.get(index);
+		if (!args.isVisible() && entry.locked()) {
+			_entries.remove(index);
+			_entries.add(lockedCount(), entry.withLocked(false).withVisible(false));
+		} else {
+			_entries.set(index, entry.withVisible(args.isVisible()));
+		}
+		pushEntries();
 	}
 
 	/**
-	 * Handles a click on the lock: locking puts the column at the end of the block, releasing it directly behind.
+	 * Handles a click on the lock: locking puts the column at the end of the block and displays it, releasing puts it
+	 * directly behind.
 	 *
 	 * <p>
 	 * A command that does not change the lock leaves the order alone - locking a locked column or releasing a released
@@ -208,8 +223,8 @@ public class ReactColumnSelectControl extends ReactControl {
 		if (_entries.get(index).locked() == args.isLocked()) {
 			return;
 		}
-		Entry entry = _entries.remove(index);
-		_entries.add(lockedCount(), entry.withLocked(args.isLocked()));
+		Entry entry = _entries.remove(index).withLocked(args.isLocked());
+		_entries.add(lockedCount(), args.isLocked() ? entry.withVisible(true) : entry);
 		pushEntries();
 	}
 

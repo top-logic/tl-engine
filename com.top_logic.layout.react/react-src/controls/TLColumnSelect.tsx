@@ -9,6 +9,8 @@ const I18N_KEYS = {
   'js.table.columnHide': 'Hide {0}',
   'js.table.columnLock': 'Freeze {0}',
   'js.table.columnUnlock': 'Unfreeze {0}',
+  'js.table.columnShowLock': 'Show and freeze {0}',
+  'js.table.columnHideUnlock': 'Hide and unfreeze {0}',
   'js.table.columnsLocked': 'Frozen',
   'js.table.columnLastVisible': 'At least one column stays visible',
 };
@@ -51,7 +53,8 @@ function format(template: string, arg: string): string {
  * The column selection of a table as a layer panel (design system: tl-reorder-list): each column with its handle at
  * the start, its name, and at the end a lock that freezes it and an eye that shows or hides it. Handle, lock and eye
  * appear on hover or focus; a hidden column keeps its place, dimmed, and shows its closed eye, a frozen one its lock.
- * The frozen columns stand as a block under the heading "Frozen".
+ * The frozen columns stand as a block under the heading "Frozen". A frozen column is always shown: the eye of a frozen
+ * column also releases it, the lock of a hidden one also shows it, and both say so in their names.
  *
  * Order, visibility and lock live on the server (see ReactColumnSelectControl), so a gesture sends a command and the
  * re-pushed list is what renders.
@@ -74,36 +77,45 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // The line under the block only where something follows it: a search can leave the block alone.
   const hasUnlockedShown = shown.some(({ entry }) => !entry.locked);
 
-  const handleToggle = React.useCallback((name: string, visible: boolean) => {
-    sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
-  }, [sendCommand]);
-
-  // A lock click can reorder the list (the column joins or leaves the frozen block), and React then moves the row's node,
-  // which takes the focus from the lock. The clicked lock is remembered by column name and focused again once the
-  // re-pushed list has rendered, as the keyboard move of the handle does - but only a lock that had the focus: a click
-  // that does not focus the button (Safari, for one) must not scroll the list to the block and show a focus ring.
-  const lockRefs = React.useRef(new Map<string, HTMLButtonElement>());
-  const pendingLockFocus = React.useRef<string | null>(null);
+  // A click on lock or eye can reorder the list (the column joins or leaves the frozen block; hiding a frozen column
+  // releases it), and React then moves the row's node, which takes the focus from the button. The clicked button is
+  // remembered by column name and kind and focused again once the re-pushed list has rendered, as the keyboard move of
+  // the handle does - but only a button that had the focus: a click that does not focus the button (Safari, for one)
+  // must not scroll the list to the block and show a focus ring.
+  const buttonRefs = React.useRef(new Map<string, HTMLButtonElement>());
+  const pendingFocus = React.useRef<string | null>(null);
+  const buttonRef = (key: string) => (element: HTMLButtonElement | null) => {
+    if (element) buttonRefs.current.set(key, element); else buttonRefs.current.delete(key);
+  };
 
   React.useLayoutEffect(() => {
-    const name = pendingLockFocus.current;
-    if (name === null) {
+    const key = pendingFocus.current;
+    if (key === null) {
       return;
     }
-    pendingLockFocus.current = null;
-    const lock = lockRefs.current.get(name);
+    pendingFocus.current = null;
+    const button = buttonRefs.current.get(key);
     // The user went on before the new list arrived: the focus is not the list's to take back.
     const active = document.activeElement;
-    if (active !== null && active !== document.body && active !== lock) {
+    if (active !== null && active !== document.body && active !== button) {
       return;
     }
-    if (lock && active !== lock) {
-      lock.focus();
+    if (button && active !== button) {
+      button.focus();
     }
   }, [entries]);
 
+  const keepFocus = (key: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    pendingFocus.current = document.activeElement === event.currentTarget ? key : null;
+  };
+
+  const handleToggle = React.useCallback((name: string, visible: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
+    keepFocus(`${name}:eye`, event);
+    sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
+  }, [sendCommand]);
+
   const handleLock = React.useCallback((name: string, locked: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
-    pendingLockFocus.current = document.activeElement === event.currentTarget ? name : null;
+    keepFocus(`${name}:lock`, event);
     sendCommand(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [sendCommand]);
 
@@ -146,8 +158,10 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
           const lastVisible = entry.visible && visibleCount <= 1;
           const eyeLabel = lastVisible
             ? i18n['js.table.columnLastVisible']
-            : format(i18n[entry.visible ? 'js.table.columnHide' : 'js.table.columnShow'], entry.label);
-          const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock' : 'js.table.columnLock'], entry.label);
+            : format(i18n[!entry.visible ? 'js.table.columnShow'
+              : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
+          const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
+            : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
           const handle = reorder.handleProps(index);
           return (
             <li
@@ -175,7 +189,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   type="button"
                   className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__lock' })}
                   aria-label={lockLabel}
-                  ref={(element) => { if (element) lockRefs.current.set(entry.name, element); else lockRefs.current.delete(entry.name); }}
+                  ref={buttonRef(`${entry.name}:lock`)}
                   {...tooltipProps(lockLabel)}
                   onClick={(event) => handleLock(entry.name, !entry.locked, event)}
                 >
@@ -186,8 +200,9 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__eye' })}
                   aria-label={eyeLabel}
                   {...tooltipProps(eyeLabel)}
+                  ref={buttonRef(`${entry.name}:eye`)}
                   disabled={lastVisible}
-                  onClick={() => handleToggle(entry.name, !entry.visible)}
+                  onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
                 >
                   <ThemeIcon encoded={entry.visible ? ICON_VISIBLE : ICON_HIDDEN} className="tl-button__icon tl-icon-sm" />
                 </button>

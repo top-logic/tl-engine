@@ -706,6 +706,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMN_UNLOCK;
 
 	/**
+	 * @en Show and freeze {0}
+	 */
+	@CustomKey("js.table.columnShowLock")
+	public static ResKey JS_TABLE_COLUMN_SHOW_LOCK;
+
+	/**
+	 * @en Hide and unfreeze {0}
+	 */
+	@CustomKey("js.table.columnHideUnlock")
+	public static ResKey JS_TABLE_COLUMN_HIDE_UNLOCK;
+
+	/**
 	 * @en Frozen
 	 */
 	@CustomKey("js.table.columnsLocked")

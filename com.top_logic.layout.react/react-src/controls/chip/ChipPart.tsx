@@ -20,7 +20,7 @@ const REMOVE_CLASS = 'tl-chip__remove';
 const TYPE_CLASS = 'tl-type-label';
 
 /** The class of the less prominent text after the label. */
-const DETAIL_CLASS = 'tlChip__detail tl-nums';
+const DETAIL_CLASS = 'tl-chip__detail tl-nums';
 
 /** The classes, without the empty ones, joined. */
 function classes(...names: (string | false | undefined)[]): string {

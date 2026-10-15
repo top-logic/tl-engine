@@ -118,7 +118,7 @@ export const MenuHeader: React.FC<{ label: string }> = ({ label }) => (
  * The class of the element around the divider between the sections of a menu, which gives it the
  * space around it.
  */
-const SEPARATOR_CLASS = 'tlMenu__separator';
+const SEPARATOR_CLASS = 'tl-menu__separator';
 
 /** The line between two sections of a menu, drawn by the part `Divider`. */
 export const MenuSeparator: React.FC = () => {

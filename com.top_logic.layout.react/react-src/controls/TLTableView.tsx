@@ -301,7 +301,7 @@ const ColumnsButton: React.FC<{
 }> = ({ label, inCell, onClick }) => {
   const Button = usePart('Button');
   return (
-    <div className="tl-table__columns tlTableView__columns">
+    <div className="tl-table__columns">
       <Button
         label={label}
         image={ICON_COLUMNS}

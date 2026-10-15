@@ -13,7 +13,7 @@ const I18N_KEYS = {
  * The class of the divider between two groups. The toolbar reads the width of a divider by it,
  * whichever implementation of the part draws it.
  */
-const SEPARATOR_CLASS = 'tlToolbar__separator';
+const SEPARATOR_CLASS = 'tl-toolbar__separator';
 
 /** Icon of the overflow menu trigger. */
 const OVERFLOW_ICON = 'css:bi bi-three-dots';

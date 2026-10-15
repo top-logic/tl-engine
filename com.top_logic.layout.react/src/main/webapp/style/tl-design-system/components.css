@@ -75,6 +75,7 @@
 }
 
 .tl-alert__close {
+  display: flex;
   align-self: start;
 }
 
@@ -690,6 +691,12 @@
   cursor: pointer;
 }
 .tl-chip[hidden] { display: none; }
+
+/* Der leisere Text hinter der Beschriftung, etwa die Größe einer Datei (Part Chip, #29787): er kürzt nicht. */
+.tl-chip__detail {
+  flex-shrink: 0;
+  color: var(--tl-text-secondary);
+}
 
 /* Die Tönung trägt der Chip selbst (data-tl-role, 3b §11) — keine Pill in der Kapsel. Die Rollenregeln
    stehen vor Zeigen und Gewählt: beide schlagen die Tönung bei gleicher Spezifität. */
@@ -1693,7 +1700,8 @@ a.tl-field-value:hover {
   color: var(--tl-text-secondary);
 }
 
-.tl-menu > .tl-divider {
+.tl-menu > .tl-divider,
+.tl-menu > .tl-menu__separator {
   margin-block: var(--tl-space-2xs);
 }
 
@@ -1888,6 +1896,35 @@ a.tl-field-value:hover {
 @keyframes tl-progress-sweep {
   from { transform: translateX(calc(-1 * 100%)); }
   to { transform: translateX(calc(2.5 * 100%)); }
+}
+
+/* --- Spinner (Part Spinner, #29787) ----------------------------------------- */
+
+/* Ein Ring auf der Spur des Balkens, darauf ein Bogen in der Marke, der sich dreht: beschäftigt, ohne Anteil.
+   Klein (--sm) steht er statt eines kleinen Icons und dreht seinen Bogen in der Textfarbe. Dauer und Kurve sind
+   die Bewegungstokens der Schleife; der globale Reduced-Motion-Schalter hält ihn an. */
+.tl-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-md) solid var(--tl-surface-interactive-selected);
+  border-top-color: var(--tl-surface-brand);
+  border-radius: var(--tl-radius-full);
+  animation: tl-spinner-turn var(--tl-duration-loop) var(--tl-easing-linear) infinite;
+}
+
+.tl-spinner[hidden] { display: none; }
+
+.tl-spinner--sm {
+  width: var(--tl-size-icon-sm);
+  height: var(--tl-size-icon-sm);
+  border-top-color: currentColor;
+}
+
+@keyframes tl-spinner-turn {
+  to { rotate: 360deg; }
 }
 
 /* --- reorder-list/reorder-list.css --- */
@@ -2524,6 +2561,9 @@ a.tl-field-value:hover {
   position: absolute;
   top: 0;
   right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--tl-size-bar);
   border-radius: 0;
   background: var(--tl-surface-layer);
@@ -3092,11 +3132,18 @@ a.tl-field-value:hover {
   rotate: 90deg;
 }
 
+/* Öffnet der Inhalt zum Zeilenende hin (Seitenleiste, Part DisclosureToggle, #29787), dreht der Chevron offen
+   zurück zum Anfang. Eine Form des Toggles, kein Zustand: darum eine Variante. */
+.tl-toggle--end[aria-expanded="true"] > .tl-icon-sm {
+  rotate: 180deg;
+}
+
 /* --- toolbar/toolbar.css --- */
 /* Toolbar — docs/skalen.md „Gleiches wird zusammengelegt“ (W12).
    Die Einträge sind Button-Controls; die Toolbar gibt ihnen die Erscheinung (ButtonDefaults) und sagt
    ihnen, wann sie kompakt sind (iconOnly) — keine Regel hier liest tl-button__label. Trenner sind
-   tl-divider--vertical. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
+   tl-divider--vertical (Part Divider, #29787) und tragen die Marke tl-toolbar__separator, an der das Control
+   ihre Breite misst — ohne eigene Regel. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
    data-tl-compact (Icons statt Label). */
 
 .tl-toolbar {

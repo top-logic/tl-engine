@@ -12,7 +12,7 @@
           insert-channel="insert"
         >
           <commands>
-            <generic-command input="ticket">
+            <generic-command inputs="ticket">
               <label>Reference ticket</label>
               <write-channel name="insert"/>
             </generic-command>

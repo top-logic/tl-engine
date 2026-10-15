@@ -19,11 +19,12 @@
 							<en>Forgot password?</en>
 							<de>Passwort vergessen?</de>
 						</label>
-						<execute-script function="x -> new(`tl.login:ForgotPassword`, transient: true)"/>
-						<open-dialog dialog-view="forgot-password.view.xml"
-							bind-input-to="model"
-							close-on-backdrop="false"
-						/>
+						<execute-script function="new(`tl.login:ForgotPassword`, transient: true)">
+							<open-dialog dialog-view="forgot-password.view.xml"
+								bind-input-to="model"
+								close-on-backdrop="false"
+							/>
+						</execute-script>
 					</action>
 				</button>
 			</commands>

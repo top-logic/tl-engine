@@ -26,15 +26,16 @@
 						<en>New token</en>
 						<de>Neues Token</de>
 					</label>
-					<execute-script function="x -> new(`tl.agent:NewAccessToken`, transient: true)..set(`tl.agent:NewAccessToken#validHours`, 8)..set(`tl.agent:NewAccessToken#mayAct`, true)"/>
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="agent-access-create.view.xml"
-					/>
+					<execute-script function="new(`tl.agent:NewAccessToken`, transient: true)..set(`tl.agent:NewAccessToken#validHours`, 8)..set(`tl.agent:NewAccessToken#mayAct`, true)">
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="agent-access-create.view.xml"
+						/>
+					</execute-script>
 				</generic-command>
 				<generic-command
 					image="css:bi bi-slash-circle"
-					input="selectedToken"
+					inputs="selectedToken"
 					placement="TOOLBAR"
 				>
 					<label>
@@ -45,7 +46,9 @@
 						<null-input-disabled/>
 					</executability>
 					<revoke-access-token/>
-					<write-channel name="selectedToken"/>
+					<write-channel name="selectedToken"
+						clear="true"
+					/>
 				</generic-command>
 			</commands>
 			<text>

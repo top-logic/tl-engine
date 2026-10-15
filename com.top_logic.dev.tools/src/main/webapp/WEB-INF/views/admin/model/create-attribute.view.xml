@@ -42,20 +42,23 @@
 						<en>Create</en>
 						<de>Anlegen</de>
 					</label>
-					<store-form-state/>
-					<with-transaction>
-						<commitMessage>
-							<en>Created attribute {0}.</en>
-							<de>Attribut {0} angelegt.</de>
-						</commitMessage>
-						<action class="com.top_logic.dev.tools.model.ModelEditAction"
-							container="container"
-							mode="CREATE_ATTRIBUTE"
-						/>
-					</with-transaction>
-					<write-channel name="selection"/>
-					<execute-script function="x -> now()"/>
-					<write-channel name="reload"/>
+					<store-form-state>
+						<with-transaction>
+							<commitMessage>
+								<en>Created attribute {0}.</en>
+								<de>Attribut {0} angelegt.</de>
+							</commitMessage>
+							<action class="com.top_logic.dev.tools.model.ModelEditAction"
+								container="container"
+								mode="CREATE_ATTRIBUTE"
+							>
+								<write-channel name="selection"/>
+							</action>
+						</with-transaction>
+					</store-form-state>
+					<execute-script function="now()">
+						<write-channel name="reload"/>
+					</execute-script>
 					<close-dialog/>
 				</generic-command>
 			</commands>

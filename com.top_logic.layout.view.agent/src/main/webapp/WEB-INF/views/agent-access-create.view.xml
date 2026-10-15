@@ -37,13 +37,15 @@
 						<en>Issue token</en>
 						<de>Token ausstellen</de>
 					</label>
-					<store-form-state/>
-					<issue-access-token/>
-					<close-dialog/>
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="agent-access-token.view.xml"
-					/>
+					<store-form-state>
+						<issue-access-token>
+							<close-dialog/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="agent-access-token.view.xml"
+							/>
+						</issue-access-token>
+					</store-form-state>
 				</generic-command>
 			</commands>
 		</form>

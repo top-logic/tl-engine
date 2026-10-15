@@ -13,6 +13,7 @@ import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.ThreadSafeSubSessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleRuntimeException;
 import com.top_logic.basic.module.ModuleUtil;
@@ -92,65 +93,155 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	}
 
 	/**
-	 * Reset the super user mode. Access restrictions apply for the current user in the current thread.
-     *
-     * Use only to finally reset the SuperUser, normally you should use something 
-     * like <pre>
-     * try {
-     *   pushSuperUser();
-     * }
-     * finally {
-     *   popSuperUser();
-     * }</pre>
-     * This way you can nest SuperUserContexts that do not influence each other.
-	 */
-	public static void resetSuperUser() {
-		SuperUserStateImpl.getInstance().resetSuperUser();
-	}
-
-	/** Set the super user mode one higher than it was before.
+	 * Switches off the security checks for the current thread until {@link #popSuperUser()}.
 	 *
-	 * The next call to popSuperUser() will result in the same state as before.
+	 * <p>
+	 * Calls nest: the checks are switched on again by the {@link #popSuperUser()} matching the
+	 * first call. Prefer {@link #uncheckedSecurity(InContext)}, which restores the previous state
+	 * on its own.
+	 * </p>
+	 *
+	 * @see #isSecurityUnchecked()
 	 */
 	public static void pushSuperUser() {
-		SuperUserStateImpl.getInstance().pushSuperUser();
+		SecurityState.current()._depth++;
 	}
 
-	/** Reset the super user to the mode before the last call to pushSuperUser(). 
-     *
-     * @throws EmptyStackException in case SuperUserMode was not set before.
+	/**
+	 * Undoes the last {@link #pushSuperUser()}.
+	 *
+	 * @throws EmptyStackException
+	 *         if there is no {@link #pushSuperUser()} to undo.
 	 */
 	public static void popSuperUser() {
-		SuperUserStateImpl.getInstance().popSuperUser();
+		SecurityState state = SecurityState.current();
+		if (state._depth == 0) {
+			throw new EmptyStackException();
+		}
+		state._depth--;
 	}
-	
+
 	/**
-	 * Whether the super user mode is set for the current user in the current thread.
+	 * Switches the security checks for the current thread on again, regardless of the number of
+	 * {@link #pushSuperUser()} calls.
+	 */
+	public static void resetSuperUser() {
+		SecurityState.current()._depth = 0;
+	}
+
+	/**
+	 * Whether access checks are switched off for the current thread.
+	 *
+	 * <p>
+	 * While the security is unchecked, every access is allowed. Otherwise, access is decided for
+	 * the person of the current context.
+	 * </p>
+	 *
+	 * @see #uncheckedSecurity(InContext)
+	 * @see #inSystemContext(Class, InContext)
+	 */
+	public static boolean isSecurityUnchecked() {
+		return SecurityState.current()._depth > 0;
+	}
+
+	/**
+	 * Executes the given job with access checks switched off, keeping the current context.
+	 *
+	 * <p>
+	 * In contrast to {@link #inSystemContext(Class, InContext)}, the person of the current context
+	 * stays in place, so that e.g. changes made by the job are attributed to that person.
+	 * </p>
+	 *
+	 * @param job
+	 *        The job to execute.
+	 *
+	 * @see #isSecurityUnchecked()
+	 */
+	public static void uncheckedSecurity(InContext job) {
+		withSecurityUnchecked(true, job);
+	}
+
+	/**
+	 * Computes the given job with access checks switched off, keeping the current context.
+	 *
+	 * @param job
+	 *        The computation to evaluate.
+	 * @return The result of the given job.
+	 *
+	 * @see #uncheckedSecurity(InContext)
+	 */
+	public static <T, E1 extends Throwable, E2 extends Throwable> T uncheckedSecurity(ComputationEx2<T, E1, E2> job)
+			throws E1, E2 {
+		return withSecurityUnchecked(true, job);
+	}
+
+	/**
+	 * Executes the given job with {@link #isSecurityUnchecked()} set to the given value, restoring
+	 * the previous state afterwards.
+	 *
+	 * @param unchecked
+	 *        Whether access checks are switched off during the job.
+	 * @param job
+	 *        The job to execute.
+	 */
+	@FrameworkInternal
+	public static void withSecurityUnchecked(boolean unchecked, InContext job) {
+		SecurityState state = SecurityState.current();
+		int before = state._depth;
+		state._depth = unchecked ? before + 1 : 0;
+		try {
+			job.inContext();
+		} finally {
+			state._depth = before;
+		}
+	}
+
+	/**
+	 * Computes the given job with {@link #isSecurityUnchecked()} set to the given value, restoring
+	 * the previous state afterwards.
+	 *
+	 * @param unchecked
+	 *        Whether access checks are switched off during the job.
+	 * @param job
+	 *        The computation to evaluate.
+	 * @return The result of the given job.
+	 */
+	@FrameworkInternal
+	public static <T, E1 extends Throwable, E2 extends Throwable> T withSecurityUnchecked(boolean unchecked,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		SecurityState state = SecurityState.current();
+		int before = state._depth;
+		state._depth = unchecked ? before + 1 : 0;
+		try {
+			return job.run();
+		} finally {
+			state._depth = before;
+		}
+	}
+
+	/**
+	 * Whether the current thread has administrative rights.
+	 *
+	 * <p>
+	 * This is the case while the {@link #isSecurityUnchecked() security is unchecked}, or if the
+	 * owner of the current context is an administrator.
+	 * </p>
 	 */
 	public static boolean isAdmin() {
-		boolean superUser = SuperUserStateImpl.getInstance().isSuperUser();
-		if (superUser) {
+		if (isSecurityUnchecked()) {
 			return true;
-
 		}
 		ThreadContext context = getThreadContext();
 		return context != null && context.isAdminContext();
- 	}
+	}
 
 	/**
 	 * Whether the current thread runs in a system context.
 	 *
 	 * <p>
 	 * A system context is established by {@link #inSystemContext(Class, InContext)} (and its
-	 * variants) when no user interaction is currently active. Code that deliberately enters a system
-	 * context has explicitly opted out of a user identity; it acts on behalf of the system and is
-	 * therefore not subject to user-based access checks.
-	 * </p>
-	 *
-	 * <p>
-	 * Note: When the system-context utilities are invoked while a user interaction is already
-	 * active, no new context is created and this method reports the surrounding context (typically a
-	 * user context). Such code remains subject to the regular access checks.
+	 * variants). Its {@link SubSessionContext#getContextId() context id} carries the
+	 * {@link SessionContext#SYSTEM_ID_PREFIX}. Setting a person on the context replaces this id.
 	 * </p>
 	 */
 	public static boolean isSystemContext() {
@@ -165,13 +256,15 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	/**
 	 * Evaluate the given {@link ComputationEx2} in a system context identified by the given caller
 	 * class.
-	 * 
+	 *
 	 * <p>
-	 * If no {@link ThreadContext} is established, a new system context is created exclusively for
-	 * the evaluation of the given computation. If a context is already established, no new context
-	 * is created, but the given {@link ComputationEx2} is evaluated in the existing context.
+	 * The system context has no person, its {@link SubSessionContext#getContextId() context id} is
+	 * {@link ThreadContextManager#systemContextId(Class)}, and the
+	 * {@link #isSecurityUnchecked() security is unchecked} during the computation. The system
+	 * context is established also when an interaction is already active; the previous context is
+	 * restored afterwards.
 	 * </p>
-	 * 
+	 *
 	 * @param caller
 	 *        Identifier for the system context to create.
 	 * @param computation
@@ -180,26 +273,22 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemContext(final Class<?> caller,
 			final ComputationEx2<T, E1, E2> computation) throws E1, E2 {
-		return ThreadContextManager.inSystemInteraction(caller, computation);
+		return ThreadContextManager.inSystemContext(caller, computation);
 	}
 
 	/**
-	 * Evaluate the given {@link InContext} in a system context identified by the given caller
+	 * Executes the given {@link InContext} in a system context identified by the given caller
 	 * class.
-	 * 
-	 * <p>
-	 * If no {@link ThreadContext} is established, a new system context is created exclusively for
-	 * the evaluation of the given computation. If a context is already established, no new context
-	 * is created, but the given {@link InContext} is evaluated in the existing context.
-	 * </p>
-	 * 
+	 *
 	 * @param caller
 	 *        Identifier for the system context to create.
 	 * @param job
 	 *        The job to execute in system context.
+	 *
+	 * @see #inSystemContext(Class, ComputationEx2)
 	 */
 	public static void inSystemContext(final Class<?> caller, final InContext job) {
-		ThreadContextManager.inSystemInteraction(caller, job);
+		ThreadContextManager.inSystemContext(caller, job);
 	}
 
 	/**
@@ -284,6 +373,24 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 			}
 		}
 		return Locale.getDefault();
+	}
+
+	/**
+	 * Per-thread state of {@link #isSecurityUnchecked()}.
+	 */
+	private static final class SecurityState {
+
+		private static final ThreadLocal<SecurityState> STATE = ThreadLocal.withInitial(SecurityState::new);
+
+		/**
+		 * The number of active requests to switch off the security checks.
+		 */
+		int _depth;
+
+		static SecurityState current() {
+			return STATE.get();
+		}
+
 	}
 
 }

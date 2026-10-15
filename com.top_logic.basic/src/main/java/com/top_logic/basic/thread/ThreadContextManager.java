@@ -283,127 +283,174 @@ public abstract class ThreadContextManager extends ManagedClass {
 	}
 
 	/**
-	 * Ensures that during execution of the given job an {@link InteractionContext} is present.
-	 * 
-	 * <p>
-	 * A new {@link InteractionContext} is only created if currently none is available.
-	 * </p>
-	 * 
+	 * Executes the given job in a system context with the given context id.
+	 *
 	 * @param contextId
-	 *        {@link SubSessionContext#getContextId() Identifier} of the created
-	 *        {@link SubSessionContext} in case currently no interaction is available.
+	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
 	 * @param job
 	 *        Callback to execute
+	 *
+	 * @see #inSystemContext(Class, InContext)
 	 */
 	public static void inInteraction(String contextId, InContext job) {
-		getManager().inInteractionInternal(contextId, job);
+		getManager().inSystemContextInternal(contextId, job);
 	}
 
 	/**
-	 * @see #inInteraction(String, InContext)
-	 */
-	protected void inInteractionInternal(String contextId, InContext job) {
-		InteractionContext interaction = getInteractionInternal();
-		if (interaction == null) {
-			interaction = newInteractionInternal();
-			registerSubSessionInSessionForInteraction(interaction);
-			SubSessionContext subsession = interaction.getSubSessionContext();
-			SessionContext session = subsession.getSessionContext();
-			subsession.setContextId(contextId);
-			setInteraction(interaction);
-			try {
-				try {
-					job.inContext();
-				} finally {
-					sessionUnbound(session);
-				}
-			} finally {
-				removeInteraction();
-			}
-		} else {
-			job.inContext();
-		}
-
-	}
-
-	/**
-	 * Ensures that during execution of the given job an {@link InteractionContext} is present.
-	 * 
-	 * <p>
-	 * A new {@link InteractionContext} is only created if currently none is available.
-	 * </p>
-	 * 
-	 * @param caller
-	 *        Class to create an identifier for the new {@link SessionContext} in case currently no
-	 *        interaction is available.
-	 * @param job
-	 *        Callback to execute
-	 */
-	public static void inSystemInteraction(Class<?> caller, InContext job) {
-		getManager().inSystemInteractionInternal(caller, job);
-	}
-
-	/**
-	 * @see #inSystemInteraction(Class, InContext)
-	 */
-	protected void inSystemInteractionInternal(Class<?> caller, InContext job) {
-		inInteractionInternal(systemContextId(caller), job);
-	}
-
-	/**
-	 * Ensures that during execution of the given job an {@link InteractionContext} is present.
-	 * 
-	 * <p>
-	 * A new {@link InteractionContext} is only created if currently none is available.
-	 * </p>
-	 * 
+	 * Computes the given job in a system context with the given context id.
+	 *
 	 * @param contextId
-	 *        {@link SubSessionContext#getContextId() Identifier} of the created
-	 *        {@link SubSessionContext} in case currently no interaction is available.
+	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
 	 * @param job
 	 *        Callback to execute
+	 * @return The result of the given job.
+	 *
+	 * @see #inSystemContext(Class, ComputationEx2)
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inInteraction(String contextId,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return getManager().inInteractionInternal(contextId, job);
+		return getManager().inSystemContextInternal(contextId, job);
 	}
 
 	/**
-	 * @see #inInteraction(String, ComputationEx2)
+	 * Executes the given job in a system context identified by the given caller class.
+	 *
+	 * @see #inSystemContext(Class, InContext)
 	 */
-	protected <T, E1 extends Throwable, E2 extends Throwable> T inInteractionInternal(String contextId,
+	public static void inSystemInteraction(Class<?> caller, InContext job) {
+		inSystemContext(caller, job);
+	}
+
+	/**
+	 * Computes the given job in a system context identified by the given caller class.
+	 *
+	 * @see #inSystemContext(Class, ComputationEx2)
+	 */
+	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemInteraction(Class<?> caller,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		return inSystemContext(caller, job);
+	}
+
+	/**
+	 * Executes the given job in a system context identified by the given caller class.
+	 *
+	 * @param caller
+	 *        Class to create the {@link #systemContextId(Class) context id} of the system context
+	 *        from.
+	 * @param job
+	 *        Callback to execute
+	 *
+	 * @see #inSystemContext(Class, ComputationEx2)
+	 */
+	public static void inSystemContext(Class<?> caller, InContext job) {
+		getManager().inSystemContextInternal(systemContextId(caller), job);
+	}
+
+	/**
+	 * Computes the given job in a system context identified by the given caller class.
+	 *
+	 * <p>
+	 * A system context has a {@link SubSessionContext} without a person, the given
+	 * {@link #systemContextId(Class) context id} and {@link ThreadContext#isSecurityUnchecked()
+	 * unchecked security}. It is established in any case: If no interaction is active, a new
+	 * interaction is created for the job. Otherwise, a new {@link SubSessionContext} with its own
+	 * {@link SessionContext} is installed in the current interaction for the job. After the job, the
+	 * previous state is restored.
+	 * </p>
+	 *
+	 * @param caller
+	 *        Class to create the {@link #systemContextId(Class) context id} of the system context
+	 *        from.
+	 * @param job
+	 *        Callback to execute
+	 * @return The result of the given job.
+	 */
+	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemContext(Class<?> caller,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		return getManager().inSystemContextInternal(systemContextId(caller), job);
+	}
+
+	/**
+	 * Implementation of {@link #inSystemContext(Class, InContext)}.
+	 *
+	 * @param contextId
+	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
+	 * @param job
+	 *        Callback to execute
+	 */
+	protected void inSystemContextInternal(String contextId, InContext job) {
+		inSystemContextInternal(contextId, () -> {
+			job.inContext();
+			return null;
+		});
+	}
+
+	/**
+	 * Implementation of {@link #inSystemContext(Class, ComputationEx2)}.
+	 *
+	 * @param contextId
+	 *        {@link SubSessionContext#getContextId() Identifier} of the system context.
+	 * @param job
+	 *        Callback to execute
+	 * @return The result of the given job.
+	 */
+	protected <T, E1 extends Throwable, E2 extends Throwable> T inSystemContextInternal(String contextId,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
 		InteractionContext interaction = getInteractionInternal();
 		if (interaction == null) {
-			interaction = newInteractionInternal();
-			registerSubSessionInSessionForInteraction(interaction);
-			SubSessionContext subsession = interaction.getSubSessionContext();
-			SessionContext session = subsession.getSessionContext();
-			subsession.setContextId(contextId);
-			setInteraction(interaction);
+			InteractionContext systemInteraction = newInteractionInternal();
+			systemInteraction.getSubSessionContext().setContextId(contextId);
+			registerSubSessionInSessionForInteraction(systemInteraction);
+			setInteraction(systemInteraction);
 			try {
-				Throwable problem = null;
-				try {
-					return job.run();
-				} catch (Throwable ex) {
-					problem = ex;
-					throw ex;
-				} finally {
-					try {
-						sessionUnbound(session);
-					} catch (Throwable ex) {
-						if (problem == null) {
-							throw ex;
-						} else {
-							problem.addSuppressed(ex);
-						}
-					}
-				}
+				return runInSystemSession(systemInteraction.getSessionContext(), job);
 			} finally {
 				removeInteraction();
 			}
 		} else {
-			return job.run();
+			/* Sub session may be null but session may be not null, in such case the session must be
+			 * saved to be able to reinstall it. */
+			SessionContext oldSession = interaction.getSessionContext();
+			SubSessionContext oldSubSession = interaction.getSubSessionContext();
+
+			ThreadContext subSession = newSubSessionContext();
+			SessionContext session = newSessionContext();
+			subSession.setSessionContext(session);
+			subSession.setContextId(contextId);
+			interaction.installSessionContext(session);
+			interaction.installSubSessionContext(subSession);
+			try {
+				registerSubSessionInSessionForInteraction(interaction);
+				return runInSystemSession(session, job);
+			} finally {
+				interaction.installSessionContext(oldSession);
+				interaction.installSubSessionContext(oldSubSession);
+			}
+		}
+	}
+
+	/**
+	 * Runs the given job with {@link ThreadContext#isSecurityUnchecked() unchecked security} and
+	 * {@link #sessionUnbound(SessionContext) unbinds} the given synthetic session afterwards.
+	 */
+	private static <T, E1 extends Throwable, E2 extends Throwable> T runInSystemSession(SessionContext session,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		Throwable problem = null;
+		try {
+			return ThreadContext.withSecurityUnchecked(true, job);
+		} catch (Throwable ex) {
+			problem = ex;
+			throw ex;
+		} finally {
+			try {
+				sessionUnbound(session);
+			} catch (Throwable ex) {
+				if (problem == null) {
+					throw ex;
+				} else {
+					problem.addSuppressed(ex);
+				}
+			}
 		}
 	}
 
@@ -420,32 +467,6 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 */
 	protected void registerSubSessionInSessionForInteraction(InteractionContext interaction) {
 		// nothing to register here.
-	}
-
-	/**
-	 * Ensures that during execution of the given job an {@link InteractionContext} is present.
-	 * 
-	 * <p>
-	 * A new {@link InteractionContext} is only created if currently none is available.
-	 * </p>
-	 * 
-	 * @param caller
-	 *        Class to create an identifier for the new {@link SessionContext} in case currently no
-	 *        interaction is available.
-	 * @param job
-	 *        Callback to execute
-	 */
-	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemInteraction(Class<?> caller,
-			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return getManager().inSystemInteractionInternal(caller, job);
-	}
-
-	/**
-	 * @see #inSystemInteraction(Class, ComputationEx2)
-	 */
-	protected <T, E1 extends Throwable, E2 extends Throwable> T inSystemInteractionInternal(Class<?> caller,
-			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return inInteractionInternal(systemContextId(caller), job);
 	}
 
 	/**
@@ -605,8 +626,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 * because the {@link InteractionContext} it belongs to is a synthetic interaction.
 	 * </p>
 	 * 
-	 * @see #inInteractionInternal(String, ComputationEx2)
-	 * @see #inInteractionInternal(String, InContext)
+	 * @see #inSystemContextInternal(String, ComputationEx2)
 	 */
 	protected static void sessionUnbound(SessionContext session) {
 		HttpSessionBindingListener listener = (SimpleSessionContext) session;

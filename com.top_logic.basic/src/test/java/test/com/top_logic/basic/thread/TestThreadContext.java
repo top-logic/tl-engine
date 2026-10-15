@@ -20,6 +20,7 @@ import test.com.top_logic.basic.CustomPropertiesSetup;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
@@ -33,6 +34,8 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 public class TestThreadContext extends TestCase {
+
+	private static final String USER_CONTEXT_ID = SessionContext.PERSON_ID_PREFIX + "user";
 
     /** Default CTor, create a test with this Function Name */
 	public TestThreadContext (String name) {
@@ -87,31 +90,173 @@ public class TestThreadContext extends TestCase {
 		assertTrue(tl.unBound);
     }
     
-    /** Check that putCOntext works as override.
-     */
-	public void testPutContext() {
+	/**
+	 * A system context nested in another system context installs a sub-session of its own and
+	 * restores the outer one afterwards.
+	 */
+	public void testNestedSystemContext() {
 		ThreadContext.inSystemContext(TestThreadContext.class, new InContext() {
 
 			@Override
 			public void inContext() {
 				final ThreadContext currentContext = ThreadContext.getThreadContext();
 				assertNotNull(currentContext);
-				Logger.configureStdout("ERROR"); // suppress valid WARNING message
-				try {
-					ThreadContext.inSystemContext(TestThreadContext.class, new InContext() {
+				ThreadContext.inSystemContext(ExampleContext.class, new InContext() {
 
-						@Override
-						public void inContext() {
-							assertSame(currentContext, ThreadContext.getThreadContext());
-						}
-					});
-				} finally {
-					Logger.configureStdout();
-				}
+					@Override
+					public void inContext() {
+						ThreadContext nested = ThreadContext.getThreadContext();
+						assertNotSame(currentContext, nested);
+						assertEquals(ThreadContextManager.systemContextId(ExampleContext.class), nested.getContextId());
+						assertTrue(ThreadContext.isSecurityUnchecked());
+					}
+				});
+				assertSame(currentContext, ThreadContext.getThreadContext());
+				assertTrue(ThreadContext.isSecurityUnchecked());
 			}
 		});
-    }
- 
+	}
+
+	/**
+	 * Outside of any job, the security is checked.
+	 */
+	public void testSecurityCheckedOutsideJob() {
+		assertNull(ThreadContextManager.getInteraction());
+		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isAdmin());
+		assertFalse(ThreadContext.isSystemContext());
+	}
+
+	/**
+	 * A system context without a surrounding interaction creates an interaction of its own with
+	 * unchecked security and removes it afterwards.
+	 */
+	public void testSystemContextWithoutInteraction() {
+		String result = ThreadContext.inSystemContext(TestThreadContext.class, () -> {
+			assertNotNull(ThreadContextManager.getInteraction());
+			assertEquals(ThreadContextManager.systemContextId(TestThreadContext.class),
+				ThreadContextManager.getSubSession().getContextId());
+			assertTrue(ThreadContext.isSystemContext());
+			assertTrue(ThreadContext.isSecurityUnchecked());
+			assertTrue(ThreadContext.isAdmin());
+			return "result";
+		});
+		assertEquals("result", result);
+
+		assertNull(ThreadContextManager.getInteraction());
+		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isAdmin());
+	}
+
+	/**
+	 * A system context within an interaction of a user installs a system sub-session for the job
+	 * and restores the user's sub-session and the security state afterwards.
+	 */
+	public void testSystemContextInsideInteraction() {
+		ThreadContext userContext = newUserContext();
+		ThreadContextManager.inContext(userContext, () -> {
+			InteractionContext interaction = ThreadContextManager.getInteraction();
+			SessionContext userSession = ThreadContextManager.getSession();
+			assertSame(userContext, ThreadContextManager.getSubSession());
+			assertFalse(ThreadContext.isSystemContext());
+			assertFalse(ThreadContext.isSecurityUnchecked());
+
+			int result = ThreadContext.inSystemContext(TestThreadContext.class, () -> {
+				assertSame("No new interaction is created.", interaction, ThreadContextManager.getInteraction());
+				SubSessionContext systemContext = ThreadContextManager.getSubSession();
+				assertNotSame(userContext, systemContext);
+				assertNotSame(userSession, ThreadContextManager.getSession());
+				assertSame(ThreadContextManager.getSession(), systemContext.getSessionContext());
+				assertEquals(ThreadContextManager.systemContextId(TestThreadContext.class),
+					systemContext.getContextId());
+				assertTrue(ThreadContext.isSystemContext());
+				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isAdmin());
+				return 42;
+			});
+			assertEquals(42, result);
+			assertUserContextRestored(interaction, userContext, userSession);
+
+			RuntimeException failure = new RuntimeException("failure in system context");
+			try {
+				ThreadContext.inSystemContext(TestThreadContext.class, new InContext() {
+					@Override
+					public void inContext() {
+						assertTrue(ThreadContext.isSecurityUnchecked());
+						throw failure;
+					}
+				});
+				fail("Expected failure.");
+			} catch (RuntimeException ex) {
+				assertSame(failure, ex);
+			}
+			assertUserContextRestored(interaction, userContext, userSession);
+		});
+		assertNull(ThreadContextManager.getInteraction());
+	}
+
+	private static void assertUserContextRestored(InteractionContext interaction, ThreadContext userContext,
+			SessionContext userSession) {
+		assertSame(interaction, ThreadContextManager.getInteraction());
+		assertSame(userContext, ThreadContextManager.getSubSession());
+		assertSame(userSession, ThreadContextManager.getSession());
+		assertEquals(USER_CONTEXT_ID, userContext.getContextId());
+		assertFalse(ThreadContext.isSystemContext());
+		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isAdmin());
+	}
+
+	/**
+	 * Unchecked security keeps the current context, nests, and is restored also on failure.
+	 */
+	public void testUncheckedSecurity() {
+		ThreadContext userContext = newUserContext();
+		ThreadContextManager.inContext(userContext, () -> {
+			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isAdmin());
+
+			ThreadContext.uncheckedSecurity(() -> {
+				assertSame("Unchecked security keeps the context.", userContext,
+					ThreadContextManager.getSubSession());
+				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isAdmin());
+
+				boolean inner = ThreadContext.uncheckedSecurity(() -> ThreadContext.isSecurityUnchecked());
+				assertTrue(inner);
+				assertTrue("Nested job must not reset the outer state.", ThreadContext.isSecurityUnchecked());
+
+				boolean checked =
+					ThreadContext.withSecurityUnchecked(false, () -> ThreadContext.isSecurityUnchecked());
+				assertFalse("Security can be switched on for a job.", checked);
+				assertTrue(ThreadContext.isSecurityUnchecked());
+			});
+			assertFalse(ThreadContext.isSecurityUnchecked());
+
+			RuntimeException failure = new RuntimeException("failure with unchecked security");
+			try {
+				ThreadContext.uncheckedSecurity(new InContext() {
+					@Override
+					public void inContext() {
+						throw failure;
+					}
+				});
+				fail("Expected failure.");
+			} catch (RuntimeException ex) {
+				assertSame(failure, ex);
+			}
+			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isAdmin());
+		});
+	}
+
+	private static ThreadContext newUserContext() {
+		ThreadContextManager manager = ThreadContextManager.getManager();
+		ThreadContext userContext = manager.newSubSessionContext();
+		userContext.setSessionContext(manager.newSessionContext());
+		userContext.setContextId(USER_CONTEXT_ID);
+		return userContext;
+	}
+
     /** 
      * Test the SupeUrser methods 
      */
@@ -120,6 +265,7 @@ public class TestThreadContext extends TestCase {
         assertFalse(ThreadContext.isAdmin());
         ThreadContext.pushSuperUser();
         assertTrue (ThreadContext.isAdmin());
+        assertTrue(ThreadContext.isSecurityUnchecked());
         ThreadContext.pushSuperUser();
         assertTrue (ThreadContext.isAdmin());
         ThreadContext.resetSuperUser();
@@ -138,6 +284,7 @@ public class TestThreadContext extends TestCase {
         assertTrue (ThreadContext.isAdmin());
         ThreadContext.popSuperUser();
         assertFalse(ThreadContext.isAdmin());
+        assertFalse(ThreadContext.isSecurityUnchecked());
     }
 
     /** Inner class implementing ThreadContextListener */

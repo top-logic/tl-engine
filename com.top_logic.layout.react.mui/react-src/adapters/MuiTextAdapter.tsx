@@ -1,5 +1,5 @@
 import { React, useTLState, rootClassName, usePart, TOOLTIP_ATTR } from 'tl-react-bridge';
-import type { TLCellProps, TextStateJson, ChipTone } from 'tl-react-bridge';
+import type { TLCellProps, TextStateJson, ColorRole } from 'tl-react-bridge';
 import Typography from '@mui/material/Typography';
 import type { TypographyProps } from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -23,13 +23,13 @@ const VARIANTS: Record<TextStateJson.Variant, TypographyProps['variant']> = {
 /**
  * The color of the `Typography` for each color role: a palette key of its `color` prop (a dotted
  * palette path such as `error.main` produces no color there). A helper text is drawn like
- * secondary text. Text on a filled surface has no palette key, see {@link ON_COLOR_SX}.
+ * secondary text, a placeholder like disabled text. Text on a filled surface has no palette key, see {@link ON_COLOR_SX}.
  */
 const COLORS: Record<TextStateJson.Tone, TypographyProps['color'] | undefined> = {
   primary: 'textPrimary',
   secondary: 'textSecondary',
   helper: 'textSecondary',
-  accent: 'primary',
+  placeholder: 'textDisabled',
   success: 'success',
   warning: 'warning',
   error: 'error',
@@ -44,13 +44,11 @@ const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--text-on-color, var(--mui-pal
 
 /**
  * The color role a text of the given tone is drawn in as a pill without a role of its own, as
- * TLText draws it: the meanings keep their name, the accent is the brand, everything else is
- * neutral.
+ * TLText draws it: the meanings keep their name, everything else is neutral.
  */
-function roleOfTone(tone: TextStateJson.Tone): ChipTone {
+function roleOfTone(tone: TextStateJson.Tone): ColorRole {
   switch (tone) {
     case 'success': case 'warning': case 'error': return tone;
-    case 'accent': return 'brand';
     default: return 'neutral';
   }
 }
@@ -65,7 +63,7 @@ function roleOfTone(tone: TextStateJson.Tone): ChipTone {
  * <li>variant → the typography variant: body → `body2`, title → `h6`, headline → `h5`,
  *     display → `h4`, label → `subtitle2`, caption → `caption`;</li>
  * <li>tone → the `color` of the `Typography`: primary → `textPrimary`, secondary and helper →
- *     `textSecondary`, accent → `primary`, success, warning and error → the palette color of that
+ *     `textSecondary`, placeholder → `textDisabled`, success, warning and error → the palette color of that
  *     name, on-color → the theme color for text on a filled surface (`text-on-color`, as in TLText);</li>
  * <li>overflow `ellipsis` → `noWrap`;</li>
  * <li>colorRole, or appearance `pill` → the part `Chip` of the role (for a pill without a role of
@@ -82,8 +80,8 @@ const MuiTextAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const tone = state.tone ?? 'primary';
   const colorRole = state.colorRole || undefined;
   const pill = state.appearance === 'pill';
-  const pillRole = text === '' ? undefined : pill ? (colorRole as ChipTone | undefined) ?? roleOfTone(tone)
-    : colorRole as ChipTone | undefined;
+  const pillRole = text === '' ? undefined : pill ? (colorRole as ColorRole | undefined) ?? roleOfTone(tone)
+    : colorRole as ColorRole | undefined;
   const tooltip = state.hasTooltip === true ? { [TOOLTIP_ATTR]: RICH_TOOLTIP } : {};
 
   if (state.hidden === true) {
@@ -93,7 +91,7 @@ const MuiTextAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   if (pillRole !== undefined) {
     return (
       <span id={controlId} role={state.role || undefined} className={rootClassName(state)} {...tooltip}>
-        <Chip tone={pillRole} label={text} />
+        <Chip colorRole={pillRole} label={text} />
       </span>
     );
   }

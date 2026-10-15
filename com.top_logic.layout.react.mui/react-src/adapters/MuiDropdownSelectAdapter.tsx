@@ -2,7 +2,7 @@ import {
   React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, useI18N, usePart,
   OptionValues,
 } from 'tl-react-bridge';
-import type { TLCellProps, ChipTone } from 'tl-react-bridge';
+import type { TLCellProps, ColorRole } from 'tl-react-bridge';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { OptionContent, useChoice } from './choice';
@@ -113,7 +113,7 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
               <Chip key={option.value} className={className} disabled={disabled} tabIndex={tabIndex}
                 data-item-index={itemIndex}
                 label={option.label} icon={option.image}
-                tone={(option.colorRole || undefined) as ChipTone | undefined} onRemove={onDelete}
+                colorRole={(option.colorRole || undefined) as ColorRole | undefined} onRemove={onDelete}
                 removeLabel={i18n[KEY_REMOVE_CHIP].replace('{0}', option.label)} />
             );
           })

@@ -32,6 +32,7 @@ import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.top_logic.base.office.POIUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -1012,7 +1013,7 @@ public class ExcelFile extends GenericMethod {
 			new ByteArrayInputStream(data),
 			data.length,
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			fileName);
+			POIUtil.withExcelExtension(fileName, POIUtil.XLSX_SUFFIX));
 	}
 
 	/**

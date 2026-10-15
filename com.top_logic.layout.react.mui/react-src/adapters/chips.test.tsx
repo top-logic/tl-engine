@@ -414,14 +414,18 @@ describe('the chosen values of a choice field that is not editable', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('leads to a linked value on a press, a chip and a text alike', async () => {
+  it('leads to a linked value on a press, a value with a color role and a text alike', async () => {
     const sent = mountValues([{ ...ALPHA, link: true }, { ...GAMMA, link: true }]);
 
     await userEvent.click(screen.getByRole('button', { name: 'Alpha' }));
-    await userEvent.click(chip('Gamma'));
+    await userEvent.click(screen.getByRole('button', { name: 'Gamma' }));
     await settle();
 
     expect(screen.getByRole('button', { name: 'Alpha' }).classList).toContain('MuiLink-root');
+    // The value of a color role is a link holding the chip of its role.
+    const gamma = screen.getByRole('button', { name: 'Gamma' });
+    expect(gamma.classList).toContain('MuiLink-root');
+    expectMuiChip(gamma.querySelector('.MuiChip-root')!);
     expect(sent.mock.calls).toEqual([[CMD_GOTO, { [ARG_OPTION]: 'a' }], [CMD_GOTO, { [ARG_OPTION]: 'g' }]]);
   });
 });
@@ -431,7 +435,7 @@ describe('a text drawn as a pill (TLText) as MUI chip', () => {
     mountAdapter(TLText, { text: 'Erledigt', colorRole: 'success' });
 
     const text = document.getElementById(CONTROL_ID)!;
-    expect(text.classList).toContain('tlText');
+    expect(text.tagName).toBe('SPAN');
     expectMuiChip(text.querySelector('.MuiChip-root')!);
     expect(text.querySelector('.MuiChip-colorSuccess')!.textContent).toBe('Erledigt');
   });

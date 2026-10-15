@@ -3,6 +3,7 @@ import type { ComponentType } from 'react';
 import type { ButtonAppearance } from './button-defaults';
 import { menuItemProps } from './button-defaults';
 import type { ButtonStateJson } from '../state/control-state';
+import type { ReorderItemProps } from './list-reorder';
 import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host';
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
@@ -145,6 +146,12 @@ export interface ButtonPartProps extends PartAttributes {
 
   /** Called when a mouse button goes down on the button, e.g. to keep the focus where it is. */
   onMouseDown?: (event: React.MouseEvent<HTMLElement>) => void;
+
+  /** Called when a pointer goes down on the button, e.g. to arm the drag of the item it is the handle of. */
+  onPointerDown?: (event: React.PointerEvent<HTMLElement>) => void;
+
+  /** Called for a key pressed on the focused button, e.g. to move the item it is the handle of. */
+  onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
 }
 
 /**
@@ -215,8 +222,7 @@ export type DisclosureDirection = 'below' | 'end';
  * <p>The toggle shows a chevron pointing where the content opens ({@link opens}) and is named by its
  * {@link label}, which is also its tooltip. Every implementation marks whether the content is shown
  * ({@link expanded}, `aria-expanded`); the element holding the content is named by `aria-controls`
- * where the control has one. While the content is being loaded ({@link loading}), the toggle shows a
- * busy indicator in place of the chevron.</p>
+ * where the control has one.</p>
  */
 export interface DisclosureTogglePartProps extends PartAttributes {
   /** The ID of the drawn element. */
@@ -237,9 +243,6 @@ export interface DisclosureTogglePartProps extends PartAttributes {
   /** Where the content opens from the toggle; absent: `below`. */
   opens?: DisclosureDirection;
 
-  /** Whether the content is being loaded; the toggle then shows a busy indicator. */
-  loading?: boolean;
-
   /** Whether the toggle cannot be pressed. */
   disabled?: boolean;
 
@@ -257,6 +260,12 @@ export interface DisclosureTogglePartProps extends PartAttributes {
 
   /** Called when the toggle is pressed. */
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+
+  /**
+   * Called when a mouse button goes down on the toggle, e.g. to keep the focus on the tree it
+   * belongs to.
+   */
+  onMouseDown?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 /**
@@ -290,8 +299,9 @@ export type FieldValidation = 'error' | 'warning';
  * press asks for the new state through {@link onChange}; it shows the new state only once the
  * control passes it.</p>
  *
- * <p>Every implementation draws an indeterminate box as indeterminate and marks it
- * `aria-checked="mixed"`, marks a read-only box `aria-readonly`, an invalid one `aria-invalid` and a
+ * <p>Every implementation draws an indeterminate box as indeterminate and states the mixed state to
+ * assistive technology - a native checkbox through its `indeterminate` property, an input that does
+ * not carry it by `aria-checked="mixed"` -, marks a read-only box `aria-readonly`, an invalid one `aria-invalid` and a
  * required one `aria-required`, and puts {@link id}, {@link ref}, {@link name}, {@link tabIndex} and
  * the passed-through attributes on the focusable input. A checkbox without {@link label} is named by
  * the control: by an `aria-label`, or by `aria-labelledby` naming the label of its form field.</p>
@@ -504,7 +514,11 @@ export interface TextInputPartProps extends PartAttributes {
  * <p>A single-line value stays on one line and ends with an ellipsis where it is cut off. A
  * {@link multiline} value keeps its line breaks; an empty line keeps its height. A value with an
  * {@link href} is a link opening the address in a window of its own, which gets no access to the
- * page that opened it. An empty text shows nothing: the value has none.</p>
+ * page that opened it. An empty text shows nothing: the value has none. A value the model gives a
+ * color role ({@link colorRole}) is drawn as a pill of that role, where it has a text.</p>
+ *
+ * <p>The value sets no type of its own: it takes the type of the place it stands in - the input
+ * area of a form field, the body of a table, the cells of a group row.</p>
  *
  * <p>Every implementation puts {@link id}, {@link className} and the passed-through attributes on
  * its outermost element.</p>
@@ -538,6 +552,9 @@ export interface FieldValuePartProps extends PartAttributes {
    */
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 
+  /** The color role of the value; absent or `neutral`: plain. Ignored for a multi-line value. */
+  colorRole?: ColorRole;
+
   /**
    * Classes added to the drawn element. They mark the part and carry no layout: the element
    * around the part places it.
@@ -546,12 +563,13 @@ export interface FieldValuePartProps extends PartAttributes {
 }
 
 /**
- * The color role of a {@link ChipPartProps chip}, from a closed list: `neutral`; `brand`; the
+ * The color role of a value ({@link ChipPartProps chip}, {@link FieldValuePartProps read-only value}),
+ * from a closed list: `neutral`; `brand`; the
  * meanings `error`, `warning`, `success` and `info`; and the categories without meaning
  * `category-1` to `category-8`. The role a model gives a value arrives by this name; how a role
  * looks is up to the implementation.
  */
-export type ChipTone = 'neutral' | 'brand' | 'error' | 'warning' | 'success' | 'info'
+export type ColorRole = 'neutral' | 'brand' | 'error' | 'warning' | 'success' | 'info'
   | 'category-1' | 'category-2' | 'category-3' | 'category-4'
   | 'category-5' | 'category-6' | 'category-7' | 'category-8';
 
@@ -568,6 +586,9 @@ export type ChipTone = 'neutral' | 'brand' | 'error' | 'warning' | 'success' | '
  * <li>A chip with {@link onClick} and without {@link pressed} is a button running an action, e.g.
  *     downloading the file it stands for.</li>
  * <li>A chip with {@link onRemove} offers to remove its value, named by {@link removeLabel}.</li>
+ * <li>A chip with a {@link handle} can be dragged by it to another place in its list, e.g. a chosen
+ *     value of a field keeping its values in order; {@link dragSource} makes the chip the element
+ *     that is dragged.</li>
  * </ul>
  *
  * <p>Every implementation puts {@link id}, {@link ref}, {@link className} and the passed-through
@@ -595,7 +616,7 @@ export interface ChipPartProps extends PartAttributes {
   icon?: string;
 
   /** The color role; absent: none, the chip is drawn in the plain look of its form. */
-  tone?: ChipTone;
+  colorRole?: ColorRole;
 
   /** The state of a toggle; absent for a chip that is no toggle. */
   pressed?: boolean;
@@ -624,6 +645,18 @@ export interface ChipPartProps extends PartAttributes {
    * element around the part places it.
    */
   className?: string;
+
+  /**
+   * The handle the chip is dragged by, drawn inside the chip ahead of its label: a part `Button`
+   * drawn `icon-only`, `ghost` and `small`, carrying the keyboard reordering. Absent: none.
+   */
+  handle?: React.ReactNode;
+
+  /**
+   * Makes the outermost drawn element the element dragged when the chip is reordered by its
+   * {@link handle}: its `draggable` and drag handlers, as the list reordering hands them out.
+   */
+  dragSource?: ReorderItemProps;
 
   /** Called when a toggle or a chip running an action is pressed. */
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
@@ -706,8 +739,12 @@ export interface DividerPartProps extends PartAttributes {
  * done, and is marked `aria-busy`.</p>
  *
  * <p>Every implementation draws an element of the role `progressbar` with the share in percent as
- * `aria-valuenow` (absent for an indeterminate bar) and the label as `aria-valuetext`, and puts
- * {@link id}, {@link className} and the passed-through attributes on its outermost element.</p>
+ * `aria-valuenow` (absent for an indeterminate bar), and puts {@link id}, {@link className} and the
+ * passed-through attributes on its outermost element. The bar states its value through
+ * `aria-valuenow` alone. It is named by its {@link label}; where the label only shows the value - a
+ * percentage -, the element saying what progresses names the bar ({@link labelledBy}), and the label
+ * is hidden from assistive technology. A bar passed `aria-hidden`, inside an element that carries the
+ * name of what loads itself, has no name of its own.</p>
  */
 export interface ProgressBarPartProps extends PartAttributes {
   /** The ID of the drawn element. */
@@ -719,8 +756,14 @@ export interface ProgressBarPartProps extends PartAttributes {
    */
   value?: number;
 
-  /** The text shown beside the bar, e.g. "3 / 4"; absent: none. */
+  /** The text shown beside the bar, e.g. "Loading…" or "3 / 4"; absent: none. */
   label?: string;
+
+  /**
+   * The ID of the element naming the bar, e.g. the state of a job above it; the {@link label} then
+   * only shows the value. Absent: the label names the bar.
+   */
+  labelledBy?: string;
 
   /**
    * Classes added to the outermost drawn element. They mark the part and carry no layout: the
@@ -733,8 +776,8 @@ export interface ProgressBarPartProps extends PartAttributes {
  * The size of a {@link SpinnerPartProps spinner}:
  *
  * <ul>
- * <li>`small`: the size of a small icon, standing in for an icon, e.g. the chevron of a toggle
- *     whose content is being loaded. It takes the color of the text around it.</li>
+ * <li>`small`: the size of a small icon, standing in for an icon. It takes the color of the text
+ *     around it.</li>
  * <li>`medium`: a busy indicator standing on its own, e.g. in place of a list being loaded.</li>
  * </ul>
  */

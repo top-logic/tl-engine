@@ -1,5 +1,5 @@
-import { React, ThemeIcon } from 'tl-react-bridge';
-import type { FieldValuePartProps } from 'tl-react-bridge';
+import { React, ThemeIcon, usePart } from 'tl-react-bridge';
+import type { ColorRole, FieldValuePartProps } from 'tl-react-bridge';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 
@@ -22,17 +22,27 @@ const LINK_TARGET = '_blank';
 const LINK_REL = 'noopener noreferrer';
 
 /**
+ * The value of a color role: the part `Chip` of that role, holding icon and text. The chip is looked
+ * up only for a value that has a role.
+ */
+function RolePill({ colorRole, icon, text }: { colorRole: ColorRole; icon?: string; text: string }) {
+  const Chip = usePart('Chip');
+  return <Chip colorRole={colorRole} icon={icon} label={text} />;
+}
+
+/**
  * Draws the part `FieldValue` ({@link FieldValuePartProps}) with Material UI: the text in a
  * `Typography` of the variant `body2`.
  *
  * <p>Mapping from the props: a single-line value → a `span` that does not wrap and ends with an
  * ellipsis (`noWrap`); href → a `Link` of the same variant opening the address in a window of its
- * own; onClick → a `Link` drawn as a button that runs it; icon → the icon ahead of the text;
+ * own; onClick → a `Link` drawn as a button that runs it; icon → the icon ahead of the text; role
+ * (with a text) → the part `Chip` of that role holding icon and text;
  * multiline → a `div` with one block per line. id, className and the passed-through attributes →
  * the drawn element.</p>
  */
 const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
-  id, text, href, multiline, icon, onClick, className, ...attributes
+  id, text, href, multiline, icon, onClick, colorRole, className, ...attributes
 }) => {
   if (multiline) {
     return (
@@ -43,13 +53,16 @@ const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
       </Typography>
     );
   }
-  const sx = icon ? WITH_ICON_SX : undefined;
-  const content = (
-    <>
-      {icon && <ThemeIcon encoded={icon} className={ICON_CLASS} />}
-      {text}
-    </>
-  );
+  const inChip = colorRole !== undefined && colorRole !== 'neutral' && text !== '';
+  const sx = icon && !inChip ? WITH_ICON_SX : undefined;
+  const content = inChip
+    ? <RolePill colorRole={colorRole} icon={icon} text={text} />
+    : (
+      <>
+        {icon && <ThemeIcon encoded={icon} className={ICON_CLASS} />}
+        {text}
+      </>
+    );
   if (href !== undefined) {
     return (
       <Link id={id} variant="body2" sx={sx} className={className} href={href} target={LINK_TARGET} rel={LINK_REL}

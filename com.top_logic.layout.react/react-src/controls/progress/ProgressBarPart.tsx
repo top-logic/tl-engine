@@ -9,9 +9,12 @@ import type { ProgressBarPartProps } from 'tl-react-bridge';
  * sweeping fill instead of a share of the track. The width of the fill is data, not design: it is
  * the share `aria-valuenow` states, and the only thing set inline.</p>
  */
-const ProgressBarPart: React.FC<ProgressBarPartProps> = ({ id, value, label, className, ...attributes }) => {
+const ProgressBarPart: React.FC<ProgressBarPartProps> = ({ id, value, label, labelledBy, className, ...attributes }) => {
+  const labelId = React.useId();
   const indeterminate = value === undefined;
   const percent = indeterminate ? 0 : Math.round(value * 100);
+  const hidden = !!attributes['aria-hidden'];
+  const named = !!label && labelledBy === undefined && !hidden;
   return (
     <div
       id={id}
@@ -20,14 +23,19 @@ const ProgressBarPart: React.FC<ProgressBarPartProps> = ({ id, value, label, cla
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={indeterminate ? undefined : percent}
-      aria-valuetext={label || undefined}
+      aria-labelledby={hidden ? undefined : labelledBy ?? (named ? labelId : undefined)}
       aria-busy={indeterminate || undefined}
       {...attributes}
     >
       <span className="tl-progress__track">
         <span className="tl-progress__fill" style={indeterminate ? undefined : { width: percent + '%' }} />
       </span>
-      {label && <span className="tl-progress__label tl-type-label tl-nums">{label}</span>}
+      {label && (
+        // A label that only shows the value is hidden from assistive technology: aria-valuenow says
+        // it, and inside a live region (a job's status) its every change would be announced.
+        <span id={named ? labelId : undefined} className="tl-progress__label tl-type-label tl-nums"
+          aria-hidden={labelledBy !== undefined ? true : undefined}>{label}</span>
+      )}
     </div>
   );
 };

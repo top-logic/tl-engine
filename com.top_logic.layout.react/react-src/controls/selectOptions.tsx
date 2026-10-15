@@ -1,5 +1,5 @@
 import { React, ThemeIcon, usePart } from 'tl-react-bridge';
-import type { ChipTone, OptionDescriptor } from 'tl-react-bridge';
+import type { ColorRole, OptionDescriptor } from 'tl-react-bridge';
 
 export type { OptionDescriptor } from 'tl-react-bridge';
 
@@ -10,42 +10,14 @@ export const CMD_GOTO = 'goto';
 export const ARG_OPTION = 'option';
 
 /**
- * Draws a value's presentation as the part `Chip` of the given color role, where the model gives the
- * value one.
- *
- * <p>Used for every presentation of an option - the rows of an open dropdown, the chosen value while
- * editing, the segments of a segmented choice and the labels of a choice group - and of a colored
- * object in a cell, so a colored value looks the same wherever a control shows it.</p>
- *
- * @param role the color role of the value; absent: the value is drawn as it is
- * @param icon the image of the value, drawn ahead of its label
- * @param label the label of the value
- * @param children what stands for a value without a color role
- */
-export function Pill({
-  role,
-  icon,
-  label,
-  children,
-}: {
-  role?: string;
-  icon?: string;
-  label: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const Chip = usePart('Chip');
-  return role ? <Chip tone={role as ChipTone} icon={icon} label={label} /> : <>{children}</>;
-}
-
-/**
- * Renders an option as its image followed by its label, as the part `Chip` where the option has a
- * color role (see {@link Pill}).
+ * Renders an option as its image followed by its label, for an element that carries the option's
+ * color role itself (data-tl-role, see {@link optionRoleAttr}): a segment. Image and label are
+ * siblings; nothing is nested in a pill.
  *
  * @param option the option to render
  * @param label what stands for the label, e.g. the label with the search match set off; the
  *        option's label where omitted
- * @param labelClassName the class of the element holding the label of an option without a color
- *        role, if any
+ * @param labelClassName the class of the element holding the label, if any
  */
 export function OptionContent({
   option,
@@ -56,11 +28,43 @@ export function OptionContent({
   label?: React.ReactNode;
   labelClassName?: string;
 }) {
-  const text = label ?? option.label;
   return (
-    <Pill role={option.colorRole} icon={option.image} label={text}>
-      <ThemeIcon encoded={option.image} className="tl-icon-sm" />
-      <span className={labelClassName}>{text}</span>
-    </Pill>
+    <>
+      {option.image && <ThemeIcon encoded={option.image} className="tl-icon-sm" />}
+      <span className={labelClassName}>{label ?? option.label}</span>
+    </>
   );
+}
+
+/**
+ * Renders an option where the element showing it carries no role of its own - a row of the open list,
+ * the single chosen value, the label of a choice: the part `Chip` of the option's color role, or image
+ * and label as they are for a value without a role (see {@link OptionContent}).
+ *
+ * @param option the option to render
+ * @param label what stands for the label, e.g. the label with the search match set off; the
+ *        option's label where omitted
+ * @param labelClassName the class of the element holding the label of an option without a color
+ *        role, if any
+ */
+export function OptionLabel({
+  option,
+  label,
+  labelClassName,
+}: {
+  option: OptionDescriptor;
+  label?: React.ReactNode;
+  labelClassName?: string;
+}) {
+  const Chip = usePart('Chip');
+  if (!option.colorRole) {
+    return <OptionContent option={option} label={label} labelClassName={labelClassName} />;
+  }
+  return <Chip colorRole={option.colorRole as ColorRole} icon={option.image} label={label ?? option.label} />;
+}
+
+/** The data-tl-role an element showing the option carries: its color role, none for a neutral one. */
+export function optionRoleAttr(option: OptionDescriptor): string | undefined {
+  const role = option.colorRole;
+  return role && role !== 'neutral' ? role : undefined;
 }

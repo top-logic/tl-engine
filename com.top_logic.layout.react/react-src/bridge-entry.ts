@@ -54,7 +54,7 @@ export type {
   TextInputMode,
   FieldValuePartProps,
   ChipPartProps,
-  ChipTone,
+  ColorRole,
   BadgePartProps,
   DividerPartProps,
   DividerOrientation,
@@ -64,7 +64,7 @@ export type {
 } from './bridge/parts';
 export { OptionValues } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';
-export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
+export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
 export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';
@@ -77,7 +77,7 @@ export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';
-export { useListReorder } from './bridge/list-reorder';
+export { useListReorder, reorderState } from './bridge/list-reorder';
 export type {
   ListReorder,
   ListReorderOptions,
@@ -129,7 +129,13 @@ export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
-export { rootClassName } from './bridge/css';
+export { rootClassName, stateAttr } from './bridge/css';
+export { tokenPx, useTokenPx } from './bridge/token-px';
+export { isEditorTarget } from './bridge/editor-target';
+export { filterOptions } from './bridge/filter-options';
+export { useFocusAfterRemove } from './bridge/focus-after-remove';
+export type { FocusAfterRemove } from './bridge/focus-after-remove';
+export * from './bridge/icons';
 export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
 export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';

@@ -148,10 +148,10 @@
 					<de>helper</de>
 				</label>
 			</text>
-			<text tone="accent">
+			<text css-class="tl-type-body-strong">
 				<label>
-					<en>accent</en>
-					<de>accent</de>
+					<en>strong</en>
+					<de>strong</de>
 				</label>
 			</text>
 			<text tone="success">

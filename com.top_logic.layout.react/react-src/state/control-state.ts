@@ -1360,9 +1360,9 @@ export namespace TextStateJson {
 		 */
 		| 'helper'
 		/**
-		 * Text the application draws attention to, in the color interactive elements share.
+		 * Text that stands in for a value not yet there: a name not given, a list without entries.
 		 */
-		| 'accent'
+		| 'placeholder'
 		/**
 		 * An outcome that went well.
 		 */

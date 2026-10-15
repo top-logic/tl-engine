@@ -20,7 +20,7 @@ import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
-import MuiSpinnerAdapter from './MuiSpinnerAdapter';
+import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
 
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
@@ -32,8 +32,9 @@ replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips, the sidebar its counts as badges.
 replacePart('Chip', MuiChipAdapter);
 replacePart('Badge', MuiBadgeAdapter);
-// A toggle whose content is being loaded shows a spinner; the sidebar draws lines between its items.
-replacePart('Spinner', MuiSpinnerAdapter);
+// A tree shows the loading of the children of a node by a progress bar; the sidebar draws lines between
+// its items.
+replacePart('ProgressBar', MuiProgressBarAdapter);
 replacePart('Divider', MuiDividerAdapter);
 
 /** The labels of the toggles: the keys, as the test stub translates each key to itself. */
@@ -41,8 +42,8 @@ const LABEL_GROUP_EXPAND = 'js.formGroup.expand';
 const LABEL_GROUP_COLLAPSE = 'js.formGroup.collapse';
 const LABEL_TREE_EXPAND = 'js.treeView.expand';
 const LABEL_TREE_COLLAPSE = 'js.treeView.collapse';
-const LABEL_ROW_EXPAND = 'js.table.expandRow';
-const LABEL_ROW_COLLAPSE = 'js.table.collapseRow';
+const LABEL_ROW_EXPAND = 'js.treeView.expand';
+const LABEL_ROW_COLLAPSE = 'js.treeView.collapse';
 const LABEL_SIDEBAR_EXPAND = 'js.sidebar.expand';
 const LABEL_SIDEBAR_COLLAPSE = 'js.sidebar.collapse';
 const LABEL_HELP = 'js.formField.help';
@@ -143,15 +144,6 @@ describe('the toggle of a tree node as MUI icon button', () => {
 
     expect(sent).toHaveBeenCalledWith(CMD_COLLAPSE, { nodeId: 'n1' });
   });
-
-  it('shows a spinner while the children of the node are being loaded', async () => {
-    mountAdapter(TLTreeView, { nodes: [node('n1', { expandable: true, leaf: false, loading: true })] });
-    await settle();
-
-    const toggle = screen.getByRole('button', { name: LABEL_TREE_EXPAND });
-    expect(toggle.getAttribute('aria-busy')).toBe('true');
-    expect(toggle.querySelector('.MuiCircularProgress-root')).not.toBeNull();
-  });
 });
 
 describe('the toggle of a tree table row as MUI icon button', () => {
@@ -176,8 +168,8 @@ describe('the toggle of a tree table row as MUI icon button', () => {
     const toggle = screen.getByRole('button', { name: LABEL_ROW_EXPAND });
     expectMuiToggle(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(toggle.parentElement!.classList).toContain('tlTableView__treeToggle');
-    expect(screen.getAllByRole('button', { name: /js\.table\.(expand|collapse)Row/ })).toHaveLength(1);
+    expect(toggle.parentElement!.classList).toContain('tl-table__tree');
+    expect(screen.getAllByRole('button', { name: /js\.treeView\.(expand|collapse)/ })).toHaveLength(1);
     await userEvent.click(toggle);
     await settle();
 

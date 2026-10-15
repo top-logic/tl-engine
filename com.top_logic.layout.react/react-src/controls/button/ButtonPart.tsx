@@ -17,7 +17,7 @@ import { buttonClassName } from './buttonClassName';
 const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   const {
     id, ref, href, target: _target, label, image, display, appearance, danger, small, active, checked: _checked,
-    disabled, tabIndex, tooltip: _tooltip, className, onClick, onMouseDown, ...attributes
+    disabled, tabIndex, tooltip: _tooltip, className, onClick, onMouseDown, onPointerDown, onKeyDown, ...attributes
   } = props;
   const iconOnly = display === 'icon-only';
   // A button showing no icon shows its label, also in icon-only mode.
@@ -45,6 +45,8 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
         ref={ref as PartRef<HTMLAnchorElement>}
         onClick={onClick}
         onMouseDown={onMouseDown}
+        onPointerDown={onPointerDown}
+        onKeyDown={onKeyDown}
         tabIndex={tabIndex}
         className={classes}
         {...buttonLinkAttributes(props)}
@@ -63,6 +65,8 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
       ref={ref as PartRef<HTMLButtonElement>}
       onClick={onClick}
       onMouseDown={onMouseDown}
+      onPointerDown={onPointerDown}
+      onKeyDown={onKeyDown}
       disabled={disabled}
       tabIndex={tabIndex}
       className={classes}

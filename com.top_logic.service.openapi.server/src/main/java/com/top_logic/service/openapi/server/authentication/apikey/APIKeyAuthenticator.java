@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -89,7 +90,7 @@ public class APIKeyAuthenticator implements Authenticator {
 	}
 
 	private Person checkKey(String apikey) throws AuthenticationFailure {
-		String userName = _accountByApiKey.get(apikey);
+		String userName = StringServices.isEmpty(apikey) ? null : _accountByApiKey.get(apikey);
 		if (userName == null) {
 			throw new AuthenticationFailure(
 				I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));

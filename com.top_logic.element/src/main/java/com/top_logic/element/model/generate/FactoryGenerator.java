@@ -100,7 +100,7 @@ public class FactoryGenerator extends TLModelGenerator {
 			writeTypeNameConstants();
 
 			if (!noElementClasses()) {
-				if (isStructure(_module)) {
+				if (hasSingletons(_module)) {
 					writeSingletonLookups();
 				}
 				writeFactoryMethods();
@@ -513,7 +513,7 @@ public class FactoryGenerator extends TLModelGenerator {
 			return "";
 		}
 		String superTypeSpec;
-		if (isStructure(_module)) {
+		if (hasSingletons(_module)) {
 			superTypeSpec = type(StructuredElementWrapperFactory.class);
 		} else {
 			superTypeSpec = type(AbstractElementFactory.class);

@@ -34,6 +34,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 /** The texts of the controls: the keys, as the test stub translates each key to itself. */
 const LABEL_DROPDOWN_LOADING = 'js.dropdownSelect.loading';
 const LABEL_ICONS_LOADING = 'js.iconSelect.loading';
+const LABEL_TREE_LOADING = 'js.tree.loading';
 const LABEL_TREE_EXPAND = 'js.treeView.expand';
 
 afterEach(() => {
@@ -51,11 +52,10 @@ describe('the progress control (TLProgress) as MUI progress bar', () => {
   it('draws the fraction as a determinate MUI bar with the label beside it, on the element of the control', () => {
     mountAdapter(TLProgress, { fraction: 0.75, label: '3 / 4', cssClass: 'my-progress' });
 
-    const bar = screen.getByRole('progressbar');
+    const bar = screen.getByRole('progressbar', { name: '3 / 4' });
     expectMuiBar(bar);
     expect(bar.classList).toContain('MuiLinearProgress-determinate');
     expect(bar.getAttribute('aria-valuenow')).toBe('75');
-    expect(bar.getAttribute('aria-valuetext')).toBe('3 / 4');
     const root = document.getElementById(CONTROL_ID)!;
     expect(root.classList).toContain('my-progress');
     expect(root.textContent).toBe('3 / 4');
@@ -117,11 +117,10 @@ describe('the loading options of a dropdown (TLDropdownSelect) as MUI progress b
   it('shows an indeterminate MUI bar with the loading text while the options are being loaded', async () => {
     await openDropdown({ options: [], optionsLoaded: false });
 
-    const bar = screen.getByRole('progressbar');
+    const bar = screen.getByRole('progressbar', { name: LABEL_DROPDOWN_LOADING });
     expectMuiBar(bar);
     expect(bar.classList).toContain('MuiLinearProgress-indeterminate');
-    expect(bar.getAttribute('aria-valuetext')).toBe(LABEL_DROPDOWN_LOADING);
-    expect(bar.closest('.tl-select__status')!.textContent).toBe(LABEL_DROPDOWN_LOADING);
+    expect(bar.closest('.tl-status')!.textContent).toBe(LABEL_DROPDOWN_LOADING);
   });
 
   it('shows no bar once the options are loaded', async () => {
@@ -132,7 +131,7 @@ describe('the loading options of a dropdown (TLDropdownSelect) as MUI progress b
   });
 });
 
-describe('the busy indicator of a tree node (TLTreeView) as MUI spinner', () => {
+describe('the loading children of a tree node (TLTreeView) as MUI progress bar', () => {
   function node(loading: boolean) {
     return {
       id: 'n1', depth: 0, expandable: true, expanded: false, leaf: false, loading, selected: false,
@@ -140,24 +139,26 @@ describe('the busy indicator of a tree node (TLTreeView) as MUI spinner', () => 
     };
   }
 
-  it('shows a small MUI spinner as decoration in the toggle of a node whose children are being loaded', async () => {
+  it('shows a status line below a node whose children are being loaded, its MUI bar hidden from assistive technology', async () => {
     mountAdapter(TLTreeView, { nodes: [node(true)] });
     await settle();
 
-    const toggle = screen.getByRole('button', { name: LABEL_TREE_EXPAND });
-    expect(toggle.getAttribute('aria-busy')).toBe('true');
-    const spinner = toggle.querySelector<HTMLElement>('.MuiCircularProgress-root')!;
-    expect(spinner.getAttribute('aria-hidden')).toBe('true');
-    expect(spinner.style.width).toBe('16px');
-    expect(toggle.querySelector('.tlSpinner')).toBeNull();
+    const status = screen.getByRole('treeitem', { name: LABEL_TREE_LOADING });
+    const bar = status.querySelector<HTMLElement>('.MuiLinearProgress-root')!;
+    expect(bar.classList).toContain('MuiLinearProgress-indeterminate');
+    expect(bar.closest('[aria-hidden="true"]')).not.toBeNull();
     expect(screen.queryByRole('progressbar')).toBeNull();
+    // The toggle stays a chevron: the status line says that the node is loading.
+    const toggle = screen.getByRole('button', { name: LABEL_TREE_EXPAND });
+    expect(toggle.querySelector('.MuiCircularProgress-root')).toBeNull();
   });
 
-  it('shows no spinner in the toggle of a node that is not being loaded', async () => {
+  it('shows no status line below a node that is not being loaded', async () => {
     mountAdapter(TLTreeView, { nodes: [node(false)] });
     await settle();
 
-    expect(screen.getByRole('button', { name: LABEL_TREE_EXPAND }).querySelector('.MuiCircularProgress-root')).toBeNull();
+    expect(screen.queryByRole('treeitem', { name: LABEL_TREE_LOADING })).toBeNull();
+    expect(document.querySelector('.MuiLinearProgress-root')).toBeNull();
   });
 });
 

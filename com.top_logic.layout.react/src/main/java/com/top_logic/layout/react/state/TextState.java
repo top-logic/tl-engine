@@ -162,9 +162,9 @@ public interface TextState extends com.top_logic.layout.react.state.ControlState
 		HELPER("helper"),
 
 		/**
-		 * Text the application draws attention to, in the color interactive elements share.
+		 * Text that stands in for a value not yet there: a name not given, a list without entries.
 		 */
-		ACCENT("accent"),
+		PLACEHOLDER("placeholder"),
 
 		/**
 		 * An outcome that went well.
@@ -211,7 +211,7 @@ public interface TextState extends com.top_logic.layout.react.state.ControlState
 				case "primary": return PRIMARY;
 				case "secondary": return SECONDARY;
 				case "helper": return HELPER;
-				case "accent": return ACCENT;
+				case "placeholder": return PLACEHOLDER;
 				case "success": return SUCCESS;
 				case "warning": return WARNING;
 				case "error": return ERROR;

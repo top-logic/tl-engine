@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, usePart, ICON_CLEAR } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -11,9 +11,6 @@ const I18N_KEYS = {
 
 /** Icon of the button downloading the file. */
 const DOWNLOAD_ICON = 'css:fa-solid fa-download';
-
-/** Icon of the button clearing the file. */
-const CLEAR_ICON = 'css:fa-solid fa-xmark';
 
 const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -95,7 +92,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
       {clearable && (
         <Button
           label={t['js.download.clearFile']}
-          image={CLEAR_ICON}
+          image={ICON_CLEAR}
           display="icon-only"
           appearance="ghost"
           small

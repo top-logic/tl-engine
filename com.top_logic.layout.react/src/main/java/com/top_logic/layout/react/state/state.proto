@@ -1311,9 +1311,9 @@ message TextState extends ControlState {
 		@Name("helper")
 		HELPER;
 
-		/** Text the application draws attention to, in the color interactive elements share. */
-		@Name("accent")
-		ACCENT;
+		/** Text that stands in for a value not yet there: a name not given, a list without entries. */
+		@Name("placeholder")
+		PLACEHOLDER;
 
 		/** An outcome that went well. */
 		@Name("success")

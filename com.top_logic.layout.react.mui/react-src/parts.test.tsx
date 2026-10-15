@@ -111,11 +111,12 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: ProgressBarPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/ProgressBarPart');
     const { default: SpinnerPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/SpinnerPart');
     // A chip draws its remove button with the part Button, a disclosure toggle its busy indicator
-    // with the part Spinner.
+    // with the part Spinner, a field value of a color role its pill with the part Chip.
     const { registerPart } = await import('tl-react-bridge');
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     registerPart('Button', ButtonPart);
     registerPart('Spinner', SpinnerPart);
+    registerPart('Chip', ChipPart);
     return {
       ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart, ChipPart, BadgePart,
       DividerPart, ProgressBarPart, SpinnerPart,
@@ -246,19 +247,6 @@ describe('the TopLogic drawing of the parts', () => {
       .toBe('tl-toggle tlDisclosureToggle--end');
   });
 
-  it('shows a busy indicator instead of the chevron while the content is being loaded', async () => {
-    const { DisclosureTogglePart } = await defaults();
-
-    render(<DisclosureTogglePart expanded={false} loading label="Aufklappen" />);
-
-    const toggle = screen.getByRole('button', { name: 'Aufklappen' });
-    expect(toggle.getAttribute('aria-busy')).toBe('true');
-    const spinner = toggle.querySelector('.tlSpinner')!;
-    expect(spinner.className).toBe('tlSpinner tlSpinner--small');
-    expect(spinner.getAttribute('aria-hidden')).toBe('true');
-    expect(toggle.querySelector('i.fa-chevron-right')).toBeNull();
-  });
-
   it('draws a checkbox as the box of the design system, named by its attributes', async () => {
     const { CheckboxPart } = await defaults();
     const ref = React.createRef<HTMLInputElement>();
@@ -283,7 +271,7 @@ describe('the TopLogic drawing of the parts', () => {
     expect(box.checked).toBe(false);
   });
 
-  it('draws an indeterminate checkbox, which stays indeterminate when pressed', async () => {
+  it('draws an indeterminate checkbox through its native state, which stays indeterminate when pressed', async () => {
     const { CheckboxPart } = await defaults();
     const onChange = vi.fn();
 
@@ -291,7 +279,8 @@ describe('the TopLogic drawing of the parts', () => {
 
     const box = screen.getByRole('checkbox') as HTMLInputElement;
     expect(box.indeterminate).toBe(true);
-    expect(box.getAttribute('aria-checked')).toBe('mixed');
+    // A native checkbox states its mixed state through the property, without ARIA of its own.
+    expect(box.hasAttribute('aria-checked')).toBe(false);
     await userEvent.click(box);
     expect(onChange.mock.calls).toEqual([[true]]);
     expect(box.indeterminate).toBe(true);
@@ -500,7 +489,7 @@ describe('the TopLogic drawing of the parts', () => {
 
     const value = document.getElementById('v1')!;
     expect(value.tagName).toBe('SPAN');
-    expect(value.className).toBe('tl-field-value tl-type-body x');
+    expect(value.className).toBe('tl-field-value x');
     expect(value.getAttribute('aria-describedby')).toBe('hint');
     expect(Array.from(value.children).map(child => child.className)).toEqual(['tl-field-value__text']);
     expect(value.textContent).toBe('Hallo');
@@ -514,7 +503,7 @@ describe('the TopLogic drawing of the parts', () => {
 
     const link = screen.getByRole('link', { name: 'a@b.de' });
     expect(link.id).toBe('v1');
-    expect(link.className).toBe('tl-field-value tl-type-body');
+    expect(link.className).toBe('tl-field-value');
     expect(link.getAttribute('href')).toBe('mailto:a@b.de');
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
@@ -527,7 +516,7 @@ describe('the TopLogic drawing of the parts', () => {
 
     const value = document.getElementById('v1')!;
     expect(value.tagName).toBe('DIV');
-    expect(value.className).toBe('tl-field-value tl-type-body tl-field-value--multiline');
+    expect(value.className).toBe('tl-field-value tl-field-value--multiline');
     expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', ' ', 'c']);
     expect(screen.queryByRole('link')).toBeNull();
   });
@@ -549,21 +538,45 @@ describe('the TopLogic drawing of the parts', () => {
     const event = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(event);
 
-    expect(link.className).toBe('tl-field-value tl-type-body');
+    expect(link.className).toBe('tl-field-value');
     expect(link.getAttribute('target')).toBeNull();
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(event.defaultPrevented).toBe(true);
   });
 
+  it('draws a field value of a color role as the part Chip of that role inside the value', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text="Offen" icon="css:fa-solid fa-star" colorRole="warning" />);
+
+    const value = document.getElementById('v1')!;
+    expect(value.className).toBe('tl-field-value');
+    const pill = value.firstElementChild!;
+    expect(pill.className).toBe('tl-pill tl-type-label');
+    expect(pill.getAttribute('data-tl-role')).toBe('warning');
+    expect(Array.from(pill.children).map(child => child.className))
+      .toEqual(['fa-solid fa-star tl-pill__icon tl-icon-sm', 'tl-pill__label']);
+  });
+
+  it('draws a field value of a color role without a text as nothing tinted', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text="" colorRole="warning" />);
+
+    const value = document.getElementById('v1')!;
+    expect(value.children).toHaveLength(0);
+  });
+
   it('draws a chip showing a value as a pill of its color role, with icon, label and detail', async () => {
     const { ChipPart } = await defaults();
 
-    render(<ChipPart id="c1" label="Alpha" detail="2 KB" icon="css:fa-solid fa-star" tone="success" className="x"
+    render(<ChipPart id="c1" label="Alpha" detail="2 KB" icon="css:fa-solid fa-star" colorRole="success" className="x"
       tooltip="Tipp" data-role="value" />);
 
     const chip = document.getElementById('c1')!;
     expect(chip.tagName).toBe('SPAN');
-    expect(chip.className).toBe('tl-pill tl-pill--success tl-type-label x');
+    expect(chip.className).toBe('tl-pill tl-type-label x');
+    expect(chip.getAttribute('data-tl-role')).toBe('success');
     expect(chip.getAttribute(TOOLTIP_ATTR)).toBe('text:Tipp');
     expect(chip.getAttribute('data-role')).toBe('value');
     expect(Array.from(chip.children).map(child => child.className))
@@ -575,12 +588,14 @@ describe('the TopLogic drawing of the parts', () => {
   it('draws a neutral chip as a pill without a role class', async () => {
     const { ChipPart } = await defaults();
 
-    render(<ChipPart id="c1" label="Alpha" tone="neutral" />);
+    render(<ChipPart id="c1" label="Alpha" colorRole="neutral" />);
 
-    expect(document.getElementById('c1')!.className).toBe('tl-pill tl-type-label');
+    const chip = document.getElementById('c1')!;
+    expect(chip.className).toBe('tl-pill tl-type-label');
+    expect(chip.hasAttribute('data-tl-role')).toBe(false);
   });
 
-  it('draws a chip running an action as a pill that is a button', async () => {
+  it('draws a chip running an action as a chip that is a button', async () => {
     const { ChipPart } = await defaults();
     const onClick = vi.fn();
 
@@ -588,23 +603,24 @@ describe('the TopLogic drawing of the parts', () => {
     const chip = screen.getByRole('button', { name: 'report.pdf' });
     await userEvent.click(chip);
 
-    expect(chip.className).toBe('tl-pill tl-type-label');
+    expect(chip.className).toBe('tl-chip tl-type-label');
     expect(chip.hasAttribute('aria-pressed')).toBe(false);
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('draws a toggle as the chip of the design system, its color role as a pill inside', async () => {
+  it('draws a toggle as the chip of the design system, carrying its color role', async () => {
     const { ChipPart } = await defaults();
     const onClick = vi.fn();
 
-    render(<ChipPart label="Beta" tone="error" pressed={false} onClick={onClick} />);
+    render(<ChipPart label="Beta" colorRole="error" pressed={false} onClick={onClick} />);
     const chip = screen.getByRole('button', { name: 'Beta' });
     await userEvent.click(chip);
 
     expect(chip.className).toBe('tl-chip tl-type-label');
     expect(chip.getAttribute('aria-pressed')).toBe('false');
-    expect(chip.firstElementChild!.className).toBe('tl-pill tl-pill--error');
-    expect(chip.querySelector('.tl-chip__label')!.textContent).toBe('Beta');
+    expect(chip.getAttribute('data-tl-role')).toBe('error');
+    expect(chip.firstElementChild!.className).toBe('tl-chip__label');
+    expect(chip.firstElementChild!.textContent).toBe('Beta');
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -630,7 +646,7 @@ describe('the TopLogic drawing of the parts', () => {
     await userEvent.click(remove);
 
     const chip = document.getElementById('c1')!;
-    expect(chip.className).toBe('tl-pill tl-select__chip tl-type-label');
+    expect(chip.className).toBe('tl-pill tl-type-label tl-select__chip');
     expect(remove.parentElement).toBe(chip);
     expect(remove.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--sm tl-button--icon');
     expect(screen.getAllByRole('button')).toEqual([remove]);
@@ -649,15 +665,33 @@ describe('the TopLogic drawing of the parts', () => {
     await userEvent.click(remove);
 
     const chip = document.getElementById('c1')!;
-    expect(chip.className).toBe('tl-chip tl-select__chip tl-type-label');
+    expect(chip.className).toBe('tl-chip tl-type-label');
     expect(chip.hasAttribute('aria-pressed')).toBe(false);
-    expect(toggle.className).toBe('tlChip__action');
+    expect(toggle.className).toBe('tl-chip__toggle');
+    expect(remove.classList).toContain('tl-chip__remove');
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
     expect(toggle.getAttribute(TOOLTIP_ATTR)).toBe('text:Filter aufheben');
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect(onClick).not.toHaveBeenCalled();
     await userEvent.click(toggle);
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws the handle of a chip inside the pill ahead of the label, the chip as the dragged element', async () => {
+    const { ChipPart, ButtonPart } = await defaults();
+    const onDragStart = vi.fn();
+
+    render(<ChipPart id="c1" label="Alpha" onRemove={vi.fn()} removeLabel="Alpha entfernen"
+      handle={<ButtonPart label="Alpha verschieben" image="css:fa-solid fa-grip-vertical" display="icon-only"
+        appearance="ghost" small />}
+      dragSource={{ draggable: true, onDragStart }} />);
+
+    const chip = document.getElementById('c1')!;
+    expect(chip.className).toBe('tl-pill tl-type-label tl-select__chip');
+    expect(chip.getAttribute('draggable')).toBe('true');
+    expect(screen.getAllByRole('button').map(button => button.getAttribute('aria-label')))
+      .toEqual(['Alpha verschieben', 'Alpha entfernen']);
+    expect(chip.firstElementChild).toBe(screen.getByRole('button', { name: 'Alpha verschieben' }));
   });
 
   it('puts the tab index on the toggle and on the remove button of a chip', async () => {
@@ -707,11 +741,36 @@ describe('the TopLogic drawing of the parts', () => {
     expect(bar.id).toBe('p1');
     expect(bar.className).toBe('tl-progress x');
     expect(bar.getAttribute('aria-valuenow')).toBe('75');
-    expect(bar.getAttribute('aria-valuetext')).toBe('3 / 4');
+    expect(bar.hasAttribute('aria-valuetext')).toBe(false);
     expect(bar.getAttribute('aria-label')).toBe('Fortschritt');
+    const label = bar.querySelector('.tl-progress__label')!;
+    expect(bar.getAttribute('aria-labelledby')).toBe(label.id);
+    expect(label.hasAttribute('aria-hidden')).toBe(false);
     expect(bar.hasAttribute('aria-busy')).toBe(false);
     expect((bar.querySelector('.tl-progress__fill') as HTMLElement).style.width).toBe('75%');
     expect(bar.querySelector('.tl-progress__label')!.textContent).toBe('3 / 4');
+  });
+
+  it('names a progress bar by another element, its label then only showing the value', async () => {
+    const { ProgressBarPart } = await defaults();
+
+    render(<><span id="state">Läuft</span><ProgressBarPart value={0.5} label="50 %" labelledBy="state" /></>);
+
+    const bar = screen.getByRole('progressbar', { name: 'Läuft' });
+    expect(bar.getAttribute('aria-labelledby')).toBe('state');
+    const label = bar.querySelector('.tl-progress__label')!;
+    expect(label.hasAttribute('id')).toBe(false);
+    expect(label.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('gives a progress bar hidden from assistive technology no name', async () => {
+    const { ProgressBarPart } = await defaults();
+
+    const { container } = render(<ProgressBarPart label="Lädt…" aria-hidden />);
+
+    const bar = container.querySelector('.tl-progress')!;
+    expect(bar.getAttribute('aria-hidden')).toBe('true');
+    expect(bar.hasAttribute('aria-labelledby')).toBe(false);
   });
 
   it('draws a progress bar without a value as indeterminate, busy, without fill width and label', async () => {

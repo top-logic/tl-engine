@@ -36,6 +36,7 @@ const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
 const LABEL_COLUMNS = 'js.table.columns';
 const LABEL_FILTER = 'js.table.filter';
+const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
 const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
@@ -132,16 +133,17 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMN_SELECT, expect.anything());
   });
 
-  it('opens the filter of a column from its funnel, filled while the filter is in force', async () => {
+  it('opens the filter of a column from its funnel, named so while the filter is in force', async () => {
     const sent = mountTable(true);
     await settle();
 
-    const funnel = screen.getByRole('button', { name: LABEL_FILTER });
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER_ACTIVE });
     expectMuiIconButton(funnel);
-    // A dialog opener, no toggle: the filled funnel tells the filter in force, not a pressed state.
+    // A dialog opener, no toggle: the name and the state of the column tell the filter in force,
+    // not a pressed state.
     expect(funnel.hasAttribute('aria-pressed')).toBe(false);
-    expect(funnel.classList).toContain('tlTableView__filterButton--active');
-    expect(funnel.querySelector('i.bi-funnel-fill')).not.toBeNull();
+    expect(funnel.closest('[role="columnheader"]')!.getAttribute('data-tl-state')).toContain('filtered');
+    expect(funnel.querySelector('i.fa-filter')).not.toBeNull();
     await userEvent.click(funnel);
     await settle();
 
@@ -153,8 +155,8 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     await settle();
 
     const funnel = screen.getByRole('button', { name: LABEL_FILTER });
-    expect(funnel.classList).not.toContain('tlTableView__filterButton--active');
-    expect(funnel.querySelector('i.bi-funnel')).not.toBeNull();
+    expect(funnel.closest('[role="columnheader"]')!.getAttribute('data-tl-state') ?? '').not.toContain('filtered');
+    expect(funnel.querySelector('i.fa-filter')).not.toBeNull();
   });
 });
 
@@ -201,13 +203,12 @@ describe('the group-by toggles of the column selection as MUI toggle buttons', (
     const groupBy = screen.getByRole('button', { name: LABEL_GROUP_BY });
     for (const toggle of [ungroup, groupBy]) {
       expect(toggle.classList).toContain('MuiToggleButton-root');
-      expect(toggle.parentElement!.classList).toContain('tlColumnSelect__groupBy');
+      expect(toggle.parentElement!.classList).toContain('tl-reorder-list__item');
       expect(toggle.textContent).toBe('');
+      expect(toggle.querySelector('i.fa-layer-group')).not.toBeNull();
     }
     expect(ungroup.getAttribute('aria-pressed')).toBe('true');
-    expect(ungroup.querySelector('i.bi-collection-fill')).not.toBeNull();
     expect(groupBy.getAttribute('aria-pressed')).toBe('false');
-    expect(groupBy.querySelector('i.bi-collection')).not.toBeNull();
 
     await userEvent.click(groupBy);
     await settle();

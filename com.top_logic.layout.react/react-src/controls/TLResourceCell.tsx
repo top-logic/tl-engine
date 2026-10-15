@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, rootClassName, usePart, TOOLTIP_ATTR } from 'tl-react-bridge';
-import type { TLCellProps, ChipTone } from 'tl-react-bridge';
+import type { TLCellProps, ColorRole } from 'tl-react-bridge';
 
 /** Command sent when the user follows the link of the displayed value. */
 const CMD_GOTO = 'goto';
@@ -21,15 +21,14 @@ const SERVER_TOOLTIP = 'key:tooltip';
  * - hasLink: boolean    - whether clicking navigates to the object
  * - colorRole?: string  - color role the object carries in the model
  *
- * The object is drawn as the part `FieldValue`, a link running {@link CMD_GOTO} where it has one;
- * an object the model gives a color role is drawn as the part `Chip` of that role, a chip running
- * {@link CMD_GOTO} where it has a link.
+ * The object is drawn as the part `FieldValue`, the one read-only value, a link running
+ * {@link CMD_GOTO} where it has one; an object the model gives a color role is a pill of that role
+ * within it.
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const FieldValue = usePart('FieldValue');
-  const Chip = usePart('Chip');
 
   const iconCss = state.iconCss as string | undefined;
   const iconSrc = state.iconSrc as string | undefined;
@@ -47,14 +46,9 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const tooltip = { [TOOLTIP_ATTR]: hasTooltip ? SERVER_TOOLTIP : undefined };
   const onClick = hasLink ? handleClick : undefined;
 
-  if (colorRole) {
-    return (
-      <Chip id={controlId} tone={colorRole as ChipTone} icon={icon} label={label} onClick={onClick}
-        className={className} {...tooltip} />
-    );
-  }
   return (
-    <FieldValue id={controlId} text={label} icon={icon} onClick={onClick} className={className} {...tooltip} />
+    <FieldValue id={controlId} text={label} icon={icon} colorRole={colorRole as ColorRole | undefined} onClick={onClick}
+      className={className} {...tooltip} />
   );
 };
 

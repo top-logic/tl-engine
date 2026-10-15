@@ -19,17 +19,27 @@ const ROW_SX: SxProps<Theme> = { alignItems: 'center', minWidth: 0 };
  * label beside it.
  *
  * <p>Mapping from the props: value → `variant="determinate"` with `value` = value × 100; absent →
- * `variant="indeterminate"`, marked `aria-busy`; label → a `Typography` beside the bar, and the
- * `aria-valuetext` of the bar; id, className and the passed-through attributes → the element around
+ * `variant="indeterminate"`, marked `aria-busy`; label → a `Typography` beside the bar naming it
+ * (`aria-labelledby`); labelledBy → the `aria-labelledby` of the bar instead, the label then hidden
+ * from assistive technology; id, className and the passed-through attributes → the element around
  * bar and label.</p>
  */
-const MuiProgressBarAdapter: React.FC<ProgressBarPartProps> = ({ id, value, label, className, ...attributes }) => (
-  <Stack id={id} direction="row" spacing={1} className={className} sx={ROW_SX} {...attributes}>
-    {value === undefined
-      ? <LinearProgress variant="indeterminate" aria-valuetext={label} aria-busy sx={BAR_SX} />
-      : <LinearProgress variant="determinate" value={value * 100} aria-valuetext={label} sx={BAR_SX} />}
-    {label && <Typography variant="body2" sx={LABEL_SX}>{label}</Typography>}
-  </Stack>
-);
+const MuiProgressBarAdapter: React.FC<ProgressBarPartProps> = ({ id, value, label, labelledBy, className, ...attributes }) => {
+  const labelId = React.useId();
+  const hidden = !!attributes['aria-hidden'];
+  const named = !!label && labelledBy === undefined && !hidden;
+  const name = hidden ? undefined : labelledBy ?? (named ? labelId : undefined);
+  return (
+    <Stack id={id} direction="row" spacing={1} className={className} sx={ROW_SX} {...attributes}>
+      {value === undefined
+        ? <LinearProgress variant="indeterminate" aria-labelledby={name} aria-busy sx={BAR_SX} />
+        : <LinearProgress variant="determinate" value={value * 100} aria-labelledby={name} sx={BAR_SX} />}
+      {label && (
+        <Typography id={named ? labelId : undefined} variant="body2" sx={LABEL_SX}
+          aria-hidden={labelledBy !== undefined ? true : undefined}>{label}</Typography>
+      )}
+    </Stack>
+  );
+};
 
 export default MuiProgressBarAdapter;

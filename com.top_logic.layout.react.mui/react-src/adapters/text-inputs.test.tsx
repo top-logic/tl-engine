@@ -556,10 +556,12 @@ describe('the search and the filter name of a table as MUI text fields', () => {
     const search = screen.getByRole('searchbox', { name: LABEL_SEARCH }) as HTMLInputElement;
     expectMuiBox(search);
     expect(search.value).toBe('al');
-    expect(search.closest('.tlTableView__search')).not.toBeNull();
+    // The element placing the search in the filter bar carries the tooltip of the whole field.
+    const place = search.closest('.tl-table__search')!;
+    expect(place).not.toBeNull();
+    expect(place.getAttribute(TOOLTIP_ATTR)).toBe('text:' + LABEL_SEARCH);
     expect(search.closest('.MuiInputBase-root')!.querySelector('.MuiInputAdornment-positionStart i'))
       .not.toBeNull();
-    expect(search.getAttribute(TOOLTIP_ATTR)).toBe('text:' + LABEL_SEARCH);
 
     fireEvent.change(search, { target: { value: 'alpha' } });
     expect(search.value).toBe('alpha');
@@ -593,7 +595,7 @@ describe('the search and the filter name of a table as MUI text fields', () => {
     const name = screen.getByRole('textbox', { name: LABEL_FILTER_NAME }) as HTMLInputElement;
     expectMuiBox(name);
     expect(document.activeElement).toBe(name);
-    expect(name.closest('.tlTableView__saveInput')).not.toBeNull();
+    expect(name.closest('.tl-table__save')).not.toBeNull();
 
     // An empty name saves nothing.
     fireEvent.keyDown(name, { key: 'Enter' });
@@ -636,7 +638,7 @@ describe('the search of the column selection as MUI text field', () => {
 
     const search = screen.getByRole('searchbox', { name: LABEL_COLUMN_SEARCH }) as HTMLInputElement;
     expectMuiBox(search);
-    expect(search.closest('.tlColumnSelect__search')).not.toBeNull();
+    expect(search.closest('.tl-reorder-list__search')).not.toBeNull();
     expect(screen.getAllByRole('checkbox')).toHaveLength(12);
 
     await userEvent.type(search, 'Spalte 1');

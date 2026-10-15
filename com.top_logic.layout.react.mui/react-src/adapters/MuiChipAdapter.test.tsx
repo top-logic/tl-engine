@@ -24,7 +24,7 @@ afterEach(() => {
 describe('the part Chip as MUI Chip', () => {
   it('draws a value as a small filled chip of its color role, with icon, detail, class and attributes', () => {
     const chip = draw({
-      tone: 'success', icon: 'css:fa-solid fa-star', detail: '2 KB', tooltip: 'Tipp', className: 'x',
+      colorRole: 'success', icon: 'css:fa-solid fa-star', detail: '2 KB', tooltip: 'Tipp', className: 'x',
       'data-role': 'value',
     });
 
@@ -41,11 +41,11 @@ describe('the part Chip as MUI Chip', () => {
   });
 
   it('maps the color roles to the MUI colors, the ones without a counterpart to the default', () => {
-    expect(draw({ tone: 'brand' }).classList).toContain('MuiChip-colorPrimary');
+    expect(draw({ colorRole: 'brand' }).classList).toContain('MuiChip-colorPrimary');
     cleanup();
-    expect(draw({ tone: 'category-3' }).classList).toContain('MuiChip-colorDefault');
+    expect(draw({ colorRole: 'category-3' }).classList).toContain('MuiChip-colorDefault');
     cleanup();
-    expect(draw({ tone: 'neutral' }).classList).toContain('MuiChip-colorDefault');
+    expect(draw({ colorRole: 'neutral' }).classList).toContain('MuiChip-colorDefault');
   });
 
   it('draws a toggle filled and primary while pressed, outlined while not', async () => {
@@ -60,14 +60,14 @@ describe('the part Chip as MUI Chip', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
     cleanup();
 
-    const released = draw({ pressed: false, tone: 'info', onClick });
+    const released = draw({ pressed: false, colorRole: 'info', onClick });
     expect(released.getAttribute('aria-pressed')).toBe('false');
     expect(released.classList).toContain('MuiChip-outlined');
     expect(released.classList).toContain('MuiChip-colorInfo');
   });
 
   it('draws a toggle in the color of the state of its value', () => {
-    expect(draw({ pressed: false, tone: 'success', validation: 'error', onClick: vi.fn() }).classList)
+    expect(draw({ pressed: false, colorRole: 'success', validation: 'error', onClick: vi.fn() }).classList)
       .toContain('MuiChip-colorError');
     cleanup();
     expect(draw({ pressed: true, validation: 'warning', onClick: vi.fn() }).classList)

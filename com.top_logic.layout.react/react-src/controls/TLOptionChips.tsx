@@ -1,7 +1,7 @@
 import {
   React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart, OptionValues,
 } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson, ChipTone } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, ColorRole } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs, showsValueOnly, validationOf } from './form/fieldState';
@@ -100,7 +100,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
           key={option.value}
           label={option.label}
           icon={option.image}
-          tone={(option.colorRole || undefined) as ChipTone | undefined}
+          colorRole={(option.colorRole || undefined) as ColorRole | undefined}
           pressed={selectedIds.has(option.value)}
           validation={validation}
           disabled={disabled}

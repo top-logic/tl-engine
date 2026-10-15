@@ -111,6 +111,30 @@ function endDrag(): void {
 }
 
 /**
+ * Calls `callback` once the browser has taken the drag image, if the drag still runs then: the one
+ * moment at which a drag source is marked as dragged (`data-tl-state~="dragging"`, faded by drag.css).
+ * Called from a `dragstart` handler. A change made within `dragstart` itself would show in the drag
+ * image, which the browser takes from the source after the handler returns; React renders a state set
+ * there before that.
+ *
+ * Whether the drag still runs is watched here rather than read from {@link runningDrag}: a drag
+ * started without {@link writeDragPayload} (tree, list reordering) is not registered there.
+ */
+export function afterDragImage(callback: () => void): void {
+  let ended = false;
+  const end = () => { ended = true; };
+  window.addEventListener('dragend', end, true);
+  window.addEventListener('drop', end, true);
+  window.setTimeout(() => {
+    window.removeEventListener('dragend', end, true);
+    window.removeEventListener('drop', end, true);
+    if (!ended) {
+      callback();
+    }
+  }, 0);
+}
+
+/**
  * Ends the running drag once it ends, wherever it ends.
  *
  * `dragend` is dispatched at the element the drag started on, which may have been removed from the
@@ -228,6 +252,34 @@ export function dragKindAccepted(
     return true;
   }
   return acceptedKinds.some((accepted) => types.includes(DRAG_KIND_TYPE_PREFIX + accepted.toLowerCase()));
+}
+
+/**
+ * The drop modes that apply to the drag a transfer carries: the modes the target announces for the
+ * dragged kind, or all its modes where the kind is not listed - a target accepting any kind lists
+ * none. The split of an item follows these modes, so a target inserting one kind among its items and
+ * dropping another kind onto an item splits an item in halves for the first and takes it as a whole
+ * for the second.
+ *
+ * @param dataTransfer The transfer of the running drag.
+ * @param modes The wire names of the drop modes the target announces.
+ * @param modesByKind The wire names of the drop modes the target announces per accepted kind.
+ */
+export function dragModes(
+  dataTransfer: DataTransfer,
+  modes: readonly string[],
+  modesByKind: Readonly<Record<string, readonly string[]>>,
+): readonly string[] {
+  const types = Array.from(dataTransfer.types);
+  const result = new Set<string>();
+  let listed = false;
+  for (const [kind, kindModes] of Object.entries(modesByKind)) {
+    if (types.includes(DRAG_KIND_TYPE_PREFIX + kind.toLowerCase())) {
+      listed = true;
+      kindModes.forEach((mode) => result.add(mode));
+    }
+  }
+  return listed ? [...result] : modes;
 }
 
 /**

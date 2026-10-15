@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, usePart, ICON_HANDLE, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { SEARCH_ICON } from './form/fieldIcons';
+import { SearchField } from './SearchField';
 
 const I18N_KEYS = {
   'js.table.columnSearch': 'Find column',
@@ -16,12 +16,6 @@ const CMD_COLUMN_REORDER = 'columnReorder';
 
 /** Groups the rows by one of the columns, or removes the grouping by it. */
 const CMD_GROUP_BY = 'groupBy';
-
-/** The icon of the toggle grouping the rows by a column the rows are not grouped by. */
-const GROUP_BY_ICON = 'css:bi bi-collection';
-
-/** The icon of the toggle grouping the rows by the column the rows are grouped by. */
-const GROUPED_ICON = 'css:bi bi-collection-fill';
 
 /** Argument of every command: which column it applies to. */
 const ARG_COLUMN = 'column';
@@ -41,8 +35,8 @@ interface ColumnEntry {
 }
 
 /**
- * The column selection of a table: the columns as a list of checkboxes, reordered by dragging a
- * row onto another one.
+ * The column selection of a table: the columns as a `tl-reorder-list`: dragged by the row, moved
+ * with Alt + arrow on the handle, shown or hidden by a checkbox (design system: tl-reorder-list).
  *
  * Both the order and the checked state live on the server (see ReactColumnSelectControl), so a
  * gesture sends a command and the re-pushed list is what renders. Each row also offers to group
@@ -54,7 +48,6 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const Checkbox = usePart('Checkbox');
-  const TextInput = usePart('TextInput');
   const Button = usePart('Button');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
@@ -66,11 +59,8 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // row can be dropped next to a row the search has hidden. Each rendered row therefore carries its
   // position within the full list, which is the position the reorder gesture works with.
   const [search, setSearch] = React.useState('');
-  const needle = search.trim().toLowerCase();
-  const positioned = entries.map((entry, index) => ({ entry, index }));
-  const shown = needle
-    ? positioned.filter(({ entry }) => entry.label.toLowerCase().includes(needle))
-    : positioned;
+  const matches = new Set(filterOptions(entries, search));
+  const shown = entries.map((entry, index) => ({ entry, index })).filter(({ entry }) => matches.has(entry));
 
   const handleToggle = React.useCallback((name: string, visible: boolean) => {
     sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
@@ -91,71 +81,73 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [entries, sendCommand]);
 
-  const reorder = useListReorder({ axis: 'vertical', onMove: handleMove });
+  // The whole row is dragged by the pointer; its handle is the button the keyboard moves it with
+  // (Alt + arrow, announced in the live region; the focus stays on the moved entry's handle).
+  const reorder = useListReorder({
+    axis: 'vertical',
+    onMove: handleMove,
+    count: entries.length,
+    labelOf: (i) => entries[i]?.label ?? '',
+    keyOf: (i) => entries[i]?.name ?? String(i),
+  });
 
   const searchable = entries.length > 10;
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlColumnSelect')} {...reorder.containerProps}>
+    <div id={controlId} className={rootClassName(state)} {...reorder.containerProps}>
       {searchable && (
-        <div className="tlColumnSelect__search">
-          <TextInput
-            type="search"
-            icon={SEARCH_ICON}
-            placeholder={i18n['js.table.columnSearch']}
-            aria-label={i18n['js.table.columnSearch']}
-            value={search}
-            onChange={setSearch}
-          />
-        </div>
+        <SearchField
+          className="tl-reorder-list__search"
+          label={i18n['js.table.columnSearch']}
+          placeholder={i18n['js.table.columnSearch']}
+          value={search}
+          onChange={setSearch}
+        />
       )}
-      {/* Alongside the search the list scrolls within a fixed height: a list that grows and shrinks
-          with the number of matches would resize the dialog under the pointer on every keystroke. */}
-      <div className={'tlColumnSelect__list' + (searchable ? ' tlColumnSelect__list--fixed' : '')}>
-      {shown.map(({ entry, index }) => {
-        // Keep the table from losing its last column: there would be nothing left to click.
-        const lastVisible = entry.visible && visibleCount <= 1;
-        const dragState = reorder.itemState(index);
-        const groupByLabel = entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy'];
-        let cls = 'tlColumnSelect__row';
-        if (dragState.dropBefore) {
-          cls += ' tlColumnSelect__row--dragOver-before';
-        }
-        if (dragState.dropAfter) {
-          cls += ' tlColumnSelect__row--dragOver-after';
-        }
-        return (
-          <div
-            key={entry.name}
-            className={cls}
-            {...reorder.itemProps(index)}
-          >
-            <i className="tlColumnSelect__handle bi bi-grip-vertical" aria-hidden="true" />
-            {groupable && (
-              <span className="tlColumnSelect__groupBy">
+      <ul className="tl-reorder-list tl-type-body">
+        {shown.map(({ entry, index }) => {
+          // Keep the table from losing its last column: there would be nothing left to click.
+          const lastVisible = entry.visible && visibleCount <= 1;
+          const groupByLabel = entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy'];
+          const handle = reorder.handleProps(index);
+          return (
+            <li
+              key={entry.name}
+              className="tl-reorder-list__item"
+              data-tl-state={reorderState(reorder.itemState(index))}
+              {...reorder.itemProps(index)}
+            >
+              <Button
+                label={handle['aria-label']}
+                image={ICON_HANDLE}
+                display="icon-only"
+                appearance="ghost"
+                small
+                className="tl-reorder-list__handle"
+                {...handle}
+              />
+              {groupable && (
                 <Button
                   label={groupByLabel}
-                  image={entry.grouped ? GROUPED_ICON : GROUP_BY_ICON}
+                  image={ICON_GROUP}
                   display="icon-only"
                   appearance="ghost"
                   small
                   checked={entry.grouped}
                   onClick={() => handleGroupBy(entry.name)}
                 />
-              </span>
-            )}
-            <div className="tlColumnSelect__label">
+              )}
               <Checkbox
-                label={entry.label}
+                label={<span className="tl-reorder-list__label">{entry.label}</span>}
                 checked={entry.visible}
                 disabled={lastVisible}
                 onChange={(checked) => handleToggle(entry.name, checked)}
               />
-            </div>
-          </div>
-        );
-      })}
-      </div>
+            </li>
+          );
+        })}
+      </ul>
+      {reorder.announcer}
     </div>
   );
 };

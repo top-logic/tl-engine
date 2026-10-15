@@ -96,8 +96,8 @@ The roles are the closed list of `ValueColor`: `neutral`, `brand`, the four mean
 `warning`, `success`, `info`, and eight categories `category-1` … `category-8` that carry no meaning
 and only tell values apart. A literal color value or a token name is not a valid specification.
 
-The pill a value of that classifier is drawn as carries the role as a class, `tl-pill tl-pill--warning`,
-and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
+The pill a value of that classifier is drawn as carries the role as the attribute `data-tl-role`,
+`<span class="tl-pill" data-tl-role="warning">`, and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
 two tokens of the role, its tinted surface and its line (`--tl-status-warning-subtle`,
 `--tl-status-warning-border`), so the pill follows a theme switch without the server sending a color.
 Which tokens a role reads, and why the text on it is `text-primary`, is decided in `docs/skalen.md` of
@@ -180,20 +180,14 @@ var(--background-image)`. The image token is `none` by default, so the page is a
 theme that wants a gradient or a texture behind the whole application sets it (`linear-gradient(…)`,
 `url(…)`) and leaves the colour as what shows through.
 
-## The current surface
+## Sticky table cells
 
-Some elements must be opaque without standing out from what they are placed on - the frozen and the
-pinned cells of a table, which hide the cells scrolling underneath. They paint
-`var(--tl-current-surface)`: the page's `--background` on `:root`, overridden by every control that
-paints a surface of its own (card, window, drawer, sidebar, maximized panel, accordion,
-`tlReactControls.css`). A new control painting a surface on which other content is placed sets the
-property to its own background colour next to that background, or a table inside it shows its
-sticky columns in the wrong colour.
-
-The table cells add the colour of their row's state on top: a row sets `--tl-row-background`, and a
-sticky cell paints `linear-gradient(var(--tl-row-background), var(--tl-row-background)),
-var(--tl-current-surface)`, which is what the rest of the row shows in every state. A page
-`--background-image` is not reproduced by sticky cells, which paint the colour only.
+The frozen and the pinned cells of a table hide the cells scrolling underneath, so they must be
+opaque without standing out. The table of the design system (`tl-table`, `table.css` of the package)
+paints every row opaque - its surface, the colour of hover or selection, or the tint of a
+[highlight class](doc:view-layer/tables) - and the sticky cells inherit the background of their row.
+They therefore show what the rest of their row shows, in every state and on every surface, without a
+property of the surface they are placed on.
 
 ## Writing a flat theme
 

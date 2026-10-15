@@ -35,7 +35,7 @@ const ARG_VALUE = 'value';
 const FIELD_ID = 'f1';
 
 /** The names of the selection boxes of a table: the keys, as the test stub translates each key to itself. */
-const LABEL_SELECT_ALL = 'js.table.selectAllRows';
+const LABEL_SELECT_ALL = 'js.table.selectAll';
 const LABEL_SELECT_ROW = 'js.table.selectRow';
 
 /** The commands the table and the column selection send for their boxes. */
@@ -278,7 +278,7 @@ describe('the boxes of the column selection as MUI checkboxes', () => {
     expectMuiBox(a);
     expect(a.checked).toBe(true);
     expect(a.closest('label')!.classList).toContain('MuiFormControlLabel-root');
-    expect(a.closest('label')!.parentElement!.classList).toContain('tlColumnSelect__label');
+    expect(a.closest('label')!.parentElement!.classList).toContain('tl-reorder-list__item');
     await userEvent.click(screen.getByText('Spalte b'));
     await settle();
 

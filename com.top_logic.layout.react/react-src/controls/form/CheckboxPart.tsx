@@ -80,7 +80,6 @@ const CheckboxPart: React.FC<CheckboxPartProps> = ({
       disabled={disabled}
       tabIndex={tabIndex}
       aria-readonly={readOnly || undefined}
-      aria-checked={mixed ? 'mixed' : undefined}
       {...fieldStateAttrs({
         hasError: validation === 'error',
         hasWarnings: validation === 'warning',

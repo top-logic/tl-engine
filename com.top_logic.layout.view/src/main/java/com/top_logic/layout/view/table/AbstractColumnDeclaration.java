@@ -49,7 +49,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *        The declaration this configuration describes.
 	 */
 	public interface Config<I extends AbstractColumnDeclaration>
-			extends ColumnDeclaration.Config<I>, AnnotatedConfig<TLAttributeAnnotation> {
+			extends ColumnDeclaration.Config<I>, ColumnExportConfig, AnnotatedConfig<TLAttributeAnnotation> {
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -186,6 +186,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final boolean _hiddenByDefault;
 
+	private final ColumnExport _export;
+
 	/** The display annotations the declaration states, {@code null} where it states none. */
 	private final AnnotationLookup _annotations;
 
@@ -206,6 +208,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = aggregate(config.getAggregate());
 		_comparator = comparator(config.getComparator());
 		_hiddenByDefault = !config.getVisible();
+		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
 	}
 
@@ -228,6 +231,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = null;
 		_comparator = null;
 		_hiddenByDefault = hiddenByDefault;
+		_export = ColumnExport.DEFAULT;
 		_annotations = null;
 	}
 
@@ -274,7 +278,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, _aggregate, _comparator, _hiddenByDefault);
+			_width, _readonly ? null : editing, _aggregate, _comparator, _hiddenByDefault, _export);
 	}
 
 	/**

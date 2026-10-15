@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart, OptionValues } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionContent } from './selectOptions';
+import { ARG_OPTION, CMD_GOTO, OptionLabel } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs, showsValueOnly, validationOf } from './form/fieldState';
 
@@ -106,7 +106,7 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
         {options.map((option) => (
           <Checkbox
             key={option.value}
-            label={<OptionContent option={option} />}
+            label={<OptionLabel option={option} />}
             checked={selectedIds.has(option.value)}
             disabled={disabled}
             validation={validation}
@@ -148,7 +148,7 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
             disabled={disabled}
             onChange={() => choose(option)}
           />
-          <OptionContent option={option} />
+          <OptionLabel option={option} />
         </label>
       ))}
     </div>

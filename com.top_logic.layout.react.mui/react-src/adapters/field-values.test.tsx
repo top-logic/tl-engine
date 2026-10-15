@@ -179,14 +179,15 @@ describe('the object of a resource cell as MUI Typography', () => {
     expect(sent).toHaveBeenCalledWith(CMD_GOTO, {});
   });
 
-  it('shows an object with a color role as MUI chip', async () => {
+  it('shows an object with a color role as MUI chip inside its link', async () => {
     const sent = mountAdapter(TLResourceCell, { label: 'Dringend', colorRole: 'error', hasLink: true });
 
-    const chip = shown();
-    expect(chip.classList).toContain('MuiChip-root');
+    const link = shown();
+    expect(link.classList).toContain('MuiLink-root');
+    const chip = link.querySelector('.MuiChip-root')!;
     expect(chip.classList).toContain('MuiChip-colorError');
     expect(chip.textContent).toBe('Dringend');
-    await userEvent.click(chip);
+    await userEvent.click(link);
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_GOTO, {});

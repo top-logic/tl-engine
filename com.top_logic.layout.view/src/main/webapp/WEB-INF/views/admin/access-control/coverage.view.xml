@@ -314,7 +314,7 @@
 									input="pending"
 								>
 									<inset>
-										<text css-class="tlText--strong">
+										<text css-class="tl-type-body-strong">
 											<label>
 												<en>There are saved changes that are not applied yet. The table keeps showing the access definition in effect until "Apply configuration" makes them effective.</en>
 												<de>Es gibt gespeicherte, noch nicht angewendete Änderungen. Die Tabelle zeigt weiterhin die geltende Zugriffsdefinition, bis „Konfiguration anwenden“ sie wirksam macht.</de>

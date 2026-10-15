@@ -161,6 +161,13 @@ public class TestTextElement extends TestCase {
 			TextAppearance.TEXT.getExternalName(), truncated.get(APPEARANCE));
 	}
 
+	/**
+	 * The placeholder tone reaches the client by its external name.
+	 */
+	public void testPlaceholderTone() {
+		assertEquals(TextTone.PLACEHOLDER.getExternalName(), child(3).get(TONE));
+	}
+
 	/** The client state of the child at the given position of the container. */
 	private Map<?, ?> child(int index) {
 		List<?> children = (List<?>) _stack.get(CHILDREN);

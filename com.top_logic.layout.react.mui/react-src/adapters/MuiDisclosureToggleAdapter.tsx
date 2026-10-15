@@ -1,4 +1,4 @@
-import { React, tooltipProps, usePart } from 'tl-react-bridge';
+import { React, tooltipProps } from 'tl-react-bridge';
 import type { DisclosureTogglePartProps, DisclosureDirection } from 'tl-react-bridge';
 import IconButton from '@mui/material/IconButton';
 import SvgIcon from '@mui/material/SvgIcon';
@@ -27,14 +27,11 @@ function chevronSx(transform: string | undefined): SxProps<Theme> {
  * the content is hidden and turns toward the content while it is shown - down for content opening
  * below, back to the start for content opening toward the end of the line.
  *
- * <p>The button is named by the label, which is also its tooltip, and carries `aria-expanded`.
- * While the content is being loaded, it is marked `aria-busy` and shows a small part `Spinner` in
- * place of the chevron.</p>
+ * <p>The button is named by the label, which is also its tooltip, and carries `aria-expanded`.</p>
  */
 const MuiDisclosureToggleAdapter: React.FC<DisclosureTogglePartProps> = ({
-  id, ref, expanded, label, opens, loading, disabled, tabIndex, className, onClick, ...attributes
+  id, ref, expanded, label, opens, disabled, tabIndex, className, onClick, onMouseDown, ...attributes
 }) => {
-  const Spinner = usePart('Spinner');
   return (
     <IconButton
       id={id}
@@ -42,21 +39,17 @@ const MuiDisclosureToggleAdapter: React.FC<DisclosureTogglePartProps> = ({
       size="small"
       className={className}
       onClick={onClick}
+      onMouseDown={onMouseDown}
       disabled={disabled}
       tabIndex={tabIndex}
       aria-expanded={expanded}
-      aria-busy={loading ? true : undefined}
       aria-label={label}
       {...tooltipProps(label)}
       {...attributes}
     >
-      {loading
-        ? <Spinner size="small" />
-        : (
-          <SvgIcon fontSize="small" sx={chevronSx(expanded ? EXPANDED_ROTATION[opens ?? 'below'] : undefined)}>
-            <path d={CHEVRON_PATH} />
-          </SvgIcon>
-        )}
+      <SvgIcon fontSize="small" sx={chevronSx(expanded ? EXPANDED_ROTATION[opens ?? 'below'] : undefined)}>
+        <path d={CHEVRON_PATH} />
+      </SvgIcon>
     </IconButton>
   );
 };

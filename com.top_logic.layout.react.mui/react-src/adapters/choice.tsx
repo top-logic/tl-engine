@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, usePart, CMD_VALUE_CHANGED, ThemeIcon } from 'tl-react-bridge';
-import type { ChipTone, DropdownSelectStateJson, OptionDescriptor } from 'tl-react-bridge';
+import type { ColorRole, DropdownSelectStateJson, OptionDescriptor } from 'tl-react-bridge';
 import Stack from '@mui/material/Stack';
 
 export type { OptionDescriptor } from 'tl-react-bridge';
@@ -25,7 +25,7 @@ const ICON_CLASS = 'tl-icon-sm';
 export function OptionContent({ option }: { option: OptionDescriptor }) {
   const Chip = usePart('Chip');
   if (option.colorRole) {
-    return <Chip tone={option.colorRole as ChipTone} icon={option.image} label={option.label} />;
+    return <Chip colorRole={option.colorRole as ColorRole} icon={option.image} label={option.label} />;
   }
   return (
     <Stack component="span" direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>

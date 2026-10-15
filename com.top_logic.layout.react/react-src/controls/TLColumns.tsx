@@ -1,8 +1,12 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
+/** The gaps the design system has a modifier for (columns.css); anything else is the default. */
+const GAPS = new Set(['compact', 'default', 'loose']);
+
 /**
- * A page layout of columns whose widths follow a weight, and that stack below a breakpoint.
+ * A page layout of columns whose widths follow a weight, and that stack below a breakpoint (design
+ * system: tl-columns).
  *
  * State:
  * - weights: number[]  (the width share of each column, in the order of the children; default: 1)
@@ -10,26 +14,23 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - gap: "compact" | "default" | "loose"  (default: "default")
  * - children: ChildDescriptor[]  (one child per column)
  *
- * The container is a wrapping flex row, and the flex basis of a column is the width the breakpoint
- * leaves over the current container width, scaled up steeply. While the container is at least as
- * wide as the breakpoint that term is negative, hence clamped to zero, and the columns share the
- * row by their grow factor. Once the container is narrower the term turns positive and, scaled,
- * exceeds the row, so every column wraps onto a line of its own and shrinks to the full width.
+ * The flex basis of a column is the width the breakpoint leaves over the current container width,
+ * scaled up steeply: data from the state, set inline (columns.css explains the formula).
  */
 const TLColumns: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const weights = (state.weights as number[]) ?? [];
   const breakpoint = (state.breakpoint as string) ?? '48rem';
-  const gap = (state.gap as string) ?? 'default';
+  const gap = GAPS.has(state.gap as string) ? (state.gap as string) : 'default';
   const children = (state.children as unknown[]) ?? [];
 
   return (
-    <div id={controlId} className={`tlColumns tlColumns--gap-${gap}`}>
+    <div id={controlId} className={rootClassName(state, 'tl-columns', `tl-columns--gap-${gap}`)}>
       {children.map((child, i) => (
         <div
           key={i}
-          className="tlColumns__column"
+          className="tl-columns__column"
           style={{ flex: `${weights[i] ?? 1} 1 calc((${breakpoint} - 100%) * 999)` }}
         >
           <TLChild control={child} />

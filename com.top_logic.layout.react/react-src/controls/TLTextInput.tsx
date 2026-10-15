@@ -7,10 +7,10 @@ import {
   useFieldLabelProps,
   fieldInputId,
   usePart,
+  ICON_CLEAR,
 } from 'tl-react-bridge';
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import { showsValueOnly, validationOf } from './form/fieldState';
-import { CLEAR_ICON } from './form/fieldIcons';
 
 const { useCallback, useRef } = React;
 
@@ -149,7 +149,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
     ? (
       <Button
         label={t['js.textInput.clear']}
-        image={CLEAR_ICON}
+        image={ICON_CLEAR}
         display="icon-only"
         appearance="ghost"
         small

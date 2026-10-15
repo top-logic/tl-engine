@@ -1,6 +1,6 @@
 import React from 'react';
 import type { DropdownSelectStateJson } from '../state/control-state';
-import type { ChipTone } from './parts';
+import type { ColorRole } from './parts';
 import { usePart } from './parts';
 
 /**
@@ -26,11 +26,11 @@ const SEPARATOR_CLASS = 'tl-select__separator';
  * The chosen values of a choice field that is not editable, in the list of the design system
  * (`tl-select__values`).
  *
- * <p>A value with a color role is the part `Chip` of that role, any other the part `FieldValue`;
- * both show the image of the option ahead of its label. A value the application displays somewhere
- * (`link`) is pressed to lead there: the chip then runs an action, the field value is a link.
- * Two values shown as plain text are separated by a comma, so that they do not run into each other;
- * a chip is set apart by its own outline. An empty choice shows an empty list - the label of the
+ * <p>Each value is the part `FieldValue`, the one read-only value: the image of the option ahead
+ * of its label, a value with a color role as a pill of that role. A value the application displays
+ * somewhere (`link`) is a link leading there. Two values shown as plain text are separated by a
+ * comma, which follows the value before it, so that they do not run into each other; a pill is set
+ * apart by its own outline. An empty choice shows an empty list - the label of the
  * empty option is an affordance of editing and would mislead here.</p>
  *
  * <p>Every control showing the chosen values of a choice field draws them through this list, also
@@ -52,7 +52,6 @@ export function OptionValues({
   value: OptionDescriptor[];
   onGoto: (optionValue: string) => void;
 }) {
-  const Chip = usePart('Chip');
   const FieldValue = usePart('FieldValue');
   return (
     <span id={id} className={className ? VALUES_CLASS + ' ' + className : VALUES_CLASS}>
@@ -62,9 +61,8 @@ export function OptionValues({
           <React.Fragment key={option.value}>
             {n > 0 && !value[n - 1].colorRole && !option.colorRole
               && <span className={SEPARATOR_CLASS}>{VALUE_SEPARATOR}</span>}
-            {option.colorRole
-              ? <Chip tone={option.colorRole as ChipTone} icon={option.image} label={option.label} onClick={goto} />
-              : <FieldValue text={option.label} icon={option.image} onClick={goto} />}
+            <FieldValue text={option.label} icon={option.image} colorRole={option.colorRole as ColorRole | undefined}
+              onClick={goto} />
           </React.Fragment>
         );
       })}

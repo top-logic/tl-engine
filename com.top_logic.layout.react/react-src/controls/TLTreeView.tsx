@@ -1,7 +1,9 @@
-import { React, usePart, useTLState, useTLCommand, TLChild, rootClassName, useI18N, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, treeZoneSplit, dropZoneAt, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, usePart, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
-import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
+import { NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
+import { DropHint } from './DropHint';
+import type { HintAnchor } from './DropHint';
 
 interface NodeState {
   id: string;
@@ -25,11 +27,11 @@ interface DropState {
   probe: string | null;
 }
 
-/** Node class of each marker drawn at a node. */
-const NODE_MARKER_CLASS: Record<Exclude<TLDropMarker, 'control'>, string> = {
-  before: 'tlTreeView__node--dragOver-before',
-  after: 'tlTreeView__node--dragOver-after',
-  into: 'tlTreeView__node--dragOver-into',
+/** State word (drag.css) of each marker drawn at a node. */
+const NODE_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
+  before: 'drop-before',
+  after: 'drop-after',
+  into: 'drop-onto',
 };
 
 /** How long a drag hovers the middle of a collapsed node before the node is expanded, in ms. */
@@ -38,9 +40,12 @@ const AUTO_EXPAND_DELAY = 700;
 const I18N_KEYS = {
   'js.treeView.expand': 'Expand',
   'js.treeView.collapse': 'Collapse',
+  'js.tree.label': 'Tree',
+  'js.tree.loading': 'Loading entries\u2026',
 };
 
-const INDENT_PX = 20;
+/** The indent of a level until the token is read: the toggle's width, size-control-sm. */
+const INDENT_FALLBACK_PX = 24;
 
 /** What the expansion toggle of a node in the given state does. */
 function toggleLabel(i18n: Record<string, string>, expanded: boolean): string {
@@ -74,6 +79,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const DisclosureToggle = usePart('DisclosureToggle');
+  const ProgressBar = usePart('ProgressBar');
 
   const nodes = (state.nodes as NodeState[]) ?? [];
   const selectionMode = (state.selectionMode as string) ?? SINGLE_SELECTION;
@@ -82,7 +88,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropAcceptsAny = (state.dropAcceptsAny as boolean) ?? false;
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropModes = (state.dropModes as string[]) ?? [];
-  const zoneSplit = treeZoneSplit(dropModes);
+  const dropModesByKind = (state.dropModesByKind as Record<string, string[]>) ?? {};
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const isMulti = selectionMode === MULTI_SELECTION;
@@ -93,6 +99,17 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   // visible nodes changes underneath it (a node is expanded, the model pushes other nodes).
   const [cursorNodeId, setCursorNodeId] = React.useState<string | null>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
+
+  // One level indents by the width of the toggle, so each child stands under its parent's label; read
+  // from the token, so the indent follows the density. The list is rendered unconditionally, so the
+  // ref is attached when the hook first measures: the token is read at the tree, not at the root.
+  const indent = useTokenPx(listRef, '--tl-size-control-sm', INDENT_FALLBACK_PX);
+  const domId = (id: string) => `${controlId}-node-${id}`;
+
+  // The nodes a drag started here carries, faded by drag.css (data-tl-state~="dragging") while it
+  // runs: the grabbed node, or the whole selection when the grabbed node is part of it.
+  const [draggedNode, setDraggedNode] = React.useState<{ id: string; selection: boolean } | null>(null);
+  React.useEffect(() => (draggedNode ? onDragEnd(() => setDraggedNode(null)) : undefined), [draggedNode]);
 
   // Where the keyboard navigation continues. Without a cursor of its own it continues at the
   // selected node, so that the keys take up a selection made elsewhere (a click on another view
@@ -110,7 +127,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     if (selectedNodeId == null) {
       return;
     }
-    const selectedEl = listRef.current?.querySelector('.tlTreeView__node--selected');
+    const selectedEl = listRef.current?.querySelector('[role="treeitem"][aria-selected="true"]');
     if (selectedEl) {
       selectedEl.scrollIntoView({ block: 'nearest' });
     }
@@ -122,7 +139,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     if (cursorNodeId == null) {
       return;
     }
-    listRef.current?.querySelector('.tlTreeView__node--focused')?.scrollIntoView({ block: 'nearest' });
+    listRef.current?.querySelector('[data-tl-state~="cursor"]')?.scrollIntoView({ block: 'nearest' });
   }, [cursorNodeId]);
 
   const handleToggle = React.useCallback((nodeId: string, expanded: boolean) => {
@@ -206,17 +223,10 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     return onDragEnd(() => setDropState(null));
   }, [dragHovers, cancelAutoExpand]);
 
-  // The pointer of the running drag over the tree, in viewport coordinates, and the hint that
-  // follows it. Moved directly in the DOM: dragover fires continuously.
-  const dragPointerRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const dropHintRef = React.useRef<HTMLDivElement | null>(null);
-  const attachDropHint = React.useCallback((hint: HTMLDivElement | null) => {
-    dropHintRef.current = hint;
-    if (hint) {
-      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y,
-        runningDrag()?.image ?? NO_DRAG_IMAGE);
-    }
-  }, []);
+  // Where the hint on a refused target stands, and the hook moving it: the hint follows the pointer
+  // on every dragover without rendering the tree.
+  const hintAnchorRef = React.useRef<HintAnchor>({ x: 0, y: 0, height: 0 });
+  const hintMoveRef = React.useRef<((at: HintAnchor) => void) | null>(null);
 
   /**
    * Starts a node drag. The payload names the node by its id and says whether the node was
@@ -230,23 +240,27 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
       selection: node.selected,
       kind: dragKind,
     });
+    const dragged = { id: node.id, selection: node.selected };
+    // A drag cancelled before the image was taken has already ended: no node stays marked dragging.
+    afterDragImage(() => { if (runningDrag()) setDraggedNode(dragged); });
   }, [controlId, dragKind]);
 
   /**
-   * Which node an event points at and the zone within it, split as the announced drop modes need,
-   * or no node where the pointer is beside the nodes or the nodes have no zones.
+   * Which node an event points at and the zone within it, split as the drop modes announced for the
+   * dragged kind need, or no node where the pointer is beside the nodes or the nodes have no zones.
    */
   const dropTargetAt = React.useCallback(
     (e: React.DragEvent): { node: string | null; zone: TLDropZone } => {
+      const zoneSplit = treeZoneSplit(dragModes(e.dataTransfer, dropModes, dropModesByKind));
       if (zoneSplit !== 'none' && e.target instanceof Element) {
-        const nodeElement = e.target.closest('.tlTreeView__node') as HTMLElement | null;
+        const nodeElement = e.target.closest('.tl-tree__node') as HTMLElement | null;
         const key = nodeElement?.dataset.dropNode;
         if (nodeElement && key) {
           return { node: key, zone: dropZoneAt(e.clientY, nodeElement, zoneSplit) };
         }
       }
       return { node: null, zone: 'none' };
-    }, [zoneSplit]);
+    }, [dropModes, dropModesByKind]);
 
   /** Expands a collapsed node once the drag rests on its middle for a while; cancels otherwise. */
   const scheduleAutoExpand = React.useCallback((target: { node: string | null; zone: TLDropZone }) => {
@@ -275,12 +289,11 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!dragKindAccepted(e.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
-    dragPointerRef.current = { x: e.clientX, y: e.clientY };
     const drag = runningDrag();
-    const hint = dropHintRef.current;
-    if (hint) {
-      placeDropHint(hint, e.clientX, e.clientY, drag?.image ?? NO_DRAG_IMAGE);
-    }
+    // The browser draws the drag image around the pointer; the hint stands beside it.
+    const image = drag?.image ?? NO_DRAG_IMAGE;
+    hintAnchorRef.current = { x: e.clientX, y: e.clientY + image.top, height: image.bottom - image.top };
+    hintMoveRef.current?.(hintAnchorRef.current);
     const target = dropTargetAt(e);
     scheduleAutoExpand(target);
     let probe: string | null = null;
@@ -375,11 +388,20 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [nodes, isMulti, sendCommand]);
 
+  // The node the cursor names. Every node in the list is rendered with its id, so the tree points
+  // aria-activedescendant at a rendered node or leaves the attribute out (no cursor, empty tree) -
+  // a reference to a missing id would hide the focus (WCAG 2.4.7); without it the tree shows the
+  // ring itself.
+  const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : undefined;
+
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
     if (nodes.length === 0) {
       return;
     }
-    const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : null;
+    // An editor inside a node keeps its keys: Space, Enter and the arrows are its own.
+    if (e.target !== e.currentTarget && isEditorTarget(e.target)) {
+      return;
+    }
     let newIndex = cursorIndex;
 
     switch (e.key) {
@@ -451,82 +473,108 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     if (newIndex !== cursorIndex) {
       moveCursor(newIndex, e.shiftKey);
     }
-  }, [cursorIndex, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
+  }, [cursorIndex, cursorNode, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
+
+  // The marker the server's verdict names, at the node it names; a refusal at the hovered node.
+  const dropWord = (node: NodeState) => {
+    if (!dropState) return undefined;
+    if (dropRefused) return dropState.node === node.id ? 'drop-refused' : undefined;
+    return dropMarker && dropMarker !== 'control' && dropMarkerKey === node.id ? NODE_MARKER_STATE[dropMarker] : undefined;
+  };
 
   return (
     <ul
       ref={listRef}
       role="tree"
-      className={rootClassName(state, 'tlTreeView',
-        dropState && (dropRefused
-          ? (dropState.node === null && 'tlTreeView--dropRefused')
-          : (dropMarker === 'control' && 'tlTreeView--dragover')))}
+      aria-label={i18n['js.tree.label']}
+      aria-multiselectable={isMulti || undefined}
+      aria-activedescendant={cursorNode ? domId(cursorNode.id) : undefined}
+      className={rootClassName(state, 'tl-tree', 'tl-type-body')}
+      data-tl-state={dropState ? (dropRefused
+        ? (dropState.node === null ? 'drop-refused' : undefined)
+        : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
     >
-      {/* Why the target under the running drag refuses it. A native tooltip is not shown while a
-          drag runs, so the reason follows the pointer, placed in the document body so that the
-          tree's scrolling cannot hide it. */}
-      {dropRefused && dropVerdict?.reason && createPortal(
-        <div ref={attachDropHint} className="tlTreeView__dropHint" role="status">
-          {dropVerdict.reason}
-        </div>,
-        document.body)}
+      {/* Why the target under the running drag refuses it, beside the pointer (DropHint). */}
+      {dropRefused && dropVerdict?.reason && (
+        <DropHint reason={dropVerdict.reason} start={hintAnchorRef.current} moveRef={hintMoveRef} />
+      )}
       {nodes.map((node, index) => (
-        <li
-          key={node.id}
-          role="treeitem"
-          aria-expanded={node.expandable ? node.expanded : undefined}
-          aria-selected={node.selected}
-          aria-level={node.depth + 1}
-          className={[
-            'tlTreeView__node',
-            node.selected ? 'tlTreeView__node--selected' : '',
-            index === cursorIndex ? 'tlTreeView__node--focused' : '',
-            dropState && dropRefused && dropState.node === node.id ? 'tlTreeView__node--dropRefused' : '',
-            dropState && !dropRefused && dropMarker && dropMarker !== 'control' && dropMarkerKey === node.id
-              ? NODE_MARKER_CLASS[dropMarker] : '',
-          ].filter(Boolean).join(' ')}
-          style={{ paddingLeft: node.depth * INDENT_PX }}
-          data-drop-node={node.id}
-          draggable={dragEnabled && node.draggable !== false}
-          onMouseDown={(e) => {
-            // Suppress the text selection the browser would start as a side
-            // effect of node-selection gestures (shift/ctrl range or toggle,
-            // double-click); plain click-and-drag still selects label text.
-            if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
-              e.preventDefault();
-            }
-          }}
-          onClick={(e) => handleSelect(node.id, e)}
-          onDoubleClick={() => handleActivate(node.id)}
-          onContextMenu={(e) => handleContextMenu(node.id, e)}
-          onDragStart={dragEnabled && node.draggable !== false ? (e) => handleDragStart(node, e) : undefined}
-          onDragEnd={dragEnabled && node.draggable !== false ? () => setDropState(null) : undefined}
-        >
-          {node.expandable ? (
-            <span className="tlTreeView__toggle">
+        <React.Fragment key={node.id}>
+          <li
+            id={domId(node.id)}
+            role="treeitem"
+            aria-expanded={node.expandable ? node.expanded : undefined}
+            aria-selected={!!node.selected}
+            aria-level={node.depth + 1}
+            aria-busy={node.loading || undefined}
+            className="tl-tree__node"
+            data-tl-state={stateAttr(
+              index === cursorIndex && 'cursor',
+              draggedNode && (node.id === draggedNode.id || (draggedNode.selection && node.selected)) && 'dragging',
+              dropWord(node),
+            )}
+            style={{ paddingInlineStart: node.depth * indent }}
+            data-drop-node={node.id}
+            draggable={dragEnabled && node.draggable !== false}
+            onMouseDown={(e) => {
+              // Suppress the text selection the browser would start as a side
+              // effect of node-selection gestures (shift/ctrl range or toggle,
+              // double-click); plain click-and-drag still selects label text.
+              if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
+                e.preventDefault();
+              }
+            }}
+            onClick={(e) => handleSelect(node.id, e)}
+            onDoubleClick={() => handleActivate(node.id)}
+            onContextMenu={(e) => handleContextMenu(node.id, e)}
+            onDragStart={dragEnabled && node.draggable !== false ? (e) => handleDragStart(node, e) : undefined}
+            onDragEnd={dragEnabled && node.draggable !== false ? () => setDropState(null) : undefined}
+          >
+            {node.expandable ? (
+              // The toggle expands its own node, so it points at no other element. Loading children
+              // is shown by the status line below the node, not by the toggle.
               <DisclosureToggle
                 expanded={node.expanded}
-                loading={node.loading}
                 label={toggleLabel(i18n, node.expanded)}
                 tabIndex={-1}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToggle(node.id, node.expanded);
                 }}
+                // A press on the toggle keeps the focus on the tree, so the keys and the ring stay with it.
+                onMouseDown={(e) => e.preventDefault()}
               />
+            ) : (
+              <span className="tl-tree__spacer" />
+            )}
+            <span className="tl-tree__content">
+              <TLChild control={node.content} />
             </span>
-          ) : (
-            <span className="tlTreeView__toggleSpacer" />
+          </li>
+          {/* The children are on their way: a status line one level deeper, with an indeterminate
+              progress - the one sign of loading the design system has. A tree owns tree items only,
+              so the line is one, named for what it says; the progress inside is hidden from
+              assistive technology, so the name is announced once. It is no cursor stop (no id, never
+              the active descendant). Its indent is that of its level: (aria-level - 1) toggle widths. */}
+          {node.loading && (
+            <li
+              role="treeitem"
+              aria-level={node.depth + 2}
+              // In a multi-selectable tree every item states whether it is selected; this one never is.
+              aria-selected={isMulti ? false : undefined}
+              aria-label={i18n['js.tree.loading']}
+              className="tl-status"
+              style={{ paddingInlineStart: (node.depth + 1) * indent }}
+            >
+              <ProgressBar aria-hidden />
+            </li>
           )}
-          <span className="tlTreeView__content">
-            <TLChild control={node.content} />
-          </span>
-        </li>
+        </React.Fragment>
       ))}
     </ul>
   );

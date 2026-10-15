@@ -84,16 +84,4 @@ describe('the part DisclosureToggle as MUI icon button', () => {
     toggle().click();
     expect(onClick).toHaveBeenCalledTimes(1);
   });
-
-  it('shows a spinner instead of the chevron while the content is being loaded', () => {
-    const { toggle, redraw } = draw({ loading: true });
-
-    expect(toggle().getAttribute('aria-busy')).toBe('true');
-    expect(toggle().querySelector('.MuiCircularProgress-root')).not.toBeNull();
-    expect(toggle().querySelector('svg.MuiSvgIcon-root')).toBeNull();
-
-    redraw({ loading: false });
-    expect(toggle().hasAttribute('aria-busy')).toBe(false);
-    expect(toggle().querySelector('.MuiCircularProgress-root')).toBeNull();
-  });
 });

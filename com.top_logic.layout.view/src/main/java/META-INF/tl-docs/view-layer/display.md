@@ -33,26 +33,20 @@ every text of a role at once — see
 
 - **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
   `label`, `caption`. The family, size, line height and weight come from the tokens.
-- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`, `accent`,
-  `success`, `warning`, `error`, `on-color`.
+- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`,
+  `placeholder`, `success`, `warning`, `error`, `on-color`.
 - **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
 
-Every text carries a class per role — `tlText--<variant>`, `tlText--tone-<tone>`, and
-`tlText--pill` where the appearance asks for one — beside `tlText` and the element's own
-`css-class`:
+Every text is a `tl-text` with the type class of its variant (`tl-type-heading-lg` …) and its tone
+as the attribute `data-tl-tone` (`secondary`, `helper`, `placeholder`, `success`, `warning`, `error`,
+`on-brand`); the primary tone carries no attribute and inherits the colour of its surroundings, which
+is how text on the primary app bar reads in the bar's colour. A strong text names the strong type
+class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
+role (a live region).
 
 ```html
-<span class="tlText tlText--caption tlText--tone-helper">Figures as of yesterday.</span>
+<span class="tl-text tl-type-label" data-tl-tone="helper">Figures as of yesterday.</span>
 ```
-
-The classes are a stable contract the stylesheet of the application may read, not something to
-write into a `css-class`: a display option of the element is a property of the element.
-
-The colour of a tone travels as the custom property `--tlText-tone`, which the text colour is taken
-from and which tints a pill that has no colour of its own — one declaration per tone. That is also
-how a text keeps its tone where the surrounding control re-maps the text colour: the primary app bar
-re-maps `.tlAppBar--primary .tlText--tone-primary`, so a text that follows the default tone reads in
-the on-accent colour while a text that states a tone of its own — an error, a success — keeps it.
 
 ## Pictures: `<image>`, `<overlay>`, `<avatar>`
 
@@ -65,7 +59,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 
 `<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tlOverlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
 
-`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`tl-avatar--category-<n>`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`data-tl-role="category-<n>"`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
 
 ```xml
 <overlay>
@@ -95,7 +89,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 </overlay>
 ```
 
-The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar--category-<n>` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
 
 ## Ready-made HTML: `<html>`
 
@@ -132,7 +126,7 @@ A value of any other type has no HTML representation; the element reports that i
 	<item>
 		<card padding="compact">
 			<html display="thumbnail" input="element"/>
-			<text css-class="tlText--strong" input="element"/>
+			<text css-class="tl-type-body-strong" input="element"/>
 			<button appearance="link">
 				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
 					<label><en>Show</en></label>
@@ -156,7 +150,7 @@ A value's color is part of the model: two annotations say where it comes from, a
 - **`<dynamic-color>`** on a type (`TLDynamicColor`) holds the `ValueColorProvider` computing the color of its instances, in the shape `<dynamic-icon>` and `<label>` use for icons and labels. `ColorByExpression` states that algorithm as a TL-Script expression over the object: the demo ticket takes its color from its status, `<dynamic-color><color-by-expression color="t -> $t.get(`demo.tickets:Ticket#status`)"/></dynamic-color>`, so a ticket appears in the color of the status literal it holds. An enumeration literal as the result is colored by its own `<color>`, the name of a role (`x -> 'category-3'`) is that role, any other result — a `Color` value included — and `null` leave the object uncolored. Specializations inherit the annotation.
 - **`AnnotationValueColorProvider.INSTANCE`** (a `ValueColorProvider`) answers both: `colorOf(value)` returns the `ValueColor` — the role — of a classifier or an object, and `null` for everything the model gives no color to. `ValueColor` is an `ExternallyNamed` enum; its external name is what reaches the client.
 
-A colored value is displayed as a **pill** in its role, an uncolored one as plain text. The role travels as the single state / descriptor field `ReactValueColor.ROLE` (`colorRole`), filled by `ReactValueColor.putRole(descriptor, value)`; never CSS. One shared presentational component `TLPill` (`react-src/controls/pill/TLPill.tsx`) draws it everywhere as `tl-pill tl-pill--<role>` with a `tl-pill__label`, and nothing but that class is set. The design-system stylesheet (`style/tl-design-system/components.css`, `pill.css` in the `tl-design-system` repository) gives each role its two tokens — the tinted surface and its line — per mode; the text on it is `text-primary`. Decision and reasoning: `docs/skalen.md`, "Pill: Rolle statt Farbe".
+A colored value is displayed as a **pill** in its role, an uncolored one as plain text. The role travels as the single state / descriptor field `ReactValueColor.ROLE` (`colorRole`), filled by `ReactValueColor.putRole(descriptor, value)`; never CSS. The part `Chip` (see [Parts](doc:view-layer/parts)) draws it everywhere - in its TopLogic drawing as `tl-pill` with `data-tl-role="<role>"` and a `tl-pill__label`, nothing but that attribute set; a read-only value of a role is the part `FieldValue` holding that chip. The design-system stylesheet (`style/tl-design-system/components.css`, `pill.css` in the `tl-design-system` repository) gives each role its two tokens — the tinted surface and its line — per mode; the text on it is `text-primary`. Decision and reasoning: `docs/skalen.md`, "Pill: Rolle statt Farbe".
 
 `<text appearance="pill">` asks for a pill whether or not the value carries a colour: a badge, a
 status, a tag written as a text rather than read off the model. The colour then follows a

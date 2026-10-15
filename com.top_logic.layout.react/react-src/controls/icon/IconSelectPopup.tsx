@@ -1,5 +1,4 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, tooltipProps } from 'tl-react-bridge';
-import { CLEAR_ICON, SEARCH_ICON } from '../form/fieldIcons';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, tooltipProps, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -185,7 +184,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       <div className="tlIconSelect__searchWrapper">
         <TextInput
           ref={searchRef}
-          icon={SEARCH_ICON}
+          icon={ICON_SEARCH}
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder={i18n['js.iconSelect.filterPlaceholder']}
@@ -193,7 +192,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
           action={searchTerm && (
             <Button
               label={i18n['js.iconSelect.clearFilter']}
-              image={CLEAR_ICON}
+              image={ICON_CLEAR}
               display="icon-only"
               appearance="ghost"
               small

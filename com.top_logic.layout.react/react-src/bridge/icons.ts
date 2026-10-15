@@ -1,0 +1,57 @@
+/**
+ * The glyphs the controls draw, by what they mean, in the encoded form {@link ThemeIcon} renders
+ * (Font Awesome Free as an icon font).
+ *
+ * <p>A control names a glyph by one of these constants, never by a glyph string of its own: the
+ * icon library is not settled (a later wave may replace Font Awesome), and a switch then changes
+ * this file alone. Two meanings may share a glyph today and part later, so each meaning keeps its
+ * own constant.</p>
+ */
+
+/** The handle an entry is dragged and moved by (select chip, column selection, value list). */
+export const ICON_HANDLE = 'css:fa-solid fa-grip-vertical';
+
+/** Removes one entry (select chip, filter chip, value list). */
+export const ICON_REMOVE = 'css:fa-solid fa-xmark';
+
+/** Clears an input (search, select). */
+export const ICON_CLEAR = 'css:fa-solid fa-xmark';
+
+/** Cancels a form without applying it. */
+export const ICON_CANCEL = 'css:fa-solid fa-xmark';
+
+/** Confirms a form. */
+export const ICON_CONFIRM = 'css:fa-solid fa-check';
+
+/** Adds an entry. */
+export const ICON_ADD = 'css:fa-solid fa-plus';
+
+/** The toggle of an expandable row; pointing right while closed, turned down by the stylesheet. */
+export const ICON_EXPAND = 'css:fa-solid fa-chevron-right';
+
+/** The arrow of a closed list that opens downwards. */
+export const ICON_LIST_CLOSED = 'css:fa-solid fa-chevron-down';
+
+/** The arrow of an open list. */
+export const ICON_LIST_OPEN = 'css:fa-solid fa-chevron-up';
+
+/** A search field. */
+export const ICON_SEARCH = 'css:fa-solid fa-magnifying-glass';
+
+/** Grouping rows by a column. */
+export const ICON_GROUP = 'css:fa-solid fa-layer-group';
+
+/** Ascending sort. */
+export const ICON_SORT_ASC = 'css:fa-solid fa-arrow-up';
+
+/** Descending sort. */
+export const ICON_SORT_DESC = 'css:fa-solid fa-arrow-down';
+
+/** A column filter. */
+export const ICON_FILTER = 'css:fa-solid fa-filter';
+
+/** The column selection of a table. */
+export const ICON_COLUMNS = 'css:fa-solid fa-gear';
+
+/** Saving the current criteria under a name. */
+export const ICON_SAVE = 'css:fa-regular fa-bookmark';

@@ -510,6 +510,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public List<Row<R>> allRows() {
+		return _source.allRows();
+	}
+
+	@Override
 	public Set<Object> containedKeys(Collection<?> keys) {
 		return _source.containedKeys(keys);
 	}
@@ -630,6 +635,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	@SuppressWarnings("unchecked")
 	private static <R, V> CellContent renderValue(Column<R, V> column, Object value) {
 		return column.renderer().render((V) value);
+	}
+
+	@Override
+	public Column<R, ?> column(String column) {
+		return _columns.get(column);
 	}
 
 	@Override

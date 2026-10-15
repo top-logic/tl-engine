@@ -138,6 +138,18 @@ public interface PropertyDescriptor {
 	boolean isInstanceValued();
 
 	/**
+	 * Whether the property value is configured in encrypted form.
+	 * 
+	 * <p>
+	 * The configured value of an encrypted property is a secret and must not be reported, e.g. in
+	 * an error message.
+	 * </p>
+	 * 
+	 * @see com.top_logic.basic.config.annotation.Encrypted
+	 */
+	boolean isEncrypted();
+
+	/**
 	 * The implementation type this property either directly contains (if
 	 * {@link #isInstanceValued()}) or provides a configuration for (if being declared as
 	 * {@link PolymorphicConfiguration}).

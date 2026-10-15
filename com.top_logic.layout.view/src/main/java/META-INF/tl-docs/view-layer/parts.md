@@ -48,25 +48,26 @@ All names and props are typed: `replacePart('Checkbox', C)` accepts only a compo
 
 | Part | Props | What it is | Drawn by |
 |---|---|---|---|
-| `Button` | `ButtonPartProps` | a button, an icon-only button, a toggle (`checked`), an entry of a menu (appearance `menu-item`), a link drawn as a button (`href`) | `TLButton` and `TLToggleButton` (also as buttons of a toolbar and entries of a menu), the action buttons of panels, drawers, tables, alerts, snackbars, form fields, dropdowns, file chips and the calendar, the clear button of a text input |
+| `Button` | `ButtonPartProps` | a button, an icon-only button, a toggle (`checked`), an entry of a menu (appearance `menu-item`), a link drawn as a button (`href`) | `TLButton` and `TLToggleButton` (also as buttons of a toolbar and entries of a menu), the action buttons of panels, drawers, tables, alerts, snackbars, form fields, dropdowns, file chips and the calendar, the clear button of a text input, the drag handles of the chosen values of a dropdown and of the column selection |
 | `MenuTrigger` | `MenuTriggerPartProps` | the button opening a menu, with its chevron or an icon alone | the menu of a toolbar, a menu region |
-| `DisclosureToggle` | `DisclosureTogglePartProps` | the chevron showing or hiding content below it or toward the end of the line, busy while the content loads | form groups, nodes of a tree, rows of a tree table, the sidebar |
+| `DisclosureToggle` | `DisclosureTogglePartProps` | the chevron showing or hiding content below it or toward the end of the line | form groups, nodes of a tree, rows of a tree table, the sidebar |
 | `Checkbox` | `CheckboxPartProps` | a box that is ticked, or a switch | `TLCheckbox`, choice groups, the selection column of a table, the column selection |
-| `TextInput` | `TextInputPartProps` | a text box, single-line (text, password, number, search, …) with optional icon and end action, or multi-line | `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, the search of a table and of its column selection, the filters of a dropdown and of the icon and color popups |
-| `FieldValue` | `FieldValuePartProps` | the value of a field that is not editable, as text or link | every text, password, number, select, date and slider field that is not editable; the chosen values without a color role of a choice field (`OptionValues`) |
-| `Chip` | `ChipPartProps` | a compact value: with a color role, a toggle, removable, or running an action | the toggles of `TLOptionChips`, the chosen values of a dropdown, the named filters of a table, the files of a file chip field, values with a color role, texts drawn as a pill |
+| `TextInput` | `TextInputPartProps` | a text box, single-line (text, password, number, search, …) with optional icon and end action, or multi-line | `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, the search field (`SearchField`) of a table and of its column selection, the name of a filter to save, the filters of a dropdown and of the icon and color popups |
+| `FieldValue` | `FieldValuePartProps` | the one read-only value, as text or link, a value of a color role as a pill (part `Chip`) within it | every text, password, number, select, date and slider field that is not editable; the chosen values of a choice field (`OptionValues`); the object in a table cell (`TLResourceCell`) |
+| `Chip` | `ChipPartProps` | a compact value: with a color role, a toggle, removable, reorderable by a handle, or running an action | the toggles of `TLOptionChips`, the chosen values of a dropdown, the named filters of a table, the files of a file chip field, the options of a color role in a list, read-only values of a color role (inside `FieldValue`), texts drawn as a pill |
 | `Badge` | `BadgePartProps` | a small marker carrying a count | the counts of the sidebar and the bottom bar |
 | `Divider` | `DividerPartProps` | a line between content, horizontal or vertical | between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
-| `ProgressBar` | `ProgressBarPartProps` | a determinate or indeterminate bar with an optional label | `TLProgress`, the status of a job, the loading options of a dropdown |
-| `Spinner` | `SpinnerPartProps` | a turning ring: small in place of an icon, or a busy indicator of its own | a disclosure toggle whose content loads, the icon popup loading its icons |
+| `ProgressBar` | `ProgressBarPartProps` | a determinate or indeterminate bar with an optional label naming it, or named by another element | `TLProgress`, the status of a job, the loading options of a dropdown, the loading children of a tree node |
+| `Spinner` | `SpinnerPartProps` | a turning ring: small in place of an icon, or a busy indicator of its own | the icon popup loading its icons |
 
-A part may draw another part through `usePart`: the `DisclosureToggle` shows the `Spinner` while
-its content loads, the `TextInput` takes a `Button` as its end action. A replacement of the inner
-part then appears inside the outer one, whichever of them is replaced.
+A part may draw another part through `usePart`: the `FieldValue` of a color role holds a `Chip`, a
+removable `Chip` draws its remove button with the `Button`, the `TextInput` takes a `Button` as its
+end action. A replacement of the inner part then appears inside the outer one, whichever of them is
+replaced.
 
 The shared component `OptionValues` of `tl-react-bridge` shows the chosen values of a choice field
-that is not editable with the parts `Chip` and `FieldValue`; a replacement of a choice control
-uses it to show such values the way the TopLogic controls do.
+that is not editable with the part `FieldValue`; a replacement of a choice control uses it to show
+such values the way the TopLogic controls do.
 
 ## Part or control?
 
@@ -183,18 +184,16 @@ A site places a part through an element of its own around it, or through its con
 through the `className` of the part:
 
 ```tsx
-// The search box sits at the end of the bar and takes up to 16rem.
-<div className="tlTableView__search">
-  <TextInput type="search" value={search} onChange={setSearch} />
+// The search of the popup of a dropdown stands above the list of options.
+<div className="tl-select__search-group">
+  <TextInput icon={ICON_SEARCH} value={searchTerm} onChange={setSearchTerm} />
 </div>
 ```
 
 ```css
-.tlTableView__search {
-  display: grid;          /* the box fills the element */
-  flex: 0 1 16rem;
-  min-width: 8rem;
-  margin-left: auto;
+.tl-select__search-group {
+  flex: 0 0 auto;
+  margin-bottom: var(--tl-space-xs);
 }
 ```
 
@@ -212,8 +211,8 @@ margin of a text field to 0, the position of a badge to `relative`, the display 
 - **Or to the container.** A row that gives a part the rest of its width is a grid
   (`grid-template-columns: auto minmax(0, 1fr)`) rather than a flex row with `flex: 1` on the part.
 - **The `className` of a part only marks it** — for tests, for the measuring of a control (the
-  width of the dividers of a toolbar), for a look the TopLogic drawing reads (the active filter
-  button of a column). A look rule on such a class reaches the TopLogic drawing only; a library
+  width of the dividers of a toolbar), for a look the TopLogic drawing reads (the funnel of a
+  column, the drag handle of a list). A look rule on such a class reaches the TopLogic drawing only; a library
   draws the part in its own look.
 
 ## Adding a part (engine developers)

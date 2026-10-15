@@ -25,14 +25,23 @@ describe('the part ProgressBar as MUI LinearProgress', () => {
   it('draws a determinate bar of the share with its label beside it, class and attributes on the root', () => {
     const root = draw({ value: 0.75, label: '3 / 4', className: 'x', 'data-testid': 'progress' });
 
-    const bar = screen.getByRole('progressbar');
+    const bar = screen.getByRole('progressbar', { name: '3 / 4' });
     expect(bar.classList).toContain('MuiLinearProgress-determinate');
     expect(bar.getAttribute('aria-valuenow')).toBe('75');
-    expect(bar.getAttribute('aria-valuetext')).toBe('3 / 4');
+    expect(bar.hasAttribute('aria-valuetext')).toBe(false);
     expect(bar.hasAttribute('aria-busy')).toBe(false);
     expect(root.classList).toContain('x');
     expect(root.getAttribute('data-testid')).toBe('progress');
     expect(root.textContent).toBe('3 / 4');
+  });
+
+  it('names the bar by another element, the label beside it then only showing the value', () => {
+    render(<span id="state">Läuft</span>);
+    const root = draw({ value: 0.5, label: '50 %', labelledBy: 'state' });
+
+    const bar = screen.getByRole('progressbar', { name: 'Läuft' });
+    expect(bar.getAttribute('aria-labelledby')).toBe('state');
+    expect(root.querySelector('.MuiTypography-root')!.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('draws the indeterminate bar without a value, busy and without a label', () => {

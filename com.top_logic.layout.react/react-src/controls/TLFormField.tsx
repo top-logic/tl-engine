@@ -135,7 +135,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
       {labelHidden && association !== null && (
         <label id={association.labelId} htmlFor={inputId ?? undefined} className="tl-visually-hidden">{label}</label>
       )}
-      <div className="tl-form-field__input">
+      <div className="tl-form-field__input tl-type-body">
         <FieldLabelContext.Provider value={association}>
           <TLChild control={field} />
         </FieldLabelContext.Provider>

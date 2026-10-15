@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import ai.djl.huggingface.tokenizers.Encoding;
 import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
@@ -239,7 +240,7 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 				options.setInterOpNumThreads(1);
 				options.addConfigEntry("session.intra_op.allow_spinning", "0");
 				options.addConfigEntry("session.inter_op.allow_spinning", "0");
-				_session = _environment.createSession(modelFile.toString(), options);
+				_session = load(_environment, modelFile.toString(), options);
 			}
 			_typeIds = _session.getInputNames().contains("token_type_ids");
 		} catch (IOException | OrtException ex) {
@@ -247,6 +248,47 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 				ex);
 		}
 	}
+
+	/**
+	 * Loads the model on a thread of its own with a stack of {@link #LOAD_STACK_BYTES}.
+	 *
+	 * <p>
+	 * ONNX Runtime parses the model graph recursively on the native stack of the calling thread. For
+	 * snowflake-arctic-embed-m-v2.0 int8 the depth depends on the application: with the class path of
+	 * one application the load crashed the JVM with a stack of 4 MB and passed with 16 MB, with a
+	 * plain class path it passed with 1 MB. The stack of the thread that creates the embedder - often
+	 * the start-up thread - is not this module's to choose, so the load does not run on it.
+	 * </p>
+	 */
+	private static OrtSession load(OrtEnvironment environment, String modelFile, OrtSession.SessionOptions options)
+			throws OrtException {
+		AtomicReference<OrtSession> session = new AtomicReference<>();
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread loader = new Thread(null, () -> {
+			try {
+				session.set(environment.createSession(modelFile, options));
+			} catch (OrtException | RuntimeException ex) {
+				failure.set(ex);
+			}
+		}, "tl-ai-index-onnx-load", LOAD_STACK_BYTES);
+		loader.start();
+		try {
+			loader.join();
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while the embedding model was loading.", ex);
+		}
+		if (failure.get() instanceof OrtException ex) {
+			throw ex;
+		}
+		if (failure.get() instanceof RuntimeException ex) {
+			throw ex;
+		}
+		return session.get();
+	}
+
+	/** The stack of the thread that loads the model, see {@link #load}. */
+	static final long LOAD_STACK_BYTES = 256L * 1024 * 1024;
 
 	@Override
 	public String modelId() {

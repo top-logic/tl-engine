@@ -234,14 +234,9 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 				.optTruncation(true)
 				.optPadding(true)
 				.build();
-			_environment = OrtEnvironment.getEnvironment();
-			try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
-				options.setIntraOpNumThreads(config.getThreads());
-				options.setInterOpNumThreads(1);
-				options.addConfigEntry("session.intra_op.allow_spinning", "0");
-				options.addConfigEntry("session.inter_op.allow_spinning", "0");
-				_session = load(_environment, modelFile.toString(), options);
-			}
+			Loaded loaded = load(modelFile.toString(), config.getThreads());
+			_environment = loaded.environment();
+			_session = loaded.session();
 			_typeIds = _session.getInputNames().contains("token_type_ids");
 		} catch (IOException | OrtException ex) {
 			throw new IllegalArgumentException("Cannot load the embedding model from " + dir + ": " + ex.getMessage(),
@@ -249,24 +244,38 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 		}
 	}
 
+	/** The runtime and the model, as {@link #load} answers them. */
+	private record Loaded(OrtEnvironment environment, OrtSession session) {
+		// Plain data.
+	}
+
 	/**
-	 * Loads the model on a thread of its own with a stack of {@link #LOAD_STACK_BYTES}.
+	 * Starts the runtime and loads the model on a thread of its own with a stack of
+	 * {@link #LOAD_STACK_BYTES}.
 	 *
 	 * <p>
-	 * ONNX Runtime parses the model graph recursively on the native stack of the calling thread. For
-	 * snowflake-arctic-embed-m-v2.0 int8 the depth depends on the application: with the class path of
-	 * one application the load crashed the JVM with a stack of 4 MB and passed with 16 MB, with a
-	 * plain class path it passed with 1 MB. The stack of the thread that creates the embedder - often
-	 * the start-up thread - is not this module's to choose, so the load does not run on it.
+	 * The first {@link OrtEnvironment#getEnvironment()} of the JVM (which loads the native library)
+	 * and the parse of the model graph recurse deeply on the native stack of the calling thread. How
+	 * deep is not this module's to know: started with a long class path on the command line - an
+	 * application with about 280 jars - the JVM crashed with a segmentation fault in
+	 * {@code libonnxruntime.so}, with a short one it did not. The stack of the thread that creates the
+	 * embedder - often the start-up thread - is not this module's to choose either, so neither step
+	 * runs on it. Inference afterwards needs no such stack.
 	 * </p>
 	 */
-	private static OrtSession load(OrtEnvironment environment, String modelFile, OrtSession.SessionOptions options)
-			throws OrtException {
-		AtomicReference<OrtSession> session = new AtomicReference<>();
+	private static Loaded load(String modelFile, int threads) throws OrtException {
+		AtomicReference<Loaded> loaded = new AtomicReference<>();
 		AtomicReference<Throwable> failure = new AtomicReference<>();
 		Thread loader = new Thread(null, () -> {
 			try {
-				session.set(environment.createSession(modelFile, options));
+				OrtEnvironment environment = OrtEnvironment.getEnvironment();
+				try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
+					options.setIntraOpNumThreads(threads);
+					options.setInterOpNumThreads(1);
+					options.addConfigEntry("session.intra_op.allow_spinning", "0");
+					options.addConfigEntry("session.inter_op.allow_spinning", "0");
+					loaded.set(new Loaded(environment, environment.createSession(modelFile, options)));
+				}
 			} catch (OrtException | RuntimeException ex) {
 				failure.set(ex);
 			}
@@ -284,7 +293,7 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 		if (failure.get() instanceof RuntimeException ex) {
 			throw ex;
 		}
-		return session.get();
+		return loaded.get();
 	}
 
 	/** The stack of the thread that loads the model, see {@link #load}. */

@@ -1,11 +1,11 @@
 import {
-  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps,
+  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, SelectStateJson } from 'tl-react-bridge';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { FIELD_ROOT_STYLE, MuiFieldValue, fieldAriaProps, fieldColor, showsValueOnly } from './field';
+import { FIELD_ROOT_STYLE, fieldAriaProps, fieldColor, showsValueOnly } from './field';
 
 /** The MUI value of the empty option: the field holds no value. */
 const EMPTY = '';
@@ -33,7 +33,7 @@ function sameValue(a: unknown, b: unknown): boolean {
  *
  * <p>Mapping from the control state besides: hasError → `error` and `aria-invalid`, hasWarnings →
  * color `warning`, mandatory → `aria-required`; a field that is not editable shows the label of the
- * chosen option as text, as TLSelect does; disabled → `disabled`; hidden → nothing is rendered; the
+ * chosen option as text (part `FieldValue`), as TLSelect does; disabled → `disabled`; hidden → nothing is rendered; the
  * configured CSS class → className of the `Select`. The control ID is on the element around the
  * `Select`; its combobox carries {@link fieldInputId} and is labelled by the surrounding form
  * field.</p>
@@ -43,6 +43,7 @@ function sameValue(a: unknown, b: unknown): boolean {
  */
 const MuiSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SelectStateJson>>();
+  const FieldValue = usePart('FieldValue');
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
@@ -56,7 +57,7 @@ const MuiSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (showsValueOnly(state)) {
     return (
-      <MuiFieldValue id={controlId} className={rootClassName(state)}
+      <FieldValue id={controlId} className={rootClassName(state) || undefined}
         text={selected < 0 ? '' : options[selected].label ?? ''} />
     );
   }

@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps, AlertStateJson, ChildControlJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback } = React;
 
@@ -40,6 +39,8 @@ const TLAlert: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(DISMISS_COMMAND, { [GENERATION_ARG]: generation });
   }, [sendCommand, generation]);
 
+  const Button = usePart('Button');
+
   if (state.hidden === true) return null;
 
   const urgent = variant === 'error';
@@ -61,13 +62,16 @@ const TLAlert: React.FC<TLCellProps> = ({ controlId }) => {
         )}
       </div>
       {closable && (
-        <button type="button"
-          className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-alert__close' })}
-          onClick={handleDismiss}
-          aria-label={i18n['js.alert.dismiss']}
-          {...tooltipProps(i18n['js.alert.dismiss'])}>
-          <ThemeIcon encoded={DISMISS_ICON} className="tl-button__icon tl-icon-sm" />
-        </button>
+        <span className="tl-alert__close">
+          <Button
+            label={i18n['js.alert.dismiss']}
+            image={DISMISS_ICON}
+            display="icon-only"
+            appearance="ghost"
+            small
+            onClick={handleDismiss}
+          />
+        </span>
       )}
     </div>
   );

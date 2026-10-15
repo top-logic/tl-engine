@@ -34,6 +34,36 @@ export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
+export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export type {
+  PartProps,
+  PartName,
+  PartComponent,
+  PartAttributes,
+  PartRef,
+  ButtonPartProps,
+  ButtonDisplay,
+  MenuTriggerPartProps,
+  DisclosureTogglePartProps,
+  DisclosureDirection,
+  CheckboxPartProps,
+  CheckboxDisplay,
+  FieldValidation,
+  TextInputPartProps,
+  TextInputType,
+  TextInputMode,
+  FieldValuePartProps,
+  ChipPartProps,
+  ColorRole,
+  BadgePartProps,
+  DividerPartProps,
+  DividerOrientation,
+  ProgressBarPartProps,
+  SpinnerPartProps,
+  SpinnerSize,
+} from './bridge/parts';
+export { OptionValues } from './bridge/option-values';
+export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';

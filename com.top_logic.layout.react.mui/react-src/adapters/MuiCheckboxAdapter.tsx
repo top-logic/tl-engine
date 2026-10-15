@@ -1,91 +1,76 @@
-import { React, useTLState, useTLFieldValue, useFieldLabelProps, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
+import { React } from 'tl-react-bridge';
+import type { CheckboxPartProps, FieldValidation } from 'tl-react-bridge';
 import Checkbox from '@mui/material/Checkbox';
 import Switch from '@mui/material/Switch';
-import { fieldAriaProps, fieldColor, showsValueOnly } from './field';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
-const { useCallback } = React;
-
-/** The `display` a switch is drawn for; any other value is drawn as a box that is ticked. */
-const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
+/** The MUI color of the box for the state of its value; `primary` for a valid one. */
+const COLOR: Record<FieldValidation, 'error' | 'warning'> = {
+  error: 'error',
+  warning: 'warning',
+};
 
 /**
- * Renders the state of a TopLogic boolean field (module name `TLCheckbox`) with the MUI
- * `Checkbox`, or with the MUI `Switch` for display `switch`.
+ * Draws the part `Checkbox` ({@link CheckboxPartProps}) with Material UI: the MUI `Checkbox`, or the
+ * MUI `Switch` for display `switch`; a box with a label stands in a `FormControlLabel`.
  *
- * <p>The field value is read and written through {@link useTLFieldValue}: a change sends the new
- * value as `valueChanged`, which makes the MUI component part of the form's edit and save cycle.
- * Mapping from the control state to the MUI props:</p>
+ * <p>Mapping from the props to the MUI props:</p>
  * <ul>
- * <li>value → `checked`; a tri-state field (triState) shows "no value" as `indeterminate` (with
- *     `aria-checked="mixed"`), and a click cycles through checked, unchecked and unset, as
- *     TLCheckbox does;</li>
- * <li>editable `false` → a read-only box: the same input with `aria-readonly`, as TLCheckbox draws
- *     it; MUI's `readOnly` ignores its changes, and the controlled input keeps the value;
- *     disabled → `disabled`;</li>
- * <li>hasError → color `error` and `aria-invalid`, otherwise hasWarnings → color `warning`;
- *     mandatory → `aria-required`;</li>
- * <li>hidden → nothing is rendered; the configured CSS class → className of the MUI root (through
- *     {@link rootClassName}).</li>
+ * <li>checked → `checked`, indeterminate → `indeterminate`, which sets the DOM property of the
+ *     input; the input is also marked `aria-checked="mixed"`, which MUI does not set;</li>
+ * <li>readOnly → `readOnly` and `aria-readonly`; a press then calls no onChange, and the controlled
+ *     input keeps its state; disabled → `disabled`;</li>
+ * <li>small → size `small`: a box of 38 pixels with its padding, which fits the selection column of
+ *     a table;</li>
+ * <li>alignStart → edge `start`: the padding of the touch area hangs over the start edge, so that
+ *     the box lines up with the label of its field, as the box beside a label of a
+ *     `FormControlLabel` does;</li>
+ * <li>validation → color `error` (with `aria-invalid`) or `warning`; required →
+ *     `aria-required`;</li>
+ * <li>id, ref, name, tabIndex and the passed-through attributes → the input; className → the
+ *     `FormControlLabel` of a box with a label, else the root of the box.</li>
  * </ul>
- *
- * <p>MUI puts the `id` of a checkbox or switch on its `input`, not on its root element. The input
- * therefore carries the control ID, as the input of TLCheckbox does, and the label of the
- * surrounding form field refers to it ({@link useFieldLabelProps}).</p>
- *
- * <p>Not used: label, errorMessage, tooltip, placeholder, nullable and submitOnEnter of the field
- * state. The surrounding form field renders the label, the error message and the help text, as for
- * TLCheckbox; a boolean field has no placeholder and nothing to submit.</p>
  */
-const MuiCheckboxAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<CheckboxStateJson>>();
-  const labelProps = useFieldLabelProps(controlId, controlId);
-  const [value, setValue] = useTLFieldValue();
+const MuiCheckboxAdapter: React.FC<CheckboxPartProps> = ({
+  id, ref, checked, indeterminate, display, label, small, alignStart, disabled, readOnly, required, validation, name, tabIndex,
+  className, onChange, ...attributes
+}) => {
+  const asSwitch = display === 'switch';
+  const mixed = indeterminate === true && !asSwitch;
 
-  const triState = state.triState === true;
-  const editable = state.editable !== false;
-  const disabled = state.disabled === true;
-  const readOnly = showsValueOnly(state);
-  const unset = triState && value !== true && value !== false;
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (readOnly || disabled) return;
+    onChange?.(event.target.checked);
+  };
 
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (!editable) return;
-      if (!triState) {
-        setValue(event.target.checked);
-        return;
-      }
-      // checked -> unchecked -> unset -> checked
-      setValue(value === true ? false : value === false ? null : true);
-    },
-    [editable, setValue, triState, value]
-  );
-
-  if (state.hidden === true) {
-    return null;
-  }
-
-  const color = state.hasError === true ? 'error' : fieldColor(state);
   const inputProps = {
-    ...labelProps,
-    ...fieldAriaProps(state),
+    ...attributes,
+    ref,
+    tabIndex,
     'aria-readonly': readOnly || undefined,
+    'aria-checked': mixed ? 'mixed' as const : undefined,
+    'aria-invalid': validation === 'error' ? true : undefined,
+    'aria-required': required || undefined,
   };
   const common = {
-    id: controlId,
-    checked: value === true,
+    id,
+    name,
+    checked,
     onChange: handleChange,
     disabled,
-    readOnly: !editable,
-    color,
-    className: rootClassName(state),
+    readOnly,
+    size: small ? 'small' as const : undefined,
+    edge: alignStart && label === undefined ? 'start' as const : undefined,
+    color: validation === undefined ? 'primary' as const : COLOR[validation],
+    className: label === undefined ? className : undefined,
     slotProps: { input: inputProps },
-  } as const;
+  };
 
-  if (state.display === DISPLAY_SWITCH) {
-    return <Switch {...common} />;
+  const box = asSwitch ? <Switch {...common} /> : <Checkbox {...common} indeterminate={mixed} />;
+  if (label === undefined) {
+    return box;
   }
-  return <Checkbox {...common} indeterminate={unset} />;
+  return <FormControlLabel className={className} control={box} label={label} disabled={disabled} />;
 };
 
 export default MuiCheckboxAdapter;

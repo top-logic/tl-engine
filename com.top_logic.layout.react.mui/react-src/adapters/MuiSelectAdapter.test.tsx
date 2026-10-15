@@ -3,11 +3,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import type { SelectStateJson } from 'tl-react-bridge';
 import MuiSelectAdapter from './MuiSelectAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The value of a field that is not editable is drawn by the part FieldValue.
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the chosen value. */
 const ARG_VALUE = 'value';
@@ -106,7 +110,19 @@ describe('TLSelect as MUI Select', () => {
     mountSelect({ value: 1, options: OPTIONS, editable: false });
 
     expect(screen.queryByRole('combobox')).toBeNull();
-    expect(document.getElementById(CONTROL_ID)!.textContent).toBe('Eins');
+    const shown = document.getElementById(CONTROL_ID)!;
+    expect(shown.textContent).toBe('Eins');
+    expect(shown.classList).toContain('MuiTypography-body2');
+    expect(shown.classList).not.toContain('tl-field-value');
+  });
+
+  it('shows nothing while read-only without a chosen option', () => {
+    mountSelect({ value: null, options: OPTIONS, editable: false, cssClass: 'my-class' });
+
+    const shown = document.getElementById(CONTROL_ID)!;
+    expect(shown.textContent).toBe('');
+    expect(shown.classList).toContain('my-class');
+    expect(screen.queryByRole('combobox')).toBeNull();
   });
 
   it('opens no menu and sends nothing while disabled', async () => {

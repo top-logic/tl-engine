@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useI18N, useListReorder, reorderState, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon, ICON_ADD, ICON_REMOVE, ICON_HANDLE } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useTLUpload, useI18N, useListReorder, reorderState, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon, ICON_ADD, ICON_REMOVE, ICON_HANDLE, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -74,6 +74,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const upload = useTLUpload();
   const t = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   const elements = (state.elements as unknown[]) ?? [];
   const block = state.layout === 'block';
@@ -198,16 +199,16 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
             <span className="tlValueList__item">
               <TLChild control={element} />
             </span>
-            <button
-              type="button"
+            <Button
+              label={t['js.valueList.remove']}
+              image={ICON_REMOVE}
+              display="icon-only"
+              appearance="ghost"
+              small
               className="tlValueList__remove"
-              aria-label={t['js.valueList.remove']}
-              {...tooltipProps(t['js.valueList.remove'])}
               disabled={disabled}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
-            >
-              <ThemeIcon encoded={ICON_REMOVE} />
-            </button>
+            />
           </div>
         );
       })}
@@ -221,11 +222,13 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
           style={{ display: 'none' }}
         />
       )}
-      <button
-        type="button"
+      <Button
+        label={addLabel}
+        image={ICON_ADD}
+        display="icon-only"
+        appearance="ghost"
+        small
         className="tlValueList__add"
-        aria-label={addLabel}
-        {...tooltipProps(addLabel)}
         disabled={disabled || uploading}
         onClick={() => {
           if (uploads) {
@@ -234,9 +237,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
             sendCommand(CMD_ADD_ELEMENT);
           }
         }}
-      >
-        <ThemeIcon encoded={ICON_ADD} />
-      </button>
+      />
       {arrangeable && reorder.announcer}
     </div>
   );

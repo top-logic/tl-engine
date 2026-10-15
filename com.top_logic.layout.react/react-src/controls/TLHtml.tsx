@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, tooltipProps, pushLocalStep } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /** Command following a link that names its target for the server (ReactHtmlControl.FOLLOW_LINK_COMMAND). */
@@ -9,6 +9,9 @@ const ARG_LINK = 'link';
 
 /** Attribute of a link naming its target for the server (ReactHtmlControl.LINK_ATTRIBUTE). */
 const LINK_ATTRIBUTE = 'data-tl-link';
+
+/** Icon of the button printing the document. */
+const PRINT_ICON = 'css:bi bi-printer';
 
 /**
  * Scrolls the element of the given id inside the container into view.
@@ -196,6 +199,8 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     frameWindow.print();
   }, []);
 
+  const Button = usePart('Button');
+
   if (error) {
     return (
       <div id={controlId} className={rootClassName(state, 'tlHtml tlHtml__error')} role="alert">{error}</div>
@@ -218,15 +223,15 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
           title={t['js.html.document']}
         />
         {print && (
-          <button
-            type="button"
-            className="tl-button tl-button--ghost tl-type-body tlHtml__print"
-            aria-label={t['js.html.print']}
-            {...tooltipProps(t['js.html.print'])}
-            onClick={handlePrint}
-          >
-            <i className="bi bi-printer" aria-hidden="true" />
-          </button>
+          <div className="tlHtml__print">
+            <Button
+              label={t['js.html.print']}
+              image={PRINT_ICON}
+              display="icon-only"
+              appearance="ghost"
+              onClick={handlePrint}
+            />
+          </div>
         )}
       </div>
     );

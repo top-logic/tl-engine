@@ -1,7 +1,7 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
   useCloseOnOutsidePress, FillBarrier, rootClassName, tooltipProps,
-  ThemeIcon,
+  ThemeIcon, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -104,28 +104,39 @@ const SidebarNavItem: React.FC<{
   tabIndex: number;
   itemRef: (el: HTMLElement | null) => void;
   onFocus: (id: string) => void;
-}> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => (
-  <button
-    className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
-    onClick={() => onSelect(item.id)}
-    aria-label={collapsed ? item.label : undefined}
-    {...tooltipProps(collapsed ? item.label : undefined)}
-    tabIndex={tabIndex}
-    ref={itemRef}
-    onFocus={() => onFocus(item.id)}
-  >
-    {collapsed && item.badge ? (
-      <span className="tlSidebar__iconWrap">
+}> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => {
+  const Badge = usePart('Badge');
+  return (
+    <button
+      className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
+      onClick={() => onSelect(item.id)}
+      aria-label={collapsed ? item.label : undefined}
+      {...tooltipProps(collapsed ? item.label : undefined)}
+      tabIndex={tabIndex}
+      ref={itemRef}
+      onFocus={() => onFocus(item.id)}
+    >
+      {collapsed && item.badge ? (
+        <span className="tlSidebar__iconWrap">
+          <SidebarIcon icon={item.icon} />
+          {/* Over the corner of the icon, placed by the element around the badge: the root of
+              the part keeps the position its implementation gives it. */}
+          <span className="tlSidebar__cornerBadge">
+            <Badge content={item.badge} />
+          </span>
+        </span>
+      ) : (
         <SidebarIcon icon={item.icon} />
-        <span className="tlSidebar__badge tlSidebar__badge--collapsed">{item.badge}</span>
-      </span>
-    ) : (
-      <SidebarIcon icon={item.icon} />
-    )}
-    {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-    {!collapsed && item.badge && <span className="tlSidebar__badge">{item.badge}</span>}
-  </button>
-);
+      )}
+      {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
+      {!collapsed && item.badge && (
+        <span className="tlSidebar__badge">
+          <Badge content={item.badge} />
+        </span>
+      )}
+    </button>
+  );
+};
 
 const SidebarCommandItem: React.FC<{
   item: CommandItemInfo;
@@ -163,9 +174,18 @@ const SidebarHeaderItem: React.FC<{
   );
 };
 
-const SidebarSeparator: React.FC = () => (
-  <hr className="tlSidebar__separator" />
-);
+/** The class of the element around the divider between two items, which gives it the space around it. */
+const SEPARATOR_CLASS = 'tlSidebar__separator';
+
+/** The line between two items of the sidebar or of its flyout, drawn by the part `Divider`. */
+const SidebarSeparator: React.FC = () => {
+  const Divider = usePart('Divider');
+  return (
+    <div className={SEPARATOR_CLASS}>
+      <Divider />
+    </div>
+  );
+};
 
 /* ---------- Group flyout (collapsed mode) ---------- */
 
@@ -179,6 +199,7 @@ const SidebarGroupFlyout: React.FC<{
   onClose: () => void;
 }> = ({ item, activeItemId, anchorRect, triggerRef, onSelect, onExecute, onClose }) => {
   const flyoutRef = useRef<HTMLDivElement>(null);
+  const Badge = usePart('Badge');
 
   // Close on a press outside the flyout. A press on the group icon the flyout hangs off is left to
   // that icon, which toggles the flyout on its click.
@@ -227,7 +248,9 @@ const SidebarGroupFlyout: React.FC<{
               <SidebarIcon icon={child.icon} />
               <span className="tlSidebar__label">{child.label}</span>
               {child.type === 'nav' && (child as NavItem).badge && (
-                <span className="tlSidebar__badge">{(child as NavItem).badge}</span>
+                <span className="tlSidebar__badge">
+                  <Badge content={(child as NavItem).badge!} />
+                </span>
               )}
             </button>
           );
@@ -240,7 +263,7 @@ const SidebarGroupFlyout: React.FC<{
           );
         }
         if (child.type === 'separator') {
-          return <hr key={child.id} className="tlSidebar__separator" />;
+          return <SidebarSeparator key={child.id} />;
         }
         return null;
       })}
@@ -410,6 +433,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const DisclosureToggle = usePart('DisclosureToggle');
 
   const items = (state.items as SidebarItemData[]) ?? [];
   const activeItemId = state.activeItemId as string;
@@ -610,6 +634,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       handleSelect, handleExecute, handleToggleGroup, handleOpenFlyout, handleCloseFlyout]);
 
   const collapseLabel = collapsed ? i18n['js.sidebar.expand'] : i18n['js.sidebar.collapse'];
+  const navId = `${controlId}-nav`;
 
   const rootClass = 'tlSidebar'
     + (collapsed ? ' tlSidebar--collapsed' : '')
@@ -623,7 +648,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       {drawerOpen && (
         <div className="tlSidebar__backdrop" onClick={handleToggleDrawer} aria-hidden="true" />
       )}
-      <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
+      <nav id={navId} className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (
           !!state.headerCollapsedContent && (
             <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">
@@ -673,14 +698,10 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
           )
         )}
 
-        <button className="tlSidebar__collapseBtn" onClick={handleToggleCollapse}
-          aria-label={collapseLabel} {...tooltipProps(collapseLabel)}>
-          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-            <path d={collapsed ? 'M6 4l4 4-4 4' : 'M10 4l-4 4 4 4'}
-              fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className="tlSidebar__collapseBar">
+          <DisclosureToggle expanded={!collapsed} opens="end" label={collapseLabel} onClick={handleToggleCollapse}
+            aria-controls={navId} />
+        </div>
       </nav>
 
       {/* The region stretches the active view to its own bounded height either way, which ends

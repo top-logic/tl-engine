@@ -123,6 +123,7 @@
 				<executions>
 					<execution>
 						<id>resolve-engine-components</id>
+						<phase>test-compile</phase>
 						<goals>
 							<goal>resolve</goal>
 						</goals>
@@ -130,6 +131,7 @@
 					
 					<execution>
 						<id>mark-as-toplogic-component</id>
+						<phase>generate-resources</phase>
 						<goals>
 							<goal>touch</goal>
 						</goals>
@@ -140,6 +142,7 @@
 					
 					<execution>
 						<id>mark-tests-as-toplogic-component</id>
+						<phase>generate-resources</phase>
 						<goals>
 							<goal>touch</goal>
 						</goals>

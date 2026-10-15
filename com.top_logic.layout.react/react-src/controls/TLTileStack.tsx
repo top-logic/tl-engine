@@ -47,7 +47,7 @@ const TileFrame: React.FC<{
  * the stack moved - `tlTileStack--forward` for a frame pushed, `tlTileStack--backward` for one
  * popped - and {@link useKeyedTransition} marks the frame arriving `tlTileStack__frame--entering`
  * and holds an inert copy of the frame left behind, marked `tlTileStack__frame--exiting`, over the
- * stack while it leaves. The engine only places the copy; the movement is the stylesheet's.
+ * stack while it leaves. The engine draws a default slide for both, which a stylesheet redefines.
  *
  * Takes part in the fill contract as a container: a stack whose frame fills fills its own
  * container, so the frame content spans the available height instead of the stack collapsing to

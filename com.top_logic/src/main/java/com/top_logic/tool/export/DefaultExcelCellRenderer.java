@@ -57,7 +57,7 @@ public final class DefaultExcelCellRenderer extends AbstractExcelCellRenderer {
 			value = ((FormField) value).getValue();
 		}
 		if (value instanceof Collection collection) {
-			ResourceProvider resourceProvider = context.modelColumn().getConfig().getResourceProvider();
+			ResourceProvider resourceProvider = context.resourceProvider();
 
 			StringBuilder buffer = new StringBuilder();
 			for (Iterator<?> it = collection.iterator(); it.hasNext();) {

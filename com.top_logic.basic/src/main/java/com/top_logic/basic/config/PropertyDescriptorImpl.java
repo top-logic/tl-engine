@@ -2317,7 +2317,8 @@ public abstract class PropertyDescriptorImpl
 		_encrypted = encryped;
 	}
 
-	private boolean isEncrypted() {
+	@Override
+	public boolean isEncrypted() {
 		return _encrypted;
 	}
 

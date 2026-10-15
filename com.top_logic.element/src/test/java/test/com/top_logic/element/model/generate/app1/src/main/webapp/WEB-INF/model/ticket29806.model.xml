@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="ticket29806.withSingleton">
+			<annotations>
+				<annotation config:interface="com.top_logic.model.config.JavaPackage"
+					interface-package="test.ticket29806.singleton"
+					implementation-package="test.ticket29806.singleton.impl"
+				/>
+				<singletons>
+					<singleton name="ROOT" type="Root"/>
+				</singletons>
+			</annotations>
+			<types>
+				<class name="Root">
+					<attributes>
+						<property name="name" type="tl.core:String"/>
+					</attributes>
+				</class>
+				<class name="Plain"/>
+				<interface name="Marker"/>
+				<interface name="Bound">
+					<annotations>
+						<implementation-binding class-name="test.ticket29806.singleton.impl.BoundImpl"/>
+					</annotations>
+				</interface>
+				<class name="BoundChild">
+					<generalizations>
+						<generalization type="Bound"/>
+					</generalizations>
+				</class>
+				<class name="Node">
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="Node"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="Node"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="MarkedNode">
+					<generalizations>
+						<generalization type="Node"/>
+						<generalization type="Marker"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="ticket29806.withoutSingleton">
+			<annotations>
+				<annotation config:interface="com.top_logic.model.config.JavaPackage"
+					interface-package="test.ticket29806.plain"
+					implementation-package="test.ticket29806.plain.impl"
+				/>
+			</annotations>
+			<types>
+				<class name="Leaf">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<class name="Other"/>
+			</types>
+		</module>
+	</modules>
+</model>

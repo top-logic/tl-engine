@@ -295,12 +295,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 
 	private void writeImports() {
 		if (generalizations(type()).isEmpty() && !(noGetter() && noSetter())) {
-			if (isStructure(module())) {
-				checkElementClassesAllowedInStructures();
-				importLine("com.top_logic.element.structured.StructuredElement");
-			} else {
-				importLine("com.top_logic.knowledge.wrap.Wrapper");
-			}
+			importLine("com.top_logic.knowledge.wrap.Wrapper");
 			nl();
 		}
 	}

@@ -5,6 +5,7 @@
  */
 package com.top_logic.service.openapi.server;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
@@ -29,6 +30,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Multiple parameters of the operation {1}:{0} are bound to the same script variable: {2}
 	 */
 	public static ResKey3 DUPLICATE_PARAMETER_VARIABLES__PATH__METHOD__NAMES;
+
+	/**
+	 * @en The schema of the parameter "{2}" of the operation {1}:{0} is invalid.
+	 */
+	public static ResKey3 ERROR_INVALID_PARAMETER_SCHEMA__PATH__METHOD__PARAMETER;
+
+	/**
+	 * @en The schema of the global parameter "{0}" is invalid.
+	 */
+	public static ResKey1 ERROR_INVALID_GLOBAL_PARAMETER_SCHEMA__PARAMETER;
 
 	static {
 		initConstants(I18NConstants.class);

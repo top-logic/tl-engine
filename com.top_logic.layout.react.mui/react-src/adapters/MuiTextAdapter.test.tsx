@@ -60,7 +60,7 @@ describe('TLText as MUI Typography', () => {
       primary: 'var(--mui-palette-text-primary)',
       secondary: 'var(--mui-palette-text-secondary)',
       helper: 'var(--mui-palette-text-secondary)',
-      accent: 'var(--mui-palette-primary-main)',
+      placeholder: 'var(--mui-palette-text-disabled)',
       success: 'var(--mui-palette-success-main)',
       warning: 'var(--mui-palette-warning-main)',
       error: 'var(--mui-palette-error-main)',
@@ -103,9 +103,9 @@ describe('TLText as MUI Typography', () => {
   });
 
   it('draws a pill without a role of its own in the role of its tone', () => {
-    mountText({ appearance: 'pill', tone: 'accent' });
+    mountText({ appearance: 'pill', tone: 'warning' });
 
-    expect(root().classList).toContain('MuiChip-colorPrimary');
+    expect(root().classList).toContain('MuiChip-colorWarning');
   });
 
   it('never draws an empty text as a pill', () => {

@@ -203,3 +203,20 @@ message RouteResumeEvent extends SSEEvent {
 	/** The URL of the refused move (relative to view base). */
 	string url;
 }
+
+/**
+ * Tells the client to download a file the server has prepared for this window.
+ *
+ * <p>
+ * Sent when a command hands a file to the user - an export, a generated document. The client fetches
+ * {@code url} as a download, so the browser saves the file instead of displaying it. The file can be
+ * fetched once.
+ * </p>
+ */
+message DownloadEvent extends SSEEvent {
+	/** The address of the prepared file, relative to the context path of the application. */
+	string url;
+
+	/** The name the file is saved under. */
+	string fileName;
+}

@@ -23,6 +23,12 @@ import com.top_logic.xio.importer.binding.ImportContext;
 
 /**
  * {@link Handler} converting the value of an {@link Config#getIdAttribute()} to a model reference.
+ * 
+ * <p>
+ * The reference is stored, when all referenced objects are imported, in the order of the IDs. An
+ * ID that is still unresolved at the end of the import is left out of the stored list (and is
+ * reported as error, unless {@link Config#getIgnoreUnresolved()} is set).
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -66,10 +72,10 @@ public class MultiReferenceImport<C extends MultiReferenceImport.Config<?>> exte
 				List<String> ids = _format.getValue(getConfig().getIdAttribute(), rawId);
 				List<Object> refs = new ArrayList<>(ids.size());
 				for (String id : ids) {
-					Object ref = context.resolveObject(this, in.getLocation(), id);
+					Object ref = resolveReference(context, in.getLocation(), id);
 					refs.add(ref);
 				}
-				storeReference(context, refs);
+				context.derefAll(refs, targets -> storeReference(context, targets));
 			} catch (ConfigurationException ex) {
 				context.error(in.getLocation(),
 					I18NConstants.ERROR_ID_FORMAT__HANDLER_MESSAGE.fill(location(), ex.getErrorKey()));

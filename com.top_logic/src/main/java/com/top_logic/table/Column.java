@@ -43,6 +43,19 @@ public interface Column<R, V> {
 	V value(R row);
 
 	/**
+	 * The value an export of the table writes for the given row, e.g. into an Excel cell.
+	 *
+	 * <p>
+	 * The default is the {@link #value(Object) cell value}. A column whose cell value is no value
+	 * of its own - a pair of the value and its row, built for a filter that needs both - answers the
+	 * value it displays.
+	 * </p>
+	 */
+	default Object exportValue(R row) {
+		return value(row);
+	}
+
+	/**
 	 * Describes how to render a cell value into UI-neutral {@link CellContent}.
 	 */
 	CellRenderer<V> renderer();
@@ -139,6 +152,21 @@ public interface Column<R, V> {
 	 */
 	default boolean selectable() {
 		return !pinnedEnd();
+	}
+
+	/**
+	 * Whether this column is part of an export of the table, e.g. to Excel.
+	 *
+	 * <p>
+	 * An export holds the data the table shows, so a column that is part of what the table
+	 * <em>does</em> - a per-row button, an action opening a row - is left out, whatever place it
+	 * has in the display. The default follows {@link #selectable()}, which draws exactly that line
+	 * for the column selection. A data column the application does not want to hand out of the
+	 * application switches this off.
+	 * </p>
+	 */
+	default boolean exportable() {
+		return selectable();
 	}
 
 	/**

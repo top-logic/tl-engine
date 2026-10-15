@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { withPill } from './selectOptions';
+import { FieldValue } from './form/FieldValue';
 
 /** Command sent when the user follows the link of the displayed value. */
 const CMD_GOTO = 'goto';
@@ -16,8 +16,9 @@ const CMD_GOTO = 'goto';
  * - hasLink: boolean    - whether clicking navigates to the object
  * - colorRole?: string  - color role the object carries in the model; shown as a pill of that role
  *
- * Design system: a read-only value, `tl-field-value` (an `a` where it is a link), with the icon
- * in `tl-icon-sm` and the label in `tl-field-value__text`.
+ * Design system: a read-only value, rendered by FieldValue - `tl-field-value` (an `a` sending
+ * `goto` where it is a link), the icon through ThemeIcon, a colored object as a `tl-pill` carrying
+ * its role as `data-tl-role`.
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -30,46 +31,22 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const hasLink = state.hasLink as boolean;
   const colorRole = (state.colorRole as string) || undefined;
 
-  const icon = iconCss
-    ? <i className={iconCss + ' tl-icon-sm'} aria-hidden="true" />
-    : iconSrc
-    ? <img src={iconSrc} className="tl-icon-sm" alt="" />
-    : null;
-
-  // A colored object is drawn as a pill; one the model gives no role stays plain.
-  const content = withPill(colorRole, (
-    <>
-      {icon}
-      {label && <span className="tl-field-value__text">{label}</span>}
-    </>
-  ));
-
-  const handleClick = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleGoto = React.useCallback(() => {
     sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
-  const className = rootClassName(state, 'tl-field-value tl-type-body');
-  const tooltipAttr = hasTooltip ? 'key:tooltip' : undefined;
-
-  if (hasLink) {
-    return (
-      <a
-        id={controlId}
-        className={className}
-        href="#"
-        onClick={handleClick}
-        data-tooltip={tooltipAttr}
-      >
-        {content}
-      </a>
-    );
-  }
-
+  // One renderer of a read-only value (N1): the icon through ThemeIcon, a colored object as a pill
+  // carrying data-tl-role, a link as the inner kind (goto).
   return (
-    <span id={controlId} className={className} data-tooltip={tooltipAttr}>
-      {content}
-    </span>
+    <FieldValue
+      id={controlId}
+      className={rootClassName(state)}
+      text={label ?? ''}
+      icon={iconCss ? 'css:' + iconCss : iconSrc}
+      role={colorRole}
+      onGoto={hasLink ? handleGoto : undefined}
+      tooltip={hasTooltip ? 'key:tooltip' : undefined}
+    />
   );
 };
 

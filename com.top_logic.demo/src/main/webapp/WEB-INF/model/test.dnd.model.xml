@@ -16,7 +16,7 @@
 		</annotations>
 		<class name="Library">
 			<generalizations>
-				<generalization type="tl.model:TLObject"/>
+				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
 			<annotations>
 				<delete-constraints>
@@ -143,7 +143,7 @@
 		</class>
 		<class name="Root">
 			<generalizations>
-				<generalization type="tl.model:TLObject"/>
+				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
 			<annotations>
 				<delete-constraints>

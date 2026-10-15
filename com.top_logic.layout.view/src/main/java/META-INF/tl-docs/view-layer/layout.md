@@ -130,7 +130,7 @@ Which of the arrangement elements fits:
 </columns>
 ```
 
-The client classes an application styles against are `.tlColumns`, `.tlColumns--gap-<gap>` and `.tlColumns__column`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
+The client classes an application styles against are `.tl-columns`, `.tl-columns--gap-<gap>` and `.tl-columns__column` (design system, `columns.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
 
 ## Repeating a template over a computed list: `<object-list>`
 

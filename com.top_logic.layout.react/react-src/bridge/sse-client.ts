@@ -26,6 +26,7 @@ import {
   type RouteResumeEventData,
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
+import { handleDownload, type DownloadEventData } from './download';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -225,6 +226,9 @@ function dispatch(data: unknown): void {
       break;
     case 'PickEvent':
       handlePick(payload as unknown as PickEventData);
+      break;
+    case 'DownloadEvent':
+      handleDownload(payload as unknown as DownloadEventData);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

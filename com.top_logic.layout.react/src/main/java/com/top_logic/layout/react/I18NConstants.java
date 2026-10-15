@@ -479,6 +479,32 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.valueList.move")
 	public static ResKey JS_VALUE_LIST_MOVE;
 
+	// -- Reordering client-side i18n keys --
+
+	/**
+	 * @en Move {0}
+	 */
+	@CustomKey("js.reorder.handle")
+	public static ResKey JS_REORDER_HANDLE;
+
+	/**
+	 * @en Alt + arrow key moves the entry
+	 */
+	@CustomKey("js.reorder.hint")
+	public static ResKey JS_REORDER_HINT;
+
+	/**
+	 * @en {0}, position {1} of {2}
+	 */
+	@CustomKey("js.reorder.moved")
+	public static ResKey JS_REORDER_MOVED;
+
+	/**
+	 * @en Position {0} of {1}
+	 */
+	@CustomKey("js.reorder.position")
+	public static ResKey JS_REORDER_POSITION;
+
 	/**
 	 * @en No value
 	 */
@@ -561,6 +587,18 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.treeView.collapse")
 	public static ResKey JS_TREE_VIEW_COLLAPSE;
 
+	/**
+	 * @en Tree
+	 */
+	@CustomKey("js.tree.label")
+	public static ResKey JS_TREE_LABEL;
+
+	/**
+	 * @en Loading entries\u2026
+	 */
+	@CustomKey("js.tree.loading")
+	public static ResKey JS_TREE_LOADING;
+
 	// -- Form group client-side i18n keys --
 
 	/**
@@ -576,6 +614,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_FORM_GROUP_EXPAND;
 
 	// -- Table client-side i18n keys --
+
+	/**
+	 * @en Select all rows
+	 */
+	@CustomKey("js.table.selectAll")
+	public static ResKey JS_TABLE_SELECT_ALL;
+
+	/**
+	 * @en Select this row
+	 */
+	@CustomKey("js.table.selectRow")
+	public static ResKey JS_TABLE_SELECT_ROW;
+
+	/**
+	 * @en No entries
+	 */
+	@CustomKey("js.table.empty")
+	public static ResKey JS_TABLE_EMPTY;
 
 	/**
 	 * @en Freeze up to here
@@ -596,10 +652,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_FREEZE_SPLITTER;
 
 	/**
+	 * @en Change the width of {0}
+	 */
+	@CustomKey("js.table.columnWidth")
+	public static ResKey JS_TABLE_COLUMN_WIDTH;
+
+	/**
 	 * @en Filter
 	 */
 	@CustomKey("js.table.filter")
 	public static ResKey JS_TABLE_FILTER;
+
+	/**
+	 * @en Filter (active)
+	 */
+	@CustomKey("js.table.filterActive")
+	public static ResKey JS_TABLE_FILTER_ACTIVE;
 
 	/**
 	 * @en Reset

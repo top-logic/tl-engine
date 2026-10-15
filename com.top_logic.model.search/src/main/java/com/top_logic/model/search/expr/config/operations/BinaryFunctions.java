@@ -5,9 +5,16 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
+import java.awt.Dimension;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.layout.image.util.ImageUtils;
 
 /**
  * TL-Script functions describing a binary value.
@@ -20,6 +27,16 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
  */
 @ScriptPrefix("binary")
 public class BinaryFunctions extends TLScriptFunctions {
+
+	/**
+	 * Key of the image width in pixels in the result of {@link #imageSize(BinaryDataSource)}.
+	 */
+	public static final String IMAGE_WIDTH = "width";
+
+	/**
+	 * Key of the image height in pixels in the result of {@link #imageSize(BinaryDataSource)}.
+	 */
+	public static final String IMAGE_HEIGHT = "height";
 
 	/**
 	 * The content type of the given binary value.
@@ -58,6 +75,43 @@ public class BinaryFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static Long size(@Mandatory BinaryDataSource data) {
 		return data == null ? null : Long.valueOf(data.getSize());
+	}
+
+	/**
+	 * The size of the image in the given binary value in pixels.
+	 *
+	 * <p>
+	 * The size is read from the image header, the image itself is not decoded. Supported are the
+	 * common bitmap formats such as PNG, JPEG, GIF and BMP. The result is a dictionary with the
+	 * width of the image in pixels under the key {@link #IMAGE_WIDTH} and its height under the key
+	 * {@link #IMAGE_HEIGHT}.
+	 * </p>
+	 *
+	 * @param data
+	 *        The binary value containing an encoded image.
+	 * @return A dictionary with the width and height of the image in pixels, or <code>null</code> if
+	 *         no value is given or the value is not a readable image.
+	 */
+	@Label("Size of an image")
+	@SideEffectFree
+	public static Map<String, Object> imageSize(@Mandatory BinaryDataSource data) {
+		if (data == null) {
+			return null;
+		}
+		Dimension size;
+		try {
+			size = ImageUtils.getImageSize(data.toData());
+		} catch (IOException ex) {
+			Logger.debug("Not a readable image: " + data.getName(), ex, BinaryFunctions.class);
+			return null;
+		}
+		if (size == null) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(IMAGE_WIDTH, Double.valueOf(size.width));
+		result.put(IMAGE_HEIGHT, Double.valueOf(size.height));
+		return result;
 	}
 
 }

@@ -5,7 +5,18 @@
  */
 package test.com.top_logic.model.search.expr;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+
 import junit.framework.Test;
+
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.model.search.expr.config.operations.BinaryFunctions;
 
 /**
  * Tests for the TL-Script functions accessing the properties of a binary value.
@@ -64,6 +75,28 @@ public class TestBinaryFunctions extends AbstractSearchExpressionTest {
 	public void testNoValue() throws Exception {
 		assertNull(eval("binaryContentType(null)"));
 		assertNull(eval("binarySize(null)"));
+		assertNull(eval("binaryImageSize(null)"));
+	}
+
+	public void testImageSize() throws Exception {
+		BinaryData png = BinaryDataFactory.createBinaryData(png(37, 23), "image/png", "image.png");
+
+		Object result = eval("image -> binaryImageSize($image)", png);
+
+		assertEquals(Map.of(
+			BinaryFunctions.IMAGE_WIDTH, Double.valueOf(37),
+			BinaryFunctions.IMAGE_HEIGHT, Double.valueOf(23)), result);
+	}
+
+	public void testImageSizeOfNonImage() throws Exception {
+		assertNull(eval("binaryImageSize(base64Decode('SGVsbG8=', name: 'a.png', contentType: 'image/png'))"));
+	}
+
+	private static byte[] png(int width, int height) throws IOException {
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		ImageIO.write(image, "png", buffer);
+		return buffer.toByteArray();
 	}
 
 	public static Test suite() {

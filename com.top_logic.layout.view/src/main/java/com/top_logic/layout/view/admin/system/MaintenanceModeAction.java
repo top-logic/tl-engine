@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -87,7 +88,7 @@ public class MaintenanceModeAction implements ViewAction {
 	 * global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<MaintenanceModeAction> {
+	public interface Config extends PolymorphicConfiguration<MaintenanceModeAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";

@@ -69,7 +69,7 @@ public class DeleteObjectAction implements ViewAction {
 	 * Configuration for {@link DeleteObjectAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<DeleteObjectAction>, WithCommitMessage {
+	public interface Config extends PolymorphicConfiguration<DeleteObjectAction>, WithCommitMessage, WithValueArgument {
 
 		/** Tag name of a {@link DeleteObjectAction} in an action chain. */
 		String TAG_NAME = "delete-object";

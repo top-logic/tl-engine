@@ -28,14 +28,15 @@ import com.top_logic.util.error.TopLogicException;
  * {@link ViewAction} that wraps inner actions in a KB transaction.
  *
  * <p>
- * All inner actions execute within the same transaction. If any action throws, the transaction is
- * rolled back. The result of the last inner action is returned.
+ * All inner actions execute within the same transaction, with the arguments of the enclosing chain.
+ * If any action throws, the transaction is rolled back. The result of the last inner action is the
+ * result of this action.
  * </p>
  *
  * <p>
  * The changes are committed with the configured commit message, filled with the label of the
- * action's input. Without one, the message names the label of the command the action runs in and
- * the action's input.
+ * default argument of the chain. Without one, the message names the label of the command the action
+ * runs in and that argument.
  * </p>
  *
  * <p>
@@ -111,19 +112,33 @@ public class WithTransactionAction implements ViewAction {
 		return ViewActions.tone(_actions);
 	}
 
+	/**
+	 * Runs the inner actions with the given value as their single argument named
+	 * {@link GenericViewCommand#DEFAULT_ARGUMENT}.
+	 */
 	@Override
 	public Object execute(ReactContext context, Object input) {
+		return executeInTransaction(context, ActionArguments.of(GenericViewCommand.DEFAULT_ARGUMENT, input));
+	}
+
+	@Override
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		continuation.resume(executeInTransaction(context,
+			arguments == null ? ActionArguments.NONE : arguments));
+	}
+
+	private Object executeInTransaction(ReactContext context, ActionArguments arguments) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction(_commitMessage.create(input));
+		Transaction tx = kb.beginTransaction(_commitMessage.create(arguments.value()));
 		try {
-			Object current = input;
+			Object result = arguments.value();
 			for (ViewAction action : _actions) {
 				RequireSyncContinuation continuation = new RequireSyncContinuation(action);
-				action.execute(context, current, continuation);
-				current = continuation.resumedValue();
+				action.execute(context, arguments, continuation);
+				result = continuation.resumedValue();
 			}
 			tx.commit();
-			return current;
+			return result;
 		} finally {
 			tx.rollback();
 		}

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import com.top_logic.layout.view.command.ActionArguments;
 import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
@@ -36,6 +37,9 @@ public final class DisplayTargetNavigator implements ObjectNavigator {
 	 */
 	private static final ViewAction SHOW_OBJECT = new ShowObjectAction();
 
+	/** Name of the argument holding the object to show. */
+	private static final String OBJECT_ARGUMENT = "object";
+
 	private DisplayTargetNavigator() {
 		// Singleton constructor.
 	}
@@ -55,7 +59,7 @@ public final class DisplayTargetNavigator implements ObjectNavigator {
 	@Override
 	public void show(ReactContext context, Object value) {
 		try {
-			ViewActionChain.run(context, List.of(SHOW_OBJECT), value, null);
+			ViewActionChain.run(context, List.of(SHOW_OBJECT), ActionArguments.of(OBJECT_ARGUMENT, value), null);
 		} catch (TopLogicException problem) {
 			ViewMessages.error(context, I18NConstants.ERROR_CANNOT_SHOW_OBJECT, problem.getErrorKey());
 		}

@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.channel.ChannelRef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -226,12 +228,11 @@ public class AlertElement implements UIElement {
 		boolean isClosable();
 
 		/**
-		 * Actions run after the user dismissed the message, each action's result becoming the input
-		 * of the next one.
+		 * Actions run after the user dismissed the message.
 		 *
 		 * <p>
-		 * The first action receives the value of the first {@link #getInputs() input channel}, or
-		 * nothing when no input is declared.
+		 * The actions run with the value of the first {@link #getInputs() input channel} as
+		 * argument named after that channel, or with nothing when no input is declared.
 		 * </p>
 		 */
 		@Name(ON_DISMISS)
@@ -315,8 +316,11 @@ public class AlertElement implements UIElement {
 				+ "') or as a function ('" + Config.MESSAGE_EXPR + "').");
 		}
 
-		List<ViewAction> onDismiss = ViewActions.instantiate(context, config.getOnDismiss());
-		_onDismiss = onDismiss.isEmpty() ? null : new GenericViewCommand(onDismiss);
+		List<ChannelRef> inputs = config.getInputs();
+		String argumentName = GenericViewCommand.argumentName(inputs.isEmpty() ? null : inputs.get(0));
+		List<ViewAction> onDismiss =
+			ViewActions.instantiate(context, config.getOnDismiss(), ActionScope.single(argumentName));
+		_onDismiss = onDismiss.isEmpty() ? null : new GenericViewCommand(argumentName, onDismiss);
 
 		_commands = new ArrayList<>();
 		_commandConfigs = new ArrayList<>();

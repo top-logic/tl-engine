@@ -72,6 +72,9 @@ public interface DropConfig extends ExecutabilityConfig {
 	/** Configuration name for {@link #getActions()}. */
 	String ACTIONS = "actions";
 
+	/** Name of the argument holding the dropped objects for the {@link #getActions() actions}. */
+	String OBJECTS_ARGUMENT = "objects";
+
 	/**
 	 * The {@link DragConfig#getKind() kinds} of the drags this drop accepts.
 	 *
@@ -174,8 +177,11 @@ public interface DropConfig extends ExecutabilityConfig {
 	Expr getRefuseIf();
 
 	/**
-	 * The chain of actions applying the drop, receiving the dropped objects as the input of its
-	 * first action.
+	 * The chain of actions applying the drop.
+	 *
+	 * <p>
+	 * The actions run with the dropped objects as argument named {@value #OBJECTS_ARGUMENT}.
+	 * </p>
 	 */
 	@Name(ACTIONS)
 	@DefaultContainer

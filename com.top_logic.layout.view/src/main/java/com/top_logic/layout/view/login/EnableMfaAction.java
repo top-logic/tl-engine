@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
@@ -44,7 +45,7 @@ public class EnableMfaAction implements ViewAction {
 	 * Configuration for {@link EnableMfaAction}.
 	 */
 	@TagName("enable-mfa")
-	public interface Config extends PolymorphicConfiguration<EnableMfaAction> {
+	public interface Config extends PolymorphicConfiguration<EnableMfaAction>, WithValueArgument {
 
 		/** Configuration name for {@link #getSecret()}. */
 		String SECRET = "secret";

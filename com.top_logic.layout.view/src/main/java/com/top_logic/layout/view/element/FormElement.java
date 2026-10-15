@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionArguments;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -319,8 +321,8 @@ public class FormElement extends ContainerElement {
 			}
 		}
 
-		_saveActions = ViewActions.instantiate(context, config.getSaveActions());
-		_cancelActions = ViewActions.instantiate(context, config.getCancelActions());
+		_saveActions = ViewActions.instantiate(context, config.getSaveActions(), ActionScope.NONE);
+		_cancelActions = ViewActions.instantiate(context, config.getCancelActions(), ActionScope.NONE);
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -721,7 +723,7 @@ public class FormElement extends ContainerElement {
 
 	/**
 	 * Creates a {@link Consumer} that runs the given {@link ViewAction}s as a
-	 * {@link ViewActionChain}, each action's output becoming the next action's input.
+	 * {@link ViewActionChain} without arguments.
 	 *
 	 * <p>
 	 * The actions execute in the form's {@link ViewContext} so that they can access the
@@ -731,6 +733,6 @@ public class FormElement extends ContainerElement {
 	 */
 	private Consumer<ReactContext> createActionChain(ViewContext formContext,
 			List<ViewAction> actions) {
-		return ctx -> ViewActionChain.run(formContext, actions, null, null);
+		return ctx -> ViewActionChain.run(formContext, actions, ActionArguments.NONE, null);
 	}
 }

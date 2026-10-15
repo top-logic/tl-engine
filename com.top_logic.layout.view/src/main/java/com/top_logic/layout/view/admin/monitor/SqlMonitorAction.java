@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin.monitor;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map.Entry;
@@ -62,7 +63,7 @@ public class SqlMonitorAction implements ViewAction {
 	 * a global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<SqlMonitorAction> {
+	public interface Config extends PolymorphicConfiguration<SqlMonitorAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";

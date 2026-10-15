@@ -124,6 +124,8 @@ public class OpenDialogCommand implements ViewCommand {
 
 	private final OpenDialogAction _action;
 
+	private final String _argumentName;
+
 	/**
 	 * Creates a new {@link OpenDialogCommand}.
 	 */
@@ -131,12 +133,13 @@ public class OpenDialogCommand implements ViewCommand {
 	public OpenDialogCommand(InstantiationContext context, Config config) {
 		_action = new OpenDialogAction(config.getDialogView(), config.getCloseOnBackdrop(),
 			config.getBindInputTo(), config.getBindings());
+		_argumentName = GenericViewCommand.argumentName(config);
 	}
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
 		// Run through the chain: opening may suspend to ask about unsaved changes first.
-		ViewActionChain.run(context, List.of(_action), input, null);
+		ViewActionChain.run(context, List.of(_action), ActionArguments.of(_argumentName, input), null);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

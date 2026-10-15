@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -142,7 +143,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * Configuration for {@link SecurityDefinitionAction}.
 	 */
-	public interface Config extends PolymorphicConfiguration<SecurityDefinitionAction> {
+	public interface Config extends PolymorphicConfiguration<SecurityDefinitionAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";

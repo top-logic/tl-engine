@@ -26,13 +26,12 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
  * {@link ViewAction} that decides between two chains of actions by a TL-Script condition over the
- * current value of the enclosing chain.
+ * default argument of the enclosing chain.
  *
  * <p>
- * The chosen chain runs as a nested chain of the enclosing one: it starts with the current value
- * and its last action's result becomes the value the enclosing chain continues with. The branch
- * that is not chosen does not run, and a branch that is not configured passes the value through
- * unchanged. An abort inside a branch - a declined {@link ConfirmAction} - aborts the whole
+ * The chosen chain runs as a nested chain of the enclosing one, with the same arguments; the result
+ * of its last action is the result of this action. The branch that is not chosen does not run, and
+ * a branch that is not configured does nothing. An abort inside a branch - a declined {@link ConfirmAction} - aborts the whole
  * command, and a compensation registered inside a branch runs on the command's abort like one
  * registered beside the branch.
  * </p>
@@ -47,14 +46,15 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *     &lt;write-channel name="ticket"/&gt;
  *   &lt;/then&gt;
  *   &lt;else&gt;
- *     &lt;execute-script function="x -&gt; new(`demo.tickets:Ticket`, transient: true)"/&gt;
- *     &lt;open-dialog bind-input-to="model" dialog-view="tickets-create.view.xml"/&gt;
+ *     &lt;execute-script function="x -&gt; new(`demo.tickets:Ticket`, transient: true)"&gt;
+ *       &lt;open-dialog bind-input-to="model" dialog-view="tickets-create.view.xml"/&gt;
+ *     &lt;/execute-script&gt;
  *   &lt;/else&gt;
  * &lt;/if&gt;
  * </pre>
  */
 @InApp
-public class IfAction extends InterruptibleViewAction {
+public class IfAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link IfAction}.
@@ -83,7 +83,7 @@ public class IfAction extends InterruptibleViewAction {
 		 *
 		 * <p>
 		 * Called with the {@link #getInputs() inputs} channel values as leading positional
-		 * arguments, followed by the chain's current value as the last argument. Its result is taken
+		 * arguments, followed by the chain's default argument as the last argument. Its result is taken
 		 * as a condition in the fuzzy sense of TL-Script, so a plain object stands for a true
 		 * condition and nothing - {@code null}, an empty list, an empty text - for a false one.
 		 * </p>
@@ -93,16 +93,14 @@ public class IfAction extends InterruptibleViewAction {
 		Expr getTest();
 
 		/**
-		 * The actions to run when the {@link #getTest() condition} holds; none to pass the chain's
-		 * value through.
+		 * The actions to run when the {@link #getTest() condition} holds; without actions, nothing happens.
 		 */
 		@Name(THEN)
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getThen();
 
 		/**
-		 * The actions to run when the {@link #getTest() condition} does not hold; none to pass the
-		 * chain's value through.
+		 * The actions to run when the {@link #getTest() condition} does not hold; without actions, nothing happens.
 		 */
 		@Name(ELSE)
 		@Options(fun = AllInAppImplementations.class)
@@ -131,9 +129,9 @@ public class IfAction extends InterruptibleViewAction {
 	 * @param test
 	 *        The condition deciding which branch runs.
 	 * @param thenActions
-	 *        The actions to run when the condition holds; empty to pass the chain's value through.
+	 *        The actions to run when the condition holds; empty for nothing to happen.
 	 * @param elseActions
-	 *        The actions to run when it does not hold; empty to pass the chain's value through.
+	 *        The actions to run when it does not hold; empty for nothing to happen.
 	 */
 	public IfAction(ActionScript test, List<ViewAction> thenActions, List<ViewAction> elseActions) {
 		_test = test;
@@ -142,9 +140,10 @@ public class IfAction extends InterruptibleViewAction {
 	}
 
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		List<ViewAction> branch = SearchExpression.isTrue(_test.execute(context, input)) ? _then : _else;
-		ViewActionChain.nest(context, branch, input, continuation);
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		List<ViewAction> branch =
+			SearchExpression.isTrue(_test.execute(context, arguments.value())) ? _then : _else;
+		ViewActionChain.nest(context, branch, arguments, continuation);
 	}
 
 	@Override

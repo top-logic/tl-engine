@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.list;
 
+import com.top_logic.layout.view.command.WithValueArgument;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -36,7 +38,7 @@ public class RemoveElementAction implements ViewAction {
 	 * Configuration for {@link RemoveElementAction}.
 	 */
 	@TagName("remove-element")
-	public interface Config extends PolymorphicConfiguration<RemoveElementAction> {
+	public interface Config extends PolymorphicConfiguration<RemoveElementAction>, WithResultActions, WithValueArgument {
 
 		@Override
 		@ClassDefault(RemoveElementAction.class)

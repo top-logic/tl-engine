@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -37,7 +38,7 @@ public class ExpirePasswordAction implements ViewAction {
 	 * Configuration for {@link ExpirePasswordAction}.
 	 */
 	@TagName("expire-password")
-	public interface Config extends PolymorphicConfiguration<ExpirePasswordAction> {
+	public interface Config extends PolymorphicConfiguration<ExpirePasswordAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(ExpirePasswordAction.class)

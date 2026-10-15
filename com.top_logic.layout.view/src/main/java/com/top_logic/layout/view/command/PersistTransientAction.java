@@ -88,7 +88,7 @@ public class PersistTransientAction implements ViewAction {
 	 * Configuration for {@link PersistTransientAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<PersistTransientAction>, CreationContainer, WithCommitMessage {
+	public interface Config extends PolymorphicConfiguration<PersistTransientAction>, CreationContainer, WithCommitMessage, WithResultActions, WithValueArgument {
 
 		/** Tag name of a {@link PersistTransientAction} in an action chain. */
 		String TAG_NAME = "persist-transient";

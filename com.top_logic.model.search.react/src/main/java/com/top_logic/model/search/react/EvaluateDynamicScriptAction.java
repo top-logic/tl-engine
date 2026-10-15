@@ -17,6 +17,7 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.parser.ParseException;
@@ -53,7 +54,7 @@ public class EvaluateDynamicScriptAction extends AbstractScriptAction {
 	 * Configuration for {@link EvaluateDynamicScriptAction}.
 	 */
 	public interface Config extends PolymorphicConfiguration<EvaluateDynamicScriptAction>, WithTransaction.Config,
-			WithCommitMessage {
+			WithCommitMessage, WithResultActions {
 
 		@Override
 		@ClassDefault(EvaluateDynamicScriptAction.class)

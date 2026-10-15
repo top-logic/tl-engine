@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -44,7 +45,7 @@ public class DisableMfaAction implements ViewAction {
 	 * Configuration for {@link DisableMfaAction}.
 	 */
 	@TagName("disable-mfa")
-	public interface Config extends PolymorphicConfiguration<DisableMfaAction> {
+	public interface Config extends PolymorphicConfiguration<DisableMfaAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(DisableMfaAction.class)

@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -130,7 +131,7 @@ public abstract class AbstractJobTest extends TestCase {
 
 	/** Runs the given actions as one command over the channels of this test. */
 	protected void run(List<ViewAction> actions) {
-		ViewActionChain.run(_context, actions, INPUT, value -> {
+		ViewActionChain.run(_context, actions, args(INPUT), value -> {
 			_completions.add(value);
 			_settled.countDown();
 		});
@@ -257,4 +258,8 @@ public abstract class AbstractJobTest extends TestCase {
 		}
 	}
 
+	/** The given value as the single argument of a chain. */
+	protected static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
+	}
 }

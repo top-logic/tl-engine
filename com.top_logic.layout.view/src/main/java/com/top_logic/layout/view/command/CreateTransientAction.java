@@ -63,7 +63,7 @@ public class CreateTransientAction implements ViewAction {
 	 * Configuration for {@link CreateTransientAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<CreateTransientAction>, CreationContainer {
+	public interface Config extends PolymorphicConfiguration<CreateTransientAction>, CreationContainer, WithResultActions {
 
 		/** Tag name of a {@link CreateTransientAction} in an action chain. */
 		String TAG_NAME = "create-transient";

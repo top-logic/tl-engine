@@ -28,6 +28,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -106,7 +107,7 @@ public class TestNotifyAction extends TestCase {
 	public void testStopEndsChain() {
 		ViewAction notify = notify(says("Nothing selected."), Kind.ERROR, Display.SNACKBAR, true);
 
-		ViewActionChain.run(windowContext(), List.of(compensate("before"), notify, downstream()), "in",
+		ViewActionChain.run(windowContext(), List.of(compensate("before"), notify, downstream()), args("in"),
 			_completions::add);
 
 		assertEquals(List.of("error: Nothing selected."), _shown);
@@ -176,7 +177,7 @@ public class TestNotifyAction extends TestCase {
 		Dialogs dialogs = new Dialogs();
 
 		ViewAction notify = notify(says("Nothing selected."), Kind.ERROR, Display.DIALOG, true);
-		ViewActionChain.run(windowContext(dialogs), List.of(compensate("before"), notify, downstream()), "in",
+		ViewActionChain.run(windowContext(dialogs), List.of(compensate("before"), notify, downstream()), args("in"),
 			_completions::add);
 
 		assertTrue("The chain waits for the dialog.", _downstream.isEmpty());
@@ -261,7 +262,7 @@ public class TestNotifyAction extends TestCase {
 	}
 
 	private void run(ViewAction notify, Object input, ReactContext context) {
-		ViewActionChain.run(context, List.of(notify, downstream()), input, _completions::add);
+		ViewActionChain.run(context, List.of(notify, downstream()), args(input), _completions::add);
 	}
 
 	/** An action recording the value that reaches it. */
@@ -388,5 +389,10 @@ public class TestNotifyAction extends TestCase {
 			ServiceTestSetup.createSetup(TestNotifyAction.class, TypeIndex.Module.INSTANCE,
 				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE,
 				ThemeFactory.Module.INSTANCE));
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

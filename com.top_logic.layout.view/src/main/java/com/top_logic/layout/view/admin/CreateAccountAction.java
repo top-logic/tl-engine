@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -42,7 +43,7 @@ public class CreateAccountAction implements ViewAction {
 	 * Configuration for {@link CreateAccountAction}.
 	 */
 	@TagName("create-account")
-	public interface Config extends PolymorphicConfiguration<CreateAccountAction> {
+	public interface Config extends PolymorphicConfiguration<CreateAccountAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(CreateAccountAction.class)

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Arrays;
 
 import com.top_logic.basic.annotation.InApp;
@@ -63,7 +64,7 @@ public class ChangePasswordApplyAction implements ViewAction {
 	 * Configuration for {@link ChangePasswordApplyAction}.
 	 */
 	@TagName("change-password")
-	public interface Config extends PolymorphicConfiguration<ChangePasswordApplyAction> {
+	public interface Config extends PolymorphicConfiguration<ChangePasswordApplyAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(ChangePasswordApplyAction.class)

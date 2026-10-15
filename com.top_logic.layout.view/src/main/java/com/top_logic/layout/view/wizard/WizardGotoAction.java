@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.wizard;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,11 +25,6 @@ import com.top_logic.layout.view.command.ViewAction;
  * value the chain carries, so that a jump target computed by an earlier action is followed. A key no
  * step of the wizard carries leaves the wizard where it is.
  * </p>
- *
- * <p>
- * Passes the input through as output, so an action following it in the chain still sees the object
- * the chain works on.
- * </p>
  */
 @InApp
 public class WizardGotoAction implements ViewAction {
@@ -37,7 +33,7 @@ public class WizardGotoAction implements ViewAction {
 	 * Configuration for {@link WizardGotoAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<WizardGotoAction> {
+	public interface Config extends PolymorphicConfiguration<WizardGotoAction>, WithValueArgument {
 
 		/** Configuration tag of a {@link WizardGotoAction}. */
 		String TAG_NAME = "wizard-goto";

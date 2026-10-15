@@ -25,10 +25,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * {@link ViewAction} that writes the input value to a named channel.
  *
  * <p>
- * Passes the input through as output so the chain can continue.
- * </p>
- *
- * <p>
  * A form displaying the channel value vetoes the write while it holds unsaved changes. The action
  * then asks the user how to proceed and continues the chain with the answer: after saving or
  * discarding those changes the write is retried, on cancel the channel keeps its value. Either way
@@ -43,7 +39,7 @@ public class WriteChannelAction extends InterruptibleViewAction {
 	 * Configuration for {@link WriteChannelAction}.
 	 */
 	@TagName("write-channel")
-	public interface Config extends PolymorphicConfiguration<WriteChannelAction> {
+	public interface Config extends PolymorphicConfiguration<WriteChannelAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(WriteChannelAction.class)

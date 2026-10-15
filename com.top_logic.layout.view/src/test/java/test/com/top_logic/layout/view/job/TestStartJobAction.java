@@ -27,6 +27,8 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.layout.view.command.ActionStep;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.Continuation;
@@ -157,11 +159,17 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that a completed job continues the command with its result, and that the last state
+	 * Tests that a completed job runs its follow-up actions with its result, and that the last state
 	 * carries the result as well.
 	 */
 	public void testACompletedJobContinuesTheCommandWithItsResult() throws Exception {
-		run(List.of(job(body((job, arguments) -> "produced"), false, List.of()), record("after")));
+		List<Object> seen = Collections.synchronizedList(new ArrayList<>());
+		ViewAction followUp = (context, value) -> {
+			seen.add(value);
+			return value;
+		};
+		run(List.of(new ActionStep(job(body((job, arguments) -> "produced"), false, List.of()), null,
+			WithResultActions.RESULT, List.of(followUp, record("after")))));
 
 		JobState last = awaitFinished();
 
@@ -169,7 +177,8 @@ public class TestStartJobAction extends AbstractJobTest {
 		assertEquals("produced", last.result());
 		assertNotNull("A finished job says when it finished.", last.finishedAt());
 		assertEquals(List.of("after"), _log);
-		assertEquals("The result of the job is the value the command continues with.",
+		assertEquals("The follow-up actions see the result of the job.", List.of("produced"), seen);
+		assertEquals("The result of the job is the completion value of the command.",
 			List.of("produced"), _completions);
 	}
 

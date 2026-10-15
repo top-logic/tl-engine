@@ -17,12 +17,6 @@ import com.top_logic.layout.view.command.ViewAction;
 /**
  * {@link ViewAction} that pops the topmost frame from the enclosing {@link TileStackScope tile
  * stack}.
- *
- * <p>
- * Passes the input through as output, so an action following it in the chain still sees the object
- * the chain works on - which is what makes "delete the object, then leave the frame that displayed
- * it" one command.
- * </p>
  */
 @InApp
 public class NavigatePopAction implements ViewAction {

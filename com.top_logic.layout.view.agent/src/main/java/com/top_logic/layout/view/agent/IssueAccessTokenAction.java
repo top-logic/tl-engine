@@ -23,6 +23,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
@@ -54,7 +55,7 @@ public class IssueAccessTokenAction extends AbstractConfiguredInstance<IssueAcce
 	 * Configuration for {@link IssueAccessTokenAction}.
 	 */
 	@TagName("issue-access-token")
-	public interface Config extends PolymorphicConfiguration<IssueAccessTokenAction> {
+	public interface Config extends PolymorphicConfiguration<IssueAccessTokenAction>, WithResultActions {
 		// No configuration options.
 	}
 

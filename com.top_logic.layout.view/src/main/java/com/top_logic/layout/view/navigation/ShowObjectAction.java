@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Collection;
 
 import com.top_logic.basic.CalledByReflection;
@@ -50,7 +51,7 @@ public class ShowObjectAction extends InterruptibleViewAction {
 	 * Configuration for {@link ShowObjectAction}.
 	 */
 	@TagName("show-object")
-	public interface Config extends PolymorphicConfiguration<ShowObjectAction> {
+	public interface Config extends PolymorphicConfiguration<ShowObjectAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(ShowObjectAction.class)

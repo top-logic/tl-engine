@@ -24,6 +24,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -212,7 +213,7 @@ public class TestActionTone extends TestCase {
 	}
 
 	private static void run(List<ViewAction> chain) {
-		ViewActionChain.run(new DefaultViewContext(null), chain, "in", null);
+		ViewActionChain.run(new DefaultViewContext(null), chain, args("in"), null);
 	}
 
 	/** A step that records the tone its continuation reports, then declines, as a user may. */
@@ -236,5 +237,10 @@ public class TestActionTone extends TestCase {
 			ServiceTestSetup.createSetup(TestActionTone.class, TypeIndex.Module.INSTANCE,
 				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE,
 				ThemeFactory.Module.INSTANCE));
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

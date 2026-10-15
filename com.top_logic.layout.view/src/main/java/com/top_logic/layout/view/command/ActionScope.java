@@ -1,0 +1,138 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.command;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.InstantiationContextAdaptor;
+
+/**
+ * The names of the {@link ActionArguments} an action runs with, known when the action is
+ * instantiated.
+ *
+ * <p>
+ * The trigger of a chain declares the names it supplies, and an action with follow-up actions
+ * {@link #with(String) adds} the name of its result for them. The scope is handed down while the
+ * chain is instantiated: {@link ViewActions#instantiate(InstantiationContext, List, ActionScope)}
+ * {@link #bind(InstantiationContext) binds} it to the context the actions are created in, and an
+ * action looks up the scope of its position with {@link #of(InstantiationContext)} in its
+ * constructor.
+ * </p>
+ *
+ * <p>
+ * The names and the default name of a scope are those of the arguments the actions in the scope run
+ * with.
+ * </p>
+ */
+public final class ActionScope {
+
+	/**
+	 * The scope of actions run without any argument.
+	 */
+	public static final ActionScope NONE = new ActionScope(Collections.emptyList(), null);
+
+	private final List<String> _names;
+
+	private final String _defaultName;
+
+	private ActionScope(List<String> names, String defaultName) {
+		_names = names;
+		_defaultName = defaultName;
+	}
+
+	/**
+	 * The scope of a trigger supplying a single argument with the given name.
+	 */
+	public static ActionScope single(String name) {
+		return NONE.with(name);
+	}
+
+	/**
+	 * The scope of actions instantiated in the given context.
+	 *
+	 * @return The scope {@link #bind(InstantiationContext) bound} to the context, {@link #NONE} when
+	 *         no scope is bound.
+	 */
+	public static ActionScope of(InstantiationContext context) {
+		if (context instanceof ScopedContext scoped) {
+			return scoped.scope();
+		}
+		return NONE;
+	}
+
+	/**
+	 * A context instantiating actions in this scope.
+	 *
+	 * @param context
+	 *        The context to create the actions in, and where problems are reported.
+	 */
+	public InstantiationContext bind(InstantiationContext context) {
+		if (of(context) == this) {
+			return context;
+		}
+		return new ScopedContext(context, this);
+	}
+
+	/**
+	 * This scope extended by the given name, which becomes the default.
+	 *
+	 * <p>
+	 * An equal name of this scope is shadowed, see {@link ActionArguments#with(String, Object)}.
+	 * </p>
+	 */
+	public ActionScope with(String name) {
+		List<String> names = new ArrayList<>(_names);
+		names.remove(name);
+		names.add(name);
+		return new ActionScope(Collections.unmodifiableList(names), name);
+	}
+
+	/**
+	 * Whether there is an argument of the given name in this scope.
+	 */
+	public boolean contains(String name) {
+		return _names.contains(name);
+	}
+
+	/**
+	 * The names of the arguments in this scope, in the order of {@link ActionArguments#names()}.
+	 */
+	public List<String> names() {
+		return _names;
+	}
+
+	/**
+	 * The name of the default argument in this scope, {@code null} for {@link #NONE}.
+	 */
+	public String defaultName() {
+		return _defaultName;
+	}
+
+	@Override
+	public String toString() {
+		return _names + " (default: " + _defaultName + ")";
+	}
+
+	/**
+	 * {@link InstantiationContext} carrying the {@link ActionScope} of the actions it creates.
+	 */
+	private static final class ScopedContext extends InstantiationContextAdaptor {
+
+		private final ActionScope _scope;
+
+		ScopedContext(InstantiationContext context, ActionScope scope) {
+			super(context, context);
+			_scope = scope;
+		}
+
+		ActionScope scope() {
+			return _scope;
+		}
+	}
+}

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Arrays;
 
 import com.top_logic.basic.annotation.InApp;
@@ -39,7 +40,7 @@ public class SetPasswordAction implements ViewAction {
 	 * Configuration for {@link SetPasswordAction}.
 	 */
 	@TagName("set-password")
-	public interface Config extends PolymorphicConfiguration<SetPasswordAction> {
+	public interface Config extends PolymorphicConfiguration<SetPasswordAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(SetPasswordAction.class)

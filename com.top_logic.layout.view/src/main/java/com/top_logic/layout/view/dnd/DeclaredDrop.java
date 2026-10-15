@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import com.top_logic.layout.view.command.ViewActions;
+import com.top_logic.layout.view.command.ActionScope;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,10 +69,8 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 	public static DeclaredDrop compile(InstantiationContext context, DropConfig config,
 			DropSignature signature) {
 		checkOptions(context, config, signature);
-		List<ViewAction> actions = config.getActions().stream()
-			.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
-			.filter(action -> action != null)
-			.toList();
+		List<ViewAction> actions = ViewActions.instantiate(context, config.getActions(),
+			ActionScope.single(DropConfig.OBJECTS_ARGUMENT));
 		Expr refuseIf = config.getRefuseIf();
 		return new DeclaredDrop(config, signature, actions,
 			refuseIf == null ? null : QueryExecutor.compile(refuseIf));

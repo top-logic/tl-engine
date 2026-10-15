@@ -35,11 +35,11 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * {@link ViewAction} that chooses one of several chains of actions by a value computed from the
- * current value of the enclosing chain.
+ * default argument of the enclosing chain.
  *
  * <p>
  * The switch value is what the cases decide on: the result of the switch's
- * {@link Config#getValue() value} function, or the chain's current value itself when no such
+ * {@link Config#getValue() value} function, or the chain's default argument itself when no such
  * function is configured. A case either names the value it stands for with
  * {@link CaseConfig#getMatch() match} - a TL-Script expression without parameters, compared to the
  * switch value with the equality of TL-Script, so a classifier, a text and a number are all written
@@ -50,10 +50,10 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * <p>
  * The cases are compared in configuration order and the first matching one runs; when none matches,
- * the default runs. The chosen chain runs as a nested chain of the enclosing one: it starts with the
- * current value and its last action's result becomes the value the enclosing chain continues with. A
- * case without actions, a default without actions, and a value matching neither a case nor a
- * configured default all pass the value through unchanged. An abort inside a case - a declined
+ * the default runs. The chosen chain runs as a nested chain of the enclosing one, with the same
+ * arguments; the result of its last action is the result of this action. A case without actions, a
+ * default without actions, and a value matching neither a case nor a configured default do
+ * nothing. An abort inside a case - a declined
  * {@link ConfirmAction} - aborts the whole command, and a compensation registered inside a case runs
  * on the command's abort like one registered beside the switch.
  * </p>
@@ -93,7 +93,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * </pre>
  */
 @InApp
-public class SwitchAction extends InterruptibleViewAction {
+public class SwitchAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link SwitchAction}.
@@ -122,8 +122,8 @@ public class SwitchAction extends InterruptibleViewAction {
 		 *
 		 * <p>
 		 * Called with the {@link #getInputs() inputs} channel values as leading positional
-		 * arguments, followed by the chain's current value as the last argument. Without such a
-		 * function, the chain's current value is the value the cases decide on.
+		 * arguments, followed by the chain's default argument as the last argument. Without such a
+		 * function, the chain's default argument is the value the cases decide on.
 		 * </p>
 		 */
 		@Name(VALUE)
@@ -139,7 +139,7 @@ public class SwitchAction extends InterruptibleViewAction {
 		List<CaseConfig> getCases();
 
 		/**
-		 * The actions to run when no case matches; none to pass the chain's value through.
+		 * The actions to run when no case matches; without actions, nothing happens.
 		 */
 		@Name(DEFAULT)
 		@Options(fun = AllInAppImplementations.class)
@@ -200,7 +200,7 @@ public class SwitchAction extends InterruptibleViewAction {
 		Expr getTest();
 
 		/**
-		 * The actions to run when this case matches; none to pass the chain's value through.
+		 * The actions to run when this case matches; without actions, nothing happens.
 		 *
 		 * @implNote Written directly as children of the {@code <case>}.
 		 */
@@ -233,7 +233,7 @@ public class SwitchAction extends InterruptibleViewAction {
 	 * @param cases
 	 *        The cases, compared in the given order; the first matching one runs.
 	 * @param defaultActions
-	 *        The actions to run when no case matches; empty to pass the chain's value through.
+	 *        The actions to run when no case matches; empty for nothing to happen.
 	 */
 	public SwitchAction(ActionScript value, List<SwitchCase> cases, List<ViewAction> defaultActions) {
 		_value = value;
@@ -264,8 +264,8 @@ public class SwitchAction extends InterruptibleViewAction {
 	}
 
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ViewActionChain.nest(context, branch(_value.execute(context, input)), input, continuation);
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		ViewActionChain.nest(context, branch(_value.execute(context, arguments.value())), arguments, continuation);
 	}
 
 	private List<ViewAction> branch(Object value) {

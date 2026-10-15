@@ -20,15 +20,18 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that executes a configured chain of {@link ViewAction}s.
  *
  * <p>
- * Each action's return value becomes the input of the next action. The first action receives the
- * command's input (typically {@code null} for toolbar buttons). This allows composing complex
- * behaviors from simple, reusable building blocks.
+ * The actions run with the command's input as their single argument, named after the command's
+ * {@link Config#getInput() input channel}, or {@value #DEFAULT_ARGUMENT} for a command without one
+ * (typically {@code null} for toolbar buttons). The result of an action is seen by the follow-up
+ * actions nested into it (see {@link WithResultActions}). This allows composing complex behaviors
+ * from simple, reusable building blocks.
  * </p>
  *
  * <p>
@@ -37,8 +40,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <pre>
  * &lt;generic-command label="New"&gt;
- *   &lt;execute-script function="x -&gt; new(`my.module:MyType`, transient: true)"/&gt;
- *   &lt;open-dialog dialog-view="demo/create.view.xml" bind-input-to="model"/&gt;
+ *   &lt;execute-script function="x -&gt; new(`my.module:MyType`, transient: true)"&gt;
+ *     &lt;open-dialog dialog-view="demo/create.view.xml" bind-input-to="model"/&gt;
+ *   &lt;/execute-script&gt;
  * &lt;/generic-command&gt;
  * </pre>
  */
@@ -57,11 +61,24 @@ public class GenericViewCommand implements ViewCommand {
 
 		/**
 		 * The chain of actions to execute sequentially.
+		 *
+		 * <p>
+		 * Every action runs with the command's input as argument, named after the
+		 * {@link #getInput() input channel}.
+		 * </p>
 		 */
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 	}
+
+	/**
+	 * Name of the argument holding the input of a command without an
+	 * {@link Config#getInput() input channel}.
+	 */
+	public static final String DEFAULT_ARGUMENT = "input";
+
+	private final String _argumentName;
 
 	private final List<ViewAction> _actions;
 
@@ -72,19 +89,52 @@ public class GenericViewCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public GenericViewCommand(InstantiationContext context, Config config) {
-		_actions = ViewActions.instantiate(context, config.getActions());
+		_argumentName = argumentName(config);
+		_actions = ViewActions.instantiate(context, config.getActions(), ActionScope.single(_argumentName));
 		_label = config.getLabel();
+	}
+
+	/**
+	 * Creates a {@link GenericViewCommand} running the given actions with its input as argument
+	 * named {@value #DEFAULT_ARGUMENT}.
+	 *
+	 * @param actions
+	 *        The chain to run.
+	 */
+	public GenericViewCommand(List<ViewAction> actions) {
+		this(DEFAULT_ARGUMENT, actions);
 	}
 
 	/**
 	 * Creates a {@link GenericViewCommand} running the given actions.
 	 *
+	 * @param argumentName
+	 *        The name of the argument holding the command's input.
 	 * @param actions
-	 *        The chain to run, each action's result becoming the input of the next one.
+	 *        The chain to run, instantiated in the {@link ActionScope#single(String) scope} of the
+	 *        argument.
 	 */
-	public GenericViewCommand(List<ViewAction> actions) {
+	public GenericViewCommand(String argumentName, List<ViewAction> actions) {
+		_argumentName = argumentName;
 		_actions = List.copyOf(actions);
 		_label = null;
+	}
+
+	/**
+	 * The name of the argument holding the input of a command with the given configuration.
+	 */
+	public static String argumentName(ViewCommand.Config config) {
+		return argumentName(config.getInput());
+	}
+
+	/**
+	 * The name of the argument holding the input of a command reading the given input channel.
+	 *
+	 * @param input
+	 *        The input channel, {@code null} for a command without one.
+	 */
+	public static String argumentName(ChannelRef input) {
+		return input == null ? DEFAULT_ARGUMENT : input.getChannelName();
 	}
 
 	/**
@@ -124,7 +174,7 @@ public class GenericViewCommand implements ViewCommand {
 	 * by an action that has not settled it.
 	 *
 	 * @implNote The chain reports its end through
-	 *           {@link ViewActionChain#run(ReactContext, java.util.List, Object, java.util.function.Consumer, Runnable)},
+	 *           {@link ViewActionChain#run(ReactContext, java.util.List, ActionArguments, java.util.function.Consumer, Runnable)},
 	 *           which for a synchronous chain happens before {@code run} returns; the handshake
 	 *           then finds the chain settled and leaves the region untouched.
 	 */
@@ -132,14 +182,18 @@ public class GenericViewCommand implements ViewCommand {
 	public HandlerResult execute(ReactContext context, Object input) {
 		SuspendedCommands region = region(context);
 		if (region == null) {
-			ViewActionChain.run(context, _actions, input, null);
+			ViewActionChain.run(context, _actions, arguments(input), null);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
 		Suspension suspension = new Suspension(region);
-		ViewActionChain.run(context, _actions, input, null, suspension::settled);
+		ViewActionChain.run(context, _actions, arguments(input), null, suspension::settled);
 		suspension.returned();
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private ActionArguments arguments(Object input) {
+		return ActionArguments.of(_argumentName, input);
 	}
 
 	/**

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import com.top_logic.layout.view.command.ActionArguments;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -356,7 +357,7 @@ public class DropBinding implements DropTarget {
 				return input;
 			});
 		}
-		ViewActionChain.run(_context, actions, objects, null);
+		ViewActionChain.run(_context, actions, ActionArguments.of(DropConfig.OBJECTS_ARGUMENT, objects), null);
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -104,7 +105,7 @@ public class LoginAction implements ViewAction {
 	 * Configuration for {@link LoginAction}.
 	 */
 	@TagName("login")
-	public interface Config extends PolymorphicConfiguration<LoginAction> {
+	public interface Config extends PolymorphicConfiguration<LoginAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(LoginAction.class)

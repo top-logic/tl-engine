@@ -54,7 +54,7 @@ public class ScrollToAnchorAction implements ViewAction {
 	 * Configuration for {@link ScrollToAnchorAction}.
 	 */
 	@TagName("scroll-to-anchor")
-	public interface Config extends PolymorphicConfiguration<ScrollToAnchorAction> {
+	public interface Config extends PolymorphicConfiguration<ScrollToAnchorAction>, WithValueArgument {
 
 		/** Configuration name for {@link #getTarget()}. */
 		String TARGET = "target";

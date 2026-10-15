@@ -59,7 +59,7 @@ public class DownloadAction implements ViewAction {
 	 * Configuration for {@link DownloadAction}.
 	 */
 	@TagName("download")
-	public interface Config extends PolymorphicConfiguration<DownloadAction>, Inputs {
+	public interface Config extends PolymorphicConfiguration<DownloadAction>, Inputs, WithValueArgument {
 
 		/** @see #getFileName() */
 		String FILE_NAME = "file-name";

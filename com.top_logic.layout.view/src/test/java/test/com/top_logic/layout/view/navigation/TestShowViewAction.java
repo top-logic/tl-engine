@@ -23,6 +23,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
@@ -164,7 +165,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 	 * Runs the given action as the only action of a command chain over the window's root display.
 	 */
 	private void run(ViewAction action) {
-		ViewActionChain.run(_root, List.of(action), INPUT, _completions::add);
+		ViewActionChain.run(_root, List.of(action), args(INPUT), _completions::add);
 	}
 
 	/**
@@ -200,5 +201,10 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		return KBSetup.getSingleKBTest(TestShowViewAction.class,
 			ServiceTestSetup.createStarterFactoryForModules(
 				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE));
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

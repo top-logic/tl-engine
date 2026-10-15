@@ -22,8 +22,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * <p>
  * Without {@link Config#getInputs() inputs}, the configured expression must be a function that takes
- * one argument: the chain's current input value is passed as the argument and the function's return
- * value becomes the output of this action.
+ * one argument: the chain's default argument is passed as the argument and the function's return
+ * value is the result of this action, seen by the follow-up actions nested into it.
  * </p>
  *
  * <p>
@@ -36,9 +36,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * <p>
  * With {@link Config#getInputs() inputs}, the current values of the referenced {@link ViewChannel}s
- * are passed as leading positional arguments, followed by the chain's current input value as the
- * last argument. This allows an action to combine a separate channel value (e.g. a create context /
- * container) with the chained value (e.g. the form object being created). Example: persist a
+ * are passed as leading positional arguments, followed by the chain's default argument as the last
+ * argument. This allows an action to combine a separate channel value (e.g. a create context /
+ * container) with the chain's value (e.g. the form object being created). Example: persist a
  * transient form object into a container channel's composite reference:
  * </p>
  *
@@ -58,7 +58,7 @@ public class ExecuteScriptAction implements ViewAction {
 	 */
 	@TagName("execute-script")
 	public interface Config
-			extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction>, Inputs {
+			extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction>, Inputs, WithResultActions {
 
 		@Override
 		@ClassDefault(ExecuteScriptAction.class)
@@ -69,8 +69,8 @@ public class ExecuteScriptAction implements ViewAction {
 		 *
 		 * <p>
 		 * Called with the {@link #getInputs() input} channel values as leading positional arguments
-		 * (in declaration order), followed by the chain's current input value as the last argument.
-		 * With no inputs, called with the chain's current input value as the single argument.
+		 * (in declaration order), followed by the chain's default argument as the last argument.
+		 * With no inputs, called with the chain's default argument as the single argument.
 		 * </p>
 		 */
 		@Name("function")

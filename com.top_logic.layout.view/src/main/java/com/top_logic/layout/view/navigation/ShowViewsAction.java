@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -62,7 +63,7 @@ public class ShowViewsAction extends InterruptibleViewAction {
 	 * Configuration for {@link ShowViewsAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<ShowViewsAction> {
+	public interface Config extends PolymorphicConfiguration<ShowViewsAction>, WithValueArgument {
 
 		/** Configuration tag of a {@link ShowViewsAction}. */
 		String TAG_NAME = "show-views";

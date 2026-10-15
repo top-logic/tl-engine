@@ -71,7 +71,7 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	 * Configuration for {@link OpenDialogAction}.
 	 */
 	@TagName("open-dialog")
-	public interface Config extends PolymorphicConfiguration<OpenDialogAction> {
+	public interface Config extends PolymorphicConfiguration<OpenDialogAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(OpenDialogAction.class)

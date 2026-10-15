@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.command;
 
 import java.util.List;
-import java.util.Objects;
 
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -58,7 +57,11 @@ public class UploadCommand implements ViewCommand {
 		Class<? extends ViewCommand> getImplementationClass();
 
 		/**
-		 * The chain of actions to execute once per uploaded file (the file is the chain input).
+		 * The chain of actions to execute once per uploaded file.
+		 *
+		 * <p>
+		 * The actions run with the uploaded file as argument named {@value UploadCommand#FILE_ARGUMENT}.
+		 * </p>
 		 */
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
@@ -83,6 +86,11 @@ public class UploadCommand implements ViewCommand {
 		boolean isMultiple();
 	}
 
+	/**
+	 * Name of the argument holding the uploaded file.
+	 */
+	public static final String FILE_ARGUMENT = "file";
+
 	private final List<ViewAction> _actions;
 
 	private final String _accept;
@@ -96,10 +104,7 @@ public class UploadCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public UploadCommand(InstantiationContext context, Config config) {
-		_actions = config.getActions().stream()
-			.<ViewAction> map(context::getInstance)
-			.filter(Objects::nonNull)
-			.toList();
+		_actions = ViewActions.instantiate(context, config.getActions(), ActionScope.single(FILE_ARGUMENT));
 		_accept = config.getAccept();
 		_multiple = config.isMultiple();
 		_label = config.getLabel();

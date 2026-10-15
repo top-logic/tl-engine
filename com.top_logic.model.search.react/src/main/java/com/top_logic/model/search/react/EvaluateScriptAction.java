@@ -18,6 +18,7 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -52,7 +53,7 @@ public class EvaluateScriptAction extends AbstractScriptAction {
 	 */
 	@TagName("evaluate-script")
 	public interface Config extends PolymorphicConfiguration<EvaluateScriptAction>, WithTransaction.Config,
-			WithCommitMessage {
+			WithCommitMessage, WithResultActions {
 
 		/** Configuration name for {@link #getScript()}. */
 		String SCRIPT = "script";

@@ -32,7 +32,7 @@ public class ReadFormObjectAction implements ViewAction {
 	 * Configuration for {@link ReadFormObjectAction}.
 	 */
 	@TagName("read-form-object")
-	public interface Config extends PolymorphicConfiguration<ReadFormObjectAction> {
+	public interface Config extends PolymorphicConfiguration<ReadFormObjectAction>, WithResultActions {
 
 		@Override
 		@ClassDefault(ReadFormObjectAction.class)

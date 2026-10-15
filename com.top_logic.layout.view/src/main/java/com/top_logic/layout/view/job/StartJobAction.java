@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.job;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,7 +73,7 @@ public class StartJobAction extends InterruptibleViewAction {
 	 * Configuration for {@link StartJobAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<StartJobAction>, Inputs {
+	public interface Config extends PolymorphicConfiguration<StartJobAction>, Inputs, WithResultActions {
 
 		/** Configuration tag of a {@link StartJobAction}. */
 		String TAG_NAME = "start-job";

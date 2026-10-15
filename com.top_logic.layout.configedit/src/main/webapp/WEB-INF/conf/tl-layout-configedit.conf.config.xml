@@ -41,6 +41,17 @@
 						<impl class="com.top_logic.layout.configedit.I18NStringFormatProvider"/>
 					</format>
 				</formats>
+				<control-providers>
+					<!--
+						Mappings for the control a property names with the declarative form's
+						@ControlProvider annotation, keyed by that annotation's provider class and
+						looked up walking up its superclasses. A provider class without a mapping
+						leaves the property to the built-in fallback.
+					-->
+					<control-provider provider="com.top_logic.layout.form.values.MultiLineText">
+						<impl class="com.top_logic.layout.configedit.MultiLineTextConfigProvider"/>
+					</control-provider>
+				</control-providers>
 			</instance>
 		</config>
 	</services>

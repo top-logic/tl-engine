@@ -6,8 +6,9 @@
 package com.top_logic.layout.react.control.form;
 
 import java.text.DateFormat;
-import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -83,9 +84,22 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 			return _inputType;
 		}
 
-		/** The ISO pattern the value is written in. */
+		/** The ISO pattern a value is written in whose seconds are zero. */
 		public String isoPattern() {
 			return _patterns.get(0);
+		}
+
+		/**
+		 * The ISO pattern a value is written in whose seconds are not zero.
+		 *
+		 * <p>
+		 * The HTML input shows the seconds of such a value and sends them back, so a value with
+		 * seconds survives the field unchanged. A kind without a time of day has no seconds to
+		 * write and answers its {@link #isoPattern()}.
+		 * </p>
+		 */
+		public String isoPatternWithSeconds() {
+			return _patterns.get(_patterns.size() - 1);
 		}
 
 		/**
@@ -93,7 +107,8 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		 *
 		 * <p>
 		 * More than the ISO pattern alone: a browser adds the seconds to a time whose seconds are
-		 * not zero, and it is the same value either way.
+		 * not zero, and it is the same value either way. A pattern is only accepted if it reads
+		 * the whole value.
 		 * </p>
 		 */
 		public List<String> parsePatterns() {
@@ -221,10 +236,21 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	}
 
 	private String formatIso(Object value) {
-		if (value instanceof Date) {
-			return isoFormat(_kind.isoPattern()).format((Date) value);
+		if (value instanceof Date date) {
+			String pattern = hasSeconds(date) ? _kind.isoPatternWithSeconds() : _kind.isoPattern();
+			return isoFormat(pattern).format(date);
 		}
 		return null;
+	}
+
+	/**
+	 * Whether the given point in time has a seconds part other than zero, read in the user's time
+	 * zone like the ISO form itself.
+	 */
+	private static boolean hasSeconds(Date date) {
+		Calendar calendar = Calendar.getInstance(ThreadContext.getTimeZone());
+		calendar.setTime(date);
+		return calendar.get(Calendar.SECOND) != 0;
 	}
 
 	private String formatLocalized(Object value) {
@@ -239,10 +265,13 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		for (String pattern : _kind.parsePatterns()) {
 			SimpleDateFormat format = isoFormat(pattern);
 			format.setLenient(false);
-			try {
-				return format.parse(trimmed);
-			} catch (ParseException ex) {
-				// Try the next accepted pattern; reported as an error when none matches.
+			ParsePosition position = new ParsePosition(0);
+			Date result = format.parse(trimmed, position);
+			// A pattern reading only a prefix - the minutes of a time with seconds - does not
+			// match: the next accepted pattern reads the rest. Reported as an error when none
+			// matches.
+			if (result != null && position.getIndex() == trimmed.length()) {
+				return result;
 			}
 		}
 		return null;

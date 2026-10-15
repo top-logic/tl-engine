@@ -9,7 +9,10 @@ import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -42,6 +45,7 @@ import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
@@ -58,6 +62,9 @@ import com.top_logic.layout.form.format.ColorConfigFormat;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.template.TextInputControlProvider;
+import com.top_logic.layout.form.values.CommonMarkText;
+import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -72,7 +79,13 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.form.ReactIconSelectControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.state.DatePickerState;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -658,6 +671,18 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getText()}. */
 		String TEXT = "text";
 
+		/** Property name for {@link #getMultiLineText()}. */
+		String MULTI_LINE_TEXT = "multiLineText";
+
+		/** Property name for {@link #getCommonMarkText()}. */
+		String COMMON_MARK_TEXT = "commonMarkText";
+
+		/** Property name for {@link #getMultiLineList()}. */
+		String MULTI_LINE_LIST = "multiLineList";
+
+		/** Property name for {@link #getUnmappedControlProvider()}. */
+		String UNMAPPED_CONTROL_PROVIDER = "unmappedControlProvider";
+
 		/** Property name for {@link #getIcon()}. */
 		String ICON = "icon";
 
@@ -793,6 +818,30 @@ public class TestConfigControlService extends TestCase {
 		/** Free text. */
 		@Name(TEXT)
 		String getText();
+
+		/** Free text the declarative form edits in a text area. */
+		@Name(MULTI_LINE_TEXT)
+		@ControlProvider(MultiLineText.class)
+		String getMultiLineText();
+
+		/**
+		 * Free text annotated with {@link CommonMarkText}, a specialization of
+		 * {@link MultiLineText}.
+		 */
+		@Name(COMMON_MARK_TEXT)
+		@ControlProvider(CommonMarkText.class)
+		String getCommonMarkText();
+
+		/** A formatted value the declarative form edits as its text in a text area. */
+		@Name(MULTI_LINE_LIST)
+		@Format(CommaSeparatedStrings.class)
+		@ControlProvider(MultiLineText.class)
+		List<String> getMultiLineList();
+
+		/** Free text annotated with a control provider of the declarative form nobody mapped. */
+		@Name(UNMAPPED_CONTROL_PROVIDER)
+		@ControlProvider(TextInputControlProvider.class)
+		String getUnmappedControlProvider();
 
 		/** An icon, the same value an icon-typed model attribute holds. */
 		@Name(ICON)
@@ -1285,15 +1334,99 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A plain {@code Date} property, without a format of its own, is edited in a date picker for a
-	 * bare date - the classic declarative form's {@code calendar} field, and the only case that
-	 * ever reaches the date picker at all.
+	 * A plain {@code Date} property, without a format of its own, is edited in a picker for a date
+	 * with a time of day - the form the configuration stores such a value in.
 	 */
 	public void testDate() {
 		ReactControl control = control(TestConfig.START);
 		assertTrue("A plain date must be edited in a date picker.", control instanceof ReactDatePickerControl);
-		assertEquals("A plain date without a format means a bare date.",
-			"date", control.scriptingScalarState().get("inputType"));
+		assertEquals("A plain date is stored with its time of day and must be edited with it.",
+			ReactDatePickerControl.Kind.DATE_TIME.inputType(),
+			control.scriptingScalarState().get(DatePickerState.INPUT_TYPE__PROP));
+	}
+
+	/**
+	 * A time of day keeps the time picker, while a plain date in the same configuration gets date
+	 * and time.
+	 */
+	public void testTimeOfDayKeepsTimePicker() {
+		assertEquals(ReactDatePickerControl.Kind.TIME.inputType(),
+			control(TestConfig.TIME_OF_DAY).scriptingScalarState().get(DatePickerState.INPUT_TYPE__PROP));
+		assertEquals(ReactDatePickerControl.Kind.DATE_TIME.inputType(),
+			control(TestConfig.START).scriptingScalarState().get(DatePickerState.INPUT_TYPE__PROP));
+	}
+
+	/**
+	 * The time of a plain date is shown in the picker and survives a value the user enters through
+	 * it - down to the seconds the input sends.
+	 */
+	public void testDateWithTimeSurvivesAWrite() {
+		TimeZone zone = ThreadContext.getTimeZone();
+		Calendar stored = Calendar.getInstance(zone);
+		stored.clear();
+		stored.set(2026, Calendar.OCTOBER, 15, 14, 30, 0);
+		_config.update(_config.descriptor().getProperty(TestConfig.START), stored.getTime());
+
+		ReactControl control = control(TestConfig.START);
+		assertEquals("The picker must show the stored time.", "2026-10-15T14:30",
+			control.scriptingScalarState().get(FieldState.VALUE__PROP));
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldValueArguments.VALUE, "2026-10-16T09:45:12"));
+
+		Calendar written = Calendar.getInstance(zone);
+		written.setTime(_config.getStart());
+		assertEquals(16, written.get(Calendar.DAY_OF_MONTH));
+		assertEquals("The time entered must reach the configuration.", 9, written.get(Calendar.HOUR_OF_DAY));
+		assertEquals(45, written.get(Calendar.MINUTE));
+		assertEquals(12, written.get(Calendar.SECOND));
+		assertEquals("The picker must show the seconds entered.", "2026-10-16T09:45:12",
+			control.scriptingScalarState().get(FieldState.VALUE__PROP));
+	}
+
+	/**
+	 * A text property annotated with the declarative form's {@link MultiLineText} is edited in a
+	 * text area with that control's default number of rows.
+	 */
+	public void testMultiLineTextAnnotation() {
+		ReactControl control = control(TestConfig.MULTI_LINE_TEXT);
+		assertTrue(control instanceof ReactTextInputControl);
+		Map<String, Object> state = control.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+		assertNotSame("A plain text is sent while it is typed.", Boolean.TRUE,
+			state.get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP));
+	}
+
+	/** The mapping for {@link MultiLineText} covers its specialization {@link CommonMarkText}. */
+	public void testMultiLineTextMappingCoversSubclasses() {
+		assertEquals(Boolean.TRUE,
+			control(TestConfig.COMMON_MARK_TEXT).scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	}
+
+	/**
+	 * A formatted value annotated with {@link MultiLineText} is edited as its text in a text area,
+	 * sent when the field is left like every formatted text.
+	 */
+	public void testMultiLineFormattedText() {
+		assertTrue(model(TestConfig.MULTI_LINE_LIST) instanceof ConfigFormatFieldModel);
+		Map<String, Object> state = control(TestConfig.MULTI_LINE_LIST).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Boolean.TRUE, state.get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP));
+	}
+
+	/** A text property without the annotation stays a single line. */
+	public void testPlainTextIsSingleLine() {
+		ReactControl control = control(TestConfig.TEXT);
+		assertTrue(control instanceof ReactTextInputControl);
+		assertNull(control.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	}
+
+	/** A control provider of the declarative form nobody mapped leaves the property to the fallback. */
+	public void testUnmappedControlProviderKeepsFallback() {
+		ReactControl control = control(TestConfig.UNMAPPED_CONTROL_PROVIDER);
+		assertTrue(control instanceof ReactTextInputControl);
+		assertNull(control.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
 	}
 
 	/**

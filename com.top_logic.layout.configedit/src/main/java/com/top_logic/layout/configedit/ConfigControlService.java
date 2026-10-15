@@ -31,8 +31,10 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -77,14 +79,31 @@ import com.top_logic.mig.html.HTMLFormatter;
  * its superclasses) is mapped, ahead of the generic format text field. This is what lets a
  * {@code Date} formatted as a time of day get a time picker instead of plain text: the Java-type
  * map above cannot separate it from a plain date, but the value provider's own class can.</li>
- * <li>The built-in fallback: the direct widget for the property's Java type, or otherwise text
+ * <li>The map from the control the declarative form's {@link ControlProvider} annotation names (on
+ * the property or on its value type) to a control of this service
+ * ({@link Config#getControlProviders()}) - e.g. a property annotated with {@link MultiLineText}
+ * gets a multi-line text input. A provider class nobody mapped leaves the property to the
+ * fallback.</li>
+ * <li>The built-in fallback: the direct widget for the property's Java type - a {@code Date} gets
+ * a picker for a date with a time of day, the form its value is stored in - or otherwise text
  * parsed and formatted through the property's own {@code ConfigurationValueProvider}.</li>
  * </ol>
  *
  * <p>
- * The configured maps ({@link Config#getProviders()} and {@link Config#getFormats()}) are what
- * let a module above this one contribute a control - the TL-Script editor, for instance, lives in
- * {@code tl-model-search-react}.
+ * The declarative form's annotation is honoured after the two value maps, although it is stated
+ * on the single property: it names a control of the declarative form, which edits the field that
+ * form built - the text a value is written as. A value map, in contrast, claims the property for a
+ * control that edits its typed value (an internationalized string in an editor per language, a
+ * color in a color chooser), and that typed editor is not given up for a text widget. Such a
+ * mapped control therefore edits the value in the form the remaining rules give it, never claims
+ * the property for its typed form: the typed value of a property whose Java type one of the
+ * built-in widgets handles directly, otherwise its format's text.
+ * </p>
+ *
+ * <p>
+ * The configured maps ({@link Config#getProviders()}, {@link Config#getFormats()} and
+ * {@link Config#getControlProviders()}) are what let a module above this one contribute a
+ * control - the TL-Script editor, for instance, lives in {@code tl-model-search-react}.
  * </p>
  *
  * @implNote {@code createModel} decides the value domain that pairs with the widget above: a
@@ -161,6 +180,24 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		@Key(FormatMapping.PROVIDER)
 		Map<Class<?>, FormatMapping> getFormats();
 
+		/** Property name of {@link #getControlProviders()}. */
+		String CONTROL_PROVIDERS = "control-providers";
+
+		/**
+		 * Mappings from the control a property names with the declarative form's
+		 * {@link ControlProvider} annotation to the control this service edits it with, keyed by
+		 * the annotation's control provider class.
+		 *
+		 * <p>
+		 * Looked up by the annotated class first, then by walking up its superclasses, so a mapping
+		 * registered for a base provider also covers its specializations. A property whose
+		 * annotated provider is not mapped is edited as if it carried no such annotation.
+		 * </p>
+		 */
+		@Name(CONTROL_PROVIDERS)
+		@Key(ControlProviderMapping.PROVIDER)
+		Map<Class<?>, ControlProviderMapping> getControlProviders();
+
 	}
 
 	/**
@@ -211,11 +248,38 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	}
 
+	/**
+	 * A single mapping from a control provider of the declarative form to a
+	 * {@link ConfigControlProvider}.
+	 */
+	public interface ControlProviderMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getProvider()}. */
+		String PROVIDER = "provider";
+
+		/**
+		 * The control provider class (or a superclass of it) a property's
+		 * {@link ControlProvider} annotation must name for this mapping to apply.
+		 */
+		@Name(PROVIDER)
+		@Mandatory
+		Class<? extends com.top_logic.layout.form.template.ControlProvider> getProvider();
+
+		/**
+		 * The control provider to use for a property whose annotation this mapping applies to.
+		 */
+		@Mandatory
+		PolymorphicConfiguration<? extends ConfigControlProvider> getImpl();
+
+	}
+
 	private final InstantiationContext _context;
 
 	private Map<Class<?>, ConfigControlProvider> _providerByType;
 
 	private Map<Class<?>, ConfigControlProvider> _providerByFormat;
+
+	private Map<Class<?>, ConfigControlProvider> _providerByControlProvider;
 
 	/**
 	 * Creates a {@link ConfigControlService} from configuration.
@@ -238,6 +302,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		_providerByFormat = new HashMap<>();
 		for (FormatMapping mapping : getConfig().getFormats().values()) {
 			_providerByFormat.put(mapping.getProvider(), _context.getInstance(mapping.getImpl()));
+		}
+
+		_providerByControlProvider = new HashMap<>();
+		for (ControlProviderMapping mapping : getConfig().getControlProviders().values()) {
+			_providerByControlProvider.put(mapping.getProvider(), _context.getInstance(mapping.getImpl()));
 		}
 	}
 
@@ -412,9 +481,42 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return formatProvider.createControl(context, model);
 		}
 
-		// 6. Built-in fallback. formatProvider is known null here (the check just above), passed
-		// on instead of resolving it a second time inside fallback's own isSpecialized check.
+		// 6. Configured provider for the control the declarative form's annotation names. Edits the
+		// value in the domain createModel chose by the rules above - the mapping is no claim.
+		ConfigControlProvider annotatedProvider = annotatedControlProvider(property);
+		if (annotatedProvider != null) {
+			return annotatedProvider.createControl(context, model);
+		}
+
+		// 7. Built-in fallback. formatProvider is known null here (the check above), passed on
+		// instead of resolving it a second time inside fallback's own isSpecialized check.
 		return fallback(context, model, property, formatProvider);
+	}
+
+	/**
+	 * Creates a single-line text input for the given field model.
+	 *
+	 * <p>
+	 * A {@link ConfigFormatFieldModel} does not store what it is handed: it parses the text and
+	 * hands back what the value formats to. Sending a value mid-edit would therefore re-render the
+	 * field from the normalized text and throw away what is being typed - typing "red, " into a
+	 * comma separated list would leave "red" behind, comma and space gone from under the cursor.
+	 * For such a model, the input holds the value back until the field is left; the plain
+	 * {@link ConfigFieldModel}, which stores its value verbatim, keeps the default debounce and its
+	 * feedback-while-typing.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model holding the text.
+	 */
+	public static ReactTextInputControl createTextInput(ReactContext context, ConfigFieldModel model) {
+		ReactTextInputControl input = new ReactTextInputControl(context, model);
+		if (model instanceof ConfigFormatFieldModel) {
+			input.setSendValueOnBlur(true);
+		}
+		return input;
 	}
 
 	/**
@@ -506,13 +608,14 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	/**
 	 * The built-in widget for a property that reached neither the annotation, the select, nor
-	 * either configured-map step.
+	 * any configured-map step.
 	 *
 	 * <p>
 	 * Only offers the type-specific widgets ({@link ReactCheckboxControl}, a number input, the
-	 * plain {@link com.top_logic.layout.react.control.form.ReactDatePickerControl.Kind#DATE date
-	 * picker}) for a property that is not {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider) specialized} -
-	 * the same veto {@link #createModel(ConfigurationItem, PropertyDescriptor)} applies, so the
+	 * {@link com.top_logic.layout.react.control.form.ReactDatePickerControl.Kind#DATE_TIME date and
+	 * time picker}) for a property that is not
+	 * {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider) specialized}
+	 * - the same veto {@link #createModel(ConfigurationItem, PropertyDescriptor)} applies, so the
 	 * value domain (plain versus format text) and the widget never disagree. A specialized property
 	 * (e.g. one with its own {@code @Format}, such as a time of day) is edited as its format's text
 	 * instead, exactly like the classic declarative form's {@code PlainEditor}.
@@ -534,22 +637,13 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 				return new ReactNumberInputControl(context, model, HTMLFormatter.getInstance().getDoubleFormat());
 			}
 			if (Date.class.isAssignableFrom(type)) {
-				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE);
+				// A plain Date is stored with its time of day (DateValueProvider writes date and
+				// time), so it is edited with both - a date-only picker would drop the time.
+				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE_TIME);
 			}
 		}
 		// String, and every specialized/typed value the format model turned into text.
-		ReactTextInputControl input = new ReactTextInputControl(context, model);
-		if (model instanceof ConfigFormatFieldModel) {
-			// A format model does not store what it is handed: it parses the text and hands back
-			// what the value formats to. Sending a value mid-edit therefore re-renders the field
-			// from the normalized text and throws away what was being typed - typing "red, " into a
-			// comma separated list would leave "red" behind, comma and space gone from under the
-			// cursor. The value is held back until the field is left instead; the plain
-			// ConfigFieldModel, which stores its value verbatim, keeps the default debounce and its
-			// feedback-while-typing.
-			input.setSendValueOnBlur(true);
-		}
-		return input;
+		return createTextInput(context, model);
 	}
 
 	/**
@@ -825,6 +919,34 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		for (Class<?> type = valueProvider.getClass(); type != null; type = type.getSuperclass()) {
 			ConfigControlProvider provider = _providerByFormat.get(type);
+			if (provider != null) {
+				return provider;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The configured {@link ConfigControlProvider} for the control the given property names with
+	 * the declarative form's {@link ControlProvider} annotation, or {@code null} if it carries none
+	 * or its provider class is not mapped.
+	 *
+	 * <p>
+	 * The annotation is looked up on the property, then on its value type - where the declarative
+	 * form looks for it, too. The mapping is looked up by the annotated class first, then by
+	 * walking up its superclasses - mirroring {@link Config#getControlProviders()}'s own contract.
+	 * </p>
+	 */
+	private ConfigControlProvider annotatedControlProvider(PropertyDescriptor property) {
+		ControlProvider annotation = property.getAnnotation(ControlProvider.class);
+		if (annotation == null) {
+			annotation = property.getType().getAnnotation(ControlProvider.class);
+			if (annotation == null) {
+				return null;
+			}
+		}
+		for (Class<?> type = annotation.value(); type != null; type = type.getSuperclass()) {
+			ConfigControlProvider provider = _providerByControlProvider.get(type);
 			if (provider != null) {
 				return provider;
 			}

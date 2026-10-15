@@ -24,7 +24,9 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * The configured function is compiled into a separate {@link QueryExecutor} that is shared by all
  * callers. The caller's {@link #usesSecurity() security setting} can therefore not be applied by
  * mutating that shared tree; instead the executor is resolved separately for the secured and the
- * unsecured variant, see {@link #getExecutor()}.
+ * unsecured variant at each call, see {@link #eval(Object[], EvalContext)}. A secured call of a
+ * {@link PrivilegedScript} runs the unsecured variant after the check of
+ * {@link ConfiguredTLScriptFunctions#call(String, boolean, Object[], Function)}.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -98,19 +100,6 @@ public class QueryExecutorMethod extends GenericMethodWithSecurity {
 		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance().call(getName(),
 			usesSecurity(), arguments,
 			secured -> _executor.apply(getName(), secured).executeIntermediate(arguments));
-	}
-
-	/**
-	 * The {@link QueryExecutor} to delegate evaluation to.
-	 *
-	 * <p>
-	 * Depending on {@link #usesSecurity()}, this resolves either the secured or the unsecured
-	 * variant of the configured function, so that a caller that has switched off security executes
-	 * the called function without security as well.
-	 * </p>
-	 */
-	public QueryExecutor getExecutor() {
-		return _executor.apply(getName(), usesSecurity());
 	}
 
 	@Override

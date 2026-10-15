@@ -30,6 +30,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -150,7 +151,7 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		assertEquals("p1", _p1.tValueByName("name"));
 	}
 
-	public void testOnDeniedValueIsEvaluatedSecured() throws Exception {
+	public void testOnDeniedValueIsReturned() throws Exception {
 		becomeUser(_auditor);
 		assertEquals("denied:p1", execute(search("p -> testPrivilegedOnDeniedValue($p)"), _p1));
 		becomeUser(_approver);
@@ -221,6 +222,92 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		Object proposals = execute(search("p -> testPrivilegedAll($p)"), _p1);
 		assertTrue(asSet(proposals).contains(_p1));
 		assertFalse("p2 is not discoverable for the approver.", asSet(proposals).contains(_p2));
+	}
+
+	public void testResultIsFilteredAtTheCall() throws Exception {
+		// The values are computed by the calling script from the result of the call, so the final
+		// filter of the execution can not hide a missing filter at the call.
+		becomeUser(_approver);
+		assertEquals("Only p1 is discoverable for the approver.", Double.valueOf(1),
+			execute(search("p -> testPrivilegedAll($p).size()"), _p1));
+	}
+
+	public void testSingleResultIsFilteredAtTheCall() throws Exception {
+		becomeUser(_approver);
+		assertEquals("The discoverable p1 is delivered.", Boolean.FALSE,
+			execute(search("p -> testPrivilegedByName($p, 'p1') == null"), _p1));
+		assertEquals("The undiscoverable p2 becomes null.", Boolean.TRUE,
+			execute(search("p -> testPrivilegedByName($p, 'p2') == null"), _p1));
+	}
+
+	public void testTransientSecurityObjectDenies() throws Exception {
+		// A transient object passes every access check, it must not be accepted as security object.
+		becomeUser(_auditor);
+		try {
+			execute(search("testPrivilegedCount(new(`TestTLScriptSecurity:Proposal`, transient: true))"));
+			fail("A transient security object denies the call.");
+		} catch (TopLogicException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCount"));
+		}
+		assertEquals(Boolean.FALSE,
+			execute(search("canCall(testPrivilegedCount(new(`TestTLScriptSecurity:Proposal`, transient: true)))")));
+	}
+
+	public void testUncommittedSecurityObjectDenies() throws Exception {
+		// An object created in the running transaction passes every access check, it must not be
+		// accepted as security object.
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject created = newObject("Proposal");
+			becomeUser(_auditor);
+			try {
+				execute(search("p -> testPrivilegedCount($p)"), created);
+				fail("An uncommitted security object denies the call.");
+			} catch (TopLogicException ex) {
+				assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCount"));
+			}
+			assertEquals(Boolean.FALSE, execute(search("p -> canCall(testPrivilegedCount($p))"), created));
+			tx.rollback();
+		}
+	}
+
+	public void testTracedCallIsChecked() throws Exception {
+		// The tracing route (e.g. a computation in a form) checks the call like the plain route.
+		becomeUser(_approver);
+		assertEquals("allowed", trace("p -> testPrivilegedOnDeniedValue($p)", _p1));
+		becomeUser(_auditor);
+		assertEquals("denied:p1", trace("p -> testPrivilegedOnDeniedValue($p)", _p1));
+		try {
+			trace("p -> testPrivilegedRename($p, 'renamed')", _p1);
+			fail("The auditor holds no Approve right.");
+		} catch (TopLogicException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedRename"));
+		}
+		assertEquals("p1", _p1.tValueByName("name"));
+	}
+
+	public void testTracedResultIsFilteredForDiscover() throws Exception {
+		// A traced evaluation does not filter its final result, the call must filter it.
+		becomeUser(_approver);
+		Object proposals = trace("p -> testPrivilegedAll($p)", _p1);
+		assertTrue(asSet(proposals).contains(_p1));
+		assertFalse("p2 is not discoverable for the approver.", asSet(proposals).contains(_p2));
+		assertEquals(Boolean.TRUE, trace("p -> testPrivilegedByName($p, 'p2') == null", _p1));
+	}
+
+	public void testTracedTransientSecurityObjectDenies() throws Exception {
+		becomeUser(_auditor);
+		try {
+			trace("testPrivilegedCount(new(`TestTLScriptSecurity:Proposal`, transient: true))");
+			fail("A transient security object denies the call.");
+		} catch (TopLogicException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCount"));
+		}
+	}
+
+	private static Object trace(String script, Object... args) throws Exception {
+		return ScriptTracer.compile(parse(script)).execute(pointer -> {
+			// Accesses are not observed.
+		}, null, args);
 	}
 
 	public void testComputedValueIsNotFiltered() throws Exception {

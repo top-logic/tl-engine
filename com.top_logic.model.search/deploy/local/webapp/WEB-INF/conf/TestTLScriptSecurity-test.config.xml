@@ -34,33 +34,45 @@
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
 			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
 				<scripts>
-					<!-- Writes the name of a project, which a ProposalReader may not write directly. -->
+					<!-- Writes the name of a proposal, which an approver may not write directly. -->
 					<privileged-script name="testPrivilegedRename"
 						command-group="Approve"
-						security-object="$project"
+						security-object="$proposal"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 							<parameter name="name"/>
 						</parameters>
-						<implementation>$project.set(`TestTLScriptSecurity:PathNode#name`, $name)</implementation>
+						<implementation>$proposal.set(`TestTLScriptSecurity:PathNode#name`, $name)</implementation>
 					</privileged-script>
-					<!-- Delivers all projects and their unfiltered number. -->
+					<!-- Delivers all proposals, also those the caller may not discover. -->
 					<privileged-script name="testPrivilegedAll"
 						command-group="Approve"
-						security-object="$project"
+						security-object="$proposal"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
 						<implementation>all(`TestTLScriptSecurity:Proposal`)</implementation>
 					</privileged-script>
-					<privileged-script name="testPrivilegedCount"
+					<!-- Delivers the proposal with the given name, also one the caller may not discover. -->
+					<privileged-script name="testPrivilegedByName"
 						command-group="Approve"
-						security-object="$project"
+						security-object="$proposal"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
+							<parameter name="name"/>
+						</parameters>
+						<implementation>all(`TestTLScriptSecurity:Proposal`).filter(x -> $x.get(`TestTLScriptSecurity:PathNode#name`) == $name).firstElement()</implementation>
+					</privileged-script>
+					<!-- Delivers the unfiltered number of all proposals. -->
+					<privileged-script name="testPrivilegedCount"
+						command-group="Approve"
+						security-object="$proposal"
+					>
+						<parameters>
+							<parameter name="proposal"/>
 						</parameters>
 						<implementation>all(`TestTLScriptSecurity:Proposal`).size()</implementation>
 					</privileged-script>
@@ -70,57 +82,57 @@
 						security-object="null"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
-						<implementation>$project.get(`TestTLScriptSecurity:PathNode#name`)</implementation>
+						<implementation>$proposal.get(`TestTLScriptSecurity:PathNode#name`)</implementation>
 					</privileged-script>
 					<!-- Calls a privileged script that denies every secured call. -->
 					<privileged-script name="testPrivilegedOuter"
 						command-group="Approve"
-						security-object="$project"
+						security-object="$proposal"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
-						<implementation>testPrivilegedNever($project)</implementation>
+						<implementation>testPrivilegedNever($proposal)</implementation>
 					</privileged-script>
 					<privileged-script name="testPrivilegedOnDeniedValue"
 						command-group="Approve"
-						security-object="$project"
-						on-denied="'denied:' + $project.get(`TestTLScriptSecurity:PathNode#name`)"
+						security-object="$proposal"
+						on-denied="'denied:' + $proposal.get(`TestTLScriptSecurity:PathNode#name`)"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>
 					<!-- The number is computed inside on-denied: it only counts what the caller may discover. -->
 					<privileged-script name="testPrivilegedOnDeniedCount"
 						command-group="Approve"
-						security-object="$project"
+						security-object="$proposal"
 						on-denied="all(`TestTLScriptSecurity:Proposal`).size()"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>
 					<privileged-script name="testPrivilegedOnDeniedThrow"
 						command-group="Approve"
-						security-object="$project"
+						security-object="$proposal"
 						on-denied="throw('custom denial')"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>
 					<privileged-script name="testPrivilegedCollection"
 						command-group="Approve"
-						security-object="list($project, $project)"
+						security-object="list($proposal, $proposal)"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>
@@ -129,7 +141,7 @@
 						security-object="$target"
 					>
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 							<parameter name="target">
 								<default-value>null</default-value>
 							</parameter>
@@ -138,9 +150,9 @@
 					</privileged-script>
 					<configured-script name="testPlainScript">
 						<parameters>
-							<parameter name="project"/>
+							<parameter name="proposal"/>
 						</parameters>
-						<implementation>$project.get(`TestTLScriptSecurity:PathNode#name`)</implementation>
+						<implementation>$proposal.get(`TestTLScriptSecurity:PathNode#name`)</implementation>
 					</configured-script>
 				</scripts>
 			</instance>

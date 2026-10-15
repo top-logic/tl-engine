@@ -190,6 +190,13 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 * returned. Every other call executes the function with the given security setting.
 	 * </p>
 	 *
+	 * <p>
+	 * The plain route ({@link QueryExecutorMethod}) and the tracing route ({@link TracingScriptMethod},
+	 * e.g. a computation in a form) are checked alike. In the tracing route, the implementation is
+	 * evaluated in the context of the caller and therefore sees its overlays, while the security
+	 * object is computed in a fresh context: the persistent state decides on the permission.
+	 * </p>
+	 *
 	 * @param scriptName
 	 *        The name of the function.
 	 * @param usesSecurity

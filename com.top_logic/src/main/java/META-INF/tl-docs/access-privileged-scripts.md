@@ -84,7 +84,11 @@ A privileged function called from a secured evaluation
    may navigate to objects the user may not see (e.g. the project of a watched ticket). An
    exception raised by the expression propagates; it does not deny silently.
 2. checks `ModelAccessRights.isAllowed(currentUser, securityObject, commandGroup)`. A result that is
-   no single object (`null`, a collection, or anything that is no `TLObject`) denies the call.
+   no single object (`null`, a collection, or anything that is no `TLObject`) denies the call. A
+   security object that is not a persistent object (transient, or created in the current
+   transaction) denies the call as well: the access check allows everything on such an object, so
+   the caller could otherwise authorize the call with an object of its own making
+   (`new(..., transient: true)`).
 3. allowed: evaluates `implementation` **unsecured** with the arguments and filters its result for
    `Discover` (R4): a single object the user does not hold `Discover` on becomes `null`, such an
    element of a collection is dropped. Computed values (numbers, strings, ...) are not filtered;
@@ -125,7 +129,8 @@ canCall(approveMilestone($milestone))
   default values included), but the function is not called.
 - For a privileged function: the security object is computed unsecured (P3, step 1) and the result
   of `isAllowed(currentUser, securityObject, commandGroup)` is returned; `false` for a security
-  object `null`. `on-denied` is not evaluated.
+  object `null`, and for a security object that is not a persistent object (transient, or created
+  in the current transaction). `on-denied` is not evaluated.
 - For a plain configured function: `true`, it has no function level permission.
 - Like `canExecute`, the check is always made for the current user, also in an unsecured
   evaluation.
@@ -197,6 +202,14 @@ by `canCall`:
 - **The command group is an operation of its own.** It needs labels (`commandGroup.<Name>`,
   `commandGroup.<Name>.tooltip`) in an application resource bundle, see the example.
 - **Computed values are disclosed.** Only objects in the result are filtered (P3).
+- **Only objects, collections and maps are filtered.** A function value (lambda) returned by the
+  implementation is not filtered and runs unsecured when the caller calls it. Objects inside any
+  other value (e.g. a `ReflectiveDataObject` assembled by the implementation) are not filtered
+  either. A privileged function must not return such values holding objects the caller may not
+  discover.
+- **The tracing evaluation sees the overlays of a form.** Called from a traced computation (e.g. in
+  a form), the implementation sees the not yet stored values of the form, while the security object
+  is computed from the persistent state.
 - **Discover still applies to the arguments.** A user can only pass objects they may discover (R4,
   R5); a privileged function does not open access to undiscoverable arguments.
 
@@ -218,8 +231,10 @@ model type `Proposal`:
 
 - allowed call reads / writes attributes the user holds no right on,
 - denied call without `on-denied` throws, with `on-denied` returns its (secured) result,
-- security object `null` denies,
-- undiscoverable objects in the result are filtered, computed values are not,
+- security object `null` denies, a transient or uncommitted security object denies,
+- undiscoverable objects in the result are filtered at the call (observed by the calling
+  script), computed values are not,
+- the tracing route (`ScriptTracer`) checks and filters like the plain route,
 - an unsecured call does not check,
 - a nested privileged function is not checked again,
 - `canCall`: privileged allowed / denied, plain script `true`, an argument that is no call of a

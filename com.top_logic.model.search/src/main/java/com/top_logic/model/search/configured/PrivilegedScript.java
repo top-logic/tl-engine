@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.TLObject;
@@ -21,7 +22,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
@@ -67,7 +70,8 @@ public class PrivilegedScript extends ConfiguredScript {
 		 * <p>
 		 * The expression accesses the {@link #getParameters() parameters} as variables. It is
 		 * evaluated without security; the arguments of a secured call contain only objects the user
-		 * may discover. A result that is no single object denies the call.
+		 * may discover. A result that is no single persistent object (e.g. a transient object or
+		 * one created in the current transaction) denies the call.
 		 * </p>
 		 */
 		@Mandatory
@@ -138,8 +142,18 @@ public class PrivilegedScript extends ConfiguredScript {
 	 * Whether the current user may call this function with the given arguments.
 	 *
 	 * <p>
-	 * The {@link Config#getSecurityObject() security object} is computed without security. A result
-	 * that is no single {@link TLObject} (e.g. <code>null</code> or a collection) denies the call.
+	 * The {@link Config#getSecurityObject() security object} is computed without security, in an
+	 * evaluation context of its own. A result that is no single persistent {@link TLObject} denies
+	 * the call: <code>null</code>, a collection, a value that is no {@link TLObject}, and an object
+	 * that is transient or was created in the current transaction. The access check passes every
+	 * such object (it has no roles yet), so accepting it would let a caller authorize the call with
+	 * an object of its own making.
+	 * </p>
+	 *
+	 * <p>
+	 * In a traced evaluation (e.g. a computation in a form), the implementation sees the overlays of
+	 * the caller, but the security object is computed from the persistent state: an edited, not yet
+	 * stored value does not decide on the permission.
 	 * </p>
 	 *
 	 * @param arguments
@@ -148,10 +162,25 @@ public class PrivilegedScript extends ConfiguredScript {
 	 */
 	public boolean isAllowed(Object[] arguments) {
 		Object securityObject = securityObjectExecutor().executeIntermediate(arguments);
-		if (!(securityObject instanceof TLObject object)) {
+		if (!(securityObject instanceof TLObject object) || !isPersistent(object)) {
 			return false;
 		}
 		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), object, _commandGroup);
+	}
+
+	/**
+	 * Whether the given object is a persistent object whose roles are computed.
+	 *
+	 * <p>
+	 * The access check allows everything on an object that is no {@link BoundObject}, is transient,
+	 * or was created in the current transaction (see the private method <code>isCommitted</code> of
+	 * {@link SecurityConfigurationService}, whose condition this method mirrors).
+	 * </p>
+	 */
+	private static boolean isPersistent(TLObject object) {
+		return object instanceof BoundObject
+			&& !object.tTransient()
+			&& object.tHandle().getState() == KnowledgeItem.State.PERSISTENT;
 	}
 
 	/**

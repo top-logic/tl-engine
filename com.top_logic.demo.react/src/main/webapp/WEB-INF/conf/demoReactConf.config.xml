@@ -205,7 +205,7 @@
 						in the "New Milestone" dialog and when editing the milestone; a member creates a
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
-						
+
 						A member approves a milestone of P1 with the "Approve" command of the milestone list
 						(the privileged script approveMilestone), a ticket watcher cannot.
 					-->

@@ -282,7 +282,10 @@ function editableInRow(
   return null;
 }
 
-/** The attribute marking the chip of a named filter, by which the focus finds a chip after a removal. */
+/**
+ * The attribute marking the chip of a named filter that can be deleted, by which the focus finds the
+ * neighbour of a deleted one.
+ */
 const FILTER_CHIP_ATTR = 'data-tl-filter-chip';
 
 /**
@@ -1532,7 +1535,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     onClick={() => handleNamedFilter(named.id)}
                     onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
                     removeLabel={i18n['js.table.deleteFilter']}
-                    {...{ [FILTER_CHIP_ATTR]: true }}
+                    {...(named.deletable ? { [FILTER_CHIP_ATTR]: true } : {})}
                   />
                 );
               })}

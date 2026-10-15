@@ -329,6 +329,18 @@ describe('the named filters of a table (TLTableView) as MUI chips', () => {
     expect(sent.mock.calls).toEqual([[CMD_DELETE_FILTER, { id: 'own' }]]);
   });
 
+  it('hands the focus to the next filter of the user once a deleted one is gone', async () => {
+    const OTHER = { id: 'other', label: 'Andere', deletable: true };
+    mountTable({ namedFilters: [DECLARED, OWN, OTHER] });
+    await settle();
+
+    await userEvent.click(deleteIcon(chip('Meine'), LABEL_DELETE_FILTER));
+    patchState({ namedFilters: [DECLARED, OTHER] });
+    await settle();
+
+    expect(document.activeElement).toBe(chip('Andere'));
+  });
+
   it('offers no deletion of a declared filter', async () => {
     mountTable({});
     await settle();

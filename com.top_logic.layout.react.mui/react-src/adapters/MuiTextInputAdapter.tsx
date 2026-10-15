@@ -9,6 +9,9 @@ const ICON_CLASS = 'tl-icon-sm';
 /** The number of visible lines of a multi-line box that names none. */
 const DEFAULT_ROWS = 3;
 
+/** Hides the browser's own clear button of a search box, which the action of the box replaces. */
+const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display: 'none' } } as const;
+
 /**
  * Draws the part `TextInput` ({@link TextInputPartProps}) with Material UI: a small MUI `TextField`
  * of full width without a label of its own - the box is named by the control, and the label of a
@@ -59,6 +62,7 @@ const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
       size="small"
       fullWidth
       className={className}
+      sx={!multiline && action ? NO_NATIVE_CLEAR_SX : undefined}
       slotProps={{
         input: {
           readOnly,

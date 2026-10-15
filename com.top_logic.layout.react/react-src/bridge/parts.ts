@@ -446,7 +446,8 @@ export interface TextInputPartProps extends PartAttributes {
 
   /**
    * The action at the end of a single-line box, inside its frame: a part `Button` drawn
-   * `icon-only`, `ghost` and `small`, e.g. the button emptying the box. Absent: none.
+   * `icon-only`, `ghost` and `small`, e.g. the button emptying the box. It replaces the browser's own
+   * clear button of a `search` box, which the box then does not show. Absent: none.
    */
   action?: React.ReactNode;
 

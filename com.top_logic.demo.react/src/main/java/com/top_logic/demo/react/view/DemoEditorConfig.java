@@ -5,6 +5,7 @@
  */
 package com.top_logic.demo.react.view;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,8 @@ import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 
@@ -28,16 +31,19 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
  * Self-contained sample configuration edited by the config-editor demo.
  *
  * <p>
- * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item, a list
- * of items, an array of items, a map of items, a list of plain strings written as one comma
- * separated text, a duration, and a {@link ResKey}) so the React configuration editor renders each
- * editor variant.
+ * Exercises a spread of property kinds (text, multi-line text, number, boolean, enumeration, a
+ * date with its time of day, a nested item, a list of items, an array of items, a map of items, a
+ * list of plain strings written as one comma separated text, a duration, and a {@link ResKey}) so
+ * the React configuration editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getTitle()}. */
 	String TITLE = "title";
+
+	/** Configuration name for the value of {@link #getDescription()}. */
+	String DESCRIPTION = "description";
 
 	/** Configuration name for the value of {@link #getCount()}. */
 	String COUNT = "count";
@@ -47,6 +53,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getPriority()}. */
 	String PRIORITY = "priority";
+
+	/** Configuration name for the value of {@link #getDueDate()}. */
+	String DUE_DATE = "dueDate";
 
 	/** Configuration name for the value of {@link #getAddress()}. */
 	String ADDRESS = "address";
@@ -96,6 +105,18 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	String getTitle();
 
 	/**
+	 * A longer free-text description spanning several lines.
+	 *
+	 * <p>
+	 * The {@link MultiLineText} control provider makes the property a text area rather than the
+	 * single-line input of {@link #getTitle()}.
+	 * </p>
+	 */
+	@Name(DESCRIPTION)
+	@ControlProvider(MultiLineText.class)
+	String getDescription();
+
+	/**
 	 * A bounded item count.
 	 *
 	 * <p>
@@ -119,6 +140,13 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	 */
 	@Name(PRIORITY)
 	Priority getPriority();
+
+	/**
+	 * The point in time by which the configuration must be in effect, a date together with its
+	 * time of day.
+	 */
+	@Name(DUE_DATE)
+	Date getDueDate();
 
 	/**
 	 * A nested address rendered inline as a monomorphic item.

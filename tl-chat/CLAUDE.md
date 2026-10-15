@@ -1221,12 +1221,56 @@ the `<context>` facts, because the block is read top down.
 
 **A dock states it too, and should.** `<chat-dock>` has no `<selection>` of its own - it frames a
 `<chat-conversation>`, and that is where the line goes. The dock is where a user asks about the page
-*behind* it, so the page has to hand its selection over: in `tl-ai-demo` the shell declares a
-`pageSelection` channel, the Events, Venues and Invoices pages' `<view-ref>`s each bind their own
-selection channel onto it, and the dock's conversation states that channel. Where a shell has no
-channel naming the active page - which is where the engine stands today - the value survives the user
-navigating away, so name the fact after what the pages hold together (`Selected object`) or, when
-only one list writes it, after that list.
+*behind* it, so the page has to give its selection to a channel of the shell. There are two ways:
+
+| | `<bind>` on the page's `<view-ref>` | `<page-selection>` in the page (#928) |
+|--|--|--|
+| Reaches | a page that is a `<view-ref>` of the shell view | every page of the browser window: a `<view-ref>`, a tile-stack frame, a page that a control builds |
+| Direction | two-way: the page's table and the shell share one channel | one-way: the page writes, nothing writes back into the page |
+| When the page leaves the screen | the value stays | the value goes, the conversation states `none` |
+| Shell side | the channel | the channel, and `<chat-channels channels="..."/>` |
+
+Use `<page-selection>`. Use `<bind>` only for a shell whose pages are all `<view-ref>`s and that
+accepts a value that stays after the user leaves the page.
+
+```xml
+<!-- app.view.xml -->
+<channels><channel name="pageSelection"/></channels>
+...
+<footer>
+    <chat-channels channels="pageSelection"/>
+    <chat-dock ...> ... <selection channel="pageSelection"/> ... </chat-dock>
+</footer>
+
+<!-- a page, also a tile-stack frame -->
+<page-selection to="pageSelection">
+    <inputs>
+        <input channel="selectedSection"/>
+        <input channel="document"/>
+    </inputs>
+</page-selection>
+```
+
+- **`<chat-channels channels="a,b"/>`** goes into the shell view, once. It draws nothing. It puts the
+  named shell channels into a register of the browser window (`ChatChannels`), a property of the
+  window's sub-session. A new browser window has its own register. Java code of the same window gets
+  a channel with `ChatChannels.channel(name)`.
+- **`<page-selection to="...">`** goes into the view of a page. It draws nothing. While the page is on
+  screen (attached), it writes the first input that holds one object into the shell channel `to`. A
+  set of exactly one object counts as that object; nothing and several objects are skipped. When the
+  page leaves the screen (another nav item, a frame over it) or is disposed, it removes its value.
+- **Two pages on screen** in one window: the most recent selection wins. When one page leaves, the
+  channel gets the value of the other one again, not `null`.
+- **Keep the shell channel for `<page-selection>` only.** Do not bind a table's selection of a page
+  to it: the table would get the objects of other pages as its selection. An application measured
+  this: a list in a shared two-way channel gave a `ClassCastException`, a foreign object in a table's
+  selection gave `NullPointerException`s. This is why `<page-selection>` writes one object, never a
+  list.
+- A dock and a page over the same conversation read the same shell channel, so both state the same
+  object.
+
+`tl-ai-demo` shows it: `app.view.xml` publishes `pageSelection`, the detail views of Events,
+Invoices and Venues write it, and Venues is a tile stack whose venue frame states the venue.
 
 **State them from every place one conversation is reachable from.** A page that declares a
 `<context>` and a dock over the same conversation that declares none flips the environment block

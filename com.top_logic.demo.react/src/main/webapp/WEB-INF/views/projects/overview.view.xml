@@ -123,6 +123,10 @@
 							header = h -> pptCell($h, fill: "topicA", color: "inverse", bold: true);
 							ticketRows = $open.map(t -> [
 								$t.get(`tl.demo.projectManagement:Ticket#title`),
+								{
+									description = $t.get(`tl.demo.projectManagement:Ticket#description`);
+									if($description == null || $description.trim().isEmpty(), "–", $description);
+								},
 								$nameOf($milestoneOf($t)),
 								$formatDate($dueOf($milestoneOf($t))),
 								{
@@ -198,12 +202,13 @@
 									pptBanner(#('There are no open tickets.'@en, 'Es gibt keine offenen Tickets.'@de).localize(), role: "done"),
 									pptTable(concat([[
 											$header(#('Ticket'@en, 'Ticket'@de).localize()),
+											$header(#('Description'@en, 'Beschreibung'@de).localize()),
 											$header(#('Milestone'@en, 'Meilenstein'@de).localize()),
 											$header(#('Due'@en, 'Fällig'@de).localize()),
 											$header(#('Assignee'@en, 'Bearbeiter'@de).localize()),
 											$header(#('Urgency'@en, 'Dringlichkeit'@de).localize())
 										]], $ticketRows),
-										headerRows: 1, columnWeights: [4, 2, 1.6, 2, 2])),
+										headerRows: 1, columnWeights: [3, 5, 2, 1.6, 2, 2])),
 								notes: #('The open tickets with the due date of their milestone. A long list continues on further slides.'@en,
 									'Die offenen Tickets mit dem Fälligkeitsdatum ihres Meilensteins. Eine lange Liste wird auf weiteren Folien fortgesetzt.'@de).localize());
 

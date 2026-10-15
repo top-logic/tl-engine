@@ -268,12 +268,9 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * Stores the given role rule after checking that it delivers a role.
+	 * Stores the given role rule.
 	 */
 	private Object saveRoleRule(RoleRuleConfig rule) {
-		if (rule.getRole().isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_ROLE);
-		}
 		store(() -> editor().putRoleRule(rule));
 		return Boolean.TRUE;
 	}

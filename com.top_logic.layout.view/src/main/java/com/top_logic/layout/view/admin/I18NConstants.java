@@ -132,11 +132,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_MISSING_RULE_PATH;
 
 	/**
-	 * @en Please select at least one role the rule grants.
-	 */
-	public static ResKey ERROR_MISSING_RULE_ROLE;
-
-	/**
 	 * @en There are no access rights to store.
 	 */
 	public static ResKey ERROR_NO_ACCESS_RIGHTS_SELECTED;

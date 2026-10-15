@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="demo.temperature">
+			<enum name="TemperatureUnit">
+				<classifier name="CELSIUS"/>
+				<classifier name="FAHRENHEIT"/>
+				<classifier name="KELVIN"/>
+			</enum>
+			<!--
+				A temperature, stored in degrees Celsius and displayed in the unit of the object it
+				belongs to: the storage of the type attaches the unit that the temperature-unit
+				annotation of an attribute computes, and the input control of the type reads a typed
+				value in that unit.
+			-->
+			<datatype name="Temperature"
+				db_type="double"
+				kind="Custom"
+			>
+				<annotations>
+					<storage-algorithm>
+						<temperature-storage/>
+					</storage-algorithm>
+					<input-control>
+						<impl class="com.top_logic.demo.react.temperature.TemperatureControlProvider"/>
+					</input-control>
+				</annotations>
+				<temperature-mapping/>
+			</datatype>
+			<class name="DemoSite">
+				<annotations>
+					<main-properties properties="name, temperatureUnit"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="temperatureUnit"
+						kind="forwards"
+						mandatory="true"
+						type="TemperatureUnit"
+					/>
+					<reference name="sensors"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="DemoSensor"
+					/>
+				</attributes>
+			</class>
+			<class name="DemoSensor">
+				<annotations>
+					<main-properties properties="name, minTemperature, maxTemperature"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="minTemperature"
+						type="Temperature"
+					>
+						<annotations>
+							<temperature-unit unit="s -> $s.container().get(`demo.temperature:DemoSite#temperatureUnit`)"/>
+						</annotations>
+					</property>
+					<property name="maxTemperature"
+						type="Temperature"
+					>
+						<annotations>
+							<temperature-unit unit="s -> $s.container().get(`demo.temperature:DemoSite#temperatureUnit`)"/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

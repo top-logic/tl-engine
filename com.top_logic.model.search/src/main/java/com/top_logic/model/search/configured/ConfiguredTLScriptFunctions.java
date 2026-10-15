@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
@@ -35,6 +36,7 @@ import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -45,6 +47,9 @@ import com.top_logic.util.error.TopLogicException;
  *        Type of the configuration.
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@ServiceDependencies({
+	CommandGroupRegistry.Module.class
+})
 @ServiceExtensionPoint(SearchBuilder.Module.class)
 @Label("Configured TL-Script functions")
 public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.Config<?>>
